@@ -1,0 +1,84 @@
+
+An interface to an external library is defined in a module in the interfaces package.
+
+Definition:
+
+This module must define three things: a function set a path at which to look for
+the external package, a function to retrieve that same path, and a function which
+will be the gateway through which all the desired functionality of that external
+package is accessed.
+
+Storing a path is necessary to allow for either the import of the library via
+python (by adding the path to the search path) or to call the external library
+via some kind of command line interface which will accessed relative to that
+given path. The details of that access are to be determined by the interface
+author.
+
+This third function must take the following arguments, and only the following arguments:
+
+algorithmName : some string identifying the functionality which we wish to call upon
+trainingData : a file containing data which will be used for training in whatever
+			functionality we call upon. Optionally, this is also allowed to be
+			a data representation object. If required, such as in any sort of
+			supervised learning, one column of the data must be identified as
+			containing the target values, aka the dependant variables, and
+			must be labled with Y (capital y)
+trialData : a file (or optionally a data representation object) containing data that
+			will be evaluated by the model that the choosen functionality has trained. 
+output : a file to which the output of the choosen functionality will be written.
+		Optionally, if None, the funciton must return a data representation type
+		of the output
+arguments : a dictionary of names to values of the other arguments required by
+			the choosen functionality.
+
+The third function must implement the legwork required to transform the above
+API into the appropriate calls to the external library's API, either through
+python, or via the command line. First it must find the desired functionality,
+and then organize the data and arguments into an valid call of that functionality,
+hopefully via automation. This may require transformations to the structure of
+the input data, and or careful rebinding of argument or function names. The goal
+is provide as much access into the external libary as possible, given the limitations
+of API.
+
+
+Suggested Approach:
+
+First perform a detailed inspection of the external library's API, to determine
+how much it is feasible to port into our more limited API. Note any name structure
+or conventions used by packages, functions, and arguments, that can be used to
+help automate any of the following procedures.
+
+There are three main tasks to be performed by the interface function proper:
+locating the desired algorithm, data preparation, and the actual calls.
+
+Locating the desired algorithm is meant to be done via some kind of automation,
+because any kind of hard coding will be susceptible to changes across different
+versions of the same library. For python libraries, we provide a helper function
+to help search a package structure, looking for the appropriate modules to import.
+In the case of a package accessed through the command line there may be a manifest
+somewhere that your interface can inspect. Ingenuity will be required to give access
+to as much functionality as possible. For example clever naming tricks could be employed
+at this point to help ease any idiosyncrocies of the library into the nomenclature
+of our interface. Alternatively, extra functionality could be patched, temporarily, to
+the library to allow for access to groups of functions that individually do not
+fit our API. However, as a baseline, there should be something very generic
+that will if necessary bipass anything clever or handmade, and attempt to pass
+the buck onto the library if all else fails.
+
+Prior to calling the interface, all of the necessary data is to be containined in
+trainingData and trialData, but not necessarily in the appropriate form. For example,
+a library may require the target values of the trainingData be separated into
+its own argument, or that what is input conventionally as column vectors must
+instead be row vectors. These conventions may even vary according to the functionality
+that is desired, so we suggest performing any such transforms as close to the call
+as possible, and hopefully with formating that was acquired automatically from the
+library, or via well established convention.
+
+Lastly, the function must actually make a call to the library. For python libraries,
+this can be performed by compiling commands to be passed to the built in functions
+exec() and eval(). For non-python pacakages, we can construct and execute commands
+via a bash shell with the subprocess module. A helper function is provided to help
+unpack and format argument value pairs that are stored in the input dictionary.
+
+
+
