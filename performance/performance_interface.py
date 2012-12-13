@@ -23,7 +23,9 @@ def computeMetrics_v2(trueLabelIndex, X, Y, functions):
 
 def confusion_matrix_generator(knownLabels, predictedLabels):
     """ Given two vectors, one of known class labels (as strings) and one of predicted labels,
-    compute the confusion matrix.  Returns a 2-dimensional dictionary of Works for an indefinite number of class labels.
+    compute the confusion matrix.  Returns a 2-dimensional dictionary in which outer label is 
+    keyed by known label, inner label is keyed by predicted label, and the value stored is the count
+    of instances for each combination.  Works for an indefinite number of class labels.
     """
     confusionCounts = {}
     for known, predicted in zip(knownLabels, predictedLabels):
