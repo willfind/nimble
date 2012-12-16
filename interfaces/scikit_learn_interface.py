@@ -59,33 +59,40 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 
 	"""
 	if not isinstance(trainData, BaseData):
-		trainData = DMDLoadCSV(trainData)
+		trainObj = DMDLoadCSV(trainData)
+	else: # input is an object
+		trainObj = trainData
 	if not isinstance(testData, BaseData):
-		testData = DMDLoadCSV(testData)
-
-	trainDataY = None
+		testObj = DMDLoadCSV(testData)
+	else: # input is an object
+		testObj = testData
+	
+	trainObjY = None
 	# directly assign target values, if present
 	if isinstance(dependentVar, BaseData):
-		trainDataY = dependentVar
-	# isolate the target values from training examples, otherwise
+		trainObjY = dependentVar
+	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
-		trainDataY = trainData.extractColumns([dependentVar])		
-		trainDataY = trainDataY.convertToDenseMatrixData()
-		trainDataY.transpose()
-		
-	# extract data
-	trainData = trainData.data
-	if trainDataY is not None:
-		#trainDataY = trainDataY.data
-		toFlatten = trainDataY.data
-		if not isinstance(dependentVar, BaseData):
-			toFlatten = toFlatten[0]
-		trainDataY = numpy.array(toFlatten).flatten()
-	testData = testData.data
+		# TODO currently destructive!
+		trainObjY = trainObj.extractColumns([dependentVar])		
+	# could be None for unsupervised learning	
+
+	# necessary format for skl, also makes the following ops easier
+	if trainObjY is not None:	
+		trainObjY = trainObjY.convertToDenseMatrixData()
+	
+	# pull out data from obj
+	trainRawData = trainObj.data
+	if trainObjY is not None:
+		# corrects the dimensions of the matrix data to be just an array
+		trainRawDataY = numpy.array(trainObjY.data).flatten()
+	else:
+		trainRawDataY = None
+	testRawData = testObj.data
 
 	# call backend
 	try:
-		retData = _sciKitLearnBackend(algorithm, trainData, trainDataY, testData, arguments)
+		retData = _sciKitLearnBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not sciKitLearnPresent():
@@ -99,6 +106,8 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 	outputObj = DMData(retData)
 
 	if output is None:
+		# we want to return a column vector
+		outputObj.transpose()
 		return outputObj
 
 	DMDWriteToCSV(outputObj,output,False)

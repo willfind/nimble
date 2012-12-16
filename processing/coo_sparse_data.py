@@ -28,14 +28,14 @@ class CooSparseData(SparseData):
 		
 
 		"""
-		keepData = []
-		keepRows = []
-		keepCols = []
 		extractData = []
 		extractRows = []
 		extractCols = []
 
-		#walk through col listing and partition all data: keep and not keep
+		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
+		# underlying structure to save space
+		copy = 0
+
 		for i in xrange(len(self.data.col)):
 			value = self.data.col[i]
 			if value in toExtract:
@@ -43,12 +43,17 @@ class CooSparseData(SparseData):
 				extractRows.append(self.data.row[i])
 				extractCols.append(toExtract.index(value))
 			else:
-				keepData.append(self.data.data[i])
-				keepRows.append(self.data.row[i])
-				keepCols.append(self.data.col[i] - _numLessThan(value, toExtract))
+				self.data.data[copy] = self.data.data[i]				
+				self.data.row[copy] = self.data.row[i]
+				self.data.col[copy] = self.data.col[i] - _numLessThan(value, toExtract)
+				copy = copy + 1
 
-		# reinstantiate the two
-		self.data = coo_matrix((keepData,(keepRows,keepCols)), shape=(self.numRows(), self.numColumns()-len(toExtract)))
+		# reinstantiate self
+		# (cannot reshape coo matrices, so cannot do this in place)
+		(rowShape, colShape) = self.data.shape
+		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), (rowShape, colShape - len(toExtract)))
+
+		# instantiate return obj
 		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(self.numRows(), len(toExtract)))
 
 		return CooSparseData(ret) 
@@ -113,7 +118,7 @@ def writeToMM(toWrite, outPath, includeLabels):
 
 
 
-def _numLessThan(value, toCheck):
+def _numLessThan(value, toCheck): # TODO caching
 	i = 0
 	while i < len(toCheck):
 		if toCheck[i] < value:

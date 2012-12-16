@@ -71,10 +71,10 @@ def testSciKitLearnHandmadeClustering():
 	# clustering returns a row vector of indices, referring to the cluster centers,
 	# we don't care about the exact numbers, this verifies that the appropriate
 	# ones are assigned to the same clusters
-	assert ret.data[0,0] == ret.data[0,1]
-	assert ret.data[0,0] != ret.data[0,2]
-	assert ret.data[0,0] != ret.data[0,3]
-	assert ret.data[0,2] != ret.data[0,3]
+	assert ret.data[0,0] == ret.data[1,0]
+	assert ret.data[0,0] != ret.data[2,0]
+	assert ret.data[0,0] != ret.data[3,0]
+	assert ret.data[2,0] != ret.data[3,0]
 
 
 def testSciKitLearnHandmadeSparseClustering():
@@ -93,8 +93,8 @@ def testSciKitLearnHandmadeSparseClustering():
 
 	ret = sciKitLearn('MiniBatchKMeans', trainData, testData, dependentVar=2, arguments={'n_clusters':2})
 	
-	assert ret.data[0,0] == ret.data[0,1]
-	assert ret.data[0,0] != ret.data[0,2]
+	assert ret.data[0,0] == ret.data[1,0]
+	assert ret.data[0,0] != ret.data[2,0]
 
 
 def testSciKitLearnListAlgorithms():
