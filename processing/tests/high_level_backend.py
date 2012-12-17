@@ -12,7 +12,7 @@ from copy import deepcopy
 
 
 ###################
-# duplicateObject #
+# duplicate #
 ###################
 
 
@@ -39,17 +39,17 @@ from copy import deepcopy
 
 
 
-##################################
-# convertColumnToCategoryColumns #
-##################################
+#################################
+# columnToBinaryCategoryColumns #
+#################################
 
 
-def convertColumnToCategoryColumns_handmade(constructor):
+def columnToBinaryCategoryColumns_handmade(constructor):
 	""" Test convertColumnToCategoryColumns() against handmade output """
 	data = [[1],[2],[3]]
 	labels = ['col']
 	toTest = constructor(data,labels)
-	toTest.convertColumnToCategoryColumns(0)
+	toTest.columnToBinaryCategoryColumns(0)
 
 	expData = [[1,0,0], [0,1,0], [0,0,1]]
 	expLabels = ['col=1','col=2','col=3']
@@ -61,20 +61,17 @@ def convertColumnToCategoryColumns_handmade(constructor):
 	
 
 
-####################################
-# convertColumnToIntegerCategories #
-####################################
+#############################
+# columnToIntegerCategories #
+#############################
 
-def convertColumnToIntegerCategories_handmade(constructor):
+def columnToIntegerCategories_handmade(constructor):
 	""" Test convertColumnToIntegerCategories() against handmade output """
 	data = [[10],[20],[30.5],[20],[10]]
 	labels = ['col']
 	toTest = constructor(data,labels)
-	toTest.convertColumnToIntegerCategories(0)
+	toTest.columnToIntegerCategories(0)
 
-	expLabels = {'col:categories':0}
-
-	assert toTest.labels == expLabels
 	assert toTest.data[0] == toTest.data[4]
 	assert toTest.data[1] == toTest.data[3]
 	assert toTest.data[0] != toTest.data[1]
@@ -206,40 +203,40 @@ def selectPercentOfAllRows_handmade(constructor):
 	assert ret.equals(expRet)
 	assert expTest.equals(toTest)
 
-##############################
-# selectEachRowWithGivenBias #
-##############################
+#########################
+# extractRowsByCoinToss #
+#########################
 
-def selectEachRowWithGivenBias_exceptionNoneBias(constructor):
-	""" Test selectEachRowWithGivenBias() for ArgumentException when bias is None """
+def extractRowsByCoinToss_exceptionNoneProbability(constructor):
+	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	labels = ['1','2','3']
 	toTest = constructor(data,labels)
-	toTest.selectEachRowWithGivenBias(None)
+	toTest.extractRowsByCoinToss(None)
 
-def selectEachRowWithGivenBias_exceptionNoneLEzero(constructor):
-	""" Test selectEachRowWithGivenBias() for ArgumentException when bias is <= 0 """
+def extractRowsByCoinToss_exceptionLEzero(constructor):
+	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	labels = ['1','2','3']
 	toTest = constructor(data,labels)
-	toTest.selectEachRowWithGivenBias(0)
+	toTest.extractRowsByCoinToss(0)
 
-def selectEachRowWithGivenBias_exceptionNoneGEone(constructor):
-	""" Test selectEachRowWithGivenBias() for ArgumentException when bias is >= 1 """
+def extractRowsByCoinToss_exceptionGEone(constructor):
+	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	labels = ['1','2','3']
 	toTest = constructor(data,labels)
-	toTest.selectEachRowWithGivenBias(1)
+	toTest.extractRowsByCoinToss(1)
 
-def selectEachRowWithGivenBias_handmade(constructor):
-	""" Test selectEachRowWithGivenBias() against handmade output with the test seed """
+def extractRowsByCoinToss_handmade(constructor):
+	""" Test extractRowsByCoinToss() against handmade output with the test seed """
 	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 	labels = ['1','2','3']
 	toTest = constructor(data,labels)
-	ret = toTest.selectEachRowWithGivenBias(0.5)
+	ret = toTest.extractRowsByCoinToss(0.5)
 
-	expRet = constructor([[1,2,3],[4,5,6],[7,8,9]],labels)
-	expTest = constructor([[10,11,12]],labels)
+	expRet = constructor([[4,5,6],[7,8,9]],labels)
+	expTest = constructor([[1,2,3],[10,11,12]],labels)
 
 	assert ret.equals(expRet)
 	assert expTest.equals(toTest)

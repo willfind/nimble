@@ -28,9 +28,9 @@ def callAll(func):
 	func(dmd)
 
 
-###################
-# duplicateObject #
-###################
+#############
+# duplicate #
+#############
 
 
 
@@ -59,24 +59,24 @@ def callAll(func):
 
 
 
-##################################
-# convertColumnToCategoryColumns #
-##################################
+#################################
+# columnToBinaryCategoryColumns #
+#################################
 
 
-def test_convertColumnToCategoryColumns_handmade():
-	""" Test convertColumnToCategoryColumns() against handmade output """
-	callAll(convertColumnToCategoryColumns_handmade)
+def test_columnToBinaryCategoryColumns_handmade():
+	""" Test columnToBinaryCategoryColumnss() against handmade output """
+	callAll(columnToBinaryCategoryColumns_handmade)
 	
 
 
-####################################
-# convertColumnToIntegerCategories #
-####################################
+#############################
+# columnToIntegerCategories #
+#############################
 
-def test_convertColumnToIntegerCategories_handmade():
-	""" Test convertColumnToIntegerCategories() against handmade output """
-	callAll(convertColumnToIntegerCategories_handmade)
+def test_columnToIntegerCategories_handmade():
+	""" Test columnToIntegerCategories() against handmade output """
+	callAll(columnToIntegerCategories_handmade)
 
 
 ###############################
@@ -150,29 +150,29 @@ def test_selectPercentOfAllRows_handmade():
 	""" Test selectPercentOfAllRows() against handmade output with the test seed """
 	callAll(selectPercentOfAllRows_handmade)
 
-##############################
-# selectEachRowWithGivenBias #
-##############################
+#########################
+# extractRowsByCoinToss #
+#########################
 
 @raises(ArgumentException)
-def test_selectEachRowWithGivenBias_exceptionNoneBias():
-	""" Test selectEachRowWithGivenBias() for ArgumentException when bias is None """
-	callAll(selectEachRowWithGivenBias_exceptionNoneBias)
+def test_extractRowsByCoinToss_exceptionNoneProbability():
+	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is None """
+	callAll(extractRowsByCoinToss_exceptionNoneProbability)
 
 @raises(ArgumentException)
-def test_selectEachRowWithGivenBias_exceptionNoneLEzero():
-	""" Test selectEachRowWithGivenBias() for ArgumentException when bias is <= 0 """
-	callAll(selectEachRowWithGivenBias_exceptionNoneLEzero)
+def test_extractRowsByCoinToss_exceptionLEzero():
+	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
+	callAll(extractRowsByCoinToss_exceptionLEzero)
 
 @raises(ArgumentException)
-def test_selectEachRowWithGivenBias_exceptionNoneGEone():
-	""" Test selectEachRowWithGivenBias() for ArgumentException when bias is >= 1 """
-	callAll(selectEachRowWithGivenBias_exceptionNoneGEone)
+def test_extractRowsByCoinToss_exceptionGEone():
+	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
+	callAll(extractRowsByCoinToss_exceptionGEone)
 
 
-def test_selectEachRowWithGivenBias_handmade():
-	""" Test selectEachRowWithGivenBias() against handmade output with the test seed """
-	callAll(selectEachRowWithGivenBias_handmade)
+def test_extractRowsByCoinToss_handmade():
+	""" Test extractRowsByCoinToss() against handmade output with the test seed """
+	callAll(extractRowsByCoinToss_handmade)
 
 
 
