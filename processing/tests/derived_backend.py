@@ -749,22 +749,6 @@ def convertToRowListData_handmade_assignedLabels(constructor):
 # convertToDenseMatrixData() #
 ##############################
 
-# incompatible input
-def convertToDenseMatrixData_incompatible(constructor):
-	""" Test convertToDenseMatrixData with data that cannot be used by dense matrices """
-	labels = ['1','2','3']
-	data = [['1','2',3]]
-	toTest = constructor(data,labels)
-
-	ret = toTest.convertToDenseMatrixData()
-	exp = DMD(data,labels)
-
-	assert False
-
-	assert ret.equals(exp)
-	assert exp.equals(ret)
-
-
 def convertToDenseMatrixData_handmade_defaultLabels(constructor):
 	""" Test convertToDenseMatrixData with default labels """
 	data = [[1,2,3],[4,5,6],[7,8,9]]

@@ -454,11 +454,6 @@ def test_convertToRowListData_handmade_assignedLabels():
 ##############################
 
 
-def test_convertToDenseMatrixData_incompatible():
-	""" Test RLD convertToDenseMatrixData with data that cannot be used by dense matrices """
-	convertToDenseMatrixData_incompatible(constructor)
-
-
 def test_convertToDenseMatrixData_handmade_defaultLabels():
 	""" Test RLD convertToDenseMatrixData with default labels """
 	convertToDenseMatrixData_handmade_defaultLabels(constructor)
