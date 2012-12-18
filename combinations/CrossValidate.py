@@ -50,8 +50,8 @@ def normalize(train, test, algorithm, parameters=None):
 	"""use this command to normalize training and testing data using an algorithm. For instance:
 	normalize(trainX, testX, algorithm="mean") would run mean normalization on trainX, and apply those learned column means to both trainX
 	and testX, modifying trainX and testX to be the new normalized dataMatrix objects."""
-	train.copyOf(runAlgorithm(train, test, algorithm=algorithm, parameters=parameters))	#copyOf() would set train so that it is the same as what's passed to it
-	test.copyOf(runAlgorithm(train, train, algorithm=algorithm, parameters=parameters))	#copyOf() would set test so that it is the same as what's passed to it
+	test.copyOf(runAlgorithm(train, test, algorithm=algorithm, parameters=parameters))	#copyOf() would set train so that it is the same as what's passed to it
+	train.copyOf(runAlgorithm(train, train, algorithm=algorithm, parameters=parameters))	#copyOf() would set test so that it is the same as what's passed to it
 
 def loadTrainingAndTesting(fileName, labelID, fractionForTestSet):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
