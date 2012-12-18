@@ -50,8 +50,8 @@ def normalize(train, test, algorithm, parameters=None):
 	"""use this command to normalize training and testing data using an algorithm. For instance:
 	normalize(trainX, testX, algorithm="mean") would run mean normalization on trainX, and apply those learned column means to both trainX
 	and testX, modifying trainX and testX to be the new normalized dataMatrix objects."""
-	train.copyOf(runAlgorithm(train, test, algorithm=algorithm, parameters=parameters))	#copyOf() would set train so that it is the same as what's passed to it
-	test.copyOf(runAlgorithm(train, train, algorithm=algorithm, parameters=parameters))	#copyOf() would set test so that it is the same as what's passed to it
+	test.copyOf(runAlgorithm(train, test, algorithm=algorithm, parameters=parameters))	#copyOf() would set train so that it is the same as what's passed to it
+	train.copyOf(runAlgorithm(train, train, algorithm=algorithm, parameters=parameters))	#copyOf() would set test so that it is the same as what's passed to it
 
 def loadTrainingAndTesting(fileName, labelID, fractionForTestSet):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
@@ -59,8 +59,8 @@ def loadTrainingAndTesting(fileName, labelID, fractionForTestSet):
 	trainX = DenseMatrix.DenseMatrix("myFile.txt")	#load all our data (both X & Y) I'm not sure actually how we do this in the current code
 													#we'll have to deal with different data types (dense, sparse, etc.) but I'm ignoring that here
 	testX = trainX.extractPoints(number=int(round(fractionForTestSet*len(trainX))), randomize=True)	#pull out a testing set
-	trainY = trainX.extractFeatures(0)	#construct the column vector of training labels
-	testY = testX.extractFeatures(0)	#construct the column vector of testing labels
+	trainY = trainX.extractFeatures(labelID)	#construct the column vector of training labels
+	testY = testX.extractFeatures(labelID)	#construct the column vector of testing labels
 	return trainX, trainY, testX, testY
 
 

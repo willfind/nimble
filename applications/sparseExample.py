@@ -14,34 +14,35 @@ if __name__ == "__main__" and __package__ is None:
 	import UML.applications
 	__package__ = "UML.applications"
 
-import sys
+if __name__ == "__main__":
+	import sys
 
-from ..interfaces.scikit_learn_interface import sciKitLearn as skl
-from ..processing.dense_matrix_data import DenseMatrixData
-from ..processing.coo_sparse_data import CooSparseData
-from ..processing.coo_sparse_data import loadMM as cooLoadMM
+	from ..interfaces.scikit_learn_interface import sciKitLearn as skl
+	from ..processing.dense_matrix_data import DenseMatrixData
+	from ..processing.coo_sparse_data import CooSparseData
+	from ..processing.coo_sparse_data import loadMM as cooLoadMM
 
-# path to input specified by command line argument
-pathIn = sys.argv[1]
+	# path to input specified by command line argument
+	pathIn = sys.argv[1]
 
-sparseAll = cooLoadMM(pathIn)
-sparseY = sparseAll.extractColumns([0])
-sparseX = sparseAll
+	sparseAll = cooLoadMM(pathIn)
+	sparseY = sparseAll.extractColumns([0])
+	sparseX = sparseAll
 
-ret = skl('LogisticRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)
+	ret = skl('LogisticRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)
 
-ret.renameLabel(0,'result')
+	ret.renameLabel(0,'result')
 
-Y = sparseY.convertToDenseMatrixData()
+	Y = sparseY.convertToDenseMatrixData()
 
-total = 0.
-correct = 0.
-for i in xrange(ret.numRows()):
-	if ret.data[i,0] == Y.data[i,0]:
-		correct = correct + 1
-	total = total + 1
+	total = 0.
+	correct = 0.
+	for i in xrange(ret.numRows()):
+		if ret.data[i,0] == Y.data[i,0]:
+			correct = correct + 1
+		total = total + 1
 
-print 'Correct ' + str(correct)
-print 'Total ' + str(total)
-print 'ratio ' + str(correct/total)
+	print 'Correct ' + str(correct)
+	print 'Total ' + str(total)
+	print 'ratio ' + str(correct/total)
 
