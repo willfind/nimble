@@ -283,17 +283,17 @@ def test_extractRangeColumns_handmadeWithLabels():
 	extractRangeColumns_handmadeWithLabels(constructor)
 
 ####################
-# applyToEachRow() #
+# applyFunctionToEachRow() #
 ####################
 
 @raises(ArgumentException)
-def test_applyToEachRow_exceptionInputNone():
-	""" Test CooSparse applyToEachRow() for ArgumentException when function is None """
-	applyToEachRow_exceptionInputNone(constructor)
+def test_applyFunctionToEachRow_exceptionInputNone():
+	""" Test CooSparse applyFunctionToEachRow() for ArgumentException when function is None """
+	applyFunctionToEachRow_exceptionInputNone(constructor)
 
-def test_applyToEachRow_Handmade():
-	""" Test CooSparse applyToEachRow() with handmade output """
-	applyToEachRow_Handmade(constructor)
+def test_applyFunctionToEachRow_Handmade():
+	""" Test CooSparse applyFunctionToEachRow() with handmade output """
+	applyFunctionToEachRow_Handmade(constructor)
 
 
 #######################

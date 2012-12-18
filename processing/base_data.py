@@ -236,7 +236,7 @@ class BaseData(object):
 
 		for row in values.data:
 			value = row[0]
-			ret = toConvert.applyToEachRow(makeFunc(value))
+			ret = toConvert.applyFunctionToEachRow(makeFunc(value))
 			ret.renameLabel(0, varName + "=" + str(value))
 			toConvert.appendColumns(ret)
 
@@ -281,7 +281,7 @@ class BaseData(object):
 		def lookup(row):
 			return mapping[row[0]]
 
-		converted = toConvert.applyToEachRow(lookup)
+		converted = toConvert.applyFunctionToEachRow(lookup)
 		converted.renameLabel(0,toConvert.labelsInverse[0])		
 
 		self.appendColumns(converted)
@@ -346,7 +346,7 @@ class BaseData(object):
 			valueToTotal[key] += 1
 			return ret
 
-#		ids = self.applyToEachRow(tagValuesWithID)
+#		ids = self.applyFunctionToEachRow(tagValuesWithID)
 #		self.addColumn(ids)
 
 	
@@ -399,7 +399,7 @@ class BaseData(object):
 		def isSelected(row):
 			return row[len(row)-1]
 
-		selectionKeys = self.applyToEachRow(experiment)
+		selectionKeys = self.applyFunctionToEachRow(experiment)
 		self.appendColumns(selectionKeys)
 		ret = self.extractSatisfyingRows(isSelected)
 		# remove the experimental data
@@ -609,7 +609,7 @@ class BaseData(object):
 			ret._renameLabel_implementation(index-start, removedLabel, True)
 		return ret
 
-	def applyToEachRow(self, function):
+	def applyFunctionToEachRow(self, function):
 		"""
 		Applies the given funciton to each row in this object, collecting the
 		output values into a new object in the shape of a row vector that is
@@ -620,7 +620,7 @@ class BaseData(object):
 		"""
 		if function is None:
 			raise ArgumentException("function must not be None")
-		return self._applyToEachRow_implementation(function)
+		return self._applyFunctionToEachRow_implementation(function)
 
 	def applyToEachColumn(self, function):
 		"""

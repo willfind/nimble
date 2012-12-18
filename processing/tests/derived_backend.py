@@ -569,18 +569,18 @@ def extractRangeColumns_handmadeWithLabels(constructor):
 
 
 ####################
-# applyToEachRow() #
+# applyFunctionToEachRow() #
 ####################
 
-def applyToEachRow_exceptionInputNone(constructor):
-	""" Test applyToEachRow() for ArgumentException when function is None """
+def applyFunctionToEachRow_exceptionInputNone(constructor):
+	""" Test applyFunctionToEachRow() for ArgumentException when function is None """
 	labels = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),labels)
-	origObj.applyToEachRow(None)
+	origObj.applyFunctionToEachRow(None)
 
-def applyToEachRow_Handmade(constructor):
-	""" Test applyToEachRow() with handmade output """
+def applyFunctionToEachRow_Handmade(constructor):
+	""" Test applyFunctionToEachRow() with handmade output """
 	labels = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),labels)
@@ -589,7 +589,7 @@ def applyToEachRow_Handmade(constructor):
 	def emitLower (row):
 		return row[origObj.labels['deci']]
 
-	lowerCounts = origObj.applyToEachRow(emitLower)
+	lowerCounts = origObj.applyFunctionToEachRow(emitLower)
 
 	expectedOut = [[0.1], [0.1], [0.1], [0.2]]
 	exp = constructor(expectedOut)

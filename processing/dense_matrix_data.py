@@ -170,7 +170,7 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(ret)
 
 
-	def _applyToEachRow_implementation(self,function):
+	def _applyFunctionToEachRow_implementation(self,function):
 		"""
 		Applies the given funciton to each row in this object, collecting the
 		output values into a new object in the shape of a row vector that is
