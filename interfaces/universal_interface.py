@@ -16,11 +16,11 @@ from mlpy_interface import mlpy
 def universalCall(package, algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
 	if package == 'mahout':
 		return mahout(algorithm, trainData, testData, output, dependentVar, arguments)
-	if package == 'regressors'
+	if package == 'regressors':
 		return regressors(algorithm, trainData, testData, output, dependentVar, arguments)
-	if package == 'sciKitLearn'
+	if package == 'sciKitLearn':
 		return sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
-	if package == 'mlpy'
+	if package == 'mlpy':
 		return mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
 
 
