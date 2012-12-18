@@ -59,8 +59,8 @@ def loadTrainingAndTesting(fileName, labelID, fractionForTestSet):
 	trainX = DenseMatrix.DenseMatrix("myFile.txt")	#load all our data (both X & Y) I'm not sure actually how we do this in the current code
 													#we'll have to deal with different data types (dense, sparse, etc.) but I'm ignoring that here
 	testX = trainX.extractPoints(number=int(round(fractionForTestSet*len(trainX))), randomize=True)	#pull out a testing set
-	trainY = trainX.extractFeatures(0)	#construct the column vector of training labels
-	testY = testX.extractFeatures(0)	#construct the column vector of testing labels
+	trainY = trainX.extractFeatures(labelID)	#construct the column vector of training labels
+	testY = testX.extractFeatures(labelID)	#construct the column vector of testing labels
 	return trainX, trainY, testX, testY
 
 
