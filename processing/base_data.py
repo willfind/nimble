@@ -132,7 +132,7 @@ class BaseData(object):
 	# Higher Order Operations #
 	###########################
 
-	def duplicateObject(self):
+	def duplicate(self):
 		"""
 		Return a new object which has the same data and labels as this object
 
@@ -200,7 +200,7 @@ class BaseData(object):
 		self.extractSatisfyingColumns(hasStrings)
 
 
-	def convertColumnToCategoryColumns(self, columnToConvert):
+	def columnToBinaryCategoryColumns(self, columnToConvert):
 		"""
 		Modify this object so that the choosen column is removed, and binary range
 		columns are added, one for each possible value seen in the choosen column.
@@ -245,7 +245,7 @@ class BaseData(object):
 		self.addColumns(toConvert)
 
 
-	def convertColumnToIntegerCategories(self, columnToConvert):
+	def columnToIntegerCategories(self, columnToConvert):
 		"""
 		Modify this object so that the chosen column in removed, and a new integer
 		valued column is added with values 0 to n-1, one for each of n values present
@@ -377,24 +377,24 @@ class BaseData(object):
 		
 		return ret
 
-	def selectEachRowWithGivenBias(self, bias, seed=DEFAULT_SEED):
+	def extractRowsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
 		"""
 		Return a new object containing a randomly selected sample of rows
 		from this object, where a random experient is performed for each
-		row, with the chance of selection equal to the bias parameter.
-		Those selected values are also removed from this object.
+		row, with the chance of selection equal to the extractionProbabilty
+		parameter. Those selected values are also removed from this object.
 
 		"""
 		random.seed(seed)
-		if bias is None:
-			raise ArgumentException("Must provide a bias")
-		if  bias <= 0:
-			raise ArgumentException("bias must be greater than zero")
-		if bias >= 1:
-			raise ArgumentException("bias must be less than one")
+		if extractionProbability is None:
+			raise ArgumentException("Must provide a extractionProbability")
+		if  extractionProbability <= 0:
+			raise ArgumentException("extractionProbability must be greater than zero")
+		if extractionProbability >= 1:
+			raise ArgumentException("extractionProbability must be less than one")
 
 		def experiment(row):
-			return bool(random.random() < bias)
+			return bool(random.random() < extractionProbability)
 
 		def isSelected(row):
 			return row[len(row)-1]
@@ -402,6 +402,7 @@ class BaseData(object):
 		selectionKeys = self.applyToEachRow(experiment)
 		self.addColumns(selectionKeys)
 		ret = self.extractSatisfyingRows(isSelected)
+		# remove the experimental data
 		if ret.numRows() > 0:
 			ret.extractColumns([ret.numColumns()-1])
 		if self.numRows() > 0:
