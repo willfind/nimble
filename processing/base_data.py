@@ -424,21 +424,21 @@ class BaseData(object):
 		self._transpose_implementation()
 		self.renameMultipleLabels(None)
 
-	def addRows(self, toAdd):
+	def appendRows(self, toAppend):
 		"""
-		Append the rows from the toAdd object to the bottom of the columns in this object.
+		Append the rows from the toAppend object to the bottom of the columns in this object.
 
-		toAdd cannot be None, and must be a kind of data representation object with the same
+		toAppend cannot be None, and must be a kind of data representation object with the same
 		number of columns as the calling object.
 		
 		"""
-		if toAdd is None:
+		if toAppend is None:
 			raise ArgumentException("toAdd must not be None")
-		if not isinstance(toAdd,BaseData):
+		if not isinstance(toAppend,BaseData):
 			raise ArgumentException("toAdd must be a kind of data representation object")
-		if not self.numColumns() == toAdd.numColumns():
+		if not self.numColumns() == toAppend.numColumns():
 			raise ArgumentException("toAdd must have the same number of columns as this object")
-		self._addRows_implementation(toAdd)
+		self._appendRows_implementation(toAppend)
 		
 	def addColumns(self, toAdd):
 		"""

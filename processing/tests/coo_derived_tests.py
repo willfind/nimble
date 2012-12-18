@@ -43,26 +43,26 @@ def test_transpose_handmade():
 
 
 #############
-# addRows() #
+# appendRows() #
 #############
 
 @raises(ArgumentException)
-def test_addRows_exceptionNone():
-	""" Test CooSparse addRows() for ArgumentException when toAdd is None"""
-	addRows_exceptionNone(constructor)
+def test_appendRows_exceptionNone():
+	""" Test CooSparse appendRows() for ArgumentException when toAppend is None"""
+	appendRows_exceptionNone(constructor)
 
 @raises(ArgumentException)
-def test_addRows_exceptionWrongSize():
-	""" Test CooSparse addRows() for ArgumentException when toAdd has too many columns """
-	addRows_exceptionWrongSize(constructor)
+def test_appendRows_exceptionWrongSize():
+	""" Test CooSparse appendRows() for ArgumentException when toAppend has too many columns """
+	appendRows_exceptionWrongSize(constructor)
 
-def test_addRows_handmadeSingle():
-	""" Test CooSparse addRows() against handmade output for a single added row """
-	addRows_handmadeSingle(constructor)
+def test_appendRows_handmadeSingle():
+	""" Test CooSparse appendRows() against handmade output for a single added row """
+	appendRows_handmadeSingle(constructor)
 
-def test_addRows_handmadeSequence():
-	""" Test CooSparse addRows() against handmade output for a sequence of additions"""
-	addRows_handmadeSequence(constructor)
+def test_appendRows_handmadeSequence():
+	""" Test CooSparse appendRows() against handmade output for a sequence of additions"""
+	appendRows_handmadeSequence(constructor)
 
 
 ################

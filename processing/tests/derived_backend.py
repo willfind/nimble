@@ -64,33 +64,33 @@ def transpose_handmade(constructor):
 
 
 #############
-# addRows() #
+# appendRows() #
 #############
 
-def addRows_exceptionNone(constructor):
-	""" Test addRows() for ArgumentException when toAdd is None"""
+def appendRows_exceptionNone(constructor):
+	""" Test appendRows() for ArgumentException when toAppend is None"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.addRows(None)
+	toTest.appendRows(None)
 
-def addRows_exceptionWrongSize(constructor):
-	""" Test addRows() for ArgumentException when toAdd has too many columns """
+def appendRows_exceptionWrongSize(constructor):
+	""" Test appendRows() for ArgumentException when toAppend has too many columns """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.addRows([["too", " ", "many", " ", "columns"]])
+	toTest.appendRows([["too", " ", "many", " ", "columns"]])
 
-def addRows_handmadeSingle(constructor):
-	""" Test addRows() against handmade output for a single added row """
+def appendRows_handmadeSingle(constructor):
+	""" Test appendRows() against handmade output for a single added row """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	dataExpected = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 	toTest = constructor(data)
 	toAdd = constructor([[10,11,12]])
 	expected = constructor(dataExpected)
-	toTest.addRows(toAdd)
+	toTest.appendRows(toAdd)
 	assert toTest.equals(expected)
 
-def addRows_handmadeSequence(constructor):
-	""" Test addRows() against handmade output for a sequence of additions"""
+def appendRows_handmadeSequence(constructor):
+	""" Test appendRows() against handmade output for a sequence of additions"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toAdd1 = [[0.1,0.2,0.3]]
 	toAdd2 = [[0.01,0.02,0.03],[0,0,0]]
@@ -98,9 +98,9 @@ def addRows_handmadeSequence(constructor):
 
 	dataExpected = [[1,2,3],[4,5,6],[7,8,9],[0.1,0.2,0.3],[0.01,0.02,0.03],[0,0,0],[10,11,12]]
 	toTest = constructor(data)
-	toTest.addRows(constructor(toAdd1))
-	toTest.addRows(constructor(toAdd2))
-	toTest.addRows(constructor(toAdd3))
+	toTest.appendRows(constructor(toAdd1))
+	toTest.appendRows(constructor(toAdd2))
+	toTest.appendRows(constructor(toAdd3))
 
 	expected = constructor(dataExpected)
 

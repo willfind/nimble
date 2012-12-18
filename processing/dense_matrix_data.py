@@ -40,7 +40,7 @@ class DenseMatrixData(BaseData):
 		self.data = self.data.getT()
 
 
-	def _addRows_implementation(self,toAdd):
+	def _appendRows_implementation(self,toAdd):
 		"""
 		Append the rows from the toAdd object to the bottom of the columns in this object
 		
