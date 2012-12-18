@@ -15,6 +15,7 @@ if __name__ == "__main__" and __package__ is None:
 	__package__ = "UML.applications"
 
 import sys
+if __name__ == "__main__":
 
 from ..interfaces.scikit_learn_interface import sciKitLearn as skl
 from ..processing.dense_matrix_data import DenseMatrixData
