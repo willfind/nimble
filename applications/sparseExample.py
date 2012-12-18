@@ -16,6 +16,7 @@ if __name__ == "__main__" and __package__ is None:
 
 import sys
 if __name__ == "__main__":
+	import sys
 
 from ..interfaces.scikit_learn_interface import sciKitLearn as skl
 from ..processing.dense_matrix_data import DenseMatrixData
