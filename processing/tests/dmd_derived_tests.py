@@ -64,31 +64,31 @@ def test_appendRows_handmadeSequence():
 
 
 ################
-# addColumns() #
+# appendColumns() #
 ################
 
 @raises(ArgumentException)
-def test_addColumns_exceptionNone():
-	""" Test DMD addColumns() for ArgumentException when toAdd is None """
-	addColumns_exceptionNone(constructor)
+def test_appendColumns_exceptionNone():
+	""" Test DMD appendColumns() for ArgumentException when toAppend is None """
+	appendColumns_exceptionNone(constructor)
 
 @raises(ArgumentException)
-def test_addColumns_exceptionWrongSize():
-	""" Test DMD addColumns() for ArgumentException when toAdd has too many rows """
-	addColumns_exceptionWrongSize(constructor)
+def test_appendColumns_exceptionWrongSize():
+	""" Test DMD appendColumns() for ArgumentException when toAppend has too many rows """
+	appendColumns_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
-def test_addColumns_exceptionSameLabel():
-	""" Test DMD addColumns() for ArgumentException when toAdd and self have a column label in common """
-	addColumns_exceptionSameLabel(constructor)
+def test_appendColumns_exceptionSameLabel():
+	""" Test DMD appendColumns() for ArgumentException when toAppend and self have a column label in common """
+	appendColumns_exceptionSameLabel(constructor)
 
-def test_addColumns_handmadeSingle():
-	""" Test DMD addColumns() against handmade output for a single added column"""
-	addColumns_handmadeSingle(constructor)
+def test_appendColumns_handmadeSingle():
+	""" Test DMD appendColumns() against handmade output for a single added column"""
+	appendColumns_handmadeSingle(constructor)
 
-def test_addColumns_handmadeSequence():
-	""" Test DMD addColumns() against handmade output for a sequence of additions"""
-	addColumns_handmadeSequence(constructor)
+def test_appendColumns_handmadeSequence():
+	""" Test DMD appendColumns() against handmade output for a sequence of additions"""
+	appendColumns_handmadeSequence(constructor)
 
 
 

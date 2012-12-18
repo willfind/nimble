@@ -40,20 +40,20 @@ class DenseMatrixData(BaseData):
 		self.data = self.data.getT()
 
 
-	def _appendRows_implementation(self,toAdd):
+	def _appendRows_implementation(self,toAppend):
 		"""
-		Append the rows from the toAdd object to the bottom of the columns in this object
+		Append the rows from the toAppend object to the bottom of the columns in this object
 		
 		"""
-		self.data = numpy.concatenate((self.data,toAdd.data),0)
+		self.data = numpy.concatenate((self.data,toAppend.data),0)
 		
 
-	def _addColumns_implementation(self,toAdd):
+	def _appendColumns_implementation(self,toAppend):
 		"""
-		Append the columns from the toAdd object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the rows in this object
 
 		"""
-		self.data = numpy.concatenate((self.data,toAdd.data),1)
+		self.data = numpy.concatenate((self.data,toAppend.data),1)
 
 	def _sortRows_implementation(self,cmp, key, reverse):
 		""" 

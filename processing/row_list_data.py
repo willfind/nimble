@@ -62,23 +62,23 @@ class RowListData(BaseData):
 		self.data = transposed
 		self.columns = tempColumns
 
-	def _appendRows_implementation(self,toAdd):
+	def _appendRows_implementation(self,toAppend):
 		"""
-		Append the rows from the toAdd object to the bottom of the columns in this object
+		Append the rows from the toAppend object to the bottom of the columns in this object
 		
 		"""
-		for point in toAdd.data:
+		for point in toAppend.data:
 			self.data.append(point)
 	
-	def _addColumns_implementation(self,toAdd):
+	def _appendColumns_implementation(self,toAppend):
 		"""
-		Append the columns from the toAdd object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the rows in this object
 
 		"""	
 		for i in xrange(self.numRows()):
-			for value in toAdd.data[i]:
+			for value in toAppend.data[i]:
 				self.data[i].append(value)
-		self.columns = self.columns + toAdd.numColumns()
+		self.columns = self.columns + toAppend.numColumns()
 
 	def _sortRows_implementation(self,cmp, key, reverse):
 		""" 

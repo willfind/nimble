@@ -238,11 +238,11 @@ class BaseData(object):
 			value = row[0]
 			ret = toConvert.applyToEachRow(makeFunc(value))
 			ret.renameLabel(0, varName + "=" + str(value))
-			toConvert.addColumns(ret)
+			toConvert.appendColumns(ret)
 
 		# remove the original column, and combine with self
 		toConvert.extractColumns([varName])
-		self.addColumns(toConvert)
+		self.appendColumns(toConvert)
 
 
 	def columnToIntegerCategories(self, columnToConvert):
@@ -284,7 +284,7 @@ class BaseData(object):
 		converted = toConvert.applyToEachRow(lookup)
 		converted.renameLabel(0,toConvert.labelsInverse[0])		
 
-		self.addColumns(converted)
+		self.appendColumns(converted)
 
 
 	def selectConstantOfRowsByValue(self, numToSelect, columnToSelectOver, seed=DEFAULT_SEED):
@@ -400,7 +400,7 @@ class BaseData(object):
 			return row[len(row)-1]
 
 		selectionKeys = self.applyToEachRow(experiment)
-		self.addColumns(selectionKeys)
+		self.appendColumns(selectionKeys)
 		ret = self.extractSatisfyingRows(isSelected)
 		# remove the experimental data
 		if ret.numRows() > 0:
@@ -433,34 +433,34 @@ class BaseData(object):
 		
 		"""
 		if toAppend is None:
-			raise ArgumentException("toAdd must not be None")
+			raise ArgumentException("toAppend must not be None")
 		if not isinstance(toAppend,BaseData):
-			raise ArgumentException("toAdd must be a kind of data representation object")
+			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.numColumns() == toAppend.numColumns():
-			raise ArgumentException("toAdd must have the same number of columns as this object")
+			raise ArgumentException("toAppend must have the same number of columns as this object")
 		self._appendRows_implementation(toAppend)
 		
-	def addColumns(self, toAdd):
+	def appendColumns(self, toAppend):
 		"""
-		Append the columns from the toAdd object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the rows in this object
 
-		toAdd cannot be None, must be a kind of data representation object with the same
+		toAppend cannot be None, must be a kind of data representation object with the same
 		number of rows as the calling object, and must not share any labels with the calling
 		object.
 		
 		"""	
-		if toAdd is None:
-			raise ArgumentException("toAdd must not be None")
-		if not isinstance(toAdd,BaseData):
-			raise ArgumentException("toAdd must be a kind of data representation object")
-		if not self.numRows() == toAdd.numRows():
-			raise ArgumentException("toAdd must have the same number of rows as this object")
-		if self.labelIntersection(toAdd):
-			raise ArgumentException("toAdd must not share any labels with this object")
-		self._addColumns_implementation(toAdd)
+		if toAppend is None:
+			raise ArgumentException("toAppend must not be None")
+		if not isinstance(toAppend,BaseData):
+			raise ArgumentException("toAppend must be a kind of data representation object")
+		if not self.numRows() == toAppend.numRows():
+			raise ArgumentException("toAppend must have the same number of rows as this object")
+		if self.labelIntersection(toAppend):
+			raise ArgumentException("toAppend must not share any labels with this object")
+		self._appendColumns_implementation(toAppend)
 
-		for i in xrange(toAdd.numColumns()):
-			self._addLabel(toAdd.labelsInverse[i])
+		for i in xrange(toAppend.numColumns()):
+			self._addLabel(toAppend.labelsInverse[i])
 
 	def sortRows(self, cmp=None, key=None, reverse=False):
 		""" 
