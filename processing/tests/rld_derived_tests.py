@@ -297,17 +297,17 @@ def test_applyFunctionToEachRow_Handmade():
 
 
 #######################
-# applyToEachColumn() #
+# applyFunctionToEachColumn() #
 #######################
 
 @raises(ArgumentException)
-def test_applyToEachColumn_exceptionInputNone():
-	""" Test RLD applyToEachColumn() for ArgumentException when function is None """
-	applyToEachColumn_exceptionInputNone(constructor)
+def test_applyFunctionToEachColumn_exceptionInputNone():
+	""" Test RLD applyFunctionToEachColumn() for ArgumentException when function is None """
+	applyFunctionToEachColumn_exceptionInputNone(constructor)
 
-def test_applyToEachColumn_Handmade():
-	""" Test RLD applyToEachColumn() with handmade output """
-	applyToEachColumn_Handmade(constructor)
+def test_applyFunctionToEachColumn_Handmade():
+	""" Test RLD applyFunctionToEachColumn() with handmade output """
+	applyFunctionToEachColumn_Handmade(constructor)
 
 
 

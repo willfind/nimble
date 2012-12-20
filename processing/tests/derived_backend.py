@@ -599,18 +599,18 @@ def applyFunctionToEachRow_Handmade(constructor):
 
 
 #######################
-# applyToEachColumn() #
+# applyFunctionToEachColumn() #
 #######################
 
-def applyToEachColumn_exceptionInputNone(constructor):
-	""" Test applyToEachColumn() for ArgumentException when function is None """
+def applyFunctionToEachColumn_exceptionInputNone(constructor):
+	""" Test applyFunctionToEachColumn() for ArgumentException when function is None """
 	labels = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),labels)
-	origObj.applyToEachColumn(None)
+	origObj.applyFunctionToEachColumn(None)
 
-def applyToEachColumn_Handmade(constructor):
-	""" Test applyToEachColumn() with handmade output """
+def applyFunctionToEachColumn_Handmade(constructor):
+	""" Test applyFunctionToEachColumn() with handmade output """
 	labels = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),labels)
@@ -622,7 +622,7 @@ def applyToEachColumn_Handmade(constructor):
 				return 0
 		return 1
 
-	lowerCounts = origObj.applyToEachColumn(emitAllEqual)
+	lowerCounts = origObj.applyFunctionToEachColumn(emitAllEqual)
 	expectedOut = [[1,0,0]]	
 	assert lowerCounts.equals(constructor(expectedOut))
 

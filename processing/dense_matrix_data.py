@@ -183,7 +183,7 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(retData)
 
 
-	def _applyToEachColumn_implementation(self,function):
+	def _applyFunctionToEachColumn_implementation(self,function):
 		"""
 		Applies the given funciton to each column in this object, collecting the
 		output values into a new object in the shape of a column vector that is

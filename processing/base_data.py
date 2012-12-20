@@ -622,7 +622,7 @@ class BaseData(object):
 			raise ArgumentException("function must not be None")
 		return self._applyFunctionToEachRow_implementation(function)
 
-	def applyToEachColumn(self, function):
+	def applyFunctionToEachColumn(self, function):
 		"""
 		Applies the given funciton to each column in this object, collecting the
 		output values into a new object in the shape of a column vector that is
@@ -633,7 +633,7 @@ class BaseData(object):
 		"""
 		if function is None:
 			raise ArgumentException("function must not be None")
-		return self._applyToEachColumn_implementation(function)
+		return self._applyFunctionToEachColumn_implementation(function)
 
 
 	def mapReduceOnRows(self, mapper, reducer):
