@@ -232,7 +232,7 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(ret)
 
 
-	def _numColumns_implementation(self):
+	def _columns_implementation(self):
 		shape = numpy.shape(self.data)
 		return shape[1]
 
@@ -245,7 +245,7 @@ class DenseMatrixData(BaseData):
 			return False
 		if self.rows() != other.rows():
 			return False
-		if self.numColumns() != other.numColumns():
+		if self.columns() != other.columns():
 			return False
 		return numpy.array_equal(self.data,other.data)
 
@@ -306,9 +306,9 @@ def writeToCSV(toWrite, outPath, includeLabels):
 	header = None
 	if includeLabels:
 		labelString = "#"
-		for i in xrange(toWrite.numColumns()):
+		for i in xrange(toWrite.columns()):
 			labelString += toWrite.labelsInverse[i]
-			if not i == toWrite.numColumns() - 1:
+			if not i == toWrite.columns() - 1:
 				labelString += ','
 		header = labelString
 

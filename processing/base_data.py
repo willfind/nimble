@@ -44,7 +44,7 @@ class BaseData(object):
 		self._nextDefaultValue = 0
 		self._setAllDefault()
 		self._renameMultipleLabels_implementation(labels,True)
-		if labels is not None and len(labels) != self.numColumns():
+		if labels is not None and len(labels) != self.columns():
 			raise ArgumentException("Cannot have different number of labels and columns")
 
 
@@ -404,9 +404,9 @@ class BaseData(object):
 		ret = self.extractSatisfyingRows(isSelected)
 		# remove the experimental data
 		if ret.rows() > 0:
-			ret.extractColumns([ret.numColumns()-1])
+			ret.extractColumns([ret.columns()-1])
 		if self.rows() > 0:
-			self.extractColumns([self.numColumns()-1])
+			self.extractColumns([self.columns()-1])
 		
 		return ret
 	
@@ -436,7 +436,7 @@ class BaseData(object):
 			raise ArgumentException("toAppend must not be None")
 		if not isinstance(toAppend,BaseData):
 			raise ArgumentException("toAppend must be a kind of data representation object")
-		if not self.numColumns() == toAppend.numColumns():
+		if not self.columns() == toAppend.columns():
 			raise ArgumentException("toAppend must have the same number of columns as this object")
 		self._appendRows_implementation(toAppend)
 		
@@ -459,7 +459,7 @@ class BaseData(object):
 			raise ArgumentException("toAppend must not share any labels with this object")
 		self._appendColumns_implementation(toAppend)
 
-		for i in xrange(toAppend.numColumns()):
+		for i in xrange(toAppend.columns()):
 			self._addLabel(toAppend.labelsInverse[i])
 
 	def sortRows(self, cmp=None, key=None, reverse=False):
@@ -593,7 +593,7 @@ class BaseData(object):
 		end = self._getIndex(end)
 		if start is None:
 			raise ArgumentException("start must be an interger index, not None")
-		if start < 0 or start > self.numColumns():
+		if start < 0 or start > self.columns():
 			raise ArgumentException("start must be a valid index, in the range of possible rows")
 		if end is None:
 			raise ArgumentException("end must be an interger index, not None")
@@ -657,8 +657,8 @@ class BaseData(object):
 	def rows(self):
 		return self._rows_implementation()
 
-	def numColumns(self):
-		return self._numColumns_implementation()
+	def columns(self):
+		return self._columns_implementation()
 
 	def convertToRowListData(self):
 		return self._convertToRowListData_implementation()
@@ -735,7 +735,7 @@ class BaseData(object):
 	def _setAllDefault(self):
 		self.labels = {}
 		self.labelsInverse = {}
-		for i in xrange(self.numColumns()):
+		for i in xrange(self.columns()):
 			defaultLabel = self._nextDefaultLabel()
 			self.labelsInverse[i] = defaultLabel
 			self.labels[defaultLabel] = i

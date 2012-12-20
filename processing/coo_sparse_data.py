@@ -76,7 +76,7 @@ class CooSparseData(SparseData):
 			return False
 		return True 
 
-	def _numColumns_implementation(self):
+	def _columns_implementation(self):
 		return self.data.shape[1]
 
 	def _rows_implementation(self):
@@ -107,9 +107,9 @@ def writeToMM(toWrite, outPath, includeLabels):
 
 	if includeLabels:
 		labelString = "#"
-		for i in xrange(toWrite.numColumns()):
+		for i in xrange(toWrite.columns()):
 			labelString += toWrite.labelsInverse[i]
-			if not i == toWrite.numColumns() - 1:
+			if not i == toWrite.columns() - 1:
 				labelString += ','
 		
 		mmwrite(target=outPath, a=toWrite.data, comment=labelString)		
