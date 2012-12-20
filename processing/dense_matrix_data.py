@@ -236,14 +236,14 @@ class DenseMatrixData(BaseData):
 		shape = numpy.shape(self.data)
 		return shape[1]
 
-	def _numRows_implementation(self):
+	def _rows_implementation(self):
 		shape = numpy.shape(self.data)
 		return shape[0]
 
 	def _equals_implementation(self,other):
 		if not isinstance(other,DenseMatrixData):
 			return False
-		if self.numRows() != other.numRows():
+		if self.rows() != other.rows():
 			return False
 		if self.numColumns() != other.numColumns():
 			return False

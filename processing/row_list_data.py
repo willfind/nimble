@@ -75,7 +75,7 @@ class RowListData(BaseData):
 		Append the columns from the toAppend object to right ends of the rows in this object
 
 		"""	
-		for i in xrange(self.numRows()):
+		for i in xrange(self.rows()):
 			for value in toAppend.data[i]:
 				self.data[i].append(value)
 		self.columns = self.columns + toAppend.numColumns()
@@ -136,7 +136,7 @@ class RowListData(BaseData):
 		"""
 		toWrite = 0
 		satisfying = []
-		for i in xrange(self.numRows()):
+		for i in xrange(self.rows()):
 			if i not in toExtract:
 				self.data[toWrite] = self.data[i]
 				toWrite += 1
@@ -220,7 +220,7 @@ class RowListData(BaseData):
 		"""
 		toWrite = start
 		inRange = []
-		for i in xrange(start,self.numRows()):
+		for i in xrange(start,self.rows()):
 			if i <= end:
 				inRange.append(self.data[i])		
 			else:
@@ -310,17 +310,17 @@ class RowListData(BaseData):
 	def _numColumns_implementation(self):
 		return self.columns
 
-	def _numRows_implementation(self):
+	def _rows_implementation(self):
 		return len(self.data)
 
 	def _equals_implementation(self,other):
 		if not isinstance(other,RowListData):
 			return False
-		if self.numRows() != other.numRows():
+		if self.rows() != other.rows():
 			return False
 		if self.numColumns() != other.numColumns():
 			return False
-		for index in xrange(self.numRows()):
+		for index in xrange(self.rows()):
 			if self.data[index] != other.data[index]:
 				return False
 		return True

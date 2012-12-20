@@ -370,8 +370,8 @@ class BaseData(object):
 		if percentToSelect >= 100:
 			raise ArgumentException("percentToSelect must be less than 100")
 
-		numToSelect = int((percentToSelect/100.0) * self.numRows())
-		selectionKeys = range(self.numRows())
+		numToSelect = int((percentToSelect/100.0) * self.rows())
+		selectionKeys = range(self.rows())
 		selectionKeys = random.sample(selectionKeys, numToSelect)
 		ret = self.extractRows(selectionKeys)
 		
@@ -403,9 +403,9 @@ class BaseData(object):
 		self.appendColumns(selectionKeys)
 		ret = self.extractSatisfyingRows(isSelected)
 		# remove the experimental data
-		if ret.numRows() > 0:
+		if ret.rows() > 0:
 			ret.extractColumns([ret.numColumns()-1])
-		if self.numRows() > 0:
+		if self.rows() > 0:
 			self.extractColumns([self.numColumns()-1])
 		
 		return ret
@@ -453,7 +453,7 @@ class BaseData(object):
 			raise ArgumentException("toAppend must not be None")
 		if not isinstance(toAppend,BaseData):
 			raise ArgumentException("toAppend must be a kind of data representation object")
-		if not self.numRows() == toAppend.numRows():
+		if not self.rows() == toAppend.rows():
 			raise ArgumentException("toAppend must have the same number of rows as this object")
 		if self.labelIntersection(toAppend):
 			raise ArgumentException("toAppend must not share any labels with this object")
@@ -567,11 +567,11 @@ class BaseData(object):
 		"""
 		if start is None:
 			raise ArgumentException("start must be an interger index, not None")
-		if start < 0 or start > self.numRows():
+		if start < 0 or start > self.rows():
 			raise ArgumentException("start must be a valid index, in the range of possible rows")
 		if end is None:
 			raise ArgumentException("end must be an interger index, not None")
-		if end < 0 or end > self.numRows():
+		if end < 0 or end > self.rows():
 			raise ArgumentException("end must be a valid index, in the range of possible rows")
 		if start > end:
 			raise ArgumentException("start cannot be an index greater than end")
@@ -597,7 +597,7 @@ class BaseData(object):
 			raise ArgumentException("start must be a valid index, in the range of possible rows")
 		if end is None:
 			raise ArgumentException("end must be an interger index, not None")
-		if end < 0 or end > self.numRows():
+		if end < 0 or end > self.rows():
 			raise ArgumentException("end must be a valid index, in the range of possible rows")
 		if start > end:
 			raise ArgumentException("start must come before end")
@@ -654,8 +654,8 @@ class BaseData(object):
 
 		return self._equals_implementation(other)
 
-	def numRows(self):
-		return self._numRows_implementation()
+	def rows(self):
+		return self._rows_implementation()
 
 	def numColumns(self):
 		return self._numColumns_implementation()
