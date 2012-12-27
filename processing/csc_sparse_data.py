@@ -74,9 +74,9 @@ def writeToMM(toWrite, outPath, includeLabels=False):
 	"""
 	if includeLabels:
 		labelString = "#"
-		for i in xrange(toWrite.numColumns()):
+		for i in xrange(toWrite.columns()):
 			labelString += toWrite.labelsInverse[i]
-			if not i == toWrite.numColumns() - 1:
+			if not i == toWrite.columns() - 1:
 				labelString += ','
 		
 		mmwrite(target=outPath, a=toWrite.data, comment=labelString)		

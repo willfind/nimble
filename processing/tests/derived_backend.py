@@ -64,43 +64,43 @@ def transpose_handmade(constructor):
 
 
 #############
-# addRows() #
+# appendRows() #
 #############
 
-def addRows_exceptionNone(constructor):
-	""" Test addRows() for ArgumentException when toAdd is None"""
+def appendRows_exceptionNone(constructor):
+	""" Test appendRows() for ArgumentException when toAppend is None"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.addRows(None)
+	toTest.appendRows(None)
 
-def addRows_exceptionWrongSize(constructor):
-	""" Test addRows() for ArgumentException when toAdd has too many columns """
+def appendRows_exceptionWrongSize(constructor):
+	""" Test appendRows() for ArgumentException when toAppend has too many columns """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.addRows([["too", " ", "many", " ", "columns"]])
+	toTest.appendRows([["too", " ", "many", " ", "columns"]])
 
-def addRows_handmadeSingle(constructor):
-	""" Test addRows() against handmade output for a single added row """
+def appendRows_handmadeSingle(constructor):
+	""" Test appendRows() against handmade output for a single added row """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	dataExpected = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 	toTest = constructor(data)
-	toAdd = constructor([[10,11,12]])
+	toAppend = constructor([[10,11,12]])
 	expected = constructor(dataExpected)
-	toTest.addRows(toAdd)
+	toTest.appendRows(toAppend)
 	assert toTest.equals(expected)
 
-def addRows_handmadeSequence(constructor):
-	""" Test addRows() against handmade output for a sequence of additions"""
+def appendRows_handmadeSequence(constructor):
+	""" Test appendRows() against handmade output for a sequence of additions"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toAdd1 = [[0.1,0.2,0.3]]
-	toAdd2 = [[0.01,0.02,0.03],[0,0,0]]
-	toAdd3 = [[10,11,12]]
+	toAppend1 = [[0.1,0.2,0.3]]
+	toAppend2 = [[0.01,0.02,0.03],[0,0,0]]
+	toAppend3 = [[10,11,12]]
 
 	dataExpected = [[1,2,3],[4,5,6],[7,8,9],[0.1,0.2,0.3],[0.01,0.02,0.03],[0,0,0],[10,11,12]]
 	toTest = constructor(data)
-	toTest.addRows(constructor(toAdd1))
-	toTest.addRows(constructor(toAdd2))
-	toTest.addRows(constructor(toAdd3))
+	toTest.appendRows(constructor(toAppend1))
+	toTest.appendRows(constructor(toAppend2))
+	toTest.appendRows(constructor(toAppend3))
 
 	expected = constructor(dataExpected)
 
@@ -108,59 +108,59 @@ def addRows_handmadeSequence(constructor):
 	
 
 ################
-# addColumns() #
+# appendColumns() #
 ################
 
 
-def addColumns_exceptionNone(constructor):
-	""" Test addColumns() for ArgumentException when toAdd is None """
+def appendColumns_exceptionNone(constructor):
+	""" Test appendColumns() for ArgumentException when toAppend is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.addColumns(None)
+	toTest.appendColumns(None)
 
-def addColumns_exceptionWrongSize(constructor):
-	""" Test addColumns() for ArgumentException when toAdd has too many rows """
+def appendColumns_exceptionWrongSize(constructor):
+	""" Test appendColumns() for ArgumentException when toAppend has too many rows """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.addColumns([["too"], [" "], ["many"], [" "], ["rows"]])
+	toTest.appendColumns([["too"], [" "], ["many"], [" "], ["rows"]])
 
-def addColumns_exceptionSameLabel(constructor):
-	""" Test addColumns() for ArgumentException when toAdd and self have a column label in common """
+def appendColumns_exceptionSameLabel(constructor):
+	""" Test appendColumns() for ArgumentException when toAppend and self have a column label in common """
 	toTest1 = constructor([[1]],["hello"])
 	toTest2 = constructor([[1,2]],["hello","goodbye"])
-	toTest2.addColumns(toTest1)
+	toTest2.appendColumns(toTest1)
 
-def addColumns_handmadeSingle(constructor):
-	""" Test addColumns() against handmade output for a single added column"""
+def appendColumns_handmadeSingle(constructor):
+	""" Test appendColumns() against handmade output for a single added column"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	labels = ['1','2','3']
 	toTest = constructor(data,labels)
 
-	toAdd = constructor([[-1],[-2],[-3]],['-1'])
+	toAppend = constructor([[-1],[-2],[-3]],['-1'])
 
 	dataExpected = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
 	labelsExpected = ['1','2','3','-1']
 	expected = constructor(dataExpected,labelsExpected)
 
-	toTest.addColumns(toAdd)
+	toTest.appendColumns(toAppend)
 	assert toTest.equals(expected)
 
-def addColumns_handmadeSequence(constructor):
-	""" Test addColumns() against handmade output for a sequence of additions"""
+def appendColumns_handmadeSequence(constructor):
+	""" Test appendColumns() against handmade output for a sequence of additions"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	labels = ['1','2','3']
 	toTest = constructor(data,labels)
 
-	toAdd1 = [[0.1],[0.2],[0.3]]
+	toAppend1 = [[0.1],[0.2],[0.3]]
 	lab1 =  ['a']
-	toAdd2 = [[0.01,0],[0.02,0],[0.03,0]]
+	toAppend2 = [[0.01,0],[0.02,0],[0.03,0]]
 	lab2 = ['A','0']
-	toAdd3 = [[10],[11],[12]]
+	toAppend3 = [[10],[11],[12]]
 	lab3 = ['10']
 
-	toTest.addColumns(constructor(toAdd1,lab1))
-	toTest.addColumns(constructor(toAdd2,lab2))
-	toTest.addColumns(constructor(toAdd3,lab3))
+	toTest.appendColumns(constructor(toAppend1,lab1))
+	toTest.appendColumns(constructor(toAppend2,lab2))
+	toTest.appendColumns(constructor(toAppend3,lab3))
 
 	labelsExpected = ['1','2','3','a','A','0','10']
 	dataExpected = [[1,2,3,0.1,0.01,0,10],[4,5,6,0.2,0.02,0,11],[7,8,9,0.3,0.03,0,12]]
@@ -569,18 +569,18 @@ def extractRangeColumns_handmadeWithLabels(constructor):
 
 
 ####################
-# applyToEachRow() #
+# applyFunctionToEachRow() #
 ####################
 
-def applyToEachRow_exceptionInputNone(constructor):
-	""" Test applyToEachRow() for ArgumentException when function is None """
+def applyFunctionToEachRow_exceptionInputNone(constructor):
+	""" Test applyFunctionToEachRow() for ArgumentException when function is None """
 	labels = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),labels)
-	origObj.applyToEachRow(None)
+	origObj.applyFunctionToEachRow(None)
 
-def applyToEachRow_Handmade(constructor):
-	""" Test applyToEachRow() with handmade output """
+def applyFunctionToEachRow_Handmade(constructor):
+	""" Test applyFunctionToEachRow() with handmade output """
 	labels = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),labels)
@@ -589,7 +589,7 @@ def applyToEachRow_Handmade(constructor):
 	def emitLower (row):
 		return row[origObj.labels['deci']]
 
-	lowerCounts = origObj.applyToEachRow(emitLower)
+	lowerCounts = origObj.applyFunctionToEachRow(emitLower)
 
 	expectedOut = [[0.1], [0.1], [0.1], [0.2]]
 	exp = constructor(expectedOut)
@@ -599,18 +599,18 @@ def applyToEachRow_Handmade(constructor):
 
 
 #######################
-# applyToEachColumn() #
+# applyFunctionToEachColumn() #
 #######################
 
-def applyToEachColumn_exceptionInputNone(constructor):
-	""" Test applyToEachColumn() for ArgumentException when function is None """
+def applyFunctionToEachColumn_exceptionInputNone(constructor):
+	""" Test applyFunctionToEachColumn() for ArgumentException when function is None """
 	labels = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),labels)
-	origObj.applyToEachColumn(None)
+	origObj.applyFunctionToEachColumn(None)
 
-def applyToEachColumn_Handmade(constructor):
-	""" Test applyToEachColumn() with handmade output """
+def applyFunctionToEachColumn_Handmade(constructor):
+	""" Test applyFunctionToEachColumn() with handmade output """
 	labels = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),labels)
@@ -622,7 +622,7 @@ def applyToEachColumn_Handmade(constructor):
 				return 0
 		return 1
 
-	lowerCounts = origObj.applyToEachColumn(emitAllEqual)
+	lowerCounts = origObj.applyFunctionToEachColumn(emitAllEqual)
 	expectedOut = [[1,0,0]]	
 	assert lowerCounts.equals(constructor(expectedOut))
 

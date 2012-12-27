@@ -54,7 +54,7 @@ class CooSparseData(SparseData):
 		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), (rowShape, colShape - len(toExtract)))
 
 		# instantiate return obj
-		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(self.numRows(), len(toExtract)))
+		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(self.rows(), len(toExtract)))
 
 		return CooSparseData(ret) 
 
@@ -76,10 +76,10 @@ class CooSparseData(SparseData):
 			return False
 		return True 
 
-	def _numColumns_implementation(self):
+	def _columns_implementation(self):
 		return self.data.shape[1]
 
-	def _numRows_implementation(self):
+	def _rows_implementation(self):
 		return self.data.shape[0]
 
 
@@ -107,9 +107,9 @@ def writeToMM(toWrite, outPath, includeLabels):
 
 	if includeLabels:
 		labelString = "#"
-		for i in xrange(toWrite.numColumns()):
+		for i in xrange(toWrite.columns()):
 			labelString += toWrite.labelsInverse[i]
-			if not i == toWrite.numColumns() - 1:
+			if not i == toWrite.columns() - 1:
 				labelString += ','
 		
 		mmwrite(target=outPath, a=toWrite.data, comment=labelString)		

@@ -2,7 +2,7 @@
 Unit tests of the low level functions defined by the base representation class.
 
 Since these functions are stand alone in the base class, they can be tested directly.
-Label equality is defined using _numColumns_implementation, which is to be defined
+Label equality is defined using _columns_implementation, which is to be defined
 in the derived class, so all of these tests make a call to makeAndDefine instead
 of directly instantiating a BaseData object. This function temporarily fills in
 that missing implementation.
@@ -22,9 +22,9 @@ def makeAndDefine(labels=None, size=0):
 	even though it has no actual data """
 	cols = size if labels is None else len(labels)
 	specificImp = makeConst(cols)
-	BaseData._numColumns_implementation = specificImp
+	BaseData._columns_implementation = specificImp
 	ret = BaseData(labels)
-	ret._numColumns_implementation = specificImp
+	ret._columns_implementation = specificImp
 	return ret
 
 

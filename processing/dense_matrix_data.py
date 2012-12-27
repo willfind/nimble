@@ -40,20 +40,20 @@ class DenseMatrixData(BaseData):
 		self.data = self.data.getT()
 
 
-	def _addRows_implementation(self,toAdd):
+	def _appendRows_implementation(self,toAppend):
 		"""
-		Append the rows from the toAdd object to the bottom of the columns in this object
+		Append the rows from the toAppend object to the bottom of the columns in this object
 		
 		"""
-		self.data = numpy.concatenate((self.data,toAdd.data),0)
+		self.data = numpy.concatenate((self.data,toAppend.data),0)
 		
 
-	def _addColumns_implementation(self,toAdd):
+	def _appendColumns_implementation(self,toAppend):
 		"""
-		Append the columns from the toAdd object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the rows in this object
 
 		"""
-		self.data = numpy.concatenate((self.data,toAdd.data),1)
+		self.data = numpy.concatenate((self.data,toAppend.data),1)
 
 	def _sortRows_implementation(self,cmp, key, reverse):
 		""" 
@@ -170,7 +170,7 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(ret)
 
 
-	def _applyToEachRow_implementation(self,function):
+	def _applyFunctionToEachRow_implementation(self,function):
 		"""
 		Applies the given funciton to each row in this object, collecting the
 		output values into a new object in the shape of a row vector that is
@@ -183,7 +183,7 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(retData)
 
 
-	def _applyToEachColumn_implementation(self,function):
+	def _applyFunctionToEachColumn_implementation(self,function):
 		"""
 		Applies the given funciton to each column in this object, collecting the
 		output values into a new object in the shape of a column vector that is
@@ -232,20 +232,20 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(ret)
 
 
-	def _numColumns_implementation(self):
+	def _columns_implementation(self):
 		shape = numpy.shape(self.data)
 		return shape[1]
 
-	def _numRows_implementation(self):
+	def _rows_implementation(self):
 		shape = numpy.shape(self.data)
 		return shape[0]
 
 	def _equals_implementation(self,other):
 		if not isinstance(other,DenseMatrixData):
 			return False
-		if self.numRows() != other.numRows():
+		if self.rows() != other.rows():
 			return False
-		if self.numColumns() != other.numColumns():
+		if self.columns() != other.columns():
 			return False
 		return numpy.array_equal(self.data,other.data)
 
@@ -306,9 +306,9 @@ def writeToCSV(toWrite, outPath, includeLabels):
 	header = None
 	if includeLabels:
 		labelString = "#"
-		for i in xrange(toWrite.numColumns()):
+		for i in xrange(toWrite.columns()):
 			labelString += toWrite.labelsInverse[i]
-			if not i == toWrite.numColumns() - 1:
+			if not i == toWrite.columns() - 1:
 				labelString += ','
 		header = labelString
 

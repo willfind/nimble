@@ -32,13 +32,13 @@ class RowListData(BaseData):
 
 		"""
 		if data is None or len(data) == 0:
-			self.columns = 0
+			self.numColumns = 0
 			self.data = []
 			super(RowListData, self).__init__([])
 		else:
-			self.columns = len(data[0])
+			self.numColumns= len(data[0])
 			for row in data:
-				if len(row) != self.columns:
+				if len(row) != self.numColumns:
 					raise ArgumentException("Rows must be of equal size")
 			self.data = data
 			super(RowListData, self).__init__(labels)
@@ -60,25 +60,25 @@ class RowListData(BaseData):
 				transposed[i].append(row[i])
 		
 		self.data = transposed
-		self.columns = tempColumns
+		self.numColumns= tempColumns
 
-	def _addRows_implementation(self,toAdd):
+	def _appendRows_implementation(self,toAppend):
 		"""
-		Append the rows from the toAdd object to the bottom of the columns in this object
+		Append the rows from the toAppend object to the bottom of the columns in this object
 		
 		"""
-		for point in toAdd.data:
+		for point in toAppend.data:
 			self.data.append(point)
 	
-	def _addColumns_implementation(self,toAdd):
+	def _appendColumns_implementation(self,toAppend):
 		"""
-		Append the columns from the toAdd object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the rows in this object
 
 		"""	
-		for i in xrange(self.numRows()):
-			for value in toAdd.data[i]:
+		for i in xrange(self.rows()):
+			for value in toAppend.data[i]:
 				self.data[i].append(value)
-		self.columns = self.columns + toAdd.numColumns()
+		self.numColumns= self.numColumns+ toAppend.columns()
 
 	def _sortRows_implementation(self,cmp, key, reverse):
 		""" 
@@ -102,7 +102,7 @@ class RowListData(BaseData):
 		#create key list - to be sorted; and dictionary
 		keyList = []
 		temp = []
-		for i in xrange(self.numColumns()):
+		for i in xrange(self.columns()):
 			ithView = self.ColumnView(self,i)
 			keyList.append(key(ithView))
 			temp.append(None)
@@ -114,15 +114,15 @@ class RowListData(BaseData):
 		#now modify data to correspond to the new order
 		for row in self.data:
 			#have to copy it out so we don't corrupt the row
-			for i in xrange(self.numColumns()):
+			for i in xrange(self.columns()):
 				currKey = keyList[i]
 				oldColNum = keyDict[currKey]
 				temp[i] = row[oldColNum]
-			for i in xrange(self.numColumns()):
+			for i in xrange(self.columns()):
 				row[i] = temp[i]
 
 		# have to deal with labels now
-		for i in xrange(self.numColumns()):
+		for i in xrange(self.columns()):
 			currKey = keyList[i]
 			oldColNum = keyDict[currKey]
 			temp[i] = self.labelsInverse[oldColNum]
@@ -136,7 +136,7 @@ class RowListData(BaseData):
 		"""
 		toWrite = 0
 		satisfying = []
-		for i in xrange(self.numRows()):
+		for i in xrange(self.rows()):
 			if i not in toExtract:
 				self.data[toWrite] = self.data[i]
 				toWrite += 1
@@ -165,7 +165,7 @@ class RowListData(BaseData):
 			extractedRow.reverse()
 			extractedData.append(extractedRow)
 
-		self.columns = self.columns - len(toExtract)
+		self.numColumns= self.numColumns- len(toExtract)
 		return RowListData(extractedData)
 
 
@@ -202,7 +202,7 @@ class RowListData(BaseData):
 
 		"""
 		toExtract = []		
-		for i in xrange(self.numColumns()):
+		for i in xrange(self.columns()):
 			ithView = self.ColumnView(self,i)
 			if function(ithView):
 				toExtract.append(i)
@@ -220,7 +220,7 @@ class RowListData(BaseData):
 		"""
 		toWrite = start
 		inRange = []
-		for i in xrange(start,self.numRows()):
+		for i in xrange(start,self.rows()):
 			if i <= end:
 				inRange.append(self.data[i])		
 			else:
@@ -251,11 +251,11 @@ class RowListData(BaseData):
 			extractedRow.reverse()
 			extractedData.append(extractedRow)
 
-		self.columns = self.columns - len(extractedRow)
+		self.numColumns= self.numColumns- len(extractedRow)
 		return RowListData(extractedData)
 
 
-	def _applyToEachRow_implementation(self,function):
+	def _applyFunctionToEachRow_implementation(self,function):
 		"""
 		Applies the given funciton to each row in this object, collecting the
 		output values into a new object in the shape of a row vector that is
@@ -268,7 +268,7 @@ class RowListData(BaseData):
 			retData.append([currOut])
 		return RowListData(retData)
 
-	def _applyToEachColumn_implementation(self,function):
+	def _applyFunctionToEachColumn_implementation(self,function):
 		"""
 		Applies the given funciton to each column in this object, collecting the
 		output values into a new object in the shape of a column vector that is
@@ -276,7 +276,7 @@ class RowListData(BaseData):
 
 		"""
 		retData = [[]]
-		for i in xrange(self.numColumns()):
+		for i in xrange(self.columns()):
 			ithView = self.ColumnView(self,i)
 			currOut = function(ithView)
 			retData[0].append(currOut)
@@ -307,20 +307,20 @@ class RowListData(BaseData):
 				ret.append([redKey,redValue])
 		return RowListData(ret)
 
-	def _numColumns_implementation(self):
-		return self.columns
+	def _columns_implementation(self):
+		return self.numColumns
 
-	def _numRows_implementation(self):
+	def _rows_implementation(self):
 		return len(self.data)
 
 	def _equals_implementation(self,other):
 		if not isinstance(other,RowListData):
 			return False
-		if self.numRows() != other.numRows():
+		if self.rows() != other.rows():
 			return False
-		if self.numColumns() != other.numColumns():
+		if self.columns() != other.columns():
 			return False
-		for index in xrange(self.numRows()):
+		for index in xrange(self.rows()):
 			if self.data[index] != other.data[index]:
 				return False
 		return True

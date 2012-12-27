@@ -44,7 +44,7 @@ class BaseData(object):
 		self._nextDefaultValue = 0
 		self._setAllDefault()
 		self._renameMultipleLabels_implementation(labels,True)
-		if labels is not None and len(labels) != self.numColumns():
+		if labels is not None and len(labels) != self.columns():
 			raise ArgumentException("Cannot have different number of labels and columns")
 
 
@@ -236,13 +236,13 @@ class BaseData(object):
 
 		for row in values.data:
 			value = row[0]
-			ret = toConvert.applyToEachRow(makeFunc(value))
+			ret = toConvert.applyFunctionToEachRow(makeFunc(value))
 			ret.renameLabel(0, varName + "=" + str(value))
-			toConvert.addColumns(ret)
+			toConvert.appendColumns(ret)
 
 		# remove the original column, and combine with self
 		toConvert.extractColumns([varName])
-		self.addColumns(toConvert)
+		self.appendColumns(toConvert)
 
 
 	def columnToIntegerCategories(self, columnToConvert):
@@ -281,10 +281,10 @@ class BaseData(object):
 		def lookup(row):
 			return mapping[row[0]]
 
-		converted = toConvert.applyToEachRow(lookup)
+		converted = toConvert.applyFunctionToEachRow(lookup)
 		converted.renameLabel(0,toConvert.labelsInverse[0])		
 
-		self.addColumns(converted)
+		self.appendColumns(converted)
 
 
 	def selectConstantOfRowsByValue(self, numToSelect, columnToSelectOver, seed=DEFAULT_SEED):
@@ -346,7 +346,7 @@ class BaseData(object):
 			valueToTotal[key] += 1
 			return ret
 
-#		ids = self.applyToEachRow(tagValuesWithID)
+#		ids = self.applyFunctionToEachRow(tagValuesWithID)
 #		self.addColumn(ids)
 
 	
@@ -370,8 +370,8 @@ class BaseData(object):
 		if percentToSelect >= 100:
 			raise ArgumentException("percentToSelect must be less than 100")
 
-		numToSelect = int((percentToSelect/100.0) * self.numRows())
-		selectionKeys = range(self.numRows())
+		numToSelect = int((percentToSelect/100.0) * self.rows())
+		selectionKeys = range(self.rows())
 		selectionKeys = random.sample(selectionKeys, numToSelect)
 		ret = self.extractRows(selectionKeys)
 		
@@ -399,14 +399,14 @@ class BaseData(object):
 		def isSelected(row):
 			return row[len(row)-1]
 
-		selectionKeys = self.applyToEachRow(experiment)
-		self.addColumns(selectionKeys)
+		selectionKeys = self.applyFunctionToEachRow(experiment)
+		self.appendColumns(selectionKeys)
 		ret = self.extractSatisfyingRows(isSelected)
 		# remove the experimental data
-		if ret.numRows() > 0:
-			ret.extractColumns([ret.numColumns()-1])
-		if self.numRows() > 0:
-			self.extractColumns([self.numColumns()-1])
+		if ret.rows() > 0:
+			ret.extractColumns([ret.columns()-1])
+		if self.rows() > 0:
+			self.extractColumns([self.columns()-1])
 		
 		return ret
 	
@@ -424,43 +424,43 @@ class BaseData(object):
 		self._transpose_implementation()
 		self.renameMultipleLabels(None)
 
-	def addRows(self, toAdd):
+	def appendRows(self, toAppend):
 		"""
-		Append the rows from the toAdd object to the bottom of the columns in this object.
+		Append the rows from the toAppend object to the bottom of the columns in this object.
 
-		toAdd cannot be None, and must be a kind of data representation object with the same
+		toAppend cannot be None, and must be a kind of data representation object with the same
 		number of columns as the calling object.
 		
 		"""
-		if toAdd is None:
-			raise ArgumentException("toAdd must not be None")
-		if not isinstance(toAdd,BaseData):
-			raise ArgumentException("toAdd must be a kind of data representation object")
-		if not self.numColumns() == toAdd.numColumns():
-			raise ArgumentException("toAdd must have the same number of columns as this object")
-		self._addRows_implementation(toAdd)
+		if toAppend is None:
+			raise ArgumentException("toAppend must not be None")
+		if not isinstance(toAppend,BaseData):
+			raise ArgumentException("toAppend must be a kind of data representation object")
+		if not self.columns() == toAppend.columns():
+			raise ArgumentException("toAppend must have the same number of columns as this object")
+		self._appendRows_implementation(toAppend)
 		
-	def addColumns(self, toAdd):
+	def appendColumns(self, toAppend):
 		"""
-		Append the columns from the toAdd object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the rows in this object
 
-		toAdd cannot be None, must be a kind of data representation object with the same
+		toAppend cannot be None, must be a kind of data representation object with the same
 		number of rows as the calling object, and must not share any labels with the calling
 		object.
 		
 		"""	
-		if toAdd is None:
-			raise ArgumentException("toAdd must not be None")
-		if not isinstance(toAdd,BaseData):
-			raise ArgumentException("toAdd must be a kind of data representation object")
-		if not self.numRows() == toAdd.numRows():
-			raise ArgumentException("toAdd must have the same number of rows as this object")
-		if self.labelIntersection(toAdd):
-			raise ArgumentException("toAdd must not share any labels with this object")
-		self._addColumns_implementation(toAdd)
+		if toAppend is None:
+			raise ArgumentException("toAppend must not be None")
+		if not isinstance(toAppend,BaseData):
+			raise ArgumentException("toAppend must be a kind of data representation object")
+		if not self.rows() == toAppend.rows():
+			raise ArgumentException("toAppend must have the same number of rows as this object")
+		if self.labelIntersection(toAppend):
+			raise ArgumentException("toAppend must not share any labels with this object")
+		self._appendColumns_implementation(toAppend)
 
-		for i in xrange(toAdd.numColumns()):
-			self._addLabel(toAdd.labelsInverse[i])
+		for i in xrange(toAppend.columns()):
+			self._addLabel(toAppend.labelsInverse[i])
 
 	def sortRows(self, cmp=None, key=None, reverse=False):
 		""" 
@@ -567,11 +567,11 @@ class BaseData(object):
 		"""
 		if start is None:
 			raise ArgumentException("start must be an interger index, not None")
-		if start < 0 or start > self.numRows():
+		if start < 0 or start > self.rows():
 			raise ArgumentException("start must be a valid index, in the range of possible rows")
 		if end is None:
 			raise ArgumentException("end must be an interger index, not None")
-		if end < 0 or end > self.numRows():
+		if end < 0 or end > self.rows():
 			raise ArgumentException("end must be a valid index, in the range of possible rows")
 		if start > end:
 			raise ArgumentException("start cannot be an index greater than end")
@@ -593,11 +593,11 @@ class BaseData(object):
 		end = self._getIndex(end)
 		if start is None:
 			raise ArgumentException("start must be an interger index, not None")
-		if start < 0 or start > self.numColumns():
+		if start < 0 or start > self.columns():
 			raise ArgumentException("start must be a valid index, in the range of possible rows")
 		if end is None:
 			raise ArgumentException("end must be an interger index, not None")
-		if end < 0 or end > self.numRows():
+		if end < 0 or end > self.rows():
 			raise ArgumentException("end must be a valid index, in the range of possible rows")
 		if start > end:
 			raise ArgumentException("start must come before end")
@@ -609,7 +609,7 @@ class BaseData(object):
 			ret._renameLabel_implementation(index-start, removedLabel, True)
 		return ret
 
-	def applyToEachRow(self, function):
+	def applyFunctionToEachRow(self, function):
 		"""
 		Applies the given funciton to each row in this object, collecting the
 		output values into a new object in the shape of a row vector that is
@@ -620,9 +620,9 @@ class BaseData(object):
 		"""
 		if function is None:
 			raise ArgumentException("function must not be None")
-		return self._applyToEachRow_implementation(function)
+		return self._applyFunctionToEachRow_implementation(function)
 
-	def applyToEachColumn(self, function):
+	def applyFunctionToEachColumn(self, function):
 		"""
 		Applies the given funciton to each column in this object, collecting the
 		output values into a new object in the shape of a column vector that is
@@ -633,7 +633,7 @@ class BaseData(object):
 		"""
 		if function is None:
 			raise ArgumentException("function must not be None")
-		return self._applyToEachColumn_implementation(function)
+		return self._applyFunctionToEachColumn_implementation(function)
 
 
 	def mapReduceOnRows(self, mapper, reducer):
@@ -654,11 +654,11 @@ class BaseData(object):
 
 		return self._equals_implementation(other)
 
-	def numRows(self):
-		return self._numRows_implementation()
+	def rows(self):
+		return self._rows_implementation()
 
-	def numColumns(self):
-		return self._numColumns_implementation()
+	def columns(self):
+		return self._columns_implementation()
 
 	def convertToRowListData(self):
 		return self._convertToRowListData_implementation()
@@ -735,7 +735,7 @@ class BaseData(object):
 	def _setAllDefault(self):
 		self.labels = {}
 		self.labelsInverse = {}
-		for i in xrange(self.numColumns()):
+		for i in xrange(self.columns()):
 			defaultLabel = self._nextDefaultLabel()
 			self.labelsInverse[i] = defaultLabel
 			self.labels[defaultLabel] = i
