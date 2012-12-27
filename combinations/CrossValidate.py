@@ -26,13 +26,14 @@ def crossValidate(X, Y, functionsToApply, numFolds=10):
 			dataHash["trainX"] = curTrainX; dataHash["testX"] = curTestX	#assumes that the function text in functionsToApply uses these variables
 			dataHash["trainY"] = curTrainY; dataHash["testY"] = curTestY
 			curResults.append(Combinations.executeCode(function, dataHash))
-		aggregatedResults[function] = sum(curResults)/float(len(curResults))
+		aggregatedResults[function] = sum(curResults)/float(len(curResults)) #NOTE: this could be bad if the sets have different size!!
 	return aggregatedResults
 
 
-def crossValidateReturnBest(X, Y, functionsToApply, minimize=True, numFolds=10):
+def crossValidateReturnBest(X, Y, functionsToApply, minimize, numFolds=10):
 	"""runs cross validation on the functions whose text is in the list functionsToApply, and returns the text of the best performer together with
 	its performance"""
+	if not isinstance(minimize, bool): raise Exception("minimize must be True or False!")
 	resultsHash = crossValidate(X,Y, functionsToApply=functionsToApply, numFolds=numFolds)
 	if minimize: bestPerformance = float('inf')
 	else: bestPerformance = float('-inf')
