@@ -5,18 +5,24 @@ Created on Dec 11, 2012
 '''
 
 import inspect
+import numpy
+from ..combinations.Combinations import executeCode
 
-def computeMetrics_v2(trueLabelIndex, X, Y, functions):
+
+def computeMetrics(knownIndicator, knownValues, predictedValues, performanceFunctions):
+    """
+
+    """
     results = {}
-    for func in functions:
+    for func in performanceFunctions:
         print inspect.getargspec(func).args
         if len(inspect.getargspec(func).args) == 2:
-            trueLabels = X[:,trueLabelIndex]
-            results[func.__name__] = (func(trueLabels, Y))
+            trueLabels = knownValues[:, trueLabelIndex]
+            results[func] = (func(trueLabels, predictedValues))
         elif len(inspect.getargspec(func).args) == 3:
             #divide X into labels and features
             #TODO
-            results[func.__name__] = (func(X, Y))
+            results[func] = (func(knownValues, predictedValues))
         else:
             raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
     return results
@@ -75,19 +81,18 @@ def print_confusion_matrix(confusionMatrix):
     
     print "Total post count: " + totalPostCount
     
-    
-def testMetric():
+def checkPrintConfusionMatrix():
     X = {"classLabel": ["A", "B", "C", "C", "B", "C", "A", "B", "C", "C", "B", "C", "A", "B", "C", "C", "B", "C"]}
     Y = ["A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C"]
     functions = [confusion_matrix_generator]
     classLabelIndex = "classLabel"
-    confusionMatrixResults = computeMetrics_v2(classLabelIndex, X, Y, functions);
+    confusionMatrixResults = computeMetrics_v2(classLabelIndex, X, Y, functions)
     confusionMatrix = confusionMatrixResults["confusion_matrix_generator"]
     print_confusion_matrix(confusionMatrix)
 
 """
 ignore this
-"""
+
 def computeMetrics_v1(X, Y, functions, classLabelName):
     results = {}
     for func in functions:
@@ -106,4 +111,4 @@ def computeMetrics_v1(X, Y, functions, classLabelName):
 
 if __name__ == "__main__":
     testMetric()
-    
+"""
