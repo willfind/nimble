@@ -83,7 +83,54 @@ class DenseMatrixData(BaseData):
 
 		#return new order
 
-	def _extractRows_implementation(self,toExtract):
+	def _extractRows_implementation(self, toExtract, start, end, number, randomize):
+		"""
+		Function to extract rows according to the parameters, and return an object containing
+		the removed rows with default label names. The actual work is done by further helper
+		functions, this determines which helper to call, and modifies the input to accomodate
+		the number and randomize parameters, where number indicates how many of the possibilities
+		should be extracted, and randomize indicates whether the choice of who to extract should
+		be by order or uniform random.
+
+		"""
+		# single identifier
+		if isinstance(toExtract, int):
+			toExtract = [toExtract]	
+		# list of identifiers
+		if isinstance(toExtract, list):
+			if number is None:
+				number = len(toExtract)
+			# if randomize, use random sample
+			if randomize:
+				toExtract = random.sample(toExtract, number)
+			# else take the first number members of toExtract
+			else:
+				toExtract = toExtract[:number]
+			return self._extractRowsByList_implementation(toExtract)
+		# boolean function
+		if hasattr(toExtract, '__call__'):
+			if randomize:
+				#apply to each
+				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+			else:
+				if number is None:
+					number = self.rows()		
+				return self._extractRowsByFunction_implementation(toExtract, number)
+		# by range
+		if start is not None or end is not None:
+			if start is None:
+				start = 0
+			if end is None:
+				end = self.rows()
+			if number is None:
+				number = end - start
+			if randomize:
+				return self.extactRowsByList(random.randrange(start,end,number))
+			else:
+				return self._extractRowsByRange_implementation(start, end)
+
+
+	def _extractRowsByList_implementation(self, toExtract):
 		"""
 		Modify this object to have only the rows that are not given in the input,
 		returning an object containing those rows that are.
@@ -93,6 +140,35 @@ class DenseMatrixData(BaseData):
 		self.data = numpy.delete(self.data,toExtract,0)
 
 		return DenseMatrixData(ret)
+
+	def _extractRowsByFunction_implementation(self, toExtract, number):
+		"""
+		Modify this object to have only the rows that do not satisfy the given function,
+		returning an object containing those rows that do.
+
+		"""
+		results = numpy.apply_along_axis(toExtract,1,self.data)
+		ret = self.data[numpy.nonzero(results),:]
+		# need to convert our boolean array to to list of rows to be removed	
+		toRemove = []
+		for i in xrange(len(results)):
+			if results[i]:
+				toRemove.append(i)
+		self.data = numpy.delete(self.data,toRemove,0)
+
+		return DenseMatrixData(ret)
+
+	def _extractRowsByRange_implementation(self, start, end):
+		"""
+		Modify this object to have only those rows that are not within the given range,
+		inclusive; returning an object containing those rows that are.
+	
+		"""
+		# +1 on end in ranges, because our ranges are inclusive
+		ret = self.data[start:end+1,:]
+		self.data = numpy.delete(self.data, numpy.s_[start:end+1], 0)
+		return DenseMatrixData(ret)
+
 
 	def _extractColumns_implementation(self,toExtract):
 		"""
@@ -104,25 +180,6 @@ class DenseMatrixData(BaseData):
 		self.data = numpy.delete(self.data,toExtract,1)
 
 		return DenseMatrixData(ret)
-
-
-	def _extractSatisfyingRows_implementation(self,function):
-		"""
-		Modify this object to have only the rows that do not satisfy the given function,
-		returning an object containing those rows that do.
-
-		"""
-		results = numpy.apply_along_axis(function,1,self.data)
-		ret = self.data[numpy.nonzero(results),:]
-		# need to convert our boolean array to to list of rows to be removed	
-		toRemove = []
-		for i in xrange(len(results)):
-			if results[i]:
-				toRemove.append(i)
-		self.data = numpy.delete(self.data,toRemove,0)
-
-		return DenseMatrixData(ret)
-
 
 	def _extractSatisfyingColumns_implementation(self,function):
 		"""
@@ -139,20 +196,6 @@ class DenseMatrixData(BaseData):
 				toRemove.append(i)
 
 		return self.extractColumns(toRemove)
-
-	def _extractRangeRows_implementation(self, start, end):
-		"""
-		Modify this object to have only those rows that are not within the given range,
-		inclusive; returning an object containing those rows that are.
-	
-		start and end must not be null, must be within the range of possible rows,
-		and start must not be greater than end
-
-		"""
-		# +1 on end in ranges, because our ranges are inclusive
-		ret = self.data[start:end+1,:]
-		self.data = numpy.delete(self.data, numpy.s_[start:end+1], 0)
-		return DenseMatrixData(ret)
 
 
 	def _extractRangeColumns_implementation(self, start, end):

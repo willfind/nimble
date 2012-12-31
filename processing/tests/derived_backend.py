@@ -245,27 +245,25 @@ def sortRows_handmade_reverse(constructor):
 # extractRows() #
 #################
 
-def extractRows_exceptionNone(constructor):
-	""" Test extractRows() for ArgumentException when toRemove is none """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data)
-	toTest.extractRows(None)
+def extractRows_emptyInput(constructor): #TODO 
+	""" Test extractRows() does nothing when not provided with any input """
+	pass
 
 def extractRows_handmadeSingle(constructor):
 	""" Test extractRows() against handmade output when extracting one row """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ext1 = toTest.extractRows([0])
+	ext1 = toTest.extractRows(0)
 	exp1 = constructor([[1,2,3]])
 	assert ext1.equals(exp1)
 	expEnd = constructor([[4,5,6],[7,8,9]])
 	assert toTest.equals(expEnd)
 
-def extractRows_handmadeSequence(constructor):
-	""" Test extractRows() against handmade output for several extractions """
+def extractRows_handmadeListSequence(constructor):
+	""" Test extractRows() against handmade output for several list extractions """
 	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 	toTest = constructor(data)
-	ext1 = toTest.extractRows([0])
+	ext1 = toTest.extractRows(0)
 	exp1 = constructor([[1,2,3]])
 	assert ext1.equals(exp1)
 	ext2 = toTest.extractRows([1,2])
@@ -273,6 +271,85 @@ def extractRows_handmadeSequence(constructor):
 	assert ext2.equals(exp2)
 	expEnd = constructor([[4,5,6]])
 	assert toTest.equals(expEnd)
+
+def extractRows_handmadeFunction(constructor):
+	""" Test extractRows() against handmade output for function extraction """
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data)
+	def oneOrFour(row):
+		if 1 in row or 4 in row:
+			return True
+		return False
+	ext = toTest.extractRows(oneOrFour)
+	exp = constructor([[1,2,3],[4,5,6]])
+	assert ext.equals(exp)
+	expEnd = constructor([[7,8,9]])
+	assert toTest.equals(expEnd)
+
+def extractRows_handmadeFuncionWithLabels(constructor):
+	""" Test extractRows() against handmade output for function extraction with labels"""
+	labels = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,labels)
+	def oneOrFour(row):
+		if 1 in row or 4 in row:
+			return True
+		return False
+	ext = toTest.extractRows(oneOrFour)
+	exp = constructor([[1,2,3],[4,5,6]],labels)
+	assert ext.equals(exp)
+	expEnd = constructor([[7,8,9]],labels)
+	assert toTest.equals(expEnd)
+
+def extractRows_exceptionStartInvalid(constructor):
+	""" Test extracRows() for ArgumentException when start is not a valid row index """
+	labels = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,labels)
+	toTest.extractRows(start=-1,end=2)
+
+def extractRows_exceptionEndInvalid(constructor):
+	""" Test extractRows() for ArgumentException when start is not a valid column index """
+	labels = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,labels)
+	toTest.extractRows(start=1,end=5)
+
+def extractRows_exceptionInversion(constructor):
+	""" Test extractRows() for ArgumentException when start comes after end """
+	labels = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,labels)
+	toTest.extractRows(start=2,end=0)
+
+def extractRows_handmade(constructor):
+	""" Test extractRows() against handmade output for range extraction """
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data)
+	ret = toTest.extractRows(start=1,end=2)
+	
+	expectedRet = constructor([[4,5,6],[7,8,9]])
+	expectedTest = constructor([[1,2,3]])
+
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
+def extractRows_handmadeWithLabels(constructor):
+	""" Test extractRows() against handmade output for range extraction with labels """
+	labels = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,labels)
+	ret = toTest.extractRows(start=1,end=2)
+	
+	expectedRet = constructor([[4,5,6],[7,8,9]],labels)
+	expectedTest = constructor([[1,2,3]],labels)
+
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
+
+#TODO an extraction test where all data is removed
+#TODO extraction tests for all of the number and randomize combinations
 
 
 ####################
@@ -324,51 +401,6 @@ def extractColumns_handmadeByLabel(constructor):
 	assert toTest.equals(expEnd)
 
 
-###########################
-# extractSatisfyingRows() #
-###########################
-
-def extractSatisfyingRows_exceptionNone(constructor):
-	""" Test extractSatisfyingRows() for ArgumentException when toRemove is none """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data)
-	toTest.extractSatisfyingRows(None)
-
-def extractSatisfyingRows_handmade(constructor):
-	""" Test extractSatisfyingRows() against handmade output """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data)
-	def oneOrFour(row):
-		if 1 in row or 4 in row:
-			return True
-		return False
-	ext = toTest.extractSatisfyingRows(oneOrFour)
-	exp = constructor([[1,2,3],[4,5,6]])
-	assert ext.equals(exp)
-	expEnd = constructor([[7,8,9]])
-	assert toTest.equals(expEnd)
-
-
-def extractSatisfyingRows_handmadeWithLabels(constructor):
-	""" Test extractSatisfyingRows() against handmade output with labels"""
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	def oneOrFour(row):
-		if 1 in row or 4 in row:
-			return True
-		return False
-	ext = toTest.extractSatisfyingRows(oneOrFour)
-	exp = constructor([[1,2,3],[4,5,6]],labels)
-	assert ext.equals(exp)
-	expEnd = constructor([[7,8,9]],labels)
-	assert toTest.equals(expEnd)
-
-
-def extractSatisfyingRows_handmadeExtractAll(constructor):
-	pass
-	#TODO
-	#print
 
 ##############################
 # extractSatisfyingColumns() #
@@ -411,73 +443,6 @@ def extractSatisfyingColumns_handmadeWithLabel(constructor):
 	assert ext.equals(exp)
 	expEnd = constructor([[2,3],[5,6],[8,9]],["two","three"])	
 	assert toTest.equals(expEnd)
-
-
-
-######################
-# extractRangeRows() #
-######################
-
-
-def extractRangeRows_exceptionStartNone(constructor):
-	""" Test extractRangeRows() for ArgumentException when start is None"""
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	toTest.extractRangeRows(None,2)
-
-def extractRangeRows_exceptionStartInvalid(constructor):
-	""" Test extractRangeRows() for ArgumentException when start is not a valid row index """
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	toTest.extractRangeRows(-1,2)
-
-def extractRangeRows_exceptionEndNone(constructor):
-	""" Test extractRangeRows() for ArgumentException when end is None"""
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	toTest.extractRangeRows(1,None)
-
-def extractRangeRows_exceptionEndInvalid(constructor):
-	""" Test extractRangeRows() for ArgumentException when start is not a valid column index """
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	toTest.extractRangeRows(start=1,end=5)
-
-def extractRangeRows_exceptionInversion(constructor):
-	""" Test extractRangeRows() for ArgumentException when start comes after end """
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	toTest.extractRangeRows(2,0)
-
-def extractRangeRows_handmade(constructor):
-	""" Test extractRangeRows() against handmade output """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data)
-	ret = toTest.extractRangeRows(1,2)
-	
-	expectedRet = constructor([[4,5,6],[7,8,9]])
-	expectedTest = constructor([[1,2,3]])
-
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
-
-def extractRangeRows_handmadeWithLabels(constructor):
-	""" Test extractRangeRows() against handmade output with labels """
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	ret = toTest.extractRangeRows(1,2)
-	
-	expectedRet = constructor([[4,5,6],[7,8,9]],labels)
-	expectedTest = constructor([[1,2,3]],labels)
-
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
 
 
 #########################

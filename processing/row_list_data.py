@@ -128,9 +128,55 @@ class RowListData(BaseData):
 			temp[i] = self.labelsInverse[oldColNum]
 		return temp
 
-	def _extractRows_implementation(self,toExtract):
+	def _extractRows_implementation(self, toExtract, start, end, number, randomize):
 		"""
-		Modify this object to have only the rows that are not given in the input,
+		Function to extract rows according to the parameters, and return an object containing
+		the removed rows with default label names. The actual work is done by further helper
+		functions, this determines which helper to call, and modifies the input to accomodate
+		the number and randomize parameters, where number indicates how many of the possibilities
+		should be extracted, and randomize indicates whether the choice of who to extract should
+		be by order or uniform random.
+
+		"""
+		# single identifier
+		if isinstance(toExtract, int):
+			toExtract = [toExtract]	
+		# list of identifiers
+		if isinstance(toExtract, list):
+			if number is None:
+				number = len(toExtract)
+			# if randomize, use random sample
+			if randomize:
+				toExtract = random.sample(toExtract, number)
+			# else take the first number members of toExtract
+			else:
+				toExtract = toExtract[:number]
+			return self._extractRowsByList_implementation(toExtract)
+		# boolean function
+		if hasattr(toExtract, '__call__'):
+			if randomize:
+				#apply to each
+				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+			else:
+				if number is None:
+					number = self.rows()		
+				return self._extractRowsByFunction_implementation(toExtract, number)
+		# by range
+		if start is not None or end is not None:
+			if start is None:
+				start = 0
+			if end is None:
+				end = self.rows()
+			if number is None:
+				number = end - start
+			if randomize:
+				return self.extactRowsByList(random.randrange(start,end,number))
+			else:
+				return self._extractRowsByRange_implementation(start, end)
+
+	def _extractRowsByList_implementation(self, toExtract):
+		"""
+		Modify this object to have only the rows that are not listed in toExtract,
 		returning an object containing those rows that are.
 
 		"""
@@ -148,6 +194,55 @@ class RowListData(BaseData):
 			self.data.pop()
 
 		return RowListData(satisfying)
+
+	def _extractRowsByFunction_implementation(self, toExtract, number):
+		"""
+		Modify this object to have only the rows that do not satisfy the given function,
+		returning an object containing those rows that do.
+
+		"""
+		toWrite = 0
+		satisfying = []
+		# walk through each row, copying the wanted rows back to the toWrite index
+		# toWrite is only incremented when we see a wanted row; unwanted rows are copied
+		# over
+		for index in xrange(len(self.data)):
+			row = self.data[index]
+			if number > 0 and toExtract(row):			
+				satisfying.append(row)
+				number = number - 1
+			else:
+				self.data[toWrite] = row
+				toWrite += 1
+
+		# blank out the elements beyond our last copy, ie our last wanted row.
+		for index in xrange(toWrite,len(self.data)):
+			self.data.pop()
+
+		return RowListData(satisfying)
+
+	def _extractRowsByRange_implementation(self, start, end):
+		"""
+		Modify this object to have only those rows that are not within the given range,
+		inclusive; returning an object containing those rows that are.
+
+		"""
+		toWrite = start
+		inRange = []
+		for i in xrange(start,self.rows()):
+			if i <= end:
+				inRange.append(self.data[i])		
+			else:
+				self.data[toWrite] = self.data[i]
+				toWrite += 1
+
+		# blank out the elements beyond our last copy, ie our last wanted row.
+		for index in xrange(toWrite,len(self.data)):
+			self.data.pop()
+
+		return RowListData(inRange)
+
+
 
 	def _extractColumns_implementation(self,toExtract):
 		"""
@@ -169,32 +264,6 @@ class RowListData(BaseData):
 		return RowListData(extractedData)
 
 
-	def _extractSatisfyingRows_implementation(self,function):
-		"""
-		Modify this object to have only the rows that do not satisfy the given function,
-		returning an object containing those rows that do.
-
-		"""
-		toWrite = 0
-		satisfying = []
-		# walk through each row, copying the wanted rows back to the toWrite index
-		# toWrite is only incremented when we see a wanted row; unwanted rows are copied
-		# over
-		for index in xrange(len(self.data)):
-			row = self.data[index]
-			if not function(row):
-				self.data[toWrite] = row
-				toWrite += 1
-			else:
-				satisfying.append(row)
-
-		# blank out the elements beyond our last copy, ie our last wanted row.
-		for index in xrange(toWrite,len(self.data)):
-			self.data.pop()
-
-		return RowListData(satisfying)
-
-
 	def _extractSatisfyingColumns_implementation(self,function):
 		"""
 		Modify this object to have only the columns whose views do not satisfy the given
@@ -208,30 +277,6 @@ class RowListData(BaseData):
 				toExtract.append(i)
 		return self.extractColumns(toExtract)
 
-
-	def _extractRangeRows_implementation(self,start,end):
-		"""
-		Modify this object to have only those rows that are not within the given range,
-		inclusive; returning an object containing those rows that are.
-	
-		start and end must not be null, must be within the range of possible rows,
-		and start must not be greater than end
-
-		"""
-		toWrite = start
-		inRange = []
-		for i in xrange(start,self.rows()):
-			if i <= end:
-				inRange.append(self.data[i])		
-			else:
-				self.data[toWrite] = self.data[i]
-				toWrite += 1
-
-		# blank out the elements beyond our last copy, ie our last wanted row.
-		for index in xrange(toWrite,len(self.data)):
-			self.data.pop()
-
-		return RowListData(inRange)
 
 	def _extractRangeColumns_implementation(self, start, end):
 		"""

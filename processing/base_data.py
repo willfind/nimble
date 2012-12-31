@@ -401,7 +401,7 @@ class BaseData(object):
 
 		selectionKeys = self.applyFunctionToEachRow(experiment)
 		self.appendColumns(selectionKeys)
-		ret = self.extractSatisfyingRows(isSelected)
+		ret = self.extractRows(isSelected)
 		# remove the experimental data
 		if ret.rows() > 0:
 			ret.extractColumns([ret.columns()-1])
@@ -481,18 +481,35 @@ class BaseData(object):
 		newLabelOrder = self._sortColumns_implementation(cmp, key, reverse)
 		self._renameMultipleLabels_implementation(newLabelOrder,True)
 
-	def extractRows(self, toExtract):
-		"""
-		Modify this object to have only the rows whose identifiers are not given
-		in the input, returning an object containing those rows that are.
 
-		toExtract must not be None, and must contain only identifiers that make
-		sense in the context of this object
+	def extractRows(self, toExtract=None, start=None, end=None, number=None, randomize=False):
+		"""
+		Modify this object, removing those rows that are specified by the input, and returning
+		an object containing those removed rows.
+
+		toExtract may be a single identifier, a list of identifiers, or a function that when
+		given a row will return True if it is to be removed. number is the quantity of rows that
+		we are to be extracted, the default None means unlimited extracttion. start and end are
+		parameters indicating range based extraction: if range based extraction is employed,
+		toExtract must be None, and vice versa. If only one of start and end are non-None, the
+		other defaults to 0 and self.numRows() respectibly. randomize indicates whether random
+		sampling is to be used in conjunction with the number paramter, if randomize is False,
+		the chosen rows are determined by row number, otherwise it is uniform random across the
+		space of possible removals.
 
 		"""
-		if toExtract is None:
-			raise ArgumentException("toRemove must not be None")
-		ret = self._extractRows_implementation(toExtract)
+		if toExtract is not None:
+			if start is not None or end is not None:
+				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
+		elif start is not None or end is not None:
+			if start < 0 or start > self.rows():
+				raise ArgumentException("start must be a valid index, in the range of possible rows")
+			if end < 0 or end > self.rows():
+				raise ArgumentException("end must be a valid index, in the range of possible rows")
+			if start > end:
+				raise ArgumentException("start cannot be an index greater than end")
+
+		ret = self._extractRows_implementation(toExtract, start, end, number, randomize)
 		ret._renameMultipleLabels_implementation(self.labels,True)
 		return ret
 
@@ -528,20 +545,6 @@ class BaseData(object):
 
 		return ret
 
-	def extractSatisfyingRows(self, function):
-		"""
-		Modify this object to have only the rows that do not satisfy the given function,
-		returning an object containing those rows that do.
-
-		function must not be none, accept a row as an argument and return a truth value
-
-		"""
-		if function is None:
-			raise ArgumentException("function must not be None")
-		ret = self._extractSatisfyingRows_implementation(function)
-		ret._renameMultipleLabels_implementation(self.labels,True)
-		return ret
-
 	def extractSatisfyingColumns(self, function):
 		"""
 		Modify this object to have only the columns that do not satisfy the given function,
@@ -556,29 +559,6 @@ class BaseData(object):
 
 		return ret
 
-	def extractRangeRows(self, start, end):
-		"""
-		Modify this object to have only those rows that are not within the given range,
-		inclusive; returning an object containing those rows that are.
-	
-		start and end must not be null, must be within the range of possible rows,
-		and start must not be greater than end
-
-		"""
-		if start is None:
-			raise ArgumentException("start must be an interger index, not None")
-		if start < 0 or start > self.rows():
-			raise ArgumentException("start must be a valid index, in the range of possible rows")
-		if end is None:
-			raise ArgumentException("end must be an interger index, not None")
-		if end < 0 or end > self.rows():
-			raise ArgumentException("end must be a valid index, in the range of possible rows")
-		if start > end:
-			raise ArgumentException("start cannot be an index greater than end")
-
-		ret = self._extractRangeRows_implementation(start,end)
-		ret._renameMultipleLabels_implementation(self.labels,True)
-		return ret
 
 	def extractRangeColumns(self, start, end):
 		"""

@@ -119,18 +119,51 @@ def test_sortColumns_handmadeWithFcn():
 # extractRows() #
 #################
 
-@raises(ArgumentException)
-def test_extractRows_exceptionNone():
-	""" Test DMD extractRows() for ArgumentException when toExtract is none """
-	extractRows_exceptionNone(constructor)
+def test_extractRows_emptyInput(): 
+	""" Test DMD extractRows() does nothing when not provided with any input """
+	extractRows_emptyInput(constructor)
 
 def test_extractRows_handmadeSingle():
 	""" Test DMD extractRows() against handmade output when extracting one row """
 	extractRows_handmadeSingle(constructor)
 
-def test_extractRows_handmadeSequence():
-	""" Test DMD extractRows() against handmade output for several extractions """
-	extractRows_handmadeSequence(constructor)
+def test_extractRows_handmadeListSequence():
+	""" Test DMD extractRows() against handmade output for several list extractions """
+	extractRows_handmadeListSequence(constructor)
+
+def test_extractRows_handmadeFunction():
+	""" Test DMD extractRows() against handmade output for function extraction """
+	extractRows_handmadeFunction(constructor)
+
+def test_extractRows_handmadeFuncionWithLabels():
+	""" Test DMD extractRows() against handmade output for function extraction with labels"""
+	extractRows_handmadeFuncionWithLabels(constructor)
+
+@raises(ArgumentException)
+def test_extractRows_exceptionStartInvalid():
+	""" Test DMD extractRows() for ArgumentException when start is not a valid row index """
+	extractRows_exceptionStartInvalid(constructor)
+
+@raises(ArgumentException)
+def test_extractRows_exceptionEndInvalid():
+	""" Test DMD extractRows() for ArgumentException when start is not a valid column index """
+	extractRows_exceptionEndInvalid(constructor)
+
+@raises(ArgumentException)
+def test_extractRows_exceptionInversion():
+	""" Test DMD extractRows() for ArgumentException when start comes after end """
+	extractRows_exceptionInversion(constructor)
+
+def test_extractRows_handmade():
+	""" Test DMD extractRows() against handmade output for range extraction """
+	extractRows_handmade(constructor)
+
+def test_extractRows_handmadeWithLabels():
+	""" Test DMD extractRows() against handmade output for range extraction with labels """
+	extractRows_handmadeWithLabels(constructor)
+
+
+
 
 
 ####################
@@ -154,22 +187,6 @@ def test_extractColumns_handmadeByLabel():
 	""" Test DMD extractColumns() against handmade output when specifying labels """
 	extractColumns_handmadeByLabel(constructor)
 
-###########################
-# extractSatisfyingRows() #
-###########################
-
-@raises(ArgumentException)
-def test_extractSatisfyingRows_exceptionNone():
-	""" Test DMD extractSatisfyingRows() for ArgumentException when toExtract is none """
-	extractSatisfyingRows_exceptionNone(constructor)
-
-def test_extractSatisfyingRows_handmade():
-	""" Test DMD extractSatisfyingRows() against handmade output """
-	extractSatisfyingRows_handmade(constructor)
-
-def test_extractSatisfyingRows_handmadeWithLabels():
-	""" Test DMD extractSatisfyingRows() against handmade output with labels"""
-	extractSatisfyingRows_handmadeWithLabels(constructor)
 
 ##############################
 # extractSatisfyingColumns() #
@@ -189,43 +206,6 @@ def test_extractSatisfyingColumns_handmadeWithLabel():
 	""" Test DMD extractSatisfyingColumns() against handmade output with labels """
 	extractSatisfyingColumns_handmadeWithLabel(constructor)
 
-
-######################
-# extractRangeRows() #
-######################
-
-@raises(ArgumentException)
-def test_extractRangeRows_exceptionStartNone():
-	""" Test DMD extractRangeRows() for ArgumentException when start is None"""
-	extractRangeRows_exceptionStartNone(constructor)	
-
-@raises(ArgumentException)
-def test_extractRangeRows_exceptionStartInvalid():
-	""" Test DMD extractRangeRows() for ArgumentException when start is not a valid row index """
-	extractRangeRows_exceptionStartInvalid(constructor)
-
-@raises(ArgumentException)
-def test_extractRangeRows_exceptionEndNone():
-	""" Test DMD extractRangeRows() for ArgumentException when end is None"""
-	extractRangeRows_exceptionEndNone(constructor)
-
-@raises(ArgumentException)
-def test_extractRangeRows_exceptionEndInvalid():
-	""" Test DMD extractRangeRows() for ArgumentException when start is not a valid column index """
-	extractRangeRows_exceptionEndInvalid(constructor)
-
-@raises(ArgumentException)
-def test_extractRangeRows_exceptionInversion():
-	""" Test DMD extractRangeRows() for ArgumentException when start comes after end """
-	extractRangeRows_exceptionInversion(constructor)
-
-def test_extractRangeRows_handmade():
-	""" Test DMD extractRangeRows() against handmade output """
-	extractRangeRows_handmade(constructor)
-
-def test_extractRangeRows_handmadeWithLabels():
-	""" Test DMD extractRangeRows() against handmade output """
-	extractRangeRows_handmadeWithLabels(constructor)
 
 
 #########################
