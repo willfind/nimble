@@ -4,7 +4,6 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 """
 
 # TODO conversions
-# TODO natrual join extract label ops
 # TODO who sorts inputs to derived implementations?
 
 from copy import copy
@@ -18,113 +17,112 @@ import os
 # a default seed for testing and predictible trials
 DEFAULT_SEED = 'DEFAULTSEED'
 
-# the prefix for default label names
+# the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
 
 
 class BaseData(object):
 	"""
 	Class defining important data manipulation operations and giving functionality
-	for the labeling of that data. A mapping from labels to column numbers is given
-	by the labels attribute, the inverse of that mapping is given by labelsInverse.
-	labels may be empty if the object is labelless, or contains no data. labelsInverse
-	will be empty only if the object contains no data, otherwise it will map column
-	numbers to None.
+	for the naming the features of that data. A mapping from feature names to column
+	numbers is given by the featureNames attribute, the inverse of that mapping is
+	given by featureNamesInverse.
 
 	"""
 
-	def __init__(self, labels=None):
+	def __init__(self, featureNames=None):
 		"""
-		Instantiates the label book-keeping structures that are defined by this representation.
+		Instantiates the featureName book-keeping structures that are defined by this representation.
 		
-		labels may be None if the object is to have default labels, or a list or dict defining the label mapping.
+		featureNames may be None if the object is to have default names, or a list or dict defining the
+		featureName mapping.
 
  		"""
 		super(BaseData, self).__init__()
 		self._nextDefaultValue = 0
 		self._setAllDefault()
-		self._renameMultipleLabels_implementation(labels,True)
-		if labels is not None and len(labels) != self.columns():
-			raise ArgumentException("Cannot have different number of labels and columns")
+		self._renameMultipleFeatureNames_implementation(featureNames,True)
+		if featureNames is not None and len(featureNames) != self.columns():
+			raise ArgumentException("Cannot have different number of featureNames and columns")
 
 
 	########################
 	# Low Level Operations #
 	########################
 
-	def labelDifference(self, other):
+	def featureNameDifference(self, other):
 		"""
-		Returns a set containing those labels in this object that are not also in the input object.
-
-		"""
-		if other is None:
-			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, BaseData):
-			raise ArgumentException("Must provide another representation type to determine label difference")
-		
-		return self.labels.viewkeys() - other.labels.viewkeys() 
-
-	def labelIntersection(self, other):
-		"""
-		Returns a set containing only those labels that are shared by this object and the input object.
+		Returns a set containing those featureNames in this object that are not also in the input object.
 
 		"""
 		if other is None:
 			raise ArgumentException("The other object cannot be None")
 		if not isinstance(other, BaseData):
-			raise ArgumentException("Must provide another representation type to determine label intersection")
+			raise ArgumentException("Must provide another representation type to determine featureName difference")
 		
-		return self.labels.viewkeys() & other.labels.viewkeys() 
+		return self.featureNames.viewkeys() - other.featureNames.viewkeys() 
 
-	def labelSymmetricDifference(self, other):
+	def featureNameIntersection(self, other):
 		"""
-		Returns a set containing only those labels not shared between this object and the input object.
+		Returns a set containing only those featureNames that are shared by this object and the input object.
 
 		"""
 		if other is None:
 			raise ArgumentException("The other object cannot be None")
 		if not isinstance(other, BaseData):
-			raise ArgumentException("Must provide another representation type to determine label difference")
+			raise ArgumentException("Must provide another representation type to determine featureName intersection")
 		
-		return self.labels.viewkeys() ^ other.labels.viewkeys() 
+		return self.featureNames.viewkeys() & other.featureNames.viewkeys() 
 
-	def labelUnion(self,other):
+	def featureNameSymmetricDifference(self, other):
 		"""
-		Returns a set containing all labels in either this object or the input object.
+		Returns a set containing only those featureNames not shared between this object and the input object.
 
 		"""
 		if other is None:
 			raise ArgumentException("The other object cannot be None")
 		if not isinstance(other, BaseData):
-			raise ArgumentException("Must provide another representation type to determine label union")
+			raise ArgumentException("Must provide another representation type to determine featureName difference")
 		
-		return self.labels.viewkeys() | other.labels.viewkeys() 
+		return self.featureNames.viewkeys() ^ other.featureNames.viewkeys() 
 
-
-	def renameLabel(self, oldIdentifier, newLabel):
+	def featureNameUnion(self,other):
 		"""
-		Changes the label specified by previous to the supplied input label.
+		Returns a set containing all featureNames in either this object or the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, BaseData):
+			raise ArgumentException("Must provide another representation type to determine featureName union")
 		
-		oldIdentifier must be a non None string or integer, specifying either a current label
-		or the index of a current label. newLabel may be either a string not currently
-		in the label set, or None for an default label. newLabel cannot begin with the
-		default label prefix.
+		return self.featureNames.viewkeys() | other.featureNames.viewkeys() 
+
+
+	def renameFeatureName(self, oldIdentifier, newFeatureName):
+		"""
+		Changes the featureName specified by previous to the supplied input name.
+		
+		oldIdentifier must be a non None string or integer, specifying either a current featureName
+		or the index of a current featureName. newName may be either a string not currently
+		in the featureName set, or None for an default featureName. newName cannot begin with the
+		default prefix.
 
 		"""
-		self._renameLabel_implementation(oldIdentifier, newLabel, False)
+		self._renameFeatureName_implementation(oldIdentifier, newFeatureName, False)
 
-	def renameMultipleLabels(self, assignments=None):
+	def renameMultipleFeatureNames(self, assignments=None):
 		"""
-		Rename some portion of the label set according to the input. 
+		Rename some portion of the featureName set according to the input. 
 
-		assignments may be either a list or dict specifying new label names, or None
-		to set all labels to new default values. If assignment is any other type, or
-		if the labels are not strings, the labels are not unique, the column
-		indices are not integers, or the labels begin with the default prefix,
+		assignments may be either a list or dict specifying new names, or None
+		to set all featureNames to new default values. If assignment is any other type, or
+		if the names are not strings, the names are not unique, the column
+		indices are not integers, or the names begin with the default prefix,
 		then an ArgumentException will be raised.
 
 		"""
-		self._renameMultipleLabels_implementation(assignments,False)
+		self._renameMultipleFeatureNames_implementation(assignments,False)
 
 
 
@@ -134,7 +132,7 @@ class BaseData(object):
 
 	def duplicate(self):
 		"""
-		Return a new object which has the same data and labels as this object
+		Return a new object which has the same data and featureNames as this object
 
 		"""
 		# extract all
@@ -168,7 +166,6 @@ class BaseData(object):
 
 	def joinUniqueKeyedOther(self, other, fillUnmatched):
 		# other must be data rep obj
-		# both must be labeled
 		# there must be overlap
 		# cannot be complete overlap
 		
@@ -218,7 +215,7 @@ class BaseData(object):
 			return (identifier,0)
 
 		values = toConvert.mapReduceOnRows(getValue, simpleReducer)
-		values.renameLabel(0,'values')
+		values.renameFeatureName(0,'values')
 		values = values.extractColumns([0])
 
 		# Convert to RLD, so we can have easy access
@@ -232,12 +229,12 @@ class BaseData(object):
 				return 0
 			return equalTo
 
-		varName = toConvert.labelsInverse[0]
+		varName = toConvert.featureNamesInverse[0]
 
 		for row in values.data:
 			value = row[0]
 			ret = toConvert.applyFunctionToEachRow(makeFunc(value))
-			ret.renameLabel(0, varName + "=" + str(value))
+			ret.renameFeatureName(0, varName + "=" + str(value))
 			toConvert.appendColumns(ret)
 
 		# remove the original column, and combine with self
@@ -264,7 +261,7 @@ class BaseData(object):
 			return (identifier,0)
 
 		values = toConvert.mapReduceOnRows(getValue, simpleReducer)
-		values.renameLabel(0,'values')
+		values.renameFeatureName(0,'values')
 		values = values.extractColumns([0])
 
 		# Convert to RLD, so we can have easy access
@@ -282,7 +279,7 @@ class BaseData(object):
 			return mapping[row[0]]
 
 		converted = toConvert.applyFunctionToEachRow(lookup)
-		converted.renameLabel(0,toConvert.labelsInverse[0])		
+		converted.renameFeatureName(0,toConvert.featureNamesInverse[0])		
 
 		self.appendColumns(converted)
 
@@ -418,11 +415,11 @@ class BaseData(object):
 		"""
 		Function to transpose the data, ie invert the column and row indices of the data.
 	
-		Columns are then given default labels.
+		Columns are then given default featureNames.
 
 		"""
 		self._transpose_implementation()
-		self.renameMultipleLabels(None)
+		self.renameMultipleFeatureNames(None)
 
 	def appendRows(self, toAppend):
 		"""
@@ -445,7 +442,7 @@ class BaseData(object):
 		Append the columns from the toAppend object to right ends of the rows in this object
 
 		toAppend cannot be None, must be a kind of data representation object with the same
-		number of rows as the calling object, and must not share any labels with the calling
+		number of rows as the calling object, and must not share any feature names with the calling
 		object.
 		
 		"""	
@@ -455,12 +452,12 @@ class BaseData(object):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.rows() == toAppend.rows():
 			raise ArgumentException("toAppend must have the same number of rows as this object")
-		if self.labelIntersection(toAppend):
-			raise ArgumentException("toAppend must not share any labels with this object")
+		if self.featureNameIntersection(toAppend):
+			raise ArgumentException("toAppend must not share any featureNames with this object")
 		self._appendColumns_implementation(toAppend)
 
 		for i in xrange(toAppend.columns()):
-			self._addLabel(toAppend.labelsInverse[i])
+			self._addFeatureName(toAppend.featureNamesInverse[i])
 
 	def sortRows(self, cmp=None, key=None, reverse=False):
 		""" 
@@ -478,8 +475,8 @@ class BaseData(object):
 		sorting.
 
 		"""
-		newLabelOrder = self._sortColumns_implementation(cmp, key, reverse)
-		self._renameMultipleLabels_implementation(newLabelOrder,True)
+		newFeatureNameOrder = self._sortColumns_implementation(cmp, key, reverse)
+		self._renameMultipleFeatureNames_implementation(newFeatureNameOrder,True)
 
 
 	def extractRows(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -510,15 +507,15 @@ class BaseData(object):
 				raise ArgumentException("start cannot be an index greater than end")
 
 		ret = self._extractRows_implementation(toExtract, start, end, number, randomize)
-		ret._renameMultipleLabels_implementation(self.labels,True)
+		ret._renameMultipleFeatureNames_implementation(self.featureNames,True)
 		return ret
 
 	def extractColumns(self, toExtract=None, start=None, end=None, number=None, randomize=False):
 		"""
 		Modify this object, removing those columns that are specified by the input, and returning
 		an object containing those removed columns. This particular function only does argument
-		checking and modifying the labels for this object. It is the job of helper functions in
-		the derived class to perform the removal and assign labels for the returned object.
+		checking and modifying the featureNames for this object. It is the job of helper functions in
+		the derived class to perform the removal and assign featureNames for the returned object.
 
 		toExtract may be a single identifier, a list of identifiers, or a function that when
 		given a column will return True if it is to be removed. number is the quantity of columns that
@@ -543,10 +540,10 @@ class BaseData(object):
 				raise ArgumentException("start cannot be an index greater than end")
 
 		ret = self._extractColumns_implementation(toExtract, start, end, number, randomize)
-		print ret.labels
-		print self.labels
-		for key in ret.labels.keys():
-			self._removeLabelAndShift(key)
+		print ret.featureNames
+		print self.featureNames
+		for key in ret.featureNames.keys():
+			self._removeFeatureNameAndShift(key)
 		return ret
 
 
@@ -590,7 +587,7 @@ class BaseData(object):
 
 
 	def equals(self, other):
-		if not self._equalLabels(other):
+		if not self._equalFeatureNames(other):
 			return False		
 
 		return self._equals_implementation(other)
@@ -611,9 +608,9 @@ class BaseData(object):
 	# Helper functions #
 	####################
 
-	def _equalLabels(self, other):
+	def _equalFeatureNames(self, other):
 		"""
-		Private function to determine equality of BaseData labels. It ignores
+		Private function to determine equality of BaseData featureNames. It ignores
 		equality of default values, though if default values are present,
 		the number of variables and their indices must match up.
 
@@ -622,32 +619,32 @@ class BaseData(object):
 			return False
 		if not isinstance(other,BaseData):
 			return False	
-		if len(self.labels) != len(other.labels):
+		if len(self.featureNames) != len(other.featureNames):
 			return False
-		if len(self.labelsInverse) != len(other.labelsInverse):
+		if len(self.featureNamesInverse) != len(other.featureNamesInverse):
 			return False
-		# check both label directions
-		for label in self.labels.keys():
-			if not label.startswith(DEFAULT_PREFIX) and label not in other.labels:
+		# check both featureName directions
+		for featureName in self.featureNames.keys():
+			if not featureName.startswith(DEFAULT_PREFIX) and featureName not in other.featureNames:
 				return False
-			if not label.startswith(DEFAULT_PREFIX) and self.labels[label] != other.labels[label]:
+			if not featureName.startswith(DEFAULT_PREFIX) and self.featureNames[featureName] != other.featureNames[featureName]:
 				return False
-		for index in self.labelsInverse.keys():
-			if index not in other.labelsInverse:
+		for index in self.featureNamesInverse.keys():
+			if index not in other.featureNamesInverse:
 				return False
-			if not self.labelsInverse[index].startswith(DEFAULT_PREFIX):
-				if self.labelsInverse[index] != self.labelsInverse[index]:
+			if not self.featureNamesInverse[index].startswith(DEFAULT_PREFIX):
+				if self.featureNamesInverse[index] != self.featureNamesInverse[index]:
 					return False
-		for label in other.labels.keys():
-			if not label.startswith(DEFAULT_PREFIX) and label not in self.labels:
+		for featureName in other.featureNames.keys():
+			if not featureName.startswith(DEFAULT_PREFIX) and featureName not in self.featureNames:
 				return False
-			if not label.startswith(DEFAULT_PREFIX) and other.labels[label] != self.labels[label]:
+			if not featureName.startswith(DEFAULT_PREFIX) and other.featureNames[featureName] != self.featureNames[featureName]:
 				return False
-		for index in other.labelsInverse.keys():
-			if index not in self.labelsInverse:
+		for index in other.featureNamesInverse.keys():
+			if index not in self.featureNamesInverse:
 				return False
-			if not other.labelsInverse[index].startswith(DEFAULT_PREFIX):
-				if other.labelsInverse[index] != other.labelsInverse[index]:
+			if not other.featureNamesInverse[index].startswith(DEFAULT_PREFIX):
+				if other.featureNamesInverse[index] != other.featureNamesInverse[index]:
 					return False
 		return True
 
@@ -659,125 +656,125 @@ class BaseData(object):
 		if (not isinstance(identifier,basestring)) and (not isinstance(identifier,int)):
 			raise ArgumentException("The indentifier must be either a string or integer index")
 		if isinstance(identifier,int):
-			if identifier < 0 or identifier >= len(self.labelsInverse):
+			if identifier < 0 or identifier >= len(self.featureNamesInverse):
 				raise ArgumentException("The index " + str(identifier) +" is outside of the range of possible values")
 		if isinstance(identifier,basestring):
-			if identifier not in self.labels:
-				raise ArgumentException("The label '" + identifier + "' cannot be found")
+			if identifier not in self.featureNames:
+				raise ArgumentException("The featureName '" + identifier + "' cannot be found")
 			# set as index for return
-			toReturn = self.labels[identifier]
+			toReturn = self.featureNames[identifier]
 		return toReturn
 
-	def _nextDefaultLabel(self):
+	def _nextDefaultFeatureName(self):
 		ret = DEFAULT_PREFIX + str(self._nextDefaultValue)
 		self._nextDefaultValue = self._nextDefaultValue + 1
 		return ret
 
 	def _setAllDefault(self):
-		self.labels = {}
-		self.labelsInverse = {}
+		self.featureNames = {}
+		self.featureNamesInverse = {}
 		for i in xrange(self.columns()):
-			defaultLabel = self._nextDefaultLabel()
-			self.labelsInverse[i] = defaultLabel
-			self.labels[defaultLabel] = i
+			defaultFeatureName = self._nextDefaultFeatureName()
+			self.featureNamesInverse[i] = defaultFeatureName
+			self.featureNames[defaultFeatureName] = i
 
 
-	def _addLabel(self, label):
+	def _addFeatureName(self, featureName):
 		"""
-		Label the next column outside of the current possible range with the given label
+		FeatureName the next column outside of the current possible range with the given featureName
 
-		label may be either a string, or None if you want this next column to be labeless.
-		If the label is not a string, or already being used by another column, an
+		featureName may be either a string, or None if you want this next column to have a default
+		name. If the featureName is not a string, or already being used by another column, an
 		ArgumentException will be raised.
 
 		"""
-		if label is not None and not isinstance(label, basestring):
-			raise ArgumentException("The label must be a string")
-		if label in self.labels:
-			raise ArgumentException("This label is already in use")
+		if featureName is not None and not isinstance(featureName, basestring):
+			raise ArgumentException("The featureName must be a string")
+		if featureName in self.featureNames:
+			raise ArgumentException("This featureName is already in use")
 		
-		if label is None:
-			label = self._nextDefaultLabel()
+		if featureName is None:
+			featureName = self._nextDefaultFeatureName()
 
-		if label.startswith(DEFAULT_PREFIX):
-			labelNum = int(label[len(DEFAULT_PREFIX):])
-			self._nextDefaultValue = max(self._nextDefaultValue + 1, labelNum)
+		if featureName.startswith(DEFAULT_PREFIX):
+			featureNameNum = int(featureName[len(DEFAULT_PREFIX):])
+			self._nextDefaultValue = max(self._nextDefaultValue + 1, featureNameNum)
 
-		columns  = len(self.labelsInverse)
-		self.labelsInverse[columns] = label
-		self.labels[label] = columns
+		columns  = len(self.featureNamesInverse)
+		self.featureNamesInverse[columns] = featureName
+		self.featureNames[featureName] = columns
 
 
-	def _removeLabelAndShift(self, toRemove):
+	def _removeFeatureNameAndShift(self, toRemove):
 		"""
-		Removes the specified column from the label set, changing the other labels to fill
+		Removes the specified column from the featureName set, changing the other featureNames to fill
 		in the missing index.
 
-		toRemove must be a non None string or integer, specifying either a current label
-		or the index of a current label.
+		toRemove must be a non None string or integer, specifying either a current featureName
+		or the index of a current featureName.
 		
 		"""
 		#this will throw the appropriate exceptions, if need be
 		index = self._getIndex(toRemove)
-		label = self.labelsInverse[index]
+		featureName = self.featureNamesInverse[index]
 
-		del self.labels[label]
+		del self.featureNames[featureName]
 
-		columns  = len(self.labelsInverse)
+		columns  = len(self.featureNamesInverse)
 		# remaping each index starting with the one we removed
 		for i in xrange(index, columns-1):
-			nextLabel = self.labelsInverse[i+1]
-			if label is not None:
-				self.labels[nextLabel] = i
-			self.labelsInverse[i] = nextLabel
-		#delete the last mapping, that label was shifted in the for loop
-		del self.labelsInverse[columns-1]
+			nextFeatureName = self.featureNamesInverse[i+1]
+			if featureName is not None:
+				self.featureNames[nextFeatureName] = i
+			self.featureNamesInverse[i] = nextFeatureName
+		#delete the last mapping, that featureName was shifted in the for loop
+		del self.featureNamesInverse[columns-1]
 
 
-	def _renameLabel_implementation(self, oldIdentifier, newLabel, allowDefaults=False):
+	def _renameFeatureName_implementation(self, oldIdentifier, newFeatureName, allowDefaults=False):
 		"""
-		Changes the label specified by previous to the supplied input label.
+		Changes the featureName specified by previous to the supplied input featureName.
 		
-		oldIdentifier must be a non None string or integer, specifying either a current label
-		or the index of a current label. newLabel may be either a string not currently
-		in the label set, or None for an default label. newLabel may begin with the
-		default label prefix
+		oldIdentifier must be a non None string or integer, specifying either a current featureName
+		or the index of a current featureName. newFeatureName may be either a string not currently
+		in the featureName set, or None for an default featureName. newFeatureName may begin with the
+		default prefix
 
 		"""
 
 		#this will throw the appropriate exceptions, if need be
 		index = self._getIndex(oldIdentifier)
-		if newLabel is not None: 
-			if not isinstance(newLabel,basestring):
-				raise ArgumentException("The new label must be either None or a string")
-			if not allowDefaults and newLabel.startswith(DEFAULT_PREFIX):
-				raise ArgumentException("Cannot manually add a label with the default prefix")
-		if newLabel in self.labels:
-			raise ArgumentException("This label is already in use")
+		if newFeatureName is not None: 
+			if not isinstance(newFeatureName,basestring):
+				raise ArgumentException("The new featureName must be either None or a string")
+			if not allowDefaults and newFeatureName.startswith(DEFAULT_PREFIX):
+				raise ArgumentException("Cannot manually add a featureName with the default prefix")
+		if newFeatureName in self.featureNames:
+			raise ArgumentException("This featureName is already in use")
 		
-		if newLabel is None:
-			newLabel = self._nextDefaultLabel()
+		if newFeatureName is None:
+			newFeatureName = self._nextDefaultFeatureName()
 
-		#remove the current label
-		oldLabel = self.labelsInverse[index]
-		del self.labels[oldLabel]		
+		#remove the current featureName
+		oldFeatureName = self.featureNamesInverse[index]
+		del self.featureNames[oldFeatureName]		
 
-		# setup the new label
-		self.labelsInverse[index] = newLabel
-		self.labels[newLabel] = index
+		# setup the new featureName
+		self.featureNamesInverse[index] = newFeatureName
+		self.featureNames[newFeatureName] = index
 
 		#TODO increment next default if necessary
 
 
-	def _renameMultipleLabels_implementation(self, assignments=None, allowDefaults=False):
+	def _renameMultipleFeatureNames_implementation(self, assignments=None, allowDefaults=False):
 		"""
-		Rename some portion of the label set according to the input. 
+		Rename some portion of the featureName set according to the input. 
 
-		assignments may be either a list or dict specifying new label names, or None
-		to set all labels to new default values. If assignment is any other type, or
-		if the labels are not strings, the labels are not unique, the column
+		assignments may be either a list or dict specifying new featureName names, or None
+		to set all featureNames to new default values. If assignment is any other type, or
+		if the featureNames are not strings, the featureNames are not unique, the column
 		indices are not integers, then an ArgumentException will be raised. If
-		allowDefault is False, then none of the new labels may begin with the default
+		allowDefault is False, then none of the new featureNames may begin with the default
 		prefix.
 
 		"""
@@ -787,40 +784,40 @@ class BaseData(object):
 			return
 		# only certain types of input are accepted
 		if (not isinstance(assignments,list)) and (not isinstance(assignments,dict)):
-			raise ArgumentException("Labels may only be a list or dictionary")
+			raise ArgumentException("FeatureNames may only be a list or dictionary")
 
 		if isinstance(assignments,list):
 			#convert to dict so we only write the checking code once
 			temp = {}
 			for index in xrange(len(assignments)):
-				label = assignments[index]
-				if label in temp:
-					raise ArgumentException("Cannot input duplicate labels")
-				temp[label] = index
+				featureName = assignments[index]
+				if featureName in temp:
+					raise ArgumentException("Cannot input duplicate featureNames")
+				temp[featureName] = index
 			assignments = temp
 
 		# at this point, the input must be a dict
 		#check input before performing any action
-		for label in assignments.keys():
-			if not isinstance(label,basestring):
-				raise ArgumentException("Labels must be strings")
-			if not isinstance(assignments[label],int):
+		for featureName in assignments.keys():
+			if not isinstance(featureName,basestring):
+				raise ArgumentException("FeatureNames must be strings")
+			if not isinstance(assignments[featureName],int):
 				raise ArgumentException("Indices must be integers")
-			if not allowDefaults and label.startswith(DEFAULT_PREFIX):
-				raise ArgumentException("Cannot manually add a label with the default prefix")
+			if not allowDefaults and featureName.startswith(DEFAULT_PREFIX):
+				raise ArgumentException("Cannot manually add a featureName with the default prefix")
 	
 
-		# we have to first clear the current labels, so if one of our 
-		# renames matches a current label, it doesn't throw an exception
+		# we have to first clear the current featureNames, so if one of our 
+		# renames matches a current featureName, it doesn't throw an exception
 		for key in assignments.keys():
-			if key in self.labels:
-				index = self.labels[key]
-				del self.labels[key]
+			if key in self.featureNames:
+				index = self.featureNames[key]
+				del self.featureNames[key]
 				temp = DEFAULT_PREFIX + 'TEMPOARY_FOR_COLUMN:' + str(index)
-				self.labels[temp] = temp
-				self.labelsInverse[index] = temp
+				self.featureNames[temp] = temp
+				self.featureNamesInverse[index] = temp
 		for key in assignments.keys():
-			self._renameLabel_implementation(assignments[key],key,allowDefaults)
+			self._renameFeatureName_implementation(assignments[key],key,allowDefaults)
 
 
 

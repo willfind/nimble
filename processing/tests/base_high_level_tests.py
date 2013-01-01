@@ -17,11 +17,11 @@ from nose.tools import *
 
 
 
-def rld(data,labels=None):
-	return RowListData(data,labels)
+def rld(data,featureNames=None):
+	return RowListData(data,featureNames)
 
-def dmd(data,labels=None):
-	return DenseMatrixData(data,labels)
+def dmd(data,featureNames=None):
+	return DenseMatrixData(data,featureNames)
 
 def callAll(func):
 	func(rld)

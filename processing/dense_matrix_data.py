@@ -24,11 +24,10 @@ class DenseMatrixData(BaseData):
 	in a numpy dense matrix.
 
 	"""
-	#TODO
 
-	def __init__(self, data=None, labels=None):
+	def __init__(self, data=None, featureNames=None):
 		self.data = numpy.matrix(data)
-		super(DenseMatrixData, self).__init__(labels)
+		super(DenseMatrixData, self).__init__(featureNames)
 		
 
 	def _transpose_implementation(self):
@@ -70,7 +69,7 @@ class DenseMatrixData(BaseData):
 		""" 
 		Modify this object so that the columns are sorted using the built in python
 		sort on column views. The input arguments are passed to that function unalterted
-		This funciton returns a list of labels indicating the new order of the data.
+		This funciton returns a list of featureNames indicating the new order of the data.
 
 		"""
 		def passThrough(toKey):
@@ -86,7 +85,7 @@ class DenseMatrixData(BaseData):
 	def _extractRows_implementation(self, toExtract, start, end, number, randomize):
 		"""
 		Function to extract rows according to the parameters, and return an object containing
-		the removed rows with default label names. The actual work is done by further helper
+		the removed rows with default names. The actual work is done by further helper
 		functions, this determines which helper to call, and modifies the input to accomodate
 		the number and randomize parameters, where number indicates how many of the possibilities
 		should be extracted, and randomize indicates whether the choice of who to extract should
@@ -172,7 +171,7 @@ class DenseMatrixData(BaseData):
 	def _extractColumns_implementation(self, toExtract, start, end, number, randomize):
 		"""
 		Function to extract columns according to the parameters, and return an object containing
-		the removed columns with their label names from this object. The actual work is done by
+		the removed columns with their featureName names from this object. The actual work is done by
 		further helper functions, this determines which helper to call, and modifies the input
 		to accomodate the number and randomize parameters, where number indicates how many of the
 		possibilities should be extracted, and randomize indicates whether the choice of who to
@@ -197,7 +196,6 @@ class DenseMatrixData(BaseData):
 			for value in toExtract:
 				toExtractIndices.append(self._getIndex(value))
 			return self._extractColumnsByList_implementation(toExtractIndices)
-			# TODO ret's labels		
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
@@ -229,12 +227,12 @@ class DenseMatrixData(BaseData):
 		ret = self.data[:,toExtract]
 		self.data = numpy.delete(self.data,toExtract,1)
 
-		# construct label list
-		labelList = []
+		# construct featureName list
+		featureNameList = []
 		for index in toExtract:
-			labelList.append(self.labelsInverse[index])
+			featureNameList.append(self.featureNamesInverse[index])
 
-		return DenseMatrixData(ret, labelList)
+		return DenseMatrixData(ret, featureNameList)
 
 	def _extractColumnsByFunction_implementation(self, toExtract, number):
 		"""
@@ -266,12 +264,12 @@ class DenseMatrixData(BaseData):
 		ret = self.data[:,start:end+1]
 		self.data = numpy.delete(self.data, numpy.s_[start:end+1], 1)
 
-		# construct label list
-		labelList = []
+		# construct featureName list
+		featureNameList = []
 		for index in xrange(start,end+1):
-			labelList.append(self.labelsInverse[index])
+			featureNameList.append(self.featureNamesInverse[index])
 
-		return DenseMatrixData(ret, labelList)
+		return DenseMatrixData(ret, featureNameList)
 
 
 	def _applyFunctionToEachRow_implementation(self,function):
@@ -355,13 +353,13 @@ class DenseMatrixData(BaseData):
 
 
 	def _convertToRowListData_implementation(self):
-		"""	Returns a RowListData object with the same data and labels as this one """
+		"""	Returns a RowListData object with the same data and featureNames as this one """
 		from row_list_data import RowListData as RLD
-		return RLD(self.data.tolist(), self.labels)
+		return RLD(self.data.tolist(), self.featureNames)
 
 	def _convertToDenseMatrixData_implementation(self):
-		""" Returns a DenseMatrixData object with the same data and labels as this object """
-		return DenseMatrixData(self.data, self.labels)
+		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
+		return DenseMatrixData(self.data, self.featureNames)
 
 
 	###########
@@ -382,39 +380,39 @@ def loadCSV(inPath, lineParser = None):
 	"""
 	inFile = open(inPath, 'r')
 	firstLine = inFile.readline()
-	labelList = None
+	featureNameList = None
 	skip_header = 0
 
-	# test if this is a line defining column labels
+	# test if this is a line defining column featureNames
 	if firstLine[0] == "#":
 		# strip '#' from the begining of the line
 		scrubbedLine = firstLine[1:]
 		# strip newline from end of line
 		scrubbedLine = scrubbedLine.rstrip()
-		labelList = scrubbedLine.split(',')
+		featureNameList = scrubbedLine.split(',')
 		skip_header = 1
 
 	matrix = numpy.genfromtxt(inPath,delimiter=',',skip_header=skip_header)
-	return DenseMatrixData(matrix,labelList)
+	return DenseMatrixData(matrix,featureNameList)
 
-def writeToCSV(toWrite, outPath, includeLabels):
+def writeToCSV(toWrite, outPath, includeFeatureNames):
 	"""
 	Function to write the data in a DenseMatrixData to a CSV file at the designated
 	path.
 
 	toWrite is the DenseMatrixData to write to file. outPath is the location where
-	we want to write the output file. includeLabels is boolean argument indicating
-	whether the file should start with a comment line designating column labels.
+	we want to write the output file. includeFeatureNames is boolean argument indicating
+	whether the file should start with a comment line designating column featureNames.
 
 	"""
 	header = None
-	if includeLabels:
-		labelString = "#"
+	if includeFeatureNames:
+		featureNameString = "#"
 		for i in xrange(toWrite.columns()):
-			labelString += toWrite.labelsInverse[i]
+			featureNameString += toWrite.featureNamesInverse[i]
 			if not i == toWrite.columns() - 1:
-				labelString += ','
-		header = labelString
+				featureNameString += ','
+		header = featureNameString
 
 	outFile = open(outPath,'w')
 	if header is not None:

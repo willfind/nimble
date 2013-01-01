@@ -13,8 +13,8 @@ from nose.tools import *
 
 from numpy import matrix as npm
 
-def constructor(data,labels=None):
-	return CooSparseData(npm(data),labels)
+def constructor(data,featureNames=None):
+	return CooSparseData(npm(data),featureNames)
 
 ############
 # equals() #
@@ -80,9 +80,9 @@ def test_appendColumns_exceptionWrongSize():
 	appendColumns_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
-def test_appendColumns_exceptionSameLabel():
-	""" Test CooSparse appendColumns() for ArgumentException when toAppend and self have a column label in common """
-	appendColumns_exceptionSameLabel(constructor)
+def test_appendColumns_exceptionSameFeatureName():
+	""" Test CooSparse appendColumns() for ArgumentException when toAppend and self have a featureName in common """
+	appendColumns_exceptionSameFeatureName(constructor)
 
 def test_appendColumns_handmadeSingle():
 	""" Test CooSparse appendColumns() against handmade output for a single added column"""
@@ -137,9 +137,9 @@ def test_extractRows_handmadeFunction():
 	""" Test CooSparse extractRows() against handmade output for function extraction """
 	extractRows_handmadeFunction(constructor)
 
-def test_extractRows_handmadeFuncionWithLabels():
-	""" Test CooSparse extractRows() against handmade output for function extraction with labels"""
-	extractRows_handmadeFuncionWithLabels(constructor)
+def test_extractRows_handmadeFuncionWithFeatureNames():
+	""" Test CooSparse extractRows() against handmade output for function extraction with featureNames"""
+	extractRows_handmadeFuncionWithFeatureNames(constructor)
 
 @raises(ArgumentException)
 def test_extractRows_exceptionStartInvalid():
@@ -160,9 +160,9 @@ def test_extractRows_handmade():
 	""" Test CooSparse extractRows() against handmade output for range extraction """
 	extractRows_handmade(constructor)
 
-def test_extractRows_handmadeWithLabels():
-	""" Test CooSparse extractRows() against handmade output for range extraction with labels """
-	extractRows_handmadeWithLabels(constructor)
+def test_extractRows_handmadeWithFeatureNames():
+	""" Test CooSparse extractRows() against handmade output for range extraction with featureNames """
+	extractRows_handmadeWithFeatureNames(constructor)
 
 
 
@@ -181,17 +181,17 @@ def test_extractColumns_handmadeListSequence():
 	""" Test CooSparse extractColumns() against handmade output for several extractions by list """
 	extractColumns_handmadeListSequence(constructor)
 
-def test_extractColumns_handmadeListWithLabel():
-	""" Test CooSparse extractColumns() against handmade output for list extraction when specifying labels """
-	extractColumns_handmadeListWithLabel(constructor)
+def test_extractColumns_handmadeListWithFeatureName():
+	""" Test CooSparse extractColumns() against handmade output for list extraction when specifying featureNames """
+	extractColumns_handmadeListWithFeatureName(constructor)
 
 def test_extractColumns_handmadeFunction():
 	""" Test CooSparse extractColumns() against handmade output for function extraction """
 	extractColumns_handmadeFunction(constructor)
 
-def test_extractColumns_handmadeFunctionWithLabel():
-	""" Test CooSparse extractColumns() against handmade output for function extraction with labels """
-	extractColumns_handmadeFunctionWithLabel(constructor)
+def test_extractColumns_handmadeFunctionWithFeatureName():
+	""" Test CooSparse extractColumns() against handmade output for function extraction with featureNames """
+	extractColumns_handmadeFunctionWithFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionStartInvalid():
@@ -199,9 +199,9 @@ def test_extractColumns_exceptionStartInvalid():
 	extractColumns_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionStartInvalidLabel():
-	""" Test CooSparse extractColumns() for ArgumentException when start is not a valid column Label """
-	extractColumns_exceptionStartInvalidLabel(constructor)
+def test_extractColumns_exceptionStartInvalidFeatureName():
+	""" Test CooSparse extractColumns() for ArgumentException when start is not a valid featureName """
+	extractColumns_exceptionStartInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionEndInvalid():
@@ -209,9 +209,9 @@ def test_extractColumns_exceptionEndInvalid():
 	extractColumns_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionEndInvalidLabel():
-	""" Test CooSparse extractColumns() for ArgumentException when start is not a valid column label """
-	extractColumns_exceptionEndInvalidLabel(constructor)
+def test_extractColumns_exceptionEndInvalidFeatureName():
+	""" Test CooSparse extractColumns() for ArgumentException when start is not a valid featureName """
+	extractColumns_exceptionEndInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionInversion():
@@ -219,17 +219,17 @@ def test_extractColumns_exceptionInversion():
 	extractColumns_exceptionInversion(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionInversionLabel():
-	""" Test CooSparse extractColumns() for ArgumentException when start comes after end as Labels"""
-	extractColumns_exceptionInversionLabel(constructor)
+def test_extractColumns_exceptionInversionFeatureName():
+	""" Test CooSparse extractColumns() for ArgumentException when start comes after end as FeatureNames"""
+	extractColumns_exceptionInversionFeatureName(constructor)
 
 def test_extractColumns_handmadeRange():
 	""" Test CooSparse extractColumns() against handmade output for range extraction """
 	extractColumns_handmadeRange(constructor)
 
-def test_extractColumns_handmadeWithLabels():
-	""" Test CooSparse extractColumns() against handmade output for range extraction with Labels """
-	extractColumns_handmadeWithLabels(constructor)
+def test_extractColumns_handmadeWithFeatureNames():
+	""" Test CooSparse extractColumns() against handmade output for range extraction with FeatureNames """
+	extractColumns_handmadeWithFeatureNames(constructor)
 
 
 
@@ -302,14 +302,14 @@ def test_mapReduceOnRows_handmadeNoneReturningReducer():
 ##########################
 
 
-def test_convertToRowListData_handmade_defaultLabels():
-	""" Test CooSparse convertToRowListData with default labels """
-	convertToRowListData_handmade_defaultLabels(constructor)
+def test_convertToRowListData_handmade_defaultFeatureNames():
+	""" Test CooSparse convertToRowListData with default featureNames """
+	convertToRowListData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToRowListData_handmade_assignedLabels():
-	""" Test CooSparse convertToRowListData with assigned labels """
-	convertToRowListData_handmade_assignedLabels(constructor)
+def test_convertToRowListData_handmade_assignedFeatureNames():
+	""" Test CooSparse convertToRowListData with assigned featureNames """
+	convertToRowListData_handmade_assignedFeatureNames(constructor)
 
 
 
@@ -323,14 +323,14 @@ def test_convertToDenseMatrixData_incompatible():
 	convertToDenseMatrixData_incompatible(constructor)
 
 
-def test_convertToDenseMatrixData_handmade_defaultLabels():
-	""" Test CooSparse convertToDenseMatrixData with default labels """
-	convertToDenseMatrixData_handmade_defaultLabels(constructor)
+def test_convertToDenseMatrixData_handmade_defaultFeatureNames():
+	""" Test CooSparse convertToDenseMatrixData with default featureNames """
+	convertToDenseMatrixData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToDenseMatrixData_handmade_assignedLabels():
-	""" Test CooSparse convertToDenseMatrixData with assigned labels """
-	convertToDenseMatrixData_handmade_assignedLabels(constructor)
+def test_convertToDenseMatrixData_handmade_assignedFeatureNames():
+	""" Test CooSparse convertToDenseMatrixData with assigned featureNames """
+	convertToDenseMatrixData_handmade_assignedFeatureNames(constructor)
 
 
 

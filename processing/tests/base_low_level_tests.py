@@ -2,7 +2,7 @@
 Unit tests of the low level functions defined by the base representation class.
 
 Since these functions are stand alone in the base class, they can be tested directly.
-Label equality is defined using _columns_implementation, which is to be defined
+FeatureName equality is defined using _columns_implementation, which is to be defined
 in the derived class, so all of these tests make a call to makeAndDefine instead
 of directly instantiating a BaseData object. This function temporarily fills in
 that missing implementation.
@@ -17,13 +17,13 @@ def makeConst(num):
 		return num
 	return const
 
-def makeAndDefine(labels=None, size=0):
-	""" Make a base data object that will think it has as many columns as it has labels,
+def makeAndDefine(featureNames=None, size=0):
+	""" Make a base data object that will think it has as many columns as it has featureNames,
 	even though it has no actual data """
-	cols = size if labels is None else len(labels)
+	cols = size if featureNames is None else len(featureNames)
 	specificImp = makeConst(cols)
 	BaseData._columns_implementation = specificImp
-	ret = BaseData(labels)
+	ret = BaseData(featureNames)
 	ret._columns_implementation = specificImp
 	return ret
 
@@ -33,75 +33,75 @@ def makeAndDefine(labels=None, size=0):
 ########
 
 #@raises(ArgumentException)
-#def test_init_exceptionNoLabelsOrCount():
-#	""" Test init() for ArgumentException when called without labels or a count of columns """
+#def test_init_exceptionNoFeatureNamesOrCount():
+#	""" Test init() for ArgumentException when called without featureNames or a count of columns """
 #	toTest= BaseData(None)
 
 ###############
-# _addLabel() #
+# _addFeatureName() #
 ###############
 
 @raises(ArgumentException)
-def test_addLabel_exceptionLabelWrongType():
-	""" Test _addLabel() for ArgumentException when given a non string label """
+def test_addFeatureName_exceptionFeatureNameWrongType():
+	""" Test _addFeatureName() for ArgumentException when given a non string featureName """
 	toTest = makeAndDefine(["hello"])
-	toTest._addLabel(label=34)
+	toTest._addFeatureName(featureName=34)
 
 @raises(ArgumentException)
-def test_addLabel_exceptionNonUnique():
-	""" Test _addLabel() for ArgumentException when given a duplicate label """
+def test_addFeatureName_exceptionNonUnique():
+	""" Test _addFeatureName() for ArgumentException when given a duplicate featureName """
 	toTest = makeAndDefine(["hello"])
-	toTest._addLabel("hello")
+	toTest._addFeatureName("hello")
 
-def test_addLabel_handmadeDefaultCounter():
-	""" Test _addLabel() changes nextDefault counter correctly """
+def test_addFeatureName_handmadeDefaultCounter():
+	""" Test _addFeatureName() changes nextDefault counter correctly """
 	toTest = makeAndDefine(["hello"])
 	assert toTest._nextDefaultValue == 1
-	toTest._addLabel(DEFAULT_PREFIX +"1")
+	toTest._addFeatureName(DEFAULT_PREFIX +"1")
 	assert toTest._nextDefaultValue == 2
 
-def test_addLabel_handmade():
-	""" Test _addLabel() against handmade output """
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest._addLabel("four")
-	toTest._addLabel("five")
+def test_addFeatureName_handmade():
+	""" Test _addFeatureName() against handmade output """
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest._addFeatureName("four")
+	toTest._addFeatureName("five")
 
 	expected = ["zero","one","two","three","four","five"]
-	confirmExpectedLabels(toTest,expected)
+	confirmExpectedFeatureNames(toTest,expected)
 
-def test_addLabel_handmade_addDefault():
-	""" Test _addLabel() against handmade output """
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest._addLabel(None)
-	toTest._addLabel(None)
+def test_addFeatureName_handmade_addDefault():
+	""" Test _addFeatureName() against handmade output """
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest._addFeatureName(None)
+	toTest._addFeatureName(None)
 
 	expected = ["zero","one","two","three",DEFAULT_PREFIX,DEFAULT_PREFIX]
 
-	confirmExpectedLabels(toTest,expected)	
+	confirmExpectedFeatureNames(toTest,expected)	
 
 #####################
-# labelDifference() #
+# featureNameDifference() #
 #####################
 
 @raises(ArgumentException)
-def test_labelDifference_exceptionOtherNone():
-	""" Test labelDifference() for ArgumentException when the other object is None """
+def test_featureNameDifference_exceptionOtherNone():
+	""" Test featureNameDifference() for ArgumentException when the other object is None """
 	toTest = makeAndDefine(["hello"])
-	toTest.labelDifference(None)
+	toTest.featureNameDifference(None)
 
 @raises(ArgumentException)
-def test_labelDifference_exceptionWrongType():
-	""" Test labelDifference() for ArgumentException when the other object is not the right type """
+def test_featureNameDifference_exceptionWrongType():
+	""" Test featureNameDifference() for ArgumentException when the other object is not the right type """
 	toTest = makeAndDefine(["hello"])
-	toTest.labelDifference("wrong")
+	toTest.featureNameDifference("wrong")
 
-def test_labelDifference_handmade():
-	""" Test labelDifference() against handmade output """
+def test_featureNameDifference_handmade():
+	""" Test featureNameDifference() against handmade output """
 	toTest1 = makeAndDefine(["one","two","three"])
 	toTest2 = makeAndDefine(["two","four"])
-	results = toTest1.labelDifference(toTest2)
+	results = toTest1.featureNameDifference(toTest2)
 	assert "one" in results
 	assert "two" not in results
 	assert "three" in results
@@ -109,26 +109,26 @@ def test_labelDifference_handmade():
 
 
 #######################
-# labelIntersection() #
+# featureNameIntersection() #
 #######################
 
 @raises(ArgumentException)
-def test_labelIntersection_exceptionOtherNone():
-	""" Test labelIntersection() for ArgumentException when the other object is None """
+def test_featureNameIntersection_exceptionOtherNone():
+	""" Test featureNameIntersection() for ArgumentException when the other object is None """
 	toTest = makeAndDefine(["hello"])
-	toTest.labelIntersection(None)
+	toTest.featureNameIntersection(None)
 
 @raises(ArgumentException)
-def test_labelIntersection_exceptionWrongType():
-	""" Test labelIntersection() for ArgumentException when the other object is not the right type """
+def test_featureNameIntersection_exceptionWrongType():
+	""" Test featureNameIntersection() for ArgumentException when the other object is not the right type """
 	toTest = makeAndDefine(["hello"])
-	toTest.labelIntersection("wrong")
+	toTest.featureNameIntersection("wrong")
 
-def test_labelIntersection_handmade():
-	""" Test labelIntersection() against handmade output """
+def test_featureNameIntersection_handmade():
+	""" Test featureNameIntersection() against handmade output """
 	toTest1 = makeAndDefine(["one","two","three"])
 	toTest2 = makeAndDefine(["two","four"])
-	results = toTest1.labelIntersection(toTest2)
+	results = toTest1.featureNameIntersection(toTest2)
 	assert "one" not in results
 	assert "two" in results
 	assert "three" not in results
@@ -136,324 +136,324 @@ def test_labelIntersection_handmade():
 
 
 ##############################
-# labelSymmetricDifference() #
+# featureNameSymmetricDifference() #
 ##############################
 
 @raises(ArgumentException)
-def test_labelSymmetricDifference_exceptionOtherNone():
-	""" Test labelSymmetricDifference() for ArgumentException when the other object is None """
+def test_featureNameSymmetricDifference_exceptionOtherNone():
+	""" Test featureNameSymmetricDifference() for ArgumentException when the other object is None """
 	toTest = makeAndDefine(["hello"])
-	toTest.labelSymmetricDifference(None)
+	toTest.featureNameSymmetricDifference(None)
 
 @raises(ArgumentException)
-def test_labelSymmetricDifference_exceptionWrongType():
-	""" Test labelSymmetricDifference() for ArgumentException when the other object is not the right type """
+def test_featureNameSymmetricDifference_exceptionWrongType():
+	""" Test featureNameSymmetricDifference() for ArgumentException when the other object is not the right type """
 	toTest = makeAndDefine(["hello"])
-	toTest.labelSymmetricDifference("wrong")
+	toTest.featureNameSymmetricDifference("wrong")
 
-def test_labelSymmetricDifference_handmade():
-	""" Test labelSymmetricDifference() against handmade output """
+def test_featureNameSymmetricDifference_handmade():
+	""" Test featureNameSymmetricDifference() against handmade output """
 	toTest1 = makeAndDefine(["one","two","three"])
 	toTest2 = makeAndDefine(["two","four"])
-	results = toTest1.labelSymmetricDifference(toTest2)
+	results = toTest1.featureNameSymmetricDifference(toTest2)
 	assert "one" in results
 	assert "two" not in results
 	assert "three" in results
 	assert "four" in results
 
 ################
-# labelUnion() #
+# featureNameUnion() #
 ################
 
 @raises(ArgumentException)
-def test_labelUnion_exceptionOtherNone():
-	""" Test labelUnion() for ArgumentException when the other object is None """
+def test_featureNameUnion_exceptionOtherNone():
+	""" Test featureNameUnion() for ArgumentException when the other object is None """
 	toTest = makeAndDefine(["hello"])
-	toTest.labelUnion(None)
+	toTest.featureNameUnion(None)
 
 @raises(ArgumentException)
-def test_labelUnion_exceptionWrongType():
-	""" Test labelUnion() for ArgumentException when the other object is not the right type """
+def test_featureNameUnion_exceptionWrongType():
+	""" Test featureNameUnion() for ArgumentException when the other object is not the right type """
 	toTest = makeAndDefine(["hello"])
-	toTest.labelUnion("wrong")
+	toTest.featureNameUnion("wrong")
 
-def test_labelUnion_handmade():
-	""" Test labelUnion() against handmade output """
+def test_featureNameUnion_handmade():
+	""" Test featureNameUnion() against handmade output """
 	toTest1 = makeAndDefine(["one","two","three"])
 	toTest2 = makeAndDefine(["two","four"])
-	results = toTest1.labelUnion(toTest2)
+	results = toTest1.featureNameUnion(toTest2)
 	assert "one" in results
 	assert "two" in results
 	assert "three" in results
 	assert "four" in results
 
 #################
-# renameLabel() #
+# renameFeatureName() #
 #################
 
 @raises(ArgumentException)
-def test_renameLabel_exceptionPrevWrongType():
-	""" Test renameLabel() for ArgumentException when given the wrong type for prev"""
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest.renameLabel(oldIdentifier=0.3,newLabel="New!")
+def test_renameFeatureName_exceptionPrevWrongType():
+	""" Test renameFeatureName() for ArgumentException when given the wrong type for prev"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest.renameFeatureName(oldIdentifier=0.3,newFeatureName="New!")
 
 @raises(ArgumentException)
-def test_renameLabel_exceptionPrevInvalidIndex():
-	""" Test renameLabel() for ArgumentException when given an invalid prev index"""
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest.renameLabel(oldIdentifier=12,newLabel="New!")
+def test_renameFeatureName_exceptionPrevInvalidIndex():
+	""" Test renameFeatureName() for ArgumentException when given an invalid prev index"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest.renameFeatureName(oldIdentifier=12,newFeatureName="New!")
 
 @raises(ArgumentException)
-def test_renameLabel_exceptionPrevNotFound():
-	""" Test renameLabel() for ArgumentException when the prev label is not found"""
-	origLabels = ["zero","one","two","three"]	
-	toTest =makeAndDefine(origLabels)
-	toTest.renameLabel(oldIdentifier="Previous!",newLabel="New!")
+def test_renameFeatureName_exceptionPrevNotFound():
+	""" Test renameFeatureName() for ArgumentException when the prev featureName is not found"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest =makeAndDefine(origFeatureNames)
+	toTest.renameFeatureName(oldIdentifier="Previous!",newFeatureName="New!")
 
 @raises(ArgumentException)
-def test_renameLabel_exceptionNewInvalidType():
-	""" Test renameLabel() for ArgumentException when the new label is not a string"""
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest.renameLabel(oldIdentifier="three",newLabel=4)
+def test_renameFeatureName_exceptionNewInvalidType():
+	""" Test renameFeatureName() for ArgumentException when the new featureName is not a string"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest.renameFeatureName(oldIdentifier="three",newFeatureName=4)
 
 @raises(ArgumentException)
-def test_renameLabel_exceptionNonUnique():
-	""" Test renameLabel() for ArgumentException when a duplicate label is given"""
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest.renameLabel(oldIdentifier="three",newLabel="two")
+def test_renameFeatureName_exceptionNonUnique():
+	""" Test renameFeatureName() for ArgumentException when a duplicate featureName is given"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest.renameFeatureName(oldIdentifier="three",newFeatureName="two")
 
 @raises(ArgumentException)
-def test_renameLabel_exceptionManualAddDefault():
-	""" Test renameLabel() for ArgumentException when given a default label """
+def test_renameFeatureName_exceptionManualAddDefault():
+	""" Test renameFeatureName() for ArgumentException when given a default featureName """
 	toTest = makeAndDefine(["hello"])
-	toTest.renameLabel("hello",DEFAULT_PREFIX + "2")
+	toTest.renameFeatureName("hello",DEFAULT_PREFIX + "2")
 
 
-def test_renameLabel_handmade_viaIndex():
-	""" Test renameLabel() against handmade input when specifying the label by index """
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest.renameLabel(0,"ZERO")
-	toTest.renameLabel(3,"3")
-	expectedLabels = ["ZERO","one","two","3"]
-	confirmExpectedLabels(toTest,expectedLabels)
+def test_renameFeatureName_handmade_viaIndex():
+	""" Test renameFeatureName() against handmade input when specifying the featureName by index """
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest.renameFeatureName(0,"ZERO")
+	toTest.renameFeatureName(3,"3")
+	expectedFeatureNames = ["ZERO","one","two","3"]
+	confirmExpectedFeatureNames(toTest,expectedFeatureNames)
 
-def test_renameLabel_handmade_viaLabel():
-	""" Test renameLabel() against handmade input when specifying the label by name """
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest.renameLabel("zero","ZERO")
-	toTest.renameLabel("three","3")
-	expectedLabels = ["ZERO","one","two","3"]
-	confirmExpectedLabels(toTest,expectedLabels)
+def test_renameFeatureName_handmade_viaFeatureName():
+	""" Test renameFeatureName() against handmade input when specifying the featureName by name """
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest.renameFeatureName("zero","ZERO")
+	toTest.renameFeatureName("three","3")
+	expectedFeatureNames = ["ZERO","one","two","3"]
+	confirmExpectedFeatureNames(toTest,expectedFeatureNames)
 
 
 
 ##########################
-# renameMultipleLabels() #
+# renameMultipleFeatureNames() #
 ##########################
 
 
 @raises(ArgumentException)
-def test_renameMultipleLabels_exceptionWrongTypeObject():
-	""" Test renameMultipleLabels() for ArgumentException when labels is an unexpected type """
+def test_renameMultipleFeatureNames_exceptionWrongTypeObject():
+	""" Test renameMultipleFeatureNames() for ArgumentException when featureNames is an unexpected type """
 	toTest = makeAndDefine(['one'])
-	toTest.renameMultipleLabels(12)
+	toTest.renameMultipleFeatureNames(12)
 
 @raises(ArgumentException)
-def test_renameMultipleLabels_exceptionNonStringLabelInList():
-	""" Test renameMultipleLabels() for ArgumentException when a list element is not a string """
+def test_renameMultipleFeatureNames_exceptionNonStringFeatureNameInList():
+	""" Test renameMultipleFeatureNames() for ArgumentException when a list element is not a string """
 	toTest = makeAndDefine(['one'])
-	nonStringLabels = [1,2,3]
-	toTest.renameMultipleLabels(nonStringLabels)
+	nonStringFeatureNames = [1,2,3]
+	toTest.renameMultipleFeatureNames(nonStringFeatureNames)
 
 @raises(ArgumentException)
-def test_renameMultipleLabels_exceptionNonUniqueStringInList():
-	""" Test renameMultipleLabels() for ArgumentException when a list element is not unique """
+def test_renameMultipleFeatureNames_exceptionNonUniqueStringInList():
+	""" Test renameMultipleFeatureNames() for ArgumentException when a list element is not unique """
 	toTest = makeAndDefine(['one'])
 	nonUnique = [1,2,3,1]
-	toTest.renameMultipleLabels(nonUnique)
+	toTest.renameMultipleFeatureNames(nonUnique)
 
 @raises(ArgumentException)
-def test_renameMultipleLabels_exceptionNonStringLabelInDict():
-	""" Test renameMultipleLabels() for ArgumentException when a dict key is not a string """
+def test_renameMultipleFeatureNames_exceptionNonStringFeatureNameInDict():
+	""" Test renameMultipleFeatureNames() for ArgumentException when a dict key is not a string """
 	toTest = makeAndDefine(['one'])
-	nonStringLabels = {1:1}
-	toTest.renameMultipleLabels(nonStringLabels)
+	nonStringFeatureNames = {1:1}
+	toTest.renameMultipleFeatureNames(nonStringFeatureNames)
 
 @raises(ArgumentException)
-def test_renameMultipleLabels_exceptionNonIntIndexInDict():
-	""" Test renameMultipleLabels() for ArgumentException when a dict value is not an int """
+def test_renameMultipleFeatureNames_exceptionNonIntIndexInDict():
+	""" Test renameMultipleFeatureNames() for ArgumentException when a dict value is not an int """
 	toTest = makeAndDefine(['one'])
 	nonIntIndex = {"one":"one"}
-	toTest.renameMultipleLabels(nonIntIndex)
+	toTest.renameMultipleFeatureNames(nonIntIndex)
 
 
 @raises(ArgumentException)
-def test_renameMultipleLabels_exceptionManualAddDefault():
-	""" Test renameMultipleLabels() for ArgumentException when given a default label """
+def test_renameMultipleFeatureNames_exceptionManualAddDefault():
+	""" Test renameMultipleFeatureNames() for ArgumentException when given a default featureName """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
-	newLabels = ["zero","one","two",DEFAULT_PREFIX + "2"]
-	toTest.renameMultipleLabels(newLabels)
+	newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "2"]
+	toTest.renameMultipleFeatureNames(newFeatureNames)
 
 
-def test_renameMultipleLabels_handmade():
-	""" Test renameMultipleLabels() against handmade output """
+def test_renameMultipleFeatureNames_handmade():
+	""" Test renameMultipleFeatureNames() against handmade output """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
-	origLabels = ["zero","one","two","three"]	
-	toTest.renameMultipleLabels(origLabels)
-	confirmExpectedLabels(toTest,origLabels)
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest.renameMultipleFeatureNames(origFeatureNames)
+	confirmExpectedFeatureNames(toTest,origFeatureNames)
 
-def test_renameMultipleLabels_handmadeReplacingWithSame():
-	""" Test renameMultipleLabels() against handmade output when you're replacing the position of labels """
+def test_renameMultipleFeatureNames_handmadeReplacingWithSame():
+	""" Test renameMultipleFeatureNames() against handmade output when you're replacing the position of featureNames """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
 	toAssign = ["hey","gone","none","blank"]
-	toTest.renameMultipleLabels(toAssign)
-	confirmExpectedLabels(toTest,toAssign)
+	toTest.renameMultipleFeatureNames(toAssign)
+	confirmExpectedFeatureNames(toTest,toAssign)
 
 
 ##########################
-# _removeLabelAndShift() #
+# _removeFeatureNameAndShift() #
 ##########################
 
 @raises(ArgumentException)
-def test_removeLabelAndShift_exceptionNoneInput():
-	""" Test _removeLabelAndShift() for ArgumentException when the identifier is None"""
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest._removeLabelAndShift(None)
+def test_removeFeatureNameAndShift_exceptionNoneInput():
+	""" Test _removeFeatureNameAndShift() for ArgumentException when the identifier is None"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest._removeFeatureNameAndShift(None)
 
 @raises(ArgumentException)
-def test_removeLabelAndShift_exceptionWrongTypeInput():
-	""" Test _removeLabelAndShift() for ArgumentException when given the wrong type"""
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest._removeLabelAndShift(0.3)
+def test_removeFeatureNameAndShift_exceptionWrongTypeInput():
+	""" Test _removeFeatureNameAndShift() for ArgumentException when given the wrong type"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest._removeFeatureNameAndShift(0.3)
 
 @raises(ArgumentException)
-def test_removeLabelAndShift_exceptionInvalidIndex():
-	""" Test _removeLabelAndShift() for ArgumentException when given an invalid index"""
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest._removeLabelAndShift(12)
+def test_removeFeatureNameAndShift_exceptionInvalidIndex():
+	""" Test _removeFeatureNameAndShift() for ArgumentException when given an invalid index"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest._removeFeatureNameAndShift(12)
 
 @raises(ArgumentException)
-def test_removeLabelAndShift_exceptionLabelNotFound():
-	""" Test _removeLabelAndShift() for ArgumentException when the label is not found"""
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest._removeLabelAndShift("bogus")
+def test_removeFeatureNameAndShift_exceptionFeatureNameNotFound():
+	""" Test _removeFeatureNameAndShift() for ArgumentException when the featureName is not found"""
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest._removeFeatureNameAndShift("bogus")
 
-def test_removeLabelAndShift_handmade_viaIndex():
-	""" Test _removeLabelAndShift() against handmade output """
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest._removeLabelAndShift(0)
-	toTest._removeLabelAndShift(2)
-	expectedLabels = ["one","two"]
-	confirmExpectedLabels(toTest,expectedLabels)
+def test_removeFeatureNameAndShift_handmade_viaIndex():
+	""" Test _removeFeatureNameAndShift() against handmade output """
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest._removeFeatureNameAndShift(0)
+	toTest._removeFeatureNameAndShift(2)
+	expectedFeatureNames = ["one","two"]
+	confirmExpectedFeatureNames(toTest,expectedFeatureNames)
 
-def test_removeLabelAndShift_handmade_viaLabel():
-	""" Test _removeLabelAndShift() against handmade output """
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	toTest._removeLabelAndShift('zero')
-	toTest._removeLabelAndShift('two')
-	expectedLabels = ["one","three"]
-	confirmExpectedLabels(toTest,expectedLabels)
+def test_removeFeatureNameAndShift_handmade_viaFeatureName():
+	""" Test _removeFeatureNameAndShift() against handmade output """
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	toTest._removeFeatureNameAndShift('zero')
+	toTest._removeFeatureNameAndShift('two')
+	expectedFeatureNames = ["one","three"]
+	confirmExpectedFeatureNames(toTest,expectedFeatureNames)
 
 
 
 ##################
-# _equalLabels() #
+# _equalFeatureNames() #
 ##################
 
-def test_equalLabels_False():
-	""" Test _equalLabels() against some non-equal input """
-	origLabels = ["zero","one","two","three"]	
-	toTest = makeAndDefine(origLabels)
-	assert not toTest._equalLabels(None)
-	assert not toTest._equalLabels(5)
-	assert not toTest._equalLabels(makeAndDefine(["short","list"]))
+def test_equalFeatureNames_False():
+	""" Test _equalFeatureNames() against some non-equal input """
+	origFeatureNames = ["zero","one","two","three"]	
+	toTest = makeAndDefine(origFeatureNames)
+	assert not toTest._equalFeatureNames(None)
+	assert not toTest._equalFeatureNames(5)
+	assert not toTest._equalFeatureNames(makeAndDefine(["short","list"]))
 
 	subset = makeAndDefine(["zero","one","two"])
 	superset = makeAndDefine(["zero","one","two","three","four"])
-	assert not toTest._equalLabels(subset)
-	assert not toTest._equalLabels(superset)
-	assert not subset._equalLabels(toTest)
-	assert not superset._equalLabels(toTest)
+	assert not toTest._equalFeatureNames(subset)
+	assert not toTest._equalFeatureNames(superset)
+	assert not subset._equalFeatureNames(toTest)
+	assert not superset._equalFeatureNames(toTest)
 
-def test_equalLabels_actuallyEqual():
-	""" Test _equalLabels() against some actually equal input """
-	origLabels = ["zero","one","two","three"]
-	labelsDict = {"zero":0,"one":1,"two":2,"three":3}
-	toTest1 = makeAndDefine(origLabels)
-	toTest2 = makeAndDefine(labelsDict)
-	assert toTest1._equalLabels(toTest2)
-	assert toTest2._equalLabels(toTest1)
+def test_equalFeatureNames_actuallyEqual():
+	""" Test _equalFeatureNames() against some actually equal input """
+	origFeatureNames = ["zero","one","two","three"]
+	featureNamesDict = {"zero":0,"one":1,"two":2,"three":3}
+	toTest1 = makeAndDefine(origFeatureNames)
+	toTest2 = makeAndDefine(featureNamesDict)
+	assert toTest1._equalFeatureNames(toTest2)
+	assert toTest2._equalFeatureNames(toTest1)
 
-def test_equalLabels_noData():
-	""" Test _equalLabels() for empty objects """
+def test_equalFeatureNames_noData():
+	""" Test _equalFeatureNames() for empty objects """
 	toTest1 = makeAndDefine(None)
 	toTest2 = makeAndDefine(None)
-	assert toTest1._equalLabels(toTest2)
-	assert toTest2._equalLabels(toTest1)
+	assert toTest1._equalFeatureNames(toTest2)
+	assert toTest2._equalFeatureNames(toTest1)
 
-def test_equalLabels_DefaultInequality():
-	""" Test _equalLabels() for inequality of some default labeled different sized objects """
+def test_equalFeatureNames_DefaultInequality():
+	""" Test _equalFeatureNames() for inequality of some default named, different sized objects """
 	toTest1 = makeAndDefine(['1','2'])
 	toTest2 = makeAndDefine(['1','2','3'])
-	toTest1.renameLabel(0,None)
-	toTest1.renameLabel(1,None)
-	toTest2.renameLabel(0,None)
-	toTest2.renameLabel(1,None)
-	toTest2.renameLabel(2,None)
-	assert not toTest1._equalLabels(toTest2)
-	assert not toTest2._equalLabels(toTest1)
+	toTest1.renameFeatureName(0,None)
+	toTest1.renameFeatureName(1,None)
+	toTest2.renameFeatureName(0,None)
+	toTest2.renameFeatureName(1,None)
+	toTest2.renameFeatureName(2,None)
+	assert not toTest1._equalFeatureNames(toTest2)
+	assert not toTest2._equalFeatureNames(toTest1)
 
-def test_equalLabels_ignoresDefaults():
-	""" Test _equalLabels() for equality of default labeled objects """
+def test_equalFeatureNames_ignoresDefaults():
+	""" Test _equalFeatureNames() for equality of default named objects """
 	toTest1 = makeAndDefine(['1','2'])
 	toTest2 = makeAndDefine(['1','2'])
-	toTest1.renameLabel(0,None)
-	toTest1.renameLabel(1,None)
-	toTest2.renameLabel(0,None)
-	toTest2.renameLabel(1,None)
-	assert toTest1._equalLabels(toTest2)
-	assert toTest2._equalLabels(toTest1)
+	toTest1.renameFeatureName(0,None)
+	toTest1.renameFeatureName(1,None)
+	toTest2.renameFeatureName(0,None)
+	toTest2.renameFeatureName(1,None)
+	assert toTest1._equalFeatureNames(toTest2)
+	assert toTest2._equalFeatureNames(toTest1)
 
-def test_equalLabels_mixedDefaultsAndActual():
-	""" Test _equalLabels() for equality of default labeled objects mixed with actual labels """
+def test_equalFeatureNames_mixedDefaultsAndActual():
+	""" Test _equalFeatureNames() for equality of default named objects mixed with actual featureNames """
 	toTest1 = makeAndDefine(['1','2'])
 	toTest2 = makeAndDefine(['1','2'])
-	toTest1.renameLabel(0,None)
-	toTest2.renameLabel(1,None)
-	assert not toTest1._equalLabels(toTest2)
-	assert not toTest2._equalLabels(toTest1)
-	toTest1.renameLabel(0,'1')
-	toTest1.renameLabel(1,None)
-	print toTest1.labels
-	print toTest2.labels
-	assert toTest1._equalLabels(toTest2)
-	assert toTest2._equalLabels(toTest1)
+	toTest1.renameFeatureName(0,None)
+	toTest2.renameFeatureName(1,None)
+	assert not toTest1._equalFeatureNames(toTest2)
+	assert not toTest2._equalFeatureNames(toTest1)
+	toTest1.renameFeatureName(0,'1')
+	toTest1.renameFeatureName(1,None)
+	print toTest1.featureNames
+	print toTest2.featureNames
+	assert toTest1._equalFeatureNames(toTest2)
+	assert toTest2._equalFeatureNames(toTest1)
 
 ###########
 # helpers #
 ###########
 
 
-def confirmExpectedLabels(toTest, expected):
+def confirmExpectedFeatureNames(toTest, expected):
 	for i in range(len(expected)):
-		expectedLabel = expected[i]
-		if not expectedLabel.startswith(DEFAULT_PREFIX):	
-			actualIndex = toTest.labels[expectedLabel]
-			actualLabel = toTest.labelsInverse[i]
+		expectedFeatureName = expected[i]
+		if not expectedFeatureName.startswith(DEFAULT_PREFIX):	
+			actualIndex = toTest.featureNames[expectedFeatureName]
+			actualFeatureName = toTest.featureNamesInverse[i]
 			assert (actualIndex == i)
-			assert (actualLabel == expectedLabel)
+			assert (actualFeatureName == expectedFeatureName)
 
 		
 

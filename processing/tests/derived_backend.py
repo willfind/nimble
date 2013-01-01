@@ -124,8 +124,8 @@ def appendColumns_exceptionWrongSize(constructor):
 	toTest = constructor(data)
 	toTest.appendColumns([["too"], [" "], ["many"], [" "], ["rows"]])
 
-def appendColumns_exceptionSameLabel(constructor):
-	""" Test appendColumns() for ArgumentException when toAppend and self have a column label in common """
+def appendColumns_exceptionSameFeatureName(constructor):
+	""" Test appendColumns() for ArgumentException when toAppend and self have a featureName in common """
 	toTest1 = constructor([[1]],["hello"])
 	toTest2 = constructor([[1,2]],["hello","goodbye"])
 	toTest2.appendColumns(toTest1)
@@ -133,14 +133,14 @@ def appendColumns_exceptionSameLabel(constructor):
 def appendColumns_handmadeSingle(constructor):
 	""" Test appendColumns() against handmade output for a single added column"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 
 	toAppend = constructor([[-1],[-2],[-3]],['-1'])
 
 	dataExpected = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
-	labelsExpected = ['1','2','3','-1']
-	expected = constructor(dataExpected,labelsExpected)
+	featureNamesExpected = ['1','2','3','-1']
+	expected = constructor(dataExpected,featureNamesExpected)
 
 	toTest.appendColumns(toAppend)
 	assert toTest.equals(expected)
@@ -148,8 +148,8 @@ def appendColumns_handmadeSingle(constructor):
 def appendColumns_handmadeSequence(constructor):
 	""" Test appendColumns() against handmade output for a sequence of additions"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 
 	toAppend1 = [[0.1],[0.2],[0.3]]
 	lab1 =  ['a']
@@ -162,10 +162,10 @@ def appendColumns_handmadeSequence(constructor):
 	toTest.appendColumns(constructor(toAppend2,lab2))
 	toTest.appendColumns(constructor(toAppend3,lab3))
 
-	labelsExpected = ['1','2','3','a','A','0','10']
+	featureNamesExpected = ['1','2','3','a','A','0','10']
 	dataExpected = [[1,2,3,0.1,0.01,0,10],[4,5,6,0.2,0.02,0,11],[7,8,9,0.3,0.03,0,12]]
 
-	expected = constructor(dataExpected,labelsExpected)
+	expected = constructor(dataExpected,featureNamesExpected)
 	assert toTest.equals(expected)
 
 
@@ -286,40 +286,40 @@ def extractRows_handmadeFunction(constructor):
 	expEnd = constructor([[7,8,9]])
 	assert toTest.equals(expEnd)
 
-def extractRows_handmadeFuncionWithLabels(constructor):
-	""" Test extractRows() against handmade output for function extraction with labels"""
-	labels = ["one","two","three"]
+def extractRows_handmadeFuncionWithFeatureNames(constructor):
+	""" Test extractRows() against handmade output for function extraction with featureNames"""
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	def oneOrFour(row):
 		if 1 in row or 4 in row:
 			return True
 		return False
 	ext = toTest.extractRows(oneOrFour)
-	exp = constructor([[1,2,3],[4,5,6]],labels)
+	exp = constructor([[1,2,3],[4,5,6]],featureNames)
 	assert ext.equals(exp)
-	expEnd = constructor([[7,8,9]],labels)
+	expEnd = constructor([[7,8,9]],featureNames)
 	assert toTest.equals(expEnd)
 
 def extractRows_exceptionStartInvalid(constructor):
 	""" Test extracRows() for ArgumentException when start is not a valid row index """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractRows(start=-1,end=2)
 
 def extractRows_exceptionEndInvalid(constructor):
 	""" Test extractRows() for ArgumentException when start is not a valid column index """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractRows(start=1,end=5)
 
 def extractRows_exceptionInversion(constructor):
 	""" Test extractRows() for ArgumentException when start comes after end """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractRows(start=2,end=0)
 
 def extractRows_handmade(constructor):
@@ -334,15 +334,15 @@ def extractRows_handmade(constructor):
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
 
-def extractRows_handmadeWithLabels(constructor):
-	""" Test extractRows() against handmade output for range extraction with labels """
-	labels = ["one","two","three"]
+def extractRows_handmadeWithFeatureNames(constructor):
+	""" Test extractRows() against handmade output for range extraction with featureNames """
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	ret = toTest.extractRows(start=1,end=2)
 	
-	expectedRet = constructor([[4,5,6],[7,8,9]],labels)
-	expectedTest = constructor([[1,2,3]],labels)
+	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
+	expectedTest = constructor([[1,2,3]],featureNames)
 
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
@@ -380,11 +380,11 @@ def extractColumns_handmadeListSequence(constructor):
 	expEnd = constructor(expEndData)
 	assert toTest.equals(expEnd)
 
-def extractColumns_handmadeListWithLabel(constructor):
-	""" Test extractColumns() against handmade output for list extraction when specifying labels """
+def extractColumns_handmadeListWithFeatureName(constructor):
+	""" Test extractColumns() against handmade output for list extraction when specifying featureNames """
 	data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
-	labels = ["one","two","three","neg"]
-	toTest = constructor(data,labels)
+	featureNames = ["one","two","three","neg"]
+	toTest = constructor(data,featureNames)
 	ext1 = toTest.extractColumns(["one"])
 	exp1 = constructor([[1],[4],[7]], ["one"])
 	assert ext1.equals(exp1)
@@ -406,20 +406,15 @@ def extractColumns_handmadeFunction(constructor):
 	ext = toTest.extractColumns(absoluteOne)
 	exp = constructor([[1,-1],[4,-2],[7,-3]])
 	assert ext.equals(exp)
-	expEnd = constructor([[2,3],[5,6],[8,9]])	
-	print toTest.data
-	print toTest.labels
-	print expEnd.data
-	print expEnd.labels
-	
+	expEnd = constructor([[2,3],[5,6],[8,9]])		
 	assert toTest.equals(expEnd)
 
 
-def extractColumns_handmadeFunctionWithLabel(constructor):
-	""" Test extractColumns() against handmade output for function extraction with labels """
+def extractColumns_handmadeFunctionWithFeatureName(constructor):
+	""" Test extractColumns() against handmade output for function extraction with featureNames """
 	data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
-	labels = ["one","two","three","neg"]
-	toTest = constructor(data,labels)
+	featureNames = ["one","two","three","neg"]
+	toTest = constructor(data,featureNames)
 	def absoluteOne(column):
 		if 1 in column or -1 in column:
 			return True
@@ -429,53 +424,49 @@ def extractColumns_handmadeFunctionWithLabel(constructor):
 	exp = constructor([[1,-1],[4,-2],[7,-3]], ['one','neg'])
 	assert ext.equals(exp)
 	expEnd = constructor([[2,3],[5,6],[8,9]],["two","three"])	
-	print toTest.data
-	print toTest.labels
-	print expEnd.data
-	print expEnd.labels
 	assert toTest.equals(expEnd)
 
 
 def extractColumns_exceptionStartInvalid(constructor):
 	""" Test extractColumns() for ArgumentException when start is not a valid column index """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractColumns(start=-1, end=2)
 
-def extractColumns_exceptionStartInvalidLabel(constructor):
-	""" Test extractColumns() for ArgumentException when start is not a valid column Label """
-	labels = ["one","two","three"]
+def extractColumns_exceptionStartInvalidFeatureName(constructor):
+	""" Test extractColumns() for ArgumentException when start is not a valid column FeatureName """
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractColumns(start="wrong", end=2)
 
 def extractColumns_exceptionEndInvalid(constructor):
 	""" Test extractColumns() for ArgumentException when start is not a valid column index """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractColumns(start=0, end=5)
 
-def extractColumns_exceptionEndInvalidLabel(constructor):
-	""" Test extractColumns() for ArgumentException when start is not a valid column label """
-	labels = ["one","two","three"]
+def extractColumns_exceptionEndInvalidFeatureName(constructor):
+	""" Test extractColumns() for ArgumentException when start is not a valid featureName """
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractColumns(start="two", end="five")
 
 def extractColumns_exceptionInversion(constructor):
 	""" Test extractColumns() for ArgumentException when start comes after end """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractColumns(start=2, end=0)
 
-def extractColumns_exceptionInversionLabel(constructor):
-	""" Test extractColumns() for ArgumentException when start comes after end as Labels"""
-	labels = ["one","two","three"]
+def extractColumns_exceptionInversionFeatureName(constructor):
+	""" Test extractColumns() for ArgumentException when start comes after end as FeatureNames"""
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.extractColumns(start="two", end="one")
 
 def extractColumns_handmadeRange(constructor):
@@ -490,11 +481,11 @@ def extractColumns_handmadeRange(constructor):
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
 
-def extractColumns_handmadeWithLabels(constructor):
-	""" Test extractColumns() against handmade output for range extraction with Labels """
-	labels = ["one","two","three"]
+def extractColumns_handmadeWithFeatureNames(constructor):
+	""" Test extractColumns() against handmade output for range extraction with FeatureNames """
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	ret = toTest.extractColumns(start=1,end=2)
 	
 	expectedRet = constructor([[2,3],[5,6],[8,9]],["two","three"])
@@ -511,20 +502,20 @@ def extractColumns_handmadeWithLabels(constructor):
 
 def applyFunctionToEachRow_exceptionInputNone(constructor):
 	""" Test applyFunctionToEachRow() for ArgumentException when function is None """
-	labels = {'number':0,'centi':2,'deci':1}
+	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-	origObj = constructor(deepcopy(origData),labels)
+	origObj = constructor(deepcopy(origData),featureNames)
 	origObj.applyFunctionToEachRow(None)
 
 def applyFunctionToEachRow_Handmade(constructor):
 	""" Test applyFunctionToEachRow() with handmade output """
-	labels = {'number':0,'centi':2,'deci':1}
+	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-	origObj = constructor(deepcopy(origData),labels)
+	origObj = constructor(deepcopy(origData),featureNames)
 
 
 	def emitLower (row):
-		return row[origObj.labels['deci']]
+		return row[origObj.featureNames['deci']]
 
 	lowerCounts = origObj.applyFunctionToEachRow(emitLower)
 
@@ -541,16 +532,16 @@ def applyFunctionToEachRow_Handmade(constructor):
 
 def applyFunctionToEachColumn_exceptionInputNone(constructor):
 	""" Test applyFunctionToEachColumn() for ArgumentException when function is None """
-	labels = {'number':0,'centi':2,'deci':1}
+	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-	origObj= constructor(deepcopy(origData),labels)
+	origObj= constructor(deepcopy(origData),featureNames)
 	origObj.applyFunctionToEachColumn(None)
 
 def applyFunctionToEachColumn_Handmade(constructor):
 	""" Test applyFunctionToEachColumn() with handmade output """
-	labels = {'number':0,'centi':2,'deci':1}
+	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-	origObj= constructor(deepcopy(origData),labels)
+	origObj= constructor(deepcopy(origData),featureNames)
 
 	def emitAllEqual (column):
 		first = column[0]
@@ -590,30 +581,30 @@ def oddOnlyReducer(identifier, valuesList):
 
 def mapReduceOnRows_argumentExceptionNoneMap(constructor):
 	""" Test mapReduceOnRows() for ArgumentException when mapper is None """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.mapReduceOnRows(None,simpleReducer)
 
 def mapReduceOnRows_argumentExceptionNoneReduce(constructor):
 	""" Test mapReduceOnRows() for ArgumentException when reducer is None """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.mapReduceOnRows(simpleMapper,None)
 
 def mapReduceOnRows_argumentExceptionUncallableMap(constructor):
 	""" Test mapReduceOnRows() for ArgumentException when mapper is not callable """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.mapReduceOnRows("hello",simpleReducer)
 
 def mapReduceOnRows_argumentExceptionUncallableReduce(constructor):
 	""" Test mapReduceOnRows() for ArgumentException when reducer is not callable """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	toTest.mapReduceOnRows(simpleMapper,5)
 
 
@@ -623,28 +614,28 @@ def mapReduceOnRows_argumentExceptionUncallableReduce(constructor):
 
 def mapReduceOnRows_handmade(constructor):
 	""" Test mapReduceOnRows() against handmade output """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	ret = toTest.mapReduceOnRows(simpleMapper,simpleReducer)
 	
 	exp = constructor([[1,5],[4,11],[7,17]])
 	
 	assert (ret.equals(exp))
-	assert (toTest.equals(constructor(data,labels)))
+	assert (toTest.equals(constructor(data,featureNames)))
 
 
 def mapReduceOnRows_handmadeNoneReturningReducer(constructor):
 	""" Test mapReduceOnRows() against handmade output with a None returning Reducer """
-	labels = ["one","two","three"]
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 	ret = toTest.mapReduceOnRows(simpleMapper,oddOnlyReducer)
 	
 	exp = constructor([[1,5],[7,17]])
 	
 	assert (ret.equals(exp))
-	assert (toTest.equals(constructor(data,labels)))
+	assert (toTest.equals(constructor(data,featureNames)))
 
 	
 
@@ -656,8 +647,8 @@ def mapReduceOnRows_handmadeNoneReturningReducer(constructor):
 ##########################
 
 
-def convertToRowListData_handmade_defaultLabels(constructor):
-	""" Test convertToRowListData with default labels """
+def convertToRowListData_handmade_defaultFeatureNames(constructor):
+	""" Test convertToRowListData with default featureNames """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
 
@@ -668,14 +659,14 @@ def convertToRowListData_handmade_defaultLabels(constructor):
 	assert exp.equals(ret)
 
 	
-def convertToRowListData_handmade_assignedLabels(constructor):
-	""" Test convertToRowListData with assigned labels """
-	labels = ["one","two","three"]
+def convertToRowListData_handmade_assignedFeatureNames(constructor):
+	""" Test convertToRowListData with assigned featureNames """
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 
 	ret = toTest.convertToRowListData()
-	exp = RLD(data,labels)
+	exp = RLD(data,featureNames)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
@@ -686,8 +677,8 @@ def convertToRowListData_handmade_assignedLabels(constructor):
 # convertToDenseMatrixData() #
 ##############################
 
-def convertToDenseMatrixData_handmade_defaultLabels(constructor):
-	""" Test convertToDenseMatrixData with default labels """
+def convertToDenseMatrixData_handmade_defaultFeatureNames(constructor):
+	""" Test convertToDenseMatrixData with default featureNames """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
 
@@ -698,14 +689,14 @@ def convertToDenseMatrixData_handmade_defaultLabels(constructor):
 	assert exp.equals(ret)
 
 	
-def convertToDenseMatrixData_handmade_assignedLabels(constructor):
-	""" Test convertToDenseMatrixData with assigned labels """
-	labels = ["one","two","three"]
+def convertToDenseMatrixData_handmade_assignedFeatureNames(constructor):
+	""" Test convertToDenseMatrixData with assigned featureNames """
+	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
+	toTest = constructor(data,featureNames)
 
 	ret = toTest.convertToDenseMatrixData()
-	exp = DMD(data,labels)
+	exp = DMD(data,featureNames)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)

@@ -69,7 +69,7 @@ def regressor(algorithm, trainData, testData, output=None, dependentVar=None, ar
 	
 	# make sure dependentVar is a column number
 	if not isinstance(dependentVar, int):
-		dependentVar = trainData.labels[dependentVar]
+		dependentVar = trainData.featureNames[dependentVar]
 	
 	# isolate the target values from training examples, if present
 	trainDataY = None

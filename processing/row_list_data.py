@@ -23,11 +23,11 @@ class RowListData(BaseData):
 
 	"""
 
-	def __init__(self, data=None, labels=None):
+	def __init__(self, data=None, featureNames=None):
 		"""
-		Instantiate a Row List data using the given data and labels. data may be
+		Instantiate a Row List data using the given data and featureNames. data may be
 		none or an empty list to indicate an empty object, or a fully populated
-		list of lists to be encased by this object. labels is passed up to
+		list of lists to be encased by this object. featureNames is passed up to
 		the init funciton of BaseData, to be interpreted there.
 
 		"""
@@ -41,7 +41,7 @@ class RowListData(BaseData):
 				if len(row) != self.numColumns:
 					raise ArgumentException("Rows must be of equal size")
 			self.data = data
-			super(RowListData, self).__init__(labels)
+			super(RowListData, self).__init__(featureNames)
 
 
 	def _transpose_implementation(self):
@@ -92,7 +92,7 @@ class RowListData(BaseData):
 		""" 
 		Modify this object so that the columns are sorted using the built in python
 		sort on column views. The input arguments are passed to that function unalterted.
-		This funciton returns a list of labels indicating the new order of the data.
+		This funciton returns a list of featureNames indicating the new order of the data.
 
 		"""
 		def passThrough(toKey):
@@ -121,17 +121,17 @@ class RowListData(BaseData):
 			for i in xrange(self.columns()):
 				row[i] = temp[i]
 
-		# have to deal with labels now
+		# have to deal with featureNames now
 		for i in xrange(self.columns()):
 			currKey = keyList[i]
 			oldColNum = keyDict[currKey]
-			temp[i] = self.labelsInverse[oldColNum]
+			temp[i] = self.featureNamesInverse[oldColNum]
 		return temp
 
 	def _extractRows_implementation(self, toExtract, start, end, number, randomize):
 		"""
 		Function to extract rows according to the parameters, and return an object containing
-		the removed rows with default label names. The actual work is done by further helper
+		the removed rows with default feature names. The actual work is done by further helper
 		functions, this determines which helper to call, and modifies the input to accomodate
 		the number and randomize parameters, where number indicates how many of the possibilities
 		should be extracted, and randomize indicates whether the choice of who to extract should
@@ -246,7 +246,7 @@ class RowListData(BaseData):
 	def _extractColumns_implementation(self, toExtract, start, end, number, randomize):
 		"""
 		Function to extract columns according to the parameters, and return an object containing
-		the removed columns with their label names from this object. The actual work is done by
+		the removed columns with their featureNames from this object. The actual work is done by
 		further helper functions, this determines which helper to call, and modifies the input
 		to accomodate the number and randomize parameters, where number indicates how many of the
 		possibilities should be extracted, and randomize indicates whether the choice of who to
@@ -297,8 +297,8 @@ class RowListData(BaseData):
 	def _extractColumnsByList_implementation(self, toExtract):
 		"""
 		Modify this object to have only the columns that are not given in the input,
-		returning an object containing those columns that are, with the same labels
-		they had previously. It does not modify the labels for the calling object.
+		returning an object containing those columns that are, with the same featureNames
+		they had previously. It does not modify the featureNames for the calling object.
 
 		"""
 		toExtract.sort()
@@ -313,24 +313,24 @@ class RowListData(BaseData):
 
 		self.numColumns = self.numColumns - len(toExtract)
 
-		# construct label list
-		labelList = []
+		# construct featureName list
+		featureNameList = []
 		for index in toExtract:
-			labelList.append(self.labelsInverse[index])
+			featureNameList.append(self.featureNamesInverse[index])
 		# toExtract was reversed (for efficiency) so we have to rereverse this to get it right
-		labelList.reverse()
-		return RowListData(extractedData, labelList)
+		featureNameList.reverse()
+		return RowListData(extractedData, featureNameList)
 
 
 	def _extractColumnsByFunction_implementation(self, function, number):
 		"""
 		Modify this object to have only the columns whose views do not satisfy the given
 		function, returning an object containing those columns whose views do, with the
-		same labels	they had previously. It does not modify the labels for the calling object.
+		same featureNames	they had previously. It does not modify the featureNames for the calling object.
 
 		"""
 		# all we're doing is making a list and calling extractColumnsBy list, no need
-		# deal with labels or the number of columns.
+		# deal with featureNames or the number of columns.
 		toExtract = []
 		for i in xrange(self.columns()):
 			ithView = self.ColumnView(self,i)
@@ -342,8 +342,8 @@ class RowListData(BaseData):
 	def _extractColumnsByRange_implementation(self, start, end):
 		"""
 		Modify this object to have only those columns that are not within the given range,
-		inclusive; returning an object containing those columns that are, with the same labels
-		they had previously. It does not modify the labels for the calling object.
+		inclusive; returning an object containing those columns that are, with the same featureNames
+		they had previously. It does not modify the featureNames for the calling object.
 		"""
 		extractedData = []
 		for row in self.data:
@@ -356,12 +356,12 @@ class RowListData(BaseData):
 
 		self.numColumns = self.numColumns- len(extractedRow)
 
-		# construct label list
-		labelList = []
+		# construct featureName list
+		featureNameList = []
 		for index in xrange(start,end+1):
-			labelList.append(self.labelsInverse[index])
+			featureNameList.append(self.featureNamesInverse[index])
 	
-		return RowListData(extractedData, labelList)
+		return RowListData(extractedData, featureNameList)
 
 
 	def _applyFunctionToEachRow_implementation(self,function):
@@ -436,13 +436,13 @@ class RowListData(BaseData):
 
 
 	def _convertToRowListData_implementation(self):
-		"""	Returns a RowListData object with the same data and labels as this one """
-		return RowListData(self.data, self.labels)
+		"""	Returns a RowListData object with the same data and featureNames as this one """
+		return RowListData(self.data, self.featureNames)
 
 	def _convertToDenseMatrixData_implementation(self):
-		""" Returns a DenseMatrixData object with the same data and labels as this object """
+		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
 		from dense_matrix_data import DenseMatrixData as DMD
-		return DMD(self.data, self.labels)
+		return DMD(self.data, self.featureNames)
 
 
 	###########
@@ -483,18 +483,18 @@ def loadCSV(inPath, lineParser = None):
 	"""
 	inFile = open(inPath, 'r')
 	firstLine = inFile.readline()
-	labelList = None
+	featureNameList = None
 
-	# test if this is a line defining column labels
+	# test if this is a line defining column featureNames
 	if firstLine[0] == "#":
 		# strip '#' from the begining of the line
 		scrubbedLine = firstLine[1:]
 		# strip newline from end of line
 		scrubbedLine = scrubbedLine.rstrip()
-		labelList = scrubbedLine.split(',')
-		labelMap = {}
-		for name in labelList:
-			labelMap[name] = labelList.index(name)
+		featureNameList = scrubbedLine.split(',')
+		featureNameMap = {}
+		for name in featureNameList:
+			featureNameMap[name] = featureNameList.index(name)
 	#if not, get the iterator pointed back at the first line again	
 	else:
 		inFile.close()
@@ -514,28 +514,28 @@ def loadCSV(inPath, lineParser = None):
 			currList = currLine.split(',')
 			data.append(currList)
 
-	if labelList == None:
+	if featureNameList == None:
 		return RowListData(data)
 
 	inFile.close()
 
-	return RowListData(data,labelMap)
+	return RowListData(data,featureNameMap)
 
 
-def writeToCSV(toWrite, outPath, includeLabels):
+def writeToCSV(toWrite, outPath, includeFeatureNames):
 	"""
 	Function to write the data in a RowListData to a CSV file at the designated
 	path.
 
 	toWrite is the RowListData to write to file. outPath is the location where
-	we want to write the output file. includeLabels is boolean argument indicating
-	whether the file should start with a comment line designating column labels.
+	we want to write the output file. includeFeatureNames is boolean argument indicating
+	whether the file should start with a comment line designating column featureNames.
 
 	"""
 	outFile = open(outPath, 'w')
 	
-	if includeLabels and toWrite.labels != None:
-		pairs = toWrite.labels.items()
+	if includeFeatureNames and toWrite.featureNames != None:
+		pairs = toWrite.featureNames.items()
 		# sort according to the value, not the key. ie sort by column number
 		pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
 		for (a,x) in pairs:

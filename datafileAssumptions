@@ -1,5 +1,5 @@
 CSV file; each line contains the same number of values. Blank values allowed. 
 
-Optional: first line begins with '#' and contains a comma separated list of labels
-corresponding to the name of each comma separated value. Labels are unique.
+Optional: first line begins with '#' and contains a comma separated list of featureNames
+corresponding to the name of each comma separated value. FeatureNames are unique.
 

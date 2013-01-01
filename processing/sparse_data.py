@@ -17,11 +17,11 @@ from ..utility.custom_exceptions import ArgumentException
 class SparseData(BaseData):
 
 
-	def __init__(self, data=None, labels=None):
+	def __init__(self, data=None, featureNames=None):
 		if not isspmatrix(data):
 			raise ArgumentException("data must be a sparse matrix")
 		self.data = data
-		super(SparseData, self).__init__(labels)
+		super(SparseData, self).__init__(featureNames)
 
 
 

@@ -47,15 +47,15 @@ from copy import deepcopy
 def columnToBinaryCategoryColumns_handmade(constructor):
 	""" Test convertColumnToCategoryColumns() against handmade output """
 	data = [[1],[2],[3]]
-	labels = ['col']
-	toTest = constructor(data,labels)
+	featureNames = ['col']
+	toTest = constructor(data,featureNames)
 	toTest.columnToBinaryCategoryColumns(0)
 
 	expData = [[1,0,0], [0,1,0], [0,0,1]]
-	expLabels = ['col=1','col=2','col=3']
-	exp = constructor(expData, expLabels)
+	expFeatureNames = ['col=1','col=2','col=3']
+	exp = constructor(expData, expFeatureNames)
 
-	print toTest.labels
+	print toTest.featureNames
 
 	assert toTest.equals(exp)
 	
@@ -68,8 +68,8 @@ def columnToBinaryCategoryColumns_handmade(constructor):
 def columnToIntegerCategories_handmade(constructor):
 	""" Test convertColumnToIntegerCategories() against handmade output """
 	data = [[10],[20],[30.5],[20],[10]]
-	labels = ['col']
-	toTest = constructor(data,labels)
+	featureNames = ['col']
+	toTest = constructor(data,featureNames)
 	toTest.columnToIntegerCategories(0)
 
 	assert toTest.data[0] == toTest.data[4]
@@ -87,26 +87,26 @@ def columnToIntegerCategories_handmade(constructor):
 def selectConstantOfRowsByValue_exceptionNumToSelectNone(constructor):
 	""" Test selectConstantOfRowsByValue() for Argument exception when numToSelect is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectConstantOfRowsByValue(None,'1')
 
 def selectConstantOfRowsByValue_exceptionNumToSelectLEzero(constructor):
 	""" Test selectConstantOfRowsByValue() for Argument exception when numToSelect <= 0 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectConstantOfRowsByValue(0,'1')
 
 def selectConstantOfRowsByValue_handmade(constructor):
 	""" Test selectConstantOfRowsByValue() against handmade output """
 	data = [[1,2,3],[1,5,6],[1,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectConstantOfRowsByValue(2,'1')
 
-	expRet = constructor([[1,2,3],[1,8,9]],labels)
-	expTest = constructor([[1,5,6],],labels)
+	expRet = constructor([[1,2,3],[1,8,9]],featureNames)
+	expTest = constructor([[1,5,6],],featureNames)
 
 	assert ret.equals(expRet)
 	assert expTest.equals(toTest)
@@ -114,12 +114,12 @@ def selectConstantOfRowsByValue_handmade(constructor):
 def selectConstantOfRowsByValue_handmadeLimit(constructor):
 	""" Test selectConstantOfRowsByValue() against handmade output when the constant exceeds the available rows """
 	data = [[1,2,3],[1,5,6],[1,8,9],[2,11,12]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectConstantOfRowsByValue(2,'1')
 
-	expRet = constructor([[1,2,3],[1,8,9],[2,11,12]],labels)
-	expTest = constructor([[1,5,6],],labels)
+	expRet = constructor([[1,2,3],[1,8,9],[2,11,12]],featureNames)
+	expTest = constructor([[1,5,6],],featureNames)
 
 	assert ret.equals(expRet)
 	assert expTest.equals(toTest)
@@ -133,33 +133,33 @@ def selectConstantOfRowsByValue_handmadeLimit(constructor):
 def selectPercentOfRowsByValue_exceptionPercentNone(constructor):
 	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectPercentOfRowsByValue(None,'1')
 
 def selectPercentOfRowsByValue_exceptionPercentZero(constructor):
 	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is <= 0 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectPercentOfRowsByValue(0,'1')
 
 def selectPercentOfRowsByValue_exceptionPercentOneHundrend(constructor):
 	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is >= 100 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectPercentOfRowsByValue(100,'1')
 
 def selectPercentOfRowsByValue_handmade(constructor):
 	""" Test selectPercentOfRowsByValue() against handmade output """
 	data = [[1,2,3],[1,5,6],[1,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectPercentOfRowsByValue(50,'1')
 
-	expRet = constructor([[1,2,3]],labels)
-	expTest = constructor([[1,5,6],[1,8,9]],labels)
+	expRet = constructor([[1,2,3]],featureNames)
+	expTest = constructor([[1,5,6],[1,8,9]],featureNames)
 
 	assert ret.equals(expRet)
 	assert expTest.equals(toTest)
@@ -172,33 +172,33 @@ def selectPercentOfRowsByValue_handmade(constructor):
 def selectPercentOfAllRows_exceptionPercentNone(constructor):
 	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectPercentOfAllRows(None)
 
 def selectPercentOfAllRows_exceptionPercentZero(constructor):
 	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is <= 0 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectPercentOfAllRows(0)
 
 def selectPercentOfAllRows_exceptionPercentOneHundrend(constructor):
 	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is >= 100 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.selectPercentOfAllRows(100)
 
 def selectPercentOfAllRows_handmade(constructor):
 	""" Test selectPercentOfAllRows() against handmade output with the test seed """
 	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	ret = toTest.selectPercentOfAllRows(50)
 
-	expRet = constructor([[1,2,3],[10,11,12]],labels)
-	expTest = constructor([[4,5,6],[7,8,9]],labels)
+	expRet = constructor([[1,2,3],[10,11,12]],featureNames)
+	expTest = constructor([[4,5,6],[7,8,9]],featureNames)
 
 	assert ret.equals(expRet)
 	assert expTest.equals(toTest)
@@ -210,33 +210,33 @@ def selectPercentOfAllRows_handmade(constructor):
 def extractRowsByCoinToss_exceptionNoneProbability(constructor):
 	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.extractRowsByCoinToss(None)
 
 def extractRowsByCoinToss_exceptionLEzero(constructor):
 	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.extractRowsByCoinToss(0)
 
 def extractRowsByCoinToss_exceptionGEone(constructor):
 	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	toTest.extractRowsByCoinToss(1)
 
 def extractRowsByCoinToss_handmade(constructor):
 	""" Test extractRowsByCoinToss() against handmade output with the test seed """
 	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-	labels = ['1','2','3']
-	toTest = constructor(data,labels)
+	featureNames = ['1','2','3']
+	toTest = constructor(data,featureNames)
 	ret = toTest.extractRowsByCoinToss(0.5)
 
-	expRet = constructor([[4,5,6],[7,8,9]],labels)
-	expTest = constructor([[1,2,3],[10,11,12]],labels)
+	expRet = constructor([[4,5,6],[7,8,9]],featureNames)
+	expTest = constructor([[1,2,3],[10,11,12]],featureNames)
 
 	assert ret.equals(expRet)
 	assert expTest.equals(toTest)

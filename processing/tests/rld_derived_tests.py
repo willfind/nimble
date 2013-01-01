@@ -11,8 +11,8 @@ from derived_backend import *
 from ..row_list_data import *
 from nose.tools import *
 
-def constructor(data,labels=None):
-	return RowListData(data,labels)
+def constructor(data,featureNames=None):
+	return RowListData(data,featureNames)
 
 ############
 # equals() #
@@ -78,9 +78,9 @@ def test_appendColumns_exceptionWrongSize():
 	appendColumns_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
-def test_appendColumns_exceptionSameLabel():
-	""" Test RLD appendColumns() for ArgumentException when toAppend and self have a column label in common """
-	appendColumns_exceptionSameLabel(constructor)
+def test_appendColumns_exceptionSameFeatureName():
+	""" Test RLD appendColumns() for ArgumentException when toAppend and self have a featureName in common """
+	appendColumns_exceptionSameFeatureName(constructor)
 
 def test_appendColumns_handmadeSingle():
 	""" Test RLD appendColumns() against handmade output for a single added column"""
@@ -135,9 +135,9 @@ def test_extractRows_handmadeFunction():
 	""" Test RLD extractRows() against handmade output for function extraction """
 	extractRows_handmadeFunction(constructor)
 
-def test_extractRows_handmadeFuncionWithLabels():
-	""" Test RLD extractRows() against handmade output for function extraction with labels"""
-	extractRows_handmadeFuncionWithLabels(constructor)
+def test_extractRows_handmadeFuncionWithFeatureNames():
+	""" Test RLD extractRows() against handmade output for function extraction with featureNames"""
+	extractRows_handmadeFuncionWithFeatureNames(constructor)
 
 @raises(ArgumentException)
 def test_extractRows_exceptionStartInvalid():
@@ -158,9 +158,9 @@ def test_extractRows_handmade():
 	""" Test RLD extractRows() against handmade output for range extraction """
 	extractRows_handmade(constructor)
 
-def test_extractRows_handmadeWithLabels():
-	""" Test RLD extractRows() against handmade output for range extraction with labels """
-	extractRows_handmadeWithLabels(constructor)
+def test_extractRows_handmadeWithFeatureNames():
+	""" Test RLD extractRows() against handmade output for range extraction with featureNames """
+	extractRows_handmadeWithFeatureNames(constructor)
 
 
 ####################
@@ -175,17 +175,17 @@ def test_extractColumns_handmadeListSequence():
 	""" Test RLD extractColumns() against handmade output for several extractions by list """
 	extractColumns_handmadeListSequence(constructor)
 
-def test_extractColumns_handmadeListWithLabel():
-	""" Test RLD extractColumns() against handmade output for list extraction when specifying labels """
-	extractColumns_handmadeListWithLabel(constructor)
+def test_extractColumns_handmadeListWithFeatureName():
+	""" Test RLD extractColumns() against handmade output for list extraction when specifying featureNames """
+	extractColumns_handmadeListWithFeatureName(constructor)
 
 def test_extractColumns_handmadeFunction():
 	""" Test RLD extractColumns() against handmade output for function extraction """
 	extractColumns_handmadeFunction(constructor)
 
-def test_extractColumns_handmadeFunctionWithLabel():
-	""" Test RLD extractColumns() against handmade output for function extraction with labels """
-	extractColumns_handmadeFunctionWithLabel(constructor)
+def test_extractColumns_handmadeFunctionWithFeatureName():
+	""" Test RLD extractColumns() against handmade output for function extraction with featureNames """
+	extractColumns_handmadeFunctionWithFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionStartInvalid():
@@ -193,9 +193,9 @@ def test_extractColumns_exceptionStartInvalid():
 	extractColumns_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionStartInvalidLabel():
-	""" Test RLD extractColumns() for ArgumentException when start is not a valid column Label """
-	extractColumns_exceptionStartInvalidLabel(constructor)
+def test_extractColumns_exceptionStartInvalidFeatureName():
+	""" Test RLD extractColumns() for ArgumentException when start is not a valid featureName """
+	extractColumns_exceptionStartInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionEndInvalid():
@@ -203,9 +203,9 @@ def test_extractColumns_exceptionEndInvalid():
 	extractColumns_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionEndInvalidLabel():
-	""" Test RLD extractColumns() for ArgumentException when start is not a valid column label """
-	extractColumns_exceptionEndInvalidLabel(constructor)
+def test_extractColumns_exceptionEndInvalidFeatureName():
+	""" Test RLD extractColumns() for ArgumentException when start is not a valid column featureName """
+	extractColumns_exceptionEndInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionInversion():
@@ -213,17 +213,17 @@ def test_extractColumns_exceptionInversion():
 	extractColumns_exceptionInversion(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionInversionLabel():
-	""" Test RLD extractColumns() for ArgumentException when start comes after end as Labels"""
-	extractColumns_exceptionInversionLabel(constructor)
+def test_extractColumns_exceptionInversionFeatureName():
+	""" Test RLD extractColumns() for ArgumentException when start comes after end as FeatureNames"""
+	extractColumns_exceptionInversionFeatureName(constructor)
 
 def test_extractColumns_handmadeRange():
 	""" Test RLD extractColumns() against handmade output for range extraction """
 	extractColumns_handmadeRange(constructor)
 
-def test_extractColumns_handmadeWithLabels():
-	""" Test RLD extractColumns() against handmade output for range extraction with Labels """
-	extractColumns_handmadeWithLabels(constructor)
+def test_extractColumns_handmadeWithFeatureNames():
+	""" Test RLD extractColumns() against handmade output for range extraction with FeatureNames """
+	extractColumns_handmadeWithFeatureNames(constructor)
 
 
 ####################
@@ -313,7 +313,7 @@ def test_LoadData():
 	loaded = loadCSV(tmpFile.name)
 
 	assert (loaded.data == origData)
-	assert (loaded.labels == {'number':0, 'lower':1, 'upper':2})
+	assert (loaded.featureNames == {'number':0, 'lower':1, 'upper':2})
 
 
 def test_LoadDataWithParser():
@@ -339,41 +339,41 @@ def test_LoadDataWithParser():
 	loaded = loadCSV(tmpFile.name,parseLine)
 
 	assert (loaded.data == origData)
-	assert (loaded.labels == {'number':0, 'lower':1, 'upper':2})
+	assert (loaded.featureNames == {'number':0, 'lower':1, 'upper':2})
 
 
 def test_RoundTrip():
-	""" Test RLD loadCSV() and RLD writeToCSV() in a round trip test, including a label line """
+	""" Test RLD loadCSV() and RLD writeToCSV() in a round trip test, including a featureName line """
 	roundTripBackend(True)
 
-def test_RoundTripNoLabels():
-	""" Test RLD loadCSV() and RLD writeToCSV() in a round trip test, without a label line """
+def test_RoundTripNoFeatureNames():
+	""" Test RLD loadCSV() and RLD writeToCSV() in a round trip test, without a featureName line """
 	roundTripBackend(False)
 
 
-def roundTripBackend(includeLabels):
+def roundTripBackend(includeFeatureNames):
 	tmpFile = tempfile.NamedTemporaryFile()
-	labels = None	
-	if includeLabels:
-		labels = {'number':0,'upper':2,'lower':1}
+	featureNames = None	
+	if includeFeatureNames:
+		featureNames = {'number':0,'upper':2,'lower':1}
 	origData = [['1','a','a'], ['1','a','B'], ['1','a','C'], ['1','b','B'],
 				['2','a','B'], ['2','c','2'], ['2','b','C'], ['2','c','C']]
 
-	if includeLabels:
-		origObj = RowListData(origData,labels)
+	if includeFeatureNames:
+		origObj = RowListData(origData,featureNames)
 	else:
 		origObj = RowListData(origData)
 
-	writeToCSV(origObj,tmpFile.name,includeLabels)
+	writeToCSV(origObj,tmpFile.name,includeFeatureNames)
 
 	loaded = loadCSV(tmpFile.name)
 
 	# test equality of data
 	assert (loaded.data == origData)
 
-	# test equality of the label map, if it exists
-	if includeLabels:
-		assert(loaded.labels == labels)
+	# test equality of the featureName map, if it exists
+	if includeFeatureNames:
+		assert(loaded.featureNames == featureNames)
 
 
 
@@ -382,14 +382,14 @@ def roundTripBackend(includeLabels):
 ##########################
 
 
-def test_convertToRowListData_handmade_defaultLabels():
-	""" Test RLD convertToRowListData with default labels """
-	convertToRowListData_handmade_defaultLabels(constructor)
+def test_convertToRowListData_handmade_defaultFeatureNames():
+	""" Test RLD convertToRowListData with default featureNames """
+	convertToRowListData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToRowListData_handmade_assignedLabels():
-	""" Test RLD convertToRowListData with assigned labels """
-	convertToRowListData_handmade_assignedLabels(constructor)
+def test_convertToRowListData_handmade_assignedFeatureNames():
+	""" Test RLD convertToRowListData with assigned featureNames """
+	convertToRowListData_handmade_assignedFeatureNames(constructor)
 
 
 
@@ -398,14 +398,14 @@ def test_convertToRowListData_handmade_assignedLabels():
 ##############################
 
 
-def test_convertToDenseMatrixData_handmade_defaultLabels():
-	""" Test RLD convertToDenseMatrixData with default labels """
-	convertToDenseMatrixData_handmade_defaultLabels(constructor)
+def test_convertToDenseMatrixData_handmade_defaultFeatureNames():
+	""" Test RLD convertToDenseMatrixData with default featureNames """
+	convertToDenseMatrixData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToDenseMatrixData_handmade_assignedLabels():
-	""" Test RLD convertToDenseMatrixData with assigned labels """
-	convertToDenseMatrixData_handmade_assignedLabels(constructor)
+def test_convertToDenseMatrixData_handmade_assignedFeatureNames():
+	""" Test RLD convertToDenseMatrixData with assigned featureNames """
+	convertToDenseMatrixData_handmade_assignedFeatureNames(constructor)
 
 
 

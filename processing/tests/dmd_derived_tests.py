@@ -11,8 +11,8 @@ from derived_backend import *
 from ..dense_matrix_data import *
 from nose.tools import *
 
-def constructor(data,labels=None):
-	return DenseMatrixData(data,labels)
+def constructor(data,featureNames=None):
+	return DenseMatrixData(data,featureNames)
 
 ############
 # equals() #
@@ -78,9 +78,9 @@ def test_appendColumns_exceptionWrongSize():
 	appendColumns_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
-def test_appendColumns_exceptionSameLabel():
-	""" Test DMD appendColumns() for ArgumentException when toAppend and self have a column label in common """
-	appendColumns_exceptionSameLabel(constructor)
+def test_appendColumns_exceptionSameFeatureName():
+	""" Test DMD appendColumns() for ArgumentException when toAppend and self have a featureName in common """
+	appendColumns_exceptionSameFeatureName(constructor)
 
 def test_appendColumns_handmadeSingle():
 	""" Test DMD appendColumns() against handmade output for a single added column"""
@@ -135,9 +135,9 @@ def test_extractRows_handmadeFunction():
 	""" Test DMD extractRows() against handmade output for function extraction """
 	extractRows_handmadeFunction(constructor)
 
-def test_extractRows_handmadeFuncionWithLabels():
-	""" Test DMD extractRows() against handmade output for function extraction with labels"""
-	extractRows_handmadeFuncionWithLabels(constructor)
+def test_extractRows_handmadeFuncionWithFeatureNames():
+	""" Test DMD extractRows() against handmade output for function extraction with featureNames"""
+	extractRows_handmadeFuncionWithFeatureNames(constructor)
 
 @raises(ArgumentException)
 def test_extractRows_exceptionStartInvalid():
@@ -158,9 +158,9 @@ def test_extractRows_handmade():
 	""" Test DMD extractRows() against handmade output for range extraction """
 	extractRows_handmade(constructor)
 
-def test_extractRows_handmadeWithLabels():
-	""" Test DMD extractRows() against handmade output for range extraction with labels """
-	extractRows_handmadeWithLabels(constructor)
+def test_extractRows_handmadeWithFeatureNames():
+	""" Test DMD extractRows() against handmade output for range extraction with featureNames """
+	extractRows_handmadeWithFeatureNames(constructor)
 
 
 
@@ -179,17 +179,17 @@ def test_extractColumns_handmadeListSequence():
 	""" Test DMD extractColumns() against handmade output for several extractions by list """
 	extractColumns_handmadeListSequence(constructor)
 
-def test_extractColumns_handmadeListWithLabel():
-	""" Test DMD extractColumns() against handmade output for list extraction when specifying labels """
-	extractColumns_handmadeListWithLabel(constructor)
+def test_extractColumns_handmadeListWithFeatureName():
+	""" Test DMD extractColumns() against handmade output for list extraction when specifying featureNames """
+	extractColumns_handmadeListWithFeatureName(constructor)
 
 def test_extractColumns_handmadeFunction():
 	""" Test DMD extractColumns() against handmade output for function extraction """
 	extractColumns_handmadeFunction(constructor)
 
-def test_extractColumns_handmadeFunctionWithLabel():
-	""" Test DMD extractColumns() against handmade output for function extraction with labels """
-	extractColumns_handmadeFunctionWithLabel(constructor)
+def test_extractColumns_handmadeFunctionWithFeatureName():
+	""" Test DMD extractColumns() against handmade output for function extraction with featureNames """
+	extractColumns_handmadeFunctionWithFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionStartInvalid():
@@ -197,9 +197,9 @@ def test_extractColumns_exceptionStartInvalid():
 	extractColumns_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionStartInvalidLabel():
-	""" Test DMD extractColumns() for ArgumentException when start is not a valid column Label """
-	extractColumns_exceptionStartInvalidLabel(constructor)
+def test_extractColumns_exceptionStartInvalidFeatureName():
+	""" Test DMD extractColumns() for ArgumentException when start is not a valid featureName """
+	extractColumns_exceptionStartInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionEndInvalid():
@@ -207,9 +207,9 @@ def test_extractColumns_exceptionEndInvalid():
 	extractColumns_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionEndInvalidLabel():
-	""" Test DMD extractColumns() for ArgumentException when start is not a valid column label """
-	extractColumns_exceptionEndInvalidLabel(constructor)
+def test_extractColumns_exceptionEndInvalidFeatureName():
+	""" Test DMD extractColumns() for ArgumentException when start is not a valid featureName """
+	extractColumns_exceptionEndInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractColumns_exceptionInversion():
@@ -217,17 +217,17 @@ def test_extractColumns_exceptionInversion():
 	extractColumns_exceptionInversion(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionInversionLabel():
-	""" Test DMD extractColumns() for ArgumentException when start comes after end as Labels"""
-	extractColumns_exceptionInversionLabel(constructor)
+def test_extractColumns_exceptionInversionFeatureName():
+	""" Test DMD extractColumns() for ArgumentException when start comes after end as FeatureNames"""
+	extractColumns_exceptionInversionFeatureName(constructor)
 
 def test_extractColumns_handmadeRange():
 	""" Test DMD extractColumns() against handmade output for range extraction """
 	extractColumns_handmadeRange(constructor)
 
-def test_extractColumns_handmadeWithLabels():
-	""" Test DMD extractColumns() against handmade output for range extraction with Labels """
-	extractColumns_handmadeWithLabels(constructor)
+def test_extractColumns_handmadeWithFeatureNames():
+	""" Test DMD extractColumns() against handmade output for range extraction with FeatureNames """
+	extractColumns_handmadeWithFeatureNames(constructor)
 
 
 
@@ -298,7 +298,7 @@ def test_mapReduceOnRows_handmadeNoneReturningReducer():
 ###########
 
 def test_LoadData():
-	""" Test DMD loadCSV() by writing to, and then reading from, a temporary file without labels """
+	""" Test DMD loadCSV() by writing to, and then reading from, a temporary file without featureNames """
 	tmpFile = tempfile.NamedTemporaryFile()
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02],
 				[2,0.1,0.02], [2,0.3,0.01], [2,0.2,0.03], [2,0.3,0.03]]
@@ -315,14 +315,14 @@ def test_LoadData():
 	loaded = loadCSV(tmpFile.name)
 	assert loaded.equals(test)
 
-def test_LoadDataLabels():
-	""" Test DMD loadCSV() by writing to, and then reading from, a temporary file with labels """
+def test_LoadDataFeatureNames():
+	""" Test DMD loadCSV() by writing to, and then reading from, a temporary file with featureNames """
 	tmpFile = tempfile.NamedTemporaryFile()
 	tmpFile.write("#number,deci,centi\n")
-	labels = (['number','deci','centi'])
+	featureNames = (['number','deci','centi'])
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02],
 				[2,0.1,0.02], [2,0.3,0.01], [2,0.2,0.03], [2,0.3,0.03]]
-	test = constructor(origData,labels)
+	test = constructor(origData,featureNames)
 
 	for point in origData:
 		for value in point:
@@ -338,25 +338,25 @@ def test_LoadDataLabels():
 
 
 def test_RoundTrip():
-	""" Test DMD loadCSV() and DMD writeToCSV() in a round trip test, including a label line """
+	""" Test DMD loadCSV() and DMD writeToCSV() in a round trip test, including a featureName line """
 	roundTripBackend(True)
 
-def test_RoundTripNoLabels():
-	""" Test DMD loadCSV() and DMD writeToCSV() in a round trip test, without a label line """
+def test_RoundTripNoFeatureNames():
+	""" Test DMD loadCSV() and DMD writeToCSV() in a round trip test, without a featureName line """
 	roundTripBackend(False)
 
 
-def roundTripBackend(includeLabels):
+def roundTripBackend(includeFeatureNames):
 	tmpFile = tempfile.NamedTemporaryFile()
-	labels = None	
-	if includeLabels:
-		labels = (['number','deci','centi'])
+	featureNames = None	
+	if includeFeatureNames:
+		featureNames = (['number','deci','centi'])
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02],
 				[2,0.1,0.02], [2,0.3,0.01], [2,0.2,0.03], [2,0.3,0.03]]
 
-	origObj = constructor(origData,labels)
+	origObj = constructor(origData,featureNames)
 
-	writeToCSV(origObj,tmpFile.name,includeLabels)
+	writeToCSV(origObj,tmpFile.name,includeFeatureNames)
 
 	loaded = loadCSV(tmpFile.name)
 
@@ -371,14 +371,14 @@ def roundTripBackend(includeLabels):
 ##########################
 
 
-def test_convertToRowListData_handmade_defaultLabels():
-	""" Test DMD convertToRowListData with default labels """
-	convertToRowListData_handmade_defaultLabels(constructor)
+def test_convertToRowListData_handmade_defaultFeatureNames():
+	""" Test DMD convertToRowListData with default featureNames """
+	convertToRowListData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToRowListData_handmade_assignedLabels():
-	""" Test DMD convertToRowListData with assigned labels """
-	convertToRowListData_handmade_assignedLabels(constructor)
+def test_convertToRowListData_handmade_assignedFeatureNames():
+	""" Test DMD convertToRowListData with assigned featureNames """
+	convertToRowListData_handmade_assignedFeatureNames(constructor)
 
 
 
@@ -387,14 +387,14 @@ def test_convertToRowListData_handmade_assignedLabels():
 ##############################
 
 
-def test_convertToDenseMatrixData_handmade_defaultLabels():
-	""" Test DMD convertToDenseMatrixData with default labels """
-	convertToDenseMatrixData_handmade_defaultLabels(constructor)
+def test_convertToDenseMatrixData_handmade_defaultFeatureNames():
+	""" Test DMD convertToDenseMatrixData with default featureNames """
+	convertToDenseMatrixData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToDenseMatrixData_handmade_assignedLabels():
-	""" Test DMD convertToDenseMatrixData with assigned labels """
-	convertToDenseMatrixData_handmade_assignedLabels(constructor)
+def test_convertToDenseMatrixData_handmade_assignedFeatureNames():
+	""" Test DMD convertToDenseMatrixData with assigned featureNames """
+	convertToDenseMatrixData_handmade_assignedFeatureNames(constructor)
 
 
 

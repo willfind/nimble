@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
 	ret = skl('LogisticRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)
 
-	ret.renameLabel(0,'result')
+	ret.renameFeatureName(0, 'result')
 
 	Y = sparseY.convertToDenseMatrixData()
 

@@ -18,9 +18,9 @@ from ..utility.custom_exceptions import ArgumentException
 class CscSparseData(SparseData):
 
 
-	def __init__(self, data=None, labels=None):
+	def __init__(self, data=None, featureNames=None):
 		self.data = csc_matrix(data)
-		super(CscSparseData, self).__init__(self.data,labels)
+		super(CscSparseData, self).__init__(self.data,featureNames)
 
 
 	def _extractColumns_implementation(self,toExtract):
@@ -51,8 +51,8 @@ class CscSparseData(SparseData):
 
 
 	def _convertToDenseMatrixData_implementation(self):
-		""" Returns a DenseMatrixData object with the same data and labels as this object """
-		return DenseMatrixData(self.data.todense(), self.labels)
+		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
+		return DenseMatrixData(self.data.todense(), self.featureNames)
 
 
 
@@ -68,18 +68,18 @@ def loadMM(inPath):
 
 
 
-def writeToMM(toWrite, outPath, includeLabels=False):
+def writeToMM(toWrite, outPath, includeFeatureNames=False):
 	"""
 
 	"""
-	if includeLabels:
-		labelString = "#"
+	if includeFeatureNames:
+		featureNameString = "#"
 		for i in xrange(toWrite.columns()):
-			labelString += toWrite.labelsInverse[i]
+			featureNameString += toWrite.featureNamesInverse[i]
 			if not i == toWrite.columns() - 1:
-				labelString += ','
+				featureNameString += ','
 		
-		mmwrite(target=outPath, a=toWrite.data, comment=labelString)		
+		mmwrite(target=outPath, a=toWrite.data, comment=featureNameString)		
 	else:
 		mmwrite(target=outPath, a=toWrite.data)
 
