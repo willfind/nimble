@@ -167,96 +167,63 @@ def test_extractRows_handmadeWithLabels():
 # extractColumns() #
 ####################
 
-@raises(ArgumentException)
-def test_extractColumns_exceptionNone():
-	""" Test RLD extractColumns() for ArgumentException when toExtract is none """
-	extractColumns_exceptionNone(constructor)
-
 def test_extractColumns_handmadeSingle():
-	""" Test RLD extractColumns() against handmade output when extracting one row """
+	""" Test RLD extractColumns() against handmade output when extracting one column """
 	extractColumns_handmadeSingle(constructor)
 
-def test_extractColumns_handmadeSequence():
-	""" Test RLD extractColumns() against handmade output for several extractions """
-	extractColumns_handmadeSequence(constructor)
+def test_extractColumns_handmadeListSequence():
+	""" Test RLD extractColumns() against handmade output for several extractions by list """
+	extractColumns_handmadeListSequence(constructor)
 
-def test_extractColumns_handmadeByLabel():
-	""" Test RLD extractColumns() against handmade output when specifying labels """
-	extractColumns_handmadeByLabel(constructor)
+def test_extractColumns_handmadeListWithLabel():
+	""" Test RLD extractColumns() against handmade output for list extraction when specifying labels """
+	extractColumns_handmadeListWithLabel(constructor)
 
+def test_extractColumns_handmadeFunction():
+	""" Test RLD extractColumns() against handmade output for function extraction """
+	extractColumns_handmadeFunction(constructor)
 
-
-##############################
-# extractSatisfyingColumns() #
-##############################
-
-@raises(ArgumentException)
-def test_extractSatisfyingColumns_exceptionNone():
-	""" Test RLD extractSatisfyingColumns() for ArgumentException when toExtract is none """
-	extractSatisfyingColumns_exceptionNone(constructor)
-
-
-def test_extractSatisfyingColumns_handmade():
-	""" Test RLD extractSatisfyingColumns() against handmade output """
-	extractSatisfyingColumns_handmade(constructor)
-
-def test_extractSatisfyingColumns_handmadeWithLabel():
-	""" Test RLD extractSatisfyingColumns() against handmade output with labels """
-	extractSatisfyingColumns_handmadeWithLabel(constructor)
-
-
-
-#########################
-# extractRangeColumns() #
-#########################
+def test_extractColumns_handmadeFunctionWithLabel():
+	""" Test RLD extractColumns() against handmade output for function extraction with labels """
+	extractColumns_handmadeFunctionWithLabel(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionStartNone():
-	""" Test RLD extractRangeColumns() for ArgumentException when start is None"""
-	extractRangeColumns_exceptionStartNone(constructor)
+def test_extractColumns_exceptionStartInvalid():
+	""" Test RLD extractColumns() for ArgumentException when start is not a valid column index """
+	extractColumns_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionStartInvalid():
-	""" Test RLD extractRangeColumns() for ArgumentException when start is not a valid column index """
-	extractRangeColumns_exceptionStartInvalid(constructor)
+def test_extractColumns_exceptionStartInvalidLabel():
+	""" Test RLD extractColumns() for ArgumentException when start is not a valid column Label """
+	extractColumns_exceptionStartInvalidLabel(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionStartInvalidLabel():
-	""" Test RLD extractRangeColumns() for ArgumentException when start is not a valid column Label """
-	extractRangeColumns_exceptionStartInvalidLabel(constructor)
+def test_extractColumns_exceptionEndInvalid():
+	""" Test RLD extractColumns() for ArgumentException when start is not a valid column index """
+	extractColumns_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionEndNone():
-	""" Test RLD extractRangeColumns() for ArgumentException when end is None"""
-	extractRangeColumns_exceptionEndNone(constructor)
+def test_extractColumns_exceptionEndInvalidLabel():
+	""" Test RLD extractColumns() for ArgumentException when start is not a valid column label """
+	extractColumns_exceptionEndInvalidLabel(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionEndInvalid():
-	""" Test RLD extractRangeColumns() for ArgumentException when start is not a valid column index """
-	extractRangeColumns_exceptionEndInvalid(constructor)
+def test_extractColumns_exceptionInversion():
+	""" Test RLD extractColumns() for ArgumentException when start comes after end """
+	extractColumns_exceptionInversion(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionEndInvalidLabel():
-	""" Test RLD extractRangeColumns() for ArgumentException when start is not a valid column label """
-	extractRangeColumns_exceptionEndInvalidLabel(constructor)
+def test_extractColumns_exceptionInversionLabel():
+	""" Test RLD extractColumns() for ArgumentException when start comes after end as Labels"""
+	extractColumns_exceptionInversionLabel(constructor)
 
-@raises(ArgumentException)
-def test_extractRangeColumns_exceptionInversion():
-	""" Test RLD extractRangeColumns() for ArgumentException when start comes after end """
-	extractRangeColumns_exceptionInversion(constructor)
+def test_extractColumns_handmadeRange():
+	""" Test RLD extractColumns() against handmade output for range extraction """
+	extractColumns_handmadeRange(constructor)
 
-@raises(ArgumentException)
-def test_extractRangeColumns_exceptionInversionLabel():
-	""" Test RLD extractRangeColumns() for ArgumentException when start comes after end as Labels"""
-	extractRangeColumns_exceptionInversionLabel(constructor)
-
-def test_extractRangeColumns_handmade():
-	""" Test RLD extractRangeColumns() against handmade output """
-	extractRangeColumns_handmade(constructor)
-
-def test_extractRangeColumns_handmadeWithLabels():
-	""" Test RLD extractRangeColumns() against handmade output with Labels """
-	extractRangeColumns_handmadeWithLabels(constructor)
+def test_extractColumns_handmadeWithLabels():
+	""" Test RLD extractColumns() against handmade output for range extraction with Labels """
+	extractColumns_handmadeWithLabels(constructor)
 
 
 ####################

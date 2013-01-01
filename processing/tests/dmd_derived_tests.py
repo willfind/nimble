@@ -170,95 +170,66 @@ def test_extractRows_handmadeWithLabels():
 # extractColumns() #
 ####################
 
-@raises(ArgumentException)
-def test_extractColumns_exceptionNone():
-	""" Test DMD extractColumns() for ArgumentException when toExtract is none """
-	extractColumns_exceptionNone(constructor)
 
 def test_extractColumns_handmadeSingle():
-	""" Test DMD extractColumns() against handmade output when extracting one row """
+	""" Test DMD extractColumns() against handmade output when extracting one column """
 	extractColumns_handmadeSingle(constructor)
 
-def test_extractColumns_handmadeSequence():
-	""" Test DMD extractColumns() against handmade output for several extractions """
-	extractColumns_handmadeSequence(constructor)
+def test_extractColumns_handmadeListSequence():
+	""" Test DMD extractColumns() against handmade output for several extractions by list """
+	extractColumns_handmadeListSequence(constructor)
 
-def test_extractColumns_handmadeByLabel():
-	""" Test DMD extractColumns() against handmade output when specifying labels """
-	extractColumns_handmadeByLabel(constructor)
+def test_extractColumns_handmadeListWithLabel():
+	""" Test DMD extractColumns() against handmade output for list extraction when specifying labels """
+	extractColumns_handmadeListWithLabel(constructor)
 
+def test_extractColumns_handmadeFunction():
+	""" Test DMD extractColumns() against handmade output for function extraction """
+	extractColumns_handmadeFunction(constructor)
 
-##############################
-# extractSatisfyingColumns() #
-##############################
-
-@raises(ArgumentException)
-def test_extractSatisfyingColumns_exceptionNone():
-	""" Test DMD extractSatisfyingColumns() for ArgumentException when toExtract is none """
-	extractSatisfyingColumns_exceptionNone(constructor)
-
-
-def test_extractSatisfyingColumns_handmade():
-	""" Test DMD extractSatisfyingColumns() against handmade output """
-	extractSatisfyingColumns_handmade(constructor)
-
-def test_extractSatisfyingColumns_handmadeWithLabel():
-	""" Test DMD extractSatisfyingColumns() against handmade output with labels """
-	extractSatisfyingColumns_handmadeWithLabel(constructor)
-
-
-
-#########################
-# extractRangeColumns() #
-#########################
+def test_extractColumns_handmadeFunctionWithLabel():
+	""" Test DMD extractColumns() against handmade output for function extraction with labels """
+	extractColumns_handmadeFunctionWithLabel(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionStartNone():
-	""" Test DMD extractRangeColumns() for ArgumentException when start is None"""
-	extractRangeColumns_exceptionStartNone(constructor)
+def test_extractColumns_exceptionStartInvalid():
+	""" Test DMD extractColumns() for ArgumentException when start is not a valid column index """
+	extractColumns_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionStartInvalid():
-	""" Test DMD extractRangeColumns() for ArgumentException when start is not a valid column index """
-	extractRangeColumns_exceptionStartInvalid(constructor)
+def test_extractColumns_exceptionStartInvalidLabel():
+	""" Test DMD extractColumns() for ArgumentException when start is not a valid column Label """
+	extractColumns_exceptionStartInvalidLabel(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionStartInvalidLabel():
-	""" Test DMD extractRangeColumns() for ArgumentException when start is not a valid column Label """
-	extractRangeColumns_exceptionStartInvalidLabel(constructor)
+def test_extractColumns_exceptionEndInvalid():
+	""" Test DMD extractColumns() for ArgumentException when start is not a valid column index """
+	extractColumns_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionEndNone():
-	""" Test DMD extractRangeColumns() for ArgumentException when end is None"""
-	extractRangeColumns_exceptionEndNone(constructor)
+def test_extractColumns_exceptionEndInvalidLabel():
+	""" Test DMD extractColumns() for ArgumentException when start is not a valid column label """
+	extractColumns_exceptionEndInvalidLabel(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionEndInvalid():
-	""" Test DMD extractRangeColumns() for ArgumentException when start is not a valid column index """
-	extractRangeColumns_exceptionEndInvalid(constructor)
+def test_extractColumns_exceptionInversion():
+	""" Test DMD extractColumns() for ArgumentException when start comes after end """
+	extractColumns_exceptionInversion(constructor)
 
 @raises(ArgumentException)
-def test_extractRangeColumns_exceptionEndInvalidLabel():
-	""" Test DMD extractRangeColumns() for ArgumentException when start is not a valid column label """
-	extractRangeColumns_exceptionEndInvalidLabel(constructor)
+def test_extractColumns_exceptionInversionLabel():
+	""" Test DMD extractColumns() for ArgumentException when start comes after end as Labels"""
+	extractColumns_exceptionInversionLabel(constructor)
 
-@raises(ArgumentException)
-def test_extractRangeColumns_exceptionInversion():
-	""" Test DMD extractRangeColumns() for ArgumentException when start comes after end """
-	extractRangeColumns_exceptionInversion(constructor)
+def test_extractColumns_handmadeRange():
+	""" Test DMD extractColumns() against handmade output for range extraction """
+	extractColumns_handmadeRange(constructor)
 
-@raises(ArgumentException)
-def test_extractRangeColumns_exceptionInversionLabel():
-	""" Test DMD extractRangeColumns() for ArgumentException when start comes after end as Labels"""
-	extractRangeColumns_exceptionInversionLabel(constructor)
+def test_extractColumns_handmadeWithLabels():
+	""" Test DMD extractColumns() against handmade output for range extraction with Labels """
+	extractColumns_handmadeWithLabels(constructor)
 
-def test_extractRangeColumns_handmade():
-	""" Test DMD extractRangeColumns() against handmade output """
-	extractRangeColumns_handmade(constructor)
 
-def test_extractRangeColumns_handmadeWithLabels():
-	""" Test DMD extractRangeColumns() against handmade output with Labels """
-	extractRangeColumns_handmadeWithLabels(constructor)
 
 ####################
 # applyFunctionToEachRow() #

@@ -197,7 +197,7 @@ class BaseData(object):
 					return True
 			return False
 	
-		self.extractSatisfyingColumns(hasStrings)
+		self.extractColumns(hasStrings)
 
 
 	def columnToBinaryCategoryColumns(self, columnToConvert):
@@ -493,8 +493,8 @@ class BaseData(object):
 		parameters indicating range based extraction: if range based extraction is employed,
 		toExtract must be None, and vice versa. If only one of start and end are non-None, the
 		other defaults to 0 and self.numRows() respectibly. randomize indicates whether random
-		sampling is to be used in conjunction with the number paramter, if randomize is False,
-		the chosen rows are determined by row number, otherwise it is uniform random across the
+		sampling is to be used in conjunction with the number parameter, if randomize is False,
+		the chosen rows are determined by row order, otherwise it is uniform random across the
 		space of possible removals.
 
 		"""
@@ -513,81 +513,42 @@ class BaseData(object):
 		ret._renameMultipleLabels_implementation(self.labels,True)
 		return ret
 
-	def extractColumns(self, toExtract):
+	def extractColumns(self, toExtract=None, start=None, end=None, number=None, randomize=False):
 		"""
-		Modify this object to have only the columns whose identifiers are not given
-		in the input, returning an object containing those columns that are.
+		Modify this object, removing those columns that are specified by the input, and returning
+		an object containing those removed columns. This particular function only does argument
+		checking and modifying the labels for this object. It is the job of helper functions in
+		the derived class to perform the removal and assign labels for the returned object.
 
-		toExtract must not be None, and must contain only identifiers that make
-		sense in the context of this object.
+		toExtract may be a single identifier, a list of identifiers, or a function that when
+		given a column will return True if it is to be removed. number is the quantity of columns that
+		are to be extracted, the default None means unlimited extracttion. start and end are
+		parameters indicating range based extraction: if range based extraction is employed,
+		toExtract must be None, and vice versa. If only one of start and end are non-None, the
+		other defaults to 0 and self.numRows() respectibly. randomize indicates whether random
+		sampling is to be used in conjunction with the number parameter, if randomize is False,
+		the chosen columns are determined by column order, otherwise it is uniform random across the
+		space of possible removals.
 
 		"""
-		if toExtract is None:
-			raise ArgumentException("toRemove must not be None")
-		toExtractIndices = []
-		for value in toExtract:
-			toExtractIndices.append(self._getIndex(value))
+		if toExtract is not None:
+			if start is not None or end is not None:
+				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
+		elif start is not None or end is not None:
+			if start < 0 or start > self.rows():
+				raise ArgumentException("start must be a valid index, in the range of possible rows")
+			if end < 0 or end > self.rows():
+				raise ArgumentException("end must be a valid index, in the range of possible rows")
+			if start > end:
+				raise ArgumentException("start cannot be an index greater than end")
 
-		toExtractIndices.sort()
-
-		ret = self._extractColumns_implementation(toExtractIndices)
-
-		# remove from the end, so as to not disturb the lower indices	
-		toExtractIndices.sort()
-		toExtractIndices.reverse()
-		newLabels = []
-		for colNum in toExtractIndices:
-			newLabels.append(self.labelsInverse[colNum])			
-			self._removeLabelAndShift(colNum)
-
-		newLabels.reverse()
-		ret._renameMultipleLabels_implementation(newLabels,True)
-
+		ret = self._extractColumns_implementation(toExtract, start, end, number, randomize)
+		print ret.labels
+		print self.labels
+		for key in ret.labels.keys():
+			self._removeLabelAndShift(key)
 		return ret
 
-	def extractSatisfyingColumns(self, function):
-		"""
-		Modify this object to have only the columns that do not satisfy the given function,
-		returning an object containing those columns that do.
-
-		function must not be none, accept a column as an argument and return a truth value
-
-		"""
-		if function is None:
-			raise ArgumentException("function must not be None")
-		ret = self._extractSatisfyingColumns_implementation(function)
-
-		return ret
-
-
-	def extractRangeColumns(self, start, end):
-		"""
-		Modify this object to have only those columns that are not within the given range,
-		inclusive; returning an object containing those rows that are.
-	
-		start and end must not be null, must be within the range of possible columns,
-		and start must not be greater than end
-
-		"""
-		start = self._getIndex(start)
-		end = self._getIndex(end)
-		if start is None:
-			raise ArgumentException("start must be an interger index, not None")
-		if start < 0 or start > self.columns():
-			raise ArgumentException("start must be a valid index, in the range of possible rows")
-		if end is None:
-			raise ArgumentException("end must be an interger index, not None")
-		if end < 0 or end > self.rows():
-			raise ArgumentException("end must be a valid index, in the range of possible rows")
-		if start > end:
-			raise ArgumentException("start must come before end")
-
-		ret = self._extractRangeColumns_implementation(start,end)
-		for index in reversed(xrange(start,end+1)):
-			removedLabel = self.labelsInverse[index]
-			self._removeLabelAndShift(removedLabel)
-			ret._renameLabel_implementation(index-start, removedLabel, True)
-		return ret
 
 	def applyFunctionToEachRow(self, function):
 		"""

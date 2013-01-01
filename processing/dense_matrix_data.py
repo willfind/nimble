@@ -169,8 +169,58 @@ class DenseMatrixData(BaseData):
 		self.data = numpy.delete(self.data, numpy.s_[start:end+1], 0)
 		return DenseMatrixData(ret)
 
+	def _extractColumns_implementation(self, toExtract, start, end, number, randomize):
+		"""
+		Function to extract columns according to the parameters, and return an object containing
+		the removed columns with their label names from this object. The actual work is done by
+		further helper functions, this determines which helper to call, and modifies the input
+		to accomodate the number and randomize parameters, where number indicates how many of the
+		possibilities should be extracted, and randomize indicates whether the choice of who to
+		extract should be by order or uniform random.
 
-	def _extractColumns_implementation(self,toExtract):
+		"""
+		# single identifier
+		if isinstance(toExtract, int):
+			toExtract = [toExtract]	
+		# list of identifiers
+		if isinstance(toExtract, list):
+			if number is None:
+				number = len(toExtract)
+			# if randomize, use random sample
+			if randomize:
+				toExtract = random.sample(toExtract, number)
+			# else take the first number members of toExtract
+			else:
+				toExtract = toExtract[:number]
+			# convert IDs if necessary
+			toExtractIndices = []
+			for value in toExtract:
+				toExtractIndices.append(self._getIndex(value))
+			return self._extractColumnsByList_implementation(toExtractIndices)
+			# TODO ret's labels		
+		# boolean function
+		if hasattr(toExtract, '__call__'):
+			if randomize:
+				#apply to each
+				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+			else:
+				if number is None:
+					number = self.rows()		
+				return self._extractColumnsByFunction_implementation(toExtract, number)
+		# by range
+		if start is not None or end is not None:
+			if start is None:
+				start = 0
+			if end is None:
+				end = self.rows()
+			if number is None:
+				number = end - start
+			if randomize:
+				return self.extactColumnsByList(random.randrange(start,end,number))
+			else:
+				return self._extractColumnsByRange_implementation(start, end)
+
+	def _extractColumnsByList_implementation(self, toExtract):
 		"""
 		Modify this object to have only the columns that are not given in the input,
 		returning an object containing those columns that are.
@@ -179,15 +229,20 @@ class DenseMatrixData(BaseData):
 		ret = self.data[:,toExtract]
 		self.data = numpy.delete(self.data,toExtract,1)
 
-		return DenseMatrixData(ret)
+		# construct label list
+		labelList = []
+		for index in toExtract:
+			labelList.append(self.labelsInverse[index])
 
-	def _extractSatisfyingColumns_implementation(self,function):
+		return DenseMatrixData(ret, labelList)
+
+	def _extractColumnsByFunction_implementation(self, toExtract, number):
 		"""
 		Modify this object to have only the columns whose views do not satisfy the given
 		function, returning an object containing those columns whose views do.
 
 		"""
-		results = numpy.apply_along_axis(function,0,self.data)
+		results = numpy.apply_along_axis(toExtract, 0, self.data)
 		ret = self.data[:,results]
 		# need to convert our boolean array to to list of columns to be removed			
 		toRemove = []
@@ -195,10 +250,10 @@ class DenseMatrixData(BaseData):
 			if results[i]:
 				toRemove.append(i)
 
-		return self.extractColumns(toRemove)
+		return self._extractColumnsByList_implementation(toRemove)
 
 
-	def _extractRangeColumns_implementation(self, start, end):
+	def _extractColumnsByRange_implementation(self, start, end):
 		"""
 		Modify this object to have only those columns that are not within the given range,
 		inclusive; returning an object containing those rows that are.
@@ -210,7 +265,13 @@ class DenseMatrixData(BaseData):
 		# +1 on end in ranges, because our ranges are inclusive
 		ret = self.data[:,start:end+1]
 		self.data = numpy.delete(self.data, numpy.s_[start:end+1], 1)
-		return DenseMatrixData(ret)
+
+		# construct label list
+		labelList = []
+		for index in xrange(start,end+1):
+			labelList.append(self.labelsInverse[index])
+
+		return DenseMatrixData(ret, labelList)
 
 
 	def _applyFunctionToEachRow_implementation(self,function):

@@ -356,24 +356,18 @@ def extractRows_handmadeWithLabels(constructor):
 # extractColumns() #
 ####################
 
-def extractColumns_exceptionNone(constructor):
-	""" Test extractColumns() for ArgumentException when toRemove is none """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data)
-	toTest.extractColumns(None)
-
 def extractColumns_handmadeSingle(constructor):
-	""" Test extractColumns() against handmade output when extracting one row """
+	""" Test extractColumns() against handmade output when extracting one column """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ext1 = toTest.extractColumns([0])
+	ext1 = toTest.extractColumns(0)
 	exp1 = constructor([[1],[4],[7]])
 	assert ext1.equals(exp1)
 	expEnd = constructor([[2,3],[5,6],[8,9]])
 	assert toTest.equals(expEnd)
 
-def extractColumns_handmadeSequence(constructor):
-	""" Test extractColumns() against handmade output for several extractions """
+def extractColumns_handmadeListSequence(constructor):
+	""" Test extractColumns() against handmade output for several extractions by list """
 	data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
 	toTest = constructor(data)
 	ext1 = toTest.extractColumns([0])
@@ -386,8 +380,8 @@ def extractColumns_handmadeSequence(constructor):
 	expEnd = constructor(expEndData)
 	assert toTest.equals(expEnd)
 
-def extractColumns_handmadeByLabel(constructor):
-	""" Test extractColumns() against handmade output when specifying labels """
+def extractColumns_handmadeListWithLabel(constructor):
+	""" Test extractColumns() against handmade output for list extraction when specifying labels """
 	data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
 	labels = ["one","two","three","neg"]
 	toTest = constructor(data,labels)
@@ -401,35 +395,28 @@ def extractColumns_handmadeByLabel(constructor):
 	assert toTest.equals(expEnd)
 
 
-
-##############################
-# extractSatisfyingColumns() #
-##############################
-
-def extractSatisfyingColumns_exceptionNone(constructor):
-	""" Test extractSatisfyingColumns() for ArgumentException when toRemove is none """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data)
-	toTest.extractSatisfyingColumns(None)
-
-
-def extractSatisfyingColumns_handmade(constructor):
-	""" Test extractSatisfyingColumns() against handmade output """
+def extractColumns_handmadeFunction(constructor):
+	""" Test extractColumns() against handmade output for function extraction """
 	data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
 	toTest = constructor(data)
 	def absoluteOne(column):
 		if 1 in column or -1 in column:
 			return True
 		return False
-	ext = toTest.extractSatisfyingColumns(absoluteOne)
+	ext = toTest.extractColumns(absoluteOne)
 	exp = constructor([[1,-1],[4,-2],[7,-3]])
 	assert ext.equals(exp)
 	expEnd = constructor([[2,3],[5,6],[8,9]])	
+	print toTest.data
+	print toTest.labels
+	print expEnd.data
+	print expEnd.labels
+	
 	assert toTest.equals(expEnd)
 
 
-def extractSatisfyingColumns_handmadeWithLabel(constructor):
-	""" Test extractSatisfyingColumns() against handmade output with labels """
+def extractColumns_handmadeFunctionWithLabel(constructor):
+	""" Test extractColumns() against handmade output for function extraction with labels """
 	data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
 	labels = ["one","two","three","neg"]
 	toTest = constructor(data,labels)
@@ -438,79 +425,64 @@ def extractSatisfyingColumns_handmadeWithLabel(constructor):
 			return True
 		return False
 
-	ext = toTest.extractSatisfyingColumns(absoluteOne)
+	ext = toTest.extractColumns(absoluteOne)
 	exp = constructor([[1,-1],[4,-2],[7,-3]], ['one','neg'])
 	assert ext.equals(exp)
 	expEnd = constructor([[2,3],[5,6],[8,9]],["two","three"])	
+	print toTest.data
+	print toTest.labels
+	print expEnd.data
+	print expEnd.labels
 	assert toTest.equals(expEnd)
 
 
-#########################
-# extractRangeColumns() #
-#########################
-
-def extractRangeColumns_exceptionStartNone(constructor):
-	""" Test extractRangeColumns() for ArgumentException when start is None"""
+def extractColumns_exceptionStartInvalid(constructor):
+	""" Test extractColumns() for ArgumentException when start is not a valid column index """
 	labels = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,labels)
-	toTest.extractRangeColumns(None,2)
+	toTest.extractColumns(start=-1, end=2)
 
-
-def extractRangeColumns_exceptionStartInvalid(constructor):
-	""" Test extractRangeColumns() for ArgumentException when start is not a valid column index """
+def extractColumns_exceptionStartInvalidLabel(constructor):
+	""" Test extractColumns() for ArgumentException when start is not a valid column Label """
 	labels = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,labels)
-	toTest.extractRangeColumns(-1,2)
+	toTest.extractColumns(start="wrong", end=2)
 
-def extractRangeColumns_exceptionStartInvalidLabel(constructor):
-	""" Test extractRangeColumns() for ArgumentException when start is not a valid column Label """
+def extractColumns_exceptionEndInvalid(constructor):
+	""" Test extractColumns() for ArgumentException when start is not a valid column index """
 	labels = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,labels)
-	toTest.extractRangeColumns("wrong",2)
+	toTest.extractColumns(start=0, end=5)
 
-def extractRangeColumns_exceptionEndNone(constructor):
-	""" Test extractRangeColumns() for ArgumentException when end is None"""
+def extractColumns_exceptionEndInvalidLabel(constructor):
+	""" Test extractColumns() for ArgumentException when start is not a valid column label """
 	labels = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,labels)
-	toTest.extractRangeColumns("one",None)
+	toTest.extractColumns(start="two", end="five")
 
-def extractRangeColumns_exceptionEndInvalid(constructor):
-	""" Test extractRangeColumns() for ArgumentException when start is not a valid column index """
+def extractColumns_exceptionInversion(constructor):
+	""" Test extractColumns() for ArgumentException when start comes after end """
 	labels = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,labels)
-	toTest.extractRangeColumns(0,5)
+	toTest.extractColumns(start=2, end=0)
 
-def extractRangeColumns_exceptionEndInvalidLabel(constructor):
-	""" Test extractRangeColumns() for ArgumentException when start is not a valid column label """
+def extractColumns_exceptionInversionLabel(constructor):
+	""" Test extractColumns() for ArgumentException when start comes after end as Labels"""
 	labels = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,labels)
-	toTest.extractRangeColumns("two","five")
+	toTest.extractColumns(start="two", end="one")
 
-def extractRangeColumns_exceptionInversion(constructor):
-	""" Test extractRangeColumns() for ArgumentException when start comes after end """
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	toTest.extractRangeColumns(2,0)
-
-def extractRangeColumns_exceptionInversionLabel(constructor):
-	""" Test extractRangeColumns() for ArgumentException when start comes after end as Labels"""
-	labels = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,labels)
-	toTest.extractRangeColumns("two","one")
-
-def extractRangeColumns_handmade(constructor):
-	""" Test extractRangeColumns() against handmade output """
+def extractColumns_handmadeRange(constructor):
+	""" Test extractColumns() against handmade output for range extraction """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ret = toTest.extractRangeColumns(1,2)
+	ret = toTest.extractColumns(start=1, end=2)
 	
 	expectedRet = constructor([[2,3],[5,6],[8,9]])
 	expectedTest = constructor([[1],[4],[7]])
@@ -518,12 +490,12 @@ def extractRangeColumns_handmade(constructor):
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
 
-def extractRangeColumns_handmadeWithLabels(constructor):
-	""" Test extractRangeColumns() against handmade output with Labels """
+def extractColumns_handmadeWithLabels(constructor):
+	""" Test extractColumns() against handmade output for range extraction with Labels """
 	labels = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,labels)
-	ret = toTest.extractRangeColumns(1,2)
+	ret = toTest.extractColumns(start=1,end=2)
 	
 	expectedRet = constructor([[2,3],[5,6],[8,9]],["two","three"])
 	expectedTest = constructor([[1],[4],[7]],["one"])

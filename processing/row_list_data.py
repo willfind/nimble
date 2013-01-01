@@ -243,11 +243,62 @@ class RowListData(BaseData):
 		return RowListData(inRange)
 
 
+	def _extractColumns_implementation(self, toExtract, start, end, number, randomize):
+		"""
+		Function to extract columns according to the parameters, and return an object containing
+		the removed columns with their label names from this object. The actual work is done by
+		further helper functions, this determines which helper to call, and modifies the input
+		to accomodate the number and randomize parameters, where number indicates how many of the
+		possibilities should be extracted, and randomize indicates whether the choice of who to
+		extract should be by order or uniform random.
 
-	def _extractColumns_implementation(self,toExtract):
+		"""
+		# single identifier
+		if isinstance(toExtract, int) or isinstance(toExtract, basestring):
+			toExtract = [toExtract]	
+		# list of identifiers
+		if isinstance(toExtract, list):
+			if number is None:
+				number = len(toExtract)
+			# if randomize, use random sample
+			if randomize:
+				toExtract = random.sample(toExtract, number)
+			# else take the first number members of toExtract
+			else:
+				toExtract = toExtract[:number]
+			# convert IDs if necessary
+			toExtractIndices = []
+			for value in toExtract:
+				toExtractIndices.append(self._getIndex(value))
+			return self._extractColumnsByList_implementation(toExtractIndices)	
+		# boolean function
+		if hasattr(toExtract, '__call__'):
+			if randomize:
+				#apply to each
+				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+			else:
+				if number is None:
+					number = self.rows()		
+				return self._extractColumnsByFunction_implementation(toExtract, number)
+		# by range
+		if start is not None or end is not None:
+			if start is None:
+				start = 0
+			if end is None:
+				end = self.rows()
+			if number is None:
+				number = end - start
+			if randomize:
+				return self.extactColumnsByList(random.randrange(start,end,number))
+			else:
+				return self._extractColumnsByRange_implementation(start, end)
+
+
+	def _extractColumnsByList_implementation(self, toExtract):
 		"""
 		Modify this object to have only the columns that are not given in the input,
-		returning an object containing those columns that are.
+		returning an object containing those columns that are, with the same labels
+		they had previously. It does not modify the labels for the calling object.
 
 		"""
 		toExtract.sort()
@@ -260,32 +311,39 @@ class RowListData(BaseData):
 			extractedRow.reverse()
 			extractedData.append(extractedRow)
 
-		self.numColumns= self.numColumns- len(toExtract)
-		return RowListData(extractedData)
+		self.numColumns = self.numColumns - len(toExtract)
+
+		# construct label list
+		labelList = []
+		for index in toExtract:
+			labelList.append(self.labelsInverse[index])
+		# toExtract was reversed (for efficiency) so we have to rereverse this to get it right
+		labelList.reverse()
+		return RowListData(extractedData, labelList)
 
 
-	def _extractSatisfyingColumns_implementation(self,function):
+	def _extractColumnsByFunction_implementation(self, function, number):
 		"""
 		Modify this object to have only the columns whose views do not satisfy the given
-		function, returning an object containing those columns whose views do.
+		function, returning an object containing those columns whose views do, with the
+		same labels	they had previously. It does not modify the labels for the calling object.
 
 		"""
-		toExtract = []		
+		# all we're doing is making a list and calling extractColumnsBy list, no need
+		# deal with labels or the number of columns.
+		toExtract = []
 		for i in xrange(self.columns()):
 			ithView = self.ColumnView(self,i)
 			if function(ithView):
 				toExtract.append(i)
-		return self.extractColumns(toExtract)
+		return self._extractColumnsByList_implementation(toExtract)
 
 
-	def _extractRangeColumns_implementation(self, start, end):
+	def _extractColumnsByRange_implementation(self, start, end):
 		"""
 		Modify this object to have only those columns that are not within the given range,
-		inclusive; returning an object containing those rows that are.
-	
-		start and end must not be null, must be within the range of possible columns,
-		and start must not be greater than end
-
+		inclusive; returning an object containing those columns that are, with the same labels
+		they had previously. It does not modify the labels for the calling object.
 		"""
 		extractedData = []
 		for row in self.data:
@@ -296,8 +354,14 @@ class RowListData(BaseData):
 			extractedRow.reverse()
 			extractedData.append(extractedRow)
 
-		self.numColumns= self.numColumns- len(extractedRow)
-		return RowListData(extractedData)
+		self.numColumns = self.numColumns- len(extractedRow)
+
+		# construct label list
+		labelList = []
+		for index in xrange(start,end+1):
+			labelList.append(self.labelsInverse[index])
+	
+		return RowListData(extractedData, labelList)
 
 
 	def _applyFunctionToEachRow_implementation(self,function):
