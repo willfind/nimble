@@ -165,44 +165,6 @@ def selectPercentOfRowsByValue_handmade(constructor):
 	assert expTest.equals(toTest)
 
 
-##########################
-# selectPercentOfAllRows #
-##########################
-
-def selectPercentOfAllRows_exceptionPercentNone(constructor):
-	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is None """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfAllRows(None)
-
-def selectPercentOfAllRows_exceptionPercentZero(constructor):
-	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is <= 0 """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfAllRows(0)
-
-def selectPercentOfAllRows_exceptionPercentOneHundrend(constructor):
-	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is >= 100 """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfAllRows(100)
-
-def selectPercentOfAllRows_handmade(constructor):
-	""" Test selectPercentOfAllRows() against handmade output with the test seed """
-	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	ret = toTest.selectPercentOfAllRows(50)
-
-	expRet = constructor([[1,2,3],[10,11,12]],featureNames)
-	expTest = constructor([[4,5,6],[7,8,9]],featureNames)
-
-	assert ret.equals(expRet)
-	assert expTest.equals(toTest)
-
 #########################
 # extractRowsByCoinToss #
 #########################

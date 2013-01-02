@@ -351,29 +351,6 @@ class BaseData(object):
 		#	the storage struc is outside the func, ie we have access to it here
 		#apply to all using above to mark selected
 
-
-	def selectPercentOfAllRows(self, percentToSelect, seed=DEFAULT_SEED):
-		"""
-		Return a new object containing a randomly selected sample of rows from
-		this object, with the sampe limited to the given percentage of all
-		present rows. Those selected values are also removed from this object.
-
-		"""
-		random.seed(seed)
-		if percentToSelect is None:
-			raise ArgumentException("percentToSelect must not be none")
-		if percentToSelect <= 0:
-			raise ArgumentException("percentToSelect must be greater than 0")
-		if percentToSelect >= 100:
-			raise ArgumentException("percentToSelect must be less than 100")
-
-		numToSelect = int((percentToSelect/100.0) * self.rows())
-		selectionKeys = range(self.rows())
-		selectionKeys = random.sample(selectionKeys, numToSelect)
-		ret = self.extractRows(selectionKeys)
-		
-		return ret
-
 	def extractRowsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
 		"""
 		Return a new object containing a randomly selected sample of rows

@@ -127,29 +127,6 @@ def test_selectPercentOfRowsByValue_handmade():
 	callAll(selectPercentOfRowsByValue_handmade)
 
 
-##########################
-# selectPercentOfAllRows #
-##########################
-
-@raises(ArgumentException)
-def test_selectPercentOfAllRows_exceptionPercentNone():
-	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is None """
-	callAll(selectPercentOfAllRows_exceptionPercentNone)
-
-@raises(ArgumentException)
-def test_selectPercentOfAllRows_exceptionPercentZero():
-	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is <= 0 """
-	callAll(selectPercentOfAllRows_exceptionPercentZero)
-
-@raises(ArgumentException)
-def test_selectPercentOfAllRows_exceptionPercentOneHundrend():
-	""" Test selectPercentOfAllRows() for ArgumentException when percent to select is >= 100 """
-	callAll(selectPercentOfAllRows_exceptionPercentOneHundrend)
-
-def test_selectPercentOfAllRows_handmade():
-	""" Test selectPercentOfAllRows() against handmade output with the test seed """
-	callAll(selectPercentOfAllRows_handmade)
-
 #########################
 # extractRowsByCoinToss #
 #########################
