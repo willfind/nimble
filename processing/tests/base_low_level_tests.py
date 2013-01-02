@@ -2,7 +2,7 @@
 Unit tests of the low level functions defined by the base representation class.
 
 Since these functions are stand alone in the base class, they can be tested directly.
-FeatureName equality is defined using _columns_implementation, which is to be defined
+FeatureName equality is defined using _features_implementation, which is to be defined
 in the derived class, so all of these tests make a call to makeAndDefine instead
 of directly instantiating a BaseData object. This function temporarily fills in
 that missing implementation.
@@ -18,13 +18,13 @@ def makeConst(num):
 	return const
 
 def makeAndDefine(featureNames=None, size=0):
-	""" Make a base data object that will think it has as many columns as it has featureNames,
+	""" Make a base data object that will think it has as many features as it has featureNames,
 	even though it has no actual data """
 	cols = size if featureNames is None else len(featureNames)
 	specificImp = makeConst(cols)
-	BaseData._columns_implementation = specificImp
+	BaseData._features_implementation = specificImp
 	ret = BaseData(featureNames)
-	ret._columns_implementation = specificImp
+	ret._features_implementation = specificImp
 	return ret
 
 
@@ -34,7 +34,7 @@ def makeAndDefine(featureNames=None, size=0):
 
 #@raises(ArgumentException)
 #def test_init_exceptionNoFeatureNamesOrCount():
-#	""" Test init() for ArgumentException when called without featureNames or a count of columns """
+#	""" Test init() for ArgumentException when called without featureNames or a count of features """
 #	toTest= BaseData(None)
 
 ###############

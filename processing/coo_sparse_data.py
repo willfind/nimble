@@ -22,10 +22,10 @@ class CooSparseData(SparseData):
 		super(CooSparseData, self).__init__(self.data,featureNames)
 
 
-	def _extractColumns_implementation(self, toExtract, start, end, number, randomize):
+	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
 		"""
-		Function to extract columns according to the parameters, and return an object containing
-		the removed columns with their featureName names from this object. The actual work is done by
+		Function to extract features according to the parameters, and return an object containing
+		the removed features with their featureName names from this object. The actual work is done by
 		further helper functions, this determines which helper to call, and modifies the input
 		to accomodate the number and randomize parameters, where number indicates how many of the
 		possibilities should be extracted, and randomize indicates whether the choice of who to
@@ -49,16 +49,16 @@ class CooSparseData(SparseData):
 			toExtractIndices = []
 			for value in toExtract:
 				toExtractIndices.append(self._getIndex(value))
-			return self._extractColumnsByList_implementation(toExtractIndices)
+			return self._extractFeaturesByList_implementation(toExtractIndices)
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractColumnByFunction case
+				raise NotImplementedError # TODO randomize in the extractFeatureByFunction case
 			else:
 				if number is None:
 					number = self.points()		
-				return self._extractColumnsByFunction_implementation(toExtract, number)
+				return self._extractFeaturesByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
@@ -68,12 +68,12 @@ class CooSparseData(SparseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactColumnsByList(random.randrange(start,end,number))
+				return self.extactFeaturesByList(random.randrange(start,end,number))
 			else:
-				return self._extractColumnsByRange_implementation(start, end)
+				return self._extractFeaturesByRange_implementation(start, end)
 
 
-	def _extractColumnsByList_implementation(self,toExtract):
+	def _extractFeaturesByList_implementation(self,toExtract):
 		"""
 		
 
@@ -131,7 +131,7 @@ class CooSparseData(SparseData):
 			return False
 		return True 
 
-	def _columns_implementation(self):
+	def _features_implementation(self):
 		return self.data.shape[1]
 
 	def _points_implementation(self):
@@ -162,9 +162,9 @@ def writeToMM(toWrite, outPath, includeFeatureNames):
 
 	if includeFeatureNames:
 		featureNameString = "#"
-		for i in xrange(toWrite.columns()):
+		for i in xrange(toWrite.features()):
 			featureNameString += toWrite.featureNamesInverse[i]
-			if not i == toWrite.columns() - 1:
+			if not i == toWrite.features() - 1:
 				featureNameString += ','
 		
 		mmwrite(target=outPath, a=toWrite.data, comment=featureNameString)		

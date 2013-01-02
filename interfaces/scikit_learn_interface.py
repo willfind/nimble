@@ -74,7 +74,7 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
 		# TODO currently destructive!
-		trainObjY = trainObj.extractColumns([dependentVar])		
+		trainObjY = trainObj.extractFeatures([dependentVar])		
 	# could be None for unsupervised learning	
 
 	# necessary format for skl, also makes the following ops easier

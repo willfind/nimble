@@ -67,14 +67,14 @@ def regressor(algorithm, trainData, testData, output=None, dependentVar=None, ar
 	if not isinstance(trainData, BaseData):
 		trainData = DMDLoadCSV(trainData)
 	
-	# make sure dependentVar is a column number
+	# make sure dependentVar is a feature index
 	if not isinstance(dependentVar, int):
 		dependentVar = trainData.featureNames[dependentVar]
 	
 	# isolate the target values from training examples, if present
 	trainDataY = None
 	if dependentVar is not None:
-		trainDataY = trainData.extractColumns([dependentVar])
+		trainDataY = trainData.extractFeatures([dependentVar])
 		# Regressors expects row vectors in this case
 		trainDataY.transpose()
 

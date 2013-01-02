@@ -24,14 +24,14 @@ from copy import deepcopy
 
 
 ####################
-# duplicateColumns #
+# duplicateFeatures #
 ####################
 
 
 
 
 ###########################
-# dropStringValuedColumns #
+# dropStringValuedFeatures #
 ###########################
 
 
@@ -40,16 +40,16 @@ from copy import deepcopy
 
 
 #################################
-# columnToBinaryCategoryColumns #
+# featureToBinaryCategoryFeatures #
 #################################
 
 
-def columnToBinaryCategoryColumns_handmade(constructor):
-	""" Test convertColumnToCategoryColumns() against handmade output """
+def featureToBinaryCategoryFeatures_handmade(constructor):
+	""" Test convertFeatureToCategoryFeatures() against handmade output """
 	data = [[1],[2],[3]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)
-	toTest.columnToBinaryCategoryColumns(0)
+	toTest.featureToBinaryCategoryFeatures(0)
 
 	expData = [[1,0,0], [0,1,0], [0,0,1]]
 	expFeatureNames = ['col=1','col=2','col=3']
@@ -62,15 +62,15 @@ def columnToBinaryCategoryColumns_handmade(constructor):
 
 
 #############################
-# columnToIntegerCategories #
+# featureToIntegerCategories #
 #############################
 
-def columnToIntegerCategories_handmade(constructor):
-	""" Test convertColumnToIntegerCategories() against handmade output """
+def featureToIntegerCategories_handmade(constructor):
+	""" Test convertFeatureToIntegerCategories() against handmade output """
 	data = [[10],[20],[30.5],[20],[10]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)
-	toTest.columnToIntegerCategories(0)
+	toTest.featureToIntegerCategories(0)
 
 	assert toTest.data[0] == toTest.data[4]
 	assert toTest.data[1] == toTest.data[3]

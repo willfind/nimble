@@ -19,7 +19,7 @@ class RowListData(BaseData):
 	"""
 	Class providing implementations of data manipulation operations on data stored
 	in a list of lists, representing a list of points of data. data is the list of
-	lists. columns is the integer number of columns in each point.
+	lists. numFeatures is the integer number of features in each point.
 
 	"""
 
@@ -32,13 +32,13 @@ class RowListData(BaseData):
 
 		"""
 		if data is None or len(data) == 0:
-			self.numColumns = 0
+			self.numFeatures = 0
 			self.data = []
 			super(RowListData, self).__init__([])
 		else:
-			self.numColumns= len(data[0])
+			self.numFeatures= len(data[0])
 			for point in data:
-				if len(point) != self.numColumns:
+				if len(point) != self.numFeatures:
 					raise ArgumentException("Points must be of equal size")
 			self.data = data
 			super(RowListData, self).__init__(featureNames)
@@ -46,13 +46,13 @@ class RowListData(BaseData):
 
 	def _transpose_implementation(self):
 		"""
-		Function to transpose the data, ie invert the column and point indices of the data.
+		Function to transpose the data, ie invert the feature and point indices of the data.
 		
 		This is not an in place operation, a new list of lists is constructed.
 		"""
-		tempColumns = len(self.data)
+		tempFeatures = len(self.data)
 		transposed = []
-		#load the new data with an empty point for each column in the original
+		#load the new data with an empty point for each feature in the original
 		for i in xrange(len(self.data[0])):
 			transposed.append([])
 		for point in self.data:
@@ -60,25 +60,25 @@ class RowListData(BaseData):
 				transposed[i].append(point[i])
 		
 		self.data = transposed
-		self.numColumns= tempColumns
+		self.numFeatures= tempFeatures
 
 	def _appendPoints_implementation(self,toAppend):
 		"""
-		Append the points from the toAppend object to the bottom of the columns in this object
+		Append the points from the toAppend object to the bottom of the features in this object
 		
 		"""
 		for point in toAppend.data:
 			self.data.append(point)
 	
-	def _appendColumns_implementation(self,toAppend):
+	def _appendFeatures_implementation(self,toAppend):
 		"""
-		Append the columns from the toAppend object to right ends of the points in this object
+		Append the features from the toAppend object to right ends of the points in this object
 
 		"""	
 		for i in xrange(self.points()):
 			for value in toAppend.data[i]:
 				self.data[i].append(value)
-		self.numColumns= self.numColumns+ toAppend.columns()
+		self.numFeatures= self.numFeatures+ toAppend.features()
 
 	def _sortPoints_implementation(self,cmp, key, reverse):
 		""" 
@@ -88,10 +88,10 @@ class RowListData(BaseData):
 		"""
 		self.data.sort(cmp, key, reverse)
 
-	def _sortColumns_implementation(self,cmp, key, reverse):
+	def _sortFeatures_implementation(self,cmp, key, reverse):
 		""" 
-		Modify this object so that the columns are sorted using the built in python
-		sort on column views. The input arguments are passed to that function unalterted.
+		Modify this object so that the features are sorted using the built in python
+		sort on feature views. The input arguments are passed to that function unalterted.
 		This funciton returns a list of featureNames indicating the new order of the data.
 
 		"""
@@ -102,8 +102,8 @@ class RowListData(BaseData):
 		#create key list - to be sorted; and dictionary
 		keyList = []
 		temp = []
-		for i in xrange(self.columns()):
-			ithView = self.ColumnView(self,i)
+		for i in xrange(self.features()):
+			ithView = self.FeatureView(self,i)
 			keyList.append(key(ithView))
 			temp.append(None)
 		keyDict = {}
@@ -114,15 +114,15 @@ class RowListData(BaseData):
 		#now modify data to correspond to the new order
 		for point in self.data:
 			#have to copy it out so we don't corrupt the point
-			for i in xrange(self.columns()):
+			for i in xrange(self.features()):
 				currKey = keyList[i]
 				oldColNum = keyDict[currKey]
 				temp[i] = point[oldColNum]
-			for i in xrange(self.columns()):
+			for i in xrange(self.features()):
 				point[i] = temp[i]
 
 		# have to deal with featureNames now
-		for i in xrange(self.columns()):
+		for i in xrange(self.features()):
 			currKey = keyList[i]
 			oldColNum = keyDict[currKey]
 			temp[i] = self.featureNamesInverse[oldColNum]
@@ -243,10 +243,10 @@ class RowListData(BaseData):
 		return RowListData(inRange)
 
 
-	def _extractColumns_implementation(self, toExtract, start, end, number, randomize):
+	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
 		"""
-		Function to extract columns according to the parameters, and return an object containing
-		the removed columns with their featureNames from this object. The actual work is done by
+		Function to extract features according to the parameters, and return an object containing
+		the removed features with their featureNames from this object. The actual work is done by
 		further helper functions, this determines which helper to call, and modifies the input
 		to accomodate the number and randomize parameters, where number indicates how many of the
 		possibilities should be extracted, and randomize indicates whether the choice of who to
@@ -270,16 +270,16 @@ class RowListData(BaseData):
 			toExtractIndices = []
 			for value in toExtract:
 				toExtractIndices.append(self._getIndex(value))
-			return self._extractColumnsByList_implementation(toExtractIndices)	
+			return self._extractFeaturesByList_implementation(toExtractIndices)	
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractColumnsByFunction case
+				raise NotImplementedError # TODO randomize in the extractFeaturesByFunction case
 			else:
 				if number is None:
 					number = self.points()		
-				return self._extractColumnsByFunction_implementation(toExtract, number)
+				return self._extractFeaturesByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
@@ -289,15 +289,15 @@ class RowListData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactColumnsByList(random.randrange(start,end,number))
+				return self.extactFeaturesByList(random.randrange(start,end,number))
 			else:
-				return self._extractColumnsByRange_implementation(start, end)
+				return self._extractFeaturesByRange_implementation(start, end)
 
 
-	def _extractColumnsByList_implementation(self, toExtract):
+	def _extractFeaturesByList_implementation(self, toExtract):
 		"""
-		Modify this object to have only the columns that are not given in the input,
-		returning an object containing those columns that are, with the same featureNames
+		Modify this object to have only the features that are not given in the input,
+		returning an object containing those features that are, with the same featureNames
 		they had previously. It does not modify the featureNames for the calling object.
 
 		"""
@@ -311,7 +311,7 @@ class RowListData(BaseData):
 			extractedPoint.reverse()
 			extractedData.append(extractedPoint)
 
-		self.numColumns = self.numColumns - len(toExtract)
+		self.numFeatures = self.numFeatures - len(toExtract)
 
 		# construct featureName list
 		featureNameList = []
@@ -322,27 +322,27 @@ class RowListData(BaseData):
 		return RowListData(extractedData, featureNameList)
 
 
-	def _extractColumnsByFunction_implementation(self, function, number):
+	def _extractFeaturesByFunction_implementation(self, function, number):
 		"""
-		Modify this object to have only the columns whose views do not satisfy the given
-		function, returning an object containing those columns whose views do, with the
+		Modify this object to have only the features whose views do not satisfy the given
+		function, returning an object containing those features whose views do, with the
 		same featureNames	they had previously. It does not modify the featureNames for the calling object.
 
 		"""
-		# all we're doing is making a list and calling extractColumnsBy list, no need
-		# deal with featureNames or the number of columns.
+		# all we're doing is making a list and calling extractFeaturesBy list, no need
+		# deal with featureNames or the number of features.
 		toExtract = []
-		for i in xrange(self.columns()):
-			ithView = self.ColumnView(self,i)
+		for i in xrange(self.features()):
+			ithView = self.FeatureView(self,i)
 			if function(ithView):
 				toExtract.append(i)
-		return self._extractColumnsByList_implementation(toExtract)
+		return self._extractFeaturesByList_implementation(toExtract)
 
 
-	def _extractColumnsByRange_implementation(self, start, end):
+	def _extractFeaturesByRange_implementation(self, start, end):
 		"""
-		Modify this object to have only those columns that are not within the given range,
-		inclusive; returning an object containing those columns that are, with the same featureNames
+		Modify this object to have only those features that are not within the given range,
+		inclusive; returning an object containing those features that are, with the same featureNames
 		they had previously. It does not modify the featureNames for the calling object.
 		"""
 		extractedData = []
@@ -354,7 +354,7 @@ class RowListData(BaseData):
 			extractedPoint.reverse()
 			extractedData.append(extractedPoint)
 
-		self.numColumns = self.numColumns- len(extractedPoint)
+		self.numFeatures = self.numFeatures- len(extractedPoint)
 
 		# construct featureName list
 		featureNameList = []
@@ -376,16 +376,16 @@ class RowListData(BaseData):
 			retData.append([currOut])
 		return RowListData(retData)
 
-	def _applyFunctionToEachColumn_implementation(self,function):
+	def _applyFunctionToEachFeature_implementation(self,function):
 		"""
-		Applies the given funciton to each column in this object, collecting the
-		output values into a new object in the shape of a column vector that is
+		Applies the given funciton to each feature in this object, collecting the
+		output values into a new object in the shape of a feature vector that is
 		returned upon completion.
 
 		"""
 		retData = [[]]
-		for i in xrange(self.columns()):
-			ithView = self.ColumnView(self,i)
+		for i in xrange(self.features()):
+			ithView = self.FeatureView(self,i)
 			currOut = function(ithView)
 			retData[0].append(currOut)
 		return RowListData(retData)
@@ -415,8 +415,8 @@ class RowListData(BaseData):
 				ret.append([redKey,redValue])
 		return RowListData(ret)
 
-	def _columns_implementation(self):
-		return self.numColumns
+	def _features_implementation(self):
+		return self.numFeatures
 
 	def _points_implementation(self):
 		return len(self.data)
@@ -426,7 +426,7 @@ class RowListData(BaseData):
 			return False
 		if self.points() != other.points():
 			return False
-		if self.columns() != other.columns():
+		if self.features() != other.features():
 			return False
 		for index in xrange(self.points()):
 			if self.data[index] != other.data[index]:
@@ -448,9 +448,9 @@ class RowListData(BaseData):
 	# Helpers #
 	###########
 
-	class ColumnView():
+	class FeatureView():
 		"""
-		Class to simulate direct random access of a column.
+		Class to simulate direct random access of a feature.
 
 		"""
 		def __init__(self, outer, colNum):
@@ -484,7 +484,7 @@ def loadCSV(inPath, lineParser = None):
 	firstLine = inFile.readline()
 	featureNameList = None
 
-	# test if this is a line defining column featureNames
+	# test if this is a line defining featureNames
 	if firstLine[0] == "#":
 		# strip '#' from the begining of the line
 		scrubbedLine = firstLine[1:]
@@ -528,14 +528,14 @@ def writeToCSV(toWrite, outPath, includeFeatureNames):
 
 	toWrite is the RowListData to write to file. outPath is the location where
 	we want to write the output file. includeFeatureNames is boolean argument indicating
-	whether the file should start with a comment line designating column featureNames.
+	whether the file should start with a comment line designating featureNames.
 
 	"""
 	outFile = open(outPath, 'w')
 	
 	if includeFeatureNames and toWrite.featureNames != None:
 		pairs = toWrite.featureNames.items()
-		# sort according to the value, not the key. ie sort by column number
+		# sort according to the value, not the key. ie sort by feature number
 		pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
 		for (a,x) in pairs:
 			if pairs.index((a,x)) == 0:

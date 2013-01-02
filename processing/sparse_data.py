@@ -25,7 +25,7 @@ class SparseData(BaseData):
 
 
 
-	def _columns_implementation(self):
+	def _features_implementation(self):
 		(points, cols) = self.data.get_shape()
 		return cols
 

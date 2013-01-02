@@ -32,7 +32,7 @@ class DenseMatrixData(BaseData):
 
 	def _transpose_implementation(self):
 		"""
-		Function to transpose the data, ie invert the column and point indices of the data.
+		Function to transpose the data, ie invert the feature and point indices of the data.
 		
 		This is not an in place operation, a new list of lists is constructed.
 		"""
@@ -41,15 +41,15 @@ class DenseMatrixData(BaseData):
 
 	def _appendPoints_implementation(self,toAppend):
 		"""
-		Append the points from the toAppend object to the bottom of the columns in this object
+		Append the points from the toAppend object to the bottom of the features in this object
 		
 		"""
 		self.data = numpy.concatenate((self.data,toAppend.data),0)
 		
 
-	def _appendColumns_implementation(self,toAppend):
+	def _appendFeatures_implementation(self,toAppend):
 		"""
-		Append the columns from the toAppend object to right ends of the points in this object
+		Append the features from the toAppend object to right ends of the points in this object
 
 		"""
 		self.data = numpy.concatenate((self.data,toAppend.data),1)
@@ -65,10 +65,10 @@ class DenseMatrixData(BaseData):
 		self.data = numpy.sort(self.data,0)
 		print self.data
 
-	def _sortColumns_implementation(self,cmp, key, reverse):
+	def _sortFeatures_implementation(self,cmp, key, reverse):
 		""" 
-		Modify this object so that the columns are sorted using the built in python
-		sort on column views. The input arguments are passed to that function unalterted
+		Modify this object so that the features are sorted using the built in python
+		sort on feature views. The input arguments are passed to that function unalterted
 		This funciton returns a list of featureNames indicating the new order of the data.
 
 		"""
@@ -168,10 +168,10 @@ class DenseMatrixData(BaseData):
 		self.data = numpy.delete(self.data, numpy.s_[start:end+1], 0)
 		return DenseMatrixData(ret)
 
-	def _extractColumns_implementation(self, toExtract, start, end, number, randomize):
+	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
 		"""
-		Function to extract columns according to the parameters, and return an object containing
-		the removed columns with their featureName names from this object. The actual work is done by
+		Function to extract features according to the parameters, and return an object containing
+		the removed features with their featureName names from this object. The actual work is done by
 		further helper functions, this determines which helper to call, and modifies the input
 		to accomodate the number and randomize parameters, where number indicates how many of the
 		possibilities should be extracted, and randomize indicates whether the choice of who to
@@ -195,7 +195,7 @@ class DenseMatrixData(BaseData):
 			toExtractIndices = []
 			for value in toExtract:
 				toExtractIndices.append(self._getIndex(value))
-			return self._extractColumnsByList_implementation(toExtractIndices)
+			return self._extractFeaturesByList_implementation(toExtractIndices)
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
@@ -204,7 +204,7 @@ class DenseMatrixData(BaseData):
 			else:
 				if number is None:
 					number = self.points()		
-				return self._extractColumnsByFunction_implementation(toExtract, number)
+				return self._extractFeaturesByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
@@ -214,14 +214,14 @@ class DenseMatrixData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactColumnsByList(random.randrange(start,end,number))
+				return self.extactFeaturesByList(random.randrange(start,end,number))
 			else:
-				return self._extractColumnsByRange_implementation(start, end)
+				return self._extractFeaturesByRange_implementation(start, end)
 
-	def _extractColumnsByList_implementation(self, toExtract):
+	def _extractFeaturesByList_implementation(self, toExtract):
 		"""
-		Modify this object to have only the columns that are not given in the input,
-		returning an object containing those columns that are.
+		Modify this object to have only the features that are not given in the input,
+		returning an object containing those features that are.
 
 		"""
 		ret = self.data[:,toExtract]
@@ -234,29 +234,29 @@ class DenseMatrixData(BaseData):
 
 		return DenseMatrixData(ret, featureNameList)
 
-	def _extractColumnsByFunction_implementation(self, toExtract, number):
+	def _extractFeaturesByFunction_implementation(self, toExtract, number):
 		"""
-		Modify this object to have only the columns whose views do not satisfy the given
-		function, returning an object containing those columns whose views do.
+		Modify this object to have only the features whose views do not satisfy the given
+		function, returning an object containing those features whose views do.
 
 		"""
 		results = numpy.apply_along_axis(toExtract, 0, self.data)
 		ret = self.data[:,results]
-		# need to convert our boolean array to to list of columns to be removed			
+		# need to convert our boolean array to to list of features to be removed			
 		toRemove = []
 		for i in xrange(len(results)):
 			if results[i]:
 				toRemove.append(i)
 
-		return self._extractColumnsByList_implementation(toRemove)
+		return self._extractFeaturesByList_implementation(toRemove)
 
 
-	def _extractColumnsByRange_implementation(self, start, end):
+	def _extractFeaturesByRange_implementation(self, start, end):
 		"""
-		Modify this object to have only those columns that are not within the given range,
-		inclusive; returning an object containing those columns that are.
+		Modify this object to have only those features that are not within the given range,
+		inclusive; returning an object containing those features that are.
 	
-		start and end must not be null, must be within the range of possible columns,
+		start and end must not be null, must be within the range of possible features,
 		and start must not be greater than end
 
 		"""
@@ -284,10 +284,10 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(retData)
 
 
-	def _applyFunctionToEachColumn_implementation(self,function):
+	def _applyFunctionToEachFeature_implementation(self,function):
 		"""
-		Applies the given funciton to each column in this object, collecting the
-		output values into a new object in the shape of a column vector that is
+		Applies the given funciton to each feature in this object, collecting the
+		output values into a new object in the shape of a feature vector that is
 		returned upon completion.
 
 		"""
@@ -333,7 +333,7 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(ret)
 
 
-	def _columns_implementation(self):
+	def _features_implementation(self):
 		shape = numpy.shape(self.data)
 		return shape[1]
 
@@ -346,7 +346,7 @@ class DenseMatrixData(BaseData):
 			return False
 		if self.points() != other.points():
 			return False
-		if self.columns() != other.columns():
+		if self.features() != other.features():
 			return False
 		return numpy.array_equal(self.data,other.data)
 
@@ -382,7 +382,7 @@ def loadCSV(inPath, lineParser = None):
 	featureNameList = None
 	skip_header = 0
 
-	# test if this is a line defining column featureNames
+	# test if this is a line defining featureNames
 	if firstLine[0] == "#":
 		# strip '#' from the begining of the line
 		scrubbedLine = firstLine[1:]
@@ -401,15 +401,15 @@ def writeToCSV(toWrite, outPath, includeFeatureNames):
 
 	toWrite is the DenseMatrixData to write to file. outPath is the location where
 	we want to write the output file. includeFeatureNames is boolean argument indicating
-	whether the file should start with a comment line designating column featureNames.
+	whether the file should start with a comment line designating featureNames.
 
 	"""
 	header = None
 	if includeFeatureNames:
 		featureNameString = "#"
-		for i in xrange(toWrite.columns()):
+		for i in xrange(toWrite.features()):
 			featureNameString += toWrite.featureNamesInverse[i]
-			if not i == toWrite.columns() - 1:
+			if not i == toWrite.features() - 1:
 				featureNameString += ','
 		header = featureNameString
 

@@ -43,7 +43,7 @@ def callAll(func):
 
 
 ####################
-# duplicateColumns #
+# duplicateFeatures #
 ####################
 
 
@@ -51,7 +51,7 @@ def callAll(func):
 
 
 ###########################
-# dropStringValuedColumns #
+# dropStringValuedFeatures #
 ###########################
 
 
@@ -60,23 +60,23 @@ def callAll(func):
 
 
 #################################
-# columnToBinaryCategoryColumns #
+# featureToBinaryCategoryFeatures #
 #################################
 
 
-def test_columnToBinaryCategoryColumns_handmade():
-	""" Test columnToBinaryCategoryColumnss() against handmade output """
-	callAll(columnToBinaryCategoryColumns_handmade)
+def test_featureToBinaryCategoryFeatures_handmade():
+	""" Test featureToBinaryCategoryFeaturess() against handmade output """
+	callAll(featureToBinaryCategoryFeatures_handmade)
 	
 
 
 #############################
-# columnToIntegerCategories #
+# featureToIntegerCategories #
 #############################
 
-def test_columnToIntegerCategories_handmade():
-	""" Test columnToIntegerCategories() against handmade output """
-	callAll(columnToIntegerCategories_handmade)
+def test_featureToIntegerCategories_handmade():
+	""" Test featureToIntegerCategories() against handmade output """
+	callAll(featureToIntegerCategories_handmade)
 
 
 ###############################

@@ -24,8 +24,8 @@ DEFAULT_PREFIX = "_DEFAULT_#"
 class BaseData(object):
 	"""
 	Class defining important data manipulation operations and giving functionality
-	for the naming the features of that data. A mapping from feature names to column
-	numbers is given by the featureNames attribute, the inverse of that mapping is
+	for the naming the features of that data. A mapping from feature names to feature
+	indices is given by the featureNames attribute, the inverse of that mapping is
 	given by featureNamesInverse.
 
 	"""
@@ -42,8 +42,8 @@ class BaseData(object):
 		self._nextDefaultValue = 0
 		self._setAllDefault()
 		self._renameMultipleFeatureNames_implementation(featureNames,True)
-		if featureNames is not None and len(featureNames) != self.columns():
-			raise ArgumentException("Cannot have different number of featureNames and columns")
+		if featureNames is not None and len(featureNames) != self.features():
+			raise ArgumentException("Cannot have different number of featureNames and features")
 
 
 	########################
@@ -117,7 +117,7 @@ class BaseData(object):
 
 		assignments may be either a list or dict specifying new names, or None
 		to set all featureNames to new default values. If assignment is any other type, or
-		if the names are not strings, the names are not unique, the column
+		if the names are not strings, the names are not unique, the feature
 		indices are not integers, or the names begin with the default prefix,
 		then an ArgumentException will be raised.
 
@@ -152,14 +152,14 @@ class BaseData(object):
 		#TODO
 		raise NotImplementedError
 	
-	def duplicateColumns(self, columns):
+	def duplicateFeatures(self, features):
 		"""
-		Return a new object which consists only of those specified columns, without mutating
+		Return a new object which consists only of those specified features, without mutating
 		this object.
 		
 		"""
-		if columns is None:
-			raise ArgumentException("Must provide identifiers for the columns you want duplicated")
+		if features is None:
+			raise ArgumentException("Must provide identifiers for the features you want duplicated")
 		#TODO
 		raise NotImplementedError
 
@@ -172,41 +172,41 @@ class BaseData(object):
 		# from overlap generate keys from other
 		#	- must be unique
 
-		# determine how many columns of new data there will be
+		# determine how many features of new data there will be
 
-		# for each new column
+		# for each new feature
 		# apply to each point in self with a lookup function into other
 
 		# .... how do we do lookup?
-		# we have all the column numbers, so its ok.
+		# we have all the feature numbers, so its ok.
 		pass
 
 	
-	def dropStringValuedColumns(self):
+	def dropStringValuedFeatures(self):
 		"""
-		Modify this object so that it no longer contains columns which have strings
+		Modify this object so that it no longer contains features which have strings
 		as values
 
 		"""
-		def hasStrings(column):
-			for value in column:
+		def hasStrings(feature):
+			for value in feature:
 				if isinstance(value, basestring):
 					return True
 			return False
 	
-		self.extractColumns(hasStrings)
+		self.extractFeatures(hasStrings)
 
 
-	def columnToBinaryCategoryColumns(self, columnToConvert):
+	def featureToBinaryCategoryFeatures(self, featureToConvert):
 		"""
-		Modify this object so that the choosen column is removed, and binary range
-		columns are added, one for each possible value seen in the choosen column.
+		Modify this object so that the choosen feature is removed, and binary valued
+		features are added, one for each possible value seen in the original feature.
 
 		"""
-		index = self._getIndex(columnToConvert)
+		index = self._getIndex(featureToConvert)
 
 		# extract col.
-		toConvert = self.extractColumns([index])
+		toConvert = self.extractFeatures([index])
 
 		# MR to get list of values
 		def getValue(point):
@@ -216,7 +216,7 @@ class BaseData(object):
 
 		values = toConvert.mapReduceOnPoints(getValue, simpleReducer)
 		values.renameFeatureName(0,'values')
-		values = values.extractColumns([0])
+		values = values.extractFeatures([0])
 
 		# Convert to RLD, so we can have easy access
 		values = values.convertToRowListData()
@@ -235,24 +235,24 @@ class BaseData(object):
 			value = point[0]
 			ret = toConvert.applyFunctionToEachPoint(makeFunc(value))
 			ret.renameFeatureName(0, varName + "=" + str(value))
-			toConvert.appendColumns(ret)
+			toConvert.appendFeatures(ret)
 
-		# remove the original column, and combine with self
-		toConvert.extractColumns([varName])
-		self.appendColumns(toConvert)
+		# remove the original feature, and combine with self
+		toConvert.extractFeatures([varName])
+		self.appendFeatures(toConvert)
 
 
-	def columnToIntegerCategories(self, columnToConvert):
+	def featureToIntegerCategories(self, featureToConvert):
 		"""
-		Modify this object so that the chosen column in removed, and a new integer
-		valued column is added with values 0 to n-1, one for each of n values present
-		in the original column
+		Modify this object so that the chosen feature in removed, and a new integer
+		valued feature is added with values 0 to n-1, one for each of n values present
+		in the original feature. 
 
 		"""
-		index = self._getIndex(columnToConvert)
+		index = self._getIndex(featureToConvert)
 
 		# extract col.
-		toConvert = self.extractColumns([index])
+		toConvert = self.extractFeatures([index])
 
 		# MR to get list of values
 		def getValue(point):
@@ -262,7 +262,7 @@ class BaseData(object):
 
 		values = toConvert.mapReduceOnPoints(getValue, simpleReducer)
 		values.renameFeatureName(0,'values')
-		values = values.extractColumns([0])
+		values = values.extractFeatures([0])
 
 		# Convert to RLD, so we can have easy access
 		values = values.convertToRowListData()
@@ -274,21 +274,21 @@ class BaseData(object):
 				mapping[point[0]] = index
 				index = index + 1
 
-		# use apply to each to make new column with the int mappings
+		# use apply to each to make new feature with the int mappings
 		def lookup(point):
 			return mapping[point[0]]
 
 		converted = toConvert.applyFunctionToEachPoint(lookup)
 		converted.renameFeatureName(0,toConvert.featureNamesInverse[0])		
 
-		self.appendColumns(converted)
+		self.appendFeatures(converted)
 
 
-	def selectConstantOfPointsByValue(self, numToSelect, columnToSelectOver, seed=DEFAULT_SEED):
+	def selectConstantOfPointsByValue(self, numToSelect, featureToSelectOver, seed=DEFAULT_SEED):
 		"""
 		Return a new object containing a randomly selected sample of points from
 		this object, with the sample limited to a constant number of points
-		of each representative value in the specifed column. Those selected
+		of each representative value in the specifed feature. Those selected
 		values are also removed from this object.
 
 		"""
@@ -297,16 +297,16 @@ class BaseData(object):
 			raise ArgumentException("The selection constant must not be None")
 		if numToSelect <= 0:
 			raise ArgumentException("The selection constant must be positive")
-		index = self._getIndex(columnToSelectOver)
+		index = self._getIndex(featureToSelectOver)
 		#TODO
 		raise NotImplementedError
 
 
-	def selectPercentOfPointsByValue(self, percentToSelect, columnToSelectOver, seed=DEFAULT_SEED):
+	def selectPercentOfPointsByValue(self, percentToSelect, featureToSelectOver, seed=DEFAULT_SEED):
 		"""
 		Return a new object containing a randomly selected sample of points from
 		this object, with the sample limited to a percentage of points
-		of each representative value in the specified column. Those selected
+		of each representative value in the specified feature. Those selected
 		values are also removed from this object.
 
 		"""
@@ -317,7 +317,7 @@ class BaseData(object):
 			raise ArgumentException("percentToSelect must be greater than 0")
 		if percentToSelect >= 100:
 			raise ArgumentException("percentToSelect must be less than 100")
-		index = self._getIndex(columnToSelectOver)
+		index = self._getIndex(featureToSelectOver)
 		#TODO
 		raise NotImplementedError
 
@@ -344,7 +344,7 @@ class BaseData(object):
 			return ret
 
 #		ids = self.applyFunctionToEachPoint(tagValuesWithID)
-#		self.addColumn(ids)
+#		self.appendFeature(ids)
 
 	
 		#apply to all to number the different values		
@@ -374,13 +374,13 @@ class BaseData(object):
 			return point[len(point)-1]
 
 		selectionKeys = self.applyFunctionToEachPoint(experiment)
-		self.appendColumns(selectionKeys)
+		self.appendFeatures(selectionKeys)
 		ret = self.extractPoints(isSelected)
 		# remove the experimental data
 		if ret.points() > 0:
-			ret.extractColumns([ret.columns()-1])
+			ret.extractFeatures([ret.features()-1])
 		if self.points() > 0:
-			self.extractColumns([self.columns()-1])
+			self.extractFeatures([self.features()-1])
 		
 		return ret
 	
@@ -390,9 +390,9 @@ class BaseData(object):
 
 	def transpose(self):
 		"""
-		Function to transpose the data, ie invert the column and point indices of the data.
+		Function to transpose the data, ie invert the feature and point indices of the data.
 	
-		Columns are then given default featureNames.
+		Features are then given default featureNames.
 
 		"""
 		self._transpose_implementation()
@@ -400,23 +400,23 @@ class BaseData(object):
 
 	def appendPoints(self, toAppend):
 		"""
-		Append the points from the toAppend object to the bottom of the columns in this object.
+		Append the points from the toAppend object to the bottom of the features in this object.
 
 		toAppend cannot be None, and must be a kind of data representation object with the same
-		number of columns as the calling object.
+		number of features as the calling object.
 		
 		"""
 		if toAppend is None:
 			raise ArgumentException("toAppend must not be None")
 		if not isinstance(toAppend,BaseData):
 			raise ArgumentException("toAppend must be a kind of data representation object")
-		if not self.columns() == toAppend.columns():
-			raise ArgumentException("toAppend must have the same number of columns as this object")
+		if not self.features() == toAppend.features():
+			raise ArgumentException("toAppend must have the same number of features as this object")
 		self._appendPoints_implementation(toAppend)
 		
-	def appendColumns(self, toAppend):
+	def appendFeatures(self, toAppend):
 		"""
-		Append the columns from the toAppend object to right ends of the points in this object
+		Append the features from the toAppend object to right ends of the points in this object
 
 		toAppend cannot be None, must be a kind of data representation object with the same
 		number of points as the calling object, and must not share any feature names with the calling
@@ -431,9 +431,9 @@ class BaseData(object):
 			raise ArgumentException("toAppend must have the same number of points as this object")
 		if self.featureNameIntersection(toAppend):
 			raise ArgumentException("toAppend must not share any featureNames with this object")
-		self._appendColumns_implementation(toAppend)
+		self._appendFeatures_implementation(toAppend)
 
-		for i in xrange(toAppend.columns()):
+		for i in xrange(toAppend.features()):
 			self._addFeatureName(toAppend.featureNamesInverse[i])
 
 	def sortPoints(self, cmp=None, key=None, reverse=False):
@@ -445,14 +445,14 @@ class BaseData(object):
 		"""
 		self._sortPoints_implementation(cmp, key, reverse)
 
-	def sortColumns(self, cmp=None, key=None, reverse=False):
+	def sortFeatures(self, cmp=None, key=None, reverse=False):
 		""" 
-		Modify this object so that the columns are sorted in place, where the input
+		Modify this object so that the features are sorted in place, where the input
 		arguments are interpreted and employed in the same way as Python list
 		sorting.
 
 		"""
-		newFeatureNameOrder = self._sortColumns_implementation(cmp, key, reverse)
+		newFeatureNameOrder = self._sortFeatures_implementation(cmp, key, reverse)
 		self._renameMultipleFeatureNames_implementation(newFeatureNameOrder,True)
 
 
@@ -487,21 +487,21 @@ class BaseData(object):
 		ret._renameMultipleFeatureNames_implementation(self.featureNames,True)
 		return ret
 
-	def extractColumns(self, toExtract=None, start=None, end=None, number=None, randomize=False):
+	def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
 		"""
-		Modify this object, removing those columns that are specified by the input, and returning
-		an object containing those removed columns. This particular function only does argument
+		Modify this object, removing those features that are specified by the input, and returning
+		an object containing those removed features. This particular function only does argument
 		checking and modifying the featureNames for this object. It is the job of helper functions in
 		the derived class to perform the removal and assign featureNames for the returned object.
 
 		toExtract may be a single identifier, a list of identifiers, or a function that when
-		given a column will return True if it is to be removed. number is the quantity of columns that
+		given a feature will return True if it is to be removed. number is the quantity of features that
 		are to be extracted, the default None means unlimited extracttion. start and end are
 		parameters indicating range based extraction: if range based extraction is employed,
 		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.columns() respectibly. randomize indicates whether random
+		other defaults to 0 and self.features() respectibly. randomize indicates whether random
 		sampling is to be used in conjunction with the number parameter, if randomize is False,
-		the chosen columns are determined by column order, otherwise it is uniform random across the
+		the chosen features are determined by feature order, otherwise it is uniform random across the
 		space of possible removals.
 
 		"""
@@ -509,14 +509,14 @@ class BaseData(object):
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
 		elif start is not None or end is not None:
-			if start < 0 or start > self.columns():
-				raise ArgumentException("start must be a valid index, in the range of possible columns")
-			if end < 0 or end > self.columns():
-				raise ArgumentException("end must be a valid index, in the range of possible columns")
+			if start < 0 or start > self.features():
+				raise ArgumentException("start must be a valid index, in the range of possible features")
+			if end < 0 or end > self.features():
+				raise ArgumentException("end must be a valid index, in the range of possible features")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
 
-		ret = self._extractColumns_implementation(toExtract, start, end, number, randomize)
+		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
 		return ret
@@ -534,18 +534,18 @@ class BaseData(object):
 			raise ArgumentException("function must not be None")
 		return self._applyFunctionToEachPoint_implementation(function)
 
-	def applyFunctionToEachColumn(self, function):
+	def applyFunctionToEachFeature(self, function):
 		"""
-		Applies the given funciton to each column in this object, collecting the
-		output values into a new object in the shape of a column vector that is
+		Applies the given funciton to each feature in this object, collecting the
+		output values into a new object in the shape of a feature vector that is
 		returned upon completion.
 
-		function must not be none and accept a column as an argument
+		function must not be none and accept a feature as an argument
 
 		"""
 		if function is None:
 			raise ArgumentException("function must not be None")
-		return self._applyFunctionToEachColumn_implementation(function)
+		return self._applyFunctionToEachFeature_implementation(function)
 
 
 	def mapReduceOnPoints(self, mapper, reducer):
@@ -569,8 +569,8 @@ class BaseData(object):
 	def points(self):
 		return self._points_implementation()
 
-	def columns(self):
-		return self._columns_implementation()
+	def features(self):
+		return self._features_implementation()
 
 	def convertToRowListData(self):
 		return self._convertToRowListData_implementation()
@@ -647,7 +647,7 @@ class BaseData(object):
 	def _setAllDefault(self):
 		self.featureNames = {}
 		self.featureNamesInverse = {}
-		for i in xrange(self.columns()):
+		for i in xrange(self.features()):
 			defaultFeatureName = self._nextDefaultFeatureName()
 			self.featureNamesInverse[i] = defaultFeatureName
 			self.featureNames[defaultFeatureName] = i
@@ -655,10 +655,10 @@ class BaseData(object):
 
 	def _addFeatureName(self, featureName):
 		"""
-		FeatureName the next column outside of the current possible range with the given featureName
+		Name the next feature outside of the current possible range with the given featureName
 
-		featureName may be either a string, or None if you want this next column to have a default
-		name. If the featureName is not a string, or already being used by another column, an
+		featureName may be either a string, or None if you want this next feature to have a default
+		name. If the featureName is not a string, or already being used by another feature, an
 		ArgumentException will be raised.
 
 		"""
@@ -674,14 +674,14 @@ class BaseData(object):
 			featureNameNum = int(featureName[len(DEFAULT_PREFIX):])
 			self._nextDefaultValue = max(self._nextDefaultValue + 1, featureNameNum)
 
-		columns  = len(self.featureNamesInverse)
-		self.featureNamesInverse[columns] = featureName
-		self.featureNames[featureName] = columns
+		features  = len(self.featureNamesInverse)
+		self.featureNamesInverse[features] = featureName
+		self.featureNames[featureName] = features
 
 
 	def _removeFeatureNameAndShift(self, toRemove):
 		"""
-		Removes the specified column from the featureName set, changing the other featureNames to fill
+		Removes the specified feature from the featureName set, changing the other featureNames to fill
 		in the missing index.
 
 		toRemove must be a non None string or integer, specifying either a current featureName
@@ -694,15 +694,15 @@ class BaseData(object):
 
 		del self.featureNames[featureName]
 
-		columns  = len(self.featureNamesInverse)
+		features  = len(self.featureNamesInverse)
 		# remaping each index starting with the one we removed
-		for i in xrange(index, columns-1):
+		for i in xrange(index, features-1):
 			nextFeatureName = self.featureNamesInverse[i+1]
 			if featureName is not None:
 				self.featureNames[nextFeatureName] = i
 			self.featureNamesInverse[i] = nextFeatureName
 		#delete the last mapping, that featureName was shifted in the for loop
-		del self.featureNamesInverse[columns-1]
+		del self.featureNamesInverse[features-1]
 
 
 	def _renameFeatureName_implementation(self, oldIdentifier, newFeatureName, allowDefaults=False):
@@ -746,7 +746,7 @@ class BaseData(object):
 
 		assignments may be either a list or dict specifying new featureName names, or None
 		to set all featureNames to new default values. If assignment is any other type, or
-		if the featureNames are not strings, the featureNames are not unique, the column
+		if the featureNames are not strings, the featureNames are not unique, the feature
 		indices are not integers, then an ArgumentException will be raised. If
 		allowDefault is False, then none of the new featureNames may begin with the default
 		prefix.

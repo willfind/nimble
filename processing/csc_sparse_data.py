@@ -23,7 +23,7 @@ class CscSparseData(SparseData):
 		super(CscSparseData, self).__init__(self.data,featureNames)
 
 
-	def _extractColumns_implementation(self,toExtract):
+	def _extractFeatures_implementation(self,toExtract):
 		"""
 		
 
@@ -74,9 +74,9 @@ def writeToMM(toWrite, outPath, includeFeatureNames=False):
 	"""
 	if includeFeatureNames:
 		featureNameString = "#"
-		for i in xrange(toWrite.columns()):
+		for i in xrange(toWrite.features()):
 			featureNameString += toWrite.featureNamesInverse[i]
-			if not i == toWrite.columns() - 1:
+			if not i == toWrite.features() - 1:
 				featureNameString += ','
 		
 		mmwrite(target=outPath, a=toWrite.data, comment=featureNameString)		

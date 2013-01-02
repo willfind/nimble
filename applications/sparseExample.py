@@ -26,7 +26,7 @@ if __name__ == "__main__":
 	pathIn = sys.argv[1]
 
 	sparseAll = cooLoadMM(pathIn)
-	sparseY = sparseAll.extractColumns([0])
+	sparseY = sparseAll.extractFeatures([0])
 	sparseX = sparseAll
 
 	ret = skl('LogisticRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)

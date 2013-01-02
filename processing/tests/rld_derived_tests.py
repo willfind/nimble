@@ -51,7 +51,7 @@ def test_appendPoints_exceptionNone():
 
 @raises(ArgumentException)
 def test_appendPoints_exceptionWrongSize():
-	""" Test RLD appendPoints() for ArgumentException when toAppend has too many columns """
+	""" Test RLD appendPoints() for ArgumentException when toAppend has too many features """
 	appendPoints_exceptionWrongSize(constructor)
 
 def test_appendPoints_handmadeSingle():
@@ -64,31 +64,31 @@ def test_appendPoints_handmadeSequence():
 
 
 ################
-# appendColumns() #
+# appendFeatures() #
 ################
 
 @raises(ArgumentException)
-def test_appendColumns_exceptionNone():
-	""" Test RLD appendColumns() for ArgumentException when toAppend is None """
-	appendColumns_exceptionNone(constructor)
+def test_appendFeatures_exceptionNone():
+	""" Test RLD appendFeatures() for ArgumentException when toAppend is None """
+	appendFeatures_exceptionNone(constructor)
 
 @raises(ArgumentException)
-def test_appendColumns_exceptionWrongSize():
-	""" Test RLD appendColumns() for ArgumentException when toAppend has too many points """
-	appendColumns_exceptionWrongSize(constructor)
+def test_appendFeatures_exceptionWrongSize():
+	""" Test RLD appendFeatures() for ArgumentException when toAppend has too many points """
+	appendFeatures_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
-def test_appendColumns_exceptionSameFeatureName():
-	""" Test RLD appendColumns() for ArgumentException when toAppend and self have a featureName in common """
-	appendColumns_exceptionSameFeatureName(constructor)
+def test_appendFeatures_exceptionSameFeatureName():
+	""" Test RLD appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
+	appendFeatures_exceptionSameFeatureName(constructor)
 
-def test_appendColumns_handmadeSingle():
-	""" Test RLD appendColumns() against handmade output for a single added column"""
-	appendColumns_handmadeSingle(constructor)
+def test_appendFeatures_handmadeSingle():
+	""" Test RLD appendFeatures() against handmade output for a single added feature"""
+	appendFeatures_handmadeSingle(constructor)
 
-def test_appendColumns_handmadeSequence():
-	""" Test RLD appendColumns() against handmade output for a sequence of additions"""
-	appendColumns_handmadeSequence(constructor)
+def test_appendFeatures_handmadeSequence():
+	""" Test RLD appendFeatures() against handmade output for a sequence of additions"""
+	appendFeatures_handmadeSequence(constructor)
 
 
 
@@ -105,13 +105,13 @@ def test_sortPoints_handmadeWithFcn():
 	sortPoints_handmadeWithFcn(constructor)
 
 #################
-# sortColumns() #
+# sortFeatures() #
 #################
 
 
-def test_sortColumns_handmadeWithFcn():
-	""" Test RLD sortColumns() against handmade output when given cmp and key functions """	
-	sortColumns_handmadeWithFcn(constructor)
+def test_sortFeatures_handmadeWithFcn():
+	""" Test RLD sortFeatures() against handmade output when given cmp and key functions """	
+	sortFeatures_handmadeWithFcn(constructor)
 
 
 
@@ -146,7 +146,7 @@ def test_extractPoints_exceptionStartInvalid():
 
 @raises(ArgumentException)
 def test_extractPoints_exceptionEndInvalid():
-	""" Test RLD extractPoints() for ArgumentException when start is not a valid column index """
+	""" Test RLD extractPoints() for ArgumentException when start is not a valid feature index """
 	extractPoints_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
@@ -164,66 +164,66 @@ def test_extractPoints_handmadeWithFeatureNames():
 
 
 ####################
-# extractColumns() #
+# extractFeatures() #
 ####################
 
-def test_extractColumns_handmadeSingle():
-	""" Test RLD extractColumns() against handmade output when extracting one column """
-	extractColumns_handmadeSingle(constructor)
+def test_extractFeatures_handmadeSingle():
+	""" Test RLD extractFeatures() against handmade output when extracting one feature """
+	extractFeatures_handmadeSingle(constructor)
 
-def test_extractColumns_handmadeListSequence():
-	""" Test RLD extractColumns() against handmade output for several extractions by list """
-	extractColumns_handmadeListSequence(constructor)
+def test_extractFeatures_handmadeListSequence():
+	""" Test RLD extractFeatures() against handmade output for several extractions by list """
+	extractFeatures_handmadeListSequence(constructor)
 
-def test_extractColumns_handmadeListWithFeatureName():
-	""" Test RLD extractColumns() against handmade output for list extraction when specifying featureNames """
-	extractColumns_handmadeListWithFeatureName(constructor)
+def test_extractFeatures_handmadeListWithFeatureName():
+	""" Test RLD extractFeatures() against handmade output for list extraction when specifying featureNames """
+	extractFeatures_handmadeListWithFeatureName(constructor)
 
-def test_extractColumns_handmadeFunction():
-	""" Test RLD extractColumns() against handmade output for function extraction """
-	extractColumns_handmadeFunction(constructor)
+def test_extractFeatures_handmadeFunction():
+	""" Test RLD extractFeatures() against handmade output for function extraction """
+	extractFeatures_handmadeFunction(constructor)
 
-def test_extractColumns_handmadeFunctionWithFeatureName():
-	""" Test RLD extractColumns() against handmade output for function extraction with featureNames """
-	extractColumns_handmadeFunctionWithFeatureName(constructor)
-
-@raises(ArgumentException)
-def test_extractColumns_exceptionStartInvalid():
-	""" Test RLD extractColumns() for ArgumentException when start is not a valid column index """
-	extractColumns_exceptionStartInvalid(constructor)
+def test_extractFeatures_handmadeFunctionWithFeatureName():
+	""" Test RLD extractFeatures() against handmade output for function extraction with featureNames """
+	extractFeatures_handmadeFunctionWithFeatureName(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionStartInvalidFeatureName():
-	""" Test RLD extractColumns() for ArgumentException when start is not a valid featureName """
-	extractColumns_exceptionStartInvalidFeatureName(constructor)
+def test_extractFeatures_exceptionStartInvalid():
+	""" Test RLD extractFeatures() for ArgumentException when start is not a valid feature index """
+	extractFeatures_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionEndInvalid():
-	""" Test RLD extractColumns() for ArgumentException when start is not a valid column index """
-	extractColumns_exceptionEndInvalid(constructor)
+def test_extractFeatures_exceptionStartInvalidFeatureName():
+	""" Test RLD extractFeatures() for ArgumentException when start is not a valid featureName """
+	extractFeatures_exceptionStartInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionEndInvalidFeatureName():
-	""" Test RLD extractColumns() for ArgumentException when start is not a valid column featureName """
-	extractColumns_exceptionEndInvalidFeatureName(constructor)
+def test_extractFeatures_exceptionEndInvalid():
+	""" Test RLD extractFeatures() for ArgumentException when start is not a valid feature index """
+	extractFeatures_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionInversion():
-	""" Test RLD extractColumns() for ArgumentException when start comes after end """
-	extractColumns_exceptionInversion(constructor)
+def test_extractFeatures_exceptionEndInvalidFeatureName():
+	""" Test RLD extractFeatures() for ArgumentException when start is not a valid featureName """
+	extractFeatures_exceptionEndInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
-def test_extractColumns_exceptionInversionFeatureName():
-	""" Test RLD extractColumns() for ArgumentException when start comes after end as FeatureNames"""
-	extractColumns_exceptionInversionFeatureName(constructor)
+def test_extractFeatures_exceptionInversion():
+	""" Test RLD extractFeatures() for ArgumentException when start comes after end """
+	extractFeatures_exceptionInversion(constructor)
 
-def test_extractColumns_handmadeRange():
-	""" Test RLD extractColumns() against handmade output for range extraction """
-	extractColumns_handmadeRange(constructor)
+@raises(ArgumentException)
+def test_extractFeatures_exceptionInversionFeatureName():
+	""" Test RLD extractFeatures() for ArgumentException when start comes after end as FeatureNames"""
+	extractFeatures_exceptionInversionFeatureName(constructor)
 
-def test_extractColumns_handmadeWithFeatureNames():
-	""" Test RLD extractColumns() against handmade output for range extraction with FeatureNames """
-	extractColumns_handmadeWithFeatureNames(constructor)
+def test_extractFeatures_handmadeRange():
+	""" Test RLD extractFeatures() against handmade output for range extraction """
+	extractFeatures_handmadeRange(constructor)
+
+def test_extractFeatures_handmadeWithFeatureNames():
+	""" Test RLD extractFeatures() against handmade output for range extraction with FeatureNames """
+	extractFeatures_handmadeWithFeatureNames(constructor)
 
 
 ####################
@@ -241,17 +241,17 @@ def test_applyFunctionToEachPoint_Handmade():
 
 
 #######################
-# applyFunctionToEachColumn() #
+# applyFunctionToEachFeature() #
 #######################
 
 @raises(ArgumentException)
-def test_applyFunctionToEachColumn_exceptionInputNone():
-	""" Test RLD applyFunctionToEachColumn() for ArgumentException when function is None """
-	applyFunctionToEachColumn_exceptionInputNone(constructor)
+def test_applyFunctionToEachFeature_exceptionInputNone():
+	""" Test RLD applyFunctionToEachFeature() for ArgumentException when function is None """
+	applyFunctionToEachFeature_exceptionInputNone(constructor)
 
-def test_applyFunctionToEachColumn_Handmade():
-	""" Test RLD applyFunctionToEachColumn() with handmade output """
-	applyFunctionToEachColumn_Handmade(constructor)
+def test_applyFunctionToEachFeature_Handmade():
+	""" Test RLD applyFunctionToEachFeature() with handmade output """
+	applyFunctionToEachFeature_Handmade(constructor)
 
 
 
