@@ -26,12 +26,12 @@ class SparseData(BaseData):
 
 
 	def _columns_implementation(self):
-		(rows, cols) = self.data.get_shape()
+		(points, cols) = self.data.get_shape()
 		return cols
 
-	def _rows_implementation(self):
-		(rows, cols) = self.data.get_shape()
-		return rows
+	def _points_implementation(self):
+		(points, cols) = self.data.get_shape()
+		return points
 
 	
 

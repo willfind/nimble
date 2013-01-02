@@ -45,12 +45,12 @@ def testSciKitLearnSparseRegression():
 
 	x = 100000
 	c = 10
-	rows = randint(0,x,c)
-	rows2 = randint(0,x,c)
+	points = randint(0,x,c)
+	points2 = randint(0,x,c)
 	cols = randint(0,x,c)
 	cols2 = randint(0,x,c)
 	data = rand(c)
-	A = scipy.sparse.coo_matrix( (data, (rows,cols)), shape=(x,x))
+	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
 	obj = CooSparseData(A)
 
 	ret = sciKitLearn('SGDRegressor', trainData=obj, testData=obj, dependentVar=cols[0])

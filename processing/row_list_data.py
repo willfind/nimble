@@ -1,5 +1,5 @@
 """
-Class extending BaseData, using a list of rows to store data.
+Class extending BaseData, using a list of lists to store data.
 
 Outside of the class, functions are defined for reading and writing RowListData
 to files.
@@ -18,8 +18,8 @@ import os
 class RowListData(BaseData):
 	"""
 	Class providing implementations of data manipulation operations on data stored
-	in a list of lists, representing a list of rows of data. data is the list of
-	lists. columns is the integer number of columns in each row.
+	in a list of lists, representing a list of points of data. data is the list of
+	lists. columns is the integer number of columns in each point.
 
 	"""
 
@@ -37,34 +37,34 @@ class RowListData(BaseData):
 			super(RowListData, self).__init__([])
 		else:
 			self.numColumns= len(data[0])
-			for row in data:
-				if len(row) != self.numColumns:
-					raise ArgumentException("Rows must be of equal size")
+			for point in data:
+				if len(point) != self.numColumns:
+					raise ArgumentException("Points must be of equal size")
 			self.data = data
 			super(RowListData, self).__init__(featureNames)
 
 
 	def _transpose_implementation(self):
 		"""
-		Function to transpose the data, ie invert the column and row indices of the data.
+		Function to transpose the data, ie invert the column and point indices of the data.
 		
 		This is not an in place operation, a new list of lists is constructed.
 		"""
 		tempColumns = len(self.data)
 		transposed = []
-		#load the new data with an empty row for each column in the original
+		#load the new data with an empty point for each column in the original
 		for i in xrange(len(self.data[0])):
 			transposed.append([])
-		for row in self.data:
-			for i in xrange(len(row)):
-				transposed[i].append(row[i])
+		for point in self.data:
+			for i in xrange(len(point)):
+				transposed[i].append(point[i])
 		
 		self.data = transposed
 		self.numColumns= tempColumns
 
-	def _appendRows_implementation(self,toAppend):
+	def _appendPoints_implementation(self,toAppend):
 		"""
-		Append the rows from the toAppend object to the bottom of the columns in this object
+		Append the points from the toAppend object to the bottom of the columns in this object
 		
 		"""
 		for point in toAppend.data:
@@ -72,17 +72,17 @@ class RowListData(BaseData):
 	
 	def _appendColumns_implementation(self,toAppend):
 		"""
-		Append the columns from the toAppend object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the points in this object
 
 		"""	
-		for i in xrange(self.rows()):
+		for i in xrange(self.points()):
 			for value in toAppend.data[i]:
 				self.data[i].append(value)
 		self.numColumns= self.numColumns+ toAppend.columns()
 
-	def _sortRows_implementation(self,cmp, key, reverse):
+	def _sortPoints_implementation(self,cmp, key, reverse):
 		""" 
-		Modify this object so that the rows are sorted using the built in python
+		Modify this object so that the points are sorted using the built in python
 		sort. The input arguments are passed to that function unalterted
 
 		"""
@@ -112,14 +112,14 @@ class RowListData(BaseData):
 		keyList.sort(cmp,passThrough,reverse)
 
 		#now modify data to correspond to the new order
-		for row in self.data:
-			#have to copy it out so we don't corrupt the row
+		for point in self.data:
+			#have to copy it out so we don't corrupt the point
 			for i in xrange(self.columns()):
 				currKey = keyList[i]
 				oldColNum = keyDict[currKey]
-				temp[i] = row[oldColNum]
+				temp[i] = point[oldColNum]
 			for i in xrange(self.columns()):
-				row[i] = temp[i]
+				point[i] = temp[i]
 
 		# have to deal with featureNames now
 		for i in xrange(self.columns()):
@@ -128,10 +128,10 @@ class RowListData(BaseData):
 			temp[i] = self.featureNamesInverse[oldColNum]
 		return temp
 
-	def _extractRows_implementation(self, toExtract, start, end, number, randomize):
+	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
 		"""
-		Function to extract rows according to the parameters, and return an object containing
-		the removed rows with default feature names. The actual work is done by further helper
+		Function to extract points according to the parameters, and return an object containing
+		the removed points with default feature names. The actual work is done by further helper
 		functions, this determines which helper to call, and modifies the input to accomodate
 		the number and randomize parameters, where number indicates how many of the possibilities
 		should be extracted, and randomize indicates whether the choice of who to extract should
@@ -151,92 +151,92 @@ class RowListData(BaseData):
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
-			return self._extractRowsByList_implementation(toExtract)
+			return self._extractPointsByList_implementation(toExtract)
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+				raise NotImplementedError # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
-					number = self.rows()		
-				return self._extractRowsByFunction_implementation(toExtract, number)
+					number = self.points()		
+				return self._extractPointsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.rows()
+				end = self.points()
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactRowsByList(random.randrange(start,end,number))
+				return self.extactPointsByList(random.randrange(start,end,number))
 			else:
-				return self._extractRowsByRange_implementation(start, end)
+				return self._extractPointsByRange_implementation(start, end)
 
-	def _extractRowsByList_implementation(self, toExtract):
+	def _extractPointsByList_implementation(self, toExtract):
 		"""
-		Modify this object to have only the rows that are not listed in toExtract,
-		returning an object containing those rows that are.
+		Modify this object to have only the points that are not listed in toExtract,
+		returning an object containing those points that are.
 
 		"""
 		toWrite = 0
 		satisfying = []
-		for i in xrange(self.rows()):
+		for i in xrange(self.points()):
 			if i not in toExtract:
 				self.data[toWrite] = self.data[i]
 				toWrite += 1
 			else:
 				satisfying.append(self.data[i])
 
-		# blank out the elements beyond our last copy, ie our last wanted row.
+		# blank out the elements beyond our last copy, ie our last wanted point.
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
 		return RowListData(satisfying)
 
-	def _extractRowsByFunction_implementation(self, toExtract, number):
+	def _extractPointsByFunction_implementation(self, toExtract, number):
 		"""
-		Modify this object to have only the rows that do not satisfy the given function,
-		returning an object containing those rows that do.
+		Modify this object to have only the points that do not satisfy the given function,
+		returning an object containing those points that do.
 
 		"""
 		toWrite = 0
 		satisfying = []
-		# walk through each row, copying the wanted rows back to the toWrite index
-		# toWrite is only incremented when we see a wanted row; unwanted rows are copied
+		# walk through each point, copying the wanted points back to the toWrite index
+		# toWrite is only incremented when we see a wanted point; unwanted points are copied
 		# over
 		for index in xrange(len(self.data)):
-			row = self.data[index]
-			if number > 0 and toExtract(row):			
-				satisfying.append(row)
+			point = self.data[index]
+			if number > 0 and toExtract(point):			
+				satisfying.append(point)
 				number = number - 1
 			else:
-				self.data[toWrite] = row
+				self.data[toWrite] = point
 				toWrite += 1
 
-		# blank out the elements beyond our last copy, ie our last wanted row.
+		# blank out the elements beyond our last copy, ie our last wanted point.
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
 		return RowListData(satisfying)
 
-	def _extractRowsByRange_implementation(self, start, end):
+	def _extractPointsByRange_implementation(self, start, end):
 		"""
-		Modify this object to have only those rows that are not within the given range,
-		inclusive; returning an object containing those rows that are.
+		Modify this object to have only those points that are not within the given range,
+		inclusive; returning an object containing those points that are.
 
 		"""
 		toWrite = start
 		inRange = []
-		for i in xrange(start,self.rows()):
+		for i in xrange(start,self.points()):
 			if i <= end:
 				inRange.append(self.data[i])		
 			else:
 				self.data[toWrite] = self.data[i]
 				toWrite += 1
 
-		# blank out the elements beyond our last copy, ie our last wanted row.
+		# blank out the elements beyond our last copy, ie our last wanted point.
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
@@ -275,17 +275,17 @@ class RowListData(BaseData):
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+				raise NotImplementedError # TODO randomize in the extractColumnsByFunction case
 			else:
 				if number is None:
-					number = self.rows()		
+					number = self.points()		
 				return self._extractColumnsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.rows()
+				end = self.points()
 			if number is None:
 				number = end - start
 			if randomize:
@@ -304,12 +304,12 @@ class RowListData(BaseData):
 		toExtract.sort()
 		toExtract.reverse()
 		extractedData = []
-		for row in self.data:
-			extractedRow = []
+		for point in self.data:
+			extractedPoint = []
 			for index in toExtract:
-				extractedRow.append(row.pop(index))
-			extractedRow.reverse()
-			extractedData.append(extractedRow)
+				extractedPoint.append(point.pop(index))
+			extractedPoint.reverse()
+			extractedData.append(extractedPoint)
 
 		self.numColumns = self.numColumns - len(toExtract)
 
@@ -346,15 +346,15 @@ class RowListData(BaseData):
 		they had previously. It does not modify the featureNames for the calling object.
 		"""
 		extractedData = []
-		for row in self.data:
-			extractedRow = []
+		for point in self.data:
+			extractedPoint = []
 			#end + 1 because our ranges are inclusive, xrange's are not
 			for index in reversed(xrange(start,end+1)):
-				extractedRow.append(row.pop(index))
-			extractedRow.reverse()
-			extractedData.append(extractedRow)
+				extractedPoint.append(point.pop(index))
+			extractedPoint.reverse()
+			extractedData.append(extractedPoint)
 
-		self.numColumns = self.numColumns- len(extractedRow)
+		self.numColumns = self.numColumns- len(extractedPoint)
 
 		# construct featureName list
 		featureNameList = []
@@ -364,16 +364,15 @@ class RowListData(BaseData):
 		return RowListData(extractedData, featureNameList)
 
 
-	def _applyFunctionToEachRow_implementation(self,function):
+	def _applyFunctionToEachPoint_implementation(self, function):
 		"""
-		Applies the given funciton to each row in this object, collecting the
-		output values into a new object in the shape of a row vector that is
-		returned upon completion.
+		Applies the given function to each point in this object, collecting the
+		output values into a new object that is returned upon completion.
 
 		"""
 		retData = []
-		for row in self.data:
-			currOut = function(row)
+		for point in self.data:
+			currOut = function(point)
 			retData.append([currOut])
 		return RowListData(retData)
 
@@ -392,11 +391,11 @@ class RowListData(BaseData):
 		return RowListData(retData)
 
 
-	def _mapReduceOnRows_implementation(self, mapper, reducer):
+	def _mapReduceOnPoints_implementation(self, mapper, reducer):
 		mapResults = {}
-		# apply the mapper to each row in the data
-		for row in self.data:
-			currResults = mapper(row)
+		# apply the mapper to each point in the data
+		for point in self.data:
+			currResults = mapper(point)
 			# the mapper will return a list of key value pairs
 			for (k,v) in currResults:
 				# if key is new, we must add an empty list
@@ -419,17 +418,17 @@ class RowListData(BaseData):
 	def _columns_implementation(self):
 		return self.numColumns
 
-	def _rows_implementation(self):
+	def _points_implementation(self):
 		return len(self.data)
 
 	def _equals_implementation(self,other):
 		if not isinstance(other,RowListData):
 			return False
-		if self.rows() != other.rows():
+		if self.points() != other.points():
 			return False
 		if self.columns() != other.columns():
 			return False
-		for index in xrange(self.rows()):
+		for index in xrange(self.points()):
 			if self.data[index] != other.data[index]:
 				return False
 		return True
@@ -458,12 +457,12 @@ class RowListData(BaseData):
 			self._data = outer.data
 			self._colNum = colNum
 		def __getitem__(self, index):
-			row = self._data[index]
-			value = row[self._colNum]
+			point = self._data[index]
+			value = point[self._colNum]
 			return value	
 		def __setitem__(self,key,value):
-			row = self._data[key]
-			row[self._colNum] = value
+			point = self._data[key]
+			point[self._colNum] = value
 
 
 

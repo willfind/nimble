@@ -32,16 +32,16 @@ class DenseMatrixData(BaseData):
 
 	def _transpose_implementation(self):
 		"""
-		Function to transpose the data, ie invert the column and row indices of the data.
+		Function to transpose the data, ie invert the column and point indices of the data.
 		
 		This is not an in place operation, a new list of lists is constructed.
 		"""
 		self.data = self.data.getT()
 
 
-	def _appendRows_implementation(self,toAppend):
+	def _appendPoints_implementation(self,toAppend):
 		"""
-		Append the rows from the toAppend object to the bottom of the columns in this object
+		Append the points from the toAppend object to the bottom of the columns in this object
 		
 		"""
 		self.data = numpy.concatenate((self.data,toAppend.data),0)
@@ -49,14 +49,14 @@ class DenseMatrixData(BaseData):
 
 	def _appendColumns_implementation(self,toAppend):
 		"""
-		Append the columns from the toAppend object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the points in this object
 
 		"""
 		self.data = numpy.concatenate((self.data,toAppend.data),1)
 
-	def _sortRows_implementation(self,cmp, key, reverse):
+	def _sortPoints_implementation(self,cmp, key, reverse):
 		""" 
-		Modify this object so that the rows are sorted using the built in python
+		Modify this object so that the points are sorted using the built in python
 		sort. The input arguments are passed to that function unalterted
 
 		"""
@@ -82,10 +82,10 @@ class DenseMatrixData(BaseData):
 
 		#return new order
 
-	def _extractRows_implementation(self, toExtract, start, end, number, randomize):
+	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
 		"""
-		Function to extract rows according to the parameters, and return an object containing
-		the removed rows with default names. The actual work is done by further helper
+		Function to extract points according to the parameters, and return an object containing
+		the removed points with default names. The actual work is done by further helper
 		functions, this determines which helper to call, and modifies the input to accomodate
 		the number and randomize parameters, where number indicates how many of the possibilities
 		should be extracted, and randomize indicates whether the choice of who to extract should
@@ -105,34 +105,34 @@ class DenseMatrixData(BaseData):
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
-			return self._extractRowsByList_implementation(toExtract)
+			return self._extractPointsByList_implementation(toExtract)
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+				raise NotImplementedError # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
-					number = self.rows()		
-				return self._extractRowsByFunction_implementation(toExtract, number)
+					number = self.points()		
+				return self._extractPointsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.rows()
+				end = self.points()
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactRowsByList(random.randrange(start,end,number))
+				return self.extactPointsByList(random.randrange(start,end,number))
 			else:
-				return self._extractRowsByRange_implementation(start, end)
+				return self._extractPointsByRange_implementation(start, end)
 
 
-	def _extractRowsByList_implementation(self, toExtract):
+	def _extractPointsByList_implementation(self, toExtract):
 		"""
-		Modify this object to have only the rows that are not given in the input,
-		returning an object containing those rows that are.
+		Modify this object to have only the points that are not given in the input,
+		returning an object containing those points that are.
 
 		"""
 		ret = self.data[toExtract]
@@ -140,15 +140,15 @@ class DenseMatrixData(BaseData):
 
 		return DenseMatrixData(ret)
 
-	def _extractRowsByFunction_implementation(self, toExtract, number):
+	def _extractPointsByFunction_implementation(self, toExtract, number):
 		"""
-		Modify this object to have only the rows that do not satisfy the given function,
-		returning an object containing those rows that do.
+		Modify this object to have only the points that do not satisfy the given function,
+		returning an object containing those points that do.
 
 		"""
 		results = numpy.apply_along_axis(toExtract,1,self.data)
 		ret = self.data[numpy.nonzero(results),:]
-		# need to convert our boolean array to to list of rows to be removed	
+		# need to convert our boolean array to to list of points to be removed	
 		toRemove = []
 		for i in xrange(len(results)):
 			if results[i]:
@@ -157,10 +157,10 @@ class DenseMatrixData(BaseData):
 
 		return DenseMatrixData(ret)
 
-	def _extractRowsByRange_implementation(self, start, end):
+	def _extractPointsByRange_implementation(self, start, end):
 		"""
-		Modify this object to have only those rows that are not within the given range,
-		inclusive; returning an object containing those rows that are.
+		Modify this object to have only those points that are not within the given range,
+		inclusive; returning an object containing those points that are.
 	
 		"""
 		# +1 on end in ranges, because our ranges are inclusive
@@ -200,17 +200,17 @@ class DenseMatrixData(BaseData):
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+				raise NotImplementedError # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
-					number = self.rows()		
+					number = self.points()		
 				return self._extractColumnsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.rows()
+				end = self.points()
 			if number is None:
 				number = end - start
 			if randomize:
@@ -254,7 +254,7 @@ class DenseMatrixData(BaseData):
 	def _extractColumnsByRange_implementation(self, start, end):
 		"""
 		Modify this object to have only those columns that are not within the given range,
-		inclusive; returning an object containing those rows that are.
+		inclusive; returning an object containing those columns that are.
 	
 		start and end must not be null, must be within the range of possible columns,
 		and start must not be greater than end
@@ -272,11 +272,10 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(ret, featureNameList)
 
 
-	def _applyFunctionToEachRow_implementation(self,function):
+	def _applyFunctionToEachPoint_implementation(self,function):
 		"""
-		Applies the given funciton to each row in this object, collecting the
-		output values into a new object in the shape of a row vector that is
-		returned upon completion.
+		Applies the given funciton to each point in this object, collecting the
+		output values into a new object that is returned upon completion.
 
 		"""
 		retData = numpy.apply_along_axis(function,1,self.data)
@@ -297,12 +296,12 @@ class DenseMatrixData(BaseData):
 
 
 
-	def _mapReduceOnRows_implementation(self, mapper, reducer):
+	def _mapReduceOnPoints_implementation(self, mapper, reducer):
 		# apply_along_axis() expects a scalar or array of scalars as output,
 		# but our mappers output a list of tuples (ie a sequence type)
 		# which is not allowed. This packs key value pairs into an array
-		def mapperWrapper(row):
-			pairs = mapper(row)
+		def mapperWrapper(point):
+			pairs = mapper(point)
 			ret = []
 			for (k,v) in pairs:
 				ret.append(k)
@@ -338,14 +337,14 @@ class DenseMatrixData(BaseData):
 		shape = numpy.shape(self.data)
 		return shape[1]
 
-	def _rows_implementation(self):
+	def _points_implementation(self):
 		shape = numpy.shape(self.data)
 		return shape[0]
 
 	def _equals_implementation(self,other):
 		if not isinstance(other,DenseMatrixData):
 			return False
-		if self.rows() != other.rows():
+		if self.points() != other.points():
 			return False
 		if self.columns() != other.columns():
 			return False

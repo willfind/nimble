@@ -67,7 +67,7 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 #	if isinstance(dependentVar, BaseData):
 #		trainDataY = dependendVar
 		# mlpy expects row vectors, but it might already be one
-#		if trainDataY.columns() < trainDataY.rows():
+#		if trainDataY.columns() < trainDataY.points():
 #			trainDataY.transpose()
 	# isolate the target values from training examples, otherwise
 #	elif dependentVar is not None:

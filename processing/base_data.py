@@ -141,14 +141,14 @@ class BaseData(object):
 		#TODO
 		raise NotImplementedError
 
-	def duplicateRows(self, rows):
+	def duplicatePoints(self, points):
 		"""
-		Return a new object which consists only of those specified rows, without mutating
+		Return a new object which consists only of those specified points, without mutating
 		this object.
 		
 		"""
-		if rows is None:
-			raise ArgumentException("Must provide identifiers for the rows you want duplicated")
+		if points is None:
+			raise ArgumentException("Must provide identifiers for the points you want duplicated")
 		#TODO
 		raise NotImplementedError
 	
@@ -175,7 +175,7 @@ class BaseData(object):
 		# determine how many columns of new data there will be
 
 		# for each new column
-		# apply to each row in self with a lookup function into other
+		# apply to each point in self with a lookup function into other
 
 		# .... how do we do lookup?
 		# we have all the column numbers, so its ok.
@@ -209,31 +209,31 @@ class BaseData(object):
 		toConvert = self.extractColumns([index])
 
 		# MR to get list of values
-		def getValue(row):
-			return [(row[0],1)]
+		def getValue(point):
+			return [(point[0],1)]
 		def simpleReducer(identifier, valuesList):
 			return (identifier,0)
 
-		values = toConvert.mapReduceOnRows(getValue, simpleReducer)
+		values = toConvert.mapReduceOnPoints(getValue, simpleReducer)
 		values.renameFeatureName(0,'values')
 		values = values.extractColumns([0])
 
 		# Convert to RLD, so we can have easy access
 		values = values.convertToRowListData()
 
-		# for each value run applyToEach to produce a category row for each value
+		# for each value run applyToEach to produce a category point for each value
 		def makeFunc(value):
-			def equalTo(row):
-				if row[0] == value:
+			def equalTo(point):
+				if point[0] == value:
 					return 1
 				return 0
 			return equalTo
 
 		varName = toConvert.featureNamesInverse[0]
 
-		for row in values.data:
-			value = row[0]
-			ret = toConvert.applyFunctionToEachRow(makeFunc(value))
+		for point in values.data:
+			value = point[0]
+			ret = toConvert.applyFunctionToEachPoint(makeFunc(value))
 			ret.renameFeatureName(0, varName + "=" + str(value))
 			toConvert.appendColumns(ret)
 
@@ -255,12 +255,12 @@ class BaseData(object):
 		toConvert = self.extractColumns([index])
 
 		# MR to get list of values
-		def getValue(row):
-			return [(row[0],1)]
+		def getValue(point):
+			return [(point[0],1)]
 		def simpleReducer(identifier, valuesList):
 			return (identifier,0)
 
-		values = toConvert.mapReduceOnRows(getValue, simpleReducer)
+		values = toConvert.mapReduceOnPoints(getValue, simpleReducer)
 		values.renameFeatureName(0,'values')
 		values = values.extractColumns([0])
 
@@ -269,25 +269,25 @@ class BaseData(object):
 
 		mapping = {}
 		index = 0
-		for row in values.data:
-			if row[0] not in mapping:
-				mapping[row[0]] = index
+		for point in values.data:
+			if point[0] not in mapping:
+				mapping[point[0]] = index
 				index = index + 1
 
 		# use apply to each to make new column with the int mappings
-		def lookup(row):
-			return mapping[row[0]]
+		def lookup(point):
+			return mapping[point[0]]
 
-		converted = toConvert.applyFunctionToEachRow(lookup)
+		converted = toConvert.applyFunctionToEachPoint(lookup)
 		converted.renameFeatureName(0,toConvert.featureNamesInverse[0])		
 
 		self.appendColumns(converted)
 
 
-	def selectConstantOfRowsByValue(self, numToSelect, columnToSelectOver, seed=DEFAULT_SEED):
+	def selectConstantOfPointsByValue(self, numToSelect, columnToSelectOver, seed=DEFAULT_SEED):
 		"""
-		Return a new object containing a randomly selected sample of rows from
-		this object, with the sample limited to a constant number of rows
+		Return a new object containing a randomly selected sample of points from
+		this object, with the sample limited to a constant number of points
 		of each representative value in the specifed column. Those selected
 		values are also removed from this object.
 
@@ -302,10 +302,10 @@ class BaseData(object):
 		raise NotImplementedError
 
 
-	def selectPercentOfRowsByValue(self, percentToSelect, columnToSelectOver, seed=DEFAULT_SEED):
+	def selectPercentOfPointsByValue(self, percentToSelect, columnToSelectOver, seed=DEFAULT_SEED):
 		"""
-		Return a new object containing a randomly selected sample of rows from
-		this object, with the sample limited to a percentage of rows
+		Return a new object containing a randomly selected sample of points from
+		this object, with the sample limited to a percentage of points
 		of each representative value in the specified column. Those selected
 		values are also removed from this object.
 
@@ -322,20 +322,20 @@ class BaseData(object):
 		raise NotImplementedError
 
 		#MR to find how many of each value
-		def mapperCount (row):
-			return [(row[index],1)]
+		def mapperCount (point):
+			return [(point[index],1)]
 		def reducerCount (identifier, values):
 			total = 0
 			for value in values:
 				total += value
 			return (identifier, total)
 		
-#		totalOfEach = self.mapReduceOnRows(mapperCount,reducerCount)
+#		totalOfEach = self.mapReduceOnPoints(mapperCount,reducerCount)
 			
 
 		valueToTotal = {}
-		def tagValuesWithID(row):
-			key = row[index]
+		def tagValuesWithID(point):
+			key = point[index]
 			if key not in valueToTotal:
 				valueToTotal[key] = 0
 				return 0
@@ -343,7 +343,7 @@ class BaseData(object):
 			valueToTotal[key] += 1
 			return ret
 
-#		ids = self.applyFunctionToEachRow(tagValuesWithID)
+#		ids = self.applyFunctionToEachPoint(tagValuesWithID)
 #		self.addColumn(ids)
 
 	
@@ -351,11 +351,11 @@ class BaseData(object):
 		#	the storage struc is outside the func, ie we have access to it here
 		#apply to all using above to mark selected
 
-	def extractRowsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
+	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
 		"""
-		Return a new object containing a randomly selected sample of rows
+		Return a new object containing a randomly selected sample of points
 		from this object, where a random experient is performed for each
-		row, with the chance of selection equal to the extractionProbabilty
+		point, with the chance of selection equal to the extractionProbabilty
 		parameter. Those selected values are also removed from this object.
 
 		"""
@@ -367,19 +367,19 @@ class BaseData(object):
 		if extractionProbability >= 1:
 			raise ArgumentException("extractionProbability must be less than one")
 
-		def experiment(row):
+		def experiment(point):
 			return bool(random.random() < extractionProbability)
 
-		def isSelected(row):
-			return row[len(row)-1]
+		def isSelected(point):
+			return point[len(point)-1]
 
-		selectionKeys = self.applyFunctionToEachRow(experiment)
+		selectionKeys = self.applyFunctionToEachPoint(experiment)
 		self.appendColumns(selectionKeys)
-		ret = self.extractRows(isSelected)
+		ret = self.extractPoints(isSelected)
 		# remove the experimental data
-		if ret.rows() > 0:
+		if ret.points() > 0:
 			ret.extractColumns([ret.columns()-1])
-		if self.rows() > 0:
+		if self.points() > 0:
 			self.extractColumns([self.columns()-1])
 		
 		return ret
@@ -390,7 +390,7 @@ class BaseData(object):
 
 	def transpose(self):
 		"""
-		Function to transpose the data, ie invert the column and row indices of the data.
+		Function to transpose the data, ie invert the column and point indices of the data.
 	
 		Columns are then given default featureNames.
 
@@ -398,9 +398,9 @@ class BaseData(object):
 		self._transpose_implementation()
 		self.renameMultipleFeatureNames(None)
 
-	def appendRows(self, toAppend):
+	def appendPoints(self, toAppend):
 		"""
-		Append the rows from the toAppend object to the bottom of the columns in this object.
+		Append the points from the toAppend object to the bottom of the columns in this object.
 
 		toAppend cannot be None, and must be a kind of data representation object with the same
 		number of columns as the calling object.
@@ -412,14 +412,14 @@ class BaseData(object):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.columns() == toAppend.columns():
 			raise ArgumentException("toAppend must have the same number of columns as this object")
-		self._appendRows_implementation(toAppend)
+		self._appendPoints_implementation(toAppend)
 		
 	def appendColumns(self, toAppend):
 		"""
-		Append the columns from the toAppend object to right ends of the rows in this object
+		Append the columns from the toAppend object to right ends of the points in this object
 
 		toAppend cannot be None, must be a kind of data representation object with the same
-		number of rows as the calling object, and must not share any feature names with the calling
+		number of points as the calling object, and must not share any feature names with the calling
 		object.
 		
 		"""	
@@ -427,8 +427,8 @@ class BaseData(object):
 			raise ArgumentException("toAppend must not be None")
 		if not isinstance(toAppend,BaseData):
 			raise ArgumentException("toAppend must be a kind of data representation object")
-		if not self.rows() == toAppend.rows():
-			raise ArgumentException("toAppend must have the same number of rows as this object")
+		if not self.points() == toAppend.points():
+			raise ArgumentException("toAppend must have the same number of points as this object")
 		if self.featureNameIntersection(toAppend):
 			raise ArgumentException("toAppend must not share any featureNames with this object")
 		self._appendColumns_implementation(toAppend)
@@ -436,14 +436,14 @@ class BaseData(object):
 		for i in xrange(toAppend.columns()):
 			self._addFeatureName(toAppend.featureNamesInverse[i])
 
-	def sortRows(self, cmp=None, key=None, reverse=False):
+	def sortPoints(self, cmp=None, key=None, reverse=False):
 		""" 
-		Modify this object so that the rows are sorted in place, where the input
+		Modify this object so that the points are sorted in place, where the input
 		arguments are interpreted and employed in the same way as Python list
 		sorting.
 
 		"""
-		self._sortRows_implementation(cmp, key, reverse)
+		self._sortPoints_implementation(cmp, key, reverse)
 
 	def sortColumns(self, cmp=None, key=None, reverse=False):
 		""" 
@@ -456,19 +456,19 @@ class BaseData(object):
 		self._renameMultipleFeatureNames_implementation(newFeatureNameOrder,True)
 
 
-	def extractRows(self, toExtract=None, start=None, end=None, number=None, randomize=False):
+	def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
 		"""
-		Modify this object, removing those rows that are specified by the input, and returning
-		an object containing those removed rows.
+		Modify this object, removing those points that are specified by the input, and returning
+		an object containing those removed points.
 
 		toExtract may be a single identifier, a list of identifiers, or a function that when
-		given a row will return True if it is to be removed. number is the quantity of rows that
+		given a point will return True if it is to be removed. number is the quantity of points that
 		we are to be extracted, the default None means unlimited extracttion. start and end are
 		parameters indicating range based extraction: if range based extraction is employed,
 		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.numRows() respectibly. randomize indicates whether random
+		other defaults to 0 and self.points() respectibly. randomize indicates whether random
 		sampling is to be used in conjunction with the number parameter, if randomize is False,
-		the chosen rows are determined by row order, otherwise it is uniform random across the
+		the chosen points are determined by point order, otherwise it is uniform random across the
 		space of possible removals.
 
 		"""
@@ -476,14 +476,14 @@ class BaseData(object):
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
 		elif start is not None or end is not None:
-			if start < 0 or start > self.rows():
-				raise ArgumentException("start must be a valid index, in the range of possible rows")
-			if end < 0 or end > self.rows():
-				raise ArgumentException("end must be a valid index, in the range of possible rows")
+			if start < 0 or start > self.points():
+				raise ArgumentException("start must be a valid index, in the range of possible points")
+			if end < 0 or end > self.points():
+				raise ArgumentException("end must be a valid index, in the range of possible points")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
 
-		ret = self._extractRows_implementation(toExtract, start, end, number, randomize)
+		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
 		ret._renameMultipleFeatureNames_implementation(self.featureNames,True)
 		return ret
 
@@ -499,7 +499,7 @@ class BaseData(object):
 		are to be extracted, the default None means unlimited extracttion. start and end are
 		parameters indicating range based extraction: if range based extraction is employed,
 		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.numRows() respectibly. randomize indicates whether random
+		other defaults to 0 and self.columns() respectibly. randomize indicates whether random
 		sampling is to be used in conjunction with the number parameter, if randomize is False,
 		the chosen columns are determined by column order, otherwise it is uniform random across the
 		space of possible removals.
@@ -509,10 +509,10 @@ class BaseData(object):
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
 		elif start is not None or end is not None:
-			if start < 0 or start > self.rows():
-				raise ArgumentException("start must be a valid index, in the range of possible rows")
-			if end < 0 or end > self.rows():
-				raise ArgumentException("end must be a valid index, in the range of possible rows")
+			if start < 0 or start > self.columns():
+				raise ArgumentException("start must be a valid index, in the range of possible columns")
+			if end < 0 or end > self.columns():
+				raise ArgumentException("end must be a valid index, in the range of possible columns")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
 
@@ -522,18 +522,17 @@ class BaseData(object):
 		return ret
 
 
-	def applyFunctionToEachRow(self, function):
+	def applyFunctionToEachPoint(self, function):
 		"""
-		Applies the given funciton to each row in this object, collecting the
-		output values into a new object in the shape of a row vector that is
-		returned upon completion.
+		Applies the given funciton to each point in this object, collecting the
+		output values into a new object that is returned upon completion.
 
-		function must not be none and accept a row as an argument
+		function must not be none and accept a point as an argument
 
 		"""
 		if function is None:
 			raise ArgumentException("function must not be None")
-		return self._applyFunctionToEachRow_implementation(function)
+		return self._applyFunctionToEachPoint_implementation(function)
 
 	def applyFunctionToEachColumn(self, function):
 		"""
@@ -549,7 +548,7 @@ class BaseData(object):
 		return self._applyFunctionToEachColumn_implementation(function)
 
 
-	def mapReduceOnRows(self, mapper, reducer):
+	def mapReduceOnPoints(self, mapper, reducer):
 		if mapper is None or reducer is None:
 			raise ArgumentException("The arguments must not be none")
 		if not hasattr(mapper, '__call__'):
@@ -557,7 +556,7 @@ class BaseData(object):
 		if not hasattr(reducer, '__call__'):
 			raise ArgumentException("The reducer must be callable")
 
-		ret = self._mapReduceOnRows_implementation(mapper, reducer)
+		ret = self._mapReduceOnPoints_implementation(mapper, reducer)
 		return ret
 
 
@@ -567,8 +566,8 @@ class BaseData(object):
 
 		return self._equals_implementation(other)
 
-	def rows(self):
-		return self._rows_implementation()
+	def points(self):
+		return self._points_implementation()
 
 	def columns(self):
 		return self._columns_implementation()

@@ -54,17 +54,17 @@ class CooSparseData(SparseData):
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractRowByFunction case
+				raise NotImplementedError # TODO randomize in the extractColumnByFunction case
 			else:
 				if number is None:
-					number = self.rows()		
+					number = self.points()		
 				return self._extractColumnsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.rows()
+				end = self.points()
 			if number is None:
 				number = end - start
 			if randomize:
@@ -100,11 +100,11 @@ class CooSparseData(SparseData):
 
 		# reinstantiate self
 		# (cannot reshape coo matrices, so cannot do this in place)
-		(rowShape, colShape) = self.data.shape
-		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), (rowShape, colShape - len(toExtract)))
+		(pointShape, colShape) = self.data.shape
+		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), (pointShape, colShape - len(toExtract)))
 
 		# instantiate return data
-		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(self.rows(), len(toExtract)))
+		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(self.points(), len(toExtract)))
 		
 		# get featureNames for return obj
 		featureNameList = []
@@ -134,7 +134,7 @@ class CooSparseData(SparseData):
 	def _columns_implementation(self):
 		return self.data.shape[1]
 
-	def _rows_implementation(self):
+	def _points_implementation(self):
 		return self.data.shape[0]
 
 

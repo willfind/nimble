@@ -43,26 +43,26 @@ def test_transpose_handmade():
 
 
 #############
-# appendRows() #
+# appendPoints() #
 #############
 
 @raises(ArgumentException)
-def test_appendRows_exceptionNone():
-	""" Test CooSparse appendRows() for ArgumentException when toAppend is None"""
-	appendRows_exceptionNone(constructor)
+def test_appendPoints_exceptionNone():
+	""" Test CooSparse appendPoints() for ArgumentException when toAppend is None"""
+	appendPoints_exceptionNone(constructor)
 
 @raises(ArgumentException)
-def test_appendRows_exceptionWrongSize():
-	""" Test CooSparse appendRows() for ArgumentException when toAppend has too many columns """
-	appendRows_exceptionWrongSize(constructor)
+def test_appendPoints_exceptionWrongSize():
+	""" Test CooSparse appendPoints() for ArgumentException when toAppend has too many columns """
+	appendPoints_exceptionWrongSize(constructor)
 
-def test_appendRows_handmadeSingle():
-	""" Test CooSparse appendRows() against handmade output for a single added row """
-	appendRows_handmadeSingle(constructor)
+def test_appendPoints_handmadeSingle():
+	""" Test CooSparse appendPoints() against handmade output for a single added point """
+	appendPoints_handmadeSingle(constructor)
 
-def test_appendRows_handmadeSequence():
-	""" Test CooSparse appendRows() against handmade output for a sequence of additions"""
-	appendRows_handmadeSequence(constructor)
+def test_appendPoints_handmadeSequence():
+	""" Test CooSparse appendPoints() against handmade output for a sequence of additions"""
+	appendPoints_handmadeSequence(constructor)
 
 
 ################
@@ -76,7 +76,7 @@ def test_appendColumns_exceptionNone():
 
 @raises(ArgumentException)
 def test_appendColumns_exceptionWrongSize():
-	""" Test CooSparse appendColumns() for ArgumentException when toAppend has too many rows """
+	""" Test CooSparse appendColumns() for ArgumentException when toAppend has too many points """
 	appendColumns_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
@@ -95,16 +95,16 @@ def test_appendColumns_handmadeSequence():
 
 
 ##############
-# sortRows() #
+# sortPoints() #
 ##############
 
-def test_sortRows_handmadeNatural():
-	""" Test CooSparse sortRows() against handmade, naturally ordered output """	
-	sortRows_handmadeNatural(constructor)
+def test_sortPoints_handmadeNatural():
+	""" Test CooSparse sortPoints() against handmade, naturally ordered output """	
+	sortPoints_handmadeNatural(constructor)
 
-def test_sortRows_handmadeWithFcn():
-	""" Test CooSparse sortRows() against handmade output when given cmp and key functions """	
-	sortRows_handmadeWithFcn(constructor)
+def test_sortPoints_handmadeWithFcn():
+	""" Test CooSparse sortPoints() against handmade output when given cmp and key functions """	
+	sortPoints_handmadeWithFcn(constructor)
 
 #################
 # sortColumns() #
@@ -118,51 +118,51 @@ def test_sortColumns_handmadeWithFcn():
 
 
 #################
-# extractRows() #
+# extractPoints() #
 #################
 
-def test_extractRows_emptyInput(): 
-	""" Test CooSparse extractRows() does nothing when not provided with any input """
-	extractRows_emptyInput(constructor)
+def test_extractPoints_emptyInput(): 
+	""" Test CooSparse extractPoints() does nothing when not provided with any input """
+	extractPoints_emptyInput(constructor)
 
-def test_extractRows_handmadeSingle():
-	""" Test CooSparse extractRows() against handmade output when extracting one row """
-	extractRows_handmadeSingle(constructor)
+def test_extractPoints_handmadeSingle():
+	""" Test CooSparse extractPoints() against handmade output when extracting one point """
+	extractPoints_handmadeSingle(constructor)
 
-def test_extractRows_handmadeListSequence():
-	""" Test CooSparse extractRows() against handmade output for several list extractions """
-	extractRows_handmadeListSequence(constructor)
+def test_extractPoints_handmadeListSequence():
+	""" Test CooSparse extractPoints() against handmade output for several list extractions """
+	extractPoints_handmadeListSequence(constructor)
 
-def test_extractRows_handmadeFunction():
-	""" Test CooSparse extractRows() against handmade output for function extraction """
-	extractRows_handmadeFunction(constructor)
+def test_extractPoints_handmadeFunction():
+	""" Test CooSparse extractPoints() against handmade output for function extraction """
+	extractPoints_handmadeFunction(constructor)
 
-def test_extractRows_handmadeFuncionWithFeatureNames():
-	""" Test CooSparse extractRows() against handmade output for function extraction with featureNames"""
-	extractRows_handmadeFuncionWithFeatureNames(constructor)
-
-@raises(ArgumentException)
-def test_extractRows_exceptionStartInvalid():
-	""" Test CooSparse extractRows() for ArgumentException when start is not a valid row index """
-	extractRows_exceptionStartInvalid(constructor)
+def test_extractPoints_handmadeFuncionWithFeatureNames():
+	""" Test CooSparse extractPoints() against handmade output for function extraction with featureNames"""
+	extractPoints_handmadeFuncionWithFeatureNames(constructor)
 
 @raises(ArgumentException)
-def test_extractRows_exceptionEndInvalid():
-	""" Test CooSparse extractRows() for ArgumentException when start is not a valid column index """
-	extractRows_exceptionEndInvalid(constructor)
+def test_extractPoints_exceptionStartInvalid():
+	""" Test CooSparse extractPoints() for ArgumentException when start is not a valid point index """
+	extractPoints_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
-def test_extractRows_exceptionInversion():
-	""" Test CooSparse extractRows() for ArgumentException when start comes after end """
-	extractRows_exceptionInversion(constructor)
+def test_extractPoints_exceptionEndInvalid():
+	""" Test CooSparse extractPoints() for ArgumentException when start is not a valid column index """
+	extractPoints_exceptionEndInvalid(constructor)
 
-def test_extractRows_handmade():
-	""" Test CooSparse extractRows() against handmade output for range extraction """
-	extractRows_handmade(constructor)
+@raises(ArgumentException)
+def test_extractPoints_exceptionInversion():
+	""" Test CooSparse extractPoints() for ArgumentException when start comes after end """
+	extractPoints_exceptionInversion(constructor)
 
-def test_extractRows_handmadeWithFeatureNames():
-	""" Test CooSparse extractRows() against handmade output for range extraction with featureNames """
-	extractRows_handmadeWithFeatureNames(constructor)
+def test_extractPoints_handmade():
+	""" Test CooSparse extractPoints() against handmade output for range extraction """
+	extractPoints_handmade(constructor)
+
+def test_extractPoints_handmadeWithFeatureNames():
+	""" Test CooSparse extractPoints() against handmade output for range extraction with featureNames """
+	extractPoints_handmadeWithFeatureNames(constructor)
 
 
 
@@ -235,17 +235,17 @@ def test_extractColumns_handmadeWithFeatureNames():
 
 
 ####################
-# applyFunctionToEachRow() #
+# applyFunctionToEachPoint() #
 ####################
 
 @raises(ArgumentException)
-def test_applyFunctionToEachRow_exceptionInputNone():
-	""" Test CooSparse applyFunctionToEachRow() for ArgumentException when function is None """
-	applyFunctionToEachRow_exceptionInputNone(constructor)
+def test_applyFunctionToEachPoint_exceptionInputNone():
+	""" Test CooSparse applyFunctionToEachPoint() for ArgumentException when function is None """
+	applyFunctionToEachPoint_exceptionInputNone(constructor)
 
-def test_applyFunctionToEachRow_Handmade():
-	""" Test CooSparse applyFunctionToEachRow() with handmade output """
-	applyFunctionToEachRow_Handmade(constructor)
+def test_applyFunctionToEachPoint_Handmade():
+	""" Test CooSparse applyFunctionToEachPoint() with handmade output """
+	applyFunctionToEachPoint_Handmade(constructor)
 
 
 #######################
@@ -263,38 +263,38 @@ def test_applyFunctionToEachColumn_Handmade():
 
 
 #####################
-# mapReduceOnRows() #
+# mapReduceOnPoints() #
 #####################
 
 @raises(ArgumentException)
-def test_mapReduceOnRows_argumentExceptionNoneMap():
-	""" Test CooSparse mapReduceOnRows() for ArgumentException when mapper is None """
-	mapReduceOnRows_argumentExceptionNoneMap(constructor)
+def test_mapReduceOnPoints_argumentExceptionNoneMap():
+	""" Test CooSparse mapReduceOnPoints() for ArgumentException when mapper is None """
+	mapReduceOnPoints_argumentExceptionNoneMap(constructor)
 
 @raises(ArgumentException)
-def test_mapReduceOnRows_argumentExceptionNoneReduce():
-	""" Test CooSparse mapReduceOnRows() for ArgumentException when reducer is None """
-	mapReduceOnRows_argumentExceptionNoneReduce(constructor)
+def test_mapReduceOnPoints_argumentExceptionNoneReduce():
+	""" Test CooSparse mapReduceOnPoints() for ArgumentException when reducer is None """
+	mapReduceOnPoints_argumentExceptionNoneReduce(constructor)
 
 @raises(ArgumentException)
-def test_mapReduceOnRows_argumentExceptionUncallableMap():
-	""" Test CooSparse mapReduceOnRows() for ArgumentException when mapper is not callable """
-	mapReduceOnRows_argumentExceptionUncallableMap(constructor)
+def test_mapReduceOnPoints_argumentExceptionUncallableMap():
+	""" Test CooSparse mapReduceOnPoints() for ArgumentException when mapper is not callable """
+	mapReduceOnPoints_argumentExceptionUncallableMap(constructor)
 
 @raises(ArgumentException)
-def test_mapReduceOnRows_argumentExceptionUncallableReduce():
-	""" Test CooSparse mapReduceOnRows() for ArgumentException when reducer is not callable """
-	mapReduceOnRows_argumentExceptionUncallableReduce(constructor)
+def test_mapReduceOnPoints_argumentExceptionUncallableReduce():
+	""" Test CooSparse mapReduceOnPoints() for ArgumentException when reducer is not callable """
+	mapReduceOnPoints_argumentExceptionUncallableReduce(constructor)
 
 
 
-def test_mapReduceOnRows_handmade():
-	""" Test CooSparse mapReduceOnRows() against handmade output """
-	mapReduceOnRows_handmade(constructor)
+def test_mapReduceOnPoints_handmade():
+	""" Test CooSparse mapReduceOnPoints() against handmade output """
+	mapReduceOnPoints_handmade(constructor)
 
-def test_mapReduceOnRows_handmadeNoneReturningReducer():
-	""" Test CooSparse mapReduceOnRows() against handmade output with a None returning Reducer """
-	mapReduceOnRows_handmadeNoneReturningReducer(constructor)
+def test_mapReduceOnPoints_handmadeNoneReturningReducer():
+	""" Test CooSparse mapReduceOnPoints() against handmade output with a None returning Reducer """
+	mapReduceOnPoints_handmadeNoneReturningReducer(constructor)
 
 
 ##########################

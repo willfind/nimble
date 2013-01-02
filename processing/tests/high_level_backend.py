@@ -19,7 +19,7 @@ from copy import deepcopy
 
 
 #################
-# duplicateRows #
+# duplicatePoints #
 #################
 
 
@@ -81,29 +81,29 @@ def columnToIntegerCategories_handmade(constructor):
 
 
 ###############################
-# selectConstantOfRowsByValue #
+# selectConstantOfPointsByValue #
 ###############################
 
-def selectConstantOfRowsByValue_exceptionNumToSelectNone(constructor):
-	""" Test selectConstantOfRowsByValue() for Argument exception when numToSelect is None """
+def selectConstantOfPointsByValue_exceptionNumToSelectNone(constructor):
+	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.selectConstantOfRowsByValue(None,'1')
+	toTest.selectConstantOfPointsByValue(None,'1')
 
-def selectConstantOfRowsByValue_exceptionNumToSelectLEzero(constructor):
-	""" Test selectConstantOfRowsByValue() for Argument exception when numToSelect <= 0 """
+def selectConstantOfPointsByValue_exceptionNumToSelectLEzero(constructor):
+	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect <= 0 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.selectConstantOfRowsByValue(0,'1')
+	toTest.selectConstantOfPointsByValue(0,'1')
 
-def selectConstantOfRowsByValue_handmade(constructor):
-	""" Test selectConstantOfRowsByValue() against handmade output """
+def selectConstantOfPointsByValue_handmade(constructor):
+	""" Test selectConstantOfPointsByValue() against handmade output """
 	data = [[1,2,3],[1,5,6],[1,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.selectConstantOfRowsByValue(2,'1')
+	toTest.selectConstantOfPointsByValue(2,'1')
 
 	expRet = constructor([[1,2,3],[1,8,9]],featureNames)
 	expTest = constructor([[1,5,6],],featureNames)
@@ -111,12 +111,12 @@ def selectConstantOfRowsByValue_handmade(constructor):
 	assert ret.equals(expRet)
 	assert expTest.equals(toTest)
 
-def selectConstantOfRowsByValue_handmadeLimit(constructor):
-	""" Test selectConstantOfRowsByValue() against handmade output when the constant exceeds the available rows """
+def selectConstantOfPointsByValue_handmadeLimit(constructor):
+	""" Test selectConstantOfPointsByValue() against handmade output when the constant exceeds the available points """
 	data = [[1,2,3],[1,5,6],[1,8,9],[2,11,12]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.selectConstantOfRowsByValue(2,'1')
+	toTest.selectConstantOfPointsByValue(2,'1')
 
 	expRet = constructor([[1,2,3],[1,8,9],[2,11,12]],featureNames)
 	expTest = constructor([[1,5,6],],featureNames)
@@ -127,36 +127,36 @@ def selectConstantOfRowsByValue_handmadeLimit(constructor):
 
 
 ##############################
-# selectPercentOfRowsByValue #
+# selectPercentOfPointsByValue #
 ##############################
 
-def selectPercentOfRowsByValue_exceptionPercentNone(constructor):
-	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is None """
+def selectPercentOfPointsByValue_exceptionPercentNone(constructor):
+	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfRowsByValue(None,'1')
+	toTest.selectPercentOfPointsByValue(None,'1')
 
-def selectPercentOfRowsByValue_exceptionPercentZero(constructor):
-	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is <= 0 """
+def selectPercentOfPointsByValue_exceptionPercentZero(constructor):
+	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is <= 0 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfRowsByValue(0,'1')
+	toTest.selectPercentOfPointsByValue(0,'1')
 
-def selectPercentOfRowsByValue_exceptionPercentOneHundrend(constructor):
-	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is >= 100 """
+def selectPercentOfPointsByValue_exceptionPercentOneHundrend(constructor):
+	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is >= 100 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfRowsByValue(100,'1')
+	toTest.selectPercentOfPointsByValue(100,'1')
 
-def selectPercentOfRowsByValue_handmade(constructor):
-	""" Test selectPercentOfRowsByValue() against handmade output """
+def selectPercentOfPointsByValue_handmade(constructor):
+	""" Test selectPercentOfPointsByValue() against handmade output """
 	data = [[1,2,3],[1,5,6],[1,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfRowsByValue(50,'1')
+	toTest.selectPercentOfPointsByValue(50,'1')
 
 	expRet = constructor([[1,2,3]],featureNames)
 	expTest = constructor([[1,5,6],[1,8,9]],featureNames)
@@ -166,36 +166,36 @@ def selectPercentOfRowsByValue_handmade(constructor):
 
 
 #########################
-# extractRowsByCoinToss #
+# extractPointsByCoinToss #
 #########################
 
-def extractRowsByCoinToss_exceptionNoneProbability(constructor):
-	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is None """
+def extractPointsByCoinToss_exceptionNoneProbability(constructor):
+	""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.extractRowsByCoinToss(None)
+	toTest.extractPointsByCoinToss(None)
 
-def extractRowsByCoinToss_exceptionLEzero(constructor):
-	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
+def extractPointsByCoinToss_exceptionLEzero(constructor):
+	""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.extractRowsByCoinToss(0)
+	toTest.extractPointsByCoinToss(0)
 
-def extractRowsByCoinToss_exceptionGEone(constructor):
-	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
+def extractPointsByCoinToss_exceptionGEone(constructor):
+	""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	toTest.extractRowsByCoinToss(1)
+	toTest.extractPointsByCoinToss(1)
 
-def extractRowsByCoinToss_handmade(constructor):
-	""" Test extractRowsByCoinToss() against handmade output with the test seed """
+def extractPointsByCoinToss_handmade(constructor):
+	""" Test extractPointsByCoinToss() against handmade output with the test seed """
 	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 	featureNames = ['1','2','3']
 	toTest = constructor(data,featureNames)
-	ret = toTest.extractRowsByCoinToss(0.5)
+	ret = toTest.extractPointsByCoinToss(0.5)
 
 	expRet = constructor([[4,5,6],[7,8,9]],featureNames)
 	expTest = constructor([[1,2,3],[10,11,12]],featureNames)

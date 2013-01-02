@@ -36,7 +36,7 @@ def callAll(func):
 
 
 #################
-# duplicateRows #
+# duplicatePoints #
 #################
 
 
@@ -80,76 +80,76 @@ def test_columnToIntegerCategories_handmade():
 
 
 ###############################
-# selectConstantOfRowsByValue #
+# selectConstantOfPointsByValue #
 ###############################
 
 @raises(ArgumentException)
-def test_selectConstantOfRowsByValue_exceptionNumToSelectNone():
-	""" Test selectConstantOfRowsByValue() for Argument exception when numToSelect is None """
-	callAll(selectConstantOfRowsByValue_exceptionNumToSelectNone)
+def test_selectConstantOfPointsByValue_exceptionNumToSelectNone():
+	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect is None """
+	callAll(selectConstantOfPointsByValue_exceptionNumToSelectNone)
 
 @raises(ArgumentException)
-def test_selectConstantOfRowsByValue_exceptionNumToSelectLEzero():
-	""" Test selectConstantOfRowsByValue() for Argument exception when numToSelect <= 0 """
-	callAll(selectConstantOfRowsByValue_exceptionNumToSelectLEzero)
+def test_selectConstantOfPointsByValue_exceptionNumToSelectLEzero():
+	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect <= 0 """
+	callAll(selectConstantOfPointsByValue_exceptionNumToSelectLEzero)
 
 @raises(ArgumentException)
-def test_selectConstantOfRowsByValue_handmade():
-	""" Test selectConstantOfRowsByValue() against handmade output """
-	callAll(selectConstantOfRowsByValue_handmade)
+def test_selectConstantOfPointsByValue_handmade():
+	""" Test selectConstantOfPointsByValue() against handmade output """
+	callAll(selectConstantOfPointsByValue_handmade)
 
-def selectConstantOfRowsByValue_handmadeLimit():
-	""" Test selectConstantOfRowsByValue() against handmade output when the constant exceeds the available rows """
-	callAll(selectConstantOfRowsByValue_handmadeLimit)
+def selectConstantOfPointsByValue_handmadeLimit():
+	""" Test selectConstantOfPointsByValue() against handmade output when the constant exceeds the available points """
+	callAll(selectConstantOfPointsByValue_handmadeLimit)
 
 
 ##############################
-# selectPercentOfRowsByValue #
+# selectPercentOfPointsByValue #
 ##############################
 
 @raises(ArgumentException)
-def test_selectPercentOfRowsByValue_exceptionPercentNone():
-	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is None """
-	callAll(selectPercentOfRowsByValue_exceptionPercentNone)
+def test_selectPercentOfPointsByValue_exceptionPercentNone():
+	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is None """
+	callAll(selectPercentOfPointsByValue_exceptionPercentNone)
 
 @raises(ArgumentException)
-def test_selectPercentOfRowsByValue_exceptionPercentZero():
-	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is <= 0 """
-	callAll(selectPercentOfRowsByValue_exceptionPercentZero)
+def test_selectPercentOfPointsByValue_exceptionPercentZero():
+	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is <= 0 """
+	callAll(selectPercentOfPointsByValue_exceptionPercentZero)
 
 @raises(ArgumentException)
-def test_selectPercentOfRowsByValue_exceptionPercentOneHundrend():
-	""" Test selectPercentOfRowsByValue() for ArgumentException when percent to select is >= 100 """
-	callAll(selectPercentOfRowsByValue_exceptionPercentOneHundrend)
+def test_selectPercentOfPointsByValue_exceptionPercentOneHundrend():
+	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is >= 100 """
+	callAll(selectPercentOfPointsByValue_exceptionPercentOneHundrend)
 
-def test_selectPercentOfRowsByValue_handmade():
-	""" Test selectPercentOfRowsByValue() against handmade output """
-	callAll(selectPercentOfRowsByValue_handmade)
+def test_selectPercentOfPointsByValue_handmade():
+	""" Test selectPercentOfPointsByValue() against handmade output """
+	callAll(selectPercentOfPointsByValue_handmade)
 
 
 #########################
-# extractRowsByCoinToss #
+# extractPointsByCoinToss #
 #########################
 
 @raises(ArgumentException)
-def test_extractRowsByCoinToss_exceptionNoneProbability():
-	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is None """
-	callAll(extractRowsByCoinToss_exceptionNoneProbability)
+def test_extractPointsByCoinToss_exceptionNoneProbability():
+	""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
+	callAll(extractPointsByCoinToss_exceptionNoneProbability)
 
 @raises(ArgumentException)
-def test_extractRowsByCoinToss_exceptionLEzero():
-	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
-	callAll(extractRowsByCoinToss_exceptionLEzero)
+def test_extractPointsByCoinToss_exceptionLEzero():
+	""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
+	callAll(extractPointsByCoinToss_exceptionLEzero)
 
 @raises(ArgumentException)
-def test_extractRowsByCoinToss_exceptionGEone():
-	""" Test extractRowsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
-	callAll(extractRowsByCoinToss_exceptionGEone)
+def test_extractPointsByCoinToss_exceptionGEone():
+	""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
+	callAll(extractPointsByCoinToss_exceptionGEone)
 
 
-def test_extractRowsByCoinToss_handmade():
-	""" Test extractRowsByCoinToss() against handmade output with the test seed """
-	callAll(extractRowsByCoinToss_handmade)
+def test_extractPointsByCoinToss_handmade():
+	""" Test extractPointsByCoinToss() against handmade output with the test seed """
+	callAll(extractPointsByCoinToss_handmade)
 
 
 

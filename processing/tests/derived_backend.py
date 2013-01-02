@@ -64,33 +64,33 @@ def transpose_handmade(constructor):
 
 
 #############
-# appendRows() #
+# appendPoints() #
 #############
 
-def appendRows_exceptionNone(constructor):
-	""" Test appendRows() for ArgumentException when toAppend is None"""
+def appendPoints_exceptionNone(constructor):
+	""" Test appendPoints() for ArgumentException when toAppend is None"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.appendRows(None)
+	toTest.appendPoints(None)
 
-def appendRows_exceptionWrongSize(constructor):
-	""" Test appendRows() for ArgumentException when toAppend has too many columns """
+def appendPoints_exceptionWrongSize(constructor):
+	""" Test appendPoints() for ArgumentException when toAppend has too many columns """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.appendRows([["too", " ", "many", " ", "columns"]])
+	toTest.appendPoints([["too", " ", "many", " ", "columns"]])
 
-def appendRows_handmadeSingle(constructor):
-	""" Test appendRows() against handmade output for a single added row """
+def appendPoints_handmadeSingle(constructor):
+	""" Test appendPoints() against handmade output for a single added point """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	dataExpected = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 	toTest = constructor(data)
 	toAppend = constructor([[10,11,12]])
 	expected = constructor(dataExpected)
-	toTest.appendRows(toAppend)
+	toTest.appendPoints(toAppend)
 	assert toTest.equals(expected)
 
-def appendRows_handmadeSequence(constructor):
-	""" Test appendRows() against handmade output for a sequence of additions"""
+def appendPoints_handmadeSequence(constructor):
+	""" Test appendPoints() against handmade output for a sequence of additions"""
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toAppend1 = [[0.1,0.2,0.3]]
 	toAppend2 = [[0.01,0.02,0.03],[0,0,0]]
@@ -98,9 +98,9 @@ def appendRows_handmadeSequence(constructor):
 
 	dataExpected = [[1,2,3],[4,5,6],[7,8,9],[0.1,0.2,0.3],[0.01,0.02,0.03],[0,0,0],[10,11,12]]
 	toTest = constructor(data)
-	toTest.appendRows(constructor(toAppend1))
-	toTest.appendRows(constructor(toAppend2))
-	toTest.appendRows(constructor(toAppend3))
+	toTest.appendPoints(constructor(toAppend1))
+	toTest.appendPoints(constructor(toAppend2))
+	toTest.appendPoints(constructor(toAppend3))
 
 	expected = constructor(dataExpected)
 
@@ -119,10 +119,10 @@ def appendColumns_exceptionNone(constructor):
 	toTest.appendColumns(None)
 
 def appendColumns_exceptionWrongSize(constructor):
-	""" Test appendColumns() for ArgumentException when toAppend has too many rows """
+	""" Test appendColumns() for ArgumentException when toAppend has too many points """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.appendColumns([["too"], [" "], ["many"], [" "], ["rows"]])
+	toTest.appendColumns([["too"], [" "], ["many"], [" "], ["points"]])
 
 def appendColumns_exceptionSameFeatureName(constructor):
 	""" Test appendColumns() for ArgumentException when toAppend and self have a featureName in common """
@@ -171,15 +171,15 @@ def appendColumns_handmadeSequence(constructor):
 
 
 ##############
-# sortRows() #
+# sortPoints() #
 ##############
 
-def sortRows_handmadeNatural(constructor):
-	""" Test sortRows() against handmade , naturally ordered  output """	
+def sortPoints_handmadeNatural(constructor):
+	""" Test sortPoints() against handmade , naturally ordered  output """	
 	data = [[7,8,9],[1,2,3],[4,5,6]]
 	toTest = constructor(data)
 
-	toTest.sortRows()
+	toTest.sortPoints()
 
 	dataExpected = [[1,2,3],[4,5,6],[7,8,9]]
 	objExp = constructor(dataExpected)
@@ -187,21 +187,21 @@ def sortRows_handmadeNatural(constructor):
 	assert toTest.equals(objExp)
 
 
-def sortRows_handmadeWithFcn(constructor):
-	""" Test sortRows() against handmade output when given cmp and key functions """	
+def sortPoints_handmadeWithFcn(constructor):
+	""" Test sortPoints() against handmade output when given cmp and key functions """	
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
 
 	def cmpNums(num1,num2):
 		return num1 - num2
 
-	def sumModEight(row):
+	def sumModEight(point):
 		total = 0
-		for value in row:
+		for value in point:
 			total = total + value
 		return total % 8
 
-	toTest.sortRows(cmpNums,sumModEight)
+	toTest.sortPoints(cmpNums,sumModEight)
 
 	dataExpected = [[7,8,9],[1,2,3],[4,5,6]]
 	objExp = constructor(dataExpected)
@@ -209,7 +209,7 @@ def sortRows_handmadeWithFcn(constructor):
 	assert toTest.equals(objExp)
 
 
-def sortRows_handmade_reverse(constructor):
+def sortPoints_handmade_reverse(constructor):
 	assert False
 
 #################
@@ -238,95 +238,95 @@ def sortColumns_handmadeWithFcn(constructor):
 	objExp = constructor(dataExpected)
 	assert toTest.equals(objExp)
 
-def sortRows_handmade_reverse(constructor):
+def sortPoints_handmade_reverse(constructor):
 	assert False
 
 #################
-# extractRows() #
+# extractPoints() #
 #################
 
-def extractRows_emptyInput(constructor): #TODO 
-	""" Test extractRows() does nothing when not provided with any input """
+def extractPoints_emptyInput(constructor): #TODO 
+	""" Test extractPoints() does nothing when not provided with any input """
 	pass
 
-def extractRows_handmadeSingle(constructor):
-	""" Test extractRows() against handmade output when extracting one row """
+def extractPoints_handmadeSingle(constructor):
+	""" Test extractPoints() against handmade output when extracting one point """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ext1 = toTest.extractRows(0)
+	ext1 = toTest.extractPoints(0)
 	exp1 = constructor([[1,2,3]])
 	assert ext1.equals(exp1)
 	expEnd = constructor([[4,5,6],[7,8,9]])
 	assert toTest.equals(expEnd)
 
-def extractRows_handmadeListSequence(constructor):
-	""" Test extractRows() against handmade output for several list extractions """
+def extractPoints_handmadeListSequence(constructor):
+	""" Test extractPoints() against handmade output for several list extractions """
 	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 	toTest = constructor(data)
-	ext1 = toTest.extractRows(0)
+	ext1 = toTest.extractPoints(0)
 	exp1 = constructor([[1,2,3]])
 	assert ext1.equals(exp1)
-	ext2 = toTest.extractRows([1,2])
+	ext2 = toTest.extractPoints([1,2])
 	exp2 = constructor([[7,8,9],[10,11,12]])
 	assert ext2.equals(exp2)
 	expEnd = constructor([[4,5,6]])
 	assert toTest.equals(expEnd)
 
-def extractRows_handmadeFunction(constructor):
-	""" Test extractRows() against handmade output for function extraction """
+def extractPoints_handmadeFunction(constructor):
+	""" Test extractPoints() against handmade output for function extraction """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	def oneOrFour(row):
-		if 1 in row or 4 in row:
+	def oneOrFour(point):
+		if 1 in point or 4 in point:
 			return True
 		return False
-	ext = toTest.extractRows(oneOrFour)
+	ext = toTest.extractPoints(oneOrFour)
 	exp = constructor([[1,2,3],[4,5,6]])
 	assert ext.equals(exp)
 	expEnd = constructor([[7,8,9]])
 	assert toTest.equals(expEnd)
 
-def extractRows_handmadeFuncionWithFeatureNames(constructor):
-	""" Test extractRows() against handmade output for function extraction with featureNames"""
+def extractPoints_handmadeFuncionWithFeatureNames(constructor):
+	""" Test extractPoints() against handmade output for function extraction with featureNames"""
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	def oneOrFour(row):
-		if 1 in row or 4 in row:
+	def oneOrFour(point):
+		if 1 in point or 4 in point:
 			return True
 		return False
-	ext = toTest.extractRows(oneOrFour)
+	ext = toTest.extractPoints(oneOrFour)
 	exp = constructor([[1,2,3],[4,5,6]],featureNames)
 	assert ext.equals(exp)
 	expEnd = constructor([[7,8,9]],featureNames)
 	assert toTest.equals(expEnd)
 
-def extractRows_exceptionStartInvalid(constructor):
-	""" Test extracRows() for ArgumentException when start is not a valid row index """
+def extractPoints_exceptionStartInvalid(constructor):
+	""" Test extracPoints() for ArgumentException when start is not a valid point index """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.extractRows(start=-1,end=2)
+	toTest.extractPoints(start=-1,end=2)
 
-def extractRows_exceptionEndInvalid(constructor):
-	""" Test extractRows() for ArgumentException when start is not a valid column index """
+def extractPoints_exceptionEndInvalid(constructor):
+	""" Test extractPoints() for ArgumentException when start is not a valid column index """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.extractRows(start=1,end=5)
+	toTest.extractPoints(start=1,end=5)
 
-def extractRows_exceptionInversion(constructor):
-	""" Test extractRows() for ArgumentException when start comes after end """
+def extractPoints_exceptionInversion(constructor):
+	""" Test extractPoints() for ArgumentException when start comes after end """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.extractRows(start=2,end=0)
+	toTest.extractPoints(start=2,end=0)
 
-def extractRows_handmade(constructor):
-	""" Test extractRows() against handmade output for range extraction """
+def extractPoints_handmade(constructor):
+	""" Test extractPoints() against handmade output for range extraction """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ret = toTest.extractRows(start=1,end=2)
+	ret = toTest.extractPoints(start=1,end=2)
 	
 	expectedRet = constructor([[4,5,6],[7,8,9]])
 	expectedTest = constructor([[1,2,3]])
@@ -334,12 +334,12 @@ def extractRows_handmade(constructor):
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
 
-def extractRows_handmadeWithFeatureNames(constructor):
-	""" Test extractRows() against handmade output for range extraction with featureNames """
+def extractPoints_handmadeWithFeatureNames(constructor):
+	""" Test extractPoints() against handmade output for range extraction with featureNames """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	ret = toTest.extractRows(start=1,end=2)
+	ret = toTest.extractPoints(start=1,end=2)
 	
 	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
 	expectedTest = constructor([[1,2,3]],featureNames)
@@ -497,27 +497,27 @@ def extractColumns_handmadeWithFeatureNames(constructor):
 
 
 ####################
-# applyFunctionToEachRow() #
+# applyFunctionToEachPoint() #
 ####################
 
-def applyFunctionToEachRow_exceptionInputNone(constructor):
-	""" Test applyFunctionToEachRow() for ArgumentException when function is None """
+def applyFunctionToEachPoint_exceptionInputNone(constructor):
+	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),featureNames)
-	origObj.applyFunctionToEachRow(None)
+	origObj.applyFunctionToEachPoint(None)
 
-def applyFunctionToEachRow_Handmade(constructor):
-	""" Test applyFunctionToEachRow() with handmade output """
+def applyFunctionToEachPoint_Handmade(constructor):
+	""" Test applyFunctionToEachPoint() with handmade output """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),featureNames)
 
 
-	def emitLower (row):
-		return row[origObj.featureNames['deci']]
+	def emitLower (point):
+		return point[origObj.featureNames['deci']]
 
-	lowerCounts = origObj.applyFunctionToEachRow(emitLower)
+	lowerCounts = origObj.applyFunctionToEachPoint(emitLower)
 
 	expectedOut = [[0.1], [0.1], [0.1], [0.2]]
 	exp = constructor(expectedOut)
@@ -557,12 +557,12 @@ def applyFunctionToEachColumn_Handmade(constructor):
 
 
 #####################
-# mapReduceOnRows() #
+# mapReduceOnPoints() #
 #####################
 
-def simpleMapper(row):
-	idInt = row[0]
-	intList = row[1:]
+def simpleMapper(point):
+	idInt = point[0]
+	intList = point[1:]
 	ret = []
 	for value in intList:
 		ret.append((idInt,value))
@@ -579,45 +579,45 @@ def oddOnlyReducer(identifier, valuesList):
 		return None
 	return simpleReducer(identifier,valuesList)
 
-def mapReduceOnRows_argumentExceptionNoneMap(constructor):
-	""" Test mapReduceOnRows() for ArgumentException when mapper is None """
+def mapReduceOnPoints_argumentExceptionNoneMap(constructor):
+	""" Test mapReduceOnPoints() for ArgumentException when mapper is None """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnRows(None,simpleReducer)
+	toTest.mapReduceOnPoints(None,simpleReducer)
 
-def mapReduceOnRows_argumentExceptionNoneReduce(constructor):
-	""" Test mapReduceOnRows() for ArgumentException when reducer is None """
+def mapReduceOnPoints_argumentExceptionNoneReduce(constructor):
+	""" Test mapReduceOnPoints() for ArgumentException when reducer is None """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnRows(simpleMapper,None)
+	toTest.mapReduceOnPoints(simpleMapper,None)
 
-def mapReduceOnRows_argumentExceptionUncallableMap(constructor):
-	""" Test mapReduceOnRows() for ArgumentException when mapper is not callable """
+def mapReduceOnPoints_argumentExceptionUncallableMap(constructor):
+	""" Test mapReduceOnPoints() for ArgumentException when mapper is not callable """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnRows("hello",simpleReducer)
+	toTest.mapReduceOnPoints("hello",simpleReducer)
 
-def mapReduceOnRows_argumentExceptionUncallableReduce(constructor):
-	""" Test mapReduceOnRows() for ArgumentException when reducer is not callable """
+def mapReduceOnPoints_argumentExceptionUncallableReduce(constructor):
+	""" Test mapReduceOnPoints() for ArgumentException when reducer is not callable """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnRows(simpleMapper,5)
+	toTest.mapReduceOnPoints(simpleMapper,5)
 
 
 # inconsistent output?
 
 
 
-def mapReduceOnRows_handmade(constructor):
-	""" Test mapReduceOnRows() against handmade output """
+def mapReduceOnPoints_handmade(constructor):
+	""" Test mapReduceOnPoints() against handmade output """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	ret = toTest.mapReduceOnRows(simpleMapper,simpleReducer)
+	ret = toTest.mapReduceOnPoints(simpleMapper,simpleReducer)
 	
 	exp = constructor([[1,5],[4,11],[7,17]])
 	
@@ -625,12 +625,12 @@ def mapReduceOnRows_handmade(constructor):
 	assert (toTest.equals(constructor(data,featureNames)))
 
 
-def mapReduceOnRows_handmadeNoneReturningReducer(constructor):
-	""" Test mapReduceOnRows() against handmade output with a None returning Reducer """
+def mapReduceOnPoints_handmadeNoneReturningReducer(constructor):
+	""" Test mapReduceOnPoints() against handmade output with a None returning Reducer """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	ret = toTest.mapReduceOnRows(simpleMapper,oddOnlyReducer)
+	ret = toTest.mapReduceOnPoints(simpleMapper,oddOnlyReducer)
 	
 	exp = constructor([[1,5],[7,17]])
 	
