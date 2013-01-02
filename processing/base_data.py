@@ -540,8 +540,6 @@ class BaseData(object):
 				raise ArgumentException("start cannot be an index greater than end")
 
 		ret = self._extractColumns_implementation(toExtract, start, end, number, randomize)
-		print ret.featureNames
-		print self.featureNames
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
 		return ret

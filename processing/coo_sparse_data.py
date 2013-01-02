@@ -103,10 +103,15 @@ class CooSparseData(SparseData):
 		(rowShape, colShape) = self.data.shape
 		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), (rowShape, colShape - len(toExtract)))
 
-		# instantiate return obj
+		# instantiate return data
 		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(self.rows(), len(toExtract)))
+		
+		# get featureNames for return obj
+		featureNameList = []
+		for index in toExtract:
+			featureNameList.append(self.featureNamesInverse[index])
 
-		return CooSparseData(ret) 
+		return CooSparseData(ret,featureNameList) 
 
 	def _transpose_implementation(self):
 		"""
