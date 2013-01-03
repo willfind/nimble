@@ -45,7 +45,7 @@ from copy import deepcopy
 
 
 def featureToBinaryCategoryFeatures_handmade(constructor):
-	""" Test convertFeatureToCategoryFeatures() against handmade output """
+	""" Test featureToBinaryCategoryFeatures() against handmade output """
 	data = [[1],[2],[3]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)
@@ -66,7 +66,7 @@ def featureToBinaryCategoryFeatures_handmade(constructor):
 #############################
 
 def featureToIntegerCategories_handmade(constructor):
-	""" Test convertFeatureToIntegerCategories() against handmade output """
+	""" Test featureToIntegerCategories() against handmade output """
 	data = [[10],[20],[30.5],[20],[10]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)

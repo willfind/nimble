@@ -79,7 +79,7 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 
 	# necessary format for skl, also makes the following ops easier
 	if trainObjY is not None:	
-		trainObjY = trainObjY.convertToDenseMatrixData()
+		trainObjY = trainObjY.toDenseMatrixData()
 	
 	# pull out data from obj
 	trainRawData = trainObj.data

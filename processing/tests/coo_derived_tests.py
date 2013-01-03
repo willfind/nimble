@@ -298,39 +298,39 @@ def test_mapReduceOnPoints_handmadeNoneReturningReducer():
 
 
 ##########################
-# convertToRowListData() #
+# toRowListData() #
 ##########################
 
 
-def test_convertToRowListData_handmade_defaultFeatureNames():
-	""" Test CooSparse convertToRowListData with default featureNames """
-	convertToRowListData_handmade_defaultFeatureNames(constructor)
+def test_toRowListData_handmade_defaultFeatureNames():
+	""" Test CooSparse toRowListData with default featureNames """
+	toRowListData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToRowListData_handmade_assignedFeatureNames():
-	""" Test CooSparse convertToRowListData with assigned featureNames """
-	convertToRowListData_handmade_assignedFeatureNames(constructor)
+def test_toRowListData_handmade_assignedFeatureNames():
+	""" Test CooSparse toRowListData with assigned featureNames """
+	toRowListData_handmade_assignedFeatureNames(constructor)
 
 
 
 ##############################
-# convertToDenseMatrixData() #
+# toDenseMatrixData() #
 ##############################
 
 
-def test_convertToDenseMatrixData_incompatible():
-	""" Test CooSparse convertToDenseMatrixData with data that cannot be used by dense matrices """
-	convertToDenseMatrixData_incompatible(constructor)
+def test_toDenseMatrixData_incompatible():
+	""" Test CooSparse toDenseMatrixData with data that cannot be used by dense matrices """
+	toDenseMatrixData_incompatible(constructor)
 
 
-def test_convertToDenseMatrixData_handmade_defaultFeatureNames():
-	""" Test CooSparse convertToDenseMatrixData with default featureNames """
-	convertToDenseMatrixData_handmade_defaultFeatureNames(constructor)
+def test_toDenseMatrixData_handmade_defaultFeatureNames():
+	""" Test CooSparse toDenseMatrixData with default featureNames """
+	toDenseMatrixData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToDenseMatrixData_handmade_assignedFeatureNames():
-	""" Test CooSparse convertToDenseMatrixData with assigned featureNames """
-	convertToDenseMatrixData_handmade_assignedFeatureNames(constructor)
+def test_toDenseMatrixData_handmade_assignedFeatureNames():
+	""" Test CooSparse toDenseMatrixData with assigned featureNames """
+	toDenseMatrixData_handmade_assignedFeatureNames(constructor)
 
 
 

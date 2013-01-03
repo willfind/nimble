@@ -138,7 +138,7 @@ class CooSparseData(SparseData):
 		return self.data.shape[0]
 
 
-	def _convertToDenseMatrixData_implementation(self):
+	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
 		return DenseMatrixData(self.data.todense(), self.featureNames)
 

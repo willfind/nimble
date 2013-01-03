@@ -378,34 +378,34 @@ def roundTripBackend(includeFeatureNames):
 
 
 ##########################
-# convertToRowListData() #
+# toRowListData() #
 ##########################
 
 
-def test_convertToRowListData_handmade_defaultFeatureNames():
-	""" Test RLD convertToRowListData with default featureNames """
-	convertToRowListData_handmade_defaultFeatureNames(constructor)
+def test_toRowListData_handmade_defaultFeatureNames():
+	""" Test RLD toRowListData with default featureNames """
+	toRowListData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToRowListData_handmade_assignedFeatureNames():
-	""" Test RLD convertToRowListData with assigned featureNames """
-	convertToRowListData_handmade_assignedFeatureNames(constructor)
+def test_toRowListData_handmade_assignedFeatureNames():
+	""" Test RLD toRowListData with assigned featureNames """
+	toRowListData_handmade_assignedFeatureNames(constructor)
 
 
 
 ##############################
-# convertToDenseMatrixData() #
+# toDenseMatrixData() #
 ##############################
 
 
-def test_convertToDenseMatrixData_handmade_defaultFeatureNames():
-	""" Test RLD convertToDenseMatrixData with default featureNames """
-	convertToDenseMatrixData_handmade_defaultFeatureNames(constructor)
+def test_toDenseMatrixData_handmade_defaultFeatureNames():
+	""" Test RLD toDenseMatrixData with default featureNames """
+	toDenseMatrixData_handmade_defaultFeatureNames(constructor)
 
 	
-def test_convertToDenseMatrixData_handmade_assignedFeatureNames():
-	""" Test RLD convertToDenseMatrixData with assigned featureNames """
-	convertToDenseMatrixData_handmade_assignedFeatureNames(constructor)
+def test_toDenseMatrixData_handmade_assignedFeatureNames():
+	""" Test RLD toDenseMatrixData with assigned featureNames """
+	toDenseMatrixData_handmade_assignedFeatureNames(constructor)
 
 
 

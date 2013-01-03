@@ -50,7 +50,7 @@ class CscSparseData(SparseData):
 
 
 
-	def _convertToDenseMatrixData_implementation(self):
+	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
 		return DenseMatrixData(self.data.todense(), self.featureNames)
 

@@ -434,11 +434,11 @@ class RowListData(BaseData):
 		return True
 
 
-	def _convertToRowListData_implementation(self):
+	def _toRowListData_implementation(self):
 		"""	Returns a RowListData object with the same data and featureNames as this one """
 		return RowListData(self.data, self.featureNames)
 
-	def _convertToDenseMatrixData_implementation(self):
+	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
 		from dense_matrix_data import DenseMatrixData as DMD
 		return DMD(self.data, self.featureNames)

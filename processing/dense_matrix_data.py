@@ -351,12 +351,12 @@ class DenseMatrixData(BaseData):
 		return numpy.array_equal(self.data,other.data)
 
 
-	def _convertToRowListData_implementation(self):
+	def _toRowListData_implementation(self):
 		"""	Returns a RowListData object with the same data and featureNames as this one """
 		from row_list_data import RowListData as RLD
 		return RLD(self.data.tolist(), self.featureNames)
 
-	def _convertToDenseMatrixData_implementation(self):
+	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
 		return DenseMatrixData(self.data, self.featureNames)
 

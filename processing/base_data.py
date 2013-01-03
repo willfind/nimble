@@ -219,7 +219,7 @@ class BaseData(object):
 		values = values.extractFeatures([0])
 
 		# Convert to RLD, so we can have easy access
-		values = values.convertToRowListData()
+		values = values.toRowListData()
 
 		# for each value run applyToEach to produce a category point for each value
 		def makeFunc(value):
@@ -265,7 +265,7 @@ class BaseData(object):
 		values = values.extractFeatures([0])
 
 		# Convert to RLD, so we can have easy access
-		values = values.convertToRowListData()
+		values = values.toRowListData()
 
 		mapping = {}
 		index = 0
@@ -572,11 +572,11 @@ class BaseData(object):
 	def features(self):
 		return self._features_implementation()
 
-	def convertToRowListData(self):
-		return self._convertToRowListData_implementation()
+	def toRowListData(self):
+		return self._toRowListData_implementation()
 
-	def convertToDenseMatrixData(self):
-		return self._convertToDenseMatrixData_implementation()
+	def toDenseMatrixData(self):
+		return self._toDenseMatrixData_implementation()
 
 	####################
 	# Helper functions #

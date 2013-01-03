@@ -643,29 +643,29 @@ def mapReduceOnPoints_handmadeNoneReturningReducer(constructor):
 
 
 ##########################
-# convertToRowListData() #
+# toRowListData() #
 ##########################
 
 
-def convertToRowListData_handmade_defaultFeatureNames(constructor):
-	""" Test convertToRowListData with default featureNames """
+def toRowListData_handmade_defaultFeatureNames(constructor):
+	""" Test toRowListData with default featureNames """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
 
-	ret = toTest.convertToRowListData()
+	ret = toTest.toRowListData()
 	exp = RLD(data)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
 
 	
-def convertToRowListData_handmade_assignedFeatureNames(constructor):
-	""" Test convertToRowListData with assigned featureNames """
+def toRowListData_handmade_assignedFeatureNames(constructor):
+	""" Test toRowListData with assigned featureNames """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	ret = toTest.convertToRowListData()
+	ret = toTest.toRowListData()
 	exp = RLD(data,featureNames)
 
 	assert ret.equals(exp)
@@ -674,28 +674,28 @@ def convertToRowListData_handmade_assignedFeatureNames(constructor):
 
 
 ##############################
-# convertToDenseMatrixData() #
+# toDenseMatrixData() #
 ##############################
 
-def convertToDenseMatrixData_handmade_defaultFeatureNames(constructor):
-	""" Test convertToDenseMatrixData with default featureNames """
+def toDenseMatrixData_handmade_defaultFeatureNames(constructor):
+	""" Test toDenseMatrixData with default featureNames """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
 
-	ret = toTest.convertToDenseMatrixData()
+	ret = toTest.toDenseMatrixData()
 	exp = DMD(data)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
 
 	
-def convertToDenseMatrixData_handmade_assignedFeatureNames(constructor):
-	""" Test convertToDenseMatrixData with assigned featureNames """
+def toDenseMatrixData_handmade_assignedFeatureNames(constructor):
+	""" Test toDenseMatrixData with assigned featureNames """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	ret = toTest.convertToDenseMatrixData()
+	ret = toTest.toDenseMatrixData()
 	exp = DMD(data,featureNames)
 
 	assert ret.equals(exp)
