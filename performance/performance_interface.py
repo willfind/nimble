@@ -6,23 +6,43 @@ Created on Dec 11, 2012
 
 import inspect
 import numpy
+
+from ..processing.base_data import BaseData
 from ..combinations.Combinations import executeCode
+from ..utility.custom_exceptions import ArgumentException
 
 
 def computeMetrics(knownIndicator, knownValues, predictedValues, performanceFunctions):
     """
 
     """
+    if isinstance(knownIndicator, BaseData):
+        #The known Indicator argument already contains all known
+        #labels, so we do not need to do any further processing
+        knownLabels = knownIndicator
+    elif knownIndicator is not None:
+        #known Indicator is an index; we extract the column it indicates
+        #from knownValues
+        knownLabels = knownValues.extractColumns([knownIndicator])
+    else:
+        raise ArgumentException("Missing indicator for known labels in computeMetrics")
+
     results = {}
+    #TODO make this hash more generic - what if function args are not knownValues and predictedValues
+    parameterHash = {"knownValues":knownLabels, "predictedValues":predictedValues}
     for func in performanceFunctions:
         print inspect.getargspec(func).args
         if len(inspect.getargspec(func).args) == 2:
-            trueLabels = knownValues[:, trueLabelIndex]
-            results[func] = (func(trueLabels, predictedValues))
+            #the metric function only takes two arguments: we assume they
+            #are the known class labels and the predicted class labels
+            results[func] = executeCode(func, parameterHash)
         elif len(inspect.getargspec(func).args) == 3:
+            #the metric function takes three arguments:  known class labels,
+            #features, and predicted class labels. add features to the parameter hash
             #divide X into labels and features
-            #TODO
-            results[func] = (func(knownValues, predictedValues))
+            #TODO correctly separate known labels and features in all cases
+            parameterHash["features"] = knownValues
+            results[func] = executeCode(func, parameterHash)
         else:
             raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
     return results
@@ -86,7 +106,7 @@ def checkPrintConfusionMatrix():
     Y = ["A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C"]
     functions = [confusion_matrix_generator]
     classLabelIndex = "classLabel"
-    confusionMatrixResults = computeMetrics_v2(classLabelIndex, X, Y, functions)
+    confusionMatrixResults = computeMetrics(classLabelIndex, X, Y, functions)
     confusionMatrix = confusionMatrixResults["confusion_matrix_generator"]
     print_confusion_matrix(confusionMatrix)
 
