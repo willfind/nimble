@@ -359,3 +359,21 @@ def test_writeMM_handmade():
 	writeMM_handmade(constructor)
 
 
+#####################
+# copyDataReference #
+#####################
+
+@raises(ArgumentException)
+def test_copyDataReference_exceptionInconsistentFeatures():
+	""" Test CooSparse copyDataReference() throws exception when the number of features doesn't match"""
+	copyDataReference_exceptionInconsistentFeatures(constructor)
+
+@raises(ArgumentException)
+def test_copyDataReference_exceptionWrongType():
+	""" Test CooSparse copyDataReference() throws exception when other is not the same type """
+	copyDataReference_exceptionWrongType(constructor)
+
+def test_copyDataReference_sameReference():
+	""" Test CooSparse copyDataReference() successfully records the same reference """
+	copyDataReference_sameReference(constructor)
+

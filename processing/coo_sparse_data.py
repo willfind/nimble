@@ -161,6 +161,12 @@ class CooSparseData(SparseData):
 			mmwrite(target=outPath, a=self.data)
 
 
+	def _copyDataReference(self, other):
+		if not isinstance(other, CooSparseData):
+			raise ArgumentException("Other must be the same type as this object")
+
+		self.data = other.data
+
 ###########
 # Helpers #
 ###########

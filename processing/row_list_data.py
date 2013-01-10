@@ -479,6 +479,11 @@ class RowListData(BaseData):
 			outFile.write('\n')
 		outFile.close()
 
+	def _copyDataReference(self, other):
+		if not isinstance(other, RowListData):
+			raise ArgumentException("Other must be the same type as this object")
+
+		self.data = other.data
 
 	###########
 	# Helpers #

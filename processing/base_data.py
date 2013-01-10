@@ -593,6 +593,21 @@ class BaseData(object):
 	def writeMM(self, outPath, includeFeatureNames):
 		return self._writeMM_implementation(outPath, includeFeatureNames)
 
+	def copyDataReference(self, other):
+		"""
+		Modifies the internal data of this object to refer to the same data as other. In other
+		words, the data wrapped by both the self and other objects resides in the
+		same place in memory. Other must be an object of the same type as
+		the calling object. Also, the shape of other should be consistent with the set
+		of featureNames currently in this object
+
+		"""
+		if self.features() != other.features():
+			raise ArgumentException("Self and other must be the same shape")
+
+		self._copyDataReference(other)
+
+
 	####################
 	# Helper functions #
 	####################

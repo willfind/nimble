@@ -388,6 +388,11 @@ class DenseMatrixData(BaseData):
 		outFile.close()
 
 
+	def _copyDataReference(self, other):
+		if not isinstance(other, DenseMatrixData):
+			raise ArgumentException("Other must be the same type as this object")
+
+		self.data = other.data
 
 ###################
 # File IO Helpers #
