@@ -10,8 +10,6 @@ import inspect
 import numpy
 
 from interface_helpers import *
-from ..processing.dense_matrix_data import loadCSV as DMDLoadCSV
-from ..processing.dense_matrix_data import writeToCSV as DMDWriteToCSV
 from ..processing.dense_matrix_data import DenseMatrixData as DMData
 from ..processing.base_data import BaseData
 
@@ -59,11 +57,11 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 
 	"""
 	if not isinstance(trainData, BaseData):
-		trainObj = DMDLoadCSV(trainData)
+		trainObj = DMData(file=trainData)
 	else: # input is an object
 		trainObj = trainData
 	if not isinstance(testData, BaseData):
-		testObj = DMDLoadCSV(testData)
+		testObj = DMData(file=testData)
 	else: # input is an object
 		testObj = testData
 	
@@ -110,7 +108,7 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 		outputObj.transpose()
 		return outputObj
 
-	DMDWriteToCSV(outputObj,output,False)
+	outputObj.writeCSV(output, False)
 
 
 def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs):

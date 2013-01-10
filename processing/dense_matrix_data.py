@@ -25,7 +25,12 @@ class DenseMatrixData(BaseData):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None):
+	def __init__(self, data=None, featureNames=None, file=None):
+		if file is not None:
+			(data, featureNamesTemp) = _readFile(file)
+			if featureNames is None:
+				featureNames = featureNamesTemp
+		
 		self.data = numpy.matrix(data)
 		super(DenseMatrixData, self).__init__(featureNames)
 		
@@ -361,23 +366,39 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(self.data, self.featureNames)
 
 
-	###########
-	# Helpers #
-	###########
+	def _writeCSV_implementation(self, outPath, includeFeatureNames):
+		"""
+		Function to write the data in this object to a CSV file at the designated
+		path.
+
+		"""
+		header = None
+		if includeFeatureNames:
+			featureNameString = "#"
+			for i in xrange(self.features()):
+				featureNameString += self.featureNamesInverse[i]
+				if not i == self.features() - 1:
+					featureNameString += ','
+			header = featureNameString
+
+		outFile = open(outPath,'w')
+		if header is not None:
+			outFile.write(header + "\n")
+		numpy.savetxt(outFile,self.data,delimiter=',')
+		outFile.close()
 
 
 
-###########
-# File IO #
-###########
+###################
+# File IO Helpers #
+###################
 
-def loadCSV(inPath, lineParser = None):
-	"""
-	Function to read the CSV formated file at the given path and to output a
-	DenseMatrixData object representing the data in the file.
+def _readFile(file):
+	# TODO do some kind of checking as to the the input file format
+	return _readCSV(file)
 
-	"""
-	inFile = open(inPath, 'r')
+def _readCSV(file):
+	inFile = open(file, 'r')
 	firstLine = inFile.readline()
 	featureNameList = None
 	skip_header = 0
@@ -391,33 +412,5 @@ def loadCSV(inPath, lineParser = None):
 		featureNameList = scrubbedLine.split(',')
 		skip_header = 1
 
-	matrix = numpy.genfromtxt(inPath,delimiter=',',skip_header=skip_header)
-	return DenseMatrixData(matrix,featureNameList)
-
-def writeToCSV(toWrite, outPath, includeFeatureNames):
-	"""
-	Function to write the data in a DenseMatrixData to a CSV file at the designated
-	path.
-
-	toWrite is the DenseMatrixData to write to file. outPath is the location where
-	we want to write the output file. includeFeatureNames is boolean argument indicating
-	whether the file should start with a comment line designating featureNames.
-
-	"""
-	header = None
-	if includeFeatureNames:
-		featureNameString = "#"
-		for i in xrange(toWrite.features()):
-			featureNameString += toWrite.featureNamesInverse[i]
-			if not i == toWrite.features() - 1:
-				featureNameString += ','
-		header = featureNameString
-
-	outFile = open(outPath,'w')
-	if header is not None:
-		outFile.write(header + "\n")
-	numpy.savetxt(outFile,toWrite.data,delimiter=',')
-	outFile.close()
-
-
-
+	matrix = numpy.genfromtxt(file, delimiter=',', skip_header=skip_header)
+	return (matrix, featureNameList)

@@ -8,8 +8,6 @@ import inspect
 import numpy
 
 from interface_helpers import *
-from ..processing.dense_matrix_data import loadCSV as DMDLoadCSV
-from ..processing.dense_matrix_data import writeToCSV as DMDWriteToCSV
 from ..processing.dense_matrix_data import DenseMatrixData as DMData
 from ..processing.base_data import BaseData
 from ..processing.sparse_data import SparseData
@@ -58,9 +56,9 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 	# mlpy takes array type objects, so our input can be either a data representation, or
 	# files that we read in ourselves
 	if not isinstance(trainData, BaseData):
-		trainData = DMDLoadCSV(trainData)
+		trainData = DMData(file=trainData)
 	if not isinstance(testData, BaseData):
-		testData = DMDLoadCSV(testData)
+		testData = DMData(file=testData)
 
 #	trainDataY = None
 	# directly assign target values, if present
@@ -109,7 +107,7 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 	if output is None:
 		return outputObj
 
-	DMDWriteToCSV(outputObj,output,False)
+	outputObj.writeCSV(output,False)
 
 
 def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs):

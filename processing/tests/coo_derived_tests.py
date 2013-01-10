@@ -5,16 +5,23 @@ in derived_backend.py using appropriate input
 
 """
 
-import tempfile
-
 from derived_backend import *
 from ..coo_sparse_data import *
 from nose.tools import *
 
 from numpy import matrix as npm
 
-def constructor(data,featureNames=None):
-	return CooSparseData(npm(data),featureNames)
+def constructor(data=None, featureNames=None, file=None):
+	return CooSparseData(npm(data), featureNames, file)
+
+
+##############
+# __init__() #
+##############
+
+def test_init_allEqual():
+	""" Test CooSparse __init__() so that each possible way to instantiate produces equal objects """
+	init_allEqual(constructor)
 
 ############
 # equals() #
@@ -333,13 +340,22 @@ def test_toDenseMatrixData_handmade_assignedFeatureNames():
 	toDenseMatrixData_handmade_assignedFeatureNames(constructor)
 
 
+############
+# writeCSV #
+############
+
+def test_writeCSV_handmade():
+	""" Test CooSparse writeCSV with both data and featureNames """
+	writeCSV_handmade(constructor)
 
 
 ###########
-# File IO #
+# writeMM #
 ###########
 
 
-
+def test_writeMM_handmade():
+	""" Test CooSparse writeMM with both data and featureNames """
+	writeMM_handmade(constructor)
 
 

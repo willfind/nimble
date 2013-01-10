@@ -5,14 +5,22 @@ in derived_backend.py using appropriate input
 
 """
 
-import tempfile
-
 from derived_backend import *
 from ..dense_matrix_data import *
 from nose.tools import *
 
-def constructor(data,featureNames=None):
-	return DenseMatrixData(data,featureNames)
+def constructor(data=None, featureNames=None, file=None):
+	return DenseMatrixData(data, featureNames, file)
+
+
+##############
+# __init__() #
+##############
+
+def test_init_allEqual():
+	""" Test DMD __init__() so that each possible way to instantiate produces equal objects """
+	init_allEqual(constructor)
+
 
 ############
 # equals() #
@@ -293,77 +301,6 @@ def test_mapReduceOnPoints_handmadeNoneReturningReducer():
 	""" Test DMD mapReduceOnPoints() against handmade output with a None returning Reducer """
 	mapReduceOnPoints_handmadeNoneReturningReducer(constructor)
 
-###########
-# File IO #
-###########
-
-def test_LoadData():
-	""" Test DMD loadCSV() by writing to, and then reading from, a temporary file without featureNames """
-	tmpFile = tempfile.NamedTemporaryFile()
-	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02],
-				[2,0.1,0.02], [2,0.3,0.01], [2,0.2,0.03], [2,0.3,0.03]]
-	test = constructor(origData)
-
-	for point in origData:
-		for value in point:
-			if point.index(value) != 0:
-				tmpFile.write(',')		
-			tmpFile.write(str(value))
-		tmpFile.write('\n')
-	tmpFile.flush()
-
-	loaded = loadCSV(tmpFile.name)
-	assert loaded.equals(test)
-
-def test_LoadDataFeatureNames():
-	""" Test DMD loadCSV() by writing to, and then reading from, a temporary file with featureNames """
-	tmpFile = tempfile.NamedTemporaryFile()
-	tmpFile.write("#number,deci,centi\n")
-	featureNames = (['number','deci','centi'])
-	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02],
-				[2,0.1,0.02], [2,0.3,0.01], [2,0.2,0.03], [2,0.3,0.03]]
-	test = constructor(origData,featureNames)
-
-	for point in origData:
-		for value in point:
-			if point.index(value) != 0:
-				tmpFile.write(',')		
-			tmpFile.write(str(value))
-		tmpFile.write('\n')
-	tmpFile.flush()
-
-	loaded = loadCSV(tmpFile.name)
-	
-	assert loaded.equals(test)
-
-
-def test_RoundTrip():
-	""" Test DMD loadCSV() and DMD writeToCSV() in a round trip test, including a featureName line """
-	roundTripBackend(True)
-
-def test_RoundTripNoFeatureNames():
-	""" Test DMD loadCSV() and DMD writeToCSV() in a round trip test, without a featureName line """
-	roundTripBackend(False)
-
-
-def roundTripBackend(includeFeatureNames):
-	tmpFile = tempfile.NamedTemporaryFile()
-	featureNames = None	
-	if includeFeatureNames:
-		featureNames = (['number','deci','centi'])
-	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02],
-				[2,0.1,0.02], [2,0.3,0.01], [2,0.2,0.03], [2,0.3,0.03]]
-
-	origObj = constructor(origData,featureNames)
-
-	writeToCSV(origObj,tmpFile.name,includeFeatureNames)
-
-	loaded = loadCSV(tmpFile.name)
-
-	assert origObj.equals(loaded)
-	assert loaded.equals(origObj)
-
-
 
 
 ##########################
@@ -399,7 +336,22 @@ def test_toDenseMatrixData_handmade_assignedFeatureNames():
 
 
 
+############
+# writeCSV #
+############
+
+def test_writeCSV_handmade():
+	""" Test DMD writeCSV with both data and featureNames """
+	writeCSV_handmade(constructor)
 
 
+###########
+# writeMM #
+###########
+
+
+def test_writeMM_handmade():
+	""" Test dmd writeMM with both data and featureNames """
+	writeMM_handmade(constructor)
 
 

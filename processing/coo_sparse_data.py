@@ -17,9 +17,14 @@ from ..utility.custom_exceptions import ArgumentException
 class CooSparseData(SparseData):
 
 
-	def __init__(self, data=None, featureNames=None):
+	def __init__(self, data=None, featureNames=None, file=None):
+		if file is not None:
+			(data, featureNamesTemp) = _readFile(file)
+			if featureNames is None:
+				featureNames = featureNamesTemp
+
 		self.data = coo_matrix(data)
-		super(CooSparseData, self).__init__(self.data,featureNames)
+		super(CooSparseData, self).__init__(self.data, featureNames)
 
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
@@ -143,35 +148,36 @@ class CooSparseData(SparseData):
 		return DenseMatrixData(self.data.todense(), self.featureNames)
 
 
+	def _writeMM_implementation(self, outPath, includeFeatureNames):
+		if includeFeatureNames:
+			featureNameString = "#"
+			for i in xrange(self.features()):
+				featureNameString += self.featureNamesInverse[i]
+				if not i == self.features() - 1:
+					featureNameString += ','
+			
+			mmwrite(target=outPath, a=self.data, comment=featureNameString)		
+		else:
+			mmwrite(target=outPath, a=self.data)
 
-def loadMM(inPath):
+
+###########
+# Helpers #
+###########
+
+
+def _readFile(file):
+	# TODO do some kind of checking as to the the input file format
+	return _readMM(file)
+
+def _readMM(file):
 	"""
-	Returns a CooSparseData object containing the data at the Market Matrix file specified by inPath.
-	Uses the build in scipy function io.mmread().
+	Returns a CooSparseData object containing the data at the Market Matrix file specified by 
+	the file parameter. Uses the build in scipy function io.mmread().
 
 	"""
-	return CooSparseData(mmread(inPath))
+	return (mmread(file), None)
 	
-
-
-
-def writeToMM(toWrite, outPath, includeFeatureNames):
-	"""
-
-	"""
-
-	if includeFeatureNames:
-		featureNameString = "#"
-		for i in xrange(toWrite.features()):
-			featureNameString += toWrite.featureNamesInverse[i]
-			if not i == toWrite.features() - 1:
-				featureNameString += ','
-		
-		mmwrite(target=outPath, a=toWrite.data, comment=featureNameString)		
-	else:
-		mmwrite(target=outPath, a=toWrite.data)
-
-
 
 def _numLessThan(value, toCheck): # TODO caching
 	i = 0

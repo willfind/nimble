@@ -11,7 +11,6 @@ import os
 import os.path
 import sys
 
-from ..processing.dense_matrix_data import loadCSV as DMDLoadCSV
 from ..processing.base_data import BaseData
 
 try:
@@ -65,7 +64,7 @@ def regressor(algorithm, trainData, testData, output=None, dependentVar=None, ar
 		outFile = open(output, 'w')
 
 	if not isinstance(trainData, BaseData):
-		trainData = DMDLoadCSV(trainData)
+		trainData = DMData(file=trainData)
 	
 	# make sure dependentVar is a feature index
 	if not isinstance(dependentVar, int):

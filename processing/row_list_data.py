@@ -23,7 +23,7 @@ class RowListData(BaseData):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None):
+	def __init__(self, data=None, featureNames=None, file=None):
 		"""
 		Instantiate a Row List data using the given data and featureNames. data may be
 		none or an empty list to indicate an empty object, or a fully populated
@@ -31,12 +31,17 @@ class RowListData(BaseData):
 		the init funciton of BaseData, to be interpreted there.
 
 		"""
+		if file is not None:
+			(data, featureNamesTemp) = _readFile(file)
+			if featureNames is None:
+				featureNames = featureNamesTemp
+		
 		if data is None or len(data) == 0:
 			self.numFeatures = 0
 			self.data = []
 			super(RowListData, self).__init__([])
 		else:
-			self.numFeatures= len(data[0])
+			self.numFeatures = len(data[0])
 			for point in data:
 				if len(point) != self.numFeatures:
 					raise ArgumentException("Points must be of equal size")
@@ -444,6 +449,37 @@ class RowListData(BaseData):
 		return DMD(self.data, self.featureNames)
 
 
+	def _writeCSV_implementation(self, outPath, includeFeatureNames):
+		"""
+		Function to write the data in this object to a CSV file at the designated
+		path.
+
+		"""
+		outFile = open(outPath, 'w')
+	
+		if includeFeatureNames and self.featureNames != None:
+			pairs = self.featureNames.items()
+			# sort according to the value, not the key. ie sort by feature number
+			pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
+			for (a,x) in pairs:
+				if pairs.index((a,x)) == 0:
+					outFile.write('#')
+				else:
+					outFile.write(',')
+				outFile.write(str(a))
+			outFile.write('\n')
+
+		for point in self.data:
+			first = True
+			for value in point:
+				if not first:
+					outFile.write(',')		
+				outFile.write(str(value))
+				first = False
+			outFile.write('\n')
+		outFile.close()
+
+
 	###########
 	# Helpers #
 	###########
@@ -465,22 +501,41 @@ class RowListData(BaseData):
 			point[self._colNum] = value
 
 
+###################
+# File IO Helpers #
+###################
 
-###########
-# File IO #
-###########
+def _intFloatOrString(str):
+	ret = str
+	try:
+		ret = int(str)
+	except exceptions.ValueError:
+		ret = float(str)
+	# this will return an int or float if either of the above two are successful
+	finally:
+		return ret
 
-def loadCSV(inPath, lineParser = None):
+def _defaultParser(line):
 	"""
-	Function to read the CSV formated file at the given path and to output a
-	RowListData object representing the data in the file.
+	When given a comma separated value line, it will attempt to convert
+	the values first to int, then to float, and if all else fails will
+	keep values as strings. Returns list of values.
 
-	lineParser is an optional argument, which may be set to a function to perform
-	the parsing. It must take a string representing a line, and output a list
-	of values that were in that line. May be used to correctly parse different
-	types of input, because by default all values read are stored as strings.
 	"""
-	inFile = open(inPath, 'r')
+	ret = []
+	lineList = line.split(',')
+	for entry in lineList:
+		ret.append(_intFloatOrString(entry))
+	return ret
+
+
+def _readFile(file):
+	# TODO do some kind of checking as to the the input file format
+	return _readCSV(file)
+
+
+def _readCSV(file, lineParser=_defaultParser):
+	inFile = open(file, 'r')
 	firstLine = inFile.readline()
 	featureNameList = None
 
@@ -507,7 +562,7 @@ def loadCSV(inPath, lineParser = None):
 		if len(currLine) == 0:
 			continue
 
-		if lineParser != None:
+		if lineParser is not None:
 			data.append(lineParser(currLine))
 		else:
 			currList = currLine.split(',')
@@ -518,43 +573,7 @@ def loadCSV(inPath, lineParser = None):
 
 	inFile.close()
 
-	return RowListData(data,featureNameMap)
-
-
-def writeToCSV(toWrite, outPath, includeFeatureNames):
-	"""
-	Function to write the data in a RowListData to a CSV file at the designated
-	path.
-
-	toWrite is the RowListData to write to file. outPath is the location where
-	we want to write the output file. includeFeatureNames is boolean argument indicating
-	whether the file should start with a comment line designating featureNames.
-
-	"""
-	outFile = open(outPath, 'w')
-	
-	if includeFeatureNames and toWrite.featureNames != None:
-		pairs = toWrite.featureNames.items()
-		# sort according to the value, not the key. ie sort by feature number
-		pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
-		for (a,x) in pairs:
-			if pairs.index((a,x)) == 0:
-				outFile.write('#')
-			else:
-				outFile.write(',')
-			outFile.write(str(a))
-		outFile.write('\n')
-
-	for point in toWrite.data:
-		first = True
-		for value in point:
-			if not first:
-				outFile.write(',')		
-			outFile.write(str(value))
-			first = False
-		outFile.write('\n')
-	outFile.close()
-
+	return (data, featureNameMap)
 
 
 

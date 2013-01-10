@@ -19,6 +19,11 @@ class CscSparseData(SparseData):
 
 
 	def __init__(self, data=None, featureNames=None):
+		if file is not None:
+			(data, featureNamesTemp) = _readFile(file)
+			if featureNames is None:
+				featureNames = featureNamesTemp
+
 		self.data = csc_matrix(data)
 		super(CscSparseData, self).__init__(self.data,featureNames)
 
@@ -43,10 +48,7 @@ class CscSparseData(SparseData):
 		"""
 
 		"""
-
-		print self.data
 		self.data = self.data.transpose()
-		print self.data
 
 
 
@@ -55,38 +57,37 @@ class CscSparseData(SparseData):
 		return DenseMatrixData(self.data.todense(), self.featureNames)
 
 
+	def _writeMM_implementation(self, outPath, includeFeatureNames):
+		if includeFeatureNames:
+			featureNameString = "#"
+			for i in xrange(self.features()):
+				featureNameString += self.featureNamesInverse[i]
+				if not i == self.features() - 1:
+					featureNameString += ','
+			
+			mmwrite(target=outPath, a=self.data, comment=featureNameString)		
+		else:
+			mmwrite(target=outPath, a=self.data)
 
 
-def loadMM(inPath):
+###########
+# Helpers #
+###########
+
+
+def _readFile(file):
+	# TODO do some kind of checking as to the the input file format
+	return _readMM(file)
+
+def _readMM(file):
 	"""
-	Returns a CscSparseData object containing the data at the Market Matrix file specified by inPath.
-	Uses the build in scipy function io.mmread().
+	Returns a CooSparseData object containing the data at the Market Matrix file specified by 
+	the file parameter. Uses the build in scipy function io.mmread().
 
 	"""
-	return CscSparseData(mmread(inPath))
+	return (mmread(file), None)
 	
-
-
-
-def writeToMM(toWrite, outPath, includeFeatureNames=False):
-	"""
-
-	"""
-	if includeFeatureNames:
-		featureNameString = "#"
-		for i in xrange(toWrite.features()):
-			featureNameString += toWrite.featureNamesInverse[i]
-			if not i == toWrite.features() - 1:
-				featureNameString += ','
-		
-		mmwrite(target=outPath, a=toWrite.data, comment=featureNameString)		
-	else:
-		mmwrite(target=outPath, a=toWrite.data)
-
-
-
-
-
+	
 
 
 

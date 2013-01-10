@@ -20,12 +20,11 @@ if __name__ == "__main__":
 	from ..interfaces.scikit_learn_interface import sciKitLearn as skl
 	from ..processing.dense_matrix_data import DenseMatrixData
 	from ..processing.coo_sparse_data import CooSparseData
-	from ..processing.coo_sparse_data import loadMM as cooLoadMM
 
 	# path to input specified by command line argument
 	pathIn = sys.argv[1]
 
-	sparseAll = cooLoadMM(pathIn)
+	sparseAll = CooSparseData(file=pathIn)
 	sparseY = sparseAll.extractFeatures([0])
 	sparseX = sparseAll
 

@@ -578,6 +578,21 @@ class BaseData(object):
 	def toDenseMatrixData(self):
 		return self._toDenseMatrixData_implementation()
 
+	def writeCSV(self, outPath, includeFeatureNames):
+		"""
+		Function to write the data in this object to a CSV file at the designated
+		path.
+
+		outPath is the location where we want to write the output file.
+		includeFeatureNames is boolean argument indicating whether the file should
+		start with a comment line designating featureNames.
+
+		"""
+		return self._writeCSV_implementation(outPath, includeFeatureNames)
+
+	def writeMM(self, outPath, includeFeatureNames):
+		return self._writeMM_implementation(outPath, includeFeatureNames)
+
 	####################
 	# Helper functions #
 	####################

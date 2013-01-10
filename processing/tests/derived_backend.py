@@ -6,10 +6,35 @@ directly by the class calling this backend.
 
 """
 
+import tempfile
+import os
+
 from ..base_data import *
 from copy import deepcopy
 from ..row_list_data import RowListData as RLD
 from ..dense_matrix_data import DenseMatrixData as DMD
+
+##############
+# __init__() #
+##############
+
+def init_allEqual(constructor):
+	""" Test __init__() so that each possible way to instantiate produces equal objects """
+	# instantiate from list of lists
+	fromList = constructor(data=[[1,2,3]], featureNames=['one', 'two', 'three'])
+
+	# instantiate from file
+	tmpFile = tempfile.NamedTemporaryFile() 
+	tmpFile.write("#one,two,three\n")
+	tmpFile.write("1,2,3\n")
+	tmpFile.flush()
+	# TODO -- can we name this file so readFile() can use the extension to determine what to call?
+	fromCSV = constructor(file=tmpFile.name)
+
+	# check equality between all pairs
+	assert fromList.equals(fromCSV)
+	assert fromCSV.equals(fromList)
+
 
 ############
 # equals() #
@@ -703,10 +728,53 @@ def toDenseMatrixData_handmade_assignedFeatureNames(constructor):
 
 
 
+############
+# writeCSV #
+############
+
+def writeCSV_handmade(constructor):
+	""" Test writeCSV with both data and featureNames """
+	tmpFile = tempfile.NamedTemporaryFile()
+
+	# instantiate object
+	data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	toWrite = constructor(data, featureNames)
+
+	# call writeCSV
+	toWrite.writeCSV(tmpFile.name, includeFeatureNames=True)
+
+	# read it back into a different object, then test equality
+	readObj = constructor(file=tmpFile.name)
+
+	assert readObj.equals(toWrite)
+	assert toWrite.equals(readObj)
 
 
+###########
+# writeMM #
+###########
 
 
+def writeMM_handmade(constructor):
+	""" Test writeCSV with both data and featureNames """
+	tmpFile = tempfile.NamedTemporaryFile()
 
+	# instantiate object
+	data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	toWrite = constructor(data, featureNames)
 
+	# call writeCSV
+	toWrite.writeMM(tmpFile.name, includeFeatureNames=True)
 
+	opened = open(tmpFile.name,'r')
+	print opened.read()
+	for line in opened:
+		print line
+
+	# read it back into a different object, then test equality
+	readObj = constructor(file=tmpFile.name)
+
+	assert readObj.equals(toWrite)
+	assert toWrite.equals(readObj)

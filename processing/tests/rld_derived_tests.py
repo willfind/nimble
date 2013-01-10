@@ -5,14 +5,21 @@ in derived_backend.py using appropriate input
 
 """
 
-import tempfile
-
 from derived_backend import *
 from ..row_list_data import *
 from nose.tools import *
 
-def constructor(data,featureNames=None):
-	return RowListData(data,featureNames)
+def constructor(data=None, featureNames=None, file=None):
+	return RowListData(data, featureNames, file)
+
+
+##############
+# __init__() #
+##############
+
+def test_init_allEqual():
+	""" Test RLD __init__() so that each possible way to instantiate produces equal objects """
+	init_allEqual(constructor)
 
 ############
 # equals() #
@@ -280,8 +287,6 @@ def test_mapReduceOnPoints_argumentExceptionUncallableReduce():
 	mapReduceOnPoints_argumentExceptionUncallableReduce(constructor)
 
 
-
-
 def test_mapReduceOnPoints_handmade():
 	""" Test RLD mapReduceOnPoints() against handmade output """
 	mapReduceOnPoints_handmade(constructor)
@@ -289,92 +294,6 @@ def test_mapReduceOnPoints_handmade():
 def test_mapReduceOnPoints_handmadeNoneReturningReducer():
 	""" Test RLD mapReduceOnPoints() against handmade output with a None returning Reducer """
 	mapReduceOnPoints_handmadeNoneReturningReducer(constructor)
-
-
-###########
-# File IO #
-###########
-
-def test_LoadData():
-	""" Test RLD loadCSV() by writing to, and then reading from, a temporary file """
-	tmpFile = tempfile.NamedTemporaryFile()
-	tmpFile.write("#number,lower,upper\n")
-	origData = [['1','a','A'], ['1','a','B'], ['1','a','C'], ['1','b','B'],
-				['2','a','B'], ['2','c','A'], ['2','b','C'], ['2','c','C']]
-
-	for point in origData:
-		for value in point:
-			if point.index(value) != 0:
-				tmpFile.write(',')		
-			tmpFile.write(str(value))
-		tmpFile.write('\n')
-	tmpFile.flush()
-
-	loaded = loadCSV(tmpFile.name)
-
-	assert (loaded.data == origData)
-	assert (loaded.featureNames == {'number':0, 'lower':1, 'upper':2})
-
-
-def test_LoadDataWithParser():
-	""" Test RLD loadCSV() with the optional line parsering argument """
-	tmpFile = tempfile.NamedTemporaryFile()
-	tmpFile.write("#number,lower,upper\n")
-	origData = [[1,'a','A'], [1,'a','B'], [1,'a','C'], [1,'b','B'],
-				[2,'a','B'], [2,'c','A'], [2,'b','C'], [2,'c','C']]
-
-	for point in origData:
-		for value in point:
-			if point.index(value) != 0:
-				tmpFile.write(',')		
-			tmpFile.write(str(value))
-		tmpFile.write('\n')
-	tmpFile.flush()
-
-	def parseLine (line):
-		currList = line.split(',')
-		currList[0] = int(currList[0])
-		return currList
-
-	loaded = loadCSV(tmpFile.name,parseLine)
-
-	assert (loaded.data == origData)
-	assert (loaded.featureNames == {'number':0, 'lower':1, 'upper':2})
-
-
-def test_RoundTrip():
-	""" Test RLD loadCSV() and RLD writeToCSV() in a round trip test, including a featureName line """
-	roundTripBackend(True)
-
-def test_RoundTripNoFeatureNames():
-	""" Test RLD loadCSV() and RLD writeToCSV() in a round trip test, without a featureName line """
-	roundTripBackend(False)
-
-
-def roundTripBackend(includeFeatureNames):
-	tmpFile = tempfile.NamedTemporaryFile()
-	featureNames = None	
-	if includeFeatureNames:
-		featureNames = {'number':0,'upper':2,'lower':1}
-	origData = [['1','a','a'], ['1','a','B'], ['1','a','C'], ['1','b','B'],
-				['2','a','B'], ['2','c','2'], ['2','b','C'], ['2','c','C']]
-
-	if includeFeatureNames:
-		origObj = RowListData(origData,featureNames)
-	else:
-		origObj = RowListData(origData)
-
-	writeToCSV(origObj,tmpFile.name,includeFeatureNames)
-
-	loaded = loadCSV(tmpFile.name)
-
-	# test equality of data
-	assert (loaded.data == origData)
-
-	# test equality of the featureName map, if it exists
-	if includeFeatureNames:
-		assert(loaded.featureNames == featureNames)
-
 
 
 ##########################
@@ -410,8 +329,21 @@ def test_toDenseMatrixData_handmade_assignedFeatureNames():
 
 
 
+############
+# writeCSV #
+############
+
+def test_writeCSV_handmade():
+	""" Test RLD writeCSV with both data and featureNames """
+	writeCSV_handmade(constructor)
 
 
+###########
+# writeMM #
+###########
 
 
+def test_writeMM_handmade():
+	""" Test RLD writeMM with both data and featureNames """
+	writeMM_handmade(constructor)
 
