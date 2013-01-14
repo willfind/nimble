@@ -1,10 +1,24 @@
+# PEP 366 'boilerplate', plus the necessary import of the top level package
+if __name__ == "__main__" and __package__ is None:
+	import sys
+	# add UML parent directory to sys.path
+	sys.path.append(sys.path[0].rsplit('/',2)[0])
+	import UML
+	import UML.logging
+	__package__ = "UML.logger"
+
 import datetime
-from logger import *
-from ..utility.custom_exceptions import ArgumentException
+import numpy
+from logger import Logger
+from ..processing.coo_sparse_data import CooSparseData
 
-class HumanReadableTestLog(Logger):
+class HumanReadableRunLog(Logger):
 
-	def logTestRun(self, trainingData, testData, function, metrics):
+	def __init__(self, logFileName=None):
+		super(HumanReadableRunLog, self).__init__(logFileName)
+
+
+	def logTestRun(self, trainData, testData, function, metrics, extraInfo=None):
 		"""
 			Write one (data + classifer + error metrics) combination to a log file
 			in a human readable format.  Should include as much information as possible,
@@ -19,56 +33,75 @@ class HumanReadableTestLog(Logger):
 		"""
 		#if the log file is not available, try to create it
 		if not self.isAvailable:
-			self.setUp()
+			self.setup()
 		else: pass
 
-		self.writeMessage('*'*80)
-		self.writeMessage('\n')
-		self.writeMessage(str(datetime.datetime.now()))
+		self.logMessage('*'*80)
+		self.logMessage(str(datetime.datetime.now()))
 		
-		self.writeMessage('\n')
-		self.writeMessage('Number of training points: ')
-		self.writeMessage(trainingData.data.shape()[0])
-		self.writeMessage('\n')
-		self.writeMessage('Number of testing points: ')
-		self.writeMessage(testingData.data.shape()[0])
-		self.writeMessage('\n')
-		self.writeMessage('Number of training features: ')
-		self.writeMessage(trainingData.data.shape()[1])
-		self.writeMessage('\n')
-		self.writeMessage('Number of testing features: ')
-		self.writeMessage(testData.data.shape()[1])
-		self.writeMessage('\n')
+		self.logMessage('Number of training points: ')
+		self.logMessage(str(trainData.data.shape[0]), addNewLine=False)
+		self.logMessage('Number of testing points: ')
+		self.logMessage(str(testData.data.shape[0]), addNewLine=False)
+		self.logMessage('Number of training features: ')
+		self.logMessage(str(trainData.data.shape[1]), addNewLine=False)
+		self.logMessage('Number of testing features: ')
+		self.logMessage(str(testData.data.shape[1]), addNewLine=False)
 		
 		#Write the function defining the classifier to the log. If it is
 		#a string, write it directly.  Else use pickle to turn the function
 		#into a string
-		self.writeMessage('Classifier Training Function: ')
-		self.writeMessage('\n')
+		self.logMessage('Classifier Training Function: ')
 		if isinstance(function, (str, unicode)):
-			self.writeMessage(function)
+			self.logMessage(function)
 		else:
-			pickle(function, self.logFile)
-		self.writeMessage('\n')
+			self.logMessage(repr(function))
+		self.logMessage('\n', False)
+
+		#if extraInfo is not null, we print whatever is in it in the form key: value
+		if extraInfo is not None:
+			for key, value in extraInfo.items():
+				message = str(key) + ": " + str(value)
+				self.logMessage(message)
+			self.logMessage('\n', False)
 
 		#Write performance metrics
-		for metric, result in metrics:
-			self.writeMessage("METRIC FUNCTION: "+"\n")
+		for metric, result in metrics.items():
+			self.logMessage("METRIC FUNCTION: ")
 			if isinstance(metric, (str, unicode)):
-				self.writeMessage(metric)
+				self.logMessage(metric)
 			else:
-				pickle(metric, self.logFile)
+				self.logMessage(repr(metric))
 
-			self.writeMessage("\n")
-			self.writeMessage("RESULT: {0:.4f}".format(result))
+			self.logMessage("RESULT: {0:.4f}".format(result))
 
-		self.writeMessage("\n\n")
-		self.writeMessage('*'*80)
-
+		self.logMessage('\n', False)
+		self.logMessage('*'*80)
 
 
+#	def write(self, message, addNewLine=True):
+#		"""
+#			Helper function to make things cleaner: instead of calling self.logMessage(),
+#			we can just call write()
+#		"""
+#		self.logMessage(message, addNewLine)
 
+def main():
+	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
+	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
 
+	trainData1 = CooSparseData(trainDataBase)
+	testData1 = CooSparseData(testDataBase)
+	functionStr = """def f():
+	return 0"""
+	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
+	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")
+	testLogger.logTestRun(trainData1, testData1, functionStr, metricsHash)
 
+	functionObj = lambda x: x+1
 
+	testLogger.logTestRun(trainData1, testData1, functionObj, metricsHash)
+
+if __name__ == "__main__":
+	main()

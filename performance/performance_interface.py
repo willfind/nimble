@@ -5,31 +5,53 @@ Created on Dec 11, 2012
 '''
 
 import inspect
-import numpy
 
 from ..processing.base_data import BaseData
 from ..combinations.Combinations import executeCode
 from ..utility.custom_exceptions import ArgumentException
 
 
-def computeMetrics(knownIndicator, knownValues, predictedValues, performanceFunctions):
+def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions):
     """
+        Calculate one or more error metrics, given a list of known labels and a list of
+        predicted labels.  Return as a dictionary associating the performance metric with
+        its numerical result.
 
+        dependentVar: either an int/string representing a column index in knownData
+        containing the known labels, or a matrix that contains the known labels
+
+        knownData: matrix containing the known labels of the test set, as well as the
+        features of the test set. Can be None if 'knownIndicator' contains the labels,
+        and none of the performance functions features as input.
+
+        predictedData: Matrix containing predicted class labels for a testing set.
+        Assumes that the predicted label in the nth row of predictedLabels is associated
+        with the same data point/instance as the label in the nth row of knownLabels.
+
+        performanceFunctions: list of functions that compute some kind of error metric.
+        Functions must be either a string that defines a proper function, a one-liner
+        function (see Combinations.py), or function code.  Also, they are expected to
+        take at least 2 arguments:  a vector or known labels and a vector of predicted
+        labels.  Optionally, they may take the features of the test set as a third argument,
+        as a matrix.
+
+        Returns: a dictionary associating each performance metric with the (presumably)
+        numerical value computed by running the function over the known labels & predicted labels
     """
-    if isinstance(knownIndicator, BaseData):
+    if isinstance(dependentVar, BaseData):
         #The known Indicator argument already contains all known
         #labels, so we do not need to do any further processing
-        knownLabels = knownIndicator
-    elif knownIndicator is not None:
+        knownLabels = dependentVar
+    elif dependentVar is not None:
         #known Indicator is an index; we extract the column it indicates
         #from knownValues
-        knownLabels = knownValues.extractColumns([knownIndicator])
+        knownLabels = knownData.copyColumns([dependentVar])
     else:
         raise ArgumentException("Missing indicator for known labels in computeMetrics")
 
     results = {}
     #TODO make this hash more generic - what if function args are not knownValues and predictedValues
-    parameterHash = {"knownValues":knownLabels, "predictedValues":predictedValues}
+    parameterHash = {"knownValues":knownLabels, "predictedValues":predictedData}
     for func in performanceFunctions:
         print inspect.getargspec(func).args
         if len(inspect.getargspec(func).args) == 2:
@@ -41,20 +63,20 @@ def computeMetrics(knownIndicator, knownValues, predictedValues, performanceFunc
             #features, and predicted class labels. add features to the parameter hash
             #divide X into labels and features
             #TODO correctly separate known labels and features in all cases
-            parameterHash["features"] = knownValues
+            parameterHash["features"] = knownData
             results[func] = executeCode(func, parameterHash)
         else:
             raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
     return results
 
-def confusion_matrix_generator(knownLabels, predictedLabels):
+def confusion_matrix_generator(knownY, predictedY):
     """ Given two vectors, one of known class labels (as strings) and one of predicted labels,
-    compute the confusion matrix.  Returns a 2-dimensional dictionary in which outer label is 
+    compute the confusion matrix.  Returns a 2-dimensional dictionary in which outer label is
     keyed by known label, inner label is keyed by predicted label, and the value stored is the count
     of instances for each combination.  Works for an indefinite number of class labels.
     """
     confusionCounts = {}
-    for known, predicted in zip(knownLabels, predictedLabels):
+    for known, predicted in zip(knownY, predictedY):
         if confusionCounts[known] is None:
             confusionCounts[known] = {predicted:1}
         elif confusionCounts[known][predicted] is None:
@@ -64,9 +86,9 @@ def confusion_matrix_generator(knownLabels, predictedLabels):
     
     #if there are any entries in the square matrix confusionCounts,
     #then there value must be 0.  Go through and fill them in.
-    for knownLabel in confusionCounts:
-        if confusionCounts[knownLabel][knownLabel] is None:
-            confusionCounts[knownLabel][knownLabel] = 0
+    for knownY in confusionCounts:
+        if confusionCounts[knownY][knownY] is None:
+            confusionCounts[knownY][knownY] = 0
     
     return confusionCounts
 
@@ -109,26 +131,3 @@ def checkPrintConfusionMatrix():
     confusionMatrixResults = computeMetrics(classLabelIndex, X, Y, functions)
     confusionMatrix = confusionMatrixResults["confusion_matrix_generator"]
     print_confusion_matrix(confusionMatrix)
-
-"""
-ignore this
-
-def computeMetrics_v1(X, Y, functions, classLabelName):
-    results = {}
-    for func in functions:
-        if len(inspect.getargspec(func).args) == 2:
-            #get just label column out of X
-            #TODO 
-            results[func.__name__] = (func(X, Y))
-        elif len(inspect.getargspec(func).args) == 3:
-            #divide X into labels and features
-            #TODO
-            results[func.__name__] = (func(X, Y))
-        else:
-            raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
-    return results
-
-
-if __name__ == "__main__":
-    testMetric()
-"""
