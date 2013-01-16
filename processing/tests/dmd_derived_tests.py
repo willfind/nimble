@@ -356,20 +356,16 @@ def test_writeMM_handmade():
 
 
 #####################
-# copyDataReference #
+# copyReferences #
 #####################
 
-@raises(ArgumentException)
-def test_copyDataReference_exceptionInconsistentFeatures():
-	""" Test DMD copyDataReference() throws exception when the number of features doesn't match"""
-	copyDataReference_exceptionInconsistentFeatures(constructor)
 
 @raises(ArgumentException)
-def test_copyDataReference_exceptionWrongType():
-	""" Test DMD copyDataReference() throws exception when other is not the same type """
-	copyDataReference_exceptionWrongType(constructor)
+def test_copyReferences_exceptionWrongType():
+	""" Test DMD copyReferences() throws exception when other is not the same type """
+	copyReferences_exceptionWrongType(constructor)
 
-def test_copyDataReference_sameReference():
-	""" Test DMD copyDataReference() successfully records the same reference """
-	copyDataReference_sameReference(constructor)
+def test_copyReferences_sameReference():
+	""" Test DMD copyReferences() successfully records the same reference """
+	copyReferences_sameReference(constructor)
 

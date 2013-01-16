@@ -781,24 +781,11 @@ def writeMM_handmade(constructor):
 
 
 #####################
-# copyDataReference #
+# copyReferences #
 #####################
 
-def copyDataReference_exceptionInconsistentFeatures(constructor):
-	""" Test copyDataReference() throws exception when the number of features doesn't match. """
-
-	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
-	featureNames = ['one', 'two', 'three']
-	orig = constructor(data1, featureNames)
-
-	data2 = [[-1,-2,-3,-4]]
-	other = constructor(data2)
-
-	orig.copyDataReference(other)
-
-
-def copyDataReference_exceptionWrongType(constructor):
-	""" Test copyDataReference() throws exception when other is not the same type """
+def copyReferences_exceptionWrongType(constructor):
+	""" Test copyReferences() throws exception when other is not the same type """
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
 	orig = constructor(data1, featureNames)
@@ -807,12 +794,12 @@ def copyDataReference_exceptionWrongType(constructor):
 	type2 = DMD(data1,featureNames)
 
 	# at least one of these two will be the wrong type
-	orig.copyDataReference(type1)
-	orig.copyDataReference(type2)
+	orig.copyReferences(type1)
+	orig.copyReferences(type2)
 
 
-def copyDataReference_sameReference(constructor):
-	""" Test copyDataReference() successfully records the same reference """
+def copyReferences_sameReference(constructor):
+	""" Test copyReference() successfully records the same reference """
 
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
@@ -821,7 +808,7 @@ def copyDataReference_sameReference(constructor):
 	data2 = [[-1,-2,-3,]]
 	other = constructor(data2)
 
-	orig.copyDataReference(other)
+	orig.copyReferences(other)
 
 	assert orig.data is other.data
 
