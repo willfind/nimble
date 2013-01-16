@@ -64,18 +64,15 @@ def testMlpyHandmadeKNN():
 	data = [[0,1,1], [0,0,1], [1,3,2]]
 	trainingObj = DMData(data,variables)
 
-	data2 = [[2,3]]
+	data2 = [[2,3],[0,0]]
 	testObj = DMData(data2)
 
 	ret = mlpy("KNN", trainingObj, testObj, output=None, dependentVar="Y", arguments={"k":1})
 
 	assert ret is not None
 
-	expected = [[1.]]
-	expectedObj = DMData(expected)
-
 	numpy.testing.assert_approx_equal(ret.data[0,0],1.)
-	
+	numpy.testing.assert_approx_equal(ret.data[1,0],0.)
 
 def testMlpyHandmadePCA():
 	""" Test mlpy() by calling PCA and checking the output has the correct dimension """

@@ -68,7 +68,6 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
-		print dependentVar
 		# TODO currently destructive!
 		trainObjY = trainObj.extractFeatures([dependentVar])		
 	# could be None for unsupervised learning	
@@ -100,7 +99,6 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 		return
 
 	outputObj = DMData(retData)
-	outputObj.transpose()
 
 	if output is None:
 		return outputObj
@@ -162,6 +160,8 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
 			predArgs = None
 		argString = makeArgString(predArgs, algArgs, "", "=", ", ")
 		outData = eval("obj.pred(testData, " + argString + ")")
+		# .learn() always returns a row vector, we want a column vector
+		outData.resize(outData.size,1)
 
 	# run code for the learn / transform paradigm
 	if hasattr(obj, 'transform'):
