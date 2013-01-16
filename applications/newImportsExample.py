@@ -4,15 +4,8 @@ in the root of the UML package
 
 """
 
-
-# PEP 366 'boilerplate', plus the necessary import of the top level package
-if __name__ == "__main__" and __package__ is None:
-	import sys
-	# add UML parent directory to sys.path
-	sys.path.append(sys.path[0].rsplit('/',2)[0])
-	import UML
-	import UML.applications
-	__package__ = "UML.applications"
+from allowImports import boilerplate
+boilerplate()
 
 if __name__ == "__main__":
 

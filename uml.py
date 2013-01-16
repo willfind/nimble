@@ -54,13 +54,13 @@ def normalize(package, algorithm, trainData, testData, dependentVar=None, argume
 	testData.copyReferences(normalizedTest)
 
 
-def data(dataType, data=None, featureNames=None):
+def data(dataType, data=None, featureNames=None, file=None):
 	if dataType == "CooSparseData":
-		return CooSparseData(data, featureNames)
+		return CooSparseData(data, featureNames, file)
 	elif dataType == "DenseMatrixData":
-		return DenseMatrixData(data, featureNames)
+		return DenseMatrixData(data, featureNames, file)
 	elif dataType == "RowListData":
-		return RowListData(data, featureNames)
+		return RowListData(data, featureNames, file)
 	else:
 		raise ArgumenException("Unknown data type, cannot instantiate")
 
