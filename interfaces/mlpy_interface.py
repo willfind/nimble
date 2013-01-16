@@ -53,44 +53,42 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 	if isinstance(testData, SparseData):
 		raise ArgumentException("MLPY does not accept sparse input")
 
-	# mlpy takes array type objects, so our input can be either a data representation, or
-	# files that we read in ourselves
 	if not isinstance(trainData, BaseData):
-		trainData = DMData(file=trainData)
+		trainObj = DMData(file=trainData)
+	else: # input is an object
+		trainObj = trainData
 	if not isinstance(testData, BaseData):
-		testData = DMData(file=testData)
-
-#	trainDataY = None
+		testObj = DMData(file=testData)
+	else: # input is an object
+		testObj = testData
+	
+	trainObjY = None
 	# directly assign target values, if present
-#	if isinstance(dependentVar, BaseData):
-#		trainDataY = dependendVar
-		# mlpy expects row vectors, but it might already be one
-#		if trainDataY.features() < trainDataY.points():
-#			trainDataY.transpose()
-	# isolate the target values from training examples, otherwise
-#	elif dependentVar is not None:
-#		trainDataY = trainData.extractFeatures([dependentVar])
-		# mlpy expects row vectors
-#		trainDataY.transpose()
+	if isinstance(dependentVar, BaseData):
+		trainObjY = dependentVar
+	# otherwise, isolate the target values from training examples
+	elif dependentVar is not None:
+		print dependentVar
+		# TODO currently destructive!
+		trainObjY = trainObj.extractFeatures([dependentVar])		
+	# could be None for unsupervised learning	
 
-	# isolate the target values from training examples, if present
-	trainDataY = None
-	if dependentVar is not None:
-		trainDataY = trainData.extractFeatures([dependentVar])
-		# mlpy expects row vectors in this case
-		trainDataY.transpose()
-
-	# extract the data from the representations
-	trainData = trainData.data
-	if trainDataY is not None:
-		#mlpy expects a 1-d array
-		trainDataY = numpy.array( trainDataY.data[0]).flatten()
-
-	testData = testData.data
+	# necessary format for skl, also makes the following ops easier
+	if trainObjY is not None:	
+		trainObjY = trainObjY.toDenseMatrixData()
+	
+	# pull out data from obj
+	trainRawData = trainObj.data
+	if trainObjY is not None:
+		# corrects the dimensions of the matrix data to be just an array
+		trainRawDataY = numpy.array(trainObjY.data).flatten()
+	else:
+		trainRawDataY = None
+	testRawData = testObj.data
 
 	# call backend
 	try:
-		retData = _mlpyBackend(algorithm,trainData, trainDataY, testData, arguments)
+		retData = _mlpyBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not mlpyPresent():
