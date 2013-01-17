@@ -394,6 +394,12 @@ class DenseMatrixData(BaseData):
 
 		self.data = other.data
 
+	def _duplicatePoints_implementation(self, points):
+		ret = self.data[points]
+
+		return DenseMatrixData(ret)
+
+
 ###################
 # File IO Helpers #
 ###################

@@ -364,3 +364,21 @@ def test_copyReferences_sameReference():
 	copyReferences_sameReference(constructor)
 
 
+###################
+# duplicatePoints #
+###################
+
+@raises(ArgumentException)
+def test_duplicatePoints_exceptionNone():
+	""" Test RLD duplicatePoints() for exception when argument is None """
+	duplicatePoints_exceptionNone(constructor)
+
+@raises(ArgumentException)
+def test_duplicatePoints_exceptionNonIndex():
+	""" Test RLD duplicatePoints() for exception when a value in the input is not a valid index """
+	duplicatePoints_exceptionNonIndex(constructor)
+
+def test_duplicatePoints_handmadeContents():
+	""" Test RLD duplicatePoints() returns the correct data """
+	duplicatePoints_handmadeContents(constructor)
+

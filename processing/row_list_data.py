@@ -485,6 +485,14 @@ class RowListData(BaseData):
 
 		self.data = other.data
 
+	def _duplicatePoints_implementation(self, points):
+		points.sort()
+		retData = []
+		for index in points:
+			retData.append(copy(self.data[index]))
+
+		return RowListData(retData)
+
 	###########
 	# Helpers #
 	###########

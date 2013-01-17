@@ -130,40 +130,6 @@ class BaseData(object):
 	# Higher Order Operations #
 	###########################
 
-	def duplicate(self):
-		"""
-		Return a new object which has the same data and featureNames as this object
-
-		"""
-		# extract all
-		# add extracted back to self
-		# return extracted
-		#TODO
-		raise NotImplementedError
-
-	def duplicatePoints(self, points):
-		"""
-		Return a new object which consists only of those specified points, without mutating
-		this object.
-		
-		"""
-		if points is None:
-			raise ArgumentException("Must provide identifiers for the points you want duplicated")
-		#TODO
-		raise NotImplementedError
-	
-	def duplicateFeatures(self, features):
-		"""
-		Return a new object which consists only of those specified features, without mutating
-		this object.
-		
-		"""
-		if features is None:
-			raise ArgumentException("Must provide identifiers for the features you want duplicated")
-		#TODO
-		raise NotImplementedError
-
-
 	def joinUniqueKeyedOther(self, other, fillUnmatched):
 		# other must be data rep obj
 		# there must be overlap
@@ -383,10 +349,13 @@ class BaseData(object):
 			self.extractFeatures([self.features()-1])
 		
 		return ret
+
+
 	
 	#################################
 	# Functions for derived classes #
 	#################################
+
 
 	def transpose(self):
 		"""
@@ -606,6 +575,40 @@ class BaseData(object):
 		self._copyReferences_implementation(other)
 		self.featureNames = other.featureNames
 		self.featureNamesInverse = other.featureNamesInverse
+
+
+	def duplicate(self):
+		"""
+		Return a new object which has the same data and featureNames as this object
+
+		"""
+		#TODO
+		raise NotImplementedError
+
+	def duplicatePoints(self, points):
+		"""
+		Return a new object which consists only of those specified points, without mutating
+		this object.
+		
+		"""
+		if points is None:
+			raise ArgumentException("Must provide identifiers for the points you want duplicated")
+		#verify everything in list is a valid index TODO
+
+		retObj = self._duplicatePoints_implementation(points)
+		retObj._renameMultipleFeatureNames_implementation(self.featureNames,True)
+		return retObj
+	
+	def duplicateFeatures(self, features):
+		"""
+		Return a new object which consists only of those specified features, without mutating
+		this object.
+		
+		"""
+		if features is None:
+			raise ArgumentException("Must provide identifiers for the features you want duplicated")
+		#TODO
+		raise NotImplementedError
 
 
 	####################
