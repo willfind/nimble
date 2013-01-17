@@ -351,6 +351,37 @@ class BaseData(object):
 		return ret
 
 
+	def foldIterator(self, numFolds, seed=DEFAULT_SEED):
+		"""
+		Returns an iterator object that iterates through folds of this object
+
+		"""
+		# note: we want truncation here
+		numInFold = self.points() / numFolds
+		if numInFold == 0:
+			raise ArgumentException("Must specifiy few enough folds so there is a point in each")
+
+		indices = range(self.points())
+		random.seed(seed)
+		random.shuffle(indices)
+		foldList = []
+		for fold in xrange(numFolds):
+			start = fold * numInFold
+			if fold == numFolds - 1:
+				end = self.points()
+			else:
+				end = (fold + 1) * numInFold 
+			foldList.append(indices[start:end])
+
+
+		#duplicate points into a list
+		foldObjects = []
+		for fold in foldList:
+			foldObjects.append(self.duplicatePoints(fold))
+
+		# return that lists iterator as the fold iterator 	
+		return iter(foldObjects)
+
 	
 	#################################
 	# Functions for derived classes #

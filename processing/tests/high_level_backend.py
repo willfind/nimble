@@ -188,5 +188,33 @@ def extractPointsByCoinToss_handmade(constructor):
 
 
 
+################
+# foldIterator #
+################
+
+def foldIterator_exceptionTooManyFolds(constructor):
+	""" Test foldIterator() for exception when given too many folds """
+	data = [[1],[2],[3],[4],[5]]
+	names = ['col']
+	toTest = constructor(data,names)
+	toTest.foldIterator(6)
 
 
+def foldIterator_verifyPartitions(constructor):
+	""" Test foldIterator() yields the correct number and size of folds partitioning the data """
+	data = [[1],[2],[3],[4],[5]]
+	names = ['col']
+	toTest = constructor(data,names)
+	folds = toTest.foldIterator(2)
+
+	fold1 = folds.next()
+	fold2 = folds.next()
+
+	try:
+		folds.next()
+		assert False
+	except StopIteration:
+		pass
+
+	assert fold1.points() == 2
+	assert fold2.points() == 3
