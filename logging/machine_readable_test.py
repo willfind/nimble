@@ -9,6 +9,8 @@ if __name__ == "__main__" and __package__ is None:
 
 import datetime
 import numpy
+import inspect
+import re
 from logger import Logger
 from ..processing.coo_sparse_data import CooSparseData
 
@@ -32,19 +34,106 @@ class MachineReadableRunLog(Logger):
 			
 			Format is key:value,key:value,...,key:value
 		"""
-		self.logMessage("Time:"+str(datetime.datetime.now())+",", False)
-		self.logMessage("numTrainDataPoints:"+str(trainData.data.shape[0])+",", False)
-		self.logMessage("numTrainDataFeatures:"+str(trainData.data.shape[1])+",", False)
-		self.logMessage("numTestDataPoints:"+str(testData.data.shape[0])+",", False)
-		self.logMessage("numTestDataFeatures:"+str(testData.data.shape[1])+",", False)
-		self.logMessage("function:"+str(function)+",", False)
 
+		#Create a string to be logged (as one line), and add dimensions and the function
+		logLine = ""
+		logLine += createMRLineElement("time", str(datetime.datetime.now()))
+		logLine += createMRLineElement("numTrainDataPoints", str(trainData.data.shape[0]))
+		logLine += createMRLineElement("numTrainDataFeatures", str(trainData.data.shape[1]))
+		logLine += createMRLineElement("numTestDataPoints", str(testData.data.shape[0]))
+		logLine += createMRLineElement("numTestDataFeatures", str(testData.data.shape[1]))
+
+		if isinstance(function, (str, unicode)):
+			logLine += createMRLineElement("function", function)
+		else:
+			#we get the source code of the function as a list of strings and glue them together
+			funcLines = inspect.getsourcelines(function)
+			funcString = ""
+			for i in range(len(funcLines) - 1):
+				funcString += str(funcLines[i])
+			if funcLines is None:
+				funcLines = "N/A"
+			logLine += createMRLineElement("function", funcString)
+
+		#add any extraInfo to the log string
 		if extraInfo is not None:
 			for key, value in extraInfo.items():
-				self.logMessage(str(key)+":"+str(value)+",", False)
+				logLine += createMRLineElement(key, str(value))
 
 		for metric, result in metrics.items():
-			self.logMessage(metric+":"+str("{0:.4f}".format(result))+",", False)
+			logLine += createMRLineElement(str(metric), str("{0:.4f}").format(result))
+
+		if logLine[len(logLine)-1] == ',':
+			logLine = logLine[:-1]
+
+		self.logMessage(logLine)
+
+def parseLog(pathToLogFile):
+	"""
+		TODO: add docstring
+	"""
+	logFile = open(pathToLogFile, 'r')
+	rawRuns = logFile.readLines()
+	parsedRuns = []
+	for rawRun in rawRuns:
+		run = parseLoggedRun(rawRun)
+		parsedRuns.append(run)
+
+	return parsedRuns
+
+def parseLoggedRun(loggedRun):
+	"""
+		TODO: add docstring
+	"""
+	runDict = {}
+	elements = re.split(r"[^\\],", loggedRun)
+	for element in elements:
+		parts = re.split(r"([^\\]\\\\|[^\\]):", element)
+		#we expect that each element has two parts (they should be of the form
+		#key:value), so if there are more or fewer than 2, we raise an exception
+		if len(parts):
+			raise Exception("Badly formed line in log of runs")
+		runDict[parts[0]] = parts[1]
+
+	return runDict
+
+def createMRLineElement(key, value, addComma=True):
+	"""
+		TODO: add docstring
+	"""
+	processedValue = sanitizeStringForLog(value)
+	result = key+":\""+processedValue+"\""
+	if addComma:
+		result += ","
+
+	return result
+
+#TODO fill out body of function
+def unSanitizeStringFromLog(sanitizedString):
+	"""
+		TODO: add docstring
+	"""
+	return
+
+def sanitizeStringForLog(rawString):
+	"""
+		Escape all characters in rawString that may interfere with the machine-readable
+		logging format: double-quotes, commas, colons, carriage returns, line-feeds, and
+		backslashes.  Takes a string as argument; returns that string with an additional
+		backslash in front of any of the above-mentioned special characters.
+	"""
+
+	if rawString is None or rawString == "":
+		return
+
+	rawString = rawString.replace("\\", "\\\\")
+	rawString = rawString.replace("\"", "\\\"")
+	rawString = rawString.replace("\n", "\\n")
+	rawString = rawString.replace("\r", "\\r")
+	rawString = rawString.replace(":", "\:")
+	rawString = rawString.replace(",", "\,")
+
+	return rawString
 
 
 def main():

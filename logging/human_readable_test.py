@@ -5,10 +5,13 @@ if __name__ == "__main__" and __package__ is None:
 	sys.path.append(sys.path[0].rsplit('/',2)[0])
 	import UML
 	import UML.logging
-	__package__ = "UML.logger"
+	__package__ = "UML.logging"
 
 import datetime
 import numpy
+import inspect
+
+from tableString import *
 from logger import Logger
 from ..processing.coo_sparse_data import CooSparseData
 
@@ -34,57 +37,45 @@ class HumanReadableRunLog(Logger):
 		#if the log file is not available, try to create it
 		if not self.isAvailable:
 			self.setup()
-		else: pass
 
-		self.logMessage('*'*80)
-		self.logMessage(str(datetime.datetime.now()))
+		tableRow = []
+
+		tableRow.append(str(datetime.datetime.now()))
+
+		#add # of training points to output list
+		if trainData.data is not None:
+			tableRow.append(str(trainData.data.shape[0]))
+			tableRow.append(str(trainData.data.shape[1]))
+		else:
+			tableRow.append("")
+			tableRow.append("")
 		
-		self.logMessage('Number of training points: ')
-		self.logMessage(str(trainData.data.shape[0]), addNewLine=False)
-		self.logMessage('Number of testing points: ')
-		self.logMessage(str(testData.data.shape[0]), addNewLine=False)
-		self.logMessage('Number of training features: ')
-		self.logMessage(str(trainData.data.shape[1]), addNewLine=False)
-		self.logMessage('Number of testing features: ')
-		self.logMessage(str(testData.data.shape[1]), addNewLine=False)
+		#add # of testing points to output list
+		if testData.data is not None:
+			tableRow.append(str(testData.data.shape[0]))
+			tableRow.append(str(testData.data.shape[1]))
+		else:
+			tableRow.append("")
+			tableRow.append("")
+
 		
 		#Write the function defining the classifier to the log. If it is
-		#a string, write it directly.  Else use pickle to turn the function
+		#a string, write it directly.  Else use inspect to turn the function
 		#into a string
-		self.logMessage('Classifier Training Function: ')
 		if isinstance(function, (str, unicode)):
-			self.logMessage(function)
+			tableRow.append(function)
 		else:
-			self.logMessage(repr(function))
-		self.logMessage('\n', False)
-
-		#if extraInfo is not null, we print whatever is in it in the form key: value
-		if extraInfo is not None:
-			for key, value in extraInfo.items():
-				message = str(key) + ": " + str(value)
-				self.logMessage(message)
-			self.logMessage('\n', False)
+			tableRow.append(inspect.getsourcelines(function))
 
 		#Write performance metrics
-		for metric, result in metrics.items():
-			self.logMessage("METRIC FUNCTION: ")
-			if isinstance(metric, (str, unicode)):
-				self.logMessage(metric)
-			else:
-				self.logMessage(repr(metric))
+		for metric in metrics:
+			tableRow.append(str(metrics[metric]))
 
-			self.logMessage("RESULT: {0:.4f}".format(result))
+		#if extraInfo is not null, we append all values in the dictionary to tableRow list
+		if extraInfo is not None:
+			for key, value in extraInfo:
+				tableRow.append(str(value))
 
-		self.logMessage('\n', False)
-		self.logMessage('*'*80)
-
-
-#	def write(self, message, addNewLine=True):
-#		"""
-#			Helper function to make things cleaner: instead of calling self.logMessage(),
-#			we can just call write()
-#		"""
-#		self.logMessage(message, addNewLine)
 
 def main():
 	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
