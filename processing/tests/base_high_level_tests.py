@@ -28,26 +28,6 @@ def callAll(func):
 	func(dmd)
 
 
-#############
-# duplicate #
-#############
-
-
-
-
-#################
-# duplicatePoints #
-#################
-
-
-
-
-####################
-# duplicateFeatures #
-####################
-
-
-
 
 
 ###########################
@@ -153,3 +133,16 @@ def test_extractPointsByCoinToss_handmade():
 
 
 
+################
+# foldIterator #
+################
+
+@raises(ArgumentException)
+def test_foldIterator_exceptionTooManyFolds():
+	""" Test foldIterator() for exception when given too many folds """
+	callAll(foldIterator_exceptionTooManyFolds)
+
+
+def test_foldIterator_verifyPartitions():
+	""" Test foldIterator() yields the correct number and size of folds partitioning the data """
+	callAll(foldIterator_verifyPartitions)

@@ -781,24 +781,11 @@ def writeMM_handmade(constructor):
 
 
 #####################
-# copyDataReference #
+# copyReferences #
 #####################
 
-def copyDataReference_exceptionInconsistentFeatures(constructor):
-	""" Test copyDataReference() throws exception when the number of features doesn't match. """
-
-	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
-	featureNames = ['one', 'two', 'three']
-	orig = constructor(data1, featureNames)
-
-	data2 = [[-1,-2,-3,-4]]
-	other = constructor(data2)
-
-	orig.copyDataReference(other)
-
-
-def copyDataReference_exceptionWrongType(constructor):
-	""" Test copyDataReference() throws exception when other is not the same type """
+def copyReferences_exceptionWrongType(constructor):
+	""" Test copyReferences() throws exception when other is not the same type """
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
 	orig = constructor(data1, featureNames)
@@ -807,12 +794,12 @@ def copyDataReference_exceptionWrongType(constructor):
 	type2 = DMD(data1,featureNames)
 
 	# at least one of these two will be the wrong type
-	orig.copyDataReference(type1)
-	orig.copyDataReference(type2)
+	orig.copyReferences(type1)
+	orig.copyReferences(type2)
 
 
-def copyDataReference_sameReference(constructor):
-	""" Test copyDataReference() successfully records the same reference """
+def copyReferences_sameReference(constructor):
+	""" Test copyReference() successfully records the same reference """
 
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
@@ -821,7 +808,49 @@ def copyDataReference_sameReference(constructor):
 	data2 = [[-1,-2,-3,]]
 	other = constructor(data2)
 
-	orig.copyDataReference(other)
+	orig.copyReferences(other)
 
 	assert orig.data is other.data
+
+###################
+# duplicatePoints #
+###################
+
+def duplicatePoints_exceptionNone(constructor):
+	""" Test duplicatePoints() for exception when argument is None """
+
+	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	orig = constructor(data1, featureNames)
+	orig.duplicatePoints(None)
+
+def duplicatePoints_exceptionNonIndex(constructor):
+	""" Test duplicatePoints() for exception when a value in the input is not a valid index """
+	
+	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	orig = constructor(data1, featureNames)
+	orig.duplicatePoints([1,'yes'])
+
+
+def duplicatePoints_handmadeContents(constructor):
+	""" Test duplicatePoints() returns the correct data """
+
+	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	orig = constructor(data1, featureNames)
+	expOrig = constructor(data1, featureNames)
+
+	data2 = [[1,2,3],[2,4,6]]
+	expRet = constructor(data2, featureNames)
+
+	ret = orig.duplicatePoints([1,2])
+
+	assert orig.equals(expOrig)
+	assert ret.equals(expRet)
+
+
+
+
+
 

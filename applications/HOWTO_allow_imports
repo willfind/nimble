@@ -1,16 +1,10 @@
 The purpose of this folder to contain scripts which make use of the UML
 framework. The expectation is that these scrips will be run via invocation of
 python on the command line, and thus as the main script, outside of the package
-structure. Both elative and absolute imports to the contents of UML require
-extra setup. The following code, added to the begining of each script contained
-in this directory, will allow for imports to be successful:
+structure. Both relative and absolute imports to the contents of UML therefore
+require extra setup, which is defined in a function in the allowImports module. 
+For scripts that are meant to be called as main, the following code must
+be included at the begining of each file in order to allow imports from UML:
 
-# PEP 366 'boilerplate', plus the necessary import of packages
-if __name__ == "__main__" and __package__ is None:
-	import sys
-	# add UML parent directory to sys.path 	
-	sys.path.append(sys.path[0].rsplit('/',2)[0])
-	import UML
-	import UML.applications
-	__package__ = "UML.applications"
-
+from allowImports import boilerplate
+boilerplate()

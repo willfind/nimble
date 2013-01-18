@@ -130,40 +130,6 @@ class BaseData(object):
 	# Higher Order Operations #
 	###########################
 
-	def duplicate(self):
-		"""
-		Return a new object which has the same data and featureNames as this object
-
-		"""
-		# extract all
-		# add extracted back to self
-		# return extracted
-		#TODO
-		raise NotImplementedError
-
-	def duplicatePoints(self, points):
-		"""
-		Return a new object which consists only of those specified points, without mutating
-		this object.
-		
-		"""
-		if points is None:
-			raise ArgumentException("Must provide identifiers for the points you want duplicated")
-		#TODO
-		raise NotImplementedError
-	
-	def duplicateFeatures(self, features):
-		"""
-		Return a new object which consists only of those specified features, without mutating
-		this object.
-		
-		"""
-		if features is None:
-			raise ArgumentException("Must provide identifiers for the features you want duplicated")
-		#TODO
-		raise NotImplementedError
-
-
 	def joinUniqueKeyedOther(self, other, fillUnmatched):
 		# other must be data rep obj
 		# there must be overlap
@@ -383,10 +349,44 @@ class BaseData(object):
 			self.extractFeatures([self.features()-1])
 		
 		return ret
+
+
+	def foldIterator(self, numFolds, seed=DEFAULT_SEED):
+		"""
+		Returns an iterator object that iterates through folds of this object
+
+		"""
+		# note: we want truncation here
+		numInFold = self.points() / numFolds
+		if numInFold == 0:
+			raise ArgumentException("Must specifiy few enough folds so there is a point in each")
+
+		indices = range(self.points())
+		random.seed(seed)
+		random.shuffle(indices)
+		foldList = []
+		for fold in xrange(numFolds):
+			start = fold * numInFold
+			if fold == numFolds - 1:
+				end = self.points()
+			else:
+				end = (fold + 1) * numInFold 
+			foldList.append(indices[start:end])
+
+
+		#duplicate points into a list
+		foldObjects = []
+		for fold in foldList:
+			foldObjects.append(self.duplicatePoints(fold))
+
+		# return that lists iterator as the fold iterator 	
+		return iter(foldObjects)
+
 	
 	#################################
 	# Functions for derived classes #
 	#################################
+
 
 	def transpose(self):
 		"""
@@ -593,7 +593,7 @@ class BaseData(object):
 	def writeMM(self, outPath, includeFeatureNames):
 		return self._writeMM_implementation(outPath, includeFeatureNames)
 
-	def copyDataReference(self, other):
+	def copyReferences(self, other):
 		"""
 		Modifies the internal data of this object to refer to the same data as other. In other
 		words, the data wrapped by both the self and other objects resides in the
@@ -602,10 +602,44 @@ class BaseData(object):
 		of featureNames currently in this object
 
 		"""
-		if self.features() != other.features():
-			raise ArgumentException("Self and other must be the same shape")
+		# this is called first because it checks the data type
+		self._copyReferences_implementation(other)
+		self.featureNames = other.featureNames
+		self.featureNamesInverse = other.featureNamesInverse
 
-		self._copyDataReference(other)
+
+	def duplicate(self):
+		"""
+		Return a new object which has the same data and featureNames as this object
+
+		"""
+		#TODO
+		raise NotImplementedError
+
+	def duplicatePoints(self, points):
+		"""
+		Return a new object which consists only of those specified points, without mutating
+		this object.
+		
+		"""
+		if points is None:
+			raise ArgumentException("Must provide identifiers for the points you want duplicated")
+		#verify everything in list is a valid index TODO
+
+		retObj = self._duplicatePoints_implementation(points)
+		retObj._renameMultipleFeatureNames_implementation(self.featureNames,True)
+		return retObj
+	
+	def duplicateFeatures(self, features):
+		"""
+		Return a new object which consists only of those specified features, without mutating
+		this object.
+		
+		"""
+		if features is None:
+			raise ArgumentException("Must provide identifiers for the features you want duplicated")
+		#TODO
+		raise NotImplementedError
 
 
 	####################

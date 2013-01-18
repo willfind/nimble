@@ -5,30 +5,23 @@ and then counts (and prints) the number of points it correctly classified.
 
 """
 
-# PEP 366 'boilerplate', plus the necessary import of the top level package
-if __name__ == "__main__" and __package__ is None:
-	import sys
-	# add UML parent directory to sys.path
-	sys.path.append(sys.path[0].rsplit('/',2)[0])
-	import UML
-	import UML.applications
-	__package__ = "UML.applications"
+from allowImports import boilerplate
+boilerplate()
 
 if __name__ == "__main__":
 	import sys
 
-	from ..interfaces.scikit_learn_interface import sciKitLearn as skl
-	from ..processing.dense_matrix_data import DenseMatrixData
-	from ..processing.coo_sparse_data import CooSparseData
+	from UML import run
+	from UML import data
 
 	# path to input specified by command line argument
 	pathIn = sys.argv[1]
 
-	sparseAll = CooSparseData(file=pathIn)
+	sparseAll = data('CooSparseData',file=pathIn)
 	sparseY = sparseAll.extractFeatures([0])
 	sparseX = sparseAll
 
-	ret = skl('LogisticRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)
+	ret = run('sciKitLearn', 'LogisticRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)
 
 	ret.renameFeatureName(0, 'result')
 

@@ -479,11 +479,19 @@ class RowListData(BaseData):
 			outFile.write('\n')
 		outFile.close()
 
-	def _copyDataReference(self, other):
+	def _copyReferences_implementation(self, other):
 		if not isinstance(other, RowListData):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
+
+	def _duplicatePoints_implementation(self, points):
+		points.sort()
+		retData = []
+		for index in points:
+			retData.append(copy(self.data[index]))
+
+		return RowListData(retData)
 
 	###########
 	# Helpers #
