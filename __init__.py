@@ -1,5 +1,5 @@
-from uml import run
-from uml import normalize
-from uml import data
-from uml import crossValidate
+from umlExtensible import run
+from umlExtensible import data
+from umlStatic import normalize
+from umlStatic import crossValidate
 
