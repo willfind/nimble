@@ -14,7 +14,6 @@ def crossValidate(X, Y, functionsToApply, numFolds=10):
 														#each time you call .next() on this iterator, it gives you the next (trainData, testData)
 														#pair, one for each fold. So for 10 fold cross validation, next works 10 times before failing.
 		YIterator = Y.foldIterator(numFolds=numFolds)
-		print XIterator
 		while True: #need to add a test here for when iterator .next() is done
 			try:
 				curTrainX, curTestX = XIterator.next()
@@ -25,7 +24,9 @@ def crossValidate(X, Y, functionsToApply, numFolds=10):
 			dataHash["trainX"] = curTrainX; dataHash["testX"] = curTestX	#assumes that the function text in functionsToApply uses these variables
 			dataHash["trainY"] = curTrainY; dataHash["testY"] = curTestY
 			curResults.append(Combinations.executeCode(function, dataHash))
-		aggregatedResults[function] = sum(curResults)/float(len(curResults)) #NOTE: this could be bad if the sets have different size!!
+		correct = sum(sum(curResults))
+		total = float(len(curResults))
+		aggregatedResults[function] = correct/total #NOTE: this could be bad if the sets have different size!!
 	return aggregatedResults
 
 
@@ -37,7 +38,8 @@ def crossValidateReturnBest(X, Y, functionsToApply, minimize, numFolds=10):
 	if minimize: bestPerformance = float('inf')
 	else: bestPerformance = float('-inf')
 	bestFuncText = None
-	for functionText, performance in resultsHash:
+	for functionText in resultsHash.keys():
+		performance = resultsHash[functionText]
 		if (minimize and performance < bestPerformance) or (not minimize and performance > bestPerformance): #if it's the best we've seen so far
 				bestPerformance = performance
 				bestFuncText = functionText
