@@ -23,12 +23,17 @@ from .utility import ArgumentException
 def run(package, algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
 	if package == 'mahout':
 		return mahout(algorithm, trainData, testData, output, dependentVar, arguments)
-	if package == 'regressor':
+	elif package == 'regressor':
 		return regressors(algorithm, trainData, testData, output, dependentVar, arguments)
-	if package == 'sciKitLearn':
+	elif package == 'sciKitLearn':
 		return sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
-	if package == 'mlpy':
+	elif package == 'mlpy':
 		return mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
+	elif package == 'self':
+		raise ArgumentException("self modifcation not yet implemented")
+	else:
+		raise ArgumentException("package not recognized")
+
 
 
 

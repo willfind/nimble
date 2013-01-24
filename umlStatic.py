@@ -5,9 +5,21 @@ is static.
 """
 
 from UML import run
+from UML import data
 
 
 # run() with a return type of the predicted labels added back into the object?
+
+
+def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="DenseMatrixData"):
+	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
+	It returns training X, training Y, testing X and testing Y"""
+	trainX = data(loadType, fileName, fileType=fileType)	
+	testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(fractionForTestSet*trainX.points())), randomize=True)	#pull out a testing set
+	trainY = trainX.extractFeatures(labelID)	#construct the column vector of training labels
+	testY = testX.extractFeatures(labelID)	#construct the column vector of testing labels
+	return trainX, trainY, testX, testY
+
 
 
 def normalize(package, algorithm, trainData, testData, dependentVar=None, arguments={}, mode=True):
