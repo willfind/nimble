@@ -578,20 +578,20 @@ class BaseData(object):
 	def toDenseMatrixData(self):
 		return self._toDenseMatrixData_implementation()
 
-	def writeCSV(self, outPath, includeFeatureNames):
+	def writeFile(self, extension, outPath, includeFeatureNames):
 		"""
-		Function to write the data in this object to a CSV file at the designated
-		path.
-
-		outPath is the location where we want to write the output file.
+		Funciton to write the data in this object to a file with the choosen
+		extension. outPath is the location where we want to write the output file.
 		includeFeatureNames is boolean argument indicating whether the file should
 		start with a comment line designating featureNames.
 
 		"""
-		return self._writeCSV_implementation(outPath, includeFeatureNames)
-
-	def writeMM(self, outPath, includeFeatureNames):
-		return self._writeMM_implementation(outPath, includeFeatureNames)
+		if extension.lower() == "csv":
+			return self._writeFileCSV_implementation(outPath, includeFeatureNames)
+		elif extension.lower() == "mtx":
+			return self._writeFileMTX_implementation(outPath, includeFeatureNames)
+		else:
+			raise ArgumentException("Unrecognized file extension")
 
 	def copyReferences(self, other):
 		"""
@@ -625,6 +625,9 @@ class BaseData(object):
 		if points is None:
 			raise ArgumentException("Must provide identifiers for the points you want duplicated")
 		#verify everything in list is a valid index TODO
+		for index in points:
+			if index < 0 or index >= self.points():
+				raise ArgumentException("input must contain only valid indices")
 
 		retObj = self._duplicatePoints_implementation(points)
 		retObj._renameMultipleFeatureNames_implementation(self.featureNames,True)
@@ -856,6 +859,3 @@ class BaseData(object):
 				self.featureNamesInverse[index] = temp
 		for key in assignments.keys():
 			self._renameFeatureName_implementation(assignments[key],key,allowDefaults)
-
-
-

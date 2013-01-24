@@ -19,11 +19,6 @@ class CscSparseData(SparseData):
 
 
 	def __init__(self, data=None, featureNames=None):
-		if file is not None:
-			(data, featureNamesTemp) = _readFile(file)
-			if featureNames is None:
-				featureNames = featureNamesTemp
-
 		self.data = csc_matrix(data)
 		super(CscSparseData, self).__init__(self.data,featureNames)
 
@@ -57,7 +52,7 @@ class CscSparseData(SparseData):
 		return DenseMatrixData(self.data.todense(), self.featureNames)
 
 
-	def _writeMM_implementation(self, outPath, includeFeatureNames):
+	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
 		if includeFeatureNames:
 			featureNameString = "#"
 			for i in xrange(self.features()):

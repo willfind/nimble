@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	# path to input specified by command line argument
 	pathIn = sys.argv[1]
 
-	sparseAll = data('CooSparseData',file=pathIn)
+	sparseAll = data('CooSparseData', data=pathIn)
 	sparseY = sparseAll.extractFeatures([0])
 	sparseX = sparseAll
 

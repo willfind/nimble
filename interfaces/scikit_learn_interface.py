@@ -108,7 +108,7 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 		outputObj.transpose()
 		return outputObj
 
-	outputObj.writeCSV(output, False)
+	outputObj.writeFile('csv', output, False)
 
 
 def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
