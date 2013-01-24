@@ -67,7 +67,7 @@ class CooSparseData(SparseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactFeaturesByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractFeaturesByRange_implementation(start, end)
 
@@ -205,6 +205,9 @@ class CooSparseData(SparseData):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
+
+	def _duplicate_implementation(self):
+		return CooSparseData(deepcopy(self.data), deepcopy(self.featureNames))
 
 ###########
 # Helpers #

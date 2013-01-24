@@ -129,7 +129,7 @@ class DenseMatrixData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactPointsByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractPointsByRange_implementation(start, end)
 
@@ -219,7 +219,7 @@ class DenseMatrixData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactFeaturesByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractFeaturesByRange_implementation(start, end)
 
@@ -405,8 +405,13 @@ class DenseMatrixData(BaseData):
 
 		self.data = other.data
 
+	def _duplicate_implementation(self):
+		return DenseMatrixData(deepcopy(self.data), deepcopy(self.featureNames))
+
 	def _duplicatePoints_implementation(self, points):
 		ret = self.data[points]
 
 		return DenseMatrixData(ret)
+
+
 

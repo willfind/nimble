@@ -361,6 +361,7 @@ class BaseData(object):
 		if numInFold == 0:
 			raise ArgumentException("Must specifiy few enough folds so there is a point in each")
 
+		# randomly select the folded portions
 		indices = range(self.points())
 		random.seed(seed)
 		random.shuffle(indices)
@@ -373,14 +374,8 @@ class BaseData(object):
 				end = (fold + 1) * numInFold 
 			foldList.append(indices[start:end])
 
-
-		#duplicate points into a list
-		foldObjects = []
-		for fold in foldList:
-			foldObjects.append(self.duplicatePoints(fold))
-
 		# return that lists iterator as the fold iterator 	
-		return iter(foldObjects)
+		return self.foldIteratorClass(foldList, self)
 
 	
 	#################################
@@ -613,8 +608,7 @@ class BaseData(object):
 		Return a new object which has the same data and featureNames as this object
 
 		"""
-		#TODO
-		raise NotImplementedError
+		return self._duplicate_implementation()
 
 	def duplicatePoints(self, points):
 		"""
@@ -859,3 +853,24 @@ class BaseData(object):
 				self.featureNamesInverse[index] = temp
 		for key in assignments.keys():
 			self._renameFeatureName_implementation(assignments[key],key,allowDefaults)
+
+
+	class foldIteratorClass():
+		def __init__(self, foldList, outerReference):
+			self.foldList= foldList
+			self.index = 0
+			self.outerReference = outerReference
+
+		def __iter__(self):
+			return self
+
+		def next(self):
+			if self.index >= len(self.foldList):
+				raise StopIteration
+			copied = self.outerReference.duplicate()
+			dataY = copied.extractPoints(self.foldList[self.index])
+			dataX = copied
+			self.index = self.index +1
+			return dataX, dataY
+
+

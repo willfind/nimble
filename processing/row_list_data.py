@@ -179,7 +179,7 @@ class RowListData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactPointsByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractPointsByRange_implementation(start, end)
 
@@ -298,7 +298,7 @@ class RowListData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactFeaturesByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractFeaturesByRange_implementation(start, end)
 
@@ -517,6 +517,9 @@ class RowListData(BaseData):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
+
+	def _duplicate_implementation(self):
+		return RowListData(deepcopy(self.data), deepcopy(self.featureNames))
 
 	def _duplicatePoints_implementation(self, points):
 		points.sort()
