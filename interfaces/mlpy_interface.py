@@ -103,7 +103,7 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 	if output is None:
 		return outputObj
 
-	outputObj.writeCSV(output,False)
+	outputObj.writeFile('csv', output, False)
 
 
 def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs):

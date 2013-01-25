@@ -3,8 +3,8 @@ Class extending SparseBaseData, defining an object to hold and manipulate a scip
 
 """
 
+import numpy
 from scipy.sparse import coo_matrix
-from scipy.io import mmread
 from scipy.io import mmwrite
 
 from base_data import *
@@ -16,13 +16,7 @@ from ..utility.custom_exceptions import ArgumentException
 
 class CooSparseData(SparseData):
 
-
-	def __init__(self, data=None, featureNames=None, file=None):
-		if file is not None:
-			(data, featureNamesTemp) = _readFile(file)
-			if featureNames is None:
-				featureNames = featureNamesTemp
-
+	def __init__(self, data=None, featureNames=None):
 		self.data = coo_matrix(data)
 		super(CooSparseData, self).__init__(self.data, featureNames)
 
@@ -73,7 +67,7 @@ class CooSparseData(SparseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactFeaturesByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractFeaturesByRange_implementation(start, end)
 
@@ -148,7 +142,52 @@ class CooSparseData(SparseData):
 		return DenseMatrixData(self.data.todense(), self.featureNames)
 
 
-	def _writeMM_implementation(self, outPath, includeFeatureNames):
+	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
+		"""
+		Function to write the data in this object to a CSV file at the designated
+		path.
+
+		"""
+		outFile = open(outPath, 'w')
+	
+		if includeFeatureNames and self.featureNames != None:
+			pairs = self.featureNames.items()
+			# sort according to the value, not the key. ie sort by feature number
+			pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
+			for (a,x) in pairs:
+				if pairs.index((a,x)) == 0:
+					outFile.write('#')
+				else:
+					outFile.write(',')
+				outFile.write(str(a))
+			outFile.write('\n')
+
+		# sort by rows first, then columns
+		placement = numpy.lexsort((self.data.col, self.data.row))
+		self.data.data[placement]
+		self.data.row[placement]
+		self.data.col[placement]
+
+		pointer = 0
+		pmax = len(self.data.data)
+		for i in xrange(self.points()):
+			for j in xrange(self.features()):
+				if pointer < pmax and i == self.data.row[pointer] and j == self.data.col[pointer]:
+					value = self.data.data[pointer]
+					pointer = pointer + 1
+				else:
+					value = 0
+
+				if j != 0:
+					outFile.write(',')	
+				outFile.write(str(value))
+			outFile.write('\n')
+
+		outFile.close()
+
+
+
+	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
 		if includeFeatureNames:
 			featureNameString = "#"
 			for i in xrange(self.features()):
@@ -167,22 +206,12 @@ class CooSparseData(SparseData):
 
 		self.data = other.data
 
+	def _duplicate_implementation(self):
+		return CooSparseData(deepcopy(self.data), deepcopy(self.featureNames))
+
 ###########
 # Helpers #
 ###########
-
-
-def _readFile(file):
-	# TODO do some kind of checking as to the the input file format
-	return _readMM(file)
-
-def _readMM(file):
-	"""
-	Returns a CooSparseData object containing the data at the Market Matrix file specified by 
-	the file parameter. Uses the build in scipy function io.mmread().
-
-	"""
-	return (mmread(file), None)
 	
 
 def _numLessThan(value, toCheck): # TODO caching

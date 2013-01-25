@@ -13,6 +13,7 @@ from ..utility.custom_exceptions import ArgumentException
 import random
 import re
 import os
+from scipy.sparse import isspmatrix
 
 
 class RowListData(BaseData):
@@ -23,7 +24,7 @@ class RowListData(BaseData):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None, file=None):
+	def __init__(self, data=None, featureNames=None):
 		"""
 		Instantiate a Row List data using the given data and featureNames. data may be
 		none or an empty list to indicate an empty object, or a fully populated
@@ -31,11 +32,14 @@ class RowListData(BaseData):
 		the init funciton of BaseData, to be interpreted there.
 
 		"""
-		if file is not None:
-			(data, featureNamesTemp) = _readFile(file)
-			if featureNames is None:
-				featureNames = featureNamesTemp
-		
+		# if sparse, make dense
+		if isspmatrix(data):
+				data = data.todense()
+		# if its a numpy construct, convert it to a python list
+		try:
+			data = data.tolist()
+		except AttributeError:
+			pass
 		if data is None or len(data) == 0:
 			self.numFeatures = 0
 			self.data = []
@@ -175,7 +179,7 @@ class RowListData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactPointsByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractPointsByRange_implementation(start, end)
 
@@ -294,7 +298,7 @@ class RowListData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactFeaturesByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractFeaturesByRange_implementation(start, end)
 
@@ -449,7 +453,7 @@ class RowListData(BaseData):
 		return DMD(self.data, self.featureNames)
 
 
-	def _writeCSV_implementation(self, outPath, includeFeatureNames):
+	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
 		path.
@@ -479,11 +483,43 @@ class RowListData(BaseData):
 			outFile.write('\n')
 		outFile.close()
 
+	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
+		"""
+		Function to write the data in this object to a matrix market file at the designated
+		path.
+
+		"""
+		outFile = open(outPath, 'w')
+		outFile.write("%%MatrixMarket matrix array real general\n")
+		if includeFeatureNames:
+			pairs = self.featureNames.items()
+			# sort according to the value, not the key. ie sort by feature number
+			pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
+			for (a,x) in pairs:
+				if pairs.index((a,x)) == 0:
+					outFile.write('%#')
+				else:
+					outFile.write(',')
+				outFile.write(str(a))
+			outFile.write('\n')
+
+		outFile.write(str(self.points()) + " " + str(self.features()) + "\n")
+
+
+		for j in xrange(self.features()):
+			for i in xrange(self.points()):
+				value = self.data[i][j]
+				outFile.write(str(value) + '\n')
+		outFile.close()
+
 	def _copyReferences_implementation(self, other):
 		if not isinstance(other, RowListData):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
+
+	def _duplicate_implementation(self):
+		return RowListData(deepcopy(self.data), deepcopy(self.featureNames))
 
 	def _duplicatePoints_implementation(self, points):
 		points.sort()
@@ -518,75 +554,6 @@ class RowListData(BaseData):
 # File IO Helpers #
 ###################
 
-def _intFloatOrString(str):
-	ret = str
-	try:
-		ret = int(str)
-	except exceptions.ValueError:
-		ret = float(str)
-	# this will return an int or float if either of the above two are successful
-	finally:
-		return ret
-
-def _defaultParser(line):
-	"""
-	When given a comma separated value line, it will attempt to convert
-	the values first to int, then to float, and if all else fails will
-	keep values as strings. Returns list of values.
-
-	"""
-	ret = []
-	lineList = line.split(',')
-	for entry in lineList:
-		ret.append(_intFloatOrString(entry))
-	return ret
-
-
-def _readFile(file):
-	# TODO do some kind of checking as to the the input file format
-	return _readCSV(file)
-
-
-def _readCSV(file, lineParser=_defaultParser):
-	inFile = open(file, 'r')
-	firstLine = inFile.readline()
-	featureNameList = None
-
-	# test if this is a line defining featureNames
-	if firstLine[0] == "#":
-		# strip '#' from the begining of the line
-		scrubbedLine = firstLine[1:]
-		# strip newline from end of line
-		scrubbedLine = scrubbedLine.rstrip()
-		featureNameList = scrubbedLine.split(',')
-		featureNameMap = {}
-		for name in featureNameList:
-			featureNameMap[name] = featureNameList.index(name)
-	#if not, get the iterator pointed back at the first line again	
-	else:
-		inFile.close()
-		inFile = open(inPath, 'r')
-
-	#list of datapoints in the file, where each data point is a list
-	data = []
-	for currLine in inFile:
-		currLine = currLine.rstrip()
-		#ignore empty lines
-		if len(currLine) == 0:
-			continue
-
-		if lineParser is not None:
-			data.append(lineParser(currLine))
-		else:
-			currList = currLine.split(',')
-			data.append(currList)
-
-	if featureNameList == None:
-		return RowListData(data)
-
-	inFile.close()
-
-	return (data, featureNameMap)
 
 
 

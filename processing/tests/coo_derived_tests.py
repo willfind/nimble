@@ -6,22 +6,28 @@ in derived_backend.py using appropriate input
 """
 
 from derived_backend import *
-from ..coo_sparse_data import *
 from nose.tools import *
 
 from numpy import matrix as npm
 
-def constructor(data=None, featureNames=None, file=None):
-	return CooSparseData(npm(data), featureNames, file)
+from ... import data as instantiate
+
+def constructor(data=None, featureNames=None):
+	return instantiate('CooSparseData', data, featureNames)
 
 
 ##############
 # __init__() #
 ##############
 
+
 def test_init_allEqual():
-	""" Test CooSparse __init__() so that each possible way to instantiate produces equal objects """
+	""" Test CooSparse __init__() that every way to instantiate produces equal objects """
 	init_allEqual(constructor)
+
+def test_init_allEqualWithFeatureNames():
+	""" Test CooSparse __init__() that every way to instantiate produces equal objects, with featureNames """
+	init_allEqualWithFeatureNames(constructor)
 
 ############
 # equals() #
@@ -341,22 +347,16 @@ def test_toDenseMatrixData_handmade_assignedFeatureNames():
 
 
 ############
-# writeCSV #
+# writeFile #
 ############
 
-def test_writeCSV_handmade():
-	""" Test CooSparse writeCSV with both data and featureNames """
-	writeCSV_handmade(constructor)
+def test_writeFileCSV_handmade():
+	""" Test CooSparse writeFile() for csv extension with both data and featureNames """
+	writeFileCSV_handmade(constructor)
 
-
-###########
-# writeMM #
-###########
-
-
-def test_writeMM_handmade():
-	""" Test CooSparse writeMM with both data and featureNames """
-	writeMM_handmade(constructor)
+def test_writeFileMTX_handmade():
+	""" Test CooSparse writeFile() for mtx extension with both data and featureNames """
+	writeFileMTX_handmade(constructor)
 
 
 #####################

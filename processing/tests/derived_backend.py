@@ -19,21 +19,87 @@ from ..dense_matrix_data import DenseMatrixData as DMD
 ##############
 
 def init_allEqual(constructor):
-	""" Test __init__() so that each possible way to instantiate produces equal objects """
+	""" Test __init__() that every way to instantiate produces equal objects """
 	# instantiate from list of lists
-	fromList = constructor(data=[[1,2,3]], featureNames=['one', 'two', 'three'])
+	fromList = constructor(data=[[1,2,3]])
 
-	# instantiate from file
-	tmpFile = tempfile.NamedTemporaryFile() 
-	tmpFile.write("#one,two,three\n")
-	tmpFile.write("1,2,3\n")
-	tmpFile.flush()
-	# TODO -- can we name this file so readFile() can use the extension to determine what to call?
-	fromCSV = constructor(file=tmpFile.name)
+	# instantiate from csv file
+	tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+	tmpCSV.write("1,2,3\n")
+	tmpCSV.flush()
+	fromCSV = constructor(data=tmpCSV.name)
+
+	# instantiate from mtx array file
+	tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx")
+	tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+	tmpMTXArr.write("1 3\n")
+	tmpMTXArr.write("1\n")
+	tmpMTXArr.write("2\n")
+	tmpMTXArr.write("3\n")
+	tmpMTXArr.flush()
+	fromMTXArr = constructor(data=tmpMTXArr.name)
+
+	# instantiate from mtx coordinate file
+	tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
+	tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+	tmpMTXCoo.write("1 3 3\n")
+	tmpMTXCoo.write("1 1 1\n")
+	tmpMTXCoo.write("1 2 2\n")
+	tmpMTXCoo.write("1 3 3\n")
+	tmpMTXCoo.flush()
+	fromMTXCoo = constructor(data=tmpMTXCoo.name)
 
 	# check equality between all pairs
 	assert fromList.equals(fromCSV)
-	assert fromCSV.equals(fromList)
+	assert fromMTXArr.equals(fromList)
+	assert fromMTXArr.equals(fromCSV)
+	assert fromMTXCoo.equals(fromList)
+	assert fromMTXCoo.equals(fromCSV)
+	assert fromMTXCoo.equals(fromMTXArr)
+
+def init_allEqualWithFeatureNames(constructor):
+	""" Test __init__() that every way to instantiate produces equal objects, with featureNames """
+	# instantiate from list of lists
+	fromList = constructor(data=[[1,2,3]], featureNames=['one', 'two', 'three'])
+
+	# instantiate from csv file
+	tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+	tmpCSV.write("#one,two,three\n")
+	tmpCSV.write("1,2,3\n")
+	tmpCSV.flush()
+	fromCSV = constructor(data=tmpCSV.name)
+
+	# instantiate from mtx file
+	tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx")
+	tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+	tmpMTXArr.write("%#one,two,three\n")
+	tmpMTXArr.write("1 3\n")
+	tmpMTXArr.write("1\n")
+	tmpMTXArr.write("2\n")
+	tmpMTXArr.write("3\n")
+	tmpMTXArr.flush()
+	fromMTXArr = constructor(data=tmpMTXArr.name)
+
+	# instantiate from mtx coordinate file
+	tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
+	tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+	tmpMTXCoo.write("%#one,two,three\n")
+	tmpMTXCoo.write("1 3 3\n")
+	tmpMTXCoo.write("1 1 1\n")
+	tmpMTXCoo.write("1 2 2\n")
+	tmpMTXCoo.write("1 3 3\n")
+	tmpMTXCoo.flush()
+	fromMTXCoo = constructor(data=tmpMTXCoo.name)
+
+	# check equality between all pairs
+	assert fromList.equals(fromCSV)
+	assert fromMTXArr.equals(fromList)
+	assert fromMTXArr.equals(fromCSV)
+	assert fromMTXCoo.equals(fromList)
+	assert fromMTXCoo.equals(fromCSV)
+	assert fromMTXCoo.equals(fromMTXArr)
+
+
 
 
 ############
@@ -729,44 +795,20 @@ def toDenseMatrixData_handmade_assignedFeatureNames(constructor):
 
 
 ############
-# writeCSV #
+# writeFile #
 ############
 
-def writeCSV_handmade(constructor):
-	""" Test writeCSV with both data and featureNames """
-	tmpFile = tempfile.NamedTemporaryFile()
+def writeFileCSV_handmade(constructor):
+	""" Test writeFile() for csv extension with both data and featureNames """
+	tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
 
 	# instantiate object
 	data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
 	toWrite = constructor(data, featureNames)
 
-	# call writeCSV
-	toWrite.writeCSV(tmpFile.name, includeFeatureNames=True)
-
-	# read it back into a different object, then test equality
-	readObj = constructor(file=tmpFile.name)
-
-	assert readObj.equals(toWrite)
-	assert toWrite.equals(readObj)
-
-
-###########
-# writeMM #
-###########
-
-
-def writeMM_handmade(constructor):
-	""" Test writeCSV with both data and featureNames """
-	tmpFile = tempfile.NamedTemporaryFile()
-
-	# instantiate object
-	data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
-	featureNames = ['one', 'two', 'three']
-	toWrite = constructor(data, featureNames)
-
-	# call writeCSV
-	toWrite.writeMM(tmpFile.name, includeFeatureNames=True)
+	# call writeFile
+	toWrite.writeFile('csv', tmpFile.name, includeFeatureNames=True)
 
 	opened = open(tmpFile.name,'r')
 	print opened.read()
@@ -774,7 +816,33 @@ def writeMM_handmade(constructor):
 		print line
 
 	# read it back into a different object, then test equality
-	readObj = constructor(file=tmpFile.name)
+	readObj = constructor(data=tmpFile.name)
+
+	assert readObj.equals(toWrite)
+	assert toWrite.equals(readObj)
+
+
+def writeFileMTX_handmade(constructor):
+	""" Test writeFile() for mtx extension with both data and featureNames """
+	tmpFile = tempfile.NamedTemporaryFile(suffix=".mtx")
+
+	# instantiate object
+	data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	toWrite = constructor(data, featureNames)
+
+	# call writeFile
+	toWrite.writeFile('mtx', tmpFile.name, includeFeatureNames=True)
+
+#	opened = open(tmpFile.name,'r')
+#	print opened.read()
+#	for line in opened:
+#		print line
+
+	# read it back into a different object, then test equality
+	readObj = constructor(data=tmpFile.name)
+
+	print readObj.data
 
 	assert readObj.equals(toWrite)
 	assert toWrite.equals(readObj)

@@ -1,5 +1,11 @@
-from uml import run
-from uml import normalize
-from uml import data
-from uml import crossValidate
+from umlExtensible import run
+from umlExtensible import data
+
+from umlStatic import normalize
+from umlStatic import loadTrainingAndTesting
+from umlStatic import runWithClassificationError
+
+from combinations import crossValidate
+from combinations import crossValidateReturnBest
+from combinations import functionCombinations
 

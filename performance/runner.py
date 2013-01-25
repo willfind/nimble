@@ -1,5 +1,5 @@
-import combinations.Combinations
-import performance.performance_interface
+import .combinations.Combinations
+import performance_interface
 
 
 def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, performanceMetricFuncs):
@@ -32,7 +32,7 @@ def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, per
 	rawResult = Combinations.executeCode(function, functionArgs)
 
 	#now we need to compute performance metric(s) for all prediction sets
-	results = performance_interface.computeMetrics(testLabels, None, rawResult, perfomanceMetricFuncs)
+	results = performance_interface.computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs)
 	return results
 
 #TODO this is a helper, move to utilities package?

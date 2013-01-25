@@ -13,6 +13,8 @@ from copy import copy
 from copy import deepcopy
 from ..utility.custom_exceptions import ArgumentException
 
+from scipy.io import mmwrite
+from scipy.sparse import isspmatrix
 import random
 import re
 import os
@@ -25,13 +27,11 @@ class DenseMatrixData(BaseData):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None, file=None):
-		if file is not None:
-			(data, featureNamesTemp) = _readFile(file)
-			if featureNames is None:
-				featureNames = featureNamesTemp
-		
-		self.data = numpy.matrix(data)
+	def __init__(self, data=None, featureNames=None):
+		if isspmatrix(data):
+			self.data = data.todense()
+		else:
+			self.data = numpy.matrix(data)
 		super(DenseMatrixData, self).__init__(featureNames)
 		
 
@@ -129,7 +129,7 @@ class DenseMatrixData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactPointsByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractPointsByRange_implementation(start, end)
 
@@ -219,7 +219,7 @@ class DenseMatrixData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self.extactFeaturesByList(random.randrange(start,end,number))
+				return self._extractPointsByList_implementation(random.randrange(start,end,number))
 			else:
 				return self._extractFeaturesByRange_implementation(start, end)
 
@@ -366,7 +366,7 @@ class DenseMatrixData(BaseData):
 		return DenseMatrixData(self.data, self.featureNames)
 
 
-	def _writeCSV_implementation(self, outPath, includeFeatureNames):
+	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
 		path.
@@ -387,6 +387,17 @@ class DenseMatrixData(BaseData):
 		numpy.savetxt(outFile,self.data,delimiter=',')
 		outFile.close()
 
+	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
+		if includeFeatureNames:
+			featureNameString = "#"
+			for i in xrange(self.features()):
+				featureNameString += self.featureNamesInverse[i]
+				if not i == self.features() - 1:
+					featureNameString += ','
+			
+			mmwrite(target=outPath, a=self.data, comment=featureNameString)		
+		else:
+			mmwrite(target=outPath, a=self.data)
 
 	def _copyReferences_implementation(self, other):
 		if not isinstance(other, DenseMatrixData):
@@ -394,34 +405,13 @@ class DenseMatrixData(BaseData):
 
 		self.data = other.data
 
+	def _duplicate_implementation(self):
+		return DenseMatrixData(deepcopy(self.data), deepcopy(self.featureNames))
+
 	def _duplicatePoints_implementation(self, points):
 		ret = self.data[points]
 
 		return DenseMatrixData(ret)
 
 
-###################
-# File IO Helpers #
-###################
 
-def _readFile(file):
-	# TODO do some kind of checking as to the the input file format
-	return _readCSV(file)
-
-def _readCSV(file):
-	inFile = open(file, 'r')
-	firstLine = inFile.readline()
-	featureNameList = None
-	skip_header = 0
-
-	# test if this is a line defining featureNames
-	if firstLine[0] == "#":
-		# strip '#' from the begining of the line
-		scrubbedLine = firstLine[1:]
-		# strip newline from end of line
-		scrubbedLine = scrubbedLine.rstrip()
-		featureNameList = scrubbedLine.split(',')
-		skip_header = 1
-
-	matrix = numpy.genfromtxt(file, delimiter=',', skip_header=skip_header)
-	return (matrix, featureNameList)

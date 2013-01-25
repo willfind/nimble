@@ -201,14 +201,14 @@ def foldIterator_exceptionTooManyFolds(constructor):
 
 
 def foldIterator_verifyPartitions(constructor):
-	""" Test foldIterator() yields the correct number and size of folds partitioning the data """
+	""" Test foldIterator() yields the correct number folds and partitions the data """
 	data = [[1],[2],[3],[4],[5]]
 	names = ['col']
 	toTest = constructor(data,names)
 	folds = toTest.foldIterator(2)
 
-	fold1 = folds.next()
-	fold2 = folds.next()
+	(fold1Train, fold1Test) = folds.next()
+	(fold2Train, fold2Test) = folds.next()
 
 	try:
 		folds.next()
@@ -216,5 +216,10 @@ def foldIterator_verifyPartitions(constructor):
 	except StopIteration:
 		pass
 
-	assert fold1.points() == 2
-	assert fold2.points() == 3
+	assert fold1Train.points() + fold1Test.points() == 5
+	assert fold2Train.points() + fold2Test.points() == 5
+
+	fold1Train.appendPoints(fold1Test)
+	fold2Train.appendPoints(fold2Test)
+
+	#TODO some kind of rigourous partition check
