@@ -31,12 +31,13 @@ class MachineReadableRunLog(Logger):
 			Function defining the classifer (algorithm, parameters, etc.)
 			Error metrics computed based on predictions of classifier: name/function and numerical
 			result)
+			Any additional information, definedy by user, passed as 'extraInfo'
 			
 			Format is key:value,key:value,...,key:value
 		"""
 
 		#Create a string to be logged (as one line), and add dimensions and the function
-		logLine = ""
+		logLine = "{RUN}::"
 		logLine += createMRLineElement("time", str(datetime.datetime.now()))
 		logLine += createMRLineElement("numTrainDataPoints", str(trainData.data.shape[0]))
 		logLine += createMRLineElement("numTrainDataFeatures", str(trainData.data.shape[1]))
@@ -70,12 +71,18 @@ class MachineReadableRunLog(Logger):
 
 def parseLog(pathToLogFile):
 	"""
-		TODO: add docstring
+		Provided with a path to a log file containing some lines representing machine-readable
+		logs of runs, read all such lines and parse them into a list of hashes.  Each hash
+		represents one run, and contains the logged information about that run.  Assumes that
+		each line in the log file that starts with {RUN} represents a run; any line that doesn't
+		start with {RUN} is ignored.
 	"""
 	logFile = open(pathToLogFile, 'r')
 	rawRuns = logFile.readLines()
 	parsedRuns = []
 	for rawRun in rawRuns:
+		if rawRun.startswith("{RUN}::"):
+			rawRun = rawRun.replace("{RUN}::", "", 1)
 		run = parseLoggedRun(rawRun)
 		parsedRuns.append(run)
 
@@ -83,7 +90,9 @@ def parseLog(pathToLogFile):
 
 def parseLoggedRun(loggedRun):
 	"""
-		TODO: add docstring
+		Convert one line of a log file - which represents output information of one run - into
+		a dictionary containing the same information, keyed by standard labels (see 
+		MachineReadableRunLog.logTestRun() for examples of labels that are used).
 	"""
 	runDict = {}
 	elements = re.split(r"[^\\],", loggedRun)
@@ -111,8 +120,13 @@ def createMRLineElement(key, value, addComma=True):
 #TODO fill out body of function
 def unSanitizeStringFromLog(sanitizedString):
 	"""
-		TODO: add docstring
+		Replace escaped versions of characters within sanitizedString with the original,
+		unescaped version.  Mirror opposite of sanitizeStringForLog: where sanitize...()
+		replaces newLines with \\n, unSanitize replaces \\n with a newline.
 	"""
+	fixedString = ""
+	fixedString = fixedString.replace("\\\\", "\\")
+	
 	return
 
 def sanitizeStringForLog(rawString):

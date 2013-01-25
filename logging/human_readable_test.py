@@ -21,60 +21,113 @@ class HumanReadableRunLog(Logger):
 		super(HumanReadableRunLog, self).__init__(logFileName)
 
 
-	def logTestRun(self, trainData, testData, function, metrics, extraInfo=None):
+	def logRun(self, trainData, testData, function, metrics, extraInfo=None):
 		"""
-			Write one (data + classifer + error metrics) combination to a log file
-			in a human readable format.  Should include as much information as possible,
-			to allow someone to reproduce the test.  Information included:
-			# of training data points
-			# of testing data points
-			# of features in training data
-			# of features in testing data
-			Function defining the classifer (algorithm, parameters, etc.)
-			Error metrics computed based on predictions of classifier: name/function and numerical
-			result)
+			Convert a set of objects representing one run (data used for training, data used for
+			testing, function representing a unique classifier {algorithm, parameters}, error metrics,
+			and any additional info) into a list.  This list can be appended to a second list, to create
+			a 2-dimensional table that can be passed to tableString().  The results of tableString can
+			then be printed to the log.
+
+			Information contained, by default, in the resulting list:
+				pass)
+				# of training data points
+				# of testing data points
+				# of features in training data
+				# of features in testing data
+				Function defining the classifer (algorithm, parameters, etc.)
+				Error metrics computed based on predictions of classifier: name/function and
+				numerical result)
+
+				Any additional information contained in extraInfo dict (optional).
 		"""
 		#if the log file is not available, try to create it
 		if not self.isAvailable:
 			self.setup()
 
+		tableHeaders = []
 		tableRow = []
 
 		tableRow.append(str(datetime.datetime.now()))
 
-		#add # of training points to output list
+		#add # of training points, # of of features to output list
 		if trainData.data is not None:
+			tableHeaders.append("# training instances")
+			tableHeaders.append("# training features")
 			tableRow.append(str(trainData.data.shape[0]))
 			tableRow.append(str(trainData.data.shape[1]))
 		else:
+			tableHeaders.append("")
+			tableHeaders.append("")
 			tableRow.append("")
 			tableRow.append("")
 		
 		#add # of testing points to output list
 		if testData.data is not None:
+			tableHeaders.append("# testing instances")
+			tableHeaders.append("# testing features")
 			tableRow.append(str(testData.data.shape[0]))
 			tableRow.append(str(testData.data.shape[1]))
 		else:
+			tableHeaders.append("")
+			tableHeaders.append("")
 			tableRow.append("")
 			tableRow.append("")
 
-		
+
+		#Write performance metrics
+		#if there is one performance metric, add to the table.
+		#Otherwise, put all metrics into a separate section.
+		multipleMetrics = True
+		if len(metrics) == 1:
+			multipleMetrics = False
+			for metric, result in metrics:
+				tableHeaders.append("Error Rate")
+				tableRow.append(str(result))
+
+		#Print table w/basic info to the log
+		basicTable = [tableHeaders, tableRow]
+		basicTableStr = tableString(basicTable, True, None, roundDigits=4)
+		self.logMessage(basicTableStr)
+
+		#Print out the name/function text of the error metric being used (if there
+		#is only one), or the rate & name/function text if more than one is being
+		#used
+		for metric, result in metrics:
+			self.logMessage("METRIC: ")
+
+			if inspect.isfunction(metric):
+				metricFuncLines = inspect.getsourcelines(metric)
+				for metricFuncLine in metricFuncLines:
+					self.logMessage(metricFuncLine)
+			else:
+				self.logMessage(str(metric))
+
+			if multipleMetrics:
+				self.logMessage("Result: ")
+				self.logMessage(str(result), False)
+
+		#if extraInfo is not null, we create a new table and add all values in
+		#extraInfo
+		if extraInfo is not None:
+			extraTableHeaders = []
+			extraTableValues = []
+			for key, value in extraInfo:
+				extraTableHeaders.append(str(key))
+				extraTableValues.append(str(value))
+			extraTable = [extraTableHeaders, extraTableValues]
+			self.logMessage(tableString(extraTable, True, None, roundDigits=4))
+
+
 		#Write the function defining the classifier to the log. If it is
 		#a string, write it directly.  Else use inspect to turn the function
 		#into a string
 		if isinstance(function, (str, unicode)):
-			tableRow.append(function)
+			self.logMessage(str(function))
 		else:
-			tableRow.append(inspect.getsourcelines(function))
-
-		#Write performance metrics
-		for metric in metrics:
-			tableRow.append(str(metrics[metric]))
-
-		#if extraInfo is not null, we append all values in the dictionary to tableRow list
-		if extraInfo is not None:
-			for key, value in extraInfo:
-				tableRow.append(str(value))
+			funcLines = inspect.getsourcelines(function)
+			for funcLine in funcLines:
+				self.logMessage(funcLine)
 
 
 def main():

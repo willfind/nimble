@@ -1,5 +1,5 @@
-import ..combinations.Combinations
-import ..performance.performance_interface
+import combinations.Combinations
+import performance.performance_interface
 
 
 def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, performanceMetricFuncs):
@@ -32,7 +32,7 @@ def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, per
 	rawResult = Combinations.executeCode(function, functionArgs)
 
 	#now we need to compute performance metric(s) for all prediction sets
-	results = performance_interface.computeMetrics(testLabels, knownValues=None, rawResult, perfomanceMetricFuncs)
+	results = performance_interface.computeMetrics(testLabels, None, rawResult, perfomanceMetricFuncs)
 	return results
 
 #TODO this is a helper, move to utilities package?
@@ -56,7 +56,7 @@ def copyLabels(dataSet, dependentVar):
 		#The known Indicator argument already contains all known
 		#labels, so we do not need to do any further processing
 		labels = dependentVar
-	elif isinstance(dependentVar, (str, unicode, int):
+	elif isinstance(dependentVar, (str, unicode, int)):
 		#known Indicator is an index; we extract the column it indicates
 		#from knownValues
 		labels = dataSet.copyColumns([dependentVar])
