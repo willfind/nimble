@@ -4,7 +4,6 @@ if __name__ == "__main__" and __package__ is None:
 	# add UML parent directory to sys.path
 	sys.path.append(sys.path[0].rsplit('/',2)[0])
 	import UML
-	import UML.logging
 	__package__ = "UML.logging"
 
 import datetime
@@ -48,12 +47,13 @@ class HumanReadableRunLog(Logger):
 		tableHeaders = []
 		tableRow = []
 
+		tableHeaders.append("Timestamp")
 		tableRow.append(str(datetime.datetime.now()))
 
-		#add # of training points, # of of features to output list
+		#add number of training points, # of of features to output list
 		if trainData.data is not None:
-			tableHeaders.append("# training instances")
-			tableHeaders.append("# training features")
+			tableHeaders.append("Training instances")
+			tableHeaders.append("Training features")
 			tableRow.append(str(trainData.data.shape[0]))
 			tableRow.append(str(trainData.data.shape[1]))
 		else:
@@ -64,8 +64,8 @@ class HumanReadableRunLog(Logger):
 		
 		#add # of testing points to output list
 		if testData.data is not None:
-			tableHeaders.append("# testing instances")
-			tableHeaders.append("# testing features")
+			tableHeaders.append("Testing instances")
+			tableHeaders.append("Testing features")
 			tableRow.append(str(testData.data.shape[0]))
 			tableRow.append(str(testData.data.shape[1]))
 		else:
@@ -93,8 +93,8 @@ class HumanReadableRunLog(Logger):
 		#Print out the name/function text of the error metric being used (if there
 		#is only one), or the rate & name/function text if more than one is being
 		#used
-		for metric, result in metrics:
-			self.logMessage("METRIC: ")
+		for metric, result in metrics.iteritems():
+			self.logMessage("Metric: ")
 
 			if inspect.isfunction(metric):
 				metricFuncLines = inspect.getsourcelines(metric)
@@ -122,12 +122,14 @@ class HumanReadableRunLog(Logger):
 		#Write the function defining the classifier to the log. If it is
 		#a string, write it directly.  Else use inspect to turn the function
 		#into a string
+		self.logMessage("")
+		self.logMessage("Function:")
 		if isinstance(function, (str, unicode)):
 			self.logMessage(str(function))
 		else:
 			funcLines = inspect.getsourcelines(function)
-			for funcLine in funcLines:
-				self.logMessage(funcLine)
+			for i in range(len(funcLines) - 1):
+				self.logMessage(str(funcLines[i]))
 
 
 def main():
@@ -141,11 +143,11 @@ def main():
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
 	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")
-	testLogger.logTestRun(trainData1, testData1, functionStr, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logTestRun(trainData1, testData1, functionObj, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash)
 
 if __name__ == "__main__":
 	main()

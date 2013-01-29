@@ -16,8 +16,7 @@ import numpy
 		parameters of algorithm
 		performance metric(s)
 		results of performance metric
-
-
+		Any additional information
 """
 class Logger(object):
 

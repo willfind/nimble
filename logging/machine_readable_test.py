@@ -4,8 +4,7 @@ if __name__ == "__main__" and __package__ is None:
 	# add UML parent directory to sys.path
 	sys.path.append(sys.path[0].rsplit('/',2)[0])
 	import UML
-	import UML.logging
-	__package__ = "UML.logger"
+	__package__ = "UML.logging"
 
 import datetime
 import numpy
@@ -38,11 +37,11 @@ class MachineReadableRunLog(Logger):
 
 		#Create a string to be logged (as one line), and add dimensions and the function
 		logLine = "{RUN}::"
-		logLine += createMRLineElement("time", str(datetime.datetime.now()))
-		logLine += createMRLineElement("numTrainDataPoints", str(trainData.data.shape[0]))
-		logLine += createMRLineElement("numTrainDataFeatures", str(trainData.data.shape[1]))
-		logLine += createMRLineElement("numTestDataPoints", str(testData.data.shape[0]))
-		logLine += createMRLineElement("numTestDataFeatures", str(testData.data.shape[1]))
+		logLine += createMRLineElement("timestamp", str(datetime.datetime.now()))
+		logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[0])
+		logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
+		logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
+		logLine += createMRLineElement("numTestDataFeatures", testData.data.shape[1])
 
 		if isinstance(function, (str, unicode)):
 			logLine += createMRLineElement("function", function)
@@ -59,10 +58,10 @@ class MachineReadableRunLog(Logger):
 		#add any extraInfo to the log string
 		if extraInfo is not None:
 			for key, value in extraInfo.items():
-				logLine += createMRLineElement(key, str(value))
+				logLine += createMRLineElement(key, value)
 
 		for metric, result in metrics.items():
-			logLine += createMRLineElement(str(metric), str("{0:.4f}").format(result))
+			logLine += createMRLineElement(str(metric), result)
 
 		if logLine[len(logLine)-1] == ',':
 			logLine = logLine[:-1]
@@ -91,18 +90,22 @@ def parseLog(pathToLogFile):
 def parseLoggedRun(loggedRun):
 	"""
 		Convert one line of a log file - which represents output information of one run - into
-		a dictionary containing the same information, keyed by standard labels (see 
+		a dictionary containing the same information, keyed by standard labels (see
 		MachineReadableRunLog.logTestRun() for examples of labels that are used).
 	"""
 	runDict = {}
 	elements = re.split(r"[^\\],", loggedRun)
 	for element in elements:
-		parts = re.split(r"([^\\]\\\\|[^\\]):", element)
+		parts = re.split(r"[^\\](\\\\)*:", element)
 		#we expect that each element has two parts (they should be of the form
 		#key:value), so if there are more or fewer than 2, we raise an exception
 		if len(parts):
 			raise Exception("Badly formed line in log of runs")
-		runDict[parts[0]] = parts[1]
+
+		key = parts[0]
+		value = parts[1]
+		unSanitizedValue = unSanitizeStringFromLog(value)
+		runDict[key] = unSanitizedValue
 
 	return runDict
 
@@ -110,24 +113,33 @@ def createMRLineElement(key, value, addComma=True):
 	"""
 		TODO: add docstring
 	"""
-	processedValue = sanitizeStringForLog(value)
-	result = key+":\""+processedValue+"\""
+	if isinstance(value, (bool, int, long, float)):
+		processedValue = str(value)
+	else:
+		processedValue = "\""+sanitizeStringForLog(value)+"\""
+	result = key+":"+processedValue
 	if addComma:
 		result += ","
 
 	return result
 
-#TODO fill out body of function
 def unSanitizeStringFromLog(sanitizedString):
 	"""
 		Replace escaped versions of characters within sanitizedString with the original,
-		unescaped version.  Mirror opposite of sanitizeStringForLog: where sanitize...()
-		replaces newLines with \\n, unSanitize replaces \\n with a newline.
+		unescaped version.  Mirror opposite of sanitizeStringForLog: where sanitize
+		replaces newLines with '\n', unSanitize replaces '\n' with a newline.
 	"""
-	fixedString = ""
-	fixedString = fixedString.replace("\\\\", "\\")
-	
-	return
+	if len(sanitizedString) < 2:
+		return sanitizedString
+
+	if re.search(r"[^\\](\\\\)*\\\\$", sanitizedString) != None:
+		sanitizedString = sanitizedString[:-1]
+	sanitizedString = re.sub(r"([^\\])(\\\\)*(\\n)", '\1\2\n', sanitizedString)
+	sanitizedString = re.sub(r"([^\\])(\\\\)*(\\r)", '\1\2\r', sanitizedString)
+	sanitizedString = re.sub(r"([^\\])(\\\\)*(\\:)", '\1\2:', sanitizedString)
+	sanitizedString = re.sub(r"([^\\])(\\\\)*(\\,)", '\1\2,', sanitizedString)
+
+	return sanitizedString
 
 def sanitizeStringForLog(rawString):
 	"""
@@ -138,9 +150,13 @@ def sanitizeStringForLog(rawString):
 	"""
 
 	if rawString is None or rawString == "":
-		return
+		return ""
 
-	rawString = rawString.replace("\\", "\\\\")
+	#escape trailing backslash, if it is not already escaped
+	if re.search(r"[^\\](\\\\)*\\$", rawString) != None:
+		rawString = rawString + '\\'
+
+	#add preceding backslash to all special characters
 	rawString = rawString.replace("\"", "\\\"")
 	rawString = rawString.replace("\n", "\\n")
 	rawString = rawString.replace("\r", "\\r")
@@ -160,7 +176,7 @@ def main():
 	return 0"""
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
-	testLogger = MachineReadableRunLog("/Users/rossnoren/UMLMisc/mrTest1.txt")
+	testLogger = MachineReadableRunLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
 	testLogger.logTestRun(trainData1, testData1, functionStr, metricsHash)
 
 	functionObj = lambda x: x+1

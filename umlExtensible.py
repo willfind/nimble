@@ -17,17 +17,34 @@ from .interfaces import mlpy
 from .processing import CooSparseData
 from .processing import DenseMatrixData
 from .processing import RowListData
+from .logging.log_manager import LogManager
 from .utility import ArgumentException
 
 
-def run(package, algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
+def run(package, algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, sendToLog=True):
 	if package == 'mahout':
+		if sendToLog:
+			funcString = 'mahout('+algorithm+', trainData, testData, output, dependentVar, arguments)'
+			#LogManager.logRun(trainData, testData, funcString, None, extraInfo=arguments)
+
 		return mahout(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'regressor':
+		if sendToLog:
+			funcString = 'regressors('+algorithm+', trainData, testData, output, dependentVar, arguments)'
+			#LogManager.logRun(trainData, testData, funcString, None, extraInfo=arguments)
+
 		return regressors(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'sciKitLearn':
+		if sendToLog:
+			funcString = 'sciKitLearn('+algorithm+', trainData, testData, output, dependentVar, arguments)'
+			#LogManager.logRun(trainData, testData, funcString, None, extraInfo=arguments)
+
 		return sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'mlpy':
+		if sendToLog:
+			funcString = 'mlpy('+algorithm+', trainData, testData, output, dependentVar, arguments)'
+			#LogManager.logRun(trainData, testData, funcString, None, extraInfo=arguments)
+
 		return mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'self':
 		raise ArgumentException("self modifcation not yet implemented")

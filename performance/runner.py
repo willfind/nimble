@@ -1,4 +1,4 @@
-import .combinations.Combinations
+import ..combinations.Combinations
 import performance_interface
 
 
