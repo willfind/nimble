@@ -376,22 +376,22 @@ def test_copyReferences_sameReference():
 
 
 ###################
-# duplicatePoints #
+# copyPoints #
 ###################
 
 @raises(ArgumentException)
-def test_duplicatePoints_exceptionNone():
-	""" Test CooSparse duplicatePoints() for exception when argument is None """
-	duplicatePoints_exceptionNone(constructor)
+def test_copyPoints_exceptionNone():
+	""" Test CooSparse copyPoints() for exception when argument is None """
+	copyPoints_exceptionNone(constructor)
 
 @raises(ArgumentException)
-def test_duplicatePoints_exceptionNonIndex():
-	""" Test CooSparse duplicatePoints() for exception when a value in the input is not a valid index """
-	duplicatePoints_exceptionNonIndex(constructor)
+def test_copyPoints_exceptionNonIndex():
+	""" Test CooSparse copyPoints() for exception when a value in the input is not a valid index """
+	copyPoints_exceptionNonIndex(constructor)
 
-def test_duplicatePoints_handmadeContents():
-	""" Test CooSparse duplicatePoints() returns the correct data """
-	duplicatePoints_handmadeContents(constructor)
+def test_copyPoints_handmadeContents():
+	""" Test CooSparse copyPoints() returns the correct data """
+	copyPoints_handmadeContents(constructor)
 
 
 #####################

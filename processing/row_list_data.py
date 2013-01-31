@@ -521,7 +521,7 @@ class RowListData(BaseData):
 	def _duplicate_implementation(self):
 		return RowListData(deepcopy(self.data), deepcopy(self.featureNames))
 
-	def _duplicatePoints_implementation(self, points):
+	def _copyPoints_implementation(self, points):
 		points.sort()
 		retData = []
 		for index in points:

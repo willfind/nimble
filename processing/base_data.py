@@ -610,7 +610,7 @@ class BaseData(object):
 		"""
 		return self._duplicate_implementation()
 
-	def duplicatePoints(self, points):
+	def copyPoints(self, points):
 		"""
 		Return a new object which consists only of those specified points, without mutating
 		this object.
@@ -623,7 +623,7 @@ class BaseData(object):
 			if index < 0 or index >= self.points():
 				raise ArgumentException("input must contain only valid indices")
 
-		retObj = self._duplicatePoints_implementation(points)
+		retObj = self._copyPoints_implementation(points)
 		retObj._renameMultipleFeatureNames_implementation(self.featureNames,True)
 		return retObj
 	

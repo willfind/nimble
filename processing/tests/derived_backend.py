@@ -881,28 +881,28 @@ def copyReferences_sameReference(constructor):
 	assert orig.data is other.data
 
 ###################
-# duplicatePoints #
+# copyPoints #
 ###################
 
-def duplicatePoints_exceptionNone(constructor):
-	""" Test duplicatePoints() for exception when argument is None """
+def copyPoints_exceptionNone(constructor):
+	""" Test copyPoints() for exception when argument is None """
 
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
 	orig = constructor(data1, featureNames)
-	orig.duplicatePoints(None)
+	orig.copyPoints(None)
 
-def duplicatePoints_exceptionNonIndex(constructor):
-	""" Test duplicatePoints() for exception when a value in the input is not a valid index """
+def copyPoints_exceptionNonIndex(constructor):
+	""" Test copyPoints() for exception when a value in the input is not a valid index """
 	
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
 	orig = constructor(data1, featureNames)
-	orig.duplicatePoints([1,'yes'])
+	orig.copyPoints([1,'yes'])
 
 
-def duplicatePoints_handmadeContents(constructor):
-	""" Test duplicatePoints() returns the correct data """
+def copyPoints_handmadeContents(constructor):
+	""" Test copyPoints() returns the correct data """
 
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
@@ -912,7 +912,7 @@ def duplicatePoints_handmadeContents(constructor):
 	data2 = [[1,2,3],[2,4,6]]
 	expRet = constructor(data2, featureNames)
 
-	ret = orig.duplicatePoints([1,2])
+	ret = orig.copyPoints([1,2])
 
 	assert orig.equals(expOrig)
 	assert ret.equals(expRet)
