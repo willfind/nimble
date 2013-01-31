@@ -59,7 +59,7 @@ def copyLabels(dataSet, dependentVar):
 	elif isinstance(dependentVar, (str, unicode, int)):
 		#known Indicator is an index; we extract the column it indicates
 		#from knownValues
-		labels = dataSet.copyColumns([dependentVar])
+		labels = dataSet.copyFeatures([dependentVar])
 	else:
 		raise ArgumentException("Missing or improperly formatted indicator for known labels in computeMetrics")
 

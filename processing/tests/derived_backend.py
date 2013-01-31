@@ -919,6 +919,44 @@ def duplicatePoints_handmadeContents(constructor):
 
 
 
+#####################
+# copyFeatures #
+#####################
 
+
+def copyFeatures_exceptionNone(constructor):
+	""" Test copyFeatures() for exception when argument is None """
+
+	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	orig = constructor(data1, featureNames)
+	orig.copyFeatures(None)
+
+
+def copyFeatures_exceptionNonIndex(constructor):
+	""" Test copyFeatures() for exception when a value in the input is not a valid index """
+	
+	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	orig = constructor(data1, featureNames)
+	orig.copyFeatures([1,'yes'])
+
+
+def copyFeatures_handmadeContents(constructor):
+	""" Test copyFeatures() returns the correct data """
+
+	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	orig = constructor(data1, featureNames)
+	expOrig = constructor(data1, featureNames)
+
+	data2 = [[1,2],[1,2],[2,4],[0,0]]
+
+	expRet = constructor(data2, ['one','two'])
+
+	ret = orig.copyFeatures([0,'two'])
+
+	assert orig.equals(expOrig)
+	assert ret.equals(expRet)
 
 

@@ -379,3 +379,23 @@ def test_duplicatePoints_handmadeContents():
 	""" Test RLD duplicatePoints() returns the correct data """
 	duplicatePoints_handmadeContents(constructor)
 
+
+#####################
+# copyFeatures #
+#####################
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionNone():
+	""" Test RLD copyFeatures() for exception when argument is None """
+	copyFeatures_exceptionNone(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionNonIndex():
+	""" Test RLD copyFeatures() for exception when a value in the input is not a valid index """
+	copyFeatures_exceptionNonIndex(constructor)
+
+
+def test_copyFeatures_handmadeContents():
+	""" Test RLD copyFeatures() returns the correct data """
+	copyFeatures_handmadeContents(constructor)
+

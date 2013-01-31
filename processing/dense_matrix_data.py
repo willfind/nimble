@@ -413,5 +413,14 @@ class DenseMatrixData(BaseData):
 
 		return DenseMatrixData(ret)
 
+	def _copyFeatures_implementation(self, indices):
+		ret = self.data[:,indices]
+
+		# construct featureName list
+		featureNameList = []
+		for index in indices:
+			featureNameList.append(self.featureNamesInverse[index])
+
+		return DenseMatrixData(ret, featureNameList)
 
 

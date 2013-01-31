@@ -627,7 +627,7 @@ class BaseData(object):
 		retObj._renameMultipleFeatureNames_implementation(self.featureNames,True)
 		return retObj
 	
-	def duplicateFeatures(self, features):
+	def copyFeatures(self, features):
 		"""
 		Return a new object which consists only of those specified features, without mutating
 		this object.
@@ -635,8 +635,11 @@ class BaseData(object):
 		"""
 		if features is None:
 			raise ArgumentException("Must provide identifiers for the features you want duplicated")
-		#TODO
-		raise NotImplementedError
+		indices = []
+		for identifier in features:
+			indices.append(self._getIndex(identifier))
+
+		return self._copyFeatures_implementation(indices)
 
 
 	####################

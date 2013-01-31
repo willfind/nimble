@@ -529,6 +529,22 @@ class RowListData(BaseData):
 
 		return RowListData(retData)
 
+	def _copyFeatures_implementation(self, indices):
+		ret = []
+		for point in self.data:
+			retPoint = []
+			for i in indices:
+				retPoint.append(point[i])
+			ret.append(retPoint)
+
+		# construct featureName list
+		featureNameList = []
+		for i in indices:
+			featureNameList.append(self.featureNamesInverse[i])
+
+		return RowListData(ret, featureNameList)
+
+
 	###########
 	# Helpers #
 	###########
