@@ -21,16 +21,10 @@ if __name__ == "__main__":
 	testObj = data('DenseMatrixData', data2)
 
 	runnerFuncStr = """def logisticRegr(trainX, testX, dependentVar):
-		return run('sciKitLearn', 'LogisticRegression', trainX, testX, dependentVar)
+		return run('sciKitLearn', 'LogisticRegression', trainX, testX, dependentVar, False)
 		"""
 
 	metricFuncs = []
 	metricFuncs.append(classificationError)
 
-	results = runAndTest(trainObj, testObj, trainDependentVar=3, testDependentVar=3, function=runnerFuncStr, performanceMetricFuncs=metricFuncs)
-
-	hrLog = HumanReadableRunLog("~/fullCycleLogHR.txt")
-	mrLog = MachineReadableRunLog("~/fullCycleLogMR.txt")
-	
-	hrLog.logRun(trainObj, testObj, runnerFuncStr, results)
-	mrLog.logRun(trainObj, testObj, runnerFuncStr, results)
+	results = runAndTest(trainObj, testObj, trainDependentVar=3, testDependentVar=3, function=runnerFuncStr, performanceMetricFuncs=metricFuncs, sendToLog=True)
