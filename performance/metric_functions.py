@@ -12,7 +12,7 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 
 	n=0.0
 	runningTotal=0.0
-	for i in xrange(predictedValues.rows()):
+	for i in xrange(predictedValues.points()):
 		pV = predictedValues.data[i,0]
 		aV = knownValues.data[i,0]
 		runningTotal = loopFunction(aV, pV, runningTotal)
