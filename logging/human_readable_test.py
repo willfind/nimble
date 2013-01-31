@@ -6,7 +6,7 @@ if __name__ == "__main__" and __package__ is None:
 	import UML
 	__package__ = "UML.logging"
 
-import datetime
+import time
 import numpy
 import inspect
 
@@ -44,75 +44,47 @@ class HumanReadableRunLog(Logger):
 		if not self.isAvailable:
 			self.setup()
 
+		self.logMessage('*'*80)
+
 		tableHeaders = []
 		tableRow = []
 
 		tableHeaders.append("Timestamp")
-		tableRow.append(str(datetime.datetime.now()))
+		tableRow.append(time.strftime('%Y-%m-%d %H:%M:%S'))
 
 		#add number of training points, # of of features to output list
 		if trainData.data is not None:
-			tableHeaders.append("Training instances")
-			tableHeaders.append("Training features")
+			tableHeaders.append("Training points")
 			tableRow.append(str(trainData.data.shape[0]))
-			tableRow.append(str(trainData.data.shape[1]))
+			if testData.data is not None:
+				tableHeaders.append("Testing points")
+				tableRow.append(str(testData.data.shape[0]))
+				if trainData.data.shape[1] == testData.data.shape[1]:
+					tableHeaders.append("Train/Test features")
+					tableRow.append(str(trainData.data.shape[1]))
+				else:
+					tableHeaders.append("Training features")
+					tableRow.append(str(trainData.data.shape[1]))
+					tableHeaders.append("Testing features")
+					tableRow.append(str(testData.data.shape[1]))
+			else:
+				tableHeaders.append("Training features")
+				tableRow.append(str(trainData.data.shape[1]))
 		else:
-			tableHeaders.append("")
-			tableHeaders.append("")
-			tableRow.append("")
-			tableRow.append("")
-		
-		#add # of testing points to output list
-		if testData.data is not None:
-			tableHeaders.append("Testing instances")
-			tableHeaders.append("Testing features")
-			tableRow.append(str(testData.data.shape[0]))
-			tableRow.append(str(testData.data.shape[1]))
-		else:
-			tableHeaders.append("")
-			tableHeaders.append("")
-			tableRow.append("")
-			tableRow.append("")
-
-
-		#Write performance metrics
-		#if there is one performance metric, add to the table.
-		#Otherwise, put all metrics into a separate section.
-		multipleMetrics = True
-		if len(metrics) == 1:
-			multipleMetrics = False
-			for metric, result in metrics:
-				tableHeaders.append("Error Rate")
-				tableRow.append(str(result))
+			tableHeaders.append("Training points")
+			tableHeaders.append("0")
 
 		#Print table w/basic info to the log
 		basicTable = [tableHeaders, tableRow]
 		basicTableStr = tableString(basicTable, True, None, roundDigits=4)
 		self.logMessage(basicTableStr)
 
-		#Print out the name/function text of the error metric being used (if there
-		#is only one), or the rate & name/function text if more than one is being
-		#used
-		for metric, result in metrics.iteritems():
-			self.logMessage("Metric: ")
-
-			if inspect.isfunction(metric):
-				metricFuncLines = inspect.getsourcelines(metric)
-				for metricFuncLine in metricFuncLines:
-					self.logMessage(metricFuncLine)
-			else:
-				self.logMessage(str(metric))
-
-			if multipleMetrics:
-				self.logMessage("Result: ")
-				self.logMessage(str(result), False)
-
 		#if extraInfo is not null, we create a new table and add all values in
 		#extraInfo
 		if extraInfo is not None:
 			extraTableHeaders = []
 			extraTableValues = []
-			for key, value in extraInfo:
+			for key, value in extraInfo.iteritems():
 				extraTableHeaders.append(str(key))
 				extraTableValues.append(str(value))
 			extraTable = [extraTableHeaders, extraTableValues]
@@ -127,9 +99,30 @@ class HumanReadableRunLog(Logger):
 		if isinstance(function, (str, unicode)):
 			self.logMessage(str(function))
 		else:
-			funcLines = inspect.getsourcelines(function)
-			for i in range(len(funcLines) - 1):
-				self.logMessage(str(funcLines[i]))
+			funcLines = inspect.getsourcelines(function)[0]
+			for funcLine in funcLines:
+				self.logMessage(str(funcLine))
+
+		#Print out the name/function text of the error metric being used (if there
+		#is only one), or the rate & name/function text if more than one is being
+		#used
+		for metric, result in metrics.iteritems():
+			metricHeaders = []
+			metricRow = []
+			metricHeaders.append("Error rate")
+			metricHeaders.append("Error Metric")
+			metricRow.append(str(result))
+
+			if inspect.isfunction(metric):
+				metricFuncLines = inspect.getsourcelines(metric)[0]
+				metricString = ""
+				for metricFuncLine in metricFuncLines:
+					metricString += metricFuncLine
+			else:
+				metricString = str(metric)
+			metricRow.append(metricString)
+			metricTableList = [metricHeaders, metricRow]
+			self.logMessage(tableString(metricTableList, True, None, roundDigits=4))
 
 
 def main():
@@ -141,13 +134,14 @@ def main():
 	functionStr = """def f():
 	return 0"""
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
+	extra = {"c":0.5, "folds":10, "tests": 20}
 
 	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")
-	testLogger.logRun(trainData1, testData1, functionStr, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, extra)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, extra)
 
 if __name__ == "__main__":
 	main()
