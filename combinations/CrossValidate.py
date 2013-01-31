@@ -24,9 +24,14 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}):
 			dataHash["trainX"] = curTrainX; dataHash["testX"] = curTestX	#assumes that the function text in functionsToApply uses these variables
 			dataHash["trainY"] = curTrainY; dataHash["testY"] = curTestY
 			curResults.append(Combinations.executeCode(function, dataHash))
-		correct = sum(sum(curResults))
-		total = float(len(curResults))
-		aggregatedResults[function] = correct/total #NOTE: this could be bad if the sets have different size!!
+		# average across all folds
+		avg = 0.
+		denom = 0.
+		for result in curResults:
+			for v in result.values():
+				avg += v
+				denom += 1
+		aggregatedResults[function] = avg/denom #NOTE: this could be bad if the sets have different size!!
 	return aggregatedResults
 
 

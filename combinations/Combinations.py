@@ -10,6 +10,8 @@ Representation:
 import re  # regular expression library
 import math
 
+from UML import *
+
 TEXT_START = "\t\t\t------"
 TEXT_END = "------"
 

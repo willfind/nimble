@@ -17,7 +17,7 @@ from .interfaces import mlpy
 from .processing import CooSparseData
 from .processing import DenseMatrixData
 from .processing import RowListData
-from .logging.log_manager import LogManager
+#from .logging.log_manager import LogManager
 from .utility import ArgumentException
 
 

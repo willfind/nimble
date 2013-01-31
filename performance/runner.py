@@ -1,5 +1,7 @@
-import ..combinations.Combinations
+from UML.combinations.Combinations import executeCode
 import performance_interface
+from UML.processing import BaseData
+from UML import run
 
 
 def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, performanceMetricFuncs):
@@ -29,7 +31,26 @@ def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, per
 					}
 
 	#rawResults contains predictions for each version of a learning function in the combos list
-	rawResult = Combinations.executeCode(function, functionArgs)
+	rawResult = executeCode(function, functionArgs)
+
+	#now we need to compute performance metric(s) for all prediction sets
+	results = performance_interface.computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs)
+	return results
+
+
+def runAndTestDirect(package, algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs):
+	#Need to make copies of all data, in case it will be modified before a classifier is trained
+	trainX = trainX.duplicate()
+	testX = testX.duplicate()
+	
+	if testDependentVar is None and isinstance(trainDependentVar, (str, unicode, int)):
+		testDependentVar = trainDependentVar
+
+	trainDependentVar = copyLabels(trainX, trainDependentVar)
+	testDependentVar = copyLabels(testX, testDependentVar)
+
+	#rawResults contains predictions for each version of a learning function in the combos list
+	rawResult = run(package, algorithm, trainX, testX, dependentVar=trainDependentVar, arguments=arguments)
 
 	#now we need to compute performance metric(s) for all prediction sets
 	results = performance_interface.computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs)
