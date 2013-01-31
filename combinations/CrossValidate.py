@@ -3,7 +3,7 @@ from .. import run
 #import DenseMatrix
 
 
-def crossValidate(X, Y, functionsToApply, numFolds=10):
+def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}):
 	"""applies crossValidation using numFolds folds, applying each function in the list functionsToApply (which are text of python functions)
 	one by one. Assumes that thefunctionsToApply is a list of the text functions, that use the variables trainX, trainY, testX, testY within
 	their text."""
@@ -20,7 +20,7 @@ def crossValidate(X, Y, functionsToApply, numFolds=10):
 				curTrainY, curTestY = YIterator.next()
 			except StopIteration:	#once we've gone through all the folds, this exception gets thrown and we're done!
 					break
-			dataHash = {}
+			dataHash = extraParams
 			dataHash["trainX"] = curTrainX; dataHash["testX"] = curTestX	#assumes that the function text in functionsToApply uses these variables
 			dataHash["trainY"] = curTrainY; dataHash["testY"] = curTestY
 			curResults.append(Combinations.executeCode(function, dataHash))
@@ -30,11 +30,16 @@ def crossValidate(X, Y, functionsToApply, numFolds=10):
 	return aggregatedResults
 
 
-def crossValidateReturnBest(X, Y, functionsToApply, minimize, numFolds=10):
+def crossValidateReturnBest(X, Y, functionsToApply, mode, numFolds=10, extraParams={}):
 	"""runs cross validation on the functions whose text is in the list functionsToApply, and returns the text of the best performer together with
 	its performance"""
-	if not isinstance(minimize, bool): raise Exception("minimize must be True or False!")
-	resultsHash = crossValidate(X,Y, functionsToApply=functionsToApply, numFolds=numFolds)
+	if mode == 'min':
+		minimize = True
+	elif mode == 'max':
+		minimize = False
+	else:
+		raise Exception("mode must be either 'min' or 'max' depending on the desired solution")
+	resultsHash = crossValidate(X,Y, functionsToApply=functionsToApply, numFolds=numFolds, extraParams=extraParams)
 	if minimize: bestPerformance = float('inf')
 	else: bestPerformance = float('-inf')
 	bestFuncText = None
