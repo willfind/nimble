@@ -21,7 +21,7 @@ if __name__ == "__main__":
 	testObj = data('DenseMatrixData', data2)
 
 	runnerFuncStr = """def logisticRegr(trainX, testX, dependentVar):
-		return run('sciKitLearn', 'LogisticRegression', trainX, testX, dependentVar, False)
+		return run('sciKitLearn.LogisticRegression', trainX, testX, dependentVar, False)
 		"""
 
 	metricFuncs = []

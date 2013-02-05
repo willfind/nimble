@@ -8,6 +8,7 @@ import numpy
 
 from UML import run
 from UML import data
+from .utility import ArgumentException
 
 
 # run() with a return type of the predicted labels added back into the object?
@@ -24,7 +25,7 @@ def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, load
 
 
 
-def normalize(package, algorithm, trainData, testData, dependentVar=None, arguments={}, mode=True):
+def normalize(algorithm, trainData, testData, dependentVar=None, arguments={}, mode=True):
 	"""
 	Calls on the functionality of a package to train on some data and then modify both
 	the training data and a set of test data accroding to the produced model.
@@ -36,22 +37,25 @@ def normalize(package, algorithm, trainData, testData, dependentVar=None, argume
 		testLength = testData.points()
 		# glue training data at the end of test data
 		testData.appendPoints(trainData)
-		normalizedAll = run(package, algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
+		try:
+			normalizedAll = run(algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
+		except ArgumentException:
+			testData.extractPoints(start=testLength, end=normalizedAll.points())
 		# resplit normalized
 		normalizedTrain = normalizedAll.extractPoints(start=testLength, end=normalizedAll.points())
 		normalizedTest = normalizedAll
 	# two call normalize, no data combination
 	else:
-		normalizedTrain = run(package, algorithm, trainData, trainData, dependentVar=dependentVar, arguments=arguments)
-		normalizedTest = run(package, algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
+		normalizedTrain = run(algorithm, trainData, trainData, dependentVar=dependentVar, arguments=arguments)
+		normalizedTest = run(algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
 		
 	# modify references for trainData and testData
 	trainData.copyReferences(normalizedTrain)
 	testData.copyReferences(normalizedTest)
 
 
-def runWithClassificationError(package, algorithm, trainDataX, trainDataY, testDataX, testDataY, arguments={}):
-	ret = run(package, algorithm, trainDataX, testDataX, dependentVar=trainDataY, arguments=arguments)
+def runWithClassificationError(algorithm, trainDataX, trainDataY, testDataX, testDataY, arguments={}):
+	ret = run(algorithm, trainDataX, testDataX, dependentVar=trainDataY, arguments=arguments)
 
 	results = []
 	for i in xrange(ret.points()):

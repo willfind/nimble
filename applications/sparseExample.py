@@ -21,7 +21,7 @@ if __name__ == "__main__":
 	sparseY = sparseAll.extractFeatures([0])
 	sparseX = sparseAll
 
-	ret = run('sciKitLearn', 'LogisticRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)
+	ret = run('sciKitLearn.LogisticRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)
 
 	ret.renameFeatureName(0, 'result')
 

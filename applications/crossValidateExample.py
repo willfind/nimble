@@ -21,7 +21,7 @@ if __name__ == "__main__":
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.15, loadType="DenseMatrixData", fileType="csv")
 
 	# run and test with a direct call to run()
-	toRun = 'runAndTestDirect("mlpy", "KNN", trainX, testX, trainY, testY, {"k":<1|5|10|50|100>}, [classificationError])'
+	toRun = 'runAndTestDirect("mlpy.KNN", trainX, testX, trainY, testY, {"k":<1|5|10|50|100>}, [classificationError])'
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTestDirect':runAndTestDirect, 'classificationError':classificationError}
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 	print performance
 
 	# run and test with a constructed call to run()
-	runCall = '\"run(\'mlpy\',\'KNN\', trainX, testX, dependentVar=dependentVar, arguments={\'k\':<1|5|10|50|100>})\"'
+	runCall = '"run(\'mlpy.KNN\', trainX, testX, dependentVar=dependentVar, arguments={\'k\':<1|5|10|50|100>})"'
 	toRun = 'runAndTest(trainX, testX, trainY, testY,' + runCall +',[classificationError])'
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError, 'run':run}

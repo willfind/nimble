@@ -19,8 +19,8 @@ if __name__ == "__main__":
 	data2 = [[1,0,0],[1,1,1],[5,1,1], [3,4,4]]
 	testObj = data('DenseMatrixData', data2)
 
-	normalize('mlpy', 'PCA', trainObj, testObj, arguments={'k':2})
-	ret = run('sciKitLearn', "KMeans", trainObj, testObj, arguments={'n_clusters':3})
+	normalize('mlpy.PCA', trainObj, testObj, arguments={'k':2})
+	ret = run('sciKitLearn.KMeans', trainObj, testObj, arguments={'n_clusters':3})
 
 	# clustering returns a row vector of indices, referring to the cluster centers,
 	# we don't care about the exact numbers, this verifies that the appropriate

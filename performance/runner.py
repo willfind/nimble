@@ -38,7 +38,7 @@ def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, per
 	return results
 
 
-def runAndTestDirect(package, algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs):
+def runAndTestDirect(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs):
 	#Need to make copies of all data, in case it will be modified before a classifier is trained
 	trainX = trainX.duplicate()
 	testX = testX.duplicate()
@@ -50,7 +50,7 @@ def runAndTestDirect(package, algorithm, trainX, testX, trainDependentVar, testD
 	testDependentVar = copyLabels(testX, testDependentVar)
 
 	#rawResults contains predictions for each version of a learning function in the combos list
-	rawResult = run(package, algorithm, trainX, testX, dependentVar=trainDependentVar, arguments=arguments)
+	rawResult = run(algorithm, trainX, testX, dependentVar=trainDependentVar, arguments=arguments)
 
 	#now we need to compute performance metric(s) for all prediction sets
 	results = performance_interface.computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs)
