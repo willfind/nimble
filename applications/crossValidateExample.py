@@ -25,7 +25,7 @@ if __name__ == "__main__":
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTestDirect':runAndTestDirect, 'classificationError':classificationError}
 
-	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='max', numFolds=10, extraParams=extraParams)
+	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=10, extraParams=extraParams)
 	print bestFunction
 	print performance
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError, 'run':run}
 
-	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='max', numFolds=10, extraParams=extraParams)
+	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=10, extraParams=extraParams)
 	print bestFunction
 	print performance
 
