@@ -54,18 +54,6 @@ def normalize(algorithm, trainData, testData, dependentVar=None, arguments={}, m
 	testData.copyReferences(normalizedTest)
 
 
-def runWithClassificationError(algorithm, trainDataX, trainDataY, testDataX, testDataY, arguments={}):
-	ret = run(algorithm, trainDataX, testDataX, dependentVar=trainDataY, arguments=arguments)
-
-	results = []
-	for i in xrange(ret.points()):
-		if ret.data[i,0] == testDataY.data[i,0]:
-			results.append([1])
-		else:
-			results.append([0])
-	return numpy.array(results)
-
-
 # def runWithPerformance()  # same as run, with extra parameter?
 
 #combinations() -- maybe
