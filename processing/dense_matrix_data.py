@@ -32,6 +32,14 @@ class DenseMatrixData(BaseData):
 			self.data = data.todense()
 		else:
 			self.data = numpy.matrix(data)
+
+		# check for any strings in the data
+		(x,y) = self.data.shape
+		for i in xrange(x):
+			for j in xrange(y):
+				if isinstance(self.data[i,j], basestring):
+					raise ArgumentException("DenseMatrixData does not accept strings in the input")
+
 		super(DenseMatrixData, self).__init__(featureNames)
 		
 
