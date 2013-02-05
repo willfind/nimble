@@ -451,6 +451,30 @@ def extractPoints_handmadeRangeRand_FM(constructor):
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
 
+def extractPoints_handmadeRangeDefaults(constructor):
+	""" Test extractPoints uses the correct defaults in the case of range based extraction """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	ret = toTest.extractPoints(end=1)
+	
+	expectedRet = constructor([[1,2,3],[4,5,6]],featureNames)
+	expectedTest = constructor([[7,8,9]],featureNames)
+	
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
+	toTest = constructor(data,featureNames)
+	ret = toTest.extractPoints(start=1)
+
+	expectedTest = constructor([[1,2,3]],featureNames)
+	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
+	
+	print ret.data
+	print expectedRet.data
+
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
 
 
 #TODO an extraction test where all data is removed

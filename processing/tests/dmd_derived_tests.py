@@ -177,7 +177,9 @@ def test_extractPoints_handmadeRangeRand_FM():
 	""" Test DMD extractPoints() against handmade output for randomized range extraction with featureNames """
 	extractPoints_handmadeRangeRand_FM(constructor)
 
-
+def test_extractPoints_handmadeRangeDefaults():
+	""" Test DMD extractPoints() uses the correct defaults in the case of range based extraction """
+	extractPoints_handmadeRangeDefaults(constructor)
 
 ####################
 # extractFeatures() #

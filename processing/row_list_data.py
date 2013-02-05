@@ -32,6 +32,9 @@ class RowListData(BaseData):
 		the init funciton of BaseData, to be interpreted there.
 
 		"""
+		# if input as a list, copy it
+		if isinstance(data, list):
+			data = deepcopy(data)
 		# if sparse, make dense
 		if isspmatrix(data):
 				data = data.todense()
@@ -172,10 +175,6 @@ class RowListData(BaseData):
 				return self._extractPointsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
-			if start is None:
-				start = 0
-			if end is None:
-				end = self.points()
 			if number is None:
 				number = end - start
 			if randomize:

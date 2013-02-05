@@ -178,6 +178,11 @@ def test_extractPoints_handmadeRangeRand_FM():
 	""" Test RLD extractPoints() against handmade output for randomized range extraction with featureNames """
 	extractPoints_handmadeRangeRand_FM(constructor)
 
+def test_extractPoints_handmadeRangeDefaults():
+	""" Test RLD extractPoints() uses the correct defaults in the case of range based extraction """
+	extractPoints_handmadeRangeDefaults(constructor)
+
+
 ####################
 # extractFeatures() #
 ####################

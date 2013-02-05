@@ -60,10 +60,6 @@ class CooSparseData(SparseData):
 				return self._extractFeaturesByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
-			if start is None:
-				start = 0
-			if end is None:
-				end = self.points()
 			if number is None:
 				number = end - start
 			if randomize:

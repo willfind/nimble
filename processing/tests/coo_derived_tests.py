@@ -181,6 +181,10 @@ def test_extractPoints_handmadeRangeRand_FM():
 	""" Test CooSparse extractPoints() against handmade output for randomized range extraction with featureNames """
 	extractPoints_handmadeRangeRand_FM(constructor)
 
+def test_extractPoints_handmadeRangeDefaults():
+	""" Test CooSparse extractPoints() uses the correct defaults in the case of range based extraction """
+	extractPoints_handmadeRangeDefaults(constructor)
+
 ####################
 # extractFeatures() #
 ####################
