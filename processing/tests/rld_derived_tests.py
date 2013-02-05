@@ -166,14 +166,17 @@ def test_extractPoints_exceptionInversion():
 	""" Test RLD extractPoints() for ArgumentException when start comes after end """
 	extractPoints_exceptionInversion(constructor)
 
-def test_extractPoints_handmade():
+def test_extractPoints_handmadeRange():
 	""" Test RLD extractPoints() against handmade output for range extraction """
-	extractPoints_handmade(constructor)
+	extractPoints_handmadeRange(constructor)
 
-def test_extractPoints_handmadeWithFeatureNames():
+def test_extractPoints_handmadeRangeWithFeatureNames():
 	""" Test RLD extractPoints() against handmade output for range extraction with featureNames """
-	extractPoints_handmadeWithFeatureNames(constructor)
+	extractPoints_handmadeRangeWithFeatureNames(constructor)
 
+def test_extractPoints_handmadeRangeRand_FM():
+	""" Test RLD extractPoints() against handmade output for randomized range extraction with featureNames """
+	extractPoints_handmadeRangeRand_FM(constructor)
 
 ####################
 # extractFeatures() #

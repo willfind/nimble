@@ -156,7 +156,7 @@ class RowListData(BaseData):
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				toExtract = random.sample(toExtract, number)
+				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
@@ -179,7 +179,9 @@ class RowListData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self._extractPointsByList_implementation(random.randrange(start,end,number))
+				toExtract = random.sample(xrange(start,end),number)
+				toExtract.sort()
+				return self._extractPointsByList_implementation(toExtract)
 			else:
 				return self._extractPointsByRange_implementation(start, end)
 
@@ -271,7 +273,8 @@ class RowListData(BaseData):
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				toExtract = random.sample(toExtract, number)
+				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
+				#toExtract = random.sample(toExtract, number)
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
@@ -298,7 +301,9 @@ class RowListData(BaseData):
 			if number is None:
 				number = end - start
 			if randomize:
-				return self._extractPointsByList_implementation(random.randrange(start,end,number))
+				toExtract = random.sample(xrange(start,end),number)
+				toExtract.sort()
+				return self._extractFeaturesByList_implementation(toExtract)
 			else:
 				return self._extractFeaturesByRange_implementation(start, end)
 

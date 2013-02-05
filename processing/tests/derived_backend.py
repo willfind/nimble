@@ -413,7 +413,7 @@ def extractPoints_exceptionInversion(constructor):
 	toTest = constructor(data,featureNames)
 	toTest.extractPoints(start=2,end=0)
 
-def extractPoints_handmade(constructor):
+def extractPoints_handmadeRange(constructor):
 	""" Test extractPoints() against handmade output for range extraction """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
@@ -425,7 +425,7 @@ def extractPoints_handmade(constructor):
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
 
-def extractPoints_handmadeWithFeatureNames(constructor):
+def extractPoints_handmadeRangeWithFeatureNames(constructor):
 	""" Test extractPoints() against handmade output for range extraction with featureNames """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
@@ -437,6 +437,20 @@ def extractPoints_handmadeWithFeatureNames(constructor):
 
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
+
+def extractPoints_handmadeRangeRand_FM(constructor):
+	""" Test extractPoints() against handmade output for randomized range extraction with featureNames """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	ret = toTest.extractPoints(start=0, end=2, number=2, randomize=True)
+	
+	expectedRet = constructor([[1,2,3],[4,5,6]],featureNames)
+	expectedTest = constructor([[7,8,9]],featureNames)
+	
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
 
 
 #TODO an extraction test where all data is removed
