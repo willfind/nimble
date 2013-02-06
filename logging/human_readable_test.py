@@ -20,7 +20,7 @@ class HumanReadableRunLog(Logger):
 		super(HumanReadableRunLog, self).__init__(logFileName)
 
 
-	def logRun(self, trainData, testData, function, metrics, extraInfo=None):
+	def logRun(self, trainData, testData, function, metrics, runTime, extraInfo=None):
 		"""
 			Convert a set of objects representing one run (data used for training, data used for
 			testing, function representing a unique classifier {algorithm, parameters}, error metrics,
@@ -54,25 +54,29 @@ class HumanReadableRunLog(Logger):
 
 		#add number of training points, # of of features to output list
 		if trainData.data is not None:
-			tableHeaders.append("Training points")
+			tableHeaders.append("Train points")
 			tableRow.append(str(trainData.data.shape[0]))
 			if testData.data is not None:
-				tableHeaders.append("Testing points")
+				tableHeaders.append("Test points")
 				tableRow.append(str(testData.data.shape[0]))
 				if trainData.data.shape[1] == testData.data.shape[1]:
 					tableHeaders.append("Train/Test features")
 					tableRow.append(str(trainData.data.shape[1]))
 				else:
-					tableHeaders.append("Training features")
+					tableHeaders.append("Train features")
 					tableRow.append(str(trainData.data.shape[1]))
-					tableHeaders.append("Testing features")
+					tableHeaders.append("Test features")
 					tableRow.append(str(testData.data.shape[1]))
 			else:
-				tableHeaders.append("Training features")
+				tableHeaders.append("Train features")
 				tableRow.append(str(trainData.data.shape[1]))
 		else:
-			tableHeaders.append("Training points")
+			tableHeaders.append("Train points")
 			tableHeaders.append("0")
+
+		if runTime is not None:
+			tableHeaders.append("Run Time")
+			tableRow.append("{0:.2f}".format(runTime))
 
 		#Print table w/basic info to the log
 		basicTable = [tableHeaders, tableRow]
@@ -106,23 +110,26 @@ class HumanReadableRunLog(Logger):
 		#Print out the name/function text of the error metric being used (if there
 		#is only one), or the rate & name/function text if more than one is being
 		#used
-		for metric, result in metrics.iteritems():
+		if metrics is not None:
+			metricTable = []
 			metricHeaders = []
-			metricRow = []
 			metricHeaders.append("Error rate")
 			metricHeaders.append("Error Metric")
-			metricRow.append(str(result))
+			metricTable.append(metricHeaders)
+			for metric, result in metrics.iteritems():
+				metricRow = []
+				metricRow.append(str(result))
 
-			if inspect.isfunction(metric):
-				metricFuncLines = inspect.getsourcelines(metric)[0]
-				metricString = ""
-				for metricFuncLine in metricFuncLines:
-					metricString += metricFuncLine
-			else:
-				metricString = str(metric)
-			metricRow.append(metricString)
-			metricTableList = [metricHeaders, metricRow]
-			self.logMessage(tableString(metricTableList, True, None, roundDigits=4))
+				if inspect.isfunction(metric):
+					metricFuncLines = inspect.getsourcelines(metric)[0]
+					metricString = ""
+					for metricFuncLine in metricFuncLines:
+						metricString += metricFuncLine
+				else:
+					metricString = str(metric)
+				metricRow.append(metricString)
+				metricTable.append(metricRow)
+			self.logMessage(tableString(metricTable, True, None, roundDigits=4))
 
 
 def main():
