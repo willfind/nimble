@@ -18,7 +18,7 @@ class MachineReadableRunLog(Logger):
 	def __init__(self, logFileName=None):
 		Logger.__init__(self, logFileName)
 
-	def logTestRun(self, trainData, testData, function, metrics, extraInfo=None):
+	def logRun(self, trainData, testData, function, metrics, runTime, extraInfo=None):
 		"""
 			Write one (data + classifer + error metrics) combination to a log file
 			in machine readable format.  Should include as much information as possible,
@@ -42,6 +42,7 @@ class MachineReadableRunLog(Logger):
 		logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
 		logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
 		logLine += createMRLineElement("numTestDataFeatures", testData.data.shape[1])
+		logLine += createMRLineElement("runTime", "{0:.2f}".format(runTime))
 
 		if isinstance(function, (str, unicode)):
 			logLine += createMRLineElement("function", function)
@@ -60,8 +61,9 @@ class MachineReadableRunLog(Logger):
 			for key, value in extraInfo.items():
 				logLine += createMRLineElement(key, value)
 
-		for metric, result in metrics.items():
-			logLine += createMRLineElement(str(metric), result)
+		if metrics is not None:
+			for metric, result in metrics.items():
+				logLine += createMRLineElement(str(metric), result)
 
 		if logLine[len(logLine)-1] == ',':
 			logLine = logLine[:-1]
@@ -82,8 +84,8 @@ def parseLog(pathToLogFile):
 	for rawRun in rawRuns:
 		if rawRun.startswith("{RUN}::"):
 			rawRun = rawRun.replace("{RUN}::", "", 1)
-		run = parseLoggedRun(rawRun)
-		parsedRuns.append(run)
+			run = parseLoggedRun(rawRun)
+			parsedRuns.append(run)
 
 	return parsedRuns
 
@@ -132,14 +134,33 @@ def unSanitizeStringFromLog(sanitizedString):
 	if len(sanitizedString) < 2:
 		return sanitizedString
 
-	if re.search(r"[^\\](\\\\)*\\\\$", sanitizedString) != None:
-		sanitizedString = sanitizedString[:-1]
-	sanitizedString = re.sub(r"([^\\])(\\\\)*(\\n)", '\1\2\n', sanitizedString)
-	sanitizedString = re.sub(r"([^\\])(\\\\)*(\\r)", '\1\2\r', sanitizedString)
-	sanitizedString = re.sub(r"([^\\])(\\\\)*(\\:)", '\1\2:', sanitizedString)
-	sanitizedString = re.sub(r"([^\\])(\\\\)*(\\,)", '\1\2,', sanitizedString)
+	unsanitizedString = sanitizedString
 
-	return sanitizedString
+	if re.search(r"[^\\](\\\\)*\\\\$", unsanitizedString) != None:
+		unsanitizedString = unsanitizedString[:-1]
+
+	done = False
+	while not done:
+		if re.search(r"([^\\]|^)((\\\\)*)(\\n)", unsanitizedString) is not None:
+			unsanitizedString = re.sub(r"([^\\]|^)((\\\\)*)(\\)(n)", '\g<1>\g<2>\n', unsanitizedString, 1)
+		else:
+			done = True
+
+	done = False
+	while not done:
+		if re.search(r"([^\\]|^)((\\\\)*)(\\r)", unsanitizedString) is not None:
+			unsanitizedString = re.sub(r"([^\\]|^)((\\\\)*)(\\)(r)", '\g<1>\g<2>\r', unsanitizedString, 1)
+		else:
+			done = True
+
+	done = False
+	while not done:
+		if re.search(r"([^\\]|^)((\\\\)*)(\\)[\":,]", unsanitizedString) is not None:
+			unsanitizedString = re.sub(r"([^\\]|^)((\\\\)*)(\\)([\":,])", '\g<1>\g<2>\g<5>', unsanitizedString, 1)
+		else:
+			done = True
+
+	return unsanitizedString
 
 def sanitizeStringForLog(rawString):
 	"""
@@ -152,21 +173,51 @@ def sanitizeStringForLog(rawString):
 	if rawString is None or rawString == "":
 		return ""
 
+	sanitizedString = rawString
 	#escape trailing backslash, if it is not already escaped
-	if re.search(r"[^\\](\\\\)*\\$", rawString) != None:
-		rawString = rawString + '\\'
+	if re.search(r"[^\\](\\\\)*\\$", sanitizedString) != None:
+		sanitizedString = sanitizedString + '\\'
 
 	#add preceding backslash to all special characters
-	rawString = rawString.replace("\"", "\\\"")
-	rawString = rawString.replace("\n", "\\n")
-	rawString = rawString.replace("\r", "\\r")
-	rawString = rawString.replace(":", "\:")
-	rawString = rawString.replace(",", "\,")
+	sanitizedString = sanitizedString.replace("\"", "\\\"")
+	sanitizedString = sanitizedString.replace("\n", "\\n")
+	sanitizedString = sanitizedString.replace("\r", "\\r")
+	sanitizedString = sanitizedString.replace(":", "\:")
+	sanitizedString = sanitizedString.replace(",", "\,")
 
-	return rawString
+	return sanitizedString
+
+def testSanitization():
+	"""
+		Test the process of sanitizing and unsanitizing strings before/after
+		writing to log.  Strings are not required to be exactly the same before
+		and after, but should be functionally the same
+	"""
+	testString1 = """Hello, we've got: fifteen dogs.
+	How many dogs have you got?\r"""
+
+	sanitizedString1 = sanitizeStringForLog(testString1)
+	unsanitizedString1 = unSanitizeStringFromLog(sanitizedString1)
+	assert testString1 == unsanitizedString1
+
+	subFuncLines = inspect.getsourcelines(re.sub)[0]
+	for line in subFuncLines:
+		assert line == unSanitizeStringFromLog(sanitizeStringForLog(line))
+
+	testString2 = """Hello \n\r where are you: spain?\n we have been to france, germany, and holland.\n\\"""
+	assert testString2 == unSanitizeStringFromLog(sanitizeStringForLog(testString2))
 
 
-def main():
+def testCreateMRElement():
+	"""
+		Test for createMRElement() function
+	"""
+
+def testParseLog():
+	"""
+		Test the function that reads in machine-readable log files and turns
+		them into lists of dictionaries.
+	"""
 	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
 	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
 
@@ -182,6 +233,27 @@ def main():
 	functionObj = lambda x: x+1
 
 	testLogger.logTestRun(trainData1, testData1, functionObj, metricsHash)
+
+
+
+def main():
+	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
+	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
+
+	trainData1 = CooSparseData(trainDataBase)
+	testData1 = CooSparseData(testDataBase)
+	functionStr = """def f():
+	return 0"""
+	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
+
+	testLogger = MachineReadableRunLog("~/mrTest2.txt")
+	testLogger.logTestRun(trainData1, testData1, functionStr, metricsHash)
+
+	functionObj = lambda x: x+1
+
+	testLogger.logTestRun(trainData1, testData1, functionObj, metricsHash)
+
+
 
 if __name__ == "__main__":
 	main()
