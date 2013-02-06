@@ -34,7 +34,7 @@ class Logger(object):
 		if newFileName is not None and isinstance(newFileName, (str, unicode)):
 			self.logFileName = newFileName
 		else: pass
-		self.logFile = open(self.logFileName, 'w')
+		self.logFile = open(self.logFileName, 'a')
 		self.isAvailable = True
 
 	def logMessage(self, message, addNewLine=True):
