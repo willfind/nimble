@@ -4,11 +4,9 @@ later be extended with more features, packages, or datatypes.
 
 """
 
-
-
-
 import numpy
 import scipy.io
+import time
 
 from .interfaces import mahout
 from .interfaces import regressor
@@ -17,7 +15,7 @@ from .interfaces import mlpy
 from .processing import CooSparseData
 from .processing import DenseMatrixData
 from .processing import RowListData
-#from .logging.log_manager import LogManager
+from .logging.log_manager import LogManager
 from .utility import ArgumentException
 
 
@@ -28,35 +26,30 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 	package = splitList[0]
 	algorithm = splitList[1]
 
+	if sendToLog:
+		startTime = time.clock()
+
 	if package == 'mahout':
-		if sendToLog:
-			funcString = 'mahout('+algorithm+', trainData, testData, output, dependentVar, arguments)'
-			#LogManager.logRun(trainData, testData, funcString, None, extraInfo=arguments)
-
-		return mahout(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'regressor':
-		if sendToLog:
-			funcString = 'regressors('+algorithm+', trainData, testData, output, dependentVar, arguments)'
-			#LogManager.logRun(trainData, testData, funcString, None, extraInfo=arguments)
-
-		return regressors(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = regressors(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'sciKitLearn':
-		if sendToLog:
-			funcString = 'sciKitLearn('+algorithm+', trainData, testData, output, dependentVar, arguments)'
-			#LogManager.logRun(trainData, testData, funcString, None, extraInfo=arguments)
-
 		return sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'mlpy':
-		if sendToLog:
-			funcString = 'mlpy('+algorithm+', trainData, testData, output, dependentVar, arguments)'
-			#LogManager.logRun(trainData, testData, funcString, None, extraInfo=arguments)
-
-		return mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'self':
 		raise ArgumentException("self modifcation not yet implemented")
 	else:
 		raise ArgumentException("package not recognized")
 
+	if sendToLog:
+			endTime = time.clock()
+			logManager = LogManager()
+			if package == 'regressor':
+				funcString = 'regressors.' + algorithm
+			else:
+				funcString = package + '.' + algorithm
+			logManager.logRun(trainData, testData, funcString, None, endTime - startTime, extraInfo=arguments)
 
 
 
