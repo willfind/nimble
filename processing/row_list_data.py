@@ -24,7 +24,7 @@ class RowListData(BaseData):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None):
+	def __init__(self, data=None, featureNames=None, name=None, path=None):
 		"""
 		Instantiate a Row List data using the given data and featureNames. data may be
 		none or an empty list to indicate an empty object, or a fully populated
@@ -53,7 +53,7 @@ class RowListData(BaseData):
 				if len(point) != self.numFeatures:
 					raise ArgumentException("Points must be of equal size")
 			self.data = data
-			super(RowListData, self).__init__(featureNames)
+			super(RowListData, self).__init__(featureNames, name, path)
 
 
 	def _transpose_implementation(self):

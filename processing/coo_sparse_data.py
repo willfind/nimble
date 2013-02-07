@@ -16,19 +16,18 @@ from ..utility.custom_exceptions import ArgumentException
 
 class CooSparseData(SparseData):
 
-	def __init__(self, data=None, featureNames=None):
+	def __init__(self, data=None, featureNames=None, name=None, path=None):
 		self.data = coo_matrix(data)
-		super(CooSparseData, self).__init__(self.data, featureNames)
+		super(CooSparseData, self).__init__(self.data, featureNames, name, path)
 
-
-	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
+	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
 		"""
-		Function to extract features according to the parameters, and return an object containing
-		the removed features with their featureName names from this object. The actual work is done by
-		further helper functions, this determines which helper to call, and modifies the input
-		to accomodate the number and randomize parameters, where number indicates how many of the
-		possibilities should be extracted, and randomize indicates whether the choice of who to
-		extract should be by order or uniform random.
+		Function to extract points according to the parameters, and return an object containing
+		the removed points with default names. The actual work is done by further helper
+		functions, this determines which helper to call, and modifies the input to accomodate
+		the number and randomize parameters, where number indicates how many of the possibilities
+		should be extracted, and randomize indicates whether the choice of who to extract should
+		be by order or uniform random.
 
 		"""
 		# single identifier
@@ -44,11 +43,56 @@ class CooSparseData(SparseData):
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
+			return self._extractByList_implementation(toExtract, 'point')
+		# boolean function
+		if hasattr(toExtract, '__call__'):
+			if randomize:
+				#apply to each
+				raise NotImplementedError # TODO randomize in the extractPointByFunction case
+			else:
+				if number is None:
+					number = self.points()		
+				return self._extractPointsByFunction_implementation(toExtract, number)
+		# by range
+		if start is not None or end is not None:
+			if number is None:
+				number = end - start
+			if randomize:
+				toExtract = random.sample(xrange(start,end),number)
+				toExtract.sort()
+				return self._extractByList_implementation(toExtract, 'point')
+			else:
+				return self._extractPointsByRange_implementation(start, end)
+
+
+	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
+		"""
+		Function to extract features according to the parameters, and return an object containing
+		the removed features with their featureName names from this object. The actual work is done by
+		further helper functions, this determines which helper to call, and modifies the input
+		to accomodate the number and randomize parameters, where number indicates how many of the
+		possibilities should be extracted, and randomize indicates whether the choice of who to
+		extract should be by order or uniform random.
+
+		"""
+		# single identifier
+		if isinstance(toExtract, int) or isinstance(toExtract, basestring):
+			toExtract = [toExtract]	
+		# list of identifiers
+		if isinstance(toExtract, list):
+			if number is None:
+				number = len(toExtract)
+			# if randomize, use random sample
+			if randomize:
+				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
+			# else take the first number members of toExtract
+			else:
+				toExtract = toExtract[:number]
 			# convert IDs if necessary
 			toExtractIndices = []
 			for value in toExtract:
 				toExtractIndices.append(self._getIndex(value))
-			return self._extractFeaturesByList_implementation(toExtractIndices)
+			return self._extractByList_implementation(toExtractIndices, "feature")
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
@@ -65,12 +109,12 @@ class CooSparseData(SparseData):
 			if randomize:
 				toExtract = random.sample(xrange(start,end),number)
 				toExtract.sort()
-				return self._extractFeaturesByList_implementation(toExtract)
+				return self._extractByList_implementation(toExtract, 'feature')
 			else:
 				return self._extractFeaturesByRange_implementation(start, end)
 
 
-	def _extractFeaturesByList_implementation(self,toExtract):
+	def _extractByList_implementation(self, toExtract, axisType):
 		"""
 		
 
@@ -79,36 +123,128 @@ class CooSparseData(SparseData):
 		extractRows = []
 		extractCols = []
 
+		if axisType == "feature":
+			targetAxis = self.data.col
+			otherAxis = self.data.row
+			extractTarget = extractCols
+			extractOther = extractRows
+		else:
+			targetAxis = self.data.row
+			otherAxis = self.data.col
+			extractTarget = extractRows
+			extractOther = extractCols
+
 		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
 		# underlying structure to save space
 		copy = 0
 
-		for i in xrange(len(self.data.col)):
-			value = self.data.col[i]
+		for i in xrange(len(self.data.data)):
+			value = targetAxis[i]
 			if value in toExtract:
 				extractData.append(self.data.data[i])
-				extractRows.append(self.data.row[i])
-				extractCols.append(toExtract.index(value))
+				extractOther.append(otherAxis[i])
+				extractTarget.append(toExtract.index(value))
 			else:
 				self.data.data[copy] = self.data.data[i]				
-				self.data.row[copy] = self.data.row[i]
-				self.data.col[copy] = self.data.col[i] - _numLessThan(value, toExtract)
+				otherAxis[copy] = otherAxis[i]
+				targetAxis[copy] = targetAxis[i] - _numLessThan(value, toExtract)
 				copy = copy + 1
 
 		# reinstantiate self
 		# (cannot reshape coo matrices, so cannot do this in place)
 		(pointShape, colShape) = self.data.shape
-		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), (pointShape, colShape - len(toExtract)))
+		if axisType == "feature":
+			selfPointShape = pointShape
+			selfColShape = colShape - len(toExtract)
+			extPointShape = pointShape
+			extColShape = len(toExtract)
+		else:
+			selfPointShape = pointShape - len(toExtract)
+			selfColShape = colShape
+			extPointShape = len(toExtract)
+			extColShape = colShape
+		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), (selfPointShape, selfColShape))
 
 		# instantiate return data
-		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(self.points(), len(toExtract)))
+		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(extPointShape, extColShape))
 		
 		# get featureNames for return obj
-		featureNameList = []
-		for index in toExtract:
-			featureNameList.append(self.featureNamesInverse[index])
+		featureNames = []
+		if axisType == "feature":
+			for index in toExtract:
+				featureNames.append(self.featureNamesInverse[index])
+		else:
+			featureNames = self.featureNames
 
-		return CooSparseData(ret,featureNameList) 
+		return CooSparseData(ret, featureNames) 
+
+
+	def _extractByRange_implementation(self, start, end, axisType):
+		"""
+		
+
+		"""
+		rangeLength = end - start + 1
+		extractData = []
+		extractRows = []
+		extractCols = []
+
+		if axisType == "feature":
+			targetAxis = self.data.col
+			otherAxis = self.data.row
+			extractTarget = extractCols
+			extractOther = extractRows
+		else:
+			targetAxis = self.data.row
+			otherAxis = self.data.col
+			extractTarget = extractRows
+			extractOther = extractCols
+
+		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
+		# underlying structure to save space
+		copy = 0
+
+		for i in xrange(len(self.data.data)):
+			value = targetAxis[i]
+			if value >= start and value <= end:
+				extractData.append(self.data.data[i])
+				extractOther.append(otherAxis[i])
+				extractTarget.append(value - start)
+			else:
+				self.data.data[copy] = self.data.data[i]				
+				otherAxis[copy] = otherAxis[i]
+				targetAxis[copy] = targetAxis[i] - _numLessThan(value, toExtract)
+				copy = copy + 1
+
+		# reinstantiate self
+		# (cannot reshape coo matrices, so cannot do this in place)
+		(pointShape, colShape) = self.data.shape
+		if axisType == "feature":
+			selfPointShape = pointShape
+			selfColShape = colShape - rangeLength
+			extPointShape = pointShape
+			extColShape = rangeLength
+		else:
+			selfPointShape = pointShape - rangeLength
+			selfColShape = colShape
+			extPointShape = rangeLength
+			extColShape = colShape
+		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), (selfPointShape, selfColShape))
+
+		# instantiate return data
+		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=(extPointShape, extColShape))
+		
+		# get featureNames for return obj
+		featureNames = []
+		if axisType == "feature":
+			for index in toExtract:
+				featureNames.append(self.featureNamesInverse[index])
+		else:
+			featureNames = self.featureNames
+
+		return CooSparseData(ret, featureNames) 
+
+
 
 	def _transpose_implementation(self):
 		"""

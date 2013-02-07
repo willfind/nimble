@@ -30,21 +30,22 @@ class BaseData(object):
 
 	"""
 
-	def __init__(self, featureNames=None):
+	def __init__(self, featureNames=None, name=None, path=None):
 		"""
 		Instantiates the featureName book-keeping structures that are defined by this representation.
 		
 		featureNames may be None if the object is to have default names, or a list or dict defining the
 		featureName mapping.
 
- 		"""
+		"""
 		super(BaseData, self).__init__()
 		self._nextDefaultValue = 0
 		self._setAllDefault()
 		self._renameMultipleFeatureNames_implementation(featureNames,True)
 		if featureNames is not None and len(featureNames) != self.features():
 			raise ArgumentException("Cannot have different number of featureNames and features")
-
+		self.name = name
+		self.path = path
 
 	########################
 	# Low Level Operations #
@@ -124,7 +125,14 @@ class BaseData(object):
 		"""
 		self._renameMultipleFeatureNames_implementation(assignments,False)
 
+	def setName(self, name):
+		"""
+		Copy over the name attribute of this object with the input name
 
+		"""
+		if name is not None and not isinstance(name, basestring):
+			raise ArgumentException("name must be a string")
+		self.name = name
 
 	###########################
 	# Higher Order Operations #
@@ -200,7 +208,7 @@ class BaseData(object):
 		for point in values.data:
 			value = point[0]
 			ret = toConvert.applyFunctionToEachPoint(makeFunc(value))
-			ret.renameFeatureName(0, varName + "=" + str(value))
+			ret.renameFeatureName(0, varName + "=" + str(value).strip())
 			toConvert.appendFeatures(ret)
 
 		# remove the original feature, and combine with self
@@ -288,9 +296,9 @@ class BaseData(object):
 		raise NotImplementedError
 
 		#MR to find how many of each value
-		def mapperCount (point):
+		def mapperCount(point):
 			return [(point[index],1)]
-		def reducerCount (identifier, values):
+		def reducerCount(identifier, values):
 			total = 0
 			for value in values:
 				total += value
@@ -328,7 +336,7 @@ class BaseData(object):
 		random.seed(seed)
 		if extractionProbability is None:
 			raise ArgumentException("Must provide a extractionProbability")
-		if  extractionProbability <= 0:
+		if extractionProbability <= 0:
 			raise ArgumentException("extractionProbability must be greater than zero")
 		if extractionProbability >= 1:
 			raise ArgumentException("extractionProbability must be less than one")
@@ -357,7 +365,7 @@ class BaseData(object):
 
 		"""
 		# note: we want truncation here
-		numInFold = self.points() / numFolds
+		numInFold = int(self.points() / numFolds)
 		if numInFold == 0:
 			raise ArgumentException("Must specifiy few enough folds so there is a point in each")
 
@@ -742,7 +750,7 @@ class BaseData(object):
 			featureNameNum = int(featureName[len(DEFAULT_PREFIX):])
 			self._nextDefaultValue = max(self._nextDefaultValue + 1, featureNameNum)
 
-		features  = len(self.featureNamesInverse)
+		features = len(self.featureNamesInverse)
 		self.featureNamesInverse[features] = featureName
 		self.featureNames[featureName] = features
 

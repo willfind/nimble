@@ -7,6 +7,7 @@ later be extended with more features, packages, or datatypes.
 import numpy
 import scipy.io
 import time
+import os.path
 
 from .interfaces import mahout
 from .interfaces import regressor
@@ -32,9 +33,9 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 	if package == 'mahout':
 		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'regressor':
-		results = regressors(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = regressor(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'sciKitLearn':
-		return sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'mlpy':
 		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'self':
@@ -51,9 +52,10 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 				funcString = package + '.' + algorithm
 			logManager.logRun(trainData, testData, funcString, None, endTime - startTime, extraInfo=arguments)
 
+	return results
 
 
-def data(retType, data=None, featureNames=None, fileType=None):
+def data(retType, data=None, featureNames=None, fileType=None, name=None):
 	# determine if its a file we have to read; we assume if its a string its a path
 	if isinstance(data, basestring):
 		# determine the extension, call the appropriate helper
@@ -77,53 +79,69 @@ def data(retType, data=None, featureNames=None, fileType=None):
 	dmdAlias = ["densematrixdata", 'dmd', 'dense']
 	rldAlias = ["rowlistdata", 'rld']
 	if retType in cooAlias:
-		return _loadCoo(data, featureNames, fileType)
+		ret = _loadCoo(data, featureNames, fileType)
 	elif retType in dmdAlias:
-		return _loadDMD(data, featureNames, fileType)
+		ret = _loadDMD(data, featureNames, fileType)
 	elif retType in rldAlias:
-		return _loadRLD(data, featureNames, fileType)
+		ret = _loadRLD(data, featureNames, fileType)
 	else:
 		raise ArgumentException("Unknown data type, cannot instantiate")
 
-
-
+	if name is not None:
+		ret.setName(name)
+	return ret
 
 
 def _loadCoo(data, featureNames, fileType):
+	if fileType is None:
+		return CooSparseData(data, featureNames)
+
+	# since file type is not None, that is an indicator that we must read from a file
+	path = data
 	tempFeatureNames = None
 	if fileType == 'csv':
-		(data, tempFeatureNames) = _loadCSVtoMatrix(data)
+		(data, tempFeatureNames) = _loadCSVtoMatrix(path)
 	elif fileType == 'mtx':
-		(data, tempFeatureNames) = _loadMTXtoAuto(data)
-	elif fileType is not None:
+		(data, tempFeatureNames) = _loadMTXtoAuto(path)
+	else:
 		raise ArgumentException("Unrecognized file type")
 
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
-	return CooSparseData(data, featureNames)
+	return CooSparseData(data, featureNames, os.path.basename(path), path)
 
 
 def _loadDMD(data, featureNames, fileType):
+	if fileType is None:
+		return DenseMatrixData(data, featureNames)
+
+	# since file type is not None, that is an indicator that we must read from a file
+	path = data
 	tempFeatureNames = None
 	if fileType == 'csv':
-		(data, tempFeatureNames) = _loadCSVtoMatrix(data)
+		(data, tempFeatureNames) = _loadCSVtoMatrix(path)
 	elif fileType == 'mtx':
-		(data, tempFeatureNames) = _loadMTXtoAuto(data)
-	elif fileType is not None:
+		(data, tempFeatureNames) = _loadMTXtoAuto(path)
+	else:
 		raise ArgumentException("Unrecognized file type")
 
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
-	return DenseMatrixData(data, featureNames)
+	return DenseMatrixData(data, featureNames, os.path.basename(path), path)
 
 
 def _loadRLD(data, featureNames, fileType):
+	if fileType is None:
+		return RowListData(data, featureNames)
+
+	# since file type is not None, that is an indicator that we must read from a file
+	path = data
 	tempFeatureNames = None
 	if fileType == 'csv':
 		(data, tempFeatureNames) =_loadCSVtoList(data)
 	elif fileType == 'mtx':
 		(data, tempFeatureNames) = _loadMTXtoAuto(data)
-	elif fileType is not None:
+	else:
 		raise ArgumentException("Unrecognized file type")
 
 	# if we load from file, we assume that data will be read; feature names may not
@@ -131,7 +149,7 @@ def _loadRLD(data, featureNames, fileType):
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
 
-	return RowListData(data, featureNames)
+	return RowListData(data, featureNames, os.path.basename(path), path)
 
 def _loadCSVtoMatrix(path):
 	inFile = open(path, 'r')

@@ -9,12 +9,10 @@ boilerplate()
 
 if __name__ == "__main__":
 
-	import sys
-	from UML import normalize
 	from UML import data
 
 	# string manipulation to get and make paths
-	pathOrig = sys.argv[1]
+	pathOrig = "example_data/adult_income_classification_tiny.csv"
 	pathSplit = pathOrig.rsplit('.',1)
 	if len(pathSplit) > 1:
 		suffix = '.' + pathSplit[1]
@@ -25,7 +23,7 @@ if __name__ == "__main__":
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
-	train = data("DenseMatrixData", pathOrig)
+	train = data("RowListData", pathOrig)
 
 	#scrub the set of any string valued data
 	train.dropStringValuedFeatures()
@@ -36,6 +34,6 @@ if __name__ == "__main__":
 	test = train.extractPoints(start=0, end=total, number=num, randomize=True)
 
 	# output the split and normalized sets for later usage
-	train.writeFile('csv', pathTrain, includeFeatureNames=False)
-	test.writeFile('csv', pathTest, includeFeatureNames=False)
+	train.writeFile('csv', pathTrain, includeFeatureNames=True)
+	test.writeFile('csv', pathTest, includeFeatureNames=True)
 

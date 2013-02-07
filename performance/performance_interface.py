@@ -53,7 +53,7 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions)
     #TODO make this hash more generic - what if function args are not knownValues and predictedValues
     parameterHash = {"knownValues":knownLabels, "predictedValues":predictedData}
     for func in performanceFunctions:
-        print inspect.getargspec(func).args
+        #print inspect.getargspec(func).args
         if len(inspect.getargspec(func).args) == 2:
             #the metric function only takes two arguments: we assume they
             #are the known class labels and the predicted class labels

@@ -27,12 +27,20 @@ class DenseMatrixData(BaseData):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None):
+	def __init__(self, data=None, featureNames=None, name=None, path=None):
 		if isspmatrix(data):
 			self.data = data.todense()
 		else:
 			self.data = numpy.matrix(data)
-		super(DenseMatrixData, self).__init__(featureNames)
+
+		# check for any strings in the data
+		(x,y) = self.data.shape
+		for i in xrange(x):
+			for j in xrange(y):
+				if isinstance(self.data[i,j], basestring):
+					raise ArgumentException("DenseMatrixData does not accept strings in the input")
+
+		super(DenseMatrixData, self).__init__(featureNames, name, path)
 		
 
 	def _transpose_implementation(self):
@@ -182,7 +190,7 @@ class DenseMatrixData(BaseData):
 
 		"""
 		# single identifier
-		if isinstance(toExtract, int):
+		if isinstance(toExtract, int) or isinstance(toExtract, basestring):
 			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):

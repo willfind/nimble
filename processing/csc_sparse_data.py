@@ -18,9 +18,9 @@ from ..utility.custom_exceptions import ArgumentException
 class CscSparseData(SparseData):
 
 
-	def __init__(self, data=None, featureNames=None):
+	def __init__(self, data=None, featureNames=None, name=None, path=None):
 		self.data = csc_matrix(data)
-		super(CscSparseData, self).__init__(self.data,featureNames)
+		super(CscSparseData, self).__init__(self.data, featureNames, name, path)
 
 
 	def _extractFeatures_implementation(self,toExtract):
