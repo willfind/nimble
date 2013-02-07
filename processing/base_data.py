@@ -30,7 +30,7 @@ class BaseData(object):
 
 	"""
 
-	def __init__(self, featureNames=None):
+	def __init__(self, featureNames=None, name=None, path=None):
 		"""
 		Instantiates the featureName book-keeping structures that are defined by this representation.
 		
@@ -44,7 +44,8 @@ class BaseData(object):
 		self._renameMultipleFeatureNames_implementation(featureNames,True)
 		if featureNames is not None and len(featureNames) != self.features():
 			raise ArgumentException("Cannot have different number of featureNames and features")
-
+		self.name = name
+		self.path = path
 
 	########################
 	# Low Level Operations #
@@ -124,7 +125,14 @@ class BaseData(object):
 		"""
 		self._renameMultipleFeatureNames_implementation(assignments,False)
 
+	def setName(self, name):
+		"""
+		Copy over the name attribute of this object with the input name
 
+		"""
+		if name is not None and not isinstance(name, basestring):
+			raise ArgumentException("name must be a string")
+		self.name = name
 
 	###########################
 	# Higher Order Operations #

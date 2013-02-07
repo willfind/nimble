@@ -27,7 +27,7 @@ class DenseMatrixData(BaseData):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None):
+	def __init__(self, data=None, featureNames=None, name=None, path=None):
 		if isspmatrix(data):
 			self.data = data.todense()
 		else:
@@ -40,7 +40,7 @@ class DenseMatrixData(BaseData):
 				if isinstance(self.data[i,j], basestring):
 					raise ArgumentException("DenseMatrixData does not accept strings in the input")
 
-		super(DenseMatrixData, self).__init__(featureNames)
+		super(DenseMatrixData, self).__init__(featureNames, name, path)
 		
 
 	def _transpose_implementation(self):
