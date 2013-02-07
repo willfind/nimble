@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	from UML import data
 
 	# string manipulation to get and make paths
-	pathOrig = "example_data/adult_income_classification_orig.csv"
+	pathOrig = "example_data/adult_income_classification_tiny.csv"
 	pathSplit = pathOrig.rsplit('.',1)
 	if len(pathSplit) > 1:
 		suffix = '.' + pathSplit[1]
@@ -34,6 +34,6 @@ if __name__ == "__main__":
 	test = train.extractPoints(start=0, end=total, number=num, randomize=True)
 
 	# output the split and normalized sets for later usage
-	train.writeFile('csv', pathTrain, includeFeatureNames=False)
-	test.writeFile('csv', pathTest, includeFeatureNames=False)
+	train.writeFile('csv', pathTrain, includeFeatureNames=True)
+	test.writeFile('csv', pathTest, includeFeatureNames=True)
 
