@@ -32,9 +32,9 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 	if package == 'mahout':
 		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'regressor':
-		results = regressors(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = regressor(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'sciKitLearn':
-		return sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'mlpy':
 		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
 	elif package == 'self':
@@ -51,6 +51,7 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 				funcString = package + '.' + algorithm
 			logManager.logRun(trainData, testData, funcString, None, endTime - startTime, extraInfo=arguments)
 
+	return results
 
 
 def data(retType, data=None, featureNames=None, fileType=None):
