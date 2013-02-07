@@ -16,8 +16,8 @@ if __name__ == "__main__":
 	pathIn = "example_data/adult_income_classification_tiny.csv"
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID='income', fractionForTestSet=.15, loadType="DenseMatrixData", fileType="csv")
 
-	# run and test with a direct call to run()
-	toRun = 'runAndTestDirect("mlpy.KNN", trainX, testX, trainY, testY, {"k":<1|5|10|15>}, [classificationError])'
+	# setup parameters we want to cross validate over
+	toRun = 'runAndTestDirect("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [classificationError])'
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTestDirect':runAndTestDirect, 'classificationError':classificationError}
 
