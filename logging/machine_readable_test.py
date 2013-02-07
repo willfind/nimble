@@ -6,7 +6,7 @@ if __name__ == "__main__" and __package__ is None:
 	import UML
 	__package__ = "UML.logging"
 
-import datetime
+import time
 import numpy
 import inspect
 import re
@@ -37,7 +37,7 @@ class MachineReadableRunLog(Logger):
 
 		#Create a string to be logged (as one line), and add dimensions and the function
 		logLine = "{RUN}::"
-		logLine += createMRLineElement("timestamp", str(datetime.datetime.now()))
+		logLine += createMRLineElement("timestamp", time.strftime('%Y-%m-%d %H:%M:%S'))
 		logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[0])
 		logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
 		logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
@@ -113,7 +113,10 @@ def parseLoggedRun(loggedRun):
 
 def createMRLineElement(key, value, addComma=True):
 	"""
-		TODO: add docstring
+		Combine the key and value into a string suitable for a machine-readable log.  
+		Returns string of the format 'key:"value",' though the double-quotes around
+		value are not included if value is a number.  The trailing comma is added by
+		default but will be ommitted if addComma is False.
 	"""
 	if isinstance(value, (bool, int, long, float)):
 		processedValue = str(value)
@@ -210,8 +213,17 @@ def testSanitization():
 
 def testCreateMRElement():
 	"""
-		Test for createMRElement() function
+		Test(s) for createMRElement() function
 	"""
+	key1 = 'dog'
+	value1 = 'cat'
+	key2 = 'pants'
+	value2 = 5
+
+	assert 'dog:"cat"' == createMRLineElement(key1, value1, False)
+	assert 'dog:"cat",' == createMRLineElement(key1, value1, True)
+	assert 'pants:5' == createMRLineElement(key2, value1, False)
+	assert 'pants:5,' == createMRLineElement(key2, value2, True)
 
 def testParseLog():
 	"""

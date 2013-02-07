@@ -1,10 +1,12 @@
+import time
 from UML.combinations.Combinations import executeCode
 import performance_interface
 from UML.processing import BaseData
+from UML.logging.log_manager import LogManager
 from UML import run
 
 
-def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, performanceMetricFuncs):
+def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, performanceMetricFuncs, sendToLog=True):
 	"""
 		Trains a classifier using the function defined in 'function' using trainingData, then
 		tests the performance of that classifier using the metric function(s) found in
@@ -24,21 +26,34 @@ def runAndTest(trainX, testX, trainDependentVar, testDependentVar, function, per
 
 	trainDependentVar = copyLabels(trainX, trainDependentVar)
 	testDependentVar = copyLabels(testX, testDependentVar)
+	dependentVar = trainDependentVar
 
 	functionArgs = {'trainX':trainX,
 					'testX':testX,
-					'dependentVar':trainDependentVar
+					'dependentVar':dependentVar
 					}
+
+	#if we are logging this run, we need to start the timer
+	if sendToLog:
+		startTime = time.clock()
 
 	#rawResults contains predictions for each version of a learning function in the combos list
 	rawResult = executeCode(function, functionArgs)
 
+	#if we are logging this run, we need to stop the timer
+	if sendToLog:
+		stopTime = time.clock()
+
 	#now we need to compute performance metric(s) for all prediction sets
 	results = performance_interface.computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs)
+
+	if sendToLog:
+		logManager = LogManager()
+		logManager.logRun(trainX, testX, function, results, stopTime - startTime)
 	return results
 
 
-def runAndTestDirect(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs):
+def runAndTestDirect(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs, sendToLog=True):
 	#Need to make copies of all data, in case it will be modified before a classifier is trained
 	trainX = trainX.duplicate()
 	testX = testX.duplicate()
@@ -49,11 +64,23 @@ def runAndTestDirect(algorithm, trainX, testX, trainDependentVar, testDependentV
 	trainDependentVar = copyLabels(trainX, trainDependentVar)
 	testDependentVar = copyLabels(testX, testDependentVar)
 
+	#if we are logging this run, we need to start the timer
+	if sendToLog:
+		startTime = time.clock()
+
 	#rawResults contains predictions for each version of a learning function in the combos list
 	rawResult = run(algorithm, trainX, testX, dependentVar=trainDependentVar, arguments=arguments)
 
+	#if we are logging this run, we need to stop the timer
+	if sendToLog:
+		stopTime = time.clock()
+
 	#now we need to compute performance metric(s) for all prediction sets
 	results = performance_interface.computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs)
+
+	if sendToLog:
+		logManager = LogManager()
+		logManager.logRun(trainX, testX, algorithm, results, stopTime - startTime, extraInfo=arguments)
 	return results
 
 #TODO this is a helper, move to utilities package?

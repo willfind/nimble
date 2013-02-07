@@ -1,7 +1,9 @@
 """
 	A class that manages logging from a high level.  Creates two low-level logger objects -
 	a human readable logger and a machine-readable logger - and passes run information to each
-	of them.  The logs are put in the default location unless 
+	of them.  The logs are put in the default location (home directory) unless the log path is provided
+	when instantiated.  Likewise with the name of the log file: unless provided at instantiation, it
+	is set to default value.
 """
 
 import os
@@ -14,13 +16,15 @@ class LogManager(object):
 
 	def __init__(self, logLocation=None, logName=None):
 		if logLocation is None:
-			logLocation = os.environ['HOME']+'/'
+			logLocation = os.environ['HOME']
 
 		if logName is None:
 			logName = "uMLLog"
 
-		self.humanReadableLog = HumanReadableRunLog(logLocation + logName + ".txt")
-		self.machineReadableLog = MachineReadableRunLog(logLocation + logName + ".mr")
+		fullLogDesignator = os.path.join(logLocation, logName)
+
+		self.humanReadableLog = HumanReadableRunLog(fullLogDesignator + ".txt")
+		self.machineReadableLog = MachineReadableRunLog(fullLogDesignator + ".mr")
 
 	def logRun(self, trainData, testData, function, metrics, runTime, extraInfo=None):
 		"""
