@@ -32,7 +32,7 @@ class CooSparseData(SparseData):
 
 		"""
 		# single identifier
-		if isinstance(toExtract, int):
+		if isinstance(toExtract, int) or isinstance(toExtract, basestring):
 			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
