@@ -25,7 +25,7 @@ def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, load
 
 
 
-def normalize(algorithm, trainData, testData, dependentVar=None, arguments={}, mode=True):
+def normalize(algorithm, trainData, testData=None, dependentVar=None, arguments={}, mode=True):
 	"""
 	Calls on the functionality of a package to train on some data and then modify both
 	the training data and a set of test data accroding to the produced model.
@@ -33,7 +33,7 @@ def normalize(algorithm, trainData, testData, dependentVar=None, arguments={}, m
 
 	"""
 	# single call normalize, combined data
-	if mode:
+	if mode and testData is not None:
 		testLength = testData.points()
 		# glue training data at the end of test data
 		testData.appendPoints(trainData)
@@ -47,11 +47,13 @@ def normalize(algorithm, trainData, testData, dependentVar=None, arguments={}, m
 	# two call normalize, no data combination
 	else:
 		normalizedTrain = run(algorithm, trainData, trainData, dependentVar=dependentVar, arguments=arguments)
-		normalizedTest = run(algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
+		if testData is not None:
+			normalizedTest = run(algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
 		
 	# modify references for trainData and testData
 	trainData.copyReferences(normalizedTrain)
-	testData.copyReferences(normalizedTest)
+	if testData is not None:
+		testData.copyReferences(normalizedTest)
 
 
 # def runWithPerformance()  # same as run, with extra parameter?

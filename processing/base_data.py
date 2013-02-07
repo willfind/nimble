@@ -208,7 +208,7 @@ class BaseData(object):
 		for point in values.data:
 			value = point[0]
 			ret = toConvert.applyFunctionToEachPoint(makeFunc(value))
-			ret.renameFeatureName(0, varName + "=" + str(value))
+			ret.renameFeatureName(0, varName + "=" + str(value).strip())
 			toConvert.appendFeatures(ret)
 
 		# remove the original feature, and combine with self
