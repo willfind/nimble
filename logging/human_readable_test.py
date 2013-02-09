@@ -144,11 +144,11 @@ def main():
 	extra = {"c":0.5, "folds":10, "tests": 20}
 
 	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")
-	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, extra)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.5, extra)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, extra)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.5, extra)
 
 if __name__ == "__main__":
 	main()
