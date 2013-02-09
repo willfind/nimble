@@ -21,7 +21,7 @@ if __name__ == "__main__":
 	pathTrain = pathSplit[0] + "TRAIN" + suffix
 	pathTest = pathSplit[0] + "TEST" + suffix
 
-	# we specify that we want a DenseMatrixData object returned, and with just the path it will
+	# we specify that we want a RowListData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
 	train = data("RowListData", pathOrig)
 

@@ -1,5 +1,6 @@
 """
-Script loading some data, spliting it, and writing the results to seperate files
+Script loading a portion of the adult income data set, and processing the string valued
+data into something easier to learn on.
 
 """
 
