@@ -63,7 +63,16 @@ class MachineReadableRunLog(Logger):
 
 		if metrics is not None:
 			for metric, result in metrics.items():
-				logLine += createMRLineElement(str(metric), result)
+				if isinstance(metric, (str, unicode)):
+					logLine += createMRLineElement(str(metric), result)
+				else:
+					metricLines = inspect.getsourcelines(metric)
+					metricString = ""
+					for i in range(len(metricLines) - 1):
+						metricString += str(metricLines[i])
+					if metricLines is None:
+						metricLines = "N/A"
+					logLine += createMRLineElement(metricString, result)
 
 		if logLine[len(logLine)-1] == ',':
 			logLine = logLine[:-1]
@@ -79,7 +88,7 @@ def parseLog(pathToLogFile):
 		start with {RUN} is ignored.
 	"""
 	logFile = open(pathToLogFile, 'r')
-	rawRuns = logFile.readLines()
+	rawRuns = logFile.readlines()
 	parsedRuns = []
 	for rawRun in rawRuns:
 		if rawRun.startswith("{RUN}::"):
@@ -93,15 +102,16 @@ def parseLoggedRun(loggedRun):
 	"""
 		Convert one line of a log file - which represents output information of one run - into
 		a dictionary containing the same information, keyed by standard labels (see
-		MachineReadableRunLog.logTestRun() for examples of labels that are used).
+		MachineReadableRunLog.logRun() for examples of labels that are used).
 	"""
 	runDict = {}
+	#split each logged Run wherever there is a comma not preceded by a backslash
 	elements = re.split(r"[^\\],", loggedRun)
 	for element in elements:
 		parts = re.split(r"[^\\](\\\\)*:", element)
 		#we expect that each element has two parts (they should be of the form
 		#key:value), so if there are more or fewer than 2, we raise an exception
-		if len(parts):
+		if len(parts) != 2:
 			raise Exception("Badly formed line in log of runs")
 
 		key = parts[0]
@@ -113,7 +123,7 @@ def parseLoggedRun(loggedRun):
 
 def createMRLineElement(key, value, addComma=True):
 	"""
-		Combine the key and value into a string suitable for a machine-readable log.  
+		Combine the key and value into a string suitable for a machine-readable log.
 		Returns string of the format 'key:"value",' though the double-quotes around
 		value are not included if value is a number.  The trailing comma is added by
 		default but will be ommitted if addComma is False.
@@ -222,8 +232,10 @@ def testCreateMRElement():
 
 	assert 'dog:"cat"' == createMRLineElement(key1, value1, False)
 	assert 'dog:"cat",' == createMRLineElement(key1, value1, True)
-	assert 'pants:5' == createMRLineElement(key2, value1, False)
+	assert 'pants:5' == createMRLineElement(key2, value2, False)
 	assert 'pants:5,' == createMRLineElement(key2, value2, True)
+	assert 'pants:""' == createMRLineElement(key2, '', False)
+	assert 'pants:"",' == createMRLineElement(key2, '', True)
 
 def testParseLog():
 	"""
@@ -240,11 +252,31 @@ def testParseLog():
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
 	testLogger = MachineReadableRunLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
-	testLogger.logTestRun(trainData1, testData1, functionStr, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logTestRun(trainData1, testData1, functionObj, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.0)
+
+	logDicts = parseLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
+
+	assert logDicts[0]["numTrainDataPoints"] == '3'
+	assert logDicts[0]["numTestDataPoints"] == '2'
+	assert logDicts[0]["numTrainDataFeatures"] == '3'
+	assert logDicts[0]["numTestDataFeatures"] == '3'
+	assert logDicts[0]["runTime"] == '0.0'
+	assert logDicts[0]["function"] == 'def f():\n\treturn 0'
+	assert logDicts[0]["rmse"] == '0.5'
+	assert logDicts[0]["meanAbsoluteError"] == '0.45'
+
+	assert logDicts[1]["numTrainDataPoints"] == '3'
+	assert logDicts[1]["numTestDataPoints"] == '2'
+	assert logDicts[1]["numTrainDataFeatures"] == '3'
+	assert logDicts[1]["numTestDataFeatures"] == '3'
+	assert logDicts[1]["runTime"] == '0.0'
+	assert logDicts[1]["function"] == "['\tfunctionObj = lambda x: x+1\n']"
+	assert logDicts[1]["rmse"] == '0.5'
+	assert logDicts[1]["meanAbsoluteError"] == '0.45'
 
 
 
@@ -259,11 +291,11 @@ def main():
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
 	testLogger = MachineReadableRunLog("~/mrTest2.txt")
-	testLogger.logTestRun(trainData1, testData1, functionStr, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logTestRun(trainData1, testData1, functionObj, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.0)
 
 
 
