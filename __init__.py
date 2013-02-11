@@ -9,4 +9,3 @@ from combinations.CrossValidate import crossValidateReturnBest
 from combinations.Combinations import functionCombinations
 
 from performance.runner import runAndTest
-from performance.runner import runAndTestDirect
