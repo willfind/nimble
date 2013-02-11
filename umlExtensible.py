@@ -167,8 +167,8 @@ def _loadCSVtoMatrix(path):
 		skip_header = 1
 
 	# check the types in the first data containing line.
-	line = ""
-	while line == "" or line[0] == '#':
+	line = firstLine
+	while (line == "") or (line[0] == '#'):
 		line = inFile.readline()
 	lineList = line.split(',')
 	for datum in lineList:
