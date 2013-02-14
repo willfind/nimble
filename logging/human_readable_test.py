@@ -49,8 +49,17 @@ class HumanReadableRunLog(Logger):
 		tableHeaders = []
 		tableRow = []
 
+		#Add current time to the basic log table
 		tableHeaders.append("Timestamp")
 		tableRow.append(time.strftime('%Y-%m-%d %H:%M:%S'))
+
+		#if the data matrix was sourced from a file, add the file name and path
+		if trainData.name is not None:
+			tableHeaders.append("Data file")
+			tableRow.append(trainData.name)
+		if trainData.path is not None:
+			tableHeaders.append("Data path")
+			tableRow.append(trainData.name)
 
 		#add number of training points, # of of features to output list
 		if trainData.data is not None:
