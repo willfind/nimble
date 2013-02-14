@@ -17,6 +17,7 @@ from .processing import CooSparseData
 from .processing import DenseMatrixData
 from .processing import RowListData
 from .logging.log_manager import LogManager
+from .logging.stopwatch import Stopwatch
 from .utility import ArgumentException
 
 
@@ -28,29 +29,28 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 	algorithm = splitList[1]
 
 	if sendToLog:
-		startTime = time.clock()
+		timer = Stopwatch()
 
 	if package == 'mahout':
-		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'regressor':
-		results = regressor(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = regressor(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'sciKitLearn':
-		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'mlpy':
-		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:
 		raise ArgumentException("package not recognized")
 
 	if sendToLog:
-			endTime = time.clock()
 			logManager = LogManager()
 			if package == 'regressor':
 				funcString = 'regressors.' + algorithm
 			else:
 				funcString = package + '.' + algorithm
-			logManager.logRun(trainData, testData, funcString, None, endTime - startTime, extraInfo=arguments)
+			logManager.logRun(trainData, testData, funcString, None, timer, extraInfo=arguments)
 
 	return results
 
@@ -166,6 +166,17 @@ def _loadCSVtoMatrix(path):
 		featureNames = scrubbedLine.split(',')
 		skip_header = 1
 
+	# check the types in the first data containing line.
+	line = firstLine
+	while (line == "") or (line[0] == '#'):
+		line = inFile.readline()
+	lineList = line.split(',')
+	for datum in lineList:
+		try:
+			num = numpy.float(datum)
+		except ValueError:
+			raise ValueError("Cannot load a file with non numerical typed columns")
+
 	inFile.close()
 
 	data = numpy.genfromtxt(path, delimiter=',', skip_header=skip_header)
@@ -200,12 +211,12 @@ def _loadMTXtoAuto(path):
 	data = scipy.io.mmread(path)
 	return (data, featureNames)
 
-def _intFloatOrString(str):
-	ret = str
+def _intFloatOrString(inString):
+	ret = inString
 	try:
-		ret = int(str)
+		ret = int(inString)
 	except exceptions.ValueError:
-		ret = float(str)
+		ret = float(inString)
 	# this will return an int or float if either of the above two are successful
 	finally:
 		return ret

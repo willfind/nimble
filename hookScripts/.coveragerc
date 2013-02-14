@@ -1,0 +1,3 @@
+[run]
+source = UML
+omit = test*

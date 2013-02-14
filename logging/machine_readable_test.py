@@ -38,6 +38,17 @@ class MachineReadableRunLog(Logger):
 		#Create a string to be logged (as one line), and add dimensions and the function
 		logLine = "{RUN}::"
 		logLine += createMRLineElement("timestamp", time.strftime('%Y-%m-%d %H:%M:%S'))
+		#If present, add name and path of source files for train and test data
+		if trainData.name is not None:
+			logLine += createMRLineElement("trainDataName", trainData.name)
+		if trainData.path is not None:
+			logLine += createMRLineElement("trainDataPath", trainData.path)
+		if testData.name is not None:
+			logLine += createMRLineElement("testDataName", testData.name)
+		if testData.path is not None:
+			logLine += createMRLineElement("testDataPath", testData.path)
+
+		#add info about size and shape of data
 		logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[0])
 		logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
 		logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
@@ -63,7 +74,16 @@ class MachineReadableRunLog(Logger):
 
 		if metrics is not None:
 			for metric, result in metrics.items():
-				logLine += createMRLineElement(str(metric), result)
+				if isinstance(metric, (str, unicode)):
+					logLine += createMRLineElement(str(metric), result)
+				else:
+					metricLines = inspect.getsourcelines(metric)
+					metricString = ""
+					for i in range(len(metricLines) - 1):
+						metricString += str(metricLines[i])
+					if metricLines is None:
+						metricLines = "N/A"
+					logLine += createMRLineElement(metricString, result)
 
 		if logLine[len(logLine)-1] == ',':
 			logLine = logLine[:-1]
@@ -79,7 +99,7 @@ def parseLog(pathToLogFile):
 		start with {RUN} is ignored.
 	"""
 	logFile = open(pathToLogFile, 'r')
-	rawRuns = logFile.readLines()
+	rawRuns = logFile.readlines()
 	parsedRuns = []
 	for rawRun in rawRuns:
 		if rawRun.startswith("{RUN}::"):
@@ -93,19 +113,61 @@ def parseLoggedRun(loggedRun):
 	"""
 		Convert one line of a log file - which represents output information of one run - into
 		a dictionary containing the same information, keyed by standard labels (see
-		MachineReadableRunLog.logTestRun() for examples of labels that are used).
+		MachineReadableRunLog.logRun() for examples of labels that are used).
 	"""
 	runDict = {}
-	elements = re.split(r"[^\\],", loggedRun)
-	for element in elements:
-		parts = re.split(r"[^\\](\\\\)*:", element)
-		#we expect that each element has two parts (they should be of the form
-		#key:value), so if there are more or fewer than 2, we raise an exception
-		if len(parts):
-			raise Exception("Badly formed line in log of runs")
+	#split each logged Run wherever there is a comma not preceded by a backslash
+	elementsRaw = re.split(r"([^\\]|^)(\\\\)*,", loggedRun)
+	elements = []
+	ticker = 0
+	for i in range(len(elementsRaw)):
+		if i == len(elementsRaw) - 1:
+			element = elementsRaw[i]
+			if element is not None:
+				elements.append(element)
+		elif ticker == 0:
+			if elementsRaw[i] is not None:
+				element = elementsRaw[i]
+		elif ticker == 1:
+			if elementsRaw[i] is not None:
+				element += elementsRaw[i]
+		else:
+			if elementsRaw[i] is not None:
+				element += elementsRaw[i]
+			ticker = -1
+			elements.append(element)
+		#increment ticker
+		ticker += 1
 
+
+	for element in elements:
+		parts = re.split(r"([^\\]|^)(\\\\)*:", element)
+		#re.split should produce a list w/3 or 4 elements, as it will split a string
+		#into the portion before the regular expression, each parenthesized group in the
+		#re, and the portion after the re.  Which will be either 3 or 4 parts.
+		if len(parts) != 3 and len(parts) != 4:
+			raise Exception("Badly formed log element in machine readable log")
+
+		#We need to glue together the results of re.split(), as it will split the key portion
+		#of the pair into three parts
 		key = parts[0]
-		value = parts[1]
+		if parts[1] is not None:
+			key += parts[1]
+		if parts[2] is not None:
+			key += parts[2]
+
+		value = parts[3]
+
+		#remove leading or trailing whitespace characters
+		value = value.strip()
+
+		#trim one (and only one) leading/trailing quote character
+		if value is not None and len(value) > 1:
+			if value[0] == "'" or value[0] == '"':
+				value = value[1:]
+			if value[-1] == "'" or value[-1] == '"':
+				value = value[0:-1]
+		
 		unSanitizedValue = unSanitizeStringFromLog(value)
 		runDict[key] = unSanitizedValue
 
@@ -113,7 +175,7 @@ def parseLoggedRun(loggedRun):
 
 def createMRLineElement(key, value, addComma=True):
 	"""
-		Combine the key and value into a string suitable for a machine-readable log.  
+		Combine the key and value into a string suitable for a machine-readable log.
 		Returns string of the format 'key:"value",' though the double-quotes around
 		value are not included if value is a number.  The trailing comma is added by
 		default but will be ommitted if addComma is False.
@@ -222,8 +284,10 @@ def testCreateMRElement():
 
 	assert 'dog:"cat"' == createMRLineElement(key1, value1, False)
 	assert 'dog:"cat",' == createMRLineElement(key1, value1, True)
-	assert 'pants:5' == createMRLineElement(key2, value1, False)
+	assert 'pants:5' == createMRLineElement(key2, value2, False)
 	assert 'pants:5,' == createMRLineElement(key2, value2, True)
+	assert 'pants:""' == createMRLineElement(key2, '', False)
+	assert 'pants:"",' == createMRLineElement(key2, '', True)
 
 def testParseLog():
 	"""
@@ -240,11 +304,31 @@ def testParseLog():
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
 	testLogger = MachineReadableRunLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
-	testLogger.logTestRun(trainData1, testData1, functionStr, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logTestRun(trainData1, testData1, functionObj, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.0)
+
+	logDicts = parseLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
+
+	assert logDicts[0]["numTrainDataPoints"] == '3'
+	assert logDicts[0]["numTestDataPoints"] == '2'
+	assert logDicts[0]["numTrainDataFeatures"] == '3'
+	assert logDicts[0]["numTestDataFeatures"] == '3'
+	assert logDicts[0]["runTime"] == '0.00'
+	assert logDicts[0]["function"] == 'def f():\n\treturn 0'
+	assert logDicts[0]["rmse"] == '0.5'
+	assert logDicts[0]["meanAbsoluteError"] == '0.45'
+
+	assert logDicts[1]["numTrainDataPoints"] == '3'
+	assert logDicts[1]["numTestDataPoints"] == '2'
+	assert logDicts[1]["numTrainDataFeatures"] == '3'
+	assert logDicts[1]["numTestDataFeatures"] == '3'
+	assert logDicts[1]["runTime"] == '0.00'
+	assert logDicts[1]["function"] == "['\tfunctionObj = lambda x: x+1\n']"
+	assert logDicts[1]["rmse"] == '0.5'
+	assert logDicts[1]["meanAbsoluteError"] == '0.45'
 
 
 
@@ -259,11 +343,11 @@ def main():
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
 	testLogger = MachineReadableRunLog("~/mrTest2.txt")
-	testLogger.logTestRun(trainData1, testData1, functionStr, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logTestRun(trainData1, testData1, functionObj, metricsHash)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.0)
 
 
 

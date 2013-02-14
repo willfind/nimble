@@ -43,7 +43,7 @@ def mlpyPresent():
 	return True
 
 
-def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
+def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, timer=None):
 	"""
 
 
@@ -106,7 +106,7 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 	outputObj.writeFile('csv', output, False)
 
 
-def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
+def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to mlpy
 

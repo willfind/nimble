@@ -49,8 +49,24 @@ class HumanReadableRunLog(Logger):
 		tableHeaders = []
 		tableRow = []
 
+		#Add current time to the basic log table
 		tableHeaders.append("Timestamp")
 		tableRow.append(time.strftime('%Y-%m-%d %H:%M:%S'))
+
+		#if the data matrix was sourced from a file, add the file name and path
+		if trainData.name is not None:
+			tableHeaders.append("Train Data file")
+			tableRow.append(trainData.name)
+		if trainData.path is not None:
+			tableHeaders.append("Train Data path")
+			tableRow.append(trainData.name)
+
+		if testData.name is not None and testData.name != trainData.name:
+			tableHeaders.append("Test Data file")
+			tableRow.append(testData.name)
+		if testData.path is not None and testData.path != trainData.path:
+			tableHeaders.append("Test Data path")
+			tableRow.append(testData.path)
 
 		#add number of training points, # of of features to output list
 		if trainData.data is not None:
@@ -144,11 +160,11 @@ def main():
 	extra = {"c":0.5, "folds":10, "tests": 20}
 
 	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")
-	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, extra)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.5, extra)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, extra)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.5, extra)
 
 if __name__ == "__main__":
 	main()

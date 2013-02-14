@@ -19,11 +19,7 @@ if __name__ == "__main__":
 	data2 = [[1,0,0],[1,1,1],[5,1,1], [3,4,4]]
 	testObj = data('DenseMatrixData', data2)
 
-	runnerFuncStr = """def sciKitKMeans(trainX, testX, dependentVar):
-		return run('sciKitLearn.KMeans', trainX, testX, None, dependentVar, arguments={'n_clusters':3}, sendToLog=False)
-		"""
-
 	metricFuncs = []
 	metricFuncs.append(classificationError)
 
-	results = runAndTest(trainObj, testObj, trainDependentVar=2, testDependentVar=2, function=runnerFuncStr, performanceMetricFuncs=metricFuncs, sendToLog=True)
+	results = runAndTest('sciKitLearn.KMeans',trainObj, testObj, trainDependentVar=2, testDependentVar=2, arguments={'n_clusters':3}, performanceMetricFuncs=metricFuncs, sendToLog=True)

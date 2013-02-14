@@ -28,7 +28,7 @@ def setMahoutLocation(path):
 def getMahoutLocation():
 	return mahoutDir
 
-def mahout(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
+def mahout(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, timer=None):
 	"""
 
 	"""
