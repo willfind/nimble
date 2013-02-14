@@ -106,16 +106,57 @@ def parseLoggedRun(loggedRun):
 	"""
 	runDict = {}
 	#split each logged Run wherever there is a comma not preceded by a backslash
-	elements = re.split(r"[^\\],", loggedRun)
-	for element in elements:
-		parts = re.split(r"[^\\](\\\\)*:", element)
-		#we expect that each element has two parts (they should be of the form
-		#key:value), so if there are more or fewer than 2, we raise an exception
-		if len(parts) != 2:
-			raise Exception("Badly formed line in log of runs")
+	elementsRaw = re.split(r"([^\\]|^)(\\\\)*,", loggedRun)
+	elements = []
+	ticker = 0
+	for i in range(len(elementsRaw)):
+		if i == len(elementsRaw) - 1:
+			element = elementsRaw[i]
+			if element is not None:
+				elements.append(element)
+		elif ticker == 0:
+			if elementsRaw[i] is not None:
+				element = elementsRaw[i]
+		elif ticker == 1:
+			if elementsRaw[i] is not None:
+				element += elementsRaw[i]
+		else:
+			if elementsRaw[i] is not None:
+				element += elementsRaw[i]
+			ticker = -1
+			elements.append(element)
+		#increment ticker
+		ticker += 1
 
+
+	for element in elements:
+		parts = re.split(r"([^\\]|^)(\\\\)*:", element)
+		#re.split should produce a list w/3 or 4 elements, as it will split a string
+		#into the portion before the regular expression, each parenthesized group in the
+		#re, and the portion after the re.  Which will be either 3 or 4 parts.
+		if len(parts) != 3 and len(parts) != 4:
+			raise Exception("Badly formed log element in machine readable log")
+
+		#We need to glue together the results of re.split(), as it will split the key portion
+		#of the pair into three parts
 		key = parts[0]
-		value = parts[1]
+		if parts[1] is not None:
+			key += parts[1]
+		if parts[2] is not None:
+			key += parts[2]
+
+		value = parts[3]
+
+		#remove leading or trailing whitespace characters
+		value = value.strip()
+
+		#trim one (and only one) leading/trailing quote character
+		if value is not None and len(value) > 1:
+			if value[0] == "'" or value[0] == '"':
+				value = value[1:]
+			if value[-1] == "'" or value[-1] == '"':
+				value = value[0:-1]
+		
 		unSanitizedValue = unSanitizeStringFromLog(value)
 		runDict[key] = unSanitizedValue
 
@@ -264,7 +305,7 @@ def testParseLog():
 	assert logDicts[0]["numTestDataPoints"] == '2'
 	assert logDicts[0]["numTrainDataFeatures"] == '3'
 	assert logDicts[0]["numTestDataFeatures"] == '3'
-	assert logDicts[0]["runTime"] == '0.0'
+	assert logDicts[0]["runTime"] == '0.00'
 	assert logDicts[0]["function"] == 'def f():\n\treturn 0'
 	assert logDicts[0]["rmse"] == '0.5'
 	assert logDicts[0]["meanAbsoluteError"] == '0.45'
@@ -273,7 +314,7 @@ def testParseLog():
 	assert logDicts[1]["numTestDataPoints"] == '2'
 	assert logDicts[1]["numTrainDataFeatures"] == '3'
 	assert logDicts[1]["numTestDataFeatures"] == '3'
-	assert logDicts[1]["runTime"] == '0.0'
+	assert logDicts[1]["runTime"] == '0.00'
 	assert logDicts[1]["function"] == "['\tfunctionObj = lambda x: x+1\n']"
 	assert logDicts[1]["rmse"] == '0.5'
 	assert logDicts[1]["meanAbsoluteError"] == '0.45'
