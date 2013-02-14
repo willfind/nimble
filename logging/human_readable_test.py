@@ -55,11 +55,18 @@ class HumanReadableRunLog(Logger):
 
 		#if the data matrix was sourced from a file, add the file name and path
 		if trainData.name is not None:
-			tableHeaders.append("Data file")
+			tableHeaders.append("Train Data file")
 			tableRow.append(trainData.name)
 		if trainData.path is not None:
-			tableHeaders.append("Data path")
+			tableHeaders.append("Train Data path")
 			tableRow.append(trainData.name)
+
+		if testData.name is not None and testData.name != trainData.name:
+			tableHeaders.append("Test Data file")
+			tableRow.append(testData.name)
+		if testData.path is not None and testData.path != trainData.path:
+			tableHeaders.append("Test Data path")
+			tableRow.append(testData.path)
 
 		#add number of training points, # of of features to output list
 		if trainData.data is not None:
