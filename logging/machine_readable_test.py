@@ -38,6 +38,17 @@ class MachineReadableRunLog(Logger):
 		#Create a string to be logged (as one line), and add dimensions and the function
 		logLine = "{RUN}::"
 		logLine += createMRLineElement("timestamp", time.strftime('%Y-%m-%d %H:%M:%S'))
+		#If present, add name and path of source files for train and test data
+		if trainData.name is not None:
+			logLine += createMRLineElement("trainDataName", trainData.name)
+		if trainData.path is not None:
+			logLine += createMRLineElement("trainDataPath", trainData.path)
+		if testData.name is not None:
+			logLine += createMRLineElement("testDataName", testData.name)
+		if testData.path is not None:
+			logLine += createMRLineElement("testDataPath", testData.path)
+
+		#add info about size and shape of data
 		logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[0])
 		logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
 		logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
