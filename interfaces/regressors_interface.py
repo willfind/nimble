@@ -38,7 +38,7 @@ def getRegressorLocation():
 
 
 # TODO outer layer regressor() interface needs to deal with multiple kinds of input
-def regressor(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
+def regressor(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, timer=None):
 	"""
 	Function to call on regressors in the Regression package.
 

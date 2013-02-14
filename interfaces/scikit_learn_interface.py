@@ -46,7 +46,7 @@ def sciKitLearnPresent():
 	return True
 
 
-def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
+def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, timer=None):
 	"""
 	Function to call on the estimator objects of the scikit-learn package.
 	It will instantiate the estimator case-sensitively matching the given algorithm,
@@ -111,7 +111,7 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 	outputObj.writeFile('csv', output, False)
 
 
-def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
+def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to scikit-learn
 
@@ -136,15 +136,28 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
 	argString = makeArgString(objArgs, algArgs, "", "=", ", ")
 	sklObj = eval(objectCall + "(" + argString + ")")
 
+	#start timer of training, if timer is present
+	if timer is not None:
+		timer.start('train')
+
 	# fit object
 	(fitArgs,v,k,d) = inspect.getargspec(sklObj.fit)
 	argString = makeArgString(fitArgs, algArgs, "", "=", ", ")
 	sklObj = eval("sklObj.fit(trainDataX,trainDataY " + argString + ")")
 
+	#stop timing training and start timing testing, if timer is present
+	if timer is not None:
+		timer.stop('train')
+		timer.start('test')
+
 	# estimate from object
 	(preArgs,v,k,d) = inspect.getargspec(sklObj.predict)
 	argString = makeArgString(preArgs, algArgs, "", "=", ", ")
 	outData = eval("sklObj.predict(testData, " + argString + ")")
+
+	#stop timing of testing, if timer is present
+	if timer is not None:
+		timer.stop('test')
 
 	return outData
 
