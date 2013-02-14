@@ -166,6 +166,17 @@ def _loadCSVtoMatrix(path):
 		featureNames = scrubbedLine.split(',')
 		skip_header = 1
 
+	# check the types in the first data containing line.
+	line = firstLine
+	while (line == "") or (line[0] == '#'):
+		line = inFile.readline()
+	lineList = line.split(',')
+	for datum in lineList:
+		try:
+			num = numpy.float(datum)
+		except ValueError:
+			raise ValueError("Cannot load a file with non numerical typed columns")
+
 	inFile.close()
 
 	data = numpy.genfromtxt(path, delimiter=',', skip_header=skip_header)
@@ -200,12 +211,12 @@ def _loadMTXtoAuto(path):
 	data = scipy.io.mmread(path)
 	return (data, featureNames)
 
-def _intFloatOrString(str):
-	ret = str
+def _intFloatOrString(inString):
+	ret = inString
 	try:
-		ret = int(str)
+		ret = int(inString)
 	except exceptions.ValueError:
-		ret = float(str)
+		ret = float(inString)
 	# this will return an int or float if either of the above two are successful
 	finally:
 		return ret
