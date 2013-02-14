@@ -29,29 +29,28 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 	algorithm = splitList[1]
 
 	if sendToLog:
-		startTime = time.clock()
+		timer = Stopwatch()
 
 	if package == 'mahout':
-		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'regressor':
-		results = regressor(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = regressor(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'sciKitLearn':
-		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'mlpy':
-		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments)
+		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'self':
 		raise ArgumentException("self modifcation not yet implemented")
 	else:
 		raise ArgumentException("package not recognized")
 
 	if sendToLog:
-			endTime = time.clock()
 			logManager = LogManager()
 			if package == 'regressor':
 				funcString = 'regressors.' + algorithm
 			else:
 				funcString = package + '.' + algorithm
-			logManager.logRun(trainData, testData, funcString, None, endTime - startTime, extraInfo=arguments)
+			logManager.logRun(trainData, testData, funcString, None, timer, extraInfo=arguments)
 
 	return results
 
