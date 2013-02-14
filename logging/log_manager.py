@@ -26,10 +26,10 @@ class LogManager(object):
 		self.humanReadableLog = HumanReadableRunLog(fullLogDesignator + ".txt")
 		self.machineReadableLog = MachineReadableRunLog(fullLogDesignator + ".mr")
 
-	def logRun(self, trainData, testData, function, metrics, runTime, extraInfo=None):
+	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None):
 		"""
 			Pass the information about this run to both logs:  human and machine
 			readable, which will write it out to the log files.
 		"""
-		self.humanReadableLog.logRun(trainData, testData, function, metrics, runTime, extraInfo)
-		self.machineReadableLog.logRun(trainData, testData, function, metrics, runTime, extraInfo)
+		self.humanReadableLog.logRun(trainData, testData, function, metrics, timer, extraInfo)
+		self.machineReadableLog.logRun(trainData, testData, function, metrics, timer, extraInfo)
