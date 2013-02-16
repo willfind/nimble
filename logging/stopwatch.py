@@ -5,13 +5,14 @@
 """
 
 import time
-
+from .utility.custom_exceptions import MissingEntryException
 
 class Stopwatch(object):
 
 	def __init__(self):
 		self.startTimes = dict()
 		self.stopTimes = dict()
+		self.cumulativeTimes = dict()
 
 	def start(self, taskName):
 		"""
@@ -20,6 +21,7 @@ class Stopwatch(object):
 			TODO: May need to change that to raising an exception, instead of overwriting).
 		"""
 		self.startTimes[taskName] = time.clock()
+		del self.startTimes[taskName]
 
 	def stop(self, taskName):
 		"""
@@ -29,10 +31,16 @@ class Stopwatch(object):
 			is already an entry for taskName.
 		"""
 		self.stopTimes[taskName] = time.clock()
+		if self.startTimes[taskName] is not None:
+			if self.cumulativeTimes[taskName] is None:
+				self.cumulativeTimes[taskName] += self.stopTimes[taskName] - self.startTimes[taskName]
+			else:
+				self.cumulativeTimes[taskName] = self.stopTimes[taskName] - self.startTimes[taskName]
 
-	def continueTiming(self, taskName):
+	def isRunning(self, taskName):
 		"""
-			If a task has previously been started and
+			Check if the stopwatch is currently timing a task with taskName (i.e. the timer has been
+			started but not stopped for said task)
 		"""
 
 	def calcRunTime(self, taskName):
@@ -43,10 +51,10 @@ class Stopwatch(object):
 			TODO: instead of returning None, raise an exception if start time or stop time is
 			unavailable.
 		"""
-		if self.startTimes[taskName] is None or self.stopTimes[taskName] is None:
-			return None
-		else:
-			return self.stopTimes[taskName] - self.startTimes[taskName]
+		if self.cumulativeTimes[taskName] is None:
+			raise MissingEntryException([taskName], "Missing entry when trying to calculate total task run time")
+		else return self.cumulativeTimes[taskName]
+
 
 
 def testBasicFuncs():
@@ -56,3 +64,10 @@ def testBasicFuncs():
 	runTime = watch.calcRunTime('test')
 	assert runTime > 0.0
 	assert runTime < 10.0
+
+	watch = Stopwatch()
+	watch.start('test')
+	watch.stop('test')
+	watch.startTimes['test'] = 0.00
+	watch.stopTimes['test'] = 5.00
+
