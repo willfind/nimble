@@ -13,6 +13,7 @@ class Stopwatch(object):
 		self.startTimes = dict()
 		self.stopTimes = dict()
 		self.cumulativeTimes = dict()
+		self.isRunning = dict()
 
 	def start(self, taskName):
 		"""
