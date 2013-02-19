@@ -1,7 +1,7 @@
 """
-	The Stopwatch class is used for timing various tasks (training classifiers,
-	testing classifiers)within the UML code.  Can time any generic task based
-	on task name.
+The Stopwatch class is used for timing various tasks (training classifiers,
+testing classifiers)within the UML code.  Can time any generic task based
+on task name.
 """
 
 import time
@@ -19,9 +19,9 @@ class Stopwatch(object):
 
 	def start(self, taskName):
 		"""
-			Record the start time for the provided taskName.  If there is already
-			a start time associated with taskName, overwrite the old start time.
-			TODO: May need to change that to raising an exception, instead of overwriting).
+		Record the start time for the provided taskName.  If there is already
+		a start time associated with taskName, overwrite the old start time.
+		TODO: May need to change that to raising an exception, instead of overwriting).
 		"""
 		if taskName in self.isRunningStatus and self.isRunningStatus[taskName] == True:
 			raise ImproperActionException("Task: " + taskName + " has already been started.")
