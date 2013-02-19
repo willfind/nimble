@@ -14,4 +14,14 @@ class ArgumentException (Exception):
 	def __str__(self):
 		return repr(self.value)
 
+class MissingEntryException (Exception):
+	def __init__(self, entryNames, value):
+		self.entryNames = entryNames
+		self.value = value
+	def __str__(self):
+		errMessage = "Missing entry names: " + self.entryNames[0]
+		for entryName in self.entryNames[1:]:
+			errMessage += ", " + entryName
+		errMessage += '. \n' + repr(self.value)
+
 

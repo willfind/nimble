@@ -4,11 +4,67 @@ from UML import run
 from UML import normalize
 from UML import data
 from UML import crossValidateReturnBest
+from UML import crossValidate
 from UML import loadTrainingAndTesting
 from UML import functionCombinations
-from UML import runAndTestDirect
+from UML import runAndTest
 from UML.performance.metric_functions import classificationError
 
+def testEverythingVolumeOne():
+	"""
+	Try to test some full use cases: load data, split data, normalize data, run crossValidate or
+	crossValidateReturnBest, and get results.  Use the classic iris data set for classification.
+	"""
+	pathOrig = "example_data/iris.csv"
+
+	# we specify that we want a DenseMatrixData object returned, and with just the path it will
+	# decide automaticallly the format of the file that is being loaded
+	processed = data("DenseMatrixData", pathOrig)
+
+	assert processed.data
+
+	partOne = processed.extractPointsByCoinToss(0.5)
+	partOneTest = partOne.extractPointsByCoinToss(0.1)
+	partTwoX = processed
+	partTwoY = processed.extractFeatures('Type')
+
+	assert len(partOne.data) > 55
+	assert len(partOne.data) < 80
+	assert len(partTwoX.data) > 65
+	assert len(partTwoX.data) < 85
+	assert len(partOne.data) + len(partTwoX.data) + len(partOneTest) + len(partTwoX) == 150
+
+	trainX = partOne
+	trainY = partOne.extractFeatures('Type')
+	testX = partOneTest
+	testY = partOneTest.extractFeatures('Type')
+	
+
+	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
+	toRunOne = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [classificationError])'
+	runsOne = functionCombinations(toRunOne)
+	extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError}
+	fullCrossValidateResults = crossValidate(trainX, trainY, runsOne, numFolds=10, extraParams=extraParams, sendToLog=False)
+	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runsOne, mode='min', numFolds=10, extraParams=extraParams, sendToLog=False)
+
+	#Check that the error rate for each function is between 0 and 1
+	for result in fullCrossValidateResults.items:
+		assert result[1] >= 0.0
+		assert result[1] <= 1.0
+	assert bestFunction is not None
+	assert performance >= 0.0
+	assert performance <= 1.0
+
+	trainObj = trainX
+	testObj = partTwoX
+
+	# use normalize to modify our data; we call a dimentionality reduction algorithm to
+	# simply our mostly redundant points. k is the desired number of dimensions in the output
+	normalize('mlpy.PCA', trainObj, testObj, arguments={'k':1})
+
+	# assert that we actually do have fewer dimensions
+	assert trainObj.data[0].size == 1
+	assert testObj.data[0].size == 1
 
 def testDataPrepExample():
 	"""
@@ -52,9 +108,9 @@ def testCrossValidateExample():
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID='income', fractionForTestSet=.15, loadType="DenseMatrixData", fileType="csv")
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTestDirect("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [classificationError])'
+	toRun = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [classificationError])'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTestDirect':runAndTestDirect, 'classificationError':classificationError}	
+	extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError}
 
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=10, extraParams=extraParams)
 	assert bestFunction is not None
@@ -88,7 +144,7 @@ def testNormalizing():
 
 	ret = run('mlpy.KNN', trainObj, testObj, dependentVar=trainObjY, arguments={'k':1})
 
-	# assert we get the correct classes 
+	# assert we get the correct classes
 	assert ret.data[0,0] == 1
 	assert ret.data[1,0] == 1
 	assert ret.data[2,0] == 0

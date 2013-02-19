@@ -3,7 +3,7 @@ from .. import run
 #import DenseMatrix
 
 
-def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}):
+def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog=True):
 	"""applies crossValidation using numFolds folds, applying each function in the list functionsToApply (which are text of python functions)
 	one by one. Assumes that thefunctionsToApply is a list of the text functions, that use the variables trainX, trainY, testX, testY within
 	their text."""
@@ -35,7 +35,7 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}):
 	return aggregatedResults
 
 
-def crossValidateReturnBest(X, Y, functionsToApply, mode, numFolds=10, extraParams={}):
+def crossValidateReturnBest(X, Y, functionsToApply, mode, numFolds=10, extraParams={}, sendToLog=True):
 	"""runs cross validation on the functions whose text is in the list functionsToApply, and returns the text of the best performer together with
 	its performance"""
 	if mode == 'min':
