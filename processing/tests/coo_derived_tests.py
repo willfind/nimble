@@ -34,11 +34,11 @@ def test_init_allEqualWithFeatureNames():
 ############
 
 def test_equals_False():
-	""" Test Coo Sparse equals() against some non-equal input """
+	""" Test CooSparse equals() against some non-equal input """
 	equals_False(constructor)
 
 def test_equals_True():
-	""" Test Coo Sparse equals() against some actually equal input """
+	""" Test CooSparse equals() against some actually equal input """
 	equals_True(constructor)
 
 def test_equals_empty():
@@ -335,11 +335,6 @@ def test_toRowListData_handmade_assignedFeatureNames():
 ##############################
 # toDenseMatrixData() #
 ##############################
-
-
-def test_toDenseMatrixData_incompatible():
-	""" Test CooSparse toDenseMatrixData with data that cannot be used by dense matrices """
-	toDenseMatrixData_incompatible(constructor)
 
 
 def test_toDenseMatrixData_handmade_defaultFeatureNames():
