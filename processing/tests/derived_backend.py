@@ -469,9 +469,6 @@ def extractPoints_handmadeRangeDefaults(constructor):
 
 	expectedTest = constructor([[1,2,3]],featureNames)
 	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
-	
-	print ret.data
-	print expectedRet.data
 
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
@@ -535,7 +532,7 @@ def extractFeatures_handmadeFunction(constructor):
 	ext = toTest.extractFeatures(absoluteOne)
 	exp = constructor([[1,-1],[4,-2],[7,-3]])
 	assert ext.equals(exp)
-	expEnd = constructor([[2,3],[5,6],[8,9]])		
+	expEnd = constructor([[2,3],[5,6],[8,9]])	
 	assert toTest.equals(expEnd)
 
 
@@ -749,7 +746,7 @@ def mapReduceOnPoints_handmade(constructor):
 	ret = toTest.mapReduceOnPoints(simpleMapper,simpleReducer)
 	
 	exp = constructor([[1,5],[4,11],[7,17]])
-	
+
 	assert (ret.equals(exp))
 	assert (toTest.equals(constructor(data,featureNames)))
 
@@ -762,7 +759,7 @@ def mapReduceOnPoints_handmadeNoneReturningReducer(constructor):
 	ret = toTest.mapReduceOnPoints(simpleMapper,oddOnlyReducer)
 	
 	exp = constructor([[1,5],[7,17]])
-	
+
 	assert (ret.equals(exp))
 	assert (toTest.equals(constructor(data,featureNames)))
 

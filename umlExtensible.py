@@ -40,7 +40,7 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 	elif package == 'mlpy':
 		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'self':
-		raise ArgumentException("self modifcation not yet implemented")
+		raise ArgumentException("self modification not yet implemented")
 	else:
 		raise ArgumentException("package not recognized")
 
@@ -152,7 +152,7 @@ def _loadRLD(data, featureNames, fileType):
 	return RowListData(data, featureNames, os.path.basename(path), path)
 
 def _loadCSVtoMatrix(path):
-	inFile = open(path, 'r')
+	inFile = open(path, 'rU')
 	firstLine = inFile.readline()
 	featureNames = None
 	skip_header = 0
@@ -191,7 +191,7 @@ def _loadMTXtoAuto(path):
 	they are also read.
 
 	"""
-	inFile = open(path, 'r')
+	inFile = open(path, 'rU')
 	featureNames = None
 
 	# read through the comment lines
@@ -236,7 +236,7 @@ def _defaultParser(line):
 
 
 def _loadCSVtoList(path):
-	inFile = open(path, 'r')
+	inFile = open(path, 'rU')
 	firstLine = inFile.readline()
 	featureNameList = None
 
@@ -253,7 +253,7 @@ def _loadCSVtoList(path):
 	#if not, get the iterator pointed back at the first line again	
 	else:
 		inFile.close()
-		inFile = open(path, 'r')
+		inFile = open(path, 'rU')
 
 	#list of datapoints in the file, where each data point is a list
 	data = []

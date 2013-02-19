@@ -482,7 +482,7 @@ class BaseData(object):
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.points()
+				end = self.points() - 1
 			if start < 0 or start > self.points():
 				raise ArgumentException("start must be a valid index, in the range of possible points")
 			if end < 0 or end > self.points():
@@ -516,6 +516,10 @@ class BaseData(object):
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
 		elif start is not None or end is not None:
+			if start is None:
+				start = 0
+			if end is None:
+				end = self.features() - 1
 			if start < 0 or start > self.features():
 				raise ArgumentException("start must be a valid index, in the range of possible features")
 			if end < 0 or end > self.features():

@@ -129,7 +129,7 @@ class HumanReadableRunLog(Logger):
 		if metrics is not None:
 			metricTable = []
 			metricHeaders = []
-			metricHeaders.append("Error rate")
+			metricHeaders.append("\n\nError rate")
 			metricHeaders.append("Error Metric")
 			metricTable.append(metricHeaders)
 			for metric, result in metrics.iteritems():
