@@ -65,7 +65,7 @@ class CscSparseData(SparseData):
 			mmwrite(target=outPath, a=self.data)
 
 	def _copyReferences_implementation(self, other):
-		if not isinstance(other, CscSparseData)
+		if not isinstance(other, CscSparseData):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
