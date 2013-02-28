@@ -64,21 +64,21 @@ def test_featureToIntegerCategories_handmade():
 ###############################
 
 @raises(ArgumentException)
-def test_selectConstantOfPointsByValue_exceptionNumToSelectNone():
+def _selectConstantOfPointsByValue_exceptionNumToSelectNone():
 	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect is None """
 	callAll(selectConstantOfPointsByValue_exceptionNumToSelectNone)
 
 @raises(ArgumentException)
-def test_selectConstantOfPointsByValue_exceptionNumToSelectLEzero():
+def _selectConstantOfPointsByValue_exceptionNumToSelectLEzero():
 	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect <= 0 """
 	callAll(selectConstantOfPointsByValue_exceptionNumToSelectLEzero)
 
 @raises(ArgumentException)
-def test_selectConstantOfPointsByValue_handmade():
+def _selectConstantOfPointsByValue_handmade():
 	""" Test selectConstantOfPointsByValue() against handmade output """
 	callAll(selectConstantOfPointsByValue_handmade)
 
-def selectConstantOfPointsByValue_handmadeLimit():
+def _selectConstantOfPointsByValue_handmadeLimit():
 	""" Test selectConstantOfPointsByValue() against handmade output when the constant exceeds the available points """
 	callAll(selectConstantOfPointsByValue_handmadeLimit)
 
@@ -88,21 +88,21 @@ def selectConstantOfPointsByValue_handmadeLimit():
 ##############################
 
 @raises(ArgumentException)
-def test_selectPercentOfPointsByValue_exceptionPercentNone():
+def _selectPercentOfPointsByValue_exceptionPercentNone():
 	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is None """
 	callAll(selectPercentOfPointsByValue_exceptionPercentNone)
 
 @raises(ArgumentException)
-def test_selectPercentOfPointsByValue_exceptionPercentZero():
+def _selectPercentOfPointsByValue_exceptionPercentZero():
 	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is <= 0 """
 	callAll(selectPercentOfPointsByValue_exceptionPercentZero)
 
 @raises(ArgumentException)
-def test_selectPercentOfPointsByValue_exceptionPercentOneHundrend():
+def _selectPercentOfPointsByValue_exceptionPercentOneHundrend():
 	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is >= 100 """
 	callAll(selectPercentOfPointsByValue_exceptionPercentOneHundrend)
 
-def test_selectPercentOfPointsByValue_handmade():
+def _selectPercentOfPointsByValue_handmade():
 	""" Test selectPercentOfPointsByValue() against handmade output """
 	callAll(selectPercentOfPointsByValue_handmade)
 
