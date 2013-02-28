@@ -87,7 +87,7 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 
 	# call backend
 	try:
-		retData = _mlpyBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments)
+		retData = _mlpyBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not mlpyPresent():
@@ -124,9 +124,16 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=Non
 		except TypeError:
 			#default to nothing
 			kernArgs = {}
+
+		#start timer of training, if timer is present
+		if timer is not None:
+			timer.start('train')
 		argString = makeArgString(kernArgs, algArgs, "", "=", ", ")
 		kernObj = eval(objectCall + "(" + argString + ")")
 		del algArgs['kernel']
+		#stop timer of training, if timer is present. We don't want to include object instantiation
+		if timer is not None:
+			timer.stop('train')
 
 	# make object
 	objectCall = "mlpy." + algorithm
@@ -141,6 +148,9 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=Non
 		argString += "kernel=kernObj" 
 	obj = eval(objectCall + "(" + argString + ")")
 
+	#start timer of training, if timer is present
+	if timer is not None:
+		timer.start('train')
 	# run code for the learn / pred paradigm
 	if hasattr(obj, 'pred'):
 		# call .learn for the object
@@ -151,6 +161,11 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=Non
 			learnArgs = None
 		argString = makeArgString(learnArgs, algArgs, "", "=", ", ")
 		eval("obj.learn(trainDataX,trainDataY " + argString + ")")
+
+		#stop timing training and start timing testing, if timer is present
+		if timer is not None:
+			timer.stop('train')
+			timer.start('test')
 
 		# call .pred for the object
 		try:
@@ -174,6 +189,11 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=Non
 		argString = makeArgString(learnArgs, algArgs, "", "=", ", ")
 		eval("obj.learn(trainDataX, " + argString + ")")
 
+		#stop timing training and start timing testing, if timer is present
+		if timer is not None:
+			timer.stop('train')
+			timer.start('test')
+
 		# call .transform for the object
 		try:
 			(transArgs,v,k,d) = inspect.getargspec(obj.transform)
@@ -182,6 +202,11 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=Non
 			transArgs = None
 		argString = makeArgString(transArgs, algArgs, "", "=", ", ")
 		outData = eval("obj.transform(testData, " + argString + ")")
+
+	#stop timing of testing, if timer is present
+	if timer is not None:
+		timer.stop('test')
+
 
 	return outData
 
