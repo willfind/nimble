@@ -83,13 +83,13 @@ def testSciKitLearnHandmadeSparseClustering():
 	trainData[0, :] = [2,3,1]
 	trainData[1, :] = [2,2,1]
 	trainData[2, :] = [0,0,0]
-	trainData = CscSparseData(data=trainData)
+	trainData = CooSparseData(data=trainData)
 
 	testData = scipy.sparse.lil_matrix((3,2))
 	testData[0, :] = [3,3]
 	testData[1, :] = [3,2]
 	testData[2, :] = [-1,0]
-	testData = CscSparseData(data=testData)
+	testData = CooSparseData(data=testData)
 
 	ret = sciKitLearn('MiniBatchKMeans', trainData, testData, dependentVar=2, arguments={'n_clusters':2})
 	
