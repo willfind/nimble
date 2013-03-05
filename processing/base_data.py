@@ -325,6 +325,20 @@ class BaseData(object):
 		#	the storage struc is outside the func, ie we have access to it here
 		#apply to all using above to mark selected
 
+	def toListOfLists(self):
+		"""
+			Extract this object's data and return it as a list of lists, with 
+			featureNames as the first row in the list.  If featureNames is blank,
+			insert a blank list in the first position of the returned list.
+		"""
+		rowListContainer = self.toRowListData()
+		if self.featureNames is not None:
+			rowListContainer.data.insert(0, self.featureNames)
+		else:
+			rowListContainer.data.insert(0, [None] * len(rowListContainer.data[0]))
+
+		return rowListContainer.data
+
 	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
 		"""
 		Return a new object containing a randomly selected sample of points
