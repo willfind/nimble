@@ -70,7 +70,6 @@ def produceFeatureWiseReport(dataContainer, supplementalFunctions=None, maxFeatu
     if numColumns > maxFeaturesToCover:
         leftFeatureIndices = range(maxFeaturesToCover/2)
         leftSlice = dataContainer.copyFeatures(leftFeatureIndices)
-
         rightFeatureIndices = 
 
 	rowLabelsList = [None] * len(dataSet.featureNames)

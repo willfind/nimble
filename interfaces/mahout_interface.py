@@ -37,6 +37,8 @@ def mahout(algorithm, trainData, testData, output=None, dependentVar=None, argum
 		print('Cannot find mahout, please call setMahoutLocation() with the path of the Mahout root directory')
 		return
 
+	raise NotImplementedError("Mahout interface is currently not in a usable state")
+
 #	if redirectOutputTarget == '':
 #		dumpFile = tempfile.NamedTemporaryFile()
 #		redirectOutputTarget = dumpFile.name

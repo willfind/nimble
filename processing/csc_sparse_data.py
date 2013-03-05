@@ -23,20 +23,10 @@ class CscSparseData(SparseData):
 		super(CscSparseData, self).__init__(self.data, featureNames, name, path)
 
 
-	def _extractFeatures_implementation(self,toExtract):
-		"""
-		
-
-		"""
-
-		converted = self.data.todense()
-		ret = converted[:,toExtract]
-		converted = numpy.delete(converted,toExtract,1)
-		self.data = csc_matrix(converted)
-
-
-		return CscSparseData(ret)
-
+#	def _extractFeatures_implementation(self,toExtract):
+#		"""
+#		
+#		"""
 
 	
 	def _transpose_implementation(self):
@@ -65,7 +55,7 @@ class CscSparseData(SparseData):
 			mmwrite(target=outPath, a=self.data)
 
 	def _copyReferences_implementation(self, other):
-		if not isinstance(other, CscSparseData)
+		if not isinstance(other, CscSparseData):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data

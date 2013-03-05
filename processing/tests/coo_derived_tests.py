@@ -41,10 +41,6 @@ def test_equals_True():
 	""" Test CooSparse equals() against some actually equal input """
 	equals_True(constructor)
 
-def test_equals_empty():
-	""" Test CooSparse equals() for empty objects """
-	equals_empty(constructor)
-
 
 ###############
 # transpose() #

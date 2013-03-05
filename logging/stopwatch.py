@@ -6,6 +6,7 @@ on task name.
 
 import time
 import nose
+from nose.tools import *
 from ..utility.custom_exceptions import MissingEntryException
 from ..utility.custom_exceptions import ImproperActionException
 
@@ -27,6 +28,7 @@ class Stopwatch(object):
 			raise ImproperActionException("Task: " + taskName + " has already been started.")
 		else:
 			self.startTimes[taskName] = time.clock()
+			self.cumulativeTimes[taskName] = 0.0
 			self.isRunningStatus[taskName] = True
 
 	def stop(self, taskName):
@@ -113,13 +115,45 @@ def testBasicFuncs():
 
 	runTime = watch.calcRunTime('test')
 	assert runTime == 5.0
-	assert watch.isRunning('test') == False
+	assert not watch.isRunning('test')
 
 	watch.start('test')
-	assert watch.isRunning('test') == True
+	assert watch.isRunning('test')
 
-	#nose.assert_raises(ImproperActionException, watch.start, ('test'))
-	#nose.assert_raises(MissingEntryException, watch.calcRunTime, ('uncle'))
-	#nose.assert_raises(ImproperActionException, watch.calcRunTime, ('test'))
-	#nose.assert_raises(MissingEntryException, watch.stop, ('uncle'))
+	watch.stop('test')
+	watch.reset('test', False)
+	assert not watch.isRunning('test')
+	assert watch.calcRunTime('test') > 0.0
+	watch.reset('test')
+	assert watch.calcRunTime('test') == 0.0
 
+@raises(ImproperActionException)
+def testDoubleStart():
+	watch = Stopwatch()
+	watch.start('test')
+	watch.start('test')
+
+@raises(MissingEntryException)
+def testStopMissingEntry():
+	watch = Stopwatch()
+	watch.start('test')
+	watch.stop('uncle')
+
+@raises(ImproperActionException)
+def testCalcRunTimeImproperAction():
+	watch = Stopwatch()
+	watch.start('test')
+	watch.calcRunTime('test')
+
+@raises(MissingEntryException)
+def testCalcRunTimeMissingEntry():
+	watch = Stopwatch()
+	watch.start('test')
+	watch.calcRunTime('uncle')
+
+@raises(ImproperActionException)
+def testImproperActionStop():
+	watch = Stopwatch()
+	watch.start('test')
+	watch.stop('test')
+	watch.stop('test')

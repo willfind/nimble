@@ -8,6 +8,7 @@ directly by the class calling this backend.
 
 import tempfile
 import os
+import numpy
 
 from ..base_data import *
 from copy import deepcopy
@@ -117,18 +118,6 @@ def equals_True(constructor):
 	""" Test equals() against some actually equal input """
 	toTest1 = constructor([[4,5]])
 	toTest2 = constructor(deepcopy([[4,5]]))
-	assert toTest1.equals(toTest2)
-	assert toTest2.equals(toTest1)
-
-def equals_empty(constructor):
-	""" Test equals() for empty objects """
-	toTest1 = constructor([])
-	toTest2 = constructor(deepcopy([]))
-	assert toTest1.equals(toTest2)
-	assert toTest2.equals(toTest1)
-
-	toTest1 = constructor(None)
-	toTest2 = constructor(deepcopy(None))
 	assert toTest1.equals(toTest2)
 	assert toTest2.equals(toTest1)
 

@@ -1,0 +1,321 @@
+"""
+Contains the functions to be used for in-script calls to the shogun module python
+interface
+
+"""
+
+import numpy
+import scipy.sparse
+
+from interface_helpers import *
+from ..processing.dense_matrix_data import DenseMatrixData as DMData
+from ..processing.base_data import BaseData
+from ..processing.sparse_data import SparseData
+
+from ..utility.custom_exceptions import ArgumentException
+
+# Contains path to shogun root directory
+shogunDir = None
+
+
+def setShogunLocation(path):
+	""" Sets the location of the root directory of the shogun installation to be used """
+	global shogunDir
+	shogunDir = path
+
+
+def getShogunLocation():
+	""" Returns the currently set path to the shogun root directory """
+	return shogunDir
+	
+
+def shogunPresent():
+	"""
+	Return true if shogun is importable. If true, then the interface should
+	be accessible.
+	
+	"""
+	putOnSearchPath(shogunDir)
+	try:
+		import shogun
+	except ImportError:	
+		return False
+
+	return True
+
+
+def shogun(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
+	"""
+
+
+	"""
+	if not isinstance(trainData, BaseData):
+		trainObj = DMData(file=trainData)
+	else: # input is an object
+		trainObj = trainData
+	if not isinstance(testData, BaseData):
+		testObj = DMData(file=testData)
+	else: # input is an object
+		testObj = testData
+	
+	trainObjY = None
+	# directly assign target values, if present
+	if isinstance(dependentVar, BaseData):
+		trainObjY = dependentVar
+	# otherwise, isolate the target values from training examples
+	elif dependentVar is not None:
+		# TODO currently destructive!
+		trainObjY = trainObj.extractFeatures([dependentVar])		
+	# could be None for unsupervised learning	
+
+	# necessary format for shogun, also makes the following ops easier
+	if trainObjY is not None:	
+		trainObjY = trainObjY.toDenseMatrixData()
+	
+	# pull out data from obj
+	trainObj.transpose()
+	trainRawData = trainObj.data
+	if trainObjY is not None:
+		# corrects the dimensions of the matrix data to be just an array
+		trainRawDataY = numpy.array(trainObjY.data).flatten()
+	else:
+		trainRawDataY = None
+	testObj.transpose()
+	testRawData = testObj.data
+
+	# call backend
+	try:
+		retData = _shogunBackend(algorithm,  trainRawData, trainRawDataY, testRawData, arguments)
+	except ImportError as e:
+		print "ImportError: " + str(e)
+		if not shogunPresent():
+			print "Shogun not importable."
+			print "It must be either on the search path, or have its path set by setshogunLocation()"
+		return
+
+	if retData is None:
+		return
+
+	outputObj = DMData(retData)
+
+	if output is None:
+		# we want to return a column vector
+		outputObj.transpose()
+		return outputObj
+
+	outputObj.writeFile('csv', output, False)
+
+
+def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
+	"""
+	Function to find, construct, and execute the wanted calls to shogun
+
+	"""	
+	moduleName = findModule(algorithm, "shogun", shogunDir)		
+
+	if moduleName is None:
+		raise ArgumentException("Could not find the algorithm")
+
+	putOnSearchPath(shogunDir)
+	exec ("from shogun import " + moduleName)
+
+	# convert data to shogun friendly format
+	# TODO automated format detection -- int, float, sparse
+	from shogun.Features import RealFeatures
+	from shogun.Features import SparseRealFeatures
+
+	if scipy.sparse.issparse(trainDataX):
+		trainFeat = SparseRealFeatures()
+		trainFeat.set_sparse_feature_matrix(trainDataX.tocsc())
+	else:
+		trainFeat = RealFeatures()
+		trainFeat.set_feature_matrix(numpy.array(trainDataX, dtype=numpy.float))
+
+	if scipy.sparse.issparse(testData):
+		testFeat = SparseRealFeatures()
+		testFeat.set_sparse_feature_matrix(testData.tocsc())
+	else:
+		testFeat = RealFeatures()
+		testFeat.set_feature_matrix(numpy.array(testData, dtype=numpy.float))
+
+	# Labels must be float typed
+	# TODO do BinaryLabels and MultiClassLabels even exist? -- depends on version :/
+	from shogun.Features import Labels
+	trainLabels = Labels(trainDataY.astype(float))
+
+	# make object
+	objectCall = moduleName + '.' + algorithm
+	SGObj = eval(objectCall + "()")
+
+	#set parameters from input arguments
+	SGObj.set_labels(trainLabels)
+	blankDataParam = False
+
+	# special parameters 'kernel' and 'distance' -- affects arguments to .train()
+	keywords = ['kernel', 'distance']
+	for word in keywords:
+		if word not in algArgs:
+			continue
+
+		wordValue = algArgs[word]
+		# both kernels and distances are in shogun.Kernel
+		import shogun.Kernel
+		if not isinstance(wordValue, basestring):
+			raise ArgumentException(word + " parameter must define the name of a Kernel to instantiate")
+		
+		#these are values we can reasonably predict that the user would want filled in
+		fillParams = ['l','r','lhs','rhs']
+		for p in fillParams:
+			if p not in algArgs:
+				algArgs[p] = trainFeat
+
+		argString = ""
+		(paramList, usedList) = _argsFromDoc("shogun.Kernel." + wordValue,"__init__", algArgs)
+		if paramList is None or len(paramList) == 0:
+			raise ArgumentException("Could not find arguments for " + wordValue)
+
+		for i in xrange(len(paramList)):
+			if i != 0:
+				argString +=", "
+			argString += "paramList[" + str(i) + "]"
+		try:
+			constructedObj = eval("shogun.Kernel." + wordValue + "(" + argString + ")")
+		except AttributeError:
+			raise ArgumentException("Failed to instantiate" + wordValue)
+		if word == 'kernel':
+			SGObj.set_kernel(constructedObj)
+		else:
+			SGObj.set_distance(constructedObj)
+
+		blankDataParam = True
+		# remove those arguments that were used, so we don't try to readd them further down
+		del(algArgs[word])
+		for toDel in usedList:
+			del(algArgs[toDel])
+		# delete these if they weren't used
+		for p in fillParams:
+			if p in algArgs:
+				del(algArgs[p])
+
+	# special case parameter 'C' -- we want to fudge the default call
+	if 'C' in algArgs:
+		Cvalue = algArgs['C']
+		# allow a list input
+		if not (isinstance(Cvalue, int) or isinstance(Cvalue, float)):
+			try:
+				SGObj.set_C(Cvalue[0], Cvalue[1])
+			except TypeError:
+				raise ArgumentException("Error setting C value. " + SGObj.set_C.__doc__)
+		# assume the same value for both params
+		else:
+			try:
+				SGObj.set_C(Cvalue, Cvalue)
+			except TypeError:
+				SGObj.set_C(Cvalue)
+		del(algArgs['C'])
+
+	for k in algArgs:
+		v = algArgs[k]
+		testString = "set_" + k
+		if testString not in dir(SGObj):
+			raise ArgumentException("Cannot set argument: " + k)
+		exec("SGObj." + testString + "(v)")
+	
+	# Training Call
+	argString = ""
+	if not blankDataParam:
+		argString = "trainFeat"
+	exec("SGObj.train(" + argString + ")")
+
+	# Prediction / Test Call
+	outData = eval("SGObj.apply(testFeat)")
+
+	return outData.get_labels()
+
+
+
+def listAlgorithms():
+	"""
+	Function to return a list of all algorithms callable through our interface, if shogun is present
+	
+	"""
+	if not shogunPresent():
+		return []
+
+	import shogun
+
+	ret = []
+	subpackages = shogun.__all__
+
+	for sub in subpackages:
+		curr = 'shogun.' + sub
+		try:
+			exec('import ' + curr)
+		except ImportError:
+			# no guarantee __all__ is accurate, if something doesn't import, just skip ahead
+			continue
+
+		contents = eval('dir(' + curr + ')')
+		
+		for member in contents:
+			memberContents = eval('dir(' + curr + "." + member + ')')
+			if 'train' in memberContents and 'apply' in memberContents:
+				ret.append(member)
+
+	return ret
+
+
+def _argsFromDoc(objectReference, methodName, algArgs):
+	"""
+	Helper function to determine the possible parameters for a method from object's docstring.
+
+	"""
+	import pydoc
+	objDocString = pydoc.render_doc(objectReference)
+	retValues = None
+	usedArgs = []
+	# find and loop through those lines definining possible parameter list
+	position = objDocString.find(methodName + "(")
+	while position != -1:
+		currValues = []
+		currUsed = []
+		objDocString = objDocString[position:]
+		endParams = objDocString.find(")")
+		paramList = objDocString[len(methodName)+1:endParams].split(',')
+
+		# at this point we have passed the possible parameters, now we need to check
+		# if we have them in our provided args
+		for name in paramList:
+			if name == 'self':
+				continue
+
+			clean = name.strip()
+			defaultValue = None
+			if '=' in clean:
+				splitList = clean.split('=')
+				clean = splitList[0].strip()
+				defaultValue = splitList[1].strip()
+			
+			if clean in algArgs:
+				currValues.append(algArgs[clean])
+				currUsed.append(clean)
+			elif defaultValue is not None:
+				currValues.append(int(defaultValue))
+			# cannot match this parameter set, break out
+			else:
+				currValues = None
+				break
+
+		# we prefer those sets of parameters that use the most of our input arguments
+		# as possible (they are there for a reason)
+		if currValues is not None:
+			if retValues is None or len(currValues) > len(retValues):
+				retValues = currValues
+				usedArgs = currUsed
+
+		# find the next instance of a string that could define parameter names
+		position = objDocString[endParams:].find(methodName + "(")
+		if position != -1:
+			position = position + endParams
+
+	return (retValues, usedArgs)

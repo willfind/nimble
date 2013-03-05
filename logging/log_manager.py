@@ -16,7 +16,7 @@ class LogManager(object):
 
 	def __init__(self, logLocation=None, logName=None):
 		if logLocation is None:
-			logLocation = os.environ['HOME']
+			logLocation = '../'
 
 		if logName is None:
 			logName = "uMLLog"

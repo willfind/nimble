@@ -19,7 +19,10 @@ from ..utility.custom_exceptions import ArgumentException
 class CooSparseData(SparseData):
 
 	def __init__(self, data=None, featureNames=None, name=None, path=None):
-		self.data = coo_matrix(data)
+		if data == [] or data == numpy.array([]):
+			raise ArgumentException("Data must not be shapeless (in other words, empty)")
+		else:
+			self.data = coo_matrix(data)
 		super(CooSparseData, self).__init__(self.data, featureNames, name, path)
 
 

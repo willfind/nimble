@@ -11,7 +11,10 @@ import os
 import os.path
 import sys
 
+import UML
 from ..processing.base_data import BaseData
+from ..processing.sparse_data import SparseData
+from ..processing.dense_matrix_data import DenseMatrixData
 
 try:
 	import numpy
@@ -64,7 +67,7 @@ def regressor(algorithm, trainData, testData, output=None, dependentVar=None, ar
 		outFile = open(output, 'w')
 
 	if not isinstance(trainData, BaseData):
-		trainData = DMData(file=trainData)
+		trainData = UML.data("DenseMatrixData", data=trainData)
 	
 	# make sure dependentVar is a feature index
 	if not isinstance(dependentVar, int):
