@@ -107,22 +107,31 @@ def test_appendFeatures_handmadeSequence():
 # sortPoints() #
 ##############
 
-def test_sortPoints_handmadeNatural():
-	""" Test CooSparse sortPoints() against handmade, naturally ordered output """	
-	sortPoints_handmadeNatural(constructor)
+@raises(ArgumentException)
+def test_sortPoints_exceptionAtLeastOne():
+	""" Test CooSparse sortPoints() has at least one paramater """
+	sortPoints_exceptionAtLeastOne(constructor)
 
-def test_sortPoints_handmadeWithFcn():
-	""" Test CooSparse sortPoints() against handmade output when given cmp and key functions """	
-	sortPoints_handmadeWithFcn(constructor)
+#def test_sortPoints_naturalByFeature():
+#	""" Test CooSparse sortPoints() when we specify a feature to sort by """	
+#	sortPoints_naturalByFeature(constructor)
+
+#def test_sortPoints_scorer():
+#	""" Test CooSparse sortPoints() when we specify a scoring function """
+#	sortPoints_scorer(constructor)
+
+#def test_sortPoints_comparator():
+#	""" Test CooSparse sortPoints() when we specify a comparator function """
+#	sortPoints_comparator(constructor)
 
 #################
 # sortFeatures() #
 #################
 
 
-def test_sortFeatures_handmadeWithFcn():
-	""" Test CooSparse sortFeatures() against handmade output when given cmp and key functions """	
-	sortFeatures_handmadeWithFcn(constructor)
+#def test_sortFeatures_handmadeWithFcn():
+#	""" Test CooSparse sortFeatures() against handmade output when given cmp and key functions """	
+#	sortFeatures_handmadeWithFcn(constructor)
 
 
 
@@ -262,6 +271,9 @@ def test_applyFunctionToEachPoint_Handmade():
 	""" Test CooSparse applyFunctionToEachPoint() with handmade output """
 	applyFunctionToEachPoint_Handmade(constructor)
 
+def test_applyFunctionToEachPoint_nonZeroItAndLen():
+	""" Test CooSparse applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
+	applyFunctionToEachPoint_nonZeroItAndLen(constructor)
 
 #######################
 # applyFunctionToEachFeature() #
@@ -275,6 +287,10 @@ def test_applyFunctionToEachFeature_exceptionInputNone():
 def test_applyFunctionToEachFeature_Handmade():
 	""" Test CooSparse applyFunctionToEachFeature() with handmade output """
 	applyFunctionToEachFeature_Handmade(constructor)
+
+def test_applyFunctionToEachFeature_nonZeroItAndLen():
+	""" Test CooSparse applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
+	applyFunctionToEachFeature_nonZeroItAndLen(constructor)
 
 
 #####################

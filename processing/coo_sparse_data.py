@@ -62,6 +62,20 @@ class CooSparseData(SparseData):
 		self.data = coo_matrix((newData,(newRow,newCol)),shape=(self.points(),numNewCols))
 
 
+	def _sortPoints_implementation(self, sortBy, sortHelper):
+		sort_general_implementation(sortBy, scoreFcn, comparator, 'point')
+
+
+	def _sortFeatures_implementation(self, sortBy, sortHelper):
+		raise NotImplementedError
+		sort_general_implementation(sortBy, scoreFcn, comparator, 'feature')
+
+
+	def sort_general_implementation(self, sortBy, sortHelper, axisType):
+		raise NotImplementedError
+
+
+
 	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
 		"""
 		Function to extract points according to the parameters, and return an object containing
@@ -659,6 +673,26 @@ class VectorView():
 				return 0
 		else:
 			raise TypeError()
+	def nonZeroIterator(self):
+		return nzIt(self._nzMap)
+	def __len__(self):
+		return self._max
+
+class nzIt():
+	def __init__(self, nzMap):
+		self._nzMap = nzMap
+		self._indices = nzMap.keys()
+		self._indices.sort()
+		self._position = 0
+	def __iter__(self):
+		return self
+	def next(self):
+		while (self._position < len(self._indices)):
+			value = self._nzMap[self._indices[self._position]]
+			self._position += 1
+			if value != 0:
+				return value
+		raise StopIteration
 
 def _numLessThan(value, toCheck): # TODO caching
 	i = 0
