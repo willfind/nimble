@@ -101,7 +101,7 @@ def testShogunMulticlassSVM():
 def testShogunSparseRegression():
 	""" Test shogun() by calling a sparse regression algorithm with an extremely large, but highly sparse, matrix """
 
-	x = 100000
+	x = 10000
 	c = 10
 	points = randint(0,x,c)
 	cols = randint(0,x,c)
