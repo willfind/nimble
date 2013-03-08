@@ -92,21 +92,43 @@ class RowListData(BaseData):
 				self.data[i].append(value)
 		self.numFeatures= self.numFeatures+ toAppend.features()
 
-	def _sortPoints_implementation(self,cmp, key, reverse):
+	def _sortPoints_implementation(self, sortBy, sortHelper):
 		""" 
-		Modify this object so that the points are sorted using the built in python
-		sort. The input arguments are passed to that function unalterted
 
 		"""
-		self.data.sort(cmp, key, reverse)
+		scorer = None
+		comparator = None
+		try:
+			sortHelper(self.data[0])
+			scorer = sortHelper
+		except TypeError:
+			pass
+		try:
+			sortHelper(self.data[0], self.data[0])
+			comparator = sortHelper
+		except TypeError:
+			pass
 
-	def _sortFeatures_implementation(self,cmp, key, reverse):
+		if sortHelper is not None and scorer is None and comparator is None:
+			raise ArgumentException("sortHelper is neither a scorer or a comparator")
+
+		keyFunc = scorer
+		if sortBy is not None:
+			def featureKey(row):
+				return row[sortBy]
+			keyFunc = featureKey
+
+		self.data.sort(key=keyFunc, cmp=comparator)
+
+
+	def _sortFeatures_implementation(self, sortBy, sortHelper):
 		""" 
 		Modify this object so that the features are sorted using the built in python
 		sort on feature views. The input arguments are passed to that function unalterted.
 		This funciton returns a list of featureNames indicating the new order of the data.
 
 		"""
+		raise NotImplementedError
 		def passThrough(toKey):
 			return toKey
 		if key is None:
@@ -115,7 +137,7 @@ class RowListData(BaseData):
 		keyList = []
 		temp = []
 		for i in xrange(self.features()):
-			ithView = self.FeatureView(self,i)
+			ithView = FeatureView(self.data,i)
 			keyList.append(key(ithView))
 			temp.append(None)
 		keyDict = {}
@@ -346,7 +368,7 @@ class RowListData(BaseData):
 		# deal with featureNames or the number of features.
 		toExtract = []
 		for i in xrange(self.features()):
-			ithView = self.FeatureView(self,i)
+			ithView = FeatureView(self.data,i)
 			if function(ithView):
 				toExtract.append(i)
 		return self._extractFeaturesByList_implementation(toExtract)
@@ -385,7 +407,7 @@ class RowListData(BaseData):
 		"""
 		retData = []
 		for point in self.data:
-			currOut = function(point)
+			currOut = function(PointView(point))
 			retData.append([currOut])
 		return RowListData(retData)
 
@@ -398,7 +420,7 @@ class RowListData(BaseData):
 		"""
 		retData = [[]]
 		for i in xrange(self.features()):
-			ithView = self.FeatureView(self,i)
+			ithView = FeatureView(self.data,i)
 			currOut = function(ithView)
 			retData[0].append(currOut)
 		return RowListData(retData)
@@ -549,30 +571,59 @@ class RowListData(BaseData):
 		return RowListData(ret, featureNameList)
 
 
-	###########
-	# Helpers #
-	###########
+###########
+# Helpers #
+###########
 
-	class FeatureView():
-		"""
-		Class to simulate direct random access of a feature.
+class FeatureView():
+	"""
+	Class to simulate direct random access of a feature, along with other helpers.
 
-		"""
-		def __init__(self, outer, colNum):
-			self._data = outer.data
-			self._colNum = colNum
-		def __getitem__(self, index):
-			point = self._data[index]
-			value = point[self._colNum]
-			return value	
-		def __setitem__(self,key,value):
-			point = self._data[key]
-			point[self._colNum] = value
+	"""
+	def __init__(self, data, colNum):
+		self._data = data
+		self._colNum = colNum
+	def __getitem__(self, index):
+		point = self._data[index]
+		value = point[self._colNum]
+		return value	
+	def __setitem__(self, key, value):
+		point = self._data[key]
+		point[self._colNum] = value
+	def nonZeroIterator(self):
+		return nzIt(self)
+	def __len__(self):
+		return len(self._data)
 
+class PointView():
+	"""
+	Class to wrap direct random access of a point, along with other helpers.
 
-###################
-# File IO Helpers #
-###################
+	"""
+	def __init__(self, point):
+		self._point = point
+	def __getitem__(self, index):
+		return self._point[index]	
+	def __setitem__(self, key, value):
+		self._point[key] = value
+	def nonZeroIterator(self):
+		return nzIt(self)
+	def __len__(self):
+		return len(self._point)
+
+class nzIt():
+	def __init__(self, indexable):
+		self._indexable = indexable
+		self._position = 0
+	def __iter__(self):
+		return self
+	def next(self):
+		while (self._position < len(self._indexable)):
+			value = self._indexable[self._position]
+			self._position += 1
+			if value != 0:
+				return value
+		raise StopIteration
 
 
 

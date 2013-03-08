@@ -448,23 +448,33 @@ class BaseData(object):
 		for i in xrange(toAppend.features()):
 			self._addFeatureName(toAppend.featureNamesInverse[i])
 
-	def sortPoints(self, cmp=None, key=None, reverse=False):
+	def sortPoints(self, sortBy=None, sortHelper=None):
 		""" 
-		Modify this object so that the points are sorted in place, where the input
-		arguments are interpreted and employed in the same way as Python list
-		sorting.
+		Modify this object so that the points are sorted in place, where sortBy may
+		indicate the feature to sort by or None if the entire point is to be taken as a key,
+		sortHelper may either be comparator, a scoring function, or None to indicate the natural
+		ordering.
+		"""
+		sortByIndex = sortBy
+		if sortBy is not None:
+			sortByIndex = self._getIndex(sortBy)
+			if sortHelper is not None:
+				raise ArgumentException("Cannot specify a feature to sort by and a helper function")
+		else:
+			if sortHelper is None:
+				raise ArgumentException("Either sortBy or sortHelper must not be None")
+
+		self._sortPoints_implementation(sortByIndex, sortHelper)
+
+	def sortFeatures(self, sortBy=None, sortHelper=None):
+		""" 
+		Modify this object so that the features are sorted in place, where sortBy may
+		indicate the feature to sort by or None if the entire point is to be taken as a key,
+		sortHelper may either be comparator, a scoring function, or None to indicate the natural
+		ordering.
 
 		"""
-		self._sortPoints_implementation(cmp, key, reverse)
-
-	def sortFeatures(self, cmp=None, key=None, reverse=False):
-		""" 
-		Modify this object so that the features are sorted in place, where the input
-		arguments are interpreted and employed in the same way as Python list
-		sorting.
-
-		"""
-		newFeatureNameOrder = self._sortFeatures_implementation(cmp, key, reverse)
+		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self._renameMultipleFeatureNames_implementation(newFeatureNameOrder,True)
 
 
