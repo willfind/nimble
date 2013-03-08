@@ -332,11 +332,6 @@ class BaseData(object):
 			insert a blank list in the first position of the returned list.
 		"""
 		rowListContainer = self.toRowListData()
-		if self.featureNames is not None:
-			rowListContainer.data.insert(0, self.featureNames)
-		else:
-			rowListContainer.data.insert(0, [None] * len(rowListContainer.data[0]))
-
 		return rowListContainer.data
 
 	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
