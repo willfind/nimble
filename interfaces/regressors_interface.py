@@ -11,7 +11,10 @@ import os
 import os.path
 import sys
 
+import UML
 from ..processing.base_data import BaseData
+from ..processing.sparse_data import SparseData
+from ..processing.dense_matrix_data import DenseMatrixData
 
 try:
 	import numpy
@@ -64,7 +67,7 @@ def regressor(algorithm, trainData, testData, output=None, dependentVar=None, ar
 		outFile = open(output, 'w')
 
 	if not isinstance(trainData, BaseData):
-		trainData = DMData(file=trainData)
+		trainData = UML.data("DenseMatrixData", data=trainData)
 	
 	# make sure dependentVar is a feature index
 	if not isinstance(dependentVar, int):
@@ -98,6 +101,10 @@ def regressor(algorithm, trainData, testData, output=None, dependentVar=None, ar
 		print "Cannot find or determine a subclass of Regressor in " + algorithm
 		return
 
+	#start timing of classifier training, if timer is present
+	if timer is not None:
+		timer.start('train')
+
 	#initialize the regressor with the constructed matrices
 	cmd = algorithm + "." + algorithmClass + "(X=trainData,Y=trainDataY"
 	for key in arguments.keys():
@@ -106,6 +113,10 @@ def regressor(algorithm, trainData, testData, output=None, dependentVar=None, ar
 	cmd += ")"
 	regressor = eval(cmd)
 
+	#stop timing of classifier training and start timing of testing if timer is present
+	if timer is not None:
+		timer.stop('train')
+		timer.start('test')
 
 	resultList = []
 	# batch estimation, estimate() only takes a vector at a time
@@ -120,12 +131,15 @@ def regressor(algorithm, trainData, testData, output=None, dependentVar=None, ar
 	
 		result = regressor.estimate(xVector)
 		if output is None:
-			resultList.appen(result)
+			resultList.append(result)
 		else:
 			outFile.write(str(result))
 			outFile.write("\n")
-		
 
+	#stop timing of testing, if timer is present
+	if timer is not None:
+		timer.stop('test')
+		
 	if output is None:
 		return DenseMatrixData(resultList)
 

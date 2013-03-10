@@ -38,10 +38,6 @@ def test_equals_True():
 	""" Test RLD equals() against some actually equal input """
 	equals_True(constructor)
 
-def test_equals_empty():
-	""" Test RLD equals() for empty objects """
-	equals_empty(constructor)
-
 
 ###############
 # transpose() #
@@ -108,22 +104,31 @@ def test_appendFeatures_handmadeSequence():
 # sortPoints() #
 ##############
 
-def test_sortPoints_handmadeNatural():
-	""" Test RLD sortPoints() against handmade , naturally ordered  output """	
-	sortPoints_handmadeNatural(constructor)
+@raises(ArgumentException)
+def test_sortPoints_exceptionAtLeastOne():
+	""" Test RLD sortPoints() has at least one paramater """
+	sortPoints_exceptionAtLeastOne(constructor)
 
-def test_sortPoints_handmadeWithFcn():
-	""" Test RLD sortPoints() against handmade output when given a key function """	
-	sortPoints_handmadeWithFcn(constructor)
+def test_sortPoints_naturalByFeature():
+	""" Test RLD sortPoints() when we specify a feature to sort by """	
+	sortPoints_naturalByFeature(constructor)
+
+def test_sortPoints_scorer():
+	""" Test RLD sortPoints() when we specify a scoring function """
+	sortPoints_scorer(constructor)
+
+def test_sortPoints_comparator():
+	""" Test RLD sortPoints() when we specify a comparator function """
+	sortPoints_comparator(constructor)
 
 #################
 # sortFeatures() #
 #################
 
 
-def test_sortFeatures_handmadeWithFcn():
-	""" Test RLD sortFeatures() against handmade output when given cmp and key functions """	
-	sortFeatures_handmadeWithFcn(constructor)
+#def test_sortFeatures_handmadeWithFcn():
+#	""" Test RLD sortFeatures() against handmade output when given cmp and key functions """	
+#	sortFeatures_handmadeWithFcn(constructor)
 
 
 
@@ -259,6 +264,9 @@ def test_applyFunctionToEachPoint_Handmade():
 	""" Test RLD applyFunctionToEachPoint() with handmade output """
 	applyFunctionToEachPoint_Handmade(constructor)
 
+def test_applyFunctionToEachPoint_nonZeroItAndLen():
+	""" Test RLD applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
+	applyFunctionToEachPoint_nonZeroItAndLen(constructor)
 
 #######################
 # applyFunctionToEachFeature() #
@@ -274,6 +282,9 @@ def test_applyFunctionToEachFeature_Handmade():
 	applyFunctionToEachFeature_Handmade(constructor)
 
 
+def test_applyFunctionToEachFeature_nonZeroItAndLen():
+	""" Test RLD applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
+	applyFunctionToEachFeature_nonZeroItAndLen(constructor)
 
 #####################
 # mapReduceOnPoints() #

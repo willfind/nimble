@@ -18,7 +18,7 @@ class MachineReadableRunLog(Logger):
 	def __init__(self, logFileName=None):
 		Logger.__init__(self, logFileName)
 
-	def logRun(self, trainData, testData, function, metrics, runTime, extraInfo=None):
+	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
 		"""
 			Write one (data + classifer + error metrics) combination to a log file
 			in machine readable format.  Should include as much information as possible,
@@ -38,22 +38,33 @@ class MachineReadableRunLog(Logger):
 		#Create a string to be logged (as one line), and add dimensions and the function
 		logLine = "{RUN}::"
 		logLine += createMRLineElement("timestamp", time.strftime('%Y-%m-%d %H:%M:%S'))
-		#If present, add name and path of source files for train and test data
-		if trainData.name is not None:
-			logLine += createMRLineElement("trainDataName", trainData.name)
-		if trainData.path is not None:
-			logLine += createMRLineElement("trainDataPath", trainData.path)
-		if testData.name is not None:
-			logLine += createMRLineElement("testDataName", testData.name)
-		if testData.path is not None:
-			logLine += createMRLineElement("testDataPath", testData.path)
 
-		#add info about size and shape of data
-		logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[0])
-		logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
-		logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
-		logLine += createMRLineElement("numTestDataFeatures", testData.data.shape[1])
-		logLine += createMRLineElement("runTime", "{0:.2f}".format(runTime))
+		#log info about training data, if present
+		if trainData is not None:
+			#If present, add name and path of source files for train and test data
+			if trainData.name is not None:
+				logLine += createMRLineElement("trainDataName", trainData.name)
+			if trainData.path is not None:
+				logLine += createMRLineElement("trainDataPath", trainData.path)
+			logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[0])
+			logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
+
+		#log info about testing data, if present
+		if testData is not None:
+			if testData.name is not None:
+				logLine += createMRLineElement("testDataName", testData.name)
+			if testData.path is not None:
+				logLine += createMRLineElement("testDataPath", testData.path)
+			logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
+			logLine += createMRLineElement("numTestDataFeatures", testData.data.shape[1])
+
+		#add numFolds if it is present - generally when testData is not present, as numFolds
+		#implies k-fold cross validation, in which case there is no test set
+		if numFolds is not None:
+			logLine += createMRLineElement("numFolds", numFolds)
+
+		#add timing info
+		#logLine += createMRLineElement("runTime", "{0:.2f}".format(runTime))
 
 		if isinstance(function, (str, unicode)):
 			logLine += createMRLineElement("function", function)

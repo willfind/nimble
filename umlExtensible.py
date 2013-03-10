@@ -219,6 +219,8 @@ def _intFloatOrString(inString):
 		ret = float(inString)
 	# this will return an int or float if either of the above two are successful
 	finally:
+		if ret == "":
+			return None
 		return ret
 
 def _defaultParser(line):

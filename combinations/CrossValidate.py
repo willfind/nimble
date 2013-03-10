@@ -1,5 +1,7 @@
+import operator
 import Combinations
 from .. import run
+from ..logging.log_manager import LogManager
 #import DenseMatrix
 
 
@@ -32,6 +34,11 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog
 				avg += v
 				denom += 1
 		aggregatedResults[function] = avg/denom #NOTE: this could be bad if the sets have different size!!
+	if sendToLog:
+		logger = LogManager()
+		sortedResults = sorted(aggregatedResults.iteritems(), key=operator.itemgetter(1))
+		for result in sortedResults:
+			pass
 	return aggregatedResults
 
 

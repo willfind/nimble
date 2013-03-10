@@ -8,6 +8,7 @@ directly by the class calling this backend.
 
 import tempfile
 import os
+import numpy
 
 from ..base_data import *
 from copy import deepcopy
@@ -117,18 +118,6 @@ def equals_True(constructor):
 	""" Test equals() against some actually equal input """
 	toTest1 = constructor([[4,5]])
 	toTest2 = constructor(deepcopy([[4,5]]))
-	assert toTest1.equals(toTest2)
-	assert toTest2.equals(toTest1)
-
-def equals_empty(constructor):
-	""" Test equals() for empty objects """
-	toTest1 = constructor([])
-	toTest2 = constructor(deepcopy([]))
-	assert toTest1.equals(toTest2)
-	assert toTest2.equals(toTest1)
-
-	toTest1 = constructor(None)
-	toTest2 = constructor(deepcopy(None))
 	assert toTest1.equals(toTest2)
 	assert toTest2.equals(toTest1)
 
@@ -243,7 +232,7 @@ def appendFeatures_handmadeSequence(constructor):
 	toTest = constructor(data,featureNames)
 
 	toAppend1 = [[0.1],[0.2],[0.3]]
-	lab1 =  ['a']
+	lab1 = ['a']
 	toAppend2 = [[0.01,0],[0.02,0],[0.03,0]]
 	lab2 = ['A','0']
 	toAppend3 = [[10],[11],[12]]
@@ -265,43 +254,75 @@ def appendFeatures_handmadeSequence(constructor):
 # sortPoints() #
 ##############
 
-def sortPoints_handmadeNatural(constructor):
-	""" Test sortPoints() against handmade , naturally ordered  output """	
+def sortPoints_exceptionAtLeastOne(constructor):
+	""" Test sortPoints() has at least one paramater """
 	data = [[7,8,9],[1,2,3],[4,5,6]]
 	toTest = constructor(data)
 
 	toTest.sortPoints()
 
-	dataExpected = [[1,2,3],[4,5,6],[7,8,9]]
-	objExp = constructor(dataExpected)
-
-	assert toTest.equals(objExp)
-
-
-def sortPoints_handmadeWithFcn(constructor):
-	""" Test sortPoints() against handmade output when given cmp and key functions """	
-	data = [[1,2,3],[4,5,6],[7,8,9]]
+def sortPoints_naturalByFeature(constructor):
+	""" Test sortPoints() when we specify a feature to sort by """	
+	data = [[1,2,3],[7,1,9],[4,5,6]]
 	toTest = constructor(data)
 
-	def cmpNums(num1,num2):
-		return num1 - num2
+	toTest.sortPoints(sortBy=1)
 
-	def sumModEight(point):
-		total = 0
-		for value in point:
-			total = total + value
-		return total % 8
-
-	toTest.sortPoints(cmpNums,sumModEight)
-
-	dataExpected = [[7,8,9],[1,2,3],[4,5,6]]
+	dataExpected = [[7,1,9],[1,2,3],[4,5,6]]
 	objExp = constructor(dataExpected)
 
 	assert toTest.equals(objExp)
 
+def sortPoints_scorer(constructor):
+	""" Test sortPoints() when we specify a scoring function """
+	data = [[7,1,9],[1,2,3],[4,5,6]]
+	toTest = constructor(data)
 
-def sortPoints_handmade_reverse(constructor):
-	assert False
+	def numOdds(point):
+		ret = 0
+		for val in point:
+			if val % 2 != 0:
+				ret += 1
+		return ret
+
+	toTest.sortPoints(sortHelper=numOdds)
+
+	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
+	objExp = constructor(dataExpected)
+
+	print toTest.data
+	print objExp.data
+
+	assert toTest.equals(objExp)	
+
+def sortPoints_comparator(constructor):
+	""" Test sortPoints() when we specify a comparator function """
+	data = [[7,1,9],[1,2,3],[4,5,6]]
+	toTest = constructor(data)
+
+	# comparator sort currently disabled for DenseMatrixData
+	if isinstance(toTest, DMD):
+		return
+
+	def compOdds(point1, point2):
+		odds1 = 0
+		odds2 = 0
+		for val in point1:
+			if val % 2 != 0:
+				odds1 += 1
+		for val in point2:
+			if val % 2 != 0:
+				odds2 += 1
+		return odds1 - odds2
+
+	toTest.sortPoints(sortHelper=compOdds)
+
+	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
+	objExp = constructor(dataExpected)
+
+	assert toTest.equals(objExp)	
+
+
 
 #################
 # sortFeatures() #
@@ -640,7 +661,7 @@ def applyFunctionToEachPoint_Handmade(constructor):
 	origObj = constructor(deepcopy(origData),featureNames)
 
 
-	def emitLower (point):
+	def emitLower(point):
 		return point[origObj.featureNames['deci']]
 
 	lowerCounts = origObj.applyFunctionToEachPoint(emitLower)
@@ -649,6 +670,26 @@ def applyFunctionToEachPoint_Handmade(constructor):
 	exp = constructor(expectedOut)
 
 	assert lowerCounts.equals(exp)
+
+
+def applyFunctionToEachPoint_nonZeroItAndLen(constructor):
+	""" Test applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
+	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+	origObj = constructor(deepcopy(origData))
+
+	def emitNumNZ(point):
+		ret = 0
+		assert len(point) == 3
+		for value in point.nonZeroIterator():
+			ret += 1
+		return ret
+
+	counts = origObj.applyFunctionToEachPoint(emitNumNZ)
+
+	expectedOut = [[3], [2], [2], [1]]
+	exp = constructor(expectedOut)
+
+	assert counts.equals(exp)
 
 
 
@@ -669,7 +710,7 @@ def applyFunctionToEachFeature_Handmade(constructor):
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),featureNames)
 
-	def emitAllEqual (feature):
+	def emitAllEqual(feature):
 		first = feature[0]
 		for value in feature:
 			if value != first:
@@ -679,6 +720,27 @@ def applyFunctionToEachFeature_Handmade(constructor):
 	lowerCounts = origObj.applyFunctionToEachFeature(emitAllEqual)
 	expectedOut = [[1,0,0]]	
 	assert lowerCounts.equals(constructor(expectedOut))
+
+
+
+def applyFunctionToEachFeature_nonZeroItAndLen(constructor):
+	""" Test applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
+	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+	origObj = constructor(deepcopy(origData))
+
+	def emitNumNZ(feature):
+		ret = 0
+		assert len(feature) == 4
+		for value in feature.nonZeroIterator():
+			ret += 1
+		return ret
+
+	counts = origObj.applyFunctionToEachFeature(emitNumNZ)
+
+	expectedOut = [[3, 3, 2]]
+	exp = constructor(expectedOut)
+
+	assert counts.equals(exp)
 
 
 

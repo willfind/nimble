@@ -4,6 +4,8 @@ Utility functions that could be useful in multiple interfaces
 """
 
 import sys
+import UML
+from UML.processing import BaseData
 
 
 def makeArgString(wanted, argDict, prefix, infix, postfix):
@@ -72,10 +74,73 @@ def putOnSearchPath(wantedPath):
 		sys.path.append(wantedPath)
 
 
-#def representationBasedIOWrapper(backendToCall, trainData, testData, output, dependentVar, arguments):
+def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, arguments, kernel, config):
 
+	inType = config['inType']
+	inTypeLabels = config['inTypeLabels']
 	
+	toCall = config['toCall']
+	checkPackage = config['checkPackage']
+	pythonOutType = config['pythonOutType']
+	fileOutType = config['fileOutType']
+
+
+	if not isinstance(trainData, BaseData):
+		trainObj = UML.data(inType, data=trainData)
+	else: # input is an object
+		trainObj = convertTo(trainObj, inType)
+	if not isinstance(testData, BaseData):
+		testObj = UML.data(inType, data=testData)
+	else: # input is an object
+		testObj = convertTo(testObj, inType)
+	
+	trainObjY = None
+	# directly assign target values, if present
+	if isinstance(dependentVar, BaseData):
+		trainObjY = dependentVar
+	# otherwise, isolate the target values from training examples
+	elif dependentVar is not None:
+		trainCopy = trainObj.duplicate()
+		trainObjY = trainCopy.extractFeatures([dependentVar])		
+	# could be None for unsupervised learning, in which case it remains none
+
+	# get the correct type for the labels
+	if trainObjY is not None:	
+		trainObjY = convertTo(trainObjY, inTypeLabels)
+	
+	# pull out data from obj
+	trainObj.transpose()
+	trainRawData = trainObj.data
+	if trainObjY is not None:
+		# corrects the dimensions of the matrix data to be just an array
+		trainRawDataY = numpy.array(trainObjY.data).flatten()
+	else:
+		trainRawDataY = None
+	testObj.transpose()
+	testRawData = testObj.data
+
+	# call backend
+	try:
+		retData = toCall(algorithm,  trainRawData, trainRawDataY, testRawData, arguments, kernel)
+	except ImportError as e:
+		if not checkPackage():
+			print "Package was not importable."
+			print "It must be either on the search path, or have its location set in UML"
+		raise e
+
+	if retData is None:
+		return
+
+	outputObj = UML.data(pythonOutType, data=retData)
+
+	if output is None:
+		# we want to return a column vector
+		outputObj.transpose()
+		return outputObj
+
+	outputObj.writeFile(fileOutType, output, False)
 
 
 
-
+def convertTo(data, retType):
+	return eval("data.to" + retType + "()")

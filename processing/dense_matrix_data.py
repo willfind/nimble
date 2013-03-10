@@ -67,24 +67,53 @@ class DenseMatrixData(BaseData):
 		"""
 		self.data = numpy.concatenate((self.data,toAppend.data),1)
 
-	def _sortPoints_implementation(self,cmp, key, reverse):
+	def _sortPoints_implementation(self, sortBy, sortHelper):
 		""" 
-		Modify this object so that the points are sorted using the built in python
-		sort. The input arguments are passed to that function unalterted
+		
 
 		"""
-		print self.data
+		scorer = None
+		comparator = None
+		try:
+			sortHelper(numpy.array(self.data[0]).flatten())
+			scorer = sortHelper
+		except TypeError:
+			pass
+		try:
+			sortHelper(self.data[0], self.data[0])
+			comparator = sortHelper
+		except TypeError:
+			pass
 
-		self.data = numpy.sort(self.data,0)
-		print self.data
+		if sortHelper is not None and scorer is None and comparator is None:
+			raise ArgumentException("sortHelper is neither a scorer or a comparator")
 
-	def _sortFeatures_implementation(self,cmp, key, reverse):
+		if scorer:
+			scores = numpy.apply_along_axis(scorer, 1, self.data)
+			scoresObj = DenseMatrixData(scores)
+			scoresObj.transpose()
+			self.appendFeatures(scoresObj)
+			# sort by the scores, ie the most recently added feature
+			sortBy = self.features() - 1 
+			
+		if sortBy is None:
+			raise ArgumentException("DenseMatrixData does not support comparator based sorting")
+		else:
+			indices = numpy.argsort(self.data[:,sortBy],0)
+			self.data = self.data[numpy.array(indices).flatten()]
+
+		# get rid of the scores we appened
+		if scorer:
+			self.extractFeatures(self.features() -1)
+
+	def _sortFeatures_implementation(self, sortBy, sortHelper):
 		""" 
 		Modify this object so that the features are sorted using the built in python
 		sort on feature views. The input arguments are passed to that function unalterted
 		This funciton returns a list of featureNames indicating the new order of the data.
 
 		"""
+		raise NotImplementedError
 		def passThrough(toKey):
 			return toKey
 		if key is None:
@@ -292,7 +321,9 @@ class DenseMatrixData(BaseData):
 		output values into a new object that is returned upon completion.
 
 		"""
-		retData = numpy.apply_along_axis(function,1,self.data)
+		def funcWrap(point):
+			return function(VectorView(point))
+		retData = numpy.apply_along_axis(funcWrap,1,self.data)
 		retData = numpy.matrix(retData)
 		retData = retData.T
 		return DenseMatrixData(retData)
@@ -305,9 +336,10 @@ class DenseMatrixData(BaseData):
 		returned upon completion.
 
 		"""
-		retData = numpy.apply_along_axis(function,0,self.data)
+		def funcWrap(feature):
+			return function(VectorView(feature))
+		retData = numpy.apply_along_axis(funcWrap,0,self.data)
 		return DenseMatrixData(retData)
-
 
 
 	def _mapReduceOnPoints_implementation(self, mapper, reducer):
@@ -432,4 +464,30 @@ class DenseMatrixData(BaseData):
 
 		return DenseMatrixData(ret, featureNameList)
 
+
+class VectorView():
+	def __init__(self, toWrap):
+		self._toWrap = toWrap
+	def __getitem__(self, index):
+		return self._toWrap[index]	
+	def __setitem__(self, key, value):
+		self._toWrap[key] = value
+	def nonZeroIterator(self):
+		return nzIt(self)
+	def __len__(self):
+		return len(self._toWrap)
+
+class nzIt():
+	def __init__(self, indexable):
+		self._indexable = indexable
+		self._position = 0
+	def __iter__(self):
+		return self
+	def next(self):
+		while (self._position < len(self._indexable)):
+			value = self._indexable[self._position]
+			self._position += 1
+			if value != 0:
+				return value
+		raise StopIteration
 

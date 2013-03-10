@@ -20,7 +20,7 @@ class HumanReadableRunLog(Logger):
 		super(HumanReadableRunLog, self).__init__(logFileName)
 
 
-	def logRun(self, trainData, testData, function, metrics, runTime, extraInfo=None):
+	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
 		"""
 			Convert a set of objects representing one run (data used for training, data used for
 			testing, function representing a unique classifier {algorithm, parameters}, error metrics,
@@ -53,46 +53,51 @@ class HumanReadableRunLog(Logger):
 		tableHeaders.append("Timestamp")
 		tableRow.append(time.strftime('%Y-%m-%d %H:%M:%S'))
 
-		#if the data matrix was sourced from a file, add the file name and path
-		if trainData.name is not None:
-			tableHeaders.append("Train Data file")
-			tableRow.append(trainData.name)
-		if trainData.path is not None:
-			tableHeaders.append("Train Data path")
-			tableRow.append(trainData.name)
+		if trainData is not None:
+			#if the data matrix was sourced from a file, add the file name and path
+			if trainData.name is not None:
+				tableHeaders.append("Train Data file")
+				tableRow.append(trainData.name)
+			if trainData.path is not None:
+				tableHeaders.append("Train Data path")
+				tableRow.append(trainData.name)
+			#add number of training points, # of of features to output list
+			if trainData.data is not None:
+				tableHeaders.append("Train points")
+				tableRow.append(str(trainData.data.shape[0]))
+				tableHeaders.append("Train features")
+				tableRow.append(str(trainData.data.shape[1]))
+			else:
+				tableHeaders.append("Train points")
+				tableHeaders.append("0")
 
-		if testData.name is not None and testData.name != trainData.name:
-			tableHeaders.append("Test Data file")
-			tableRow.append(testData.name)
-		if testData.path is not None and testData.path != trainData.path:
-			tableHeaders.append("Test Data path")
-			tableRow.append(testData.path)
-
-		#add number of training points, # of of features to output list
-		if trainData.data is not None:
-			tableHeaders.append("Train points")
-			tableRow.append(str(trainData.data.shape[0]))
+		if testData is not None:
+			#add name and path, if present
+			if testData.name is not None and testData.name != trainData.name:
+				tableHeaders.append("Test Data file")
+				tableRow.append(testData.name)
+			if testData.path is not None and testData.path != trainData.path:
+				tableHeaders.append("Test Data path")
+				tableRow.append(testData.path)
+			#add number of training points, # of of features to output list
 			if testData.data is not None:
 				tableHeaders.append("Test points")
 				tableRow.append(str(testData.data.shape[0]))
-				if trainData.data.shape[1] == testData.data.shape[1]:
-					tableHeaders.append("Train/Test features")
-					tableRow.append(str(trainData.data.shape[1]))
-				else:
-					tableHeaders.append("Train features")
-					tableRow.append(str(trainData.data.shape[1]))
-					tableHeaders.append("Test features")
-					tableRow.append(str(testData.data.shape[1]))
+				tableHeaders.append("Test features")
+				tableRow.append(str(testData.data.shape[1]))
 			else:
-				tableHeaders.append("Train features")
-				tableRow.append(str(trainData.data.shape[1]))
-		else:
-			tableHeaders.append("Train points")
-			tableHeaders.append("0")
+				tableHeaders.append("Test points")
+				tableHeaders.append("0")
 
-		if runTime is not None:
-			tableHeaders.append("Run Time")
-			tableRow.append("{0:.2f}".format(runTime))
+		if numFolds is not None:
+			tableHeaders.append("# of folds")
+			tableRow.append(str(numFolds))
+
+
+		if timer is not None:
+			#tableHeaders.append("Run Time")
+			#tableRow.append("{0:.2f}".format(runTime))
+			pass
 
 		#Print table w/basic info to the log
 		basicTable = [tableHeaders, tableRow]

@@ -13,7 +13,7 @@ def objectClass(obj):
 		return str(type(obj)).replace("<type '", "").replace("'>", "")
 		#raise Errors.Badness("Could not get the class of object " + str(obj) + " with type " + str(type(obj)) )	
 
-def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSeperator="", maxRowsToShow=None, useSpaces=True, includeTrailingNewLine=True):
+def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSeperator="", maxRowsToShow=None, snipIndex=None, useSpaces=True, includeTrailingNewLine=True):
 	"""takes a table (rows and columns of strings) and returns a string representing a nice visual representation of that table. 
 	roundDigits is the number of digits to round floats to"""
 	if not isinstance(table, (list, tuple)): raise TableError("table must be list or tuple")
@@ -50,6 +50,10 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
 			firstToDelete = int(math.ceil((len(table)/2.0)-(numToDelete/2.0)))
 			lastToDelete = firstToDelete + numToDelete - 1
 			table = table[:firstToDelete] + [["..."]*len(table[firstToDelete])] + table[lastToDelete+1:]
+	#if we want to imply the existence of more rows, but they are not currently present in the table, so
+	#we just add an elipses at the specified index
+	elif snipIndex != None and snipIndex > 0:
+		table = table[:snipIndex] + [["..."]*len(table[firstToDelete])] + table[snipIndex+1:]
 	
 	#modify the text in each column to give it the right length
 	for r in xrange(len(table)): 

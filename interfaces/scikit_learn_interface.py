@@ -90,7 +90,7 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 
 	# call backend
 	try:
-		retData = _sciKitLearnBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments)
+		retData = _sciKitLearnBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not sciKitLearnPresent():

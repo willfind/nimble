@@ -12,9 +12,9 @@ def testRegressorsHandmade():
 	""" Test regressor() by calling a regressor with known output using files """
 	setRegressorLocation("/home/tpburns/Dropbox/Regressors")
 
-	trainingIn = tempfile.NamedTemporaryFile()
-	trialIn = tempfile.NamedTemporaryFile()
-	actualOut = tempfile.NamedTemporaryFile()
+	trainingIn = tempfile.NamedTemporaryFile(suffix=".csv")
+	trialIn = tempfile.NamedTemporaryFile(suffix=".csv")
+	actualOut = tempfile.NamedTemporaryFile(suffix=".csv")
 
 	trainingIn.write("3,107,4.0\n")
 	trainingIn.write("5,101,4.0\n")

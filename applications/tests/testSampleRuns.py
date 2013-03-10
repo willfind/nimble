@@ -10,29 +10,33 @@ from UML import functionCombinations
 from UML import runAndTest
 from UML.performance.metric_functions import classificationError
 
+import os
+exampleDirPath = os.path.dirname(os.path.dirname(__file__)) + "/example_data/"
+
 def testEverythingVolumeOne():
 	"""
 	Try to test some full use cases: load data, split data, normalize data, run crossValidate or
 	crossValidateReturnBest, and get results.  Use the classic iris data set for classification.
 	"""
-	pathOrig = "example_data/iris.csv"
+	pathOrig = os.path.join(os.path.dirname(__file__), "../example_data/iris.csv")
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
 	processed = data("DenseMatrixData", pathOrig)
 
-	assert processed.data
-
+	assert processed.data is not None
+    
 	partOne = processed.extractPointsByCoinToss(0.5)
 	partOneTest = partOne.extractPointsByCoinToss(0.1)
 	partTwoX = processed
 	partTwoY = processed.extractFeatures('Type')
 
-	assert len(partOne.data) > 55
-	assert len(partOne.data) < 80
-	assert len(partTwoX.data) > 65
-	assert len(partTwoX.data) < 85
-	assert len(partOne.data) + len(partTwoX.data) + len(partOneTest) + len(partTwoX) == 150
+	assert partOne.points() > 55
+	assert partOne.points() < 80
+	assert partTwoX.points() > 65
+	assert partTwoX.points() < 85
+	assert partTwoY.points() == partTwoX.points()
+	assert partOne.points() + partTwoX.points() + partOneTest.points() == 150
 
 	trainX = partOne
 	trainY = partOne.extractFeatures('Type')
@@ -72,8 +76,8 @@ def testDataPrepExample():
 	"""
 
 	# string manipulation to get and make paths
-	pathOrig = "example_data/adult_income_classification_tiny.csv"
-	pathOut = "example_data/adult_income_classification_tiny_numerical.csv"
+    pathOrig = os.path.join(os.path.dirname(__file__), "../example_data/adult_income_classification_tiny.csv")
+	pathOut = os.path.join(os.path.dirname(__file__), "../example_data/adult_income_classification_tiny_numerical.csv")
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
@@ -104,7 +108,7 @@ def testCrossValidateExample():
 		Functional test for load-data-to-classification-results example of crossvalidation
 	"""
 	# path to input specified by command line argument
-	pathIn = "example_data/adult_income_classification_tiny_numerical.csv"
+	pathIn = os.path.join(os.path.dirname(__file__), "../example_data/adult_income_classification_tiny_numerical.csv")
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID='income', fractionForTestSet=.15, loadType="DenseMatrixData", fileType="csv")
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate

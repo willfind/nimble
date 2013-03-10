@@ -3,7 +3,6 @@
 import nose
 import sys
 from nose.plugins.base import Plugin
-from nose.plugins.cover import Coverage
 
 class ExtensionPlugin(Plugin):
 
@@ -28,5 +27,12 @@ class ExtensionPlugin(Plugin):
 
 if __name__ == '__main__':
     includeDirs = ["-w", ".", ".."]
-    nose.run(addplugins=[ExtensionPlugin(), Coverage()], argv=sys.argv.extend(includeDirs))
+    args = sys.argv
+    args.append('--with-coverage')
+    args.append('--cover-package=UML')
+    args.extend(includeDirs)
+    nose.run(addplugins=[ExtensionPlugin()], argv=args)
+    sys.stdin = open('/dev/tty')
+    blank = raw_input("Press Enter to continue...")
     exit(0)
+
