@@ -39,7 +39,7 @@ class DenseMatrixData(BaseData):
 			for j in xrange(y):
 				if isinstance(self.data[i,j], basestring):
 					raise ArgumentException("DenseMatrixData does not accept strings in the input")
-
+		#print "featureNames: ", featureNames
 		super(DenseMatrixData, self).__init__(featureNames, name, path)
 		
 
