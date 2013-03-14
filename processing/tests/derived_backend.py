@@ -1054,9 +1054,6 @@ def copyPoints_handmadeContents(constructor):
 	assert orig.equals(expOrig)
 	assert ret.equals(expRet)
 
-
-####
-
 def copyPoints_exceptionStartInvalid(constructor):
 	""" Test copyPoints() for ArgumentException when start is not a valid point index """
 	featureNames = ["one","two","three"]
@@ -1168,4 +1165,74 @@ def copyFeatures_handmadeContents(constructor):
 	assert orig.equals(expOrig)
 	assert ret.equals(expRet)
 
+
+####
+
+
+def copyFeatures_exceptionStartInvalid(constructor):
+	""" Test copyFeatures() for ArgumentException when start is not a valid feature index """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyFeatures(start=-1, end=2)
+
+def copyFeatures_exceptionStartInvalidFeatureName(constructor):
+	""" Test copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyFeatures(start="wrong", end=2)
+
+def copyFeatures_exceptionEndInvalid(constructor):
+	""" Test copyFeatures() for ArgumentException when start is not a valid feature index """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyFeatures(start=0, end=5)
+
+def copyFeatures_exceptionEndInvalidFeatureName(constructor):
+	""" Test copyFeatures() for ArgumentException when start is not a valid featureName """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyFeatures(start="two", end="five")
+
+def copyFeatures_exceptionInversion(constructor):
+	""" Test copyFeatures() for ArgumentException when start comes after end """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyFeatures(start=2, end=0)
+
+def copyFeatures_exceptionInversionFeatureName(constructor):
+	""" Test copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyFeatures(start="two", end="one")
+
+def copyFeatures_handmadeRange(constructor):
+	""" Test copyFeatures() against handmade output for range copying """
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data)
+	ret = toTest.copyFeatures(start=1, end=2)
+	
+	expectedRet = constructor([[2,3],[5,6],[8,9]])
+	expectedTest = constructor(data)
+
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
+def copyFeatures_handmadeWithFeatureNames(constructor):
+	""" Test copyFeatures() against handmade output for range copying with FeatureNames """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	ret = toTest.copyFeatures(start=1,end=2)
+	
+	expectedRet = constructor([[2,3],[5,6],[8,9]],["two","three"])
+	expectedTest = constructor(data, featureNames)
+
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
 

@@ -559,18 +559,26 @@ class RowListData(BaseData):
 
 		return RowListData(retData)
 
-	def _copyFeatures_implementation(self, indices):
+	def _copyFeatures_implementation(self, indices, start, end):
 		ret = []
 		for point in self.data:
 			retPoint = []
-			for i in indices:
-				retPoint.append(point[i])
+			if indices is not None:
+				for i in indices:
+					retPoint.append(point[i])
+			else:
+				for i in range(start,end+1):
+					retPoint.append(point[i])
 			ret.append(retPoint)
 
 		# construct featureName list
 		featureNameList = []
-		for i in indices:
-			featureNameList.append(self.featureNamesInverse[i])
+		if indices is not None:
+			for i in indices:
+				featureNameList.append(self.featureNamesInverse[i])
+		else:
+			for i in range(start,end+1):
+				featureNameList.append(self.featureNamesInverse[i])
 
 		return RowListData(ret, featureNameList)
 

@@ -446,3 +446,46 @@ def test_copyFeatures_handmadeContents():
 	""" Test RLD copyFeatures() returns the correct data """
 	copyFeatures_handmadeContents(constructor)
 
+
+####
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionStartInvalid():
+	""" Test RLD copyFeatures() for ArgumentException when start is not a valid feature index """
+	copyFeatures_exceptionStartInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionStartInvalidFeatureName():
+	""" Test RLD copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
+	copyFeatures_exceptionStartInvalidFeatureName(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionEndInvalid():
+	""" Test RLD copyFeatures() for ArgumentException when start is not a valid feature index """
+	copyFeatures_exceptionEndInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionEndInvalidFeatureName():
+	""" Test RLD copyFeatures() for ArgumentException when start is not a valid featureName """
+	copyFeatures_exceptionEndInvalidFeatureName(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionInversion():
+	""" Test RLD copyFeatures() for ArgumentException when start comes after end """
+	copyFeatures_exceptionInversion(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionInversionFeatureName():
+	""" Test RLD copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
+	copyFeatures_exceptionInversionFeatureName(constructor)
+
+
+def test_copyFeatures_handmadeRange():
+	""" Test RLD copyFeatures() against handmade output for range copying """
+	copyFeatures_handmadeRange(constructor)
+
+def test_copyFeatures_handmadeWithFeatureNames():
+	""" Test RLD copyFeatures() against handmade output for range copying with FeatureNames """
+	copyFeatures_handmadeWithFeatureNames(constructor)
+
+

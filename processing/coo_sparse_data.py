@@ -611,21 +611,35 @@ class CooSparseData(SparseData):
 		return CooSparseData(coo_matrix((retData,(retRow,retCol)),shape=newShape), self.featureNames)
 
 
-	def _copyFeatures_implementation(self, features):
+	def _copyFeatures_implementation(self, features, start, end):
 		retData = []
 		retRow = []
 		retCol = []
-		for i in xrange(len(self.data.data)):
-			if self.data.col[i] in features:
-				retData.append(self.data.data[i])
-				retRow.append(self.data.row[i])
-				retCol.append(_numLessThan(self.data.col[i], features))
+		if features is not None:
+			for i in xrange(len(self.data.data)):
+				if self.data.col[i] in features:
+					retData.append(self.data.data[i])
+					retRow.append(self.data.row[i])
+					retCol.append(_numLessThan(self.data.col[i], features))
 
-		newShape = (numpy.shape(self.data)[0], len(features))
-		newNames = {}
-		for i in xrange(len(features)):
-			value = self.featureNamesInverse[features[i]]
-			newNames[value] = i
+			newShape = (numpy.shape(self.data)[0], len(features))
+			newNames = {}
+			for i in xrange(len(features)):
+				value = self.featureNamesInverse[features[i]]
+				newNames[value] = i
+		else:
+			for i in xrange(len(self.data.data)):
+				if self.data.col[i] >= start and self.data.col[i] <= end:
+					retData.append(self.data.data[i])
+					retRow.append(self.data.row[i])
+					retCol.append(self.data.col[i] - start)
+
+			newShape = (numpy.shape(self.data)[0], end - start + 1)
+			newNames = {}
+			for i in xrange(start,end+1):
+				value = self.featureNamesInverse[i]
+				newNames[value] = i - start
+
 		return CooSparseData(coo_matrix((retData,(retRow,retCol)),shape=newShape), newNames)
 	
 

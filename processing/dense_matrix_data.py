@@ -454,17 +454,19 @@ class DenseMatrixData(BaseData):
 			ret = self.data[points]
 		else:
 			ret = self.data[start:end+1,:]
-			print ret
 
 		return DenseMatrixData(ret)
 
-	def _copyFeatures_implementation(self, indices):
-		ret = self.data[:,indices]
-
-		# construct featureName list
+	def _copyFeatures_implementation(self, indices, start, end):
 		featureNameList = []
-		for index in indices:
-			featureNameList.append(self.featureNamesInverse[index])
+		if indices is not None:
+			ret = self.data[:,indices]
+			for index in indices:
+				featureNameList.append(self.featureNamesInverse[index])
+		else:
+			ret = self.data[:,start:end+1]
+			for index in range(start, end+1):
+				featureNameList.append(self.featureNamesInverse[index])
 
 		return DenseMatrixData(ret, featureNameList)
 

@@ -676,8 +676,8 @@ class BaseData(object):
 				if start is None:
 					start = 0
 				if end is None:
-					end = self.features() - 1
-				if start < 0 or start > self.features():
+					end = self.points() - 1
+				if start < 0 or start > self.points():
 					raise ArgumentException("start must be a valid index, in the range of possible features")
 				if end < 0 or end > self.features():
 					raise ArgumentException("end must be a valid index, in the range of possible features")
@@ -697,19 +697,35 @@ class BaseData(object):
 		retObj._renameMultipleFeatureNames_implementation(self.featureNames,True)
 		return retObj
 	
-	def copyFeatures(self, features):
+	def copyFeatures(self, features=None, start=None, end=None):
 		"""
 		Return a new object which consists only of those specified features, without mutating
 		this object.
 		
 		"""
+		indices = None
 		if features is None:
-			raise ArgumentException("Must provide identifiers for the features you want duplicated")
-		indices = []
-		for identifier in features:
-			indices.append(self._getIndex(identifier))
+			if start is not None or end is not None:
+				if start is None:
+					start = 0
+				if end is None:
+					end = self.features() - 1
+				if start < 0 or start > self.features():
+					raise ArgumentException("start must be a valid index, in the range of possible features")
+				if end < 0 or end > self.features():
+					raise ArgumentException("end must be a valid index, in the range of possible features")
+				if start > end:
+					raise ArgumentException("start cannot be an index greater than end")
+			else:
+				raise ArgumentException("must specify something to copy")
+		else:
+			if start is not None or end is not None:
+				raise ArgumentException("Cannot specify both IDs and a range")
+			indices = []
+			for identifier in features:
+				indices.append(self._getIndex(identifier))
 
-		return self._copyFeatures_implementation(indices)
+		return self._copyFeatures_implementation(indices, start, end)
 
 
 	####################
