@@ -290,9 +290,6 @@ def sortPoints_scorer(constructor):
 	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 	objExp = constructor(dataExpected)
 
-	print toTest.data
-	print objExp.data
-
 	assert toTest.equals(objExp)	
 
 def sortPoints_comparator(constructor):
@@ -323,35 +320,78 @@ def sortPoints_comparator(constructor):
 	assert toTest.equals(objExp)	
 
 
-
 #################
 # sortFeatures() #
 #################
 
 
-def sortFeatures_handmadeWithFcn(constructor):
-	""" Test sortFeatures() against handmade output when given cmp and key functions """	
-	data = [[1,4,7],[2,5,8],[3,6,9]]
+def sortFeatures_exceptionAtLeastOne(constructor):
+	""" Test sortFeatures() has at least one paramater """
+	data = [[7,8,9],[1,2,3],[4,5,6]]
 	toTest = constructor(data)
 
-	def cmpNums(num1,num2):
-		return num1 - num2
+	toTest.sortFeatures()
 
-	def sumModEight(col):
-		total = 0
-		for value in col:
-			total = total + value
-		return total % 8
+def sortFeatures_naturalByPointWithNames(constructor):
+	""" Test sortFeatures() when we specify a point to sort by; includes featureNames """	
+	data = [[1,2,3],[7,1,9],[4,5,6]]
+	names = ["1","2","3"]
+	toTest = constructor(data,names)
 
-	toTest.sortFeatures(cmpNums,sumModEight)
-	toTest.sortFeatures(key=sumModEight)
+	toTest.sortFeatures(sortBy=1)
 
-	dataExpected = [[7,1,4],[8,2,5],[9,3,6]]
+	dataExpected = [[2,1,3],[1,7,9],[5,4,6]]
 	objExp = constructor(dataExpected)
+
 	assert toTest.equals(objExp)
 
-def sortPoints_handmade_reverse(constructor):
-	assert False
+def sortFeatures_scorer(constructor):
+	""" Test sortFeatures() when we specify a scoring function """
+	data = [[7,1,9],[1,2,3],[4,2,9]]
+	toTest = constructor(data)
+
+	def numOdds(feature):
+		ret = 0
+		for val in feature:
+			if val % 2 != 0:
+				ret += 1
+		return ret
+
+	toTest.sortFeatures(sortHelper=numOdds)
+
+	dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
+	objExp = constructor(dataExpected)
+
+	assert toTest.equals(objExp)	
+
+def sortFeatures_comparator(constructor):
+	""" Test sortFeatures() when we specify a comparator function """
+	data = [[7,1,9],[1,2,3],[4,2,9]]
+	toTest = constructor(data)
+
+	# comparator sort currently disabled for DenseMatrixData
+	if isinstance(toTest, DMD):
+		return
+
+	def compOdds(point1, point2):
+		odds1 = 0
+		odds2 = 0
+		for val in point1:
+			if val % 2 != 0:
+				odds1 += 1
+		for val in point2:
+			if val % 2 != 0:
+				odds2 += 1
+		return odds1 - odds2
+
+	toTest.sortFeatures(sortHelper=compOdds)
+
+	dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
+	objExp = constructor(dataExpected)
+
+	assert toTest.equals(objExp)	
+
+
 
 #################
 # extractPoints() #
@@ -1013,6 +1053,78 @@ def copyPoints_handmadeContents(constructor):
 
 	assert orig.equals(expOrig)
 	assert ret.equals(expRet)
+
+
+####
+
+def copyPoints_exceptionStartInvalid(constructor):
+	""" Test copyPoints() for ArgumentException when start is not a valid point index """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyPoints(start=-1,end=2)
+
+def copyPoints_exceptionEndInvalid(constructor):
+	""" Test copyPoints() for ArgumentException when start is not a valid feature index """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyPoints(start=1,end=5)
+
+def copyPoints_exceptionInversion(constructor):
+	""" Test copyPoints() for ArgumentException when start comes after end """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.copyPoints(start=2,end=0)
+
+def copyPoints_handmadeRange(constructor):
+	""" Test copyPoints() against handmade output for range copying """
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data)
+	ret = toTest.copyPoints(start=1,end=2)
+	
+	expectedRet = constructor([[4,5,6],[7,8,9]])
+	expectedTest = constructor(data)
+
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
+def copyPoints_handmadeRangeWithFeatureNames(constructor):
+	""" Test copyPoints() against handmade output for range copying with featureNames """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	ret = toTest.copyPoints(start=1,end=2)
+	
+	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
+	expectedTest = constructor(data,featureNames)
+
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
+def copyPoints_handmadeRangeDefaults(constructor):
+	""" Test copyPoints uses the correct defaults in the case of range based copying """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	ret = toTest.copyPoints(end=1)
+	
+	expectedRet = constructor([[1,2,3],[4,5,6]],featureNames)
+	expectedTest = constructor(data,featureNames)
+	
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
+	toTest = constructor(data,featureNames)
+	ret = toTest.copyPoints(start=1)
+
+	expectedTest = constructor(data,featureNames)
+	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
+
+	assert expectedRet.equals(ret)
+	assert expectedTest.equals(toTest)
+
 
 
 

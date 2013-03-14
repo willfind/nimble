@@ -587,17 +587,27 @@ class CooSparseData(SparseData):
 		return CooSparseData(deepcopy(self.data), deepcopy(self.featureNames))
 
 
-	def _copyPoints_implementation(self, points):
+	def _copyPoints_implementation(self, points, start, end):
 		retData = []
 		retRow = []
 		retCol = []
-		for i in xrange(len(self.data.data)):
-			if self.data.row[i] in points:
-				retData.append(self.data.data[i])
-				retRow.append(_numLessThan(self.data.row[i], points))
-				retCol.append(self.data.col[i])
+		if points is not None:
+			for i in xrange(len(self.data.data)):
+				if self.data.row[i] in points:
+					retData.append(self.data.data[i])
+					retRow.append(_numLessThan(self.data.row[i], points))
+					retCol.append(self.data.col[i])
 
-		newShape = (len(points), numpy.shape(self.data)[1])
+			newShape = (len(points), numpy.shape(self.data)[1])
+		else:
+			for i in xrange(len(self.data.data)):
+				if self.data.row[i] >= start and self.data.row[i] <= end:
+					retData.append(self.data.data[i])
+					retRow.append(self.data.row[i] - start)
+					retCol.append(self.data.col[i])
+
+			newShape = (end - start + 1, numpy.shape(self.data)[1])
+
 		return CooSparseData(coo_matrix((retData,(retRow,retCol)),shape=newShape), self.featureNames)
 
 

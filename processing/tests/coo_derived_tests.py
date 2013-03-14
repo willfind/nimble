@@ -406,6 +406,33 @@ def test_copyPoints_handmadeContents():
 	""" Test CooSparse copyPoints() returns the correct data """
 	copyPoints_handmadeContents(constructor)
 
+@raises(ArgumentException)
+def test_copyPoints_exceptionStartInvalid():
+	""" Test CooSparse copyPoints() for ArgumentException when start is not a valid point index """
+	copyPoints_exceptionStartInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyPoints_exceptionEndInvalid():
+	""" Test CooSparse copyPoints() for ArgumentException when start is not a valid feature index """
+	copyPoints_exceptionEndInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyPoints_exceptionInversion():
+	""" Test CooSparse copyPoints() for ArgumentException when start comes after end """
+	copyPoints_exceptionInversion(constructor)
+
+def test_copyPoints_handmadeRange():
+	""" Test CooSparse copyPoints() against handmade output for range copying """
+	copyPoints_handmadeRange(constructor)
+
+def test_copyPoints_handmadeRangeWithFeatureNames():
+	""" Test CooSparse copyPoints() against handmade output for range copying with featureNames """
+	copyPoints_handmadeRangeWithFeatureNames(constructor)
+
+def test_copyPoints_handmadeRangeDefaults():
+	""" Test CooSparse copyPoints uses the correct defaults in the case of range based copying """
+	copyPoints_handmadeRangeDefaults(constructor)
+
 
 #####################
 # copyFeatures #

@@ -665,20 +665,35 @@ class BaseData(object):
 		"""
 		return self._duplicate_implementation()
 
-	def copyPoints(self, points):
+	def copyPoints(self, points=None, start=None, end=None):
 		"""
 		Return a new object which consists only of those specified points, without mutating
 		this object.
 		
 		"""
 		if points is None:
-			raise ArgumentException("Must provide identifiers for the points you want duplicated")
-		#verify everything in list is a valid index TODO
-		for index in points:
-			if index < 0 or index >= self.points():
-				raise ArgumentException("input must contain only valid indices")
+			if start is not None or end is not None:
+				if start is None:
+					start = 0
+				if end is None:
+					end = self.features() - 1
+				if start < 0 or start > self.features():
+					raise ArgumentException("start must be a valid index, in the range of possible features")
+				if end < 0 or end > self.features():
+					raise ArgumentException("end must be a valid index, in the range of possible features")
+				if start > end:
+					raise ArgumentException("start cannot be an index greater than end")
+			else:
+				raise ArgumentException("must specify something to copy")
+		else:
+			if start is not None or end is not None:
+				raise ArgumentException("Cannot specify both IDs and a range")
+			#verify everything in list is a valid index TODO
+			for index in points:
+				if index < 0 or index >= self.points():
+					raise ArgumentException("input must contain only valid indices")
 
-		retObj = self._copyPoints_implementation(points)
+		retObj = self._copyPoints_implementation(points, start, end)
 		retObj._renameMultipleFeatureNames_implementation(self.featureNames,True)
 		return retObj
 	
@@ -843,6 +858,8 @@ class BaseData(object):
 			if not allowDefaults and newFeatureName.startswith(DEFAULT_PREFIX):
 				raise ArgumentException("Cannot manually add a featureName with the default prefix")
 		if newFeatureName in self.featureNames:
+			if self.featureNamesInverse[index] == newFeatureName:
+				return
 			raise ArgumentException("This featureName is already in use")
 		
 		if newFeatureName is None:

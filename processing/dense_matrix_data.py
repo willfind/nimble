@@ -449,8 +449,12 @@ class DenseMatrixData(BaseData):
 	def _duplicate_implementation(self):
 		return DenseMatrixData(deepcopy(self.data), deepcopy(self.featureNames))
 
-	def _copyPoints_implementation(self, points):
-		ret = self.data[points]
+	def _copyPoints_implementation(self, points, start, end):
+		if points is not None:
+			ret = self.data[points]
+		else:
+			ret = self.data[start:end+1,:]
+			print ret
 
 		return DenseMatrixData(ret)
 

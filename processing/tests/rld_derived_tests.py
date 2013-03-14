@@ -399,6 +399,34 @@ def test_copyPoints_handmadeContents():
 	copyPoints_handmadeContents(constructor)
 
 
+
+@raises(ArgumentException)
+def test_copyPoints_exceptionStartInvalid():
+	""" Test RLD copyPoints() for ArgumentException when start is not a valid point index """
+	copyPoints_exceptionStartInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyPoints_exceptionEndInvalid():
+	""" Test RLD copyPoints() for ArgumentException when start is not a valid feature index """
+	copyPoints_exceptionEndInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyPoints_exceptionInversion():
+	""" Test RLD copyPoints() for ArgumentException when start comes after end """
+	copyPoints_exceptionInversion(constructor)
+
+def test_copyPoints_handmadeRange():
+	""" Test RLD copyPoints() against handmade output for range copying """
+	copyPoints_handmadeRange(constructor)
+
+def test_copyPoints_handmadeRangeWithFeatureNames():
+	""" Test RLD copyPoints() against handmade output for range copying with featureNames """
+	copyPoints_handmadeRangeWithFeatureNames(constructor)
+
+def test_copyPoints_handmadeRangeDefaults():
+	""" Test RLD copyPoints uses the correct defaults in the case of range based copying """
+	copyPoints_handmadeRangeDefaults(constructor)
+
 #####################
 # copyFeatures #
 #####################

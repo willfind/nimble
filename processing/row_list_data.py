@@ -98,13 +98,14 @@ class RowListData(BaseData):
 		"""
 		scorer = None
 		comparator = None
+		testPoint = PointView(self.data[0])
 		try:
-			sortHelper(self.data[0])
+			sortHelper(testPoint)
 			scorer = sortHelper
 		except TypeError:
 			pass
 		try:
-			sortHelper(self.data[0], self.data[0])
+			sortHelper(testPoint, testPoint)
 			comparator = sortHelper
 		except TypeError:
 			pass
@@ -547,11 +548,14 @@ class RowListData(BaseData):
 	def _duplicate_implementation(self):
 		return RowListData(deepcopy(self.data), deepcopy(self.featureNames))
 
-	def _copyPoints_implementation(self, points):
-		points.sort()
+	def _copyPoints_implementation(self, points, start, end):
 		retData = []
-		for index in points:
-			retData.append(copy(self.data[index]))
+		if points is not None:
+			for index in points:
+				retData.append(copy(self.data[index]))
+		else:
+			for i in range(start,end+1):
+				retData.append(copy(self.data[i]))
 
 		return RowListData(retData)
 
