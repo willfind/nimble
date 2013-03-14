@@ -679,7 +679,7 @@ class BaseData(object):
 					end = self.points() - 1
 				if start < 0 or start > self.points():
 					raise ArgumentException("start must be a valid index, in the range of possible features")
-				if end < 0 or end > self.features():
+				if end < 0 or end > self.points():
 					raise ArgumentException("end must be a valid index, in the range of possible features")
 				if start > end:
 					raise ArgumentException("start cannot be an index greater than end")
