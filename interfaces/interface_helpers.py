@@ -144,3 +144,51 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 
 def convertTo(data, retType):
 	return eval("data.to" + retType + "()")
+
+def generateAllPairs(items):
+	"""
+		Given a list of items, generate a list of all possible pairs 
+		(2-combinations) of items from the list, and return as a list
+		of tuples.  Assumes that no two items in the list refer to the same
+		object or number.  If there are duplicates in the input list, there
+		will be duplicates in the output list.
+	"""
+	if items is None or len(items) == 0:
+		return None
+
+	pairs = []
+	for i in range(len(items)):
+		firstItem = items[i]
+		for j in range(i+1, len(items)):
+			secondItem = items[j]
+			pair = (firstItem, secondItem)
+			pairs.append(pair)
+
+	return pairs
+
+def testGenerateAllPairs():
+	"""
+	Unit test function for testGenerateAllPairs
+	"""
+	testList1 = [1, 2, 3, 4]
+	testPairs = generateAllPairs(testList1)
+	print testPairs
+
+	assert len(testPairs) == 6
+	assert ((1, 2) in testPairs) or ((2, 1) in testPairs)
+	assert not (((1, 2) in testPairs) and ((2, 1) in testPairs))
+	assert ((1, 3) in testPairs) or ((3, 1) in testPairs)
+	assert not (((1, 3) in testPairs) and ((3, 1) in testPairs))
+	assert ((1, 4) in testPairs) or ((4, 1) in testPairs)
+	assert not (((1, 4) in testPairs) and ((4, 1) in testPairs))
+	assert ((2, 3) in testPairs) or ((3, 2) in testPairs)
+	assert not (((2, 3) in testPairs) and ((3, 2) in testPairs))
+	assert ((2, 4) in testPairs) or ((4, 2) in testPairs)
+	assert not (((2, 4) in testPairs) and ((4, 2) in testPairs))
+	assert ((3, 4) in testPairs) or ((4, 3) in testPairs)
+	assert not (((3, 4) in testPairs) and ((4, 3) in testPairs))
+
+	testList2 = []
+	testPairs2 = generateAllPairs(testList2)
+	assert testPairs2 is None
+
