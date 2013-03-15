@@ -9,9 +9,9 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 from copy import copy
 from copy import deepcopy
 from ..utility.custom_exceptions import ArgumentException
+from UML.logging.data_set_analyzer import produceFeaturewiseReport
+from UML.logging.data_set_analyzer import produceAggregateReport
 import random
-import re
-import os
 
 
 # a default seed for testing and predictible trials
@@ -393,6 +393,26 @@ class BaseData(object):
 
 		# return that lists iterator as the fold iterator 	
 		return self.foldIteratorClass(foldList, self)
+
+	#################################
+	# Functions related to logging  #
+	#################################
+	def featureReport(self, displayDigits=2):
+		"""
+		Produce a report, in a string formatted as a table, containing summary and statistical
+		information about each feature in the data set, up to 50 features.  If there are more
+		than 50 features, only information about 50 of those features will be reported.
+		"""
+		return produceFeaturewiseReport(self, displayDigits=displayDigits)
+
+	def report(self, displayDigits=2):
+		"""
+		Produce a report, in a string formatted as a table, containing summary 
+		information about the data set contained in this object.  Includes 
+		proportion of missing values, proportion of zero values, total # of points,
+		and number of features.
+		"""
+		return produceAggregateReport(self, displayDigits=displayDigits)
 
 	
 	#################################
