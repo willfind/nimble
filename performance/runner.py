@@ -61,6 +61,11 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentIndicator, testDependent
 	"""
 	TODO: add docstring
 	"""
+
+	#TODO DUPLICATE DATA BEFORE CALLING RUN
+	trainX = trainX.duplicate()
+	testX = testX.duplicate()
+
 	# If testDependentIndicator is missing, assume it is because it's the same as trainDependentIndicator
 	if testDependentIndicator is None:
 		testDependentIndicator = trainDependentIndicator
@@ -70,7 +75,9 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentIndicator, testDependent
 
 	# Get set of unique class labels, then generate list of all 2-combinations of
 	# class labels
-	labelSet = list(set(trainX.copyFeatures([trainDependentIndicator]).data))
+	labelVector = trainX.copyFeatures([trainDependentIndicator])
+	labelVector.transpose()
+	labelSet = list(set(labelVector.toListOfLists()[0]))
 	labelPairs = generateAllPairs(labelSet)
 
 	#if we are logging this run, we need to start the timer
@@ -99,7 +106,6 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentIndicator, testDependent
 		pairData.appendFeatures(pairTrueLabels)
 		trainX.appendPoints(pairData)
 		predictionFeatureID +=1
-
 
 	finalPredictions = rawPredictions.applyFunctionToEachPoint(extractWinningPrediction)
 
