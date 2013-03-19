@@ -57,14 +57,20 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions)
         if len(inspect.getargspec(func).args) == 2:
             #the metric function only takes two arguments: we assume they
             #are the known class labels and the predicted class labels
-            results[func] = executeCode(func, parameterHash)
+            if func.__name__ != "<lambda>":
+                results[func.__name__] = executeCode(func, parameterHash)
+            else:
+                results[inspect.getsource(func)] = executeCode(func, parameterHash)
         elif len(inspect.getargspec(func).args) == 3:
             #the metric function takes three arguments:  known class labels,
             #features, and predicted class labels. add features to the parameter hash
             #divide X into labels and features
             #TODO correctly separate known labels and features in all cases
             parameterHash["features"] = knownData
-            results[func] = executeCode(func, parameterHash)
+            if func.__name__ != "<lambda>":
+                results[func.__name__] = executeCode(func, parameterHash)
+            else:
+                results[inspect.getsource(func)] = executeCode(func, parameterHash)
         else:
             raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
     return results
