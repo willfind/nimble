@@ -24,12 +24,14 @@ from .utility import ArgumentException
 def run(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, sendToLog=True):
 	splitList = algorithm.split('.',1)
 	if len(splitList) < 2:
-		raise ArgumentException("The algorithm must be prefeced with the package name and a dot. Example:'mlpy.KNN'")
+		raise ArgumentException("The algorithm must be prefaced with the package name and a dot. Example:'mlpy.KNN'")
 	package = splitList[0]
 	algorithm = splitList[1]
 
 	if sendToLog:
 		timer = Stopwatch()
+	else:
+		timer = None
 
 	if package == 'mahout':
 		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments, timer)
