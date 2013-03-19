@@ -7,14 +7,14 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 		A generic function to compute different kinds of error metrics.  knownValues
 		is a numpy array with the
 	"""
-	if knownValues is None or predictedValues is None or knownValues.data.size == 0 or predictedValues.data.size == 0:
+	if knownValues is None or predictedValues is None or len(knownValues.data) == 0 or len(predictedValues.data) == 0:
 		raise ArgumentException("Empty argument(s) in error calculator")
 
 	n=0.0
 	runningTotal=0.0
 	for i in xrange(predictedValues.points()):
-		pV = predictedValues.data[i,0]
-		aV = knownValues.data[i,0]
+		pV = predictedValues.data[i][0]
+		aV = knownValues.data[i][0]
 		runningTotal = loopFunction(aV, pV, runningTotal)
 		n += 1
 	if n > 0:
