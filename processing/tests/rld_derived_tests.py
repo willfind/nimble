@@ -489,3 +489,11 @@ def test_copyFeatures_handmadeWithFeatureNames():
 	copyFeatures_handmadeWithFeatureNames(constructor)
 
 
+##############
+# __getitem__#
+##############
+
+
+def test_getitem_simpleExampeWithZeroes():
+	""" Test RLD __getitem__ returns the correct output for a number of simple queries """
+	getitem_simpleExampeWithZeroes(constructor)

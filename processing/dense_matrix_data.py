@@ -470,6 +470,9 @@ class DenseMatrixData(BaseData):
 
 		return DenseMatrixData(ret, featureNameList)
 
+	def _getitem_implementation(self, x, y):
+		return self.data[x,y]
+
 
 class VectorView():
 	def __init__(self, toWrap):

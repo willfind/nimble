@@ -582,6 +582,8 @@ class RowListData(BaseData):
 
 		return RowListData(ret, featureNameList)
 
+	def _getitem_implementation(self, x, y):
+		return self.data[x][y]
 
 ###########
 # Helpers #

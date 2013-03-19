@@ -487,3 +487,12 @@ def test_copyFeatures_handmadeRange():
 def test_copyFeatures_handmadeWithFeatureNames():
 	""" Test DMD copyFeatures() against handmade output for range copying with FeatureNames """
 	copyFeatures_handmadeWithFeatureNames(constructor)
+
+
+##############
+# __getitem__#
+##############
+
+def test_getitem_simpleExampeWithZeroes():
+	""" Test DMD __getitem__ returns the correct output for a number of simple queries """
+	getitem_simpleExampeWithZeroes(constructor)

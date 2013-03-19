@@ -1236,3 +1236,21 @@ def copyFeatures_handmadeWithFeatureNames(constructor):
 	assert expectedRet.equals(ret)
 	assert expectedTest.equals(toTest)
 
+
+##############
+# __getitem__#
+##############
+
+
+def getitem_simpleExampeWithZeroes(constructor):
+	""" Test __getitem__ returns the correct output for a number of simple queries """
+	featureNames = ["one","two","three","zero"]
+	data = [[1,2,3,0],[4,5,0,0],[7,0,9,0],[0,0,0,0]]
+
+	toTest = constructor(data, featureNames)
+
+	assert toTest[0,0] == 1
+	assert toTest[1,3] == 0
+	assert toTest[2,2] == 9
+	assert toTest[3,3] == 0
+

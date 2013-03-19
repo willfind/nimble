@@ -643,6 +643,15 @@ class CooSparseData(SparseData):
 		return CooSparseData(coo_matrix((retData,(retRow,retCol)),shape=newShape), newNames)
 	
 
+	def _getitem_implementation(self, x, y):
+		for i in xrange(len(self.data.row)):
+			rowVal = self.data.row[i]
+			if rowVal == x and self.data.col[i] == y:
+				return self.data.data[i]
+
+		return 0
+
+
 	###########
 	# Helpers #
 	###########

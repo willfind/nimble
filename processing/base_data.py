@@ -727,6 +727,16 @@ class BaseData(object):
 
 		return self._copyFeatures_implementation(indices, start, end)
 
+	def __getitem__(self, key):
+		try:
+			(x,y) = key
+		except TypeError:
+			raise ArgumentException("Must include a point and feature index")
+		if not isinstance(x,int) or x < 0 or x >= self.points():
+			raise ArgumentException(str(x) + " is not a valid point ID")
+		if not isinstance(y,int) or y < 0 or y >= self.features():
+			raise ArgumentException(str(y) + " is not a valid feature ID")
+		return self._getitem_implementation(x,y)
 
 	####################
 	# Helper functions #
