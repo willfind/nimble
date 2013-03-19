@@ -102,6 +102,9 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
 
     infoTable = produceFeaturewiseInfoTable(dataContainer, functionsToApply)
 
+    if displayDigits is not None and isinstance(displayDigits, (int, long)):
+        displayDigits = "." + str(displayDigits) + "f"
+
     if isSubset:
         printableTable = tableString(infoTable, True, headers=infoTable[0], roundDigits=displayDigits, snipIndex=leftIndicesToSelect[-1])
     else:
@@ -150,6 +153,10 @@ def produceAggregateReport(dataContainer, displayDigits):
     in the data set, number of features in the data set.
     """
     table = produceAggregateTable(dataContainer)
+
+    if displayDigits is not None and isinstance(displayDigits, (int, long)):
+        displayDigits = "." + str(displayDigits) + "f"
+
     return tableString(table, False, headers=table[0], roundDigits=displayDigits)
 
     ###############################################################################
