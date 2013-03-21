@@ -13,6 +13,7 @@ from .interfaces import mahout
 from .interfaces import regressor
 from .interfaces import sciKitLearn
 from .interfaces import mlpy
+from .interfaces import shogun
 from .processing import CooSparseData
 from .processing import DenseMatrixData
 from .processing import RowListData
@@ -41,6 +42,8 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'mlpy':
 		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+	elif package == 'shogun':
+		results = shogun(algorithm, trainData, testData, output, dependentVar, arguments, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:

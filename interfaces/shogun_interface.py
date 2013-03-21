@@ -44,7 +44,7 @@ def shogunPresent():
 	return True
 
 
-def shogun(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}):
+def shogun(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, timer=None):
 	"""
 
 
@@ -85,7 +85,7 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 
 	# call backend
 	try:
-		retData = _shogunBackend(algorithm,  trainRawData, trainRawDataY, testRawData, arguments)
+		retData = _shogunBackend(algorithm,  trainRawData, trainRawDataY, testRawData, arguments, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not shogunPresent():
@@ -106,7 +106,7 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 	outputObj.writeFile('csv', output, False)
 
 
-def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
+def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to shogun
 
@@ -120,20 +120,19 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
 	exec ("from shogun import " + moduleName)
 
 	# convert data to shogun friendly format
-	# TODO automated format detection -- int, float, sparse
 	from shogun.Features import RealFeatures
 	from shogun.Features import SparseRealFeatures
 
 	if scipy.sparse.issparse(trainDataX):
 		trainFeat = SparseRealFeatures()
-		trainFeat.set_sparse_feature_matrix(trainDataX.tocsc())
+		trainFeat.set_sparse_feature_matrix(trainDataX.tocsc().astype(numpy.float))
 	else:
 		trainFeat = RealFeatures()
 		trainFeat.set_feature_matrix(numpy.array(trainDataX, dtype=numpy.float))
 
 	if scipy.sparse.issparse(testData):
 		testFeat = SparseRealFeatures()
-		testFeat.set_sparse_feature_matrix(testData.tocsc())
+		testFeat.set_sparse_feature_matrix(testData.tocsc().astype(numpy.float))
 	else:
 		testFeat = RealFeatures()
 		testFeat.set_feature_matrix(numpy.array(testData, dtype=numpy.float))
@@ -178,10 +177,19 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
 			if i != 0:
 				argString +=", "
 			argString += "paramList[" + str(i) + "]"
+
+		#start timer of training, if timer is present
+		if timer is not None:
+			timer.start('train')
 		try:
 			constructedObj = eval("shogun.Kernel." + wordValue + "(" + argString + ")")
 		except AttributeError:
 			raise ArgumentException("Failed to instantiate" + wordValue)
+
+		#stop timing training, if timer is present
+		if timer is not None:
+			timer.stop('train')
+
 		if word == 'kernel':
 			SGObj.set_kernel(constructedObj)
 		else:
@@ -221,14 +229,27 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs):
 			raise ArgumentException("Cannot set argument: " + k)
 		exec("SGObj." + testString + "(v)")
 	
+	#start timing training, if timer is present
+	if timer is not None:
+		timer.start('train')
+
 	# Training Call
 	argString = ""
 	if not blankDataParam:
 		argString = "trainFeat"
 	exec("SGObj.train(" + argString + ")")
 
+	#stop timing training and start timing testing, if timer is present
+	if timer is not None:
+		timer.stop('train')
+		timer.start('test')
+
 	# Prediction / Test Call
-	outData = eval("SGObj.apply(testFeat)")
+	outData = SGObj.apply(testFeat)
+
+	#stop timing of testing, if timer is present
+	if timer is not None:
+		timer.stop('test')
 
 	return outData.get_labels()
 

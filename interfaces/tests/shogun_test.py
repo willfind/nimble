@@ -92,7 +92,6 @@ def testShogunMulticlassSVM():
 
 	assert ret is not None
 
-	# shogun binary classifiers seem to return confidence values, not class ID
 	assert ret.data[0,0] == 0
 	assert ret.data[1,0] == 1
 	assert ret.data[2,0] == 2
