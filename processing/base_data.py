@@ -734,8 +734,13 @@ class BaseData(object):
 			raise ArgumentException("Must include a point and feature index")
 		if not isinstance(x,int) or x < 0 or x >= self.points():
 			raise ArgumentException(str(x) + " is not a valid point ID")
+
+		if isinstance(y,basestring):
+			y = self._getIndex(y)
+
 		if not isinstance(y,int) or y < 0 or y >= self.features():
 			raise ArgumentException(str(y) + " is not a valid feature ID")
+
 		return self._getitem_implementation(x,y)
 
 	####################
