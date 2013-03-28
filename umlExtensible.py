@@ -220,7 +220,7 @@ def _intFloatOrString(inString):
 	ret = inString
 	try:
 		ret = int(inString)
-	except exceptions.ValueError:
+	except ValueError:
 		ret = float(inString)
 	# this will return an int or float if either of the above two are successful
 	finally:
