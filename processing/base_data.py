@@ -670,6 +670,8 @@ class BaseData(object):
 		this object.
 		
 		"""
+		if isinstance(points, basestring):
+			points = [points]
 		if points is None:
 			if start is not None or end is not None:
 				if start is None:
@@ -702,6 +704,8 @@ class BaseData(object):
 		this object.
 		
 		"""
+		if isinstance(features, basestring):
+			features = [features]
 		indices = None
 		if features is None:
 			if start is not None or end is not None:

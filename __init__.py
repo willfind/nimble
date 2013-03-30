@@ -7,5 +7,7 @@ from umlStatic import loadTrainingAndTesting
 from combinations.CrossValidate import crossValidate
 from combinations.CrossValidate import crossValidateReturnBest
 from combinations.Combinations import functionCombinations
+from combinations.OrderedCrossValidate import orderedCrossValidate
+from combinations.OrderedCrossValidate import orderedCrossValidateReturnBest
 
 from performance.runner import runAndTest
