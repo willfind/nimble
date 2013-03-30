@@ -9,8 +9,8 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 from copy import copy
 from copy import deepcopy
 from ..utility.custom_exceptions import ArgumentException
-from UML.logging.data_set_analyzer import produceFeaturewiseReport
-from UML.logging.data_set_analyzer import produceAggregateReport
+from UML.uml_logging.data_set_analyzer import produceFeaturewiseReport
+from UML.uml_logging.data_set_analyzer import produceAggregateReport
 import random
 
 
@@ -419,7 +419,6 @@ class BaseData(object):
 	# Functions for derived classes #
 	#################################
 
-
 	def transpose(self):
 		"""
 		Function to transpose the data, ie invert the feature and point indices of the data.
@@ -726,6 +725,14 @@ class BaseData(object):
 				indices.append(self._getIndex(identifier))
 
 		return self._copyFeatures_implementation(indices, start, end)
+
+	def getType(self):
+		"""
+			Return a string representing the non-abstract type of this object (e.g. DenseMatrixData,
+			CooSparseData, etc.) that can be passed to data() function to create a new object
+			of the same type.
+		"""
+		return self._getType_implementation()
 
 	def __getitem__(self, key):
 		try:
