@@ -17,8 +17,8 @@ from .interfaces import shogun
 from .processing import CooSparseData
 from .processing import DenseMatrixData
 from .processing import RowListData
-from .logging.log_manager import LogManager
-from .logging.stopwatch import Stopwatch
+from .uml_logging.log_manager import LogManager
+from .uml_logging.stopwatch import Stopwatch
 from .utility import ArgumentException
 
 
