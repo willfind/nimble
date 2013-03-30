@@ -119,6 +119,10 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 	putOnSearchPath(shogunDir)
 	exec ("from shogun import " + moduleName)
 
+	# make object
+	objectCall = moduleName + '.' + algorithm
+	SGObj = eval(objectCall + "()")
+
 	# convert data to shogun friendly format
 	from shogun.Features import RealFeatures
 	from shogun.Features import SparseRealFeatures
@@ -139,12 +143,25 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 
 	# Labels must be float typed
 	# TODO do BinaryLabels and MultiClassLabels even exist? -- depends on version :/
-	from shogun.Features import Labels
-	trainLabels = Labels(trainDataY.astype(float))
-
-	# make object
-	objectCall = moduleName + '.' + algorithm
-	SGObj = eval(objectCall + "()")
+	try:
+		import shogun.Classifier
+		if isinstance(SGObj, shogun.Classifier.BaseMulticlassMachine):
+			from shogun.Features import MulticlassLabels
+			trainLabels = MulticlassLabels(trainDataY.astype(float))
+		else:
+			regression = False
+			for value in trainDataY:
+				if value != -1 and value != 1:
+					regression = True
+			if regression:
+				from shogun.Features import RegressionLabels
+				trainLabels = RegressionLabels(trainDataY.astype(float))
+			else:
+				from shogun.Features import BinaryLabels
+				trainLabels = BinaryLabels(trainDataY.astype(float))
+	except ImportError:
+		from shogun.Features import Labels
+		trainLabels = Labels(trainDataY.astype(float))
 
 	#set parameters from input arguments
 	SGObj.set_labels(trainLabels)
@@ -162,33 +179,12 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 		if not isinstance(wordValue, basestring):
 			raise ArgumentException(word + " parameter must define the name of a Kernel to instantiate")
 		
-		#these are values we can reasonably predict that the user would want filled in
-		fillParams = ['l','r','lhs','rhs']
-		for p in fillParams:
-			if p not in algArgs:
-				algArgs[p] = trainFeat
-
-		argString = ""
-		(paramList, usedList) = _argsFromDoc("shogun.Kernel." + wordValue,"__init__", algArgs)
-		if paramList is None or len(paramList) == 0:
-			raise ArgumentException("Could not find arguments for " + wordValue)
-
-		for i in xrange(len(paramList)):
-			if i != 0:
-				argString +=", "
-			argString += "paramList[" + str(i) + "]"
-
-		#start timer of training, if timer is present
-		if timer is not None:
-			timer.start('train')
 		try:
-			constructedObj = eval("shogun.Kernel." + wordValue + "(" + argString + ")")
+			constructedObj = eval("shogun.Kernel." + wordValue + "()")
 		except AttributeError:
 			raise ArgumentException("Failed to instantiate" + wordValue)
 
-		#stop timing training, if timer is present
-		if timer is not None:
-			timer.stop('train')
+		constructedObj.init(trainFeat,trainFeat)
 
 		if word == 'kernel':
 			SGObj.set_kernel(constructedObj)
@@ -198,12 +194,6 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 		blankDataParam = True
 		# remove those arguments that were used, so we don't try to readd them further down
 		del(algArgs[word])
-		for toDel in usedList:
-			del(algArgs[toDel])
-		# delete these if they weren't used
-		for p in fillParams:
-			if p in algArgs:
-				del(algArgs[p])
 
 	# special case parameter 'C' -- we want to fudge the default call
 	if 'C' in algArgs:
@@ -226,7 +216,8 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 		v = algArgs[k]
 		testString = "set_" + k
 		if testString not in dir(SGObj):
-			raise ArgumentException("Cannot set argument: " + k)
+#			raise ArgumentException("Cannot set argument: " + k)
+			continue
 		exec("SGObj." + testString + "(v)")
 	
 	#start timing training, if timer is present

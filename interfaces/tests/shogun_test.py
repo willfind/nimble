@@ -11,10 +11,10 @@ from ..shogun_interface import shogun
 from ..shogun_interface import listAlgorithms
 from ..shogun_interface import setShogunLocation
 from ..shogun_interface import getShogunLocation
+from ..shogun_interface import shogunPresent
 from ...processing.dense_matrix_data import DenseMatrixData as DMData
 from ...processing.coo_sparse_data import CooSparseData
 from ...processing.csc_sparse_data import CscSparseData
-
 
 
 def testShogunLocation():
@@ -45,13 +45,13 @@ def testShogunHandmadeBinaryClassification():
 def testShogunHandmadeBinaryClassificationWithKernel():
 	""" Test shogun() by calling a binary linear classification algorithm with a kernel """
 	variables = ["Y","x1","x2"]
-	data = [[-1,1,0], [-1,0,1], [1,3,2]]
+	data = [[-1,-11,-5], [1,0,1], [1,3,2]]
 	trainingObj = DMData(data,variables)
 
-	data2 = [[3,3]]
+	data2 = [[5,3]]
 	testObj = DMData(data2)
 
-	args = {'kernel':'GaussianKernel', 'width':2}
+	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
 	ret = shogun("LibSVM", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
 
 	assert ret is not None
@@ -81,14 +81,14 @@ def testShogunKMeans():
 def testShogunMulticlassSVM():
 	""" Test shogun() by calling a multilass classifier with a kernel """
 	variables = ["Y","x1","x2"]
-	data = [[0,0,0], [0,0,1], [1,8,1], [1,7,1], [2,1,9], [2,1,8]]
+	data = [[0,0,0], [0,0,1], [1,-118,1], [1,-117,1], [2,1,191], [2,1,118]]
 	trainingObj = DMData(data,variables)
 
-	data2 = [[0,0], [10,1], [1,10]]
+	data2 = [[0,0], [-101,1], [1,101]]
 	testObj = DMData(data2)
 
-	args = {'C':.5, 'kernel':'PolyKernel', 'd':2, 'inhom':False}
-	ret = shogun("LibSVMMultiClass", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+	args = {'C':.5, 'kernel':'LinearKernel'}
+	ret = shogun("MulticlassLibSVM", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
 
 	assert ret is not None
 
@@ -123,5 +123,5 @@ def testShogunListAlgorithms():
 
 	assert 'LibSVM' in ret
 	assert 'LibLinear' in ret
-	assert 'LibSVMMultiClass' in ret
+	assert 'MulticlassLibSVM' in ret
 	assert 'SubGradientSVM' in ret

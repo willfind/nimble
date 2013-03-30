@@ -20,6 +20,6 @@ if __name__ == "__main__":
 	testY = testY.toDenseMatrixData()
 
 	args = {"kernel":"GaussianKernel", "width":1, "C":1}
-	results = runAndTest("shogun.LibSVMMultiClass", trainX, testX, trainY, testY, args, [classificationError])
+	results = runAndTest("shogun.MulticlassLibSVM", trainX, testX, trainY, testY, args, [classificationError])
 	
 	print results
