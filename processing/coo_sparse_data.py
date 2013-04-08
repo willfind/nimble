@@ -506,6 +506,8 @@ class CooSparseData(SparseData):
 	def _points_implementation(self):
 		return self.data.shape[0]
 
+	def _getType_implementation(self):
+		return 'CooSparseData'
 
 	def _toRowListData_implementation(self):
 		"""	Returns a RowListData object with the same data and featureNames as this one """
