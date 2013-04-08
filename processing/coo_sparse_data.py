@@ -175,10 +175,12 @@ class CooSparseData(SparseData):
 		
 
 		"""
+		extractLength = len(toExtract)
 		extractData = []
 		extractRows = []
 		extractCols = []
 
+		self._sortInternal(axisType)
 		if axisType == "feature":
 			targetAxis = self.data.col
 			otherAxis = self.data.row
@@ -193,17 +195,19 @@ class CooSparseData(SparseData):
 		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
 		# underlying structure to save space
 		copy = 0
-
+		extractIndex = 0
 		for i in xrange(len(self.data.data)):
 			value = targetAxis[i]
-			if value in toExtract:
+			if extractIndex < extractLength and value > toExtract[extractIndex]:
+				extractIndex = extractIndex + 1
+			if extractIndex < extractLength and value == toExtract[extractIndex]:
 				extractData.append(self.data.data[i])
 				extractOther.append(otherAxis[i])
-				extractTarget.append(toExtract.index(value))
+				extractTarget.append(extractIndex)	
 			else:
 				self.data.data[copy] = self.data.data[i]				
 				otherAxis[copy] = otherAxis[i]
-				targetAxis[copy] = targetAxis[i] - _numLessThan(value, toExtract)
+				targetAxis[copy] = targetAxis[i] - extractIndex
 				copy = copy + 1
 
 		# reinstantiate self
