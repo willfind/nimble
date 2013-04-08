@@ -6,6 +6,7 @@ interface
 
 import numpy
 import scipy.sparse
+import copy
 
 from interface_helpers import *
 from ..processing.dense_matrix_data import DenseMatrixData as DMData
@@ -49,6 +50,7 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 
 
 	"""
+	args = copy.copy(arguments)
 	if not isinstance(trainData, BaseData):
 		trainObj = DMData(file=trainData)
 	else: # input is an object
@@ -64,7 +66,7 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
-		# TODO currently destructive!
+		trainObj = trainObj.duplicate()
 		trainObjY = trainObj.extractFeatures([dependentVar])		
 	# could be None for unsupervised learning	
 
@@ -85,7 +87,7 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 
 	# call backend
 	try:
-		retData = _shogunBackend(algorithm,  trainRawData, trainRawDataY, testRawData, arguments, timer)
+		retData = _shogunBackend(algorithm,  trainRawData, trainRawDataY, testRawData, args, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not shogunPresent():
