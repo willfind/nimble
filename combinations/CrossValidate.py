@@ -1,7 +1,7 @@
 import operator
 import Combinations
 from .. import run
-from ..logging.log_manager import LogManager
+from ..uml_logging.log_manager import LogManager
 #import DenseMatrix
 
 
