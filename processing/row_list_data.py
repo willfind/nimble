@@ -457,6 +457,9 @@ class RowListData(BaseData):
 	def _points_implementation(self):
 		return len(self.data)
 
+	def _getType_implementation(self):
+		return 'RowListData'
+
 	def _equals_implementation(self,other):
 		if not isinstance(other,RowListData):
 			return False
