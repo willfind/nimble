@@ -387,6 +387,9 @@ class DenseMatrixData(BaseData):
 		shape = numpy.shape(self.data)
 		return shape[0]
 
+	def _getType_implementation(self):
+		return 'DenseMatrixData'
+
 	def _equals_implementation(self,other):
 		if not isinstance(other,DenseMatrixData):
 			return False
