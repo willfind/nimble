@@ -6,9 +6,12 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 	"""
 		A generic function to compute different kinds of error metrics.  knownValues
 		is a numpy array with the
+		TODO: finish docstring
 	"""
-	if knownValues is None or predictedValues is None or len(knownValues.data) == 0 or len(predictedValues.data) == 0:
-		raise ArgumentException("Empty argument(s) in error calculator")
+	if knownValues is None or len(knownValues.data) == 0:
+		raise ArgumentException("Empty 'knownValues' argument in error calculator")
+	elif predictedValues is None or len(predictedValues.data) == 0:
+		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
 	n=0.0
 	runningTotal=0.0
