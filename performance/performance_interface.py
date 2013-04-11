@@ -38,7 +38,7 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions)
         Returns: a dictionary associating each performance metric with the (presumably)
         numerical value computed by running the function over the known labels & predicted labels
     """
-    if isinstance(dependentVar, BaseData):
+    if isinstance(dependentVar, (list, BaseData)):
         #The known Indicator argument already contains all known
         #labels, so we do not need to do any further processing
         knownLabels = dependentVar
