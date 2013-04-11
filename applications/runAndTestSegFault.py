@@ -15,7 +15,7 @@ if __name__ == "__main__":
 	from UML.performance.metric_functions import classificationError
 
 	pathIn = "applications/example_data/sparseSampleReal.mtx"
-	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=1, fractionForTestSet=.2, loadType="CooSparseData", fileType="mtx")
+	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="CooSparseData", fileType="mtx")
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
 	trainY = trainY.toDenseMatrixData()
@@ -26,11 +26,13 @@ if __name__ == "__main__":
 	for i in range(len(trainY.data)):
 		label = trainY.data[i][0]
 		trainYList.append([int(label)])
+		print "label: "+str(int(label))
 
 	testYList = []
 	for i in range(len(testY.data)):
 		label = testY.data[i][0]
 		testYList.append([int(label)])
+		print "label: "+str(int(label))
 
 	trainY = data('dense', trainYList)
 	testY = data('dense', testYList)
