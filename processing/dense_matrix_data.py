@@ -89,7 +89,7 @@ class DenseMatrixData(BaseData):
 			raise ArgumentException("sortHelper is neither a scorer or a comparator")
 
 		if scorer:
-			scores = numpy.apply_along_axis(scorer, 1, self.data)
+			scores = viewBasedApplyAlongAxis(scorer, 'point', self)
 			scoresObj = DenseMatrixData(scores)
 			scoresObj.transpose()
 			self.appendFeatures(scoresObj)
@@ -186,7 +186,8 @@ class DenseMatrixData(BaseData):
 		returning an object containing those points that do.
 
 		"""
-		results = numpy.apply_along_axis(toExtract,1,self.data)
+		results = viewBasedApplyAlongAxis(toExtract,'point',self)
+		results = results.astype(numpy.int)
 		ret = self.data[numpy.nonzero(results),:]
 		# need to convert our boolean array to to list of points to be removed	
 		toRemove = []
@@ -283,7 +284,8 @@ class DenseMatrixData(BaseData):
 		function, returning an object containing those features whose views do.
 
 		"""
-		results = numpy.apply_along_axis(toExtract, 0, self.data)
+		results = viewBasedApplyAlongAxis(toExtract, 'feature', self)
+		results = results.astype(numpy.int64)
 		ret = self.data[:,results]
 		# need to convert our boolean array to to list of features to be removed			
 		toRemove = []
@@ -321,9 +323,9 @@ class DenseMatrixData(BaseData):
 		output values into a new object that is returned upon completion.
 
 		"""
-		def funcWrap(point):
-			return function(VectorView(point))
-		retData = numpy.apply_along_axis(funcWrap,1,self.data)
+#		def funcWrap(point):
+#			return function(VectorView(point))
+		retData = numpy.apply_along_axis(function,1,self.data)
 		retData = numpy.matrix(retData)
 		retData = retData.T
 		return DenseMatrixData(retData)
@@ -336,9 +338,9 @@ class DenseMatrixData(BaseData):
 		returned upon completion.
 
 		"""
-		def funcWrap(feature):
-			return function(VectorView(feature))
-		retData = numpy.apply_along_axis(funcWrap,0,self.data)
+#		def funcWrap(feature):
+#			return function(VectorView(feature))
+		retData = numpy.apply_along_axis(function,0,self.data)
 		return DenseMatrixData(retData)
 
 
@@ -476,18 +478,41 @@ class DenseMatrixData(BaseData):
 	def _getitem_implementation(self, x, y):
 		return self.data[x,y]
 
+	def _getPointView_implementation(self, ID):
+		return VectorView(self, 'point', ID)
 
-class VectorView():
-	def __init__(self, toWrap):
-		self._toWrap = toWrap
-	def __getitem__(self, index):
-		return self._toWrap[index]	
+	def _getFeatureView_implementation(self, ID):
+		return VectorView(self, 'feature', ID)
+
+class VectorView(View):
+	def __init__(self, outer, axis, index):
+		self._outer = outer
+		self._axis = axis
+		self._vecIndex = index
+		if axis == 'point' or axis == 0:
+			self._name = None
+			self._length = outer.points()
+		else:
+			self._name = outer.featureNamesInverse[index]
+			self._length = outer.features()
+	def __getitem__(self, key):
+		if self._axis == 'point' or self._axis == 0:
+			return self._outer.data[self._vecIndex,key] 
+		else:
+			return self._outer.data[key,self._vecIndex]
 	def __setitem__(self, key, value):
-		self._toWrap[key] = value
+		if self._axis == 'point' or self._axis == 0:
+			self._outer.data[self._vecIndex,key] = value
+		else:
+			self._outer.data[key,self._vecIndex] = value
 	def nonZeroIterator(self):
 		return nzIt(self)
 	def __len__(self):
-		return len(self._toWrap)
+		self._length
+	def index(self):
+		return self._vecIndex
+	def name(self):
+		return self._name
 
 class nzIt():
 	def __init__(self, indexable):
@@ -503,3 +528,25 @@ class nzIt():
 				return value
 		raise StopIteration
 
+
+def viewBasedApplyAlongAxis(function, axis, outerObject):
+	""" applies the given function to each view along the given axis, returning the results
+	of the function in numpy array """
+
+#	import pdb
+#	pdb.set_trace()
+
+	if axis == "point":
+		maxVal = outerObject.data.shape[0]
+	else:
+		if axis != "feature":
+			raise ArgumentException("axis must be 'point' or 'feature'")
+		maxVal = outerObject.data.shape[1]
+	ret = numpy.zeros(maxVal)
+
+	for i in xrange(0,maxVal):
+		funcOut = function(VectorView(outerObject,axis,i))
+		ret[i] = funcOut
+
+	print ret
+	return ret

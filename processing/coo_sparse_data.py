@@ -249,45 +249,47 @@ class CooSparseData(SparseData):
 			maxVal = self.features()
 
 		copy = 0
-		vectorIndex = 0
-		currVector = {}
+		vectorStartIndex = 0
 		extractedIDs = []
-		#check whether zeroed vectors are included or excluded
-		extractEmpty = toExtract(VectorView({}, maxVal))
 		# consume zeroed vectors, up to the first nonzero value
-		if self.data.data[0] != 0 and extractEmpty:
+		if self.data.data[0] != 0:
 			for i in xrange(0,targetAxis[0]):
-				extractedIDs.append(i)
+				if toExtract(VectorView(self, None, None, {}, maxVal, i, axisType)):
+					extractedIDs.append(i)
 		#walk through each coordinate entry
 		for i in xrange(len(self.data.data)):
 			#collect values into points
 			targetValue = targetAxis[i]
-			otherValue = otherAxis[i]
-			currVector[otherValue] = self.data.data[i]	
 			#if this is the end of a point
 			if i == len(self.data.data)-1 or targetAxis[i+1] != targetValue:
 				#evaluate whether curr point is to be extracted or not
 				# and perform the appropriate copies
-				if toExtract(VectorView(currVector, maxVal)):
-					for j in xrange(vectorIndex, i + 1):
+				if toExtract(VectorView(self, vectorStartIndex, i, None, maxVal, targetValue, axisType)):
+					for j in xrange(vectorStartIndex, i + 1):
 						extractData.append(self.data.data[j])
 						extractOther.append(otherAxis[j])
 						extractTarget.append(len(extractedIDs))
 					extractedIDs.append(targetValue)
 				else:
-					for j in xrange(vectorIndex, i + 1):
+					for j in xrange(vectorStartIndex, i + 1):
 						self.data.data[copy] = self.data.data[j]				
 						otherAxis[copy] = otherAxis[j]
 						targetAxis[copy] = targetAxis[j] - len(extractedIDs)
 						copy = copy + 1
-					currVector = {}
 				# process zeroed vectors up to the ID of the new vector
-				if extractEmpty:
-					for j in xrange(targetValue, targetAxis[i+1]):
+				if i < len(self.data.data) - 1:
+					nextValue = targetAxis[i+1]
+				else:
+					if axisType == 'point':
+						nextValue = self.points()
+					else:
+						nextValue = self.features()
+				for j in xrange(targetValue+1, nextValue):
+					if toExtract(VectorView(self, None, None, {}, maxVal, j, axisType)):
 						extractedIDs.append(j)
 
 				#reset the vector starting index
-				vectorIndex = i + 1
+				vectorStartIndex = i + 1
 
 		# reinstantiate self
 		# (cannot reshape coo matrices, so cannot do this in place)
@@ -395,38 +397,46 @@ class CooSparseData(SparseData):
 			retOther = retCols
 			maxVal = self.features()
 
-		currVector = {}
 		# consume zeroed vectors, up to the first nonzero value
 		if self.data.data[0] != 0:
 			for i in xrange(0,targetAxis[0]):
-				funcRet = function(VectorView({}, maxVal))
+				funcRet = function(VectorView(self, None, None, {}, maxVal, i, axisType))
 				retData.append(funcRet)
 				retTarget.append(i)
 				retOther.append(0)
 
+		vectorStartIndex = 0
 		#walk through each coordinate entry
 		for i in xrange(len(self.data.data)):
 			#collect values into points
 			targetValue = targetAxis[i]
-			otherValue = otherAxis[i]
-			currVector[otherValue] = self.data.data[i]	
 			#if this is the end of a point
 			if i == len(self.data.data)-1 or targetAxis[i+1] != targetValue:
-				funcRet = function(VectorView(currVector, maxVal))
+				#evaluate whether curr point is to be extracted or not
+				# and perform the appropriate copies
+				funcRet = function(VectorView(self, vectorStartIndex, i, None, maxVal, targetValue, axisType))
 				retData.append(funcRet)
 				retTarget.append(targetValue)
 				retOther.append(0)
-				currVector = {}
-				# process zeroed vectors up to the ID of the new vector
-				if i != len(self.data.data)-1:
-					for j in xrange(targetValue+1, targetAxis[i+1]):
-						funcRet = function(VectorView({}, maxVal))
-						retData.append(funcRet)
-						retTarget.append(targetValue)
-						retOther.append(0)
 
-		# reinstantiate self
-		# (cannot reshape coo matrices, so cannot do this in place)
+				# process zeroed vectors up to the ID of the new vector
+				if i < len(self.data.data) - 1:
+					nextValue = targetAxis[i+1]
+				else:
+					if axisType == 'point':
+						nextValue = self.points()
+					else:
+						nextValue = self.features()
+				for j in xrange(targetValue+1, nextValue):
+					funcRet = function(VectorView(self, None, None, {}, maxVal, j, axisType))
+					retData.append(funcRet)
+					retTarget.append(targetValue)
+					retOther.append(0)
+
+				#reset the vector starting index
+				vectorStartIndex = i + 1
+
+		# calculate return data shape
 		if axisType == 'point':
 			extShape = (self.points(), 1)
 		else:
@@ -446,42 +456,67 @@ class CooSparseData(SparseData):
 
 	def _mapReduceOnPoints_implementation(self, mapper, reducer):
 		self._sortInternal("point")
-		currPoint = {}
-		currIndex = self.data.row[0]
-		nonZeroPoints = 0
 		mapperResults = {}
-#		raise NotImplementedError
-		for i in xrange(len(self.data.data)):
-			rowValue = self.data.row[i]
-			if rowValue != currIndex:
-				currResults = mapper(VectorView(currPoint, self.features()))
+		maxVal = self.features()
+#		for i in xrange(len(self.data.data)):
+#			rowValue = self.data.row[i]
+#			if rowValue != currIndex:
+#				currResults = mapper(VectorView(currPoint, self.features()))
+#				for (k,v) in currResults:
+#					if not k in mapperResults:
+#						mapperResults[k] = []
+#					mapperResults[k].append(v)
+#				currPoint = {}
+#				currIndex = rowValue
+#				nonZeroPoints = nonZeroPoints + 1
+#			currPoint[self.data.col[i]] = self.data.data[i]
+#
+		# run the mapper on the last collected point outside the loop
+#		currResults = mapper(VectorView(currPoint, self.features()))
+#		for (k,v) in currResults:
+#			if k not in mapperResults:
+#				mapperResults[k] = []
+#			mapperResults[k].append(v)
+#		nonZeroPoints = nonZeroPoints + 1
+
+		# consume zeroed vectors, up to the first nonzero value
+		if self.data.data[0] != 0:
+			for i in xrange(0, self.data.row[0]):
+				currResults = mapper(VectorView(self, None, None, {}, maxVal, i, 'point'))
 				for (k,v) in currResults:
 					if not k in mapperResults:
 						mapperResults[k] = []
 					mapperResults[k].append(v)
-				currPoint = {}
-				currIndex = rowValue
-				nonZeroPoints = nonZeroPoints + 1
-			currPoint[self.data.col[i]] = self.data.data[i]
 
-		# run the mapper on the last collected point outside the loop
-		currResults = mapper(VectorView(currPoint, self.features()))
-		for (k,v) in currResults:
-			if k not in mapperResults:
-				mapperResults[k] = []
-			mapperResults[k].append(v)
-		nonZeroPoints = nonZeroPoints + 1
-
-		# run the maper on an empty point, and collect an appropriate multiple of the resutls
-		emptyView = VectorView({}, self.features())
-		emptyResults = mapper(emptyView)
-		emptyTotal = self.points() - nonZeroPoints
-		if emptyTotal > 0:
-			for (k,v) in emptyResults:
-				if k not in emptyResults:
-					mapperResults[k] = []
-				for i in xrange(emptyTotal):
+		vectorStartIndex = 0
+		#walk through each coordinate entry
+		for i in xrange(len(self.data.data)):
+			#collect values into points
+			targetValue = self.data.row[i]
+			#if this is the end of a point
+			if i == len(self.data.data)-1 or self.data.row[i+1] != targetValue:
+				#evaluate whether curr point is to be extracted or not
+				# and perform the appropriate copies
+				currResults = mapper(VectorView(self, vectorStartIndex, i, None, maxVal, targetValue, 'point'))
+				for (k,v) in currResults:
+					if not k in mapperResults:
+						mapperResults[k] = []
 					mapperResults[k].append(v)
+
+				# process zeroed vectors up to the ID of the new vector
+				if i < len(self.data.data) - 1:
+					nextValue = self.data.row[i+1]
+				else:
+					nextValue = self.points()
+				for j in xrange(targetValue+1, nextValue):
+					currResults = mapper(VectorView(self, None, None, {}, maxVal, j, 'point'))
+					for (k,v) in currResults:
+						if not k in mapperResults:
+							mapperResults[k] = []
+						mapperResults[k].append(v)
+
+				#reset the vector starting index
+				vectorStartIndex = i + 1
 
 		# apply the reducer to the list of values associated with each key
 		ret = []
@@ -590,7 +625,7 @@ class CooSparseData(SparseData):
 		self.data = other.data
 
 	def _duplicate_implementation(self):
-		return CooSparseData(deepcopy(self.data), deepcopy(self.featureNames))
+		return CooSparseData(self.data.copy(), deepcopy(self.featureNames))
 
 
 	def _copyPoints_implementation(self, points, start, end):
@@ -657,6 +692,25 @@ class CooSparseData(SparseData):
 
 		return 0
 
+	def _getPointView_implementation(self, ID):
+		nzMap = {}
+		#check each value in the matrix
+		for i in xrange(len(self.data.data)):
+			rowIndex = self.data.row[i]
+			if rowIndex == ID:
+				nzMap[self.data.col[i]] = i
+
+		return VectorView(self,None,None,nzMap,self.features(),ID,'point')
+
+	def _getFeatureView_implementation(self, ID):
+		nzMap = {}
+		#check each value in the matrix
+		for i in xrange(len(self.data.data)):
+			colIndex = self.data.col[i]
+			if colIndex == ID:
+				nzMap[self.data.row[i]] = i
+
+		return VectorView(self,None,None,nzMap,self.features(),ID,'feature')
 
 	###########
 	# Helpers #
@@ -687,38 +741,90 @@ class CooSparseData(SparseData):
 # Generic Helpers #
 ###################
 
-class VectorView():
+class VectorView(View):
 	"""
 	Class to simulate direct random access of a either a single point or feature
 
 	"""
-	def __init__(self, nzMap, maxVal):
+	def __init__(self, CooObject, startInData, endInData, nzMap, maxVal, index, axis):
+		if startInData is None and endInData is None and nzMap is None:
+			raise ArgumentException("No vector data given as input")
+		if nzMap is None and (startInData is None or endInData is None):
+			raise ArgumentException("Must provide both start and end in the data")
+		self._outer = CooObject
+		self._start = startInData
+		self._end = endInData
 		self._nzMap = nzMap
 		self._max = maxVal
+		self._index = index
+		self._axis = axis
+		if axis == "feature":
+			self._name = CooObject.featureNamesInverse[index]
+		else:
+			self._name = None
 	def __getitem__(self, key):
+		if self._nzMap is None:
+			self._makeMap()
+
 		if isinstance(key, slice):
+			start = key.start
+			stop = key.stop
+			if key.start is None:
+				start = 0
+			if key.stop is None:
+				stop = self._max
 			retMap = {}
-			for k in self._nzMap:
-				if k >= key.start and k <= key.stop: 
-					if key.step is None or (k - key.start)/key.step == 0:
-						retMap[k] = self._nzMap[k]
-			return VectorView(retMap, self._max)
-		elif isinstance(key, int):
+			for mapKey in self._nzMap:
+				if mapKey >= start and mapKey <= stop: 
+					if key.step is None or (mapKey - start)/key.step == 0:
+						retMap[mapKey - start] = self._nzMap[mapKey]
+			return VectorView(self._outer, None, None, retMap, self._max-start, self._index, self._axis)
+		if isinstance(key, int):
 			if key in self._nzMap:
-				return self._nzMap[key]
+				return self._outer.data.data[self._nzMap[key]]
 			elif key >= self._max:
 				raise IndexError()
 			else:
 				return 0
 		else:
 			raise TypeError()
+	def __setitem__(self, key, value):
+		if self._nzMap is None:
+			self._makeMap()
+
+		if key in self._nzMap:
+			self._outer.data.data[self._nzMap[key]] = value
+		else:
+			self._outer.data.data.append(value)
+			if self._axis == 'point':
+				self._outer.data.row.append(self._index)
+				self._outer.data.col.append(key)
+			else:
+				self._outer.data.row.append(key)
+				self._outer.data.col.append(self._index)
 	def nonZeroIterator(self):
-		return nzIt(self._nzMap)
+		if self._nzMap is not None:
+			return nzItMap(self._outer, self._nzMap)
+		else:
+			return nzItRange(self._outer, self._start, self._end)
 	def __len__(self):
 		return self._max
+	def index(self):
+		return self._index
+	def name(self):
+		return self._name
+	def _makeMap(self):
+		self._nzMap = {}
+		for i in xrange(self._start, self._end+1):
+			if self._axis == 'point':
+				mapKey = self._outer.data.col[i]
+			else:
+				mapKey = self._outer.data.row[i]
+			self._nzMap[mapKey] = i
 
-class nzIt():
-	def __init__(self, nzMap):
+class nzItMap():
+	def __init__(self, outer, nzMap):
+		self._outer = outer
 		self._nzMap = nzMap
 		self._indices = nzMap.keys()
 		self._indices.sort()
@@ -727,11 +833,26 @@ class nzIt():
 		return self
 	def next(self):
 		while (self._position < len(self._indices)):
-			value = self._nzMap[self._indices[self._position]]
+			index = self._nzMap[self._indices[self._position]]
+			value = self._outer.data.data[index]
 			self._position += 1
 			if value != 0:
 				return value
 		raise StopIteration
+
+class nzItRange():
+	def __init__(self, outer, start, end):
+		self._outer = outer
+		self._end = end
+		self._position = start
+	def __iter__(self):
+		return self
+	def next(self):
+		if self._position > self._end:
+			raise StopIteration
+		ret = self._outer.data.data[self._position]
+		self._position = self._position + 1
+		return ret
 
 def _numLessThan(value, toCheck): # TODO caching
 	i = 0

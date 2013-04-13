@@ -10,10 +10,12 @@ import tempfile
 import os
 import numpy
 
-from ..base_data import *
 from copy import deepcopy
+from ...utility.custom_exceptions import ArgumentException
 from ..row_list_data import RowListData as RLD
 from ..dense_matrix_data import DenseMatrixData as DMD
+
+from .. import base_data
 
 ##############
 # __init__() #
@@ -279,16 +281,22 @@ def sortPoints_scorer(constructor):
 	toTest = constructor(data)
 
 	def numOdds(point):
+		print point
 		ret = 0
 		for val in point:
+			print val
 			if val % 2 != 0:
 				ret += 1
+		print ret
 		return ret
 
 	toTest.sortPoints(sortHelper=numOdds)
 
 	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 	objExp = constructor(dataExpected)
+
+	print toTest.data
+	print objExp.data
 
 	assert toTest.equals(objExp)	
 
@@ -549,6 +557,7 @@ def extractFeatures_handmadeSingle(constructor):
 	toTest = constructor(data)
 	ext1 = toTest.extractFeatures(0)
 	exp1 = constructor([[1],[4],[7]])
+
 	assert ext1.equals(exp1)
 	expEnd = constructor([[2,3],[5,6],[8,9]])
 	assert toTest.equals(expEnd)
@@ -947,10 +956,10 @@ def writeFileCSV_handmade(constructor):
 	# call writeFile
 	toWrite.writeFile('csv', tmpFile.name, includeFeatureNames=True)
 
-	opened = open(tmpFile.name,'r')
-	print opened.read()
-	for line in opened:
-		print line
+#	opened = open(tmpFile.name,'r')
+#	print opened.read()
+#	for line in opened:
+#		print line
 
 	# read it back into a different object, then test equality
 	readObj = constructor(data=tmpFile.name)
@@ -971,15 +980,8 @@ def writeFileMTX_handmade(constructor):
 	# call writeFile
 	toWrite.writeFile('mtx', tmpFile.name, includeFeatureNames=True)
 
-#	opened = open(tmpFile.name,'r')
-#	print opened.read()
-#	for line in opened:
-#		print line
-
 	# read it back into a different object, then test equality
 	readObj = constructor(data=tmpFile.name)
-
-	print readObj.data
 
 	assert readObj.equals(toWrite)
 	assert toWrite.equals(readObj)
@@ -1016,6 +1018,27 @@ def copyReferences_sameReference(constructor):
 	orig.copyReferences(other)
 
 	assert orig.data is other.data
+
+
+#############
+# duplicate #
+#############
+
+def duplicate_withZeros(constructor):
+	""" Test duplicate() produces an equal object and doesn't just copy the references """
+	data1 = [[1,2,3,0],[1,0,3,0],[2,4,6,0],[0,0,0,0]]
+	featureNames = ['one', 'two', 'three', 'four']
+	orig = constructor(data1, featureNames)
+
+	dup = orig.duplicate()
+
+	assert orig.equals(dup)
+	assert dup.equals(orig)
+
+	assert orig.data is not dup.data
+
+
+
 
 ###################
 # copyPoints #
@@ -1253,4 +1276,50 @@ def getitem_simpleExampeWithZeroes(constructor):
 	assert toTest[1,3] == 0
 	assert toTest[2,2] == 9
 	assert toTest[3,3] == 0
+
+	assert toTest[1,'one'] == 4
+
+
+####################
+# transformPoint #
+##################
+
+def transformPoint_AddOne(constructor):
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+
+#	def addOne(point):
+#		for value in poin
+
+
+
+################
+# getPointView #
+################
+
+def getPointView_isinstance(constructor):
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+
+	view = toTest.getPointView(0)
+
+	assert isinstance(view, base_data.View)
+
+
+
+##################
+# getFeatureView #
+##################
+
+def getFeatureView_isinstance(constructor):
+	""" Test getFeatureView() returns an instance of the View in base_data """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+
+	view = toTest.getFeatureView('one')
+
+	assert isinstance(view, base_data.View)
 

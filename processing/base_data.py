@@ -12,7 +12,8 @@ from ..utility.custom_exceptions import ArgumentException
 from UML.uml_logging.data_set_analyzer import produceFeaturewiseReport
 from UML.uml_logging.data_set_analyzer import produceAggregateReport
 import random
-
+from abc import ABCMeta
+from abc import abstractmethod
 
 # a default seed for testing and predictible trials
 DEFAULT_SEED = 'DEFAULTSEED'
@@ -43,6 +44,8 @@ class BaseData(object):
 		self._setAllDefault()
 		self._renameMultipleFeatureNames_implementation(featureNames,True)
 		if featureNames is not None and len(featureNames) != self.features():
+			print featureNames
+			print self.features()
 			raise ArgumentException("Cannot have different number of featureNames and features")
 		self.name = name
 		self.path = path
@@ -754,6 +757,58 @@ class BaseData(object):
 
 		return self._getitem_implementation(x,y)
 
+	def transformPoint(self, point, function):
+		"""
+		Modifies this object so that the specified point is replaced with the results
+		of passing the original point to the input function.
+
+		"""
+		if point is None or function is None:
+			raise ArgumentException("point and function must not be None")
+		if not isinstance(point, int):
+			raise ArgumentException("point must be the integer index of the point to modify")
+
+		return self._transformPoint_implementation(point, function)
+
+
+	def transformFeature(self, feature, function):
+		"""
+		Modifies this object so that the specified feature is replaced with the results
+		of passing the original feature to the input function.
+
+		"""
+		if feature is None or function is None:
+			raise ArgumentException("feature and function must not be None")
+		index = self._getIndex(feature)
+
+		return self._transformFeature_implementation(index, function)
+
+
+	def getPointView(self, ID):
+		"""
+		Returns a View object into the data of the point with the given ID. See View object
+		comments for its capabilities. This View is only valid until the next modification
+		to the shape or ordering of the internal data. After such a modification, there is
+		no guarantee to the validity of the results.
+		"""
+		return self._getPointView_implementation(ID)
+
+	def pointViewIterator(self):
+		pass
+
+	def getFeatureView(self, ID):
+		"""
+		Returns a View object into the data of the point with the given ID. See View object
+		comments for its capabilities. This View is only valid until the next modification
+		to the shape or ordering of the internal data. After such a modification, there is
+		no guarantee to the validity of the results.
+		"""
+		index = self._getIndex(ID)
+		return self._getFeatureView_implementation(index)
+
+	def pointViewIterator(self):
+		pass
+
 	####################
 	# Helper functions #
 	####################
@@ -990,4 +1045,27 @@ class BaseData(object):
 			self.index = self.index +1
 			return dataX, dataY
 
+
+
+class View():
+	__metaclass__ = ABCMeta
+
+	@abstractmethod
+	def __getitem__(self, index):
+		pass
+	@abstractmethod
+	def __setitem__(self, key, value):
+		pass
+	@abstractmethod
+	def nonZeroIterator(self):
+		pass
+	@abstractmethod
+	def __len__(self):
+		pass
+	@abstractmethod
+	def index(self):
+		pass
+	@abstractmethod
+	def name(self):
+		pass
 

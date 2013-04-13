@@ -387,6 +387,13 @@ def test_copyReferences_sameReference():
 	copyReferences_sameReference(constructor)
 
 
+#############
+# duplicate #
+#############
+
+def test_duplicate_withZeros():
+	""" Test CooSparse duplicate() produces an equal object and doesn't just copy the references """
+	duplicate_withZeros(constructor)
 
 ###################
 # copyPoints #
@@ -502,3 +509,21 @@ def test_getitem_simpleExampeWithZeroes():
 	""" Test CooSparse __getitem__ returns the correct output for a number of simple queries """
 	getitem_simpleExampeWithZeroes(constructor)
 
+
+
+################
+# getPointView #
+################
+
+def test_getPointView_isinstance():
+	""" Test CooSparse getPointView() returns an instance of the View in base_data """
+	getPointView_isinstance(constructor)
+
+
+##################
+# getFeatureView #
+##################
+
+def test_getFeatureView_isinstance():
+	""" Test CooSparse getFeatureView() returns an instance of the View in base_data """
+	getFeatureView_isinstance(constructor)

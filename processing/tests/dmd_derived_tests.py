@@ -383,6 +383,14 @@ def test_copyReferences_sameReference():
 	copyReferences_sameReference(constructor)
 
 
+#############
+# duplicate #
+#############
+
+def test_duplicate_withZeros():
+	""" Test DMD duplicate() produces an equal object and doesn't just copy the references """
+	duplicate_withZeros(constructor)
+
 
 ###################
 # copyPoints #
@@ -496,3 +504,22 @@ def test_copyFeatures_handmadeWithFeatureNames():
 def test_getitem_simpleExampeWithZeroes():
 	""" Test DMD __getitem__ returns the correct output for a number of simple queries """
 	getitem_simpleExampeWithZeroes(constructor)
+
+
+
+################
+# getPointView #
+################
+
+def test_getPointView_isinstance():
+	""" Test DMD getPointView returns an instance of the View in base_data """
+	getPointView_isinstance(constructor)
+
+
+##################
+# getFeatureView #
+##################
+
+def test_getFeatureView_isinstance():
+	""" Test DMD getFeatureView() returns an instance of the View in base_data """
+	getFeatureView_isinstance(constructor)
