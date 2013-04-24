@@ -146,3 +146,78 @@ def test_foldIterator_exceptionTooManyFolds():
 def test_foldIterator_verifyPartitions():
 	""" Test foldIterator() yields the correct number and size of folds partitioning the data """
 	callAll(foldIterator_verifyPartitions)
+
+
+
+####################
+# applyFunctionToEachPoint() #
+####################
+
+@raises(ArgumentException)
+def test_applyFunctionToEachPoint_exceptionInputNone():
+	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
+	callAll(applyFunctionToEachPoint_exceptionInputNone)
+
+def test_applyFunctionToEachPoint_Handmade():
+	""" Test applyFunctionToEachPoint() with handmade output """
+	callAll(applyFunctionToEachPoint_Handmade)
+
+
+def test_applyFunctionToEachPoint_nonZeroItAndLen():
+	""" Test applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
+	callAll(applyFunctionToEachPoint_nonZeroItAndLen)
+
+
+
+#######################
+# applyFunctionToEachFeature() #
+#######################
+
+@raises(ArgumentException)
+def test_applyFunctionToEachFeature_exceptionInputNone():
+	""" Test applyFunctionToEachFeature() for ArgumentException when function is None """
+	callAll(applyFunctionToEachFeature_exceptionInputNone)
+
+def test_applyFunctionToEachFeature_Handmade():
+	""" Test applyFunctionToEachFeature() with handmade output """
+	callAll(applyFunctionToEachFeature_Handmade)
+
+
+def test_applyFunctionToEachFeature_nonZeroItAndLen():
+	""" Test applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
+	callAll(applyFunctionToEachFeature_nonZeroItAndLen)
+
+
+#####################
+# mapReduceOnPoints() #
+#####################
+
+@raises(ArgumentException)
+def test_mapReduceOnPoints_argumentExceptionNoneMap():
+	""" Test mapReduceOnPoints() for ArgumentException when mapper is None """
+	callAll(mapReduceOnPoints_argumentExceptionNoneMap)
+
+@raises(ArgumentException)
+def test_mapReduceOnPoints_argumentExceptionNoneReduce():
+	""" Test mapReduceOnPoints() for ArgumentException when reducer is None """
+	callAll(mapReduceOnPoints_argumentExceptionNoneReduce)
+
+@raises(ArgumentException)
+def test_mapReduceOnPoints_argumentExceptionUncallableMap():
+	""" Test mapReduceOnPoints() for ArgumentException when mapper is not callable """
+	callAll(mapReduceOnPoints_argumentExceptionUncallableMap)
+
+@raises(ArgumentException)
+def test_mapReduceOnPoints_argumentExceptionUncallableReduce():
+	""" Test mapReduceOnPoints() for ArgumentException when reducer is not callable """
+	callAll(mapReduceOnPoints_argumentExceptionUncallableReduce)
+
+def test_mapReduceOnPoints_handmade():
+	""" Test mapReduceOnPoints() against handmade output """
+	callAll(mapReduceOnPoints_handmade)
+
+
+def test_mapReduceOnPoints_handmadeNoneReturningReducer():
+	""" Test mapReduceOnPoints() against handmade output with a None returning Reducer """
+	callAll(mapReduceOnPoints_handmadeNoneReturningReducer)
+

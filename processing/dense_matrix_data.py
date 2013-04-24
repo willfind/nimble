@@ -491,10 +491,10 @@ class VectorView(View):
 		self._vecIndex = index
 		if axis == 'point' or axis == 0:
 			self._name = None
-			self._length = outer.points()
+			self._length = outer.features()
 		else:
 			self._name = outer.featureNamesInverse[index]
-			self._length = outer.features()
+			self._length = outer.points()
 	def __getitem__(self, key):
 		if self._axis == 'point' or self._axis == 0:
 			return self._outer.data[self._vecIndex,key] 
@@ -508,7 +508,7 @@ class VectorView(View):
 	def nonZeroIterator(self):
 		return nzIt(self)
 	def __len__(self):
-		self._length
+		return self._length
 	def index(self):
 		return self._vecIndex
 	def name(self):
