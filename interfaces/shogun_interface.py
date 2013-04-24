@@ -8,7 +8,8 @@ import numpy
 import scipy.sparse
 import copy
 
-from interface_helpers import *
+from interface_helpers import findModule
+from interface_helpers import putOnSearchPath
 from ..processing.dense_matrix_data import DenseMatrixData as DMData
 from ..processing.base_data import BaseData
 from ..processing.sparse_data import SparseData
@@ -54,24 +55,23 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 	if not isinstance(trainData, BaseData):
 		trainObj = DMData(file=trainData)
 	else: # input is an object
-		trainObj = trainData
+		trainObj = trainData.duplicate()
 	if not isinstance(testData, BaseData):
 		testObj = DMData(file=testData)
 	else: # input is an object
-		testObj = testData
+		testObj = testData.duplicate()
 	
 	trainObjY = None
 	# directly assign target values, if present
 	if isinstance(dependentVar, BaseData):
-		trainObjY = dependentVar
+		trainObjY = dependentVar.duplicate()
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
-		trainObj = trainObj.duplicate()
 		trainObjY = trainObj.extractFeatures([dependentVar])		
 	# could be None for unsupervised learning	
 
 	# necessary format for shogun, also makes the following ops easier
-	if trainObjY is not None:	
+	if trainObjY is not None:
 		trainObjY = trainObjY.toDenseMatrixData()
 	
 	# pull out data from obj
@@ -84,6 +84,11 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 		trainRawDataY = None
 	testObj.transpose()
 	testRawData = testObj.data
+
+
+	# check some stuff that we know won't work, but shogun will not report intelligently
+	if trainRawData.shape[0] != testRawData.shape[0]:
+		raise ArgumentException("Points in the training data and testing data must be the same size")
 
 	# call backend
 	try:
@@ -119,7 +124,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 		raise ArgumentException("Could not find the algorithm")
 
 	putOnSearchPath(shogunDir)
-	exec ("from shogun import " + moduleName)
+	exec "from shogun import " + moduleName in locals()
 
 	# make object
 	objectCall = moduleName + '.' + algorithm
@@ -144,12 +149,18 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 		testFeat.set_feature_matrix(numpy.array(testData, dtype=numpy.float))
 
 	# Labels must be float typed
-	# TODO do BinaryLabels and MultiClassLabels even exist? -- depends on version :/
 	try:
 		import shogun.Classifier
+		inverseMapping = None
 		if isinstance(SGObj, shogun.Classifier.BaseMulticlassMachine):
+			tempObj = DMData(trainDataY)
+			inverseMapping = remapLabels(tempObj)
+			if len(inverseMapping) == 1:
+				raise ArgumentException("Cannot train a multiclass classifier with data containing only one label")
+
 			from shogun.Features import MulticlassLabels
-			trainLabels = MulticlassLabels(trainDataY.astype(float))
+			flattened = numpy.array(tempObj.data).flatten()
+			trainLabels = MulticlassLabels(flattened.astype(float))
 		else:
 			regression = False
 			for value in trainDataY:
@@ -244,9 +255,19 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 	if timer is not None:
 		timer.stop('test')
 
-	return outData.get_labels()
+	retData = outData.get_labels()
 
+	if inverseMapping is not None:
+		outputObj = DMData(retData)
+		outputObj.transformPoint(0, makeInverseMapper(inverseMapping))
+		retData = outputObj.data
 
+	return retData
+
+def makeInverseMapper(inverseMappingParam):
+	def inverseMapper(value):
+		return inverseMappingParam[int(value)]
+	return inverseMapper
 
 def listAlgorithms():
 	"""
@@ -333,3 +354,31 @@ def _argsFromDoc(objectReference, methodName, algArgs):
 			position = position + endParams
 
 	return (retValues, usedArgs)
+
+
+
+def remapLabels(toRemap):
+	"""
+	Takes the object toRemap, which must be a data representation with a single feature,
+	and maps the values in that feature into the range between 0 and n-1, where n is
+	the number of distinct values in that feature. The object is modified, and the
+	inverse mapping is returned a length n list
+
+	"""
+
+	mapping = {}
+	inverse = []
+	invIndex = 0
+
+	view = toRemap.getPointView(0)
+
+	for x in xrange(toRemap.features()):
+		value = view[x]
+		if value not in mapping:
+			mapping[value] = invIndex
+			inverse.append(value)
+			invIndex += 1
+		view[x] = mapping[value]
+
+	return inverse
+

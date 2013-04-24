@@ -6,6 +6,9 @@ Unit tests for shogun_interface.py
 import numpy
 import scipy.sparse
 from numpy.random import rand, randint
+from nose.tools import *
+
+from ...utility.custom_exceptions import ArgumentException
 
 from ..shogun_interface import shogun
 from ..shogun_interface import listAlgorithms
@@ -23,6 +26,34 @@ def testShogunLocation():
 	setShogunLocation(path)
 
 	assert getShogunLocation() == path
+
+@raises(ArgumentException)
+def testShogun_shapemismatchException():
+	""" Test shogun() raises exception when the shape of the train and test data don't match """
+	variables = ["Y","x1","x2"]
+	data = [[-1,1,0], [-1,0,1], [1,3,2]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[3]]
+	testObj = DMData(data2)
+
+	args = {}
+	ret = shogun("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+
+
+@raises(ArgumentException)
+def testShogun_singleClassException():
+	""" Test shogun() raises exception when the training data only has a single label """
+	variables = ["Y","x1","x2"]
+	data = [[-1,1,0], [-1,0,1], [1,3,2]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[3]]
+	testObj = DMData(data2)
+
+	args = {}
+	ret = shogun("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+
 
 
 def testShogunHandmadeBinaryClassification():
@@ -88,6 +119,7 @@ def testShogunMulticlassSVM():
 	testObj = DMData(data2)
 
 	args = {'C':.5, 'kernel':'LinearKernel'}
+#	args = {'C':1}
 	ret = shogun("MulticlassLibSVM", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
 
 	assert ret is not None
@@ -100,7 +132,7 @@ def testShogunMulticlassSVM():
 def testShogunSparseRegression():
 	""" Test shogun() by calling a sparse regression algorithm with an extremely large, but highly sparse, matrix """
 
-	x = 10000
+	x = 1000
 	c = 10
 	points = randint(0,x,c)
 	cols = randint(0,x,c)
@@ -116,6 +148,78 @@ def testShogunSparseRegression():
 	assert ret is not None
 
 
+def testShogunRossData():
+	""" Test shogun() by calling classifers using the problematic data from Ross """
+	
+	p0 = [1,  0,    0,    0,    0.21,  0.12]
+	p1 = [2,  0,    0.56, 0.77, 0,     0]
+	p2 = [1,  0.24, 0,    0,    0.12,  0]
+	p3 = [1,  0,    0,    0,    0,     0.33]
+	p4 = [2,  0.55, 0,    0.67, 0.98,  0]
+	p5 = [1,  0,    0,    0,    0.21,  0.12]
+	p6 = [2,  0,    0.56, 0.77, 0,     0]
+	p7 = [1,  0.24, 0,    0,    0.12,  0]
+
+	data = [p0,p1,p2,p3,p4,p5,p6,p7]
+
+	trainingObj = DMData(data)
+
+	data2 = [[0, 0, 0, 0, 0.33], [0.55, 0, 0.67, 0.98, 0]]
+	testObj = DMData(data2)
+
+	args = {'C':1.0}
+	argsk = {'C':1.0, 'kernel':"LinearKernel"}
+
+	ret = shogun("MulticlassLibSVM", trainingObj, testObj, output=None, dependentVar=0, arguments=argsk)
+	assert ret is not None
+
+	ret = shogun("MulticlassLibLinear", trainingObj, testObj, output=None, dependentVar=0, arguments=args)
+	assert ret is not None
+
+	ret = shogun("LaRank", trainingObj, testObj, output=None, dependentVar=0, arguments=argsk)
+	assert ret is not None
+
+	ret = shogun("MulticlassOCAS", trainingObj, testObj, output=None, dependentVar=0, arguments=args)
+	assert ret is not None
+
+
+def testShogunEmbeddedRossData():
+	""" Test shogun() by MulticlassOCAS with the ross data embedded in random data """
+	
+	p0 = [1,  0,    0,    0,    0.21,  0.12]
+	p1 = [2,  0,    0.56, 0.77, 0,     0]
+	p2 = [1,  0.24, 0,    0,    0.12,  0]
+	p3 = [1,  0,    0,    0,    0,     0.33]
+	p4 = [2,  0.55, 0,    0.67, 0.98,  0]
+	p5 = [1,  0,    0,    0,    0.21,  0.12]
+	p6 = [2,  0,    0.56, 0.77, 0,     0]
+	p7 = [1,  0.24, 0,    0,    0.12,  0]
+
+	data = [p0,p1,p2,p3,p4,p5,p6,p7]
+
+	numpyData = numpy.zeros((50,10))
+
+	for i in xrange(50):
+		for j in xrange(10):
+			if i < 8 and j < 6:
+				numpyData[i,j] = data[i][j]
+			else:
+				if j == 0:
+					numpyData[i,j] = numpy.random.randint(1,3)
+				else:
+					numpyData[i,j] = numpy.random.rand()
+
+	trainingObj = DMData(numpyData)
+
+	data2 = [[0, 0, 0, 0, 0.33,0, 0, 0, 0.33], [0.55, 0, 0.67, 0.98,0.55, 0, 0.67, 0.98, 0]]
+	testObj = DMData(data2)
+
+	args = {'C':1.0}
+
+	ret = shogun("MulticlassOCAS", trainingObj, testObj, output=None, dependentVar=0, arguments=args)
+	assert ret is not None
+
+
 def testShogunListAlgorithms():
 	""" Test shogun's listAlgorithms() by checking the output for those algorithms we unit test """
 
@@ -125,3 +229,4 @@ def testShogunListAlgorithms():
 	assert 'LibLinear' in ret
 	assert 'MulticlassLibSVM' in ret
 	assert 'SubGradientSVM' in ret
+	assert 'MulticlassOCAS' in ret
