@@ -710,7 +710,7 @@ class CooSparseData(SparseData):
 			if colIndex == ID:
 				nzMap[self.data.row[i]] = i
 
-		return VectorView(self,None,None,nzMap,self.features(),ID,'feature')
+		return VectorView(self,None,None,nzMap,self.points(),ID,'feature')
 
 	###########
 	# Helpers #

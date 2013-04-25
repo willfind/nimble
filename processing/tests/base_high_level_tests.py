@@ -9,6 +9,7 @@ test will call the backend test for each possible representation
 from ..base_data import *
 from ..row_list_data import RowListData
 from ..dense_matrix_data import DenseMatrixData
+from ..coo_sparse_data import CooSparseData
 from high_level_backend import *
 
 from copy import deepcopy
@@ -23,10 +24,13 @@ def rld(data,featureNames=None):
 def dmd(data,featureNames=None):
 	return DenseMatrixData(data,featureNames)
 
+def coo(data,featureNames=None):
+	return CooSparseData(data, featureNames)
+
 def callAll(func):
 	func(rld)
 	func(dmd)
-
+#	func(coo)
 
 
 
@@ -221,3 +225,47 @@ def test_mapReduceOnPoints_handmadeNoneReturningReducer():
 	""" Test mapReduceOnPoints() against handmade output with a None returning Reducer """
 	callAll(mapReduceOnPoints_handmadeNoneReturningReducer)
 
+
+
+####################
+# transformPoint() #
+####################
+
+
+
+
+######################
+# transformFeature() #
+######################
+
+
+
+#####################################
+# computeListOfValuesFromElements() #
+#####################################
+
+
+def test_computeList_passthrough():
+	""" test computeListOfValuesFromElements() can construct a list by just passing values through  """
+	callAll(computeList_passthrough)
+
+def test_computeList_passthroughSkip():
+	""" test computeListOfValuesFromElements() skipZeros flag """
+	callAll(computeList_passthroughSkip)
+
+
+def test_computeList_passthroughExclude():
+	""" test computeListOfValuesFromElements() excludeNoneResultValues flag  """
+	callAll(computeList_passthroughSkip)
+
+
+
+
+########################
+# isApproxEquivalent() #
+########################
+
+
+def test_isApproxEquivalent_randomTest():
+	""" Test isApproxEquivalent() using randomly generated data """
+	callAll(isApproxEquivalent_randomTest)

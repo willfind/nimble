@@ -13,6 +13,7 @@ import UML
 from UML.uml_logging.data_set_analyzer import produceFeaturewiseReport
 from UML.uml_logging.data_set_analyzer import produceAggregateReport
 import random
+import math
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -527,6 +528,57 @@ class BaseData(object):
 			result = function(currValue)
 			currView[x] = result
 
+
+	def computeListOfValuesFromElements(self, valueFunction, skipZeros=False, excludeNoneResultValues=False):
+		"""Applies the valueFunction(elementValue) or valueFunction(elementValue, pointNum, featureNum) 
+		to each element, and returns a list of the resulting values. 
+		If skipZeros=True it does not apply valueFunction to elements in the dataMatrix that are 0.
+		If excludeNoneResultValues=True, any time valueFunction() returns None, that None value will not be
+		added to the list of resulting values that is returned.
+		"""
+		oneArg = False
+		try:
+			valueFunction(0,0,0)
+		except TypeError:
+			oneArg = True
+
+		valueList = []
+		for currPoint in self.pointViewIterator():
+			currPointID = currPoint.index()
+			for j in xrange(len(currPoint)):
+				value = currPoint[j]
+				if skipZeros and value == 0:
+					continue	
+				if oneArg:
+					currRet = valueFunction(value)
+				else:
+					currRet = valueFunction(value, currPointID, j)
+				if not (excludeNoneResultValues and currRet is None):
+					valueList.append(currRet)
+
+		return valueList
+
+	def hashCode(self):
+		"""returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
+		that should almost always change when the values of the matrix are changed by a substantive amount"""
+		valueList = self.computeListOfValuesFromElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, skipZeros=True)
+		avg = sum(valueList)/float(self.points()*self.features())
+		bigNum = 1000000000
+		#this should return an integer x in the range 0<= x < 1 billion
+		return int(int(round(bigNum*avg)) % bigNum)	
+
+
+	def isApproxEquivalent(self, otherDataMatrix):
+		"""If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data. 
+		If it returns True, they probably do but you can't be absolutely sure.
+		Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
+		passed are of the same type (dense, sparse, etc.)"""
+		#first check to make sure they have the same number of rows and columns
+		if self.points() != otherDataMatrix.points(): return False
+		if self.features() != otherDataMatrix.features(): return False
+		#now check if the hashes of each matrix are the same
+		if self.hashCode() != otherDataMatrix.hashCode(): return False
+		return True
 
 
 	#################################

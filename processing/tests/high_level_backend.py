@@ -10,7 +10,11 @@ objects provided.
 from ..base_data import *
 from copy import deepcopy
 
+import numpy
 
+from ..row_list_data import RowListData
+from ..dense_matrix_data import DenseMatrixData
+from ..coo_sparse_data import CooSparseData
 
 
 ###########################
@@ -415,4 +419,112 @@ def mapReduceOnPoints_handmadeNoneReturningReducer(constructor):
 	assert (toTest.equals(constructor(data,featureNames)))
 
 
+
+
+####################
+# transformPoint() #
+####################
+
+
+
+
+######################
+# transformFeature() #
+######################
+
+
+
+#####################################
+# computeListOfValuesFromElements() #
+#####################################
+
+def passThrough(value):
+	return value
+
+def passThroughEven(value):
+	if value % 2 == 0:
+		return value
+	else:
+		return None
+
+def computeList_passthrough(constructor):
+	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data)
+	ret = toTest.computeListOfValuesFromElements(passThrough)
+
+	print toTest.getType()
+
+	assert 1 in ret
+	assert 2 in ret
+	assert 3 in ret
+	assert 4 in ret
+	assert 5 in ret
+	assert 6 in ret
+	assert 7 in ret
+	assert 8 in ret
+	assert 9 in ret
+
+
+def computeList_passthroughSkip(constructor):
+	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+
+	data = [[1,0,3],[0,5,6],[7,0,9]]
+	toTest = constructor(data)
+	ret = toTest.computeListOfValuesFromElements(passThrough, skipZeros=True)
+
+	assert 1 in ret
+	assert 3 in ret
+	assert 5 in ret
+	assert 6 in ret
+	assert 7 in ret
+	assert 9 in ret
+
+
+def computeList_passthroughExclude(constructor):
+	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data)
+	ret = toTest.computeListOfValuesFromElements(passThroughEven,excludeNoneResultValues=True)
+
+	assert 2 in ret
+	assert 4 in ret
+	assert 6 in ret
+	assert 8 in ret
+
+
+
+########################
+# isApproxEquivalent() #
+########################
+
+
+def isApproxEquivalent_randomTest(constructor):
+	""" Test isApproxEquivalent() using randomly generated data """
+
+	for x in xrange(1,2):
+		points = numpy.random.randint(1, 200)
+		features = numpy.random.randint(1, 200)
+		data = numpy.zeros((points,features))
+
+		for i in xrange(points):
+			for j in xrange(features):
+				data[i,j] = numpy.random.rand() * numpy.random.randint(1,5)
+
+	toTest = constructor(data)
+
+	rld = RowListData(data)
+	dmd = DenseMatrixData(data)
+	coo = CooSparseData(data)
+
+	assert toTest.isApproxEquivalent(rld)
+	assert rld.isApproxEquivalent(toTest)
+
+	assert toTest.isApproxEquivalent(dmd)
+	assert dmd.isApproxEquivalent(toTest)
+
+#	assert toTest.isApproxEquivalent(coo)
+#	assert coo.isApproxEquivalent(toTest)
 
