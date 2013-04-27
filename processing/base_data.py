@@ -9,10 +9,13 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 from copy import copy
 from copy import deepcopy
 from ..utility.custom_exceptions import ArgumentException
+import UML
 from UML.uml_logging.data_set_analyzer import produceFeaturewiseReport
 from UML.uml_logging.data_set_analyzer import produceAggregateReport
 import random
-
+import math
+from abc import ABCMeta
+from abc import abstractmethod
 
 # a default seed for testing and predictible trials
 DEFAULT_SEED = 'DEFAULTSEED'
@@ -394,6 +397,190 @@ class BaseData(object):
 		# return that lists iterator as the fold iterator 	
 		return self.foldIteratorClass(foldList, self)
 
+	def applyFunctionToEachPoint(self, function):
+		"""
+		Applies the given funciton to each point in this object, collecting the
+		output values into a new object that is returned upon completion.
+
+		function must not be none and accept a point as an argument
+
+		"""
+		if function is None:
+			raise ArgumentException("function must not be None")
+		retData = []
+		for point in self.pointViewIterator():
+			currOut = function(point)
+			retData.append([currOut])
+		return UML.data(self.getType(), retData)
+
+	def applyFunctionToEachFeature(self,function):
+		"""
+		Applies the given funciton to each feature in this object, collecting the
+		output values into a new object in the shape of a feature vector that is
+		returned upon completion.
+
+		function must not be none and accept a feature as an argument
+
+		"""
+		if function is None:
+			raise ArgumentException("function must not be None")
+		retData = [[]]
+		for feature in self.featureViewIterator():
+			currOut = function(feature)
+			retData[0].append(currOut)
+		return UML.data(self.getType(), retData)
+
+
+	def mapReduceOnPoints(self, mapper, reducer):
+		if mapper is None or reducer is None:
+			raise ArgumentException("The arguments must not be none")
+		if not hasattr(mapper, '__call__'):
+			raise ArgumentException("The mapper must be callable")
+		if not hasattr(reducer, '__call__'):
+			raise ArgumentException("The reducer must be callable")
+
+		mapResults = {}
+		# apply the mapper to each point in the data
+		for point in self.pointViewIterator():
+			currResults = mapper(point)
+			# the mapper will return a list of key value pairs
+			for (k,v) in currResults:
+				# if key is new, we must add an empty list
+				if k not in mapResults:
+					mapResults[k] = []
+				# append this value to the list of values associated with the key
+				mapResults[k].append(v)
+
+		# apply the reducer to the list of values associated with each key
+		ret = []
+		for mapKey in mapResults.keys():
+			mapValues = mapResults[mapKey]
+			# the reducer will return a tuple of a key to a value
+			redRet = reducer(mapKey, mapValues)
+			if redRet is not None:
+				(redKey,redValue) = redRet
+				ret.append([redKey,redValue])
+		return UML.data(self.getType(), ret)
+
+	def pointViewIterator(self):
+		class pointIt():
+			def __init__(self, outer):
+				self._outer = outer
+				self._position = 0
+			def __iter__(self):
+				return self
+			def next(self):
+				while (self._position < self._outer.points()):
+					value = self._outer.getPointView(self._position)
+					self._position += 1
+					return value
+				raise StopIteration
+		return pointIt(self)
+
+	def featureViewIterator(self):
+		class featureIt():
+			def __init__(self, outer):
+				self._outer = outer
+				self._position = 0
+			def __iter__(self):
+				return self
+			def next(self):
+				while (self._position < self._outer.features()):
+					value = self._outer.getFeatureView(self._position)
+					self._position += 1
+					return value
+				raise StopIteration
+		return featureIt(self)
+
+	def transformPoint(self, point, function):
+		"""
+		Modifies this object so that the specified point is replaced with the results
+		of passing each value of the original point to the input function.
+
+		"""
+		if point is None or function is None:
+			raise ArgumentException("point and function must not be None")
+		if not isinstance(point, int):
+			raise ArgumentException("point must be the integer index of the point to modify")
+
+		currView = self.getPointView(point)
+
+		for x in xrange(self.features()):
+			currValue = currView[x]
+			result = function(currValue)
+			currView[x] = result
+
+
+	def transformFeature(self, feature, function):
+		"""
+		Modifies this object so that the specified feature is replaced with the results
+		of passing each value of the original feature to the input function.
+
+		"""
+		if feature is None or function is None:
+			raise ArgumentException("feature and function must not be None")
+		index = self._getIndex(feature)
+
+		currView = self.getFeatureView(index)
+
+		for x in xrange(self.points()):
+			currValue = currView[x]
+			result = function(currValue)
+			currView[x] = result
+
+
+	def computeListOfValuesFromElements(self, valueFunction, skipZeros=False, excludeNoneResultValues=False):
+		"""Applies the valueFunction(elementValue) or valueFunction(elementValue, pointNum, featureNum) 
+		to each element, and returns a list of the resulting values. 
+		If skipZeros=True it does not apply valueFunction to elements in the dataMatrix that are 0.
+		If excludeNoneResultValues=True, any time valueFunction() returns None, that None value will not be
+		added to the list of resulting values that is returned.
+		"""
+		oneArg = False
+		try:
+			valueFunction(0,0,0)
+		except TypeError:
+			oneArg = True
+
+		valueList = []
+		for currPoint in self.pointViewIterator():
+			currPointID = currPoint.index()
+			for j in xrange(len(currPoint)):
+				value = currPoint[j]
+				if skipZeros and value == 0:
+					continue	
+				if oneArg:
+					currRet = valueFunction(value)
+				else:
+					currRet = valueFunction(value, currPointID, j)
+				if not (excludeNoneResultValues and currRet is None):
+					valueList.append(currRet)
+
+		return valueList
+
+	def hashCode(self):
+		"""returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
+		that should almost always change when the values of the matrix are changed by a substantive amount"""
+		valueList = self.computeListOfValuesFromElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, skipZeros=True)
+		avg = sum(valueList)/float(self.points()*self.features())
+		bigNum = 1000000000
+		#this should return an integer x in the range 0<= x < 1 billion
+		return int(int(round(bigNum*avg)) % bigNum)	
+
+
+	def isApproxEquivalent(self, otherDataMatrix):
+		"""If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data. 
+		If it returns True, they probably do but you can't be absolutely sure.
+		Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
+		passed are of the same type (dense, sparse, etc.)"""
+		#first check to make sure they have the same number of rows and columns
+		if self.points() != otherDataMatrix.points(): return False
+		if self.features() != otherDataMatrix.features(): return False
+		#now check if the hashes of each matrix are the same
+		if self.hashCode() != otherDataMatrix.hashCode(): return False
+		return True
+
+
 	#################################
 	# Functions related to logging  #
 	#################################
@@ -527,6 +714,11 @@ class BaseData(object):
 				raise ArgumentException("end must be a valid index, in the range of possible points")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
+			if not randomize and number is not None:
+				#then we can do the windowing calculation here
+				possibleEnd = start + number -1
+				if possibleEnd < end:
+					end = possibleEnd
 
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
 		ret._renameMultipleFeatureNames_implementation(self.featureNames,True)
@@ -564,50 +756,16 @@ class BaseData(object):
 				raise ArgumentException("end must be a valid index, in the range of possible features")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
+			if not randomize and number is not None:
+				#then we can do the windowing calculation here
+				possibleEnd = start + number -1
+				if possibleEnd < end:
+					end = possibleEnd
 
 		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
 		return ret
-
-
-	def applyFunctionToEachPoint(self, function):
-		"""
-		Applies the given funciton to each point in this object, collecting the
-		output values into a new object that is returned upon completion.
-
-		function must not be none and accept a point as an argument
-
-		"""
-		if function is None:
-			raise ArgumentException("function must not be None")
-		return self._applyFunctionToEachPoint_implementation(function)
-
-	def applyFunctionToEachFeature(self, function):
-		"""
-		Applies the given funciton to each feature in this object, collecting the
-		output values into a new object in the shape of a feature vector that is
-		returned upon completion.
-
-		function must not be none and accept a feature as an argument
-
-		"""
-		if function is None:
-			raise ArgumentException("function must not be None")
-		return self._applyFunctionToEachFeature_implementation(function)
-
-
-	def mapReduceOnPoints(self, mapper, reducer):
-		if mapper is None or reducer is None:
-			raise ArgumentException("The arguments must not be none")
-		if not hasattr(mapper, '__call__'):
-			raise ArgumentException("The mapper must be callable")
-		if not hasattr(reducer, '__call__'):
-			raise ArgumentException("The reducer must be callable")
-
-		ret = self._mapReduceOnPoints_implementation(mapper, reducer)
-		return ret
-
 
 	def equals(self, other):
 		if not self._equalFeatureNames(other):
@@ -753,6 +911,28 @@ class BaseData(object):
 			raise ArgumentException(str(y) + " is not a valid feature ID")
 
 		return self._getitem_implementation(x,y)
+
+	def getPointView(self, ID):
+		"""
+		Returns a View object into the data of the point with the given ID. See View object
+		comments for its capabilities. This View is only valid until the next modification
+		to the shape or ordering of the internal data. After such a modification, there is
+		no guarantee to the validity of the results.
+		"""
+		if not isinstance(ID,int):
+			raise ArgumentException("Point IDs must be integers")
+		return self._getPointView_implementation(ID)
+
+	def getFeatureView(self, ID):
+		"""
+		Returns a View object into the data of the point with the given ID. See View object
+		comments for its capabilities. This View is only valid until the next modification
+		to the shape or ordering of the internal data. After such a modification, there is
+		no guarantee to the validity of the results.
+		"""
+		index = self._getIndex(ID)
+		return self._getFeatureView_implementation(index)
+	
 
 	####################
 	# Helper functions #
@@ -990,4 +1170,27 @@ class BaseData(object):
 			self.index = self.index +1
 			return dataX, dataY
 
+
+
+class View():
+	__metaclass__ = ABCMeta
+
+	@abstractmethod
+	def __getitem__(self, index):
+		pass
+	@abstractmethod
+	def __setitem__(self, key, value):
+		pass
+	@abstractmethod
+	def nonZeroIterator(self):
+		pass
+	@abstractmethod
+	def __len__(self):
+		pass
+	@abstractmethod
+	def index(self):
+		pass
+	@abstractmethod
+	def name(self):
+		pass
 

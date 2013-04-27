@@ -10,10 +10,12 @@ import tempfile
 import os
 import numpy
 
-from ..base_data import *
 from copy import deepcopy
+from ...utility.custom_exceptions import ArgumentException
 from ..row_list_data import RowListData as RLD
 from ..dense_matrix_data import DenseMatrixData as DMD
+
+from .. import base_data
 
 ##############
 # __init__() #
@@ -279,16 +281,22 @@ def sortPoints_scorer(constructor):
 	toTest = constructor(data)
 
 	def numOdds(point):
+		print point
 		ret = 0
 		for val in point:
+			print val
 			if val % 2 != 0:
 				ret += 1
+		print ret
 		return ret
 
 	toTest.sortPoints(sortHelper=numOdds)
 
 	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 	objExp = constructor(dataExpected)
+
+	print toTest.data
+	print objExp.data
 
 	assert toTest.equals(objExp)	
 
@@ -549,6 +557,7 @@ def extractFeatures_handmadeSingle(constructor):
 	toTest = constructor(data)
 	ext1 = toTest.extractFeatures(0)
 	exp1 = constructor([[1],[4],[7]])
+
 	assert ext1.equals(exp1)
 	expEnd = constructor([[2,3],[5,6],[8,9]])
 	assert toTest.equals(expEnd)
@@ -683,191 +692,7 @@ def extractFeatures_handmadeWithFeatureNames(constructor):
 
 
 
-####################
-# applyFunctionToEachPoint() #
-####################
-
-def applyFunctionToEachPoint_exceptionInputNone(constructor):
-	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
-	featureNames = {'number':0,'centi':2,'deci':1}
-	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-	origObj = constructor(deepcopy(origData),featureNames)
-	origObj.applyFunctionToEachPoint(None)
-
-def applyFunctionToEachPoint_Handmade(constructor):
-	""" Test applyFunctionToEachPoint() with handmade output """
-	featureNames = {'number':0,'centi':2,'deci':1}
-	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-	origObj = constructor(deepcopy(origData),featureNames)
-
-
-	def emitLower(point):
-		return point[origObj.featureNames['deci']]
-
-	lowerCounts = origObj.applyFunctionToEachPoint(emitLower)
-
-	expectedOut = [[0.1], [0.1], [0.1], [0.2]]
-	exp = constructor(expectedOut)
-
-	assert lowerCounts.equals(exp)
-
-
-def applyFunctionToEachPoint_nonZeroItAndLen(constructor):
-	""" Test applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
-	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
-	origObj = constructor(deepcopy(origData))
-
-	def emitNumNZ(point):
-		ret = 0
-		assert len(point) == 3
-		for value in point.nonZeroIterator():
-			ret += 1
-		return ret
-
-	counts = origObj.applyFunctionToEachPoint(emitNumNZ)
-
-	expectedOut = [[3], [2], [2], [1]]
-	exp = constructor(expectedOut)
-
-	assert counts.equals(exp)
-
-
-
-#######################
-# applyFunctionToEachFeature() #
-#######################
-
-def applyFunctionToEachFeature_exceptionInputNone(constructor):
-	""" Test applyFunctionToEachFeature() for ArgumentException when function is None """
-	featureNames = {'number':0,'centi':2,'deci':1}
-	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-	origObj= constructor(deepcopy(origData),featureNames)
-	origObj.applyFunctionToEachFeature(None)
-
-def applyFunctionToEachFeature_Handmade(constructor):
-	""" Test applyFunctionToEachFeature() with handmade output """
-	featureNames = {'number':0,'centi':2,'deci':1}
-	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-	origObj= constructor(deepcopy(origData),featureNames)
-
-	def emitAllEqual(feature):
-		first = feature[0]
-		for value in feature:
-			if value != first:
-				return 0
-		return 1
-
-	lowerCounts = origObj.applyFunctionToEachFeature(emitAllEqual)
-	expectedOut = [[1,0,0]]	
-	assert lowerCounts.equals(constructor(expectedOut))
-
-
-
-def applyFunctionToEachFeature_nonZeroItAndLen(constructor):
-	""" Test applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
-	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
-	origObj = constructor(deepcopy(origData))
-
-	def emitNumNZ(feature):
-		ret = 0
-		assert len(feature) == 4
-		for value in feature.nonZeroIterator():
-			ret += 1
-		return ret
-
-	counts = origObj.applyFunctionToEachFeature(emitNumNZ)
-
-	expectedOut = [[3, 3, 2]]
-	exp = constructor(expectedOut)
-
-	assert counts.equals(exp)
-
-
-
-#####################
-# mapReduceOnPoints() #
-#####################
-
-def simpleMapper(point):
-	idInt = point[0]
-	intList = point[1:]
-	ret = []
-	for value in intList:
-		ret.append((idInt,value))
-	return ret
-
-def simpleReducer(identifier, valuesList):
-	total = 0
-	for value in valuesList:
-		total += value
-	return (identifier,total)
-
-def oddOnlyReducer(identifier, valuesList):
-	if identifier % 2 == 0:
-		return None
-	return simpleReducer(identifier,valuesList)
-
-def mapReduceOnPoints_argumentExceptionNoneMap(constructor):
-	""" Test mapReduceOnPoints() for ArgumentException when mapper is None """
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnPoints(None,simpleReducer)
-
-def mapReduceOnPoints_argumentExceptionNoneReduce(constructor):
-	""" Test mapReduceOnPoints() for ArgumentException when reducer is None """
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnPoints(simpleMapper,None)
-
-def mapReduceOnPoints_argumentExceptionUncallableMap(constructor):
-	""" Test mapReduceOnPoints() for ArgumentException when mapper is not callable """
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnPoints("hello",simpleReducer)
-
-def mapReduceOnPoints_argumentExceptionUncallableReduce(constructor):
-	""" Test mapReduceOnPoints() for ArgumentException when reducer is not callable """
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnPoints(simpleMapper,5)
-
-
-# inconsistent output?
-
-
-
-def mapReduceOnPoints_handmade(constructor):
-	""" Test mapReduceOnPoints() against handmade output """
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-	ret = toTest.mapReduceOnPoints(simpleMapper,simpleReducer)
 	
-	exp = constructor([[1,5],[4,11],[7,17]])
-
-	assert (ret.equals(exp))
-	assert (toTest.equals(constructor(data,featureNames)))
-
-
-def mapReduceOnPoints_handmadeNoneReturningReducer(constructor):
-	""" Test mapReduceOnPoints() against handmade output with a None returning Reducer """
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-	ret = toTest.mapReduceOnPoints(simpleMapper,oddOnlyReducer)
-	
-	exp = constructor([[1,5],[7,17]])
-
-	assert (ret.equals(exp))
-	assert (toTest.equals(constructor(data,featureNames)))
-
-	
-
-
 
 
 ##########################
@@ -947,10 +772,10 @@ def writeFileCSV_handmade(constructor):
 	# call writeFile
 	toWrite.writeFile('csv', tmpFile.name, includeFeatureNames=True)
 
-	opened = open(tmpFile.name,'r')
-	print opened.read()
-	for line in opened:
-		print line
+#	opened = open(tmpFile.name,'r')
+#	print opened.read()
+#	for line in opened:
+#		print line
 
 	# read it back into a different object, then test equality
 	readObj = constructor(data=tmpFile.name)
@@ -971,15 +796,8 @@ def writeFileMTX_handmade(constructor):
 	# call writeFile
 	toWrite.writeFile('mtx', tmpFile.name, includeFeatureNames=True)
 
-#	opened = open(tmpFile.name,'r')
-#	print opened.read()
-#	for line in opened:
-#		print line
-
 	# read it back into a different object, then test equality
 	readObj = constructor(data=tmpFile.name)
-
-	print readObj.data
 
 	assert readObj.equals(toWrite)
 	assert toWrite.equals(readObj)
@@ -1016,6 +834,27 @@ def copyReferences_sameReference(constructor):
 	orig.copyReferences(other)
 
 	assert orig.data is other.data
+
+
+#############
+# duplicate #
+#############
+
+def duplicate_withZeros(constructor):
+	""" Test duplicate() produces an equal object and doesn't just copy the references """
+	data1 = [[1,2,3,0],[1,0,3,0],[2,4,6,0],[0,0,0,0]]
+	featureNames = ['one', 'two', 'three', 'four']
+	orig = constructor(data1, featureNames)
+
+	dup = orig.duplicate()
+
+	assert orig.equals(dup)
+	assert dup.equals(orig)
+
+	assert orig.data is not dup.data
+
+
+
 
 ###################
 # copyPoints #
@@ -1253,4 +1092,50 @@ def getitem_simpleExampeWithZeroes(constructor):
 	assert toTest[1,3] == 0
 	assert toTest[2,2] == 9
 	assert toTest[3,3] == 0
+
+	assert toTest[1,'one'] == 4
+
+
+####################
+# transformPoint #
+##################
+
+def transformPoint_AddOne(constructor):
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+
+#	def addOne(point):
+#		for value in poin
+
+
+
+################
+# getPointView #
+################
+
+def getPointView_isinstance(constructor):
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+
+	view = toTest.getPointView(0)
+
+	assert isinstance(view, base_data.View)
+
+
+
+##################
+# getFeatureView #
+##################
+
+def getFeatureView_isinstance(constructor):
+	""" Test getFeatureView() returns an instance of the View in base_data """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+
+	view = toTest.getFeatureView('one')
+
+	assert isinstance(view, base_data.View)
 

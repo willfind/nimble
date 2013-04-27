@@ -258,75 +258,6 @@ def test_extractFeatures_handmadeWithFeatureNames():
 
 
 
-####################
-# applyFunctionToEachPoint() #
-####################
-
-@raises(ArgumentException)
-def test_applyFunctionToEachPoint_exceptionInputNone():
-	""" Test CooSparse applyFunctionToEachPoint() for ArgumentException when function is None """
-	applyFunctionToEachPoint_exceptionInputNone(constructor)
-
-def test_applyFunctionToEachPoint_Handmade():
-	""" Test CooSparse applyFunctionToEachPoint() with handmade output """
-	applyFunctionToEachPoint_Handmade(constructor)
-
-def test_applyFunctionToEachPoint_nonZeroItAndLen():
-	""" Test CooSparse applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
-	applyFunctionToEachPoint_nonZeroItAndLen(constructor)
-
-#######################
-# applyFunctionToEachFeature() #
-#######################
-
-@raises(ArgumentException)
-def test_applyFunctionToEachFeature_exceptionInputNone():
-	""" Test CooSparse applyFunctionToEachFeature() for ArgumentException when function is None """
-	applyFunctionToEachFeature_exceptionInputNone(constructor)
-
-def test_applyFunctionToEachFeature_Handmade():
-	""" Test CooSparse applyFunctionToEachFeature() with handmade output """
-	applyFunctionToEachFeature_Handmade(constructor)
-
-def test_applyFunctionToEachFeature_nonZeroItAndLen():
-	""" Test CooSparse applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
-	applyFunctionToEachFeature_nonZeroItAndLen(constructor)
-
-
-#####################
-# mapReduceOnPoints() #
-#####################
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionNoneMap():
-	""" Test CooSparse mapReduceOnPoints() for ArgumentException when mapper is None """
-	mapReduceOnPoints_argumentExceptionNoneMap(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionNoneReduce():
-	""" Test CooSparse mapReduceOnPoints() for ArgumentException when reducer is None """
-	mapReduceOnPoints_argumentExceptionNoneReduce(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionUncallableMap():
-	""" Test CooSparse mapReduceOnPoints() for ArgumentException when mapper is not callable """
-	mapReduceOnPoints_argumentExceptionUncallableMap(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionUncallableReduce():
-	""" Test CooSparse mapReduceOnPoints() for ArgumentException when reducer is not callable """
-	mapReduceOnPoints_argumentExceptionUncallableReduce(constructor)
-
-
-
-def test_mapReduceOnPoints_handmade():
-	""" Test CooSparse mapReduceOnPoints() against handmade output """
-	mapReduceOnPoints_handmade(constructor)
-
-def test_mapReduceOnPoints_handmadeNoneReturningReducer():
-	""" Test CooSparse mapReduceOnPoints() against handmade output with a None returning Reducer """
-	mapReduceOnPoints_handmadeNoneReturningReducer(constructor)
-
 
 ##########################
 # toRowListData() #
@@ -387,6 +318,13 @@ def test_copyReferences_sameReference():
 	copyReferences_sameReference(constructor)
 
 
+#############
+# duplicate #
+#############
+
+def test_duplicate_withZeros():
+	""" Test CooSparse duplicate() produces an equal object and doesn't just copy the references """
+	duplicate_withZeros(constructor)
 
 ###################
 # copyPoints #
@@ -502,3 +440,21 @@ def test_getitem_simpleExampeWithZeroes():
 	""" Test CooSparse __getitem__ returns the correct output for a number of simple queries """
 	getitem_simpleExampeWithZeroes(constructor)
 
+
+
+################
+# getPointView #
+################
+
+def test_getPointView_isinstance():
+	""" Test CooSparse getPointView() returns an instance of the View in base_data """
+	getPointView_isinstance(constructor)
+
+
+##################
+# getFeatureView #
+##################
+
+def test_getFeatureView_isinstance():
+	""" Test CooSparse getFeatureView() returns an instance of the View in base_data """
+	getFeatureView_isinstance(constructor)

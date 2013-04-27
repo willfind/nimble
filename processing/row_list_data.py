@@ -7,6 +7,7 @@ to files.
 """
 
 from base_data import BaseData
+from base_data import View
 from copy import copy
 from copy import deepcopy
 from ..utility.custom_exceptions import ArgumentException
@@ -98,7 +99,7 @@ class RowListData(BaseData):
 		"""
 		scorer = None
 		comparator = None
-		testPoint = PointView(self.data[0])
+		testPoint = PointView(self.featureNames, self.data[0], 0)
 		try:
 			sortHelper(testPoint)
 			scorer = sortHelper
@@ -138,7 +139,7 @@ class RowListData(BaseData):
 		keyList = []
 		temp = []
 		for i in xrange(self.features()):
-			ithView = FeatureView(self.data,i)
+			ithView = FeatureView(self.data,i, self.featureNamesInverse[i])
 			keyList.append(key(ithView))
 			temp.append(None)
 		keyDict = {}
@@ -241,7 +242,7 @@ class RowListData(BaseData):
 		# over
 		for index in xrange(len(self.data)):
 			point = self.data[index]
-			if number > 0 and toExtract(point):			
+			if number > 0 and toExtract(PointView(self.featureNames, point, index)):			
 				satisfying.append(point)
 				number = number - 1
 			else:
@@ -369,7 +370,7 @@ class RowListData(BaseData):
 		# deal with featureNames or the number of features.
 		toExtract = []
 		for i in xrange(self.features()):
-			ithView = FeatureView(self.data,i)
+			ithView = FeatureView(self.data, i, self.featureNamesInverse[i])
 			if function(ithView):
 				toExtract.append(i)
 		return self._extractFeaturesByList_implementation(toExtract)
@@ -407,8 +408,9 @@ class RowListData(BaseData):
 
 		"""
 		retData = []
-		for point in self.data:
-			currOut = function(PointView(point))
+		for i in xrange(self.points()):
+			point = self.data[i]
+			currOut = function(PointView(self.featureNames, point, i))
 			retData.append([currOut])
 		return RowListData(retData)
 
@@ -421,7 +423,7 @@ class RowListData(BaseData):
 		"""
 		retData = [[]]
 		for i in xrange(self.features()):
-			ithView = FeatureView(self.data,i)
+			ithView = FeatureView(self.data,i, self.featureNamesInverse[i])
 			currOut = function(ithView)
 			retData[0].append(currOut)
 		return RowListData(retData)
@@ -430,8 +432,9 @@ class RowListData(BaseData):
 	def _mapReduceOnPoints_implementation(self, mapper, reducer):
 		mapResults = {}
 		# apply the mapper to each point in the data
-		for point in self.data:
-			currResults = mapper(point)
+		for i in xrange(self.points()):
+			point = self.data[i]
+			currResults = mapper(PointView(self.featureNames, point, i))
 			# the mapper will return a list of key value pairs
 			for (k,v) in currResults:
 				# if key is new, we must add an empty list
@@ -588,18 +591,25 @@ class RowListData(BaseData):
 	def _getitem_implementation(self, x, y):
 		return self.data[x][y]
 
+	def _getPointView_implementation(self, ID):
+		return PointView(self.featureNames, self.data[ID], ID)
+
+	def _getFeatureView_implementation(self, ID):
+		return FeatureView(self.data, ID, self.featureNamesInverse[ID])
+
 ###########
 # Helpers #
 ###########
 
-class FeatureView():
+class FeatureView(View):
 	"""
 	Class to simulate direct random access of a feature, along with other helpers.
 
 	"""
-	def __init__(self, data, colNum):
+	def __init__(self, data, colNum, colName):
 		self._data = data
 		self._colNum = colNum
+		self._colName = colName
 	def __getitem__(self, index):
 		point = self._data[index]
 		value = point[self._colNum]
@@ -611,15 +621,23 @@ class FeatureView():
 		return nzIt(self)
 	def __len__(self):
 		return len(self._data)
+	def index(self):
+		return self._colNum
+	def name(self):
+		return None
 
-class PointView():
+class PointView(View):
 	"""
 	Class to wrap direct random access of a point, along with other helpers.
 
 	"""
-	def __init__(self, point):
+	def __init__(self, featureNames, point, index):
 		self._point = point
+		self._featureNames = featureNames
+		self._index = index
 	def __getitem__(self, index):
+		if isinstance(index,basestring):
+			index = self._featureNames[index]
 		return self._point[index]	
 	def __setitem__(self, key, value):
 		self._point[key] = value
@@ -627,6 +645,10 @@ class PointView():
 		return nzIt(self)
 	def __len__(self):
 		return len(self._point)
+	def index(self):
+		return self._index
+	def name(self):
+		return None
 
 class nzIt():
 	def __init__(self, indexable):

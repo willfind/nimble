@@ -251,75 +251,6 @@ def test_extractFeatures_handmadeWithFeatureNames():
 	extractFeatures_handmadeWithFeatureNames(constructor)
 
 
-####################
-# applyFunctionToEachPoint() #
-####################
-
-@raises(ArgumentException)
-def test_applyFunctionToEachPoint_exceptionInputNone():
-	""" Test RLD applyFunctionToEachPoint() for ArgumentException when function is None """
-	applyFunctionToEachPoint_exceptionInputNone(constructor)
-
-def test_applyFunctionToEachPoint_Handmade():
-	""" Test RLD applyFunctionToEachPoint() with handmade output """
-	applyFunctionToEachPoint_Handmade(constructor)
-
-def test_applyFunctionToEachPoint_nonZeroItAndLen():
-	""" Test RLD applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
-	applyFunctionToEachPoint_nonZeroItAndLen(constructor)
-
-#######################
-# applyFunctionToEachFeature() #
-#######################
-
-@raises(ArgumentException)
-def test_applyFunctionToEachFeature_exceptionInputNone():
-	""" Test RLD applyFunctionToEachFeature() for ArgumentException when function is None """
-	applyFunctionToEachFeature_exceptionInputNone(constructor)
-
-def test_applyFunctionToEachFeature_Handmade():
-	""" Test RLD applyFunctionToEachFeature() with handmade output """
-	applyFunctionToEachFeature_Handmade(constructor)
-
-
-def test_applyFunctionToEachFeature_nonZeroItAndLen():
-	""" Test RLD applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
-	applyFunctionToEachFeature_nonZeroItAndLen(constructor)
-
-#####################
-# mapReduceOnPoints() #
-#####################
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionNoneMap():
-	""" Test RLD mapReduceOnPoints() for ArgumentException when mapper is None """
-	mapReduceOnPoints_argumentExceptionNoneMap(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionNoneReduce():
-	""" Test RLD mapReduceOnPoints() for ArgumentException when reducer is None """
-	mapReduceOnPoints_argumentExceptionNoneReduce(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionUncallableMap():
-	""" Test RLD mapReduceOnPoints() for ArgumentException when mapper is not callable """
-	mapReduceOnPoints_argumentExceptionUncallableMap(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionUncallableReduce():
-	""" Test RLD mapReduceOnPoints() for ArgumentException when reducer is not callable """
-	mapReduceOnPoints_argumentExceptionUncallableReduce(constructor)
-
-
-def test_mapReduceOnPoints_handmade():
-	""" Test RLD mapReduceOnPoints() against handmade output """
-	mapReduceOnPoints_handmade(constructor)
-
-def test_mapReduceOnPoints_handmadeNoneReturningReducer():
-	""" Test RLD mapReduceOnPoints() against handmade output with a None returning Reducer """
-	mapReduceOnPoints_handmadeNoneReturningReducer(constructor)
-
-
 ##########################
 # toRowListData() #
 ##########################
@@ -379,6 +310,14 @@ def test_copyReferences_sameReference():
 	""" Test RLD copyReferences() successfully records the same reference """
 	copyReferences_sameReference(constructor)
 
+
+#############
+# duplicate #
+#############
+
+def test_duplicate_withZeros():
+	""" Test RLD duplicate() produces an equal object and doesn't just copy the references """
+	duplicate_withZeros(constructor)
 
 ###################
 # copyPoints #
@@ -497,3 +436,22 @@ def test_copyFeatures_handmadeWithFeatureNames():
 def test_getitem_simpleExampeWithZeroes():
 	""" Test RLD __getitem__ returns the correct output for a number of simple queries """
 	getitem_simpleExampeWithZeroes(constructor)
+
+
+################
+# getPointView #
+################
+
+def test_getPointView_isinstance():
+	""" Test RLD getPointView returns an instance of the View in base_data """
+	getPointView_isinstance(constructor)
+
+
+##################
+# getFeatureView #
+##################
+
+def test_getFeatureView_isinstance():
+	""" Test DMD getFeatureView() returns an instance of the View in base_data """
+	getFeatureView_isinstance(constructor)
+

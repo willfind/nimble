@@ -9,6 +9,7 @@ test will call the backend test for each possible representation
 from ..base_data import *
 from ..row_list_data import RowListData
 from ..dense_matrix_data import DenseMatrixData
+from ..coo_sparse_data import CooSparseData
 from high_level_backend import *
 
 from copy import deepcopy
@@ -23,10 +24,13 @@ def rld(data,featureNames=None):
 def dmd(data,featureNames=None):
 	return DenseMatrixData(data,featureNames)
 
+def coo(data,featureNames=None):
+	return CooSparseData(data, featureNames)
+
 def callAll(func):
 	func(rld)
 	func(dmd)
-
+#	func(coo)
 
 
 
@@ -146,3 +150,122 @@ def test_foldIterator_exceptionTooManyFolds():
 def test_foldIterator_verifyPartitions():
 	""" Test foldIterator() yields the correct number and size of folds partitioning the data """
 	callAll(foldIterator_verifyPartitions)
+
+
+
+####################
+# applyFunctionToEachPoint() #
+####################
+
+@raises(ArgumentException)
+def test_applyFunctionToEachPoint_exceptionInputNone():
+	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
+	callAll(applyFunctionToEachPoint_exceptionInputNone)
+
+def test_applyFunctionToEachPoint_Handmade():
+	""" Test applyFunctionToEachPoint() with handmade output """
+	callAll(applyFunctionToEachPoint_Handmade)
+
+
+def test_applyFunctionToEachPoint_nonZeroItAndLen():
+	""" Test applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
+	callAll(applyFunctionToEachPoint_nonZeroItAndLen)
+
+
+
+#######################
+# applyFunctionToEachFeature() #
+#######################
+
+@raises(ArgumentException)
+def test_applyFunctionToEachFeature_exceptionInputNone():
+	""" Test applyFunctionToEachFeature() for ArgumentException when function is None """
+	callAll(applyFunctionToEachFeature_exceptionInputNone)
+
+def test_applyFunctionToEachFeature_Handmade():
+	""" Test applyFunctionToEachFeature() with handmade output """
+	callAll(applyFunctionToEachFeature_Handmade)
+
+
+def test_applyFunctionToEachFeature_nonZeroItAndLen():
+	""" Test applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
+	callAll(applyFunctionToEachFeature_nonZeroItAndLen)
+
+
+#####################
+# mapReduceOnPoints() #
+#####################
+
+@raises(ArgumentException)
+def test_mapReduceOnPoints_argumentExceptionNoneMap():
+	""" Test mapReduceOnPoints() for ArgumentException when mapper is None """
+	callAll(mapReduceOnPoints_argumentExceptionNoneMap)
+
+@raises(ArgumentException)
+def test_mapReduceOnPoints_argumentExceptionNoneReduce():
+	""" Test mapReduceOnPoints() for ArgumentException when reducer is None """
+	callAll(mapReduceOnPoints_argumentExceptionNoneReduce)
+
+@raises(ArgumentException)
+def test_mapReduceOnPoints_argumentExceptionUncallableMap():
+	""" Test mapReduceOnPoints() for ArgumentException when mapper is not callable """
+	callAll(mapReduceOnPoints_argumentExceptionUncallableMap)
+
+@raises(ArgumentException)
+def test_mapReduceOnPoints_argumentExceptionUncallableReduce():
+	""" Test mapReduceOnPoints() for ArgumentException when reducer is not callable """
+	callAll(mapReduceOnPoints_argumentExceptionUncallableReduce)
+
+def test_mapReduceOnPoints_handmade():
+	""" Test mapReduceOnPoints() against handmade output """
+	callAll(mapReduceOnPoints_handmade)
+
+
+def test_mapReduceOnPoints_handmadeNoneReturningReducer():
+	""" Test mapReduceOnPoints() against handmade output with a None returning Reducer """
+	callAll(mapReduceOnPoints_handmadeNoneReturningReducer)
+
+
+
+####################
+# transformPoint() #
+####################
+
+
+
+
+######################
+# transformFeature() #
+######################
+
+
+
+#####################################
+# computeListOfValuesFromElements() #
+#####################################
+
+
+def test_computeList_passthrough():
+	""" test computeListOfValuesFromElements() can construct a list by just passing values through  """
+	callAll(computeList_passthrough)
+
+def test_computeList_passthroughSkip():
+	""" test computeListOfValuesFromElements() skipZeros flag """
+	callAll(computeList_passthroughSkip)
+
+
+def test_computeList_passthroughExclude():
+	""" test computeListOfValuesFromElements() excludeNoneResultValues flag  """
+	callAll(computeList_passthroughSkip)
+
+
+
+
+########################
+# isApproxEquivalent() #
+########################
+
+
+def test_isApproxEquivalent_randomTest():
+	""" Test isApproxEquivalent() using randomly generated data """
+	callAll(isApproxEquivalent_randomTest)
