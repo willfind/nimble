@@ -3,6 +3,8 @@ from umlExtensible import data
 
 from umlStatic import normalize
 from umlStatic import loadTrainingAndTesting
+from umlStatic import listDataRepresentationMethods
+from umlStatic import listUMLFunctions
 
 from combinations.CrossValidate import crossValidate
 from combinations.CrossValidate import crossValidateReturnBest
