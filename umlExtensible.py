@@ -8,7 +8,7 @@ import numpy
 import scipy.io
 import time
 import os.path
- 
+
 from .interfaces import mahout
 from .interfaces import regressor
 from .interfaces import sciKitLearn
@@ -22,7 +22,13 @@ from .uml_logging.stopwatch import Stopwatch
 from .utility import ArgumentException
 
 
-def run(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, sendToLog=True):
+def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
+	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
+		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
+	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
+		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
+	if not isinstance(arguments, dict):
+		raise ArgumentException("The 'arguments' parameter must be a dictionary")
 	splitList = algorithm.split('.',1)
 	if len(splitList) < 2:
 		raise ArgumentException("The algorithm must be prefaced with the package name and a dot. Example:'mlpy.KNN'")
@@ -35,15 +41,15 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 		timer = None
 
 	if package == 'mahout':
-		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = mahout(algorithm, trainData, testData, dependentVar, arguments, output, timer)
 	elif package == 'regressor':
-		results = regressor(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = regressor(algorithm, trainData, testData, dependentVar, arguments, output, timer)
 	elif package == 'sciKitLearn':
-		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = sciKitLearn(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'mlpy':
-		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = mlpy(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'shogun':
-		results = shogun(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = shogun(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:

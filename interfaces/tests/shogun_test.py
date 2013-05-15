@@ -62,7 +62,7 @@ def testShogunHandmadeBinaryClassification():
 	data = [[-1,1,0], [-1,0,1], [1,3,2]]
 	trainingObj = DMData(data,variables)
 
-	data2 = [[3,3]]
+	data2 = [[3,3], [-1,0]]
 	testObj = DMData(data2)
 
 	args = {}
@@ -79,7 +79,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 	data = [[-1,-11,-5], [1,0,1], [1,3,2]]
 	trainingObj = DMData(data,variables)
 
-	data2 = [[5,3]]
+	data2 = [[5,3], [-1,0]]
 	testObj = DMData(data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
@@ -112,10 +112,10 @@ def testShogunKMeans():
 def testShogunMulticlassSVM():
 	""" Test shogun() by calling a multilass classifier with a kernel """
 	variables = ["Y","x1","x2"]
-	data = [[0,0,0], [0,0,1], [1,-118,1], [1,-117,1], [2,1,191], [2,1,118]]
+	data = [[0,0,0], [0,0,1], [1,-118,1], [1,-117,1], [2,1,191], [2,1,118], [3,-1000,-500]]
 	trainingObj = DMData(data,variables)
 
-	data2 = [[0,0], [-101,1], [1,101]]
+	data2 = [[0,0], [-101,1], [1,101], [1,1]]
 	testObj = DMData(data2)
 
 	args = {'C':.5, 'kernel':'LinearKernel'}
@@ -218,6 +218,59 @@ def testShogunEmbeddedRossData():
 
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, output=None, dependentVar=0, arguments=args)
 	assert ret is not None
+
+def testShogunScoreModeMulti():
+	""" Test shogun() returns the right dimensions when given different scoreMode flags, multi case"""
+	variables = ["Y","x1","x2"]
+	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[2,3],[-200,0]]
+	testObj = DMData(data2)
+
+#	import pdb
+#	pdb.set_trace()
+
+	# default scoreMode is 'label'
+	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={})
+	assert ret.points() == 2
+	assert ret.features() == 1
+
+	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+	print "go"
+	print ""
+
+	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert ret.points() == 2
+	assert ret.features() == 3
+
+
+def testShogunScoreModeBinary():
+	""" Test shogun() returns the right dimensions when given different scoreMode flags, binary case"""
+	variables = ["Y","x1","x2"]
+	data = [[-1,1,1], [-1,0,1], [1,30,2], [1,30,3]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[2,1],[25,0]]
+	testObj = DMData(data2)
+
+	# default scoreMode is 'label'
+	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={})
+	assert ret.points() == 2
+	assert ret.features() == 1
+
+	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+
 
 
 def testShogunListAlgorithms():

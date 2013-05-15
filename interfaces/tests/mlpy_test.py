@@ -6,8 +6,8 @@ Unit tests for mlpy_interface.py
 import numpy.testing
 
 from ..mlpy_interface import *
-#from ...processing.dense_matrix_data import DenseMatrixData as DMData
-from ...processing.row_list_data import RowListData as DMData
+from ...processing.dense_matrix_data import DenseMatrixData as DMData
+#from ...processing.row_list_data import RowListData as RLData
 
 def testMlpyLocation():
 	""" Test setMlpyLocation() """
@@ -21,10 +21,10 @@ def testMlpyHandmadeSVMClassification():
 	""" Test mlpy() by calling on SVM classification with handmade output """
 
 	variables = ["Y","x1","x2"]
-	data = [[0,1,1], [0,0,1], [1,3,2]]
+	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2], [3,1,500]]
 	trainingObj = DMData(data,variables)
 
-	data2 = [[2,3]]
+	data2 = [[2,3],[-200,0]]
 	testObj = DMData(data2)
 
 	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})
@@ -41,10 +41,10 @@ def testMlpyHandmadeLogisticRegression():
 	""" Test mlpy() by calling on logistic regression on handmade output """
 
 	variables = ["Y","x1","x2"]
-	data = [[0,1,1], [0,0,1], [1,3,2]]
+	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2], [3,1,500]]
 	trainingObj = DMData(data,variables)
 
-	data2 = [[2,3]]
+	data2 = [[2,3],[-200,0]]
 	testObj = DMData(data2)
 
 	ret = mlpy("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments={"solver_type":"l2r_lr"})
@@ -102,6 +102,29 @@ def testMlpyHandmadeKernelPCA():
 	assert ret is not None
 	# check return has the right dimension
 	assert len(ret.data[0]) == 1
+
+
+def testMlpyScoreMode():
+	""" Test mlpy() returns the right dimensions of output when given different scoreMode flags"""
+	variables = ["Y","x1","x2"]
+	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[2,3],[-200,0]]
+	testObj = DMData(data2)
+
+	# default scoreMode is 'label'
+	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})
+	assert ret.points() == 2
+	assert ret.features() == 1
+
+	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert ret.points() == 2
+	assert ret.features() == 3
 
 
 def testMlpyListAlgorithms():
