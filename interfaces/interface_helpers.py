@@ -77,16 +77,33 @@ def putOnSearchPath(wantedPath):
 		sys.path.append(wantedPath)
 
 
-def ovaNotOvOFormatted(scoresPerPoint, predicedLabels, numLabels):
+def checkClassificationStrategy(toCall, algorithm, algArgs):
+	"""
+	Helper to determine the classification strategy used for a given algorithm called
+	from the given backend with the given args. The backend must support the scoreMode
+	equal to 'test' flag, which will run the algorithm on the data passed in and return
+	a string indicating the strategy, instead of the predicted results
+	"""
+
+	dataX = [[-100,3], [-122,1], [118,1], [117,5], [1,-191], [-2,-118], [-1,200],[3,222]]
+	dataY = [[0],[0],[1],[1],[2],[2],[3],[3]]
+	dataTest = [[0,0],[-100,0],[100,0],[0,-100],[0,100]]
+
+	return toCall(algorithm, dataX, dataY, dataTest,algArgs, 'test')
+
+
+def ovaNotOvOFormatted(scoresPerPoint, predicedLabels, numLabels, useSize=True):
 	"""
 	return True if the scoresPerPoint list of list has scores formatted for a
-	one vs all strategy, False if it is for a one vs one strategy
+	one vs all strategy, False if it is for a one vs one strategy. None if there
+	are no definitive cases. May throw an ArgumentException if there are conflicting
+	definitive votes for different strategies.
 	"""
 	length = len(scoresPerPoint)
 	scoreLength = len(scoresPerPoint[0])
-	if scoreLength == numLabels and numLabels != 3:
+	if useSize and scoreLength == numLabels and numLabels != 3:
 		return True
-	if scoreLength > numLabels:
+	if useSize and scoreLength > numLabels:
 		return False
 
 	check = 20
@@ -95,15 +112,25 @@ def ovaNotOvOFormatted(scoresPerPoint, predicedLabels, numLabels):
 	checkList = random.sample(xrange(length), check)
 	results = []
 	for i in checkList:
-		results.append(verifyOvANotOvOSingleList(scoresPerPoint[i], predicedLabels[i], numLabels))
+		strategy = verifyOvANotOvOSingleList(scoresPerPoint[i], predicedLabels[i], numLabels)
+		results.append(strategy)
 
 	ovaVote = results.count(True)
 	ovoVote = results.count(False)
 
-	if ovaVote > ovoVote:
+	# different points were unambigously in different scoring strategies. Can't make sense of that
+	if ovoVote > 0 and ovaVote > 0:
+		raise ArgumentException("We found conflicting scoring strategies for multiclass classification, cannot verify one way or the other")
+	# only definitive votes were ova
+	elif ovaVote > 0:
 		return True
-	else:
+	# only definitive votes were ovo
+	elif ovoVote > 0:
 		return False
+	# no unambiguous cases: return None as a sentinal for unsure
+	else:
+		return None
+
 
 
 def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):

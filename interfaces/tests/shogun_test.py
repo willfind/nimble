@@ -228,9 +228,6 @@ def testShogunScoreModeMulti():
 	data2 = [[2,3],[-200,0]]
 	testObj = DMData(data2)
 
-#	import pdb
-#	pdb.set_trace()
-
 	# default scoreMode is 'label'
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={})
 	assert ret.points() == 2
@@ -239,9 +236,6 @@ def testShogunScoreModeMulti():
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
 	assert ret.points() == 2
 	assert ret.features() == 2
-
-	print "go"
-	print ""
 
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
 	assert ret.points() == 2

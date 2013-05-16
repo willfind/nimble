@@ -48,10 +48,22 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 
 
 	"""
+	# argument checking
 	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
 		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
 	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
 		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
+
+	# if we have to enfore a classification strategy, we test the algorithm in question,
+	# and call our own strategies if necessary
+	if multiClassStrategy != 'default':
+		trialResult = checkClassificationStrategy(_mlpyBackend, algorithm, arguments)
+		if multiClassStrategy == 'ova' and trialResult != 'ova':
+			from ..performance.runner import runOneVsAll
+			runOneVsAll(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+		if multiClassStrategy == 'ovo' and trialResult != 'ovo':
+			from ..performance.runner import runOneVsOne
+			runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
 
 	if isinstance(trainData, SparseData):
 		raise ArgumentException("MLPY does not accept sparse input")
@@ -92,7 +104,7 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 
 	# call backend
 	try:
-		retData = _mlpyBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, scoreMode, multiClassStrategy, timer)
+		retData = _mlpyBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, scoreMode, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not mlpyPresent():
@@ -117,7 +129,7 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 	outputObj.writeFile('csv', output, False)
 
 
-def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode, multiClassStrategy, timer=None):
+def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to mlpy
 
@@ -188,7 +200,10 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 		scores = None
 		labelOrder = obj.labels()
 		numLabels = len(labelOrder)
-		if scoreMode == 'label' or scoreMode == 'bestScore' or numLabels == 3:
+		# the only case we don't want to actually predict are if we're getting allScores,
+		# and the number of labels is not three (in which case we couldn't tell the strategy)
+		# just from the number of confidence scores
+		if scoreMode != 'allScores' or numLabels == 3:
 			# call .pred for the object
 			try:
 				(predArgs,v,k,d) = inspect.getargspec(obj.pred)
@@ -203,14 +218,21 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 			#stop timing of testing, if timer is present
 			if timer is not None:
 				timer.stop('test')
+		# the only case where we don't want to get scores is if we're returning labels only
 		if scoreMode != 'label':
 			try:
 				scoresPerPoint = obj.pred_values(testData)
 			except AttributeError:
 				raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
 			scores = scoresPerPoint
-			# we want the scores to be per label, regardless of the original format
-			if not ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels):
+			strategy = ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels, useSize=(scoreMode!='test'))
+			if scoreMode == 'test':
+				if strategy: return 'ova'
+				elif not strategy: return 'ovo'
+				elif strategy is None: return 'ambiguous'
+			# we want the scores to be per label, regardless of the original format, so we
+			# check the strategy, and modify it if necessary
+			if not strategy:
 				scores = []
 				for i in xrange(len(scoresPerPoint)):
 					combinedScores = calculateSingleLabelScoresFromOneVsOneScores(scoresPerPoint[i], numLabels)
