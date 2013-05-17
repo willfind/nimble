@@ -1,3 +1,8 @@
+from cfg import defaultSkipSetNonAlpha
+from cfg import defaultSkipSetNonAlphaNumeric
+from cfg import defaultStopWords
+from cfg import numericalChars
+
 from umlExtensible import run
 from umlExtensible import data
 
