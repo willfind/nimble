@@ -192,6 +192,9 @@ class CooSparseData(SparseData):
 			extractTarget = extractRows
 			extractOther = extractCols
 
+		#List of rows or columns to extract must be sorted in ascending order
+		toExtract.sort()
+		
 		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
 		# underlying structure to save space
 		copy = 0
