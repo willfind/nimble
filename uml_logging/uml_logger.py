@@ -1,5 +1,7 @@
 import numpy
 
+from UML.utility import ArgumentException
+
 """
 	Handle logging of creating and testing classifiers.  Currently
 	creates two versions of a log for each run:  one that is human-readable,
@@ -58,4 +60,27 @@ class UmlLogger(object):
 		else: pass
 			
 		self.logFile.write(message)
+
+	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
+		"""
+		TODO: add docstring
+		"""
+		self._logRun_implementation(trainData, testData, function, metrics, timer, extraInfo, numFolds)
+
+
+	def logData(self):
+		"""
+		TODO: add docstring
+		"""
+		self._logData_implementation()
+
+
+	def logLoad(self, dataFileName, baseDataType=None, name=None):
+		"""
+		TODO: add docstring
+		"""
+		if dataFileName is None and baseDataType is None and name is None:
+			raise ArgumentException("logLoad requires at least one non-None argument")
+		else:
+			self._logRun_implementation(dataFileName, baseDataType, name)
 

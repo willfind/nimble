@@ -3,7 +3,7 @@ from UML.uml_loading.dok_data_set import DokDataSet
 from UML.utility import ArgumentException
 
 
-def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMappingMode='all', attributeMaps=None, attributeTransformFunctionsMap=None, docIdClassLabelMaps=None, featureRepresentation='frequency', cleanHtml=True, ignoreCase=True, tokenizer='default', removeBlankTokens=True, skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, removeTokensContaining=None, keepNumbers=False, stopWordSet=UML.defaultStopWords, tokenTransformFunction=None, stemmer='default'):
+def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMappingMode='all', attributeMaps=None, attributeTransformFunctionsMap=None, docIdClassLabelMaps=None, minTermFrequency=2, featureRepresentation='frequency', cleanHtml=True, ignoreCase=True, tokenizer='default', removeBlankTokens=True, skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, removeTokensContaining=None, keepNumbers=False, stopWordSet=UML.defaultStopWords, tokenTransformFunction=None, stemmer='default'):
     """
     Blanket function to manage process of converting raw data (in the form of a directory of individual files
     on the file system, or a mapping between document ID and attribute) into a Coo BaseData object, which can
@@ -68,6 +68,10 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMapp
                              TODO: allow for a case where there is only one set of class labels, use default
                              classLabel name.
 
+        minTermFrequency: Minimun number of documents a feature has to appear in to be included in the final
+                          data set.  Any feature that does not appear in at least this many documents will be
+                          removed from the data set.
+
         featureRepresentation: Three possible values: 'binary', 'frequency', 'tfidf'.  If 'binary' is chosen,
                                the final object will have an entry of 1 for each feature present in each document.
                                If 'frequency' is chosen, the # of occurences of each feature in each document
@@ -129,8 +133,8 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMapp
         textDataSet = DokDataSet()
         textDataSet.loadDirectory(dirPath, fileExtensions, dirMappingMode, cleanHtml, ignoreCase, tokenizer, removeBlankTokens, skipSymbolSet, removeTokensContaining, keepNumbers, stopWordSet, tokenTransformFunction, stemmer)
 
+    attrDataSets = []
     if attributeMaps is not None:
-        attrDataSets = []
         for attributeName, docIdAttrMap in attributeMaps.iteritems():
             if attributeTransformFunctionsMap is not None and attributeName in attributeTransformFunctionsMap:
                 attributeTransformFunction = attributeTransformFunctionsMap[attributeName]
@@ -142,7 +146,7 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMapp
 
     dataSet = None
     if textDataSet is not None:
-        if attrDataSets is not None:
+        if len(attrDataSets) > 0:
             for attrDataSet in attrDataSets:
                 textDataSet.merge(attrDataSet)
         dataSet = textDataSet
@@ -162,4 +166,4 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMapp
         for classLabelName, docIdClassLabelMap in docIdClassLabelMaps.iteritems():
             dataSet.addClassLabelMap(docIdClassLabelMap, classLabelName)
 
-    return dataSet.toCooBaseData(featureRepresentation)
+    return dataSet.toCooBaseData(featureRepresentation, minTermFrequency)

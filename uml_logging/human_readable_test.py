@@ -3,6 +3,8 @@ import numpy
 import inspect
 
 from tableString import *
+from UML.processing import BaseData
+from UML.utility import ArgumentException
 from uml_logger import UmlLogger
 from ..processing.coo_sparse_data import CooSparseData
 
@@ -12,7 +14,40 @@ class HumanReadableRunLog(UmlLogger):
 		super(HumanReadableRunLog, self).__init__(logFileName)
 
 
-	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
+	def _logData_implementation(self, baseDataObject):
+		"""
+		Log information about a data object
+		"""
+		if baseDataObject is None:
+			raise ArgumentException("logData() cannot do anything with a null data object")
+		elif not isinstance(baseDataObject, BaseData):
+			raise ArgumentException("logData() requires an object of type BaseData to work")
+
+		self.logMessage('*'*37+" DATA "+'*'*37)
+		self.logMessage("FEATURE REPORT")
+		self.logMessage(baseDataObject.featureReport())
+		self.logMessage("AGGREGATE REPORT")
+		self.logMessage(baseDataObject.report())
+
+	def _logLoad_implementation(self, dataFileName, baseDataType=None, name=None):
+		"""
+		Log information about the event of loading data from disk
+		into a data object
+		"""
+		#initialize string that will contain entire data loading log message
+		self.logMessage('*'*80)
+		self.logMessage("Loaded Data")
+		if dataFileName is not None and dataFileName != '':
+			self.logMessage("Data file: "+str(dataFileName))
+
+		if baseDataType is not None and baseDataType != '':
+			self.logMessage("Data container type: "+str(baseDataType))
+
+		if name is not None and name != '':
+			self.logMessage("Data name: "+str(name))
+
+
+	def _logRun_implementation(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
 		"""
 			Convert a set of objects representing one run (data used for training, data used for
 			testing, function representing a unique classifier {algorithm, parameters}, error metrics,
@@ -56,9 +91,9 @@ class HumanReadableRunLog(UmlLogger):
 			#add number of training points, # of of features to output list
 			if trainData.data is not None:
 				tableHeaders.append("Train points")
-				tableRow.append(str(trainData.data.shape[0]))
-				tableHeaders.append("Train features")
 				tableRow.append(str(trainData.data.shape[1]))
+				tableHeaders.append("Train features")
+				tableRow.append(str(trainData.data.shape[0]))
 			else:
 				tableHeaders.append("Train points")
 				tableHeaders.append("0")
@@ -74,9 +109,9 @@ class HumanReadableRunLog(UmlLogger):
 			#add number of training points, # of of features to output list
 			if testData.data is not None:
 				tableHeaders.append("Test points")
-				tableRow.append(str(testData.data.shape[0]))
-				tableHeaders.append("Test features")
 				tableRow.append(str(testData.data.shape[1]))
+				tableHeaders.append("Test features")
+				tableRow.append(str(testData.data.shape[0]))
 			else:
 				tableHeaders.append("Test points")
 				tableHeaders.append("0")

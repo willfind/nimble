@@ -43,11 +43,16 @@ def mlpyPresent():
 	return True
 
 
-def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, timer=None):
+def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 
 
 	"""
+	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
+		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
+	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
+		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
+
 	if isinstance(trainData, SparseData):
 		raise ArgumentException("MLPY does not accept sparse input")
 	if isinstance(testData, SparseData):
@@ -87,7 +92,7 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 
 	# call backend
 	try:
-		retData = _mlpyBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, timer)
+		retData = _mlpyBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, scoreMode, multiClassStrategy, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not mlpyPresent():
@@ -101,12 +106,18 @@ def mlpy(algorithm, trainData, testData, output=None, dependentVar=None, argumen
 	outputObj = DMData(retData)
 
 	if output is None:
+		if scoreMode == 'bestScore':
+			outputObj.renameMultipleFeatureNames(['PredictedClassLabel', 'LabelScore'])
+		elif scoreMode == 'allScores':
+			names = sorted(list(str(i) for i in numpy.unique(trainRawDataY)))
+			outputObj.renameMultipleFeatureNames(names)
+		
 		return outputObj
 
 	outputObj.writeFile('csv', output, False)
 
 
-def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=None):
+def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode, multiClassStrategy, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to mlpy
 
@@ -151,49 +162,65 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=Non
 	#start timer of training, if timer is present
 	if timer is not None:
 		timer.start('train')
-	# run code for the learn / pred paradigm
+
+	# call .learn for the object
+	try:
+		(learnArgs,v,k,d) = inspect.getargspec(obj.learn)
+	except TypeError:
+		# in this case, we default to adding nothing
+		learnArgs = None
+	argString = makeArgString(learnArgs, algArgs, "", "=", ", ")
 	if hasattr(obj, 'pred'):
-		# call .learn for the object
-		try:
-			(learnArgs,v,k,d) = inspect.getargspec(obj.learn)
-		except TypeError:
-			# in this case, we default to adding nothing
-			learnArgs = None
-		argString = makeArgString(learnArgs, algArgs, "", "=", ", ")
 		eval("obj.learn(trainDataX,trainDataY " + argString + ")")
-
-		#stop timing training and start timing testing, if timer is present
-		if timer is not None:
-			timer.stop('train')
-			timer.start('test')
-
-		# call .pred for the object
-		try:
-			(predArgs,v,k,d) = inspect.getargspec(obj.pred)
-		except TypeError:
-			# in this case, we default to adding nothing
-			predArgs = None
-		argString = makeArgString(predArgs, algArgs, "", "=", ", ")
-		outData = eval("obj.pred(testData, " + argString + ")")
-		# .learn() always returns a row vector, we want a column vector
-		outData.resize(outData.size,1)
-
-	# run code for the learn / transform paradigm
-	if hasattr(obj, 'transform'):
-		# call .learn for the object
-		try:
-			(learnArgs,v,k,d) = inspect.getargspec(obj.learn)
-		except TypeError:
-			# in this case, we default to adding nothing
-			learnArgs = None
-		argString = makeArgString(learnArgs, algArgs, "", "=", ", ")
+	# else, we're in the transform paradigm
+	else:
 		eval("obj.learn(trainDataX, " + argString + ")")
 
-		#stop timing training and start timing testing, if timer is present
-		if timer is not None:
-			timer.stop('train')
-			timer.start('test')
+	#stop timing training and start timing testing, if timer is present
+	if timer is not None:
+		timer.stop('train')
+		timer.start('test')
 
+	# run code for the pred paradigm
+	if hasattr(obj, 'pred'):
+		# case on score mode:
+		predLabels = None
+		scores = None
+		labelOrder = obj.labels()
+		numLabels = len(labelOrder)
+		if scoreMode == 'label' or scoreMode == 'bestScore' or numLabels == 3:
+			# call .pred for the object
+			try:
+				(predArgs,v,k,d) = inspect.getargspec(obj.pred)
+			except TypeError:
+				# in this case, we default to adding nothing
+				predArgs = None
+			argString = makeArgString(predArgs, algArgs, "", "=", ", ")
+			predLabels = eval("obj.pred(testData, " + argString + ")")
+			# .pred() always returns a row vector, we want a column vector
+			predLabels.resize(predLabels.size,1)
+
+			#stop timing of testing, if timer is present
+			if timer is not None:
+				timer.stop('test')
+		if scoreMode != 'label':
+			try:
+				scoresPerPoint = obj.pred_values(testData)
+			except AttributeError:
+				raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
+			scores = scoresPerPoint
+			# we want the scores to be per label, regardless of the original format
+			if not ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels):
+				scores = []
+				for i in xrange(len(scoresPerPoint)):
+					combinedScores = calculateSingleLabelScoresFromOneVsOneScores(scoresPerPoint[i], numLabels)
+					scores.append(combinedScores)
+				scores = numpy.array(scores)
+
+		outData = scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder)
+
+	# run code for the transform paradigm
+	if hasattr(obj, 'transform'):
 		# call .transform for the object
 		try:
 			(transArgs,v,k,d) = inspect.getargspec(obj.transform)
@@ -203,10 +230,9 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=Non
 		argString = makeArgString(transArgs, algArgs, "", "=", ", ")
 		outData = eval("obj.transform(testData, " + argString + ")")
 
-	#stop timing of testing, if timer is present
-	if timer is not None:
-		timer.stop('test')
-
+		#stop timing of testing, if timer is present
+		if timer is not None:
+			timer.stop('test')
 
 	return outData
 

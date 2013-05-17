@@ -10,6 +10,9 @@ import copy
 
 from interface_helpers import findModule
 from interface_helpers import putOnSearchPath
+from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+from interface_helpers import ovaNotOvOFormatted
+from interface_helpers import scoreModeOutputAdjustment
 from ..processing.dense_matrix_data import DenseMatrixData as DMData
 from ..processing.base_data import BaseData
 from ..processing.sparse_data import SparseData
@@ -46,11 +49,16 @@ def shogunPresent():
 	return True
 
 
-def shogun(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, timer=None):
+def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 
 
 	"""
+	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
+		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
+	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
+		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
+
 	args = copy.copy(arguments)
 	if not isinstance(trainData, BaseData):
 		trainObj = DMData(file=trainData)
@@ -92,7 +100,7 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 
 	# call backend
 	try:
-		retData = _shogunBackend(algorithm,  trainRawData, trainRawDataY, testRawData, args, timer)
+		retData = _shogunBackend(algorithm,  trainRawData, trainRawDataY, testRawData, args, scoreMode, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not shogunPresent():
@@ -106,14 +114,18 @@ def shogun(algorithm, trainData, testData, output=None, dependentVar=None, argum
 	outputObj = DMData(retData)
 
 	if output is None:
-		# we want to return a column vector
-		outputObj.transpose()
+		if scoreMode == 'bestScore':
+			outputObj.renameMultipleFeatureNames(['PredictedClassLabel', 'LabelScore'])
+		elif scoreMode == 'allScores':
+			names = sorted(list(str(i) for i in numpy.unique(trainRawDataY)))
+			outputObj.renameMultipleFeatureNames(names)
+
 		return outputObj
 
 	outputObj.writeFile('csv', output, False)
 
 
-def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=None):
+def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to shogun
 
@@ -148,7 +160,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 		testFeat = RealFeatures()
 		testFeat.set_feature_matrix(numpy.array(testData, dtype=numpy.float))
 
-	# Labels must be float typed
+	# set up the correct type of label
 	try:
 		import shogun.Classifier
 		inverseMapping = None
@@ -169,6 +181,8 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 			if regression:
 				from shogun.Features import RegressionLabels
 				trainLabels = RegressionLabels(trainDataY.astype(float))
+				if scoreMode != 'label':
+					raise ArgumentException("Invalid scoreMode for a regression problem; the default parameter must be used")
 			else:
 				from shogun.Features import BinaryLabels
 				trainLabels = BinaryLabels(trainDataY.astype(float))
@@ -232,7 +246,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 #			raise ArgumentException("Cannot set argument: " + k)
 			continue
 		exec("SGObj." + testString + "(v)")
-	
+
 	#start timing training, if timer is present
 	if timer is not None:
 		timer.start('train')
@@ -248,21 +262,69 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=N
 		timer.stop('train')
 		timer.start('test')
 
+	predLabels = None
+	scores = None
+	if scoreMode != 'label':
+		labelOrder = numpy.unique(trainDataY)
+		numLabels = len(labelOrder)
+	else:
+		labelOrder = None
+
 	# Prediction / Test Call
-	outData = SGObj.apply(testFeat)
+	predObject = SGObj.apply(testFeat)
+	predLabels = predObject.get_labels()
+	predLabels = numpy.atleast_2d(predLabels)
+	predLabels = predLabels.T
+	# this is going to be our default output in the case of scoreMode == 'label'
+	outData = predLabels
 
 	#stop timing of testing, if timer is present
 	if timer is not None:
 		timer.stop('test')
 
-	retData = outData.get_labels()
+	if scoreMode != 'label':
+		# the multiclass case
+		if hasattr(predObject, 'get_multiclass_confidences'):
+			# setup an array in the right shape, number of predicted labels by number of possible labels
+			scoresPerPoint = numpy.empty((len(predLabels),numLabels))
+			for i in xrange(len(predLabels)):
+				currConfidences = predObject.get_multiclass_confidences(i)
+				for j in xrange(currConfidences.size):
+					scoresPerPoint[i,j] = currConfidences[j]
+			scores = scoresPerPoint
+			if not ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels):
+				scores = []
+				for i in xrange(len(scoresPerPoint)):
+					combinedScores = calculateSingleLabelScoresFromOneVsOneScores(scoresPerPoint[i], numLabels)
+					scores.append(combinedScores)
+				scores = numpy.array(scores)
+			# helper function will setup the right outputs for the different scoreMode flags
+			outData = scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder)
+		# otherwise we must be dealing with binary classification
+		else:
+			# we get a 1d array containing the winning label's confidence value
+			scoresPerPoint = predObject.get_values()
+			scoresPerPoint.resize(scoresPerPoint.size,1)
+			if scoreMode == 'bestScore':
+				outData = numpy.concatenate((outData,scoresPerPoint), axis=1)
+			else:
+				outData = numpy.empty((predObject.get_num_labels(), 2))
+				for i in xrange(len(outData)):
+					# the confidence value of one label is negative the confidence value of the other
+					if predLabels[i] == labelOrder[0]:
+						outData[i,0] = scoresPerPoint[i]
+						outData[i,1] = -scoresPerPoint[i]
+					else:
+						outData[i,0] = -scoresPerPoint[i]
+						outData[i,1] = scoresPerPoint[i]
 
-	if inverseMapping is not None:
-		outputObj = DMData(retData)
+	# have to undo the label name packing we performed earlier
+	if inverseMapping is not None and scoreMode != 'allScores':
+		outputObj = DMData(outData)
 		outputObj.transformPoint(0, makeInverseMapper(inverseMapping))
-		retData = outputObj.data
+		outData = outputObj.data
 
-	return retData
+	return outData
 
 def makeInverseMapper(inverseMappingParam):
 	def inverseMapper(value):

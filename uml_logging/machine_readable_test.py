@@ -3,6 +3,7 @@ import numpy
 import inspect
 import re
 from uml_logger import UmlLogger
+from UML.utility import ArgumentException
 from ..processing.coo_sparse_data import CooSparseData
 
 class MachineReadableRunLog(UmlLogger):
@@ -10,7 +11,34 @@ class MachineReadableRunLog(UmlLogger):
 	def __init__(self, logFileName=None):
 		UmlLogger.__init__(self, logFileName)
 
-	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
+	def _logLoad_implementation(self, dataFileName, baseDataType=None, name=None):
+		"""
+		"""
+		logLine = "{LOAD}::"
+		if dataFileName is not None:
+			if isinstance(dataFileName, str):
+				logLine += dataFileName
+			else:
+				raise ArgumentException("dataFileName must be a string")
+
+		if baseDataType is not None:
+			if isinstance(baseDataType, str):
+				logLine += ":"+baseDataType
+			else:
+				raise ArgumentException("baseDataType must be a string")
+
+		if name is not None:
+			if isinstance(name, str):
+				logLine += ":"+name
+			else:
+				raise ArgumentException("name must be a string")
+
+	def _logData_implementation():
+		"""
+		"""
+		pass
+
+	def _logRun_implementation(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
 		"""
 			Write one (data + classifer + error metrics) combination to a log file
 			in machine readable format.  Should include as much information as possible,
@@ -38,8 +66,8 @@ class MachineReadableRunLog(UmlLogger):
 				logLine += createMRLineElement("trainDataName", trainData.name)
 			if trainData.path is not None:
 				logLine += createMRLineElement("trainDataPath", trainData.path)
-			logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[0])
-			logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
+			logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[1])
+			logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[0])
 
 		#log info about testing data, if present
 		if testData is not None:
@@ -47,8 +75,8 @@ class MachineReadableRunLog(UmlLogger):
 				logLine += createMRLineElement("testDataName", testData.name)
 			if testData.path is not None:
 				logLine += createMRLineElement("testDataPath", testData.path)
-			logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
-			logLine += createMRLineElement("numTestDataFeatures", testData.data.shape[1])
+			logLine += createMRLineElement("numTestDataPoints", testData.data.shape[1])
+			logLine += createMRLineElement("numTestDataFeatures", testData.data.shape[0])
 
 		#add numFolds if it is present - generally when testData is not present, as numFolds
 		#implies k-fold cross validation, in which case there is no test set

@@ -202,9 +202,11 @@ if __name__ == "__main__":
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('UML/uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='tfidf')
+    cooDataSet = convertToCooBaseData('UML/uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, minTermFrequency=2, featureRepresentation='frequency')
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
+
+    print "featureNameMap: " + str(featureNameMap)
 
     dokVersion = cooDataSet.data.todok()
 

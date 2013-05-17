@@ -78,6 +78,7 @@ def executeOneLinerCode(codeText, inputHash):
 	codeText = ";".join(pieces)
 	#oneLiner = True
 
+	print "Code text: "+str(codeText)
 	exec(codeText, globals(), localVariables)	#apply the code
 	return localVariables["RESULTING_VALUE_ZX7_"]
 

@@ -26,7 +26,7 @@ class DokDataSet(object):
 
 	def __init__(self):
 		"""
-		Empty constructor
+		Empty constructor.  Set up all data structures for this object except the dok matrix.
 		"""
 		self.isEmpty = True
 		self.featureColumnIndexMap = {}
@@ -60,13 +60,14 @@ class DokDataSet(object):
 		rowCount = 0
 
 		#get map of typeName->filePathList
-		if featureMergeMode == 'all':
+		if featureMergeMode.lower() == 'all'.lower():
 			fileMap = dirMapper(directoryPath, extensions, 'oneType')
-		elif featureMergeMode == 'multiTyped':
+		elif featureMergeMode.lower() == 'multiTyped'.lower():
 			fileMap = dirMapper(directoryPath, extensions, 'multiTyped')
 		else:
 			raise ArgumentException("Unrecognized featureMerge mode in readDirectoryIntoFreqMaps")
 
+		numDocsVisited = 0
 		# sparse matrix to hold results.  To start, has as many rows as there are document ids
 		# and 10,000,000 columns (we do not expect to use that many columns but there is no penalty
 		# for having unused columns.)  
@@ -75,6 +76,7 @@ class DokDataSet(object):
 		# load all files and convert to token lists/frequency counts, then add to a 
 		# 3-layer map: dataType->{docKey->freqMap}
 		for docId in fileMap.keys():
+			numDocsVisited += 1
 			#record the unique key of this document
 			self.docIdRowIndexMap[docId] = rowCount
 			self.rowIndexDocIdMap[rowCount] = docId
@@ -90,6 +92,8 @@ class DokDataSet(object):
 					try:
 						tokens, freqMap = loadAndTokenize(filePath, cleanHtml, ignoreCase, tokenizer, removeBlankTokens, skipSymbolSet, removeTokensContaining, keepNumbers, stopWordSet, tokenTransformFunction, stemmer)
 					except EmptyFileException:
+						continue
+					if tokens is None or freqMap is None or len(tokens) == 0 or len(freqMap) == 0:
 						continue
 					newFreqMap = Counter()
 					for token, count in freqMap.iteritems():
@@ -265,42 +269,129 @@ class DokDataSet(object):
 				self.classLabelSets[classLabelName] = docIdClassLabelMap
 
 
-	def toCooBaseData(self, representationMode='frequency'):
+	def toCooBaseData(self, representationMode='frequency', minTermFrequency=2, featureTypeWeightScheme=None):
 		"""
 		Provided a set of data objects containing all necessary information about a corpus/data set,
 		convert this object to a COO BaseData object with the desired feature representation (options are binary, 
 		term frequency, and TF-IDF).
 		The resulting object will have column headers based on features contained in this object.  Document IDs
 		and class labels, if present, should be in the leftmost columns of the final object.  
+
+		Inputs:
+			representationMode: Can be one of three strings representing standard types of feature
+			                    representation: 'binary', 'frequency' (for term frequency), or
+			                    'tfidf'.  Alternately, can be a function which will be called for
+			                    each feature in each document, and will compute a value
+			                    for feature representation based on the following inputs:
+
+			                    	feature: the feature/term itself, as a string
+
+			                    	featureCount:  Absolute number of times this feature appears in 
+			                    	this document (row).  Integer.
+			                    	
+			                    	numDocs:  Number of documents in the data set. Integer
+
+			                    	numFeatures: Number of features in the data set. Integer
+			                    	
+			                    	featureDocCount: Number of documents in the corpus in which the
+			                    	feature/term appears. Integer.
+
+			                    	docFeatureCount: Number of features in the current document (current row). Integer.
+
+			                    	docId: unique ID of the current document. Integer.
+
+			minTermFrequency: Minimum number of documents a feature/term must appear in to be kept in the
+							  corpus.  If any feature doesn't occur in at least this many documents, it will
+							  be removed from the corpus entirely.
+
+
 		"""
 		if self.isEmpty:
 			raise ImproperActionException("Can't convert empty object to BaseData version")
 
-		if representationMode.lower() == 'binary':
-			newDokMatrix = dok_matrix(self.data.shape, 'uint8')
+		featureNameList = [''] * len(self.featureColumnIndexMap)
+		featuresToRemove = set()
+		columnShiftIndexList = []
+		for feature, columnIndex in self.featureColumnIndexMap.iteritems():
+			featureDocCount = self.featureDocCountMap[feature]
+			if featureDocCount >= minTermFrequency:
+				featureNameList[columnIndex] = feature
+			else:
+				featuresToRemove.add(feature)
+				columnShiftIndexList.append(columnIndex)
+		columnShiftIndexList.sort()
+		totalColumnShift = len(columnShiftIndexList)
+		newRowCount = self.data.shape[0]
+		newColumnCount = self.data.shape[1] - totalColumnShift
+
+		while True:
+			try:
+				featureNameList.remove('')
+			except ValueError:
+				break
+
+		if featureTypeWeightScheme is not None:
+			for featureTypeName, featureTypeWeight in featureTypeWeightScheme:
+				if not isinstance(featureTypeWeight, int):
+					self.data = self.data.asfptype()
+					break
+
+		if featureTypeWeightScheme is not None and representationMode.lower() != 'binary':
 			entries = self.data.nonzero()
 			for l in range(len(entries[0])):
 				rowIndex = entries[0][l]
 				columnIndex = entries[1][l]
-				newDokMatrix[rowIndex, columnIndex] = 1
-		elif representationMode.lower() == 'frequency':
-			newDokMatrix = self.data
-		elif representationMode.lower() == 'tfidf':
-			newDokMatrix = dok_matrix(self.data.shape, dtype='float32')
-			numRows = self.data.shape[0]
-			self.calcIdfValues()
-			for i in range(numRows):
-				tfIdfMap = self.calcTfIdfVals(i)
-				for columnIndex, tfIdfVal in tfIdfMap.iteritems():
-					newDokMatrix[i, columnIndex] = tfIdfVal
-		else:
-			raise ArgumentException("Unrecognized representationMode: " + str(representationMode))
+				feature = self.columnIndexFeatureMap[columnIndex]
+				featureType = feature.partition('_')[0] + '_'
+				if featureType in featureTypeWeightScheme:
+					self.data[rowIndex, columnIndex] *= featureTypeWeightScheme[featureType]
+
+		if isinstance(representationMode, str):
+			if representationMode.lower() == 'binary':
+				newDokMatrix = dok_matrix((newRowCount, newColumnCount), 'uint8')
+				entries = self.data.nonzero()
+				for l in range(len(entries[0])):
+					rowIndex = entries[0][l]
+					columnIndex = entries[1][l]
+					newColumnIndex = columnIndex - calcFirstBiggerIndex(columnShiftIndexList, columnIndex)
+					feature = self.columnIndexFeatureMap[columnIndex]
+					if columnIndex not in columnShiftIndexList:
+						newDokMatrix[rowIndex, newColumnIndex] = 1
+			elif representationMode.lower() == 'frequency':
+				newDokMatrix = dok_matrix((newRowCount, newColumnCount), self.data.dtype)
+				entries = self.data.nonzero()
+				for l in range(len(entries[0])):
+					rowIndex = entries[0][l]
+					columnIndex = entries[1][l]
+					newColumnIndex = columnIndex - calcFirstBiggerIndex(columnShiftIndexList, columnIndex)
+					feature = self.columnIndexFeatureMap[columnIndex]
+					if columnIndex not in columnShiftIndexList:
+						newDokMatrix[rowIndex, newColumnIndex] = self.data[rowIndex, columnIndex]
+			elif representationMode.lower() == 'tfidf':
+				newDokMatrix = dok_matrix((newRowCount, newColumnCount), dtype='float32')
+				numRows = self.data.shape[0]
+				self.calcIdfValues()
+				for i in range(numRows):
+					tfIdfMap = self.calcTfIdfVals(i)
+					for columnIndex, tfIdfVal in tfIdfMap.iteritems():
+						newColumnIndex = columnIndex - calcFirstBiggerIndex(columnShiftIndexList, columnIndex)
+						if columnIndex not in columnShiftIndexList:
+							newDokMatrix[i, newColumnIndex] = tfIdfVal
+		elif hasattr(representationMode, '__call__'):
+			newDokMatrix = dok_matrix((newRowCount, newColumnCount), self.data.dtype)
+			entries = self.data.nonzero()
+			for l in range(len(entries[0])):
+				rowIndex = entries[0][l]
+				columnIndex = entries[1][l]
+				newColumnIndex = columnIndex - calcFirstBiggerIndex(columnShiftIndexList, columnIndex)
+				numNonZeroInRow = self.data.getrow(rowIndex).getnnz()
+				feature = self.columnIndexFeatureMap[columnIndex]
+				if columnIndex not in columnShiftIndexList:
+					newDokMatrix[rowIndex, newColumnIndex] = representationMode(feature, self.data[rowIndex, columnIndex], newRowCount, len(featureNameList), self.featureDocCountMap[feature], numNonZeroInRow, int(self.rowIndexDocIdMap[rowIndex]))
 
 		cooVersion = newDokMatrix.tocoo()
 
-		featureNameList = [''] * len(self.featureColumnIndexMap)
-		for feature, columnIndex in self.featureColumnIndexMap.iteritems():
-			featureNameList[columnIndex] = feature
+		print "featureNameList: " + str(featureNameList)
 
 		baseDataVersion = data('coo', cooVersion, featureNameList, sendToLog=False)
 
@@ -372,3 +463,28 @@ class DokDataSet(object):
 			self.featureIdfMap[feature] = math.log((float(numDocs) / float(count))) / log2
 
 		return None
+
+
+def calcFirstBiggerIndex(columnIndexShiftList, searchItem):
+	"""
+	Provided a list of column indices, sorted in ascending order,
+	find the index of the first entry in that list that is larger
+	than or equal to searchIndex.  If searchIndex is larger than all
+	items in the list, return len(columnIndexShiftMap)
+
+	Example:  if the list is [3, 6, 14, 25], and searchIndex is
+	10, this function will return 2 (which is the index of 14 in the list).
+	If searchIndex is 27, this function will return 4.
+	"""
+	for i in range(len(columnIndexShiftList)):
+		currItem = columnIndexShiftList[i]
+		if searchItem <= currItem:
+			return i
+
+	return len(columnIndexShiftList)
+
+
+
+
+
+

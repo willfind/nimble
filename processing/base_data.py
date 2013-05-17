@@ -141,7 +141,7 @@ class BaseData(object):
 	# Higher Order Operations #
 	###########################
 
-	def joinUniqueKeyedOther(self, other, fillUnmatched):
+	def _joinUniqueKeyedOther(self, other, fillUnmatched):
 		# other must be data rep obj
 		# there must be overlap
 		# cannot be complete overlap
@@ -156,7 +156,8 @@ class BaseData(object):
 
 		# .... how do we do lookup?
 		# we have all the feature numbers, so its ok.
-		pass
+		#TODO
+		raise NotImplementedError
 
 	
 	def dropStringValuedFeatures(self):
@@ -261,7 +262,7 @@ class BaseData(object):
 		self.appendFeatures(converted)
 
 
-	def selectConstantOfPointsByValue(self, numToSelect, featureToSelectOver, seed=DEFAULT_SEED):
+	def _selectConstantOfPointsByValue(self, numToSelect, featureToSelectOver, seed=DEFAULT_SEED):
 		"""
 		Return a new object containing a randomly selected sample of points from
 		this object, with the sample limited to a constant number of points
@@ -279,7 +280,7 @@ class BaseData(object):
 		raise NotImplementedError
 
 
-	def selectPercentOfPointsByValue(self, percentToSelect, featureToSelectOver, seed=DEFAULT_SEED):
+	def _selectPercentOfPointsByValue(self, percentToSelect, featureToSelectOver, seed=DEFAULT_SEED):
 		"""
 		Return a new object containing a randomly selected sample of points from
 		this object, with the sample limited to a percentage of points
@@ -395,7 +396,7 @@ class BaseData(object):
 			foldList.append(indices[start:end])
 
 		# return that lists iterator as the fold iterator 	
-		return self.foldIteratorClass(foldList, self)
+		return self._foldIteratorClass(foldList, self)
 
 	def applyFunctionToEachPoint(self, function):
 		"""
@@ -1152,7 +1153,7 @@ class BaseData(object):
 			self._renameFeatureName_implementation(assignments[key],key,allowDefaults)
 
 
-	class foldIteratorClass():
+	class _foldIteratorClass():
 		def __init__(self, foldList, outerReference):
 			self.foldList= foldList
 			self.index = 0

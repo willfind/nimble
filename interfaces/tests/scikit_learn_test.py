@@ -99,6 +99,29 @@ def testSciKitLearnHandmadeSparseClustering():
 	assert ret.data[0,0] != ret.data[2,0]
 
 
+def testSciKitLearnScoreMode():
+	""" Test sciKitLearn() returns the right dimensions of output when given different scoreMode flags"""
+	variables = ["Y","x1","x2"]
+	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[2,3],[-200,0]]
+	testObj = DMData(data2)
+
+	# default scoreMode is 'label'
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})
+	assert ret.points() == 2
+	assert ret.features() == 1
+
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert ret.points() == 2
+	assert ret.features() == 3
+
+
 def testSciKitLearnListAlgorithms():
 	""" Test scikit learn's listAlgorithms() by checking the output for those algorithms we unit test """
 
