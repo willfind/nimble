@@ -8,6 +8,7 @@ import numpy
 import scipy.io
 import time
 import os.path
+import nltk
  
 from .interfaces import mahout
 from .interfaces import regressor
@@ -60,9 +61,16 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 	return results
 
 
-def data(retType, data=None, featureNames=None, fileType=None, name=None):
+def data(retType, data=None, featureNames=None, fileType=None, name=None, sendToLog=True):
 	# determine if its a file we have to read; we assume if its a string its a path
 	if isinstance(data, basestring):
+		#we may log this event
+		if sendToLog is not None and sendToLog is not False:
+			if isinstance(sendToLog, UmlLogger):
+				logger = sendToLog
+			else:
+				logger = LogManager()
+			#logger.logLoad(retType, data, name)
 		# determine the extension, call the appropriate helper
 		split = data.rsplit('.', 1)
 		extension = None
