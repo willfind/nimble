@@ -10,6 +10,7 @@ from umlStatic import normalize
 from umlStatic import loadTrainingAndTesting
 from umlStatic import listDataRepresentationMethods
 from umlStatic import listUMLFunctions
+from umlStatic import randomizedData
 
 from combinations.CrossValidate import crossValidate
 from combinations.CrossValidate import crossValidateReturnBest

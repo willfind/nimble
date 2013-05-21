@@ -4,6 +4,7 @@ is static.
 
 """
 
+import random
 import numpy
 import inspect
 import UML
@@ -14,6 +15,27 @@ from .utility import ArgumentException
 
 
 # run() with a return type of the predicted labels added back into the object?
+
+def randomizedData(retType, numPoints, numFeatures, sparcity, numericType="int", featureNames=None, name=None):
+	if numPoints < 1:
+		raise ArgumentException("must specify a positive nonzero number of points")
+	if numFeatures < 1:
+		raise ArgumentException("must specify a positive nonzero number of features")
+	if sparcity < 0 or sparcity >=1:
+		raise ArgumentException("sparcity must be greater than zero and less than one")
+	if numericType != "int" and numericType != "float":
+		raise ArgumentException("numericType may only be 'int' or 'float'")
+
+	randData = numpy.zeros((numPoints,numFeatures))
+	for i in xrange(numPoints):
+		for j in xrange(numFeatures):
+			if random.random() > sparcity:
+				if numericType == 'int':
+					randData[i,j] = numpy.random.randint(1,100)
+				else:
+					randData[i,j] = numpy.random.rand()
+
+	return data(retType, data=randData, featureNames=featureNames, name=name)
 
 
 def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="DenseMatrixData"):
