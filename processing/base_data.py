@@ -801,7 +801,7 @@ class BaseData(object):
 		else:
 			raise ArgumentException("Unrecognized file extension")
 
-	def copyReferences(self, other):
+	def copyReferences(self, toCopy):
 		"""
 		Modifies the internal data of this object to refer to the same data as other. In other
 		words, the data wrapped by both the self and other objects resides in the
@@ -811,9 +811,9 @@ class BaseData(object):
 
 		"""
 		# this is called first because it checks the data type
-		self._copyReferences_implementation(other)
-		self.featureNames = other.featureNames
-		self.featureNamesInverse = other.featureNamesInverse
+		self._copyReferences_implementation(toCopy)
+		self.featureNames = toCopy.featureNames
+		self.featureNamesInverse = toCopy.featureNamesInverse
 
 
 	def duplicate(self):
@@ -1175,6 +1175,20 @@ class BaseData(object):
 
 class View():
 	__metaclass__ = ABCMeta
+
+	def equals(self, other):
+		if not isinstance(other, View):
+			return False
+		if len(self) != len(other):
+			return False
+		if self.index() != other.index():
+			return False
+		if self.name() != other.name():
+			return False
+		for i in xrange(len(self)):
+			if self[i] != other[i]:
+				return False
+		return True
 
 	@abstractmethod
 	def __getitem__(self, index):
