@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
 	print "runs prepared"
 
-	bestFunction, performance = crossValidateReturnBest(xData, yData, runs, mode='min', numFolds=5, extraParams=extraParams)
-	print bestFunction
-	print performance
+	bestFunction, performance = crossValidateReturnBest(xData, yData, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
+	#print bestFunction
+	#print performance
 
