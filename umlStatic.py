@@ -84,8 +84,26 @@ def normalize(algorithm, trainData, testData=None, dependentVar=None, arguments=
 
 #combinations() -- maybe
 
-#listAllAlgorithms()
+def listAlgorithms(package):
+	package = package.lower()
+	results = None
+	if package == 'mahout':
+		import UML.interfaces.mahout_interface
+		results = UML.interfaces.mahout_interface.listAlgorithms()
+	elif package == 'regressor':
+		import UML.interfaces.regressors_interface
+		results = UML.interfaces.regressors_interface.listAlgorithms()
+	elif package == 'scikitlearn':
+		import UML.interfaces.scikit_learn_interface
+		results = UML.interfaces.scikit_learn_interface.listAlgorithms()
+	elif package == 'mlpy':
+		import UML.interfaces.mlpy_interface
+		results = UML.interfaces.mlpy_interface.listAlgorithms()
+	elif package == 'shogun':
+		import UML.interfaces.shogun_interface
+		results = UML.interfaces.shogun_interface.listAlgorithms()
 
+	return results
 
 def listDataRepresentationMethods():
 	methodList = dir(UML.processing.base_data.BaseData)
