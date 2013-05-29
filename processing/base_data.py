@@ -46,7 +46,7 @@ class BaseData(object):
 		self._setAllDefault()
 		self._renameMultipleFeatureNames_implementation(featureNames,True)
 		if featureNames is not None and len(featureNames) != self.features():
-			raise ArgumentException("Cannot have different number of featureNames and features")
+			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.features(): " + str(self.features()))
 		self.name = name
 		self.path = path
 
