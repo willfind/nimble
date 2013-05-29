@@ -1,8 +1,51 @@
 import numpy
 from nose.tools import *
-from ..metric_functions import *
-from ..performance_interface import *
+from ..metric_functions import rmse, classificationError, computeError, meanAbsoluteError, proportionPercentNegative50, proportionPercentNegative90, bottomProportionPercentNegative10
+from ..performance_interface import computeMetrics
 from ...processing.dense_matrix_data import DenseMatrixData
+from UML import data
+from UML.utility import ArgumentException
+
+def testProportionPercentNegative():
+	"""
+	Unit test for proportionPercentNegative50/90
+	"""
+	knownLabelsOne = [[1], [2], [2], [2], [1], [1], [1], [2], [2], [2], [1], [2], [2], [2], [1], [1], [1], [2], [2], [2]]
+	knownLabelsTwo = [[2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]]
+	knownLabelsThree = [[2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
+	knownLabelsFour = [[2], [1], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
+
+	knownLabelsOneBaseData = data('dense', knownLabelsOne, sendToLog=False)
+	knownLabelsTwoBaseData = data('dense', knownLabelsTwo, sendToLog=False)
+	knownLabelsThreeBaseData = data('dense', knownLabelsThree, sendToLog=False)
+	knownLabelsFourBaseData = data('dense', knownLabelsFour, sendToLog=False)
+
+	predictedScoreList = []
+	for i in range (20):
+		oneScore = i * 0.05
+		twoScore = 1.0 - i * 0.05
+		predictedScoreList.append([oneScore, twoScore])
+
+	predictedScoreListBaseData = data('dense', predictedScoreList, ['1', '2'])
+
+	topHalfProportionNegativeOne = proportionPercentNegative50(knownLabelsOneBaseData, predictedScoreListBaseData, negativeLabel='1')
+	topNinetyProportionNegativeOne = proportionPercentNegative90(knownLabelsOneBaseData, predictedScoreListBaseData, negativeLabel='1')
+	topHalfProportionNegativeTwo = proportionPercentNegative50(knownLabelsTwoBaseData, predictedScoreListBaseData, negativeLabel='1')
+	topNinetyProportionNegativeTwo = proportionPercentNegative90(knownLabelsTwoBaseData, predictedScoreListBaseData, negativeLabel='1')
+	topHalfProportionNegativeThree = proportionPercentNegative50(knownLabelsThreeBaseData, predictedScoreListBaseData, negativeLabel='1')
+	topNinetyProportionNegativeThree = proportionPercentNegative90(knownLabelsThreeBaseData, predictedScoreListBaseData, negativeLabel='1')
+	topHalfProportionNegativeFour = proportionPercentNegative50(knownLabelsFourBaseData, predictedScoreListBaseData, negativeLabel='1')
+	topNinetyProportionNegativeFour = proportionPercentNegative90(knownLabelsFourBaseData, predictedScoreListBaseData, negativeLabel='1')
+	
+	assert topHalfProportionNegativeOne == 0.4
+	assert topNinetyProportionNegativeOne >= 0.443 and topNinetyProportionNegativeOne <= 0.445
+	assert topHalfProportionNegativeTwo == 0.0
+	assert topNinetyProportionNegativeTwo >= 0.443 and topNinetyProportionNegativeTwo <= 0.445
+	assert topHalfProportionNegativeThree == 0.0
+	assert topNinetyProportionNegativeThree == 0.0
+	assert topHalfProportionNegativeFour == 0.10
+	assert topNinetyProportionNegativeFour >= 0.0554 and topNinetyProportionNegativeFour <= 0.0556
+
 
 #####################################
 # performance combinations function #
