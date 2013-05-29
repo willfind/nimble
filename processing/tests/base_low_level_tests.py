@@ -13,7 +13,7 @@ from ..base_data import *
 from nose.tools import *
 
 def makeConst(num):
-	def const(dummy):
+	def const(dummy=2):
 		return num
 	return const
 

@@ -9,6 +9,7 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 from copy import copy
 from copy import deepcopy
 from ..utility.custom_exceptions import ArgumentException
+from ..utility.custom_exceptions import ImproperActionException
 import UML
 from UML.uml_logging.data_set_analyzer import produceFeaturewiseReport
 from UML.uml_logging.data_set_analyzer import produceAggregateReport
@@ -184,8 +185,10 @@ class BaseData(object):
 		features are added, one for each possible value seen in the original feature.
 
 		"""
+		if self.features() == 0:
+			raise ImproperActionException("There is no possible valid input for this method; this object has 0 features")
+		
 		index = self._getIndex(featureToConvert)
-
 		# extract col.
 		toConvert = self.extractFeatures([index])
 
@@ -230,6 +233,9 @@ class BaseData(object):
 		in the original feature. 
 
 		"""
+		if self.features() == 0:
+			raise ImproperActionException("There is no possible valid input for this method; this object has 0 features")
+
 		index = self._getIndex(featureToConvert)
 
 		# extract col.
@@ -338,6 +344,14 @@ class BaseData(object):
 			featureNames as the first row in the list.  If featureNames is blank,
 			insert a blank list in the first position of the returned list.
 		"""
+		if self.points() == 0:
+			return []
+		if self.features() == 0:
+			ret = []
+			for i in xrange(self.points()):
+				ret.append([])
+			return ret
+
 		rowListContainer = self.toRowListData()
 		return rowListContainer.data
 
@@ -350,7 +364,7 @@ class BaseData(object):
 
 		"""
 		if self.points() == 0:
-			raise ArgumentException("Cannot extract points from an object with 0 points")
+			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
 		random.seed(seed)
 		if extractionProbability is None:
@@ -383,6 +397,10 @@ class BaseData(object):
 		Returns an iterator object that iterates through folds of this object
 
 		"""
+
+		if self.points() == 0:
+			raise ImproperActionException("Cannot produce an iterator over groups of points; this object has 0 points")
+
 		# note: we want truncation here
 		numInFold = int(self.points() / numFolds)
 		if numInFold == 0:
@@ -415,7 +433,7 @@ class BaseData(object):
 
 		"""
 		if self.points() == 0:
-			raise ArgumentException("Function not callable if there are 0 points of data")
+			raise ImproperActionException("Function not callable if there are 0 points of data")
 		if function is None:
 			raise ArgumentException("function must not be None")
 		retData = []
@@ -434,7 +452,7 @@ class BaseData(object):
 
 		"""
 		if self.features() == 0:
-			raise ArgumentException("Function not callable if there are 0 features of data")
+			raise ImproperActionException("Function not callable if there are 0 features of data")
 		if function is None:
 			raise ArgumentException("function must not be None")
 		retData = [[]]
@@ -445,8 +463,9 @@ class BaseData(object):
 
 
 	def mapReduceOnPoints(self, mapper, reducer):
-#		if self.points() == 0 or self.features() == 0:
-#
+		if self.features() == 0:
+			raise ImproperActionException("We do not allow operations over points if there are 0 features")
+
 		if mapper is None or reducer is None:
 			raise ArgumentException("The arguments must not be none")
 		if not hasattr(mapper, '__call__'):
@@ -478,6 +497,9 @@ class BaseData(object):
 		return UML.data(self.getType(), ret)
 
 	def pointViewIterator(self):
+		if self.features() == 0:
+			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
+
 		class pointIt():
 			def __init__(self, outer):
 				self._outer = outer
@@ -493,6 +515,9 @@ class BaseData(object):
 		return pointIt(self)
 
 	def featureViewIterator(self):
+		if self.points() == 0:
+			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
+
 		class featureIt():
 			def __init__(self, outer):
 				self._outer = outer
@@ -514,7 +539,7 @@ class BaseData(object):
 
 		"""
 		if self.features() == 0:
-			raise ArgumentException("Cannot transform points in a data object with no features")
+			raise ImproperActionException("Cannot transform points in a data object with no features")
 		if point is None or function is None:
 			raise ArgumentException("point and function must not be None")
 		if not isinstance(point, int):
@@ -535,7 +560,7 @@ class BaseData(object):
 
 		"""
 		if self.points() == 0:
-			raise ArgumentException("Cannot transform features in a data object with no points")
+			raise ImproperActionException("Cannot transform features in a data object with no points")
 		if feature is None or function is None:
 			raise ArgumentException("feature and function must not be None")
 		index = self._getIndex(feature)
@@ -727,7 +752,7 @@ class BaseData(object):
 
 		"""
 		if self.points() == 0:
-			raise ArgumentException("Cannot extract points from an object with 0 points")
+			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
 		if toExtract is not None:
 			if start is not None or end is not None:
@@ -772,7 +797,7 @@ class BaseData(object):
 
 		"""
 		if self.features() == 0:
-			raise ArgumentException("Cannot extract features from an object with 0 features")
+			raise ImproperActionException("Cannot extract features from an object with 0 features")
 
 		if toExtract is not None:
 			if start is not None or end is not None:
@@ -951,6 +976,10 @@ class BaseData(object):
 		to the shape or ordering of the internal data. After such a modification, there is
 		no guarantee to the validity of the results.
 		"""
+		if self.features() == 0:
+			raise ImproperActionException("This object contains no features, we do not allow point views in this case")
+		if self.points() == 0:
+			raise ImproperActionException("This object contains no points")
 		if not isinstance(ID,int):
 			raise ArgumentException("Point IDs must be integers")
 		return self._getPointView_implementation(ID)
@@ -962,6 +991,11 @@ class BaseData(object):
 		to the shape or ordering of the internal data. After such a modification, there is
 		no guarantee to the validity of the results.
 		"""
+		if self.points() == 0:
+			raise ImproperActionException("This object contains no points, we do not allow feature views in this case")
+		if self.features() == 0:
+			raise ImproperActionException("This object contains no features")
+
 		index = self._getIndex(ID)
 		return self._getFeatureView_implementation(index)
 	
@@ -1013,6 +1047,8 @@ class BaseData(object):
 
 	def _getIndex(self, identifier):
 		toReturn = identifier
+		if len(self.featureNames) == 0:
+			raise ArgumentException("There are no valid feature identifiers; this object has 0 features")
 		if identifier is None:
 			raise ArgumentException("An identifier cannot be None")
 		if (not isinstance(identifier,basestring)) and (not isinstance(identifier,int)):
