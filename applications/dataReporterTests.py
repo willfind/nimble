@@ -4,11 +4,6 @@ the applyFunctionToEachFeature() function in BaseData.
 """
 
 import numpy as np
-import scipy
-import random
-from scipy.sparse import coo_matrix
-from scipy.io import mmwrite
-from copy import deepcopy
 
 from allowImports import boilerplate
 boilerplate()
@@ -26,11 +21,11 @@ if __name__ == "__main__":
 	trainObj2 = data('DenseMatrixData', data2, variables2)
 	data3 = np.array([1, 4, 7])
 
-	print produceFeaturewiseReport(trainObj1)
-	print produceAggregateReport(trainObj1)
+	print "feature report: " + produceFeaturewiseReport(trainObj1)
+	print "aggregate report: " + produceAggregateReport(trainObj1, displayDigits=2)
 
-	print produceFeaturewiseReport(trainObj2)
-	print produceAggregateReport(trainObj2)
+	print "feature report: " + produceFeaturewiseReport(trainObj2)
+	print "aggregate report: " + produceAggregateReport(trainObj2, displayDigits=2)
 
 
 

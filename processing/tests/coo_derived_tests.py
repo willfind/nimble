@@ -258,75 +258,6 @@ def test_extractFeatures_handmadeWithFeatureNames():
 
 
 
-####################
-# applyFunctionToEachPoint() #
-####################
-
-@raises(ArgumentException)
-def test_applyFunctionToEachPoint_exceptionInputNone():
-	""" Test CooSparse applyFunctionToEachPoint() for ArgumentException when function is None """
-	applyFunctionToEachPoint_exceptionInputNone(constructor)
-
-def test_applyFunctionToEachPoint_Handmade():
-	""" Test CooSparse applyFunctionToEachPoint() with handmade output """
-	applyFunctionToEachPoint_Handmade(constructor)
-
-def test_applyFunctionToEachPoint_nonZeroItAndLen():
-	""" Test CooSparse applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
-	applyFunctionToEachPoint_nonZeroItAndLen(constructor)
-
-#######################
-# applyFunctionToEachFeature() #
-#######################
-
-@raises(ArgumentException)
-def test_applyFunctionToEachFeature_exceptionInputNone():
-	""" Test CooSparse applyFunctionToEachFeature() for ArgumentException when function is None """
-	applyFunctionToEachFeature_exceptionInputNone(constructor)
-
-def test_applyFunctionToEachFeature_Handmade():
-	""" Test CooSparse applyFunctionToEachFeature() with handmade output """
-	applyFunctionToEachFeature_Handmade(constructor)
-
-def test_applyFunctionToEachFeature_nonZeroItAndLen():
-	""" Test CooSparse applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
-	applyFunctionToEachFeature_nonZeroItAndLen(constructor)
-
-
-#####################
-# mapReduceOnPoints() #
-#####################
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionNoneMap():
-	""" Test CooSparse mapReduceOnPoints() for ArgumentException when mapper is None """
-	mapReduceOnPoints_argumentExceptionNoneMap(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionNoneReduce():
-	""" Test CooSparse mapReduceOnPoints() for ArgumentException when reducer is None """
-	mapReduceOnPoints_argumentExceptionNoneReduce(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionUncallableMap():
-	""" Test CooSparse mapReduceOnPoints() for ArgumentException when mapper is not callable """
-	mapReduceOnPoints_argumentExceptionUncallableMap(constructor)
-
-@raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionUncallableReduce():
-	""" Test CooSparse mapReduceOnPoints() for ArgumentException when reducer is not callable """
-	mapReduceOnPoints_argumentExceptionUncallableReduce(constructor)
-
-
-
-def test_mapReduceOnPoints_handmade():
-	""" Test CooSparse mapReduceOnPoints() against handmade output """
-	mapReduceOnPoints_handmade(constructor)
-
-def test_mapReduceOnPoints_handmadeNoneReturningReducer():
-	""" Test CooSparse mapReduceOnPoints() against handmade output with a None returning Reducer """
-	mapReduceOnPoints_handmadeNoneReturningReducer(constructor)
-
 
 ##########################
 # toRowListData() #
@@ -387,6 +318,13 @@ def test_copyReferences_sameReference():
 	copyReferences_sameReference(constructor)
 
 
+#############
+# duplicate #
+#############
+
+def test_duplicate_withZeros():
+	""" Test CooSparse duplicate() produces an equal object and doesn't just copy the references """
+	duplicate_withZeros(constructor)
 
 ###################
 # copyPoints #
@@ -405,6 +343,33 @@ def test_copyPoints_exceptionNonIndex():
 def test_copyPoints_handmadeContents():
 	""" Test CooSparse copyPoints() returns the correct data """
 	copyPoints_handmadeContents(constructor)
+
+@raises(ArgumentException)
+def test_copyPoints_exceptionStartInvalid():
+	""" Test CooSparse copyPoints() for ArgumentException when start is not a valid point index """
+	copyPoints_exceptionStartInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyPoints_exceptionEndInvalid():
+	""" Test CooSparse copyPoints() for ArgumentException when start is not a valid feature index """
+	copyPoints_exceptionEndInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyPoints_exceptionInversion():
+	""" Test CooSparse copyPoints() for ArgumentException when start comes after end """
+	copyPoints_exceptionInversion(constructor)
+
+def test_copyPoints_handmadeRange():
+	""" Test CooSparse copyPoints() against handmade output for range copying """
+	copyPoints_handmadeRange(constructor)
+
+def test_copyPoints_handmadeRangeWithFeatureNames():
+	""" Test CooSparse copyPoints() against handmade output for range copying with featureNames """
+	copyPoints_handmadeRangeWithFeatureNames(constructor)
+
+def test_copyPoints_handmadeRangeDefaults():
+	""" Test CooSparse copyPoints uses the correct defaults in the case of range based copying """
+	copyPoints_handmadeRangeDefaults(constructor)
 
 
 #####################
@@ -425,3 +390,71 @@ def test_copyFeatures_exceptionNonIndex():
 def test_copyFeatures_handmadeContents():
 	""" Test CooSparse copyFeatures() returns the correct data """
 	copyFeatures_handmadeContents(constructor)
+
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionStartInvalid():
+	""" Test CooSparse copyFeatures() for ArgumentException when start is not a valid feature index """
+	copyFeatures_exceptionStartInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionStartInvalidFeatureName():
+	""" Test CooSparse copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
+	copyFeatures_exceptionStartInvalidFeatureName(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionEndInvalid():
+	""" Test CooSparse copyFeatures() for ArgumentException when start is not a valid feature index """
+	copyFeatures_exceptionEndInvalid(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionEndInvalidFeatureName():
+	""" Test CooSparse copyFeatures() for ArgumentException when start is not a valid featureName """
+	copyFeatures_exceptionEndInvalidFeatureName(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionInversion():
+	""" Test CooSparse copyFeatures() for ArgumentException when start comes after end """
+	copyFeatures_exceptionInversion(constructor)
+
+@raises(ArgumentException)
+def test_copyFeatures_exceptionInversionFeatureName():
+	""" Test CooSparse copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
+	copyFeatures_exceptionInversionFeatureName(constructor)
+
+
+def test_copyFeatures_handmadeRange():
+	""" Test CooSparse copyFeatures() against handmade output for range copying """
+	copyFeatures_handmadeRange(constructor)
+
+def test_copyFeatures_handmadeWithFeatureNames():
+	""" Test CooSparse copyFeatures() against handmade output for range copying with FeatureNames """
+	copyFeatures_handmadeWithFeatureNames(constructor)
+
+
+##############
+# __getitem__#
+##############
+
+def test_getitem_simpleExampeWithZeroes():
+	""" Test CooSparse __getitem__ returns the correct output for a number of simple queries """
+	getitem_simpleExampeWithZeroes(constructor)
+
+
+
+################
+# getPointView #
+################
+
+def test_getPointView_isinstance():
+	""" Test CooSparse getPointView() returns an instance of the View in base_data """
+	getPointView_isinstance(constructor)
+
+
+##################
+# getFeatureView #
+##################
+
+def test_getFeatureView_isinstance():
+	""" Test CooSparse getFeatureView() returns an instance of the View in base_data """
+	getFeatureView_isinstance(constructor)

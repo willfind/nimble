@@ -8,37 +8,49 @@ import numpy
 import scipy.io
 import time
 import os.path
+import nltk
  
 from .interfaces import mahout
 from .interfaces import regressor
 from .interfaces import sciKitLearn
 from .interfaces import mlpy
+from .interfaces import shogun
 from .processing import CooSparseData
 from .processing import DenseMatrixData
 from .processing import RowListData
-from .logging.log_manager import LogManager
-from .logging.stopwatch import Stopwatch
+from .uml_logging.log_manager import LogManager
+from .uml_logging.stopwatch import Stopwatch
 from .utility import ArgumentException
 
 
-def run(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, sendToLog=True):
+def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
+	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
+		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
+	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
+		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
+	if not isinstance(arguments, dict):
+		raise ArgumentException("The 'arguments' parameter must be a dictionary")
 	splitList = algorithm.split('.',1)
 	if len(splitList) < 2:
-		raise ArgumentException("The algorithm must be prefeced with the package name and a dot. Example:'mlpy.KNN'")
+		raise ArgumentException("The algorithm must be prefaced with the package name and a dot. Example:'mlpy.KNN'")
 	package = splitList[0]
 	algorithm = splitList[1]
 
 	if sendToLog:
 		timer = Stopwatch()
+	else:
+		timer = None
 
 	if package == 'mahout':
-		results = mahout(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = mahout(algorithm, trainData, testData, dependentVar, arguments, output, timer)
 	elif package == 'regressor':
-		results = regressor(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = regressor(algorithm, trainData, testData, dependentVar, arguments, output, timer)
 	elif package == 'sciKitLearn':
-		results = sciKitLearn(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = sciKitLearn(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'mlpy':
-		results = mlpy(algorithm, trainData, testData, output, dependentVar, arguments, timer)
+		results = mlpy(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+	elif package == 'shogun':
+		results = shogun(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:
@@ -55,9 +67,16 @@ def run(algorithm, trainData, testData, output=None, dependentVar=None, argument
 	return results
 
 
-def data(retType, data=None, featureNames=None, fileType=None, name=None):
+def data(retType, data=None, featureNames=None, fileType=None, name=None, sendToLog=True):
 	# determine if its a file we have to read; we assume if its a string its a path
 	if isinstance(data, basestring):
+		#we may log this event
+		if sendToLog is not None and sendToLog is not False:
+			if isinstance(sendToLog, UmlLogger):
+				logger = sendToLog
+			else:
+				logger = LogManager()
+			#logger.logLoad(retType, data, name)
 		# determine the extension, call the appropriate helper
 		split = data.rsplit('.', 1)
 		extension = None
@@ -215,7 +234,7 @@ def _intFloatOrString(inString):
 	ret = inString
 	try:
 		ret = int(inString)
-	except exceptions.ValueError:
+	except ValueError:
 		ret = float(inString)
 	# this will return an int or float if either of the above two are successful
 	finally:

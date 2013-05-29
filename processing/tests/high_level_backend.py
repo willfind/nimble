@@ -10,7 +10,11 @@ objects provided.
 from ..base_data import *
 from copy import deepcopy
 
+import numpy
 
+from ..row_list_data import RowListData
+from ..dense_matrix_data import DenseMatrixData
+from ..coo_sparse_data import CooSparseData
 
 
 ###########################
@@ -223,3 +227,304 @@ def foldIterator_verifyPartitions(constructor):
 	fold2Train.appendPoints(fold2Test)
 
 	#TODO some kind of rigourous partition check
+
+
+
+
+####################
+# applyFunctionToEachPoint() #
+####################
+
+def applyFunctionToEachPoint_exceptionInputNone(constructor):
+	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj = constructor(deepcopy(origData),featureNames)
+	origObj.applyFunctionToEachPoint(None)
+
+def applyFunctionToEachPoint_Handmade(constructor):
+	""" Test applyFunctionToEachPoint() with handmade output """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj = constructor(deepcopy(origData),featureNames)
+
+
+	def emitLower(point):
+		return point[origObj.featureNames['deci']]
+
+	lowerCounts = origObj.applyFunctionToEachPoint(emitLower)
+
+	expectedOut = [[0.1], [0.1], [0.1], [0.2]]
+	exp = constructor(expectedOut)
+
+	assert lowerCounts.equals(exp)
+
+
+def applyFunctionToEachPoint_nonZeroItAndLen(constructor):
+	""" Test applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
+	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+	origObj = constructor(deepcopy(origData))
+
+	def emitNumNZ(point):
+		ret = 0
+		assert len(point) == 3
+		for value in point.nonZeroIterator():
+			ret += 1
+		return ret
+
+	counts = origObj.applyFunctionToEachPoint(emitNumNZ)
+
+	expectedOut = [[3], [2], [2], [1]]
+	exp = constructor(expectedOut)
+
+	assert counts.equals(exp)
+
+
+
+#######################
+# applyFunctionToEachFeature() #
+#######################
+
+def applyFunctionToEachFeature_exceptionInputNone(constructor):
+	""" Test applyFunctionToEachFeature() for ArgumentException when function is None """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj= constructor(deepcopy(origData),featureNames)
+	origObj.applyFunctionToEachFeature(None)
+
+def applyFunctionToEachFeature_Handmade(constructor):
+	""" Test applyFunctionToEachFeature() with handmade output """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj= constructor(deepcopy(origData),featureNames)
+
+	def emitAllEqual(feature):
+		first = feature[0]
+		for value in feature:
+			if value != first:
+				return 0
+		return 1
+
+	lowerCounts = origObj.applyFunctionToEachFeature(emitAllEqual)
+	expectedOut = [[1,0,0]]	
+	assert lowerCounts.equals(constructor(expectedOut))
+
+
+
+def applyFunctionToEachFeature_nonZeroItAndLen(constructor):
+	""" Test applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
+	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+	origObj = constructor(deepcopy(origData))
+
+	def emitNumNZ(feature):
+		ret = 0
+		assert len(feature) == 4
+		for value in feature.nonZeroIterator():
+			ret += 1
+		return ret
+
+	counts = origObj.applyFunctionToEachFeature(emitNumNZ)
+
+	expectedOut = [[3, 3, 2]]
+	exp = constructor(expectedOut)
+
+	assert counts.equals(exp)
+
+
+
+#####################
+# mapReduceOnPoints() #
+#####################
+
+def simpleMapper(point):
+	idInt = point[0]
+	intList = []
+	for i in xrange(1, len(point)):
+		intList.append(point[i])
+	ret = []
+	for value in intList:
+		ret.append((idInt,value))
+	return ret
+
+def simpleReducer(identifier, valuesList):
+	total = 0
+	for value in valuesList:
+		total += value
+	return (identifier,total)
+
+def oddOnlyReducer(identifier, valuesList):
+	if identifier % 2 == 0:
+		return None
+	return simpleReducer(identifier,valuesList)
+
+def mapReduceOnPoints_argumentExceptionNoneMap(constructor):
+	""" Test mapReduceOnPoints() for ArgumentException when mapper is None """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.mapReduceOnPoints(None,simpleReducer)
+
+def mapReduceOnPoints_argumentExceptionNoneReduce(constructor):
+	""" Test mapReduceOnPoints() for ArgumentException when reducer is None """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.mapReduceOnPoints(simpleMapper,None)
+
+def mapReduceOnPoints_argumentExceptionUncallableMap(constructor):
+	""" Test mapReduceOnPoints() for ArgumentException when mapper is not callable """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.mapReduceOnPoints("hello",simpleReducer)
+
+def mapReduceOnPoints_argumentExceptionUncallableReduce(constructor):
+	""" Test mapReduceOnPoints() for ArgumentException when reducer is not callable """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	toTest.mapReduceOnPoints(simpleMapper,5)
+
+
+# inconsistent output?
+
+
+
+def mapReduceOnPoints_handmade(constructor):
+	""" Test mapReduceOnPoints() against handmade output """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+#	if toTest.getType() == "DenseMatrixData":
+#		import pdb
+#		pdb.set_trace()
+	ret = toTest.mapReduceOnPoints(simpleMapper,simpleReducer)
+	
+	exp = constructor([[1,5],[4,11],[7,17]])
+
+	assert (ret.equals(exp))
+	assert (toTest.equals(constructor(data,featureNames)))
+
+
+def mapReduceOnPoints_handmadeNoneReturningReducer(constructor):
+	""" Test mapReduceOnPoints() against handmade output with a None returning Reducer """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	ret = toTest.mapReduceOnPoints(simpleMapper,oddOnlyReducer)
+	
+	exp = constructor([[1,5],[7,17]])
+
+	assert (ret.equals(exp))
+	assert (toTest.equals(constructor(data,featureNames)))
+
+
+
+
+####################
+# transformPoint() #
+####################
+
+
+
+
+######################
+# transformFeature() #
+######################
+
+
+
+#####################################
+# computeListOfValuesFromElements() #
+#####################################
+
+def passThrough(value):
+	return value
+
+def passThroughEven(value):
+	if value % 2 == 0:
+		return value
+	else:
+		return None
+
+def computeList_passthrough(constructor):
+	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data)
+	ret = toTest.computeListOfValuesFromElements(passThrough)
+
+	print toTest.getType()
+
+	assert 1 in ret
+	assert 2 in ret
+	assert 3 in ret
+	assert 4 in ret
+	assert 5 in ret
+	assert 6 in ret
+	assert 7 in ret
+	assert 8 in ret
+	assert 9 in ret
+
+
+def computeList_passthroughSkip(constructor):
+	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+
+	data = [[1,0,3],[0,5,6],[7,0,9]]
+	toTest = constructor(data)
+	ret = toTest.computeListOfValuesFromElements(passThrough, skipZeros=True)
+
+	assert 1 in ret
+	assert 3 in ret
+	assert 5 in ret
+	assert 6 in ret
+	assert 7 in ret
+	assert 9 in ret
+
+
+def computeList_passthroughExclude(constructor):
+	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data)
+	ret = toTest.computeListOfValuesFromElements(passThroughEven,excludeNoneResultValues=True)
+
+	assert 2 in ret
+	assert 4 in ret
+	assert 6 in ret
+	assert 8 in ret
+
+
+
+########################
+# isApproxEquivalent() #
+########################
+
+
+def isApproxEquivalent_randomTest(constructor):
+	""" Test isApproxEquivalent() using randomly generated data """
+
+	for x in xrange(1,2):
+		points = numpy.random.randint(1, 200)
+		features = numpy.random.randint(1, 200)
+		data = numpy.zeros((points,features))
+
+		for i in xrange(points):
+			for j in xrange(features):
+				data[i,j] = numpy.random.rand() * numpy.random.randint(1,5)
+
+	toTest = constructor(data)
+
+	rld = RowListData(data)
+	dmd = DenseMatrixData(data)
+	coo = CooSparseData(data)
+
+	assert toTest.isApproxEquivalent(rld)
+	assert rld.isApproxEquivalent(toTest)
+
+	assert toTest.isApproxEquivalent(dmd)
+	assert dmd.isApproxEquivalent(toTest)
+
+#	assert toTest.isApproxEquivalent(coo)
+#	assert coo.isApproxEquivalent(toTest)
+

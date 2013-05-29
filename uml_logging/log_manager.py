@@ -26,6 +26,20 @@ class LogManager(object):
 		self.humanReadableLog = HumanReadableRunLog(fullLogDesignator + ".txt")
 		self.machineReadableLog = MachineReadableRunLog(fullLogDesignator + ".mr")
 
+	def logData(self):
+		"""
+		Send information about a data set to the log(s).
+		"""
+		self.humanReadableLog.logData()
+		self.machineReadableLog.logData()
+
+	def logLoad(self, dataFilePath=None):
+		"""
+		Send information about the loading of a data set to the log(s).
+		"""
+		self.humanReadableLog.logLoad()
+		self.machineReadableLog.logLoad()
+
 	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
 		"""
 			Pass the information about this run to both logs:  human and machine

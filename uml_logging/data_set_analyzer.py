@@ -10,30 +10,15 @@ import numpy as np
 from nose.tools import assert_equal
 from nose.tools import assert_almost_equal
 
-from UML import data
-from UML.logging.tableString import tableString
+import UML
+from UML.uml_logging.tableString import tableString
 from UML.utility import ArgumentException
-
-
-def featurewiseFunctionGenerator():
-    """
-    TODO: fill out docstring
-    """
-    functions = [min_, max_, mean_, median_, standardDeviation, numUnique]
-    return functions
-
-def aggregateFunctionGenerator():
-    """
-    TODO: fill out docstring
-    """
-    functions = [proportionZero, proportionMissing]
-    return functions
 
 
 def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     """
     Produce a report with summary information about each feature in the
-    data set.  Returns the report as a string containing a 2-dimensional
+    data set found in dataContainer.  Returns the report as a string containing a 2-dimensional
     table, with each row representing a feature and each column representing
     a piece of information about the feature.  If the number of features in
     the data set is greater than maxFeaturesToCover, only a subset (equal in size
@@ -49,13 +34,13 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
         equal in size to maxFeaturesToCover.
 
     Output:
-        A string containing a table with each row containing summary information about one
+        A table with each row containing summary information about one
         of the features in the data set.  Each column represents the results of one of
         the functions applied to each feature.
     """
     columnLabels = ['featureName']
     for func in funcsToApply:
-        label = func.__name__
+        label = func.__name__.rstrip('_')
         columnLabels.append(label)
 
     resultsTable = [None] * len(dataContainer.featureNames)
@@ -76,14 +61,21 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     return resultsTable
 
 
-def convertToPrintableTable(table, headers, isSubset=False):
+def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeaturesToCover=50, displayDigits=2):
     """
-        TODO: add docstring
-    """
-    return tableString(table, True, headers)
+    Produce a string formatted as a table.  The table contains iformation about each feature
+    in the data set contained in dataContainer.
 
-def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeaturesToCover=50):
-    """
+    Inputs
+        dataContainer - object of a type that inherits from BaseData.
+        
+        supplementalFunctions - additional functions that should be applied to each feature in 
+            the data set.  Arg signature must expect one iterable feature vector, any other parameters
+            must be optional.
+
+        maxFeaturesToCover - # of features (columns) in the data set to compute statistics for and
+        include in the result.  If there are more features in the data set, an arbitrary subset of size
+        equal to maxFeaturesToCoverwill be chosen, the rest will be ignored.
     """
     #try to find out basic information about the data set: # of rows
     #and columns.  For numpy containers, this is obtained through call
@@ -110,27 +102,25 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
 
     infoTable = produceFeaturewiseInfoTable(dataContainer, functionsToApply)
 
+    if displayDigits is not None and isinstance(displayDigits, (int, long)):
+        displayDigits = "." + str(displayDigits) + "f"
+
     if isSubset:
-        printableTable = tableString(infoTable, True, headers=infoTable[0], snipIndex=leftIndicesToSelect[-1])
+        printableTable = tableString(infoTable, True, headers=infoTable[0], roundDigits=displayDigits, snipIndex=leftIndicesToSelect[-1])
     else:
-        printableTable = tableString(infoTable, True, headers=infoTable[0])
+        printableTable = tableString(infoTable, True, headers=infoTable[0], roundDigits=displayDigits)
 
     return printableTable
 
-def computeShape(dataContainer):
-    """
-    TODO: add docstring
-    """
-    try:
-        shape = dataContainer.data.shape
-    except AttributeError:
-        shape = (len(dataContainer.data), len(dataContainer.data[0]))
-
-    return shape
 
 def produceAggregateTable(dataContainer):
     """
-    TODO: add docstring
+    Calculate various aggregate statistics about the data set held in dataContainer and return
+    them as a table (2d list), with descriptors in the first row and numerical results of those descriptors
+    in the second row of the table.
+
+    Statistics gathered:  proportion of zero values, proportion of missing values, number of Points
+    in the data set, number of features in the data set.
     """
     shape = computeShape(dataContainer)
     funcs = aggregateFunctionGenerator()
@@ -152,18 +142,34 @@ def produceAggregateTable(dataContainer):
 
     return [headers, stats]
 
-def produceAggregateReport(dataContainer):
+
+def produceAggregateReport(dataContainer, displayDigits):
     """
-    TODO: add docstring
+    Calculate various aggregate statistics about the data set held in dataContainer and return
+    them as a string containing a table, with descriptors in the first row and numerical results 
+    of those descriptors in the second row of the table.
+
+    Statistics gathered:  proportion of zero values, proportion of missing values, number of Points
+    in the data set, number of features in the data set.
     """
     table = produceAggregateTable(dataContainer)
-    printableTable = tableString(table, False, headers=table[0])
-    return printableTable
+
+    if displayDigits is not None and isinstance(displayDigits, (int, long)):
+        displayDigits = "." + str(displayDigits) + "f"
+
+    return tableString(table, False, headers=table[0], roundDigits=displayDigits)
+
+    ###############################################################################
+    #                                                                             #
+    #                           Statistical functions                             #
+    #                                                                             #
+    ###############################################################################
 
 
 def proportionMissing(values):
     """
-    TODO: add docstring
+    Calculate proportion of entries in 'values' iterator that are missing (defined
+    as being None or NaN).
     """
     numMissing = 0
     numTotal = len(values)
@@ -176,9 +182,10 @@ def proportionMissing(values):
         return float(numMissing) / float(numTotal)
     else: return 0.0
 
+
 def proportionZero(values):
     """
-    TODO: add docstring
+    Calculate proportion of entries in 'values' iterator that are equal to zero.
     """
     totalNum = len(values)
     nonZeroCount = 0
@@ -189,122 +196,6 @@ def proportionZero(values):
     if totalNum > 0:
         return float(totalNum - nonZeroCount) / float(totalNum)
     else: return 0.0
-
-def numValues(values):
-    """
-    TODO: add docstring
-    """
-    return len(values)
-
-
-def isMissing(point):
-    """
-    TODO: add docstring
-    """
-    if point is None or math.isnan(point):
-        return True
-    else: return False
-
-
-def adjustStats(rawStats, funcNames, totalNumRows):
-    """
-        TODO: add docstring
-    """
-    rawNumRows = rawStats[-1]
-
-    #find value of 'mean' for this feature
-    for i in range(rawStats):
-        if funcNames[i] == 'mean_':
-            mean = rawStats[i]
-        else:
-            pass
-
-    for i in range(rawStats):
-        rawStat = rawStats[i]
-        funcName = funcNames[i]
-        if funcName == "min_":
-            if rawStat > 0:
-                rawStats[i] = 0
-            else:
-                rawStats[i] = rawStat
-        elif funcName == "max_":
-            if rawStat < 0:
-                rawStats[i] = 0
-            else:
-                rawStats[i] = rawStat
-        elif funcName == "median_":
-            pass
-        elif funcName == "mean_":
-            rawStats[i] = float(rawStat * rawNumRows) / float(totalNumRows)
-        elif funcName == "standardDeviation":
-            rawStats[i] = math.sqrt(rawStats[i]**2 + (totalNumRows - rawNumRows) * (mean**2))
-        elif funcName == "numUnique":
-            rawStats[i] = rawStat + 1
-        elif funcName == 'featureType':
-            rawStats[i] = rawStat
-        else:
-            rawStats[i] = rawStat
-
-    return rawStats
-
-def transposeRow(row):
-    """
-        Given a row (1d list), convert it into a column (list of lists, each
-        with one element of the original row.  Alters row directly, rather than
-        making a copy and returning the copy.
-        Example: [1, 2, 3, 4] -> [[1], [2], [3], [4]]
-        TODO: make more general (just transpose, rather than transposeRow)
-    """
-    for i in range(len(row)):
-        row[i] = [row[i]]
-
-    return
-
-def appendColumns(appendTo, appendFrom):
-    """
-        Append the columns of one 2D matrix (lists of lists) into another.  
-        They must have the same number of rows, but can have different numbers 
-        of columns.  I.e. len(appendTo) == len(appendFrom), but 
-        len(appendTo[0]) == len(appendFrom[0]) does not need to be true.
-        If they do not have the same number of rows, an ArgumentException is
-        raised.
-    """
-    if len(appendTo) != len(appendFrom):
-        raise ArgumentException("Can't merge two matrices with different numbers of rows: " + 
-            str(len(appendTo)) + " != " + str(len(appendFrom)))
-
-    for i in xrange(len(appendTo)):
-        appendFromRow = appendFrom[i]
-        for j in xrange(len(appendFromRow)):
-            appendTo[i].append(appendFromRow[j])
-
-    return
-
-def isNumericalFeatureGuesser(featureVector):
-    """
-    Returns true if the vector contains primitive numerical non-complex values, 
-    returns false otherwise.  Assumes that all items in vector are of the same type.
-    """
-    for item in featureVector:
-        if isinstance(item, (int, float, long)):
-            return True
-        elif item is None or math.isnan(item):
-            pass
-        else:
-            return False
-
-    return True
-
-def isNumericalPoint(point):
-    """
-    Check to see if a point is a valid number that can be used in numerical calculations.
-    If point is of type float, long, or int, and not None or NaN, return True.  Otherwise
-    return False.
-    """
-    if isinstance(point, (int, float, long)) and not math.isnan(point):
-        return True
-    else:
-        return False
 
 
 def min_(values):
@@ -331,6 +222,7 @@ def min_(values):
     else:
         return None
 
+
 def max_(values):
     """
     Given a 1D vector of values, find the maximum value.  If the values are
@@ -354,6 +246,7 @@ def max_(values):
         else: return currMax
     else:
         return None
+
 
 def mean_(values):
     """
@@ -389,7 +282,6 @@ def median_(values):
     """
     Given a 1D vector of values, find the minimum value.  If the values are
     not numerical, return None.
-    TODO: handle nan/None values
     """
     if not isNumericalFeatureGuesser(values):
         return None
@@ -407,6 +299,7 @@ def median_(values):
         median = float(sortedValues[int(math.floor(numValues/2))])
 
     return median
+
 
 def standardDeviation(values):
     """
@@ -437,6 +330,7 @@ def standardDeviation(values):
     stDev = math.sqrt(squaredDifferenceTotal / float(numericalCount))
     return stDev
 
+
 def numUnique(values):
     """
     Given a 1D vector of values, calculate the number of unique values.
@@ -444,6 +338,7 @@ def numUnique(values):
     values = filter(lambda x: not (x == None or math.isnan(x)), values)
     valueSet = set(values)
     return len(valueSet)
+
 
 def featureType(values):
     """
@@ -463,6 +358,126 @@ def featureType(values):
             pass
 
     return "Unknown"
+
+
+###############################################################################
+#                                                                             #
+#                           Utility functions                                 #
+#                                                                             #
+###############################################################################
+
+def featurewiseFunctionGenerator():
+    """
+    Produce a list of functions suitable for being passed to BaseData's applyFunctionToEachFeature
+    function.  Includes: min(), max(), mean(), median(), standardDeviation(), numUniqueValues()
+    """
+    functions = [min_, max_, mean_, median_, standardDeviation, numUnique]
+    return functions
+
+
+def aggregateFunctionGenerator():
+    """
+    Produce a list of functions that can be used to produce aggregate statistics on an entire
+    data set.  The functions will be applied through BaseData's applyFunctionToEachFeature
+    function, and their results averaged across all features.  Includes a function to calculate
+    the proportion of entries that are equal to zero and the proportion of entries that are missing
+    (i.e. are None or NaN).
+    """
+    functions = [proportionZero, proportionMissing]
+    return functions
+
+
+def isMissing(point):
+    """
+    Determine if a point is missing or not.  If the point is None or NaN, return True.
+    Else return False.
+    """
+    if point is None or math.isnan(point):
+        return True
+    else: return False
+
+
+def transposeRow(row):
+    """
+        Given a row (1d list), convert it into a column (list of lists, each
+        with one element of the original row.  Alters row directly, rather than
+        making a copy and returning the copy.
+        Example: [1, 2, 3, 4] -> [[1], [2], [3], [4]]
+        TODO: make more general (just transpose, rather than transposeRow)
+    """
+    for i in range(len(row)):
+        row[i] = [row[i]]
+
+    return
+
+
+def appendColumns(appendTo, appendFrom):
+    """
+        Append the columns of one 2D matrix (lists of lists) into another.  
+        They must have the same number of rows, but can have different numbers 
+        of columns.  I.e. len(appendTo) == len(appendFrom), but 
+        len(appendTo[0]) == len(appendFrom[0]) does not need to be true.
+        If they do not have the same number of rows, an ArgumentException is
+        raised.
+    """
+    if len(appendTo) != len(appendFrom):
+        raise ArgumentException("Can't merge two matrices with different numbers of rows: " + 
+            str(len(appendTo)) + " != " + str(len(appendFrom)))
+
+    for i in xrange(len(appendTo)):
+        appendFromRow = appendFrom[i]
+        for j in xrange(len(appendFromRow)):
+            appendTo[i].append(appendFromRow[j])
+
+    return
+
+
+def isNumericalFeatureGuesser(featureVector):
+    """
+    Returns true if the vector contains primitive numerical non-complex values, 
+    returns false otherwise.  Assumes that all items in vector are of the same type.
+    """
+    for item in featureVector:
+        if isinstance(item, (int, float, long)):
+            return True
+        elif item is None or math.isnan(item):
+            pass
+        else:
+            return False
+
+    return True
+
+
+def isNumericalPoint(point):
+    """
+    Check to see if a point is a valid number that can be used in numerical calculations.
+    If point is of type float, long, or int, and not None or NaN, return True.  Otherwise
+    return False.
+    """
+    if isinstance(point, (int, float, long)) and not math.isnan(point):
+        return True
+    else:
+        return False
+
+
+def computeShape(dataContainer):
+    """
+    Compute number of rows and columns in the dataSet contained within dataContainer.  Return
+    as a tuple: (numRows, numColumns)
+    """
+    try:
+        shape = dataContainer.data.shape
+    except AttributeError:
+        shape = (len(dataContainer.data), len(dataContainer.data[0]))
+
+    return shape
+
+
+###############################################################################
+#                                                                             #
+#                                 Unit tests                                  #
+#                                                                             #
+###############################################################################
 
 def testDense():
     """

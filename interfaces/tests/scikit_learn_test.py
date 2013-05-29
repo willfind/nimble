@@ -52,8 +52,10 @@ def testSciKitLearnSparseRegression():
 	data = rand(c)
 	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
 	obj = CooSparseData(A)
+	testObj = obj.duplicate()
+	testObj.extractFeatures(cols[0])
 
-	ret = sciKitLearn('SGDRegressor', trainData=obj, testData=obj, dependentVar=cols[0])
+	ret = sciKitLearn('SGDRegressor', trainData=obj, testData=testObj, dependentVar=cols[0])
 
 	assert ret is not None
 
@@ -95,6 +97,29 @@ def testSciKitLearnHandmadeSparseClustering():
 	
 	assert ret.data[0,0] == ret.data[1,0]
 	assert ret.data[0,0] != ret.data[2,0]
+
+
+def testSciKitLearnScoreMode():
+	""" Test sciKitLearn() returns the right dimensions of output when given different scoreMode flags"""
+	variables = ["Y","x1","x2"]
+	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[2,3],[-200,0]]
+	testObj = DMData(data2)
+
+	# default scoreMode is 'label'
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})
+	assert ret.points() == 2
+	assert ret.features() == 1
+
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert ret.points() == 2
+	assert ret.features() == 3
 
 
 def testSciKitLearnListAlgorithms():

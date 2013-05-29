@@ -5,6 +5,8 @@ is static.
 """
 
 import numpy
+import inspect
+import UML
 
 from UML import run
 from UML import data
@@ -62,3 +64,59 @@ def normalize(algorithm, trainData, testData=None, dependentVar=None, arguments=
 
 #listAllAlgorithms()
 
+
+def listDataRepresentationMethods():
+	methodList = dir(UML.processing.base_data.BaseData)
+	visibleMethodList = []
+	for methodName in methodList:
+		if not methodName.startswith('_'):
+			visibleMethodList.append(methodName)
+
+	ret = []
+	for methodName in visibleMethodList:
+		currMethod = eval("UML.processing.base_data.BaseData." + methodName)
+		(args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
+
+		retString = methodName + "("
+		for i in xrange(0, len(args)):
+			if i != 0:
+				retString += ", "
+			retString += args[i]
+			if defaults is not None and i >= (len(args) - len(defaults)):
+				retString += "=" + str(defaults[i - (len(args) - len(defaults))])
+			
+		# obliterate the last comma
+		retString += ")"
+		ret.append(retString)
+
+	return ret
+
+
+def listUMLFunctions():
+	methodList = dir(UML)
+
+	visibleMethodList = []
+	for methodName in methodList:
+		if not methodName.startswith('_'):
+			visibleMethodList.append(methodName)
+
+	ret = []
+	for methodName in visibleMethodList:
+		currMethod = eval("UML." + methodName)
+		if "__call__" not in dir(currMethod):
+			continue
+		(args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
+
+		retString = methodName + "("
+		for i in xrange(0, len(args)):
+			if i != 0:
+				retString += ", "
+			retString += args[i]
+			if defaults is not None and i >= (len(args) - len(defaults)):
+				retString += "=" + str(defaults[i - (len(args) - len(defaults))])
+			
+		# obliterate the last comma
+		retString += ")"
+		ret.append(retString)
+
+	return ret

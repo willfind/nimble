@@ -46,7 +46,7 @@ def sciKitLearnPresent():
 	return True
 
 
-def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, arguments={}, timer=None):
+def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 	Function to call on the estimator objects of the scikit-learn package.
 	It will instantiate the estimator case-sensitively matching the given algorithm,
@@ -56,6 +56,11 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 	otherwise it is returned as a DenseMatrixData object.
 
 	"""
+	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
+		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
+	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
+		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
+
 	if not isinstance(trainData, BaseData):
 		trainObj = DMData(file=trainData)
 	else: # input is an object
@@ -71,7 +76,7 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
-		# TODO currently destructive!
+		trainObj = trainObj.duplicate()
 		trainObjY = trainObj.extractFeatures([dependentVar])		
 	# could be None for unsupervised learning	
 
@@ -90,7 +95,7 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 
 	# call backend
 	try:
-		retData = _sciKitLearnBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, timer)
+		retData = _sciKitLearnBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, scoreMode, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not sciKitLearnPresent():
@@ -104,14 +109,18 @@ def sciKitLearn(algorithm, trainData, testData, output=None, dependentVar=None, 
 	outputObj = DMData(retData)
 
 	if output is None:
-		# we want to return a column vector
-		outputObj.transpose()
+		if scoreMode == 'bestScore':
+			outputObj.renameMultipleFeatureNames(['PredictedClassLabel', 'LabelScore'])
+		elif scoreMode == 'allScores':
+			names = sorted(list(str(i) for i in numpy.unique(trainRawDataY)))
+			outputObj.renameMultipleFeatureNames(names)
+
 		return outputObj
 
 	outputObj.writeFile('csv', output, False)
 
 
-def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, timer=None):
+def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to scikit-learn
 
@@ -150,14 +159,39 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, ti
 		timer.stop('train')
 		timer.start('test')
 
-	# estimate from object
-	(preArgs,v,k,d) = inspect.getargspec(sklObj.predict)
-	argString = makeArgString(preArgs, algArgs, "", "=", ", ")
-	outData = eval("sklObj.predict(testData, " + argString + ")")
+	#case on scoreMode
+	predLabels = None
+	scores = None
+	if scoreMode != 'label':
+		labelOrder = numpy.unique(trainDataY)
+		numLabels = len(labelOrder)
+	else:
+		labelOrder = None
+	if scoreMode == 'label' or scoreMode == 'bestScore' or numLabels == 3:
+		# estimate from object
+		(preArgs,v,k,d) = inspect.getargspec(sklObj.predict)
+		argString = makeArgString(preArgs, algArgs, "", "=", ", ")
+		predLabels = eval("sklObj.predict(testData, " + argString + ")")
+		predLabels = numpy.atleast_2d(predLabels)
+		predLabels = predLabels.T
+		#stop timing of testing, if timer is present
+		if timer is not None:
+			timer.stop('test')
 
-	#stop timing of testing, if timer is present
-	if timer is not None:
-		timer.stop('test')
+	if scoreMode != 'label':
+		try:
+			scoresPerPoint = sklObj.decision_function(testData)
+		except AttributeError:
+			raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
+		scores = scoresPerPoint
+		if not ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels):
+			scores = []
+			for i in xrange(len(scoresPerPoint)):
+				combinedScores = calculateSingleLabelScoresFromOneVsOneScores(scoresPerPoint[i], numLabels)
+				scores.append(combinedScores)
+			scores = numpy.array(scores)
+
+	outData = scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder)
 
 	return outData
 
