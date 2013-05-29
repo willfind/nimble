@@ -2,6 +2,8 @@ import time
 import numpy
 import inspect
 import re
+import types
+from UML.processing import BaseData
 from uml_logger import UmlLogger
 from UML.utility import ArgumentException
 from ..processing.coo_sparse_data import CooSparseData
@@ -13,6 +15,9 @@ class MachineReadableRunLog(UmlLogger):
 
 	def _logLoad_implementation(self, dataFileName, baseDataType=None, name=None):
 		"""
+		Send information about the loading of a data file into a BaseData object to the log.
+		Includes: name of the data file, type of baseData object it was loaded into, and the
+		name of the object, if any.
 		"""
 		logLine = "{LOAD}::"
 		if dataFileName is not None:
@@ -33,10 +38,39 @@ class MachineReadableRunLog(UmlLogger):
 			else:
 				raise ArgumentException("name must be a string")
 
-	def _logData_implementation():
+		self.logMessage(logLine)
+
+	def _logData_implementation(self, baseDataObject):
 		"""
+		Send information about a BaseData object to the machine-readable log.  Includes
+		name of the object, if present, the type of the object, and the dimensions of the data
+		in the object.  The human readable version of this function includes much more data
+		about the object and the data it contains.
 		"""
-		pass
+		if baseDataObject is None:
+			return
+
+		logLine = "{DATA}::"
+
+		#boolean to track whether logLine has had info appended to it
+		firstInfoAppended = False
+
+		#add the data object's name, if it has one
+		if baseDataObject.name is not None:
+			logLine += "name:" + str(baseDataObject.name)
+			firstInfo = True
+
+		if firstInfoAppended:
+			logLine += "," + "type:" + str(baseDataObject.getType())
+		else:
+			logLine += "type:" + str(baseDataObject.getType())
+
+		if firstInfoAppended:
+			logLine += "," + "dimensions:(" + str(baseDataObject.points()) + ", " + str(baseDataObject.features()) + ")"
+
+		self.logMessage(logLine)
+
+
 
 	def _logRun_implementation(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
 		"""
@@ -54,7 +88,6 @@ class MachineReadableRunLog(UmlLogger):
 			
 			Format is key:value,key:value,...,key:value
 		"""
-
 		#Create a string to be logged (as one line), and add dimensions and the function
 		logLine = "{RUN}::"
 		logLine += createMRLineElement("timestamp", time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -86,7 +119,8 @@ class MachineReadableRunLog(UmlLogger):
 		#add timing info
 		#logLine += createMRLineElement("runTime", "{0:.2f}".format(runTime))
 		if timer is not None and len(timer.cumulativeTimes) > 0:
-			for label, duration in timer.cumulativeTimes.iteritems():
+			for label in timer.cumulativeTimes.keys():
+				duration = timer.calcRunTime(label)
 				logLine += createMRLineElement(label, "{0:.2f}".format(duration))
 
 		if isinstance(function, (str, unicode)):
@@ -103,11 +137,18 @@ class MachineReadableRunLog(UmlLogger):
 
 		#add any extraInfo to the log string
 		if extraInfo is not None:
-			for key, value in extraInfo.items():
-				logLine += createMRLineElement(key, value)
+			for key, value in extraInfo.iteritems():
+				if isinstance(key, (str, int, float, bool)) and isinstance(value, (str, int, float, bool)):
+					logLine += createMRLineElement(key, value)
+				elif isinstance(value, types.FunctionType):
+					logLine += createMRLineElement(key, value.__name__)
+				elif isinstance(value, BaseData):
+					logLine += createMRLineElement(key, str(value.points()) + ", " + str(value.features()) + ")")
+				else:
+					logLine += createMRLineElement(key, value)
 
 		if metrics is not None:
-			for metric, result in metrics.items():
+			for metric, result in metrics.iteritems():
 				if isinstance(metric, (str, unicode)):
 					logLine += createMRLineElement(str(metric), result)
 				else:
@@ -119,7 +160,7 @@ class MachineReadableRunLog(UmlLogger):
 						metricLines = "N/A"
 					logLine += createMRLineElement(metricString, result)
 
-		if logLine[len(logLine)-1] == ',':
+		if logLine[-1] == ',':
 			logLine = logLine[:-1]
 
 		self.logMessage(logLine)

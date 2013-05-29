@@ -90,7 +90,7 @@ class Stopwatch(object):
 			ImproperActionException.
 		"""
 		if taskName not in self.cumulativeTimes or taskName not in self.isRunningStatus:
-			raise MissingEntryException([taskName], "Missing entry when trying to calculate total task run time")
+			raise MissingEntryException("Missing entry when trying to calculate total task run time: " + str(taskName))
 		elif self.isRunningStatus[taskName] == True:
 			raise ImproperActionException('Can\'t calculate total running time for ' + taskName + ', as it is still running')
 		else:

@@ -1,6 +1,7 @@
 import time
 import numpy
 import inspect
+import types
 
 from tableString import *
 from UML.processing import BaseData
@@ -122,7 +123,8 @@ class HumanReadableRunLog(UmlLogger):
 
 
 		if timer is not None:
-			for header, duration in timer.cumulativeTimes.iteritems():
+			for header in timer.cumulativeTimes.keys():
+				duration = timer.calcRunTime(header)
 				tableHeaders.append(header+" time")
 				tableRow.append("{0:.2f}".format(duration))
 
@@ -138,7 +140,12 @@ class HumanReadableRunLog(UmlLogger):
 			extraTableValues = []
 			for key, value in extraInfo.iteritems():
 				extraTableHeaders.append(str(key))
-				extraTableValues.append(str(value))
+				if isinstance(value, types.FunctionType):
+					extraTableValues.append(value.__name__)
+				elif isinstance(value, BaseData):
+					extraTableValues.append("BaseData: " + "(" + str(value.points()) + ", " + str(value.features()) + ")")
+				else:
+					extraTableValues.append(str(value))
 			extraTable = [extraTableHeaders, extraTableValues]
 			self.logMessage(tableString(extraTable, True, None, roundDigits=4))
 

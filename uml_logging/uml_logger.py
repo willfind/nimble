@@ -68,11 +68,11 @@ class UmlLogger(object):
 		self._logRun_implementation(trainData, testData, function, metrics, timer, extraInfo, numFolds)
 
 
-	def logData(self):
+	def logData(self, baseDataObject):
 		"""
 		TODO: add docstring
 		"""
-		self._logData_implementation()
+		self._logData_implementation(baseDataObject)
 
 
 	def logLoad(self, dataFileName, baseDataType=None, name=None):

@@ -7,6 +7,7 @@
 """
 
 import os
+import datetime
 
 from human_readable_test import HumanReadableRunLog
 from machine_readable_test import MachineReadableRunLog
@@ -19,14 +20,15 @@ class LogManager(object):
 			logLocation = '../'
 
 		if logName is None:
-			logName = "uMLLog"
+			currDate = datetime.datetime.now()
+			logName = "uMLLog-" + currDate.strftime("%Y%m%d")
 
 		fullLogDesignator = os.path.join(logLocation, logName)
 
 		self.humanReadableLog = HumanReadableRunLog(fullLogDesignator + ".txt")
 		self.machineReadableLog = MachineReadableRunLog(fullLogDesignator + ".mr")
 
-	def logData(self):
+	def logData(self, baseDataObject):
 		"""
 		Send information about a data set to the log(s).
 		"""
