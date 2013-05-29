@@ -1,7 +1,136 @@
 import math
 
 from UML.uml_loading.data_loading import *
+from UML.uml_loading.dok_data_set import DokDataSet
 from UML.uml_loading.convert_to_basedata import convertToCooBaseData
+
+def test_DokDataSetFrequencyFloor():
+    """
+    Unit test for DokDataSet object's minimum frequency
+    filter
+    """
+    testSet = DokDataSet()
+    testSet.loadDirectory('uml_loading/tests/testDirectory2', featureMergeMode='multiTyped')
+    attributeMap = {'001': 'yahoo.com', '002': 'google.com', '003': 'bing.com', '004': 'google.com', '005': 'bing.com', '007': 'bing.com', '008': 'bing.com', '009': 'google.com'}
+    classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
+    attributeMapMap = {'domain': attributeMap}
+    classLabelMapMap = {'classLabel': classLabelMap}
+    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=3, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
+
+    featureNameMap = cooDataSet.featureNames
+    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+
+    assert len(featureNameMap) == 9
+    assert 'body_cat' in featureNameMap
+    assert 'body_dog' in featureNameMap
+    assert 'body_account' in featureNameMap
+    assert 'body_abl' in featureNameMap
+    assert 'head_cat' in featureNameMap
+    assert 'domain_bing.com' in featureNameMap
+    assert 'domain_google.com' in featureNameMap
+
+    assert cooDataSet.data.shape[0] == 8
+    assert cooDataSet.data.shape[1] == 9
+
+    dokVersion = cooDataSet.data.todok()
+
+    dokShape = dokVersion.shape
+    numRows = dokShape[0]
+    numColumns = dokShape[1]
+
+    doc1Map = {'classLabel': 1, 'body_dog': 1, 'body_cat': 1, 'body_account': 1, 'body_abl': 1}
+    doc2Map = {'classLabel': 2, 'body_cat': 2, 'body_dog': 1, 'body_account': 1, 'head_cat': 1, 'domain_google.com': 1}
+    doc3Map = {'classLabel': 2, 'body_abl': 2, 'body_dog': 1, 'domain_bing.com': 1}
+    doc4Map = {'classLabel': 3, 'body_cat': 2, 'body_dog': 1, 'domain_google.com': 1, 'head_cat': 2}
+    doc5Map = {'classLabel': 1, 'head_cat': 1, 'head_account': 1, 'domain_bing.com': 1}
+    doc7Map = {'classLabel': 2, 'body_dog': 1, 'body_pant': 1, 'body_cat': 1, 'domain_bing.com': 1}
+    doc8Map = {'classLabel': 1, 'body_dog': 1, 'body_abl': 1, 'body_hors': 1, 'domain_bing.com': 1}
+    doc9Map = {'classLabel': 1, 'body_account': 2, 'body_abl': 1, 'body_dog': 1, 'domain_google.com': 1}
+
+    docMap = {1: doc1Map, 2: doc2Map, 3: doc3Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
+
+    for i in range(numRows):
+        docIdNumber = dokVersion[i, 0]
+        classLabel = dokVersion[i, 1]
+        assert classLabel == docMap[docIdNumber]['classLabel']
+        if i != 5:
+            featureCountMap = docMap[int(docIdNumber)]
+        else:
+            continue
+        print "docIdNumber: " + str(docIdNumber)
+        for j in range(2, numColumns):
+            feature = inverseFeatureNameMap[j]
+            if dokVersion[i, j] > 0:
+                print "processed feature: " + str(feature)
+                print "processed feature count: " + str(dokVersion[i, j])
+                if feature in featureCountMap:
+                    print "manually computed feature count: " + str(featureCountMap[feature])
+                assert int(dokVersion[i, j]) == featureCountMap[feature]
+
+
+def test_DokDataSetTypeWeighting():
+    """
+    Unit test for DokDataSet object's type weighting
+    functions
+    """
+    testSet = DokDataSet()
+    testSet.loadDirectory('uml_loading/tests/testDirectory2', featureMergeMode='multiTyped')
+    attributeMap = {'001': 'yahoo.com', '002': 'google.com', '003': 'bing.com', '004': 'google.com', '005': 'bing.com', '007': 'bing.com', '008': 'bing.com', '009': 'google.com'}
+    classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
+    attributeMapMap = {'domain': attributeMap}
+    classLabelMapMap = {'classLabel': classLabelMap}
+    typeWeightScheme = {'domain':3}
+    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=3, featureTypeWeightScheme=typeWeightScheme, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
+
+    featureNameMap = cooDataSet.featureNames
+    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+
+    assert len(featureNameMap) == 9
+    assert 'body_cat' in featureNameMap
+    assert 'body_dog' in featureNameMap
+    assert 'body_account' in featureNameMap
+    assert 'body_abl' in featureNameMap
+    assert 'head_cat' in featureNameMap
+    assert 'domain_bing.com' in featureNameMap
+    assert 'domain_google.com' in featureNameMap
+
+    assert cooDataSet.data.shape[0] == 8
+    assert cooDataSet.data.shape[1] == 9
+
+    dokVersion = cooDataSet.data.todok()
+
+    dokShape = dokVersion.shape
+    numRows = dokShape[0]
+    numColumns = dokShape[1]
+
+    doc1Map = {'classLabel': 1, 'body_dog': 1, 'body_cat': 1, 'body_account': 1, 'body_abl': 1}
+    doc2Map = {'classLabel': 2, 'body_cat': 2, 'body_dog': 1, 'body_account': 1, 'head_cat': 1, 'domain_google.com': 3}
+    doc3Map = {'classLabel': 2, 'body_abl': 2, 'body_dog': 1, 'domain_bing.com': 3}
+    doc4Map = {'classLabel': 3, 'body_cat': 2, 'body_dog': 1, 'domain_google.com': 1, 'head_cat': 2}
+    doc5Map = {'classLabel': 1, 'head_cat': 1, 'head_account': 1, 'domain_bing.com': 3}
+    doc7Map = {'classLabel': 2, 'body_dog': 1, 'body_pant': 1, 'body_cat': 1, 'domain_bing.com': 3}
+    doc8Map = {'classLabel': 1, 'body_dog': 1, 'body_abl': 1, 'body_hors': 1, 'domain_bing.com': 3}
+    doc9Map = {'classLabel': 1, 'body_account': 2, 'body_abl': 1, 'body_dog': 1, 'domain_google.com': 3}
+
+    docMap = {1: doc1Map, 2: doc2Map, 3: doc3Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
+
+    for i in range(numRows):
+        docIdNumber = dokVersion[i, 0]
+        classLabel = dokVersion[i, 1]
+        assert classLabel == docMap[docIdNumber]['classLabel']
+        if i != 5:
+            featureCountMap = docMap[int(docIdNumber)]
+        else:
+            continue
+        print "docIdNumber: " + str(docIdNumber)
+        for j in range(2, numColumns):
+            feature = inverseFeatureNameMap[j]
+            if dokVersion[i, j] > 0:
+                print "processed feature: " + str(feature)
+                print "processed feature count: " + str(dokVersion[i, j])
+                if feature in featureCountMap:
+                    print "manually computed feature count: " + str(featureCountMap[feature])
+                assert int(dokVersion[i, j]) == featureCountMap[feature]
 
 
 def test_convertToCooBaseDataFreqRepMultiTyped():
@@ -12,10 +141,11 @@ def test_convertToCooBaseDataFreqRepMultiTyped():
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
+    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
+    print "featureNameMap: " + str(featureNameMap)
     assert len(featureNameMap) == 15
     assert 'body_cat' in featureNameMap
     assert 'body_dog' in featureNameMap
@@ -76,7 +206,7 @@ def test_convertToCooBaseDataBinaryMultiTyped():
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='binary')
+    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='binary')
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
@@ -140,7 +270,7 @@ def test_convertToCooBaseDataTfIdfMultiTyped():
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='tfidf')
+    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='tfidf')
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
@@ -184,14 +314,14 @@ def test_convertToCooBaseDataTfIdfMultiTyped():
             featureCountMap = docMap[int(docIdNumber)]
         else:
             continue
-        print "docIdNumber: " + str(docIdNumber)
+        #print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
             feature = inverseFeatureNameMap[j]
             if dokVersion[i, j] > 0:
-                print "processed feature: " + str(feature)
-                print "processed feature count: " + str(dokVersion[i, j])
-                if feature in featureCountMap:
-                    print "manually computed feature count: " + str(featureCountMap[feature])
+                #print "processed feature: " + str(feature)
+                #print "processed feature count: " + str(dokVersion[i, j])
+                #if feature in featureCountMap:
+                    #print "manually computed feature count: " + str(featureCountMap[feature])
                 assert math.fabs(dokVersion[i, j] -featureCountMap[feature]) < 0.01
 
     return
