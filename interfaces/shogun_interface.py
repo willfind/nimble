@@ -321,7 +321,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 	# have to undo the label name packing we performed earlier
 	if inverseMapping is not None and scoreMode != 'allScores':
 		outputObj = DMData(outData)
-		outputObj.transformPoint(0, makeInverseMapper(inverseMapping))
+		outputObj.transformFeature(0, makeInverseMapper(inverseMapping))
 		outData = outputObj.data
 
 	return outData
