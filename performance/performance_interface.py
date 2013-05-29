@@ -8,21 +8,22 @@ import inspect
 
 from ..processing.base_data import BaseData
 from ..combinations.Combinations import executeCode
+from UML.performance.metric_functions import proportionPercentNegative90, proportionPercentNegative50, bottomProportionPercentNegative10
 from ..utility.custom_exceptions import ArgumentException
 
 
-def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions):
+def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions, negativeLabel=None):
     """
         Calculate one or more error metrics, given a list of known labels and a list of
         predicted labels.  Return as a dictionary associating the performance metric with
         its numerical result.
 
         dependentVar: either an int/string representing a column index in knownData
-        containing the known labels, or a matrix that contains the known labels
+        containing the known labels, or an n x 1 matrix that contains the known labels
 
         knownData: matrix containing the known labels of the test set, as well as the
         features of the test set. Can be None if 'knownIndicator' contains the labels,
-        and none of the performance functions features as input.
+        and none of the performance functions needs features as input.
 
         predictedData: Matrix containing predicted class labels for a testing set.
         Assumes that the predicted label in the nth row of predictedLabels is associated
@@ -53,8 +54,11 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions)
     #TODO make this hash more generic - what if function args are not knownValues and predictedValues
     parameterHash = {"knownValues":knownLabels, "predictedValues":predictedData}
     for func in performanceFunctions:
-        #print inspect.getargspec(func).args
-        if len(inspect.getargspec(func).args) == 2:
+        if func == proportionPercentNegative90 or func == proportionPercentNegative50 or func == bottomProportionPercentNegative10:
+            parameterHash["negativeLabel"] = negativeLabel
+            results[inspect.getsource(func)] = executeCode(func, parameterHash)
+            del parameterHash["negativeLabel"]
+        elif len(inspect.getargspec(func).args) == 2:
             #the metric function only takes two arguments: we assume they
             #are the known class labels and the predicted class labels
             if func.__name__ != "<lambda>":
