@@ -10,7 +10,7 @@ from UML import run
 from UML import data
 
 
-def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs, sendToLog=True):
+def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs, scoreMode='label', negativeLabel=None, sendToLog=True):
 	"""
 		Calls on run() to train and evaluate the learning algorithm defined in 'algorithm,'
 		then tests its performance using the metric function(s) found in
@@ -18,13 +18,21 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 
 		trainX: data set to be used for training (as some form of BaseData object)
 		testX: data set to be used for testing (as some form of BaseData object)
+		
 		trainDependentVar: used to retrieve the known class labels of the traing data. Either
 		contains the labels themselves or an index (numerical or string) that defines their locale
 		in the trainX object
+		
 		testDependentVar: used to retreive the known class labels of the test data. Either
 		contains the labels themselves or an index (numerical or string) that defines their locale
 		in the testX object
+		
 		arguments: optional arguments to be passed to the function specified by 'algorithm'
+		
+		negativeLabel: Argument required if performanceMetricFuncs contains proportionPercentPositive90
+		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
+		applies to data sets with 2 possible class labels.
+		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
 	#Need to make copies of all data, in case it will be modified before a classifier is trained
@@ -43,14 +51,14 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 		timer.start('train')
 
 	#rawResults contains predictions for each version of a learning function in the combos list
-	rawResult = run(algorithm, trainX, testX, dependentVar=trainDependentVar, arguments=arguments, sendToLog=False)
+	rawResult = run(algorithm, trainX, testX, dependentVar=trainDependentVar, arguments=arguments, scoreMode=scoreMode, sendToLog=False)
 
 	#if we are logging this run, we need to stop the timer
 	if sendToLog:
 		timer.stop('train')
 
 	#now we need to compute performance metric(s) for all prediction sets
-	results = computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs)
+	results = computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs, negativeLabel)
 
 	if sendToLog:
 		logManager = LogManager()
@@ -58,7 +66,7 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 
 	return results
 
-def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, performanceMetricFuncs=None, sendToLog=True):
+def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, performanceMetricFuncs=None, negativeLabel=None, sendToLog=True):
 	"""
 		Wrapper class for runOneVsOne.  Useful if you want the entire process of training,
 		testing, and computing performance measures to be handled.  Takes in a learning algorithm
@@ -110,7 +118,7 @@ def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependen
 	predictions = runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
-	results = computeMetrics(testDependentVar, None, predictions, performanceMetricFuncs)
+	results = computeMetrics(testDependentVar, None, predictions, performanceMetricFuncs, negativeLabel)
 
 	# Send this run to the log, if desired
 	if sendToLog:
@@ -344,7 +352,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
 
-def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, performanceMetricFuncs=None, sendToLog=True):
+def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, performanceMetricFuncs=None, negativeLabel=None, sendToLog=True):
 	"""
 	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -388,7 +396,7 @@ def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependen
 	predictions = runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
-	results = computeMetrics(testDependentVar, None, predictions, performanceMetricFuncs)
+	results = computeMetrics(testDependentVar, None, predictions, performanceMetricFuncs, negativeLabel)
 
 	# Send this run to the log, if desired
 	if sendToLog:
