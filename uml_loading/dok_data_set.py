@@ -218,9 +218,6 @@ class DokDataSet(object):
 			rowIndex = nonZeroEntries[0][listIndex]
 			columnIndex = nonZeroEntries[1][listIndex]
 			dataMatrixAll[rowIndex, columnIndex] = self.data[rowIndex, columnIndex]
-			if listIndex % 10000 == 0:
-				print "[rowIndex, columnIndex]: " + "[" + str(rowIndex) + ", " + str(columnIndex) + "]"
-				print "listIndex: " + str(listIndex)
 
 		#use these two numbers to track the index of new features or documents as
 		#they are added to dataMatrixAll
@@ -339,12 +336,6 @@ class DokDataSet(object):
 
 		featureNameList = self.removeInfrequentFeatures(minTermFrequency)
 
-		print "new shape: " + str(self.data.shape)
-		print "number of feature Names: " + str(len(featureNameList))
-		print "len(self.featureDocCountMap): " + str(len(self.featureDocCountMap))
-		print "len(self.featureColumnIndexMap): " + str(len(self.featureColumnIndexMap))
-		print "len(self.columnIndexFeatureMap): " + str(len(self.columnIndexFeatureMap))
-
 		#If any of the featureTypeWeights is not an integer, we need to change the type of
 		#this objects data matrix to float
 		if featureTypeWeightScheme is not None and len(featureTypeWeightScheme) > 0:
@@ -443,10 +434,6 @@ class DokDataSet(object):
 				rowIndexWeightSumMap[rowIndex] += tempTfIdf**2
 			except KeyError:
 				rowIndexWeightSumMap[rowIndex] = tempTfIdf**2
-			if i % 10000 == 0:
-				print "In calcTfIdf"
-				print "[rowIndex, columnIndex]: " + "[" + str(rowIndex) + ", " + str(columnIndex) + "]"
-				print "listIndex: " + str(i)
 				
 
 		for rowIndex, normalizationFactor in rowIndexWeightSumMap.iteritems():
@@ -458,10 +445,6 @@ class DokDataSet(object):
 			normalizationFactor = rowIndexWeightSumMap[rowIndex]
 			tempTfIdf = tfIdfDataHolder[rowIndex, columnIndex]
 			tfIdfDataHolder[rowIndex, columnIndex] = tempTfIdf / normalizationFactor
-			if i % 10000 == 0:
-				print "In calcTfIdf"
-				print "[rowIndex, columnIndex]: " + "[" + str(rowIndex) + ", " + str(columnIndex) + "]"
-				print "listIndex: " + str(i)
 
 		return tfIdfDataHolder
 
@@ -553,10 +536,6 @@ class DokDataSet(object):
 				newColumnIndexFeatureMap[newColumnIndex] = feature
 				newFeatureColumnIndexMap[feature] = newColumnIndex
 				newDokMatrix[rowIndex, newColumnIndex] = self.data[rowIndex, columnIndex]
-			if l % 10000 == 0:
-				print "In removeInfrequentTerms"
-				print "[rowIndex, columnIndex]: " + "[" + str(rowIndex) + ", " + str(columnIndex) + "]"
-				print "listIndex: " + str(l)
 
 		self.columnIndexFeatureMap = newColumnIndexFeatureMap
 		self.featureColumnIndexMap = newFeatureColumnIndexMap
