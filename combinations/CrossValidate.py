@@ -2,20 +2,29 @@ import operator
 import Combinations
 from .. import run
 from ..uml_logging.log_manager import LogManager
+from ..uml_logging.stopwatch import Stopwatch
 #import DenseMatrix
 
 
 def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog=True):
 	"""applies crossValidation using numFolds folds, applying each function in the list functionsToApply (which are text of python functions)
-	one by one. Assumes that thefunctionsToApply is a list of the text functions, that use the variables trainX, trainY, testX, testY within
+	one by one. Assumes that functionsToApply is a list of the text functions, that use the variables trainX, trainY, testX, testY within
 	their text."""
 	aggregatedResults = {}
+	if sendToLog:
+		timerMap = {}
 	for function in functionsToApply:
 		curResults = []
 		XIterator = X.foldIterator(numFolds=numFolds)	#assumes that the dataMatrix class has a function foldIterator that returns an iterator
 														#each time you call .next() on this iterator, it gives you the next (trainData, testData)
 														#pair, one for each fold. So for 10 fold cross validation, next works 10 times before failing.
 		YIterator = Y.foldIterator(numFolds=numFolds)
+		
+		#if we are loggin this, create a timer
+		if sendToLog:
+				timer = Stopwatch()
+				timerMap[function] = timer
+
 		while True: #need to add a test here for when iterator .next() is done
 			try:
 				curTrainX, curTestX = XIterator.next()
@@ -25,7 +34,15 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog
 			dataHash = extraParams
 			dataHash["trainX"] = curTrainX; dataHash["testX"] = curTestX	#assumes that the function text in functionsToApply uses these variables
 			dataHash["trainY"] = curTrainY; dataHash["testY"] = curTestY
+
+			if sendToLog:
+				timer.start('learning')
+
 			curResults.append(Combinations.executeCode(function, dataHash))
+
+			if sendToLog:
+				timer.stop('learning')
+
 		# average across all folds
 		avg = 0.
 		denom = 0.
@@ -34,11 +51,14 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog
 				avg += v
 				denom += 1
 		aggregatedResults[function] = avg/denom #NOTE: this could be bad if the sets have different size!!
-	if sendToLog:
-		logger = LogManager()
-		sortedResults = sorted(aggregatedResults.iteritems(), key=operator.itemgetter(1))
-		for result in sortedResults:
-			pass
+
+		if sendToLog:
+			logger = LogManager()
+			sortedResults = sorted(aggregatedResults.iteritems(), key=operator.itemgetter(1))
+			for result in sortedResults:
+				logger.logRun(X, None, function, {function:aggregatedResults[function]}, timer=None, numFolds=numFolds)
+				print "function: " + str(function)
+				print "results: " + str(result)
 	return aggregatedResults
 
 
@@ -51,7 +71,9 @@ def crossValidateReturnBest(X, Y, functionsToApply, mode, numFolds=10, extraPara
 		minimize = False
 	else:
 		raise Exception("mode must be either 'min' or 'max' depending on the desired solution")
-	resultsHash = crossValidate(X,Y, functionsToApply=functionsToApply, numFolds=numFolds, extraParams=extraParams)
+
+	resultsHash = crossValidate(X,Y, functionsToApply=functionsToApply, numFolds=numFolds, extraParams=extraParams, sendToLog=sendToLog)
+
 	if minimize: bestPerformance = float('inf')
 	else: bestPerformance = float('-inf')
 	bestFuncText = None
@@ -60,11 +82,8 @@ def crossValidateReturnBest(X, Y, functionsToApply, mode, numFolds=10, extraPara
 		if (minimize and performance < bestPerformance) or (not minimize and performance > bestPerformance): #if it's the best we've seen so far
 				bestPerformance = performance
 				bestFuncText = functionText
+
 	return bestFuncText, bestPerformance
-
-
-
-
 
 
 
