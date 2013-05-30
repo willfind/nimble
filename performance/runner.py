@@ -9,6 +9,23 @@ from UML.utility import ArgumentException
 from UML import run
 from UML import data
 
+def dataPrinter(trainX, testX, trainY, testY):
+    """
+    Print all values for each data object
+    """
+    trainXList = trainX.toListOfLists()
+    testXList = testX.toListOfLists()
+    trainYList = trainY.toListOfLists()
+    testYList = testY.toListOfLists()
+
+    for i in range(len(trainXList)):
+        print "trainX[" + str(i) + "]" + "[0]: " + str(trainXList[i][0]) + ", trainY[" + str(i) + "][0]: " + str(trainYList[i][0])
+
+    for i in range(len(testXList)):
+        print "testX[" + str(i) + "]" + "[0]: " + str(testXList[i][0]) + ", testY[" + str(i) + "][0]: " + str(testYList[i][0])
+
+    return 1.0
+
 
 def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs, scoreMode='label', negativeLabel=None, sendToLog=True):
 	"""
