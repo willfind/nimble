@@ -4,6 +4,7 @@ is static.
 
 """
 
+import random
 import numpy
 import inspect
 import UML
@@ -14,6 +15,27 @@ from .utility import ArgumentException
 
 
 # run() with a return type of the predicted labels added back into the object?
+
+def randomizedData(retType, numPoints, numFeatures, sparcity, numericType="int", featureNames=None, name=None):
+	if numPoints < 1:
+		raise ArgumentException("must specify a positive nonzero number of points")
+	if numFeatures < 1:
+		raise ArgumentException("must specify a positive nonzero number of features")
+	if sparcity < 0 or sparcity >=1:
+		raise ArgumentException("sparcity must be greater than zero and less than one")
+	if numericType != "int" and numericType != "float":
+		raise ArgumentException("numericType may only be 'int' or 'float'")
+
+	randData = numpy.zeros((numPoints,numFeatures))
+	for i in xrange(numPoints):
+		for j in xrange(numFeatures):
+			if random.random() > sparcity:
+				if numericType == 'int':
+					randData[i,j] = numpy.random.randint(1,100)
+				else:
+					randData[i,j] = numpy.random.rand()
+
+	return data(retType, data=randData, featureNames=featureNames, name=name)
 
 
 def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="DenseMatrixData"):
@@ -62,8 +84,26 @@ def normalize(algorithm, trainData, testData=None, dependentVar=None, arguments=
 
 #combinations() -- maybe
 
-#listAllAlgorithms()
+def listAlgorithms(package):
+	package = package.lower()
+	results = None
+	if package == 'mahout':
+		import UML.interfaces.mahout_interface
+		results = UML.interfaces.mahout_interface.listAlgorithms()
+	elif package == 'regressor':
+		import UML.interfaces.regressors_interface
+		results = UML.interfaces.regressors_interface.listAlgorithms()
+	elif package == 'scikitlearn':
+		import UML.interfaces.scikit_learn_interface
+		results = UML.interfaces.scikit_learn_interface.listAlgorithms()
+	elif package == 'mlpy':
+		import UML.interfaces.mlpy_interface
+		results = UML.interfaces.mlpy_interface.listAlgorithms()
+	elif package == 'shogun':
+		import UML.interfaces.shogun_interface
+		results = UML.interfaces.shogun_interface.listAlgorithms()
 
+	return results
 
 def listDataRepresentationMethods():
 	methodList = dir(UML.processing.base_data.BaseData)

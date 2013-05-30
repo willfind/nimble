@@ -1122,7 +1122,9 @@ def getPointView_isinstance(constructor):
 	view = toTest.getPointView(0)
 
 	assert isinstance(view, base_data.View)
-
+	assert view.name() is  None
+	assert view.index() >= 0 and view.index() < toTest.points()
+	assert len(view) == toTest.features()
 
 
 ##################
@@ -1138,4 +1140,7 @@ def getFeatureView_isinstance(constructor):
 	view = toTest.getFeatureView('one')
 
 	assert isinstance(view, base_data.View)
+	assert view.name() is not None
+	assert view.index() >= 0 and view.index() < toTest.features()
+	assert len(view) == toTest.points()
 

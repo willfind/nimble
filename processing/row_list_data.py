@@ -624,7 +624,7 @@ class FeatureView(View):
 	def index(self):
 		return self._colNum
 	def name(self):
-		return None
+		return self._colName
 
 class PointView(View):
 	"""

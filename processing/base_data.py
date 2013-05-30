@@ -166,6 +166,9 @@ class BaseData(object):
 		as values
 
 		"""
+		if self.features() == 0:
+			return
+
 		def hasStrings(feature):
 			for value in feature:
 				if isinstance(value, basestring):
@@ -346,6 +349,9 @@ class BaseData(object):
 		parameter. Those selected values are also removed from this object.
 
 		"""
+		if self.points() == 0:
+			raise ArgumentException("Cannot extract points from an object with 0 points")
+
 		random.seed(seed)
 		if extractionProbability is None:
 			raise ArgumentException("Must provide a extractionProbability")
@@ -408,6 +414,8 @@ class BaseData(object):
 		function must not be none and accept a point as an argument
 
 		"""
+		if self.points() == 0:
+			raise ArgumentException("Function not callable if there are 0 points of data")
 		if function is None:
 			raise ArgumentException("function must not be None")
 		retData = []
@@ -425,6 +433,8 @@ class BaseData(object):
 		function must not be none and accept a feature as an argument
 
 		"""
+		if self.features() == 0:
+			raise ArgumentException("Function not callable if there are 0 features of data")
 		if function is None:
 			raise ArgumentException("function must not be None")
 		retData = [[]]
@@ -435,6 +445,8 @@ class BaseData(object):
 
 
 	def mapReduceOnPoints(self, mapper, reducer):
+#		if self.points() == 0 or self.features() == 0:
+#
 		if mapper is None or reducer is None:
 			raise ArgumentException("The arguments must not be none")
 		if not hasattr(mapper, '__call__'):
@@ -501,6 +513,8 @@ class BaseData(object):
 		of passing each value of the original point to the input function.
 
 		"""
+		if self.features() == 0:
+			raise ArgumentException("Cannot transform points in a data object with no features")
 		if point is None or function is None:
 			raise ArgumentException("point and function must not be None")
 		if not isinstance(point, int):
@@ -520,6 +534,8 @@ class BaseData(object):
 		of passing each value of the original feature to the input function.
 
 		"""
+		if self.points() == 0:
+			raise ArgumentException("Cannot transform features in a data object with no points")
 		if feature is None or function is None:
 			raise ArgumentException("feature and function must not be None")
 		index = self._getIndex(feature)
@@ -664,6 +680,10 @@ class BaseData(object):
 		sortHelper may either be comparator, a scoring function, or None to indicate the natural
 		ordering.
 		"""
+		# its already sorted in these cases
+		if self.features() == 0 or self.points() == 0:
+			return
+
 		sortByIndex = sortBy
 		if sortBy is not None:
 			sortByIndex = self._getIndex(sortBy)
@@ -683,6 +703,9 @@ class BaseData(object):
 		ordering.
 
 		"""
+		# its already sorted in these cases
+		if self.features() == 0 or self.points() == 0:
+			return
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self._renameMultipleFeatureNames_implementation(newFeatureNameOrder,True)
 
@@ -703,6 +726,9 @@ class BaseData(object):
 		space of possible removals.
 
 		"""
+		if self.points() == 0:
+			raise ArgumentException("Cannot extract points from an object with 0 points")
+
 		if toExtract is not None:
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
@@ -745,6 +771,9 @@ class BaseData(object):
 		space of possible removals.
 
 		"""
+		if self.features() == 0:
+			raise ArgumentException("Cannot extract features from an object with 0 features")
+
 		if toExtract is not None:
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
@@ -803,7 +832,7 @@ class BaseData(object):
 		else:
 			raise ArgumentException("Unrecognized file extension")
 
-	def copyReferences(self, other):
+	def copyReferences(self, toCopy):
 		"""
 		Modifies the internal data of this object to refer to the same data as other. In other
 		words, the data wrapped by both the self and other objects resides in the
@@ -813,9 +842,9 @@ class BaseData(object):
 
 		"""
 		# this is called first because it checks the data type
-		self._copyReferences_implementation(other)
-		self.featureNames = other.featureNames
-		self.featureNamesInverse = other.featureNamesInverse
+		self._copyReferences_implementation(toCopy)
+		self.featureNames = toCopy.featureNames
+		self.featureNamesInverse = toCopy.featureNamesInverse
 
 
 	def duplicate(self):
@@ -1177,6 +1206,20 @@ class BaseData(object):
 
 class View():
 	__metaclass__ = ABCMeta
+
+	def equals(self, other):
+		if not isinstance(other, View):
+			return False
+		if len(self) != len(other):
+			return False
+		if self.index() != other.index():
+			return False
+		if self.name() != other.name():
+			return False
+		for i in xrange(len(self)):
+			if self[i] != other[i]:
+				return False
+		return True
 
 	@abstractmethod
 	def __getitem__(self, index):

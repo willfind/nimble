@@ -186,14 +186,14 @@ def testShogunRossData():
 def testShogunEmbeddedRossData():
 	""" Test shogun() by MulticlassOCAS with the ross data embedded in random data """
 	
-	p0 = [1,  0,    0,    0,    0.21,  0.12]
+	p0 = [3,  0,    0,    0,    0.21,  0.12]
 	p1 = [2,  0,    0.56, 0.77, 0,     0]
-	p2 = [1,  0.24, 0,    0,    0.12,  0]
-	p3 = [1,  0,    0,    0,    0,     0.33]
+	p2 = [3,  0.24, 0,    0,    0.12,  0]
+	p3 = [3,  0,    0,    0,    0,     0.33]
 	p4 = [2,  0.55, 0,    0.67, 0.98,  0]
-	p5 = [1,  0,    0,    0,    0.21,  0.12]
+	p5 = [3,  0,    0,    0,    0.21,  0.12]
 	p6 = [2,  0,    0.56, 0.77, 0,     0]
-	p7 = [1,  0.24, 0,    0,    0.12,  0]
+	p7 = [3,  0.24, 0,    0,    0.12,  0]
 
 	data = [p0,p1,p2,p3,p4,p5,p6,p7]
 
@@ -219,6 +219,10 @@ def testShogunEmbeddedRossData():
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, output=None, dependentVar=0, arguments=args)
 	assert ret is not None
 
+	for value in ret.data:
+		assert value == 2 or value == 3
+
+
 def testShogunScoreModeMulti():
 	""" Test shogun() returns the right dimensions when given different scoreMode flags, multi case"""
 	variables = ["Y","x1","x2"]
@@ -228,9 +232,6 @@ def testShogunScoreModeMulti():
 	data2 = [[2,3],[-200,0]]
 	testObj = DMData(data2)
 
-#	import pdb
-#	pdb.set_trace()
-
 	# default scoreMode is 'label'
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={})
 	assert ret.points() == 2
@@ -239,9 +240,6 @@ def testShogunScoreModeMulti():
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
 	assert ret.points() == 2
 	assert ret.features() == 2
-
-	print "go"
-	print ""
 
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
 	assert ret.points() == 2

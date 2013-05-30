@@ -59,6 +59,17 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
 		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
 
+	# if we have to enfore a classification strategy, we test the algorithm in question,
+	# and call our own strategies if necessary
+	if multiClassStrategy != 'default':
+		trialResult = checkClassificationStrategy(_shogunBackend, algorithm, arguments)
+		if multiClassStrategy == 'ova' and trialResult != 'ova':
+			from ..performance.runner import runOneVsAll
+			runOneVsAll(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+		if multiClassStrategy == 'ovo' and trialResult != 'ovo':
+			from ..performance.runner import runOneVsOne
+			runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+
 	args = copy.copy(arguments)
 	if not isinstance(trainData, BaseData):
 		trainObj = DMData(file=trainData)
@@ -184,6 +195,8 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 				if scoreMode != 'label':
 					raise ArgumentException("Invalid scoreMode for a regression problem; the default parameter must be used")
 			else:
+				if scoreMode == 'test':
+					return 'binary'
 				from shogun.Features import BinaryLabels
 				trainLabels = BinaryLabels(trainDataY.astype(float))
 	except ImportError:
@@ -292,7 +305,14 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 				for j in xrange(currConfidences.size):
 					scoresPerPoint[i,j] = currConfidences[j]
 			scores = scoresPerPoint
-			if not ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels):
+			strategy = ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels,useSize=(scoreMode!='test'))
+			if scoreMode == 'test':
+				if strategy: return 'ova'
+				elif not strategy: return 'ovo'
+				elif strategy is None: return 'ambiguous'
+			# we want the scores to be per label, regardless of the original format, so we
+			# check the strategy, and modify it if necessary
+			if not strategy:
 				scores = []
 				for i in xrange(len(scoresPerPoint)):
 					combinedScores = calculateSingleLabelScoresFromOneVsOneScores(scoresPerPoint[i], numLabels)
