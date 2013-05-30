@@ -11,6 +11,7 @@ from ..row_list_data import RowListData
 from ..dense_matrix_data import DenseMatrixData
 from ..coo_sparse_data import CooSparseData
 from high_level_backend import *
+from UML import data
 
 from copy import deepcopy
 from nose.tools import *
@@ -151,6 +152,31 @@ def test_foldIterator_verifyPartitions():
 	""" Test foldIterator() yields the correct number and size of folds partitioning the data """
 	callAll(foldIterator_verifyPartitions)
 
+def test_foldIterator_ordering():
+	""" Test that foldIterator() yields folds in the proper order: X and Y folds should be in the same order"""
+	twoColumnData = [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9], [10, 10]]
+	denseObj = data('dmd', twoColumnData)
+	Ydata = denseObj.extractFeatures([1])
+	Xdata = denseObj
+	XIterator = Xdata.foldIterator(numFolds=2)
+	YIterator = Ydata.foldIterator(numFolds=2)
+	
+	while True: #need to add a test here for when iterator .next() is done
+		try:
+			curTrainX, curTestX = XIterator.next()
+			curTrainY, curTestY = YIterator.next()
+		except StopIteration:	#once we've gone through all the folds, this exception gets thrown and we're done!
+			break
+		curTrainXList = curTrainX.toListOfLists()
+		curTestXList = curTestX.toListOfLists()
+		curTrainYList = curTrainY.toListOfLists()
+		curTestYList = curTestY.toListOfLists()
+
+		for i in range(len(curTrainXList)):
+			assert curTrainXList[i][0] == curTrainYList[i][0]
+
+		for i in range(len(curTestXList)):
+			assert curTestXList[i][0] == curTestYList[i][0]
 
 
 ####################
