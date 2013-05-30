@@ -392,8 +392,10 @@ class BaseData(object):
 			if fold == numFolds - 1:
 				end = self.points()
 			else:
-				end = (fold + 1) * numInFold 
-			foldList.append(indices[start:end])
+				end = (fold + 1) * numInFold
+			thisFoldList = indices[start:end]
+			thisFoldList.sort()
+			foldList.append(thisFoldList)
 
 		# return that lists iterator as the fold iterator 	
 		return self._foldIteratorClass(foldList, self)
@@ -770,7 +772,7 @@ class BaseData(object):
 
 	def equals(self, other):
 		if not self._equalFeatureNames(other):
-			return False		
+			return False
 
 		return self._equals_implementation(other)
 
