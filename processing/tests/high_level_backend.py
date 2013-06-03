@@ -24,11 +24,25 @@ from ..coo_sparse_data import CooSparseData
 
 #hmmm but this only applies to representations that can have strings.
 
+def dropStringValuedFeatures_emptyTest(constructor):
+	""" Test dropStringValuedFeatures() when the data is empty """
+	data = []
+	toTest = constructor(data)
+	unchanged = constructor(data)
+	toTest.dropStringValuedFeatures()
+	assert toTest.equals(unchanged)
 
 
 #################################
 # featureToBinaryCategoryFeatures #
 #################################
+
+
+def featureToBinaryCategoryFeatures_emptyException(constructor):
+	""" Test featureToBinaryCategoryFeatures() with an empty object """
+	data = []
+	toTest = constructor(data)
+	toTest.featureToBinaryCategoryFeatures(0)
 
 
 def featureToBinaryCategoryFeatures_handmade(constructor):
@@ -51,6 +65,12 @@ def featureToBinaryCategoryFeatures_handmade(constructor):
 #############################
 # featureToIntegerCategories #
 #############################
+
+def featureToIntegerCategories_emptyException(constructor):
+	""" Test featureToIntegerCategories() with an empty object """
+	data = []
+	toTest = constructor(data)
+	toTest.featureToIntegerCategories(0)
 
 def featureToIntegerCategories_handmade(constructor):
 	""" Test featureToIntegerCategories() against handmade output """
@@ -156,6 +176,12 @@ def selectPercentOfPointsByValue_handmade(constructor):
 # extractPointsByCoinToss #
 #########################
 
+def extractPointsByCoinToss_exceptionEmpty(constructor):
+	""" Test extractPointsByCoinToss() for ImproperActionException when object is empty """
+	data = []
+	toTest = constructor(data)
+	toTest.extractPointsByCoinToss(0.5)
+
 def extractPointsByCoinToss_exceptionNoneProbability(constructor):
 	""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
@@ -196,6 +222,12 @@ def extractPointsByCoinToss_handmade(constructor):
 # foldIterator #
 ################
 
+def foldIterator_exceptionEmpty(constructor):
+	""" Test foldIterator() for exception when object is empty """
+	data = []
+	toTest = constructor(data)
+	toTest.foldIterator(2)
+
 def foldIterator_exceptionTooManyFolds(constructor):
 	""" Test foldIterator() for exception when given too many folds """
 	data = [[1],[2],[3],[4],[5]]
@@ -234,6 +266,16 @@ def foldIterator_verifyPartitions(constructor):
 ####################
 # applyFunctionToEachPoint() #
 ####################
+
+def applyFunctionToEachPoint_exceptionEmpty(constructor):
+	""" Test applyFunctionToEachPoint() for ImproperActionException when object is empty """
+	origData = []
+	origObj = constructor(origData)
+
+	def emitLower(point):
+		return point[origObj.featureNames['deci']]
+
+	lowerCounts = origObj.applyFunctionToEachPoint(emitLower)
 
 def applyFunctionToEachPoint_exceptionInputNone(constructor):
 	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
@@ -284,6 +326,20 @@ def applyFunctionToEachPoint_nonZeroItAndLen(constructor):
 #######################
 # applyFunctionToEachFeature() #
 #######################
+
+def applyFunctionToEachFeature_exceptionEmpty(constructor):
+	""" Test applyFunctionToEachFeature() for ImproperActionException when object is empty """
+	origData = []
+	origObj= constructor(origData)
+
+	def emitAllEqual(feature):
+		first = feature[0]
+		for value in feature:
+			if value != first:
+				return 0
+		return 1
+
+	lowerCounts = origObj.applyFunctionToEachFeature(emitAllEqual)
 
 def applyFunctionToEachFeature_exceptionInputNone(constructor):
 	""" Test applyFunctionToEachFeature() for ArgumentException when function is None """
@@ -356,6 +412,13 @@ def oddOnlyReducer(identifier, valuesList):
 	if identifier % 2 == 0:
 		return None
 	return simpleReducer(identifier,valuesList)
+
+
+def mapReduceOnPoints_argumentExceptionNoFeatures(constructor):
+	""" Test mapReduceOnPoints() for ImproperActionException when there are no features  """
+	data = [[],[],[]]
+	toTest = constructor(data)
+	toTest.mapReduceOnPoints(simpleMapper,simpleReducer)
 
 def mapReduceOnPoints_argumentExceptionNoneMap(constructor):
 	""" Test mapReduceOnPoints() for ArgumentException when mapper is None """

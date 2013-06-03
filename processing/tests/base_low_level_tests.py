@@ -232,6 +232,10 @@ def test_renameFeatureName_exceptionManualAddDefault():
 	toTest = makeAndDefine(["hello"])
 	toTest.renameFeatureName("hello",DEFAULT_PREFIX + "2")
 
+@raises(ImproperActionException)
+def test_renameFeatureName_exceptionNoFeatures():
+	toTest = makeAndDefine([])
+	toTest.renameFeatureName("hello","2")
 
 def test_renameFeatureName_handmade_viaIndex():
 	""" Test renameFeatureName() against handmade input when specifying the featureName by index """
@@ -300,6 +304,11 @@ def test_renameMultipleFeatureNames_exceptionManualAddDefault():
 	newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "2"]
 	toTest.renameMultipleFeatureNames(newFeatureNames)
 
+@raises(ImproperActionException)
+def test_renameMultipleFeatureName_exceptionNoFeatures():
+	toTest = makeAndDefine([])
+	toAssign = ["hey","gone","none","blank"]
+	toTest.renameMultipleFeatureNames(toAssign)
 
 def test_renameMultipleFeatureNames_handmade():
 	""" Test renameMultipleFeatureNames() against handmade output """

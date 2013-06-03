@@ -114,6 +114,8 @@ class BaseData(object):
 		default prefix.
 
 		"""
+		if len(self.featureNames) == 0:
+			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
 		self._renameFeatureName_implementation(oldIdentifier, newFeatureName, False)
 
 	def renameMultipleFeatureNames(self, assignments=None):
@@ -127,6 +129,8 @@ class BaseData(object):
 		then an ArgumentException will be raised.
 
 		"""
+		if len(self.featureNames) == 0:
+			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
 		self._renameMultipleFeatureNames_implementation(assignments,False)
 
 	def setName(self, name):
