@@ -205,7 +205,7 @@ def testShogunEmbeddedRossData():
 				numpyData[i,j] = data[i][j]
 			else:
 				if j == 0:
-					numpyData[i,j] = numpy.random.randint(1,3)
+					numpyData[i,j] = numpy.random.randint(2,3)
 				else:
 					numpyData[i,j] = numpy.random.rand()
 

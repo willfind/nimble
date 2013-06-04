@@ -39,6 +39,9 @@ def callAll(func):
 # dropStringValuedFeatures #
 ###########################
 
+def test_dropStringValuedFeatures_emptyTest():
+	""" Test dropStringValuedFeatures() when the data is empty """
+	callAll(dropStringValuedFeatures_emptyTest)
 
 #hmmm but this only applies to representations that can have strings.
 
@@ -48,6 +51,10 @@ def callAll(func):
 # featureToBinaryCategoryFeatures #
 #################################
 
+@raises(ImproperActionException)
+def test_featureToBinaryCategoryFeatures_emptyException():
+	""" Test featureToBinaryCategoryFeatures() with an empty object """
+	callAll(featureToBinaryCategoryFeatures_emptyException)
 
 def test_featureToBinaryCategoryFeatures_handmade():
 	""" Test featureToBinaryCategoryFeaturess() against handmade output """
@@ -58,6 +65,11 @@ def test_featureToBinaryCategoryFeatures_handmade():
 #############################
 # featureToIntegerCategories #
 #############################
+
+@raises(ImproperActionException)
+def test_featureToIntegerCategories_emptyException():
+	""" Test featureToIntegerCategories() with an empty object """
+	callAll(featureToIntegerCategories_emptyException)
 
 def test_featureToIntegerCategories_handmade():
 	""" Test featureToIntegerCategories() against handmade output """
@@ -116,6 +128,11 @@ def _selectPercentOfPointsByValue_handmade():
 # extractPointsByCoinToss #
 #########################
 
+@raises(ImproperActionException)
+def test_extractPointsByCoinToss_exceptionEmpty():
+	""" Test extractPointsByCoinToss() for ImproperActionException when object is empty """
+	callAll(extractPointsByCoinToss_exceptionEmpty)
+
 @raises(ArgumentException)
 def test_extractPointsByCoinToss_exceptionNoneProbability():
 	""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
@@ -141,6 +158,11 @@ def test_extractPointsByCoinToss_handmade():
 ################
 # foldIterator #
 ################
+
+@raises(ImproperActionException)
+def test_foldIterator_exceptionEmpty():
+	""" Test foldIterator() for exception when object is empty """
+	callAll(foldIterator_exceptionEmpty)
 
 @raises(ArgumentException)
 def test_foldIterator_exceptionTooManyFolds():
@@ -183,6 +205,11 @@ def test_foldIterator_ordering():
 # applyFunctionToEachPoint() #
 ####################
 
+@raises(ImproperActionException)
+def test_applyFunctionToEachPoint_exceptionEmpty():
+	""" Test applyFunctionToEachPoint() for ImproperActionException when object is empty """
+	callAll(applyFunctionToEachPoint_exceptionEmpty)
+
 @raises(ArgumentException)
 def test_applyFunctionToEachPoint_exceptionInputNone():
 	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
@@ -202,6 +229,11 @@ def test_applyFunctionToEachPoint_nonZeroItAndLen():
 #######################
 # applyFunctionToEachFeature() #
 #######################
+
+@raises(ImproperActionException)
+def test_applyFunctionToEachFeature_exceptionEmpty():
+	""" Test applyFunctionToEachFeature() for ImproperActionException when object is empty """
+	callAll(applyFunctionToEachFeature_exceptionEmpty)
 
 @raises(ArgumentException)
 def test_applyFunctionToEachFeature_exceptionInputNone():

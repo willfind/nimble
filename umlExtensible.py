@@ -21,6 +21,7 @@ from .processing import RowListData
 from .uml_logging.uml_logger import UmlLogger
 from .uml_logging.log_manager import LogManager
 from .uml_logging.stopwatch import Stopwatch
+from .uml_logging.uml_logger import UmlLogger
 from .utility import ArgumentException
 
 
