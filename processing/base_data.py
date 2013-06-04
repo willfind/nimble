@@ -1156,7 +1156,7 @@ class BaseData(object):
 			for index in xrange(len(assignments)):
 				featureName = assignments[index]
 				if featureName in temp:
-					raise ArgumentException("Cannot input duplicate featureNames")
+					raise ArgumentException("Cannot input duplicate featureNames: " + str(featureName))
 				temp[featureName] = index
 			assignments = temp
 
