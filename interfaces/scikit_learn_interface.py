@@ -199,6 +199,19 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, sc
 			scoresPerPoint = sklObj.decision_function(testData)
 		except AttributeError:
 			raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
+		if scoreMode.lower() == 'allScores'.lower() and numLabels == 2:
+			newScoresPerPoint = []
+			for i in xrange(len(scoresPerPoint)):
+				pointScoreList = []
+				try:
+					currScore = scoresPerPoint[i][0]
+				except IndexError:
+					currScore = scoresPerPoint[i]
+				pointScoreList.append((-1) * currScore)
+				pointScoreList.append(currScore)
+				newScoresPerPoint.append(pointScoreList)
+			return newScoresPerPoint
+
 		scores = scoresPerPoint
 		strategy = ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels,useSize=(scoreMode!='test'))
 		if scoreMode == 'test':
