@@ -14,7 +14,7 @@ from copy import deepcopy
 from ...utility.custom_exceptions import ArgumentException
 from ..row_list_data import RowListData as RLD
 from ..dense_matrix_data import DenseMatrixData as DMD
-
+from ..base_data import View as View
 from .. import base_data
 
 ##############
@@ -281,13 +281,11 @@ def sortPoints_scorer(constructor):
 	toTest = constructor(data)
 
 	def numOdds(point):
-		print point
+		assert isinstance(point, View)
 		ret = 0
 		for val in point:
-			print val
 			if val % 2 != 0:
 				ret += 1
-		print ret
 		return ret
 
 	toTest.sortPoints(sortHelper=numOdds)
@@ -431,6 +429,17 @@ def extractPoints_handmadeListSequence(constructor):
 	assert ext2.equals(exp2)
 	expEnd = constructor([[4,5,6]])
 	assert toTest.equals(expEnd)
+
+def extractPoints_handmadeListOrdering(constructor):
+	""" Test extractPoints() against handmade output for out of order extraction """
+	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15]]
+	toTest = constructor(data)
+	ext1 = toTest.extractPoints([3,4,1])
+	exp1 = constructor([[10,11,12],[13,14,15],[4,5,6]])
+	assert ext1.equals(exp1)
+	expEnd = constructor([[1,2,3], [7,8,9]])
+	assert toTest.equals(expEnd)
+
 
 def extractPoints_handmadeFunction(constructor):
 	""" Test extractPoints() against handmade output for function extraction """

@@ -6,8 +6,7 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 # TODO conversions
 # TODO who sorts inputs to derived implementations?
 
-from copy import copy
-from copy import deepcopy
+import copy
 from ..utility.custom_exceptions import ArgumentException
 from ..utility.custom_exceptions import ImproperActionException
 import UML
@@ -421,9 +420,7 @@ class BaseData(object):
 				end = self.points()
 			else:
 				end = (fold + 1) * numInFold
-			thisFoldList = indices[start:end]
-			thisFoldList.sort()
-			foldList.append(thisFoldList)
+			foldList.append(indices[start:end])
 
 		# return that lists iterator as the fold iterator 	
 		return self._foldIteratorClass(foldList, self)
@@ -1279,4 +1276,40 @@ class View():
 	@abstractmethod
 	def name(self):
 		pass
+
+
+
+def reorderToMatchExtractionList(dataObject, extractionList, axis):
+	"""
+	Helper which will reorder the data object along the specified axis so that
+	instead of being in an order corresponding to a sorted version of extractionList,
+	it will be in the order of the given extractionList.
+
+	extractionList must contain only indices, not name based identifiers.
+	
+	"""
+	if axis.lower() == "point":
+		sortFunc = dataObject.sortPoints
+	else:
+		sortFunc = dataObject.sortFeatures
+
+	sortedList = copy.copy(extractionList)
+	sortedList.sort()
+	mappedOrig = {}
+	for i in xrange(len(extractionList)):
+		mappedOrig[extractionList[i]] = i
+	
+	def scorer(viewObj):
+#		import pdb
+#		pdb.set_trace()
+		return mappedOrig[sortedList[viewObj.index()]]
+
+
+	
+
+	sortFunc(sortHelper=scorer)
+
+	return dataObject
+
+
 

@@ -148,6 +148,10 @@ def test_extractPoints_handmadeListSequence():
 	""" Test DMD extractPoints() against handmade output for several list extractions """
 	extractPoints_handmadeListSequence(constructor)
 
+def test_extractPoints_handmadeListOrdering():
+	""" Test DMD extractPoints() against handmade output for out of order extraction """
+	extractPoints_handmadeListOrdering(constructor)
+
 def test_extractPoints_handmadeFunction():
 	""" Test DMD extractPoints() against handmade output for function extraction """
 	extractPoints_handmadeFunction(constructor)

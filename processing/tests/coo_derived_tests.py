@@ -151,6 +151,10 @@ def test_extractPoints_handmadeListSequence():
 	""" Test CooSparse extractPoints() against handmade output for several list extractions """
 	extractPoints_handmadeListSequence(constructor)
 
+def test_extractPoints_handmadeListOrdering():
+	""" Test CooSparse extractPoints() against handmade output for out of order extraction """
+	extractPoints_handmadeListOrdering(constructor)
+
 def test_extractPoints_handmadeFunction():
 	""" Test CooSparse extractPoints() against handmade output for function extraction """
 	extractPoints_handmadeFunction(constructor)
