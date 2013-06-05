@@ -13,6 +13,7 @@ from interface_helpers import putOnSearchPath
 from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from interface_helpers import ovaNotOvOFormatted
 from interface_helpers import scoreModeOutputAdjustment
+from interface_helpers import checkClassificationStrategy
 from ..processing.dense_matrix_data import DenseMatrixData as DMData
 from ..processing.base_data import BaseData
 from ..processing.sparse_data import SparseData
@@ -63,12 +64,13 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 	# and call our own strategies if necessary
 	if multiClassStrategy != 'default':
 		trialResult = checkClassificationStrategy(_shogunBackend, algorithm, arguments)
+		# note: these conditionals include a binary return
 		if multiClassStrategy == 'ova' and trialResult != 'ova':
 			from ..performance.runner import runOneVsAll
-			runOneVsAll(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+			runOneVsAll(algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
 		if multiClassStrategy == 'ovo' and trialResult != 'ovo':
 			from ..performance.runner import runOneVsOne
-			runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+			runOneVsOne(algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
 
 	args = copy.copy(arguments)
 	if not isinstance(trainData, BaseData):
@@ -175,30 +177,30 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 	try:
 		import shogun.Classifier
 		inverseMapping = None
-		if isinstance(SGObj, shogun.Classifier.BaseMulticlassMachine):
-			tempObj = DMData(trainDataY)
-			inverseMapping = remapLabels(tempObj)
+		tempObj = DMData(trainDataY)
+		problemType = SGObj.get_machine_problem_type()
+		if problemType == shogun.Classifier.PT_MULTICLASS:
+			inverseMapping = remapLabelsRange(tempObj)
 			if len(inverseMapping) == 1:
 				raise ArgumentException("Cannot train a multiclass classifier with data containing only one label")
-
 			from shogun.Features import MulticlassLabels
 			flattened = numpy.array(tempObj.data).flatten()
 			trainLabels = MulticlassLabels(flattened.astype(float))
+		elif problemType == shogun.Classifier.PT_BINARY:
+			if scoreMode == 'test':
+				return 'binary'
+			inverseMapping = remapLabelsSpecific(tempObj, [-1,1])
+			from shogun.Features import BinaryLabels
+			flattened = numpy.array(tempObj.data).flatten()
+			trainLabels = BinaryLabels(flattened.astype(float))
+		elif problemType == shogun.Classifier.PT_REGRESSION:
+			from shogun.Features import RegressionLabels
+			trainLabels = RegressionLabels(trainDataY.astype(float))
+			if scoreMode != 'label':
+				raise ArgumentException("Invalid scoreMode for a regression problem; the default parameter must be used")
 		else:
-			regression = False
-			for value in trainDataY:
-				if value != -1 and value != 1:
-					regression = True
-			if regression:
-				from shogun.Features import RegressionLabels
-				trainLabels = RegressionLabels(trainDataY.astype(float))
-				if scoreMode != 'label':
-					raise ArgumentException("Invalid scoreMode for a regression problem; the default parameter must be used")
-			else:
-				if scoreMode == 'test':
-					return 'binary'
-				from shogun.Features import BinaryLabels
-				trainLabels = BinaryLabels(trainDataY.astype(float))
+			raise ArgumentException("Algorithm problem type not supported")
+
 	except ImportError:
 		from shogun.Features import Labels
 		trainLabels = Labels(trainDataY.astype(float))
@@ -439,10 +441,10 @@ def _argsFromDoc(objectReference, methodName, algArgs):
 
 
 
-def remapLabels(toRemap):
+def remapLabelsRange(toRemap):
 	"""
-	Takes the object toRemap, which must be a data representation with a single feature,
-	and maps the values in that feature into the range between 0 and n-1, where n is
+	Takes the object toRemap, which must be a data representation with a single point,
+	and maps the values in that point into the range between 0 and n-1, where n is
 	the number of distinct values in that feature. The object is modified, and the
 	inverse mapping is returned a length n list
 
@@ -461,6 +463,40 @@ def remapLabels(toRemap):
 			inverse.append(value)
 			invIndex += 1
 		view[x] = mapping[value]
+
+	return inverse
+
+def remapLabelsSpecific(toRemap, space):
+	"""
+	Takes the object toRemap, which must be a data representation with a single point
+	containing as many unique values as the length of parameter space, and maps those
+	values into the values specified in space, on a first come first served basis. The
+	object is modified, and the inverse mapping is returned as a list with the same
+	length as space.
+
+	If there are more than unique values than values in space, an ArgumentException is raised
+
+	"""
+
+	mapping = {}
+	inverse = []
+	invIndex = 0
+	maxLength = len(space)
+
+	view = toRemap.getPointView(0)
+
+	for x in xrange(toRemap.features()):
+		value = view[x]
+		if value not in mapping:
+			mapping[value] = invIndex
+			inverse.append(value)
+			invIndex += 1
+			if invIndex > maxLength:
+				raise ArgumentException("toRemap contains more values than can be mapped into the provided space.")
+
+	for x in xrange(toRemap.features()):
+		value = view[x]
+		view[x] = space[mapping[value]]
 
 	return inverse
 

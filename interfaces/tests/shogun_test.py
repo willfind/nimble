@@ -59,7 +59,7 @@ def testShogun_singleClassException():
 def testShogunHandmadeBinaryClassification():
 	""" Test shogun() by calling a binary linear classification algorithm"""
 	variables = ["Y","x1","x2"]
-	data = [[-1,1,0], [-1,0,1], [1,3,2]]
+	data = [[0,1,0], [-0,0,1], [1,3,2]]
 	trainingObj = DMData(data,variables)
 
 	data2 = [[3,3], [-1,0]]
@@ -76,7 +76,7 @@ def testShogunHandmadeBinaryClassification():
 def testShogunHandmadeBinaryClassificationWithKernel():
 	""" Test shogun() by calling a binary linear classification algorithm with a kernel """
 	variables = ["Y","x1","x2"]
-	data = [[-1,-11,-5], [1,0,1], [1,3,2]]
+	data = [[5,-11,-5], [1,0,1], [1,3,2]]
 	trainingObj = DMData(data,variables)
 
 	data2 = [[5,3], [-1,0]]
@@ -130,9 +130,9 @@ def testShogunMulticlassSVM():
 
 
 def testShogunSparseRegression():
-	""" Test shogun() by calling a sparse regression algorithm with an extremely large, but highly sparse, matrix """
+	""" Test shogun() sparse data instantiation by calling a sparse regression algorithm with a large, but highly sparse, matrix """
 
-	x = 1000
+	x = 100
 	c = 10
 	points = randint(0,x,c)
 	cols = randint(0,x,c)
@@ -143,7 +143,7 @@ def testShogunSparseRegression():
 	labelsData = numpy.random.rand(x)
 	labels = DMData(labelsData)
 
-	ret = shogun('SubGradientSVM', trainData=obj, testData=obj, dependentVar=labels)
+	ret = shogun('MulticlassOCAS', trainData=obj, testData=obj, dependentVar=labels)
 
 	assert ret is not None
 
@@ -267,6 +267,22 @@ def testShogunScoreModeBinary():
 	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
 	assert ret.points() == 2
 	assert ret.features() == 2
+
+
+def testShogunMultiClassStrategyMultiDataBinaryAlg():
+	""" Test shogun() will correctly apply the provided strategies when given multiclass data and a binary algorithm"""
+	variables = ["Y","x1","x2"]
+	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[2,3],[-200,0]]
+	testObj = DMData(data2)
+
+#	import pdb
+#	pdb.set_trace()
+
+	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, multiClassStrategy="ovo")
+	
 
 
 
