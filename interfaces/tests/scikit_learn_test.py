@@ -122,6 +122,32 @@ def testSciKitLearnScoreMode():
 	assert ret.features() == 3
 
 
+def testSciKitLearnScoreModeBinary():
+	""" Test sciKitLearn() returns the right dimensions when given different scoreMode flags, binary case"""
+	variables = ["Y","x1","x2"]
+	data = [[1,30,2],[2,1,1], [2,0,1],[2,-1,-1],  [1,30,3], [1,34,4]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[2,1],[25,0]]
+	testObj = DMData(data2)
+
+#	import pdb
+#	pdb.set_trace()
+
+	# default scoreMode is 'label'
+#	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})
+#	assert ret.points() == 2
+#	assert ret.features() == 1
+
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+#	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+#	assert ret.points() == 2
+#	assert ret.features() == 2
+
+
 def testSciKitLearnListAlgorithms():
 	""" Test scikit learn's listAlgorithms() by checking the output for those algorithms we unit test """
 

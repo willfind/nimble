@@ -101,7 +101,7 @@ def ovaNotOvOFormatted(scoresPerPoint, predicedLabels, numLabels, useSize=True):
 	"""
 	length = len(scoresPerPoint)
 	scoreLength = len(scoresPerPoint[0])
-	if useSize and scoreLength == numLabels and numLabels != 3:
+	if useSize and scoreLength <= numLabels and numLabels != 3:
 		return True
 	if useSize and scoreLength > numLabels:
 		return False
