@@ -131,21 +131,18 @@ def testSciKitLearnScoreModeBinary():
 	data2 = [[2,1],[25,0]]
 	testObj = DMData(data2)
 
-#	import pdb
-#	pdb.set_trace()
-
 	# default scoreMode is 'label'
-#	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})
-#	assert ret.points() == 2
-#	assert ret.features() == 1
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})
+	assert ret.points() == 2
+	assert ret.features() == 1
 
 	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
 	assert ret.points() == 2
 	assert ret.features() == 2
 
-#	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
-#	assert ret.points() == 2
-#	assert ret.features() == 2
+	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert ret.points() == 2
+	assert ret.features() == 2
 
 
 def testSciKitLearnListAlgorithms():

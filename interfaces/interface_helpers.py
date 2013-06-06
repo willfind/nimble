@@ -235,7 +235,7 @@ def scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder):
 		for i in xrange(len(scores)):
 			label = predLabels[i,0]
 			index = labelToIndexMap[label]
-			matchingScore = scores[i,index]
+			matchingScore = scores[i][index]
 			bestScorePerPrediction[i] = matchingScore
 		outData = numpy.concatenate((outData,bestScorePerPrediction), axis=1)
 	else:
