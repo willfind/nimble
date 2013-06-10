@@ -36,6 +36,10 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions,
         labels.  Optionally, they may take the features of the test set as a third argument,
         as a matrix.
 
+        negativeLabel: Label of the 'negative' class in the testing set.  This parameter is
+        only relevant for binary class problems; and only needed for some error metrics
+        (proportionPerentNegative50/90).
+
         Returns: a dictionary associating each performance metric with the (presumably)
         numerical value computed by running the function over the known labels & predicted labels
     """
@@ -51,9 +55,9 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions,
         raise ArgumentException("Missing indicator for known labels in computeMetrics")
 
     results = {}
-    #TODO make this hash more generic - what if function args are not knownValues and predictedValues
     parameterHash = {"knownValues":knownLabels, "predictedValues":predictedData}
     for func in performanceFunctions:
+        #some functions need negativeLabel as an argument.
         if func == proportionPercentNegative90 or func == proportionPercentNegative50 or func == bottomProportionPercentNegative10:
             parameterHash["negativeLabel"] = negativeLabel
             results[inspect.getsource(func)] = executeCode(func, parameterHash)
