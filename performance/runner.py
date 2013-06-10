@@ -9,23 +9,6 @@ from UML.utility import ArgumentException
 from UML import run
 from UML import data
 
-def dataPrinter(trainX, testX, trainY, testY):
-    """
-    Print all values for each data object
-    """
-    trainXList = trainX.toListOfLists()
-    testXList = testX.toListOfLists()
-    trainYList = trainY.toListOfLists()
-    testYList = testY.toListOfLists()
-
-    for i in range(len(trainXList)):
-        print "trainX[" + str(i) + "]" + "[0]: " + str(trainXList[i][0]) + ", trainY[" + str(i) + "][0]: " + str(trainYList[i][0])
-
-    for i in range(len(testXList)):
-        print "testX[" + str(i) + "]" + "[0]: " + str(testXList[i][0]) + ", testY[" + str(i) + "][0]: " + str(testYList[i][0])
-
-    return 1.0
-
 
 def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs, scoreMode='label', negativeLabel=None, sendToLog=True):
 	"""
@@ -33,22 +16,26 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 		then tests its performance using the metric function(s) found in
 		performanceMetricFunctions
 
+		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
+
 		trainX: data set to be used for training (as some form of BaseData object)
+
 		testX: data set to be used for testing (as some form of BaseData object)
 		
 		trainDependentVar: used to retrieve the known class labels of the traing data. Either
-		contains the labels themselves or an index (numerical or string) that defines their locale
-		in the trainX object
+		contains the labels themselves (as a BaseData object) or an index (numerical or string) 
+		that defines their locale in the trainX object
 		
 		testDependentVar: used to retreive the known class labels of the test data. Either
-		contains the labels themselves or an index (numerical or string) that defines their locale
-		in the testX object
+		contains the labels themselves (as a BaseData object) or an index (numerical or string) 
+		that defines their locale in the testX object.  If left blank, runAndTest() assumes 
+		that testDependentVar is the same as trainDependentVar.
 		
 		arguments: optional arguments to be passed to the function specified by 'algorithm'
 		
 		negativeLabel: Argument required if performanceMetricFuncs contains proportionPercentPositive90
 		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
-		applies to data sets with 2 possible class labels.
+		applies to data sets with 2 class labels.
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
@@ -56,6 +43,7 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 	trainX = trainX.duplicate()
 	testX = testX.duplicate()
 	
+	#if testDependentVar is empty, attempt to use trainDependentVar
 	if testDependentVar is None and isinstance(trainDependentVar, (str, unicode, int)):
 		testDependentVar = trainDependentVar
 
@@ -73,9 +61,13 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 	#if we are logging this run, we need to stop the timer
 	if sendToLog:
 		timer.stop('train')
+		timer.start('errorComputation')
 
 	#now we need to compute performance metric(s) for all prediction sets
 	results = computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs, negativeLabel)
+
+	if sendToLog:
+		timer.stop('errorComputation')
 
 	if sendToLog:
 		logManager = LogManager()
@@ -88,9 +80,11 @@ def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependen
 		Wrapper class for runOneVsOne.  Useful if you want the entire process of training,
 		testing, and computing performance measures to be handled.  Takes in a learning algorithm
 		and training and testing data sets, trains a learner, passes the test data to the 
-		computed model, gets results, and calculates performance based on those results.
+		computed model, gets results, and calculates performance based on those results.  
 
 		Arguments:
+
+			algorithm: training algorithm to be called, in the form 'package.algorithmName'.
 
 			trainX: data set to be used for training (as some form of BaseData object)
 		
@@ -152,6 +146,8 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
 
+		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
+
 		trainX: data set to be used for training (as some form of BaseData object)
 		
 		testX: data set to be used for testing (as some form of BaseData object)
@@ -178,8 +174,6 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-
-	#TODO DUPLICATE DATA BEFORE CALLING RUN
 	trainX = trainX.duplicate()
 	testX = testX.duplicate()
 
@@ -235,6 +229,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 	if sendToLog:
 		timer.stop('train')
 
+	#set up the return data based on which format has been requested
 	if scoreMode.lower() == 'label'.lower():
 		return rawPredictions.applyFunctionToEachPoint(extractWinningPredictionLabel)
 	elif scoreMode.lower() == 'bestScore'.lower():
@@ -272,7 +267,40 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 
 	
 def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
-	#TODO DUPLICATE DATA BEFORE CALLING RUN
+	"""
+	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
+	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
+	training set into 2-label subsets. Tests performance using the metric function(s) found in 
+	performanceMetricFunctions.
+
+		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
+
+		trainX: data set to be used for training (as some form of BaseData object)
+		
+		testX: data set to be used for testing (as some form of BaseData object)
+		
+		trainDependentVar: used to retrieve the known class labels of the traing data. Either
+		contains the labels themselves (in a BaseData object of the same type as trainX) 
+		or an index (numerical or string) that defines their locale in the trainX object.
+		
+		testDependentVar: used to retreive the known class labels of the test data. Either
+		contains the labels themselves or an index (numerical or string) that defines their locale
+		in the testX object.  If not present, it is assumed that testDependentVar is the same
+		as trainDependentVar.  
+		
+		arguments: optional arguments to be passed to the function specified by 'algorithm'
+
+		scoreMode:  a flag with three possible values:  label, bestScore, or allScores.  If
+		labels is selected, this function returns a single column with a predicted label for 
+		each point in the test set.  If bestScore is selected, this function returns an object
+		with two columns: the first has the predicted label, the second  has that label's score.  
+		If allScores is selected, returns a BaseData object with each row containing a score for 
+		each possible class label.  The class labels are the featureNames of the BaseData object, 
+		so the list of scores in each row is not sorted by score, but by the order of class label
+		found in featureNames.
+		
+		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+	"""
 	trainX = trainX.duplicate()
 	testX = testX.duplicate()
 
@@ -332,6 +360,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		for winningIndex in winningPredictionIndices:
 			winningLabels.append([indexToLabelMap[winningIndex]])
 		return data(rawPredictions.getType, winningLabels, featureNames='winningLabel')
+
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
 		#label and score of that label for the corresponding row in rawPredictions
@@ -347,6 +376,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		featureNames = ['PredictedClassLabel', 'LabelScore']
 		resultsContainer = data("RowListData", tempResultsList, featureNames=featureNames)
 		return resultsContainer
+
 	elif scoreMode.lower() == 'allScores'.lower():
 		#create list of Feature Names/Column Headers for final return object
 		columnHeaders = sorted([str(i) for i in labelSet])
@@ -423,6 +453,11 @@ def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependen
 	return results
 
 def countWins(predictions):
+	"""
+	Count how many contests were won by each label in the set.  If a class label doesn't
+	win any predictions, it will not be included in the results.  Return a dictionary:
+	{classLabel: # of contests won}
+	"""
 	predictionCounts = {}
 	for prediction in predictions:
 		if prediction in predictionCounts:
@@ -438,8 +473,6 @@ def extractWinningPredictionLabel(predictions):
 	choose the label that wins the most tournaments.  Returns the winning label.
 	"""
 	#Count how many times each class won
-	#predictionCounts = valueCounter(predictions)
-
 	predictionCounts = countWins(predictions)
 
 	#get the class that won the most tournaments
