@@ -101,7 +101,7 @@ def ovaNotOvOFormatted(scoresPerPoint, predicedLabels, numLabels, useSize=True):
 	"""
 	length = len(scoresPerPoint)
 	scoreLength = len(scoresPerPoint[0])
-	if useSize and scoreLength == numLabels and numLabels != 3:
+	if useSize and scoreLength <= numLabels and numLabels != 3:
 		return True
 	if useSize and scoreLength > numLabels:
 		return False
@@ -235,7 +235,7 @@ def scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder):
 		for i in xrange(len(scores)):
 			label = predLabels[i,0]
 			index = labelToIndexMap[label]
-			matchingScore = scores[i,index]
+			matchingScore = scores[i][index]
 			bestScorePerPrediction[i] = matchingScore
 		outData = numpy.concatenate((outData,bestScorePerPrediction), axis=1)
 	else:

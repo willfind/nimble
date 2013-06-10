@@ -126,6 +126,29 @@ def testMlpyScoreMode():
 	assert ret.points() == 2
 	assert ret.features() == 3
 
+def testMlpyScoreModeBinary():
+	""" Test mlpy() returns the right dimensions when given different scoreMode flags, binary case"""
+	variables = ["Y","x1","x2"]
+	data = [[-1,1,1], [-1,0,1],[-1,-1,-1], [1,30,2], [1,30,3], [1,34,4]]
+	trainingObj = DMData(data,variables)
+
+	data2 = [[2,1],[25,0]]
+	testObj = DMData(data2)
+
+	# default scoreMode is 'label'
+	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})
+	assert ret.points() == 2
+	assert ret.features() == 1
+
+	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert ret.points() == 2
+	assert ret.features() == 2
+
+
 
 def testMlpyListAlgorithms():
 	""" Test mlpy's listAlgorithms() by checking the output for those algorithms we unit test """

@@ -3,14 +3,15 @@ Class extending SparseBaseData, defining an object to hold and manipulate a scip
 
 """
 
+
 import numpy
 import scipy
 import random
 from scipy.sparse import coo_matrix
 from scipy.io import mmwrite
-from copy import deepcopy
+import copy
 
-from base_data import *
+from base_data import BaseData
 from sparse_data import *
 from ..utility.custom_exceptions import ArgumentException
 
@@ -193,30 +194,36 @@ class CooSparseData(SparseData):
 			extractOther = extractCols
 
 		#List of rows or columns to extract must be sorted in ascending order
-		toExtract.sort()
+		toExtractSorted = copy.copy(toExtract)
+		toExtractSorted.sort()
+
+		# need mapping from values in sorted list to index in nonsorted list
+		positionMap = {}
+		for i in xrange(len(toExtract)):
+			positionMap[toExtract[i]] = i
 		
 		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
 		# underlying structure to save space
-		copy = 0
+		copyIndex = 0
 		extractIndex = 0
 		for i in xrange(len(self.data.data)):
 			value = targetAxis[i]
-			if extractIndex < extractLength and value > toExtract[extractIndex]:
+			if extractIndex < extractLength and value > toExtractSorted[extractIndex]:
 				extractIndex = extractIndex + 1
-			if extractIndex < extractLength and value == toExtract[extractIndex]:
+			if extractIndex < extractLength and value == toExtractSorted[extractIndex]:
 				extractData.append(self.data.data[i])
 				extractOther.append(otherAxis[i])
-				extractTarget.append(extractIndex)	
+				extractTarget.append(positionMap[value])	
 			else:
-				self.data.data[copy] = self.data.data[i]				
-				otherAxis[copy] = otherAxis[i]
-				targetAxis[copy] = targetAxis[i] - extractIndex
-				copy = copy + 1
+				self.data.data[copyIndex] = self.data.data[i]				
+				otherAxis[copyIndex] = otherAxis[i]
+				targetAxis[copyIndex] = targetAxis[i] - extractIndex
+				copyIndex = copyIndex + 1
 
 		# reinstantiate self
 		# (cannot reshape coo matrices, so cannot do this in place)
-		(selfShape, extShape) = _calcShapes(self.data.shape, len(toExtract), axisType)
-		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), selfShape)
+		(selfShape, extShape) = _calcShapes(self.data.shape, extractLength, axisType)
+		self.data = coo_matrix( (self.data.data[0:copyIndex],(self.data.row[0:copyIndex],self.data.col[0:copyIndex])), selfShape)
 
 		# instantiate return data
 		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=extShape)
@@ -251,7 +258,7 @@ class CooSparseData(SparseData):
 			extractOther = extractCols
 			maxVal = self.features()
 
-		copy = 0
+		copyIndex = 0
 		vectorStartIndex = 0
 		extractedIDs = []
 		# consume zeroed vectors, up to the first nonzero value
@@ -275,10 +282,10 @@ class CooSparseData(SparseData):
 					extractedIDs.append(targetValue)
 				else:
 					for j in xrange(vectorStartIndex, i + 1):
-						self.data.data[copy] = self.data.data[j]				
-						otherAxis[copy] = otherAxis[j]
-						targetAxis[copy] = targetAxis[j] - len(extractedIDs)
-						copy = copy + 1
+						self.data.data[copyIndex] = self.data.data[j]				
+						otherAxis[copyIndex] = otherAxis[j]
+						targetAxis[copyIndex] = targetAxis[j] - len(extractedIDs)
+						copyIndex = copyIndex + 1
 				# process zeroed vectors up to the ID of the new vector
 				if i < len(self.data.data) - 1:
 					nextValue = targetAxis[i+1]
@@ -297,7 +304,7 @@ class CooSparseData(SparseData):
 		# reinstantiate self
 		# (cannot reshape coo matrices, so cannot do this in place)
 		(selfShape, extShape) = _calcShapes(self.data.shape, len(extractedIDs), axisType)
-		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), selfShape)
+		self.data = coo_matrix( (self.data.data[0:copyIndex],(self.data.row[0:copyIndex],self.data.col[0:copyIndex])), selfShape)
 
 		# instantiate return data
 		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=extShape)
@@ -339,7 +346,7 @@ class CooSparseData(SparseData):
 
 		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
 		# underlying structure to save space
-		copy = 0
+		copyIndex = 0
 
 		for i in xrange(len(self.data.data)):
 			value = targetAxis[i]
@@ -348,19 +355,19 @@ class CooSparseData(SparseData):
 				extractOther.append(otherAxis[i])
 				extractTarget.append(value - start)
 			else:
-				self.data.data[copy] = self.data.data[i]
-				otherAxis[copy] = otherAxis[i]
+				self.data.data[copyIndex] = self.data.data[i]
+				otherAxis[copyIndex] = otherAxis[i]
 				if targetAxis[i] < start:
-					targetAxis[copy] = targetAxis[i]
+					targetAxis[copyIndex] = targetAxis[i]
 				else:
 					# end is inclusive, so we subtract end + 1
-					targetAxis[copy] = targetAxis[i] - (end + 1)
-				copy = copy + 1
+					targetAxis[copyIndex] = targetAxis[i] - (end + 1)
+				copyIndex = copyIndex + 1
 
 		# reinstantiate self
 		# (cannot reshape coo matrices, so cannot do this in place)
 		(selfShape, extShape) = _calcShapes(self.data.shape, rangeLength, axisType)
-		self.data = coo_matrix( (self.data.data[0:copy],(self.data.row[0:copy],self.data.col[0:copy])), selfShape)
+		self.data = coo_matrix( (self.data.data[0:copyIndex],(self.data.row[0:copyIndex],self.data.col[0:copyIndex])), selfShape)
 
 		# instantiate return data
 		ret = coo_matrix((extractData,(extractRows,extractCols)),shape=extShape)
@@ -628,7 +635,7 @@ class CooSparseData(SparseData):
 		self.data = other.data
 
 	def _duplicate_implementation(self):
-		return CooSparseData(self.data.copy(), deepcopy(self.featureNames))
+		return CooSparseData(self.data.copy(), copy.deepcopy(self.featureNames))
 
 
 	def _copyPoints_implementation(self, points, start, end):

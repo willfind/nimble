@@ -8,12 +8,10 @@ to files.
 
 from base_data import BaseData
 from base_data import View
-from copy import copy
-from copy import deepcopy
+from base_data import reorderToMatchExtractionList
+import copy
 from ..utility.custom_exceptions import ArgumentException
 import random
-import re
-import os
 from scipy.sparse import isspmatrix
 
 
@@ -35,7 +33,7 @@ class RowListData(BaseData):
 		"""
 		# if input as a list, copy it
 		if isinstance(data, list):
-			data = deepcopy(data)
+			data = copy.deepcopy(data)
 		# if sparse, make dense
 		if isspmatrix(data):
 				data = data.todense()
@@ -99,10 +97,20 @@ class RowListData(BaseData):
 		"""
 		scorer = None
 		comparator = None
+		needToRemove = False
 		testPoint = PointView(self.featureNames, self.data[0], 0)
 		try:
 			sortHelper(testPoint)
-			scorer = sortHelper
+			indices = self.applyFunctionToEachPoint(lambda x:x.index())
+			indices.renameFeatureName(0,"#UML_SORTHELPER_INDEX")
+			self.appendFeatures(indices)
+			newFeatureIndex = self.features() - 1 
+			def wrapperMaker(funcToWrap, outer):
+				def wrapped(row):
+					return funcToWrap(PointView(outer.featureNames,row[0:newFeatureIndex], row[newFeatureIndex]))
+				return wrapped
+			scorer = wrapperMaker(sortHelper, self)
+			needToRemove = True
 		except TypeError:
 			pass
 		try:
@@ -116,11 +124,15 @@ class RowListData(BaseData):
 
 		keyFunc = scorer
 		if sortBy is not None:
+			#this is going to get its input from self.data.sort, so it will recieve
+			# a python list object
 			def featureKey(row):
 				return row[sortBy]
 			keyFunc = featureKey
 
 		self.data.sort(key=keyFunc, cmp=comparator)
+		if needToRemove:
+			self.extractFeatures([newFeatureIndex])
 
 
 	def _sortFeatures_implementation(self, sortBy, sortHelper):
@@ -227,7 +239,9 @@ class RowListData(BaseData):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		return RowListData(satisfying)
+		extracted = RowListData(satisfying)
+		reorderToMatchExtractionList(extracted, toExtract, 'point')
+		return extracted
 
 	def _extractPointsByFunction_implementation(self, toExtract, number):
 		"""
@@ -552,16 +566,16 @@ class RowListData(BaseData):
 		self.data = other.data
 
 	def _duplicate_implementation(self):
-		return RowListData(deepcopy(self.data), deepcopy(self.featureNames))
+		return RowListData(copy.deepcopy(self.data), copy.deepcopy(self.featureNames))
 
 	def _copyPoints_implementation(self, points, start, end):
 		retData = []
 		if points is not None:
 			for index in points:
-				retData.append(copy(self.data[index]))
+				retData.append(copy.copy(self.data[index]))
 		else:
 			for i in range(start,end+1):
-				retData.append(copy(self.data[i]))
+				retData.append(copy.copy(self.data[i]))
 
 		return RowListData(retData)
 
