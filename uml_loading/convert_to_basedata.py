@@ -1,11 +1,29 @@
 import UML
 from UML.uml_loading.dok_data_set import DokDataSet
+from UML.uml_loading.ClassLabelMap import ClassLabelMap
 from UML.utility import ArgumentException
 
 
-def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMappingMode='all', attributeMaps=None, attributeTransformFunctionsMap=None, docIdClassLabelMaps=None, minTermFrequency=2, featureTypeWeightScheme=None, featureRepresentation='frequency', cleanHtml=True, ignoreCase=True, tokenizer='default', removeBlankTokens=True, skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, removeTokensContaining=None, keepNumbers=False, stopWordSet=UML.defaultStopWords, tokenTransformFunction=None, stemmer='default'):
+def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], 
+                         dirMappingMode='all', 
+                         attributeMaps=None,
+                         attributeTransformFunctionsMap=None,
+                         docIdClassLabelMaps=None,
+                         requiredClassLabelTypes=None,
+                         minTermFrequency=2,
+                         featureTypeWeightScheme=None,
+                         featureRepresentation='frequency',
+                         cleanHtml=True,
+                         ignoreCase=True,
+                         tokenizer='default',
+                         removeBlankTokens=True,
+                         skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric,
+                         removeTokensContaining=None,
+                         keepNumbers=False, stopWordSet=UML.defaultStopWords,
+                         tokenTransformFunction=None,
+                         stemmer='default'):
     """
-    Blanket function to manage process of converting raw data (in the form of a directory of individual files
+    Umbrella function to manage process of converting raw data (in the form of a directory of individual files
     on the file system, or a mapping between document ID and attribute) into a Coo BaseData object, which can
     be used as any other Coo BaseData object or written to disk for use later on.  
 
@@ -68,6 +86,12 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMapp
                              TODO: allow for a case where there is only one set of class labels, use default
                              classLabel name.
 
+        requiredClassLabelTypes:  List of classLabelTypes (must be the same as those used in docIdClassLabelMaps)
+                            that each document must possess in order to be retained in the returned data set.
+                            For example: if there are three classLabelTypes A, B, and C; and A and B are in 
+                            requiredClassLabelTypes, then any document that doesn't have an A label *and* a B
+                            label will not be included in the results.  
+
         minTermFrequency: Minimun number of documents a feature has to appear in to be included in the final
                           data set.  Any feature that does not appear in at least this many documents will be
                           removed from the data set.
@@ -129,10 +153,14 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMapp
     if dirPath is None and (attributeMaps is None or len(attributeMaps) == 0):
         raise ArgumentException("Either dirPath or attributeMaps must be present")
 
+    #We need to create textDataSet, though we may not use it
+    textDataSet = None
+    #create new DokDataSet object; DokDataSet class does most of the work
     if dirPath is not None:
         textDataSet = DokDataSet()
         textDataSet.loadDirectory(dirPath, fileExtensions, dirMappingMode, cleanHtml, ignoreCase, tokenizer, removeBlankTokens, skipSymbolSet, removeTokensContaining, keepNumbers, stopWordSet, tokenTransformFunction, stemmer)
 
+    #load all attribute sets as separate DokDataSet objects
     attrDataSets = []
     if attributeMaps is not None:
         for attributeName, docIdAttrMap in attributeMaps.iteritems():
@@ -144,6 +172,8 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMapp
             attrDataSet.loadAttributeMap(docIdAttrMap, attributeName, attributeTransformFunction)
             attrDataSets.append(attrDataSet)
 
+    #merge all the DokDataSet objects together.  Merge is essentially a left-join, with the
+    #dokDataSet object that calls merge() on the left.
     dataSet = None
     if textDataSet is not None:
         if len(attrDataSets) > 0:
@@ -162,8 +192,14 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], dirMapp
         else:
             dataSet = attrDataSets[0]
 
+    #Add all classLabel sets to main dataSet object, checking to see if they are required or not.
     if docIdClassLabelMaps is not None:
         for classLabelName, docIdClassLabelMap in docIdClassLabelMaps.iteritems():
-            dataSet.addClassLabelMap(docIdClassLabelMap, classLabelName)
+            if requiredClassLabelTypes is not None and classLabelName in requiredClassLabelTypes:
+                isRequired = True
+            else:
+                isRequired = False
+            classLabelMap = ClassLabelMap(docIdClassLabelMap, classLabelName, isRequired)
+            dataSet.addClassLabelMap(classLabelMap)
 
     return dataSet.toCooBaseData(featureRepresentation, minTermFrequency, featureTypeWeightScheme)
