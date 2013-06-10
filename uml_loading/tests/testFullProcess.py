@@ -21,13 +21,13 @@ def test_DokDataSetFrequencyFloor():
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
     assert len(featureNameMap) == 9
-    assert 'body_cat' in featureNameMap
-    assert 'body_dog' in featureNameMap
-    assert 'body_account' in featureNameMap
-    assert 'body_abl' in featureNameMap
-    assert 'head_cat' in featureNameMap
-    assert 'domain_bing.com' in featureNameMap
-    assert 'domain_google.com' in featureNameMap
+    assert 'body/cat' in featureNameMap
+    assert 'body/dog' in featureNameMap
+    assert 'body/account' in featureNameMap
+    assert 'body/abl' in featureNameMap
+    assert 'head/cat' in featureNameMap
+    assert 'domain/bing.com' in featureNameMap
+    assert 'domain/google.com' in featureNameMap
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 9
@@ -38,14 +38,14 @@ def test_DokDataSetFrequencyFloor():
     numRows = dokShape[0]
     numColumns = dokShape[1]
 
-    doc1Map = {'classLabel': 1, 'body_dog': 1, 'body_cat': 1, 'body_account': 1, 'body_abl': 1}
-    doc2Map = {'classLabel': 2, 'body_cat': 2, 'body_dog': 1, 'body_account': 1, 'head_cat': 1, 'domain_google.com': 1}
-    doc3Map = {'classLabel': 2, 'body_abl': 2, 'body_dog': 1, 'domain_bing.com': 1}
-    doc4Map = {'classLabel': 3, 'body_cat': 2, 'body_dog': 1, 'domain_google.com': 1, 'head_cat': 2}
-    doc5Map = {'classLabel': 1, 'head_cat': 1, 'head_account': 1, 'domain_bing.com': 1}
-    doc7Map = {'classLabel': 2, 'body_dog': 1, 'body_pant': 1, 'body_cat': 1, 'domain_bing.com': 1}
-    doc8Map = {'classLabel': 1, 'body_dog': 1, 'body_abl': 1, 'body_hors': 1, 'domain_bing.com': 1}
-    doc9Map = {'classLabel': 1, 'body_account': 2, 'body_abl': 1, 'body_dog': 1, 'domain_google.com': 1}
+    doc1Map = {'classLabel': 1, 'body/dog': 1, 'body/cat': 1, 'body/account': 1, 'body/abl': 1}
+    doc2Map = {'classLabel': 2, 'body/cat': 2, 'body/dog': 1, 'body/account': 1, 'head/cat': 1, 'domain/google.com': 1}
+    doc3Map = {'classLabel': 2, 'body/abl': 2, 'body/dog': 1, 'domain/bing.com': 1}
+    doc4Map = {'classLabel': 3, 'body/cat': 2, 'body/dog': 1, 'domain/google.com': 1, 'head/cat': 2}
+    doc5Map = {'classLabel': 1, 'head/cat': 1, 'head/account': 1, 'domain/bing.com': 1}
+    doc7Map = {'classLabel': 2, 'body/dog': 1, 'body/pant': 1, 'body/cat': 1, 'domain/bing.com': 1}
+    doc8Map = {'classLabel': 1, 'body/dog': 1, 'body/abl': 1, 'body/hors': 1, 'domain/bing.com': 1}
+    doc9Map = {'classLabel': 1, 'body/account': 2, 'body/abl': 1, 'body/dog': 1, 'domain/google.com': 1}
 
     docMap = {1: doc1Map, 2: doc2Map, 3: doc3Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
 
@@ -86,13 +86,13 @@ def test_DokDataSetTypeWeighting():
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
     assert len(featureNameMap) == 9
-    assert 'body_cat' in featureNameMap
-    assert 'body_dog' in featureNameMap
-    assert 'body_account' in featureNameMap
-    assert 'body_abl' in featureNameMap
-    assert 'head_cat' in featureNameMap
-    assert 'domain_bing.com' in featureNameMap
-    assert 'domain_google.com' in featureNameMap
+    assert 'body/cat' in featureNameMap
+    assert 'body/dog' in featureNameMap
+    assert 'body/account' in featureNameMap
+    assert 'body/abl' in featureNameMap
+    assert 'head/cat' in featureNameMap
+    assert 'domain/bing.com' in featureNameMap
+    assert 'domain/google.com' in featureNameMap
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 9
@@ -103,16 +103,29 @@ def test_DokDataSetTypeWeighting():
     numRows = dokShape[0]
     numColumns = dokShape[1]
 
-    doc1Map = {'classLabel': 1, 'body_dog': 1, 'body_cat': 1, 'body_account': 1, 'body_abl': 1}
-    doc2Map = {'classLabel': 2, 'body_cat': 2, 'body_dog': 1, 'body_account': 1, 'head_cat': 1, 'domain_google.com': 3}
-    doc3Map = {'classLabel': 2, 'body_abl': 2, 'body_dog': 1, 'domain_bing.com': 3}
-    doc4Map = {'classLabel': 3, 'body_cat': 2, 'body_dog': 1, 'domain_google.com': 1, 'head_cat': 2}
-    doc5Map = {'classLabel': 1, 'head_cat': 1, 'head_account': 1, 'domain_bing.com': 3}
-    doc7Map = {'classLabel': 2, 'body_dog': 1, 'body_pant': 1, 'body_cat': 1, 'domain_bing.com': 3}
-    doc8Map = {'classLabel': 1, 'body_dog': 1, 'body_abl': 1, 'body_hors': 1, 'domain_bing.com': 3}
-    doc9Map = {'classLabel': 1, 'body_account': 2, 'body_abl': 1, 'body_dog': 1, 'domain_google.com': 3}
+    doc1Map = {'classLabel': 1, 'body/dog': 1, 'body/cat': 1, 'body/account': 1, 'body/abl': 1}
+    doc2Map = {'classLabel': 2, 'body/cat': 2, 'body/dog': 1, 'body/account': 1, 'head/cat': 1, 'domain/google.com': 3}
+    doc3Map = {'classLabel': 2, 'body/abl': 2, 'body/dog': 1, 'domain/bing.com': 3}
+    doc4Map = {'classLabel': 3, 'body/cat': 2, 'body/dog': 1, 'domain/google.com': 1, 'head/cat': 2}
+    doc5Map = {'classLabel': 1, 'head/cat': 1, 'head/account': 1, 'domain/bing.com': 3}
+    doc7Map = {'classLabel': 2, 'body/dog': 1, 'body/pant': 1, 'body/cat': 1, 'domain/bing.com': 3}
+    doc8Map = {'classLabel': 1, 'body/dog': 1, 'body/abl': 1, 'body/hors': 1, 'domain/bing.com': 3}
+    doc9Map = {'classLabel': 1, 'body/account': 2, 'body/abl': 1, 'body/dog': 1, 'domain/google.com': 3}
 
     docMap = {1: doc1Map, 2: doc2Map, 3: doc3Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
+
+    featureNamesInverseKeys = inverseFeatureNameMap.keys()
+    featureNamesInverseKeys.sort()
+    # nameBuffer = ''
+    # for featureNameIndex in featureNamesInverseKeys:
+    #     nameBuffer += str(inverseFeatureNameMap[featureNameIndex]) + " "*(20 - len(inverseFeatureNameMap[featureNameIndex]))
+    # print nameBuffer
+
+    # for i in range(numRows):
+    #     printBuffer = ''
+    #     for j in range(numColumns):
+    #         printBuffer += str(dokVersion[i, j]) + " "*19
+    #     print printBuffer
 
     for i in range(numRows):
         docIdNumber = dokVersion[i, 0]
@@ -122,14 +135,14 @@ def test_DokDataSetTypeWeighting():
             featureCountMap = docMap[int(docIdNumber)]
         else:
             continue
-        print "docIdNumber: " + str(docIdNumber)
+        # print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
             feature = inverseFeatureNameMap[j]
             if dokVersion[i, j] > 0:
-                print "processed feature: " + str(feature)
-                print "processed feature count: " + str(dokVersion[i, j])
+                # print "processed feature: " + str(feature)
+                # print "processed feature count: " + str(dokVersion[i, j])
                 if feature in featureCountMap:
-                    print "manually computed feature count: " + str(featureCountMap[feature])
+                    # print "manually computed feature count: " + str(featureCountMap[feature])
                 assert int(dokVersion[i, j]) == featureCountMap[feature]
 
 
@@ -145,18 +158,18 @@ def test_convertToCooBaseDataFreqRepMultiTyped():
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
-    print "featureNameMap: " + str(featureNameMap)
+    # print "featureNameMap: " + str(featureNameMap)
     assert len(featureNameMap) == 15
-    assert 'body_cat' in featureNameMap
-    assert 'body_dog' in featureNameMap
-    assert 'body_account' in featureNameMap
-    assert 'body_abl' in featureNameMap
-    assert 'body_hors' in featureNameMap
-    assert 'body_pant' in featureNameMap
-    assert 'head_sauc' in featureNameMap
-    assert 'head_cat' in featureNameMap
-    assert 'head_account' in featureNameMap
-    assert 'head_dog' in featureNameMap
+    assert 'body/cat' in featureNameMap
+    assert 'body/dog' in featureNameMap
+    assert 'body/account' in featureNameMap
+    assert 'body/abl' in featureNameMap
+    assert 'body/hors' in featureNameMap
+    assert 'body/pant' in featureNameMap
+    assert 'head/sauc' in featureNameMap
+    assert 'head/cat' in featureNameMap
+    assert 'head/account' in featureNameMap
+    assert 'head/dog' in featureNameMap
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 15
@@ -167,14 +180,14 @@ def test_convertToCooBaseDataFreqRepMultiTyped():
     numRows = dokShape[0]
     numColumns = dokShape[1]
 
-    doc1Map = {'classLabel': 1, 'body_dog': 1, 'body_cat': 1, 'body_account': 1, 'body_abl': 1, 'domain_yahoo.com': 1}
-    doc2Map = {'classLabel': 2, 'body_cat': 2, 'body_dog': 1, 'body_hors': 1, 'body_account': 1, 'head_cat': 1, 'head_account': 1, 'head_sauc': 1, 'domain_google.com': 1}
-    doc3Map = {'classLabel': 2, 'body_abl': 2, 'body_dog': 1, 'domain_bing.com': 1}
-    doc4Map = {'classLabel': 3, 'body_cat': 2, 'body_dog': 1, 'domain_google.com': 1, 'head_cat': 2, 'head_dog': 1}
-    doc5Map = {'classLabel': 1, 'head_cat': 1, 'head_account': 1, 'domain_bing.com': 1}
-    doc7Map = {'classLabel': 2, 'body_dog': 1, 'body_pant': 1, 'body_cat': 1, 'domain_bing.com': 1}
-    doc8Map = {'classLabel': 1, 'body_dog': 1, 'body_abl': 1, 'body_hors': 1, 'domain_bing.com': 1}
-    doc9Map = {'classLabel': 1, 'body_account': 2, 'body_abl': 1, 'body_dog': 1, 'domain_google.com': 1}
+    doc1Map = {'classLabel': 1, 'body/dog': 1, 'body/cat': 1, 'body/account': 1, 'body/abl': 1, 'domain/yahoo.com': 1}
+    doc2Map = {'classLabel': 2, 'body/cat': 2, 'body/dog': 1, 'body/hors': 1, 'body/account': 1, 'head/cat': 1, 'head/account': 1, 'head/sauc': 1, 'domain/google.com': 1}
+    doc3Map = {'classLabel': 2, 'body/abl': 2, 'body/dog': 1, 'domain/bing.com': 1}
+    doc4Map = {'classLabel': 3, 'body/cat': 2, 'body/dog': 1, 'domain/google.com': 1, 'head/cat': 2, 'head/dog': 1}
+    doc5Map = {'classLabel': 1, 'head/cat': 1, 'head/account': 1, 'domain/bing.com': 1}
+    doc7Map = {'classLabel': 2, 'body/dog': 1, 'body/pant': 1, 'body/cat': 1, 'domain/bing.com': 1}
+    doc8Map = {'classLabel': 1, 'body/dog': 1, 'body/abl': 1, 'body/hors': 1, 'domain/bing.com': 1}
+    doc9Map = {'classLabel': 1, 'body/account': 2, 'body/abl': 1, 'body/dog': 1, 'domain/google.com': 1}
 
     docMap = {1: doc1Map, 2: doc2Map, 3: doc3Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
 
@@ -186,14 +199,14 @@ def test_convertToCooBaseDataFreqRepMultiTyped():
             featureCountMap = docMap[int(docIdNumber)]
         else:
             continue
-        print "docIdNumber: " + str(docIdNumber)
+        #print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
             feature = inverseFeatureNameMap[j]
             if dokVersion[i, j] > 0:
-                print "processed feature: " + str(feature)
-                print "processed feature count: " + str(dokVersion[i, j])
+                #print "processed feature: " + str(feature)
+                #print "processed feature count: " + str(dokVersion[i, j])
                 if feature in featureCountMap:
-                    print "manually computed feature count: " + str(featureCountMap[feature])
+                    #print "manually computed feature count: " + str(featureCountMap[feature])
                 assert int(dokVersion[i, j]) == featureCountMap[feature]
 
     return
@@ -211,16 +224,16 @@ def test_convertToCooBaseDataBinaryMultiTyped():
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
     assert len(featureNameMap) == 15
-    assert 'body_cat' in featureNameMap
-    assert 'body_dog' in featureNameMap
-    assert 'body_account' in featureNameMap
-    assert 'body_abl' in featureNameMap
-    assert 'body_hors' in featureNameMap
-    assert 'body_pant' in featureNameMap
-    assert 'head_sauc' in featureNameMap
-    assert 'head_cat' in featureNameMap
-    assert 'head_account' in featureNameMap
-    assert 'head_dog' in featureNameMap
+    assert 'body/cat' in featureNameMap
+    assert 'body/dog' in featureNameMap
+    assert 'body/account' in featureNameMap
+    assert 'body/abl' in featureNameMap
+    assert 'body/hors' in featureNameMap
+    assert 'body/pant' in featureNameMap
+    assert 'head/sauc' in featureNameMap
+    assert 'head/cat' in featureNameMap
+    assert 'head/account' in featureNameMap
+    assert 'head/dog' in featureNameMap
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 15
@@ -231,14 +244,14 @@ def test_convertToCooBaseDataBinaryMultiTyped():
     numRows = dokShape[0]
     numColumns = dokShape[1]
 
-    doc1Map = {'classLabel': 1, 'body_dog': 1, 'body_cat': 1, 'body_account': 1, 'body_abl': 1, 'domain_yahoo.com': 1}
-    doc2Map = {'classLabel': 2, 'body_cat': 1, 'body_dog': 1, 'body_hors': 1, 'body_account': 1, 'head_cat': 1, 'head_account': 1, 'head_sauc': 1, 'domain_google.com': 1}
-    doc3Map = {'classLabel': 2, 'body_abl': 1, 'body_dog': 1, 'domain_bing.com': 1}
-    doc4Map = {'classLabel': 3, 'body_cat': 1, 'body_dog': 1, 'domain_google.com': 1, 'head_cat': 1, 'head_dog': 1}
-    doc5Map = {'classLabel': 1, 'head_cat': 1, 'head_account': 1, 'domain_bing.com': 1}
-    doc7Map = {'classLabel': 2, 'body_dog': 1, 'body_pant': 1, 'body_cat': 1, 'domain_bing.com': 1}
-    doc8Map = {'classLabel': 1, 'body_dog': 1, 'body_abl': 1, 'body_hors': 1, 'domain_bing.com': 1}
-    doc9Map = {'classLabel': 1, 'body_account': 1, 'body_abl': 1, 'body_dog': 1, 'domain_google.com': 1}
+    doc1Map = {'classLabel': 1, 'body/dog': 1, 'body/cat': 1, 'body/account': 1, 'body/abl': 1, 'domain/yahoo.com': 1}
+    doc2Map = {'classLabel': 2, 'body/cat': 1, 'body/dog': 1, 'body/hors': 1, 'body/account': 1, 'head/cat': 1, 'head/account': 1, 'head/sauc': 1, 'domain/google.com': 1}
+    doc3Map = {'classLabel': 2, 'body/abl': 1, 'body/dog': 1, 'domain/bing.com': 1}
+    doc4Map = {'classLabel': 3, 'body/cat': 1, 'body/dog': 1, 'domain/google.com': 1, 'head/cat': 1, 'head/dog': 1}
+    doc5Map = {'classLabel': 1, 'head/cat': 1, 'head/account': 1, 'domain/bing.com': 1}
+    doc7Map = {'classLabel': 2, 'body/dog': 1, 'body/pant': 1, 'body/cat': 1, 'domain/bing.com': 1}
+    doc8Map = {'classLabel': 1, 'body/dog': 1, 'body/abl': 1, 'body/hors': 1, 'domain/bing.com': 1}
+    doc9Map = {'classLabel': 1, 'body/account': 1, 'body/abl': 1, 'body/dog': 1, 'domain/google.com': 1}
 
     docMap = {1: doc1Map, 2: doc2Map, 3: doc3Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
 
@@ -250,14 +263,14 @@ def test_convertToCooBaseDataBinaryMultiTyped():
             featureCountMap = docMap[int(docIdNumber)]
         else:
             continue
-        print "docIdNumber: " + str(docIdNumber)
+        #print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
             feature = inverseFeatureNameMap[j]
             if dokVersion[i, j] > 0:
-                print "processed feature: " + str(feature)
-                print "processed feature count: " + str(dokVersion[i, j])
+                #print "processed feature: " + str(feature)
+                #print "processed feature count: " + str(dokVersion[i, j])
                 if feature in featureCountMap:
-                    print "manually computed feature count: " + str(featureCountMap[feature])
+                    #print "manually computed feature count: " + str(featureCountMap[feature])
                 assert int(dokVersion[i, j]) == featureCountMap[feature]
 
     return
@@ -275,16 +288,16 @@ def test_convertToCooBaseDataTfIdfMultiTyped():
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
     assert len(featureNameMap) == 15
-    assert 'body_cat' in featureNameMap
-    assert 'body_dog' in featureNameMap
-    assert 'body_account' in featureNameMap
-    assert 'body_abl' in featureNameMap
-    assert 'body_hors' in featureNameMap
-    assert 'body_pant' in featureNameMap
-    assert 'head_sauc' in featureNameMap
-    assert 'head_cat' in featureNameMap
-    assert 'head_account' in featureNameMap
-    assert 'head_dog' in featureNameMap
+    assert 'body/cat' in featureNameMap
+    assert 'body/dog' in featureNameMap
+    assert 'body/account' in featureNameMap
+    assert 'body/abl' in featureNameMap
+    assert 'body/hors' in featureNameMap
+    assert 'body/pant' in featureNameMap
+    assert 'head/sauc' in featureNameMap
+    assert 'head/cat' in featureNameMap
+    assert 'head/account' in featureNameMap
+    assert 'head/dog' in featureNameMap
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 15
@@ -295,14 +308,14 @@ def test_convertToCooBaseDataTfIdfMultiTyped():
     numRows = dokShape[0]
     numColumns = dokShape[1]
 
-    doc1Map = {'classLabel': 1, 'body_dog': 0.053349, 'body_cat': 0.27693, 'body_account': 0.391867, 'body_abl': 0.27693, 'domain_yahoo.com': 0.830791}
-    doc2Map = {'classLabel': 2, 'body_cat': 0.2982506, 'body_dog': 0.0383061, 'body_hors': 0.39766752, 'body_account': 0.2813577, 'head_cat': 0.2813577, 'head_account': 0.39766752, 'head_sauc': 0.59650128, 'domain_google.com': 0.281357723}
-    doc3Map = {'classLabel': 2, 'body_abl': 0.82734, 'body_dog': 0.106255, 'domain_bing.com': 0.55156}
-    doc4Map = {'classLabel': 3, 'body_cat': 0.355587, 'body_dog': 0.045668, 'domain_google.com': 0.335446, 'head_cat': 0.50317, 'head_dog': 0.711174}
-    doc5Map = {'classLabel': 1, 'head_cat': 0.534745, 'head_account': 0.755803, 'domain_bing.com': 0.377901}
-    doc7Map = {'classLabel': 2, 'body_dog': 0.057987, 'body_pant': .903012, 'body_cat': .301004, 'domain_bing.com': .301004}
-    doc8Map = {'classLabel': 1, 'body_dog': .078405, 'body_abl': .406992, 'body_hors': .813983, 'domain_bing.com': .406992}
-    doc9Map = {'classLabel': 1, 'body_account': 0.772749, 'body_abl': 0.364065, 'body_dog': 0.070135, 'domain_google.com': 0.515166}
+    doc1Map = {'classLabel': 1, 'body/dog': 0.053349, 'body/cat': 0.27693, 'body/account': 0.391867, 'body/abl': 0.27693, 'domain/yahoo.com': 0.830791}
+    doc2Map = {'classLabel': 2, 'body/cat': 0.2982506, 'body/dog': 0.0383061, 'body/hors': 0.39766752, 'body/account': 0.2813577, 'head/cat': 0.2813577, 'head/account': 0.39766752, 'head/sauc': 0.59650128, 'domain/google.com': 0.281357723}
+    doc3Map = {'classLabel': 2, 'body/abl': 0.82734, 'body/dog': 0.106255, 'domain/bing.com': 0.55156}
+    doc4Map = {'classLabel': 3, 'body/cat': 0.355587, 'body/dog': 0.045668, 'domain/google.com': 0.335446, 'head/cat': 0.50317, 'head/dog': 0.711174}
+    doc5Map = {'classLabel': 1, 'head/cat': 0.534745, 'head/account': 0.755803, 'domain/bing.com': 0.377901}
+    doc7Map = {'classLabel': 2, 'body/dog': 0.057987, 'body/pant': .903012, 'body/cat': .301004, 'domain/bing.com': .301004}
+    doc8Map = {'classLabel': 1, 'body/dog': .078405, 'body/abl': .406992, 'body/hors': .813983, 'domain/bing.com': .406992}
+    doc9Map = {'classLabel': 1, 'body/account': 0.772749, 'body/abl': 0.364065, 'body/dog': 0.070135, 'domain/google.com': 0.515166}
 
     docMap = {1: doc1Map, 2: doc2Map, 3: doc3Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
 
@@ -323,6 +336,73 @@ def test_convertToCooBaseDataTfIdfMultiTyped():
                 #if feature in featureCountMap:
                     #print "manually computed feature count: " + str(featureCountMap[feature])
                 assert math.fabs(dokVersion[i, j] -featureCountMap[feature]) < 0.01
+
+    return
+
+def test_convertToCooBaseDataRequiredClassLabel():
+    """
+    Unit test for requiredClassLabel functionality in text_processing
+    """
+    attributeMap = {'001': 'yahoo.com', '002': 'google.com', '003': 'bing.com', '004': 'google.com', '005': 'bing.com', '007': 'bing.com', '008': 'bing.com', '009': 'google.com'}
+    classLabelMap = {'001': 1, '002': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
+    attributeMapMap = {'domain': attributeMap}
+    classLabelMapMap = {'classLabel': classLabelMap}
+    requiredClassLabelTypes = set(['classLabel'])
+    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, requiredClassLabelTypes=requiredClassLabelTypes)
+    #print "featureReport:\n" + cooDataSet.featureReport()
+    featureNameMap = cooDataSet.featureNames
+    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+
+    #print "featureNameMap: " + str(featureNameMap)
+    assert len(featureNameMap) == 15
+    assert 'body/cat' in featureNameMap
+    assert 'body/dog' in featureNameMap
+    assert 'body/account' in featureNameMap
+    assert 'body/abl' in featureNameMap
+    assert 'body/hors' in featureNameMap
+    assert 'body/pant' in featureNameMap
+    assert 'head/sauc' in featureNameMap
+    assert 'head/cat' in featureNameMap
+    assert 'head/account' in featureNameMap
+    assert 'head/dog' in featureNameMap
+
+    assert cooDataSet.data.shape[0] == 7
+    assert cooDataSet.data.shape[1] == 15
+
+    dokVersion = cooDataSet.data.todok()
+
+    dokShape = dokVersion.shape
+    numRows = dokShape[0]
+    numColumns = dokShape[1]
+
+    doc1Map = {'classLabel': 1, 'body/dog': 1, 'body/cat': 1, 'body/account': 1, 'body/abl': 1, 'domain/yahoo.com': 1}
+    doc2Map = {'classLabel': 2, 'body/cat': 2, 'body/dog': 1, 'body/hors': 1, 'body/account': 1, 'head/cat': 1, 'head/account': 1, 'head/sauc': 1, 'domain/google.com': 1}
+    #doc3Map = {'classLabel': 2, 'body/abl': 2, 'body/dog': 1, 'domain/bing.com': 1}
+    doc4Map = {'classLabel': 3, 'body/cat': 2, 'body/dog': 1, 'domain/google.com': 1, 'head/cat': 2, 'head/dog': 1}
+    doc5Map = {'classLabel': 1, 'head/cat': 1, 'head/account': 1, 'domain/bing.com': 1}
+    doc7Map = {'classLabel': 2, 'body/dog': 1, 'body/pant': 1, 'body/cat': 1, 'domain/bing.com': 1}
+    doc8Map = {'classLabel': 1, 'body/dog': 1, 'body/abl': 1, 'body/hors': 1, 'domain/bing.com': 1}
+    doc9Map = {'classLabel': 1, 'body/account': 2, 'body/abl': 1, 'body/dog': 1, 'domain/google.com': 1}
+
+    docMap = {1: doc1Map, 2: doc2Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
+
+    for i in range(numRows):
+        docIdNumber = dokVersion[i, 0]
+        classLabel = dokVersion[i, 1]
+        assert classLabel == docMap[docIdNumber]['classLabel']
+        if i != 5 and i != 3:
+            featureCountMap = docMap[int(docIdNumber)]
+        else:
+            continue
+        #print "docIdNumber: " + str(docIdNumber)
+        for j in range(2, numColumns):
+            feature = inverseFeatureNameMap[j]
+            if dokVersion[i, j] > 0:
+                #print "processed feature: " + str(feature)
+                #print "processed feature count: " + str(dokVersion[i, j])
+                if feature in featureCountMap:
+                    #print "manually computed feature count: " + str(featureCountMap[feature])
+                assert int(dokVersion[i, j]) == featureCountMap[feature]
 
     return
 
