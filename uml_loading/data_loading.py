@@ -6,9 +6,18 @@ def dirMapper(dirPath, extensions=[], mode="multiTyped"):
 	"""
 	Return a map of {id:{type:[list of file paths]}}, where ids uniquely
 	identify documents (not necessarily files). Id's are taken from fileNames; 
-	each document should be uniquely identified their filename.  This function
-	has two modes: 'oneType' and 'multiTyped'.  In oneType mode, all files
-	in dirPath are treated as being of the same type - 
+	each document should be uniquely identified by their filename.  This function
+	has two modes: 'oneType' and 'multiTyped'.  In oneType mode, all files (with the 
+	proper extension) in dirPath are treated as being of the same type, while
+	in multiTyped mode, the type of any given file is determined by which of 
+	dirPath's immediate subfolder contains that file.  Regardless of which mode
+	is chosen, all files with the same filename will be considered to be part 
+	of the same document; the difference is that in multiTyped mode, tokens
+	are separated by type - in 'oneType' mode, if 'account' is found in 
+	dirPath/head/001.txt and dirPath/body/001.txt, document 001 will contain
+	the token 'all/account' with a count of 2.  In multiTyped mode, document
+	001 would have the feature 'head/account' with a count of 1 and a feature
+	'body/account' with a count of 1.
 
 	Parameters:
 		dirPath: path to the directory containing files to be processed
@@ -16,7 +25,7 @@ def dirMapper(dirPath, extensions=[], mode="multiTyped"):
 		extensions: list of file extensions (of format '.xxx') denoting
 		which files to include in the returned list.  Any file whose extension
 		is not contained within extensions will not be included in the results.
-		Defaults all extensions, in which case all files will be included (but
+		Defaults to all extensions, in which case all files will be included (but
 		not directories).
 
 		mode:  Either 'oneType' or 'multiTyped'.  In oneType mode, all files within
@@ -38,7 +47,11 @@ def dirMapper(dirPath, extensions=[], mode="multiTyped"):
 	topDirs = listDirs(dirPath)
 
 	if mode == "oneType":
+		#Get all files contained anywhere within dirPath that have an extension
+		#in desired extension set.
 		allFiles = recursiveFileLister(root, extensions)
+		#Construct a 2-layer dict, outer layer keyed by docId, inner layer
+		#keyed by 'all', containing a list of files with the same filename/docId
 		for filePath in allFiles:
 			docId = extractFilename(filePath)
 			if docId in results:
@@ -49,6 +62,9 @@ def dirMapper(dirPath, extensions=[], mode="multiTyped"):
 				typeFileListMap = {'all':fileList}
 				results[docId] = typeFileListMap
 	elif mode == "multiTyped":
+		#same as 'oneType' mode, but start by searching immediate subdirectories
+		#of dirPath, then use the names of those subdirectories as keys for the list
+		#of files associated with each unique doc Id
 		for topDir in topDirs:
 			typeName = os.path.basename(topDir)
 			topDirPath = os.path.join(root, topDir)
