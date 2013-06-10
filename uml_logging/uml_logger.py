@@ -54,30 +54,32 @@ class UmlLogger(object):
 		else:
 			self.setup()
 
-		#
+		#Should we put this message on a new line?
 		if addNewLine:
 			message = "\n"+message
 		else: pass
 			
 		self.logFile.write(message)
+		self.logFile.flush()
 
 	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
 		"""
-		TODO: add docstring
+		Send pertinent information about a cycle of train a learning algorithm and test its performance
+		to the log file
 		"""
 		self._logRun_implementation(trainData, testData, function, metrics, timer, extraInfo, numFolds)
 
 
 	def logData(self, baseDataObject):
 		"""
-		TODO: add docstring
+		Send pertinent information about a data object that has been loaded/created to the log file
 		"""
 		self._logData_implementation(baseDataObject)
 
 
 	def logLoad(self, dataFileName, baseDataType=None, name=None):
 		"""
-		TODO: add docstring
+		Send pertinent information about the loading of some data set to the log file
 		"""
 		if dataFileName is None and baseDataType is None and name is None:
 			raise ArgumentException("logLoad requires at least one non-None argument")

@@ -9,8 +9,8 @@
 import os
 import datetime
 
-from human_readable_test import HumanReadableRunLog
-from machine_readable_test import MachineReadableRunLog
+from human_readable_log import HumanReadableLogger
+from machine_readable_log import MachineReadableLogger
 
 
 class LogManager(object):
@@ -25,22 +25,22 @@ class LogManager(object):
 
 		fullLogDesignator = os.path.join(logLocation, logName)
 
-		self.humanReadableLog = HumanReadableRunLog(fullLogDesignator + ".txt")
-		self.machineReadableLog = MachineReadableRunLog(fullLogDesignator + ".mr")
+		self.humanReadableLog = HumanReadableLogger(fullLogDesignator + ".txt")
+		self.machineReadableLog = MachineReadableLogger(fullLogDesignator + ".mr")
 
 	def logData(self, baseDataObject):
 		"""
 		Send information about a data set to the log(s).
 		"""
-		self.humanReadableLog.logData()
-		self.machineReadableLog.logData()
+		self.humanReadableLog.logData(baseDataObject)
+		self.machineReadableLog.logData(baseDataObject)
 
 	def logLoad(self, dataFilePath=None):
 		"""
 		Send information about the loading of a data set to the log(s).
 		"""
-		self.humanReadableLog.logLoad()
-		self.machineReadableLog.logLoad()
+		self.humanReadableLog.logLoad(dataFilePath)
+		self.machineReadableLog.logLoad(dataFilePath)
 
 	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
 		"""

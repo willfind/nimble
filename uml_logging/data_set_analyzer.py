@@ -1,5 +1,5 @@
 """
-Class to handle the calculation of various statistics about a data set and converting
+Module to handle the calculation of various statistics about a data set and converting
 them into a readable version suitable for printing to a log file.  Some statistics
 that are calculated, depending on the type of feature: sparsity (proportion of zero valued
 entries), min, max, mean, st. dev., # of unique values (for non-real valued features), # of
@@ -159,11 +159,13 @@ def produceAggregateReport(dataContainer, displayDigits):
 
     return tableString(table, False, headers=table[0], roundDigits=displayDigits)
 
-    ###############################################################################
-    #                                                                             #
-    #                           Statistical functions                             #
-    #                                                                             #
-    ###############################################################################
+
+
+###############################################################################
+#                                                                             #
+#                           Statistical functions                             #
+#                                                                             #
+###############################################################################
 
 
 def proportionMissing(values):
