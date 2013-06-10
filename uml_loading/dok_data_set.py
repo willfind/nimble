@@ -3,8 +3,9 @@
 """
 import math
 import numpy as np
+import gc
+from guppy import hpy; h=hpy()
 from numpy import searchsorted
-from bisect import bisect_left
 from collections import Counter
 from scipy.sparse import dok_matrix
 
@@ -24,7 +25,8 @@ class DokDataSet(object):
 	feature:columnIndex, columnIndex:feature, docId:rowIndex, and docId:classLabel.  The 
 	dok matrix holds data about the features making up each document; assumes that each
 	entry in the matrix represents the number of times that feature (column) occurs in
-	that document (row).
+	that document (row).  Supports three types of feature representation when converting
+	to a BaseData object: binary, frequency, and tf-idf.
 	"""
 
 	def __init__(self):
@@ -39,18 +41,31 @@ class DokDataSet(object):
 		self.rowIndexDocIdMap = {}
 		self.featureDocCountMap = Counter()
 		self.featureIdfMap = {}
-		self.classLabelSets = {}
+		self.classLabelMaps = []
 
-	def loadDirectory(self, directoryPath, extensions=['.txt', '.html'], featureMergeMode='all', cleanHtml=True, ignoreCase=True, tokenizer='default', removeBlankTokens=True, skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, removeTokensContaining=None, keepNumbers=False, stopWordSet=UML.defaultStopWords, tokenTransformFunction=None, stemmer='default'):
+	def loadDirectory(self, 
+					  directoryPath, 
+					  extensions=['.txt', '.html'], 
+					  featureMergeMode='all', 
+					  cleanHtml=True, 
+					  ignoreCase=True, 
+					  tokenizer='default', 
+					  removeBlankTokens=True, 
+					  skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, 
+					  removeTokensContaining=None, 
+					  keepNumbers=False, 
+					  stopWordSet=UML.defaultStopWords, 
+					  tokenTransformFunction=None, 
+					  stemmer='default'):
 		"""
-		Read all files in a directory, assuming they contain raw text, and load them into this object.  
+		Read all files in a directory, assuming they contain raw text, and load them into this object.
+		Various processing is performed to convert raw text into a numerical matrix.
 		For explanation of all parameter options, see docstring of convertToCooBaseData() function in
 		convert_to_basedata.py.  
 		"""
 		# If this DokDataSet object already contains a data set, we will load the new data and
-		# merge it into the current data.  This assumes that, while there may be overlap in documents
-		# or overlap in features between the two data sets, there is not simultaneous overlap between
-		# documents and features.  In that case, some data may get overwritten.
+		# merge it into the current data.  If the new data set overlaps the current data set,
+		# 
 		if not self.containsRawText:
 			self.containsRawText = True
 
@@ -78,11 +93,19 @@ class DokDataSet(object):
 		# sparse matrix to hold results.  To start, has as many rows as there are document ids
 		# and 10,000,000 columns (we do not expect to use that many columns but there is no penalty
 		# for having unused columns.)  
-		self.data = dok_matrix((len(fileMap),1000000), dtype='uint16')
+		self.data = dok_matrix((len(fileMap),2000000), dtype='uint16')
 
 		# load all files and convert to token lists/frequency counts, then add to a 
 		# 3-layer map: dataType->{docKey->freqMap}
+		counter = 0
 		for docId in fileMap.keys():
+			counter += 1
+			if counter % 5000 == 0:
+				print h.heap()
+				print "length of featureColumnIndexMap: " + str(len(self.featureColumnIndexMap))
+				print "num non-zero entries in self.data: " + str(self.data.nnz)
+				print "number of rows added: " + str(rowCount)
+				print "collecting garbage: " + str(gc.collect())
 			numDocsVisited += 1
 			#record the unique key of this document
 			self.docIdRowIndexMap[docId] = rowCount
@@ -94,7 +117,7 @@ class DokDataSet(object):
 				#create a new Counter object to track the number of appearances of each feature
 				#in the document
 				typeFreqMap = Counter()
-				#iterate through all files associated with this document
+				#iterate through all files associated with this document, load and tokenize them
 				for filePath in filePathList:
 					try:
 						tokens, freqMap = loadAndTokenize(filePath, cleanHtml, ignoreCase, tokenizer, removeBlankTokens, skipSymbolSet, removeTokensContaining, keepNumbers, stopWordSet, tokenTransformFunction, stemmer)
@@ -105,9 +128,9 @@ class DokDataSet(object):
 					newFreqMap = Counter()
 					for token, count in freqMap.iteritems():
 						if dataType == 'all':
-							newFreqMap["allText_" + token] = count
+							newFreqMap["allText/" + token] = count
 						else:
-							newFreqMap[dataType + "_" + token] = count
+							newFreqMap[dataType + "/" + token] = count
 					typeFreqMap = typeFreqMap + newFreqMap
 				#loop over all tokens in this document and update count of docs this token
 				#appears in.  If the token/feature hasn't been seen before, add to this object's
@@ -158,9 +181,13 @@ class DokDataSet(object):
 		self.data = dok_matrix((len(attributeIdMap), len(attributeIdMap)), dtype='uint8')
 
 		for docId, attribute in attributeIdMap.iteritems():
+			attribute = attribute.replace(" ", "_")
 			if attributeTransformFunction is not None:
 				attribute = attributeTransformFunction(attribute)
-			attribute = attributeName + "_" + attribute
+			attribute = attributeName + "/" + attribute
+			#if we've seen this attribute before, add entry to self.data and update
+			#data structures.  If we haven't, we also have to add this attribute to 
+			#tracking structures
 			try:
 				self.data[rowCount, self.featureColumnIndexMap[attribute]] = 1
 				self.docIdRowIndexMap[docId] = rowCount
@@ -191,7 +218,8 @@ class DokDataSet(object):
 		"""
 		if toMerge is None:
 			raise ArgumentException("toMerge cannot be empty")
-		elif self.isEmpty:
+		
+		if self.isEmpty:
 			self.featureColumnIndexMap = toMerge.featureColumnIndexMap.copy()
 			self.columnIndexFeatureMap = toMerge.columnIndexFeatureMap.copy()
 			self.docIdRowIndexMap = toMerge.docIdRowIndexMap.copy()
@@ -273,7 +301,7 @@ class DokDataSet(object):
 
 		return None
 
-	def addClassLabelMap(self, docIdClassLabelMap, classLabelName=None):
+	def addClassLabelMap(self, classLabelMapObj):
 		"""
 		Add a column of class labels to the beginning of self.data (at column 0).
 		Shifts all other columns to the right by one.  If classLabelName is None,
@@ -283,15 +311,16 @@ class DokDataSet(object):
 
 		Class Labels should be represented numerically.
 		"""
-		if len(self.classLabelSets) > 1 and classLabelName is None:
-			raise ImproperActionException("Please provide a name/type for your class label list")
-		elif classLabelName in self.classLabelSets:
-			raise ImproperActionException("That classLabelName is already in use; please choose another")
-		else:
-			if classLabelName is None:
-				self.classLabelSets['defaultClassLabel'] = docIdClassLabelMap
-			else:
-				self.classLabelSets[classLabelName] = docIdClassLabelMap
+		if len(self.classLabelMaps) > 1 and classLabelMapObj.name is None or classLabelMapObj.name == '':
+			raise ImproperActionException("Please provide a name/type for your class label")
+
+		for classLabelMap in self.classLabelMaps:
+			if classLabelMapObj.name == classLabelMap.name:
+				raise ImproperActionException("That classLabelName is already in use; please choose another")
+		
+		if classLabelMapObj.name is None:
+			classLabelMapObj.name = 'defaultClassLabel'
+		self.classLabelMaps.append(classLabelMapObj)
 
 
 	def toCooBaseData(self, representationMode='frequency', minTermFrequency=2, featureTypeWeightScheme=None):
@@ -336,23 +365,46 @@ class DokDataSet(object):
 
 		featureNameList = self.removeInfrequentFeatures(minTermFrequency)
 
+		#If any specific type of class label is required, we want to remove any documents that do not
+		#have a value for that type of class label.  So we build a set of document Id's that are missing
+		#any class label type in the set of all required class label types.
+		requiredValueSet = set([classLabelMap.isRequired for classLabelMap in self.classLabelMaps])
+		if True in requiredValueSet:
+			docIdSet = set(self.docIdRowIndexMap.keys())
+			docIdsToRemove = set()
+			for classLabelMap in self.classLabelMaps:
+				classLabelName = classLabelMap.name
+				classLabelMapInterior = classLabelMap.labelMap
+				classLabelIdSet = set(classLabelMapInterior.keys())
+				if classLabelMap.isRequired:
+					missingLabelSet = docIdSet - classLabelIdSet
+					docIdsToRemove = docIdsToRemove | missingLabelSet
+			rowsToRemove = []
+			for docId in docIdsToRemove:
+				rowIndex = self.docIdRowIndexMap[docId]
+				rowsToRemove.append(rowIndex)
+			self.removeRows(rowsToRemove)
+		self.reCalcFeatureDocCount()
+
 		#If any of the featureTypeWeights is not an integer, we need to change the type of
-		#this objects data matrix to float
+		#this object's data matrix to float
 		if featureTypeWeightScheme is not None and len(featureTypeWeightScheme) > 0:
 			for featureTypeName, featureTypeWeight in featureTypeWeightScheme.iteritems():
 				if not isinstance(featureTypeWeight, int):
 					self.data = self.data.asfptype()
 					break
 
+		#for any feature type that has a weight, we multiply entries of that type by the specified weight
 		if featureTypeWeightScheme is not None and representationMode.lower() != 'binary':
 			entries = self.data.nonzero()
 			for l in xrange(len(entries[0])):
 				rowIndex = entries[0][l]
 				columnIndex = entries[1][l]
 				feature = self.columnIndexFeatureMap[columnIndex]
-				featureType = feature.partition('_')[0]
+				featureType = feature.partition('/')[0]
 				if featureType in featureTypeWeightScheme:
 					self.data[rowIndex, columnIndex] *= featureTypeWeightScheme[featureType]
+
 
 		if isinstance(representationMode, str):
 			if representationMode.lower() == 'binary':
@@ -367,7 +419,7 @@ class DokDataSet(object):
 				newDokMatrix = self.data
 			elif representationMode.lower() == 'tfidf':
 				newDokMatrix = self.calcTfIdfVals()
-
+		#if representationMode is a function, we call it for each entry in self.data
 		elif hasattr(representationMode, '__call__'):
 			newDokMatrix = dok_matrix(self.data.shape, 'float64')
 			entries = self.data.nonzero()
@@ -383,20 +435,25 @@ class DokDataSet(object):
 		baseDataVersion = data('coo', cooVersion, featureNameList, sendToLog=False)
 
 		# Build a dok matrix containing document Ids and Class Labels
-		labelDokMatrix = dok_matrix((newDokMatrix.shape[0], 1 + len(self.classLabelSets)))
+		labelDokMatrix = dok_matrix((newDokMatrix.shape[0], 1 + len(self.classLabelMaps)))
 		idLabelOrderedNames = []
 		for docId, rowIndex in self.docIdRowIndexMap.iteritems():
 			labelDokMatrix[rowIndex, 0] = int(docId)
-		idLabelOrderedNames.append('documentId***')
+		idLabelOrderedNames.append('documentId')
 		labelColumnIndex = 1
-		for classLabelName, classLabelSet in self.classLabelSets.iteritems():
-			for docId, classLabel in classLabelSet.iteritems():
+		
+		#add all class labels
+		for classLabelMap in self.classLabelMaps:
+			classLabelName = classLabelMap.name
+			classLabelMapInterior = classLabelMap.labelMap
+			classLabelIdSet = classLabelMapInterior.keys()
+			for docId, classLabel in classLabelMapInterior.iteritems():
 				try:
 					rowIndex = self.docIdRowIndexMap[docId]
 				except KeyError:
 					continue
 				labelDokMatrix[rowIndex, labelColumnIndex] = classLabel
-			idLabelOrderedNames.append(classLabelName+ '***')
+			idLabelOrderedNames.append(classLabelName)
 			labelColumnIndex += 1
 		#convert dok matrix w/labels and ids to Coo BaseData version
 		labelsAndIds = data('coo', labelDokMatrix.tocoo(), idLabelOrderedNames, sendToLog=False)
@@ -409,12 +466,11 @@ class DokDataSet(object):
 
 	def calcTfIdfVals(self):
 		"""
-		Calculate the tf normalization factor for one document (row) in
-		a dok matrix with feature frequency counts in each entry.  Returns a map
-		of columnIndex:tfIdf value for the specified row.  Ignores 0-valued entries
-		in dokMatrix, so the final map only contains mappings for columns that have
-		non-zero values.
+		Calculate the tf x idf value for each entry in self.data.  Return
+		dok matrix of same size as self.data, with entries containing tf-idf
+		values instead of feature frequency counts.
 		"""
+		#We need idf values for each feature
 		if self.featureIdfMap is None or len(self.featureIdfMap) == 0:
 			self.calcIdfValues()
 
@@ -423,6 +479,8 @@ class DokDataSet(object):
 
 		tfIdfDataHolder = dok_matrix(self.data.shape, 'float64')
 
+		#Make one pass over self.data to calculate non-normalized tf values and 
+		#the normalization factor for each row (document) in self.data
 		for i in xrange(len(nonZeroEntries[0])):
 			rowIndex = nonZeroEntries[0][i]
 			columnIndex = nonZeroEntries[1][i]
@@ -435,16 +493,18 @@ class DokDataSet(object):
 			except KeyError:
 				rowIndexWeightSumMap[rowIndex] = tempTfIdf**2
 				
-
+		#Finish calculation of normalization factors by getting sqrt of all
+		#normalization factors
 		for rowIndex, normalizationFactor in rowIndexWeightSumMap.iteritems():
 			rowIndexWeightSumMap[rowIndex] = math.sqrt(normalizationFactor)
 
+		#reset all temporary tf x idf values to temp value / normalization factor
 		for i in xrange(len(nonZeroEntries[0])):
 			rowIndex = nonZeroEntries[0][i]
 			columnIndex = nonZeroEntries[1][i]
 			normalizationFactor = rowIndexWeightSumMap[rowIndex]
 			tempTfIdf = tfIdfDataHolder[rowIndex, columnIndex]
-			tfIdfDataHolder[rowIndex, columnIndex] = tempTfIdf / normalizationFactor
+			tfIdfDataHolder[rowIndex, columnIndex] = round(tempTfIdf / normalizationFactor, 9)
 
 		return tfIdfDataHolder
 
@@ -465,6 +525,7 @@ class DokDataSet(object):
 
 		return None
 
+
 	def reCalcFeatureDocCount(self):
 		"""
 			Re-calculate the count of # of documents each feature appears in,
@@ -473,6 +534,8 @@ class DokDataSet(object):
 		featureDocCountMap = {}
 		nonZeroEntries = self.data.nonzero()
 		for i in xrange(len(nonZeroEntries[0])):
+			#only need to look at columns, since each feature can only appear
+			#once in each row of self.data
 			columnIndex = nonZeroEntries[1][i]
 			feature = self.columnIndexFeatureMap[columnIndex]
 			try:
@@ -481,6 +544,7 @@ class DokDataSet(object):
 				featureDocCountMap[feature] = 1
 
 		self.featureDocCountMap = featureDocCountMap
+
 
 	def removeInfrequentFeatures(self, minFeatureFrequency):
 		"""
@@ -505,20 +569,33 @@ class DokDataSet(object):
 				columnShiftIndexList.append(columnIndex)
 				del self.featureDocCountMap[feature]
 
-		#Use columnShiftIndexList to figure out how much each retained feature
-		#needs to have its column index shifted by
-		columnShiftIndexList.sort()
-		columnsToRemoveSet = set(columnShiftIndexList)
-		columnShiftIndexList = np.array(columnShiftIndexList, np.int32)
-		totalColumnShift = len(columnShiftIndexList)
-		newRowCount = self.data.shape[0]
-		newColumnCount = self.data.shape[1] - totalColumnShift
-
 		while True:
 			try:
 				featureNameList.remove('')
 			except ValueError:
 				break
+
+		self.removeColumns(columnShiftIndexList)
+
+		return featureNameList
+
+		
+
+	def removeColumns(self, columnToRemoveIndexList, recalculateDocFeatureCounts=False):
+		"""
+		Given a list of columns to remove, remove them from the data set in this
+		object.  
+		"""
+		#Use columnShiftIndexList to figure out how much each retained feature
+		#needs to have its column index shifted by
+		columnToRemoveIndexList.sort()
+		columnsToRemoveSet = set(columnToRemoveIndexList)
+		#convert to numpy object to speed up searching
+		columnToRemoveIndexList = np.array(columnToRemoveIndexList, np.int32)
+		totalColumnShift = len(columnToRemoveIndexList)
+		newRowCount = self.data.shape[0]
+		newColumnCount = self.data.shape[1] - totalColumnShift
+
 
 		#set up new data structures: we will reassign this objects matrix and columnIndex
 		#maps to these new structures
@@ -531,40 +608,68 @@ class DokDataSet(object):
 			columnIndex = entries[1][l]
 			
 			if columnIndex not in columnsToRemoveSet:
-				newColumnIndex = columnIndex - searchsorted(columnShiftIndexList, columnIndex)
 				feature = self.columnIndexFeatureMap[columnIndex]
-				newColumnIndexFeatureMap[newColumnIndex] = feature
-				newFeatureColumnIndexMap[feature] = newColumnIndex
+				if feature not in newColumnIndexFeatureMap:
+					newColumnIndex = columnIndex - searchsorted(columnToRemoveIndexList, columnIndex)
+					newColumnIndexFeatureMap[newColumnIndex] = feature
+					newFeatureColumnIndexMap[feature] = newColumnIndex
+				else:
+					newColumnIndex = newFeatureColumnIndexMap[feature]
+					
 				newDokMatrix[rowIndex, newColumnIndex] = self.data[rowIndex, columnIndex]
 
 		self.columnIndexFeatureMap = newColumnIndexFeatureMap
 		self.featureColumnIndexMap = newFeatureColumnIndexMap
 		self.data = newDokMatrix
 
-		#return the list of feature names.  The index of each feature name is its column
-		#index in self.data
-		return featureNameList
+		if recalculateDocFeatureCounts:
+			self.reCalcFeatureDocCount()
 
 
+	def removeRows(self, rowToRemoveIndexList, recalculateFeatureCounts=False):
+		"""
+		Given a list of rows to remove, remove them from the data set in this
+		object.  If recalculateFeatureCounts is True, this function will call 
+		reCalcFeatureDocCount.
+		"""
+		#Use rowToRemoveIndexList to figure out how much each retained row
+		#needs to have its row index shifted by
+		rowToRemoveIndexList.sort()
+		rowsToRemoveSet = set(rowToRemoveIndexList)
+		#convert to numpy object to speed up searching
+		rowToRemoveIndexList = np.array(rowToRemoveIndexList, np.int32)
+		totalRowShift = len(rowToRemoveIndexList)
+		newColumnCount = self.data.shape[1]
+		newRowCount = self.data.shape[0] - totalRowShift
 
+		#set up new data structures: we will reassign this objects matrix and columnIndex
+		#maps to these new structures
+		newDokMatrix = dok_matrix((newRowCount, newColumnCount), self.data.dtype)
+		newRowIndexDocIdMap = {}
+		newDocIdRowIndexMap = {}
+		entries = self.data.nonzero()
+		for l in xrange(len(entries[0])):
+			rowIndex = entries[0][l]
+			columnIndex = entries[1][l]
+			
+			if rowIndex not in rowsToRemoveSet:
+				docId = self.rowIndexDocIdMap[rowIndex]
+				if docId not in newRowIndexDocIdMap:
+					newRowIndex = rowIndex - searchsorted(rowToRemoveIndexList, rowIndex)
+					newRowIndexDocIdMap[newRowIndex] = docId
+					newDocIdRowIndexMap[docId] = newRowIndex
+				else:
+					newRowIndex = newDocIdRowIndexMap[docId]
+					
+				newDokMatrix[newRowIndex, columnIndex] = self.data[rowIndex, columnIndex]
 
-def calcFirstBiggerIndex(columnIndexShiftList, searchItem):
-	"""
-	Provided a list of column indices, sorted in ascending order,
-	find the index of the first entry in that list that is larger
-	than or equal to searchIndex.  If searchIndex is larger than all
-	items in the list, return len(columnIndexShiftMap)
+		self.rowIndexDocIdMap = newRowIndexDocIdMap
+		self.docIdRowIndexMap = newDocIdRowIndexMap
+		self.data = newDokMatrix
 
-	Example:  if the list is [3, 6, 14, 25], and searchIndex is
-	10, this function will return 2 (which is the index of 14 in the list).
-	If searchIndex is 27, this function will return 4.
-	"""
-	for i in xrange(len(columnIndexShiftList)):
-		currItem = columnIndexShiftList[i]
-		if searchItem <= currItem:
-			return i
+		if recalculateFeatureCounts:
+			self.reCalcFeatureDocCount()
 
-	return len(columnIndexShiftList)
 
 
 
