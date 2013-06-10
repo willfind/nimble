@@ -11,7 +11,17 @@ import UML
 from UML.utility import ArgumentException, EmptyFileException
 
 
-def loadAndTokenize(textFilePath, cleanHtml=True, ignoreCase=True, tokenizer='default', removeBlankTokens=True, skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, removeTokensContaining=None, keepNumbers=False, stopWordSet=UML.defaultStopWords, tokenTransformFunction=None, stemmer='default'):
+def loadAndTokenize(textFilePath, 
+				    cleanHtml=True, 
+				    ignoreCase=True, 
+				    tokenizer='default', 
+				    removeBlankTokens=True, 
+				    skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, 
+				    removeTokensContaining=None, 
+				    keepNumbers=False, 
+				    stopWordSet=UML.defaultStopWords, 
+				    tokenTransformFunction=None, 
+				    stemmer='default'):
 	"""
 	Load one file, run the contents of that file through text-processing function (convertToTokens), and return
 	the contents as a list of tokens and a frequency map in the form token:# of occurences in file.
@@ -28,10 +38,22 @@ def loadAndTokenize(textFilePath, cleanHtml=True, ignoreCase=True, tokenizer='de
 
 	tokens, frequencyMap = convertToTokens(text, cleanHtml, ignoreCase, tokenizer, removeBlankTokens, skipSymbolSet, removeTokensContaining, keepNumbers, stopWordSet, tokenTransformFunction, stemmer)
 
+	textFile.close()
+	
 	return tokens, frequencyMap
 
 
-def convertToTokens(text, cleanHtml=True, ignoreCase=True, tokenizer='default', removeBlankTokens=True, skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, removeTokensContaining=None, keepNumbers=False, stopWordSet=UML.defaultStopWords, tokenTransformFunction=None, stemmer='default'):
+def convertToTokens(text, 
+					cleanHtml=True, 
+					ignoreCase=True, 
+					tokenizer='default', 
+					removeBlankTokens=True, 
+					skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, 
+					removeTokensContaining=None, 
+					keepNumbers=False, 
+					stopWordSet=UML.defaultStopWords, 
+					tokenTransformFunction=None, 
+					stemmer='default'):
 	"""
 		Convert raw text to processed tokens.  Returns a list of tokens in the same order in
 		which they appear in the original text, as well as a map of token:frequencyCount.  
@@ -65,9 +87,9 @@ def convertToTokens(text, cleanHtml=True, ignoreCase=True, tokenizer='default', 
         skipSymbolSet: A set of symbols.  These symbols will be removed from tokens, leaving the rest of the token
                        intact.  Defaults to all non alphanumeric characters.
 
-        removeSymbolsContaining: A set of symbols.  Any token containing any symbol/character in this set will be
+        removeTokensContaining: A set of symbols.  Any token containing any symbol/character in this set will be
                                  removed entirely.  If a symbol appears in both this set and in skipSymbolSet,
-                                 removeSymbolsContaining will take precedence, and all tokes containing that symbol
+                                 removeTokensContaining will take precedence, and all tokens containing that symbol
                                  will be removed.  Defaults to None.
 
         keepNumbers: boolean flag.  If true, numerals will not be removed.  If False, numerals will be treated
@@ -192,6 +214,7 @@ def convertToTokens(text, cleanHtml=True, ignoreCase=True, tokenizer='default', 
 
 	return tokens, frequencyMap
 
+
 def filterStopWords(tokens, stopWords=set()):
 	"""
 	Provided a list of tokens and a set of stop words, return a list of tokens
@@ -252,7 +275,8 @@ def loadStopList(stopListFilePath=None, ignoreCase=True):
 	the file has one stop word per line.
 	"""
 	if stopListFilePath is None or not isinstance(stopListFilePath, str):
-		raise ArgumentException("stopListFilePath must be a string pointing to the location of a file containing stop words")
+		raise ArgumentException("stopListFilePath must be a string pointing to the location of " + 
+								"a file containing stop words")
 
 	stopListFile = open(stopListFilePath, 'rU')
 	stopList = []
