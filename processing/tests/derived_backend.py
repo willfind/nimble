@@ -1134,6 +1134,9 @@ def getPointView_isinstance(constructor):
 	assert view.name() is  None
 	assert view.index() >= 0 and view.index() < toTest.points()
 	assert len(view) == toTest.features()
+	assert view['one'] == 1
+	assert view['two'] == 2
+	assert view['three'] == 3
 
 
 ##################

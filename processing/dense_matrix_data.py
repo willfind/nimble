@@ -497,11 +497,15 @@ class VectorView(View):
 			self._length = outer.points()
 	def __getitem__(self, key):
 		if self._axis == 'point' or self._axis == 0:
+			if isinstance(key, basestring):
+				key = self._outer.featureNames[key]
 			return self._outer.data[self._vecIndex,key] 
 		else:
 			return self._outer.data[key,self._vecIndex]
 	def __setitem__(self, key, value):
 		if self._axis == 'point' or self._axis == 0:
+			if isinstance(key, basestring):
+				key = self._outer.featureNames[key]
 			self._outer.data[self._vecIndex,key] = value
 		else:
 			self._outer.data[key,self._vecIndex] = value

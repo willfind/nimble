@@ -67,10 +67,10 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 		# note: these conditionals include a binary return
 		if multiClassStrategy == 'ova' and trialResult != 'ova':
 			from ..performance.runner import runOneVsAll
-			runOneVsAll(algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			runOneVsAll("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
 		if multiClassStrategy == 'ovo' and trialResult != 'ovo':
 			from ..performance.runner import runOneVsOne
-			runOneVsOne(algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			runOneVsOne("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
 
 	args = copy.copy(arguments)
 	if not isinstance(trainData, BaseData):

@@ -789,15 +789,21 @@ class VectorView(View):
 					if key.step is None or (mapKey - start)/key.step == 0:
 						retMap[mapKey - start] = self._nzMap[mapKey]
 			return VectorView(self._outer, None, None, retMap, self._max-start, self._index, self._axis)
-		if isinstance(key, int):
+		elif isinstance(key, int):
 			if key in self._nzMap:
 				return self._outer.data.data[self._nzMap[key]]
 			elif key >= self._max:
-				raise IndexError()
+				raise IndexError('key is greater than the max possible value')
+			else:
+				return 0
+		elif isinstance(key, basestring) and self._axis =='point':
+			index = self._outer.featureNames[key]
+			if index in self._nzMap:
+				return self._outer.data.data[self._nzMap[index]]
 			else:
 				return 0
 		else:
-			raise TypeError()
+			raise TypeError('key is not a recognized type')
 	def __setitem__(self, key, value):
 		if self._nzMap is None:
 			self._makeMap()
