@@ -9,7 +9,14 @@ Relies on being scikit-learn 0.9 or above
 import inspect
 import numpy
 
-from interface_helpers import *
+from interface_helpers import makeArgString
+from interface_helpers import checkClassificationStrategy
+from interface_helpers import findModule
+from interface_helpers import putOnSearchPath
+from interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
+from interface_helpers import ovaNotOvOFormatted
+from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+from interface_helpers import scoreModeOutputAdjustment
 from ..processing.dense_matrix_data import DenseMatrixData as DMData
 from ..processing.base_data import BaseData
 
@@ -199,18 +206,11 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, sc
 			scoresPerPoint = sklObj.decision_function(testData)
 		except AttributeError:
 			raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
+		# If it was a binary problem, then only one column of scores is returned, so we must
+		# generate the other column ourselves
 		if numLabels == 2:
-			newScoresPerPoint = []
-			for i in xrange(len(scoresPerPoint)):
-				pointScoreList = []
-				try:
-					currScore = scoresPerPoint[i][0]
-				except IndexError:
-					currScore = scoresPerPoint[i]
-				pointScoreList.append((-1) * currScore)
-				pointScoreList.append(currScore)
-				newScoresPerPoint.append(pointScoreList)
-			scoresPerPoint = newScoresPerPoint
+			scoresPerPoint = generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint)
+			# this is exactly what we need returned in this case, so we just do it immediately
 			if scoreMode.lower() == 'allScores'.lower():
 				return scoresPerPoint
 

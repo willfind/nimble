@@ -243,6 +243,28 @@ def scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder):
 
 	return outData
 
+def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
+	""" Given an indexable containing the score for the label with a higher
+	natural ordering corresponding to the ith test point of an n point binary
+	classification problem set, construct and return an array with two columns
+	and n rows, where the ith row corresponds to the ith test point, the first
+	column contains the score for the label with the lower natural sort order,
+	and the second column contains the score for the label with the higher natural
+	sort order.
+
+	""" 
+	newScoresPerPoint = []
+	for i in xrange(len(scoresPerPoint)):
+		pointScoreList = []
+		try:
+			currScore = scoresPerPoint[i][0]
+		except IndexError:
+			currScore = scoresPerPoint[i]
+		pointScoreList.append((-1) * currScore)
+		pointScoreList.append(currScore)
+		newScoresPerPoint.append(pointScoreList)
+	return newScoresPerPoint
+
 
 def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, arguments, kernel, config):
 

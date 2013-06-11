@@ -7,7 +7,14 @@ package
 import inspect
 import numpy
 
-from interface_helpers import *
+from interface_helpers import makeArgString
+from interface_helpers import checkClassificationStrategy
+from interface_helpers import findModule
+from interface_helpers import putOnSearchPath
+from interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
+from interface_helpers import ovaNotOvOFormatted
+from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+from interface_helpers import scoreModeOutputAdjustment
 from ..processing.dense_matrix_data import DenseMatrixData as DMData
 from ..processing.base_data import BaseData
 from ..processing.sparse_data import SparseData
@@ -198,7 +205,7 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 		# case on score mode:
 		predLabels = None
 		scores = None
-		labelOrder = obj.labels()
+		labelOrder = sorted(obj.labels())
 		numLabels = len(labelOrder)
 		# the only case we don't want to actually predict are if we're getting allScores,
 		# and the number of labels is not three (in which case we couldn't tell the strategy)
@@ -224,6 +231,12 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 				scoresPerPoint = obj.pred_values(testData)
 			except AttributeError:
 				raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
+			if numLabels == 2:
+				scoresPerPoint = generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint)
+				# this is exactly what we need returned in this case, so we just do it immediately
+				if scoreMode.lower() == 'allScores'.lower():
+					return scoresPerPoint
+
 			scores = scoresPerPoint
 			strategy = ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels, useSize=(scoreMode!='test'))
 			if scoreMode == 'test':

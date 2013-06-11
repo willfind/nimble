@@ -7,6 +7,7 @@ import numpy.testing
 import scipy.sparse
 from numpy.random import rand, randint
 
+from test_helpers import checkLabelOrderingAndScoreAssociations
 from ..scikit_learn_interface import *
 from ...processing.dense_matrix_data import DenseMatrixData as DMData
 from ...processing.coo_sparse_data import CooSparseData
@@ -100,7 +101,7 @@ def testSciKitLearnHandmadeSparseClustering():
 
 
 def testSciKitLearnScoreMode():
-	""" Test sciKitLearn() returns the right dimensions of output when given different scoreMode flags"""
+	""" Test sciKitLearn() scoreMode flags"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
 	trainingObj = DMData(data,variables)
@@ -113,17 +114,19 @@ def testSciKitLearnScoreMode():
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	bestScores = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert bestScores.points() == 2
+	assert bestScores.features() == 2
 
-	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
-	assert ret.points() == 2
-	assert ret.features() == 3
+	allScores = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert allScores.points() == 2
+	assert allScores.features() == 3
+
+	checkLabelOrderingAndScoreAssociations([0,1,2], bestScores, allScores)
 
 
 def testSciKitLearnScoreModeBinary():
-	""" Test sciKitLearn() returns the right dimensions when given different scoreMode flags, binary case"""
+	""" Test sciKitLearn() scoreMode flags, binary case"""
 	variables = ["Y","x1","x2"]
 	data = [[1,30,2],[2,1,1], [2,0,1],[2,-1,-1],  [1,30,3], [1,34,4]]
 	trainingObj = DMData(data,variables)
@@ -136,13 +139,15 @@ def testSciKitLearnScoreModeBinary():
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	bestScores = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert bestScores.points() == 2
+	assert bestScores.features() == 2
 
-	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	allScores = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert allScores.points() == 2
+	assert allScores.features() == 2
+
+	checkLabelOrderingAndScoreAssociations([1,2], bestScores, allScores)
 
 
 def testSciKitLearnListAlgorithms():

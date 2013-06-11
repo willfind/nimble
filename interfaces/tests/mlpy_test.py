@@ -5,6 +5,7 @@ Unit tests for mlpy_interface.py
 
 import numpy.testing
 
+from test_helpers import checkLabelOrderingAndScoreAssociations
 from ..mlpy_interface import *
 from ...processing.dense_matrix_data import DenseMatrixData as DMData
 #from ...processing.row_list_data import RowListData as RLData
@@ -105,7 +106,7 @@ def testMlpyHandmadeKernelPCA():
 
 
 def testMlpyScoreMode():
-	""" Test mlpy() returns the right dimensions of output when given different scoreMode flags"""
+	""" Test mlpy() scoreMode flags"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
 	trainingObj = DMData(data,variables)
@@ -118,18 +119,20 @@ def testMlpyScoreMode():
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	bestScores = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert bestScores.points() == 2
+	assert bestScores.features() == 2
 
-	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
-	assert ret.points() == 2
-	assert ret.features() == 3
+	allScores = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert allScores.points() == 2
+	assert allScores.features() == 3
+
+	checkLabelOrderingAndScoreAssociations([0,1,2], bestScores, allScores)
 
 def testMlpyScoreModeBinary():
-	""" Test mlpy() returns the right dimensions when given different scoreMode flags, binary case"""
+	""" Test mlpy() scoreMode flags, binary case"""
 	variables = ["Y","x1","x2"]
-	data = [[-1,1,1], [-1,0,1],[-1,-1,-1], [1,30,2], [1,30,3], [1,34,4]]
+	data = [[1,1,1], [1,0,1],[1,-1,-1], [-1,30,2], [-1,30,3], [-1,34,4]]
 	trainingObj = DMData(data,variables)
 
 	data2 = [[2,1],[25,0]]
@@ -140,14 +143,15 @@ def testMlpyScoreModeBinary():
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	bestScores = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	assert bestScores.points() == 2
+	assert bestScores.features() == 2
 
-	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	allScores = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	assert allScores.points() == 2
+	assert allScores.features() == 2
 
+	checkLabelOrderingAndScoreAssociations([-1,1], bestScores, allScores)
 
 
 def testMlpyListAlgorithms():
