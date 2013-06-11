@@ -281,7 +281,7 @@ def testShogunMultiClassStrategyMultiDataBinaryAlg():
 #	import pdb
 #	pdb.set_trace()
 
-	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, multiClassStrategy="ovo")
+	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, multiClassStrategy="OneVsOne")
 	
 
 

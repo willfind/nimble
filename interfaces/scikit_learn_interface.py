@@ -65,17 +65,18 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 	"""
 	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
 		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
-	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
-		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
+	multiClassStrategy = multiClassStrategy.lower()	
+	if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll' and multiClassStrategy != 'OneVsOne':
+		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
 
 	# if we have to enfore a classification strategy, we test the algorithm in question,
 	# and call our own strategies if necessary
 	if multiClassStrategy != 'default':
 		trialResult = checkClassificationStrategy(_sciKitLearnBackend, algorithm, arguments)
-		if multiClassStrategy == 'ova' and trialResult != 'ova':
+		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
 			from ..performance.runner import runOneVsAll
 			runOneVsAll(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
-		if multiClassStrategy == 'ovo' and trialResult != 'ovo':
+		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
 			from ..performance.runner import runOneVsOne
 			runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
 
@@ -217,8 +218,8 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, sc
 		scores = scoresPerPoint
 		strategy = ovaNotOvOFormatted(scoresPerPoint, predLabels, numLabels,useSize=(scoreMode!='test'))
 		if scoreMode == 'test':
-			if strategy: return 'ova'
-			elif not strategy: return 'ovo'
+			if strategy: return 'OneVsAll'
+			elif not strategy: return 'OneVsOne'
 			elif strategy is None: return 'ambiguous'
 		# we want the scores to be per label, regardless of the original format, so we
 		# check the strategy, and modify it if necessary

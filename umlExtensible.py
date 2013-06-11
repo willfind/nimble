@@ -28,8 +28,9 @@ from .utility import ArgumentException
 def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
 	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
 		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
-	if multiClassStrategy != 'default' and multiClassStrategy != 'ova' and multiClassStrategy != 'ovo':
-		raise ArgumentException("multiClassStrategy may only be 'default' 'ova' or 'ovo'")
+	multiClassStrategy = multiClassStrategy.lower()
+	if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll'.lower() and multiClassStrategy != 'OneVsOne'.lower():
+		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
 	if not isinstance(arguments, dict):
 		raise ArgumentException("The 'arguments' parameter must be a dictionary")
 	splitList = algorithm.split('.',1)
