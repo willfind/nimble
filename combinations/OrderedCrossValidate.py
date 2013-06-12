@@ -56,6 +56,44 @@ def orderedCrossValidate(X, Y, functionsToApply, orderedFeature, minTrainSize, m
 	"""
 	Performs iterative testing of ordered subsets of the data for each function in the list
 	functionsToApply, collecting the output of each into a dict that maps output to function text.
+	It is important to note that the training and testing subdivisions of the data will never
+	split points with the same value of the orderedFeature; 
+
+	X: the data which will be subdivided into training and testing sets.
+
+	Y: the labels corresponding to the data points in X
+
+	functionsToApply: a list of functions which is called on each subdivision of the data
+
+	orderedFeature: an ID of a feature in X over which the points of X will be sorted by. This
+	defines the ordering which is maintained during the creation of subdivisions.
+
+	minTrainSize: the minimum valid training size allowed by a subdivision of the data.
+
+	maxTrainSize: the maximum valid training size allowed by a subdivision of the data. After
+	the first subdivion, the training window will grow (roughly) in proportion to step size,
+	tending towards maxTrainSize, but there is no guarantee that a trial with maxTrainSize will
+	ever be reached.
+
+	stepSize: roughly how far forward we shift the training and testing windows of each
+	iterative subdivision. The training and testing windows are all defined off of the anchor
+	point of the end of the training set. As long as there is more (high valued according to the
+	ordered feature) data, step size is used to define the new end point of the training set:
+	newTrainEndPoint = oldTrainEndPoint + stepSize (or an equivalent operation if a timedelta
+	object is provided) though this endpoint may be shifted forward in order to not split
+	data with the same value in the orderedFeature.
+
+	gap: rouhly the distance between the end of the training window and the begining of the
+	testing window.
+
+	minTestSize: the minimum valid testing size allowed by a subdivision of the data. As
+	large as possible testing sets are preferred, but as we approach the end of the data,
+	the testing set size will shrink towards the minimum.
+
+	maxTestSize: the maximum valid testing size allowed by a subdivision of the data. As
+	long as there is enough data to do so, we will always construct maximum sized test sets.
+
+	extraParams: name to value mapping of parameters used by functions in the functionsToApply list
 
 	"""
 	if not (isinstance(minTrainSize,int) and isinstance(maxTrainSize,int)):
