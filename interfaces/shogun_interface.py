@@ -57,7 +57,7 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 	"""
 	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
 		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
-	multiClassStrategy = multiClassStrategy.lower()	
+#	multiClassStrategy = multiClassStrategy.lower()	
 	if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll' and multiClassStrategy != 'OneVsOne':
 		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
 

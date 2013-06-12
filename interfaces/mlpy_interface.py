@@ -58,7 +58,7 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 	# argument checking
 	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
 		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
-	multiClassStrategy = multiClassStrategy.lower()	
+#	multiClassStrategy = multiClassStrategy.lower()	
 	if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll' and multiClassStrategy != 'OneVsOne':
 		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
 
