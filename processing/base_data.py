@@ -626,6 +626,34 @@ class BaseData(object):
 		return True
 
 
+	def permutePoints(self, seed=DEFAULT_SEED):
+		"""
+		Permute the indexing of the points so they are in a random order. Note: this relies on
+		python's random.shuffle() so may not be sufficiently random for large number of points.
+		See shuffle()'s documentation.
+
+		"""
+		indices = range(0, self.points())
+		random.shuffle(indices)
+		def permuter(pointView):
+			return indices[pointView.index()]
+		self.sortPoints(sortHelper=permuter)
+
+
+	def permuteFeatures(self, seed=DEFAULT_SEED):
+		"""
+		Permute the indexing of the features so they are in a random order. Note: this relies on
+		python's random.shuffle() so may not be sufficiently random for large number of features.
+		See shuffle()'s documentation.
+
+		"""
+		indices = range(0, self.features())
+		random.shuffle(indices)
+		def permuter(featureView):
+			return indices[featureView.index()]
+		self.sortFeatures(sortHelper=permuter)
+
+
 	#################################
 	# Functions related to logging  #
 	#################################
@@ -1302,12 +1330,7 @@ def reorderToMatchExtractionList(dataObject, extractionList, axis):
 		mappedOrig[extractionList[i]] = i
 	
 	def scorer(viewObj):
-#		import pdb
-#		pdb.set_trace()
 		return mappedOrig[sortedList[viewObj.index()]]
-
-
-	
 
 	sortFunc(sortHelper=scorer)
 

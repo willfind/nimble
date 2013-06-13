@@ -591,3 +591,48 @@ def isApproxEquivalent_randomTest(constructor):
 #	assert toTest.isApproxEquivalent(coo)
 #	assert coo.isApproxEquivalent(toTest)
 
+
+
+
+
+###################
+# permutePoints() #
+###################
+
+
+def permutePoints_noLongerEqual(constructor):
+	""" Tests permutePoints() results in a changed object """
+	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+	toTest = constructor(deepcopy(data))
+	toCompare = constructor(deepcopy(data))
+
+	toTest.permutePoints()
+
+	assert not toTest.isApproxEquivalent(toCompare)
+
+
+
+
+
+
+#####################
+# permuteFeatures() #
+#####################
+
+
+def permuteFeatures_noLongerEqual(constructor):
+	""" Tests permuteFeatures() results in a changed object """
+	data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,1111111]]
+	toTest = constructor(deepcopy(data))
+	toCompare = constructor(deepcopy(data))
+
+	toTest.permuteFeatures()
+
+	assert not toTest.isApproxEquivalent(toCompare)
+
+
+
+
+
+
+

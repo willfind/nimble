@@ -327,3 +327,26 @@ def test_computeList_passthroughExclude():
 def test_isApproxEquivalent_randomTest():
 	""" Test isApproxEquivalent() using randomly generated data """
 	callAll(isApproxEquivalent_randomTest)
+
+
+
+###################
+# permutePoints() #
+###################
+
+
+def test_permutePoints_noLongerEqual():
+	""" Tests permutePoints() results in a changed object """
+	callAll(permutePoints_noLongerEqual)
+
+
+
+#####################
+# permuteFeatures() #
+#####################
+
+
+def test_permuteFeatures_noLongerEqual():
+	""" Tests permuteFeatures() results in a changed object """
+	callAll(permuteFeatures_noLongerEqual)
+
