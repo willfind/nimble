@@ -43,6 +43,9 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog
 			if sendToLog:
 				timer.stop('learning')
 
+		if sendToLog:
+			timer.cumulativeTimes['learning'] /= numFolds
+
 		# average across all folds
 		avg = 0.
 		denom = 0.
@@ -56,9 +59,7 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog
 			logger = LogManager()
 			sortedResults = sorted(aggregatedResults.iteritems(), key=operator.itemgetter(1))
 			for result in sortedResults:
-				logger.logRun(X, None, function, {function:aggregatedResults[function]}, timer=None, numFolds=numFolds)
-				print "function: " + str(function)
-				print "results: " + str(result)
+				logger.logRun(X, None, function, {function:aggregatedResults[function]}, timer, numFolds=numFolds)
 	return aggregatedResults
 
 
