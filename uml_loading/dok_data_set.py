@@ -4,7 +4,6 @@
 import math
 import numpy as np
 import gc
-from guppy import hpy; h=hpy()
 from numpy import searchsorted
 from collections import Counter
 from scipy.sparse import dok_matrix
@@ -91,21 +90,13 @@ class DokDataSet(object):
 
 		numDocsVisited = 0
 		# sparse matrix to hold results.  To start, has as many rows as there are document ids
-		# and 10,000,000 columns (we do not expect to use that many columns but there is no penalty
+		# and 20,000,000 columns (we do not expect to use that many columns but there is no penalty
 		# for having unused columns.)  
-		self.data = dok_matrix((len(fileMap),2000000), dtype='uint16')
+		self.data = dok_matrix((len(fileMap),20000000), dtype='uint16')
 
 		# load all files and convert to token lists/frequency counts, then add to a 
 		# 3-layer map: dataType->{docKey->freqMap}
-		counter = 0
 		for docId in fileMap.keys():
-			counter += 1
-			if counter % 5000 == 0:
-				print h.heap()
-				print "length of featureColumnIndexMap: " + str(len(self.featureColumnIndexMap))
-				print "num non-zero entries in self.data: " + str(self.data.nnz)
-				print "number of rows added: " + str(rowCount)
-				print "collecting garbage: " + str(gc.collect())
 			numDocsVisited += 1
 			#record the unique key of this document
 			self.docIdRowIndexMap[docId] = rowCount
@@ -182,6 +173,7 @@ class DokDataSet(object):
 
 		for docId, attribute in attributeIdMap.iteritems():
 			attribute = attribute.replace(" ", "_")
+			attribute = attribute.replace(",", "_")
 			if attributeTransformFunction is not None:
 				attribute = attributeTransformFunction(attribute)
 			attribute = attributeName + "/" + attribute
@@ -237,15 +229,16 @@ class DokDataSet(object):
 		elif maxDtype != 'uint32' and toMerge.data.dtype == 'uint64':
 			maxDtype = 'uint64'
 
-		dataMatrixAll = dok_matrix((approxDocCount, approxFeatureCount), dtype=maxDtype)
+		#dataMatrixAll = dok_matrix((approxDocCount, approxFeatureCount), dtype=maxDtype)
+		self.data.resize((approxDocCount, approxFeatureCount))
 
-		nonZeroEntries = self.data.nonzero()
+		#nonZeroEntries = self.data.nonzero()
 
 		#populate the new matrix with all entries from self.data
-		for listIndex in xrange(len(nonZeroEntries[0])):
-			rowIndex = nonZeroEntries[0][listIndex]
-			columnIndex = nonZeroEntries[1][listIndex]
-			dataMatrixAll[rowIndex, columnIndex] = self.data[rowIndex, columnIndex]
+		# for listIndex in xrange(len(nonZeroEntries[0])):
+		# 	rowIndex = nonZeroEntries[0][listIndex]
+		# 	columnIndex = nonZeroEntries[1][listIndex]
+		# 	dataMatrixAll[rowIndex, columnIndex] = self.data[rowIndex, columnIndex]
 
 		#use these two numbers to track the index of new features or documents as
 		#they are added to dataMatrixAll
@@ -288,14 +281,12 @@ class DokDataSet(object):
 				newColumnIndex = self.featureColumnIndexMap[feature]
 				numFeaturesCounter += 1
 
-			if dataMatrixAll[newRowIndex, newColumnIndex] > 0:
-				dataMatrixAll[newRowIndex, newColumnIndex] += toMerge.data[oldRowIndex, oldColumnIndex]
+			if self.data[newRowIndex, newColumnIndex] > 0:
+				self.data[newRowIndex, newColumnIndex] += toMerge.data[oldRowIndex, oldColumnIndex]
 			else:
-				dataMatrixAll[newRowIndex, newColumnIndex] = toMerge.data[oldRowIndex, oldColumnIndex]
+				self.data[newRowIndex, newColumnIndex] = toMerge.data[oldRowIndex, oldColumnIndex]
 
-
-		dataMatrixAll.resize((numUniqueDocumentsCounter, numFeaturesCounter))
-		self.data = dataMatrixAll
+		self.data.resize((numUniqueDocumentsCounter, numFeaturesCounter))
 
 		self.reCalcFeatureDocCount()
 
@@ -376,6 +367,9 @@ class DokDataSet(object):
 				classLabelName = classLabelMap.name
 				classLabelMapInterior = classLabelMap.labelMap
 				classLabelIdSet = set(classLabelMapInterior.keys())
+				#if this type of class label is required, find the difference between set of all
+				#docIds and the document Id's in this class label mapping, and add that set to the
+				#set of all docIds that are missing a label
 				if classLabelMap.isRequired:
 					missingLabelSet = docIdSet - classLabelIdSet
 					docIdsToRemove = docIdsToRemove | missingLabelSet
@@ -408,35 +402,35 @@ class DokDataSet(object):
 
 		if isinstance(representationMode, str):
 			if representationMode.lower() == 'binary':
-				newDokMatrix = dok_matrix(self.data.shape, 'uint8')
 				entries = self.data.nonzero()
 				for l in xrange(len(entries[0])):
 					rowIndex = entries[0][l]
 					columnIndex = entries[1][l]
-					newDokMatrix[rowIndex, columnIndex] = 1
+					self.data[rowIndex, columnIndex] = 1
 			elif representationMode.lower() == 'frequency':
 				#this object's data matrix is already in the format we want
-				newDokMatrix = self.data
+				pass
 			elif representationMode.lower() == 'tfidf':
-				newDokMatrix = self.calcTfIdfVals()
+				self.calcTfIdfVals()
 		#if representationMode is a function, we call it for each entry in self.data
 		elif hasattr(representationMode, '__call__'):
-			newDokMatrix = dok_matrix(self.data.shape, 'float64')
+			self.data.asfptype()
 			entries = self.data.nonzero()
 			for l in xrange(len(entries[0])):
 				rowIndex = entries[0][l]
 				columnIndex = entries[1][l]
 				numNonZeroInRow = self.data.getrow(rowIndex).getnnz()
 				feature = self.columnIndexFeatureMap[columnIndex]
-				newDokMatrix[rowIndex, columnIndex] = representationMode(feature, self.data[rowIndex, columnIndex], self.data.shape[0], len(featureNameList), self.featureDocCountMap[feature], numNonZeroInRow, int(self.rowIndexDocIdMap[rowIndex]))
+				self.data[rowIndex, columnIndex] = representationMode(feature, self.data[rowIndex, columnIndex], self.data.shape[0], len(featureNameList), self.featureDocCountMap[feature], numNonZeroInRow, int(self.rowIndexDocIdMap[rowIndex]))
 
-		cooVersion = newDokMatrix.tocoo()
+		cooVersion = self.data.tocoo()
 
 		baseDataVersion = data('coo', cooVersion, featureNameList, sendToLog=False)
 
 		# Build a dok matrix containing document Ids and Class Labels
-		labelDokMatrix = dok_matrix((newDokMatrix.shape[0], 1 + len(self.classLabelMaps)))
+		labelDokMatrix = dok_matrix((self.data.shape[0], 1 + len(self.classLabelMaps)))
 		idLabelOrderedNames = []
+		#add all documents that exist in self
 		for docId, rowIndex in self.docIdRowIndexMap.iteritems():
 			labelDokMatrix[rowIndex, 0] = int(docId)
 		idLabelOrderedNames.append('documentId')
@@ -451,6 +445,7 @@ class DokDataSet(object):
 				try:
 					rowIndex = self.docIdRowIndexMap[docId]
 				except KeyError:
+					#this docId doesn't exist in self, so ignore it
 					continue
 				labelDokMatrix[rowIndex, labelColumnIndex] = classLabel
 			idLabelOrderedNames.append(classLabelName)
@@ -477,7 +472,7 @@ class DokDataSet(object):
 		rowIndexWeightSumMap = {}
 		nonZeroEntries = self.data.nonzero()
 
-		tfIdfDataHolder = dok_matrix(self.data.shape, 'float64')
+		holderMatrix = dok_matrix(self.data.shape, 'float32')
 
 		#Make one pass over self.data to calculate non-normalized tf values and 
 		#the normalization factor for each row (document) in self.data
@@ -487,7 +482,8 @@ class DokDataSet(object):
 			feature = self.columnIndexFeatureMap[columnIndex]
 			featureCount = self.data[rowIndex, columnIndex]
 			tempTfIdf = (featureCount + 1) * self.featureIdfMap[feature]
-			tfIdfDataHolder[rowIndex, columnIndex] = tempTfIdf
+			holderMatrix[rowIndex, columnIndex] = tempTfIdf
+			self.data[rowIndex, columnIndex] = 0
 			try:
 				rowIndexWeightSumMap[rowIndex] += tempTfIdf**2
 			except KeyError:
@@ -503,10 +499,10 @@ class DokDataSet(object):
 			rowIndex = nonZeroEntries[0][i]
 			columnIndex = nonZeroEntries[1][i]
 			normalizationFactor = rowIndexWeightSumMap[rowIndex]
-			tempTfIdf = tfIdfDataHolder[rowIndex, columnIndex]
-			tfIdfDataHolder[rowIndex, columnIndex] = round(tempTfIdf / normalizationFactor, 9)
+			tempTfIdf = holderMatrix[rowIndex, columnIndex]
+			holderMatrix[rowIndex, columnIndex] = round(tempTfIdf / normalizationFactor, 9)
 
-		return tfIdfDataHolder
+		self.data = holderMatrix
 
 
 	def calcIdfValues(self):
@@ -586,6 +582,9 @@ class DokDataSet(object):
 		Given a list of columns to remove, remove them from the data set in this
 		object.  
 		"""
+		if len(columnToRemoveIndexList) == 0:
+			return
+
 		#Use columnShiftIndexList to figure out how much each retained feature
 		#needs to have its column index shifted by
 		columnToRemoveIndexList.sort()
@@ -599,13 +598,14 @@ class DokDataSet(object):
 
 		#set up new data structures: we will reassign this objects matrix and columnIndex
 		#maps to these new structures
-		newDokMatrix = dok_matrix((newRowCount, newColumnCount), self.data.dtype)
 		newColumnIndexFeatureMap = {}
 		newFeatureColumnIndexMap = {}
 		entries = self.data.nonzero()
-		for l in xrange(len(entries[0])):
-			rowIndex = entries[0][l]
-			columnIndex = entries[1][l]
+		entries = zip(entries[0], entries[1])
+		entries = sorted(entries, key=lambda entry: entry[1])
+		for l in xrange(len(entries)):
+			rowIndex = entries[l][0]
+			columnIndex = entries[l][1]
 			
 			if columnIndex not in columnsToRemoveSet:
 				feature = self.columnIndexFeatureMap[columnIndex]
@@ -616,11 +616,20 @@ class DokDataSet(object):
 				else:
 					newColumnIndex = newFeatureColumnIndexMap[feature]
 					
-				newDokMatrix[rowIndex, newColumnIndex] = self.data[rowIndex, columnIndex]
+				#Clear out old column, unless old column is the same as new column, in which
+				#case we don't need to do anything
+				if newColumnIndex == columnIndex:
+					pass
+				else:
+					self.data[rowIndex, newColumnIndex] = self.data[rowIndex, columnIndex]
+					self.data[rowIndex, columnIndex] = 0
+			else:
+				self.data[rowIndex, columnIndex] = 0
 
 		self.columnIndexFeatureMap = newColumnIndexFeatureMap
 		self.featureColumnIndexMap = newFeatureColumnIndexMap
-		self.data = newDokMatrix
+
+		self.data.resize((newRowCount, newColumnCount))
 
 		if recalculateDocFeatureCounts:
 			self.reCalcFeatureDocCount()
@@ -632,6 +641,9 @@ class DokDataSet(object):
 		object.  If recalculateFeatureCounts is True, this function will call 
 		reCalcFeatureDocCount.
 		"""
+		if len(rowToRemoveIndexList) == 0:
+			return
+
 		#Use rowToRemoveIndexList to figure out how much each retained row
 		#needs to have its row index shifted by
 		rowToRemoveIndexList.sort()
@@ -644,13 +656,14 @@ class DokDataSet(object):
 
 		#set up new data structures: we will reassign this objects matrix and columnIndex
 		#maps to these new structures
-		newDokMatrix = dok_matrix((newRowCount, newColumnCount), self.data.dtype)
 		newRowIndexDocIdMap = {}
 		newDocIdRowIndexMap = {}
 		entries = self.data.nonzero()
-		for l in xrange(len(entries[0])):
-			rowIndex = entries[0][l]
-			columnIndex = entries[1][l]
+		entries = zip(entries[0], entries[1])
+		entries = sorted(entries, key=lambda entry: entry[0])
+		for l in xrange(len(entries)):
+			rowIndex = entries[l][0]
+			columnIndex = entries[l][1]
 			
 			if rowIndex not in rowsToRemoveSet:
 				docId = self.rowIndexDocIdMap[rowIndex]
@@ -658,17 +671,51 @@ class DokDataSet(object):
 					newRowIndex = rowIndex - searchsorted(rowToRemoveIndexList, rowIndex)
 					newRowIndexDocIdMap[newRowIndex] = docId
 					newDocIdRowIndexMap[docId] = newRowIndex
+
 				else:
 					newRowIndex = newDocIdRowIndexMap[docId]
-					
-				newDokMatrix[newRowIndex, columnIndex] = self.data[rowIndex, columnIndex]
+				
+				if newRowIndex == rowIndex:
+					pass
+				else:
+					self.data[newRowIndex, columnIndex] = self.data[rowIndex, columnIndex]
+					self.data[rowIndex, columnIndex] = 0
+			else:
+				self.data[rowIndex, columnIndex] = 0
 
 		self.rowIndexDocIdMap = newRowIndexDocIdMap
 		self.docIdRowIndexMap = newDocIdRowIndexMap
-		self.data = newDokMatrix
+
+		self.data.resize((newRowCount, newColumnCount))
 
 		if recalculateFeatureCounts:
 			self.reCalcFeatureDocCount()
+
+	def printMatrix(self):
+		print
+		dokShape = self.data.shape
+		numRows = dokShape[0]
+		numColumns = dokShape[1]
+
+		headerRow = ""
+		for k in range(0, numColumns):
+			feature = self.columnIndexFeatureMap[k]
+			headerLength = len(feature)
+			leftoverLength = 20 - headerLength
+			headerRow += feature + ' ' * leftoverLength
+
+		print headerRow
+
+		for i in range(numRows):
+			rowString = ''
+			for j in range(numColumns):
+				if j == 0:
+				    rowString += str(self.data[i, j]) + ' ' * (5 - len(str(self.data[i, j])))
+				else:
+					leftoverLength = 20 - len(str(self.data[i, j]))
+					rowString += ' ' * leftoverLength + str(self.data[i, j])
+			print rowString
+
 
 
 
