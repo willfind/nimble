@@ -61,6 +61,11 @@ def test_appendPoints_exceptionWrongSize():
 	""" Test DMD appendPoints() for ArgumentException when toAppend has too many features """
 	appendPoints_exceptionWrongSize(constructor)
 
+@raises(ArgumentException)
+def test_appendPoints_exceptionMismatchedFeatureNames():
+	""" Test DMD appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
+	appendPoints_exceptionMismatchedFeatureNames(constructor)
+
 def test_appendPoints_handmadeSingle():
 	""" Test DMD appendPoints() against handmade output for a single added point """
 	appendPoints_handmadeSingle(constructor)

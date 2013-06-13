@@ -675,6 +675,8 @@ class BaseData(object):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.features() == toAppend.features():
 			raise ArgumentException("toAppend must have the same number of features as this object")
+		if not self._equalFeatureNames(toAppend):
+			raise ArgumentException("The featureNames of the two objects must match")
 		self._appendPoints_implementation(toAppend)
 		
 	def appendFeatures(self, toAppend):

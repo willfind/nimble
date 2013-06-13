@@ -159,7 +159,15 @@ def appendPoints_exceptionWrongSize(constructor):
 	""" Test appendPoints() for ArgumentException when toAppend has too many features """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	toTest.appendPoints([["too", " ", "many", " ", "features"]])
+	toAppend = constructor([[2, 3, 4, 5, 6]])
+	toTest.appendPoints(toAppend)
+
+def appendPoints_exceptionMismatchedFeatureNames(constructor):
+	""" Test appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,['one','two','three'])
+	toAppend = constructor([[11, 12, 13,]], ["two", 'one', 'three'])
+	toTest.appendPoints(toAppend)
 
 def appendPoints_handmadeSingle(constructor):
 	""" Test appendPoints() against handmade output for a single added point """
@@ -209,6 +217,12 @@ def appendFeatures_exceptionWrongSize(constructor):
 def appendFeatures_exceptionSameFeatureName(constructor):
 	""" Test appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
 	toTest1 = constructor([[1]],["hello"])
+	toTest2 = constructor([[1,2]],["hello","goodbye"])
+	toTest2.appendFeatures(toTest1)
+
+def appendFeatures_exceptionMismatchedFeatureNames(constructor):
+	""" Test appendFeatures() for ArgumentException when toAppend and self do not have equal featureNames """
+	toTest1 = constructor([[2,1]],["goodbye","hello"])
 	toTest2 = constructor([[1,2]],["hello","goodbye"])
 	toTest2.appendFeatures(toTest1)
 
