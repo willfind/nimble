@@ -11,10 +11,10 @@ from scipy.sparse import coo_matrix
 from scipy.io import mmwrite
 import copy
 
-from base_data import BaseData
-from sparse_data import *
-from ..utility.custom_exceptions import ArgumentException
-
+from UML.processing.base_data import View
+from UML.processing.sparse_data import SparseData
+from UML.utility.custom_exceptions import ArgumentException
+from UML.utility.custom_exceptions import ImproperActionException
 
 
 class CooSparseData(SparseData):
@@ -24,7 +24,75 @@ class CooSparseData(SparseData):
 			raise ArgumentException("Data must not be shapeless (in other words, empty)")
 		else:
 			self.data = coo_matrix(data)
+		self._sorted = None
 		super(CooSparseData, self).__init__(self.data, featureNames, name, path)
+
+
+	def pointViewIterator(self):
+		if self.features() == 0:
+			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
+		self._sortInternal('point')
+
+		class pointIt():
+			def __init__(self, outer):
+				self._outer = outer
+				self._nextID = 0
+				self._stillSorted = True
+				self._sortedPosition = 0
+			def __iter__(self):
+				return self
+			def next(self):
+				if self._nextID >= self._outer.points():
+					raise StopIteration
+				if self._outer._sorted != "point" or not self._stillSorted:
+					print "actually called"
+					self._stillSorted = False
+					value = self._outer.getPointView(self._nextID)	
+				else:
+					end = self._sortedPosition
+					#this ensures end is always in range, and always inclusive
+					while (end < len(self._outer.data.data)-1 and self._outer.data.row[end+1] == self._nextID):
+						end += 1
+					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.features(), self._nextID, 'point')
+					self._sortedPosition = end + 1
+				self._nextID += 1
+				return value
+
+		return pointIt(self)
+
+
+	def featureViewIterator(self):
+		if self.points() == 0:
+			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
+
+		self._sortInternal('feature')
+
+		class featureIt():
+			def __init__(self, outer):
+				self._outer = outer
+				self._nextID = 0
+				self._stillSorted = True
+				self._sortedPosition = 0
+			def __iter__(self):
+				return self
+			def next(self):
+				if self._nextID >= self._outer.features():
+					raise StopIteration
+				if self._outer._sorted != "feature" or not self._stillSorted:
+					print "actually called"
+
+					self._stillSorted = False
+					value = self._outer.getFeatureView(self._nextID)	
+				else:
+					end = self._sortedPosition
+					#this ensures end is always in range, and always inclusive
+					while (end < len(self._outer.data.data)-1 and self._outer.data.col[end+1] == self._nextID):
+						end += 1
+					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.points(), self._nextID, 'feature')
+					self._sortedPosition = end + 1
+				self._nextID += 1
+				return value
+		return featureIt(self)
 
 
 	def _appendPoints_implementation(self,toAppend):
@@ -43,6 +111,7 @@ class CooSparseData(SparseData):
 		
 		numNewRows = self.points() + toAppend.points()
 		self.data = coo_matrix((newData,(newRow,newCol)),shape=(numNewRows,self.features()))
+		self._sorted = None
 
 
 	def _appendFeatures_implementation(self,toAppend):
@@ -64,16 +133,89 @@ class CooSparseData(SparseData):
 
 
 	def _sortPoints_implementation(self, sortBy, sortHelper):
-		sort_general_implementation(sortBy, scoreFcn, comparator, 'point')
+		self.sort_general_implementation(sortBy, sortHelper, 'point')
+		self._sorted = None
 
 
 	def _sortFeatures_implementation(self, sortBy, sortHelper):
-		raise NotImplementedError
-		sort_general_implementation(sortBy, scoreFcn, comparator, 'feature')
+		indices = self.sort_general_implementation(sortBy, sortHelper, 'feature')
+		self._sorted = None
+		return indices
 
 
 	def sort_general_implementation(self, sortBy, sortHelper, axisType):
-		raise NotImplementedError
+		scorer = None
+		comparator = None
+		if axisType == 'point':
+			viewMaker = self.getPointView
+			getViewIter = self.pointViewIterator
+			targetAxis = self.data.row
+		else:
+			viewMaker = self.getFeatureView
+			targetAxis = self.data.col
+			getViewIter = self.featureViewIterator
+
+		test = viewMaker(0)
+		try:
+			sortHelper(test)
+			scorer = sortHelper
+		except TypeError:
+			pass
+		try:
+			sortHelper(test, test)
+			comparator = sortHelper
+		except TypeError:
+			pass
+
+		if sortHelper is not None and scorer is None and comparator is None:
+			raise ArgumentException("sortHelper is neither a scorer or a comparator")
+
+		# make array of views
+		viewArray = []
+		viewIter = getViewIter()
+		for v in viewIter:
+			viewArray.append(v)
+
+		if comparator is not None:
+			viewArray.sort(cmp=comparator)
+			indexPosition = []
+			for i in xrange(len(viewArray)):
+				indexPosition.append(viewArray[i].index())
+		else:
+			scoreArray = viewArray
+			if scorer is not None:
+				# use scoring function to turn views into values
+				for i in xrange(len(viewArray)):
+					scoreArray[i] = scorer(viewArray[i])
+			else:
+				for i in xrange(len(viewArray)):
+					scoreArray[i] = viewArray[i][sortBy]
+
+			# use numpy.argsort to make desired index array
+			# this results in an array whole ith index contains the the
+			# index into the data of the value that should be in the ith
+			# position
+			indexPosition = numpy.argsort(scoreArray)
+
+		# run through array making curr index to new index map
+		indexMap = {}
+		for i in xrange(len(indexPosition)):
+			indexMap[indexPosition[i]] = i
+		# run through target axis and change indices
+		for i in xrange(len(targetAxis)):
+			targetAxis[i] = indexMap[targetAxis[i]]
+
+		# if we are sorting features we need to return an array of the feature names
+		# in their new order
+		if axisType == 'feature':
+			# we convert the indices of the their previous location into their feature names
+			newFeatureNameOrder = []
+			for i in xrange(len(indexPosition)):
+				oldIndex = indexPosition[i]
+				newName = self.featureNamesInverse[oldIndex]
+				newFeatureNameOrder.append(newName)
+			return newFeatureNameOrder
+
 
 
 
@@ -633,6 +775,7 @@ class CooSparseData(SparseData):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
+		self._sorted = None
 
 	def _duplicate_implementation(self):
 		return CooSparseData(self.data.copy(), copy.deepcopy(self.featureNames))
@@ -734,18 +877,28 @@ class CooSparseData(SparseData):
 			sortKeys = numpy.argsort(self.data.col)
 		else:
 			sortKeys = numpy.argsort(self.data.row)
-		self.data.data = self.data.data[sortKeys]
-		self.data.row = self.data.row[sortKeys]
-		self.data.col = self.data.col[sortKeys]
+		newData = self.data.data[sortKeys]
+		newRow = self.data.row[sortKeys]
+		newCol = self.data.col[sortKeys]
 
 		# then sort by the significant axis
 		if axis == "point":
-			sortKeys = numpy.argsort(self.data.row)
+			sortKeys = numpy.argsort(newRow)
 		else:
-			sortKeys = numpy.argsort(self.data.col)
-		self.data.data = self.data.data[sortKeys]
-		self.data.row = self.data.row[sortKeys]
-		self.data.col = self.data.col[sortKeys]
+			sortKeys = numpy.argsort(newCol)
+		newData = newData[sortKeys]
+		newRow = newRow[sortKeys]
+		newCol = newCol[sortKeys]
+
+		for i in xrange(len(newData)):
+			self.data.data[i] = newData[i]
+		for i in xrange(len(newRow)):
+			self.data.row[i] = newRow[i]
+		for i in xrange(len(newCol)):
+			self.data.col[i] = newCol[i]
+
+		# flag that we are internally sorted
+		self._sorted = axis
 
 ###################
 # Generic Helpers #
@@ -868,7 +1021,10 @@ class nzItRange():
 			raise StopIteration
 		ret = self._outer.data.data[self._position]
 		self._position = self._position + 1
-		return ret
+		if ret != 0:
+			return ret
+		else:
+			return self.next()
 
 def _numLessThan(value, toCheck): # TODO caching
 	i = 0

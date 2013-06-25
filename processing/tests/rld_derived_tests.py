@@ -131,9 +131,22 @@ def test_sortPoints_comparator():
 #################
 
 
-#def test_sortFeatures_handmadeWithFcn():
-#	""" Test RLD sortFeatures() against handmade output when given cmp and key functions """	
-#	sortFeatures_handmadeWithFcn(constructor)
+@raises(ArgumentException)
+def test_sortFeatures_exceptionAtLeastOne():
+	""" Test RLD sortFeatures() has at least one paramater """
+	sortFeatures_exceptionAtLeastOne(constructor)
+
+def test_sortFeatures_naturalByPointWithNames():
+	""" Test RLD sortFeatures() when we specify a point to sort by; includes featureNames """	
+	sortFeatures_naturalByPointWithNames(constructor)
+
+def test_sortFeatures_scorer():
+	""" Test RLD sortFeatures() when we specify a scoring function """
+	sortFeatures_scorer(constructor)
+
+def test_sortFeatures_comparator():
+	""" Test RLD sortFeatures() when we specify a comparator function """
+	sortFeatures_comparator(constructor)
 
 
 

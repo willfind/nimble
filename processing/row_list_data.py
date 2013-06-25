@@ -6,13 +6,17 @@ to files.
 
 """
 
-from base_data import BaseData
-from base_data import View
-from base_data import reorderToMatchExtractionList
 import copy
-from ..utility.custom_exceptions import ArgumentException
 import random
+import numpy
 from scipy.sparse import isspmatrix
+
+from UML.processing.base_data import BaseData
+from UML.processing.base_data import View
+from UML.processing.base_data import reorderToMatchExtractionList
+from UML.utility.custom_exceptions import ArgumentException
+
+
 
 
 class RowListData(BaseData):
@@ -142,39 +146,69 @@ class RowListData(BaseData):
 		This funciton returns a list of featureNames indicating the new order of the data.
 
 		"""
-		raise NotImplementedError
-		def passThrough(toKey):
-			return toKey
-		if key is None:
-			key = passThrough
-		#create key list - to be sorted; and dictionary
-		keyList = []
-		temp = []
-		for i in xrange(self.features()):
-			ithView = FeatureView(self.data,i, self.featureNamesInverse[i])
-			keyList.append(key(ithView))
-			temp.append(None)
-		keyDict = {}
-		for i in xrange(len(keyList)):
-			keyDict[keyList[i]] = i
-		keyList.sort(cmp,passThrough,reverse)
+		scorer = None
+		comparator = None
+		test = self.getFeatureView(0)
+		try:
+			sortHelper(test)
+			scorer = sortHelper
+		except TypeError:
+			pass
+		try:
+			sortHelper(test, test)
+			comparator = sortHelper
+		except TypeError:
+			pass
 
-		#now modify data to correspond to the new order
-		for point in self.data:
-			#have to copy it out so we don't corrupt the point
-			for i in xrange(self.features()):
-				currKey = keyList[i]
-				oldColNum = keyDict[currKey]
-				temp[i] = point[oldColNum]
-			for i in xrange(self.features()):
-				point[i] = temp[i]
+		if sortHelper is not None and scorer is None and comparator is None:
+			raise ArgumentException("sortHelper is neither a scorer or a comparator")
 
-		# have to deal with featureNames now
-		for i in xrange(self.features()):
-			currKey = keyList[i]
-			oldColNum = keyDict[currKey]
-			temp[i] = self.featureNamesInverse[oldColNum]
-		return temp
+		# make array of views
+		viewArray = []
+		viewIter = self.featureViewIterator()
+		for v in viewIter:
+			viewArray.append(v)
+
+		if comparator is not None:
+			viewArray.sort(cmp=comparator)
+			indexPosition = []
+			for i in xrange(len(viewArray)):
+				indexPosition.append(viewArray[i].index())
+		else:
+			scoreArray = viewArray
+			if scorer is not None:
+				# use scoring function to turn views into values
+				for i in xrange(len(viewArray)):
+					scoreArray[i] = scorer(viewArray[i])
+			else:
+				for i in xrange(len(viewArray)):
+					scoreArray[i] = viewArray[i][sortBy]
+
+			# use numpy.argsort to make desired index array
+			# this results in an array whole ith index contains the the
+			# index into the data of the value that should be in the ith
+			# position
+			indexPosition = numpy.argsort(scoreArray)
+
+		# run through array making curr index to new index map
+		indexMap = {}
+		for i in xrange(len(indexPosition)):
+			indexMap[indexPosition[i]] = i
+		# run through target axis and change indices
+		for i in xrange(len(self.data)):
+			currPoint = self.data[i]
+			temp = copy.copy(currPoint)
+			for j in xrange(len(currPoint)):
+				currPoint[j] = temp[indexMap[j]]
+
+		# we convert the indices of the their previous location into their feature names
+		newFeatureNameOrder = []
+		for i in xrange(len(indexPosition)):
+			oldIndex = indexPosition[i]
+			newName = self.featureNamesInverse[oldIndex]
+			newFeatureNameOrder.append(newName)
+		return newFeatureNameOrder
+
 
 	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
 		"""

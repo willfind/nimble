@@ -626,7 +626,7 @@ class BaseData(object):
 		return True
 
 
-	def permutePoints(self, seed=DEFAULT_SEED):
+	def shufflePoints(self, seed=DEFAULT_SEED):
 		"""
 		Permute the indexing of the points so they are in a random order. Note: this relies on
 		python's random.shuffle() so may not be sufficiently random for large number of points.
@@ -640,7 +640,7 @@ class BaseData(object):
 		self.sortPoints(sortHelper=permuter)
 
 
-	def permuteFeatures(self, seed=DEFAULT_SEED):
+	def shuffleFeatures(self, seed=DEFAULT_SEED):
 		"""
 		Permute the indexing of the features so they are in a random order. Note: this relies on
 		python's random.shuffle() so may not be sufficiently random for large number of features.
@@ -762,6 +762,11 @@ class BaseData(object):
 		# its already sorted in these cases
 		if self.features() == 0 or self.points() == 0:
 			return
+		if sortBy is not None and sortHelper is not None:
+			raise ArgumentException("Cannot specify a feature to sort by and a helper function")
+		if sortBy is None and sortHelper is None:
+			raise ArgumentException("Either sortBy or sortHelper must not be None")
+
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self._renameMultipleFeatureNames_implementation(newFeatureNameOrder,True)
 
@@ -1266,6 +1271,7 @@ class BaseData(object):
 			copied = self.outerReference.duplicate()
 			dataY = copied.extractPoints(self.foldList[self.index])
 			dataX = copied
+#			dataX.shufflePoints()
 			self.index = self.index +1
 			return dataX, dataY
 

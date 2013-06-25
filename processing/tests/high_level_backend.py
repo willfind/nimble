@@ -309,6 +309,7 @@ def applyFunctionToEachPoint_nonZeroItAndLen(constructor):
 
 	def emitNumNZ(point):
 		ret = 0
+		print len(point)
 		assert len(point) == 3
 		for value in point.nonZeroIterator():
 			ret += 1
@@ -458,9 +459,6 @@ def mapReduceOnPoints_handmade(constructor):
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-#	if toTest.getType() == "DenseMatrixData":
-#		import pdb
-#		pdb.set_trace()
 	ret = toTest.mapReduceOnPoints(simpleMapper,simpleReducer)
 	
 	exp = constructor([[1,5],[4,11],[7,17]])
@@ -481,6 +479,65 @@ def mapReduceOnPoints_handmadeNoneReturningReducer(constructor):
 	assert (ret.equals(exp))
 	assert (toTest.equals(constructor(data,featureNames)))
 
+
+
+#######################
+# pointViewIterator() #
+#######################
+
+
+def pointViewIterator_exactValueViaFor(constructor):
+	""" Test pointViewIterator() gives views that contain exactly the correct data """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	
+#	import pdb
+#	pdb.set_trace()
+
+	viewIter = toTest.pointViewIterator()
+
+	toCheck = []
+	for v in viewIter:
+		toCheck.append(v)
+
+	assert toCheck[0][0] == 1
+	assert toCheck[0][1] == 2
+	assert toCheck[0][2] == 3
+	assert toCheck[1][0] == 4
+	assert toCheck[1][1] == 5
+	assert toCheck[1][2] == 6
+	assert toCheck[2][0] == 7
+	assert toCheck[2][1] == 8
+	assert toCheck[2][2] == 9
+
+
+#########################
+# featureViewIterator() #
+#########################
+
+
+def featureViewIterator_exactValueViaFor(constructor):
+	""" Test featureViewIterator() gives views that contain exactly the correct data """
+	featureNames = ["one","two","three"]
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	toTest = constructor(data,featureNames)
+	
+	viewIter = toTest.featureViewIterator()
+
+	toCheck = []
+	for v in viewIter:
+		toCheck.append(v)
+
+	assert toCheck[0][0] == 1
+	assert toCheck[0][1] == 4
+	assert toCheck[0][2] == 7
+	assert toCheck[1][0] == 2
+	assert toCheck[1][1] == 5
+	assert toCheck[1][2] == 8
+	assert toCheck[2][0] == 3
+	assert toCheck[2][1] == 6
+	assert toCheck[2][2] == 9
 
 
 
@@ -568,8 +625,8 @@ def isApproxEquivalent_randomTest(constructor):
 	""" Test isApproxEquivalent() using randomly generated data """
 
 	for x in xrange(1,2):
-		points = numpy.random.randint(1, 200)
-		features = numpy.random.randint(1, 200)
+		points = 200
+		features = 80
 		data = numpy.zeros((points,features))
 
 		for i in xrange(points):
@@ -588,25 +645,31 @@ def isApproxEquivalent_randomTest(constructor):
 	assert toTest.isApproxEquivalent(dmd)
 	assert dmd.isApproxEquivalent(toTest)
 
-#	assert toTest.isApproxEquivalent(coo)
-#	assert coo.isApproxEquivalent(toTest)
+	assert toTest.isApproxEquivalent(coo)
+	assert coo.isApproxEquivalent(toTest)
 
 
 
 
 
 ###################
-# permutePoints() #
+# shufflePoints() #
 ###################
 
 
-def permutePoints_noLongerEqual(constructor):
-	""" Tests permutePoints() results in a changed object """
+def shufflePoints_noLongerEqual(constructor):
+	""" Tests shufflePoints() results in a changed object """
 	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 	toTest = constructor(deepcopy(data))
 	toCompare = constructor(deepcopy(data))
 
-	toTest.permutePoints()
+	# it is possible that it shuffles it into the same configuration.
+	# the odds are vanishly low that it will do so over consecutive calls
+	# however. We will pass as long as it changes once
+	for i in xrange(5):
+		toTest.shufflePoints()
+		if not toTest.isApproxEquivalent(toCompare):
+			return
 
 	assert not toTest.isApproxEquivalent(toCompare)
 
@@ -616,17 +679,23 @@ def permutePoints_noLongerEqual(constructor):
 
 
 #####################
-# permuteFeatures() #
+# shuffleFeatures() #
 #####################
 
 
-def permuteFeatures_noLongerEqual(constructor):
-	""" Tests permuteFeatures() results in a changed object """
+def shuffleFeatures_noLongerEqual(constructor):
+	""" Tests shuffleFeatures() results in a changed object """
 	data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,1111111]]
 	toTest = constructor(deepcopy(data))
 	toCompare = constructor(deepcopy(data))
 
-	toTest.permuteFeatures()
+	# it is possible that it shuffles it into the same configuration.
+	# the odds are vanishly low that it will do so over consecutive calls
+	# however. We will pass as long as it changes once
+	for i in xrange(5):
+		toTest.shuffleFeatures()
+		if not toTest.isApproxEquivalent(toCompare):
+			return
 
 	assert not toTest.isApproxEquivalent(toCompare)
 

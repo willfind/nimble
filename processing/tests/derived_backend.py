@@ -307,9 +307,6 @@ def sortPoints_scorer(constructor):
 	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 	objExp = constructor(dataExpected)
 
-	print toTest.data
-	print objExp.data
-
 	assert toTest.equals(objExp)	
 
 def sortPoints_comparator(constructor):
@@ -361,7 +358,8 @@ def sortFeatures_naturalByPointWithNames(constructor):
 	toTest.sortFeatures(sortBy=1)
 
 	dataExpected = [[2,1,3],[1,7,9],[5,4,6]]
-	objExp = constructor(dataExpected)
+	namesExp = ["2", "1", "3"]
+	objExp = constructor(dataExpected, namesExp)
 
 	assert toTest.equals(objExp)
 

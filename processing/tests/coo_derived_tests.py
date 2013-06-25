@@ -117,27 +117,39 @@ def test_sortPoints_exceptionAtLeastOne():
 	""" Test CooSparse sortPoints() has at least one paramater """
 	sortPoints_exceptionAtLeastOne(constructor)
 
-#def test_sortPoints_naturalByFeature():
-#	""" Test CooSparse sortPoints() when we specify a feature to sort by """	
-#	sortPoints_naturalByFeature(constructor)
+def test_sortPoints_naturalByFeature():
+	""" Test CooSparse sortPoints() when we specify a feature to sort by """	
+	sortPoints_naturalByFeature(constructor)
 
-#def test_sortPoints_scorer():
-#	""" Test CooSparse sortPoints() when we specify a scoring function """
-#	sortPoints_scorer(constructor)
+def test_sortPoints_scorer():
+	""" Test CooSparse sortPoints() when we specify a scoring function """
+	sortPoints_scorer(constructor)
 
-#def test_sortPoints_comparator():
-#	""" Test CooSparse sortPoints() when we specify a comparator function """
-#	sortPoints_comparator(constructor)
+def test_sortPoints_comparator():
+	""" Test CooSparse sortPoints() when we specify a comparator function """
+	sortPoints_comparator(constructor)
 
 #################
 # sortFeatures() #
 #################
 
+@raises(ArgumentException)
+def test_sortFeatures_exceptionAtLeastOne():
+	""" Test CooSparse sortFeatures() has at least one paramater """
+	sortFeatures_exceptionAtLeastOne(constructor)
 
-#def test_sortFeatures_handmadeWithFcn():
-#	""" Test CooSparse sortFeatures() against handmade output when given cmp and key functions """	
-#	sortFeatures_handmadeWithFcn(constructor)
+def test_sortFeatures_naturalByPointWithNames():
+	""" Test CooSparse sortFeatures() when we specify a point to sort by; includes featureNames """	
+	sortFeatures_naturalByPointWithNames(constructor)
 
+def test_sortFeatures_scorer():
+	""" Test CooSparse sortFeatures() when we specify a scoring function """
+	sortFeatures_scorer(constructor)
+
+def test_sortFeatures_comparator():
+	""" Test CooSparse sortFeatures() when we specify a comparator function """
+	sortFeatures_comparator(constructor)
+		
 
 
 #################

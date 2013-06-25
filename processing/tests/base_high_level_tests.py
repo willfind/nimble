@@ -31,7 +31,7 @@ def coo(data,featureNames=None):
 def callAll(func):
 	func(rld)
 	func(dmd)
-#	func(coo)
+	func(coo)
 
 
 
@@ -194,6 +194,9 @@ def test_foldIterator_ordering():
 		curTrainYList = curTrainY.toListOfLists()
 		curTestYList = curTestY.toListOfLists()
 
+#		import pdb
+#		pdb.set_trace()
+
 		for i in range(len(curTrainXList)):
 			assert curTrainXList[i][0] == curTrainYList[i][0]
 
@@ -285,6 +288,25 @@ def test_mapReduceOnPoints_handmadeNoneReturningReducer():
 
 
 
+#######################
+# pointViewIterator() #
+#######################
+
+
+def test_pointViewIterator_exactValueViaFor():
+	""" Test pointViewIterator() gives views that contain exactly the correct data """
+	callAll(pointViewIterator_exactValueViaFor)
+
+#########################
+# featureViewIterator() #
+#########################
+
+
+def test_featureViewIterator_exactValueViaFor():
+	""" Test featureViewIterator() gives views that contain exactly the correct data """
+	callAll(featureViewIterator_exactValueViaFor)
+
+
 ####################
 # transformPoint() #
 ####################
@@ -331,22 +353,22 @@ def test_isApproxEquivalent_randomTest():
 
 
 ###################
-# permutePoints() #
+# shufflePoints() #
 ###################
 
 
-def test_permutePoints_noLongerEqual():
-	""" Tests permutePoints() results in a changed object """
-	callAll(permutePoints_noLongerEqual)
+def test_shufflePoints_noLongerEqual():
+	""" Tests shufflePoints() results in a changed object """
+	callAll(shufflePoints_noLongerEqual)
 
 
 
 #####################
-# permuteFeatures() #
+# shuffleFeatures() #
 #####################
 
 
-def test_permuteFeatures_noLongerEqual():
-	""" Tests permuteFeatures() results in a changed object """
-	callAll(permuteFeatures_noLongerEqual)
+def test_shuffleFeatures_noLongerEqual():
+	""" Tests shuffleFeatures() results in a changed object """
+	callAll(shuffleFeatures_noLongerEqual)
 

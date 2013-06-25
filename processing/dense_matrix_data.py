@@ -8,16 +8,14 @@ to files.
 
 import numpy
 
-from base_data import *
-from copy import copy
-from copy import deepcopy
-from ..utility.custom_exceptions import ArgumentException
+from UML.processing.base_data import BaseData
+from UML.processing.base_data import View
+from UML.utility.custom_exceptions import ArgumentException
 
+from copy import deepcopy
 from scipy.io import mmwrite
 from scipy.sparse import isspmatrix
 import random
-import re
-import os
 
 
 class DenseMatrixData(BaseData):
@@ -74,13 +72,14 @@ class DenseMatrixData(BaseData):
 		"""
 		scorer = None
 		comparator = None
+		test = self.getPointView(0)
 		try:
-			sortHelper(numpy.array(self.data[0]).flatten())
+			sortHelper(test)
 			scorer = sortHelper
 		except TypeError:
 			pass
 		try:
-			sortHelper(self.data[0], self.data[0])
+			sortHelper(test, test)
 			comparator = sortHelper
 		except TypeError:
 			pass
@@ -113,16 +112,61 @@ class DenseMatrixData(BaseData):
 		This funciton returns a list of featureNames indicating the new order of the data.
 
 		"""
-		raise NotImplementedError
-		def passThrough(toKey):
-			return toKey
-		if key is None:
-			key = passThrough	
+		scorer = None
+		comparator = None
+		test = self.getFeatureView(0)
+		try:
+			sortHelper(test)
+			scorer = sortHelper
+		except TypeError:
+			pass
+		try:
+			sortHelper(test, test)
+			comparator = sortHelper
+		except TypeError:
+			pass
 
-		#TODO
-		raise NotImplementedError
+		if sortHelper is not None and scorer is None and comparator is None:
+			raise ArgumentException("sortHelper is neither a scorer or a comparator")
 
-		#return new order
+		# make array of views
+		viewArray = []
+		viewIter = self.featureViewIterator()
+		for v in viewIter:
+			viewArray.append(v)
+
+		if comparator is not None:
+			viewArray.sort(cmp=comparator)
+			indexPosition = []
+			for i in xrange(len(viewArray)):
+				indexPosition.append(viewArray[i].index())
+		else:
+			scoreArray = viewArray
+			if scorer is not None:
+				# use scoring function to turn views into values
+				for i in xrange(len(viewArray)):
+					scoreArray[i] = scorer(viewArray[i])
+			else:
+				for i in xrange(len(viewArray)):
+					scoreArray[i] = viewArray[i][sortBy]
+
+			# use numpy.argsort to make desired index array
+			# this results in an array whole ith index contains the the
+			# index into the data of the value that should be in the ith
+			# position
+			indexPosition = numpy.argsort(scoreArray)
+
+		# use numpy indexing to change the ordering
+		self.data = self.data[:,indexPosition]
+
+		# we convert the indices of the their previous location into their feature names
+		newFeatureNameOrder = []
+		for i in xrange(len(indexPosition)):
+			oldIndex = indexPosition[i]
+			newName = self.featureNamesInverse[oldIndex]
+			newFeatureNameOrder.append(newName)
+		return newFeatureNameOrder
+
 
 	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
 		"""
