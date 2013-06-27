@@ -15,15 +15,9 @@ import UML.applications.laddersExperiments
 __package__ = "UML.applications.laddersExperiments"
 
 if __name__ == "__main__":
-    import re
-    from UML import crossValidateReturnBest
-    from UML import functionCombinations
-    from UML.combinations.Combinations import executeCode
+    from UML.umlHelpers import executeCode
     from UML import runAndTest
     from UML import data
-    from UML import loadTrainingAndTesting
-    from UML.performance.metric_functions import classificationError
-    from UML.performance.metric_functions import bottomProportionPercentNegative10
     from UML.performance.metric_functions import proportionPercentNegative90
 
     pathIn = "/home/ross/library/LaddersData/PlaygroundFull/DocVectors.mtx"

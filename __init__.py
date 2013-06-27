@@ -3,20 +3,23 @@ from cfg import defaultSkipSetNonAlphaNumeric
 from cfg import defaultStopWords
 from cfg import numericalChars
 
-from umlExtensible import run
-from umlExtensible import data
+from uml import run
+from uml import data
+from uml import normalize
+from uml import loadTrainingAndTesting
+from uml import listDataRepresentationMethods
+from uml import listUMLFunctions
+from uml import randomizedData
+from uml import listAlgorithms
+from uml import runAndTest
+from uml import runAndTestOneVsOne
+from uml import runOneVsOne
+from uml import runOneVsAll
+from uml import runAndTestOneVsAll
+from uml import functionCombinations
+from uml import crossValidate
+from uml import crossValidateReturnBest
+from uml import orderedCrossValidate
+from uml import orderedCrossValidateReturnBest
 
-from umlStatic import normalize
-from umlStatic import loadTrainingAndTesting
-from umlStatic import listDataRepresentationMethods
-from umlStatic import listUMLFunctions
-from umlStatic import randomizedData
-from umlStatic import listAlgorithms
 
-from combinations.CrossValidate import crossValidate
-from combinations.CrossValidate import crossValidateReturnBest
-from combinations.Combinations import functionCombinations
-from combinations.OrderedCrossValidate import orderedCrossValidate
-from combinations.OrderedCrossValidate import orderedCrossValidateReturnBest
-
-from performance.runner import runAndTest

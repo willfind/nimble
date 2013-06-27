@@ -8,7 +8,7 @@ boilerplate()
 if __name__ == "__main__":
 	from UML import crossValidateReturnBest
 	from UML import functionCombinations
-	from UML.combinations.Combinations import executeCode
+	from UML.umlHelpers import executeCode
 	from UML import runAndTest
 	from UML import data
 	from UML import loadTrainingAndTesting

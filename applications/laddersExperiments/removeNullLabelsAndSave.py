@@ -8,15 +8,8 @@ from allowImports import boilerplate
 boilerplate()
 
 if __name__ == "__main__":
-    from UML import crossValidateReturnBest
-    from UML import functionCombinations
-    from UML.combinations.Combinations import executeCode
-    from UML import runAndTest
+
     from UML import data
-    from UML import loadTrainingAndTesting
-    from UML.performance.metric_functions import classificationError
-    from UML.performance.metric_functions import bottomProportionPercentNegative10
-    from UML.performance.metric_functions import proportionPercentNegative90
 
     pathIn = "/media/library_/LaddersData/umlApproval50KTfIdfRoundedNoHeaders.mtx"
     sparseVersion = data('coo', pathIn, fileType='mtx')

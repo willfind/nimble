@@ -1,5 +1,4 @@
 from math import sqrt
-from UML import data
 from UML.processing.dense_matrix_data import DenseMatrixData
 from ..utility.custom_exceptions import ArgumentException
 

@@ -7,9 +7,9 @@ boilerplate()
 
 if __name__ == "__main__":
 	from UML import data
-	from UML.performance.runner import runAndTest
-	from UML.performance.runner import runOneVsOne
-	from UML.performance.runner import runAndTestOneVsOne
+	from UML import runAndTest
+	from UML import runOneVsOne
+	from UML import runAndTestOneVsOne
 	from UML.performance.metric_functions import classificationError
 
 	variables = ["x1","x2","x3", "label"]

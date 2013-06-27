@@ -17,10 +17,11 @@ from interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
 from interface_helpers import ovaNotOvOFormatted
 from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from interface_helpers import scoreModeOutputAdjustment
-from ..processing.dense_matrix_data import DenseMatrixData as DMData
-from ..processing.base_data import BaseData
+from UML.processing.dense_matrix_data import DenseMatrixData as DMData
+from UML.processing.base_data import BaseData
+import UML
 
-from ..utility.custom_exceptions import ArgumentException
+from UML.utility.custom_exceptions import ArgumentException
 
 # Contains path to sciKitLearn root directory
 sciKitLearnDir = None
@@ -74,11 +75,9 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 	if multiClassStrategy != 'default':
 		trialResult = checkClassificationStrategy(_sciKitLearnBackend, algorithm, arguments)
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			from ..performance.runner import runOneVsAll
-			runOneVsAll(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+			UML.runOneVsAll(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			from ..performance.runner import runOneVsOne
-			runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+			UML.runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
 
 
 	if not isinstance(trainData, BaseData):

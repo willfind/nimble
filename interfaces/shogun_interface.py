@@ -14,11 +14,11 @@ from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from interface_helpers import ovaNotOvOFormatted
 from interface_helpers import scoreModeOutputAdjustment
 from interface_helpers import checkClassificationStrategy
-from ..processing.dense_matrix_data import DenseMatrixData as DMData
-from ..processing.base_data import BaseData
-from ..processing.sparse_data import SparseData
+from UML.processing.dense_matrix_data import DenseMatrixData as DMData
+from UML.processing.base_data import BaseData
+import UML
 
-from ..utility.custom_exceptions import ArgumentException
+from UML.utility.custom_exceptions import ArgumentException
 
 # Contains path to shogun root directory
 shogunDir = None
@@ -67,11 +67,9 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 		trialResult = checkClassificationStrategy(_shogunBackend, algorithm, arguments)
 		# note: these conditionals include a binary return
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			from ..performance.runner import runOneVsAll
-			runOneVsAll("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			UML.runOneVsAll("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			from ..performance.runner import runOneVsOne
-			runOneVsOne("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			UML.runOneVsOne("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
 
 	args = copy.copy(arguments)
 	if not isinstance(trainData, BaseData):

@@ -18,14 +18,8 @@ def readMapFile(filePath):
     return idAttrMap
 
 if __name__ == "__main__":
-    from UML import crossValidateReturnBest
-    from UML import functionCombinations
-    from UML.combinations.Combinations import executeCode
-    from UML import runAndTest
-    from UML import data
-    from UML import loadTrainingAndTesting
     from UML.uml_loading.convert_to_basedata import convertToCooBaseData
-    from UML.performance.metric_functions import proportionPercentNegative90
+
 
     rawTextDirPath = '/home/ross/library/LaddersData'
     jobTitleMapPath = 'UML/applications/example_data/rawData/jobTitlesMapAll.txt'
