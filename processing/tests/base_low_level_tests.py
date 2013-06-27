@@ -9,8 +9,9 @@ that missing implementation.
 
 """
 
-from ..base_data import *
+from UML.processing.base_data import *
 from nose.tools import *
+from UML.exceptions import ArgumentException
 
 def makeConst(num):
 	def const(dummy=2):

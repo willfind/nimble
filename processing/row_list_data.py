@@ -14,7 +14,7 @@ from scipy.sparse import isspmatrix
 from UML.processing.base_data import BaseData
 from UML.processing.base_data import View
 from UML.processing.base_data import reorderToMatchExtractionList
-from UML.utility.custom_exceptions import ArgumentException
+from UML.exceptions import ArgumentException
 
 
 

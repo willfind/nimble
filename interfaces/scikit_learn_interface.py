@@ -17,11 +17,11 @@ from interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
 from interface_helpers import ovaNotOvOFormatted
 from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from interface_helpers import scoreModeOutputAdjustment
-from UML.processing.dense_matrix_data import DenseMatrixData as DMData
-from UML.processing.base_data import BaseData
+from UML.processing import DenseMatrixData as DMData
+from UML.processing import BaseData
 import UML
 
-from UML.utility.custom_exceptions import ArgumentException
+from UML.exceptions import ArgumentException
 
 # Contains path to sciKitLearn root directory
 sciKitLearnDir = None

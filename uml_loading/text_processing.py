@@ -8,7 +8,7 @@ from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk.stem.lancaster import LancasterStemmer
 
 import UML
-from UML.utility import ArgumentException, EmptyFileException
+from UML.exceptions import ArgumentException, EmptyFileException
 
 
 def loadAndTokenize(textFilePath, 

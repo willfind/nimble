@@ -8,7 +8,7 @@ import scipy.sparse
 from numpy.random import rand, randint
 from nose.tools import *
 
-from ...utility.custom_exceptions import ArgumentException
+from UML.exceptions import ArgumentException
 
 from ..shogun_interface import shogun
 from ..shogun_interface import listAlgorithms

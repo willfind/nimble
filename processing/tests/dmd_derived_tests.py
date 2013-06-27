@@ -5,9 +5,10 @@ in derived_backend.py using appropriate input
 
 """
 
-from derived_backend import *
+from UML.processing.tests.derived_backend import *
 from nose.tools import *
-from ... import data as instantiate
+from UML import data as instantiate
+from UML.exceptions import ArgumentException
 
 def constructor(data=None, featureNames=None):
 	return instantiate('DenseMatrixData', data, featureNames)

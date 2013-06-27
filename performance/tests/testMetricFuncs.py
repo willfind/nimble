@@ -4,7 +4,7 @@ from ..metric_functions import rmse, classificationError, computeError, meanAbso
 from ..performance_interface import computeMetrics
 from ...processing.dense_matrix_data import DenseMatrixData
 from UML import data
-from UML.utility import ArgumentException
+from UML.exceptions import ArgumentException
 
 def testProportionPercentNegative():
 	"""

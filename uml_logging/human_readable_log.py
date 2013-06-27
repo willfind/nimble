@@ -5,9 +5,9 @@ import types
 
 from tableString import *
 from UML.processing import BaseData
-from UML.utility import ArgumentException
-from uml_logger import UmlLogger
-from ..processing.coo_sparse_data import CooSparseData
+from UML.exceptions import ArgumentException
+from UML.uml_logging.uml_logger import UmlLogger
+from UML.processing import CooSparseData
 
 class HumanReadableLogger(UmlLogger):
 	"""

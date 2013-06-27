@@ -1,7 +1,7 @@
 import UML
 from UML.uml_loading.dok_data_set import DokDataSet
 from UML.uml_loading.ClassLabelMap import ClassLabelMap
-from UML.utility import ArgumentException
+from UML.exceptions import ArgumentException
 
 
 def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], 

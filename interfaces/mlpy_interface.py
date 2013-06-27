@@ -9,15 +9,15 @@ import numpy
 
 from interface_helpers import makeArgString
 from interface_helpers import checkClassificationStrategy
-from interface_helpers import findModule
 from interface_helpers import putOnSearchPath
 from interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
 from interface_helpers import ovaNotOvOFormatted
 from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from interface_helpers import scoreModeOutputAdjustment
-from UML.processing.dense_matrix_data import DenseMatrixData as DMData
-from UML.processing.base_data import BaseData
+from UML.processing import DenseMatrixData as DMData
+from UML.processing import BaseData
 from UML.processing.sparse_data import SparseData
+from UML.exceptions import ArgumentException
 import UML
 
 # Contains path to mlpy root directory

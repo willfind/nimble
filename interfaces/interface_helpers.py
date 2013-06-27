@@ -8,7 +8,7 @@ import random
 import sys
 import UML
 from UML.processing import BaseData
-from ..utility.custom_exceptions import ArgumentException
+from UML.exceptions import ArgumentException
 
 
 def makeArgString(wanted, argDict, prefix, infix, postfix):

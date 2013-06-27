@@ -7,8 +7,8 @@ on task name.
 import time
 import nose
 from nose.tools import *
-from ..utility.custom_exceptions import MissingEntryException
-from ..utility.custom_exceptions import ImproperActionException
+from UML.exceptions import MissingEntryException
+from UML.exceptions import ImproperActionException
 
 class Stopwatch(object):
 

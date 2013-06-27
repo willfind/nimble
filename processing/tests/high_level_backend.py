@@ -7,14 +7,14 @@ objects provided.
 
 """
 
-from ..base_data import *
+#from ..base_data import *
 from copy import deepcopy
 
 import numpy
 
-from ..row_list_data import RowListData
-from ..dense_matrix_data import DenseMatrixData
-from ..coo_sparse_data import CooSparseData
+from UML.processing import RowListData
+from UML.processing import DenseMatrixData
+from UML.processing import CooSparseData
 
 
 ###########################

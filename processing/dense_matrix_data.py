@@ -10,7 +10,7 @@ import numpy
 
 from UML.processing.base_data import BaseData
 from UML.processing.base_data import View
-from UML.utility.custom_exceptions import ArgumentException
+from UML.exceptions import ArgumentException
 
 from copy import deepcopy
 from scipy.io import mmwrite

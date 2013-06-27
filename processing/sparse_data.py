@@ -7,11 +7,9 @@ to non-sparse formats in order to complete their operations.
 """
 
 from scipy.sparse import *
-from copy import copy
-from copy import deepcopy
 
-from base_data import *
-from ..utility.custom_exceptions import ArgumentException
+from UML.processing.base_data import *
+from UML.exceptions import ArgumentException
 
 
 class SparseData(BaseData):

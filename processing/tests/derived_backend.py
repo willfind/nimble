@@ -7,15 +7,12 @@ directly by the class calling this backend.
 """
 
 import tempfile
-import os
-import numpy
 
 from copy import deepcopy
-from ...utility.custom_exceptions import ArgumentException
-from ..row_list_data import RowListData as RLD
-from ..dense_matrix_data import DenseMatrixData as DMD
-from ..base_data import View as View
-from .. import base_data
+from UML.processing import RowListData as RLD
+from UML.processing import DenseMatrixData as DMD
+from UML.processing.base_data import View as View
+from UML.processing import base_data
 
 ##############
 # __init__() #

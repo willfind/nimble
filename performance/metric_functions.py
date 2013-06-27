@@ -1,6 +1,6 @@
 from math import sqrt
-from UML.processing.dense_matrix_data import DenseMatrixData
-from ..utility.custom_exceptions import ArgumentException
+from UML.processing import DenseMatrixData
+from UML.exceptions import ArgumentException
 
 
 def computeError(knownValues, predictedValues, loopFunction, compressionFunction):

@@ -12,7 +12,7 @@ from nose.tools import assert_almost_equal
 
 import UML
 from UML.uml_logging.tableString import tableString
-from UML.utility import ArgumentException
+from UML.exceptions import ArgumentException
 
 
 def produceFeaturewiseInfoTable(dataContainer, funcsToApply):

@@ -4,9 +4,9 @@ import inspect
 import re
 import types
 from UML.processing import BaseData
-from uml_logger import UmlLogger
-from UML.utility import ArgumentException
-from ..processing.coo_sparse_data import CooSparseData
+from UML.uml_logging.uml_logger import UmlLogger
+from UML.exceptions import ArgumentException
+from UML.processing import CooSparseData
 
 class MachineReadableLogger(UmlLogger):
 	"""

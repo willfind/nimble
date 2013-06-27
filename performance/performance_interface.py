@@ -6,10 +6,10 @@ Created on Dec 11, 2012
 
 import inspect
 
-from UML.processing.base_data import BaseData
+from UML.processing import BaseData
 from UML.umlHelpers import executeCode
 from UML.performance.metric_functions import proportionPercentNegative90, proportionPercentNegative50, bottomProportionPercentNegative10
-from UML.utility.custom_exceptions import ArgumentException
+from UML.exceptions import ArgumentException
 
 
 def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions, negativeLabel=None):

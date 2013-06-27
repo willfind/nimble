@@ -11,10 +11,6 @@ import os
 import os.path
 import sys
 
-import UML
-from ..processing.base_data import BaseData
-from ..processing.sparse_data import SparseData
-from ..processing.dense_matrix_data import DenseMatrixData
 
 try:
 	import numpy
@@ -23,7 +19,12 @@ except ImportError as ie:
 	loaded = False
 	message = ie
 
-from ..utility.custom_exceptions import ArgumentException
+
+import UML
+from UML.processing import BaseData
+from UML.processing.sparse_data import SparseData
+from UML.processing import DenseMatrixData
+from UML.exceptions import ArgumentException
 
 # Contains path to regressors root directory
 regressorsDir = None

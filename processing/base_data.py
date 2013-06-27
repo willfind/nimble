@@ -7,15 +7,17 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 # TODO who sorts inputs to derived implementations?
 
 import copy
-from ..utility.custom_exceptions import ArgumentException
-from ..utility.custom_exceptions import ImproperActionException
-import UML
-from UML.uml_logging.data_set_analyzer import produceFeaturewiseReport
-from UML.uml_logging.data_set_analyzer import produceAggregateReport
 import random
 import math
 from abc import ABCMeta
 from abc import abstractmethod
+
+import UML
+from UML.exceptions import ArgumentException
+from UML.exceptions import ImproperActionException
+from UML.uml_logging.data_set_analyzer import produceFeaturewiseReport
+from UML.uml_logging.data_set_analyzer import produceAggregateReport
+
 
 # a default seed for testing and predictible trials
 DEFAULT_SEED = 'DEFAULTSEED'

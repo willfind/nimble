@@ -6,15 +6,19 @@ test will call the backend test for each possible representation
 
 """
 
-from ..base_data import *
-from ..row_list_data import RowListData
-from ..dense_matrix_data import DenseMatrixData
-from ..coo_sparse_data import CooSparseData
-from high_level_backend import *
+from nose.tools import *
+
+
+from UML.processing import RowListData
+from UML.processing import DenseMatrixData
+from UML.processing import CooSparseData
+from UML.processing.tests.high_level_backend import *
 from UML import data
 
-from copy import deepcopy
-from nose.tools import *
+from UML.exceptions import ImproperActionException
+from UML.exceptions import ArgumentException
+
+
 
 
 

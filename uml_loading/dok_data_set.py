@@ -12,7 +12,7 @@ import UML
 from UML.uml_loading.data_loading import dirMapper
 from UML.uml_loading.text_processing import loadAndTokenize
 from UML import data
-from UML.utility import ArgumentException, EmptyFileException, ImproperActionException
+from UML.exceptions import ArgumentException, EmptyFileException, ImproperActionException
 
 class DokDataSet(object):
 	"""

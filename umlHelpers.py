@@ -13,7 +13,7 @@ import os.path
 import re 
 import datetime
 
-from UML.utility import ArgumentException
+from UML.exceptions import ArgumentException
 from UML.processing import CooSparseData
 from UML.processing import DenseMatrixData
 from UML.processing import RowListData

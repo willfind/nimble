@@ -13,8 +13,8 @@ import copy
 
 from UML.processing.base_data import View
 from UML.processing.sparse_data import SparseData
-from UML.utility.custom_exceptions import ArgumentException
-from UML.utility.custom_exceptions import ImproperActionException
+from UML.exceptions import ArgumentException
+from UML.exceptions import ImproperActionException
 
 
 class CooSparseData(SparseData):

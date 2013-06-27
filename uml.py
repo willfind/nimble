@@ -11,7 +11,7 @@ import re
 import datetime
 
 import UML
-from UML.utility import ArgumentException
+from UML.exceptions import ArgumentException
 from UML.interfaces import mahout
 from UML.interfaces import regressor
 from UML.interfaces import sciKitLearn

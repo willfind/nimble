@@ -11,10 +11,9 @@ package
 import subprocess
 import os
 import os.path
-import tempfile
 
-from ..utility.custom_exceptions import ArgumentException
-from ..processing.base_data import BaseData
+from UML.exceptions import ArgumentException
+from UML.processing import BaseData
 
 
 patchDir = os.path.dirname(__file__) + "/mahout_patches"

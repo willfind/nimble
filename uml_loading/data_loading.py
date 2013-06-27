@@ -1,6 +1,6 @@
 import os
 
-from UML.utility import ArgumentException
+from UML.exceptions import ArgumentException
 
 def dirMapper(dirPath, extensions=[], mode="multiTyped"):
 	"""

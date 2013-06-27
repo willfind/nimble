@@ -1,6 +1,6 @@
 import numpy
 
-from UML.utility import ArgumentException
+from UML.exceptions import ArgumentException
 
 """
 	Handle logging of creating and testing classifiers.  Currently

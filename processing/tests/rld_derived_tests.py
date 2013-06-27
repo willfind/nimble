@@ -6,8 +6,9 @@ in derived_backend.py using appropriate input
 """
 from nose.tools import *
 
-from derived_backend import *
-from ... import data as instantiate
+from UML.processing.tests.derived_backend import *
+from UML import data as instantiate
+from UML.exceptions import ArgumentException
 
 def constructor(data=None, featureNames=None):
 	return instantiate('RowListData', data, featureNames)

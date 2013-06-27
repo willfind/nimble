@@ -6,12 +6,11 @@ Class extending SparseBaseData, defining an object to hold and manipulate a scip
 from scipy.sparse import csc_matrix
 from scipy.io import mmread
 from scipy.io import mmwrite
-import numpy
 
-from base_data import *
-from dense_matrix_data import DenseMatrixData
-from sparse_data import *
-from ..utility.custom_exceptions import ArgumentException
+from UML.processing.base_data import *
+from UML.processing.dense_matrix_data import DenseMatrixData
+from UML.processing.sparse_data import *
+from UML.exceptions import ArgumentException
 
 
 
