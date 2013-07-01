@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	from UML.performance.metric_functions import classificationError
 
 	# path to input specified by command line argument
-	pathIn = "example_data/adult_income_classification_tiny_numerical.csv"
+	pathIn = "../datasets/adult_income_classification_tiny_numerical.csv"
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID='income', fractionForTestSet=.15, loadType="DenseMatrixData", fileType="csv")
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate

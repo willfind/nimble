@@ -21,7 +21,7 @@ if __name__ == "__main__":
     from UML.uml_loading.convert_to_basedata import convertToCooBaseData
 
     rawTextDirPath = '/home/ross/LaddersData/rawData'
-    #rawTextDirPath = 'UML/applications/example_data/rawDataSmall/rawHtml'
+    #rawTextDirPath = 'UML/datasets/rawDataSmall/rawHtml'
     urlMapPath = '/home/ross/LaddersData/rawData/urlMapAll.txt'
     companyNamePath = '/home/ross/LaddersData/rawData/companyNameMapAll.txt'
     approvalMapPath = '/home/ross/LaddersData/rawData/approvalMapAll.txt'

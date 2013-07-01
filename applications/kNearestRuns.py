@@ -17,7 +17,7 @@ if __name__ == "__main__":
     from UML.performance.metric_functions import proportionPercentNegative50
     from UML.performance.metric_functions import proportionPercentNegative90
 
-    pathIn = "UML/applications/example_data/tfIdfApproval50K.mtx"
+    pathIn = "UML/datasets/tfIdfApproval50K.mtx"
     trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="CooSparseData", fileType="mtx")
     print "Finished loading data"
     print "trainX shape: " + str(trainX.data.shape)

@@ -8,8 +8,8 @@ from UML.performance.metric_functions import rmse, meanAbsoluteError
 
 if __name__ == "__main__":
 
-	#fileName = "example_data/noisy-linear.csv"
-	fileName = "example_data/concrete_slump.csv"
+	#fileName = "../datasets/noisy-linear.csv"
+	fileName = "../datasets/concrete_slump.csv"
 	trainX, trainY, testX, testY = loadTrainingAndTesting(fileName, labelID='Compressive Strength', fractionForTestSet=.15, fileType="csv")
 	#random.seed = 5
 	#remove this column, since it's just the ID number of each data point

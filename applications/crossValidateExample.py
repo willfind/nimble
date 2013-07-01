@@ -14,7 +14,7 @@ if __name__ == "__main__":
 	from UML.performance.metric_functions import classificationError
 
 	# path to input specified by command line argument
-	pathIn = "UML/applications/example_data/sparseSample.mtx"
+	pathIn = "UML/datasets/sparseSample.mtx"
 	allData = data('coo', pathIn, fileType="mtx")
 
 	print "data loaded"

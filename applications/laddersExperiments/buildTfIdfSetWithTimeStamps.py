@@ -22,10 +22,10 @@ if __name__ == "__main__":
 
 
     rawTextDirPath = '/home/ross/library/LaddersData'
-    jobTitleMapPath = 'UML/applications/example_data/rawData/jobTitlesMapAll.txt'
-    urlMapPath = 'UML/applications/example_data/rawData/urlMapAll.txt'
-    companyNamePath = 'UML/applications/example_data/rawData/companyNameMapAll.txt'
-    approvalMapPath = 'UML/applications/example_data/rawData/approvalMap207K.txt'
+    jobTitleMapPath = 'UML/datasets/rawData/jobTitlesMapAll.txt'
+    urlMapPath = 'UML/datasets/rawData/urlMapAll.txt'
+    companyNamePath = 'UML/datasets/rawData/companyNameMapAll.txt'
+    approvalMapPath = 'UML/datasets/rawData/approvalMap207K.txt'
     timeStampPath = '/home/ross/library/LaddersData/individualFeatures/'
 
     jobTitleMap = readMapFile(jobTitleMapPath)

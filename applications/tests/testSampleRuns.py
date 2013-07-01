@@ -11,14 +11,14 @@ from UML import runAndTest
 from UML.performance.metric_functions import classificationError
 
 import os
-exampleDirPath = os.path.dirname(os.path.dirname(__file__)) + "/example_data/"
+exampleDirPath = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + "/datasets/"
 
 def testEverythingVolumeOne():
 	"""
 	Try to test some full use cases: load data, split data, normalize data, run crossValidate or
 	crossValidateReturnBest, and get results.  Use the classic iris data set for classification.
 	"""
-	pathOrig = os.path.join(os.path.dirname(__file__), "../example_data/iris.csv")
+	pathOrig = os.path.join(os.path.dirname(__file__), "../../datasets/iris.csv")
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
@@ -76,8 +76,8 @@ def testDataPrepExample():
 	"""
 
 	# string manipulation to get and make paths
-    pathOrig = os.path.join(os.path.dirname(__file__), "../example_data/adult_income_classification_tiny.csv")
-	pathOut = os.path.join(os.path.dirname(__file__), "../example_data/adult_income_classification_tiny_numerical.csv")
+    pathOrig = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny.csv")
+	pathOut = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny_numerical.csv")
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
@@ -108,7 +108,7 @@ def testCrossValidateExample():
 		Functional test for load-data-to-classification-results example of crossvalidation
 	"""
 	# path to input specified by command line argument
-	pathIn = os.path.join(os.path.dirname(__file__), "../example_data/adult_income_classification_tiny_numerical.csv")
+	pathIn = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny_numerical.csv")
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID='income', fractionForTestSet=.15, loadType="DenseMatrixData", fileType="csv")
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate

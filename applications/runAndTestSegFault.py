@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	from UML import loadTrainingAndTesting
 	from UML.performance.metric_functions import classificationError
 
-	pathIn = "applications/example_data/sparseSampleReal.mtx"
+	pathIn = "datasets/sparseSampleReal.mtx"
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="CooSparseData", fileType="mtx")
 
 	# sparse types aren't playing nice with the error metrics currently, so convert

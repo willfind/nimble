@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	from UML import data
 
 	# string manipulation to get and make paths
-	pathOrig = "example_data/adult_income_classification_tiny.csv"
+	pathOrig = "../datasets/adult_income_classification_tiny.csv"
 	pathSplit = pathOrig.rsplit('.',1)
 	if len(pathSplit) > 1:
 		suffix = '.' + pathSplit[1]

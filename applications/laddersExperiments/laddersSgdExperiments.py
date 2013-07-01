@@ -22,7 +22,7 @@ if __name__ == "__main__":
     from UML import data
     from UML.performance.metric_functions import proportionPercentNegative90
 
-    pathIn = "UML/application/example_data/tfIdfApproval50K.mtx"
+    pathIn = "UML/datasets/tfIdfApproval50K.mtx"
     trainX = data('coo', pathIn, fileType='mtx')
     testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(0.2*trainX.points())), randomize=True)
     trainY = trainX.extractFeatures(0)

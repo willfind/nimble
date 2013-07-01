@@ -8,7 +8,7 @@ from UML.uml_loading.text_processing import *
 
 if __name__ == "__main__":
 	#convert a directory w/text files (or *.html files) into a set of data objects
-	testDirPath = 'example_data/testDirectory'
+	testDirPath = '../datasets/testDirectory'
 
 	#read in the directory of individual files and convert to a dok sparse matrix + auxiliary
 	# data objects

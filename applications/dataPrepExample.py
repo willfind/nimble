@@ -13,8 +13,8 @@ if __name__ == "__main__":
 	from UML import data
 
 	# string manipulation to get and make paths
-	pathOrig = "example_data/adult_income_classification_tiny.csv"
-	pathOut = "example_data/adult_income_classification_tiny_numerical.csv"
+	pathOrig = "../datasets/adult_income_classification_tiny.csv"
+	pathOut = "../datasets/adult_income_classification_tiny_numerical.csv"
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded

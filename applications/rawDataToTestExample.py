@@ -26,12 +26,12 @@ if __name__ == "__main__":
     from UML.uml_loading.convert_to_basedata import convertToCooBaseData
     from UML.performance.metric_functions import proportionPercentNegative90
 
-    rawTextDirPath = 'UML/applications/example_data/rawData/rawHtmlFiles'
-    #rawTextDirPath = 'UML/applications/example_data/rawDataSmall/rawHtml'
-    jobTitleMapPath = 'UML/applications/example_data/rawData/jobTitlesMapAll.txt'
-    urlMapPath = 'UML/applications/example_data/rawData/urlMapAll.txt'
-    companyNamePath = 'UML/applications/example_data/rawData/companyNameMapAll.txt'
-    approvalMapPath = 'UML/applications/example_data/rawData/approvalMap207K.txt'
+    rawTextDirPath = 'UML/datasets/rawData/rawHtmlFiles'
+    #rawTextDirPath = 'UML/datasets/rawDataSmall/rawHtml'
+    jobTitleMapPath = 'UML/datasets/rawData/jobTitlesMapAll.txt'
+    urlMapPath = 'UML/datasets/rawData/urlMapAll.txt'
+    companyNamePath = 'UML/datasets/rawData/companyNameMapAll.txt'
+    approvalMapPath = 'UML/datasets/rawData/approvalMap207K.txt'
 
     jobTitleMap = readMapFile(jobTitleMapPath)
     urlMap = readMapFile(urlMapPath)
