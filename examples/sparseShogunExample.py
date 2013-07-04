@@ -11,7 +11,7 @@ if __name__ == "__main__":
 	from UML import runAndTest
 	from UML import run
 	from UML import loadTrainingAndTesting
-	from UML.performance.metric_functions import classificationError
+	from UML.metrics import classificationError
 
 	pathIn = "datasets/adult_income_classification_tiny_numerical.csv"
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID="income", fractionForTestSet=.2, loadType="CooSparseData", fileType="csv")

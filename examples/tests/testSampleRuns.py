@@ -8,7 +8,7 @@ from UML import crossValidate
 from UML import loadTrainingAndTesting
 from UML import functionCombinations
 from UML import runAndTest
-from UML.performance.metric_functions import classificationError
+from UML.metrics import classificationError
 
 import os
 exampleDirPath = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + "/datasets/"
@@ -25,7 +25,7 @@ def testEverythingVolumeOne():
 	processed = data("DenseMatrixData", pathOrig)
 
 	assert processed.data is not None
-    
+
 	partOne = processed.extractPointsByCoinToss(0.5)
 	partOneTest = partOne.extractPointsByCoinToss(0.1)
 	partTwoX = processed
@@ -52,7 +52,7 @@ def testEverythingVolumeOne():
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runsOne, mode='min', numFolds=10, extraParams=extraParams, sendToLog=False)
 
 	#Check that the error rate for each function is between 0 and 1
-	for result in fullCrossValidateResults.items:
+	for result in fullCrossValidateResults.items():
 		assert result[1] >= 0.0
 		assert result[1] <= 1.0
 	assert bestFunction is not None
@@ -76,7 +76,7 @@ def testDataPrepExample():
 	"""
 
 	# string manipulation to get and make paths
-    pathOrig = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny.csv")
+	pathOrig = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny.csv")
 	pathOut = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny_numerical.csv")
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will

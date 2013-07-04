@@ -21,11 +21,10 @@ from UML.interfaces.interface_helpers import generateAllPairs
 from UML.uml_logging.uml_logger import UmlLogger
 from UML.uml_logging.log_manager import LogManager
 from UML.uml_logging.stopwatch import Stopwatch
-from UML.performance.performance_interface import computeMetrics
 from UML.processing import BaseData
 
 
-
+from UML.umlHelpers import computeMetrics
 from UML.umlHelpers import _loadCoo
 from UML.umlHelpers import _loadDMD
 from UML.umlHelpers import _loadRLD

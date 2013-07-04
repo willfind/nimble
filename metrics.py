@@ -1,50 +1,9 @@
+
 from math import sqrt
-from UML.processing import DenseMatrixData
 from UML.exceptions import ArgumentException
+from UML.umlHelpers import computeError
 
 
-def computeError(knownValues, predictedValues, loopFunction, compressionFunction):
-	"""
-		A generic function to compute different kinds of error metrics.  knownValues
-		is a 1d BaseData object with one known label (or number) per row. predictedValues is a 1d BaseData
-		object with one predictedLabel (or score) per row.  The ith row in knownValues should refer
-		to the same point as the ith row in predictedValues. loopFunction is a function to be applied
-		to each row in knownValues/predictedValues, that takes 3 arguments: a known class label,
-		a predicted label, and runningTotal, which contains the successive output of loopFunction.
-		compressionFunction is a function that should take two arguments: runningTotal, the final
-		output of loopFunction, and n, the number of values in knownValues/predictedValues.
-	"""
-	if knownValues is None or len(knownValues.data) == 0:
-		raise ArgumentException("Empty 'knownValues' argument in error calculator")
-	elif predictedValues is None or len(predictedValues.data) == 0:
-		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
-
-	if not isinstance(knownValues, DenseMatrixData):
-		knownValues = knownValues.toDenseMatrixData()
-
-	if not isinstance(predictedValues, DenseMatrixData):
-		predictedValues = predictedValues.toDenseMatrixData()
-
-	n=0.0
-	runningTotal=0.0
-	#Go through all values in known and predicted values, and pass those values to loopFunction
-	for i in xrange(predictedValues.points()):
-		pV = predictedValues.data[i][0]
-		aV = knownValues.data[i][0]
-		runningTotal = loopFunction(aV, pV, runningTotal)
-		n += 1
-	if n > 0:
-		try:
-			#provide the final value from loopFunction to compressionFunction, along with the
-			#number of values looped over
-			runningTotal = compressionFunction(runningTotal, n)
-		except ZeroDivisionError:
-			raise ZeroDivisionError('Tried to divide by zero when calculating performance metric')
-			return
-	else:
-		raise ArgumentException("Empty argument(s) in error calculator")
-
-	return runningTotal
 
 def rmse(knownValues, predictedValues):
 	"""
@@ -255,4 +214,17 @@ def bottomPercentError(knownValues, labelScoreList, negativeLabel):
 	proportionCorrect = float(correctPredictions) / float(len(sortedKnownValues))
 
 	return proportionCorrect
+
+
+
+
+
+
+
+
+
+
+
+
+
 

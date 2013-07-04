@@ -3,7 +3,7 @@ from allowImports import boilerplate
 boilerplate()
 import random
 from UML import *
-from UML.performance.metric_functions import rmse, meanAbsoluteError
+from UML.metrics import rmse, meanAbsoluteError
 
 
 if __name__ == "__main__":

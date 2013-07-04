@@ -11,7 +11,7 @@ if __name__ == "__main__":
 	from UML import functionCombinations
 	from UML import data
 	from UML import runAndTest
-	from UML.performance.metric_functions import classificationError
+	from UML.metrics import classificationError
 
 	# path to input specified by command line argument
 	pathIn = "UML/datasets/sparseSample.mtx"

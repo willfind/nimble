@@ -11,7 +11,7 @@ if __name__ == "__main__":
 	from UML import runAndTest
 	from UML import data
 	from UML import loadTrainingAndTesting
-	from UML.performance.metric_functions import classificationError
+	from UML.metrics import classificationError
 
 	pathIn = "datasets/sparseSampleReal.mtx"
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="CooSparseData", fileType="mtx")

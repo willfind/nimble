@@ -16,7 +16,7 @@ if __name__ == "__main__":
     from UML.umlHelpers import executeCode
     from UML import runAndTest
     from UML import data
-    from UML.performance.metric_functions import proportionPercentNegative90
+    from UML.metrics import proportionPercentNegative90
 
     pathIn = "/home/ross/library/LaddersData/PlaygroundFull/DocVectors.mtx"
     trainX = data('coo', pathIn, fileType='mtx')

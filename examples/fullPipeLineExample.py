@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	from UML import runAndTest
 	from UML import runOneVsOne
 	from UML import runAndTestOneVsOne
-	from UML.performance.metric_functions import classificationError
+	from UML.metrics import classificationError
 
 	variables = ["x1","x2","x3", "label"]
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]

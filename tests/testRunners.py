@@ -3,7 +3,7 @@ from UML import runAndTestOneVsOne
 from UML import runOneVsOne
 from UML import runOneVsAll
 from UML.umlHelpers import extractWinningPredictionLabel
-from UML.performance.metric_functions import classificationError
+from UML.metrics import classificationError
 
 
 def testRunAndTestOneVsOne():

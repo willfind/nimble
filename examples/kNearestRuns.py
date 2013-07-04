@@ -12,10 +12,10 @@ if __name__ == "__main__":
     from UML import runAndTest
     from UML import data
     from UML import loadTrainingAndTesting
-    from UML.performance.metric_functions import classificationError
-    from UML.performance.metric_functions import bottomProportionPercentNegative10
-    from UML.performance.metric_functions import proportionPercentNegative50
-    from UML.performance.metric_functions import proportionPercentNegative90
+    from UML.metrics import classificationError
+    from UML.metrics import bottomProportionPercentNegative10
+    from UML.metrics import proportionPercentNegative50
+    from UML.metrics import proportionPercentNegative90
 
     pathIn = "UML/datasets/tfIdfApproval50K.mtx"
     trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="CooSparseData", fileType="mtx")

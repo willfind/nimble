@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	from UML import loadTrainingAndTesting
 	from UML import functionCombinations
 	from UML import runAndTestDirect
-	from UML.performance.metric_functions import classificationError
+	from UML.metrics import classificationError
 
 	# path to input specified by command line argument
 	pathIn = "../datasets/adult_income_classification_tiny_numerical.csv"
