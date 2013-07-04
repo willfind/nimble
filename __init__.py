@@ -1,7 +1,7 @@
-from cfg import defaultSkipSetNonAlpha
-from cfg import defaultSkipSetNonAlphaNumeric
-from cfg import defaultStopWords
-from cfg import numericalChars
+from configuration import defaultSkipSetNonAlpha
+from configuration import defaultSkipSetNonAlphaNumeric
+from configuration import defaultStopWords
+from configuration import numericalChars
 
 from uml import run
 from uml import data
