@@ -8,9 +8,9 @@ from datetime import timedelta
 # add UML parent directory to sys.path
 sys.path.append(sys.path[0].rsplit('/',2)[0])
 import UML
-import UML.applications
-import UML.applications.laddersExperiments
-__package__ = "UML.applications.laddersExperiments"
+import UML.examples
+import UML.examples.laddersExperiments
+__package__ = "UML.examples.laddersExperiments"
 
 if __name__ == "__main__":
     from UML import orderedCrossValidate

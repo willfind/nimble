@@ -11,6 +11,6 @@ def boilerplate():
 	# add UML parent directory to sys.path
 	sys.path.append(sys.path[0].rsplit('/',2)[0])
 	import UML
-	import UML.applications
-	__package__ = "UML.applications"
+	import UML.examples
+	__package__ = "UML.examples"
 

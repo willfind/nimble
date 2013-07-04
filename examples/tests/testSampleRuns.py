@@ -1,4 +1,4 @@
-from UML.applications.allowImports import boilerplate
+from UML.examples.allowImports import boilerplate
 boilerplate()
 from UML import run
 from UML import normalize
