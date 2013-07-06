@@ -1152,7 +1152,7 @@ def getPointView_isinstance(constructor):
 ##################
 
 def getFeatureView_isinstance(constructor):
-	""" Test getFeatureView() returns an instance of the View in base_data """
+	""" Test getFeatureView() returns an instance of the View in dataHelpers """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)

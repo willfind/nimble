@@ -15,7 +15,7 @@ from UML.exceptions import ArgumentException
 from UML.uml_logging.uml_logger import UmlLogger
 from UML.uml_logging.log_manager import LogManager
 from UML.uml_logging.stopwatch import Stopwatch
-from UML.data import BaseData
+from UML.data import Base
 
 
 from UML.umlHelpers import computeMetrics
@@ -126,7 +126,7 @@ def listAlgorithms(package):
 	return results
 
 def listDataRepresentationMethods():
-	methodList = dir(UML.data.BaseData)
+	methodList = dir(UML.data.Base)
 	visibleMethodList = []
 	for methodName in methodList:
 		if not methodName.startswith('_'):
@@ -134,7 +134,7 @@ def listDataRepresentationMethods():
 
 	ret = []
 	for methodName in visibleMethodList:
-		currMethod = eval("UML.data.BaseData." + methodName)
+		currMethod = eval("UML.data.Base." + methodName)
 		(args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
 
 		retString = methodName + "("
@@ -280,16 +280,16 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 
 		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
 
-		trainX: data set to be used for training (as some form of BaseData object)
+		trainX: data set to be used for training (as some form of Base object)
 
-		testX: data set to be used for testing (as some form of BaseData object)
+		testX: data set to be used for testing (as some form of Base object)
 		
 		trainDependentVar: used to retrieve the known class labels of the traing data. Either
-		contains the labels themselves (as a BaseData object) or an index (numerical or string) 
+		contains the labels themselves (as a Base object) or an index (numerical or string) 
 		that defines their locale in the trainX object
 		
 		testDependentVar: used to retreive the known class labels of the test data. Either
-		contains the labels themselves (as a BaseData object) or an index (numerical or string) 
+		contains the labels themselves (as a Base object) or an index (numerical or string) 
 		that defines their locale in the testX object.  If left blank, runAndTest() assumes 
 		that testDependentVar is the same as trainDependentVar.
 		
@@ -348,12 +348,12 @@ def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependen
 
 			algorithm: training algorithm to be called, in the form 'package.algorithmName'.
 
-			trainX: data set to be used for training (as some form of BaseData object)
+			trainX: data set to be used for training (as some form of Base object)
 		
-			testX: data set to be used for testing (as some form of BaseData object)
+			testX: data set to be used for testing (as some form of Base object)
 		
 			trainDependentVar: used to retrieve the known class labels of the traing data. Either
-			contains the labels themselves (in a BaseData object of the same type as trainX) 
+			contains the labels themselves (in a Base object of the same type as trainX) 
 			or an index (numerical or string) that defines their locale in the trainX object.
 		
 			testDependentVar: used to retreive the known class labels of the test data. Either
@@ -410,12 +410,12 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 
 		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
 
-		trainX: data set to be used for training (as some form of BaseData object)
+		trainX: data set to be used for training (as some form of Base object)
 		
-		testX: data set to be used for testing (as some form of BaseData object)
+		testX: data set to be used for testing (as some form of Base object)
 		
 		trainDependentVar: used to retrieve the known class labels of the traing data. Either
-		contains the labels themselves (in a BaseData object of the same type as trainX) 
+		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
 		testDependentVar: used to retreive the known class labels of the test data. Either
@@ -429,8 +429,8 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		labels is selected, this function returns a single column with a predicted label for 
 		each point in the test set.  If bestScore is selected, this function returns an object
 		with two columns: the first has the predicted label, the second  has that label's score.  
-		If allScores is selected, returns a BaseData object with each row containing a score for 
-		each possible class label.  The class labels are the featureNames of the BaseData object, 
+		If allScores is selected, returns a Base object with each row containing a score for 
+		each possible class label.  The class labels are the featureNames of the Base object, 
 		so the list of scores in each row is not sorted by score, but by the order of class label
 		found in featureNames.
 		
@@ -439,7 +439,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 	trainX = trainX.duplicate()
 	testX = testX.duplicate()
 
-	if isinstance(trainDependentVar, BaseData):
+	if isinstance(trainDependentVar, Base):
 		trainX.appendFeatures(trainDependentVar)
 		trainDependentVar = trainX.features() - 1
 
@@ -537,12 +537,12 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 
 		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
 
-		trainX: data set to be used for training (as some form of BaseData object)
+		trainX: data set to be used for training (as some form of Base object)
 		
-		testX: data set to be used for testing (as some form of BaseData object)
+		testX: data set to be used for testing (as some form of Base object)
 		
 		trainDependentVar: used to retrieve the known class labels of the traing data. Either
-		contains the labels themselves (in a BaseData object of the same type as trainX) 
+		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
 		testDependentVar: used to retreive the known class labels of the test data. Either
@@ -556,8 +556,8 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		labels is selected, this function returns a single column with a predicted label for 
 		each point in the test set.  If bestScore is selected, this function returns an object
 		with two columns: the first has the predicted label, the second  has that label's score.  
-		If allScores is selected, returns a BaseData object with each row containing a score for 
-		each possible class label.  The class labels are the featureNames of the BaseData object, 
+		If allScores is selected, returns a Base object with each row containing a score for 
+		each possible class label.  The class labels are the featureNames of the Base object, 
 		so the list of scores in each row is not sorted by score, but by the order of class label
 		found in featureNames.
 		
@@ -605,7 +605,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 			else: return 1
 		trainLabels = trainDependentVar.applyFunctionToEachPoint(relabeler)
 		oneLabelResults = run(algorithm, trainX, testX, output=None, dependentVar=trainLabels, arguments=arguments, sendToLog=False)
-		#put all results into one BaseData container, of the same type as trainX
+		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
 			rawPredictions = oneLabelResults
 			#as it's added to results object, rename each column with its corresponding class label
@@ -656,7 +656,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 				#put score into proper place in its row
 				finalRow[finalIndex] = score
 			resultsContainer.append(finalRow)
-		#wrap data in BaseData container
+		#wrap data in Base container
 		return create(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
@@ -668,12 +668,12 @@ def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependen
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
 
-		trainX: data set to be used for training (as some form of BaseData object)
+		trainX: data set to be used for training (as some form of Base object)
 		
-		testX: data set to be used for testing (as some form of BaseData object)
+		testX: data set to be used for testing (as some form of Base object)
 		
 		trainDependentVar: used to retrieve the known class labels of the traing data. Either
-		contains the labels themselves (in a BaseData object of the same type as trainX) 
+		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
 		testDependentVar: used to retreive the known class labels of the test data. Either

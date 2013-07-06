@@ -18,7 +18,7 @@ from UML.exceptions import ArgumentException
 from UML.data import CooSparseData
 from UML.data import DenseMatrixData
 from UML.data import RowListData
-from UML.data import BaseData
+from UML.data import Base
 
 def _loadCoo(data, featureNames, fileType):
 	if fileType is None:
@@ -304,7 +304,7 @@ def copyLabels(dataSet, dependentVar):
 
 		returns A 1-column matrix of class labels
 	"""
-	if isinstance(dependentVar, BaseData):
+	if isinstance(dependentVar, Base):
 		#The known Indicator argument already contains all known
 		#labels, so we do not need to do any further processing
 		labels = dependentVar
@@ -517,7 +517,7 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions,
 	from UML.metrics import proportionPercentNegative50
 	from UML.metrics import bottomProportionPercentNegative10
 
-	if isinstance(dependentVar, (list, BaseData)):
+	if isinstance(dependentVar, (list, Base)):
 		#The known Indicator argument already contains all known
 		#labels, so we do not need to do any further processing
 		knownLabels = dependentVar
@@ -625,7 +625,7 @@ def checkPrintConfusionMatrix():
 def computeError(knownValues, predictedValues, loopFunction, compressionFunction):
 	"""
 		A generic function to compute different kinds of error metrics.  knownValues
-		is a 1d BaseData object with one known label (or number) per row. predictedValues is a 1d BaseData
+		is a 1d Base object with one known label (or number) per row. predictedValues is a 1d Base
 		object with one predictedLabel (or score) per row.  The ith row in knownValues should refer
 		to the same point as the ith row in predictedValues. loopFunction is a function to be applied
 		to each row in knownValues/predictedValues, that takes 3 arguments: a known class label,
@@ -633,9 +633,9 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 		compressionFunction is a function that should take two arguments: runningTotal, the final
 		output of loopFunction, and n, the number of values in knownValues/predictedValues.
 	"""
-	if knownValues is None or not isinstance(knownValues, BaseData) or knownValues.points == 0:
+	if knownValues is None or not isinstance(knownValues, Base) or knownValues.points == 0:
 		raise ArgumentException("Empty 'knownValues' argument in error calculator")
-	elif predictedValues is None or not isinstance(predictedValues, BaseData) or predictedValues.points == 0:
+	elif predictedValues is None or not isinstance(predictedValues, Base) or predictedValues.points == 0:
 		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
 	if not isinstance(knownValues, DenseMatrixData):

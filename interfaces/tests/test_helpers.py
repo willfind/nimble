@@ -5,7 +5,7 @@ Functions that could be useful accross multple interface test suites
 
 import numpy
 
-from UML.data import BaseData
+from UML.data import Base
 from ..interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 #from ..interface_helpers import valueFromOneVOneData
 
@@ -26,9 +26,9 @@ def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
 	do some checks to make sure the results match each other.
 
 	"""
-	if isinstance(bestScores, BaseData):
+	if isinstance(bestScores, Base):
 		bestScores = bestScores.data
-	if isinstance(allScores, BaseData):
+	if isinstance(allScores, Base):
 		allScores = allScores.data
 
 	assert len(bestScores) == len(allScores)

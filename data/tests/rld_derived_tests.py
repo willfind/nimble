@@ -466,7 +466,7 @@ def test_getitem_simpleExampeWithZeroes():
 ################
 
 def test_getPointView_isinstance():
-	""" Test RLD getPointView returns an instance of the View in base_data """
+	""" Test RLD getPointView returns an instance of the View in dataHelpers """
 	getPointView_isinstance(constructor)
 
 
@@ -475,6 +475,6 @@ def test_getPointView_isinstance():
 ##################
 
 def test_getFeatureView_isinstance():
-	""" Test DMD getFeatureView() returns an instance of the View in base_data """
+	""" Test DMD getFeatureView() returns an instance of the View in dataHelpers """
 	getFeatureView_isinstance(constructor)
 

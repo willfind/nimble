@@ -63,7 +63,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
     in the data set contained in dataContainer.
 
     Inputs
-        dataContainer - object of a type that inherits from BaseData.
+        dataContainer - object of a type that inherits from Base.
         
         supplementalFunctions - additional functions that should be applied to each feature in 
             the data set.  Arg signature must expect one iterable feature vector, any other parameters
@@ -366,7 +366,7 @@ def featureType(values):
 
 def featurewiseFunctionGenerator():
     """
-    Produce a list of functions suitable for being passed to BaseData's applyFunctionToEachFeature
+    Produce a list of functions suitable for being passed to Base's applyFunctionToEachFeature
     function.  Includes: min(), max(), mean(), median(), standardDeviation(), numUniqueValues()
     """
     functions = [min_, max_, mean_, median_, standardDeviation, numUnique]
@@ -376,7 +376,7 @@ def featurewiseFunctionGenerator():
 def aggregateFunctionGenerator():
     """
     Produce a list of functions that can be used to produce aggregate statistics on an entire
-    data set.  The functions will be applied through BaseData's applyFunctionToEachFeature
+    data set.  The functions will be applied through Base's applyFunctionToEachFeature
     function, and their results averaged across all features.  Includes a function to calculate
     the proportion of entries that are equal to zero and the proportion of entries that are missing
     (i.e. are None or NaN).

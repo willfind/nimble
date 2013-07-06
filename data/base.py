@@ -22,7 +22,7 @@ from dataHelpers import DEFAULT_SEED
 from dataHelpers import DEFAULT_PREFIX
 
 
-class BaseData(object):
+class Base(object):
 	"""
 	Class defining important data manipulation operations and giving functionality
 	for the naming the features of that data. A mapping from feature names to feature
@@ -39,7 +39,7 @@ class BaseData(object):
 		featureName mapping.
 
 		"""
-		super(BaseData, self).__init__()
+		super(Base, self).__init__()
 		self._nextDefaultValue = 0
 		self._setAllDefault()
 		self._renameMultipleFeatureNames_implementation(featureNames,True)
@@ -59,7 +59,7 @@ class BaseData(object):
 		"""
 		if other is None:
 			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, BaseData):
+		if not isinstance(other, Base):
 			raise ArgumentException("Must provide another representation type to determine featureName difference")
 		
 		return self.featureNames.viewkeys() - other.featureNames.viewkeys() 
@@ -71,7 +71,7 @@ class BaseData(object):
 		"""
 		if other is None:
 			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, BaseData):
+		if not isinstance(other, Base):
 			raise ArgumentException("Must provide another representation type to determine featureName intersection")
 		
 		return self.featureNames.viewkeys() & other.featureNames.viewkeys() 
@@ -83,7 +83,7 @@ class BaseData(object):
 		"""
 		if other is None:
 			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, BaseData):
+		if not isinstance(other, Base):
 			raise ArgumentException("Must provide another representation type to determine featureName difference")
 		
 		return self.featureNames.viewkeys() ^ other.featureNames.viewkeys() 
@@ -95,7 +95,7 @@ class BaseData(object):
 		"""
 		if other is None:
 			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, BaseData):
+		if not isinstance(other, Base):
 			raise ArgumentException("Must provide another representation type to determine featureName union")
 		
 		return self.featureNames.viewkeys() | other.featureNames.viewkeys() 
@@ -697,7 +697,7 @@ class BaseData(object):
 		"""
 		if toAppend is None:
 			raise ArgumentException("toAppend must not be None")
-		if not isinstance(toAppend,BaseData):
+		if not isinstance(toAppend,Base):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.features() == toAppend.features():
 			raise ArgumentException("toAppend must have the same number of features as this object")
@@ -716,7 +716,7 @@ class BaseData(object):
 		"""	
 		if toAppend is None:
 			raise ArgumentException("toAppend must not be None")
-		if not isinstance(toAppend,BaseData):
+		if not isinstance(toAppend,Base):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.points() == toAppend.points():
 			raise ArgumentException("toAppend must have the same number of points as this object")
@@ -1040,14 +1040,14 @@ class BaseData(object):
 
 	def _equalFeatureNames(self, other):
 		"""
-		Private function to determine equality of BaseData featureNames. It ignores
+		Private function to determine equality of featureNames. It ignores
 		equality of default values, though if default values are present,
 		the number of variables and their indices must match up.
 
 		"""
 		if other is None:
 			return False
-		if not isinstance(other,BaseData):
+		if not isinstance(other, Base):
 			return False	
 		if len(self.featureNames) != len(other.featureNames):
 			return False

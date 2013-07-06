@@ -9,7 +9,7 @@ from UML.uml_logging.data_set_analyzer import *
 def testDense():
     """
         Test the functionality of calculating statistical/informational 
-        funcs on a dense BaseData object using the produceInfoTable.
+        funcs on a dense Base object using the produceInfoTable.
     """
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
@@ -55,7 +55,7 @@ def testDense():
 def testSparse():
     """
         Test the functionality of calculating statistical/informational 
-        funcs on a dense BaseData object using the produceInfoTable.
+        funcs on a dense Base object using the produceInfoTable.
 
         Testing matrix is 6 x 6, with 11 non-zero values, 1 None/Missing value,
         and 24 zero values.

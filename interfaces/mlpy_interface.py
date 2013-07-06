@@ -74,18 +74,18 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 	if isinstance(testData, UML.data.SparseData):
 		raise ArgumentException("MLPY does not accept sparse input")
 
-	if not isinstance(trainData, UML.data.BaseData):
+	if not isinstance(trainData, UML.data.Base):
 		trainObj = UML.data.DenseMatrixData(file=trainData)
 	else: # input is an object
 		trainObj = trainData
-	if not isinstance(testData, UML.data.BaseData):
+	if not isinstance(testData, UML.data.Base):
 		testObj = UML.data.DenseMatrixData(file=testData)
 	else: # input is an object
 		testObj = testData
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, UML.data.BaseData):
+	if isinstance(dependentVar, UML.data.Base):
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:

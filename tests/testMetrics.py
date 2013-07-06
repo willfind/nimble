@@ -14,10 +14,10 @@ def testProportionPercentNegative():
 	knownLabelsThree = [[2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
 	knownLabelsFour = [[2], [1], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
 
-	knownLabelsOneBaseData = create('dense', knownLabelsOne, sendToLog=False)
-	knownLabelsTwoBaseData = create('dense', knownLabelsTwo, sendToLog=False)
-	knownLabelsThreeBaseData = create('dense', knownLabelsThree, sendToLog=False)
-	knownLabelsFourBaseData = create('dense', knownLabelsFour, sendToLog=False)
+	knownLabelsOneBase = create('dense', knownLabelsOne, sendToLog=False)
+	knownLabelsTwoBase = create('dense', knownLabelsTwo, sendToLog=False)
+	knownLabelsThreeBase = create('dense', knownLabelsThree, sendToLog=False)
+	knownLabelsFourBase = create('dense', knownLabelsFour, sendToLog=False)
 
 	predictedScoreList = []
 	for i in range (20):
@@ -25,16 +25,16 @@ def testProportionPercentNegative():
 		twoScore = 1.0 - i * 0.05
 		predictedScoreList.append([oneScore, twoScore])
 
-	predictedScoreListBaseData = create('dense', predictedScoreList, ['1', '2'])
+	predictedScoreListBase = create('dense', predictedScoreList, ['1', '2'])
 
-	topHalfProportionNegativeOne = proportionPercentNegative50(knownLabelsOneBaseData, predictedScoreListBaseData, negativeLabel='1')
-	topNinetyProportionNegativeOne = proportionPercentNegative90(knownLabelsOneBaseData, predictedScoreListBaseData, negativeLabel='1')
-	topHalfProportionNegativeTwo = proportionPercentNegative50(knownLabelsTwoBaseData, predictedScoreListBaseData, negativeLabel='1')
-	topNinetyProportionNegativeTwo = proportionPercentNegative90(knownLabelsTwoBaseData, predictedScoreListBaseData, negativeLabel='1')
-	topHalfProportionNegativeThree = proportionPercentNegative50(knownLabelsThreeBaseData, predictedScoreListBaseData, negativeLabel='1')
-	topNinetyProportionNegativeThree = proportionPercentNegative90(knownLabelsThreeBaseData, predictedScoreListBaseData, negativeLabel='1')
-	topHalfProportionNegativeFour = proportionPercentNegative50(knownLabelsFourBaseData, predictedScoreListBaseData, negativeLabel='1')
-	topNinetyProportionNegativeFour = proportionPercentNegative90(knownLabelsFourBaseData, predictedScoreListBaseData, negativeLabel='1')
+	topHalfProportionNegativeOne = proportionPercentNegative50(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
+	topNinetyProportionNegativeOne = proportionPercentNegative90(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
+	topHalfProportionNegativeTwo = proportionPercentNegative50(knownLabelsTwoBase, predictedScoreListBase, negativeLabel='1')
+	topNinetyProportionNegativeTwo = proportionPercentNegative90(knownLabelsTwoBase, predictedScoreListBase, negativeLabel='1')
+	topHalfProportionNegativeThree = proportionPercentNegative50(knownLabelsThreeBase, predictedScoreListBase, negativeLabel='1')
+	topNinetyProportionNegativeThree = proportionPercentNegative90(knownLabelsThreeBase, predictedScoreListBase, negativeLabel='1')
+	topHalfProportionNegativeFour = proportionPercentNegative50(knownLabelsFourBase, predictedScoreListBase, negativeLabel='1')
+	topNinetyProportionNegativeFour = proportionPercentNegative90(knownLabelsFourBase, predictedScoreListBase, negativeLabel='1')
 	
 	assert topHalfProportionNegativeOne == 0.4
 	assert topNinetyProportionNegativeOne >= 0.443 and topNinetyProportionNegativeOne <= 0.445

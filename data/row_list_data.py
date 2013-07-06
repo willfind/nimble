@@ -1,5 +1,5 @@
 """
-Class extending BaseData, using a list of lists to store data.
+Class extending Base, using a list of lists to store data.
 
 Outside of the class, functions are defined for reading and writing RowListData
 to files.
@@ -12,7 +12,7 @@ import numpy
 from scipy.sparse import isspmatrix
 
 import UML
-from base_data import BaseData
+from base import Base
 from dataHelpers import View
 from dataHelpers import reorderToMatchExtractionList
 from UML.exceptions import ArgumentException
@@ -20,7 +20,7 @@ from UML.exceptions import ArgumentException
 
 
 
-class RowListData(BaseData):
+class RowListData(Base):
 	"""
 	Class providing implementations of data manipulation operations on data stored
 	in a list of lists, representing a list of points of data. data is the list of
@@ -33,7 +33,7 @@ class RowListData(BaseData):
 		Instantiate a Row List data using the given data and featureNames. data may be
 		none or an empty list to indicate an empty object, or a fully populated
 		list of lists to be encased by this object. featureNames is passed up to
-		the init funciton of BaseData, to be interpreted there.
+		the init funciton of Base, to be interpreted there.
 
 		"""
 		# if input as a list, copy it
@@ -684,7 +684,7 @@ class PointView(View):
 		self._featureNames = featureNames
 		self._index = index
 	def __getitem__(self, index):
-		if isinstance(index,basestring):
+		if isinstance(index, basestring):
 			index = self._featureNames[index]
 		return self._point[index]	
 	def __setitem__(self, key, value):

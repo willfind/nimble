@@ -46,11 +46,11 @@ def mahout(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 		mahoutTasteRecommenderEstimation(arguments) #,redirectOutputTarget)
 		return
 
-	if isinstance(trainData, UML.data.BaseData):
+	if isinstance(trainData, UML.data.Base):
 		raise ArgumentException("Must call mahout with paths to input files, not data objects")
-	if isinstance(testData, UML.data.BaseData):
+	if isinstance(testData, UML.data.Base):
 		raise ArgumentException("Must call mahout with paths to input files, not data objects")
-	if isinstance(dependentVar, UML.data.BaseData):
+	if isinstance(dependentVar, UML.data.Base):
 		raise ArgumentException("dependentVar must be the name of the dependent var in trainData, a vector is not allowed")
 
 	cmds = []

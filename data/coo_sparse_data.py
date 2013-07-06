@@ -1,5 +1,5 @@
 """
-Class extending SparseBaseData, defining an object to hold and manipulate a scipy coo_matrix.
+Class extending SparseBase, defining an object to hold and manipulate a scipy coo_matrix.
 
 """
 

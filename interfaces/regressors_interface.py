@@ -54,7 +54,7 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 				'path of the Regressors root directory')
 		return
 
-	if isinstance(testData, UML.data.BaseData):
+	if isinstance(testData, UML.data.Base):
 		print('testData may not be an in package representation, it must refer to a file')
 	
 	if isinstance(trainData, UML.data.SparseData):
@@ -64,7 +64,7 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 	if output is not None:
 		outFile = open(output, 'w')
 
-	if not isinstance(trainData, UML.data.BaseData):
+	if not isinstance(trainData, UML.data.Base):
 		trainData = UML.create("DenseMatrixData", data=trainData)
 	
 	# make sure dependentVar is a feature index

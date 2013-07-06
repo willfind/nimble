@@ -4,7 +4,7 @@ import inspect
 import types
 from tableString import *
 
-from UML.data import BaseData
+from UML.data import Base
 from UML.data import CooSparseData
 from UML.exceptions import ArgumentException
 from uml_logger import UmlLogger
@@ -26,8 +26,8 @@ class HumanReadableLogger(UmlLogger):
 		"""
 		if baseDataObject is None:
 			raise ArgumentException("logData() cannot do anything with a null data object")
-		elif not isinstance(baseDataObject, BaseData):
-			raise ArgumentException("logData() requires an object of type BaseData to work")
+		elif not isinstance(baseDataObject, Base):
+			raise ArgumentException("logData() requires an object of type Base to work")
 
 		self.logMessage('*'*37+" DATA "+'*'*37)
 		self.logMessage("FEATURE REPORT")
@@ -147,8 +147,8 @@ class HumanReadableLogger(UmlLogger):
 				extraTableHeaders.append(str(key))
 				if isinstance(value, types.FunctionType):
 					extraTableValues.append(value.__name__)
-				elif isinstance(value, BaseData):
-					extraTableValues.append("BaseData: " + "(" + str(value.points()) + ", " + str(value.features()) + ")")
+				elif isinstance(value, Base):
+					extraTableValues.append("Base: " + "(" + str(value.points()) + ", " + str(value.features()) + ")")
 				else:
 					extraTableValues.append(str(value))
 			extraTable = [extraTableHeaders, extraTableValues]

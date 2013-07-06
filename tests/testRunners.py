@@ -103,9 +103,9 @@ def testExtractWinningPredictionLabel():
     Unit test for extractWinningPrediction function in runner.py
     """
     predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
-    baseDataObj = create('DenseMatrixData', predictionData)
-    baseDataObj.transpose()
-    predictions = baseDataObj.applyFunctionToEachFeature(extractWinningPredictionLabel)
+    BaseObj = create('DenseMatrixData', predictionData)
+    BaseObj.transpose()
+    predictions = BaseObj.applyFunctionToEachFeature(extractWinningPredictionLabel)
     listPredictions = predictions.toListOfLists()
     
     assert listPredictions[0][0] - 3 == 0.0

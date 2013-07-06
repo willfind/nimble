@@ -4,12 +4,12 @@ Unit tests of the low level functions defined by the base representation class.
 Since these functions are stand alone in the base class, they can be tested directly.
 FeatureName equality is defined using _features_implementation, which is to be defined
 in the derived class, so all of these tests make a call to makeAndDefine instead
-of directly instantiating a BaseData object. This function temporarily fills in
+of directly instantiating a Base object. This function temporarily fills in
 that missing implementation.
 
 """
 
-from UML.data import BaseData
+from UML.data import Base
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from nose.tools import *
 from UML.exceptions import ArgumentException
@@ -25,8 +25,8 @@ def makeAndDefine(featureNames=None, size=0):
 	even though it has no actual data """
 	cols = size if featureNames is None else len(featureNames)
 	specificImp = makeConst(cols)
-	BaseData._features_implementation = specificImp
-	ret = BaseData(featureNames)
+	Base._features_implementation = specificImp
+	ret = Base(featureNames)
 	ret._features_implementation = specificImp
 	return ret
 
@@ -38,7 +38,7 @@ def makeAndDefine(featureNames=None, size=0):
 #@raises(ArgumentException)
 #def test_init_exceptionNoFeatureNamesOrCount():
 #	""" Test init() for ArgumentException when called without featureNames or a count of features """
-#	toTest= BaseData(None)
+#	toTest= Base(None)
 
 ###############
 # _addFeatureName() #

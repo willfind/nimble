@@ -277,18 +277,18 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 	fileOutType = config['fileOutType']
 
 
-	if not isinstance(trainData, UML.data.BaseData):
+	if not isinstance(trainData, UML.data.Base):
 		trainObj = UML.create(inType, data=trainData)
 	else: # input is an object
 		trainObj = convertTo(trainObj, inType)
-	if not isinstance(testData, UML.data.BaseData):
+	if not isinstance(testData, UML.data.Base):
 		testObj = UML.create(inType, data=testData)
 	else: # input is an object
 		testObj = convertTo(testObj, inType)
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, UML.data.BaseData):
+	if isinstance(dependentVar, UML.data.Base):
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:

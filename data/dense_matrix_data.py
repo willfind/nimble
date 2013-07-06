@@ -1,5 +1,5 @@
 """
-Class extending BaseData, using a numpy dense matrix to store data.
+Class extending Base, using a numpy dense matrix to store data.
 
 Outside of the class, functions are defined for reading and writing DenseMatrixData
 to files.
@@ -9,7 +9,7 @@ to files.
 import numpy
 
 import UML
-from base_data import BaseData
+from base import Base
 from dataHelpers import View
 from UML.exceptions import ArgumentException
 
@@ -19,7 +19,7 @@ from scipy.sparse import isspmatrix
 import random
 
 
-class DenseMatrixData(BaseData):
+class DenseMatrixData(Base):
 	"""
 	Class providing implementations of data manipulation operations on data stored
 	in a numpy dense matrix.

@@ -1,5 +1,5 @@
 """
-Class extending BaseData, defining a generic sparse matrix wrapper class. Specific implementations
+Class extending Base, defining a generic sparse matrix wrapper class. Specific implementations
 of sparse matrices should extend this one. This class defines functions which will either be
 the same across all specific formats, or throw warnings of slow operations and use conversions
 to non-sparse formats in order to complete their operations.
@@ -8,11 +8,11 @@ to non-sparse formats in order to complete their operations.
 
 from scipy.sparse import *
 
-from base_data import BaseData
+from base import Base
 from UML.exceptions import ArgumentException
 
 
-class SparseData(BaseData):
+class SparseData(Base):
 
 
 	def __init__(self, data=None, featureNames=None, name=None, path=None):

@@ -7,7 +7,6 @@ objects provided.
 
 """
 
-#from ..base_data import *
 from copy import deepcopy
 
 import numpy

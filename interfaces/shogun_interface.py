@@ -71,18 +71,18 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 			UML.runOneVsOne("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
 
 	args = copy.copy(arguments)
-	if not isinstance(trainData, UML.data.BaseData):
+	if not isinstance(trainData, UML.data.Base):
 		trainObj = UML.data.DenseMatrixData(file=trainData)
 	else: # input is an object
 		trainObj = trainData.duplicate()
-	if not isinstance(testData, UML.data.BaseData):
+	if not isinstance(testData, UML.data.Base):
 		testObj = UML.data.DenseMatrixData(file=testData)
 	else: # input is an object
 		testObj = testData.duplicate()
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, UML.data.BaseData):
+	if isinstance(dependentVar, UML.data.Base):
 		trainObjY = dependentVar.duplicate()
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
