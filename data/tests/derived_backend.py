@@ -11,7 +11,7 @@ import tempfile
 from copy import deepcopy
 from UML.data import RowListData as RLD
 from UML.data import DenseMatrixData as DMD
-from UML.data.base_data import View
+from UML.data.dataHelpers import View
 
 ##############
 # __init__() #

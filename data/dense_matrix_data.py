@@ -10,7 +10,7 @@ import numpy
 
 import UML
 from base_data import BaseData
-from base_data import View
+from dataHelpers import View
 from UML.exceptions import ArgumentException
 
 from copy import deepcopy

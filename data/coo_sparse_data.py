@@ -13,7 +13,7 @@ import copy
 
 import UML
 from sparse_data import SparseData
-from base_data import View
+from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 
@@ -708,7 +708,7 @@ class CooSparseData(SparseData):
 
 	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
-		return UML.data.enseMatrixData(self.data.todense(), self.featureNames)
+		return UML.data.DenseMatrixData(self.data.todense(), self.featureNames)
 
 
 	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):

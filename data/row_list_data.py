@@ -13,8 +13,8 @@ from scipy.sparse import isspmatrix
 
 import UML
 from base_data import BaseData
-from base_data import View
-from base_data import reorderToMatchExtractionList
+from dataHelpers import View
+from dataHelpers import reorderToMatchExtractionList
 from UML.exceptions import ArgumentException
 
 

@@ -10,7 +10,7 @@ that missing implementation.
 """
 
 from UML.data import BaseData
-from UML.data.base_data import DEFAULT_PREFIX
+from UML.data.dataHelpers import DEFAULT_PREFIX
 from nose.tools import *
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
