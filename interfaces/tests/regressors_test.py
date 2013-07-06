@@ -3,8 +3,8 @@ Unit tests for regressors_interface.py
 
 """
 
-from ..regressors_interface import *
-from ...processing.dense_matrix_data import DenseMatrixData
+from UML.interfaces.regressors_interface import *
+from UML.data import DenseMatrixData
 import tempfile
 
 

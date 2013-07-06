@@ -12,18 +12,18 @@ if __name__ == "__main__":
 	import sys
 
 	from UML import run
-	from UML import data
+	from UML import create
 
 	# path to input specified by command line argument
 	pathIn = sys.argv[1]
 
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
 
-	sparseAll = data('CooSparseData', data=pathIn)
+	sparseAll = create('CooSparseData', data=pathIn)
 	sparseY = sparseAll.extractFeatures(sparseAll.data.shape[1] - 1)
 	sparseX = sparseAll
 
-	sparseAll2 = data('CooSparseData', data=data1)
+	sparseAll2 = create('CooSparseData', data=data1)
 	sparseY2 = sparseAll2.extractFeatures(3)
 	sparseX2 = sparseAll2
 

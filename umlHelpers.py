@@ -15,11 +15,10 @@ import re
 import datetime
 
 from UML.exceptions import ArgumentException
-from UML.processing import CooSparseData
-from UML.processing import DenseMatrixData
-from UML.processing import RowListData
-from UML.processing import BaseData
-#from UML.processing.base_data import DEFAULT_PREFIX
+from UML.data import CooSparseData
+from UML.data import DenseMatrixData
+from UML.data import RowListData
+from UML.data import BaseData
 
 def _loadCoo(data, featureNames, fileType):
 	if fileType is None:
@@ -667,5 +666,26 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 	return runningTotal
 
 
+
+def generateAllPairs(items):
+	"""
+		Given a list of items, generate a list of all possible pairs 
+		(2-combinations) of items from the list, and return as a list
+		of tuples.  Assumes that no two items in the list refer to the same
+		object or number.  If there are duplicates in the input list, there
+		will be duplicates in the output list.
+	"""
+	if items is None or len(items) == 0:
+		return None
+
+	pairs = []
+	for i in range(len(items)):
+		firstItem = items[i]
+		for j in range(i+1, len(items)):
+			secondItem = items[j]
+			pair = (firstItem, secondItem)
+			pairs.append(pair)
+
+	return pairs
 
 

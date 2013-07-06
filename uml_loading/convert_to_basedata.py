@@ -1,6 +1,6 @@
 import UML
-from UML.uml_loading.dok_data_set import DokDataSet
-from UML.uml_loading.ClassLabelMap import ClassLabelMap
+from dok_data_set import DokDataSet
+from ClassLabelMap import ClassLabelMap
 from UML.exceptions import ArgumentException
 
 

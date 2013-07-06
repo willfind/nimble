@@ -10,17 +10,17 @@ boilerplate()
 if __name__ == "__main__":
 	from UML import run
 	from UML import normalize
-	from UML import data
+	from UML import create
 
 	# we separate into classes accoring to whether x1 is positive or negative
 	variables = ["y","x1","x2","x3"]
 	data1 = [[1,6,0,0], [1,3,0,0], [0,-5,0,0],[0,-3,0,0]]
-	trainObj = data('DenseMatrixData', data1, variables)
+	trainObj = create('DenseMatrixData', data1, variables)
 	trainObjY = trainObj.extractFeatures('y')
 
 	# data we're going to classify
 	data2 = [[1,0,0],[4,0,0],[-1,0,0], [-2,0,0]]
-	testObj = data('DenseMatrixData', data2)
+	testObj = create('DenseMatrixData', data2)
 
 	# baseline check
 	assert trainObj.data[0].size == 3

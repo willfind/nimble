@@ -12,16 +12,10 @@ import datetime
 
 import UML
 from UML.exceptions import ArgumentException
-from UML.interfaces import mahout
-from UML.interfaces import regressor
-from UML.interfaces import sciKitLearn
-from UML.interfaces import mlpy
-from UML.interfaces import shogun
-from UML.interfaces.interface_helpers import generateAllPairs
 from UML.uml_logging.uml_logger import UmlLogger
 from UML.uml_logging.log_manager import LogManager
 from UML.uml_logging.stopwatch import Stopwatch
-from UML.processing import BaseData
+from UML.data import BaseData
 
 
 from UML.umlHelpers import computeMetrics
@@ -39,6 +33,7 @@ from UML.umlHelpers import _incrementTrialWindows
 from UML.umlHelpers import _jumpBack
 from UML.umlHelpers import _jumpForward
 from UML.umlHelpers import _diffLessThan
+from UML.umlHelpers import generateAllPairs
 
 
 
@@ -65,13 +60,13 @@ def randomizedData(retType, numPoints, numFeatures, sparcity, numericType="int",
 				else:
 					randData[i,j] = numpy.random.rand()
 
-	return data(retType, data=randData, featureNames=featureNames, name=name)
+	return create(retType, data=randData, featureNames=featureNames, name=name)
 
 
 def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="DenseMatrixData"):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
 	It returns training X, training Y, testing X and testing Y"""
-	trainX = data(loadType, fileName, fileType=fileType)
+	trainX = create(loadType, fileName, fileType=fileType)
 	testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(fractionForTestSet*trainX.points())), randomize=True)	#pull out a testing set
 	trainY = trainX.extractFeatures(labelID)	#construct the column vector of training labels
 	testY = testX.extractFeatures(labelID)	#construct the column vector of testing labels
@@ -131,7 +126,7 @@ def listAlgorithms(package):
 	return results
 
 def listDataRepresentationMethods():
-	methodList = dir(UML.processing.base_data.BaseData)
+	methodList = dir(UML.data.BaseData)
 	visibleMethodList = []
 	for methodName in methodList:
 		if not methodName.startswith('_'):
@@ -139,7 +134,7 @@ def listDataRepresentationMethods():
 
 	ret = []
 	for methodName in visibleMethodList:
-		currMethod = eval("UML.processing.base_data.BaseData." + methodName)
+		currMethod = eval("UML.data.BaseData." + methodName)
 		(args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
 
 		retString = methodName + "("
@@ -207,15 +202,15 @@ def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=
 		timer = None
 
 	if package == 'mahout':
-		results = mahout(algorithm, trainData, testData, dependentVar, arguments, output, timer)
+		results = UML.interfaces.mahout(algorithm, trainData, testData, dependentVar, arguments, output, timer)
 	elif package == 'regressor':
-		results = regressor(algorithm, trainData, testData, dependentVar, arguments, output, timer)
+		results = UML.interfaces.regressor(algorithm, trainData, testData, dependentVar, arguments, output, timer)
 	elif package == 'sciKitLearn':
-		results = sciKitLearn(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = UML.interfaces.sciKitLearn(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'mlpy':
-		results = mlpy(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = UML.interfaces.mlpy(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'shogun':
-		results = shogun(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = UML.interfaces.shogun(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:
@@ -232,7 +227,7 @@ def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=
 	return results
 
 
-def data(retType, data=None, featureNames=None, fileType=None, name=None, sendToLog=True):
+def create(retType, data=None, featureNames=None, fileType=None, name=None, sendToLog=True):
 	# determine if its a file we have to read; we assume if its a string its a path
 	if isinstance(data, basestring):
 		#we may log this event
@@ -512,7 +507,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 
 		#wrap the results data in a RowListData container
 		featureNames = ['PredictedClassLabel', 'LabelScore']
-		resultsContainer = data("RowListData", tempResultsList, featureNames=featureNames)
+		resultsContainer = create("RowListData", tempResultsList, featureNames=featureNames)
 		return resultsContainer
 	elif scoreMode.lower() == 'allScores'.lower():
 		columnHeaders = sorted([str(i) for i in labelSet])
@@ -527,7 +522,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 				finalRow[finalIndex] = score
 			resultsContainer.append(finalRow)
 
-		return data(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
+		return create(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsOne: ' + str(scoreMode))
 
@@ -626,7 +621,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		winningLabels = []
 		for winningIndex in winningPredictionIndices:
 			winningLabels.append([indexToLabelMap[winningIndex]])
-		return data(rawPredictions.getType, winningLabels, featureNames='winningLabel')
+		return create(rawPredictions.getType, winningLabels, featureNames='winningLabel')
 
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
@@ -641,7 +636,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 			tempResultsList.append([[bestLabelAndScore[0], bestLabelAndScore[1]]])
 		#wrap the results data in a RowListData container
 		featureNames = ['PredictedClassLabel', 'LabelScore']
-		resultsContainer = data("RowListData", tempResultsList, featureNames=featureNames)
+		resultsContainer = create("RowListData", tempResultsList, featureNames=featureNames)
 		return resultsContainer
 
 	elif scoreMode.lower() == 'allScores'.lower():
@@ -662,7 +657,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 				finalRow[finalIndex] = score
 			resultsContainer.append(finalRow)
 		#wrap data in BaseData container
-		return data(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
+		return create(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
 

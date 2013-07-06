@@ -7,7 +7,7 @@ boilerplate()
 
 if __name__ == "__main__":
     from UML import crossValidate
-    from UML import data
+    from UML import create
     from UML import loadTrainingAndTesting
 
     pathIn = "UML/datasets/10points2columns.mtx"
@@ -28,8 +28,8 @@ if __name__ == "__main__":
         label = testY.data[i][0]
         testYList.append([int(label)])
 
-    trainY = data('dense', trainYList)
-    testY = data('dense', testYList)
+    trainY = create('dense', trainYList)
+    testY = create('dense', testYList)
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate

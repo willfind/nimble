@@ -9,11 +9,11 @@ test will call the backend test for each possible representation
 from nose.tools import *
 
 
-from UML.processing import RowListData
-from UML.processing import DenseMatrixData
-from UML.processing import CooSparseData
-from UML.processing.tests.high_level_backend import *
-from UML import data
+from UML.data import RowListData
+from UML.data import DenseMatrixData
+from UML.data import CooSparseData
+from UML.data.tests.high_level_backend import *
+from UML import create
 
 from UML.exceptions import ImproperActionException
 from UML.exceptions import ArgumentException
@@ -181,7 +181,7 @@ def test_foldIterator_verifyPartitions():
 def test_foldIterator_ordering():
 	""" Test that foldIterator() yields folds in the proper order: X and Y folds should be in the same order"""
 	twoColumnData = [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9], [10, 10]]
-	denseObj = data('dmd', twoColumnData)
+	denseObj = create('dmd', twoColumnData)
 	Ydata = denseObj.extractFeatures([1])
 	Xdata = denseObj
 	XIterator = Xdata.foldIterator(numFolds=2)

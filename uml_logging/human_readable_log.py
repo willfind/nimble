@@ -2,12 +2,13 @@ import time
 import numpy
 import inspect
 import types
-
 from tableString import *
-from UML.processing import BaseData
+
+from UML.data import BaseData
+from UML.data import CooSparseData
 from UML.exceptions import ArgumentException
-from UML.uml_logging.uml_logger import UmlLogger
-from UML.processing import CooSparseData
+from uml_logger import UmlLogger
+
 
 class HumanReadableLogger(UmlLogger):
 	"""

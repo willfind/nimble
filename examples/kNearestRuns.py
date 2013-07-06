@@ -10,7 +10,7 @@ if __name__ == "__main__":
     from UML import functionCombinations
     from UML.umlHelpers import executeCode
     from UML import runAndTest
-    from UML import data
+    from UML import create
     from UML import loadTrainingAndTesting
     from UML.metrics import classificationError
     from UML.metrics import bottomProportionPercentNegative10
@@ -38,8 +38,8 @@ if __name__ == "__main__":
         label = testY.data[i][0]
         testYList.append([int(label)])
 
-    trainY = data('dense', trainYList)
-    testY = data('dense', testYList)
+    trainY = create('dense', trainYList)
+    testY = create('dense', testYList)
 
     print "Finished converting labels to ints"
 

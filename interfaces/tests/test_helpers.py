@@ -5,7 +5,7 @@ Functions that could be useful accross multple interface test suites
 
 import numpy
 
-from UML.processing import BaseData
+from UML.data import BaseData
 from ..interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 #from ..interface_helpers import valueFromOneVOneData
 

@@ -6,9 +6,8 @@ Unit tests for mlpy_interface.py
 import numpy.testing
 
 from test_helpers import checkLabelOrderingAndScoreAssociations
-from ..mlpy_interface import *
-from ...processing.dense_matrix_data import DenseMatrixData as DMData
-#from ...processing.row_list_data import RowListData as RLData
+from UML.interfaces.mlpy_interface import *
+from UML.data import DenseMatrixData as DMData
 
 def testMlpyLocation():
 	""" Test setMlpyLocation() """

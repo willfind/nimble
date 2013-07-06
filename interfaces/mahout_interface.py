@@ -12,8 +12,8 @@ import subprocess
 import os
 import os.path
 
+import UML
 from UML.exceptions import ArgumentException
-from UML.processing import BaseData
 
 
 patchDir = os.path.dirname(__file__) + "/mahout_patches"
@@ -46,11 +46,11 @@ def mahout(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 		mahoutTasteRecommenderEstimation(arguments) #,redirectOutputTarget)
 		return
 
-	if isinstance(trainData, BaseData):
+	if isinstance(trainData, UML.data.BaseData):
 		raise ArgumentException("Must call mahout with paths to input files, not data objects")
-	if isinstance(testData, BaseData):
+	if isinstance(testData, UML.data.BaseData):
 		raise ArgumentException("Must call mahout with paths to input files, not data objects")
-	if isinstance(dependentVar, BaseData):
+	if isinstance(dependentVar, UML.data.BaseData):
 		raise ArgumentException("dependentVar must be the name of the dependent var in trainData, a vector is not allowed")
 
 	cmds = []

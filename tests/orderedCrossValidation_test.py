@@ -2,13 +2,13 @@
 
 import datetime
 
-from UML import data
+from UML import create
 from UML import orderedCrossValidate
 
 
 def createAll(inData, featureNames=None):
-	rld = data("RowListData", inData, featureNames)
-	dmd = data("DenseMatrixData", inData, featureNames)
+	rld = create("RowListData", inData, featureNames)
+	dmd = create("DenseMatrixData", inData, featureNames)
 
 	return (rld, dmd)
 

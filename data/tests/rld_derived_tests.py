@@ -1,17 +1,17 @@
 """
-Unit tests for the DenseMatrixData object. Calls upon the functions defined
+Unit tests for the RowListData object. Calls upon the functions defined
 in derived_backend.py using appropriate input
 
 
 """
-
-from UML.processing.tests.derived_backend import *
 from nose.tools import *
-from UML import data as instantiate
+
+from UML.data.tests.derived_backend import *
+from UML import create
 from UML.exceptions import ArgumentException
 
 def constructor(data=None, featureNames=None):
-	return instantiate('DenseMatrixData', data, featureNames)
+	return create('RowListData', data, featureNames)
 
 
 ##############
@@ -19,23 +19,24 @@ def constructor(data=None, featureNames=None):
 ##############
 
 def test_init_allEqual():
-	""" Test DMD __init__() that every way to instantiate produces equal objects """
+	""" Test RLD __init__() that every way to instantiate produces equal objects """
 	init_allEqual(constructor)
 
 def test_init_allEqualWithFeatureNames():
-	""" Test DMD __init__() that every way to instantiate produces equal objects, with featureNames """
+	""" Test RLD __init__() that every way to instantiate produces equal objects, with featureNames """
 	init_allEqualWithFeatureNames(constructor)
+
 
 ############
 # equals() #
 ############
 
 def test_equals_False():
-	""" Test DMD equals() against some non-equal input """
+	""" Test RLD equals() against some non-equal input """
 	equals_False(constructor)
 
 def test_equals_True():
-	""" Test DMD equals() against some actually equal input """
+	""" Test RLD equals() against some actually equal input """
 	equals_True(constructor)
 
 
@@ -44,7 +45,7 @@ def test_equals_True():
 ###############
 
 def test_transpose_handmade():
-	""" Test DMD transpose() function against handmade output """
+	""" Test RLD transpose() function against handmade output """
 	transpose_handmade(constructor)
 
 
@@ -54,25 +55,25 @@ def test_transpose_handmade():
 
 @raises(ArgumentException)
 def test_appendPoints_exceptionNone():
-	""" Test DMD appendPoints() for ArgumentException when toAppend is None"""
+	""" Test RLD appendPoints() for ArgumentException when toAppend is None"""
 	appendPoints_exceptionNone(constructor)
 
 @raises(ArgumentException)
 def test_appendPoints_exceptionWrongSize():
-	""" Test DMD appendPoints() for ArgumentException when toAppend has too many features """
+	""" Test RLD appendPoints() for ArgumentException when toAppend has too many features """
 	appendPoints_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
 def test_appendPoints_exceptionMismatchedFeatureNames():
-	""" Test DMD appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
+	""" Test RLD appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
 	appendPoints_exceptionMismatchedFeatureNames(constructor)
 
 def test_appendPoints_handmadeSingle():
-	""" Test DMD appendPoints() against handmade output for a single added point """
+	""" Test RLD appendPoints() against handmade output for a single added point """
 	appendPoints_handmadeSingle(constructor)
 
 def test_appendPoints_handmadeSequence():
-	""" Test DMD appendPoints() against handmade output for a sequence of additions"""
+	""" Test RLD appendPoints() against handmade output for a sequence of additions"""
 	appendPoints_handmadeSequence(constructor)
 
 
@@ -82,25 +83,25 @@ def test_appendPoints_handmadeSequence():
 
 @raises(ArgumentException)
 def test_appendFeatures_exceptionNone():
-	""" Test DMD appendFeatures() for ArgumentException when toAppend is None """
+	""" Test RLD appendFeatures() for ArgumentException when toAppend is None """
 	appendFeatures_exceptionNone(constructor)
 
 @raises(ArgumentException)
 def test_appendFeatures_exceptionWrongSize():
-	""" Test DMD appendFeatures() for ArgumentException when toAppend has too many points """
+	""" Test RLD appendFeatures() for ArgumentException when toAppend has too many points """
 	appendFeatures_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
 def test_appendFeatures_exceptionSameFeatureName():
-	""" Test DMD appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
+	""" Test RLD appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
 	appendFeatures_exceptionSameFeatureName(constructor)
 
 def test_appendFeatures_handmadeSingle():
-	""" Test DMD appendFeatures() against handmade output for a single added feature"""
+	""" Test RLD appendFeatures() against handmade output for a single added feature"""
 	appendFeatures_handmadeSingle(constructor)
 
 def test_appendFeatures_handmadeSequence():
-	""" Test DMD appendFeatures() against handmade output for a sequence of additions"""
+	""" Test RLD appendFeatures() against handmade output for a sequence of additions"""
 	appendFeatures_handmadeSequence(constructor)
 
 
@@ -111,21 +112,20 @@ def test_appendFeatures_handmadeSequence():
 
 @raises(ArgumentException)
 def test_sortPoints_exceptionAtLeastOne():
-	""" Test DMD sortPoints() has at least one paramater """
+	""" Test RLD sortPoints() has at least one paramater """
 	sortPoints_exceptionAtLeastOne(constructor)
 
 def test_sortPoints_naturalByFeature():
-	""" Test DMD sortPoints() when we specify a feature to sort by """	
+	""" Test RLD sortPoints() when we specify a feature to sort by """	
 	sortPoints_naturalByFeature(constructor)
 
 def test_sortPoints_scorer():
-	""" Test DMD sortPoints() when we specify a scoring function """
+	""" Test RLD sortPoints() when we specify a scoring function """
 	sortPoints_scorer(constructor)
 
 def test_sortPoints_comparator():
-	""" Test DMD sortPoints() when we specify a comparator function """
+	""" Test RLD sortPoints() when we specify a comparator function """
 	sortPoints_comparator(constructor)
-
 
 #################
 # sortFeatures() #
@@ -134,19 +134,19 @@ def test_sortPoints_comparator():
 
 @raises(ArgumentException)
 def test_sortFeatures_exceptionAtLeastOne():
-	""" Test DMD sortFeatures() has at least one paramater """
+	""" Test RLD sortFeatures() has at least one paramater """
 	sortFeatures_exceptionAtLeastOne(constructor)
 
 def test_sortFeatures_naturalByPointWithNames():
-	""" Test DMD sortFeatures() when we specify a point to sort by; includes featureNames """	
+	""" Test RLD sortFeatures() when we specify a point to sort by; includes featureNames """	
 	sortFeatures_naturalByPointWithNames(constructor)
 
 def test_sortFeatures_scorer():
-	""" Test DMD sortFeatures() when we specify a scoring function """
+	""" Test RLD sortFeatures() when we specify a scoring function """
 	sortFeatures_scorer(constructor)
 
 def test_sortFeatures_comparator():
-	""" Test DMD sortFeatures() when we specify a comparator function """
+	""" Test RLD sortFeatures() when we specify a comparator function """
 	sortFeatures_comparator(constructor)
 
 
@@ -156,121 +156,121 @@ def test_sortFeatures_comparator():
 #################
 
 def test_extractPoints_emptyInput(): 
-	""" Test DMD extractPoints() does nothing when not provided with any input """
+	""" Test RLD extractPoints() does nothing when not provided with any input """
 	extractPoints_emptyInput(constructor)
 
 def test_extractPoints_handmadeSingle():
-	""" Test DMD extractPoints() against handmade output when extracting one point """
+	""" Test RLD extractPoints() against handmade output when extracting one point """
 	extractPoints_handmadeSingle(constructor)
 
 def test_extractPoints_handmadeListSequence():
-	""" Test DMD extractPoints() against handmade output for several list extractions """
+	""" Test RLD extractPoints() against handmade output for several list extractions """
 	extractPoints_handmadeListSequence(constructor)
 
 def test_extractPoints_handmadeListOrdering():
-	""" Test DMD extractPoints() against handmade output for out of order extraction """
+	""" Test RLD extractPoints() against handmade output for out of order extraction """
 	extractPoints_handmadeListOrdering(constructor)
 
 def test_extractPoints_handmadeFunction():
-	""" Test DMD extractPoints() against handmade output for function extraction """
+	""" Test RLD extractPoints() against handmade output for function extraction """
 	extractPoints_handmadeFunction(constructor)
 
 def test_extractPoints_handmadeFuncionWithFeatureNames():
-	""" Test DMD extractPoints() against handmade output for function extraction with featureNames"""
+	""" Test RLD extractPoints() against handmade output for function extraction with featureNames"""
 	extractPoints_handmadeFuncionWithFeatureNames(constructor)
 
 @raises(ArgumentException)
 def test_extractPoints_exceptionStartInvalid():
-	""" Test DMD extractPoints() for ArgumentException when start is not a valid point index """
+	""" Test RLD extractPoints() for ArgumentException when start is not a valid point index """
 	extractPoints_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
 def test_extractPoints_exceptionEndInvalid():
-	""" Test DMD extractPoints() for ArgumentException when start is not a valid feature index """
+	""" Test RLD extractPoints() for ArgumentException when start is not a valid feature index """
 	extractPoints_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
 def test_extractPoints_exceptionInversion():
-	""" Test DMD extractPoints() for ArgumentException when start comes after end """
+	""" Test RLD extractPoints() for ArgumentException when start comes after end """
 	extractPoints_exceptionInversion(constructor)
 
 def test_extractPoints_handmadeRange():
-	""" Test DMD extractPoints() against handmade output for range extraction """
+	""" Test RLD extractPoints() against handmade output for range extraction """
 	extractPoints_handmadeRange(constructor)
 
 def test_extractPoints_handmadeRangeWithFeatureNames():
-	""" Test DMD extractPoints() against handmade output for range extraction with featureNames """
+	""" Test RLD extractPoints() against handmade output for range extraction with featureNames """
 	extractPoints_handmadeRangeWithFeatureNames(constructor)
 
 def test_extractPoints_handmadeRangeRand_FM():
-	""" Test DMD extractPoints() against handmade output for randomized range extraction with featureNames """
+	""" Test RLD extractPoints() against handmade output for randomized range extraction with featureNames """
 	extractPoints_handmadeRangeRand_FM(constructor)
 
 def test_extractPoints_handmadeRangeDefaults():
-	""" Test DMD extractPoints() uses the correct defaults in the case of range based extraction """
+	""" Test RLD extractPoints() uses the correct defaults in the case of range based extraction """
 	extractPoints_handmadeRangeDefaults(constructor)
+
 
 ####################
 # extractFeatures() #
 ####################
 
-
 def test_extractFeatures_handmadeSingle():
-	""" Test DMD extractFeatures() against handmade output when extracting one feature """
+	""" Test RLD extractFeatures() against handmade output when extracting one feature """
 	extractFeatures_handmadeSingle(constructor)
 
 def test_extractFeatures_handmadeListSequence():
-	""" Test DMD extractFeatures() against handmade output for several extractions by list """
+	""" Test RLD extractFeatures() against handmade output for several extractions by list """
 	extractFeatures_handmadeListSequence(constructor)
 
 def test_extractFeatures_handmadeListWithFeatureName():
-	""" Test DMD extractFeatures() against handmade output for list extraction when specifying featureNames """
+	""" Test RLD extractFeatures() against handmade output for list extraction when specifying featureNames """
 	extractFeatures_handmadeListWithFeatureName(constructor)
 
 def test_extractFeatures_handmadeFunction():
-	""" Test DMD extractFeatures() against handmade output for function extraction """
+	""" Test RLD extractFeatures() against handmade output for function extraction """
 	extractFeatures_handmadeFunction(constructor)
 
 def test_extractFeatures_handmadeFunctionWithFeatureName():
-	""" Test DMD extractFeatures() against handmade output for function extraction with featureNames """
+	""" Test RLD extractFeatures() against handmade output for function extraction with featureNames """
 	extractFeatures_handmadeFunctionWithFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionStartInvalid():
-	""" Test DMD extractFeatures() for ArgumentException when start is not a valid feature index """
+	""" Test RLD extractFeatures() for ArgumentException when start is not a valid feature index """
 	extractFeatures_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionStartInvalidFeatureName():
-	""" Test DMD extractFeatures() for ArgumentException when start is not a valid featureName """
+	""" Test RLD extractFeatures() for ArgumentException when start is not a valid featureName """
 	extractFeatures_exceptionStartInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionEndInvalid():
-	""" Test DMD extractFeatures() for ArgumentException when start is not a valid feature index """
+	""" Test RLD extractFeatures() for ArgumentException when start is not a valid feature index """
 	extractFeatures_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionEndInvalidFeatureName():
-	""" Test DMD extractFeatures() for ArgumentException when start is not a valid featureName """
+	""" Test RLD extractFeatures() for ArgumentException when start is not a valid featureName """
 	extractFeatures_exceptionEndInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionInversion():
-	""" Test DMD extractFeatures() for ArgumentException when start comes after end """
+	""" Test RLD extractFeatures() for ArgumentException when start comes after end """
 	extractFeatures_exceptionInversion(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionInversionFeatureName():
-	""" Test DMD extractFeatures() for ArgumentException when start comes after end as FeatureNames"""
+	""" Test RLD extractFeatures() for ArgumentException when start comes after end as FeatureNames"""
 	extractFeatures_exceptionInversionFeatureName(constructor)
 
 def test_extractFeatures_handmadeRange():
-	""" Test DMD extractFeatures() against handmade output for range extraction """
+	""" Test RLD extractFeatures() against handmade output for range extraction """
 	extractFeatures_handmadeRange(constructor)
 
 def test_extractFeatures_handmadeWithFeatureNames():
-	""" Test DMD extractFeatures() against handmade output for range extraction with FeatureNames """
+	""" Test RLD extractFeatures() against handmade output for range extraction with FeatureNames """
 	extractFeatures_handmadeWithFeatureNames(constructor)
 
 
@@ -280,12 +280,12 @@ def test_extractFeatures_handmadeWithFeatureNames():
 
 
 def test_toRowListData_handmade_defaultFeatureNames():
-	""" Test DMD toRowListData with default featureNames """
+	""" Test RLD toRowListData with default featureNames """
 	toRowListData_handmade_defaultFeatureNames(constructor)
 
 	
 def test_toRowListData_handmade_assignedFeatureNames():
-	""" Test DMD toRowListData with assigned featureNames """
+	""" Test RLD toRowListData with assigned featureNames """
 	toRowListData_handmade_assignedFeatureNames(constructor)
 
 
@@ -296,12 +296,12 @@ def test_toRowListData_handmade_assignedFeatureNames():
 
 
 def test_toDenseMatrixData_handmade_defaultFeatureNames():
-	""" Test DMD toDenseMatrixData with default featureNames """
+	""" Test RLD toDenseMatrixData with default featureNames """
 	toDenseMatrixData_handmade_defaultFeatureNames(constructor)
 
 	
 def test_toDenseMatrixData_handmade_assignedFeatureNames():
-	""" Test DMD toDenseMatrixData with assigned featureNames """
+	""" Test RLD toDenseMatrixData with assigned featureNames """
 	toDenseMatrixData_handmade_assignedFeatureNames(constructor)
 
 
@@ -311,11 +311,11 @@ def test_toDenseMatrixData_handmade_assignedFeatureNames():
 ############
 
 def test_writeFileCSV_handmade():
-	""" Test DMD writeFile() for csv extension with both data and featureNames """
+	""" Test RLD writeFile() for csv extension with both data and featureNames """
 	writeFileCSV_handmade(constructor)
 
 def test_writeFileMTX_handmade():
-	""" Test DMD writeFile() for mtx extension with both data and featureNames """
+	""" Test RLD writeFile() for mtx extension with both data and featureNames """
 	writeFileMTX_handmade(constructor)
 
 
@@ -326,11 +326,11 @@ def test_writeFileMTX_handmade():
 
 @raises(ArgumentException)
 def test_copyReferences_exceptionWrongType():
-	""" Test DMD copyReferences() throws exception when other is not the same type """
+	""" Test RLD copyReferences() throws exception when other is not the same type """
 	copyReferences_exceptionWrongType(constructor)
 
 def test_copyReferences_sameReference():
-	""" Test DMD copyReferences() successfully records the same reference """
+	""" Test RLD copyReferences() successfully records the same reference """
 	copyReferences_sameReference(constructor)
 
 
@@ -339,9 +339,8 @@ def test_copyReferences_sameReference():
 #############
 
 def test_duplicate_withZeros():
-	""" Test DMD duplicate() produces an equal object and doesn't just copy the references """
+	""" Test RLD duplicate() produces an equal object and doesn't just copy the references """
 	duplicate_withZeros(constructor)
-
 
 ###################
 # copyPoints #
@@ -349,43 +348,45 @@ def test_duplicate_withZeros():
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionNone():
-	""" Test DMD copyPoints() for exception when argument is None """
+	""" Test RLD copyPoints() for exception when argument is None """
 	copyPoints_exceptionNone(constructor)
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionNonIndex():
-	""" Test DMD copyPoints() for exception when a value in the input is not a valid index """
+	""" Test RLD copyPoints() for exception when a value in the input is not a valid index """
 	copyPoints_exceptionNonIndex(constructor)
 
 def test_copyPoints_handmadeContents():
-	""" Test DMD copyPoints() returns the correct data """
+	""" Test RLD copyPoints() returns the correct data """
 	copyPoints_handmadeContents(constructor)
+
+
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionStartInvalid():
-	""" Test DMD copyPoints() for ArgumentException when start is not a valid point index """
+	""" Test RLD copyPoints() for ArgumentException when start is not a valid point index """
 	copyPoints_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionEndInvalid():
-	""" Test DMD copyPoints() for ArgumentException when start is not a valid feature index """
+	""" Test RLD copyPoints() for ArgumentException when start is not a valid feature index """
 	copyPoints_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionInversion():
-	""" Test DMD copyPoints() for ArgumentException when start comes after end """
+	""" Test RLD copyPoints() for ArgumentException when start comes after end """
 	copyPoints_exceptionInversion(constructor)
 
 def test_copyPoints_handmadeRange():
-	""" Test DMD copyPoints() against handmade output for range copying """
+	""" Test RLD copyPoints() against handmade output for range copying """
 	copyPoints_handmadeRange(constructor)
 
 def test_copyPoints_handmadeRangeWithFeatureNames():
-	""" Test DMD copyPoints() against handmade output for range copying with featureNames """
+	""" Test RLD copyPoints() against handmade output for range copying with featureNames """
 	copyPoints_handmadeRangeWithFeatureNames(constructor)
 
 def test_copyPoints_handmadeRangeDefaults():
-	""" Test DMD copyPoints uses the correct defaults in the case of range based copying """
+	""" Test RLD copyPoints uses the correct defaults in the case of range based copying """
 	copyPoints_handmadeRangeDefaults(constructor)
 
 #####################
@@ -394,57 +395,59 @@ def test_copyPoints_handmadeRangeDefaults():
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionNone():
-	""" Test DMD copyFeatures() for exception when argument is None """
+	""" Test RLD copyFeatures() for exception when argument is None """
 	copyFeatures_exceptionNone(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionNonIndex():
-	""" Test DMD copyFeatures() for exception when a value in the input is not a valid index """
+	""" Test RLD copyFeatures() for exception when a value in the input is not a valid index """
 	copyFeatures_exceptionNonIndex(constructor)
 
 
 def test_copyFeatures_handmadeContents():
-	""" Test DMD copyFeatures() returns the correct data """
+	""" Test RLD copyFeatures() returns the correct data """
 	copyFeatures_handmadeContents(constructor)
 
 
+####
+
 @raises(ArgumentException)
 def test_copyFeatures_exceptionStartInvalid():
-	""" Test DMD copyFeatures() for ArgumentException when start is not a valid feature index """
+	""" Test RLD copyFeatures() for ArgumentException when start is not a valid feature index """
 	copyFeatures_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionStartInvalidFeatureName():
-	""" Test DMD copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
+	""" Test RLD copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
 	copyFeatures_exceptionStartInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionEndInvalid():
-	""" Test DMD copyFeatures() for ArgumentException when start is not a valid feature index """
+	""" Test RLD copyFeatures() for ArgumentException when start is not a valid feature index """
 	copyFeatures_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionEndInvalidFeatureName():
-	""" Test DMD copyFeatures() for ArgumentException when start is not a valid featureName """
+	""" Test RLD copyFeatures() for ArgumentException when start is not a valid featureName """
 	copyFeatures_exceptionEndInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionInversion():
-	""" Test DMD copyFeatures() for ArgumentException when start comes after end """
+	""" Test RLD copyFeatures() for ArgumentException when start comes after end """
 	copyFeatures_exceptionInversion(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionInversionFeatureName():
-	""" Test DMD copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
+	""" Test RLD copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
 	copyFeatures_exceptionInversionFeatureName(constructor)
 
 
 def test_copyFeatures_handmadeRange():
-	""" Test DMD copyFeatures() against handmade output for range copying """
+	""" Test RLD copyFeatures() against handmade output for range copying """
 	copyFeatures_handmadeRange(constructor)
 
 def test_copyFeatures_handmadeWithFeatureNames():
-	""" Test DMD copyFeatures() against handmade output for range copying with FeatureNames """
+	""" Test RLD copyFeatures() against handmade output for range copying with FeatureNames """
 	copyFeatures_handmadeWithFeatureNames(constructor)
 
 
@@ -452,10 +455,10 @@ def test_copyFeatures_handmadeWithFeatureNames():
 # __getitem__#
 ##############
 
-def test_getitem_simpleExampeWithZeroes():
-	""" Test DMD __getitem__ returns the correct output for a number of simple queries """
-	getitem_simpleExampeWithZeroes(constructor)
 
+def test_getitem_simpleExampeWithZeroes():
+	""" Test RLD __getitem__ returns the correct output for a number of simple queries """
+	getitem_simpleExampeWithZeroes(constructor)
 
 
 ################
@@ -463,7 +466,7 @@ def test_getitem_simpleExampeWithZeroes():
 ################
 
 def test_getPointView_isinstance():
-	""" Test DMD getPointView returns an instance of the View in base_data """
+	""" Test RLD getPointView returns an instance of the View in base_data """
 	getPointView_isinstance(constructor)
 
 
@@ -474,3 +477,4 @@ def test_getPointView_isinstance():
 def test_getFeatureView_isinstance():
 	""" Test DMD getFeatureView() returns an instance of the View in base_data """
 	getFeatureView_isinstance(constructor)
+

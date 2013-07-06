@@ -7,12 +7,12 @@ in derived_backend.py using appropriate input
 
 from nose.tools import *
 
-from UML.processing.tests.derived_backend import *
-from UML import data as instantiate
+from UML.data.tests.derived_backend import *
+from UML import create
 from UML.exceptions import ArgumentException
 
 def constructor(data=None, featureNames=None):
-	return instantiate('CooSparseData', data, featureNames)
+	return create('CooSparseData', data, featureNames)
 
 
 ##############

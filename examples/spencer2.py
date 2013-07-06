@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	from UML import crossValidateReturnBest
 	from UML import loadTrainingAndTesting
 	from UML import functionCombinations
-	from UML import data
+	from UML import create
 	from UML import runAndTest
 	from UML.metrics import classificationError
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 	print "UML dir", dir(UML)
 	# path to input specified by command line argument
 	pathIn = "datasets/sparseSample.mtx"
-	allData = data('coo', pathIn, fileType="mtx")
+	allData = create('coo', pathIn, fileType="mtx")
 
 	print "data loaded"
 

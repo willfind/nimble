@@ -21,9 +21,6 @@ except ImportError as ie:
 
 
 import UML
-from UML.processing import BaseData
-from UML.processing.sparse_data import SparseData
-from UML.processing import DenseMatrixData
 from UML.exceptions import ArgumentException
 
 # Contains path to regressors root directory
@@ -57,18 +54,18 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 				'path of the Regressors root directory')
 		return
 
-	if isinstance(testData, BaseData):
+	if isinstance(testData, UML.data.BaseData):
 		print('testData may not be an in package representation, it must refer to a file')
 	
-	if isinstance(trainData, SparseData):
+	if isinstance(trainData, UML.data.SparseData):
 		raise ArgumentException("Regressors does not accept sparse input")
 
 	testFile = open(testData, 'r')
 	if output is not None:
 		outFile = open(output, 'w')
 
-	if not isinstance(trainData, BaseData):
-		trainData = UML.data("DenseMatrixData", data=trainData)
+	if not isinstance(trainData, UML.data.BaseData):
+		trainData = UML.create("DenseMatrixData", data=trainData)
 	
 	# make sure dependentVar is a feature index
 	if not isinstance(dependentVar, int):
@@ -142,7 +139,7 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 		timer.stop('test')
 		
 	if output is None:
-		return DenseMatrixData(resultList)
+		return UML.data.DenseMatrixData(resultList)
 
 
 def regressorsPresent():
@@ -197,7 +194,7 @@ def listAlgorithms(includeParams=False):
 				ret.append(className)
 
 	return ret
- 
+
 
 
 

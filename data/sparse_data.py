@@ -8,7 +8,7 @@ to non-sparse formats in order to complete their operations.
 
 from scipy.sparse import *
 
-from UML.processing.base_data import *
+from base_data import BaseData
 from UML.exceptions import ArgumentException
 
 

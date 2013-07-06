@@ -10,14 +10,12 @@ from nose.tools import *
 
 from UML.exceptions import ArgumentException
 
-from ..shogun_interface import shogun
-from ..shogun_interface import listAlgorithms
-from ..shogun_interface import setShogunLocation
-from ..shogun_interface import getShogunLocation
-from ..shogun_interface import shogunPresent
-from ...processing.dense_matrix_data import DenseMatrixData as DMData
-from ...processing.coo_sparse_data import CooSparseData
-from ...processing.csc_sparse_data import CscSparseData
+from UML.interfaces import shogun
+from UML.interfaces.shogun_interface import listAlgorithms
+from UML.interfaces.shogun_interface import setShogunLocation
+from UML.interfaces.shogun_interface import getShogunLocation
+from UML.data.dense_matrix_data import DenseMatrixData as DMData
+from UML.data.coo_sparse_data import CooSparseData
 
 
 def testShogunLocation():

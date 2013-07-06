@@ -4,7 +4,7 @@ from configuration import defaultStopWords
 from configuration import numericalChars
 
 from uml import run
-from uml import data
+from uml import create
 from uml import normalize
 from uml import loadTrainingAndTesting
 from uml import listDataRepresentationMethods

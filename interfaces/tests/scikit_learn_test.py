@@ -7,11 +7,10 @@ import numpy.testing
 import scipy.sparse
 from numpy.random import rand, randint
 
-from test_helpers import checkLabelOrderingAndScoreAssociations
-from ..scikit_learn_interface import *
-from ...processing.dense_matrix_data import DenseMatrixData as DMData
-from ...processing.coo_sparse_data import CooSparseData
-from ...processing.csc_sparse_data import CscSparseData
+from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
+from UML.interfaces.scikit_learn_interface import *
+from UML.data.dense_matrix_data import DenseMatrixData as DMData
+from UML.data.coo_sparse_data import CooSparseData
 
 
 

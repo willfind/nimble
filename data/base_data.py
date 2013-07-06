@@ -443,7 +443,7 @@ class BaseData(object):
 		for point in self.pointViewIterator():
 			currOut = function(point)
 			retData.append([currOut])
-		return UML.data(self.getType(), retData)
+		return UML.create(self.getType(), retData)
 
 	def applyFunctionToEachFeature(self,function):
 		"""
@@ -462,7 +462,7 @@ class BaseData(object):
 		for feature in self.featureViewIterator():
 			currOut = function(feature)
 			retData[0].append(currOut)
-		return UML.data(self.getType(), retData)
+		return UML.create(self.getType(), retData)
 
 
 	def mapReduceOnPoints(self, mapper, reducer):
@@ -497,7 +497,7 @@ class BaseData(object):
 			if redRet is not None:
 				(redKey,redValue) = redRet
 				ret.append([redKey,redValue])
-		return UML.data(self.getType(), ret)
+		return UML.create(self.getType(), ret)
 
 	def pointViewIterator(self):
 		if self.features() == 0:
@@ -986,7 +986,7 @@ class BaseData(object):
 	def getType(self):
 		"""
 			Return a string representing the non-abstract type of this object (e.g. DenseMatrixData,
-			CooSparseData, etc.) that can be passed to data() function to create a new object
+			CooSparseData, etc.) that can be passed to create() function to create a new object
 			of the same type.
 		"""
 		return self._getType_implementation()
@@ -1156,7 +1156,7 @@ class BaseData(object):
 
 		del self.featureNames[featureName]
 
-		features  = len(self.featureNamesInverse)
+		features = len(self.featureNamesInverse)
 		# remaping each index starting with the one we removed
 		for i in xrange(index, features-1):
 			nextFeatureName = self.featureNamesInverse[i+1]

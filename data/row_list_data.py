@@ -11,9 +11,10 @@ import random
 import numpy
 from scipy.sparse import isspmatrix
 
-from UML.processing.base_data import BaseData
-from UML.processing.base_data import View
-from UML.processing.base_data import reorderToMatchExtractionList
+import UML
+from base_data import BaseData
+from base_data import View
+from base_data import reorderToMatchExtractionList
 from UML.exceptions import ArgumentException
 
 
@@ -530,8 +531,7 @@ class RowListData(BaseData):
 
 	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
-		from dense_matrix_data import DenseMatrixData as DMD
-		return DMD(self.data, self.featureNames)
+		return UML.data.DenseMatrixData(self.data, self.featureNames)
 
 
 	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):

@@ -10,7 +10,7 @@ boilerplate()
 
 if __name__ == "__main__":
 
-	from UML import data
+	from UML import create
 
 	# string manipulation to get and make paths
 	pathOrig = "../datasets/adult_income_classification_tiny.csv"
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
-	processed = data("RowListData", pathOrig)
+	processed = create("RowListData", pathOrig)
 
 	# this feature is a precalculated similarity rating. Lets not make it too easy....
 	processed.extractFeatures('fnlwgt')

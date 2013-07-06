@@ -3,10 +3,12 @@ import numpy
 import inspect
 import re
 import types
-from UML.processing import BaseData
-from UML.uml_logging.uml_logger import UmlLogger
+
+from UML.data import BaseData
+from UML.data import CooSparseData
+from uml_logger import UmlLogger
 from UML.exceptions import ArgumentException
-from UML.processing import CooSparseData
+
 
 class MachineReadableLogger(UmlLogger):
 	"""

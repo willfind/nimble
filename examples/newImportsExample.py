@@ -10,14 +10,14 @@ boilerplate()
 if __name__ == "__main__":
 
 	from UML import run
-	from UML import data
+	from UML import create
 
 	variables = ["x1","x2"]
 	data1 = [[1,0], [3,3], [5,0],]
-	trainingObj = data('DenseMatrixData', data1, variables)
+	trainingObj = create('DenseMatrixData', data1, variables)
 
 	data2 = [[1,0],[1,1],[5,1], [3,4]]
-	testObj = data('DenseMatrixData', data2)
+	testObj = create('DenseMatrixData', data2)
 
 	ret = run('sciKitLearn.KMeans', trainingObj, testObj, output=None, arguments={'n_clusters':3})
 

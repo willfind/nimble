@@ -14,9 +14,6 @@ from interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
 from interface_helpers import ovaNotOvOFormatted
 from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from interface_helpers import scoreModeOutputAdjustment
-from UML.processing import DenseMatrixData as DMData
-from UML.processing import BaseData
-from UML.processing.sparse_data import SparseData
 from UML.exceptions import ArgumentException
 import UML
 
@@ -72,23 +69,23 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
 			UML.runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
 
-	if isinstance(trainData, SparseData):
+	if isinstance(trainData, UML.data.SparseData):
 		raise ArgumentException("MLPY does not accept sparse input")
-	if isinstance(testData, SparseData):
+	if isinstance(testData, UML.data.SparseData):
 		raise ArgumentException("MLPY does not accept sparse input")
 
-	if not isinstance(trainData, BaseData):
-		trainObj = DMData(file=trainData)
+	if not isinstance(trainData, UML.data.BaseData):
+		trainObj = UML.data.DenseMatrixData(file=trainData)
 	else: # input is an object
 		trainObj = trainData
-	if not isinstance(testData, BaseData):
-		testObj = DMData(file=testData)
+	if not isinstance(testData, UML.data.BaseData):
+		testObj = UML.data.DenseMatrixData(file=testData)
 	else: # input is an object
 		testObj = testData
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, BaseData):
+	if isinstance(dependentVar, UML.data.BaseData):
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
@@ -122,7 +119,7 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 	if retData is None:
 		return
 
-	outputObj = DMData(retData)
+	outputObj = UML.data.DenseMatrixData(retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':

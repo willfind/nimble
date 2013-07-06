@@ -11,8 +11,9 @@ from scipy.sparse import coo_matrix
 from scipy.io import mmwrite
 import copy
 
-from UML.processing.base_data import View
-from UML.processing.sparse_data import SparseData
+import UML
+from sparse_data import SparseData
+from base_data import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 
@@ -702,14 +703,12 @@ class CooSparseData(SparseData):
 
 	def _toRowListData_implementation(self):
 		"""	Returns a RowListData object with the same data and featureNames as this one """
-		from row_list_data import RowListData
-		return RowListData(self.data.todense(), self.featureNames)
+		return UML.data.RowListData(self.data.todense(), self.featureNames)
 
 
 	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
-		from dense_matrix_data import DenseMatrixData
-		return DenseMatrixData(self.data.todense(), self.featureNames)
+		return UML.data.enseMatrixData(self.data.todense(), self.featureNames)
 
 
 	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):

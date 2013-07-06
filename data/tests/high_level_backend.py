@@ -12,9 +12,9 @@ from copy import deepcopy
 
 import numpy
 
-from UML.processing import RowListData
-from UML.processing import DenseMatrixData
-from UML.processing import CooSparseData
+from UML.data import RowListData
+from UML.data import DenseMatrixData
+from UML.data import CooSparseData
 
 
 ###########################

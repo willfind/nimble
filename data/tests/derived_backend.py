@@ -9,10 +9,9 @@ directly by the class calling this backend.
 import tempfile
 
 from copy import deepcopy
-from UML.processing import RowListData as RLD
-from UML.processing import DenseMatrixData as DMD
-from UML.processing.base_data import View as View
-from UML.processing import base_data
+from UML.data import RowListData as RLD
+from UML.data import DenseMatrixData as DMD
+from UML.data.base_data import View
 
 ##############
 # __init__() #
@@ -1137,15 +1136,15 @@ def getPointView_isinstance(constructor):
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	view = toTest.getPointView(0)
+	pView = toTest.getPointView(0)
 
-	assert isinstance(view, base_data.View)
-	assert view.name() is  None
-	assert view.index() >= 0 and view.index() < toTest.points()
-	assert len(view) == toTest.features()
-	assert view['one'] == 1
-	assert view['two'] == 2
-	assert view['three'] == 3
+	assert isinstance(pView, View)
+	assert pView.name() is None
+	assert pView.index() >= 0 and pView.index() < toTest.points()
+	assert len(pView) == toTest.features()
+	assert pView['one'] == 1
+	assert pView['two'] == 2
+	assert pView['three'] == 3
 
 
 ##################
@@ -1158,10 +1157,10 @@ def getFeatureView_isinstance(constructor):
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	view = toTest.getFeatureView('one')
+	fView = toTest.getFeatureView('one')
 
-	assert isinstance(view, base_data.View)
-	assert view.name() is not None
-	assert view.index() >= 0 and view.index() < toTest.features()
-	assert len(view) == toTest.points()
+	assert isinstance(fView, View)
+	assert fView.name() is not None
+	assert fView.index() >= 0 and fView.index() < toTest.features()
+	assert len(fView) == toTest.points()
 

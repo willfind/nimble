@@ -9,13 +9,13 @@ if __name__ == "__main__":
 	from UML import crossValidateReturnBest
 	from UML import loadTrainingAndTesting
 	from UML import functionCombinations
-	from UML import data
+	from UML import create
 	from UML import runAndTest
 	from UML.metrics import classificationError
 
 	# path to input specified by command line argument
 	pathIn = "UML/datasets/sparseSample.mtx"
-	allData = data('coo', pathIn, fileType="mtx")
+	allData = create('coo', pathIn, fileType="mtx")
 
 	print "data loaded"
 

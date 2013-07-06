@@ -1,4 +1,4 @@
-from UML import data
+from UML import create
 from UML import runAndTestOneVsOne
 from UML import runOneVsOne
 from UML import runOneVsAll
@@ -10,13 +10,13 @@ def testRunAndTestOneVsOne():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-    trainObj1 = data('DenseMatrixData', data1, variables)
-    trainObj2 = data('DenseMatrixData', data2, variables)
+    trainObj1 = create('DenseMatrixData', data1, variables)
+    trainObj2 = create('DenseMatrixData', data2, variables)
 
     testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
     testData2 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3], [0, 1, 1, 2]]
-    testObj1 = data('DenseMatrixData', testData1)
-    testObj2 = data('DenseMatrixData', testData2)
+    testObj1 = create('DenseMatrixData', testData1)
+    testObj2 = create('DenseMatrixData', testData2)
 
     metricFuncs = []
     metricFuncs.append(classificationError)
@@ -31,13 +31,13 @@ def testRunOneVsAll():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-    trainObj1 = data('CooSparseData', data1, variables)
-    trainObj2 = data('CooSparseData', data2, variables)
+    trainObj1 = create('CooSparseData', data1, variables)
+    trainObj2 = create('CooSparseData', data2, variables)
 
     testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
     testData2 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3], [0, 1, 1, 2]]
-    testObj1 = data('CooSparseData', testData1)
-    testObj2 = data('CooSparseData', testData2)
+    testObj1 = create('CooSparseData', testData1)
+    testObj2 = create('CooSparseData', testData2)
 
     metricFuncs = []
     metricFuncs.append(classificationError)
@@ -58,10 +58,10 @@ def testRunOneVsAll():
 def testRunOneVsOne():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-    trainObj1 = data('DenseMatrixData', data1, variables)
+    trainObj1 = create('DenseMatrixData', data1, variables)
 
     testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
-    testObj1 = data('DenseMatrixData', testData1)
+    testObj1 = create('DenseMatrixData', testData1)
 
     metricFuncs = []
     metricFuncs.append(classificationError)
@@ -103,7 +103,7 @@ def testExtractWinningPredictionLabel():
     Unit test for extractWinningPrediction function in runner.py
     """
     predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
-    baseDataObj = data('DenseMatrixData', predictionData)
+    baseDataObj = create('DenseMatrixData', predictionData)
     baseDataObj.transpose()
     predictions = baseDataObj.applyFunctionToEachFeature(extractWinningPredictionLabel)
     listPredictions = predictions.toListOfLists()

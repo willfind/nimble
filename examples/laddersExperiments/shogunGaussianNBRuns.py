@@ -17,11 +17,11 @@ __package__ = "UML.examples.laddersExperiments"
 if __name__ == "__main__":
     from UML.umlHelpers import executeCode
     from UML import runAndTest
-    from UML import data
+    from UML import create
     from UML.metrics import proportionPercentNegative90
 
     pathIn = "/home/ross/library/LaddersData/PlaygroundFull/DocVectors.mtx"
-    trainX = data('coo', pathIn, fileType='mtx')
+    trainX = create('coo', pathIn, fileType='mtx')
     testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(0.2*trainX.points())), randomize=True)
     trainY = trainX.extractFeatures(0)
     testY = testX.extractFeatures(0)
@@ -61,8 +61,8 @@ if __name__ == "__main__":
     trainX.extractPoints(trainRemoveList)
     testX.extractPoints(testRemoveList)
 
-    trainY = data('dense', trainYList)
-    testY = data('dense', testYList)
+    trainY = create('dense', trainYList)
+    testY = create('dense', testYList)
 
     print "Finished converting labels to ints"
 

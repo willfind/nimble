@@ -8,8 +8,9 @@ to files.
 
 import numpy
 
-from UML.processing.base_data import BaseData
-from UML.processing.base_data import View
+import UML
+from base_data import BaseData
+from base_data import View
 from UML.exceptions import ArgumentException
 
 from copy import deepcopy
@@ -448,8 +449,7 @@ class DenseMatrixData(BaseData):
 
 	def _toRowListData_implementation(self):
 		"""	Returns a RowListData object with the same data and featureNames as this one """
-		from row_list_data import RowListData as RLD
-		return RLD(self.data.tolist(), self.featureNames)
+		return UML.data.RowListData(self.data.tolist(), self.featureNames)
 
 	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """

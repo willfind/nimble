@@ -16,11 +16,11 @@ if __name__ == "__main__":
     from UML import orderedCrossValidate
     from UML import functionCombinations
     from UML import runAndTest
-    from UML import data
+    from UML import create
     from UML.metrics import proportionPercentNegative90
 
     pathIn = "/home/ross/library/LaddersData/umlApprovalEntryDate300K.mtx"
-    trainX = data('coo', pathIn, fileType='mtx')
+    trainX = create('coo', pathIn, fileType='mtx')
     docId = trainX.extractFeatures(0)
     trainY = trainX.extractFeatures(0)
     print "Finished loading data"
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     trainX.extractPoints(trainRemoveList)
 
-    trainY = data('coo', trainYList)
+    trainY = create('coo', trainYList)
 
     print "Finished converting labels to ints"
 

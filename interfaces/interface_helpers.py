@@ -6,8 +6,8 @@ Utility functions that could be useful in multiple interfaces
 import numpy
 import random
 import sys
+
 import UML
-from UML.processing import BaseData
 from UML.exceptions import ArgumentException
 
 
@@ -277,18 +277,18 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 	fileOutType = config['fileOutType']
 
 
-	if not isinstance(trainData, BaseData):
-		trainObj = UML.data(inType, data=trainData)
+	if not isinstance(trainData, UML.data.BaseData):
+		trainObj = UML.create(inType, data=trainData)
 	else: # input is an object
 		trainObj = convertTo(trainObj, inType)
-	if not isinstance(testData, BaseData):
-		testObj = UML.data(inType, data=testData)
+	if not isinstance(testData, UML.data.BaseData):
+		testObj = UML.create(inType, data=testData)
 	else: # input is an object
 		testObj = convertTo(testObj, inType)
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, BaseData):
+	if isinstance(dependentVar, UML.data.BaseData):
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
@@ -323,7 +323,7 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 	if retData is None:
 		return
 
-	outputObj = UML.data(pythonOutType, data=retData)
+	outputObj = UML.create(pythonOutType, data=retData)
 
 	if output is None:
 		# we want to return a column vector
@@ -336,27 +336,6 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 
 def convertTo(data, retType):
 	return eval("data.to" + retType + "()")
-
-def generateAllPairs(items):
-	"""
-		Given a list of items, generate a list of all possible pairs 
-		(2-combinations) of items from the list, and return as a list
-		of tuples.  Assumes that no two items in the list refer to the same
-		object or number.  If there are duplicates in the input list, there
-		will be duplicates in the output list.
-	"""
-	if items is None or len(items) == 0:
-		return None
-
-	pairs = []
-	for i in range(len(items)):
-		firstItem = items[i]
-		for j in range(i+1, len(items)):
-			secondItem = items[j]
-			pair = (firstItem, secondItem)
-			pairs.append(pair)
-
-	return pairs
 
 def testGenerateAllPairs():
 	"""

@@ -14,8 +14,6 @@ from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from interface_helpers import ovaNotOvOFormatted
 from interface_helpers import scoreModeOutputAdjustment
 from interface_helpers import checkClassificationStrategy
-from UML.processing import DenseMatrixData as DMData
-from UML.processing import BaseData
 import UML
 
 from UML.exceptions import ArgumentException
@@ -44,6 +42,7 @@ def shogunPresent():
 	putOnSearchPath(shogunDir)
 	try:
 		import shogun
+		dir(shogun)
 	except ImportError:	
 		return False
 
@@ -72,18 +71,18 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 			UML.runOneVsOne("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
 
 	args = copy.copy(arguments)
-	if not isinstance(trainData, BaseData):
-		trainObj = DMData(file=trainData)
+	if not isinstance(trainData, UML.data.BaseData):
+		trainObj = UML.data.DenseMatrixData(file=trainData)
 	else: # input is an object
 		trainObj = trainData.duplicate()
-	if not isinstance(testData, BaseData):
-		testObj = DMData(file=testData)
+	if not isinstance(testData, UML.data.BaseData):
+		testObj = UML.data.DenseMatrixData(file=testData)
 	else: # input is an object
 		testObj = testData.duplicate()
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, BaseData):
+	if isinstance(dependentVar, UML.data.BaseData):
 		trainObjY = dependentVar.duplicate()
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
@@ -123,7 +122,7 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 	if retData is None:
 		return
 
-	outputObj = DMData(retData)
+	outputObj = UML.data.DenseMatrixData(retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':
@@ -176,7 +175,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 	try:
 		import shogun.Classifier
 		inverseMapping = None
-		tempObj = DMData(trainDataY)
+		tempObj = UML.data.DenseMatrixData(trainDataY)
 		problemType = SGObj.get_machine_problem_type()
 		if problemType == shogun.Classifier.PT_MULTICLASS:
 			inverseMapping = remapLabelsRange(tempObj)
@@ -341,7 +340,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 
 	# have to undo the label name packing we performed earlier
 	if inverseMapping is not None and scoreMode != 'allScores':
-		outputObj = DMData(outData)
+		outputObj = UML.data.DenseMatrixData(outData)
 		outputObj.transformFeature(0, makeInverseMapper(inverseMapping))
 		outData = outputObj.data
 

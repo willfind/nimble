@@ -9,7 +9,7 @@ boilerplate()
 
 if __name__ == "__main__":
 
-	from UML import data
+	from UML import create
 
 	# string manipulation to get and make paths
 	pathOrig = "../datasets/adult_income_classification_tiny.csv"
@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
 	# we specify that we want a RowListData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
-	train = data("RowListData", pathOrig)
+	train = create("RowListData", pathOrig)
 
 	#scrub the set of any string valued data
 	train.dropStringValuedFeatures()
