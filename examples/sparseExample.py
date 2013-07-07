@@ -19,11 +19,11 @@ if __name__ == "__main__":
 
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
 
-	sparseAll = create('CooSparseData', data=pathIn)
+	sparseAll = create('Sparse', data=pathIn)
 	sparseY = sparseAll.extractFeatures(sparseAll.data.shape[1] - 1)
 	sparseX = sparseAll
 
-	sparseAll2 = create('CooSparseData', data=data1)
+	sparseAll2 = create('Sparse', data=data1)
 	sparseY2 = sparseAll2.extractFeatures(3)
 	sparseX2 = sparseAll2
 

@@ -15,14 +15,14 @@ import re
 import datetime
 
 from UML.exceptions import ArgumentException
-from UML.data import CooSparseData
+from UML.data import Sparse
 from UML.data import DenseMatrixData
 from UML.data import RowListData
 from UML.data import Base
 
 def _loadCoo(data, featureNames, fileType):
 	if fileType is None:
-		return CooSparseData(data, featureNames)
+		return Sparse(data, featureNames)
 
 	# since file type is not None, that is an indicator that we must read from a file
 	path = data
@@ -36,7 +36,7 @@ def _loadCoo(data, featureNames, fileType):
 
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
-	return CooSparseData(data, featureNames, os.path.basename(path), path)
+	return Sparse(data, featureNames, os.path.basename(path), path)
 
 
 def _loadDMD(data, featureNames, fileType):

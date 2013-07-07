@@ -9,8 +9,8 @@ from numpy.random import rand, randint
 
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.interfaces.scikit_learn_interface import *
-from UML.data.dense_matrix_data import DenseMatrixData as DMData
-from UML.data.coo_sparse_data import CooSparseData
+from UML.data import DenseMatrixData as DMData
+from UML.data import Sparse
 
 
 
@@ -51,7 +51,7 @@ def testSciKitLearnSparseRegression():
 	cols2 = randint(0,x,c)
 	data = rand(c)
 	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
-	obj = CooSparseData(A)
+	obj = Sparse(A)
 	testObj = obj.duplicate()
 	testObj.extractFeatures(cols[0])
 
@@ -85,13 +85,13 @@ def testSciKitLearnHandmadeSparseClustering():
 	trainData[0, :] = [2,3,1]
 	trainData[1, :] = [2,2,1]
 	trainData[2, :] = [0,0,0]
-	trainData = CooSparseData(data=trainData)
+	trainData = Sparse(data=trainData)
 
 	testData = scipy.sparse.lil_matrix((3,2))
 	testData[0, :] = [3,3]
 	testData[1, :] = [3,2]
 	testData[2, :] = [-1,0]
-	testData = CooSparseData(data=testData)
+	testData = Sparse(data=testData)
 
 	ret = sciKitLearn('MiniBatchKMeans', trainData, testData, dependentVar=2, arguments={'n_clusters':2})
 	

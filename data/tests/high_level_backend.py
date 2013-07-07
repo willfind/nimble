@@ -13,7 +13,7 @@ import numpy
 
 from UML.data import RowListData
 from UML.data import DenseMatrixData
-from UML.data import CooSparseData
+from UML.data import Sparse
 
 
 ###########################
@@ -636,7 +636,7 @@ def isApproxEquivalent_randomTest(constructor):
 
 	rld = RowListData(data)
 	dmd = DenseMatrixData(data)
-	coo = CooSparseData(data)
+	sparse = Sparse(data)
 
 	assert toTest.isApproxEquivalent(rld)
 	assert rld.isApproxEquivalent(toTest)
@@ -644,8 +644,8 @@ def isApproxEquivalent_randomTest(constructor):
 	assert toTest.isApproxEquivalent(dmd)
 	assert dmd.isApproxEquivalent(toTest)
 
-	assert toTest.isApproxEquivalent(coo)
-	assert coo.isApproxEquivalent(toTest)
+	assert toTest.isApproxEquivalent(sparse)
+	assert sparse.isApproxEquivalent(toTest)
 
 
 

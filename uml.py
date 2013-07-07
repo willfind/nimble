@@ -254,10 +254,10 @@ def create(retType, data=None, featureNames=None, fileType=None, name=None, send
 
 	# these should be lowercase to avoid ambiguity
 	retType = retType.lower()
-	cooAlias = ["coosparsedata", "coo", "coosparse"]
+	sparseAlias = ["sparse"]
 	dmdAlias = ["densematrixdata", 'dmd', 'dense']
 	rldAlias = ["rowlistdata", 'rld']
-	if retType in cooAlias:
+	if retType in sparseAlias:
 		ret = _loadCoo(data, featureNames, fileType)
 	elif retType in dmdAlias:
 		ret = _loadDMD(data, featureNames, fileType)

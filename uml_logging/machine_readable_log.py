@@ -5,7 +5,7 @@ import re
 import types
 
 from UML.data import Base
-from UML.data import CooSparseData
+from UML.data import Sparse
 from uml_logger import UmlLogger
 from UML.exceptions import ArgumentException
 
@@ -385,8 +385,8 @@ def testParseLog():
 	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
 	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
 
-	trainData1 = CooSparseData(trainDataBase)
-	testData1 = CooSparseData(testDataBase)
+	trainData1 = Sparse(trainDataBase)
+	testData1 = Sparse(testDataBase)
 	functionStr = """def f():
 	return 0"""
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
@@ -424,8 +424,8 @@ def main():
 	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
 	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
 
-	trainData1 = CooSparseData(trainDataBase)
-	testData1 = CooSparseData(testDataBase)
+	trainData1 = Sparse(trainDataBase)
+	testData1 = Sparse(testDataBase)
 	functionStr = """def f():
 	return 0"""
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}

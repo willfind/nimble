@@ -31,13 +31,13 @@ def testRunOneVsAll():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-    trainObj1 = create('CooSparseData', data1, variables)
-    trainObj2 = create('CooSparseData', data2, variables)
+    trainObj1 = create('Sparse', data1, variables)
+    trainObj2 = create('Sparse', data2, variables)
 
     testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
     testData2 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3], [0, 1, 1, 2]]
-    testObj1 = create('CooSparseData', testData1)
-    testObj2 = create('CooSparseData', testData2)
+    testObj1 = create('Sparse', testData1)
+    testObj2 = create('Sparse', testData2)
 
     metricFuncs = []
     metricFuncs.append(classificationError)

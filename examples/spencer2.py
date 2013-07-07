@@ -18,7 +18,7 @@ if __name__ == "__main__":
 	print "UML dir", dir(UML)
 	# path to input specified by command line argument
 	pathIn = "datasets/sparseSample.mtx"
-	allData = create('coo', pathIn, fileType="mtx")
+	allData = create('sparse', pathIn, fileType="mtx")
 
 	print "data loaded"
 

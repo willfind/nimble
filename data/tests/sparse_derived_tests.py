@@ -1,5 +1,5 @@
 """
-Unit tests for the DenseMatrixData object. Calls upon the functions defined
+Unit tests for the Sparse object. Calls upon the functions defined
 in derived_backend.py using appropriate input
 
 
@@ -12,7 +12,7 @@ from UML import create
 from UML.exceptions import ArgumentException
 
 def constructor(data=None, featureNames=None):
-	return create('CooSparseData', data, featureNames)
+	return create('Sparse', data, featureNames)
 
 
 ##############

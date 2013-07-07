@@ -14,8 +14,8 @@ from UML.interfaces import shogun
 from UML.interfaces.shogun_interface import listAlgorithms
 from UML.interfaces.shogun_interface import setShogunLocation
 from UML.interfaces.shogun_interface import getShogunLocation
-from UML.data.dense_matrix_data import DenseMatrixData as DMData
-from UML.data.coo_sparse_data import CooSparseData
+from UML.data import DenseMatrixData as DMData
+from UML.data import Sparse
 
 
 def testShogunLocation():
@@ -136,7 +136,7 @@ def testShogunSparseRegression():
 	cols = randint(0,x,c)
 	data = rand(c)
 	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
-	obj = CooSparseData(A)
+	obj = Sparse(A)
 
 	labelsData = numpy.random.rand(x)
 	labels = DMData(labelsData)

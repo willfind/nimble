@@ -1,5 +1,5 @@
 """
-Class extending SparseBase, defining an object to hold and manipulate a scipy coo_matrix.
+Class extending Base, defining an object to hold and manipulate a scipy coo_matrix.
 
 """
 
@@ -18,7 +18,7 @@ from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 
 
-class CooSparseData(Base):
+class Sparse(Base):
 
 	def __init__(self, data=None, featureNames=None, name=None, path=None):
 		if data == [] or data == numpy.array([]):
@@ -26,7 +26,7 @@ class CooSparseData(Base):
 		else:
 			self.data = coo_matrix(data)
 		self._sorted = None
-		super(CooSparseData, self).__init__(featureNames, name, path)
+		super(Sparse, self).__init__(featureNames, name, path)
 
 	def _features_implementation(self):
 		(points, cols) = self.data.get_shape()
@@ -387,7 +387,7 @@ class CooSparseData(Base):
 		else:
 			featureNames = self.featureNames
 
-		return CooSparseData(ret, featureNames) 
+		return Sparse(ret, featureNames) 
 
 
 	def _extractByFunction_implementation(self, toExtract, number, axisType):
@@ -468,7 +468,7 @@ class CooSparseData(Base):
 		else:
 			featureNames = self.featureNames
 
-		return CooSparseData(ret, featureNames) 
+		return Sparse(ret, featureNames) 
 
 
 
@@ -531,7 +531,7 @@ class CooSparseData(Base):
 		else:
 			featureNames = self.featureNames
 
-		return CooSparseData(ret, featureNames) 
+		return Sparse(ret, featureNames) 
 
 	def _applyFunctionToEachPoint_implementation(self,function):
 		return self._applyFunctionAlongAxis(function, 'point')
@@ -605,7 +605,7 @@ class CooSparseData(Base):
 
 		# instantiate return data
 		ret = coo_matrix((retData,(retRows,retCols)),shape=extShape)
-		return CooSparseData(ret) 
+		return Sparse(ret) 
 
 
 	def _transpose_implementation(self):
@@ -688,11 +688,11 @@ class CooSparseData(Base):
 			if redRet is not None:
 				(redKey,redValue) = redRet
 				ret.append([redKey, redValue])
-		return CooSparseData(numpy.matrix(ret))
+		return Sparse(numpy.matrix(ret))
 
 
 	def _equals_implementation(self,other):
-		if not isinstance(other, CooSparseData):
+		if not isinstance(other, Sparse):
 			return False
 		if scipy.shape(self.data) != scipy.shape(other.data):
 			return False
@@ -707,7 +707,7 @@ class CooSparseData(Base):
 		return self.data.shape[0]
 
 	def _getType_implementation(self):
-		return 'CooSparseData'
+		return 'Sparse'
 
 	def _toRowListData_implementation(self):
 		"""	Returns a RowListData object with the same data and featureNames as this one """
@@ -778,14 +778,14 @@ class CooSparseData(Base):
 
 
 	def _copyReferences_implementation(self, other):
-		if not isinstance(other, CooSparseData):
+		if not isinstance(other, Sparse):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
 		self._sorted = None
 
 	def _duplicate_implementation(self):
-		return CooSparseData(self.data.copy(), copy.deepcopy(self.featureNames))
+		return Sparse(self.data.copy(), copy.deepcopy(self.featureNames))
 
 
 	def _copyPoints_implementation(self, points, start, end):
@@ -809,7 +809,7 @@ class CooSparseData(Base):
 
 			newShape = (end - start + 1, numpy.shape(self.data)[1])
 
-		return CooSparseData(coo_matrix((retData,(retRow,retCol)),shape=newShape), self.featureNames)
+		return Sparse(coo_matrix((retData,(retRow,retCol)),shape=newShape), self.featureNames)
 
 
 	def _copyFeatures_implementation(self, features, start, end):
@@ -841,7 +841,7 @@ class CooSparseData(Base):
 				value = self.featureNamesInverse[i]
 				newNames[value] = i - start
 
-		return CooSparseData(coo_matrix((retData,(retRow,retCol)),shape=newShape), newNames)
+		return Sparse(coo_matrix((retData,(retRow,retCol)),shape=newShape), newNames)
 	
 
 	def _getitem_implementation(self, x, y):

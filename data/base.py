@@ -982,7 +982,7 @@ class Base(object):
 	def getType(self):
 		"""
 			Return a string representing the non-abstract type of this object (e.g. DenseMatrixData,
-			CooSparseData, etc.) that can be passed to create() function to create a new object
+			Sparse, etc.) that can be passed to create() function to create a new object
 			of the same type.
 		"""
 		return self._getType_implementation()

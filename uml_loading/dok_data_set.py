@@ -424,7 +424,7 @@ class DokDataSet(object):
 
 		cooVersion = self.data.tocoo()
 
-		baseDataVersion = create('coo', cooVersion, featureNameList, sendToLog=False)
+		baseDataVersion = create('sparse', cooVersion, featureNameList, sendToLog=False)
 
 		# Build a dok matrix containing document Ids and Class Labels
 		labelDokMatrix = dok_matrix((self.data.shape[0], 1 + len(self.classLabelMaps)))
@@ -450,7 +450,7 @@ class DokDataSet(object):
 			idLabelOrderedNames.append(classLabelName)
 			labelColumnIndex += 1
 		#convert dok matrix w/labels and ids to Coo BaseData version
-		labelsAndIds = create('coo', labelDokMatrix.tocoo(), idLabelOrderedNames, sendToLog=False)
+		labelsAndIds = create('sparse', labelDokMatrix.tocoo(), idLabelOrderedNames, sendToLog=False)
 
 		#put together the two matrices, with doc Ids and class labels in leftmost columns
 		labelsAndIds.appendFeatures(baseDataVersion)

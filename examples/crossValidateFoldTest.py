@@ -11,7 +11,7 @@ if __name__ == "__main__":
     from UML import loadTrainingAndTesting
 
     pathIn = "UML/datasets/10points2columns.mtx"
-    trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=1, fractionForTestSet=.2, loadType="CooSparseData", fileType="mtx")
+    trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=1, fractionForTestSet=.2, loadType="Sparse", fileType="mtx")
 
     # sparse types aren't playing nice with the error metrics currently, so convert
     trainY = trainY.toDenseMatrixData()

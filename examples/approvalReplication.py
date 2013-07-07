@@ -15,7 +15,7 @@ if __name__ == "__main__":
 	from UML.metrics import proportionPercentNegative90
 
 	pathIn = "/media/library_/LaddersData/PlaygroundFull/DocVectors.mtx"
-	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="CooSparseData", fileType="mtx")
+	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="Sparse", fileType="mtx")
 	print "Finished loading data"
 	print "trainX shape: " + str(trainX.data.shape)
 	print "trainY shape: " + str(trainY.data.shape)
