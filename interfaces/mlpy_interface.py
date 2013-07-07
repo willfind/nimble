@@ -69,9 +69,9 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
 			UML.runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
 
-	if isinstance(trainData, UML.data.SparseData):
+	if isinstance(trainData, UML.data.CooSparseData):
 		raise ArgumentException("MLPY does not accept sparse input")
-	if isinstance(testData, UML.data.SparseData):
+	if isinstance(testData, UML.data.CooSparseData):
 		raise ArgumentException("MLPY does not accept sparse input")
 
 	if not isinstance(trainData, UML.data.Base):

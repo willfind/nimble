@@ -12,13 +12,13 @@ from scipy.io import mmwrite
 import copy
 
 import UML
-from sparse_data import SparseData
+from base import Base
 from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 
 
-class CooSparseData(SparseData):
+class CooSparseData(Base):
 
 	def __init__(self, data=None, featureNames=None, name=None, path=None):
 		if data == [] or data == numpy.array([]):
@@ -26,7 +26,15 @@ class CooSparseData(SparseData):
 		else:
 			self.data = coo_matrix(data)
 		self._sorted = None
-		super(CooSparseData, self).__init__(self.data, featureNames, name, path)
+		super(CooSparseData, self).__init__(featureNames, name, path)
+
+	def _features_implementation(self):
+		(points, cols) = self.data.get_shape()
+		return cols
+
+	def _points_implementation(self):
+		(points, cols) = self.data.get_shape()
+		return points
 
 
 	def pointViewIterator(self):

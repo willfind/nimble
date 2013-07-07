@@ -57,7 +57,7 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 	if isinstance(testData, UML.data.Base):
 		print('testData may not be an in package representation, it must refer to a file')
 	
-	if isinstance(trainData, UML.data.SparseData):
+	if isinstance(trainData, UML.data.CooSparseData):
 		raise ArgumentException("Regressors does not accept sparse input")
 
 	testFile = open(testData, 'r')
