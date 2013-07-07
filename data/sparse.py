@@ -709,9 +709,9 @@ class Sparse(Base):
 	def _getType_implementation(self):
 		return 'Sparse'
 
-	def _toRowListData_implementation(self):
-		"""	Returns a RowListData object with the same data and featureNames as this one """
-		return UML.data.RowListData(self.data.todense(), self.featureNames)
+	def _toList_implementation(self):
+		"""	Returns a List object with the same data and featureNames as this one """
+		return UML.data.List(self.data.todense(), self.featureNames)
 
 
 	def _toDenseMatrixData_implementation(self):

@@ -119,7 +119,7 @@ def testRowList():
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
 
-    trainObj = create('RowListData', data1, names1)
+    trainObj = create('List', data1, names1)
     funcs = featurewiseFunctionGenerator()
     rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
     funcNames = rawTable[0]
@@ -209,7 +209,7 @@ def testProduceAggregateTable():
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
 
-    trainObj = create('RowListData', data1, names1)
+    trainObj = create('List', data1, names1)
     rawTable = produceAggregateTable(trainObj)
 
     for i in range(len(rawTable[0])):
@@ -225,7 +225,7 @@ def testProduceAggregateTable():
 
 
 def testStDev():
-    testRowList = create('rld', np.array([[1], [1], [3], [4], [2], [6], [12], [0]]), ['nums'])
+    testRowList = create('List', np.array([[1], [1], [3], [4], [2], [6], [12], [0]]), ['nums'])
     stDevContainer = testRowList.applyFunctionToEachFeature(standardDeviation)
     stDev = stDevContainer.toListOfLists()[0][0]
     assert_almost_equal(stDev, 3.6379, 3)

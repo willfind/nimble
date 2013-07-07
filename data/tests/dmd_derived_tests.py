@@ -275,18 +275,18 @@ def test_extractFeatures_handmadeWithFeatureNames():
 
 
 ##########################
-# toRowListData() #
+# toList() #
 ##########################
 
 
-def test_toRowListData_handmade_defaultFeatureNames():
-	""" Test DMD toRowListData with default featureNames """
-	toRowListData_handmade_defaultFeatureNames(constructor)
+def test_toList_handmade_defaultFeatureNames():
+	""" Test DMD toList with default featureNames """
+	toList_handmade_defaultFeatureNames(constructor)
 
 	
-def test_toRowListData_handmade_assignedFeatureNames():
-	""" Test DMD toRowListData with assigned featureNames """
-	toRowListData_handmade_assignedFeatureNames(constructor)
+def test_toList_handmade_assignedFeatureNames():
+	""" Test DMD toList with assigned featureNames """
+	toList_handmade_assignedFeatureNames(constructor)
 
 
 

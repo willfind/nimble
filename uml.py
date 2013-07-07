@@ -19,9 +19,9 @@ from UML.data import Base
 
 
 from UML.umlHelpers import computeMetrics
-from UML.umlHelpers import _loadCoo
-from UML.umlHelpers import _loadDMD
-from UML.umlHelpers import _loadRLD
+from UML.umlHelpers import _loadSparse
+from UML.umlHelpers import _loadDense
+from UML.umlHelpers import _loadList
 from UML.umlHelpers import countWins
 from UML.umlHelpers import extractWinningPredictionLabel
 from UML.umlHelpers import extractWinningPredictionIndex
@@ -255,14 +255,14 @@ def create(retType, data=None, featureNames=None, fileType=None, name=None, send
 	# these should be lowercase to avoid ambiguity
 	retType = retType.lower()
 	sparseAlias = ["sparse"]
-	dmdAlias = ["densematrixdata", 'dmd', 'dense']
-	rldAlias = ["rowlistdata", 'rld']
+	denseAlias = ["densematrixdata", 'dmd', 'dense']
+	listAlias = ["list"]
 	if retType in sparseAlias:
-		ret = _loadCoo(data, featureNames, fileType)
-	elif retType in dmdAlias:
-		ret = _loadDMD(data, featureNames, fileType)
-	elif retType in rldAlias:
-		ret = _loadRLD(data, featureNames, fileType)
+		ret = _loadSparse(data, featureNames, fileType)
+	elif retType in denseAlias:
+		ret = _loadDense(data, featureNames, fileType)
+	elif retType in listAlias:
+		ret = _loadList(data, featureNames, fileType)
 	else:
 		raise ArgumentException("Unknown data type, cannot instantiate")
 
@@ -480,10 +480,10 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		partialResults = run(algorithm, pairData, testX, output=None, dependentVar=pairTrueLabels, arguments=arguments, sendToLog=False)
 		#put predictions into table of predictions
 		if rawPredictions is None:
-			rawPredictions = partialResults.toRowListData()
+			rawPredictions = partialResults.toList()
 		else:
 			partialResults.renameFeatureName(0, 'predictions-'+str(predictionFeatureID))
-			rawPredictions.appendFeatures(partialResults.toRowListData())
+			rawPredictions.appendFeatures(partialResults.toList())
 		pairData.appendFeatures(pairTrueLabels)
 		trainX.appendPoints(pairData)
 		predictionFeatureID +=1
@@ -505,9 +505,9 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 			bestLabel = sortedScores[0]
 			tempResultsList.append([bestLabel, scores[bestLabel]])
 
-		#wrap the results data in a RowListData container
+		#wrap the results data in a List container
 		featureNames = ['PredictedClassLabel', 'LabelScore']
-		resultsContainer = create("RowListData", tempResultsList, featureNames=featureNames)
+		resultsContainer = create("List", tempResultsList, featureNames=featureNames)
 		return resultsContainer
 	elif scoreMode.lower() == 'allScores'.lower():
 		columnHeaders = sorted([str(i) for i in labelSet])
@@ -634,9 +634,9 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 			scores = sorted(scores, key=operator.itemgetter(1))
 			bestLabelAndScore = scores[0]
 			tempResultsList.append([[bestLabelAndScore[0], bestLabelAndScore[1]]])
-		#wrap the results data in a RowListData container
+		#wrap the results data in a List container
 		featureNames = ['PredictedClassLabel', 'LabelScore']
-		resultsContainer = create("RowListData", tempResultsList, featureNames=featureNames)
+		resultsContainer = create("List", tempResultsList, featureNames=featureNames)
 		return resultsContainer
 
 	elif scoreMode.lower() == 'allScores'.lower():

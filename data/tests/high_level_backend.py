@@ -11,7 +11,7 @@ from copy import deepcopy
 
 import numpy
 
-from UML.data import RowListData
+from UML.data import List
 from UML.data import DenseMatrixData
 from UML.data import Sparse
 
@@ -634,12 +634,12 @@ def isApproxEquivalent_randomTest(constructor):
 
 	toTest = constructor(data)
 
-	rld = RowListData(data)
+	listObj = List(data)
 	dmd = DenseMatrixData(data)
 	sparse = Sparse(data)
 
-	assert toTest.isApproxEquivalent(rld)
-	assert rld.isApproxEquivalent(toTest)
+	assert toTest.isApproxEquivalent(listObj)
+	assert listObj.isApproxEquivalent(toTest)
 
 	assert toTest.isApproxEquivalent(dmd)
 	assert dmd.isApproxEquivalent(toTest)

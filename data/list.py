@@ -1,9 +1,6 @@
 """
 Class extending Base, using a list of lists to store data.
 
-Outside of the class, functions are defined for reading and writing RowListData
-to files.
-
 """
 
 import copy
@@ -20,7 +17,7 @@ from UML.exceptions import ArgumentException
 
 
 
-class RowListData(Base):
+class List(Base):
 	"""
 	Class providing implementations of data manipulation operations on data stored
 	in a list of lists, representing a list of points of data. data is the list of
@@ -50,14 +47,14 @@ class RowListData(Base):
 		if data is None or len(data) == 0:
 			self.numFeatures = 0
 			self.data = []
-			super(RowListData, self).__init__([])
+			super(List, self).__init__([])
 		else:
 			self.numFeatures = len(data[0])
 			for point in data:
 				if len(point) != self.numFeatures:
 					raise ArgumentException("Points must be of equal size")
 			self.data = data
-			super(RowListData, self).__init__(featureNames, name, path)
+			super(List, self).__init__(featureNames, name, path)
 
 
 	def _transpose_implementation(self):
@@ -274,7 +271,7 @@ class RowListData(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		extracted = RowListData(satisfying)
+		extracted = List(satisfying)
 		reorderToMatchExtractionList(extracted, toExtract, 'point')
 		return extracted
 
@@ -302,7 +299,7 @@ class RowListData(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		return RowListData(satisfying)
+		return List(satisfying)
 
 	def _extractPointsByRange_implementation(self, start, end):
 		"""
@@ -323,7 +320,7 @@ class RowListData(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		return RowListData(inRange)
+		return List(inRange)
 
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
@@ -405,7 +402,7 @@ class RowListData(Base):
 			featureNameList.append(self.featureNamesInverse[index])
 		# toExtract was reversed (for efficiency) so we have to rereverse this to get it right
 		featureNameList.reverse()
-		return RowListData(extractedData, featureNameList)
+		return List(extractedData, featureNameList)
 
 
 	def _extractFeaturesByFunction_implementation(self, function, number):
@@ -447,7 +444,7 @@ class RowListData(Base):
 		for index in xrange(start,end+1):
 			featureNameList.append(self.featureNamesInverse[index])
 	
-		return RowListData(extractedData, featureNameList)
+		return List(extractedData, featureNameList)
 
 
 	def _applyFunctionToEachPoint_implementation(self, function):
@@ -461,7 +458,7 @@ class RowListData(Base):
 			point = self.data[i]
 			currOut = function(PointView(self.featureNames, point, i))
 			retData.append([currOut])
-		return RowListData(retData)
+		return List(retData)
 
 	def _applyFunctionToEachFeature_implementation(self,function):
 		"""
@@ -475,7 +472,7 @@ class RowListData(Base):
 			ithView = FeatureView(self.data,i, self.featureNamesInverse[i])
 			currOut = function(ithView)
 			retData[0].append(currOut)
-		return RowListData(retData)
+		return List(retData)
 
 
 	def _mapReduceOnPoints_implementation(self, mapper, reducer):
@@ -501,7 +498,7 @@ class RowListData(Base):
 			if redRet is not None:
 				(redKey,redValue) = redRet
 				ret.append([redKey,redValue])
-		return RowListData(ret)
+		return List(ret)
 
 	def _features_implementation(self):
 		return self.numFeatures
@@ -510,10 +507,10 @@ class RowListData(Base):
 		return len(self.data)
 
 	def _getType_implementation(self):
-		return 'RowListData'
+		return 'List'
 
 	def _equals_implementation(self,other):
-		if not isinstance(other,RowListData):
+		if not isinstance(other,List):
 			return False
 		if self.points() != other.points():
 			return False
@@ -525,9 +522,9 @@ class RowListData(Base):
 		return True
 
 
-	def _toRowListData_implementation(self):
-		"""	Returns a RowListData object with the same data and featureNames as this one """
-		return RowListData(self.data, self.featureNames)
+	def _toList_implementation(self):
+		"""	Returns a List object with the same data and featureNames as this one """
+		return List(self.data, self.featureNames)
 
 	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
@@ -594,13 +591,13 @@ class RowListData(Base):
 		outFile.close()
 
 	def _copyReferences_implementation(self, other):
-		if not isinstance(other, RowListData):
+		if not isinstance(other, List):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
 
 	def _duplicate_implementation(self):
-		return RowListData(copy.deepcopy(self.data), copy.deepcopy(self.featureNames))
+		return List(copy.deepcopy(self.data), copy.deepcopy(self.featureNames))
 
 	def _copyPoints_implementation(self, points, start, end):
 		retData = []
@@ -611,7 +608,7 @@ class RowListData(Base):
 			for i in range(start,end+1):
 				retData.append(copy.copy(self.data[i]))
 
-		return RowListData(retData)
+		return List(retData)
 
 	def _copyFeatures_implementation(self, indices, start, end):
 		ret = []
@@ -634,7 +631,7 @@ class RowListData(Base):
 			for i in range(start,end+1):
 				featureNameList.append(self.featureNamesInverse[i])
 
-		return RowListData(ret, featureNameList)
+		return List(ret, featureNameList)
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x][y]

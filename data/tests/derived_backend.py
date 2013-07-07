@@ -9,7 +9,7 @@ directly by the class calling this backend.
 import tempfile
 
 from copy import deepcopy
-from UML.data import RowListData as RLD
+from UML.data import List
 from UML.data import DenseMatrixData as DMD
 from UML.data.dataHelpers import View
 
@@ -713,30 +713,30 @@ def extractFeatures_handmadeWithFeatureNames(constructor):
 
 
 ##########################
-# toRowListData() #
+# toList() #
 ##########################
 
 
-def toRowListData_handmade_defaultFeatureNames(constructor):
-	""" Test toRowListData with default featureNames """
+def toList_handmade_defaultFeatureNames(constructor):
+	""" Test toList with default featureNames """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
 
-	ret = toTest.toRowListData()
-	exp = RLD(data)
+	ret = toTest.toList()
+	exp = List(data)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
 
 	
-def toRowListData_handmade_assignedFeatureNames(constructor):
-	""" Test toRowListData with assigned featureNames """
+def toList_handmade_assignedFeatureNames(constructor):
+	""" Test toList with assigned featureNames """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	ret = toTest.toRowListData()
-	exp = RLD(data,featureNames)
+	ret = toTest.toList()
+	exp = List(data,featureNames)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
@@ -830,7 +830,7 @@ def copyReferences_exceptionWrongType(constructor):
 	featureNames = ['one', 'two', 'three']
 	orig = constructor(data1, featureNames)
 
-	type1 = RLD(data1,featureNames)
+	type1 = List(data1,featureNames)
 	type2 = DMD(data1,featureNames)
 
 	# at least one of these two will be the wrong type

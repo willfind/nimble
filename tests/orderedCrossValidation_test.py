@@ -7,10 +7,10 @@ from UML import orderedCrossValidate
 
 
 def createAll(inData, featureNames=None):
-	rld = create("RowListData", inData, featureNames)
+	listObj = create("List", inData, featureNames)
 	dmd = create("DenseMatrixData", inData, featureNames)
 
-	return (rld, dmd)
+	return (listObj, dmd)
 
 def returnNone(**args):
 	return None

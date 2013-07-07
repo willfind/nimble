@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
 	# we specify that we want a DenseMatrixData object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
-	processed = create("RowListData", pathOrig)
+	processed = create("List", pathOrig)
 
 	# this feature is a precalculated similarity rating. Lets not make it too easy....
 	processed.extractFeatures('fnlwgt')

@@ -9,7 +9,7 @@ test will call the backend test for each possible representation
 from nose.tools import *
 
 
-from UML.data import RowListData
+from UML.data import List
 from UML.data import DenseMatrixData
 from UML.data import Sparse
 from UML.data.tests.high_level_backend import *
@@ -23,19 +23,19 @@ from UML.exceptions import ArgumentException
 
 
 
-def rld(data,featureNames=None):
-	return RowListData(data,featureNames)
+def listInit(data,featureNames=None):
+	return List(data,featureNames)
 
-def dmd(data,featureNames=None):
+def denseInit(data,featureNames=None):
 	return DenseMatrixData(data,featureNames)
 
-def sparse(data,featureNames=None):
+def sparseInit(data,featureNames=None):
 	return Sparse(data, featureNames)
 
 def callAll(func):
-	func(rld)
-	func(dmd)
-	func(sparse)
+	func(listInit)
+	func(denseInit)
+	func(sparseInit)
 
 
 

@@ -203,8 +203,8 @@ class Base(object):
 		values.renameFeatureName(0,'values')
 		values = values.extractFeatures([0])
 
-		# Convert to RLD, so we can have easy access
-		values = values.toRowListData()
+		# Convert to List, so we can have easy access
+		values = values.toList()
 
 		# for each value run applyToEach to produce a category point for each value
 		def makeFunc(value):
@@ -252,8 +252,8 @@ class Base(object):
 		values.renameFeatureName(0,'values')
 		values = values.extractFeatures([0])
 
-		# Convert to RLD, so we can have easy access
-		values = values.toRowListData()
+		# Convert to List, so we can have easy access
+		values = values.toList()
 
 		mapping = {}
 		index = 0
@@ -353,7 +353,7 @@ class Base(object):
 				ret.append([])
 			return ret
 
-		rowListContainer = self.toRowListData()
+		rowListContainer = self.toList()
 		return rowListContainer.data
 
 	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
@@ -870,8 +870,8 @@ class Base(object):
 	def features(self):
 		return self._features_implementation()
 
-	def toRowListData(self):
-		return self._toRowListData_implementation()
+	def toList(self):
+		return self._toList_implementation()
 
 	def toDenseMatrixData(self):
 		return self._toDenseMatrixData_implementation()

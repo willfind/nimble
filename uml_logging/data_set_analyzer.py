@@ -75,7 +75,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
     """
     #try to find out basic information about the data set: # of rows
     #and columns.  For numpy containers, this is obtained through call
-    #to shape().  For RowListData, can use len()
+    #to shape().  For List, can use len()
     shape = computeShape(dataContainer)
 
     functionsToApply = featurewiseFunctionGenerator()

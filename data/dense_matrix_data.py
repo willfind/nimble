@@ -447,9 +447,9 @@ class DenseMatrixData(Base):
 		return numpy.array_equal(self.data,other.data)
 
 
-	def _toRowListData_implementation(self):
-		"""	Returns a RowListData object with the same data and featureNames as this one """
-		return UML.data.RowListData(self.data.tolist(), self.featureNames)
+	def _toList_implementation(self):
+		"""	Returns a List object with the same data and featureNames as this one """
+		return UML.data.List(self.data.tolist(), self.featureNames)
 
 	def _toDenseMatrixData_implementation(self):
 		""" Returns a DenseMatrixData object with the same data and featureNames as this object """

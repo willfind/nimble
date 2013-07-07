@@ -17,10 +17,10 @@ import datetime
 from UML.exceptions import ArgumentException
 from UML.data import Sparse
 from UML.data import DenseMatrixData
-from UML.data import RowListData
+from UML.data import List
 from UML.data import Base
 
-def _loadCoo(data, featureNames, fileType):
+def _loadSparse(data, featureNames, fileType):
 	if fileType is None:
 		return Sparse(data, featureNames)
 
@@ -39,7 +39,7 @@ def _loadCoo(data, featureNames, fileType):
 	return Sparse(data, featureNames, os.path.basename(path), path)
 
 
-def _loadDMD(data, featureNames, fileType):
+def _loadDense(data, featureNames, fileType):
 	if fileType is None:
 		return DenseMatrixData(data, featureNames)
 
@@ -58,9 +58,9 @@ def _loadDMD(data, featureNames, fileType):
 	return DenseMatrixData(data, featureNames, os.path.basename(path), path)
 
 
-def _loadRLD(data, featureNames, fileType):
+def _loadList(data, featureNames, fileType):
 	if fileType is None:
-		return RowListData(data, featureNames)
+		return List(data, featureNames)
 
 	# since file type is not None, that is an indicator that we must read from a file
 	path = data
@@ -77,7 +77,7 @@ def _loadRLD(data, featureNames, fileType):
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
 
-	return RowListData(data, featureNames, os.path.basename(path), path)
+	return List(data, featureNames, os.path.basename(path), path)
 
 def _loadCSVtoMatrix(path):
 	inFile = open(path, 'rU')
