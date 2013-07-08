@@ -3,7 +3,7 @@ import numpy as np
 from nose.tools import assert_almost_equal, assert_equal
 
 from UML import create
-from UML.uml_logging.data_set_analyzer import *
+from UML.logging.data_set_analyzer import *
 
 
 def testDense():

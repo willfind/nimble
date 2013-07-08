@@ -12,9 +12,9 @@ import datetime
 
 import UML
 from UML.exceptions import ArgumentException
-from UML.uml_logging.uml_logger import UmlLogger
-from UML.uml_logging.log_manager import LogManager
-from UML.uml_logging.stopwatch import Stopwatch
+from UML.logging import UmlLogger
+from UML.logging import LogManager
+from UML.logging import Stopwatch
 from UML.data import Base
 
 
@@ -34,9 +34,6 @@ from UML.umlHelpers import _jumpBack
 from UML.umlHelpers import _jumpForward
 from UML.umlHelpers import _diffLessThan
 from UML.umlHelpers import generateAllPairs
-
-
-
 
 
 

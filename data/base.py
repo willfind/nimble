@@ -12,8 +12,8 @@ import math
 import UML
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
-from UML.uml_logging.data_set_analyzer import produceFeaturewiseReport
-from UML.uml_logging.data_set_analyzer import produceAggregateReport
+from UML.logging import produceFeaturewiseReport
+from UML.logging import produceAggregateReport
 
 # a default seed for testing and predictible trials
 from dataHelpers import DEFAULT_SEED
