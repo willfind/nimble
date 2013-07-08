@@ -478,3 +478,20 @@ def test_getFeatureView_isinstance():
 	""" Test List getFeatureView() returns an instance of the View in dataHelpers """
 	getFeatureView_isinstance(constructor)
 
+
+
+############
+# points() #
+############
+
+def test_points_vectorTest():
+	""" Test List points() when we only have row or column vectors of data """
+	points_vectorTest(constructor)
+
+############
+# features() #
+############
+
+def test_features_vectorTest():
+	""" Test List features() when we only have row or column vectors of data """
+	features_vectorTest(constructor)

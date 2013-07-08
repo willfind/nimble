@@ -648,8 +648,8 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 	runningTotal=0.0
 	#Go through all values in known and predicted values, and pass those values to loopFunction
 	for i in xrange(predictedValues.points()):
-		pV = predictedValues.data[i][0]
-		aV = knownValues.data[i][0]
+		pV = predictedValues[i,0]
+		aV = knownValues[i,0]
 		runningTotal = loopFunction(aV, pV, runningTotal)
 		n += 1
 	if n > 0:

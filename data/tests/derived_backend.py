@@ -1164,3 +1164,42 @@ def getFeatureView_isinstance(constructor):
 	assert fView.index() >= 0 and fView.index() < toTest.features()
 	assert len(fView) == toTest.points()
 
+
+
+############
+# points() #
+############
+
+def points_vectorTest(constructor):
+	""" Test points() when we only have row or column vectors of data """
+	dataR = [[1,2,3]]
+	dataC = [[1], [2], [3]]
+
+	toTestR = constructor(dataR)
+	toTestC = constructor(dataC)
+
+	rPoints = toTestR.points()
+	cPoints = toTestC.points()
+
+	assert rPoints == 1
+	assert cPoints == 3
+
+############
+# features() #
+############
+
+def features_vectorTest(constructor):
+	""" Test features() when we only have row or column vectors of data """
+	dataR = [[1,2,3]]
+	dataC = [[1], [2], [3]]
+
+	toTestR = constructor(dataR)
+	toTestC = constructor(dataC)
+
+	rFeatures = toTestR.features()
+	cFeatures = toTestC.features()
+
+	assert rFeatures == 3
+	assert cFeatures == 1
+
+

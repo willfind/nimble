@@ -58,9 +58,10 @@ def testPerfCombinations():
 
 	metricFunctions = [rmse, meanAbsoluteError, classificationError]
 	results = computeMetrics(knownLabelsDense, None, predictedLabelsDense, metricFunctions)
-	assert results[rmse] == 0.0
-	assert results[meanAbsoluteError] == 0.0
-	assert results[classificationError] == 0.0
+	print results
+	assert results['rmse'] == 0.0
+	assert results['meanAbsoluteError'] == 0.0
+	assert results['classificationError'] == 0.0
 
 	knownLabels = numpy.array([1.5,2.5,3.5])
 	predictedLabels = numpy.array([1.0,2.0,3.0])
@@ -70,10 +71,10 @@ def testPerfCombinations():
 
 	metricFunctions = [rmse, meanAbsoluteError, classificationError]
 	results = computeMetrics(knownLabelsDense, None, predictedLabelsDense, metricFunctions)
-	assert results[rmse] > 0.49
-	assert results[rmse] < 0.51
-	assert results[meanAbsoluteError] > 0.49
-	assert results[meanAbsoluteError] < 0.51
+	assert results['rmse'] > 0.49
+	assert results['rmse'] < 0.51
+	assert results['meanAbsoluteError'] > 0.49
+	assert results['meanAbsoluteError'] < 0.51
 
 ############################
 # generic error calculator #

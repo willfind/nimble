@@ -474,3 +474,22 @@ def test_getPointView_isinstance():
 def test_getFeatureView_isinstance():
 	""" Test Dense getFeatureView() returns an instance of the View in dataHelpers """
 	getFeatureView_isinstance(constructor)
+
+
+############
+# points() #
+############
+
+def test_points_vectorTest():
+	""" Test Dense points() when we only have row or column vectors of data """
+	points_vectorTest(constructor)
+
+############
+# features() #
+############
+
+def test_features_vectorTest():
+	""" Test Dense features() when we only have row or column vectors of data """
+	features_vectorTest(constructor)
+
+
