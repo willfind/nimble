@@ -1,16 +1,16 @@
 """
 Unit tests for functions that get lists of files/directories from a provided directory,
-found in uml_loading.data_loading module
+found in read.data_loading module
 """
 
-from UML.uml_loading.data_loading import *
+from UML.read.data_loading import *
 import UML
 
-testDirectory = os.path.join(UML.UMLPath(), 'uml_loading', 'tests', 'testDirectory')
+testDirectory = os.path.join(UML.UMLPath(), 'read', 'tests', 'testDirectory')
 
 def test_listFiles():
 	"""
-	Unit test for listFiles function in uml_loading.data_loading module
+	Unit test for listFiles function in read.data_loading module
 	"""
 	print testDirectory
 
@@ -26,7 +26,7 @@ def test_listFiles():
 
 def test_listDirs():
 	"""
-	Unit test for listDirs function in uml_loading.data_loading module
+	Unit test for listDirs function in read.data_loading module
 	"""
 	dirList = [dirName.lower() for dirName in listDirs(testDirectory)]
 	assert (os.path.join(testDirectory, '001.txt')).lower() not in dirList
@@ -37,7 +37,7 @@ def test_listDirs():
 
 def test_dirMapper():
 	"""
-	Unit test for dirMapper function in uml_loading.data_loading module
+	Unit test for dirMapper function in read.data_loading module
 	"""
 	fileList = dirMapper(testDirectory, ['.txt'], 'multiTyped')
 
@@ -75,7 +75,7 @@ def test_dirMapper():
 
 def test_recursiveFileLister():
 	"""
-	Unit test of the recursiveFileLister function in uml_loading.data_loading module
+	Unit test of the recursiveFileLister function in read.data_loading module
 	"""
 	textFileList = [fileName.lower() for fileName in recursiveFileLister(testDirectory, ['.txt'])]
 
@@ -104,7 +104,7 @@ def test_recursiveFileLister():
 
 def test_extractFilename():
 	"""
-	Unit test of the extractFilename function in uml_loading.data_loading module
+	Unit test of the extractFilename function in read.data_loading module
 	"""
 	testFilePath1 = '/blard/flard/nard/dog.txt'
 	testFilename1 = extractFilename(testFilePath1)

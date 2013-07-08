@@ -23,7 +23,7 @@ if __name__ == "__main__":
     from UML.umlHelpers import executeCode
     from UML import runAndTest
     from UML import create
-    from UML.uml_loading.convert_to_basedata import convertToCooBaseData
+    from UML.read.convert_to_basedata import convertToCooBaseData
     from UML.metrics import proportionPercentNegative90
 
     rawTextDirPath = 'UML/datasets/rawData/rawHtmlFiles'

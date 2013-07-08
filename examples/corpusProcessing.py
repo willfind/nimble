@@ -3,8 +3,8 @@
 	object.  Includes loading, processing, and merging/join operations.
 """
 
-from UML.uml_loading.data_loading import *
-from UML.uml_loading.text_processing import *
+from UML.read.data_loading import *
+from UML.read.text_processing import *
 
 if __name__ == "__main__":
 	#convert a directory w/text files (or *.html files) into a set of data objects

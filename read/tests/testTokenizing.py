@@ -3,23 +3,24 @@ Unit tests of the functions to do basic text processing - remove html, tokenize,
 remove symbols, remove stop words, etc.
 """
 
-#from UML.uml_loading.text_processing import readDirectoryIntoSparseMatrix
-from UML.uml_loading.text_processing import convertToTokens
-#from UML.uml_loading.text_processing import convertAttributeMapToMatrix
+#from UML.read.text_processing import readDirectoryIntoSparseMatrix
+from UML.read.text_processing import convertToTokens
+#from UML.read.text_processing import convertAttributeMapToMatrix
 
+testDirectory = os.path.join(UML.UMLPath(), 'read', 'tests', 'testDirectory')
 
 def test_readDirectoryIntoSparseMatrix():
 	"""
 	Unit test for readDirectoryIntoSparseMatrix function
 	"""
-	featureIndexMapOne, inverseFeatureIndexMapOne, docTermCountOne, idRowIndexMapOne, holderMatrixOne = readDirectoryIntoSparseMatrix('uml_loading/tests/testDirectory')
+	featureIndexMapOne, inverseFeatureIndexMapOne, docTermCountOne, idRowIndexMapOne, holderMatrixOne = readDirectoryIntoSparseMatrix(testDirectory)
 	assert len(featureIndexMapOne) > 0
 	assert len(inverseFeatureIndexMapOne) > 0
 	assert len(docTermCountOne) > 0
 	assert len(idRowIndexMapOne) > 0
 	assert len(holderMatrixOne) > 0
 
-	featureIndexMapTwo, inverseFeatureIndexMapTwo, docTermCountTwo, idRowIndexMapTwo, holderMatrixTwo = readDirectoryIntoSparseMatrix('uml_loading/tests/testDirectory', featureMergeMode='multiTyped')
+	featureIndexMapTwo, inverseFeatureIndexMapTwo, docTermCountTwo, idRowIndexMapTwo, holderMatrixTwo = readDirectoryIntoSparseMatrix(testDirectory, featureMergeMode='multiTyped')
 
 	assert len(featureIndexMapTwo) > 0
 	assert len(inverseFeatureIndexMapTwo) > 0
