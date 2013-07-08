@@ -4,35 +4,42 @@ found in uml_loading.data_loading module
 """
 
 from UML.uml_loading.data_loading import *
+import UML
+
+testDirectory = os.path.join(UML.UMLPath(), 'uml_loading', 'tests', 'testDirectory')
 
 def test_listFiles():
 	"""
 	Unit test for listFiles function in uml_loading.data_loading module
 	"""
-	fileList = [fileName.lower() for fileName in listFiles('uml_loading/tests/testDirectory')]
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/001.txt'.lower() in fileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/002.txt'.lower() in fileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/001.html'.lower() in fileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/050.html'.lower() in fileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body'.lower() not in fileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/'.lower() not in fileList
+	print testDirectory
+
+	fileList = [fileName.lower() for fileName in listFiles(testDirectory)]
+	print fileList
+
+	assert (os.path.join(testDirectory, '001.txt')).lower() in fileList
+	assert (os.path.join(testDirectory, '002.txt')).lower() in fileList
+	assert (os.path.join(testDirectory, '001.html')).lower() in fileList
+	assert (os.path.join(testDirectory, '050.html')).lower() in fileList
+	assert (os.path.join(testDirectory, 'body')).lower() not in fileList
+	assert (os.path.join(testDirectory, 'body/')).lower() not in fileList
 
 def test_listDirs():
 	"""
 	Unit test for listDirs function in uml_loading.data_loading module
 	"""
-	dirList = [dirName.lower() for dirName in listDirs('uml_loading/tests/testDirectory')]
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/001.txt'.lower() not in dirList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/002.txt'.lower() not in dirList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/001.html'.lower() not in dirList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/050.html'.lower() not in dirList
-	assert ('/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body'.lower() in dirList) or ('/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/'.lower() in dirList)
+	dirList = [dirName.lower() for dirName in listDirs(testDirectory)]
+	assert (os.path.join(testDirectory, '001.txt')).lower() not in dirList
+	assert (os.path.join(testDirectory, '002.txt')).lower() not in dirList
+	assert (os.path.join(testDirectory, '001.html')).lower() not in dirList
+	assert (os.path.join(testDirectory, '050.html')).lower() not in dirList
+	assert ((os.path.join(testDirectory, 'body')).lower() in dirList) or ((os.path.join(testDirectory, 'body/')).lower() in dirList)
 
 def test_dirMapper():
 	"""
 	Unit test for dirMapper function in uml_loading.data_loading module
 	"""
-	fileList = dirMapper('uml_loading/tests/testDirectory', ['.txt'], 'multiTyped')
+	fileList = dirMapper(testDirectory, ['.txt'], 'multiTyped')
 
 	assert '001' in fileList
 	assert '002' in fileList
@@ -60,40 +67,40 @@ def test_dirMapper():
 	twoFileListHead = [fileName.lower() for fileName in innerDictTwo['head']]
 	twoFileListBody = [fileName.lower() for fileName in innerDictTwo['body']]
 
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/001.txt'.lower() in oneFileListBody
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/head/002.txt'.lower() in twoFileListHead
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/002.txt'.lower() in twoFileListBody
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/a/002.txt'.lower() in twoFileListBody
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/b/008.txt'.lower() in eightFileListBody
+	assert (os.path.join(testDirectory, 'body/001.txt')).lower() in oneFileListBody
+	assert (os.path.join(testDirectory, 'head/002.txt')).lower() in twoFileListHead
+	assert (os.path.join(testDirectory, 'body/002.txt')).lower() in twoFileListBody
+	assert (os.path.join(testDirectory, 'body/a/002.txt')).lower() in twoFileListBody
+#	assert (os.path.join(testDirectory, 'body/b/008.txt')).lower() in eightFileListBody
 
 def test_recursiveFileLister():
 	"""
 	Unit test of the recursiveFileLister function in uml_loading.data_loading module
 	"""
-	textFileList = [fileName.lower() for fileName in recursiveFileLister('uml_loading/tests/testDirectory', ['.txt'])]
+	textFileList = [fileName.lower() for fileName in recursiveFileLister(testDirectory, ['.txt'])]
 
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/001.txt'.lower() in textFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/002.txt'.lower() in textFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/003.txt'.lower() in textFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/004.txt'.lower() in textFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/001.txt'.lower() in textFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/002.txt'.lower() in textFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/a/001.txt'.lower() in textFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/b/007.txt'.lower() in textFileList
+	assert (os.path.join(testDirectory, 'body/001.txt')).lower() in textFileList
+	assert (os.path.join(testDirectory, 'body/002.txt')).lower() in textFileList
+	assert (os.path.join(testDirectory, 'body/003.txt')).lower() in textFileList
+	assert (os.path.join(testDirectory, 'body/004.txt')).lower() in textFileList
+	assert (os.path.join(testDirectory, '001.txt')).lower() in textFileList
+	assert (os.path.join(testDirectory, '002.txt')).lower() in textFileList
+	assert (os.path.join(testDirectory, 'body/a/001.txt')).lower() in textFileList
+	assert (os.path.join(testDirectory, 'body/b/007.txt')).lower() in textFileList
 
-	allFileList = [fileName.lower() for fileName in recursiveFileLister('uml_loading/tests/testDirectory')]
+	allFileList = [fileName.lower() for fileName in recursiveFileLister(testDirectory)]
 
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/001.txt'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/002.txt'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/003.txt'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/004.txt'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/001.txt'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/002.txt'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/a/001.txt'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/body/b/007.txt'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/001.html'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/050.html'.lower() in allFileList
-	assert '/Users/rossnoren/Dropbox/Ross Noren ML/git/UML/uml_loading/tests/testDirectory/001.savv'.lower() in allFileList
+	assert (os.path.join(testDirectory, 'body/001.txt')).lower() in allFileList
+	assert (os.path.join(testDirectory, 'body/002.txt')).lower() in allFileList
+	assert (os.path.join(testDirectory, 'body/003.txt')).lower() in allFileList
+	assert (os.path.join(testDirectory, 'body/004.txt')).lower() in allFileList
+	assert (os.path.join(testDirectory, '001.txt')).lower() in allFileList
+	assert (os.path.join(testDirectory, '002.txt')).lower() in allFileList
+	assert (os.path.join(testDirectory, 'body/a/001.txt')).lower() in allFileList
+	assert (os.path.join(testDirectory, 'body/b/007.txt')).lower() in allFileList
+	assert (os.path.join(testDirectory, '001.html')).lower() in allFileList
+	assert (os.path.join(testDirectory, '050.html')).lower() in allFileList
+	assert (os.path.join(testDirectory, '001.savv')).lower() in allFileList
 
 def test_extractFilename():
 	"""

@@ -1,8 +1,12 @@
 import math
 
+import UML
 from UML.uml_loading.data_loading import *
 from UML.uml_loading.dok_data_set import DokDataSet
 from UML.uml_loading.convert_to_basedata import convertToCooBaseData
+
+testDirectory = os.path.join(UML.UMLPath(), 'uml_loading', 'tests', 'testDirectory')
+testDirectory2 = os.path.join(UML.UMLPath(), 'uml_loading', 'tests', 'testDirectory2')
 
 def test_DokDataSetFrequencyFloor():
     """
@@ -10,12 +14,12 @@ def test_DokDataSetFrequencyFloor():
     filter
     """
     testSet = DokDataSet()
-    testSet.loadDirectory('uml_loading/tests/testDirectory2', featureMergeMode='multiTyped')
+    testSet.loadDirectory(testDirectory2, featureMergeMode='multiTyped')
     attributeMap = {'001': 'yahoo.com', '002': 'google.com', '003': 'bing.com', '004': 'google.com', '005': 'bing.com', '007': 'bing.com', '008': 'bing.com', '009': 'google.com'}
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=3, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
+    cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=3, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
 
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
@@ -74,13 +78,13 @@ def test_DokDataSetTypeWeighting():
     functions
     """
     testSet = DokDataSet()
-    testSet.loadDirectory('uml_loading/tests/testDirectory2', featureMergeMode='multiTyped')
+    testSet.loadDirectory(testDirectory2, featureMergeMode='multiTyped')
     attributeMap = {'001': 'yahoo.com', '002': 'google.com', '003': 'bing.com', '004': 'google.com', '005': 'bing.com', '007': 'bing.com', '008': 'bing.com', '009': 'google.com'}
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
     typeWeightScheme = {'domain':3}
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=3, featureTypeWeightScheme=typeWeightScheme, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
+    cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=3, featureTypeWeightScheme=typeWeightScheme, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
 
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
@@ -143,6 +147,7 @@ def test_DokDataSetTypeWeighting():
                 # print "processed feature count: " + str(dokVersion[i, j])
                 if feature in featureCountMap:
                     # print "manually computed feature count: " + str(featureCountMap[feature])
+                    pass
                 assert int(dokVersion[i, j]) == featureCountMap[feature]
 
 
@@ -154,7 +159,7 @@ def test_convertToCooBaseDataFreqRepMultiTyped():
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
+    cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
@@ -207,6 +212,7 @@ def test_convertToCooBaseDataFreqRepMultiTyped():
                 #print "processed feature count: " + str(dokVersion[i, j])
                 if feature in featureCountMap:
                     #print "manually computed feature count: " + str(featureCountMap[feature])
+                    pass
                 assert int(dokVersion[i, j]) == featureCountMap[feature]
 
     return
@@ -219,7 +225,7 @@ def test_convertToCooBaseDataBinaryMultiTyped():
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='binary')
+    cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='binary')
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
@@ -271,6 +277,7 @@ def test_convertToCooBaseDataBinaryMultiTyped():
                 #print "processed feature count: " + str(dokVersion[i, j])
                 if feature in featureCountMap:
                     #print "manually computed feature count: " + str(featureCountMap[feature])
+                    pass
                 assert int(dokVersion[i, j]) == featureCountMap[feature]
 
     return
@@ -283,7 +290,7 @@ def test_convertToCooBaseDataTfIdfMultiTyped():
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='tfidf')
+    cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='tfidf')
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 
@@ -348,7 +355,7 @@ def test_convertToCooBaseDataRequiredClassLabel():
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
     requiredClassLabelTypes = set(['classLabel'])
-    cooDataSet = convertToCooBaseData('uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, requiredClassLabelTypes=requiredClassLabelTypes)
+    cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, requiredClassLabelTypes=requiredClassLabelTypes)
     #print "featureReport:\n" + cooDataSet.featureReport()
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
@@ -402,6 +409,7 @@ def test_convertToCooBaseDataRequiredClassLabel():
                 #print "processed feature count: " + str(dokVersion[i, j])
                 if feature in featureCountMap:
                     #print "manually computed feature count: " + str(featureCountMap[feature])
+                    pass
                 assert int(dokVersion[i, j]) == featureCountMap[feature]
 
     return
@@ -412,7 +420,7 @@ if __name__ == "__main__":
     classLabelMap = {'001': 1, '002': 2, '003': 2, '004': 3, '005': 1, '007': 2, '008': 1, '009': 1}
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
-    cooDataSet = convertToCooBaseData('UML/uml_loading/tests/testDirectory2', dirMappingMode='multiTyped', attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, minTermFrequency=2, featureRepresentation='frequency')
+    cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, minTermFrequency=2, featureRepresentation='frequency')
     featureNameMap = cooDataSet.featureNames
     inverseFeatureNameMap = cooDataSet.featureNamesInverse
 

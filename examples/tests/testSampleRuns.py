@@ -1,5 +1,6 @@
 from UML.examples.allowImports import boilerplate
 boilerplate()
+from UML import UMLPath
 from UML import run
 from UML import normalize
 from UML import create
@@ -11,7 +12,7 @@ from UML import runAndTest
 from UML.metrics import classificationError
 
 import os
-exampleDirPath = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + "/datasets/"
+exampleDirPath = UMLPath() + "/datasets/"
 
 def testEverythingVolumeOne():
 	"""

@@ -3,6 +3,7 @@ from configuration import defaultSkipSetNonAlphaNumeric
 from configuration import defaultStopWords
 from configuration import numericalChars
 
+from uml import UMLPath
 from uml import run
 from uml import create
 from uml import normalize
