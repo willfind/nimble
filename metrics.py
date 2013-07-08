@@ -1,3 +1,9 @@
+"""
+Contains various error metrics to be used for evaluating the results
+of supervised learning algorithms.
+
+
+"""
 
 from math import sqrt
 from UML.exceptions import ArgumentException

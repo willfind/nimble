@@ -17,6 +17,11 @@ from UML.logging import UmlLogger
 from UML.logging import LogManager
 from UML.logging import Stopwatch
 from UML.data import Base
+from UML.interfaces import shogun
+from UML.interfaces import mahout
+from UML.interfaces import regressor
+from UML.interfaces import sciKitLearn
+from UML.interfaces import mlpy
 
 
 from UML.umlHelpers import computeMetrics
@@ -201,15 +206,15 @@ def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=
 		timer = None
 
 	if package == 'mahout':
-		results = UML.interfaces.mahout(algorithm, trainData, testData, dependentVar, arguments, output, timer)
+		results = mahout(algorithm, trainData, testData, dependentVar, arguments, output, timer)
 	elif package == 'regressor':
-		results = UML.interfaces.regressor(algorithm, trainData, testData, dependentVar, arguments, output, timer)
+		results = regressor(algorithm, trainData, testData, dependentVar, arguments, output, timer)
 	elif package == 'sciKitLearn':
-		results = UML.interfaces.sciKitLearn(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = sciKitLearn(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'mlpy':
-		results = UML.interfaces.mlpy(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = mlpy(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'shogun':
-		results = UML.interfaces.shogun(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = shogun(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:
