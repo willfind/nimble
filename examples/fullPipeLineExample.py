@@ -14,10 +14,10 @@ if __name__ == "__main__":
 
 	variables = ["x1","x2","x3", "label"]
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-	trainObj = create('DenseMatrixData', data1, variables)
+	trainObj = create('Dense', data1, variables)
 
 	data2 = [[1,0,0,1],[0,1,0,2],[0,0,1,3]]
-	testObj = create('DenseMatrixData', data2, variables)
+	testObj = create('Dense', data2, variables)
 
 	trainObj2 = trainObj.duplicate()
 	testObj2 = testObj.duplicate()

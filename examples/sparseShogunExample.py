@@ -18,8 +18,8 @@ if __name__ == "__main__":
 	print "Finished loading data"
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
-	trainY = trainY.toDenseMatrixData()
-	testY = testY.toDenseMatrixData()
+	trainY = trainY.toDense()
+	testY = testY.toDense()
 
 	args = {"kernel":"GaussianKernel", "width":1, "C":1}
 	results = runAndTest("shogun.MulticlassLibSVM", trainX, testX, trainY, testY, args, [classificationError])

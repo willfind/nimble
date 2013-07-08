@@ -19,8 +19,8 @@ if __name__ == "__main__":
     print "trainY shape: " + str(trainY.data.shape)
 
     # sparse types aren't playing nice with the error metrics currently, so convert
-    trainY = trainY.toDenseMatrixData()
-    testY = testY.toDenseMatrixData()
+    trainY = trainY.toDense()
+    testY = testY.toDense()
 
     trainYList = []
     nullPointIndicesTrain = []

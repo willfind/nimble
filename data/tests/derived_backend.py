@@ -10,7 +10,7 @@ import tempfile
 
 from copy import deepcopy
 from UML.data import List
-from UML.data import DenseMatrixData as DMD
+from UML.data import Dense
 from UML.data.dataHelpers import View
 
 ##############
@@ -310,8 +310,8 @@ def sortPoints_comparator(constructor):
 	data = [[7,1,9],[1,2,3],[4,5,6]]
 	toTest = constructor(data)
 
-	# comparator sort currently disabled for DenseMatrixData
-	if isinstance(toTest, DMD):
+	# comparator sort currently disabled for Dense
+	if isinstance(toTest, Dense):
 		return
 
 	def compOdds(point1, point2):
@@ -383,8 +383,8 @@ def sortFeatures_comparator(constructor):
 	data = [[7,1,9],[1,2,3],[4,2,9]]
 	toTest = constructor(data)
 
-	# comparator sort currently disabled for DenseMatrixData
-	if isinstance(toTest, DMD):
+	# comparator sort currently disabled for Dense
+	if isinstance(toTest, Dense):
 		return
 
 	def compOdds(point1, point2):
@@ -744,29 +744,29 @@ def toList_handmade_assignedFeatureNames(constructor):
 
 
 ##############################
-# toDenseMatrixData() #
+# toDense() #
 ##############################
 
-def toDenseMatrixData_handmade_defaultFeatureNames(constructor):
-	""" Test toDenseMatrixData with default featureNames """
+def toDense_handmade_defaultFeatureNames(constructor):
+	""" Test toDense with default featureNames """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
 
-	ret = toTest.toDenseMatrixData()
-	exp = DMD(data)
+	ret = toTest.toDense()
+	exp = Dense(data)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
 
 	
-def toDenseMatrixData_handmade_assignedFeatureNames(constructor):
-	""" Test toDenseMatrixData with assigned featureNames """
+def toDense_handmade_assignedFeatureNames(constructor):
+	""" Test toDense with assigned featureNames """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	ret = toTest.toDenseMatrixData()
-	exp = DMD(data,featureNames)
+	ret = toTest.toDense()
+	exp = Dense(data,featureNames)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
@@ -831,7 +831,7 @@ def copyReferences_exceptionWrongType(constructor):
 	orig = constructor(data1, featureNames)
 
 	type1 = List(data1,featureNames)
-	type2 = DMD(data1,featureNames)
+	type2 = Dense(data1,featureNames)
 
 	# at least one of these two will be the wrong type
 	orig.copyReferences(type1)

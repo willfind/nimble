@@ -291,18 +291,18 @@ def test_toList_handmade_assignedFeatureNames():
 
 
 ##############################
-# toDenseMatrixData() #
+# toDense() #
 ##############################
 
 
-def test_toDenseMatrixData_handmade_defaultFeatureNames():
-	""" Test List toDenseMatrixData with default featureNames """
-	toDenseMatrixData_handmade_defaultFeatureNames(constructor)
+def test_toDense_handmade_defaultFeatureNames():
+	""" Test List toDense with default featureNames """
+	toDense_handmade_defaultFeatureNames(constructor)
 
 	
-def test_toDenseMatrixData_handmade_assignedFeatureNames():
-	""" Test List toDenseMatrixData with assigned featureNames """
-	toDenseMatrixData_handmade_assignedFeatureNames(constructor)
+def test_toDense_handmade_assignedFeatureNames():
+	""" Test List toDense with assigned featureNames """
+	toDense_handmade_assignedFeatureNames(constructor)
 
 
 
@@ -475,6 +475,6 @@ def test_getPointView_isinstance():
 ##################
 
 def test_getFeatureView_isinstance():
-	""" Test DMD getFeatureView() returns an instance of the View in dataHelpers """
+	""" Test List getFeatureView() returns an instance of the View in dataHelpers """
 	getFeatureView_isinstance(constructor)
 

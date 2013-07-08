@@ -10,7 +10,7 @@ from nose.tools import *
 
 
 from UML.data import List
-from UML.data import DenseMatrixData
+from UML.data import Dense
 from UML.data import Sparse
 from UML.data.tests.high_level_backend import *
 from UML import create
@@ -27,7 +27,7 @@ def listInit(data,featureNames=None):
 	return List(data,featureNames)
 
 def denseInit(data,featureNames=None):
-	return DenseMatrixData(data,featureNames)
+	return Dense(data,featureNames)
 
 def sparseInit(data,featureNames=None):
 	return Sparse(data, featureNames)
@@ -181,7 +181,7 @@ def test_foldIterator_verifyPartitions():
 def test_foldIterator_ordering():
 	""" Test that foldIterator() yields folds in the proper order: X and Y folds should be in the same order"""
 	twoColumnData = [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9], [10, 10]]
-	denseObj = create('dmd', twoColumnData)
+	denseObj = create('dense', twoColumnData)
 	Ydata = denseObj.extractFeatures([1])
 	Xdata = denseObj
 	XIterator = Xdata.foldIterator(numFolds=2)

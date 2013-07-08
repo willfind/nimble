@@ -14,10 +14,10 @@ if __name__ == "__main__":
 
 	variables = ["x1","x2","x3"]
 	data1 = [[1,0,0], [3,3,3], [5,0,0],]
-	trainObj = create('DenseMatrixData', data1, variables)
+	trainObj = create('Dense', data1, variables)
 
 	data2 = [[1,0,0],[1,1,1],[5,1,1], [3,4,4]]
-	testObj = create('DenseMatrixData', data2)
+	testObj = create('Dense', data2)
 
 	normalize('mlpy.PCA', trainObj, testObj, arguments={'k':2})
 	ret = run('sciKitLearn.KMeans', trainObj, testObj, arguments={'n_clusters':3})

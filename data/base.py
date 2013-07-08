@@ -873,8 +873,8 @@ class Base(object):
 	def toList(self):
 		return self._toList_implementation()
 
-	def toDenseMatrixData(self):
-		return self._toDenseMatrixData_implementation()
+	def toDense(self):
+		return self._toDense_implementation()
 
 	def writeFile(self, extension, outPath, includeFeatureNames):
 		"""
@@ -981,7 +981,7 @@ class Base(object):
 
 	def getType(self):
 		"""
-			Return a string representing the non-abstract type of this object (e.g. DenseMatrixData,
+			Return a string representing the non-abstract type of this object (e.g. Dense,
 			Sparse, etc.) that can be passed to create() function to create a new object
 			of the same type.
 		"""

@@ -14,10 +14,10 @@ if __name__ == "__main__":
 
 	variables = ["x1","x2"]
 	data1 = [[1,0], [3,3], [5,0],]
-	trainingObj = create('DenseMatrixData', data1, variables)
+	trainingObj = create('Dense', data1, variables)
 
 	data2 = [[1,0],[1,1],[5,1], [3,4]]
-	testObj = create('DenseMatrixData', data2)
+	testObj = create('Dense', data2)
 
 	ret = run('sciKitLearn.KMeans', trainingObj, testObj, output=None, arguments={'n_clusters':3})
 

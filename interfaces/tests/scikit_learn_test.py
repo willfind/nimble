@@ -9,7 +9,7 @@ from numpy.random import rand, randint
 
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.interfaces.scikit_learn_interface import *
-from UML.data import DenseMatrixData as DMData
+from UML.data import Dense
 from UML.data import Sparse
 
 
@@ -26,17 +26,17 @@ def testSciKitLearnHandmadeRegression():
 	""" Test sciKitLearn() by calling a regression algorithm with known output """
 	variables = ["Y","x1","x2"]
 	data = [[2,1,1], [3,1,2], [4,2,2],]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[0,1]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	ret = sciKitLearn("LinearRegression", trainingObj, testObj, output=None, dependentVar="Y", arguments={})
 
 	assert ret is not None
 
 	expected = [[1.]]
-	expectedObj = DMData(expected)
+	expectedObj = Dense(expected)
 
 	numpy.testing.assert_approx_equal(ret.data[0,0],1.)
 
@@ -63,10 +63,10 @@ def testSciKitLearnHandmadeClustering():
 	""" Test sciKitLearn() by calling a clustering algorithm with known output """
 	variables = ["x1","x2"]
 	data = [[1,0], [3,3], [5,0],]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[1,0],[1,1],[5,1], [3,4]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	ret = sciKitLearn("KMeans", trainingObj, testObj, output=None, arguments={'n_clusters':3})
 
@@ -103,10 +103,10 @@ def testSciKitLearnScoreMode():
 	""" Test sciKitLearn() scoreMode flags"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	# default scoreMode is 'label'
 	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})
@@ -128,10 +128,10 @@ def testSciKitLearnScoreModeBinary():
 	""" Test sciKitLearn() scoreMode flags, binary case"""
 	variables = ["Y","x1","x2"]
 	data = [[1,30,2],[2,1,1], [2,0,1],[2,-1,-1],  [1,30,3], [1,34,4]]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[2,1],[25,0]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	# default scoreMode is 'label'
 	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})

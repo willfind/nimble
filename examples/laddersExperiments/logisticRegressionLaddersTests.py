@@ -29,11 +29,11 @@ if __name__ == "__main__":
 
 
     # sparse types aren't playing nice with the error metrics currently, so convert
-    #trainX = trainX.toDenseMatrixData()
-    #testX = testX.toDenseMatrixData()
+    #trainX = trainX.toDense()
+    #testX = testX.toDense()
 
-    trainY = trainY.toDenseMatrixData()
-    testY = testY.toDenseMatrixData()
+    trainY = trainY.toDense()
+    testY = testY.toDense()
 
     trainYList = []
     trainRemoveList = []

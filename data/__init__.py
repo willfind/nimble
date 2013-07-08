@@ -1,4 +1,4 @@
 from sparse import Sparse
-from dense_matrix_data import DenseMatrixData
+from dense import Dense
 from list import List
 from base import Base

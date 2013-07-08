@@ -14,8 +14,8 @@ if __name__ == "__main__":
     trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=1, fractionForTestSet=.2, loadType="Sparse", fileType="mtx")
 
     # sparse types aren't playing nice with the error metrics currently, so convert
-    trainY = trainY.toDenseMatrixData()
-    testY = testY.toDenseMatrixData()
+    trainY = trainY.toDense()
+    testY = testY.toDense()
 
     trainYList = []
     

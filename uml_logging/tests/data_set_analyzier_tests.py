@@ -14,7 +14,7 @@ def testDense():
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
 
-    trainObj = create('DenseMatrixData', data1, names1)
+    trainObj = create('Dense', data1, names1)
     funcs = featurewiseFunctionGenerator()
     rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
     funcNames = rawTable[0]

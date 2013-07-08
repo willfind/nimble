@@ -7,7 +7,7 @@ import numpy.testing
 
 from test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.interfaces.mlpy_interface import *
-from UML.data import DenseMatrixData as DMData
+from UML.data import Dense
 
 def testMlpyLocation():
 	""" Test setMlpyLocation() """
@@ -22,17 +22,17 @@ def testMlpyHandmadeSVMClassification():
 
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2], [3,1,500]]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})
 
 	assert ret is not None
 
 	expected = [[1.]]
-	expectedObj = DMData(expected)
+	expectedObj = Dense(expected)
 
 	numpy.testing.assert_approx_equal(ret.data[0,0],1.)
 	
@@ -42,17 +42,17 @@ def testMlpyHandmadeLogisticRegression():
 
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2], [3,1,500]]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	ret = mlpy("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments={"solver_type":"l2r_lr"})
 
 	assert ret is not None
 
 	expected = [[1.]]
-	expectedObj = DMData(expected)
+	expectedObj = Dense(expected)
 
 	numpy.testing.assert_approx_equal(ret.data[0,0],1.)
 	
@@ -62,10 +62,10 @@ def testMlpyHandmadeKNN():
 
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2]]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[2,3],[0,0]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	ret = mlpy("KNN", trainingObj, testObj, output=None, dependentVar="Y", arguments={"k":1})
 
@@ -77,10 +77,10 @@ def testMlpyHandmadeKNN():
 def testMlpyHandmadePCA():
 	""" Test mlpy() by calling PCA and checking the output has the correct dimension """
 	data = [[1,1,1], [2,2,2], [4,4,4]]
-	trainingObj = DMData(data)
+	trainingObj = Dense(data)
 
 	data2 = [[4,4,4]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	ret = mlpy("PCA", trainingObj, testObj, output=None, arguments={'k':1})
 
@@ -92,10 +92,10 @@ def testMlpyHandmadePCA():
 def testMlpyHandmadeKernelPCA():
 	""" Test mlpy() by calling PCA with a kernel transformation, checking the output has the correct dimension """
 	data = [[1,1], [2,2], [3,3]]
-	trainObj = DMData(data)
+	trainObj = Dense(data)
 
 	data2 = [[4,4]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	ret = mlpy("KPCA", trainObj, testObj, output=None, arguments={"kernel":"KernelGaussian", 'k':1})
 
@@ -108,10 +108,10 @@ def testMlpyScoreMode():
 	""" Test mlpy() scoreMode flags"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	# default scoreMode is 'label'
 	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})
@@ -132,10 +132,10 @@ def testMlpyScoreModeBinary():
 	""" Test mlpy() scoreMode flags, binary case"""
 	variables = ["Y","x1","x2"]
 	data = [[1,1,1], [1,0,1],[1,-1,-1], [-1,30,2], [-1,30,3], [-1,34,4]]
-	trainingObj = DMData(data,variables)
+	trainingObj = Dense(data,variables)
 
 	data2 = [[2,1],[25,0]]
-	testObj = DMData(data2)
+	testObj = Dense(data2)
 
 	# default scoreMode is 'label'
 	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})

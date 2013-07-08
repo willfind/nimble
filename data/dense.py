@@ -1,9 +1,6 @@
 """
 Class extending Base, using a numpy dense matrix to store data.
 
-Outside of the class, functions are defined for reading and writing DenseMatrixData
-to files.
-
 """
 
 import numpy
@@ -19,7 +16,7 @@ from scipy.sparse import isspmatrix
 import random
 
 
-class DenseMatrixData(Base):
+class Dense(Base):
 	"""
 	Class providing implementations of data manipulation operations on data stored
 	in a numpy dense matrix.
@@ -37,9 +34,9 @@ class DenseMatrixData(Base):
 		for i in xrange(x):
 			for j in xrange(y):
 				if isinstance(self.data[i,j], basestring):
-					raise ArgumentException("DenseMatrixData does not accept strings in the input")
+					raise ArgumentException("Dense does not accept strings in the input")
 		#print "featureNames: ", featureNames
-		super(DenseMatrixData, self).__init__(featureNames, name, path)
+		super(Dense, self).__init__(featureNames, name, path)
 		
 
 	def _transpose_implementation(self):
@@ -90,14 +87,14 @@ class DenseMatrixData(Base):
 
 		if scorer:
 			scores = viewBasedApplyAlongAxis(scorer, 'point', self)
-			scoresObj = DenseMatrixData(scores)
+			scoresObj = Dense(scores)
 			scoresObj.transpose()
 			self.appendFeatures(scoresObj)
 			# sort by the scores, ie the most recently added feature
 			sortBy = self.features() - 1 
 			
 		if sortBy is None:
-			raise ArgumentException("DenseMatrixData does not support comparator based sorting")
+			raise ArgumentException("Dense does not support comparator based sorting")
 		else:
 			indices = numpy.argsort(self.data[:,sortBy],0)
 			self.data = self.data[numpy.array(indices).flatten()]
@@ -223,7 +220,7 @@ class DenseMatrixData(Base):
 		ret = self.data[toExtract]
 		self.data = numpy.delete(self.data,toExtract,0)
 
-		return DenseMatrixData(ret)
+		return Dense(ret)
 
 	def _extractPointsByFunction_implementation(self, toExtract, number):
 		"""
@@ -241,7 +238,7 @@ class DenseMatrixData(Base):
 				toRemove.append(i)
 		self.data = numpy.delete(self.data,toRemove,0)
 
-		return DenseMatrixData(ret)
+		return Dense(ret)
 
 	def _extractPointsByRange_implementation(self, start, end):
 		"""
@@ -252,7 +249,7 @@ class DenseMatrixData(Base):
 		# +1 on end in ranges, because our ranges are inclusive
 		ret = self.data[start:end+1,:]
 		self.data = numpy.delete(self.data, numpy.s_[start:end+1], 0)
-		return DenseMatrixData(ret)
+		return Dense(ret)
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
 		"""
@@ -321,7 +318,7 @@ class DenseMatrixData(Base):
 		for index in toExtract:
 			featureNameList.append(self.featureNamesInverse[index])
 
-		return DenseMatrixData(ret, featureNameList)
+		return Dense(ret, featureNameList)
 
 	def _extractFeaturesByFunction_implementation(self, toExtract, number):
 		"""
@@ -359,7 +356,7 @@ class DenseMatrixData(Base):
 		for index in xrange(start,end+1):
 			featureNameList.append(self.featureNamesInverse[index])
 
-		return DenseMatrixData(ret, featureNameList)
+		return Dense(ret, featureNameList)
 
 
 	def _applyFunctionToEachPoint_implementation(self,function):
@@ -373,7 +370,7 @@ class DenseMatrixData(Base):
 		retData = numpy.apply_along_axis(function,1,self.data)
 		retData = numpy.matrix(retData)
 		retData = retData.T
-		return DenseMatrixData(retData)
+		return Dense(retData)
 
 
 	def _applyFunctionToEachFeature_implementation(self,function):
@@ -386,7 +383,7 @@ class DenseMatrixData(Base):
 #		def funcWrap(feature):
 #			return function(VectorView(feature))
 		retData = numpy.apply_along_axis(function,0,self.data)
-		return DenseMatrixData(retData)
+		return Dense(retData)
 
 
 	def _mapReduceOnPoints_implementation(self, mapper, reducer):
@@ -423,7 +420,7 @@ class DenseMatrixData(Base):
 			if redRet is not None:
 				(redKey,redValue) = redRet
 				ret.append([redKey, redValue])
-		return DenseMatrixData(ret)
+		return Dense(ret)
 
 
 	def _features_implementation(self):
@@ -435,10 +432,10 @@ class DenseMatrixData(Base):
 		return shape[0]
 
 	def _getType_implementation(self):
-		return 'DenseMatrixData'
+		return 'Dense'
 
 	def _equals_implementation(self,other):
-		if not isinstance(other,DenseMatrixData):
+		if not isinstance(other,Dense):
 			return False
 		if self.points() != other.points():
 			return False
@@ -451,9 +448,9 @@ class DenseMatrixData(Base):
 		"""	Returns a List object with the same data and featureNames as this one """
 		return UML.data.List(self.data.tolist(), self.featureNames)
 
-	def _toDenseMatrixData_implementation(self):
-		""" Returns a DenseMatrixData object with the same data and featureNames as this object """
-		return DenseMatrixData(self.data, self.featureNames)
+	def _toDense_implementation(self):
+		""" Returns a Dense object with the same data and featureNames as this object """
+		return Dense(self.data, self.featureNames)
 
 
 	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
@@ -490,13 +487,13 @@ class DenseMatrixData(Base):
 			mmwrite(target=outPath, a=self.data)
 
 	def _copyReferences_implementation(self, other):
-		if not isinstance(other, DenseMatrixData):
+		if not isinstance(other, Dense):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
 
 	def _duplicate_implementation(self):
-		return DenseMatrixData(deepcopy(self.data), deepcopy(self.featureNames))
+		return Dense(deepcopy(self.data), deepcopy(self.featureNames))
 
 	def _copyPoints_implementation(self, points, start, end):
 		if points is not None:
@@ -504,7 +501,7 @@ class DenseMatrixData(Base):
 		else:
 			ret = self.data[start:end+1,:]
 
-		return DenseMatrixData(ret)
+		return Dense(ret)
 
 	def _copyFeatures_implementation(self, indices, start, end):
 		featureNameList = []
@@ -517,7 +514,7 @@ class DenseMatrixData(Base):
 			for index in range(start, end+1):
 				featureNameList.append(self.featureNamesInverse[index])
 
-		return DenseMatrixData(ret, featureNameList)
+		return Dense(ret, featureNameList)
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x,y]

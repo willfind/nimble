@@ -20,9 +20,9 @@ def testEverythingVolumeOne():
 	"""
 	pathOrig = os.path.join(os.path.dirname(__file__), "../../datasets/iris.csv")
 
-	# we specify that we want a DenseMatrixData object returned, and with just the path it will
+	# we specify that we want a Dense object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
-	processed = create("DenseMatrixData", pathOrig)
+	processed = create("Dense", pathOrig)
 
 	assert processed.data is not None
 
@@ -79,7 +79,7 @@ def testDataPrepExample():
 	pathOrig = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny.csv")
 	pathOut = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny_numerical.csv")
 
-	# we specify that we want a DenseMatrixData object returned, and with just the path it will
+	# we specify that we want a Dense object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
 	processed = create("List", pathOrig)
 
@@ -109,7 +109,7 @@ def testCrossValidateExample():
 	"""
 	# path to input specified by command line argument
 	pathIn = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny_numerical.csv")
-	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID='income', fractionForTestSet=.15, loadType="DenseMatrixData", fileType="csv")
+	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID='income', fractionForTestSet=.15, loadType="Dense", fileType="csv")
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
 	toRun = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [classificationError])'
@@ -127,12 +127,12 @@ def testNormalizing():
 	# we separate into classes accoring to whether x1 is positive or negative
 	variables = ["y","x1","x2","x3"]
 	data1 = [[1,6,0,0], [1,3,0,0], [0,-5,0,0],[0,-3,0,0]]
-	trainObj = create('DenseMatrixData', data1, variables)
+	trainObj = create('Dense', data1, variables)
 	trainObjY = trainObj.extractFeatures('y')
 
 	# data we're going to classify
 	data2 = [[1,0,0],[4,0,0],[-1,0,0], [-2,0,0]]
-	testObj = create('DenseMatrixData', data2)
+	testObj = create('Dense', data2)
 
 	# baseline check
 	assert trainObj.data[0].size == 3

@@ -25,7 +25,7 @@ if __name__ == "__main__":
 	yData = allData.extractFeatures([5])
 	xData = allData
 
-	yData = yData.toDenseMatrixData()
+	yData = yData.toDense()
 
 	print "data formatted"
 

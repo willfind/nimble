@@ -63,7 +63,7 @@ def randomizedData(retType, numPoints, numFeatures, sparcity, numericType="int",
 	return create(retType, data=randData, featureNames=featureNames, name=name)
 
 
-def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="DenseMatrixData"):
+def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="Dense"):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
 	It returns training X, training Y, testing X and testing Y"""
 	trainX = create(loadType, fileName, fileType=fileType)
@@ -255,7 +255,7 @@ def create(retType, data=None, featureNames=None, fileType=None, name=None, send
 	# these should be lowercase to avoid ambiguity
 	retType = retType.lower()
 	sparseAlias = ["sparse"]
-	denseAlias = ["densematrixdata", 'dmd', 'dense']
+	denseAlias = ['dense']
 	listAlias = ["list"]
 	if retType in sparseAlias:
 		ret = _loadSparse(data, featureNames, fileType)
