@@ -64,7 +64,7 @@ def testSparse():
     col = np.array([0, 4, 2, 3, 1, 3, 4, 0, 1, 3, 4, 5])
     vals = np.array([1, 1, 1, 1, 1, None, 1, 1, 1, 1, 1, 1])
 
-    testObj = create('coo', (vals, (row, col)))
+    testObj = create('Sparse', (vals, (row, col)))
     funcs = featurewiseFunctionGenerator()
     rawTable = produceFeaturewiseInfoTable(testObj, funcs)
 

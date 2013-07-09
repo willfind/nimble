@@ -28,7 +28,8 @@ class Stopwatch(object):
 			raise ImproperActionException("Task: " + taskName + " has already been started.")
 		else:
 			self.startTimes[taskName] = time.clock()
-			self.cumulativeTimes[taskName] = 0.0
+			if taskName not in self.cumulativeTimes:
+				self.cumulativeTimes[taskName] = 0.0
 			self.isRunningStatus[taskName] = True
 
 	def stop(self, taskName):
@@ -90,7 +91,7 @@ class Stopwatch(object):
 			ImproperActionException.
 		"""
 		if taskName not in self.cumulativeTimes or taskName not in self.isRunningStatus:
-			raise MissingEntryException("Missing entry when trying to calculate total task run time: " + str(taskName))
+			raise MissingEntryException([taskName], "Missing entry when trying to calculate total task run time: " + str(taskName))
 		elif self.isRunningStatus[taskName] == True:
 			raise ImproperActionException('Can\'t calculate total running time for ' + taskName + ', as it is still running')
 		else:
@@ -101,6 +102,9 @@ class Stopwatch(object):
 def testBasicFuncs():
 	watch = Stopwatch()
 	watch.start('test')
+	# giberish, to eat some time
+	for i in range(100000):
+		x = (i * (i + i)) / 3.0
 	watch.stop('test')
 	runTime = watch.calcRunTime('test')
 	assert runTime > 0.0

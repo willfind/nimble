@@ -5,6 +5,7 @@ found in read.data_loading module
 
 from UML.read.data_loading import *
 import UML
+import os
 
 testDirectory = os.path.join(UML.UMLPath(), 'read', 'tests', 'testDirectory')
 

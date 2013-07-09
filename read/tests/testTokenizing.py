@@ -3,6 +3,9 @@ Unit tests of the functions to do basic text processing - remove html, tokenize,
 remove symbols, remove stop words, etc.
 """
 
+import os
+import UML
+
 #from UML.read.text_processing import readDirectoryIntoSparseMatrix
 from UML.read.text_processing import convertToTokens
 #from UML.read.text_processing import convertAttributeMapToMatrix

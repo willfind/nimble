@@ -391,7 +391,7 @@ def testParseLog():
 	return 0"""
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
-	testLogger = MachineReadableRunLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
+	testLogger = MachineReadableLogger("/Users/rossnoren/UMLMisc/mrTest2.txt")
 	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)
 
 	functionObj = lambda x: x+1
@@ -430,7 +430,7 @@ def main():
 	return 0"""
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
-	testLogger = MachineReadableRunLog("~/mrTest2.txt")
+	testLogger = MachineReadableLogger("~/mrTest2.txt")
 	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)
 
 	functionObj = lambda x: x+1
