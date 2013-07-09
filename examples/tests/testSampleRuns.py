@@ -12,7 +12,7 @@ from UML import runAndTest
 from UML.metrics import classificationError
 
 import os
-exampleDirPath = UMLPath() + "/datasets/"
+exampleDirPath = UMLPath + "/datasets/"
 
 def testEverythingVolumeOne():
 	"""

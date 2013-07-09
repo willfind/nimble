@@ -10,7 +10,7 @@ import UML
 from UML.read.text_processing import convertToTokens
 #from UML.read.text_processing import convertAttributeMapToMatrix
 
-testDirectory = os.path.join(UML.UMLPath(), 'read', 'tests', 'testDirectory')
+testDirectory = os.path.join(UML.UMLPath, 'read', 'tests', 'testDirectory')
 
 def test_readDirectoryIntoSparseMatrix():
 	"""

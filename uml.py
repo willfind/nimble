@@ -42,8 +42,7 @@ from UML.umlHelpers import _diffLessThan
 from UML.umlHelpers import generateAllPairs
 
 
-def UMLPath():
-	return os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 def randomizedData(retType, numPoints, numFeatures, sparcity, numericType="int", featureNames=None, name=None):
 	if numPoints < 1:

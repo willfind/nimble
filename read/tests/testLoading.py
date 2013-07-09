@@ -7,7 +7,7 @@ from UML.read.data_loading import *
 import UML
 import os
 
-testDirectory = os.path.join(UML.UMLPath(), 'read', 'tests', 'testDirectory')
+testDirectory = os.path.join(UML.UMLPath, 'read', 'tests', 'testDirectory')
 
 def test_listFiles():
 	"""

@@ -6,8 +6,8 @@ from UML.read.data_loading import *
 from UML.read.dok_data_set import DokDataSet
 from UML.read.convert_to_basedata import convertToCooBaseData
 
-testDirectory = os.path.join(UML.UMLPath(), 'read', 'tests', 'testDirectory')
-testDirectory2 = os.path.join(UML.UMLPath(), 'read', 'tests', 'testDirectory2')
+testDirectory = os.path.join(UML.UMLPath, 'read', 'tests', 'testDirectory')
+testDirectory2 = os.path.join(UML.UMLPath, 'read', 'tests', 'testDirectory2')
 
 def test_DokDataSetFrequencyFloor():
     """
