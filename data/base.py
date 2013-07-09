@@ -615,7 +615,7 @@ class Base(object):
 		"""If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data. 
 		If it returns True, they probably do but you can't be absolutely sure.
 		Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
-		passed are of the same type (dense, sparse, etc.)"""
+		passed are of the same type (Matrix, Sparse, etc.)"""
 		#first check to make sure they have the same number of rows and columns
 		if self.points() != otherDataMatrix.points(): return False
 		if self.features() != otherDataMatrix.features(): return False
@@ -873,8 +873,8 @@ class Base(object):
 	def toList(self):
 		return self._toList_implementation()
 
-	def toDense(self):
-		return self._toDense_implementation()
+	def toMatrix(self):
+		return self._toMatrix_implementation()
 
 	def writeFile(self, extension, outPath, includeFeatureNames):
 		"""
@@ -981,7 +981,7 @@ class Base(object):
 
 	def getType(self):
 		"""
-			Return a string representing the non-abstract type of this object (e.g. Dense,
+			Return a string representing the non-abstract type of this object (e.g. Matrix,
 			Sparse, etc.) that can be passed to create() function to create a new object
 			of the same type.
 		"""

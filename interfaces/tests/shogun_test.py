@@ -14,7 +14,7 @@ from UML.interfaces import shogun
 from UML.interfaces.shogun_interface import listAlgorithms
 from UML.interfaces.shogun_interface import setShogunLocation
 from UML.interfaces.shogun_interface import getShogunLocation
-from UML.data import Dense
+from UML.data import Matrix
 from UML.data import Sparse
 
 
@@ -30,10 +30,10 @@ def testShogun_shapemismatchException():
 	""" Test shogun() raises exception when the shape of the train and test data don't match """
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,0], [-1,0,1], [1,3,2]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[3]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	args = {}
 	ret = shogun("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
@@ -44,10 +44,10 @@ def testShogun_singleClassException():
 	""" Test shogun() raises exception when the training data only has a single label """
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,0], [-1,0,1], [1,3,2]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[3]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	args = {}
 	ret = shogun("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
@@ -58,10 +58,10 @@ def testShogunHandmadeBinaryClassification():
 	""" Test shogun() by calling a binary linear classification algorithm"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,0], [-0,0,1], [1,3,2]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[3,3], [-1,0]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	args = {}
 	ret = shogun("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
@@ -75,10 +75,10 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 	""" Test shogun() by calling a binary linear classification algorithm with a kernel """
 	variables = ["Y","x1","x2"]
 	data = [[5,-11,-5], [1,0,1], [1,3,2]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[5,3], [-1,0]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
 	ret = shogun("LibSVM", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
@@ -92,10 +92,10 @@ def testShogunKMeans():
 	""" Test shogun() by calling the Kmeans classifier, a distance based machine """
 	variables = ["Y","x1","x2"]
 	data = [[0,0,0], [0,0,1], [1,8,1], [1,7,1], [2,1,9], [2,1,8]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[0,-10], [10,1], [1,10]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	args = {'distance':'ManhattanMetric'}
 	ret = shogun("KNN", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
@@ -111,10 +111,10 @@ def testShogunMulticlassSVM():
 	""" Test shogun() by calling a multilass classifier with a kernel """
 	variables = ["Y","x1","x2"]
 	data = [[0,0,0], [0,0,1], [1,-118,1], [1,-117,1], [2,1,191], [2,1,118], [3,-1000,-500]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[0,0], [-101,1], [1,101], [1,1]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	args = {'C':.5, 'kernel':'LinearKernel'}
 #	args = {'C':1}
@@ -139,7 +139,7 @@ def testShogunSparseRegression():
 	obj = Sparse(A)
 
 	labelsData = numpy.random.rand(x)
-	labels = Dense(labelsData)
+	labels = Matrix(labelsData)
 
 	ret = shogun('MulticlassOCAS', trainData=obj, testData=obj, dependentVar=labels)
 
@@ -160,10 +160,10 @@ def testShogunRossData():
 
 	data = [p0,p1,p2,p3,p4,p5,p6,p7]
 
-	trainingObj = Dense(data)
+	trainingObj = Matrix(data)
 
 	data2 = [[0, 0, 0, 0, 0.33], [0.55, 0, 0.67, 0.98, 0]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	args = {'C':1.0}
 	argsk = {'C':1.0, 'kernel':"LinearKernel"}
@@ -207,10 +207,10 @@ def testShogunEmbeddedRossData():
 				else:
 					numpyData[i,j] = numpy.random.rand()
 
-	trainingObj = Dense(numpyData)
+	trainingObj = Matrix(numpyData)
 
 	data2 = [[0, 0, 0, 0, 0.33,0, 0, 0, 0.33], [0.55, 0, 0.67, 0.98,0.55, 0, 0.67, 0.98, 0]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	args = {'C':1.0}
 
@@ -225,10 +225,10 @@ def testShogunScoreModeMulti():
 	""" Test shogun() returns the right dimensions when given different scoreMode flags, multi case"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
 	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={})
@@ -248,10 +248,10 @@ def testShogunScoreModeBinary():
 	""" Test shogun() returns the right dimensions when given different scoreMode flags, binary case"""
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,1], [-1,0,1], [1,30,2], [1,30,3]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[2,1],[25,0]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
 	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={})
@@ -271,10 +271,10 @@ def testShogunMultiClassStrategyMultiDataBinaryAlg():
 	""" Test shogun() will correctly apply the provided strategies when given multiclass data and a binary algorithm"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
-	trainingObj = Dense(data,variables)
+	trainingObj = Matrix(data,variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = Dense(data2)
+	testObj = Matrix(data2)
 
 #	import pdb
 #	pdb.set_trace()

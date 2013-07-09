@@ -21,8 +21,8 @@ if __name__ == "__main__":
 	print "trainY shape: " + str(trainY.data.shape)
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
-	trainY = trainY.toDense()
-	testY = testY.toDense()
+	trainY = trainY.toMatrix()
+	testY = testY.toMatrix()
 
 	trainYList = []
 	
@@ -41,8 +41,8 @@ if __name__ == "__main__":
 		else:
 			testYList.append([2])
 
-	trainY = create('dense', trainYList)
-	testY = create('dense', testYList)
+	trainY = create('Matrix', trainYList)
+	testY = create('Matrix', testYList)
 
 	print "Finished converting labels to ints"
 

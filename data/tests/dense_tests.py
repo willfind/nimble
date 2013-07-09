@@ -1,5 +1,5 @@
 """
-Unit tests for the Dense object. Calls upon the functions defined
+Unit tests for the Matrix object. Calls upon the functions defined
 in derived_backend.py using appropriate input
 
 
@@ -11,7 +11,7 @@ from UML import create
 from UML.exceptions import ArgumentException
 
 def constructor(data=None, featureNames=None):
-	return create('Dense', data, featureNames)
+	return create('Matrix', data, featureNames)
 
 
 ##############
@@ -19,11 +19,11 @@ def constructor(data=None, featureNames=None):
 ##############
 
 def test_init_allEqual():
-	""" Test Dense __init__() that every way to instantiate produces equal objects """
+	""" Test Matrix __init__() that every way to instantiate produces equal objects """
 	init_allEqual(constructor)
 
 def test_init_allEqualWithFeatureNames():
-	""" Test Dense __init__() that every way to instantiate produces equal objects, with featureNames """
+	""" Test Matrix __init__() that every way to instantiate produces equal objects, with featureNames """
 	init_allEqualWithFeatureNames(constructor)
 
 ############
@@ -31,11 +31,11 @@ def test_init_allEqualWithFeatureNames():
 ############
 
 def test_equals_False():
-	""" Test Dense equals() against some non-equal input """
+	""" Test Matrix equals() against some non-equal input """
 	equals_False(constructor)
 
 def test_equals_True():
-	""" Test Dense equals() against some actually equal input """
+	""" Test Matrix equals() against some actually equal input """
 	equals_True(constructor)
 
 
@@ -44,7 +44,7 @@ def test_equals_True():
 ###############
 
 def test_transpose_handmade():
-	""" Test Dense transpose() function against handmade output """
+	""" Test Matrix transpose() function against handmade output """
 	transpose_handmade(constructor)
 
 
@@ -54,25 +54,25 @@ def test_transpose_handmade():
 
 @raises(ArgumentException)
 def test_appendPoints_exceptionNone():
-	""" Test Dense appendPoints() for ArgumentException when toAppend is None"""
+	""" Test Matrix appendPoints() for ArgumentException when toAppend is None"""
 	appendPoints_exceptionNone(constructor)
 
 @raises(ArgumentException)
 def test_appendPoints_exceptionWrongSize():
-	""" Test Dense appendPoints() for ArgumentException when toAppend has too many features """
+	""" Test Matrix appendPoints() for ArgumentException when toAppend has too many features """
 	appendPoints_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
 def test_appendPoints_exceptionMismatchedFeatureNames():
-	""" Test Dense appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
+	""" Test Matrix appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
 	appendPoints_exceptionMismatchedFeatureNames(constructor)
 
 def test_appendPoints_handmadeSingle():
-	""" Test Dense appendPoints() against handmade output for a single added point """
+	""" Test Matrix appendPoints() against handmade output for a single added point """
 	appendPoints_handmadeSingle(constructor)
 
 def test_appendPoints_handmadeSequence():
-	""" Test Dense appendPoints() against handmade output for a sequence of additions"""
+	""" Test Matrix appendPoints() against handmade output for a sequence of additions"""
 	appendPoints_handmadeSequence(constructor)
 
 
@@ -82,25 +82,25 @@ def test_appendPoints_handmadeSequence():
 
 @raises(ArgumentException)
 def test_appendFeatures_exceptionNone():
-	""" Test Dense appendFeatures() for ArgumentException when toAppend is None """
+	""" Test Matrix appendFeatures() for ArgumentException when toAppend is None """
 	appendFeatures_exceptionNone(constructor)
 
 @raises(ArgumentException)
 def test_appendFeatures_exceptionWrongSize():
-	""" Test Dense appendFeatures() for ArgumentException when toAppend has too many points """
+	""" Test Matrix appendFeatures() for ArgumentException when toAppend has too many points """
 	appendFeatures_exceptionWrongSize(constructor)
 
 @raises(ArgumentException)
 def test_appendFeatures_exceptionSameFeatureName():
-	""" Test Dense appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
+	""" Test Matrix appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
 	appendFeatures_exceptionSameFeatureName(constructor)
 
 def test_appendFeatures_handmadeSingle():
-	""" Test Dense appendFeatures() against handmade output for a single added feature"""
+	""" Test Matrix appendFeatures() against handmade output for a single added feature"""
 	appendFeatures_handmadeSingle(constructor)
 
 def test_appendFeatures_handmadeSequence():
-	""" Test Dense appendFeatures() against handmade output for a sequence of additions"""
+	""" Test Matrix appendFeatures() against handmade output for a sequence of additions"""
 	appendFeatures_handmadeSequence(constructor)
 
 
@@ -111,19 +111,19 @@ def test_appendFeatures_handmadeSequence():
 
 @raises(ArgumentException)
 def test_sortPoints_exceptionAtLeastOne():
-	""" Test Dense sortPoints() has at least one paramater """
+	""" Test Matrix sortPoints() has at least one paramater """
 	sortPoints_exceptionAtLeastOne(constructor)
 
 def test_sortPoints_naturalByFeature():
-	""" Test Dense sortPoints() when we specify a feature to sort by """	
+	""" Test Matrix sortPoints() when we specify a feature to sort by """	
 	sortPoints_naturalByFeature(constructor)
 
 def test_sortPoints_scorer():
-	""" Test Dense sortPoints() when we specify a scoring function """
+	""" Test Matrix sortPoints() when we specify a scoring function """
 	sortPoints_scorer(constructor)
 
 def test_sortPoints_comparator():
-	""" Test Dense sortPoints() when we specify a comparator function """
+	""" Test Matrix sortPoints() when we specify a comparator function """
 	sortPoints_comparator(constructor)
 
 
@@ -134,19 +134,19 @@ def test_sortPoints_comparator():
 
 @raises(ArgumentException)
 def test_sortFeatures_exceptionAtLeastOne():
-	""" Test Dense sortFeatures() has at least one paramater """
+	""" Test Matrix sortFeatures() has at least one paramater """
 	sortFeatures_exceptionAtLeastOne(constructor)
 
 def test_sortFeatures_naturalByPointWithNames():
-	""" Test Dense sortFeatures() when we specify a point to sort by; includes featureNames """	
+	""" Test Matrix sortFeatures() when we specify a point to sort by; includes featureNames """	
 	sortFeatures_naturalByPointWithNames(constructor)
 
 def test_sortFeatures_scorer():
-	""" Test Dense sortFeatures() when we specify a scoring function """
+	""" Test Matrix sortFeatures() when we specify a scoring function """
 	sortFeatures_scorer(constructor)
 
 def test_sortFeatures_comparator():
-	""" Test Dense sortFeatures() when we specify a comparator function """
+	""" Test Matrix sortFeatures() when we specify a comparator function """
 	sortFeatures_comparator(constructor)
 
 
@@ -156,58 +156,58 @@ def test_sortFeatures_comparator():
 #################
 
 def test_extractPoints_emptyInput(): 
-	""" Test Dense extractPoints() does nothing when not provided with any input """
+	""" Test Matrix extractPoints() does nothing when not provided with any input """
 	extractPoints_emptyInput(constructor)
 
 def test_extractPoints_handmadeSingle():
-	""" Test Dense extractPoints() against handmade output when extracting one point """
+	""" Test Matrix extractPoints() against handmade output when extracting one point """
 	extractPoints_handmadeSingle(constructor)
 
 def test_extractPoints_handmadeListSequence():
-	""" Test Dense extractPoints() against handmade output for several list extractions """
+	""" Test Matrix extractPoints() against handmade output for several list extractions """
 	extractPoints_handmadeListSequence(constructor)
 
 def test_extractPoints_handmadeListOrdering():
-	""" Test Dense extractPoints() against handmade output for out of order extraction """
+	""" Test Matrix extractPoints() against handmade output for out of order extraction """
 	extractPoints_handmadeListOrdering(constructor)
 
 def test_extractPoints_handmadeFunction():
-	""" Test Dense extractPoints() against handmade output for function extraction """
+	""" Test Matrix extractPoints() against handmade output for function extraction """
 	extractPoints_handmadeFunction(constructor)
 
 def test_extractPoints_handmadeFuncionWithFeatureNames():
-	""" Test Dense extractPoints() against handmade output for function extraction with featureNames"""
+	""" Test Matrix extractPoints() against handmade output for function extraction with featureNames"""
 	extractPoints_handmadeFuncionWithFeatureNames(constructor)
 
 @raises(ArgumentException)
 def test_extractPoints_exceptionStartInvalid():
-	""" Test Dense extractPoints() for ArgumentException when start is not a valid point index """
+	""" Test Matrix extractPoints() for ArgumentException when start is not a valid point index """
 	extractPoints_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
 def test_extractPoints_exceptionEndInvalid():
-	""" Test Dense extractPoints() for ArgumentException when start is not a valid feature index """
+	""" Test Matrix extractPoints() for ArgumentException when start is not a valid feature index """
 	extractPoints_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
 def test_extractPoints_exceptionInversion():
-	""" Test Dense extractPoints() for ArgumentException when start comes after end """
+	""" Test Matrix extractPoints() for ArgumentException when start comes after end """
 	extractPoints_exceptionInversion(constructor)
 
 def test_extractPoints_handmadeRange():
-	""" Test Dense extractPoints() against handmade output for range extraction """
+	""" Test Matrix extractPoints() against handmade output for range extraction """
 	extractPoints_handmadeRange(constructor)
 
 def test_extractPoints_handmadeRangeWithFeatureNames():
-	""" Test Dense extractPoints() against handmade output for range extraction with featureNames """
+	""" Test Matrix extractPoints() against handmade output for range extraction with featureNames """
 	extractPoints_handmadeRangeWithFeatureNames(constructor)
 
 def test_extractPoints_handmadeRangeRand_FM():
-	""" Test Dense extractPoints() against handmade output for randomized range extraction with featureNames """
+	""" Test Matrix extractPoints() against handmade output for randomized range extraction with featureNames """
 	extractPoints_handmadeRangeRand_FM(constructor)
 
 def test_extractPoints_handmadeRangeDefaults():
-	""" Test Dense extractPoints() uses the correct defaults in the case of range based extraction """
+	""" Test Matrix extractPoints() uses the correct defaults in the case of range based extraction """
 	extractPoints_handmadeRangeDefaults(constructor)
 
 ####################
@@ -216,61 +216,61 @@ def test_extractPoints_handmadeRangeDefaults():
 
 
 def test_extractFeatures_handmadeSingle():
-	""" Test Dense extractFeatures() against handmade output when extracting one feature """
+	""" Test Matrix extractFeatures() against handmade output when extracting one feature """
 	extractFeatures_handmadeSingle(constructor)
 
 def test_extractFeatures_handmadeListSequence():
-	""" Test Dense extractFeatures() against handmade output for several extractions by list """
+	""" Test Matrix extractFeatures() against handmade output for several extractions by list """
 	extractFeatures_handmadeListSequence(constructor)
 
 def test_extractFeatures_handmadeListWithFeatureName():
-	""" Test Dense extractFeatures() against handmade output for list extraction when specifying featureNames """
+	""" Test Matrix extractFeatures() against handmade output for list extraction when specifying featureNames """
 	extractFeatures_handmadeListWithFeatureName(constructor)
 
 def test_extractFeatures_handmadeFunction():
-	""" Test Dense extractFeatures() against handmade output for function extraction """
+	""" Test Matrix extractFeatures() against handmade output for function extraction """
 	extractFeatures_handmadeFunction(constructor)
 
 def test_extractFeatures_handmadeFunctionWithFeatureName():
-	""" Test Dense extractFeatures() against handmade output for function extraction with featureNames """
+	""" Test Matrix extractFeatures() against handmade output for function extraction with featureNames """
 	extractFeatures_handmadeFunctionWithFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionStartInvalid():
-	""" Test Dense extractFeatures() for ArgumentException when start is not a valid feature index """
+	""" Test Matrix extractFeatures() for ArgumentException when start is not a valid feature index """
 	extractFeatures_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionStartInvalidFeatureName():
-	""" Test Dense extractFeatures() for ArgumentException when start is not a valid featureName """
+	""" Test Matrix extractFeatures() for ArgumentException when start is not a valid featureName """
 	extractFeatures_exceptionStartInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionEndInvalid():
-	""" Test Dense extractFeatures() for ArgumentException when start is not a valid feature index """
+	""" Test Matrix extractFeatures() for ArgumentException when start is not a valid feature index """
 	extractFeatures_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionEndInvalidFeatureName():
-	""" Test Dense extractFeatures() for ArgumentException when start is not a valid featureName """
+	""" Test Matrix extractFeatures() for ArgumentException when start is not a valid featureName """
 	extractFeatures_exceptionEndInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionInversion():
-	""" Test Dense extractFeatures() for ArgumentException when start comes after end """
+	""" Test Matrix extractFeatures() for ArgumentException when start comes after end """
 	extractFeatures_exceptionInversion(constructor)
 
 @raises(ArgumentException)
 def test_extractFeatures_exceptionInversionFeatureName():
-	""" Test Dense extractFeatures() for ArgumentException when start comes after end as FeatureNames"""
+	""" Test Matrix extractFeatures() for ArgumentException when start comes after end as FeatureNames"""
 	extractFeatures_exceptionInversionFeatureName(constructor)
 
 def test_extractFeatures_handmadeRange():
-	""" Test Dense extractFeatures() against handmade output for range extraction """
+	""" Test Matrix extractFeatures() against handmade output for range extraction """
 	extractFeatures_handmadeRange(constructor)
 
 def test_extractFeatures_handmadeWithFeatureNames():
-	""" Test Dense extractFeatures() against handmade output for range extraction with FeatureNames """
+	""" Test Matrix extractFeatures() against handmade output for range extraction with FeatureNames """
 	extractFeatures_handmadeWithFeatureNames(constructor)
 
 
@@ -280,29 +280,29 @@ def test_extractFeatures_handmadeWithFeatureNames():
 
 
 def test_toList_handmade_defaultFeatureNames():
-	""" Test Dense toList with default featureNames """
+	""" Test Matrix toList with default featureNames """
 	toList_handmade_defaultFeatureNames(constructor)
 
 	
 def test_toList_handmade_assignedFeatureNames():
-	""" Test Dense toList with assigned featureNames """
+	""" Test Matrix toList with assigned featureNames """
 	toList_handmade_assignedFeatureNames(constructor)
 
 
 
 ##############################
-# toDense() #
+# toMatrix() #
 ##############################
 
 
-def test_toDense_handmade_defaultFeatureNames():
-	""" Test Dense toDense with default featureNames """
-	toDense_handmade_defaultFeatureNames(constructor)
+def test_toMatrix_handmade_defaultFeatureNames():
+	""" Test Matrix toMatrix with default featureNames """
+	toMatrix_handmade_defaultFeatureNames(constructor)
 
 	
-def test_toDense_handmade_assignedFeatureNames():
-	""" Test Dense toDense with assigned featureNames """
-	toDense_handmade_assignedFeatureNames(constructor)
+def test_toMatrix_handmade_assignedFeatureNames():
+	""" Test Matrix toMatrix with assigned featureNames """
+	toMatrix_handmade_assignedFeatureNames(constructor)
 
 
 
@@ -311,11 +311,11 @@ def test_toDense_handmade_assignedFeatureNames():
 ############
 
 def test_writeFileCSV_handmade():
-	""" Test Dense writeFile() for csv extension with both data and featureNames """
+	""" Test Matrix writeFile() for csv extension with both data and featureNames """
 	writeFileCSV_handmade(constructor)
 
 def test_writeFileMTX_handmade():
-	""" Test Dense writeFile() for mtx extension with both data and featureNames """
+	""" Test Matrix writeFile() for mtx extension with both data and featureNames """
 	writeFileMTX_handmade(constructor)
 
 
@@ -326,11 +326,11 @@ def test_writeFileMTX_handmade():
 
 @raises(ArgumentException)
 def test_copyReferences_exceptionWrongType():
-	""" Test Dense copyReferences() throws exception when other is not the same type """
+	""" Test Matrix copyReferences() throws exception when other is not the same type """
 	copyReferences_exceptionWrongType(constructor)
 
 def test_copyReferences_sameReference():
-	""" Test Dense copyReferences() successfully records the same reference """
+	""" Test Matrix copyReferences() successfully records the same reference """
 	copyReferences_sameReference(constructor)
 
 
@@ -339,7 +339,7 @@ def test_copyReferences_sameReference():
 #############
 
 def test_duplicate_withZeros():
-	""" Test Dense duplicate() produces an equal object and doesn't just copy the references """
+	""" Test Matrix duplicate() produces an equal object and doesn't just copy the references """
 	duplicate_withZeros(constructor)
 
 
@@ -349,43 +349,43 @@ def test_duplicate_withZeros():
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionNone():
-	""" Test Dense copyPoints() for exception when argument is None """
+	""" Test Matrix copyPoints() for exception when argument is None """
 	copyPoints_exceptionNone(constructor)
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionNonIndex():
-	""" Test Dense copyPoints() for exception when a value in the input is not a valid index """
+	""" Test Matrix copyPoints() for exception when a value in the input is not a valid index """
 	copyPoints_exceptionNonIndex(constructor)
 
 def test_copyPoints_handmadeContents():
-	""" Test Dense copyPoints() returns the correct data """
+	""" Test Matrix copyPoints() returns the correct data """
 	copyPoints_handmadeContents(constructor)
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionStartInvalid():
-	""" Test Dense copyPoints() for ArgumentException when start is not a valid point index """
+	""" Test Matrix copyPoints() for ArgumentException when start is not a valid point index """
 	copyPoints_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionEndInvalid():
-	""" Test Dense copyPoints() for ArgumentException when start is not a valid feature index """
+	""" Test Matrix copyPoints() for ArgumentException when start is not a valid feature index """
 	copyPoints_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
 def test_copyPoints_exceptionInversion():
-	""" Test Dense copyPoints() for ArgumentException when start comes after end """
+	""" Test Matrix copyPoints() for ArgumentException when start comes after end """
 	copyPoints_exceptionInversion(constructor)
 
 def test_copyPoints_handmadeRange():
-	""" Test Dense copyPoints() against handmade output for range copying """
+	""" Test Matrix copyPoints() against handmade output for range copying """
 	copyPoints_handmadeRange(constructor)
 
 def test_copyPoints_handmadeRangeWithFeatureNames():
-	""" Test Dense copyPoints() against handmade output for range copying with featureNames """
+	""" Test Matrix copyPoints() against handmade output for range copying with featureNames """
 	copyPoints_handmadeRangeWithFeatureNames(constructor)
 
 def test_copyPoints_handmadeRangeDefaults():
-	""" Test Dense copyPoints uses the correct defaults in the case of range based copying """
+	""" Test Matrix copyPoints uses the correct defaults in the case of range based copying """
 	copyPoints_handmadeRangeDefaults(constructor)
 
 #####################
@@ -394,57 +394,57 @@ def test_copyPoints_handmadeRangeDefaults():
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionNone():
-	""" Test Dense copyFeatures() for exception when argument is None """
+	""" Test Matrix copyFeatures() for exception when argument is None """
 	copyFeatures_exceptionNone(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionNonIndex():
-	""" Test Dense copyFeatures() for exception when a value in the input is not a valid index """
+	""" Test Matrix copyFeatures() for exception when a value in the input is not a valid index """
 	copyFeatures_exceptionNonIndex(constructor)
 
 
 def test_copyFeatures_handmadeContents():
-	""" Test Dense copyFeatures() returns the correct data """
+	""" Test Matrix copyFeatures() returns the correct data """
 	copyFeatures_handmadeContents(constructor)
 
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionStartInvalid():
-	""" Test Dense copyFeatures() for ArgumentException when start is not a valid feature index """
+	""" Test Matrix copyFeatures() for ArgumentException when start is not a valid feature index """
 	copyFeatures_exceptionStartInvalid(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionStartInvalidFeatureName():
-	""" Test Dense copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
+	""" Test Matrix copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
 	copyFeatures_exceptionStartInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionEndInvalid():
-	""" Test Dense copyFeatures() for ArgumentException when start is not a valid feature index """
+	""" Test Matrix copyFeatures() for ArgumentException when start is not a valid feature index """
 	copyFeatures_exceptionEndInvalid(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionEndInvalidFeatureName():
-	""" Test Dense copyFeatures() for ArgumentException when start is not a valid featureName """
+	""" Test Matrix copyFeatures() for ArgumentException when start is not a valid featureName """
 	copyFeatures_exceptionEndInvalidFeatureName(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionInversion():
-	""" Test Dense copyFeatures() for ArgumentException when start comes after end """
+	""" Test Matrix copyFeatures() for ArgumentException when start comes after end """
 	copyFeatures_exceptionInversion(constructor)
 
 @raises(ArgumentException)
 def test_copyFeatures_exceptionInversionFeatureName():
-	""" Test Dense copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
+	""" Test Matrix copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
 	copyFeatures_exceptionInversionFeatureName(constructor)
 
 
 def test_copyFeatures_handmadeRange():
-	""" Test Dense copyFeatures() against handmade output for range copying """
+	""" Test Matrix copyFeatures() against handmade output for range copying """
 	copyFeatures_handmadeRange(constructor)
 
 def test_copyFeatures_handmadeWithFeatureNames():
-	""" Test Dense copyFeatures() against handmade output for range copying with FeatureNames """
+	""" Test Matrix copyFeatures() against handmade output for range copying with FeatureNames """
 	copyFeatures_handmadeWithFeatureNames(constructor)
 
 
@@ -453,7 +453,7 @@ def test_copyFeatures_handmadeWithFeatureNames():
 ##############
 
 def test_getitem_simpleExampeWithZeroes():
-	""" Test Dense __getitem__ returns the correct output for a number of simple queries """
+	""" Test Matrix __getitem__ returns the correct output for a number of simple queries """
 	getitem_simpleExampeWithZeroes(constructor)
 
 
@@ -463,7 +463,7 @@ def test_getitem_simpleExampeWithZeroes():
 ################
 
 def test_getPointView_isinstance():
-	""" Test Dense getPointView returns an instance of the View in dataHelpers """
+	""" Test Matrix getPointView returns an instance of the View in dataHelpers """
 	getPointView_isinstance(constructor)
 
 
@@ -472,7 +472,7 @@ def test_getPointView_isinstance():
 ##################
 
 def test_getFeatureView_isinstance():
-	""" Test Dense getFeatureView() returns an instance of the View in dataHelpers """
+	""" Test Matrix getFeatureView() returns an instance of the View in dataHelpers """
 	getFeatureView_isinstance(constructor)
 
 
@@ -481,7 +481,7 @@ def test_getFeatureView_isinstance():
 ############
 
 def test_points_vectorTest():
-	""" Test Dense points() when we only have row or column vectors of data """
+	""" Test Matrix points() when we only have row or column vectors of data """
 	points_vectorTest(constructor)
 
 ############
@@ -489,7 +489,7 @@ def test_points_vectorTest():
 ############
 
 def test_features_vectorTest():
-	""" Test Dense features() when we only have row or column vectors of data """
+	""" Test Matrix features() when we only have row or column vectors of data """
 	features_vectorTest(constructor)
 
 

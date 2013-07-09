@@ -10,7 +10,7 @@ import tempfile
 
 from copy import deepcopy
 from UML.data import List
-from UML.data import Dense
+from UML.data import Matrix
 from UML.data.dataHelpers import View
 
 ##############
@@ -310,8 +310,8 @@ def sortPoints_comparator(constructor):
 	data = [[7,1,9],[1,2,3],[4,5,6]]
 	toTest = constructor(data)
 
-	# comparator sort currently disabled for Dense
-	if isinstance(toTest, Dense):
+	# comparator sort currently disabled for Matrix
+	if isinstance(toTest, Matrix):
 		return
 
 	def compOdds(point1, point2):
@@ -383,8 +383,8 @@ def sortFeatures_comparator(constructor):
 	data = [[7,1,9],[1,2,3],[4,2,9]]
 	toTest = constructor(data)
 
-	# comparator sort currently disabled for Dense
-	if isinstance(toTest, Dense):
+	# comparator sort currently disabled for Matrix
+	if isinstance(toTest, Matrix):
 		return
 
 	def compOdds(point1, point2):
@@ -744,29 +744,29 @@ def toList_handmade_assignedFeatureNames(constructor):
 
 
 ##############################
-# toDense() #
+# toMatrix() #
 ##############################
 
-def toDense_handmade_defaultFeatureNames(constructor):
-	""" Test toDense with default featureNames """
+def toMatrix_handmade_defaultFeatureNames(constructor):
+	""" Test toMatrix with default featureNames """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
 
-	ret = toTest.toDense()
-	exp = Dense(data)
+	ret = toTest.toMatrix()
+	exp = Matrix(data)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
 
 	
-def toDense_handmade_assignedFeatureNames(constructor):
-	""" Test toDense with assigned featureNames """
+def toMatrix_handmade_assignedFeatureNames(constructor):
+	""" Test toMatrix with assigned featureNames """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	ret = toTest.toDense()
-	exp = Dense(data,featureNames)
+	ret = toTest.toMatrix()
+	exp = Matrix(data,featureNames)
 
 	assert ret.equals(exp)
 	assert exp.equals(ret)
@@ -831,7 +831,7 @@ def copyReferences_exceptionWrongType(constructor):
 	orig = constructor(data1, featureNames)
 
 	type1 = List(data1,featureNames)
-	type2 = Dense(data1,featureNames)
+	type2 = Matrix(data1,featureNames)
 
 	# at least one of these two will be the wrong type
 	orig.copyReferences(type1)

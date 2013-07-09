@@ -1,7 +1,7 @@
 """
 Script to load a data set, determine which rows have null class labels (if label==0), 
 remove those rows, and save the data set.  May not work on very large, sparse sets: converts
-data to dense version to hasten removal of arbitrary rows.
+data to Matrix version to hasten removal of arbitrary rows.
 """
 
 from allowImports import boilerplate
@@ -19,8 +19,8 @@ if __name__ == "__main__":
     print "trainY shape: " + str(trainY.data.shape)
 
     # sparse types aren't playing nice with the error metrics currently, so convert
-    trainY = trainY.toDense()
-    testY = testY.toDense()
+    trainY = trainY.toMatrix()
+    testY = testY.toMatrix()
 
     trainYList = []
     nullPointIndicesTrain = []
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         else:
             testYList.append([int('1')])
 
-    trainY = create('dense', trainYList)
-    testY = create('dense', testYList)
+    trainY = create('Matrix', trainYList)
+    testY = create('Matrix', testYList)
 
     print "Finished converting labels to ints"

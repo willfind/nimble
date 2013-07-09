@@ -72,11 +72,11 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 
 	args = copy.copy(arguments)
 	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.create('Dense', trainData)
+		trainObj = UML.create('Matrix', trainData)
 	else: # input is an object
 		trainObj = trainData.duplicate()
 	if not isinstance(testData, UML.data.Base):
-		testObj = UML.create('Dense', testData)
+		testObj = UML.create('Matrix', testData)
 	else: # input is an object
 		testObj = testData.duplicate()
 	
@@ -91,7 +91,7 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 
 	# necessary format for shogun, also makes the following ops easier
 	if trainObjY is not None:
-		trainObjY = trainObjY.toDense()
+		trainObjY = trainObjY.toMatrix()
 	
 	# pull out data from obj
 	trainObj.transpose()
@@ -122,7 +122,7 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 	if retData is None:
 		return
 
-	outputObj = UML.create('Dense', retData)
+	outputObj = UML.create('Matrix', retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':
@@ -175,7 +175,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 	try:
 		import shogun.Classifier
 		inverseMapping = None
-		tempObj = UML.create('Dense', trainDataY)
+		tempObj = UML.create('Matrix', trainDataY)
 		problemType = SGObj.get_machine_problem_type()
 		if problemType == shogun.Classifier.PT_MULTICLASS:
 			inverseMapping = remapLabelsRange(tempObj)
@@ -340,7 +340,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 
 	# have to undo the label name packing we performed earlier
 	if inverseMapping is not None and scoreMode != 'allScores':
-		outputObj = UML.create('Dense', outData)
+		outputObj = UML.create('Matrix', outData)
 		outputObj.transformFeature(0, makeInverseMapper(inverseMapping))
 		outData = outputObj.data
 

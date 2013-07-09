@@ -73,8 +73,8 @@ if __name__ == "__main__":
     #     label = nonzeroTestEntries[i][0]
     #     testYList.append([int(label)])
 
-    # trainY = create('dense', trainYList)
-    # testY = create('dense', testYList)
+    # trainY = create('Matrix', trainYList)
+    # testY = create('Matrix', testYList)
 
     # toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":<0.1|0.6|0.75|0.9|1.5|5.0>}, [proportionPercentNegative90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     # runs = functionCombinations(toRun)

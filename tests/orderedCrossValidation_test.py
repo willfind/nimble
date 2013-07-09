@@ -8,10 +8,10 @@ from UML import orderedCrossValidate
 
 def createAll(inData, featureNames=None):
 	listObj = create("List", inData, featureNames)
-	dense = create("Dense", inData, featureNames)
+	matrix = create("Matrix", inData, featureNames)
 	sparse = create("Sparse", inData, featureNames)
 
-	return (listObj, dense, sparse)
+	return (listObj, matrix, sparse)
 
 def returnNone(**args):
 	return None

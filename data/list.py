@@ -526,9 +526,9 @@ class List(Base):
 		"""	Returns a List object with the same data and featureNames as this one """
 		return List(self.data, self.featureNames)
 
-	def _toDense_implementation(self):
-		""" Returns a Dense object with the same data and featureNames as this object """
-		return UML.data.Dense(self.data, self.featureNames)
+	def _toMatrix_implementation(self):
+		""" Returns a Matrix object with the same data and featureNames as this object """
+		return UML.data.Matrix(self.data, self.featureNames)
 
 
 	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):

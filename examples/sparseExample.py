@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
 	ret.renameFeatureName(0, 'result')
 
-	Y = sparseY.toDense()
+	Y = sparseY.toMatrix()
 
 	total = 0.
 	correct = 0.

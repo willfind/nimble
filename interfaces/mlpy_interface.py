@@ -75,11 +75,11 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 		raise ArgumentException("MLPY does not accept sparse input")
 
 	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.create('Dense', trainData)
+		trainObj = UML.create('Matrix', trainData)
 	else: # input is an object
 		trainObj = trainData
 	if not isinstance(testData, UML.data.Base):
-		testObj = UML.create('Dense', testData)
+		testObj = UML.create('Matrix', testData)
 	else: # input is an object
 		testObj = testData
 	
@@ -95,7 +95,7 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 
 	# necessary format for skl, also makes the following ops easier
 	if trainObjY is not None:	
-		trainObjY = trainObjY.toDense()
+		trainObjY = trainObjY.toMatrix()
 	
 	# pull out data from obj
 	trainRawData = trainObj.data
@@ -119,7 +119,7 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 	if retData is None:
 		return
 
-	outputObj = UML.create('Dense', retData)
+	outputObj = UML.create('Matrix', retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':

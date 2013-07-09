@@ -15,12 +15,12 @@ if __name__ == "__main__":
 	# we separate into classes accoring to whether x1 is positive or negative
 	variables = ["y","x1","x2","x3"]
 	data1 = [[1,6,0,0], [1,3,0,0], [0,-5,0,0],[0,-3,0,0]]
-	trainObj = create('Dense', data1, variables)
+	trainObj = create('Matrix', data1, variables)
 	trainObjY = trainObj.extractFeatures('y')
 
 	# data we're going to classify
 	data2 = [[1,0,0],[4,0,0],[-1,0,0], [-2,0,0]]
-	testObj = create('Dense', data2)
+	testObj = create('Matrix', data2)
 
 	# baseline check
 	assert trainObj.data[0].size == 3

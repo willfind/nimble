@@ -14,8 +14,8 @@ if __name__ == "__main__":
     trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=1, fractionForTestSet=.2, loadType="Sparse", fileType="mtx")
 
     # sparse types aren't playing nice with the error metrics currently, so convert
-    trainY = trainY.toDense()
-    testY = testY.toDense()
+    trainY = trainY.toMatrix()
+    testY = testY.toMatrix()
 
     trainYList = []
     
@@ -28,8 +28,8 @@ if __name__ == "__main__":
         label = testY.data[i][0]
         testYList.append([int(label)])
 
-    trainY = create('dense', trainYList)
-    testY = create('dense', testYList)
+    trainY = create('Matrix', trainYList)
+    testY = create('Matrix', testYList)
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate

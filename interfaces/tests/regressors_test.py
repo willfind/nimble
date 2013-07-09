@@ -4,7 +4,7 @@ Unit tests for regressors_interface.py
 """
 
 from UML.interfaces.regressors_interface import *
-from UML.data import Dense
+from UML.data import Matrix
 import tempfile
 
 
@@ -34,7 +34,7 @@ def testRegressorsHandmade():
 
 
 def testRegressorsHandmadeTrainMatrix():
-	""" Test regressor() against handmade output with a Dense object as training input """
+	""" Test regressor() against handmade output with a Matrix object as training input """
 
 	setRegressorLocation("/home/tpburns/Dropbox/Regressors")
 	algorithmName = 'LinearRegressor'
@@ -46,7 +46,7 @@ def testRegressorsHandmadeTrainMatrix():
 	trialIn.flush()
 
 	data = [[1,1,2],[2,2,4]]
-	training = Dense(data)
+	training = Matrix(data)
 
 
 	regressor(algorithmName, training, trialIn.name, output=actualOut.name, dependentVar=2, arguments={})

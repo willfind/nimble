@@ -17,8 +17,8 @@ if __name__ == "__main__":
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=5, fractionForTestSet=.2, loadType="Sparse", fileType="mtx")
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
-	trainY = trainY.toDense()
-	testY = testY.toDense()
+	trainY = trainY.toMatrix()
+	testY = testY.toMatrix()
 
 	args = {"kernel":"GaussianKernel", "C":1}
 	results = runAndTest("shogun.MulticlassLibSVM", trainX.duplicate(), testX.duplicate(), trainY.duplicate(), testY.duplicate(), args, [classificationError])

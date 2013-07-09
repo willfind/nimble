@@ -14,10 +14,10 @@ def testProportionPercentNegative():
 	knownLabelsThree = [[2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
 	knownLabelsFour = [[2], [1], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
 
-	knownLabelsOneBase = create('dense', knownLabelsOne, sendToLog=False)
-	knownLabelsTwoBase = create('dense', knownLabelsTwo, sendToLog=False)
-	knownLabelsThreeBase = create('dense', knownLabelsThree, sendToLog=False)
-	knownLabelsFourBase = create('dense', knownLabelsFour, sendToLog=False)
+	knownLabelsOneBase = create('Matrix', knownLabelsOne, sendToLog=False)
+	knownLabelsTwoBase = create('Matrix', knownLabelsTwo, sendToLog=False)
+	knownLabelsThreeBase = create('Matrix', knownLabelsThree, sendToLog=False)
+	knownLabelsFourBase = create('Matrix', knownLabelsFour, sendToLog=False)
 
 	predictedScoreList = []
 	for i in range (20):
@@ -25,7 +25,7 @@ def testProportionPercentNegative():
 		twoScore = 1.0 - i * 0.05
 		predictedScoreList.append([oneScore, twoScore])
 
-	predictedScoreListBase = create('dense', predictedScoreList, ['1', '2'])
+	predictedScoreListBase = create('Matrix', predictedScoreList, ['1', '2'])
 
 	topHalfProportionNegativeOne = proportionPercentNegative50(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
 	topNinetyProportionNegativeOne = proportionPercentNegative90(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
@@ -53,11 +53,11 @@ def testPerfCombinations():
 	knownLabels = numpy.array([1.0,2.0,3.0])
 	predictedLabels = numpy.array([1.0,2.0,3.0])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
 	metricFunctions = [rmse, meanAbsoluteError, classificationError]
-	results = computeMetrics(knownLabelsDense, None, predictedLabelsDense, metricFunctions)
+	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
 	print results
 	assert results['rmse'] == 0.0
 	assert results['meanAbsoluteError'] == 0.0
@@ -66,11 +66,11 @@ def testPerfCombinations():
 	knownLabels = numpy.array([1.5,2.5,3.5])
 	predictedLabels = numpy.array([1.0,2.0,3.0])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
 	metricFunctions = [rmse, meanAbsoluteError, classificationError]
-	results = computeMetrics(knownLabelsDense, None, predictedLabelsDense, metricFunctions)
+	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
 	assert results['rmse'] > 0.49
 	assert results['rmse'] < 0.51
 	assert results['meanAbsoluteError'] > 0.49
@@ -87,10 +87,10 @@ def testGenericErrorCalculatorEmptyKnownInput():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1,2,3])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	computeError(knownLabelsDense, predictedLabelsDense, lambda x,y,z: z, lambda x,y: x)
+	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 
 @raises(ArgumentException)
 def testGenericErrorCalculatorEmptyPredictedInput():
@@ -100,10 +100,10 @@ def testGenericErrorCalculatorEmptyPredictedInput():
 	knownLabels = numpy.array([1,2,3])
 	predictedLabels = numpy.array([])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	computeError(knownLabelsDense, predictedLabelsDense, lambda x,y,z: z, lambda x,y: x)
+	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 
 @raises(ZeroDivisionError)
 def testGenericErrorCalculatorDivideByZero():
@@ -114,19 +114,19 @@ def testGenericErrorCalculatorDivideByZero():
 	knownLabels = numpy.array([1,2,3])
 	predictedLabels = numpy.array([1,2,3])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	computeError(knownLabelsDense, predictedLabelsDense, lambda x,y,z: z, lambda x,y: y/x)
+	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: y/x)
 
 def testGenericErrorCalculator():
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	sameRate = computeError(knownLabelsDense, predictedLabelsDense, lambda x,y,z: z, lambda x,y: x)
+	sameRate = computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 	assert sameRate == 0.0
 
 ###########################
@@ -143,10 +143,10 @@ def testRmseEmptyKnownValues():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsDense, predictedLabelsDense)
+	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 
 @raises(ArgumentException)
 def testRmseEmptyPredictedValues():
@@ -157,10 +157,10 @@ def testRmseEmptyPredictedValues():
 	predictedLabels = numpy.array([])
 	knownLabels = numpy.array([1, 2, 3])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsDense, predictedLabelsDense)
+	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 
 
 def testRmse():
@@ -172,28 +172,28 @@ def testRmse():
 	predictedLabels = numpy.array([0,0,0])
 	knownLabels = numpy.array([0,0,0])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsDense, predictedLabelsDense)
+	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
 
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsDense, predictedLabelsDense)
+	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
 
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.5, 2.5, 3.5])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsDense, predictedLabelsDense)
+	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate > 0.49
 	assert rmseRate < 0.51
 
@@ -209,10 +209,10 @@ def testMeanAbsoluteErrorEmptyKnownValues():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	maeRate = meanAbsoluteError(knownLabelsDense, predictedLabelsDense)
+	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
 @raises(ArgumentException)
 def testMeanAbsoluteErrorEmptyPredictedValues():
@@ -223,10 +223,10 @@ def testMeanAbsoluteErrorEmptyPredictedValues():
 	predictedLabels = numpy.array([])
 	knownLabels = numpy.array([1, 2, 3])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	maeRate = meanAbsoluteError(knownLabelsDense, predictedLabelsDense)
+	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
 def testMeanAbsoluteError():
 	"""
@@ -237,28 +237,28 @@ def testMeanAbsoluteError():
 	predictedLabels = numpy.array([0,0,0])
 	knownLabels = numpy.array([0,0,0])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	maeRate = meanAbsoluteError(knownLabelsDense, predictedLabelsDense)
+	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate == 0.0
 
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	maeRate = meanAbsoluteError(knownLabelsDense, predictedLabelsDense)
+	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate == 0.0
 
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.5, 2.5, 3.5])
 
-	knownLabelsDense = create('dense', knownLabels)
-	predictedLabelsDense = create('dense', predictedLabels)
+	knownLabelsMatrix = create('Matrix', knownLabels)
+	predictedLabelsMatrix = create('Matrix', predictedLabels)
 
-	maeRate = meanAbsoluteError(knownLabelsDense, predictedLabelsDense)
+	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate > 0.49
 	assert maeRate < 0.51
 

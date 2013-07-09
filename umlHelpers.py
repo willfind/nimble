@@ -16,7 +16,7 @@ import datetime
 
 from UML.exceptions import ArgumentException
 from UML.data import Sparse
-from UML.data import Dense
+from UML.data import Matrix
 from UML.data import List
 from UML.data import Base
 
@@ -39,9 +39,9 @@ def _loadSparse(data, featureNames, fileType):
 	return Sparse(data, featureNames, os.path.basename(path), path)
 
 
-def _loadDense(data, featureNames, fileType):
+def _loadMatrix(data, featureNames, fileType):
 	if fileType is None:
-		return Dense(data, featureNames)
+		return Matrix(data, featureNames)
 
 	# since file type is not None, that is an indicator that we must read from a file
 	path = data
@@ -55,7 +55,7 @@ def _loadDense(data, featureNames, fileType):
 
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
-	return Dense(data, featureNames, os.path.basename(path), path)
+	return Matrix(data, featureNames, os.path.basename(path), path)
 
 
 def _loadList(data, featureNames, fileType):
@@ -638,11 +638,11 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 	elif predictedValues is None or not isinstance(predictedValues, Base) or predictedValues.points == 0:
 		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
-	if not isinstance(knownValues, Dense):
-		knownValues = knownValues.toDense()
+	if not isinstance(knownValues, Matrix):
+		knownValues = knownValues.toMatrix()
 
-	if not isinstance(predictedValues, Dense):
-		predictedValues = predictedValues.toDense()
+	if not isinstance(predictedValues, Matrix):
+		predictedValues = predictedValues.toMatrix()
 
 	n=0.0
 	runningTotal=0.0

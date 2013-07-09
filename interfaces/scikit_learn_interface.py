@@ -59,7 +59,7 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 	using the trainData to in the .fit call, and testData in the .predict call,
 	with all matching arguments from algArgs supplied at each step. If output
 	is non-None, the output from the predict call is written to the supplied file,
-	otherwise it is returned as a Dense object.
+	otherwise it is returned as a Matrix object.
 
 	"""
 	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
@@ -79,11 +79,11 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 
 
 	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.create('Dense', trainData)
+		trainObj = UML.create('Matrix', trainData)
 	else: # input is an object
 		trainObj = trainData
 	if not isinstance(testData, UML.data.Base):
-		testObj = UML.create('Dense', testData)
+		testObj = UML.create('Matrix', testData)
 	else: # input is an object
 		testObj = testData
 	
@@ -99,7 +99,7 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 
 	# necessary format for skl, also makes the following ops easier
 	if trainObjY is not None:	
-		trainObjY = trainObjY.toDense()
+		trainObjY = trainObjY.toMatrix()
 	
 	# pull out data from obj
 	trainRawData = trainObj.data
@@ -123,7 +123,7 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 	if retData is None:
 		return
 
-	outputObj = UML.create('Dense', retData)
+	outputObj = UML.create('Matrix', retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':

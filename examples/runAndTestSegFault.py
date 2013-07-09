@@ -17,8 +17,8 @@ if __name__ == "__main__":
 	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="Sparse", fileType="mtx")
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
-	trainY = trainY.toDense()
-	testY = testY.toDense()
+	trainY = trainY.toMatrix()
+	testY = testY.toMatrix()
 
 	trainYList = []
 	
@@ -33,8 +33,8 @@ if __name__ == "__main__":
 		testYList.append([int(label)])
 		print "label: "+str(int(label))
 
-	trainY = create('dense', trainYList)
-	testY = create('dense', testYList)
+	trainY = create('Matrix', trainYList)
+	testY = create('Matrix', testYList)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
 	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, testX, trainY, testY, {"C":<1.0>}, [classificationError])'

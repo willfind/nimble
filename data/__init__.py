@@ -1,4 +1,4 @@
 from sparse import Sparse
-from dense import Dense
+from matrix import Matrix
 from list import List
 from base import Base

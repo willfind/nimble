@@ -296,18 +296,18 @@ def test_toList_handmade_assignedFeatureNames():
 
 
 ##############################
-# toDense() #
+# toMatrix() #
 ##############################
 
 
-def test_toDense_handmade_defaultFeatureNames():
-	""" Test CooSparse toDense with default featureNames """
-	toDense_handmade_defaultFeatureNames(constructor)
+def test_toMatrix_handmade_defaultFeatureNames():
+	""" Test CooSparse toMatrix with default featureNames """
+	toMatrix_handmade_defaultFeatureNames(constructor)
 
 	
-def test_toDense_handmade_assignedFeatureNames():
-	""" Test CooSparse toDense with assigned featureNames """
-	toDense_handmade_assignedFeatureNames(constructor)
+def test_toMatrix_handmade_assignedFeatureNames():
+	""" Test CooSparse toMatrix with assigned featureNames """
+	toMatrix_handmade_assignedFeatureNames(constructor)
 
 
 ############

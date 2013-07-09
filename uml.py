@@ -26,7 +26,7 @@ from UML.interfaces import mlpy
 
 from UML.umlHelpers import computeMetrics
 from UML.umlHelpers import _loadSparse
-from UML.umlHelpers import _loadDense
+from UML.umlHelpers import _loadMatrix
 from UML.umlHelpers import _loadList
 from UML.umlHelpers import countWins
 from UML.umlHelpers import extractWinningPredictionLabel
@@ -66,7 +66,7 @@ def randomizedData(retType, numPoints, numFeatures, sparcity, numericType="int",
 	return create(retType, data=randData, featureNames=featureNames, name=name)
 
 
-def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="Dense"):
+def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="Matrix"):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
 	It returns training X, training Y, testing X and testing Y"""
 	trainX = create(loadType, fileName, fileType=fileType)
@@ -258,12 +258,12 @@ def create(retType, data=None, featureNames=None, fileType=None, name=None, send
 	# these should be lowercase to avoid ambiguity
 	retType = retType.lower()
 	sparseAlias = ["sparse"]
-	denseAlias = ['dense']
+	matrixAlias = ['matrix']
 	listAlias = ["list"]
 	if retType in sparseAlias:
 		ret = _loadSparse(data, featureNames, fileType)
-	elif retType in denseAlias:
-		ret = _loadDense(data, featureNames, fileType)
+	elif retType in matrixAlias:
+		ret = _loadMatrix(data, featureNames, fileType)
 	elif retType in listAlias:
 		ret = _loadList(data, featureNames, fileType)
 	else:

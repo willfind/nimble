@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
 	##results = runAndTestDirect("mlpy.LibSvm", trainX, testX, trainY, testY, arguments={"C":1}, performanceMetricFuncs=[classificationError])
 
-	#xData = create("Dense", fileName, fileType="csv")
+	#xData = create("Matrix", fileName, fileType="csv")
 	#trainX, trainY, testX, testY = loadTrainingAndTesting(fileName, labelID='y', fractionForTestSet=.15, fileType="csv")
 	#normalize('mlpy.PCA', trainX, testX, arguments={'k':2})
 
