@@ -7,6 +7,7 @@ import types
 from UML.data import Base
 from UML.data import Sparse
 from uml_logger import UmlLogger
+from stopwatch import Stopwatch
 from UML.exceptions import ArgumentException
 
 
@@ -392,11 +393,11 @@ def testParseLog():
 	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
 
 	testLogger = MachineReadableLogger("/Users/rossnoren/UMLMisc/mrTest2.txt")
-	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)
+	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, Stopwatch())
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.0)
+	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, Stopwatch())
 
 	logDicts = parseLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
 
