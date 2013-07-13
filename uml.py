@@ -267,7 +267,10 @@ def create(retType, data=None, featureNames=None, fileType=None, name=None, send
 	elif retType in listAlias:
 		ret = _loadList(data, featureNames, fileType)
 	else:
-		raise ArgumentException("Unknown data type, cannot instantiate")
+		msg = "Unknown data type, cannot instantiate. Only allowable inputs: "
+		msg += "'List' for data in python lists, 'Matrix' for a numpy matrix, "
+		msg += "and 'Sparse' for a scipy sparse coo_matrix"
+		raise ArgumentException(msg)
 
 	if name is not None:
 		ret.setName(name)
