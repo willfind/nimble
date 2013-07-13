@@ -351,7 +351,7 @@ def makeInverseMapper(inverseMappingParam):
 		return inverseMappingParam[int(value)]
 	return inverseMapper
 
-def listAlgorithms():
+def listShogunAlgorithms():
 	"""
 	Function to return a list of all algorithms callable through our interface, if shogun is present
 	

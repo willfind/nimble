@@ -150,9 +150,9 @@ def testSciKitLearnScoreModeBinary():
 
 
 def testSciKitLearnListAlgorithms():
-	""" Test scikit learn's listAlgorithms() by checking the output for those algorithms we unit test """
+	""" Test scikit learn's listSciKitLearnAlgorithms() by checking the output for those algorithms we unit test """
 
-	ret = listAlgorithms()
+	ret = listSciKitLearnAlgorithms()
 
 	assert 'KMeans' in ret
 	assert 'LinearRegression' in ret

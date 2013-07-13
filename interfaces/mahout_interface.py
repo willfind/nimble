@@ -168,7 +168,7 @@ def mahoutPresent():
 	return os.path.isfile(mahoutDir + '/bin/mahout')
 
 
-def listAlgorithms():
+def listMahoutAlgorithms():
 	"""
 	Function to return a list of all algorithms callable through our interface, if mahout is present
 	

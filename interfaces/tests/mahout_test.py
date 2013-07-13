@@ -3,7 +3,7 @@ Unit tests for mahout_interface.py
 
 """
 
-from ..mahout_interface import *
+from UML.interfaces.mahout_interface import *
 import tempfile
 
 # TODO re enable 
@@ -143,11 +143,11 @@ def MahoutPresent():
 
 # TODO re enable 
 def MahoutListAlgorithms():
-	""" Test Mahout's listAlgorithms() by checking the output for those algorithms we unit test """
+	""" Test Mahout's listMahoutAlgorithms() by checking the output for those algorithms we unit test """
 	
 	setMahoutLocation('/home/tpburns/Dropbox/ML_intern_tpb/workspace/mahout-distribution-0.7')
 	
-	ret = listAlgorithms()
+	ret = listMahoutAlgorithms()
 
 
 	assert 'kmeans' in ret

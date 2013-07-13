@@ -176,7 +176,7 @@ def findRegressorClassName(sourceFile):
 	return None
 
 
-def listAlgorithms(includeParams=False):
+def listRegressorAlgorithms(includeParams=False):
 
 	if not regressorsPresent():
 		return []

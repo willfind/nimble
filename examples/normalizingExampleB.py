@@ -9,7 +9,7 @@ boilerplate()
 
 if __name__ == "__main__":
 	from UML import run
-	from UML import normalize
+	from UML import normalizeData
 	from UML import createData
 
 	variables = ["x1","x2","x3"]
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 	data2 = [[1,0,0],[1,1,1],[5,1,1], [3,4,4]]
 	testObj = createData('Matrix', data2)
 
-	normalize('mlpy.PCA', trainObj, testObj, arguments={'k':2})
+	normalizeData('mlpy.PCA', trainObj, testObj, arguments={'k':2})
 	ret = run('sciKitLearn.KMeans', trainObj, testObj, arguments={'n_clusters':3})
 
 	print "returned: " + str(ret)

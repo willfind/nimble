@@ -11,7 +11,7 @@ from nose.tools import *
 from UML.exceptions import ArgumentException
 
 from UML.interfaces import shogun
-from UML.interfaces.shogun_interface import listAlgorithms
+from UML.interfaces.shogun_interface import listShogunAlgorithms
 from UML.interfaces.shogun_interface import setShogunLocation
 from UML.interfaces.shogun_interface import getShogunLocation
 from UML.data import Matrix
@@ -286,9 +286,9 @@ def testShogunMultiClassStrategyMultiDataBinaryAlg():
 
 
 def testShogunListAlgorithms():
-	""" Test shogun's listAlgorithms() by checking the output for those algorithms we unit test """
+	""" Test shogun's listShogunAlgorithms() by checking the output for those algorithms we unit test """
 
-	ret = listAlgorithms()
+	ret = listShogunAlgorithms()
 
 	assert 'LibSVM' in ret
 	assert 'LibLinear' in ret

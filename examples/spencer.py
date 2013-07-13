@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
 
 	#do some dimensionality reduction
-	normalize('mlpy.PCA', trainX, testX, arguments={'k':5})
+	normalizeData('mlpy.PCA', trainX, testX, arguments={'k':5})
 
 	"""
 	results = runAndTestDirect("mlpy.Ridge", trainX, testX, trainY, testY, arguments={"lmb":1}, performanceMetricFuncs=[rmse, meanAbsoluteError])
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
 	#xData = createData("Matrix", fileName, fileType="csv")
 	#trainX, trainY, testX, testY = loadTrainingAndTesting(fileName, labelID='y', fractionForTestSet=.15, fileType="csv")
-	#normalize('mlpy.PCA', trainX, testX, arguments={'k':2})
+	#normalizeData('mlpy.PCA', trainX, testX, arguments={'k':2})
 
 
 

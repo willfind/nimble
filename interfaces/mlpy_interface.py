@@ -270,7 +270,7 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 
 
 
-def listAlgorithms(includeParams=False):
+def listMlpyAlgorithms(includeParams=False):
 	"""
 	Function to return a list of all algorithms callable through our interface, if mlpy is present
 	

@@ -233,7 +233,7 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, sc
 
 
 
-def listAlgorithms():
+def listSciKitLearnAlgorithms():
 	"""
 	Function to return a list of all algorithms callable through our interface, if scikit learn is present
 	

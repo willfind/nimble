@@ -2,7 +2,7 @@ from UML.examples.allowImports import boilerplate
 boilerplate()
 from UML import UMLPath
 from UML import run
-from UML import normalize
+from UML import normalizeData
 from UML import createData
 from UML import crossValidateReturnBest
 from UML import crossValidate
@@ -63,9 +63,9 @@ def testEverythingVolumeOne():
 	trainObj = trainX
 	testObj = partTwoX
 
-	# use normalize to modify our data; we call a dimentionality reduction algorithm to
+	# use normalizeData to modify our data; we call a dimentionality reduction algorithm to
 	# simply our mostly redundant points. k is the desired number of dimensions in the output
-	normalize('mlpy.PCA', trainObj, testObj, arguments={'k':1})
+	normalizeData('mlpy.PCA', trainObj, testObj, arguments={'k':1})
 
 	# assert that we actually do have fewer dimensions
 	assert trainObj.data[0].size == 1
@@ -140,9 +140,9 @@ def testNormalizing():
 	assert trainObj.data[0].size == 3
 	assert testObj.data[0].size == 3
 
-	# use normalize to modify our data; we call a dimentionality reduction algorithm to
+	# use normalizeData to modify our data; we call a dimentionality reduction algorithm to
 	# simply our mostly redundant points. k is the desired number of dimensions in the output
-	normalize('mlpy.PCA', trainObj, testObj, arguments={'k':1})
+	normalizeData('mlpy.PCA', trainObj, testObj, arguments={'k':1})
 
 	# assert that we actually do have fewer dimensions
 	assert trainObj.data[0].size == 1

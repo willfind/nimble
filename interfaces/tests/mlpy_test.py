@@ -154,9 +154,9 @@ def testMlpyScoreModeBinary():
 
 
 def testMlpyListAlgorithms():
-	""" Test mlpy's listAlgorithms() by checking the output for those algorithms we unit test """
+	""" Test mlpy's listMlpyAlgorithms() by checking the output for those algorithms we unit test """
 
-	ret = listAlgorithms()
+	ret = listMlpyAlgorithms()
 
 	assert 'KPCA' in ret
 	assert 'PCA' in ret

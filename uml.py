@@ -44,7 +44,7 @@ from UML.umlHelpers import generateAllPairs
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def randomizedData(retType, numPoints, numFeatures, sparcity, numericType="int", featureNames=None, name=None):
+def createRandomizedData(retType, numPoints, numFeatures, sparcity, numericType="int", featureNames=None, name=None):
 	if numPoints < 1:
 		raise ArgumentException("must specify a positive nonzero number of points")
 	if numFeatures < 1:
@@ -77,7 +77,7 @@ def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, load
 
 
 
-def normalize(algorithm, trainData, testData=None, dependentVar=None, arguments={}, mode=True):
+def normalizeData(algorithm, trainData, testData=None, dependentVar=None, arguments={}, mode=True):
 	"""
 	Calls on the functionality of a package to train on some data and then modify both
 	the training data and a set of test data accroding to the produced model.
@@ -107,28 +107,28 @@ def normalize(algorithm, trainData, testData=None, dependentVar=None, arguments=
 		testData.copyReferences(normalizedTest)
 
 
-def listAlgorithms(package):
+def listLearningFunctions(package):
 	package = package.lower()
 	results = None
 	if package == 'mahout':
 		import UML.interfaces.mahout_interface
-		results = UML.interfaces.mahout_interface.listAlgorithms()
+		results = UML.interfaces.mahout_interface.listMahoutAlgorithms()
 	elif package == 'regressor':
 		import UML.interfaces.regressors_interface
-		results = UML.interfaces.regressors_interface.listAlgorithms()
+		results = UML.interfaces.regressors_interface.listRegressorAlgorithms()
 	elif package == 'scikitlearn':
 		import UML.interfaces.scikit_learn_interface
-		results = UML.interfaces.scikit_learn_interface.listAlgorithms()
+		results = UML.interfaces.scikit_learn_interface.listSciKitLearnAlgorithms()
 	elif package == 'mlpy':
 		import UML.interfaces.mlpy_interface
-		results = UML.interfaces.mlpy_interface.listAlgorithms()
+		results = UML.interfaces.mlpy_interface.listMlpyAlgorithms()
 	elif package == 'shogun':
 		import UML.interfaces.shogun_interface
-		results = UML.interfaces.shogun_interface.listAlgorithms()
+		results = UML.interfaces.shogun_interface.listShogunAlgorithms()
 
 	return results
 
-def listDataRepresentationMethods():
+def listDataFunctions():
 	methodList = dir(UML.data.Base)
 	visibleMethodList = []
 	for methodName in methodList:

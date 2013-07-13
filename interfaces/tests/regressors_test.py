@@ -125,11 +125,11 @@ def testFindRegressorClassName():
 
 
 def testRegressorsListAlgorithms():
-	""" Test Regressors's listAlgorithms() by checking the output for those algorithms we unit test """
+	""" Test Regressors's listRegressorAlgorithms() by checking the output for those algorithms we unit test """
 	
 	setRegressorLocation('/home/tpburns/Dropbox/Regressors')
 	
-	ret = listAlgorithms()
+	ret = listRegressorAlgorithms()
 	assert 'ConstantRegressor' in ret
 	assert 'LinearRegressor' in ret
 

@@ -6,12 +6,12 @@ from configuration import numericalChars
 from uml import UMLPath
 from uml import run
 from uml import createData
-from uml import normalize
+from uml import normalizeData
 from uml import loadTrainingAndTesting
-from uml import listDataRepresentationMethods
+from uml import listDataFunctions
 from uml import listUMLFunctions
-from uml import randomizedData
-from uml import listAlgorithms
+from uml import createRandomizedData
+from uml import listLearningFunctions
 from uml import runAndTest
 from uml import runAndTestOneVsOne
 from uml import runOneVsOne

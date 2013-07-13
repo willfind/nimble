@@ -9,7 +9,7 @@ boilerplate()
 
 if __name__ == "__main__":
 	from UML import run
-	from UML import normalize
+	from UML import normalizeData
 	from UML import createData
 
 	# we separate into classes accoring to whether x1 is positive or negative
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
 	# use normalize to modify our data; we call a dimentionality reduction algorithm to
 	# simply our mostly redundant points. k is the desired number of dimensions in the output
-	normalize('mlpy.PCA', trainObj, testObj, arguments={'k':1})
+	normalizeData('mlpy.PCA', trainObj, testObj, arguments={'k':1})
 
 	# assert that we actually do have fewer dimensions
 	assert trainObj.data[0].size == 1
