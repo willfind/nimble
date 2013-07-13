@@ -3,7 +3,7 @@ boilerplate()
 from UML import UMLPath
 from UML import run
 from UML import normalize
-from UML import create
+from UML import createData
 from UML import crossValidateReturnBest
 from UML import crossValidate
 from UML import loadTrainingAndTesting
@@ -23,7 +23,7 @@ def testEverythingVolumeOne():
 
 	# we specify that we want a Matrix object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
-	processed = create("Matrix", pathOrig)
+	processed = createData("Matrix", pathOrig)
 
 	assert processed.data is not None
 
@@ -82,7 +82,7 @@ def testDataPrepExample():
 
 	# we specify that we want a Matrix object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
-	processed = create("List", pathOrig)
+	processed = createData("List", pathOrig)
 
 	# this feature is a precalculated similarity rating. Lets not make it too easy....
 	processed.extractFeatures('fnlwgt')
@@ -128,13 +128,13 @@ def testNormalizing():
 	# we separate into classes accoring to whether x1 is positive or negative
 	variables = ["y","x1","x2","x3"]
 	data1 = [[1,6,0,0], [1,3,0,0], [0,-5,0,0],[0,-3,0,0]]
-	trainObj = create('Matrix', data1, variables)
+	trainObj = createData('Matrix', data1, variables)
 	trainObjY = trainObj.extractFeatures('y')
 
 	# data we're going to classify
 	variables2 = ["x1","x2","x3"]
 	data2 = [[1,0,0],[4,0,0],[-1,0,0], [-2,0,0]]
-	testObj = create('Matrix', data2, variables2)
+	testObj = createData('Matrix', data2, variables2)
 
 	# baseline check
 	assert trainObj.data[0].size == 3

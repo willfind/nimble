@@ -9,10 +9,10 @@ boilerplate()
 
 if __name__ == "__main__":
 
-    from UML import create
+    from UML import createData
 
     pathIn = "/media/library_/LaddersData/umlApproval50KTfIdfRoundedNoHeaders.mtx"
-    sparseVersion = create('coo', pathIn, fileType='mtx')
+    sparseVersion = createData('coo', pathIn, fileType='mtx')
     
     print "Finished loading data"
     print "trainX shape: " + str(trainX.data.shape)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         else:
             testYList.append([int('1')])
 
-    trainY = create('Matrix', trainYList)
-    testY = create('Matrix', testYList)
+    trainY = createData('Matrix', trainYList)
+    testY = createData('Matrix', testYList)
 
     print "Finished converting labels to ints"

@@ -439,7 +439,7 @@ class Base(object):
 		for point in self.pointViewIterator():
 			currOut = function(point)
 			retData.append([currOut])
-		return UML.create(self.getType(), retData)
+		return UML.createData(self.getType(), retData)
 
 	def applyFunctionToEachFeature(self,function):
 		"""
@@ -458,7 +458,7 @@ class Base(object):
 		for feature in self.featureViewIterator():
 			currOut = function(feature)
 			retData[0].append(currOut)
-		return UML.create(self.getType(), retData)
+		return UML.createData(self.getType(), retData)
 
 
 	def mapReduceOnPoints(self, mapper, reducer):
@@ -493,7 +493,7 @@ class Base(object):
 			if redRet is not None:
 				(redKey,redValue) = redRet
 				ret.append([redKey,redValue])
-		return UML.create(self.getType(), ret)
+		return UML.createData(self.getType(), ret)
 
 	def pointViewIterator(self):
 		if self.features() == 0:
@@ -982,7 +982,7 @@ class Base(object):
 	def getType(self):
 		"""
 			Return a string representing the non-abstract type of this object (e.g. Matrix,
-			Sparse, etc.) that can be passed to create() function to create a new object
+			Sparse, etc.) that can be passed to createData() function to create a new object
 			of the same type.
 		"""
 		return self._getType_implementation()

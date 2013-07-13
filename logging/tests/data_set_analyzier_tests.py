@@ -2,7 +2,7 @@ import numpy as np
 
 from nose.tools import assert_almost_equal, assert_equal
 
-from UML import create
+from UML import createData
 from UML.logging.data_set_analyzer import *
 
 
@@ -14,7 +14,7 @@ def testMatrix():
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
 
-    trainObj = create('Matrix', data1, names1)
+    trainObj = createData('Matrix', data1, names1)
     funcs = featurewiseFunctionGenerator()
     rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
     funcNames = rawTable[0]
@@ -64,7 +64,7 @@ def testSparse():
     col = np.array([0, 4, 2, 3, 1, 3, 4, 0, 1, 3, 4, 5])
     vals = np.array([1, 1, 1, 1, 1, None, 1, 1, 1, 1, 1, 1])
 
-    testObj = create('Sparse', (vals, (row, col)))
+    testObj = createData('Sparse', (vals, (row, col)))
     funcs = featurewiseFunctionGenerator()
     rawTable = produceFeaturewiseInfoTable(testObj, funcs)
 
@@ -119,7 +119,7 @@ def testRowList():
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
 
-    trainObj = create('List', data1, names1)
+    trainObj = createData('List', data1, names1)
     funcs = featurewiseFunctionGenerator()
     rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
     funcNames = rawTable[0]
@@ -209,7 +209,7 @@ def testProduceAggregateTable():
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
 
-    trainObj = create('List', data1, names1)
+    trainObj = createData('List', data1, names1)
     rawTable = produceAggregateTable(trainObj)
 
     for i in range(len(rawTable[0])):
@@ -225,7 +225,7 @@ def testProduceAggregateTable():
 
 
 def testStDev():
-    testRowList = create('List', np.array([[1], [1], [3], [4], [2], [6], [12], [0]]), ['nums'])
+    testRowList = createData('List', np.array([[1], [1], [3], [4], [2], [6], [12], [0]]), ['nums'])
     stDevContainer = testRowList.applyFunctionToEachFeature(standardDeviation)
     stDev = stDevContainer.toListOfLists()[0][0]
     assert_almost_equal(stDev, 3.6379, 3)

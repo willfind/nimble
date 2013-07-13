@@ -79,11 +79,11 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 
 
 	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.create('Matrix', trainData)
+		trainObj = UML.createData('Matrix', trainData)
 	else: # input is an object
 		trainObj = trainData
 	if not isinstance(testData, UML.data.Base):
-		testObj = UML.create('Matrix', testData)
+		testObj = UML.createData('Matrix', testData)
 	else: # input is an object
 		testObj = testData
 	
@@ -123,7 +123,7 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 	if retData is None:
 		return
 
-	outputObj = UML.create('Matrix', retData)
+	outputObj = UML.createData('Matrix', retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':

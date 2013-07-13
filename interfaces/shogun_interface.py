@@ -72,11 +72,11 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 
 	args = copy.copy(arguments)
 	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.create('Matrix', trainData)
+		trainObj = UML.createData('Matrix', trainData)
 	else: # input is an object
 		trainObj = trainData.duplicate()
 	if not isinstance(testData, UML.data.Base):
-		testObj = UML.create('Matrix', testData)
+		testObj = UML.createData('Matrix', testData)
 	else: # input is an object
 		testObj = testData.duplicate()
 	
@@ -122,7 +122,7 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 	if retData is None:
 		return
 
-	outputObj = UML.create('Matrix', retData)
+	outputObj = UML.createData('Matrix', retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':
@@ -175,7 +175,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 	try:
 		import shogun.Classifier
 		inverseMapping = None
-		tempObj = UML.create('Matrix', trainDataY)
+		tempObj = UML.createData('Matrix', trainDataY)
 		problemType = SGObj.get_machine_problem_type()
 		if problemType == shogun.Classifier.PT_MULTICLASS:
 			inverseMapping = remapLabelsRange(tempObj)
@@ -340,7 +340,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 
 	# have to undo the label name packing we performed earlier
 	if inverseMapping is not None and scoreMode != 'allScores':
-		outputObj = UML.create('Matrix', outData)
+		outputObj = UML.createData('Matrix', outData)
 		outputObj.transformFeature(0, makeInverseMapper(inverseMapping))
 		outData = outputObj.data
 

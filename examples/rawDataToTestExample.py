@@ -22,7 +22,7 @@ if __name__ == "__main__":
     from UML import functionCombinations
     from UML.umlHelpers import executeCode
     from UML import runAndTest
-    from UML import create
+    from UML import createData
     from UML.read.convert_to_basedata import convertToCooBaseData
     from UML.metrics import proportionPercentNegative90
 
@@ -77,8 +77,8 @@ if __name__ == "__main__":
         label = nonzeroTestEntries[i][0]
         testYList.append([int(label)])
 
-    trainY = create('Matrix', trainYList)
-    testY = create('Matrix', testYList)
+    trainY = createData('Matrix', trainYList)
+    testY = createData('Matrix', testYList)
 
     toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":<0.1|0.6|0.75|0.9>}, [proportionPercentNegative90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     runs = functionCombinations(toRun)

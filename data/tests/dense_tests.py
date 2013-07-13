@@ -7,11 +7,11 @@ in derived_backend.py using appropriate input
 
 from UML.data.tests.derived_backend import *
 from nose.tools import *
-from UML import create
+from UML import createData
 from UML.exceptions import ArgumentException
 
 def constructor(data=None, featureNames=None):
-	return create('Matrix', data, featureNames)
+	return createData('Matrix', data, featureNames)
 
 
 ##############

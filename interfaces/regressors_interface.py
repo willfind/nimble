@@ -65,7 +65,7 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 		outFile = open(output, 'w')
 
 	if not isinstance(trainData, UML.data.Base):
-		trainData = UML.create("Matrix", data=trainData)
+		trainData = UML.createData("Matrix", data=trainData)
 	
 	# make sure dependentVar is a feature index
 	if not isinstance(dependentVar, int):
@@ -139,7 +139,7 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 		timer.stop('test')
 		
 	if output is None:
-		return UML.create('Matrix', resultList)
+		return UML.createData('Matrix', resultList)
 
 
 def regressorsPresent():

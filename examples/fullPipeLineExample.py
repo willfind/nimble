@@ -6,7 +6,7 @@ from allowImports import boilerplate
 boilerplate()
 
 if __name__ == "__main__":
-	from UML import create
+	from UML import createData
 	from UML import runAndTest
 	from UML import runOneVsOne
 	from UML import runAndTestOneVsOne
@@ -14,10 +14,10 @@ if __name__ == "__main__":
 
 	variables = ["x1","x2","x3", "label"]
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-	trainObj = create('Matrix', data1, variables)
+	trainObj = createData('Matrix', data1, variables)
 
 	data2 = [[1,0,0,1],[0,1,0,2],[0,0,1,3]]
-	testObj = create('Matrix', data2, variables)
+	testObj = createData('Matrix', data2, variables)
 
 	trainObj2 = trainObj.duplicate()
 	testObj2 = testObj.duplicate()

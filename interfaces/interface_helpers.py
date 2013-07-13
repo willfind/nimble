@@ -278,11 +278,11 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 
 
 	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.create(inType, data=trainData)
+		trainObj = UML.createData(inType, data=trainData)
 	else: # input is an object
 		trainObj = convertTo(trainObj, inType)
 	if not isinstance(testData, UML.data.Base):
-		testObj = UML.create(inType, data=testData)
+		testObj = UML.createData(inType, data=testData)
 	else: # input is an object
 		testObj = convertTo(testObj, inType)
 	
@@ -323,7 +323,7 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 	if retData is None:
 		return
 
-	outputObj = UML.create(pythonOutType, data=retData)
+	outputObj = UML.createData(pythonOutType, data=retData)
 
 	if output is None:
 		# we want to return a column vector

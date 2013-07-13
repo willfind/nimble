@@ -2,14 +2,14 @@
 
 import datetime
 
-from UML import create
+from UML import createData
 from UML import orderedCrossValidate
 
 
 def createAll(inData, featureNames=None):
-	listObj = create("List", inData, featureNames)
-	matrix = create("Matrix", inData, featureNames)
-	sparse = create("Sparse", inData, featureNames)
+	listObj = createData("List", inData, featureNames)
+	matrix = createData("Matrix", inData, featureNames)
+	sparse = createData("Sparse", inData, featureNames)
 
 	return (listObj, matrix, sparse)
 

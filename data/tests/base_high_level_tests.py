@@ -13,7 +13,7 @@ from UML.data import List
 from UML.data import Matrix
 from UML.data import Sparse
 from UML.data.tests.high_level_backend import *
-from UML import create
+from UML import createData
 
 from UML.exceptions import ImproperActionException
 from UML.exceptions import ArgumentException
@@ -181,7 +181,7 @@ def test_foldIterator_verifyPartitions():
 def test_foldIterator_ordering():
 	""" Test that foldIterator() yields folds in the proper order: X and Y folds should be in the same order"""
 	twoColumnData = [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9], [10, 10]]
-	matrixObj = create('Matrix', twoColumnData)
+	matrixObj = createData('Matrix', twoColumnData)
 	Ydata = matrixObj.extractFeatures([1])
 	Xdata = matrixObj
 	XIterator = Xdata.foldIterator(numFolds=2)

@@ -1,4 +1,4 @@
-from UML import create
+from UML import createData
 from UML import runAndTestOneVsOne
 from UML import runOneVsOne
 from UML import runOneVsAll
@@ -11,13 +11,13 @@ def testRunAndTestOneVsOne():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-    trainObj1 = create('Matrix', data1, variables)
-    trainObj2 = create('Matrix', data2, variables)
+    trainObj1 = createData('Matrix', data1, variables)
+    trainObj2 = createData('Matrix', data2, variables)
 
     testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
     testData2 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3], [0, 1, 1, 2]]
-    testObj1 = create('Matrix', testData1)
-    testObj2 = create('Matrix', testData2)
+    testObj1 = createData('Matrix', testData1)
+    testObj2 = createData('Matrix', testData2)
 
     metricFuncs = []
     metricFuncs.append(classificationError)
@@ -32,13 +32,13 @@ def testRunOneVsAll():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-    trainObj1 = create('Sparse', data1, variables)
-    trainObj2 = create('Sparse', data2, variables)
+    trainObj1 = createData('Sparse', data1, variables)
+    trainObj2 = createData('Sparse', data2, variables)
 
     testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
     testData2 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3], [0, 1, 1, 2]]
-    testObj1 = create('Sparse', testData1)
-    testObj2 = create('Sparse', testData2)
+    testObj1 = createData('Sparse', testData1)
+    testObj2 = createData('Sparse', testData2)
 
     metricFuncs = []
     metricFuncs.append(classificationError)
@@ -59,10 +59,10 @@ def testRunOneVsAll():
 def testRunOneVsOne():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-    trainObj1 = create('Matrix', data1, variables)
+    trainObj1 = createData('Matrix', data1, variables)
 
     testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
-    testObj1 = create('Matrix', testData1)
+    testObj1 = createData('Matrix', testData1)
 
     metricFuncs = []
     metricFuncs.append(classificationError)
@@ -104,7 +104,7 @@ def testExtractWinningPredictionLabel():
     Unit test for extractWinningPrediction function in runner.py
     """
     predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
-    BaseObj = create('Matrix', predictionData)
+    BaseObj = createData('Matrix', predictionData)
     BaseObj.transpose()
     predictions = BaseObj.applyFunctionToEachFeature(extractWinningPredictionLabel)
     listPredictions = predictions.toListOfLists()

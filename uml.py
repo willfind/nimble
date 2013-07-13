@@ -63,13 +63,13 @@ def randomizedData(retType, numPoints, numFeatures, sparcity, numericType="int",
 				else:
 					randData[i,j] = numpy.random.rand()
 
-	return create(retType, data=randData, featureNames=featureNames, name=name)
+	return createData(retType, data=randData, featureNames=featureNames, name=name)
 
 
 def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="Matrix"):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
 	It returns training X, training Y, testing X and testing Y"""
-	trainX = create(loadType, fileName, fileType=fileType)
+	trainX = createData(loadType, fileName, fileType=fileType)
 	testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(fractionForTestSet*trainX.points())), randomize=True)	#pull out a testing set
 	trainY = trainX.extractFeatures(labelID)	#construct the column vector of training labels
 	testY = testX.extractFeatures(labelID)	#construct the column vector of testing labels
@@ -230,7 +230,7 @@ def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=
 	return results
 
 
-def create(retType, data=None, featureNames=None, fileType=None, name=None, sendToLog=True):
+def createData(retType, data=None, featureNames=None, fileType=None, name=None, sendToLog=True):
 	# determine if its a file we have to read; we assume if its a string its a path
 	if isinstance(data, basestring):
 		#we may log this event
@@ -513,7 +513,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 
 		#wrap the results data in a List container
 		featureNames = ['PredictedClassLabel', 'LabelScore']
-		resultsContainer = create("List", tempResultsList, featureNames=featureNames)
+		resultsContainer = createData("List", tempResultsList, featureNames=featureNames)
 		return resultsContainer
 	elif scoreMode.lower() == 'allScores'.lower():
 		columnHeaders = sorted([str(i) for i in labelSet])
@@ -528,7 +528,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 				finalRow[finalIndex] = score
 			resultsContainer.append(finalRow)
 
-		return create(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
+		return createData(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsOne: ' + str(scoreMode))
 
@@ -627,7 +627,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		winningLabels = []
 		for winningIndex in winningPredictionIndices:
 			winningLabels.append([indexToLabelMap[winningIndex]])
-		return create(rawPredictions.getType, winningLabels, featureNames='winningLabel')
+		return createData(rawPredictions.getType, winningLabels, featureNames='winningLabel')
 
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
@@ -642,7 +642,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 			tempResultsList.append([[bestLabelAndScore[0], bestLabelAndScore[1]]])
 		#wrap the results data in a List container
 		featureNames = ['PredictedClassLabel', 'LabelScore']
-		resultsContainer = create("List", tempResultsList, featureNames=featureNames)
+		resultsContainer = createData("List", tempResultsList, featureNames=featureNames)
 		return resultsContainer
 
 	elif scoreMode.lower() == 'allScores'.lower():
@@ -663,7 +663,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 				finalRow[finalIndex] = score
 			resultsContainer.append(finalRow)
 		#wrap data in Base container
-		return create(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
+		return createData(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
 

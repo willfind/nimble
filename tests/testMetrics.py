@@ -2,7 +2,7 @@ import numpy
 from nose.tools import *
 from UML.metrics import rmse, classificationError, computeError, meanAbsoluteError, proportionPercentNegative50, proportionPercentNegative90
 from UML.umlHelpers import computeMetrics
-from UML import create
+from UML import createData
 from UML.exceptions import ArgumentException
 
 def testProportionPercentNegative():
@@ -14,10 +14,10 @@ def testProportionPercentNegative():
 	knownLabelsThree = [[2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
 	knownLabelsFour = [[2], [1], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
 
-	knownLabelsOneBase = create('Matrix', knownLabelsOne, sendToLog=False)
-	knownLabelsTwoBase = create('Matrix', knownLabelsTwo, sendToLog=False)
-	knownLabelsThreeBase = create('Matrix', knownLabelsThree, sendToLog=False)
-	knownLabelsFourBase = create('Matrix', knownLabelsFour, sendToLog=False)
+	knownLabelsOneBase = createData('Matrix', knownLabelsOne, sendToLog=False)
+	knownLabelsTwoBase = createData('Matrix', knownLabelsTwo, sendToLog=False)
+	knownLabelsThreeBase = createData('Matrix', knownLabelsThree, sendToLog=False)
+	knownLabelsFourBase = createData('Matrix', knownLabelsFour, sendToLog=False)
 
 	predictedScoreList = []
 	for i in range (20):
@@ -25,7 +25,7 @@ def testProportionPercentNegative():
 		twoScore = 1.0 - i * 0.05
 		predictedScoreList.append([oneScore, twoScore])
 
-	predictedScoreListBase = create('Matrix', predictedScoreList, ['1', '2'])
+	predictedScoreListBase = createData('Matrix', predictedScoreList, ['1', '2'])
 
 	topHalfProportionNegativeOne = proportionPercentNegative50(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
 	topNinetyProportionNegativeOne = proportionPercentNegative90(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
@@ -53,8 +53,8 @@ def testPerfCombinations():
 	knownLabels = numpy.array([1.0,2.0,3.0])
 	predictedLabels = numpy.array([1.0,2.0,3.0])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	metricFunctions = [rmse, meanAbsoluteError, classificationError]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
@@ -66,8 +66,8 @@ def testPerfCombinations():
 	knownLabels = numpy.array([1.5,2.5,3.5])
 	predictedLabels = numpy.array([1.0,2.0,3.0])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	metricFunctions = [rmse, meanAbsoluteError, classificationError]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
@@ -87,8 +87,8 @@ def testGenericErrorCalculatorEmptyKnownInput():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1,2,3])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 
@@ -100,8 +100,8 @@ def testGenericErrorCalculatorEmptyPredictedInput():
 	knownLabels = numpy.array([1,2,3])
 	predictedLabels = numpy.array([])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 
@@ -114,8 +114,8 @@ def testGenericErrorCalculatorDivideByZero():
 	knownLabels = numpy.array([1,2,3])
 	predictedLabels = numpy.array([1,2,3])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: y/x)
 
@@ -123,8 +123,8 @@ def testGenericErrorCalculator():
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	sameRate = computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 	assert sameRate == 0.0
@@ -143,8 +143,8 @@ def testRmseEmptyKnownValues():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -157,8 +157,8 @@ def testRmseEmptyPredictedValues():
 	predictedLabels = numpy.array([])
 	knownLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -172,8 +172,8 @@ def testRmse():
 	predictedLabels = numpy.array([0,0,0])
 	knownLabels = numpy.array([0,0,0])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
@@ -181,8 +181,8 @@ def testRmse():
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
@@ -190,8 +190,8 @@ def testRmse():
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.5, 2.5, 3.5])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate > 0.49
@@ -209,8 +209,8 @@ def testMeanAbsoluteErrorEmptyKnownValues():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -223,8 +223,8 @@ def testMeanAbsoluteErrorEmptyPredictedValues():
 	predictedLabels = numpy.array([])
 	knownLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -237,8 +237,8 @@ def testMeanAbsoluteError():
 	predictedLabels = numpy.array([0,0,0])
 	knownLabels = numpy.array([0,0,0])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate == 0.0
@@ -246,8 +246,8 @@ def testMeanAbsoluteError():
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate == 0.0
@@ -255,8 +255,8 @@ def testMeanAbsoluteError():
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.5, 2.5, 3.5])
 
-	knownLabelsMatrix = create('Matrix', knownLabels)
-	predictedLabelsMatrix = create('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', knownLabels)
+	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate > 0.49
