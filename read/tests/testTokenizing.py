@@ -129,7 +129,7 @@ def test_keepNumbers():
 	testTokens1, testTokenFreqMap1 = convertToTokens(testText, keepNumbers=True)
 	testTokens2, testTokenFreqMap2 = convertToTokens(testText, keepNumbers=False)
 
-	from UML import numericalChars
+	from UML.read.defaults import numericalChars
 	for token in testTokens2:
 		tokenSet = set(token)
 		assert tokenSet.isdisjoint(numericalChars)

@@ -1,4 +1,5 @@
-import UML
+from UML.read.defaults import defaultSkipSetNonAlphaNumeric
+from UML.read.defaults import defaultStopWords
 from dok_data_set import DokDataSet
 from ClassLabelMap import ClassLabelMap
 from UML.exceptions import ArgumentException
@@ -17,9 +18,9 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'],
                          ignoreCase=True,
                          tokenizer='default',
                          removeBlankTokens=True,
-                         skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric,
+                         skipSymbolSet=defaultSkipSetNonAlphaNumeric,
                          removeTokensContaining=None,
-                         keepNumbers=False, stopWordSet=UML.defaultStopWords,
+                         keepNumbers=False, stopWordSet=defaultStopWords,
                          tokenTransformFunction=None,
                          stemmer='default'):
     """

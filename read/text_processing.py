@@ -7,7 +7,9 @@ from scipy.sparse import *
 from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk.stem.lancaster import LancasterStemmer
 
-import UML
+from UML.read.defaults import defaultSkipSetNonAlphaNumeric
+from UML.read.defaults import defaultStopWords
+from UML.read.defaults import numericalChars
 from UML.exceptions import ArgumentException, EmptyFileException
 
 
@@ -16,10 +18,10 @@ def loadAndTokenize(textFilePath,
 				    ignoreCase=True, 
 				    tokenizer='default', 
 				    removeBlankTokens=True, 
-				    skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, 
+				    skipSymbolSet=defaultSkipSetNonAlphaNumeric, 
 				    removeTokensContaining=None, 
 				    keepNumbers=False, 
-				    stopWordSet=UML.defaultStopWords, 
+				    stopWordSet=defaultStopWords, 
 				    tokenTransformFunction=None, 
 				    stemmer='default'):
 	"""
@@ -48,10 +50,10 @@ def convertToTokens(text,
 					ignoreCase=True, 
 					tokenizer='default', 
 					removeBlankTokens=True, 
-					skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, 
+					skipSymbolSet=defaultSkipSetNonAlphaNumeric, 
 					removeTokensContaining=None, 
 					keepNumbers=False, 
-					stopWordSet=UML.defaultStopWords, 
+					stopWordSet=defaultStopWords, 
 					tokenTransformFunction=None, 
 					stemmer='default'):
 	"""
@@ -177,7 +179,7 @@ def convertToTokens(text,
 
 	if not keepNumbers:
 		filteredSet = []
-		numbersSet = UML.numericalChars
+		numbersSet = numericalChars
 		for token in tokens:
 			if token == '' and not removeBlankTokens:
 				filteredSet.append(token)

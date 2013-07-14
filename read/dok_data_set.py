@@ -7,7 +7,8 @@ from numpy import searchsorted
 from collections import Counter
 from scipy.sparse import dok_matrix
 
-import UML
+from UML.read.defaults import defaultSkipSetNonAlphaNumeric
+from UML.read.defaults import defaultStopWords
 from data_loading import dirMapper
 from text_processing import loadAndTokenize
 from UML import createData
@@ -49,10 +50,10 @@ class DokDataSet(object):
 					  ignoreCase=True, 
 					  tokenizer='default', 
 					  removeBlankTokens=True, 
-					  skipSymbolSet=UML.defaultSkipSetNonAlphaNumeric, 
+					  skipSymbolSet=defaultSkipSetNonAlphaNumeric, 
 					  removeTokensContaining=None, 
 					  keepNumbers=False, 
-					  stopWordSet=UML.defaultStopWords, 
+					  stopWordSet=defaultStopWords, 
 					  tokenTransformFunction=None, 
 					  stemmer='default'):
 		"""
