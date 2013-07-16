@@ -8,8 +8,8 @@ boilerplate()
 if __name__ == "__main__":
 	from UML import createData
 	from UML import runAndTest
-	from UML import runOneVsOne
-	from UML import runAndTestOneVsOne
+	from UML.runners import runOneVsOne
+	from UML.runners import runAndTestOneVsOne
 	from UML.metrics import classificationError
 
 	variables = ["x1","x2","x3", "label"]
