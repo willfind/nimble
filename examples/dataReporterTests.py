@@ -1,6 +1,6 @@
 """
 Testing how type works with Base objects (based on numpy matrices) and
-the applyFunctionToEachFeature() function in Base.
+the applyToEachFeature() function in Base.
 """
 
 import numpy as np

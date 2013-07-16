@@ -533,10 +533,10 @@ class Sparse(Base):
 
 		return Sparse(ret, featureNames) 
 
-	def _applyFunctionToEachPoint_implementation(self,function):
+	def _applyToEachPoint_implementation(self,function):
 		return self._applyFunctionAlongAxis(function, 'point')
 
-	def _applyFunctionToEachFeature_implementation(self,function):
+	def _applyToEachFeature_implementation(self,function):
 		return self._applyFunctionAlongAxis(function, 'feature')
 
 	def _applyFunctionAlongAxis(self, function, axisType):

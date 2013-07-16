@@ -209,52 +209,52 @@ def test_foldIterator_ordering():
 
 
 ####################
-# applyFunctionToEachPoint() #
+# applyToEachPoint() #
 ####################
 
 @raises(ImproperActionException)
-def test_applyFunctionToEachPoint_exceptionEmpty():
-	""" Test applyFunctionToEachPoint() for ImproperActionException when object is empty """
-	callAll(applyFunctionToEachPoint_exceptionEmpty)
+def test_applyToEachPoint_exceptionEmpty():
+	""" Test applyToEachPoint() for ImproperActionException when object is empty """
+	callAll(applyToEachPoint_exceptionEmpty)
 
 @raises(ArgumentException)
-def test_applyFunctionToEachPoint_exceptionInputNone():
-	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
-	callAll(applyFunctionToEachPoint_exceptionInputNone)
+def test_applyToEachPoint_exceptionInputNone():
+	""" Test applyToEachPoint() for ArgumentException when function is None """
+	callAll(applyToEachPoint_exceptionInputNone)
 
-def test_applyFunctionToEachPoint_Handmade():
-	""" Test applyFunctionToEachPoint() with handmade output """
-	callAll(applyFunctionToEachPoint_Handmade)
+def test_applyToEachPoint_Handmade():
+	""" Test applyToEachPoint() with handmade output """
+	callAll(applyToEachPoint_Handmade)
 
 
-def test_applyFunctionToEachPoint_nonZeroItAndLen():
-	""" Test applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
-	callAll(applyFunctionToEachPoint_nonZeroItAndLen)
+def test_applyToEachPoint_nonZeroItAndLen():
+	""" Test applyToEachPoint() for the correct usage of the nonzero iterator """
+	callAll(applyToEachPoint_nonZeroItAndLen)
 
 
 
 #######################
-# applyFunctionToEachFeature() #
+# applyToEachFeature() #
 #######################
 
 @raises(ImproperActionException)
-def test_applyFunctionToEachFeature_exceptionEmpty():
-	""" Test applyFunctionToEachFeature() for ImproperActionException when object is empty """
-	callAll(applyFunctionToEachFeature_exceptionEmpty)
+def test_applyToEachFeature_exceptionEmpty():
+	""" Test applyToEachFeature() for ImproperActionException when object is empty """
+	callAll(applyToEachFeature_exceptionEmpty)
 
 @raises(ArgumentException)
-def test_applyFunctionToEachFeature_exceptionInputNone():
-	""" Test applyFunctionToEachFeature() for ArgumentException when function is None """
-	callAll(applyFunctionToEachFeature_exceptionInputNone)
+def test_applyToEachFeature_exceptionInputNone():
+	""" Test applyToEachFeature() for ArgumentException when function is None """
+	callAll(applyToEachFeature_exceptionInputNone)
 
-def test_applyFunctionToEachFeature_Handmade():
-	""" Test applyFunctionToEachFeature() with handmade output """
-	callAll(applyFunctionToEachFeature_Handmade)
+def test_applyToEachFeature_Handmade():
+	""" Test applyToEachFeature() with handmade output """
+	callAll(applyToEachFeature_Handmade)
 
 
-def test_applyFunctionToEachFeature_nonZeroItAndLen():
-	""" Test applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
-	callAll(applyFunctionToEachFeature_nonZeroItAndLen)
+def test_applyToEachFeature_nonZeroItAndLen():
+	""" Test applyToEachFeature() for the correct usage of the nonzero iterator """
+	callAll(applyToEachFeature_nonZeroItAndLen)
 
 
 #####################

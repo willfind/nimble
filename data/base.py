@@ -218,7 +218,7 @@ class Base(object):
 
 		for point in values.data:
 			value = point[0]
-			ret = toConvert.applyFunctionToEachPoint(makeFunc(value))
+			ret = toConvert.applyToEachPoint(makeFunc(value))
 			ret.renameFeatureName(0, varName + "=" + str(value).strip())
 			toConvert.appendFeatures(ret)
 
@@ -266,7 +266,7 @@ class Base(object):
 		def lookup(point):
 			return mapping[point[0]]
 
-		converted = toConvert.applyFunctionToEachPoint(lookup)
+		converted = toConvert.applyToEachPoint(lookup)
 		converted.renameFeatureName(0,toConvert.featureNamesInverse[0])		
 
 		self.appendFeatures(converted)
@@ -331,7 +331,7 @@ class Base(object):
 			valueToTotal[key] += 1
 			return ret
 
-#		ids = self.applyFunctionToEachPoint(tagValuesWithID)
+#		ids = self.applyToEachPoint(tagValuesWithID)
 #		self.appendFeature(ids)
 
 	
@@ -381,7 +381,7 @@ class Base(object):
 		def isSelected(point):
 			return point[len(point)-1]
 
-		selectionKeys = self.applyFunctionToEachPoint(experiment)
+		selectionKeys = self.applyToEachPoint(experiment)
 		self.appendFeatures(selectionKeys)
 		ret = self.extractPoints(isSelected)
 		# remove the experimental data
@@ -423,7 +423,7 @@ class Base(object):
 		# return that lists iterator as the fold iterator 	
 		return self._foldIteratorClass(foldList, self)
 
-	def applyFunctionToEachPoint(self, function):
+	def applyToEachPoint(self, function):
 		"""
 		Applies the given funciton to each point in this object, collecting the
 		output values into a new object that is returned upon completion.
@@ -441,7 +441,7 @@ class Base(object):
 			retData.append([currOut])
 		return UML.createData(self.getType(), retData)
 
-	def applyFunctionToEachFeature(self,function):
+	def applyToEachFeature(self,function):
 		"""
 		Applies the given funciton to each feature in this object, collecting the
 		output values into a new object in the shape of a feature vector that is

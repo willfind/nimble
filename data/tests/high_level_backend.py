@@ -263,28 +263,28 @@ def foldIterator_verifyPartitions(constructor):
 
 
 ####################
-# applyFunctionToEachPoint() #
+# applyToEachPoint() #
 ####################
 
-def applyFunctionToEachPoint_exceptionEmpty(constructor):
-	""" Test applyFunctionToEachPoint() for ImproperActionException when object is empty """
+def applyToEachPoint_exceptionEmpty(constructor):
+	""" Test applyToEachPoint() for ImproperActionException when object is empty """
 	origData = []
 	origObj = constructor(origData)
 
 	def emitLower(point):
 		return point[origObj.featureNames['deci']]
 
-	lowerCounts = origObj.applyFunctionToEachPoint(emitLower)
+	lowerCounts = origObj.applyToEachPoint(emitLower)
 
-def applyFunctionToEachPoint_exceptionInputNone(constructor):
-	""" Test applyFunctionToEachPoint() for ArgumentException when function is None """
+def applyToEachPoint_exceptionInputNone(constructor):
+	""" Test applyToEachPoint() for ArgumentException when function is None """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),featureNames)
-	origObj.applyFunctionToEachPoint(None)
+	origObj.applyToEachPoint(None)
 
-def applyFunctionToEachPoint_Handmade(constructor):
-	""" Test applyFunctionToEachPoint() with handmade output """
+def applyToEachPoint_Handmade(constructor):
+	""" Test applyToEachPoint() with handmade output """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),featureNames)
@@ -293,7 +293,7 @@ def applyFunctionToEachPoint_Handmade(constructor):
 	def emitLower(point):
 		return point[origObj.featureNames['deci']]
 
-	lowerCounts = origObj.applyFunctionToEachPoint(emitLower)
+	lowerCounts = origObj.applyToEachPoint(emitLower)
 
 	expectedOut = [[0.1], [0.1], [0.1], [0.2]]
 	exp = constructor(expectedOut)
@@ -301,8 +301,8 @@ def applyFunctionToEachPoint_Handmade(constructor):
 	assert lowerCounts.equals(exp)
 
 
-def applyFunctionToEachPoint_nonZeroItAndLen(constructor):
-	""" Test applyFunctionToEachPoint() for the correct usage of the nonzero iterator """
+def applyToEachPoint_nonZeroItAndLen(constructor):
+	""" Test applyToEachPoint() for the correct usage of the nonzero iterator """
 	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
 	origObj = constructor(deepcopy(origData))
 
@@ -314,7 +314,7 @@ def applyFunctionToEachPoint_nonZeroItAndLen(constructor):
 			ret += 1
 		return ret
 
-	counts = origObj.applyFunctionToEachPoint(emitNumNZ)
+	counts = origObj.applyToEachPoint(emitNumNZ)
 
 	expectedOut = [[3], [2], [2], [1]]
 	exp = constructor(expectedOut)
@@ -324,11 +324,11 @@ def applyFunctionToEachPoint_nonZeroItAndLen(constructor):
 
 
 #######################
-# applyFunctionToEachFeature() #
+# applyToEachFeature() #
 #######################
 
-def applyFunctionToEachFeature_exceptionEmpty(constructor):
-	""" Test applyFunctionToEachFeature() for ImproperActionException when object is empty """
+def applyToEachFeature_exceptionEmpty(constructor):
+	""" Test applyToEachFeature() for ImproperActionException when object is empty """
 	origData = []
 	origObj= constructor(origData)
 
@@ -339,17 +339,17 @@ def applyFunctionToEachFeature_exceptionEmpty(constructor):
 				return 0
 		return 1
 
-	lowerCounts = origObj.applyFunctionToEachFeature(emitAllEqual)
+	lowerCounts = origObj.applyToEachFeature(emitAllEqual)
 
-def applyFunctionToEachFeature_exceptionInputNone(constructor):
-	""" Test applyFunctionToEachFeature() for ArgumentException when function is None """
+def applyToEachFeature_exceptionInputNone(constructor):
+	""" Test applyToEachFeature() for ArgumentException when function is None """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),featureNames)
-	origObj.applyFunctionToEachFeature(None)
+	origObj.applyToEachFeature(None)
 
-def applyFunctionToEachFeature_Handmade(constructor):
-	""" Test applyFunctionToEachFeature() with handmade output """
+def applyToEachFeature_Handmade(constructor):
+	""" Test applyToEachFeature() with handmade output """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),featureNames)
@@ -361,14 +361,14 @@ def applyFunctionToEachFeature_Handmade(constructor):
 				return 0
 		return 1
 
-	lowerCounts = origObj.applyFunctionToEachFeature(emitAllEqual)
+	lowerCounts = origObj.applyToEachFeature(emitAllEqual)
 	expectedOut = [[1,0,0]]	
 	assert lowerCounts.equals(constructor(expectedOut))
 
 
 
-def applyFunctionToEachFeature_nonZeroItAndLen(constructor):
-	""" Test applyFunctionToEachFeature() for the correct usage of the nonzero iterator """
+def applyToEachFeature_nonZeroItAndLen(constructor):
+	""" Test applyToEachFeature() for the correct usage of the nonzero iterator """
 	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
 	origObj = constructor(deepcopy(origData))
 
@@ -379,7 +379,7 @@ def applyFunctionToEachFeature_nonZeroItAndLen(constructor):
 			ret += 1
 		return ret
 
-	counts = origObj.applyFunctionToEachFeature(emitNumNZ)
+	counts = origObj.applyToEachFeature(emitNumNZ)
 
 	expectedOut = [[3, 3, 2]]
 	exp = constructor(expectedOut)

@@ -46,7 +46,7 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     transposeRow(resultsTable)
 
     for func in funcsToApply:
-        oneFuncResults = dataContainer.applyFunctionToEachFeature(func)
+        oneFuncResults = dataContainer.applyToEachFeature(func)
         oneFuncResults.transpose()
         oneFuncResultsList = oneFuncResults.toListOfLists()
         appendColumns(resultsTable, oneFuncResultsList)
@@ -122,9 +122,9 @@ def produceAggregateTable(dataContainer):
     funcs = aggregateFunctionGenerator()
     resultsDict = {}
     for func in funcs:
-        funcResults = dataContainer.applyFunctionToEachFeature(func)
+        funcResults = dataContainer.applyToEachFeature(func)
         funcResults.transpose()
-        aggregateResults = funcResults.applyFunctionToEachFeature(mean_).toListOfLists()[0][0]
+        aggregateResults = funcResults.applyToEachFeature(mean_).toListOfLists()[0][0]
         resultsDict[func.__name__] = aggregateResults
 
     resultsDict['Points'] = shape[0] * shape[1]
@@ -366,7 +366,7 @@ def featureType(values):
 
 def featurewiseFunctionGenerator():
     """
-    Produce a list of functions suitable for being passed to Base's applyFunctionToEachFeature
+    Produce a list of functions suitable for being passed to Base's applyToEachFeature
     function.  Includes: min(), max(), mean(), median(), standardDeviation(), numUniqueValues()
     """
     functions = [min_, max_, mean_, median_, standardDeviation, numUnique]
@@ -376,7 +376,7 @@ def featurewiseFunctionGenerator():
 def aggregateFunctionGenerator():
     """
     Produce a list of functions that can be used to produce aggregate statistics on an entire
-    data set.  The functions will be applied through Base's applyFunctionToEachFeature
+    data set.  The functions will be applied through Base's applyToEachFeature
     function, and their results averaged across all features.  Includes a function to calculate
     the proportion of entries that are equal to zero and the proportion of entries that are missing
     (i.e. are None or NaN).

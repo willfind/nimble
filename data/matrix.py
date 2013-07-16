@@ -359,7 +359,7 @@ class Matrix(Base):
 		return Matrix(ret, featureNameList)
 
 
-	def _applyFunctionToEachPoint_implementation(self,function):
+	def _applyToEachPoint_implementation(self,function):
 		"""
 		Applies the given funciton to each point in this object, collecting the
 		output values into a new object that is returned upon completion.
@@ -373,7 +373,7 @@ class Matrix(Base):
 		return Matrix(retData)
 
 
-	def _applyFunctionToEachFeature_implementation(self,function):
+	def _applyToEachFeature_implementation(self,function):
 		"""
 		Applies the given funciton to each feature in this object, collecting the
 		output values into a new object in the shape of a feature vector that is

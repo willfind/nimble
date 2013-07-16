@@ -103,7 +103,7 @@ class List(Base):
 		testPoint = PointView(self.featureNames, self.data[0], 0)
 		try:
 			sortHelper(testPoint)
-			indices = self.applyFunctionToEachPoint(lambda x:x.index())
+			indices = self.applyToEachPoint(lambda x:x.index())
 			indices.renameFeatureName(0,"#UML_SORTHELPER_INDEX")
 			self.appendFeatures(indices)
 			newFeatureIndex = self.features() - 1 
@@ -447,7 +447,7 @@ class List(Base):
 		return List(extractedData, featureNameList)
 
 
-	def _applyFunctionToEachPoint_implementation(self, function):
+	def _applyToEachPoint_implementation(self, function):
 		"""
 		Applies the given function to each point in this object, collecting the
 		output values into a new object that is returned upon completion.
@@ -460,7 +460,7 @@ class List(Base):
 			retData.append([currOut])
 		return List(retData)
 
-	def _applyFunctionToEachFeature_implementation(self,function):
+	def _applyToEachFeature_implementation(self,function):
 		"""
 		Applies the given funciton to each feature in this object, collecting the
 		output values into a new object in the shape of a feature vector that is
