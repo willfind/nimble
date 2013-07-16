@@ -358,34 +358,6 @@ class Matrix(Base):
 
 		return Matrix(ret, featureNameList)
 
-
-	def _applyToEachPoint_implementation(self,function):
-		"""
-		Applies the given funciton to each point in this object, collecting the
-		output values into a new object that is returned upon completion.
-
-		"""
-#		def funcWrap(point):
-#			return function(VectorView(point))
-		retData = numpy.apply_along_axis(function,1,self.data)
-		retData = numpy.matrix(retData)
-		retData = retData.T
-		return Matrix(retData)
-
-
-	def _applyToEachFeature_implementation(self,function):
-		"""
-		Applies the given funciton to each feature in this object, collecting the
-		output values into a new object in the shape of a feature vector that is
-		returned upon completion.
-
-		"""
-#		def funcWrap(feature):
-#			return function(VectorView(feature))
-		retData = numpy.apply_along_axis(function,0,self.data)
-		return Matrix(retData)
-
-
 	def _mapReduceOnPoints_implementation(self, mapper, reducer):
 		# apply_along_axis() expects a scalar or array of scalars as output,
 		# but our mappers output a list of tuples (ie a sequence type)

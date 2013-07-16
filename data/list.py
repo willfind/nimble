@@ -446,35 +446,6 @@ class List(Base):
 	
 		return List(extractedData, featureNameList)
 
-
-	def _applyToEachPoint_implementation(self, function):
-		"""
-		Applies the given function to each point in this object, collecting the
-		output values into a new object that is returned upon completion.
-
-		"""
-		retData = []
-		for i in xrange(self.points()):
-			point = self.data[i]
-			currOut = function(PointView(self.featureNames, point, i))
-			retData.append([currOut])
-		return List(retData)
-
-	def _applyToEachFeature_implementation(self,function):
-		"""
-		Applies the given funciton to each feature in this object, collecting the
-		output values into a new object in the shape of a feature vector that is
-		returned upon completion.
-
-		"""
-		retData = [[]]
-		for i in xrange(self.features()):
-			ithView = FeatureView(self.data,i, self.featureNamesInverse[i])
-			currOut = function(ithView)
-			retData[0].append(currOut)
-		return List(retData)
-
-
 	def _mapReduceOnPoints_implementation(self, mapper, reducer):
 		mapResults = {}
 		# apply the mapper to each point in the data

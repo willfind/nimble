@@ -142,25 +142,6 @@ class Base(object):
 	###########################
 	# Higher Order Operations #
 	###########################
-
-	def _joinUniqueKeyedOther(self, other, fillUnmatched):
-		# other must be data rep obj
-		# there must be overlap
-		# cannot be complete overlap
-		
-		# from overlap generate keys from other
-		#	- must be unique
-
-		# determine how many features of new data there will be
-
-		# for each new feature
-		# apply to each point in self with a lookup function into other
-
-		# .... how do we do lookup?
-		# we have all the feature numbers, so its ok.
-		#TODO
-		raise NotImplementedError
-
 	
 	def dropStringValuedFeatures(self):
 		"""
@@ -271,73 +252,6 @@ class Base(object):
 
 		self.appendFeatures(converted)
 
-
-	def _selectConstantOfPointsByValue(self, numToSelect, featureToSelectOver, seed=DEFAULT_SEED):
-		"""
-		Return a new object containing a randomly selected sample of points from
-		this object, with the sample limited to a constant number of points
-		of each representative value in the specifed feature. Those selected
-		values are also removed from this object.
-
-		"""
-		random.seed(seed)
-		if numToSelect is None:
-			raise ArgumentException("The selection constant must not be None")
-		if numToSelect <= 0:
-			raise ArgumentException("The selection constant must be positive")
-		index = self._getIndex(featureToSelectOver)
-		#TODO
-		raise NotImplementedError
-
-
-	def _selectPercentOfPointsByValue(self, percentToSelect, featureToSelectOver, seed=DEFAULT_SEED):
-		"""
-		Return a new object containing a randomly selected sample of points from
-		this object, with the sample limited to a percentage of points
-		of each representative value in the specified feature. Those selected
-		values are also removed from this object.
-
-		"""
-		random.seed(seed)
-		if percentToSelect is None:
-			raise ArgumentException("percentToSelect must not be none")
-		if percentToSelect <= 0:
-			raise ArgumentException("percentToSelect must be greater than 0")
-		if percentToSelect >= 100:
-			raise ArgumentException("percentToSelect must be less than 100")
-		index = self._getIndex(featureToSelectOver)
-		#TODO
-		raise NotImplementedError
-
-		#MR to find how many of each value
-		def mapperCount(point):
-			return [(point[index],1)]
-		def reducerCount(identifier, values):
-			total = 0
-			for value in values:
-				total += value
-			return (identifier, total)
-		
-#		totalOfEach = self.mapReduceOnPoints(mapperCount,reducerCount)
-			
-
-		valueToTotal = {}
-		def tagValuesWithID(point):
-			key = point[index]
-			if key not in valueToTotal:
-				valueToTotal[key] = 0
-				return 0
-			ret = valueToTotal[key]
-			valueToTotal[key] += 1
-			return ret
-
-#		ids = self.applyToEachPoint(tagValuesWithID)
-#		self.appendFeature(ids)
-
-	
-		#apply to all to number the different values		
-		#	the storage struc is outside the func, ie we have access to it here
-		#apply to all using above to mark selected
 
 	def toListOfLists(self):
 		"""
