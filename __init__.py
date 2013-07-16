@@ -2,7 +2,7 @@ from uml import UMLPath
 from uml import run
 from uml import createData
 from uml import normalizeData
-from uml import loadTrainingAndTesting
+from uml import splitData
 from uml import listDataFunctions
 from uml import listUMLFunctions
 from uml import createRandomizedData

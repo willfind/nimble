@@ -1,5 +1,6 @@
 
-from UML import loadTrainingAndTesting
+from UML import createData
+from UML import splitData
 from UML import normalizeData
 from UML import crossValidateReturnBest
 from UML import functionCombinations
@@ -12,7 +13,8 @@ if __name__ == "__main__":
 	###############################################
 	#mean normalize your training and testing data#
 
-	trainX, trainY, testX, testY = loadTrainingAndTesting("myFile.txt", "predictionLabels", fractionForTestSet=.15) #load and split up the data
+	allData = createData("Matrix", "myFile.txt")
+	trainX, trainY, testX, testY = splitData(allData, labelID="predictionLabels", fractionForTestSet=.15) #load and split up the data
 	normalizeData(trainX, testX, algorithm="mean") #perform mean normalization
 
 	##################################################

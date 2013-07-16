@@ -11,11 +11,12 @@ if __name__ == "__main__":
 	from UML.umlHelpers import executeCode
 	from UML import runAndTest
 	from UML import createData
-	from UML import loadTrainingAndTesting
+	from UML import splitData
 	from UML.metrics import proportionPercentNegative90
 
 	pathIn = "/media/library_/LaddersData/PlaygroundFull/DocVectors.mtx"
-	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="Sparse", fileType="mtx")
+	allData = createData("Sparse", pathIn, fileType="mtx")
+	trainX, trainY, testX, testY = splitData(allData, labelID=0, fractionForTestSet=.2)
 	print "Finished loading data"
 	print "trainX shape: " + str(trainX.data.shape)
 	print "trainY shape: " + str(trainY.data.shape)

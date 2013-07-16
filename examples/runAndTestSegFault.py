@@ -10,11 +10,12 @@ if __name__ == "__main__":
 	from UML.umlHelpers import executeCode
 	from UML import runAndTest
 	from UML import createData
-	from UML import loadTrainingAndTesting
+	from UML import splitData
 	from UML.metrics import classificationError
 
 	pathIn = "datasets/sparseSampleReal.mtx"
-	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID=0, fractionForTestSet=.2, loadType="Sparse", fileType="mtx")
+	allData = createData("Sparse", pathIn, fileType="mtx")
+	trainX, trainY, testX, testY = splitData(allData, labelID=0, fractionForTestSet=.2)
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
 	trainY = trainY.toMatrix()

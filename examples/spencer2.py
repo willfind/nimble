@@ -8,7 +8,6 @@ import UML
 if __name__ == "__main__":
 
 	from UML import crossValidateReturnBest
-	from UML import loadTrainingAndTesting
 	from UML import functionCombinations
 	from UML import createData
 	from UML import runAndTest

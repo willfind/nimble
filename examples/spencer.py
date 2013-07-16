@@ -10,7 +10,8 @@ if __name__ == "__main__":
 
 	#fileName = "../datasets/noisy-linear.csv"
 	fileName = "../datasets/concrete_slump.csv"
-	trainX, trainY, testX, testY = loadTrainingAndTesting(fileName, labelID='Compressive Strength', fractionForTestSet=.15, fileType="csv")
+	allData = createData("Matrix", fileName, fileType="csv")
+	trainX, trainY, testX, testY = splitData(allData, labelID='Compressive Strength', fractionForTestSet=.15)
 	#random.seed = 5
 	#remove this column, since it's just the ID number of each data point
 	trainX.extractFeatures("No")
@@ -48,7 +49,8 @@ if __name__ == "__main__":
 	##results = runAndTestDirect("mlpy.LibSvm", trainX, testX, trainY, testY, arguments={"C":1}, performanceMetricFuncs=[classificationError])
 
 	#xData = createData("Matrix", fileName, fileType="csv")
-	#trainX, trainY, testX, testY = loadTrainingAndTesting(fileName, labelID='y', fractionForTestSet=.15, fileType="csv")
+	#allData = createData("Matrix", fileName, fileType="csv")
+	#trainX, trainY, testX, testY = splitData(allData, labelID='y', fractionForTestSet=.15)
 	#normalizeData('mlpy.PCA', trainX, testX, arguments={'k':2})
 
 

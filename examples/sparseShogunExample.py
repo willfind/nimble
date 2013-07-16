@@ -10,11 +10,13 @@ boilerplate()
 if __name__ == "__main__":
 	from UML import runAndTest
 	from UML import run
-	from UML import loadTrainingAndTesting
+	from UML import createData
+	from UML import splitData
 	from UML.metrics import classificationError
 
 	pathIn = "datasets/adult_income_classification_tiny_numerical.csv"
-	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID="income", fractionForTestSet=.2, loadType="Sparse", fileType="csv")
+	allData = createData("Sparse", pathIn, fileType="csv")
+	trainX, trainY, testX, testY = splitData(allData, labelID="income", fractionForTestSet=.2)
 	print "Finished loading data"
 
 	# sparse types aren't playing nice with the error metrics currently, so convert

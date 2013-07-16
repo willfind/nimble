@@ -66,14 +66,18 @@ def createRandomizedData(retType, numPoints, numFeatures, sparcity, numericType=
 	return createData(retType, data=randData, featureNames=featureNames, name=name)
 
 
-def loadTrainingAndTesting(fileName, labelID, fractionForTestSet, fileType, loadType="Matrix"):
+def splitData(toSplit, fractionForTestSet, labelID=None):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
 	It returns training X, training Y, testing X and testing Y"""
-	trainX = createData(loadType, fileName, fileType=fileType)
-	testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(fractionForTestSet*trainX.points())), randomize=True)	#pull out a testing set
-	trainY = trainX.extractFeatures(labelID)	#construct the column vector of training labels
-	testY = testX.extractFeatures(labelID)	#construct the column vector of testing labels
-	return trainX, trainY, testX, testY
+	testXSize = int(round(fractionForTestSet*toSplit.points()))
+	#pull out a testing set
+	testX = toSplit.extractPoints(start=0, end=toSplit.points(), number=testXSize, randomize=True)	
+	trainY = None
+	testY = None
+	if labelID is not None:
+		trainY = toSplit.extractFeatures(labelID)	#construct the column vector of training labels
+		testY = testX.extractFeatures(labelID)	#construct the column vector of testing labels
+	return toSplit, trainY, testX, testY
 
 
 

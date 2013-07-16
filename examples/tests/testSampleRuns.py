@@ -6,7 +6,7 @@ from UML import normalizeData
 from UML import createData
 from UML import crossValidateReturnBest
 from UML import crossValidate
-from UML import loadTrainingAndTesting
+from UML import splitData
 from UML import functionCombinations
 from UML import runAndTest
 from UML.metrics import classificationError
@@ -110,7 +110,8 @@ def testCrossValidateExample():
 	"""
 	# path to input specified by command line argument
 	pathIn = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny_numerical.csv")
-	trainX, trainY, testX, testY = loadTrainingAndTesting(pathIn, labelID='income', fractionForTestSet=.15, loadType="Matrix", fileType="csv")
+	allData = createData("Matrix", pathIn, fileType="csv")
+	trainX, trainY, testX, testY = splitData(allData, labelID='income', fractionForTestSet=.15)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
 	toRun = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [classificationError])'
