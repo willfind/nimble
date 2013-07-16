@@ -390,7 +390,7 @@ def testParseLog():
 	testData1 = Sparse(testDataBase)
 	functionStr = """def f():
 	return 0"""
-	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
+	metricsHash = {"rootMeanSquareError":0.50, "meanAbsoluteError":0.45}
 
 	testLogger = MachineReadableLogger("/Users/rossnoren/UMLMisc/mrTest2.txt")
 	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, Stopwatch())
@@ -407,7 +407,7 @@ def testParseLog():
 	assert logDicts[0]["numTestDataFeatures"] == '3'
 	assert logDicts[0]["runTime"] == '0.00'
 	assert logDicts[0]["function"] == 'def f():\n\treturn 0'
-	assert logDicts[0]["rmse"] == '0.5'
+	assert logDicts[0]["rootMeanSquareError"] == '0.5'
 	assert logDicts[0]["meanAbsoluteError"] == '0.45'
 
 	assert logDicts[1]["numTrainDataPoints"] == '3'
@@ -416,7 +416,7 @@ def testParseLog():
 	assert logDicts[1]["numTestDataFeatures"] == '3'
 	assert logDicts[1]["runTime"] == '0.00'
 	assert logDicts[1]["function"] == "['\tfunctionObj = lambda x: x+1\n']"
-	assert logDicts[1]["rmse"] == '0.5'
+	assert logDicts[1]["rootMeanSquareError"] == '0.5'
 	assert logDicts[1]["meanAbsoluteError"] == '0.45'
 
 
@@ -429,7 +429,7 @@ def main():
 	testData1 = Sparse(testDataBase)
 	functionStr = """def f():
 	return 0"""
-	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
+	metricsHash = {"rootMeanSquareError":0.50, "meanAbsoluteError":0.45}
 
 	testLogger = MachineReadableLogger("~/mrTest2.txt")
 	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)

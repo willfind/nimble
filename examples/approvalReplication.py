@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	from UML import runAndTest
 	from UML import createData
 	from UML import splitData
-	from UML.metrics import proportionPercentNegative90
+	from UML.metrics import fractionTrueNegativeTop90
 
 	pathIn = "/media/library_/LaddersData/PlaygroundFull/DocVectors.mtx"
 	allData = createData("Sparse", pathIn, fileType="mtx")
@@ -48,9 +48,9 @@ if __name__ == "__main__":
 	print "Finished converting labels to ints"
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":<0.01|0.1|0.5|1.0|10.0>}, [proportionPercentNegative90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+	toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":<0.01|0.1|0.5|1.0|10.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'proportionPercentNegative90':proportionPercentNegative90}
+	extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
 	results = {}
 	run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 		      "trainY":trainY.duplicate(), 
 		      "testY":testY.duplicate(), 
 		      'runAndTest':runAndTest, 
-		      'proportionPercentNegative90':proportionPercentNegative90}
+		      'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
 	# 	print "Run call: "+repr(run)
 	print "Best Run confirmation: "+repr(executeCode(run, dataHash))
 

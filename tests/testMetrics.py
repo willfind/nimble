@@ -1,13 +1,13 @@
 import numpy
 from nose.tools import *
-from UML.metrics import rmse, classificationError, computeError, meanAbsoluteError, proportionPercentNegative50, proportionPercentNegative90
+from UML.metrics import rootMeanSquareError, fractionIncorrect, computeError, meanAbsoluteError, fractionTrueNegativeTop50, fractionTrueNegativeTop90
 from UML.umlHelpers import computeMetrics
 from UML import createData
 from UML.exceptions import ArgumentException
 
-def testProportionPercentNegative():
+def testFractionTrueNegative():
 	"""
-	Unit test for proportionPercentNegative50/90
+	Unit test for fractionTrueNegativeTop50/Top90
 	"""
 	knownLabelsOne = [[1], [2], [2], [2], [1], [1], [1], [2], [2], [2], [1], [2], [2], [2], [1], [1], [1], [2], [2], [2]]
 	knownLabelsTwo = [[2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]]
@@ -27,14 +27,14 @@ def testProportionPercentNegative():
 
 	predictedScoreListBase = createData('Matrix', predictedScoreList, ['1', '2'])
 
-	topHalfProportionNegativeOne = proportionPercentNegative50(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
-	topNinetyProportionNegativeOne = proportionPercentNegative90(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
-	topHalfProportionNegativeTwo = proportionPercentNegative50(knownLabelsTwoBase, predictedScoreListBase, negativeLabel='1')
-	topNinetyProportionNegativeTwo = proportionPercentNegative90(knownLabelsTwoBase, predictedScoreListBase, negativeLabel='1')
-	topHalfProportionNegativeThree = proportionPercentNegative50(knownLabelsThreeBase, predictedScoreListBase, negativeLabel='1')
-	topNinetyProportionNegativeThree = proportionPercentNegative90(knownLabelsThreeBase, predictedScoreListBase, negativeLabel='1')
-	topHalfProportionNegativeFour = proportionPercentNegative50(knownLabelsFourBase, predictedScoreListBase, negativeLabel='1')
-	topNinetyProportionNegativeFour = proportionPercentNegative90(knownLabelsFourBase, predictedScoreListBase, negativeLabel='1')
+	topHalfProportionNegativeOne = fractionTrueNegativeTop50(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
+	topNinetyProportionNegativeOne = fractionTrueNegativeTop90(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
+	topHalfProportionNegativeTwo = fractionTrueNegativeTop50(knownLabelsTwoBase, predictedScoreListBase, negativeLabel='1')
+	topNinetyProportionNegativeTwo = fractionTrueNegativeTop90(knownLabelsTwoBase, predictedScoreListBase, negativeLabel='1')
+	topHalfProportionNegativeThree = fractionTrueNegativeTop50(knownLabelsThreeBase, predictedScoreListBase, negativeLabel='1')
+	topNinetyProportionNegativeThree = fractionTrueNegativeTop90(knownLabelsThreeBase, predictedScoreListBase, negativeLabel='1')
+	topHalfProportionNegativeFour = fractionTrueNegativeTop50(knownLabelsFourBase, predictedScoreListBase, negativeLabel='1')
+	topNinetyProportionNegativeFour = fractionTrueNegativeTop90(knownLabelsFourBase, predictedScoreListBase, negativeLabel='1')
 	
 	assert topHalfProportionNegativeOne == 0.4
 	assert topNinetyProportionNegativeOne >= 0.443 and topNinetyProportionNegativeOne <= 0.445
@@ -56,12 +56,12 @@ def testPerfCombinations():
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
-	metricFunctions = [rmse, meanAbsoluteError, classificationError]
+	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
 	print results
-	assert results['rmse'] == 0.0
+	assert results['rootMeanSquareError'] == 0.0
 	assert results['meanAbsoluteError'] == 0.0
-	assert results['classificationError'] == 0.0
+	assert results['fractionIncorrect'] == 0.0
 
 	knownLabels = numpy.array([1.5,2.5,3.5])
 	predictedLabels = numpy.array([1.0,2.0,3.0])
@@ -69,10 +69,10 @@ def testPerfCombinations():
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
-	metricFunctions = [rmse, meanAbsoluteError, classificationError]
+	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
-	assert results['rmse'] > 0.49
-	assert results['rmse'] < 0.51
+	assert results['rootMeanSquareError'] > 0.49
+	assert results['rootMeanSquareError'] < 0.51
 	assert results['meanAbsoluteError'] > 0.49
 	assert results['meanAbsoluteError'] < 0.51
 
@@ -137,7 +137,7 @@ def testGenericErrorCalculator():
 @raises(ArgumentException)
 def testRmseEmptyKnownValues():
 	"""
-		Check that the rmse calculator correctly throws an
+		Check that the rootMeanSquareError calculator correctly throws an
 		exception if knownLabels vector is empty
 	"""
 	knownLabels = numpy.array([])
@@ -146,12 +146,12 @@ def testRmseEmptyKnownValues():
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
+	rootMeanSquareErrorRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 
 @raises(ArgumentException)
 def testRmseEmptyPredictedValues():
 	"""
-		Check that the rmse calculator correctly throws an
+		Check that the rootMeanSquareError calculator correctly throws an
 		exception if predictedLabels vector is empty
 	"""
 	predictedLabels = numpy.array([])
@@ -160,12 +160,12 @@ def testRmseEmptyPredictedValues():
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
+	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 
 
 def testRmse():
 	"""
-		Check that the rmse calculator works correctly when
+		Check that the rootMeanSquareError calculator works correctly when
 		all inputs are zero, and when all known values are
 		the same as predicted values.
 	"""
@@ -175,7 +175,7 @@ def testRmse():
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
+	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
 
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
@@ -184,7 +184,7 @@ def testRmse():
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
+	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
 
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
@@ -193,7 +193,7 @@ def testRmse():
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
-	rmseRate = rmse(knownLabelsMatrix, predictedLabelsMatrix)
+	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate > 0.49
 	assert rmseRate < 0.51
 

@@ -200,7 +200,7 @@ def main():
 	testData1 = Sparse(testDataBase)
 	functionStr = """def f():
 	return 0"""
-	metricsHash = {"rmse":0.50, "meanAbsoluteError":0.45}
+	metricsHash = {"rootMeanSquareError":0.50, "meanAbsoluteError":0.45}
 	extra = {"c":0.5, "folds":10, "tests": 20}
 
 	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")

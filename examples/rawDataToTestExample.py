@@ -24,7 +24,7 @@ if __name__ == "__main__":
     from UML import runAndTest
     from UML import createData
     from UML.read.convert_to_basedata import convertToCooBaseData
-    from UML.metrics import proportionPercentNegative90
+    from UML.metrics import fractionTrueNegativeTop90
 
     rawTextDirPath = 'UML/datasets/rawData/rawHtmlFiles'
     #rawTextDirPath = 'UML/datasets/rawDataSmall/rawHtml'
@@ -80,9 +80,9 @@ if __name__ == "__main__":
     trainY = createData('Matrix', trainYList)
     testY = createData('Matrix', testYList)
 
-    toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":<0.1|0.6|0.75|0.9>}, [proportionPercentNegative90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":<0.1|0.6|0.75|0.9>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     runs = functionCombinations(toRun)
-    extraParams = {'runAndTest':runAndTest, 'proportionPercentNegative90':proportionPercentNegative90}
+    extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     results = {}
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
               "trainY":trainY, 
               "testY":testY, 
               'runAndTest':runAndTest, 
-              'proportionPercentNegative90':proportionPercentNegative90}
+              'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     #   print "Run call: "+repr(run)
     print "Best run call: " + str(run)
     print "Best Run confirmation: "+repr(executeCode(run, dataHash))

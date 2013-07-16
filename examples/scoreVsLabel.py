@@ -6,16 +6,11 @@ from allowImports import boilerplate
 boilerplate()
 
 if __name__ == "__main__":
-    from UML import crossValidateReturnBest
-    from UML import functionCombinations
-    from UML.umlHelpers import executeCode
     from UML import runAndTest
     from UML import createData
     from UML import splitData
-    from UML.metrics import classificationError
-    from UML.metrics import bottomProportionPercentNegative10
-    from UML.metrics import proportionPercentNegative50
-    from UML.metrics import proportionPercentNegative90
+    from UML.metrics import fractionTrueNegativeTop50
+    from UML.metrics import fractionTrueNegativeTop90
 
     pathIn = "UML/datasets/tfIdfApproval50K.mtx"
     allData = createData("Sparse", pathIn, fileType="mtx")
@@ -46,7 +41,6 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    scores = runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":0.75}, [proportionPercentNegative90, proportionPercentNegative50], scoreMode="allScores", negativeLabel="2", sendToLog=False)
+    scores = runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":0.75}, [fractionTrueNegativeTop90, fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)
 
     print "top 90 proportion Rejected: " + str(scores)
-    

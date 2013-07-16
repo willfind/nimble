@@ -1,9 +1,8 @@
 
 from allowImports import boilerplate
 boilerplate()
-import random
+
 from UML import *
-from UML.metrics import rmse, meanAbsoluteError
 
 
 if __name__ == "__main__":
@@ -23,15 +22,15 @@ if __name__ == "__main__":
 	normalizeData('mlpy.PCA', trainX, testX, arguments={'k':5})
 
 	"""
-	results = runAndTestDirect("mlpy.Ridge", trainX, testX, trainY, testY, arguments={"lmb":1}, performanceMetricFuncs=[rmse, meanAbsoluteError])
+	results = runAndTestDirect("mlpy.Ridge", trainX, testX, trainY, testY, arguments={"lmb":1}, performanceMetricFuncs=[rootMeanSquareError, meanAbsoluteError])
 
 	print "results", results
 	"""
 
 
-	toRun = 'runAndTestDirect("mlpy.Ridge", trainX, testX, trainY, testY, {"lmb":<.01|.1|1>}, [rmse])'
+	toRun = 'runAndTestDirect("mlpy.Ridge", trainX, testX, trainY, testY, {"lmb":<.01|.1|1>}, [rootMeanSquareError])'
 	runs = functionCombinations(toRun)
-	runs.append('runAndTestDirect("mlpy.LARS", trainX, testX, trainY, testY, {"maxsteps":20}, [rmse])')
+	runs.append('runAndTestDirect("mlpy.LARS", trainX, testX, trainY, testY, {"maxsteps":20}, [rootMeanSquareError])')
 
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=10, extraParams=locals())
 
@@ -46,7 +45,7 @@ if __name__ == "__main__":
 
 	#OLD STUFF
 
-	##results = runAndTestDirect("mlpy.LibSvm", trainX, testX, trainY, testY, arguments={"C":1}, performanceMetricFuncs=[classificationError])
+	##results = runAndTestDirect("mlpy.LibSvm", trainX, testX, trainY, testY, arguments={"C":1}, performanceMetricFuncs=[fractionIncorrect])
 
 	#xData = createData("Matrix", fileName, fileType="csv")
 	#allData = createData("Matrix", fileName, fileType="csv")

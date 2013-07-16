@@ -182,7 +182,7 @@ def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependen
 
 		Returns: A dictionary associating the name or code of performance metrics with the results
 		of those metrics, computed using the predictions of 'algorithm' on testX.  
-		Example: { 'classificationError': 0.21, 'numCorrect': 1020 }
+		Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
 	"""
 	if sendToLog:
 		timer = Stopwatch()

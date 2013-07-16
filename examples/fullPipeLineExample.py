@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	from UML import runAndTest
 	from UML.runners import runOneVsOne
 	from UML.runners import runAndTestOneVsOne
-	from UML.metrics import classificationError
+	from UML.metrics import fractionIncorrect
 
 	variables = ["x1","x2","x3", "label"]
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 	testObj3 = testObj.duplicate()
 
 	metricFuncs = []
-	metricFuncs.append(classificationError)
+	metricFuncs.append(fractionIncorrect)
 
 	results1 = runAndTest('sciKitLearn.LogisticRegression',trainObj, testObj, trainDependentVar=3, testDependentVar=3, arguments={}, performanceMetricFuncs=metricFuncs)
 	results2 = runOneVsOne('sciKitLearn.SVC',trainObj, testObj, trainDependentVar=3, testDependentVar=3, arguments={}, scoreMode='label', sendToLog=False)

@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	from UML import run
 	from UML import createData
 	from UML import splitData
-	from UML.metrics import classificationError
+	from UML.metrics import fractionIncorrect
 
 	pathIn = "datasets/sparseSample.mtx"
 	allData = createData("Sparse", pathIn, fileType="mtx")
@@ -23,7 +23,7 @@ if __name__ == "__main__":
 	testY = testY.toMatrix()
 
 	args = {"kernel":"GaussianKernel", "C":1}
-	results = runAndTest("shogun.MulticlassLibSVM", trainX.duplicate(), testX.duplicate(), trainY.duplicate(), testY.duplicate(), args, [classificationError])
+	results = runAndTest("shogun.MulticlassLibSVM", trainX.duplicate(), testX.duplicate(), trainY.duplicate(), testY.duplicate(), args, [fractionIncorrect])
 	rawResults = run("shogun.MulticlassLibSVM", trainX, testX, trainY, testY, args)
 	
 	print results

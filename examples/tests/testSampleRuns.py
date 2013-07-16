@@ -9,7 +9,7 @@ from UML import crossValidate
 from UML import splitData
 from UML import functionCombinations
 from UML import runAndTest
-from UML.metrics import classificationError
+from UML.metrics import fractionIncorrect
 
 import os
 exampleDirPath = UMLPath + "/datasets/"
@@ -46,9 +46,9 @@ def testEverythingVolumeOne():
 	
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRunOne = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [classificationError])'
+	toRunOne = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
 	runsOne = functionCombinations(toRunOne)
-	extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError}
+	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 	fullCrossValidateResults = crossValidate(trainX, trainY, runsOne, numFolds=10, extraParams=extraParams, sendToLog=False)
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runsOne, mode='min', numFolds=10, extraParams=extraParams, sendToLog=False)
 
@@ -114,9 +114,9 @@ def testCrossValidateExample():
 	trainX, trainY, testX, testY = splitData(allData, labelID='income', fractionForTestSet=.15)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [classificationError])'
+	toRun = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError}
+	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=10, extraParams=extraParams)
 	assert bestFunction is not None

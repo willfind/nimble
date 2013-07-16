@@ -12,10 +12,7 @@ if __name__ == "__main__":
     from UML import runAndTest
     from UML import createData
     from UML import splitData
-    from UML.metrics import classificationError
-    from UML.metrics import bottomProportionPercentNegative10
-    from UML.metrics import proportionPercentNegative50
-    from UML.metrics import proportionPercentNegative90
+    from UML.metrics import fractionIncorrect
 
     pathIn = "UML/datasets/tfIdfApproval50K.mtx"
     allData = createData("Sparse", pathIn, fileType="mtx")
@@ -46,9 +43,9 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("shogun.KNN", trainX, testX, trainY, testY, {"k":<1|3|5|10|15|20|25>}, [classificationError],sendToLog=False)'
+    toRun = 'runAndTest("shogun.KNN", trainX, testX, trainY, testY, {"k":<1|3|5|10|15|20|25>}, [fractionIncorrect],sendToLog=False)'
     runs = functionCombinations(toRun)
-    extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError}
+    extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
     run = run.replace('sendToLog=False', 'sendToLog=True')
@@ -57,16 +54,16 @@ if __name__ == "__main__":
               "trainY":trainY, 
               "testY":testY, 
               'runAndTest':runAndTest, 
-              'classificationError':classificationError}
+              'fractionIncorrect':fractionIncorrect}
     #   print "Run call: "+repr(run)
     print "Best run code: " + str(run)
     print "Best Run confirmation: "+repr(executeCode(run, dataHash))
 
 
     # # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    # toRun = 'runAndTest("shogun.KNN", trainX, testX, trainY, testY, {"k":<1|3|5|10|15|20|25>}, [proportionPercentNegative50], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    # toRun = 'runAndTest("shogun.KNN", trainX, testX, trainY, testY, {"k":<1|3|5|10|15|20|25>}, [fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     # runs = functionCombinations(toRun)
-    # extraParams = {'runAndTest':runAndTest, 'proportionPercentNegative50':proportionPercentNegative50}
+    # extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
     # run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
     # run = run.replace('sendToLog=False', 'sendToLog=True')
@@ -75,7 +72,7 @@ if __name__ == "__main__":
     #           "trainY":trainY, 
     #           "testY":testY, 
     #           'runAndTest':runAndTest, 
-    #           'proportionPercentNegative50':proportionPercentNegative50}
+    #           'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
     # #   print "Run call: "+repr(run)
     # print "Best run code: " + str(run)
     # print "Best Run confirmation: "+repr(executeCode(run, dataHash))

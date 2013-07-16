@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	from UML import run
 	from UML import createData
 	from UML import splitData
-	from UML.metrics import classificationError
+	from UML.metrics import fractionIncorrect
 
 	pathIn = "datasets/adult_income_classification_tiny_numerical.csv"
 	allData = createData("Sparse", pathIn, fileType="csv")
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 	testY = testY.toMatrix()
 
 	args = {"kernel":"GaussianKernel", "width":1, "C":1}
-	results = runAndTest("shogun.MulticlassLibSVM", trainX, testX, trainY, testY, args, [classificationError])
+	results = runAndTest("shogun.MulticlassLibSVM", trainX, testX, trainY, testY, args, [fractionIncorrect])
 	rawResults = run("shogun.MulticlassLibSVM", trainX, testX, dependentVar=trainY, arguments=args)
 	
 	print "results: "+repr(results)

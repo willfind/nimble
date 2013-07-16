@@ -11,7 +11,7 @@ from UML.umlHelpers import computeError
 
 
 
-def rmse(knownValues, predictedValues):
+def rootMeanSquareError(knownValues, predictedValues):
 	"""
 		Compute the root mean square error.  Assumes that knownValues and predictedValues contain
 		numerical values, rather than categorical data.
@@ -25,16 +25,16 @@ def meanAbsoluteError(knownValues, predictedValues):
 	"""
 	return computeError(knownValues, predictedValues, lambda x,y,z: z + abs(y - x), lambda x,y: x/y)
 
-def classificationError(knownValues, predictedValues):
+def fractionIncorrect(knownValues, predictedValues):
 	"""
 		Compute the proportion of incorrect predictions within a set of
 		instances.  Assumes that values in knownValues and predictedValues are categorical.
 	"""
 	return computeError(knownValues, predictedValues, lambda x,y,z: z if x == y else z + 1, lambda x,y: x/y)
 
-def proportionPercentNegative90(knownValues, predictedValues, negativeLabel):
+def fractionTrueNegativeTop90(knownValues, predictedValues, negativeLabel):
 	"""
-		Wrapper function for proportionPercentError.  Computes the proportion
+		Wrapper function for fractionTrueNegative.  Computes the proportion
 		of posts that fall in the 90% most likely to be in the positive class
 		that are actually in the negative class.  Assumes there are only 2 classes
 		in the data set, and that predictedValues contains a score for each of
@@ -42,31 +42,31 @@ def proportionPercentNegative90(knownValues, predictedValues, negativeLabel):
 		ascending order, and looks at highest 90% of values.
 				
 	"""
-	return proportionPercentNegative(knownValues, predictedValues, negativeLabel, proportionToScore=0.90)
+	return fractionTrueNegative(knownValues, predictedValues, negativeLabel, proportionToScore=0.90)
 
-def proportionPercentNegative50(knownValues, predictedValues, negativeLabel):
+def fractionTrueNegativeTop50(knownValues, predictedValues, negativeLabel):
 	"""
-		Wrapper function for proportionPercentError.  Computes the proportion
+		Wrapper function for fractionTrueNegative.  Computes the proportion
 		of posts that fall in the 50% most likely to be in the positive class
 		that are actually in the negative class.  Assumes there are only 2 classes
 		in the data set, and that predictedValues contains a score for each of
 		the 2 labels.  Sorts by (positive label score - negative label score), in
 		ascending order, and looks at highest 50% of values.
 	"""
-	return proportionPercentNegative(knownValues, predictedValues, negativeLabel, proportionToScore=0.50)
+	return fractionTrueNegative(knownValues, predictedValues, negativeLabel, proportionToScore=0.50)
 
-def bottomProportionPercentNegative10(knownValues, predictedValues, negativeLabel):
+def fractionTrueNegativeBottom10(knownValues, predictedValues, negativeLabel):
 	"""
-		Wrapper function for proportionPercentError.  Computes the proportion
+		Wrapper function for fractionTrueNegative.  Computes the proportion
 		of posts that fall in the 50% most likely to be in the positive class
 		that are actually in the negative class.  Assumes there are only 2 classes
 		in the data set, and that predictedValues contains a score for each of
 		the 2 labels.  Sorts by (positive label score - negative label score), in
 		ascending order, and looks at lowest 10% of values.
 	"""
-	return proportionPercentNegative(knownValues, predictedValues, negativeLabel, proportionToScore=0.10, reverseSort=True)
+	return fractionTrueNegative(knownValues, predictedValues, negativeLabel, proportionToScore=0.10, reverseSort=True)
 
-def proportionPercentNegative(knownValues, labelScoreList, negativeLabel, proportionToScore=0.90, reverseSort=False):
+def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionToScore=0.90, reverseSort=False):
 	"""
 		Computes the proportion
 		of posts that fall in the x% most likely to be in the positive class
@@ -86,7 +86,7 @@ def proportionPercentNegative(knownValues, labelScoreList, negativeLabel, propor
 
 	#Enforce requirement that there be only 2 classes present
 	if len(labelNames) != 2:
-		raise ArgumentException("proportionPercentNegative requires a set of precisely two predicted label scores for each point")
+		raise ArgumentException("fractionTrueNegative requires a set of precisely two predicted label scores for each point")
 
 	#look through featureNames; whichever isn't the negative label must be
 	#the positive label
@@ -147,7 +147,7 @@ def proportionPercentNegative(knownValues, labelScoreList, negativeLabel, propor
 	#return proportion of top posts that are negative
 	return float(numNegativeLabels) / float(len(sortedKnownValues))
 
-def bottomPercentError(knownValues, labelScoreList, negativeLabel):
+def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 	"""
 		Note: this error function is only appropriate for binary classification
 		situations.  If there are more than two labels in the labelScoreMap,
@@ -162,7 +162,7 @@ def bottomPercentError(knownValues, labelScoreList, negativeLabel):
 	labelNames = labelScoreList.featureNames
 	positiveLabel = ''
 	if len(labelNames) != 2:
-		raise ArgumentException("proportionPercentNegative requires a set of precisely two predicted label scores for each point")
+		raise ArgumentException("fractionTrueNegative requires a set of precisely two predicted label scores for each point")
 
 	for labelName in labelNames.keys():
 		if labelName == negativeLabel:

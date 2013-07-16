@@ -4,7 +4,7 @@ from UML.runners import runOneVsOne
 from UML.runners import runOneVsAll
 from UML.umlHelpers import extractWinningPredictionLabel
 from UML.umlHelpers import generateAllPairs
-from UML.metrics import classificationError
+from UML.metrics import fractionIncorrect
 
 
 def testRunAndTestOneVsOne():
@@ -20,13 +20,13 @@ def testRunAndTestOneVsOne():
     testObj2 = createData('Matrix', testData2)
 
     metricFuncs = []
-    metricFuncs.append(classificationError)
+    metricFuncs.append(fractionIncorrect)
 
     results1 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj1, testObj1, trainDependentVar=3,  arguments={}, performanceMetricFuncs=metricFuncs)
     results2 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj2, testObj2, trainDependentVar=3,  arguments={}, performanceMetricFuncs=metricFuncs)
 
-    assert results1['classificationError'] == 0.0
-    assert results2['classificationError'] == 0.25
+    assert results1['fractionIncorrect'] == 0.0
+    assert results2['fractionIncorrect'] == 0.25
 
 def testRunOneVsAll():
     variables = ["x1", "x2", "x3", "label"]
@@ -41,7 +41,7 @@ def testRunOneVsAll():
     testObj2 = createData('Sparse', testData2)
 
     metricFuncs = []
-    metricFuncs.append(classificationError)
+    metricFuncs.append(fractionIncorrect)
 
     results1 = runOneVsAll('sciKitLearn.LogisticRegression', trainObj1, testObj1, trainDependentVar=3,  arguments={}, scoreMode='label')
     results2 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.duplicate(), testObj1.duplicate(), trainDependentVar=3,  arguments={}, scoreMode='bestScore')
@@ -65,7 +65,7 @@ def testRunOneVsOne():
     testObj1 = createData('Matrix', testData1)
 
     metricFuncs = []
-    metricFuncs.append(classificationError)
+    metricFuncs.append(fractionIncorrect)
 
     results1 = runOneVsOne('sciKitLearn.SVC', trainObj1.duplicate(), testObj1.duplicate(), trainDependentVar=3,  arguments={}, scoreMode='label')
     results2 = runOneVsOne('sciKitLearn.SVC', trainObj1.duplicate(), testObj1.duplicate(), trainDependentVar=3,  arguments={}, scoreMode='bestScore')

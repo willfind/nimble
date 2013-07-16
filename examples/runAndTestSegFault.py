@@ -11,7 +11,7 @@ if __name__ == "__main__":
 	from UML import runAndTest
 	from UML import createData
 	from UML import splitData
-	from UML.metrics import classificationError
+	from UML.metrics import fractionIncorrect
 
 	pathIn = "datasets/sparseSampleReal.mtx"
 	allData = createData("Sparse", pathIn, fileType="mtx")
@@ -38,9 +38,9 @@ if __name__ == "__main__":
 	testY = createData('Matrix', testYList)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, testX, trainY, testY, {"C":<1.0>}, [classificationError])'
+	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, testX, trainY, testY, {"C":<1.0>}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError}
+	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 	results = {}
 	for run in runs:
 		dataHash={"trainX": trainX.duplicate(), 
@@ -48,6 +48,6 @@ if __name__ == "__main__":
 		          "trainY":trainY.duplicate(), 
 		          "testY":testY.duplicate(), 
 		          'runAndTest':runAndTest, 
-		          'classificationError':classificationError}
+		          'fractionIncorrect':fractionIncorrect}
 		print "Run call: "+repr(run)
 		print "Run results: "+repr(executeCode(run, dataHash))

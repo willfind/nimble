@@ -513,9 +513,9 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions,
 		Returns: a dictionary associating each performance metric with the (presumably)
 		numerical value computed by running the function over the known labels & predicted labels
 	"""
-	from UML.metrics import proportionPercentNegative90
-	from UML.metrics import proportionPercentNegative50
-	from UML.metrics import bottomProportionPercentNegative10
+	from UML.metrics import fractionTrueNegativeTop90
+	from UML.metrics import fractionTrueNegativeTop50
+	from UML.metrics import fractionTrueNegativeBottom10
 
 	if isinstance(dependentVar, (list, Base)):
 		#The known Indicator argument already contains all known
@@ -532,7 +532,7 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions,
 	parameterHash = {"knownValues":knownLabels, "predictedValues":predictedData}
 	for func in performanceFunctions:
 		#some functions need negativeLabel as an argument.
-		if func == proportionPercentNegative90 or func == proportionPercentNegative50 or func == bottomProportionPercentNegative10:
+		if func == fractionTrueNegativeTop90 or func == fractionTrueNegativeTop50 or func == fractionTrueNegativeBottom10:
 			parameterHash["negativeLabel"] = negativeLabel
 			results[inspect.getsource(func)] = executeCode(func, parameterHash)
 			del parameterHash["negativeLabel"]

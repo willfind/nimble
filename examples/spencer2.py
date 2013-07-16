@@ -11,7 +11,7 @@ if __name__ == "__main__":
 	from UML import functionCombinations
 	from UML import createData
 	from UML import runAndTest
-	from UML.metrics import classificationError
+	from UML.metrics import fractionIncorrect
 
 
 	print "UML dir", dir(UML)
@@ -29,9 +29,9 @@ if __name__ == "__main__":
 	print "data formatted"
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, testX, trainY, testY, {"C":<1.0>}, [classificationError])'
+	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, testX, trainY, testY, {"C":<1.0>}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'classificationError':classificationError}
+	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 
 	print "runs prepared"
 
