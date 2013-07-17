@@ -3,12 +3,18 @@
 	object.  Includes loading, processing, and merging/join operations.
 """
 
+from allowImports import boilerplate
+boilerplate()
+
+import os.path
+import UML
+
 from UML.read.data_loading import *
 from UML.read.text_processing import *
 
 if __name__ == "__main__":
 	#convert a directory w/text files (or *.html files) into a set of data objects
-	testDirPath = '../datasets/testDirectory'
+	testDirPath = os.path.join(UML.UMLPath, 'datasets/testDirectory')
 
 	#read in the directory of individual files and convert to a dok sparse matrix + auxiliary
 	# data objects

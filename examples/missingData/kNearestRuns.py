@@ -6,6 +6,8 @@ from allowImports import boilerplate
 boilerplate()
 
 if __name__ == "__main__":
+    import os.path 
+    import UML
     from UML import crossValidateReturnBest
     from UML import functionCombinations
     from UML.umlHelpers import executeCode
@@ -14,7 +16,7 @@ if __name__ == "__main__":
     from UML import splitData
     from UML.metrics import fractionIncorrect
 
-    pathIn = "UML/datasets/tfIdfApproval50K.mtx"
+    pathIn = os.path.join(UML.UMLPath, "datasets/tfIdfApproval50K.mtx")
     allData = createData("Sparse", pathIn, fileType="mtx")
     trainX, trainY, testX, testY = splitData(allData, labelID=0, fractionForTestSet=.2)
     print "Finished loading data"

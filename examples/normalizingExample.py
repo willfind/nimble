@@ -19,8 +19,9 @@ if __name__ == "__main__":
 	trainObjY = trainObj.extractFeatures('y')
 
 	# data we're going to classify
+	variables2 = ["x1","x2","x3"]
 	data2 = [[1,0,0],[4,0,0],[-1,0,0], [-2,0,0]]
-	testObj = createData('Matrix', data2)
+	testObj = createData('Matrix', data2, variables2)
 
 	# baseline check
 	assert trainObj.data[0].size == 3

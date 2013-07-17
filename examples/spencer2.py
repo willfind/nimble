@@ -3,7 +3,7 @@
 from allowImports import boilerplate
 boilerplate()
 import UML
-
+import os.path
 
 if __name__ == "__main__":
 
@@ -14,9 +14,9 @@ if __name__ == "__main__":
 	from UML.metrics import fractionIncorrect
 
 
-	print "UML dir", dir(UML)
+#	print "UML dir", dir(UML)
 	# path to input specified by command line argument
-	pathIn = "datasets/sparseSample.mtx"
+	pathIn = os.path.join(UML.UMLPath, "datasets/sparseSample.mtx")
 	allData = createData('sparse', pathIn, fileType="mtx")
 
 	print "data loaded"

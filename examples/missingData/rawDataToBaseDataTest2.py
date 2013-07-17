@@ -18,7 +18,7 @@ def readMapFile(filePath):
     return idAttrMap
 
 if __name__ == "__main__":
-    from UML.read.convert_to_basedata import convertToCooBaseData
+    from UML.read.convert_to_base import convertToCooBaseData
 
     rawTextDirPath = '/home/ross/LaddersData/rawData'
     #rawTextDirPath = 'UML/datasets/rawDataSmall/rawHtml'

@@ -18,20 +18,22 @@ def readMapFile(filePath):
     return idAttrMap
 
 if __name__ == "__main__":
+    import os.path
+    import UML
     from UML import crossValidateReturnBest
     from UML import functionCombinations
     from UML.umlHelpers import executeCode
     from UML import runAndTest
     from UML import createData
-    from UML.read.convert_to_basedata import convertToCooBaseData
+    from UML.read.convert_to_base import convertToCooBaseData
     from UML.metrics import fractionTrueNegativeTop90
 
-    rawTextDirPath = 'UML/datasets/rawData/rawHtmlFiles'
-    #rawTextDirPath = 'UML/datasets/rawDataSmall/rawHtml'
-    jobTitleMapPath = 'UML/datasets/rawData/jobTitlesMapAll.txt'
-    urlMapPath = 'UML/datasets/rawData/urlMapAll.txt'
-    companyNamePath = 'UML/datasets/rawData/companyNameMapAll.txt'
-    approvalMapPath = 'UML/datasets/rawData/approvalMap207K.txt'
+    rawTextDirPath = os.path.join(UML.UMLPath, 'datasets/rawData/rawHtmlFiles')
+    #rawTextDirPath = os.path.join(UML.UMLPath, 'datasets/rawDataSmall/rawHtml')
+    jobTitleMapPath = os.path.join(UML.UMLPath, 'datasets/rawData/jobTitlesMapAll.txt')
+    urlMapPath = os.path.join(UML.UMLPath, 'datasets/rawData/urlMapAll.txt')
+    companyNamePath = os.path.join(UML.UMLPath, 'datasets/rawData/companyNameMapAll.txt')
+    approvalMapPath = os.path.join(UML.UMLPath, 'datasets/rawData/approvalMap207K.txt')
 
     jobTitleMap = readMapFile(jobTitleMapPath)
     urlMap = readMapFile(urlMapPath)
@@ -48,7 +50,7 @@ if __name__ == "__main__":
 
     dataObj = convertToCooBaseData(rawTextDirPath, dirMappingMode='multiTyped', attributeMaps=attributeMaps, docIdClassLabelMaps={'approval':approvalMap}, minTermFrequency=5, featureRepresentation='tfidf')
 
-    dataObj.writeFile('csv', '/home/ross/library/LaddersData/umlApproval50KTfIdf.csv', True)
+    dataObj.writeFile('csv', os.path.join(UML.UMLPath, 'datasets/umlApproval50KTfIdf.csv'), True)
     numPointsToExtract = int(round(dataObj.points() * 0.2))
     testData = dataObj.extractPoints(number=numPointsToExtract, randomize=True)
     trainData = dataObj

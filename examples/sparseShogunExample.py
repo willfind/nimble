@@ -8,13 +8,15 @@ from allowImports import boilerplate
 boilerplate()
 
 if __name__ == "__main__":
+	import os.path
+	import UML
 	from UML import runAndTest
 	from UML import run
 	from UML import createData
 	from UML import splitData
 	from UML.metrics import fractionIncorrect
 
-	pathIn = "datasets/adult_income_classification_tiny_numerical.csv"
+	pathIn = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny_numerical.csv")
 	allData = createData("Sparse", pathIn, fileType="csv")
 	trainX, trainY, testX, testY = splitData(allData, labelID="income", fractionForTestSet=.2)
 	print "Finished loading data"

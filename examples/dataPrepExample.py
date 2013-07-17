@@ -9,16 +9,18 @@ boilerplate()
 
 
 if __name__ == "__main__":
+	import os.path
+	import UML
 
 	from UML import createData
 
 	# string manipulation to get and make paths
-	pathOrig = "../datasets/adult_income_classification_tiny.csv"
-	pathOut = "../datasets/adult_income_classification_tiny_numerical.csv"
+	pathOrig = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny.csv")
+	pathOut = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny_numerical.csv")
 
-	# we specify that we want a Matrix object returned, and with just the path it will
+	# we specify that we want a List object returned, and with just the path it will
 	# decide automaticallly the format of the file that is being loaded
-	processed = createData("Matrix", pathOrig)
+	processed = createData("List", pathOrig)
 
 	# this feature is a precalculated similarity rating. Lets not make it too easy....
 	processed.extractFeatures('fnlwgt')

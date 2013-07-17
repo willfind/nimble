@@ -5,7 +5,8 @@ boilerplate()
 
 
 if __name__ == "__main__":
-
+	import os.path
+	import UML
 	from UML import crossValidateReturnBest
 	from UML import functionCombinations
 	from UML import createData
@@ -13,7 +14,7 @@ if __name__ == "__main__":
 	from UML.metrics import fractionIncorrect
 
 	# path to input specified by command line argument
-	pathIn = "UML/datasets/sparseSample.mtx"
+	pathIn = os.path.join(UML.UMLPath, "datasets/sparseSample.mtx")
 	allData = createData('sparse', pathIn, fileType="mtx")
 
 	print "data loaded"

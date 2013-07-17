@@ -9,7 +9,7 @@ from datetime import timedelta
 sys.path.append(sys.path[0].rsplit('/',2)[0])
 import UML
 import UML.examples
-import UML.examples.laddersExperiments
+#import UML.examples.laddersExperiments
 __package__ = "UML.examples.laddersExperiments"
 
 if __name__ == "__main__":
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     from UML.metrics import fractionTrueNegativeTop90
 
     pathIn = "/home/ross/library/LaddersData/umlApprovalEntryDate300K.mtx"
-    trainX = createData('coo', pathIn, fileType='mtx')
+    trainX = createData('Sparse', pathIn, fileType='mtx')
     docId = trainX.extractFeatures(0)
     trainY = trainX.extractFeatures(0)
     print "Finished loading data"
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     trainX.extractPoints(trainRemoveList)
 
-    trainY = createData('coo', trainYList)
+    trainY = createData('Sparse', trainYList)
 
     print "Finished converting labels to ints"
 

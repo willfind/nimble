@@ -6,18 +6,15 @@ from allowImports import boilerplate
 boilerplate()
 
 if __name__ == "__main__":
-    from UML import runAndTest
+    import os.path
+    import UML
+    from UML import crossValidate
     from UML import createData
     from UML import splitData
-    from UML.metrics import fractionTrueNegativeTop50
-    from UML.metrics import fractionTrueNegativeTop90
 
-    pathIn = "UML/datasets/tfIdfApproval50K.mtx"
+    pathIn = os.path.join(UML.UMLPath, "datasets/10points2columns.mtx")
     allData = createData("Sparse", pathIn, fileType="mtx")
-    trainX, trainY, testX, testY = splitData(allData, labelID=0, fractionForTestSet=.2)
-    print "Finished loading data"
-    print "trainX shape: " + str(trainX.data.shape)
-    print "trainY shape: " + str(trainY.data.shape)
+    trainX, trainY, testX, testY = splitData(allData, labelID=1, fractionForTestSet=.2)
 
     # sparse types aren't playing nice with the error metrics currently, so convert
     trainY = trainY.toMatrix()
@@ -37,10 +34,8 @@ if __name__ == "__main__":
     trainY = createData('Matrix', trainYList)
     testY = createData('Matrix', testYList)
 
-    print "Finished converting labels to ints"
-
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    scores = runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":0.75}, [fractionTrueNegativeTop90, fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)
-
-    print "top 90 proportion Rejected: " + str(scores)
+    toRun = 'dataPrinter(trainX, testX, trainY, testY)'
+    extraParams = {'dataPrinter':dataPrinter}
+    results = crossValidate(trainX, trainY, [toRun], numFolds=2, extraParams=extraParams, sendToLog=False)

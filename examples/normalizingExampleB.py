@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	trainObj = createData('Matrix', data1, variables)
 
 	data2 = [[1,0,0],[1,1,1],[5,1,1], [3,4,4]]
-	testObj = createData('Matrix', data2)
+	testObj = createData('Matrix', data2, variables)
 
 	normalizeData('mlpy.PCA', trainObj, testObj, arguments={'k':2})
 	ret = run('sciKitLearn.KMeans', trainObj, testObj, arguments={'n_clusters':3})

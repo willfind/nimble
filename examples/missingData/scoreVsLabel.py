@@ -6,16 +6,15 @@ from allowImports import boilerplate
 boilerplate()
 
 if __name__ == "__main__":
-    from UML import crossValidateReturnBest
-    from UML import functionCombinations
-    from UML.umlHelpers import executeCode
+    import os.path
+    import UML
     from UML import runAndTest
     from UML import createData
     from UML import splitData
     from UML.metrics import fractionTrueNegativeTop50
     from UML.metrics import fractionTrueNegativeTop90
 
-    pathIn = "UML/datasets/tfIdfApproval50K.mtx"
+    pathIn = os.path.join(UML.UMLPath, "datasets/tfIdfApproval50K.mtx")
     allData = createData("Sparse", pathIn, fileType="mtx")
     trainX, trainY, testX, testY = splitData(allData, labelID=0, fractionForTestSet=.2)
     print "Finished loading data"
@@ -44,20 +43,6 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, testX, trainY, testY, {"C":<0.1|0.5|0.75|1.0|5.0>}, <[fractionTrueNegativeTop90]|[fractionTrueNegativeTop50]>, scoreMode="allScores", negativeLabel="2", sendToLog=False)'
-    runs = functionCombinations(toRun)
-    extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90, 'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
-    run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
+    scores = runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":0.75}, [fractionTrueNegativeTop90, fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)
 
-    # for run in runs:
-    dataHash={"trainX": trainX.duplicate(), 
-              "testX":testX.duplicate(), 
-              "trainY":trainY.duplicate(), 
-              "testY":testY.duplicate(), 
-              'runAndTest':runAndTest, 
-              'fractionTrueNegativeTop90':fractionTrueNegativeTop90,
-              'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
-    #   print "Run call: "+repr(run)
-    print "Best run code: " + str(run)
-    print "Best Run confirmation: "+repr(executeCode(run, dataHash))
-
+    print "top 90 proportion Rejected: " + str(scores)

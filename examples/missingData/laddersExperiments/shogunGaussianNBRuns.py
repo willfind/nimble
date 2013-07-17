@@ -11,7 +11,7 @@ import sys
 sys.path.append(sys.path[0].rsplit('/',2)[0])
 import UML
 import UML.examples
-import UML.examples.laddersExperiments
+#import UML.examples.laddersExperiments
 __package__ = "UML.examples.laddersExperiments"
 
 if __name__ == "__main__":
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     from UML.metrics import fractionTrueNegativeTop90
 
     pathIn = "/home/ross/library/LaddersData/PlaygroundFull/DocVectors.mtx"
-    trainX = createData('coo', pathIn, fileType='mtx')
+    trainX = createData('Sparse', pathIn, fileType='mtx')
     testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(0.2*trainX.points())), randomize=True)
     trainY = trainX.extractFeatures(0)
     testY = testX.extractFeatures(0)

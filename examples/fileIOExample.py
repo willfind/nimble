@@ -8,11 +8,12 @@ boilerplate()
 
 
 if __name__ == "__main__":
-
+	import os.path
+	import UML
 	from UML import createData
 
 	# string manipulation to get and make paths
-	pathOrig = "../datasets/adult_income_classification_tiny.csv"
+	pathOrig = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny.csv")
 	pathSplit = pathOrig.rsplit('.',1)
 	if len(pathSplit) > 1:
 		suffix = '.' + pathSplit[1]
