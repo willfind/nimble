@@ -28,16 +28,16 @@ def test_init_allEqualWithFeatureNames():
 
 
 ############
-# equals() #
+# isIdentical() #
 ############
 
-def test_equals_False():
-	""" Test List equals() against some non-equal input """
-	equals_False(constructor)
+def test_isIdentical_False():
+	""" Test List isIdentical() against some non-equal input """
+	isIdentical_False(constructor)
 
-def test_equals_True():
-	""" Test List equals() against some actually equal input """
-	equals_True(constructor)
+def test_isIdentical_True():
+	""" Test List isIdentical() against some actually equal input """
+	isIdentical_True(constructor)
 
 
 ###############
@@ -320,27 +320,27 @@ def test_writeFileMTX_handmade():
 
 
 #####################
-# copyReferences #
+# referenceDataFrom #
 #####################
 
 
 @raises(ArgumentException)
-def test_copyReferences_exceptionWrongType():
-	""" Test List copyReferences() throws exception when other is not the same type """
-	copyReferences_exceptionWrongType(constructor)
+def test_referenceDataFrom_exceptionWrongType():
+	""" Test List referenceDataFrom() throws exception when other is not the same type """
+	referenceDataFrom_exceptionWrongType(constructor)
 
-def test_copyReferences_sameReference():
-	""" Test List copyReferences() successfully records the same reference """
-	copyReferences_sameReference(constructor)
+def test_referenceDataFrom_sameReference():
+	""" Test List referenceDataFrom() successfully records the same reference """
+	referenceDataFrom_sameReference(constructor)
 
 
 #############
-# duplicate #
+# copy #
 #############
 
-def test_duplicate_withZeros():
-	""" Test List duplicate() produces an equal object and doesn't just copy the references """
-	duplicate_withZeros(constructor)
+def test_copy_withZeros():
+	""" Test List copy() produces an equal object and doesn't just copy the references """
+	copy_withZeros(constructor)
 
 ###################
 # copyPoints #
@@ -462,21 +462,21 @@ def test_getitem_simpleExampeWithZeroes():
 
 
 ################
-# getPointView #
+# pointView #
 ################
 
-def test_getPointView_isinstance():
-	""" Test List getPointView returns an instance of the View in dataHelpers """
-	getPointView_isinstance(constructor)
+def test_pointView_isinstance():
+	""" Test List pointView returns an instance of the View in dataHelpers """
+	pointView_isinstance(constructor)
 
 
 ##################
-# getFeatureView #
+# featureView #
 ##################
 
-def test_getFeatureView_isinstance():
-	""" Test List getFeatureView() returns an instance of the View in dataHelpers """
-	getFeatureView_isinstance(constructor)
+def test_featureView_isinstance():
+	""" Test List featureView() returns an instance of the View in dataHelpers """
+	featureView_isinstance(constructor)
 
 
 

@@ -292,7 +292,7 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
-		trainCopy = trainObj.duplicate()
+		trainCopy = trainObj.copy()
 		trainObjY = trainCopy.extractFeatures([dependentVar])		
 	# could be None for unsupervised learning, in which case it remains none
 

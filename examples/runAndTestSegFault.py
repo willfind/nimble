@@ -45,10 +45,10 @@ if __name__ == "__main__":
 	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 	results = {}
 	for run in runs:
-		dataHash={"trainX": trainX.duplicate(), 
-		          "testX":testX.duplicate(), 
-		          "trainY":trainY.duplicate(), 
-		          "testY":testY.duplicate(), 
+		dataHash={"trainX": trainX.copy(), 
+		          "testX":testX.copy(), 
+		          "trainY":trainY.copy(), 
+		          "testY":testY.copy(), 
 		          'runAndTest':runAndTest, 
 		          'fractionIncorrect':fractionIncorrect}
 		print "Run call: "+repr(run)

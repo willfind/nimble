@@ -1,7 +1,7 @@
 """
 Backend for unit tests of the functions implemented by the derived classes.
 
-These tests rely on having a working .equals method, which must be tested
+These tests rely on having a working .isIdentical method, which must be tested
 directly by the class calling this backend.
 
 """
@@ -49,12 +49,12 @@ def init_allEqual(constructor):
 	fromMTXCoo = constructor(data=tmpMTXCoo.name)
 
 	# check equality between all pairs
-	assert fromList.equals(fromCSV)
-	assert fromMTXArr.equals(fromList)
-	assert fromMTXArr.equals(fromCSV)
-	assert fromMTXCoo.equals(fromList)
-	assert fromMTXCoo.equals(fromCSV)
-	assert fromMTXCoo.equals(fromMTXArr)
+	assert fromList.isIdentical(fromCSV)
+	assert fromMTXArr.isIdentical(fromList)
+	assert fromMTXArr.isIdentical(fromCSV)
+	assert fromMTXCoo.isIdentical(fromList)
+	assert fromMTXCoo.isIdentical(fromCSV)
+	assert fromMTXCoo.isIdentical(fromMTXArr)
 
 def init_allEqualWithFeatureNames(constructor):
 	""" Test __init__() that every way to instantiate produces equal objects, with featureNames """
@@ -91,33 +91,33 @@ def init_allEqualWithFeatureNames(constructor):
 	fromMTXCoo = constructor(data=tmpMTXCoo.name)
 
 	# check equality between all pairs
-	assert fromList.equals(fromCSV)
-	assert fromMTXArr.equals(fromList)
-	assert fromMTXArr.equals(fromCSV)
-	assert fromMTXCoo.equals(fromList)
-	assert fromMTXCoo.equals(fromCSV)
-	assert fromMTXCoo.equals(fromMTXArr)
+	assert fromList.isIdentical(fromCSV)
+	assert fromMTXArr.isIdentical(fromList)
+	assert fromMTXArr.isIdentical(fromCSV)
+	assert fromMTXCoo.isIdentical(fromList)
+	assert fromMTXCoo.isIdentical(fromCSV)
+	assert fromMTXCoo.isIdentical(fromMTXArr)
 
 
 
 
 ############
-# equals() #
+# isIdentical() #
 ############
 
-def equals_False(constructor):
-	""" Test equals() against some non-equal input """
+def isIdentical_False(constructor):
+	""" Test isIdentical() against some non-equal input """
 	toTest = constructor([[4,5]])
-	assert not toTest.equals(constructor([[1,1],[2,2]]))
-	assert not toTest.equals(constructor([[1,2,3]]))
-	assert not toTest.equals(constructor([[1,2]]))
+	assert not toTest.isIdentical(constructor([[1,1],[2,2]]))
+	assert not toTest.isIdentical(constructor([[1,2,3]]))
+	assert not toTest.isIdentical(constructor([[1,2]]))
 
-def equals_True(constructor):
-	""" Test equals() against some actually equal input """
+def isIdentical_True(constructor):
+	""" Test isIdentical() against some actually equal input """
 	toTest1 = constructor([[4,5]])
 	toTest2 = constructor(deepcopy([[4,5]]))
-	assert toTest1.equals(toTest2)
-	assert toTest2.equals(toTest1)
+	assert toTest1.isIdentical(toTest2)
+	assert toTest2.isIdentical(toTest1)
 
 
 ###############
@@ -134,11 +134,11 @@ def transpose_handmade(constructor):
 	dataObjT = constructor(deepcopy(dataTrans))
 	
 	dataObj1.transpose()
-	assert dataObj1.equals(dataObjT)
+	assert dataObj1.isIdentical(dataObjT)
 	dataObj1.transpose()
 	dataObjT.transpose()
-	assert dataObj1.equals(dataObj2)
-	assert dataObj2.equals(dataObjT)
+	assert dataObj1.isIdentical(dataObj2)
+	assert dataObj2.isIdentical(dataObjT)
 
 
 #############
@@ -173,7 +173,7 @@ def appendPoints_handmadeSingle(constructor):
 	toAppend = constructor([[10,11,12]])
 	expected = constructor(dataExpected)
 	toTest.appendPoints(toAppend)
-	assert toTest.equals(expected)
+	assert toTest.isIdentical(expected)
 
 def appendPoints_handmadeSequence(constructor):
 	""" Test appendPoints() against handmade output for a sequence of additions"""
@@ -190,7 +190,7 @@ def appendPoints_handmadeSequence(constructor):
 
 	expected = constructor(dataExpected)
 
-	assert toTest.equals(expected)
+	assert toTest.isIdentical(expected)
 	
 
 ################
@@ -235,7 +235,7 @@ def appendFeatures_handmadeSingle(constructor):
 	expected = constructor(dataExpected,featureNamesExpected)
 
 	toTest.appendFeatures(toAppend)
-	assert toTest.equals(expected)
+	assert toTest.isIdentical(expected)
 
 def appendFeatures_handmadeSequence(constructor):
 	""" Test appendFeatures() against handmade output for a sequence of additions"""
@@ -258,7 +258,7 @@ def appendFeatures_handmadeSequence(constructor):
 	dataExpected = [[1,2,3,0.1,0.01,0,10],[4,5,6,0.2,0.02,0,11],[7,8,9,0.3,0.03,0,12]]
 
 	expected = constructor(dataExpected,featureNamesExpected)
-	assert toTest.equals(expected)
+	assert toTest.isIdentical(expected)
 
 
 
@@ -283,7 +283,7 @@ def sortPoints_naturalByFeature(constructor):
 	dataExpected = [[7,1,9],[1,2,3],[4,5,6]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.equals(objExp)
+	assert toTest.isIdentical(objExp)
 
 def sortPoints_scorer(constructor):
 	""" Test sortPoints() when we specify a scoring function """
@@ -303,7 +303,7 @@ def sortPoints_scorer(constructor):
 	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.equals(objExp)	
+	assert toTest.isIdentical(objExp)	
 
 def sortPoints_comparator(constructor):
 	""" Test sortPoints() when we specify a comparator function """
@@ -330,7 +330,7 @@ def sortPoints_comparator(constructor):
 	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.equals(objExp)	
+	assert toTest.isIdentical(objExp)	
 
 
 #################
@@ -357,7 +357,7 @@ def sortFeatures_naturalByPointWithNames(constructor):
 	namesExp = ["2", "1", "3"]
 	objExp = constructor(dataExpected, namesExp)
 
-	assert toTest.equals(objExp)
+	assert toTest.isIdentical(objExp)
 
 def sortFeatures_scorer(constructor):
 	""" Test sortFeatures() when we specify a scoring function """
@@ -376,7 +376,7 @@ def sortFeatures_scorer(constructor):
 	dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.equals(objExp)	
+	assert toTest.isIdentical(objExp)	
 
 def sortFeatures_comparator(constructor):
 	""" Test sortFeatures() when we specify a comparator function """
@@ -403,7 +403,7 @@ def sortFeatures_comparator(constructor):
 	dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.equals(objExp)	
+	assert toTest.isIdentical(objExp)	
 
 
 
@@ -421,9 +421,9 @@ def extractPoints_handmadeSingle(constructor):
 	toTest = constructor(data)
 	ext1 = toTest.extractPoints(0)
 	exp1 = constructor([[1,2,3]])
-	assert ext1.equals(exp1)
+	assert ext1.isIdentical(exp1)
 	expEnd = constructor([[4,5,6],[7,8,9]])
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 def extractPoints_handmadeListSequence(constructor):
 	""" Test extractPoints() against handmade output for several list extractions """
@@ -431,12 +431,12 @@ def extractPoints_handmadeListSequence(constructor):
 	toTest = constructor(data)
 	ext1 = toTest.extractPoints(0)
 	exp1 = constructor([[1,2,3]])
-	assert ext1.equals(exp1)
+	assert ext1.isIdentical(exp1)
 	ext2 = toTest.extractPoints([1,2])
 	exp2 = constructor([[7,8,9],[10,11,12]])
-	assert ext2.equals(exp2)
+	assert ext2.isIdentical(exp2)
 	expEnd = constructor([[4,5,6]])
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 def extractPoints_handmadeListOrdering(constructor):
 	""" Test extractPoints() against handmade output for out of order extraction """
@@ -444,9 +444,9 @@ def extractPoints_handmadeListOrdering(constructor):
 	toTest = constructor(data)
 	ext1 = toTest.extractPoints([3,4,1])
 	exp1 = constructor([[10,11,12],[13,14,15],[4,5,6]])
-	assert ext1.equals(exp1)
+	assert ext1.isIdentical(exp1)
 	expEnd = constructor([[1,2,3], [7,8,9]])
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 
 def extractPoints_handmadeFunction(constructor):
@@ -459,9 +459,9 @@ def extractPoints_handmadeFunction(constructor):
 		return False
 	ext = toTest.extractPoints(oneOrFour)
 	exp = constructor([[1,2,3],[4,5,6]])
-	assert ext.equals(exp)
+	assert ext.isIdentical(exp)
 	expEnd = constructor([[7,8,9]])
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 def extractPoints_handmadeFuncionWithFeatureNames(constructor):
 	""" Test extractPoints() against handmade output for function extraction with featureNames"""
@@ -474,9 +474,9 @@ def extractPoints_handmadeFuncionWithFeatureNames(constructor):
 		return False
 	ext = toTest.extractPoints(oneOrFour)
 	exp = constructor([[1,2,3],[4,5,6]],featureNames)
-	assert ext.equals(exp)
+	assert ext.isIdentical(exp)
 	expEnd = constructor([[7,8,9]],featureNames)
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 def extractPoints_exceptionStartInvalid(constructor):
 	""" Test extracPoints() for ArgumentException when start is not a valid point index """
@@ -508,8 +508,8 @@ def extractPoints_handmadeRange(constructor):
 	expectedRet = constructor([[4,5,6],[7,8,9]])
 	expectedTest = constructor([[1,2,3]])
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 def extractPoints_handmadeRangeWithFeatureNames(constructor):
 	""" Test extractPoints() against handmade output for range extraction with featureNames """
@@ -521,8 +521,8 @@ def extractPoints_handmadeRangeWithFeatureNames(constructor):
 	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
 	expectedTest = constructor([[1,2,3]],featureNames)
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 def extractPoints_handmadeRangeRand_FM(constructor):
 	""" Test extractPoints() against handmade output for randomized range extraction with featureNames """
@@ -534,8 +534,8 @@ def extractPoints_handmadeRangeRand_FM(constructor):
 	expectedRet = constructor([[1,2,3],[4,5,6]],featureNames)
 	expectedTest = constructor([[7,8,9]],featureNames)
 	
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 def extractPoints_handmadeRangeDefaults(constructor):
 	""" Test extractPoints uses the correct defaults in the case of range based extraction """
@@ -547,8 +547,8 @@ def extractPoints_handmadeRangeDefaults(constructor):
 	expectedRet = constructor([[1,2,3],[4,5,6]],featureNames)
 	expectedTest = constructor([[7,8,9]],featureNames)
 	
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 	toTest = constructor(data,featureNames)
 	ret = toTest.extractPoints(start=1)
@@ -556,8 +556,8 @@ def extractPoints_handmadeRangeDefaults(constructor):
 	expectedTest = constructor([[1,2,3]],featureNames)
 	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 
 #TODO an extraction test where all data is removed
@@ -575,9 +575,9 @@ def extractFeatures_handmadeSingle(constructor):
 	ext1 = toTest.extractFeatures(0)
 	exp1 = constructor([[1],[4],[7]])
 
-	assert ext1.equals(exp1)
+	assert ext1.isIdentical(exp1)
 	expEnd = constructor([[2,3],[5,6],[8,9]])
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 def extractFeatures_handmadeListSequence(constructor):
 	""" Test extractFeatures() against handmade output for several extractions by list """
@@ -585,13 +585,13 @@ def extractFeatures_handmadeListSequence(constructor):
 	toTest = constructor(data)
 	ext1 = toTest.extractFeatures([0])
 	exp1 = constructor([[1],[4],[7]])
-	assert ext1.equals(exp1)
+	assert ext1.isIdentical(exp1)
 	ext2 = toTest.extractFeatures([1,2])
 	exp2 = constructor([[3,-1],[6,-2],[9,-3]])
-	assert ext2.equals(exp2)
+	assert ext2.isIdentical(exp2)
 	expEndData = [[2],[5],[8]]
 	expEnd = constructor(expEndData)
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 def extractFeatures_handmadeListWithFeatureName(constructor):
 	""" Test extractFeatures() against handmade output for list extraction when specifying featureNames """
@@ -600,12 +600,12 @@ def extractFeatures_handmadeListWithFeatureName(constructor):
 	toTest = constructor(data,featureNames)
 	ext1 = toTest.extractFeatures(["one"])
 	exp1 = constructor([[1],[4],[7]], ["one"])
-	assert ext1.equals(exp1)
+	assert ext1.isIdentical(exp1)
 	ext2 = toTest.extractFeatures(["three","neg"])
 	exp2 = constructor([[3,-1],[6,-2],[9,-3]],["three","neg"])
-	assert ext2.equals(exp2)
+	assert ext2.isIdentical(exp2)
 	expEnd = constructor([[2],[5],[8]], ["two"])
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 
 def extractFeatures_handmadeFunction(constructor):
@@ -618,9 +618,9 @@ def extractFeatures_handmadeFunction(constructor):
 		return False
 	ext = toTest.extractFeatures(absoluteOne)
 	exp = constructor([[1,-1],[4,-2],[7,-3]])
-	assert ext.equals(exp)
+	assert ext.isIdentical(exp)
 	expEnd = constructor([[2,3],[5,6],[8,9]])	
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 
 def extractFeatures_handmadeFunctionWithFeatureName(constructor):
@@ -635,9 +635,9 @@ def extractFeatures_handmadeFunctionWithFeatureName(constructor):
 
 	ext = toTest.extractFeatures(absoluteOne)
 	exp = constructor([[1,-1],[4,-2],[7,-3]], ['one','neg'])
-	assert ext.equals(exp)
+	assert ext.isIdentical(exp)
 	expEnd = constructor([[2,3],[5,6],[8,9]],["two","three"])	
-	assert toTest.equals(expEnd)
+	assert toTest.isIdentical(expEnd)
 
 
 def extractFeatures_exceptionStartInvalid(constructor):
@@ -691,8 +691,8 @@ def extractFeatures_handmadeRange(constructor):
 	expectedRet = constructor([[2,3],[5,6],[8,9]])
 	expectedTest = constructor([[1],[4],[7]])
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 def extractFeatures_handmadeWithFeatureNames(constructor):
 	""" Test extractFeatures() against handmade output for range extraction with FeatureNames """
@@ -704,8 +704,8 @@ def extractFeatures_handmadeWithFeatureNames(constructor):
 	expectedRet = constructor([[2,3],[5,6],[8,9]],["two","three"])
 	expectedTest = constructor([[1],[4],[7]],["one"])
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 
 
@@ -725,8 +725,8 @@ def toList_handmade_defaultFeatureNames(constructor):
 	ret = toTest.toList()
 	exp = List(data)
 
-	assert ret.equals(exp)
-	assert exp.equals(ret)
+	assert ret.isIdentical(exp)
+	assert exp.isIdentical(ret)
 
 	
 def toList_handmade_assignedFeatureNames(constructor):
@@ -738,8 +738,8 @@ def toList_handmade_assignedFeatureNames(constructor):
 	ret = toTest.toList()
 	exp = List(data,featureNames)
 
-	assert ret.equals(exp)
-	assert exp.equals(ret)
+	assert ret.isIdentical(exp)
+	assert exp.isIdentical(ret)
 
 
 
@@ -755,8 +755,8 @@ def toMatrix_handmade_defaultFeatureNames(constructor):
 	ret = toTest.toMatrix()
 	exp = Matrix(data)
 
-	assert ret.equals(exp)
-	assert exp.equals(ret)
+	assert ret.isIdentical(exp)
+	assert exp.isIdentical(ret)
 
 	
 def toMatrix_handmade_assignedFeatureNames(constructor):
@@ -768,8 +768,8 @@ def toMatrix_handmade_assignedFeatureNames(constructor):
 	ret = toTest.toMatrix()
 	exp = Matrix(data,featureNames)
 
-	assert ret.equals(exp)
-	assert exp.equals(ret)
+	assert ret.isIdentical(exp)
+	assert exp.isIdentical(ret)
 
 
 
@@ -797,8 +797,8 @@ def writeFileCSV_handmade(constructor):
 	# read it back into a different object, then test equality
 	readObj = constructor(data=tmpFile.name)
 
-	assert readObj.equals(toWrite)
-	assert toWrite.equals(readObj)
+	assert readObj.isIdentical(toWrite)
+	assert toWrite.isIdentical(readObj)
 
 
 def writeFileMTX_handmade(constructor):
@@ -816,16 +816,16 @@ def writeFileMTX_handmade(constructor):
 	# read it back into a different object, then test equality
 	readObj = constructor(data=tmpFile.name)
 
-	assert readObj.equals(toWrite)
-	assert toWrite.equals(readObj)
+	assert readObj.isIdentical(toWrite)
+	assert toWrite.isIdentical(readObj)
 
 
 #####################
-# copyReferences #
+# referenceDataFrom #
 #####################
 
-def copyReferences_exceptionWrongType(constructor):
-	""" Test copyReferences() throws exception when other is not the same type """
+def referenceDataFrom_exceptionWrongType(constructor):
+	""" Test referenceDataFrom() throws exception when other is not the same type """
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 	featureNames = ['one', 'two', 'three']
 	orig = constructor(data1, featureNames)
@@ -834,11 +834,11 @@ def copyReferences_exceptionWrongType(constructor):
 	type2 = Matrix(data1,featureNames)
 
 	# at least one of these two will be the wrong type
-	orig.copyReferences(type1)
-	orig.copyReferences(type2)
+	orig.referenceDataFrom(type1)
+	orig.referenceDataFrom(type2)
 
 
-def copyReferences_sameReference(constructor):
+def referenceDataFrom_sameReference(constructor):
 	""" Test copyReference() successfully records the same reference """
 
 	data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
@@ -848,25 +848,25 @@ def copyReferences_sameReference(constructor):
 	data2 = [[-1,-2,-3,]]
 	other = constructor(data2)
 
-	orig.copyReferences(other)
+	orig.referenceDataFrom(other)
 
 	assert orig.data is other.data
 
 
 #############
-# duplicate #
+# copy #
 #############
 
-def duplicate_withZeros(constructor):
-	""" Test duplicate() produces an equal object and doesn't just copy the references """
+def copy_withZeros(constructor):
+	""" Test copy() produces an equal object and doesn't just copy the references """
 	data1 = [[1,2,3,0],[1,0,3,0],[2,4,6,0],[0,0,0,0]]
 	featureNames = ['one', 'two', 'three', 'four']
 	orig = constructor(data1, featureNames)
 
-	dup = orig.duplicate()
+	dup = orig.copy()
 
-	assert orig.equals(dup)
-	assert dup.equals(orig)
+	assert orig.isIdentical(dup)
+	assert dup.isIdentical(orig)
 
 	assert orig.data is not dup.data
 
@@ -907,8 +907,8 @@ def copyPoints_handmadeContents(constructor):
 
 	ret = orig.copyPoints([1,2])
 
-	assert orig.equals(expOrig)
-	assert ret.equals(expRet)
+	assert orig.isIdentical(expOrig)
+	assert ret.isIdentical(expRet)
 
 def copyPoints_exceptionStartInvalid(constructor):
 	""" Test copyPoints() for ArgumentException when start is not a valid point index """
@@ -940,8 +940,8 @@ def copyPoints_handmadeRange(constructor):
 	expectedRet = constructor([[4,5,6],[7,8,9]])
 	expectedTest = constructor(data)
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 def copyPoints_handmadeRangeWithFeatureNames(constructor):
 	""" Test copyPoints() against handmade output for range copying with featureNames """
@@ -953,8 +953,8 @@ def copyPoints_handmadeRangeWithFeatureNames(constructor):
 	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
 	expectedTest = constructor(data,featureNames)
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 def copyPoints_handmadeRangeDefaults(constructor):
 	""" Test copyPoints uses the correct defaults in the case of range based copying """
@@ -966,8 +966,8 @@ def copyPoints_handmadeRangeDefaults(constructor):
 	expectedRet = constructor([[1,2,3],[4,5,6]],featureNames)
 	expectedTest = constructor(data,featureNames)
 	
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 	toTest = constructor(data,featureNames)
 	ret = toTest.copyPoints(start=1)
@@ -975,8 +975,8 @@ def copyPoints_handmadeRangeDefaults(constructor):
 	expectedTest = constructor(data,featureNames)
 	expectedRet = constructor([[4,5,6],[7,8,9]],featureNames)
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 
 
@@ -1018,8 +1018,8 @@ def copyFeatures_handmadeContents(constructor):
 
 	ret = orig.copyFeatures([0,'two'])
 
-	assert orig.equals(expOrig)
-	assert ret.equals(expRet)
+	assert orig.isIdentical(expOrig)
+	assert ret.isIdentical(expRet)
 
 
 ####
@@ -1076,8 +1076,8 @@ def copyFeatures_handmadeRange(constructor):
 	expectedRet = constructor([[2,3],[5,6],[8,9]])
 	expectedTest = constructor(data)
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 def copyFeatures_handmadeWithFeatureNames(constructor):
 	""" Test copyFeatures() against handmade output for range copying with FeatureNames """
@@ -1089,8 +1089,8 @@ def copyFeatures_handmadeWithFeatureNames(constructor):
 	expectedRet = constructor([[2,3],[5,6],[8,9]],["two","three"])
 	expectedTest = constructor(data, featureNames)
 
-	assert expectedRet.equals(ret)
-	assert expectedTest.equals(toTest)
+	assert expectedRet.isIdentical(ret)
+	assert expectedTest.isIdentical(toTest)
 
 
 ##############
@@ -1128,15 +1128,15 @@ def transformPoint_AddOne(constructor):
 
 
 ################
-# getPointView #
+# pointView #
 ################
 
-def getPointView_isinstance(constructor):
+def pointView_isinstance(constructor):
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	pView = toTest.getPointView(0)
+	pView = toTest.pointView(0)
 
 	assert isinstance(pView, View)
 	assert pView.name() is None
@@ -1148,16 +1148,16 @@ def getPointView_isinstance(constructor):
 
 
 ##################
-# getFeatureView #
+# featureView #
 ##################
 
-def getFeatureView_isinstance(constructor):
-	""" Test getFeatureView() returns an instance of the View in dataHelpers """
+def featureView_isinstance(constructor):
+	""" Test featureView() returns an instance of the View in dataHelpers """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 
-	fView = toTest.getFeatureView('one')
+	fView = toTest.featureView('one')
 
 	assert isinstance(fView, View)
 	assert fView.name() is not None

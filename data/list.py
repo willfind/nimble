@@ -104,7 +104,7 @@ class List(Base):
 		try:
 			sortHelper(testPoint)
 			indices = self.applyToEachPoint(lambda x:x.index())
-			indices.renameFeatureName(0,"#UML_SORTHELPER_INDEX")
+			indices.setFeatureName(0,"#UML_SORTHELPER_INDEX")
 			self.appendFeatures(indices)
 			newFeatureIndex = self.features() - 1 
 			def wrapperMaker(funcToWrap, outer):
@@ -146,7 +146,7 @@ class List(Base):
 		"""
 		scorer = None
 		comparator = None
-		test = self.getFeatureView(0)
+		test = self.featureView(0)
 		try:
 			sortHelper(test)
 			scorer = sortHelper
@@ -163,7 +163,7 @@ class List(Base):
 
 		# make array of views
 		viewArray = []
-		viewIter = self.featureViewIterator()
+		viewIter = self.featureIterator()
 		for v in viewIter:
 			viewArray.append(v)
 
@@ -446,7 +446,7 @@ class List(Base):
 	
 		return List(extractedData, featureNameList)
 
-	def _mapReduceOnPoints_implementation(self, mapper, reducer):
+	def _mapReducePoints_implementation(self, mapper, reducer):
 		mapResults = {}
 		# apply the mapper to each point in the data
 		for i in xrange(self.points()):
@@ -477,10 +477,10 @@ class List(Base):
 	def _points_implementation(self):
 		return len(self.data)
 
-	def _getType_implementation(self):
+	def _getTypeString_implementation(self):
 		return 'List'
 
-	def _equals_implementation(self,other):
+	def _isIdentical_implementation(self,other):
 		if not isinstance(other,List):
 			return False
 		if self.points() != other.points():
@@ -561,13 +561,13 @@ class List(Base):
 				outFile.write(str(value) + '\n')
 		outFile.close()
 
-	def _copyReferences_implementation(self, other):
+	def _referenceDataFrom_implementation(self, other):
 		if not isinstance(other, List):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
 
-	def _duplicate_implementation(self):
+	def _copy_implementation(self):
 		return List(copy.deepcopy(self.data), copy.deepcopy(self.featureNames))
 
 	def _copyPoints_implementation(self, points, start, end):
@@ -607,10 +607,10 @@ class List(Base):
 	def _getitem_implementation(self, x, y):
 		return self.data[x][y]
 
-	def _getPointView_implementation(self, ID):
+	def _pointView_implementation(self, ID):
 		return PointView(self.featureNames, self.data[ID], ID)
 
-	def _getFeatureView_implementation(self, ID):
+	def _featureView_implementation(self, ID):
 		return FeatureView(self.data, ID, self.featureNamesInverse[ID])
 
 ###########

@@ -26,15 +26,15 @@ if __name__ == "__main__":
 	processed.extractFeatures('fnlwgt')
 
 	#convert assorted features from strings to binary category columns
-	processed.featureToBinaryCategoryFeatures('sex')
-	processed.featureToBinaryCategoryFeatures('marital-status')
-	processed.featureToBinaryCategoryFeatures('occupation')
-	processed.featureToBinaryCategoryFeatures('relationship')
-	processed.featureToBinaryCategoryFeatures('race')
-	processed.featureToBinaryCategoryFeatures('native-country')
+	processed.replaceFeatureWithBinaryFeatures('sex')
+	processed.replaceFeatureWithBinaryFeatures('marital-status')
+	processed.replaceFeatureWithBinaryFeatures('occupation')
+	processed.replaceFeatureWithBinaryFeatures('relationship')
+	processed.replaceFeatureWithBinaryFeatures('race')
+	processed.replaceFeatureWithBinaryFeatures('native-country')
 	
 	# convert 'income' column (the classification label) to a single numerical column
-	processed.featureToIntegerCategories('income')
+	processed.transformFeartureToIntegerFeature('income')
 
 	#scrub the rest of the string valued data -- the ones we converted are the non-redundent ones
 	processed.dropStringValuedFeatures()

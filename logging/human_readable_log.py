@@ -33,7 +33,7 @@ class HumanReadableLogger(UmlLogger):
 		self.logMessage("FEATURE REPORT")
 		self.logMessage(baseDataObject.featureReport())
 		self.logMessage("AGGREGATE REPORT")
-		self.logMessage(baseDataObject.report())
+		self.logMessage(baseDataObject.summaryReport())
 
 	def _logLoad_implementation(self, dataFileName, baseDataType=None, name=None):
 		"""

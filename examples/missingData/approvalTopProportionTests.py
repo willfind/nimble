@@ -52,10 +52,10 @@ if __name__ == "__main__":
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
     # for run in runs:
-    dataHash={"trainX": trainX.duplicate(), 
-              "testX":testX.duplicate(), 
-              "trainY":trainY.duplicate(), 
-              "testY":testY.duplicate(), 
+    dataHash={"trainX": trainX.copy(), 
+              "testX":testX.copy(), 
+              "trainY":trainY.copy(), 
+              "testY":testY.copy(), 
               'runAndTest':runAndTest, 
               'fractionTrueNegativeTop90':fractionTrueNegativeTop90,
               'fractionTrueNegativeTop50':fractionTrueNegativeTop50}

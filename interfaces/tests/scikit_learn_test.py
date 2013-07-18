@@ -52,7 +52,7 @@ def testSciKitLearnSparseRegression():
 	data = rand(c)
 	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
 	obj = Sparse(A)
-	testObj = obj.duplicate()
+	testObj = obj.copy()
 	testObj.extractFeatures(cols[0])
 
 	ret = sciKitLearn('SGDRegressor', trainData=obj, testData=testObj, dependentVar=cols[0])

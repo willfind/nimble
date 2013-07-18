@@ -56,10 +56,10 @@ if __name__ == "__main__":
 
 	# for run in runs:
 	run = run.replace('sendToLog=False', 'sendToLog=True')
-	dataHash={"trainX": trainX.duplicate(), 
-		      "testX":testX.duplicate(), 
-		      "trainY":trainY.duplicate(), 
-		      "testY":testY.duplicate(), 
+	dataHash={"trainX": trainX.copy(), 
+		      "testX":testX.copy(), 
+		      "trainY":trainY.copy(), 
+		      "testY":testY.copy(), 
 		      'runAndTest':runAndTest, 
 		      'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
 	# 	print "Run call: "+repr(run)

@@ -85,26 +85,26 @@ def test_addFeatureName_handmade_addDefault():
 	confirmExpectedFeatureNames(toTest,expected)	
 
 #####################
-# featureNameDifference() #
+# _featureNameDifference() #
 #####################
 
 @raises(ArgumentException)
 def test_featureNameDifference_exceptionOtherNone():
-	""" Test featureNameDifference() for ArgumentException when the other object is None """
+	""" Test _featureNameDifference() for ArgumentException when the other object is None """
 	toTest = makeAndDefine(["hello"])
-	toTest.featureNameDifference(None)
+	toTest._featureNameDifference(None)
 
 @raises(ArgumentException)
 def test_featureNameDifference_exceptionWrongType():
-	""" Test featureNameDifference() for ArgumentException when the other object is not the right type """
+	""" Test _featureNameDifference() for ArgumentException when the other object is not the right type """
 	toTest = makeAndDefine(["hello"])
-	toTest.featureNameDifference("wrong")
+	toTest._featureNameDifference("wrong")
 
 def test_featureNameDifference_handmade():
-	""" Test featureNameDifference() against handmade output """
+	""" Test _featureNameDifference() against handmade output """
 	toTest1 = makeAndDefine(["one","two","three"])
 	toTest2 = makeAndDefine(["two","four"])
-	results = toTest1.featureNameDifference(toTest2)
+	results = toTest1._featureNameDifference(toTest2)
 	assert "one" in results
 	assert "two" not in results
 	assert "three" in results
@@ -112,26 +112,26 @@ def test_featureNameDifference_handmade():
 
 
 #######################
-# featureNameIntersection() #
+# _featureNameIntersection() #
 #######################
 
 @raises(ArgumentException)
 def test_featureNameIntersection_exceptionOtherNone():
-	""" Test featureNameIntersection() for ArgumentException when the other object is None """
+	""" Test _featureNameIntersection() for ArgumentException when the other object is None """
 	toTest = makeAndDefine(["hello"])
-	toTest.featureNameIntersection(None)
+	toTest._featureNameIntersection(None)
 
 @raises(ArgumentException)
 def test_featureNameIntersection_exceptionWrongType():
-	""" Test featureNameIntersection() for ArgumentException when the other object is not the right type """
+	""" Test _featureNameIntersection() for ArgumentException when the other object is not the right type """
 	toTest = makeAndDefine(["hello"])
-	toTest.featureNameIntersection("wrong")
+	toTest._featureNameIntersection("wrong")
 
 def test_featureNameIntersection_handmade():
-	""" Test featureNameIntersection() against handmade output """
+	""" Test _featureNameIntersection() against handmade output """
 	toTest1 = makeAndDefine(["one","two","three"])
 	toTest2 = makeAndDefine(["two","four"])
-	results = toTest1.featureNameIntersection(toTest2)
+	results = toTest1._featureNameIntersection(toTest2)
 	assert "one" not in results
 	assert "two" in results
 	assert "three" not in results
@@ -139,122 +139,122 @@ def test_featureNameIntersection_handmade():
 
 
 ##############################
-# featureNameSymmetricDifference() #
+# _featureNameSymmetricDifference() #
 ##############################
 
 @raises(ArgumentException)
 def test_featureNameSymmetricDifference_exceptionOtherNone():
-	""" Test featureNameSymmetricDifference() for ArgumentException when the other object is None """
+	""" Test _featureNameSymmetricDifference() for ArgumentException when the other object is None """
 	toTest = makeAndDefine(["hello"])
-	toTest.featureNameSymmetricDifference(None)
+	toTest._featureNameSymmetricDifference(None)
 
 @raises(ArgumentException)
 def test_featureNameSymmetricDifference_exceptionWrongType():
-	""" Test featureNameSymmetricDifference() for ArgumentException when the other object is not the right type """
+	""" Test _featureNameSymmetricDifference() for ArgumentException when the other object is not the right type """
 	toTest = makeAndDefine(["hello"])
-	toTest.featureNameSymmetricDifference("wrong")
+	toTest._featureNameSymmetricDifference("wrong")
 
 def test_featureNameSymmetricDifference_handmade():
-	""" Test featureNameSymmetricDifference() against handmade output """
+	""" Test _featureNameSymmetricDifference() against handmade output """
 	toTest1 = makeAndDefine(["one","two","three"])
 	toTest2 = makeAndDefine(["two","four"])
-	results = toTest1.featureNameSymmetricDifference(toTest2)
+	results = toTest1._featureNameSymmetricDifference(toTest2)
 	assert "one" in results
 	assert "two" not in results
 	assert "three" in results
 	assert "four" in results
 
 ################
-# featureNameUnion() #
+# _featureNameUnion() #
 ################
 
 @raises(ArgumentException)
 def test_featureNameUnion_exceptionOtherNone():
-	""" Test featureNameUnion() for ArgumentException when the other object is None """
+	""" Test _featureNameUnion() for ArgumentException when the other object is None """
 	toTest = makeAndDefine(["hello"])
-	toTest.featureNameUnion(None)
+	toTest._featureNameUnion(None)
 
 @raises(ArgumentException)
 def test_featureNameUnion_exceptionWrongType():
-	""" Test featureNameUnion() for ArgumentException when the other object is not the right type """
+	""" Test _featureNameUnion() for ArgumentException when the other object is not the right type """
 	toTest = makeAndDefine(["hello"])
-	toTest.featureNameUnion("wrong")
+	toTest._featureNameUnion("wrong")
 
 def test_featureNameUnion_handmade():
-	""" Test featureNameUnion() against handmade output """
+	""" Test _featureNameUnion() against handmade output """
 	toTest1 = makeAndDefine(["one","two","three"])
 	toTest2 = makeAndDefine(["two","four"])
-	results = toTest1.featureNameUnion(toTest2)
+	results = toTest1._featureNameUnion(toTest2)
 	assert "one" in results
 	assert "two" in results
 	assert "three" in results
 	assert "four" in results
 
 #################
-# renameFeatureName() #
+# setFeatureName() #
 #################
 
 @raises(ArgumentException)
-def test_renameFeatureName_exceptionPrevWrongType():
-	""" Test renameFeatureName() for ArgumentException when given the wrong type for prev"""
+def test_setFeatureName_exceptionPrevWrongType():
+	""" Test setFeatureName() for ArgumentException when given the wrong type for prev"""
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest = makeAndDefine(origFeatureNames)
-	toTest.renameFeatureName(oldIdentifier=0.3,newFeatureName="New!")
+	toTest.setFeatureName(oldIdentifier=0.3,newFeatureName="New!")
 
 @raises(ArgumentException)
-def test_renameFeatureName_exceptionPrevInvalidIndex():
-	""" Test renameFeatureName() for ArgumentException when given an invalid prev index"""
+def test_setFeatureName_exceptionPrevInvalidIndex():
+	""" Test setFeatureName() for ArgumentException when given an invalid prev index"""
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest = makeAndDefine(origFeatureNames)
-	toTest.renameFeatureName(oldIdentifier=12,newFeatureName="New!")
+	toTest.setFeatureName(oldIdentifier=12,newFeatureName="New!")
 
 @raises(ArgumentException)
-def test_renameFeatureName_exceptionPrevNotFound():
-	""" Test renameFeatureName() for ArgumentException when the prev featureName is not found"""
+def test_setFeatureName_exceptionPrevNotFound():
+	""" Test setFeatureName() for ArgumentException when the prev featureName is not found"""
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest =makeAndDefine(origFeatureNames)
-	toTest.renameFeatureName(oldIdentifier="Previous!",newFeatureName="New!")
+	toTest.setFeatureName(oldIdentifier="Previous!",newFeatureName="New!")
 
 @raises(ArgumentException)
-def test_renameFeatureName_exceptionNewInvalidType():
-	""" Test renameFeatureName() for ArgumentException when the new featureName is not a string"""
+def test_setFeatureName_exceptionNewInvalidType():
+	""" Test setFeatureName() for ArgumentException when the new featureName is not a string"""
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest = makeAndDefine(origFeatureNames)
-	toTest.renameFeatureName(oldIdentifier="three",newFeatureName=4)
+	toTest.setFeatureName(oldIdentifier="three",newFeatureName=4)
 
 @raises(ArgumentException)
-def test_renameFeatureName_exceptionNonUnique():
-	""" Test renameFeatureName() for ArgumentException when a duplicate featureName is given"""
+def test_setFeatureName_exceptionNonUnique():
+	""" Test setFeatureName() for ArgumentException when a duplicate featureName is given"""
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest = makeAndDefine(origFeatureNames)
-	toTest.renameFeatureName(oldIdentifier="three",newFeatureName="two")
+	toTest.setFeatureName(oldIdentifier="three",newFeatureName="two")
 
 @raises(ArgumentException)
-def test_renameFeatureName_exceptionManualAddDefault():
-	""" Test renameFeatureName() for ArgumentException when given a default featureName """
+def test_setFeatureName_exceptionManualAddDefault():
+	""" Test setFeatureName() for ArgumentException when given a default featureName """
 	toTest = makeAndDefine(["hello"])
-	toTest.renameFeatureName("hello",DEFAULT_PREFIX + "2")
+	toTest.setFeatureName("hello",DEFAULT_PREFIX + "2")
 
 @raises(ImproperActionException)
-def test_renameFeatureName_exceptionNoFeatures():
+def test_setFeatureName_exceptionNoFeatures():
 	toTest = makeAndDefine([])
-	toTest.renameFeatureName("hello","2")
+	toTest.setFeatureName("hello","2")
 
-def test_renameFeatureName_handmade_viaIndex():
-	""" Test renameFeatureName() against handmade input when specifying the featureName by index """
+def test_setFeatureName_handmade_viaIndex():
+	""" Test setFeatureName() against handmade input when specifying the featureName by index """
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest = makeAndDefine(origFeatureNames)
-	toTest.renameFeatureName(0,"ZERO")
-	toTest.renameFeatureName(3,"3")
+	toTest.setFeatureName(0,"ZERO")
+	toTest.setFeatureName(3,"3")
 	expectedFeatureNames = ["ZERO","one","two","3"]
 	confirmExpectedFeatureNames(toTest,expectedFeatureNames)
 
-def test_renameFeatureName_handmade_viaFeatureName():
-	""" Test renameFeatureName() against handmade input when specifying the featureName by name """
+def test_setFeatureName_handmade_viaFeatureName():
+	""" Test setFeatureName() against handmade input when specifying the featureName by name """
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest = makeAndDefine(origFeatureNames)
-	toTest.renameFeatureName("zero","ZERO")
-	toTest.renameFeatureName("three","3")
+	toTest.setFeatureName("zero","ZERO")
+	toTest.setFeatureName("three","3")
 	expectedFeatureNames = ["ZERO","one","two","3"]
 	confirmExpectedFeatureNames(toTest,expectedFeatureNames)
 
@@ -419,11 +419,11 @@ def test_equalFeatureNames_DefaultInequality():
 	""" Test _equalFeatureNames() for inequality of some default named, different sized objects """
 	toTest1 = makeAndDefine(['1','2'])
 	toTest2 = makeAndDefine(['1','2','3'])
-	toTest1.renameFeatureName(0,None)
-	toTest1.renameFeatureName(1,None)
-	toTest2.renameFeatureName(0,None)
-	toTest2.renameFeatureName(1,None)
-	toTest2.renameFeatureName(2,None)
+	toTest1.setFeatureName(0,None)
+	toTest1.setFeatureName(1,None)
+	toTest2.setFeatureName(0,None)
+	toTest2.setFeatureName(1,None)
+	toTest2.setFeatureName(2,None)
 	assert not toTest1._equalFeatureNames(toTest2)
 	assert not toTest2._equalFeatureNames(toTest1)
 
@@ -431,10 +431,10 @@ def test_equalFeatureNames_ignoresDefaults():
 	""" Test _equalFeatureNames() for equality of default named objects """
 	toTest1 = makeAndDefine(['1','2'])
 	toTest2 = makeAndDefine(['1','2'])
-	toTest1.renameFeatureName(0,None)
-	toTest1.renameFeatureName(1,None)
-	toTest2.renameFeatureName(0,None)
-	toTest2.renameFeatureName(1,None)
+	toTest1.setFeatureName(0,None)
+	toTest1.setFeatureName(1,None)
+	toTest2.setFeatureName(0,None)
+	toTest2.setFeatureName(1,None)
 	assert toTest1._equalFeatureNames(toTest2)
 	assert toTest2._equalFeatureNames(toTest1)
 
@@ -442,12 +442,12 @@ def test_equalFeatureNames_mixedDefaultsAndActual():
 	""" Test _equalFeatureNames() for equality of default named objects mixed with actual featureNames """
 	toTest1 = makeAndDefine(['1','2'])
 	toTest2 = makeAndDefine(['1','2'])
-	toTest1.renameFeatureName(0,None)
-	toTest2.renameFeatureName(1,None)
+	toTest1.setFeatureName(0,None)
+	toTest2.setFeatureName(1,None)
 	assert not toTest1._equalFeatureNames(toTest2)
 	assert not toTest2._equalFeatureNames(toTest1)
-	toTest1.renameFeatureName(0,'1')
-	toTest1.renameFeatureName(1,None)
+	toTest1.setFeatureName(0,'1')
+	toTest1.setFeatureName(1,None)
 	print toTest1.featureNames
 	print toTest2.featureNames
 	assert toTest1._equalFeatureNames(toTest2)

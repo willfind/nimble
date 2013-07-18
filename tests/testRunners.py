@@ -44,8 +44,8 @@ def testRunOneVsAll():
     metricFuncs.append(fractionIncorrect)
 
     results1 = runOneVsAll('sciKitLearn.LogisticRegression', trainObj1, testObj1, trainDependentVar=3,  arguments={}, scoreMode='label')
-    results2 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.duplicate(), testObj1.duplicate(), trainDependentVar=3,  arguments={}, scoreMode='bestScore')
-    results3 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.duplicate(), testObj1.duplicate(), trainDependentVar=3,  arguments={}, scoreMode='allScores')
+    results2 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='bestScore')
+    results3 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='allScores')
 
     print "Results 1 output: " + str(results1.data)
     print "Results 2 output: " + str(results2.data)
@@ -67,9 +67,9 @@ def testRunOneVsOne():
     metricFuncs = []
     metricFuncs.append(fractionIncorrect)
 
-    results1 = runOneVsOne('sciKitLearn.SVC', trainObj1.duplicate(), testObj1.duplicate(), trainDependentVar=3,  arguments={}, scoreMode='label')
-    results2 = runOneVsOne('sciKitLearn.SVC', trainObj1.duplicate(), testObj1.duplicate(), trainDependentVar=3,  arguments={}, scoreMode='bestScore')
-    results3 = runOneVsOne('sciKitLearn.SVC', trainObj1.duplicate(), testObj1.duplicate(), trainDependentVar=3,  arguments={}, scoreMode='allScores')
+    results1 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='label')
+    results2 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='bestScore')
+    results3 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='allScores')
 
     assert results1.data[0][0] == 1.0
     assert results1.data[1][0] == 2.0

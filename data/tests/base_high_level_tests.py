@@ -52,32 +52,32 @@ def test_dropStringValuedFeatures_emptyTest():
 
 
 #################################
-# featureToBinaryCategoryFeatures #
+# replaceFeatureWithBinaryFeatures #
 #################################
 
 @raises(ImproperActionException)
-def test_featureToBinaryCategoryFeatures_emptyException():
-	""" Test featureToBinaryCategoryFeatures() with an empty object """
-	callAll(featureToBinaryCategoryFeatures_emptyException)
+def test_replaceFeatureWithBinaryFeatures_emptyException():
+	""" Test replaceFeatureWithBinaryFeatures() with an empty object """
+	callAll(replaceFeatureWithBinaryFeatures_emptyException)
 
-def test_featureToBinaryCategoryFeatures_handmade():
-	""" Test featureToBinaryCategoryFeaturess() against handmade output """
-	callAll(featureToBinaryCategoryFeatures_handmade)
+def test_replaceFeatureWithBinaryFeatures_handmade():
+	""" Test replaceFeatureWithBinaryFeaturess() against handmade output """
+	callAll(replaceFeatureWithBinaryFeatures_handmade)
 	
 
 
 #############################
-# featureToIntegerCategories #
+# transformFeartureToIntegerFeature #
 #############################
 
 @raises(ImproperActionException)
-def test_featureToIntegerCategories_emptyException():
-	""" Test featureToIntegerCategories() with an empty object """
-	callAll(featureToIntegerCategories_emptyException)
+def test_transformFeartureToIntegerFeature_emptyException():
+	""" Test transformFeartureToIntegerFeature() with an empty object """
+	callAll(transformFeartureToIntegerFeature_emptyException)
 
-def test_featureToIntegerCategories_handmade():
-	""" Test featureToIntegerCategories() against handmade output """
-	callAll(featureToIntegerCategories_handmade)
+def test_transformFeartureToIntegerFeature_handmade():
+	""" Test transformFeartureToIntegerFeature() against handmade output """
+	callAll(transformFeartureToIntegerFeature_handmade)
 
 
 ###############################
@@ -258,57 +258,57 @@ def test_applyToEachFeature_nonZeroItAndLen():
 
 
 #####################
-# mapReduceOnPoints() #
+# mapReducePoints() #
 #####################
 
 @raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionNoneMap():
-	""" Test mapReduceOnPoints() for ArgumentException when mapper is None """
-	callAll(mapReduceOnPoints_argumentExceptionNoneMap)
+def test_mapReducePoints_argumentExceptionNoneMap():
+	""" Test mapReducePoints() for ArgumentException when mapper is None """
+	callAll(mapReducePoints_argumentExceptionNoneMap)
 
 @raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionNoneReduce():
-	""" Test mapReduceOnPoints() for ArgumentException when reducer is None """
-	callAll(mapReduceOnPoints_argumentExceptionNoneReduce)
+def test_mapReducePoints_argumentExceptionNoneReduce():
+	""" Test mapReducePoints() for ArgumentException when reducer is None """
+	callAll(mapReducePoints_argumentExceptionNoneReduce)
 
 @raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionUncallableMap():
-	""" Test mapReduceOnPoints() for ArgumentException when mapper is not callable """
-	callAll(mapReduceOnPoints_argumentExceptionUncallableMap)
+def test_mapReducePoints_argumentExceptionUncallableMap():
+	""" Test mapReducePoints() for ArgumentException when mapper is not callable """
+	callAll(mapReducePoints_argumentExceptionUncallableMap)
 
 @raises(ArgumentException)
-def test_mapReduceOnPoints_argumentExceptionUncallableReduce():
-	""" Test mapReduceOnPoints() for ArgumentException when reducer is not callable """
-	callAll(mapReduceOnPoints_argumentExceptionUncallableReduce)
+def test_mapReducePoints_argumentExceptionUncallableReduce():
+	""" Test mapReducePoints() for ArgumentException when reducer is not callable """
+	callAll(mapReducePoints_argumentExceptionUncallableReduce)
 
-def test_mapReduceOnPoints_handmade():
-	""" Test mapReduceOnPoints() against handmade output """
-	callAll(mapReduceOnPoints_handmade)
+def test_mapReducePoints_handmade():
+	""" Test mapReducePoints() against handmade output """
+	callAll(mapReducePoints_handmade)
 
 
-def test_mapReduceOnPoints_handmadeNoneReturningReducer():
-	""" Test mapReduceOnPoints() against handmade output with a None returning Reducer """
-	callAll(mapReduceOnPoints_handmadeNoneReturningReducer)
+def test_mapReducePoints_handmadeNoneReturningReducer():
+	""" Test mapReducePoints() against handmade output with a None returning Reducer """
+	callAll(mapReducePoints_handmadeNoneReturningReducer)
 
 
 
 #######################
-# pointViewIterator() #
+# pointIterator() #
 #######################
 
 
-def test_pointViewIterator_exactValueViaFor():
-	""" Test pointViewIterator() gives views that contain exactly the correct data """
-	callAll(pointViewIterator_exactValueViaFor)
+def test_pointIterator_exactValueViaFor():
+	""" Test pointIterator() gives views that contain exactly the correct data """
+	callAll(pointIterator_exactValueViaFor)
 
 #########################
-# featureViewIterator() #
+# featureIterator() #
 #########################
 
 
-def test_featureViewIterator_exactValueViaFor():
-	""" Test featureViewIterator() gives views that contain exactly the correct data """
-	callAll(featureViewIterator_exactValueViaFor)
+def test_featureIterator_exactValueViaFor():
+	""" Test featureIterator() gives views that contain exactly the correct data """
+	callAll(featureIterator_exactValueViaFor)
 
 
 ####################
@@ -346,13 +346,13 @@ def test_computeList_passthroughExclude():
 
 
 ########################
-# isApproxEquivalent() #
+# isApproximatelyEqual() #
 ########################
 
 
-def test_isApproxEquivalent_randomTest():
-	""" Test isApproxEquivalent() using randomly generated data """
-	callAll(isApproxEquivalent_randomTest)
+def test_isApproximatelyEqual_randomTest():
+	""" Test isApproximatelyEqual() using randomly generated data """
+	callAll(isApproximatelyEqual_randomTest)
 
 
 

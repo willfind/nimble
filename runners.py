@@ -112,8 +112,8 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
 	#Need to make copies of all data, in case it will be modified before a classifier is trained
-	trainX = trainX.duplicate()
-	testX = testX.duplicate()
+	trainX = trainX.copy()
+	testX = testX.copy()
 	
 	#if testDependentVar is empty, attempt to use trainDependentVar
 	if testDependentVar is None and isinstance(trainDependentVar, (str, unicode, int)):
@@ -246,8 +246,8 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	trainX = trainX.duplicate()
-	testX = testX.duplicate()
+	trainX = trainX.copy()
+	testX = testX.copy()
 
 	if isinstance(trainDependentVar, Base):
 		trainX.appendFeatures(trainDependentVar)
@@ -292,7 +292,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		if rawPredictions is None:
 			rawPredictions = partialResults.toList()
 		else:
-			partialResults.renameFeatureName(0, 'predictions-'+str(predictionFeatureID))
+			partialResults.setFeatureName(0, 'predictions-'+str(predictionFeatureID))
 			rawPredictions.appendFeatures(partialResults.toList())
 		pairData.appendFeatures(pairTrueLabels)
 		trainX.appendPoints(pairData)
@@ -332,7 +332,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 				finalRow[finalIndex] = score
 			resultsContainer.append(finalRow)
 
-		return UML.createData(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
+		return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsOne: ' + str(scoreMode))
 
@@ -373,8 +373,8 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	trainX = trainX.duplicate()
-	testX = testX.duplicate()
+	trainX = trainX.copy()
+	testX = testX.copy()
 
 
 	# If testDependentVar is missing, assume it is because it's the same as trainDependentVar
@@ -419,10 +419,10 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		if rawPredictions is None:
 			rawPredictions = oneLabelResults
 			#as it's added to results object, rename each column with its corresponding class label
-			rawPredictions.renameFeatureName(0, str(label))
+			rawPredictions.setFeatureName(0, str(label))
 		else:
 			#as it's added to results object, rename each column with its corresponding class label
-			oneLabelResults.renameFeatureName(0, str(label))
+			oneLabelResults.setFeatureName(0, str(label))
 			rawPredictions.appendFeatures(oneLabelResults)
 
 	if scoreMode.lower() == 'label'.lower():
@@ -431,7 +431,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		winningLabels = []
 		for winningIndex in winningPredictionIndices:
 			winningLabels.append([indexToLabelMap[winningIndex]])
-		return UML.createData(rawPredictions.getType, winningLabels, featureNames='winningLabel')
+		return UML.createData(rawPredictions.getTypeString(), winningLabels, featureNames='winningLabel')
 
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
@@ -467,7 +467,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 				finalRow[finalIndex] = score
 			resultsContainer.append(finalRow)
 		#wrap data in Base container
-		return UML.createData(rawPredictions.getType(), resultsContainer, featureNames=columnHeaders)
+		return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
 

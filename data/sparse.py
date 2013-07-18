@@ -37,7 +37,7 @@ class Sparse(Base):
 		return points
 
 
-	def pointViewIterator(self):
+	def pointIterator(self):
 		if self.features() == 0:
 			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
 		self._sortInternal('point')
@@ -56,7 +56,7 @@ class Sparse(Base):
 				if self._outer._sorted != "point" or not self._stillSorted:
 					print "actually called"
 					self._stillSorted = False
-					value = self._outer.getPointView(self._nextID)	
+					value = self._outer.pointView(self._nextID)	
 				else:
 					end = self._sortedPosition
 					#this ensures end is always in range, and always inclusive
@@ -70,7 +70,7 @@ class Sparse(Base):
 		return pointIt(self)
 
 
-	def featureViewIterator(self):
+	def featureIterator(self):
 		if self.points() == 0:
 			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
 
@@ -91,7 +91,7 @@ class Sparse(Base):
 					print "actually called"
 
 					self._stillSorted = False
-					value = self._outer.getFeatureView(self._nextID)	
+					value = self._outer.featureView(self._nextID)	
 				else:
 					end = self._sortedPosition
 					#this ensures end is always in range, and always inclusive
@@ -156,13 +156,13 @@ class Sparse(Base):
 		scorer = None
 		comparator = None
 		if axisType == 'point':
-			viewMaker = self.getPointView
-			getViewIter = self.pointViewIterator
+			viewMaker = self.pointView
+			getViewIter = self.pointIterator
 			targetAxis = self.data.row
 		else:
-			viewMaker = self.getFeatureView
+			viewMaker = self.featureView
 			targetAxis = self.data.col
-			getViewIter = self.featureViewIterator
+			getViewIter = self.featureIterator
 
 		test = viewMaker(0)
 		try:
@@ -540,7 +540,7 @@ class Sparse(Base):
 		self.data = self.data.transpose()
 
 
-	def _mapReduceOnPoints_implementation(self, mapper, reducer):
+	def _mapReducePoints_implementation(self, mapper, reducer):
 		self._sortInternal("point")
 		mapperResults = {}
 		maxVal = self.features()
@@ -616,7 +616,7 @@ class Sparse(Base):
 		return Sparse(numpy.matrix(ret))
 
 
-	def _equals_implementation(self,other):
+	def _isIdentical_implementation(self,other):
 		if not isinstance(other, Sparse):
 			return False
 		if scipy.shape(self.data) != scipy.shape(other.data):
@@ -631,7 +631,7 @@ class Sparse(Base):
 	def _points_implementation(self):
 		return self.data.shape[0]
 
-	def _getType_implementation(self):
+	def _getTypeString_implementation(self):
 		return 'Sparse'
 
 	def _toList_implementation(self):
@@ -702,14 +702,14 @@ class Sparse(Base):
 			mmwrite(target=outPath, a=self.data)
 
 
-	def _copyReferences_implementation(self, other):
+	def _referenceDataFrom_implementation(self, other):
 		if not isinstance(other, Sparse):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
 		self._sorted = None
 
-	def _duplicate_implementation(self):
+	def _copy_implementation(self):
 		return Sparse(self.data.copy(), copy.deepcopy(self.featureNames))
 
 
@@ -777,7 +777,7 @@ class Sparse(Base):
 
 		return 0
 
-	def _getPointView_implementation(self, ID):
+	def _pointView_implementation(self, ID):
 		nzMap = {}
 		#check each value in the matrix
 		for i in xrange(len(self.data.data)):
@@ -787,7 +787,7 @@ class Sparse(Base):
 
 		return VectorView(self,None,None,nzMap,self.features(),ID,'point')
 
-	def _getFeatureView_implementation(self, ID):
+	def _featureView_implementation(self, ID):
 		nzMap = {}
 		#check each value in the matrix
 		for i in xrange(len(self.data.data)):

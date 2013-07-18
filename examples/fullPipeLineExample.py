@@ -19,11 +19,11 @@ if __name__ == "__main__":
 	data2 = [[1,0,0,1],[0,1,0,2],[0,0,1,3]]
 	testObj = createData('Matrix', data2, variables)
 
-	trainObj2 = trainObj.duplicate()
-	testObj2 = testObj.duplicate()
+	trainObj2 = trainObj.copy()
+	testObj2 = testObj.copy()
 
-	trainObj3 = trainObj.duplicate()
-	testObj3 = testObj.duplicate()
+	trainObj3 = trainObj.copy()
+	testObj3 = testObj.copy()
 
 	metricFuncs = []
 	metricFuncs.append(fractionIncorrect)

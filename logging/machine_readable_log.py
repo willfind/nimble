@@ -75,9 +75,9 @@ class MachineReadableLogger(UmlLogger):
 			firstInfo = True
 
 		if firstInfoAppended:
-			logLine += "," + "type:" + str(baseDataObject.getType())
+			logLine += "," + "type:" + str(baseDataObject.getTypeString())
 		else:
-			logLine += "type:" + str(baseDataObject.getType())
+			logLine += "type:" + str(baseDataObject.getTypeString())
 
 		if firstInfoAppended:
 			logLine += "," + "dimensions:(" + str(baseDataObject.points()) + ", " + str(baseDataObject.features()) + ")"

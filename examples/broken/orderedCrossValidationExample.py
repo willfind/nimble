@@ -26,7 +26,7 @@ if __name__ == "__main__":
 		tokens = point[0].split("-")
 		return datetime.date(int(tokens[0]),int(tokens[1]),int(tokens[2]))
 	dateObjects = dateStrings.applyToEachPoint(makeDate)
-	dateObjects.renameFeatureName(0, "Date")
+	dateObjects.setFeatureName(0, "Date")
 	appleStock.appendFeatures(dateObjects)
 	appleStock.sortPoints("Date")
 	dateNum = appleStock.featureNames["Date"]
@@ -34,13 +34,13 @@ if __name__ == "__main__":
 	def makeDifference(point):
 		return (point[dateNum] - start).days
 	daysSinceStart = appleStock.applyToEachPoint(makeDifference)
-	daysSinceStart.renameFeatureName(0, "Time")
+	daysSinceStart.setFeatureName(0, "Time")
 	appleStock.extractFeatures("Date")
 	appleStock.appendFeatures(daysSinceStart)
 
 	# add prediction column
 	adjCloseNextDay = appleStock.copyFeatures("Adj Close")
-	adjCloseNextDay.renameFeatureName(0, "Adj Close Next Day")
+	adjCloseNextDay.setFeatureName(0, "Adj Close Next Day")
 	adjCloseNextDay.extractPoints(0)
 	appleStock.extractPoints(appleStock.points()-1)
 	appleStock.appendFeatures(adjCloseNextDay)
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 	def ratioChange(point):
 		return (float(point[adjCloseNDNum]) / point[adjCloseNum]) - 1
 	predictionLabels = appleStock.applyToEachPoint(ratioChange)
-	predictionLabels.renameFeatureName(0, "Predict")
+	predictionLabels.setFeatureName(0, "Predict")
 	appleStock.extractFeatures(["Adj Close Next Day"])
 
 	appleStock = appleStock.toMatrix()

@@ -34,7 +34,7 @@ if __name__ == "__main__":
 	print "Raw results 1: " + str(ret.data)
 	print "Raw results 2: " + str(ret2.data)
 
-	ret.renameFeatureName(0, 'result')
+	ret.setFeatureName(0, 'result')
 
 	Y = sparseY.toMatrix()
 

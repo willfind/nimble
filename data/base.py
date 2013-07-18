@@ -52,56 +52,7 @@ class Base(object):
 	# Low Level Operations #
 	########################
 
-	def featureNameDifference(self, other):
-		"""
-		Returns a set containing those featureNames in this object that are not also in the input object.
-
-		"""
-		if other is None:
-			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, Base):
-			raise ArgumentException("Must provide another representation type to determine featureName difference")
-		
-		return self.featureNames.viewkeys() - other.featureNames.viewkeys() 
-
-	def featureNameIntersection(self, other):
-		"""
-		Returns a set containing only those featureNames that are shared by this object and the input object.
-
-		"""
-		if other is None:
-			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, Base):
-			raise ArgumentException("Must provide another representation type to determine featureName intersection")
-		
-		return self.featureNames.viewkeys() & other.featureNames.viewkeys() 
-
-	def featureNameSymmetricDifference(self, other):
-		"""
-		Returns a set containing only those featureNames not shared between this object and the input object.
-
-		"""
-		if other is None:
-			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, Base):
-			raise ArgumentException("Must provide another representation type to determine featureName difference")
-		
-		return self.featureNames.viewkeys() ^ other.featureNames.viewkeys() 
-
-	def featureNameUnion(self,other):
-		"""
-		Returns a set containing all featureNames in either this object or the input object.
-
-		"""
-		if other is None:
-			raise ArgumentException("The other object cannot be None")
-		if not isinstance(other, Base):
-			raise ArgumentException("Must provide another representation type to determine featureName union")
-		
-		return self.featureNames.viewkeys() | other.featureNames.viewkeys() 
-
-
-	def renameFeatureName(self, oldIdentifier, newFeatureName):
+	def setFeatureName(self, oldIdentifier, newFeatureName):
 		"""
 		Changes the featureName specified by previous to the supplied input name.
 		
@@ -113,7 +64,7 @@ class Base(object):
 		"""
 		if len(self.featureNames) == 0:
 			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
-		self._renameFeatureName_implementation(oldIdentifier, newFeatureName, False)
+		self._setFeatureName_implementation(oldIdentifier, newFeatureName, False)
 
 	def renameMultipleFeatureNames(self, assignments=None):
 		"""
@@ -130,7 +81,7 @@ class Base(object):
 			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
 		self._renameMultipleFeatureNames_implementation(assignments,False)
 
-	def setName(self, name):
+	def nameData(self, name):
 		"""
 		Copy over the name attribute of this object with the input name
 
@@ -161,7 +112,7 @@ class Base(object):
 		self.extractFeatures(hasStrings)
 
 
-	def featureToBinaryCategoryFeatures(self, featureToConvert):
+	def replaceFeatureWithBinaryFeatures(self, featureToConvert):
 		"""
 		Modify this object so that the choosen feature is removed, and binary valued
 		features are added, one for each possible value seen in the original feature.
@@ -180,8 +131,8 @@ class Base(object):
 		def simpleReducer(identifier, valuesList):
 			return (identifier,0)
 
-		values = toConvert.mapReduceOnPoints(getValue, simpleReducer)
-		values.renameFeatureName(0,'values')
+		values = toConvert.mapReducePoints(getValue, simpleReducer)
+		values.setFeatureName(0,'values')
 		values = values.extractFeatures([0])
 
 		# Convert to List, so we can have easy access
@@ -200,7 +151,7 @@ class Base(object):
 		for point in values.data:
 			value = point[0]
 			ret = toConvert.applyToEachPoint(makeFunc(value))
-			ret.renameFeatureName(0, varName + "=" + str(value).strip())
+			ret.setFeatureName(0, varName + "=" + str(value).strip())
 			toConvert.appendFeatures(ret)
 
 		# remove the original feature, and combine with self
@@ -208,7 +159,7 @@ class Base(object):
 		self.appendFeatures(toConvert)
 
 
-	def featureToIntegerCategories(self, featureToConvert):
+	def transformFeartureToIntegerFeature(self, featureToConvert):
 		"""
 		Modify this object so that the chosen feature in removed, and a new integer
 		valued feature is added with values 0 to n-1, one for each of n values present
@@ -229,8 +180,8 @@ class Base(object):
 		def simpleReducer(identifier, valuesList):
 			return (identifier,0)
 
-		values = toConvert.mapReduceOnPoints(getValue, simpleReducer)
-		values.renameFeatureName(0,'values')
+		values = toConvert.mapReducePoints(getValue, simpleReducer)
+		values.setFeatureName(0,'values')
 		values = values.extractFeatures([0])
 
 		# Convert to List, so we can have easy access
@@ -248,7 +199,7 @@ class Base(object):
 			return mapping[point[0]]
 
 		converted = toConvert.applyToEachPoint(lookup)
-		converted.renameFeatureName(0,toConvert.featureNamesInverse[0])		
+		converted.setFeatureName(0,toConvert.featureNamesInverse[0])		
 
 		self.appendFeatures(converted)
 
@@ -350,10 +301,10 @@ class Base(object):
 		if function is None:
 			raise ArgumentException("function must not be None")
 		retData = []
-		for point in self.pointViewIterator():
+		for point in self.pointIterator():
 			currOut = function(point)
 			retData.append([currOut])
-		return UML.createData(self.getType(), retData)
+		return UML.createData(self.getTypeString(), retData)
 
 	def applyToEachFeature(self,function):
 		"""
@@ -369,13 +320,13 @@ class Base(object):
 		if function is None:
 			raise ArgumentException("function must not be None")
 		retData = [[]]
-		for feature in self.featureViewIterator():
+		for feature in self.featureIterator():
 			currOut = function(feature)
 			retData[0].append(currOut)
-		return UML.createData(self.getType(), retData)
+		return UML.createData(self.getTypeString(), retData)
 
 
-	def mapReduceOnPoints(self, mapper, reducer):
+	def mapReducePoints(self, mapper, reducer):
 		if self.features() == 0:
 			raise ImproperActionException("We do not allow operations over points if there are 0 features")
 
@@ -388,7 +339,7 @@ class Base(object):
 
 		mapResults = {}
 		# apply the mapper to each point in the data
-		for point in self.pointViewIterator():
+		for point in self.pointIterator():
 			currResults = mapper(point)
 			# the mapper will return a list of key value pairs
 			for (k,v) in currResults:
@@ -407,9 +358,9 @@ class Base(object):
 			if redRet is not None:
 				(redKey,redValue) = redRet
 				ret.append([redKey,redValue])
-		return UML.createData(self.getType(), ret)
+		return UML.createData(self.getTypeString(), ret)
 
-	def pointViewIterator(self):
+	def pointIterator(self):
 		if self.features() == 0:
 			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
 
@@ -421,13 +372,13 @@ class Base(object):
 				return self
 			def next(self):
 				while (self._position < self._outer.points()):
-					value = self._outer.getPointView(self._position)
+					value = self._outer.pointView(self._position)
 					self._position += 1
 					return value
 				raise StopIteration
 		return pointIt(self)
 
-	def featureViewIterator(self):
+	def featureIterator(self):
 		if self.points() == 0:
 			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
 
@@ -439,7 +390,7 @@ class Base(object):
 				return self
 			def next(self):
 				while (self._position < self._outer.features()):
-					value = self._outer.getFeatureView(self._position)
+					value = self._outer.featureView(self._position)
 					self._position += 1
 					return value
 				raise StopIteration
@@ -458,7 +409,7 @@ class Base(object):
 		if not isinstance(point, int):
 			raise ArgumentException("point must be the integer index of the point to modify")
 
-		currView = self.getPointView(point)
+		currView = self.pointView(point)
 
 		for x in xrange(self.features()):
 			currValue = currView[x]
@@ -478,7 +429,7 @@ class Base(object):
 			raise ArgumentException("feature and function must not be None")
 		index = self._getIndex(feature)
 
-		currView = self.getFeatureView(index)
+		currView = self.featureView(index)
 
 		for x in xrange(self.points()):
 			currValue = currView[x]
@@ -500,7 +451,7 @@ class Base(object):
 			oneArg = True
 
 		valueList = []
-		for currPoint in self.pointViewIterator():
+		for currPoint in self.pointIterator():
 			currPointID = currPoint.index()
 			for j in xrange(len(currPoint)):
 				value = currPoint[j]
@@ -525,7 +476,7 @@ class Base(object):
 		return int(int(round(bigNum*avg)) % bigNum)	
 
 
-	def isApproxEquivalent(self, otherDataMatrix):
+	def isApproximatelyEqual(self, otherDataMatrix):
 		"""If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data. 
 		If it returns True, they probably do but you can't be absolutely sure.
 		Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
@@ -577,7 +528,7 @@ class Base(object):
 		"""
 		return produceFeaturewiseReport(self, displayDigits=displayDigits)
 
-	def report(self, displayDigits=2):
+	def summaryReport(self, displayDigits=2):
 		"""
 		Produce a report, in a string formatted as a table, containing summary 
 		information about the data set contained in this object.  Includes 
@@ -634,7 +585,7 @@ class Base(object):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.points() == toAppend.points():
 			raise ArgumentException("toAppend must have the same number of points as this object")
-		if self.featureNameIntersection(toAppend):
+		if self._featureNameIntersection(toAppend):
 			raise ArgumentException("toAppend must not share any featureNames with this object")
 		self._appendFeatures_implementation(toAppend)
 
@@ -772,11 +723,11 @@ class Base(object):
 			self._removeFeatureNameAndShift(key)
 		return ret
 
-	def equals(self, other):
+	def isIdentical(self, other):
 		if not self._equalFeatureNames(other):
 			return False
 
-		return self._equals_implementation(other)
+		return self._isIdentical_implementation(other)
 
 	def points(self):
 		return self._points_implementation()
@@ -805,7 +756,7 @@ class Base(object):
 		else:
 			raise ArgumentException("Unrecognized file extension")
 
-	def copyReferences(self, toCopy):
+	def referenceDataFrom(self, other):
 		"""
 		Modifies the internal data of this object to refer to the same data as other. In other
 		words, the data wrapped by both the self and other objects resides in the
@@ -815,17 +766,17 @@ class Base(object):
 
 		"""
 		# this is called first because it checks the data type
-		self._copyReferences_implementation(toCopy)
-		self.featureNames = toCopy.featureNames
-		self.featureNamesInverse = toCopy.featureNamesInverse
+		self._referenceDataFrom_implementation(other)
+		self.featureNames = other.featureNames
+		self.featureNamesInverse = other.featureNamesInverse
 
 
-	def duplicate(self):
+	def copy(self):
 		"""
 		Return a new object which has the same data and featureNames as this object
 
 		"""
-		return self._duplicate_implementation()
+		return self._copy_implementation()
 
 	def copyPoints(self, points=None, start=None, end=None):
 		"""
@@ -893,13 +844,13 @@ class Base(object):
 
 		return self._copyFeatures_implementation(indices, start, end)
 
-	def getType(self):
+	def getTypeString(self):
 		"""
 			Return a string representing the non-abstract type of this object (e.g. Matrix,
 			Sparse, etc.) that can be passed to createData() function to create a new object
 			of the same type.
 		"""
-		return self._getType_implementation()
+		return self._getTypeString_implementation()
 
 	def __getitem__(self, key):
 		try:
@@ -917,7 +868,7 @@ class Base(object):
 
 		return self._getitem_implementation(x,y)
 
-	def getPointView(self, ID):
+	def pointView(self, ID):
 		"""
 		Returns a View object into the data of the point with the given ID. See View object
 		comments for its capabilities. This View is only valid until the next modification
@@ -930,9 +881,9 @@ class Base(object):
 			raise ImproperActionException("This object contains no points")
 		if not isinstance(ID,int):
 			raise ArgumentException("Point IDs must be integers")
-		return self._getPointView_implementation(ID)
+		return self._pointView_implementation(ID)
 
-	def getFeatureView(self, ID):
+	def featureView(self, ID):
 		"""
 		Returns a View object into the data of the point with the given ID. See View object
 		comments for its capabilities. This View is only valid until the next modification
@@ -945,12 +896,61 @@ class Base(object):
 			raise ImproperActionException("This object contains no features")
 
 		index = self._getIndex(ID)
-		return self._getFeatureView_implementation(index)
+		return self._featureView_implementation(index)
 	
 
 	####################
 	# Helper functions #
 	####################
+
+	def _featureNameDifference(self, other):
+		"""
+		Returns a set containing those featureNames in this object that are not also in the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, Base):
+			raise ArgumentException("Must provide another representation type to determine featureName difference")
+		
+		return self.featureNames.viewkeys() - other.featureNames.viewkeys() 
+
+	def _featureNameIntersection(self, other):
+		"""
+		Returns a set containing only those featureNames that are shared by this object and the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, Base):
+			raise ArgumentException("Must provide another representation type to determine featureName intersection")
+		
+		return self.featureNames.viewkeys() & other.featureNames.viewkeys() 
+
+	def _featureNameSymmetricDifference(self, other):
+		"""
+		Returns a set containing only those featureNames not shared between this object and the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, Base):
+			raise ArgumentException("Must provide another representation type to determine featureName difference")
+		
+		return self.featureNames.viewkeys() ^ other.featureNames.viewkeys() 
+
+	def _featureNameUnion(self,other):
+		"""
+		Returns a set containing all featureNames in either this object or the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, Base):
+			raise ArgumentException("Must provide another representation type to determine featureName union")
+		
+		return self.featureNames.viewkeys() | other.featureNames.viewkeys() 
+
 
 	def _equalFeatureNames(self, other):
 		"""
@@ -1077,7 +1077,7 @@ class Base(object):
 		del self.featureNamesInverse[features-1]
 
 
-	def _renameFeatureName_implementation(self, oldIdentifier, newFeatureName, allowDefaults=False):
+	def _setFeatureName_implementation(self, oldIdentifier, newFeatureName, allowDefaults=False):
 		"""
 		Changes the featureName specified by previous to the supplied input featureName.
 		
@@ -1165,7 +1165,7 @@ class Base(object):
 				self.featureNames[temp] = temp
 				self.featureNamesInverse[index] = temp
 		for key in assignments.keys():
-			self._renameFeatureName_implementation(assignments[key],key,allowDefaults)
+			self._setFeatureName_implementation(assignments[key],key,allowDefaults)
 
 
 	class _foldIteratorClass():
@@ -1180,7 +1180,7 @@ class Base(object):
 		def next(self):
 			if self.index >= len(self.foldList):
 				raise StopIteration
-			copied = self.outerReference.duplicate()
+			copied = self.outerReference.copy()
 			dataY = copied.extractPoints(self.foldList[self.index])
 			dataX = copied
 #			dataX.shufflePoints()

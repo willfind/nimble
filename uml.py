@@ -91,9 +91,9 @@ def normalizeData(algorithm, trainData, testData=None, dependentVar=None, argume
 			normalizedTest = run(algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
 		
 	# modify references for trainData and testData
-	trainData.copyReferences(normalizedTrain)
+	trainData.referenceDataFrom(normalizedTrain)
 	if testData is not None:
-		testData.copyReferences(normalizedTest)
+		testData.referenceDataFrom(normalizedTest)
 
 
 def listLearningFunctions(package):
@@ -217,7 +217,7 @@ def createData(retType, data=None, featureNames=None, fileType=None, name=None, 
 		raise ArgumentException(msg)
 
 	if name is not None:
-		ret.setName(name)
+		ret.nameData(name)
 	return ret
 
 
@@ -335,7 +335,7 @@ def orderedCrossValidate(X, Y, functionsToApply, orderedFeature, minTrainSize, m
 			raise ArgumentException("minTestSize and maxTestSize must be specified using the same type")
 
 	# we have to combine all the data into a new object before we sort
-	allData = X.duplicate()
+	allData = X.copy()
 	allData.appendFeatures(Y)
 
 	# gran the ID with which to split the data later

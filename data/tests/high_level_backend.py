@@ -29,27 +29,27 @@ def dropStringValuedFeatures_emptyTest(constructor):
 	toTest = constructor(data)
 	unchanged = constructor(data)
 	toTest.dropStringValuedFeatures()
-	assert toTest.equals(unchanged)
+	assert toTest.isIdentical(unchanged)
 
 
 #################################
-# featureToBinaryCategoryFeatures #
+# replaceFeatureWithBinaryFeatures #
 #################################
 
 
-def featureToBinaryCategoryFeatures_emptyException(constructor):
-	""" Test featureToBinaryCategoryFeatures() with an empty object """
+def replaceFeatureWithBinaryFeatures_emptyException(constructor):
+	""" Test replaceFeatureWithBinaryFeatures() with an empty object """
 	data = []
 	toTest = constructor(data)
-	toTest.featureToBinaryCategoryFeatures(0)
+	toTest.replaceFeatureWithBinaryFeatures(0)
 
 
-def featureToBinaryCategoryFeatures_handmade(constructor):
-	""" Test featureToBinaryCategoryFeatures() against handmade output """
+def replaceFeatureWithBinaryFeatures_handmade(constructor):
+	""" Test replaceFeatureWithBinaryFeatures() against handmade output """
 	data = [[1],[2],[3]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)
-	toTest.featureToBinaryCategoryFeatures(0)
+	toTest.replaceFeatureWithBinaryFeatures(0)
 
 	expData = [[1,0,0], [0,1,0], [0,0,1]]
 	expFeatureNames = ['col=1','col=2','col=3']
@@ -57,26 +57,26 @@ def featureToBinaryCategoryFeatures_handmade(constructor):
 
 	print toTest.featureNames
 
-	assert toTest.equals(exp)
+	assert toTest.isIdentical(exp)
 	
 
 
 #############################
-# featureToIntegerCategories #
+# transformFeartureToIntegerFeature #
 #############################
 
-def featureToIntegerCategories_emptyException(constructor):
-	""" Test featureToIntegerCategories() with an empty object """
+def transformFeartureToIntegerFeature_emptyException(constructor):
+	""" Test transformFeartureToIntegerFeature() with an empty object """
 	data = []
 	toTest = constructor(data)
-	toTest.featureToIntegerCategories(0)
+	toTest.transformFeartureToIntegerFeature(0)
 
-def featureToIntegerCategories_handmade(constructor):
-	""" Test featureToIntegerCategories() against handmade output """
+def transformFeartureToIntegerFeature_handmade(constructor):
+	""" Test transformFeartureToIntegerFeature() against handmade output """
 	data = [[10],[20],[30.5],[20],[10]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)
-	toTest.featureToIntegerCategories(0)
+	toTest.transformFeartureToIntegerFeature(0)
 
 	assert toTest.data[0] == toTest.data[4]
 	assert toTest.data[1] == toTest.data[3]
@@ -114,8 +114,8 @@ def selectConstantOfPointsByValue_handmade(constructor):
 	expRet = constructor([[1,2,3],[1,8,9]],featureNames)
 	expTest = constructor([[1,5,6],],featureNames)
 
-	assert ret.equals(expRet)
-	assert expTest.equals(toTest)
+	assert ret.isIdentical(expRet)
+	assert expTest.isIdentical(toTest)
 
 def selectConstantOfPointsByValue_handmadeLimit(constructor):
 	""" Test selectConstantOfPointsByValue() against handmade output when the constant exceeds the available points """
@@ -127,8 +127,8 @@ def selectConstantOfPointsByValue_handmadeLimit(constructor):
 	expRet = constructor([[1,2,3],[1,8,9],[2,11,12]],featureNames)
 	expTest = constructor([[1,5,6],],featureNames)
 
-	assert ret.equals(expRet)
-	assert expTest.equals(toTest)
+	assert ret.isIdentical(expRet)
+	assert expTest.isIdentical(toTest)
 
 
 
@@ -167,8 +167,8 @@ def selectPercentOfPointsByValue_handmade(constructor):
 	expRet = constructor([[1,2,3]],featureNames)
 	expTest = constructor([[1,5,6],[1,8,9]],featureNames)
 
-	assert ret.equals(expRet)
-	assert expTest.equals(toTest)
+	assert ret.isIdentical(expRet)
+	assert expTest.isIdentical(toTest)
 
 
 #########################
@@ -212,8 +212,8 @@ def extractPointsByCoinToss_handmade(constructor):
 	expRet = constructor([[4,5,6],[7,8,9]],featureNames)
 	expTest = constructor([[1,2,3],[10,11,12]],featureNames)
 
-	assert ret.equals(expRet)
-	assert expTest.equals(toTest)
+	assert ret.isIdentical(expRet)
+	assert expTest.isIdentical(toTest)
 
 
 
@@ -298,7 +298,7 @@ def applyToEachPoint_Handmade(constructor):
 	expectedOut = [[0.1], [0.1], [0.1], [0.2]]
 	exp = constructor(expectedOut)
 
-	assert lowerCounts.equals(exp)
+	assert lowerCounts.isIdentical(exp)
 
 
 def applyToEachPoint_nonZeroItAndLen(constructor):
@@ -319,7 +319,7 @@ def applyToEachPoint_nonZeroItAndLen(constructor):
 	expectedOut = [[3], [2], [2], [1]]
 	exp = constructor(expectedOut)
 
-	assert counts.equals(exp)
+	assert counts.isIdentical(exp)
 
 
 
@@ -363,7 +363,7 @@ def applyToEachFeature_Handmade(constructor):
 
 	lowerCounts = origObj.applyToEachFeature(emitAllEqual)
 	expectedOut = [[1,0,0]]	
-	assert lowerCounts.equals(constructor(expectedOut))
+	assert lowerCounts.isIdentical(constructor(expectedOut))
 
 
 
@@ -384,12 +384,12 @@ def applyToEachFeature_nonZeroItAndLen(constructor):
 	expectedOut = [[3, 3, 2]]
 	exp = constructor(expectedOut)
 
-	assert counts.equals(exp)
+	assert counts.isIdentical(exp)
 
 
 
 #####################
-# mapReduceOnPoints() #
+# mapReducePoints() #
 #####################
 
 def simpleMapper(point):
@@ -414,79 +414,79 @@ def oddOnlyReducer(identifier, valuesList):
 	return simpleReducer(identifier,valuesList)
 
 
-def mapReduceOnPoints_argumentExceptionNoFeatures(constructor):
-	""" Test mapReduceOnPoints() for ImproperActionException when there are no features  """
+def mapReducePoints_argumentExceptionNoFeatures(constructor):
+	""" Test mapReducePoints() for ImproperActionException when there are no features  """
 	data = [[],[],[]]
 	toTest = constructor(data)
-	toTest.mapReduceOnPoints(simpleMapper,simpleReducer)
+	toTest.mapReducePoints(simpleMapper,simpleReducer)
 
-def mapReduceOnPoints_argumentExceptionNoneMap(constructor):
-	""" Test mapReduceOnPoints() for ArgumentException when mapper is None """
+def mapReducePoints_argumentExceptionNoneMap(constructor):
+	""" Test mapReducePoints() for ArgumentException when mapper is None """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnPoints(None,simpleReducer)
+	toTest.mapReducePoints(None,simpleReducer)
 
-def mapReduceOnPoints_argumentExceptionNoneReduce(constructor):
-	""" Test mapReduceOnPoints() for ArgumentException when reducer is None """
+def mapReducePoints_argumentExceptionNoneReduce(constructor):
+	""" Test mapReducePoints() for ArgumentException when reducer is None """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnPoints(simpleMapper,None)
+	toTest.mapReducePoints(simpleMapper,None)
 
-def mapReduceOnPoints_argumentExceptionUncallableMap(constructor):
-	""" Test mapReduceOnPoints() for ArgumentException when mapper is not callable """
+def mapReducePoints_argumentExceptionUncallableMap(constructor):
+	""" Test mapReducePoints() for ArgumentException when mapper is not callable """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnPoints("hello",simpleReducer)
+	toTest.mapReducePoints("hello",simpleReducer)
 
-def mapReduceOnPoints_argumentExceptionUncallableReduce(constructor):
-	""" Test mapReduceOnPoints() for ArgumentException when reducer is not callable """
+def mapReducePoints_argumentExceptionUncallableReduce(constructor):
+	""" Test mapReducePoints() for ArgumentException when reducer is not callable """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	toTest.mapReduceOnPoints(simpleMapper,5)
+	toTest.mapReducePoints(simpleMapper,5)
 
 
 # inconsistent output?
 
 
 
-def mapReduceOnPoints_handmade(constructor):
-	""" Test mapReduceOnPoints() against handmade output """
+def mapReducePoints_handmade(constructor):
+	""" Test mapReducePoints() against handmade output """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	ret = toTest.mapReduceOnPoints(simpleMapper,simpleReducer)
+	ret = toTest.mapReducePoints(simpleMapper,simpleReducer)
 	
 	exp = constructor([[1,5],[4,11],[7,17]])
 
-	assert (ret.equals(exp))
-	assert (toTest.equals(constructor(data,featureNames)))
+	assert (ret.isIdentical(exp))
+	assert (toTest.isIdentical(constructor(data,featureNames)))
 
 
-def mapReduceOnPoints_handmadeNoneReturningReducer(constructor):
-	""" Test mapReduceOnPoints() against handmade output with a None returning Reducer """
+def mapReducePoints_handmadeNoneReturningReducer(constructor):
+	""" Test mapReducePoints() against handmade output with a None returning Reducer """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	ret = toTest.mapReduceOnPoints(simpleMapper,oddOnlyReducer)
+	ret = toTest.mapReducePoints(simpleMapper,oddOnlyReducer)
 	
 	exp = constructor([[1,5],[7,17]])
 
-	assert (ret.equals(exp))
-	assert (toTest.equals(constructor(data,featureNames)))
+	assert (ret.isIdentical(exp))
+	assert (toTest.isIdentical(constructor(data,featureNames)))
 
 
 
 #######################
-# pointViewIterator() #
+# pointIterator() #
 #######################
 
 
-def pointViewIterator_exactValueViaFor(constructor):
-	""" Test pointViewIterator() gives views that contain exactly the correct data """
+def pointIterator_exactValueViaFor(constructor):
+	""" Test pointIterator() gives views that contain exactly the correct data """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
@@ -494,7 +494,7 @@ def pointViewIterator_exactValueViaFor(constructor):
 #	import pdb
 #	pdb.set_trace()
 
-	viewIter = toTest.pointViewIterator()
+	viewIter = toTest.pointIterator()
 
 	toCheck = []
 	for v in viewIter:
@@ -512,17 +512,17 @@ def pointViewIterator_exactValueViaFor(constructor):
 
 
 #########################
-# featureViewIterator() #
+# featureIterator() #
 #########################
 
 
-def featureViewIterator_exactValueViaFor(constructor):
-	""" Test featureViewIterator() gives views that contain exactly the correct data """
+def featureIterator_exactValueViaFor(constructor):
+	""" Test featureIterator() gives views that contain exactly the correct data """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
 	
-	viewIter = toTest.featureViewIterator()
+	viewIter = toTest.featureIterator()
 
 	toCheck = []
 	for v in viewIter:
@@ -573,7 +573,7 @@ def computeList_passthrough(constructor):
 	toTest = constructor(data)
 	ret = toTest.computeListOfValuesFromElements(passThrough)
 
-	print toTest.getType()
+	print toTest.getTypeString()
 
 	assert 1 in ret
 	assert 2 in ret
@@ -616,12 +616,12 @@ def computeList_passthroughExclude(constructor):
 
 
 ########################
-# isApproxEquivalent() #
+# isApproximatelyEqual() #
 ########################
 
 
-def isApproxEquivalent_randomTest(constructor):
-	""" Test isApproxEquivalent() using randomly generated data """
+def isApproximatelyEqual_randomTest(constructor):
+	""" Test isApproximatelyEqual() using randomly generated data """
 
 	for x in xrange(1,2):
 		points = 200
@@ -638,14 +638,14 @@ def isApproxEquivalent_randomTest(constructor):
 	matrix = Matrix(data)
 	sparse = Sparse(data)
 
-	assert toTest.isApproxEquivalent(listObj)
-	assert listObj.isApproxEquivalent(toTest)
+	assert toTest.isApproximatelyEqual(listObj)
+	assert listObj.isApproximatelyEqual(toTest)
 
-	assert toTest.isApproxEquivalent(matrix)
-	assert matrix.isApproxEquivalent(toTest)
+	assert toTest.isApproximatelyEqual(matrix)
+	assert matrix.isApproximatelyEqual(toTest)
 
-	assert toTest.isApproxEquivalent(sparse)
-	assert sparse.isApproxEquivalent(toTest)
+	assert toTest.isApproximatelyEqual(sparse)
+	assert sparse.isApproximatelyEqual(toTest)
 
 
 
@@ -667,10 +667,10 @@ def shufflePoints_noLongerEqual(constructor):
 	# however. We will pass as long as it changes once
 	for i in xrange(5):
 		toTest.shufflePoints()
-		if not toTest.isApproxEquivalent(toCompare):
+		if not toTest.isApproximatelyEqual(toCompare):
 			return
 
-	assert not toTest.isApproxEquivalent(toCompare)
+	assert not toTest.isApproximatelyEqual(toCompare)
 
 
 
@@ -693,10 +693,10 @@ def shuffleFeatures_noLongerEqual(constructor):
 	# however. We will pass as long as it changes once
 	for i in xrange(5):
 		toTest.shuffleFeatures()
-		if not toTest.isApproxEquivalent(toCompare):
+		if not toTest.isApproximatelyEqual(toCompare):
 			return
 
-	assert not toTest.isApproxEquivalent(toCompare)
+	assert not toTest.isApproximatelyEqual(toCompare)
 
 
 

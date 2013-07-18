@@ -93,7 +93,7 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 		trainObjY = dependentVar
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
-		trainObj = trainObj.duplicate()
+		trainObj = trainObj.copy()
 		trainObjY = trainObj.extractFeatures([dependentVar])		
 	# could be None for unsupervised learning	
 

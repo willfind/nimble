@@ -74,16 +74,16 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 	if not isinstance(trainData, UML.data.Base):
 		trainObj = UML.createData('Matrix', trainData)
 	else: # input is an object
-		trainObj = trainData.duplicate()
+		trainObj = trainData.copy()
 	if not isinstance(testData, UML.data.Base):
 		testObj = UML.createData('Matrix', testData)
 	else: # input is an object
-		testObj = testData.duplicate()
+		testObj = testData.copy()
 	
 	trainObjY = None
 	# directly assign target values, if present
 	if isinstance(dependentVar, UML.data.Base):
-		trainObjY = dependentVar.duplicate()
+		trainObjY = dependentVar.copy()
 	# otherwise, isolate the target values from training examples
 	elif dependentVar is not None:
 		trainObjY = trainObj.extractFeatures([dependentVar])		
@@ -452,7 +452,7 @@ def remapLabelsRange(toRemap):
 	inverse = []
 	invIndex = 0
 
-	view = toRemap.getPointView(0)
+	view = toRemap.pointView(0)
 
 	for x in xrange(toRemap.features()):
 		value = view[x]
@@ -481,7 +481,7 @@ def remapLabelsSpecific(toRemap, space):
 	invIndex = 0
 	maxLength = len(space)
 
-	view = toRemap.getPointView(0)
+	view = toRemap.pointView(0)
 
 	for x in xrange(toRemap.features()):
 		value = view[x]

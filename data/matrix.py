@@ -70,7 +70,7 @@ class Matrix(Base):
 		"""
 		scorer = None
 		comparator = None
-		test = self.getPointView(0)
+		test = self.pointView(0)
 		try:
 			sortHelper(test)
 			scorer = sortHelper
@@ -112,7 +112,7 @@ class Matrix(Base):
 		"""
 		scorer = None
 		comparator = None
-		test = self.getFeatureView(0)
+		test = self.featureView(0)
 		try:
 			sortHelper(test)
 			scorer = sortHelper
@@ -129,7 +129,7 @@ class Matrix(Base):
 
 		# make array of views
 		viewArray = []
-		viewIter = self.featureViewIterator()
+		viewIter = self.featureIterator()
 		for v in viewIter:
 			viewArray.append(v)
 
@@ -358,7 +358,7 @@ class Matrix(Base):
 
 		return Matrix(ret, featureNameList)
 
-	def _mapReduceOnPoints_implementation(self, mapper, reducer):
+	def _mapReducePoints_implementation(self, mapper, reducer):
 		# apply_along_axis() expects a scalar or array of scalars as output,
 		# but our mappers output a list of tuples (ie a sequence type)
 		# which is not allowed. This packs key value pairs into an array
@@ -403,10 +403,10 @@ class Matrix(Base):
 		shape = numpy.shape(self.data)
 		return shape[0]
 
-	def _getType_implementation(self):
+	def _getTypeString_implementation(self):
 		return 'Matrix'
 
-	def _equals_implementation(self,other):
+	def _isIdentical_implementation(self,other):
 		if not isinstance(other,Matrix):
 			return False
 		if self.points() != other.points():
@@ -458,13 +458,13 @@ class Matrix(Base):
 		else:
 			mmwrite(target=outPath, a=self.data)
 
-	def _copyReferences_implementation(self, other):
+	def _referenceDataFrom_implementation(self, other):
 		if not isinstance(other, Matrix):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
 
-	def _duplicate_implementation(self):
+	def _copy_implementation(self):
 		return Matrix(deepcopy(self.data), deepcopy(self.featureNames))
 
 	def _copyPoints_implementation(self, points, start, end):
@@ -491,10 +491,10 @@ class Matrix(Base):
 	def _getitem_implementation(self, x, y):
 		return self.data[x,y]
 
-	def _getPointView_implementation(self, ID):
+	def _pointView_implementation(self, ID):
 		return VectorView(self, 'point', ID)
 
-	def _getFeatureView_implementation(self, ID):
+	def _featureView_implementation(self, ID):
 		return VectorView(self, 'feature', ID)
 
 class VectorView(View):
