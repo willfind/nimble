@@ -266,7 +266,7 @@ def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
 	return newScoresPerPoint
 
 
-def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, arguments, kernel, config):
+def pythonIOWrapper(algorithm, trainX, trainY, testX, output, arguments, kernel, config):
 
 	inType = config['inType']
 	inTypeLabels = config['inTypeLabels']
@@ -277,23 +277,23 @@ def pythonIOWrapper(algorithm, trainData, testData, output, dependentVar, argume
 	fileOutType = config['fileOutType']
 
 
-	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.createData(inType, data=trainData)
+	if not isinstance(trainX, UML.data.Base):
+		trainObj = UML.createData(inType, data=trainX)
 	else: # input is an object
 		trainObj = convertTo(trainObj, inType)
-	if not isinstance(testData, UML.data.Base):
-		testObj = UML.createData(inType, data=testData)
+	if not isinstance(testX, UML.data.Base):
+		testObj = UML.createData(inType, data=testX)
 	else: # input is an object
 		testObj = convertTo(testObj, inType)
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, UML.data.Base):
-		trainObjY = dependentVar
+	if isinstance(trainY, UML.data.Base):
+		trainObjY = trainY
 	# otherwise, isolate the target values from training examples
-	elif dependentVar is not None:
+	elif trainY is not None:
 		trainCopy = trainObj.copy()
-		trainObjY = trainCopy.extractFeatures([dependentVar])		
+		trainObjY = trainCopy.extractFeatures([trainY])		
 	# could be None for unsupervised learning, in which case it remains none
 
 	# get the correct type for the labels

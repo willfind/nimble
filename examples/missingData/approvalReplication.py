@@ -48,7 +48,7 @@ if __name__ == "__main__":
 	print "Finished converting labels to ints"
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":<0.01|0.1|0.5|1.0|10.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+	toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":<0.01|0.1|0.5|1.0|10.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
 	results = {}

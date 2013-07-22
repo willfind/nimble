@@ -116,7 +116,7 @@ def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, s
 
 
 
-def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, performanceMetricFuncs, scoreMode='label', negativeLabel=None, sendToLog=True):
+def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceMetricFuncs, scoreMode='label', negativeLabel=None, sendToLog=True):
 	"""
 		Calls on run() to train and evaluate the learning algorithm defined in 'algorithm,'
 		then tests its performance using the metric function(s) found in
@@ -128,14 +128,14 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 
 		testX: data set to be used for testing (as some form of Base object)
 		
-		trainDependentVar: used to retrieve the known class labels of the traing data. Either
+		trainY: used to retrieve the known class labels of the traing data. Either
 		contains the labels themselves (as a Base object) or an index (numerical or string) 
 		that defines their locale in the trainX object
 		
-		testDependentVar: used to retreive the known class labels of the test data. Either
+		testY: used to retreive the known class labels of the test data. Either
 		contains the labels themselves (as a Base object) or an index (numerical or string) 
 		that defines their locale in the testX object.  If left blank, runAndTest() assumes 
-		that testDependentVar is the same as trainDependentVar.
+		that testY is the same as trainY.
 		
 		arguments: optional arguments to be passed to the function specified by 'algorithm'
 		
@@ -145,18 +145,18 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	_validData(trainX, trainDependentVar, testX, testDependentVar)
+	_validData(trainX, trainY, testX, testY)
 
 	#Need to make copies of all data, in case it will be modified before a classifier is trained
 	trainX = trainX.copy()
 	testX = testX.copy()
 	
-	#if testDependentVar is empty, attempt to use trainDependentVar
-	if testDependentVar is None and isinstance(trainDependentVar, (str, unicode, int)):
-		testDependentVar = trainDependentVar
+	#if testY is empty, attempt to use trainY
+	if testY is None and isinstance(trainY, (str, unicode, int)):
+		testY = trainY
 
-	trainDependentVar = copyLabels(trainX, trainDependentVar)
-	testDependentVar = copyLabels(testX, testDependentVar)
+	trainY = copyLabels(trainX, trainY)
+	testY = copyLabels(testX, testY)
 
 	#if we are logging this run, we need to start the timer
 	if sendToLog:
@@ -164,7 +164,7 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 		timer.start('train')
 
 	#rawResults contains predictions for each version of a learning function in the combos list
-	rawResult = run(algorithm, trainX, trainDependentVar, testX, arguments=arguments, scoreMode=scoreMode, sendToLog=False)
+	rawResult = run(algorithm, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, sendToLog=False)
 
 	#if we are logging this run, we need to stop the timer
 	if sendToLog:
@@ -172,7 +172,7 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 		timer.start('errorComputation')
 
 	#now we need to compute performance metric(s) for all prediction sets
-	results = computeMetrics(testDependentVar, None, rawResult, performanceMetricFuncs, negativeLabel)
+	results = computeMetrics(testY, None, rawResult, performanceMetricFuncs, negativeLabel)
 
 	if sendToLog:
 		timer.stop('errorComputation')

@@ -25,15 +25,15 @@ if __name__ == "__main__":
 	normalizeData('mlpy.PCA', trainX, testX, arguments={'k':5})
 
 	"""
-	results = runAndTest("mlpy.Ridge", trainX, testX, trainY, testY, arguments={"lmb":1}, performanceMetricFuncs=[rootMeanSquareError, meanAbsoluteError])
+	results = runAndTest("mlpy.Ridge", trainX, trainY, testX, testY, arguments={"lmb":1}, performanceMetricFuncs=[rootMeanSquareError, meanAbsoluteError])
 
 	print "results", results
 	"""
 
 
-	toRun = 'runAndTest("mlpy.Ridge", trainX, testX, trainY, testY, {"lmb":<.01|.1|1>}, [rootMeanSquareError])'
+	toRun = 'runAndTest("mlpy.Ridge", trainX, trainY, testX, testY, {"lmb":<.01|.1|1>}, [rootMeanSquareError])'
 	runs = functionCombinations(toRun)
-	runs.append('runAndTest("mlpy.LARS", trainX, testX, trainY, testY, {"maxsteps":20}, [rootMeanSquareError])')
+	runs.append('runAndTest("mlpy.LARS", trainX, trainY, testX, testY, {"maxsteps":20}, [rootMeanSquareError])')
 
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=10, extraParams=locals())
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
 	#OLD STUFF
 
-	##results = runAndTestDirect("mlpy.LibSvm", trainX, testX, trainY, testY, arguments={"C":1}, performanceMetricFuncs=[fractionIncorrect])
+	##results = runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, arguments={"C":1}, performanceMetricFuncs=[fractionIncorrect])
 
 	#xData = createData("Matrix", fileName, fileType="csv")
 	#allData = createData("Matrix", fileName, fileType="csv")

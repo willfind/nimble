@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("shogun.KNN", trainX, testX, trainY, testY, {"k":<1|3|5|10|15|20|25>}, [fractionIncorrect],sendToLog=False)'
+    toRun = 'runAndTest("shogun.KNN", trainX, trainY, testX, testY, {"k":<1|3|5|10|15|20|25>}, [fractionIncorrect],sendToLog=False)'
     runs = functionCombinations(toRun)
     extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
 
     # # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    # toRun = 'runAndTest("shogun.KNN", trainX, testX, trainY, testY, {"k":<1|3|5|10|15|20|25>}, [fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    # toRun = 'runAndTest("shogun.KNN", trainX, trainY, testX, testY, {"k":<1|3|5|10|15|20|25>}, [fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     # runs = functionCombinations(toRun)
     # extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
     # run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)

@@ -40,7 +40,7 @@ if __name__ == "__main__":
 	testY = createData('Matrix', testYList)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, testX, trainY, testY, {"C":<1.0>}, [fractionIncorrect])'
+	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, trainY, testX, testY, {"C":<1.0>}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 	results = {}

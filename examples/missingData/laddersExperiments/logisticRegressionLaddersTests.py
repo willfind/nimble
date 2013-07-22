@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("sciKitLearn.LogisticRegression", trainX, testX, trainY, testY, {"C":<0.000001|0.00001|0.0001|0.001|0.01|0.1|1.0|10.0|50.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    toRun = 'runAndTest("sciKitLearn.LogisticRegression", trainX, trainY, testX, testY, {"C":<0.000001|0.00001|0.0001|0.001|0.01|0.1|1.0|10.0|50.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     runs = functionCombinations(toRun)
     extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)

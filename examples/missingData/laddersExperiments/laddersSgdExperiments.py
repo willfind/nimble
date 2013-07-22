@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("sciKitLearn.SGDClassifier", trainX, testX, trainY, testY, {"class_weight":{1:1.0, 2:<0.5|1.0|1.25|1.5|1.75|2.0|5.0|10.0>, "alpha":0.00001}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    toRun = 'runAndTest("sciKitLearn.SGDClassifier", trainX, trainY, testX, testY, {"class_weight":{1:1.0, 2:<0.5|1.0|1.25|1.5|1.75|2.0|5.0|10.0>, "alpha":0.00001}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     runs = functionCombinations(toRun)
     extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # print "Best Run confirmation, with L1 penalty: "+repr(executeCode(runWithL1Penalty, dataHash))
 
     # runNItersCombinations = re.sub(r'(?P<args>\{\"alpha[^}]*)', '\g<args>, "n_iter":<1|5|10|15|20|25>', run)
-    # runNItersCombinations = 'runAndTest("sciKitLearn.SGDClassifier", trainX, testX, trainY, testY, {"alpha":<0.0000001|0.000001|0.00001|0.0001|0.001|0.01|0.1|1.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=True)'
+    # runNItersCombinations = 'runAndTest("sciKitLearn.SGDClassifier", trainX, trainY, testX, testY, {"alpha":<0.0000001|0.000001|0.00001|0.0001|0.001|0.01|0.1|1.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=True)'
     # nItersRuns = functionCombinations(runNItersCombinations)
     # nItersResults = [None] * len(nItersRuns)
     # for run in nItersRuns:

@@ -55,7 +55,7 @@ if __name__ == "__main__":
 	appleStock = appleStock.toMatrix()
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("sciKitLearn.LinearRegression", trainX, testX, trainY, testY, {}, [rootMeanSquareError])["rootMeanSquareError"]'
+	toRun = 'runAndTest("sciKitLearn.LinearRegression", trainX, trainY, testX, testY, {}, [rootMeanSquareError])["rootMeanSquareError"]'
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTest':runAndTest, 'rootMeanSquareError':rootMeanSquareError}
 

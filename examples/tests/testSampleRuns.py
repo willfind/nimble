@@ -46,7 +46,7 @@ def testEverythingVolumeOne():
 	
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRunOne = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
+	toRunOne = 'runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
 	runsOne = functionCombinations(toRunOne)
 	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 	fullCrossValidateResults = crossValidate(trainX, trainY, runsOne, numFolds=10, extraParams=extraParams, sendToLog=False)
@@ -114,7 +114,7 @@ def testCrossValidateExample():
 	trainX, trainY, testX, testY = splitData(allData, labelID='income', fractionForTestSet=.15)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
+	toRun = 'runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 

@@ -20,7 +20,7 @@ if __name__ == "__main__":
 	trainX, trainY, testX, testY = splitData(allData, labelID='income', fractionForTestSet=.15)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("mlpy.LibSvm", trainX, testX, trainY, testY, {"C":<.01|.1|1>,"gamma":<.01|.1|1>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
+	toRun = 'runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|1>,"gamma":<.01|.1|1>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
 	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
 

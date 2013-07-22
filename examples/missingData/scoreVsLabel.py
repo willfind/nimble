@@ -43,6 +43,6 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    scores = runAndTest("shogun.MulticlassLibLinear", trainX, testX, trainY, testY, {"C":0.75}, [fractionTrueNegativeTop90, fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)
+    scores = runAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":0.75}, [fractionTrueNegativeTop90, fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)
 
     print "top 90 proportion Rejected: " + str(scores)

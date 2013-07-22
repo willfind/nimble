@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    # toRun = 'runAndTest("sciKitLearn.SGDClassifier", trainX, testX, trainY, testY, {"alpha":<0.0000001|0.000001|0.00001|0.0001|0.001|0.01|0.1|1.0|10.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    # toRun = 'runAndTest("sciKitLearn.SGDClassifier", trainX, trainY, testX, testY, {"alpha":<0.0000001|0.000001|0.00001|0.0001|0.001|0.01|0.1|1.0|10.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     # runs = functionCombinations(toRun)
     # extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     # run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # print "Best Run confirmation, with L1 penalty: "+repr(executeCode(runWithL1Penalty, dataHash))
 
     # runNItersCombinations = re.sub(r'(?P<args>\{\"alpha[^}]*)', '\g<args>, "n_iter":<1|5|10|15|20|25>', run)
-    run = 'runAndTest("shogun.GaussianNaiveBayes", trainX, testX, trainY, testY, {}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=True)'
+    run = 'runAndTest("shogun.GaussianNaiveBayes", trainX, trainY, testX, testY, {}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=True)'
     result = executeCode(run, dataHash)
     print "Run call: " + str(run)
     print "Result: " + str(result)

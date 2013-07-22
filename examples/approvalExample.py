@@ -25,7 +25,7 @@ if __name__ == "__main__":
 	testY = testY.toMatrix()
 
 	args = {"kernel":"GaussianKernel", "C":1}
-	results = runAndTest("shogun.MulticlassLibSVM", trainX.copy(), testX.copy(), trainY.copy(), testY.copy(), args, [fractionIncorrect])
+	results = runAndTest("shogun.MulticlassLibSVM", trainX.copy(), trainY.copy(), testX.copy(), testY.copy(), args, [fractionIncorrect])
 	rawResults = run("shogun.MulticlassLibSVM", trainX, trainY, testX, args)
 	
 	print results
