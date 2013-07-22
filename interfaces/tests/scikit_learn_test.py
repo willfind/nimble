@@ -31,7 +31,7 @@ def testSciKitLearnHandmadeRegression():
 	data2 = [[0,1]]
 	testObj = Matrix(data2)
 
-	ret = sciKitLearn("LinearRegression", trainingObj, testObj, output=None, dependentVar="Y", arguments={})
+	ret = sciKitLearn("LinearRegression", trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
 
 	assert ret is not None
 
@@ -55,7 +55,7 @@ def testSciKitLearnSparseRegression():
 	testObj = obj.copy()
 	testObj.extractFeatures(cols[0])
 
-	ret = sciKitLearn('SGDRegressor', trainData=obj, testData=testObj, dependentVar=cols[0])
+	ret = sciKitLearn('SGDRegressor', trainX=obj, trainY=cols[0], testX=testObj)
 
 	assert ret is not None
 
@@ -68,7 +68,7 @@ def testSciKitLearnHandmadeClustering():
 	data2 = [[1,0],[1,1],[5,1], [3,4]]
 	testObj = Matrix(data2)
 
-	ret = sciKitLearn("KMeans", trainingObj, testObj, output=None, arguments={'n_clusters':3})
+	ret = sciKitLearn("KMeans", trainingObj, testX=testObj, output=None, arguments={'n_clusters':3})
 
 	# clustering returns a row vector of indices, referring to the cluster centers,
 	# we don't care about the exact numbers, this verifies that the appropriate
@@ -93,7 +93,7 @@ def testSciKitLearnHandmadeSparseClustering():
 	testData[2, :] = [-1,0]
 	testData = Sparse(data=testData)
 
-	ret = sciKitLearn('MiniBatchKMeans', trainData, testData, dependentVar=2, arguments={'n_clusters':2})
+	ret = sciKitLearn('MiniBatchKMeans', trainData, trainY=2, testX=testData, arguments={'n_clusters':2})
 	
 	assert ret.data[0,0] == ret.data[1,0]
 	assert ret.data[0,0] != ret.data[2,0]
@@ -109,15 +109,15 @@ def testSciKitLearnScoreMode():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})
+	ret = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	bestScores = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	bestScores = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.points() == 2
 	assert bestScores.features() == 2
 
-	allScores = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	allScores = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.points() == 2
 	assert allScores.features() == 3
 
@@ -134,15 +134,15 @@ def testSciKitLearnScoreModeBinary():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={})
+	ret = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	bestScores = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	bestScores = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.points() == 2
 	assert bestScores.features() == 2
 
-	allScores = sciKitLearn("SVC", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	allScores = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.points() == 2
 	assert allScores.features() == 2
 

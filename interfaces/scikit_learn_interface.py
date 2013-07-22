@@ -52,11 +52,11 @@ def sciKitLearnPresent():
 	return True
 
 
-def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
+def sciKitLearn(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 	Function to call on the estimator objects of the scikit-learn package.
 	It will instantiate the estimator case-sensitively matching the given algorithm,
-	using the trainData to in the .fit call, and testData in the .predict call,
+	using the trainX to in the .fit call, and testX in the .predict call,
 	with all matching arguments from algArgs supplied at each step. If output
 	is non-None, the output from the predict call is written to the supplied file,
 	otherwise it is returned as a Matrix object.
@@ -73,28 +73,30 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 	if multiClassStrategy != 'default':
 		trialResult = checkClassificationStrategy(_sciKitLearnBackend, algorithm, arguments)
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsAll(algorithm, trainX, testX, trainY, arguments, output, scoreMode, timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsOne(algorithm, trainX, testX, trainY, arguments, output, scoreMode, timer)
 
 
-	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.createData('Matrix', trainData)
+	if not isinstance(trainX, UML.data.Base):
+		trainObj = UML.createData('Matrix', trainX)
 	else: # input is an object
-		trainObj = trainData
-	if not isinstance(testData, UML.data.Base):
-		testObj = UML.createData('Matrix', testData)
+		trainObj = trainX
+	if not isinstance(testX, UML.data.Base):
+		if testX is None:
+			raise ArgumentException("testX must be an object derived from Base")
+		testObj = UML.createData('Matrix', testX)
 	else: # input is an object
-		testObj = testData
+		testObj = testX
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, UML.data.Base):
-		trainObjY = dependentVar
+	if isinstance(trainY, UML.data.Base):
+		trainObjY = trainY
 	# otherwise, isolate the target values from training examples
-	elif dependentVar is not None:
+	elif trainY is not None:
 		trainObj = trainObj.copy()
-		trainObjY = trainObj.extractFeatures([dependentVar])		
+		trainObjY = trainObj.extractFeatures([trainY])		
 	# could be None for unsupervised learning	
 
 	# necessary format for skl, also makes the following ops easier
@@ -137,7 +139,7 @@ def sciKitLearn(algorithm, trainData, testData, dependentVar=None, arguments={},
 	outputObj.writeFile('csv', output, False)
 
 
-def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode, timer=None):
+def _sciKitLearnBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to scikit-learn
 
@@ -169,7 +171,7 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, sc
 	# fit object
 	(fitArgs,v,k,d) = inspect.getargspec(sklObj.fit)
 	argString = makeArgString(fitArgs, algArgs, "", "=", ", ")
-	sklObj = eval("sklObj.fit(trainDataX,trainDataY " + argString + ")")
+	sklObj = eval("sklObj.fit(trainX,trainY " + argString + ")")
 
 	#stop timing training and start timing testing, if timer is present
 	if timer is not None:
@@ -181,7 +183,7 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, sc
 	scores = None
 	numLabels = -1
 	if scoreMode != 'label':
-		labelOrder = numpy.unique(trainDataY)
+		labelOrder = numpy.unique(trainY)
 		numLabels = len(labelOrder)
 	else:
 		labelOrder = None
@@ -192,7 +194,7 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, sc
 		# estimate from object
 		(preArgs,v,k,d) = inspect.getargspec(sklObj.predict)
 		argString = makeArgString(preArgs, algArgs, "", "=", ", ")
-		predLabels = eval("sklObj.predict(testData, " + argString + ")")
+		predLabels = eval("sklObj.predict(testX, " + argString + ")")
 		predLabels = numpy.atleast_2d(predLabels)
 		predLabels = predLabels.T
 		#stop timing of testing, if timer is present
@@ -201,7 +203,7 @@ def _sciKitLearnBackend(algorithm, trainDataX, trainDataY, testData, algArgs, sc
 	# the only case where we don't want to get scores is if we're returning labels only
 	if scoreMode != 'label':
 		try:
-			scoresPerPoint = sklObj.decision_function(testData)
+			scoresPerPoint = sklObj.decision_function(testX)
 		except AttributeError:
 			raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
 		# If it was a binary problem, then only one column of scores is returned, so we must

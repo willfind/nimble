@@ -94,7 +94,7 @@ def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, s
 	elif package == 'regressor':
 		results = regressor(algorithm, trainX, trainY, testX, arguments, output, timer)
 	elif package == 'sciKitLearn':
-		results = sciKitLearn(algorithm, trainX, testX, trainY, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = sciKitLearn(algorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'mlpy':
 		results = mlpy(algorithm, trainX, testX, trainY, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'shogun':
