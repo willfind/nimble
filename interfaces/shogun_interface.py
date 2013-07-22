@@ -49,7 +49,7 @@ def shogunPresent():
 	return True
 
 
-def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
+def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 
 
@@ -66,27 +66,29 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 		trialResult = checkClassificationStrategy(_shogunBackend, algorithm, arguments)
 		# note: these conditionals include a binary return
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			UML.runners.runOneVsAll("shogun."+algorithm, trainX, testX, trainY, arguments=arguments, scoreMode=scoreMode, timer=timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne("shogun."+algorithm, trainData, testData, dependentVar, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			UML.runners.runOneVsOne("shogun."+algorithm, trainX, testX, trainY, arguments=arguments, scoreMode=scoreMode, timer=timer)
 
 	args = copy.copy(arguments)
-	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.createData('Matrix', trainData)
+	if not isinstance(trainX, UML.data.Base):
+		trainObj = UML.createData('Matrix', trainX)
 	else: # input is an object
-		trainObj = trainData.copy()
-	if not isinstance(testData, UML.data.Base):
-		testObj = UML.createData('Matrix', testData)
+		trainObj = trainX.copy()
+	if not isinstance(testX, UML.data.Base):
+		if testX is None:
+			raise ArgumentException("testX may only be an object derived from Base")
+		testObj = UML.createData('Matrix', testX)
 	else: # input is an object
-		testObj = testData.copy()
+		testObj = testX.copy()
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, UML.data.Base):
-		trainObjY = dependentVar.copy()
+	if isinstance(trainY, UML.data.Base):
+		trainObjY = trainY.copy()
 	# otherwise, isolate the target values from training examples
-	elif dependentVar is not None:
-		trainObjY = trainObj.extractFeatures([dependentVar])		
+	elif trainY is not None:
+		trainObjY = trainObj.extractFeatures([trainY])		
 	# could be None for unsupervised learning	
 
 	# necessary format for shogun, also makes the following ops easier
@@ -136,7 +138,7 @@ def shogun(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 	outputObj.writeFile('csv', output, False)
 
 
-def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode, timer=None):
+def _shogunBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to shogun
 
@@ -157,25 +159,25 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 	from shogun.Features import RealFeatures
 	from shogun.Features import SparseRealFeatures
 
-	if scipy.sparse.issparse(trainDataX):
+	if scipy.sparse.issparse(trainX):
 		trainFeat = SparseRealFeatures()
-		trainFeat.set_sparse_feature_matrix(trainDataX.tocsc().astype(numpy.float))
+		trainFeat.set_sparse_feature_matrix(trainX.tocsc().astype(numpy.float))
 	else:
 		trainFeat = RealFeatures()
-		trainFeat.set_feature_matrix(numpy.array(trainDataX, dtype=numpy.float))
+		trainFeat.set_feature_matrix(numpy.array(trainX, dtype=numpy.float))
 
-	if scipy.sparse.issparse(testData):
+	if scipy.sparse.issparse(testX):
 		testFeat = SparseRealFeatures()
-		testFeat.set_sparse_feature_matrix(testData.tocsc().astype(numpy.float))
+		testFeat.set_sparse_feature_matrix(testX.tocsc().astype(numpy.float))
 	else:
 		testFeat = RealFeatures()
-		testFeat.set_feature_matrix(numpy.array(testData, dtype=numpy.float))
+		testFeat.set_feature_matrix(numpy.array(testX, dtype=numpy.float))
 
 	# set up the correct type of label
 	try:
 		import shogun.Classifier
 		inverseMapping = None
-		tempObj = UML.createData('Matrix', trainDataY)
+		tempObj = UML.createData('Matrix', trainY)
 		problemType = SGObj.get_machine_problem_type()
 		if problemType == shogun.Classifier.PT_MULTICLASS:
 			inverseMapping = remapLabelsRange(tempObj)
@@ -193,7 +195,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 			trainLabels = BinaryLabels(flattened.astype(float))
 		elif problemType == shogun.Classifier.PT_REGRESSION:
 			from shogun.Features import RegressionLabels
-			trainLabels = RegressionLabels(trainDataY.astype(float))
+			trainLabels = RegressionLabels(trainY.astype(float))
 			if scoreMode != 'label':
 				raise ArgumentException("Invalid scoreMode for a regression problem; the default parameter must be used")
 		else:
@@ -201,7 +203,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 
 	except ImportError:
 		from shogun.Features import Labels
-		trainLabels = Labels(trainDataY.astype(float))
+		trainLabels = Labels(trainY.astype(float))
 
 	#set parameters from input arguments
 	SGObj.set_labels(trainLabels)
@@ -278,7 +280,7 @@ def _shogunBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMo
 	predLabels = None
 	scores = None
 	if scoreMode != 'label':
-		labelOrder = numpy.unique(trainDataY)
+		labelOrder = numpy.unique(trainY)
 		numLabels = len(labelOrder)
 	else:
 		labelOrder = None

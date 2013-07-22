@@ -98,7 +98,7 @@ def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, s
 	elif package == 'mlpy':
 		results = mlpy(algorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'shogun':
-		results = shogun(algorithm, trainX, testX, trainY, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = shogun(algorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:

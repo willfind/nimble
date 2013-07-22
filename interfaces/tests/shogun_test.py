@@ -36,7 +36,7 @@ def testShogun_shapemismatchException():
 	testObj = Matrix(data2)
 
 	args = {}
-	ret = shogun("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+	ret = shogun("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
 @raises(ArgumentException)
@@ -50,7 +50,7 @@ def testShogun_singleClassException():
 	testObj = Matrix(data2)
 
 	args = {}
-	ret = shogun("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+	ret = shogun("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
 
@@ -64,7 +64,7 @@ def testShogunHandmadeBinaryClassification():
 	testObj = Matrix(data2)
 
 	args = {}
-	ret = shogun("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+	ret = shogun("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 
@@ -81,7 +81,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 	testObj = Matrix(data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
-	ret = shogun("LibSVM", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+	ret = shogun("LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 
@@ -98,7 +98,7 @@ def testShogunKMeans():
 	testObj = Matrix(data2)
 
 	args = {'distance':'ManhattanMetric'}
-	ret = shogun("KNN", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+	ret = shogun("KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 
@@ -118,7 +118,7 @@ def testShogunMulticlassSVM():
 
 	args = {'C':.5, 'kernel':'LinearKernel'}
 #	args = {'C':1}
-	ret = shogun("MulticlassLibSVM", trainingObj, testObj, output=None, dependentVar="Y", arguments=args)
+	ret = shogun("MulticlassLibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 
@@ -141,7 +141,7 @@ def testShogunSparseRegression():
 	labelsData = numpy.random.rand(x)
 	labels = Matrix(labelsData)
 
-	ret = shogun('MulticlassOCAS', trainData=obj, testData=obj, dependentVar=labels)
+	ret = shogun('MulticlassOCAS', trainX=obj, trainY=labels, testX=obj)
 
 	assert ret is not None
 
@@ -168,16 +168,16 @@ def testShogunRossData():
 	args = {'C':1.0}
 	argsk = {'C':1.0, 'kernel':"LinearKernel"}
 
-	ret = shogun("MulticlassLibSVM", trainingObj, testObj, output=None, dependentVar=0, arguments=argsk)
+	ret = shogun("MulticlassLibSVM", trainingObj, trainY=0, testX=testObj, output=None, arguments=argsk)
 	assert ret is not None
 
-	ret = shogun("MulticlassLibLinear", trainingObj, testObj, output=None, dependentVar=0, arguments=args)
+	ret = shogun("MulticlassLibLinear", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
 	assert ret is not None
 
-	ret = shogun("LaRank", trainingObj, testObj, output=None, dependentVar=0, arguments=argsk)
+	ret = shogun("LaRank", trainingObj, trainY=0, testX=testObj, output=None, arguments=argsk)
 	assert ret is not None
 
-	ret = shogun("MulticlassOCAS", trainingObj, testObj, output=None, dependentVar=0, arguments=args)
+	ret = shogun("MulticlassOCAS", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
 	assert ret is not None
 
 
@@ -214,7 +214,7 @@ def testShogunEmbeddedRossData():
 
 	args = {'C':1.0}
 
-	ret = shogun("MulticlassOCAS", trainingObj, testObj, output=None, dependentVar=0, arguments=args)
+	ret = shogun("MulticlassOCAS", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
 	assert ret is not None
 
 	for value in ret.data:
@@ -231,15 +231,15 @@ def testShogunScoreModeMulti():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={})
+	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert ret.points() == 2
 	assert ret.features() == 2
 
-	ret = shogun("MulticlassOCAS", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert ret.points() == 2
 	assert ret.features() == 3
 
@@ -254,15 +254,15 @@ def testShogunScoreModeBinary():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={})
+	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert ret.points() == 2
 	assert ret.features() == 2
 
-	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert ret.points() == 2
 	assert ret.features() == 2
 
@@ -279,7 +279,7 @@ def testShogunMultiClassStrategyMultiDataBinaryAlg():
 #	import pdb
 #	pdb.set_trace()
 
-	ret = shogun("SVMOcas", trainingObj, testObj, dependentVar="Y", arguments={}, multiClassStrategy="OneVsOne")
+	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, multiClassStrategy="OneVsOne")
 	
 
 
