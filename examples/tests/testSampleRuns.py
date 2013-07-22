@@ -149,7 +149,7 @@ def testNormalizing():
 	assert trainObj.data[0].size == 1
 	assert testObj.data[0].size == 1
 
-	ret = run('mlpy.KNN', trainObj, testObj, dependentVar=trainObjY, arguments={'k':1})
+	ret = run('mlpy.KNN', trainObj, trainObjY, testObj, arguments={'k':1})
 
 	# assert we get the correct classes
 	assert ret.data[0,0] == 1

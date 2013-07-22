@@ -78,7 +78,7 @@ def normalizeData(algorithm, trainData, testData=None, dependentVar=None, argume
 		# glue training data at the end of test data
 		testData.appendPoints(trainData)
 		try:
-			normalizedAll = run(algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
+			normalizedAll = run(algorithm, trainData, dependentVar, testData, arguments=arguments)
 		except ArgumentException:
 			testData.extractPoints(start=testLength, end=normalizedAll.points())
 		# resplit normalized
@@ -86,9 +86,9 @@ def normalizeData(algorithm, trainData, testData=None, dependentVar=None, argume
 		normalizedTest = normalizedAll
 	# two call normalize, no data combination
 	else:
-		normalizedTrain = run(algorithm, trainData, trainData, dependentVar=dependentVar, arguments=arguments)
+		normalizedTrain = run(algorithm, trainData, dependentVar, trainData, arguments=arguments)
 		if testData is not None:
-			normalizedTest = run(algorithm, trainData, testData, dependentVar=dependentVar, arguments=arguments)
+			normalizedTest = run(algorithm, trainData, dependentVar, testData, arguments=arguments)
 		
 	# modify references for trainData and testData
 	trainData.referenceDataFrom(normalizedTrain)

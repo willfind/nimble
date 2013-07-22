@@ -112,7 +112,7 @@ class Base(object):
 		self.extractFeatures(hasStrings)
 
 
-	def replaceFeatureWithBinaryFeatures(self, featureToConvert):
+	def replaceFeatureWithBinaryFeatures(self, featureToReplace):
 		"""
 		Modify this object so that the choosen feature is removed, and binary valued
 		features are added, one for each possible value seen in the original feature.
@@ -121,7 +121,7 @@ class Base(object):
 		if self.features() == 0:
 			raise ImproperActionException("There is no possible valid input for this method; this object has 0 features")
 		
-		index = self._getIndex(featureToConvert)
+		index = self._getIndex(featureToReplace)
 		# extract col.
 		toConvert = self.extractFeatures([index])
 
@@ -476,16 +476,16 @@ class Base(object):
 		return int(int(round(bigNum*avg)) % bigNum)	
 
 
-	def isApproximatelyEqual(self, otherDataMatrix):
+	def isApproximatelyEqual(self, other):
 		"""If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data. 
 		If it returns True, they probably do but you can't be absolutely sure.
 		Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
 		passed are of the same type (Matrix, Sparse, etc.)"""
 		#first check to make sure they have the same number of rows and columns
-		if self.points() != otherDataMatrix.points(): return False
-		if self.features() != otherDataMatrix.features(): return False
+		if self.points() != other.points(): return False
+		if self.features() != other.features(): return False
 		#now check if the hashes of each matrix are the same
-		if self.hashCode() != otherDataMatrix.hashCode(): return False
+		if self.hashCode() != other.hashCode(): return False
 		return True
 
 

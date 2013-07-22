@@ -13,7 +13,7 @@ import sys
 import UML.examples.allowImports
 
 
-def est_callAllAsMain():
+def test_callAllAsMain():
 	"""
 	Test which calls each script in the examples folder individually, and
 	confirms that it does not throw any sort of exception.
@@ -61,5 +61,6 @@ def est_callAllAsMain():
 	sortedKeys = sorted(results.keys())
 	for key in sortedKeys:
 		print key +" : " + str(results[key])
+		assert results[key] is None
 
-	assert False
+#	assert False

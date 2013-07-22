@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
 	args = {"kernel":"GaussianKernel", "width":1, "C":1}
 	results = runAndTest("shogun.MulticlassLibSVM", trainX, testX, trainY, testY, args, [fractionIncorrect])
-	rawResults = run("shogun.MulticlassLibSVM", trainX, testX, dependentVar=trainY, arguments=args)
+	rawResults = run("shogun.MulticlassLibSVM", trainX, trainY, testX, arguments=args)
 	
 	print "results: "+repr(results)
 	print "raw predictions: "+repr(rawResults.data)

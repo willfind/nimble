@@ -27,9 +27,9 @@ if __name__ == "__main__":
 	sparseY2 = sparseAll2.extractFeatures(3)
 	sparseX2 = sparseAll2
 
-	ret = run('sciKitLearn.LinearRegression', trainData=sparseX, testData=sparseX, dependentVar=sparseY)
+	ret = run('sciKitLearn.LinearRegression', trainX=sparseX, trainY=sparseY, testX=sparseX)
 
-	ret2 = run('sciKitLearn.LinearRegression', trainData=sparseX2, testData=sparseX2, dependentVar=sparseY2)
+	ret2 = run('sciKitLearn.LinearRegression', trainX=sparseX2, trainY=sparseY2, testX=sparseX2)
 
 	print "Raw results 1: " + str(ret.data)
 	print "Raw results 2: " + str(ret2.data)

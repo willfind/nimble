@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
 	args = {"kernel":"GaussianKernel", "C":1}
 	results = runAndTest("shogun.MulticlassLibSVM", trainX.copy(), testX.copy(), trainY.copy(), testY.copy(), args, [fractionIncorrect])
-	rawResults = run("shogun.MulticlassLibSVM", trainX, testX, trainY, args)
+	rawResults = run("shogun.MulticlassLibSVM", trainX, trainY, testX, args)
 	
 	print results
 	print str(rawResults.data)

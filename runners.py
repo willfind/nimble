@@ -36,19 +36,53 @@ from UML.umlHelpers import _jumpForward
 from UML.umlHelpers import _diffLessThan
 from UML.umlHelpers import generateAllPairs
 
-def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
-	if scoreMode != 'label' and scoreMode != 'bestScore' and scoreMode != 'allScores':
+
+def _validScoreMode(scoreMode):
+	scoreMode = scoreMode.lower()
+	if scoreMode != 'label' and scoreMode != 'bestscore' and scoreMode != 'allscores':
 		raise ArgumentException("scoreMode may only be 'label' 'bestScore' or 'allScores'")
+
+
+def _validMultiClassStrategy(multiClassStrategy):
 	multiClassStrategy = multiClassStrategy.lower()
 	if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll'.lower() and multiClassStrategy != 'OneVsOne'.lower():
 		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
-	if not isinstance(arguments, dict):
-		raise ArgumentException("The 'arguments' parameter must be a dictionary")
+
+
+def _unpackAlgorithm(algorithm):
 	splitList = algorithm.split('.',1)
 	if len(splitList) < 2:
 		raise ArgumentException("The algorithm must be prefaced with the package name and a dot. Example:'mlpy.KNN'")
 	package = splitList[0]
 	algorithm = splitList[1]
+	return (package, algorithm)
+
+
+def _validArguments(arguments):
+	if not isinstance(arguments, dict):
+		raise ArgumentException("The 'arguments' parameter must be a dictionary")
+
+def _validData(trainX, trainY, testX, testY):
+	if not isinstance(trainX, Base):
+		raise ArgumentException("trainX may only be an object derived from Base")
+	if trainY is not None:
+		if not (isinstance(trainY, Base) or isinstance(trainY, basestring) or isinstance(trainY, int)):
+			raise ArgumentException("trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
+	if testX is None:
+		raise ArgumentException("Despite it being an optional parameter, testX must not be None. textX may only be an object derived from Base")
+	if not isinstance(testX, Base):
+		raise ArgumentException("testX may only be an object derived from Base")
+	if testY is not None:
+		if not (isinstance(testY, Base) or isinstance(testY, basestring) or isinstance(testY, int)):
+			raise ArgumentException("testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
+
+
+def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
+	(package, algorithm) = _unpackAlgorithm(algorithm)
+	_validData(trainX, trainY, testX, None)
+	_validScoreMode(scoreMode)
+	_validMultiClassStrategy(multiClassStrategy)
+	_validArguments(arguments)
 
 	if sendToLog:
 		timer = Stopwatch()
@@ -56,15 +90,15 @@ def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=
 		timer = None
 
 	if package == 'mahout':
-		results = mahout(algorithm, trainData, testData, dependentVar, arguments, output, timer)
+		results = mahout(algorithm, trainX, testX, trainY, arguments, output, timer)
 	elif package == 'regressor':
-		results = regressor(algorithm, trainData, testData, dependentVar, arguments, output, timer)
+		results = regressor(algorithm, trainX, testX, trainY, arguments, output, timer)
 	elif package == 'sciKitLearn':
-		results = sciKitLearn(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = sciKitLearn(algorithm, trainX, testX, trainY, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'mlpy':
-		results = mlpy(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = mlpy(algorithm, trainX, testX, trainY, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'shogun':
-		results = shogun(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = shogun(algorithm, trainX, testX, trainY, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:
@@ -76,7 +110,7 @@ def run(algorithm, trainData, testData, dependentVar=None, arguments={}, output=
 				funcString = 'regressors.' + algorithm
 			else:
 				funcString = package + '.' + algorithm
-			logManager.logRun(trainData, testData, funcString, None, timer, extraInfo=arguments)
+			logManager.logRun(trainX, testX, funcString, None, timer, extraInfo=arguments)
 
 	return results
 
@@ -111,6 +145,8 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
+	_validData(trainX, trainDependentVar, testX, testDependentVar)
+
 	#Need to make copies of all data, in case it will be modified before a classifier is trained
 	trainX = trainX.copy()
 	testX = testX.copy()
@@ -128,7 +164,7 @@ def runAndTest(algorithm, trainX, testX, trainDependentVar, testDependentVar, ar
 		timer.start('train')
 
 	#rawResults contains predictions for each version of a learning function in the combos list
-	rawResult = run(algorithm, trainX, testX, dependentVar=trainDependentVar, arguments=arguments, scoreMode=scoreMode, sendToLog=False)
+	rawResult = run(algorithm, trainX, trainDependentVar, testX, arguments=arguments, scoreMode=scoreMode, sendToLog=False)
 
 	#if we are logging this run, we need to stop the timer
 	if sendToLog:
@@ -184,6 +220,8 @@ def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependen
 		of those metrics, computed using the predictions of 'algorithm' on testX.  
 		Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
 	"""
+	_validData(trainX, trainDependentVar, testX, testDependentVar)
+
 	if sendToLog:
 		timer = Stopwatch()
 	else:
@@ -246,6 +284,8 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
+	_validData(trainX, trainDependentVar, testX, testDependentVar)
+
 	trainX = trainX.copy()
 	testX = testX.copy()
 
@@ -287,7 +327,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		pairData = trainX.extractPoints(lambda point: (point[trainDependentVar] == pair[0]) or (point[trainDependentVar] == pair[1]))
 		pairTrueLabels = pairData.extractFeatures(trainDependentVar)
 		#train classifier on that data; apply it to the test set
-		partialResults = run(algorithm, pairData, testX, output=None, dependentVar=pairTrueLabels, arguments=arguments, sendToLog=False)
+		partialResults = run(algorithm, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put predictions into table of predictions
 		if rawPredictions is None:
 			rawPredictions = partialResults.toList()
@@ -373,6 +413,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
+	_validData(trainX, trainDependentVar, testX, testDependentVar)
 	trainX = trainX.copy()
 	testX = testX.copy()
 
@@ -414,7 +455,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 				return 0
 			else: return 1
 		trainLabels = trainDependentVar.applyToEachPoint(relabeler)
-		oneLabelResults = run(algorithm, trainX, testX, output=None, dependentVar=trainLabels, arguments=arguments, sendToLog=False)
+		oneLabelResults = run(algorithm, trainX, trainLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
 			rawPredictions = oneLabelResults
@@ -499,6 +540,7 @@ def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependen
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
+	_validData(trainX, trainDependentVar, testX, testDependentVar)
 
 	if sendToLog:
 		timer = Stopwatch()
