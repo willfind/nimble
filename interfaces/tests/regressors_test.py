@@ -25,7 +25,7 @@ def testRegressorsHandmade():
 	trialIn.write("5,107,4.0\n")
 	trialIn.flush()
 
-	regressor("ConstantRegressor",trainingIn.name, trialIn.name, output=actualOut.name, dependentVar=2, arguments={'randomObject':None})
+	regressor("ConstantRegressor",trainingIn.name, trainY=2, testX=trialIn.name, output=actualOut.name, arguments={'randomObject':None})
 
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -49,7 +49,7 @@ def testRegressorsHandmadeTrainMatrix():
 	training = Matrix(data)
 
 
-	regressor(algorithmName, training, trialIn.name, output=actualOut.name, dependentVar=2, arguments={})
+	regressor(algorithmName, training, trainY=2, testX=trialIn.name, output=actualOut.name,  arguments={})
 
 	actualOut.seek(0)
 	line = actualOut.readline()

@@ -39,7 +39,7 @@ def getRegressorLocation():
 
 
 # TODO outer layer regressor() interface needs to deal with multiple kinds of input
-def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, timer=None):
+def regressor(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, timer=None):
 	"""
 	Function to call on regressors in the Regression package.
 
@@ -54,34 +54,29 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 				'path of the Regressors root directory')
 		return
 
-	if isinstance(testData, UML.data.Base):
-		print('testData may not be an in package representation, it must refer to a file')
+	if isinstance(testX, UML.data.Base):
+		print('testX may not be an in package representation, it must refer to a file')
 	
-	if isinstance(trainData, UML.data.Sparse):
+	if isinstance(trainX, UML.data.Sparse):
 		raise ArgumentException("Regressors does not accept sparse input")
 
-	testFile = open(testData, 'r')
+	testFile = open(testX, 'r')
 	if output is not None:
 		outFile = open(output, 'w')
 
-	if not isinstance(trainData, UML.data.Base):
-		trainData = UML.createData("Matrix", data=trainData)
-	
-	# make sure dependentVar is a feature index
-	if not isinstance(dependentVar, int):
-		dependentVar = trainData.featureNames[dependentVar]
+	if not isinstance(trainX, UML.data.Base):
+		trainX = UML.createData("Matrix", data=trainX)
 	
 	# isolate the target values from training examples, if present
-	trainDataY = None
-	if dependentVar is not None:
-		trainDataY = trainData.extractFeatures([dependentVar])
+	if trainY is not None:
+		trainY = trainX.extractFeatures([trainY])
 		# Regressors expects row vectors in this case
-		trainDataY.transpose()
+		trainY.transpose()
 
 	# extract data and format data: Regressors expects numpy arrays
-	trainData = numpy.array(trainData.data)
-	if trainDataY is not None:
-		trainDataY = numpy.array( trainDataY.data[0]).flatten()
+	trainX = numpy.array(trainX.data)
+	if trainY is not None:
+		trainY = numpy.array( trainY.data[0]).flatten()
 
 	# import the type of regressor specified by the input
 	try:
@@ -104,7 +99,7 @@ def regressor(algorithm, trainData, testData, dependentVar=None, arguments={}, o
 		timer.start('train')
 
 	#initialize the regressor with the constructed matrices
-	cmd = algorithm + "." + algorithmClass + "(X=trainData,Y=trainDataY"
+	cmd = algorithm + "." + algorithmClass + "(X=trainX,Y=trainY"
 	for key in arguments.keys():
 		cmd += "," + key + "="
 		cmd += str(arguments[key])
