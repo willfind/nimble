@@ -23,7 +23,7 @@ def MahoutHandmadeOutput():
 	trialIn.write("3,4\n")
 	trialIn.flush()
 	args = { 'numClusters':'2' }
-	mahout("kmeans", trainingIn.name, trialIn.name, output=actualOut.name, arguments=args)
+	mahout("kmeans", trainingIn.name, trainY=None, testX=trialIn.name, output=actualOut.name, arguments=args)
 	
 	actualOut.seek(0)
 	line = actualOut.readline()

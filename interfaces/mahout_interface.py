@@ -27,7 +27,7 @@ def setMahoutLocation(path):
 def getMahoutLocation():
 	return mahoutDir
 
-def mahout(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, timer=None):
+def mahout(algorithm, trainX, trainY, testX, arguments={}, output=None, timer=None):
 	"""
 
 	"""
@@ -46,22 +46,22 @@ def mahout(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 		mahoutTasteRecommenderEstimation(arguments) #,redirectOutputTarget)
 		return
 
-	if isinstance(trainData, UML.data.Base):
+	if isinstance(trainX, UML.data.Base):
 		raise ArgumentException("Must call mahout with paths to input files, not data objects")
-	if isinstance(testData, UML.data.Base):
+	if isinstance(testX, UML.data.Base):
 		raise ArgumentException("Must call mahout with paths to input files, not data objects")
-	if isinstance(dependentVar, UML.data.Base):
-		raise ArgumentException("dependentVar must be the name of the dependent var in trainData, a vector is not allowed")
+	if isinstance(trainY, UML.data.Base):
+		raise ArgumentException("trainY must be the name of the dependent var in trainX, a vector is not allowed")
 
 	cmds = []
 
 	cmd1 = mahoutDir + '/bin/mahout -core ' + algorithm
 	
 	# comand line argument packing	
-	if trainData is not None:
-		cmd1 += ' --input ' + trainData
-	if dependentVar is not None:
-		cmd1 += ' --target ' + dependentVar
+	if trainX is not None:
+		cmd1 += ' --input ' + trainX
+	if trainY is not None:
+		cmd1 += ' --target ' + trainY
 	if output is not None:
 		cmd1 += ' --output ' + output 
 
@@ -76,7 +76,7 @@ def mahout(algorithm, trainData, testData, dependentVar=None, arguments={}, outp
 		subprocess.call(cmd, shell=True)
 
 
-def mahoutTasteRecommenderEstimation(trainData, testData, output, arguments): #,redirectOutputTarget=None):
+def mahoutTasteRecommenderEstimation(trainX, testX, output, arguments): #,redirectOutputTarget=None):
 	"""
 	Function to call an extension to Mahout to use Taste (Sequential) Recommenders
 	to predict ratings. Extension is achieved by temporarily patching Mahout.

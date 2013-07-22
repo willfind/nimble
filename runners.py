@@ -90,7 +90,7 @@ def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, s
 		timer = None
 
 	if package == 'mahout':
-		results = mahout(algorithm, trainX, testX, trainY, arguments, output, timer)
+		results = mahout(algorithm, trainX, trainY, testX, arguments, output, timer)
 	elif package == 'regressor':
 		results = regressor(algorithm, trainX, testX, trainY, arguments, output, timer)
 	elif package == 'sciKitLearn':
