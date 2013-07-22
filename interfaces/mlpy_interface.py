@@ -48,7 +48,7 @@ def mlpyPresent():
 	return True
 
 
-def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
+def mlpy(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 
 
@@ -65,32 +65,34 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 	if multiClassStrategy != 'default':
 		trialResult = checkClassificationStrategy(_mlpyBackend, algorithm, arguments)
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsAll(algorithm, trainX, testX, trainY, arguments, output, scoreMode, timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne(algorithm, trainData, testData, dependentVar, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsOne(algorithm, trainX, testX, trainY, arguments, output, scoreMode, timer)
 
-	if isinstance(trainData, UML.data.Sparse):
+	if isinstance(trainX, UML.data.Sparse):
 		raise ArgumentException("MLPY does not accept sparse input")
-	if isinstance(testData, UML.data.Sparse):
+	if isinstance(testX, UML.data.Sparse):
 		raise ArgumentException("MLPY does not accept sparse input")
 
-	if not isinstance(trainData, UML.data.Base):
-		trainObj = UML.createData('Matrix', trainData)
+	if not isinstance(trainX, UML.data.Base):
+		trainObj = UML.createData('Matrix', trainX)
 	else: # input is an object
-		trainObj = trainData
-	if not isinstance(testData, UML.data.Base):
-		testObj = UML.createData('Matrix', testData)
+		trainObj = trainX
+	if not isinstance(testX, UML.data.Base):
+		if testX is None:
+			raise ArgumentException("testX may only be an object derived from Base")
+		testObj = UML.createData('Matrix', testX)
 	else: # input is an object
-		testObj = testData
+		testObj = testX
 	
 	trainObjY = None
 	# directly assign target values, if present
-	if isinstance(dependentVar, UML.data.Base):
-		trainObjY = dependentVar
+	if isinstance(trainY, UML.data.Base):
+		trainObjY = trainY
 	# otherwise, isolate the target values from training examples
-	elif dependentVar is not None:
+	elif trainY is not None:
 		trainObj = trainObj.copy()
-		trainObjY = trainObj.extractFeatures([dependentVar])		
+		trainObjY = trainObj.extractFeatures([trainY])		
 	# could be None for unsupervised learning	
 
 	# necessary format for skl, also makes the following ops easier
@@ -133,7 +135,7 @@ def mlpy(algorithm, trainData, testData, dependentVar=None, arguments={}, output
 	outputObj.writeFile('csv', output, False)
 
 
-def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode, timer=None):
+def _mlpyBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to mlpy
 
@@ -187,10 +189,10 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 		learnArgs = None
 	argString = makeArgString(learnArgs, algArgs, "", "=", ", ")
 	if hasattr(obj, 'pred'):
-		eval("obj.learn(trainDataX,trainDataY " + argString + ")")
+		eval("obj.learn(trainX,trainY " + argString + ")")
 	# else, we're in the transform paradigm
 	else:
-		eval("obj.learn(trainDataX, " + argString + ")")
+		eval("obj.learn(trainX, " + argString + ")")
 
 	#stop timing training and start timing testing, if timer is present
 	if timer is not None:
@@ -215,7 +217,7 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 				# in this case, we default to adding nothing
 				predArgs = None
 			argString = makeArgString(predArgs, algArgs, "", "=", ", ")
-			predLabels = eval("obj.pred(testData, " + argString + ")")
+			predLabels = eval("obj.pred(testX, " + argString + ")")
 			# .pred() always returns a row vector, we want a column vector
 			predLabels.resize(predLabels.size,1)
 
@@ -225,7 +227,7 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 		# the only case where we don't want to get scores is if we're returning labels only
 		if scoreMode != 'label':
 			try:
-				scoresPerPoint = obj.pred_values(testData)
+				scoresPerPoint = obj.pred_values(testX)
 			except AttributeError:
 				raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
 			if numLabels == 2:
@@ -260,7 +262,7 @@ def _mlpyBackend(algorithm, trainDataX, trainDataY, testData, algArgs, scoreMode
 			# in this case, we default to adding nothing
 			transArgs = None
 		argString = makeArgString(transArgs, algArgs, "", "=", ", ")
-		outData = eval("obj.transform(testData, " + argString + ")")
+		outData = eval("obj.transform(testX, " + argString + ")")
 
 		#stop timing of testing, if timer is present
 		if timer is not None:

@@ -27,7 +27,7 @@ def testMlpyHandmadeSVMClassification():
 	data2 = [[2,3],[-200,0]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})
+	ret = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 
 	assert ret is not None
 
@@ -47,7 +47,7 @@ def testMlpyHandmadeLogisticRegression():
 	data2 = [[2,3],[-200,0]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("LibLinear", trainingObj, testObj, output=None, dependentVar="Y", arguments={"solver_type":"l2r_lr"})
+	ret = mlpy("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"solver_type":"l2r_lr"})
 
 	assert ret is not None
 
@@ -67,7 +67,7 @@ def testMlpyHandmadeKNN():
 	data2 = [[2,3],[0,0]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("KNN", trainingObj, testObj, output=None, dependentVar="Y", arguments={"k":1})
+	ret = mlpy("KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"k":1})
 
 	assert ret is not None
 
@@ -82,7 +82,7 @@ def testMlpyHandmadePCA():
 	data2 = [[4,4,4]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("PCA", trainingObj, testObj, output=None, arguments={'k':1})
+	ret = mlpy("PCA", trainingObj, testX=testObj, output=None, arguments={'k':1})
 
 	assert ret is not None
 	# check return has the right dimension
@@ -97,7 +97,7 @@ def testMlpyHandmadeKernelPCA():
 	data2 = [[4,4]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("KPCA", trainObj, testObj, output=None, arguments={"kernel":"KernelGaussian", 'k':1})
+	ret = mlpy("KPCA", trainObj, testX=testObj, output=None, arguments={"kernel":"KernelGaussian", 'k':1})
 
 	assert ret is not None
 	# check return has the right dimension
@@ -114,15 +114,15 @@ def testMlpyScoreMode():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})
+	ret = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	bestScores = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	bestScores = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.points() == 2
 	assert bestScores.features() == 2
 
-	allScores = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	allScores = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.points() == 2
 	assert allScores.features() == 3
 
@@ -138,15 +138,15 @@ def testMlpyScoreModeBinary():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={})
+	ret = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.points() == 2
 	assert ret.features() == 1
 
-	bestScores = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='bestScore')
+	bestScores = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.points() == 2
 	assert bestScores.features() == 2
 
-	allScores = mlpy("LibSvm", trainingObj, testObj, dependentVar="Y", arguments={}, scoreMode='allScores')
+	allScores = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.points() == 2
 	assert allScores.features() == 2
 

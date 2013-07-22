@@ -96,7 +96,7 @@ def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, s
 	elif package == 'sciKitLearn':
 		results = sciKitLearn(algorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'mlpy':
-		results = mlpy(algorithm, trainX, testX, trainY, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = mlpy(algorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'shogun':
 		results = shogun(algorithm, trainX, testX, trainY, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'self':
