@@ -66,34 +66,34 @@ def splitData(toSplit, fractionForTestSet, labelID=None):
 
 
 
-def normalizeData(algorithm, trainData, testData=None, dependentVar=None, arguments={}, mode=True):
+def normalizeData(algorithm, trainX, trainY=None, testX=None, arguments={}, mode=True):
 	"""
 	Calls on the functionality of a package to train on some data and then modify both
 	the training data and a set of test data accroding to the produced model.
 
 	"""
 	# single call normalize, combined data
-	if mode and testData is not None:
-		testLength = testData.points()
+	if mode and testX is not None:
+		testLength = testX.points()
 		# glue training data at the end of test data
-		testData.appendPoints(trainData)
+		testX.appendPoints(trainX)
 		try:
-			normalizedAll = run(algorithm, trainData, dependentVar, testData, arguments=arguments)
+			normalizedAll = run(algorithm, trainX, trainY, testX, arguments=arguments)
 		except ArgumentException:
-			testData.extractPoints(start=testLength, end=normalizedAll.points())
+			testX.extractPoints(start=testLength, end=normalizedAll.points())
 		# resplit normalized
 		normalizedTrain = normalizedAll.extractPoints(start=testLength, end=normalizedAll.points())
 		normalizedTest = normalizedAll
 	# two call normalize, no data combination
 	else:
-		normalizedTrain = run(algorithm, trainData, dependentVar, trainData, arguments=arguments)
-		if testData is not None:
-			normalizedTest = run(algorithm, trainData, dependentVar, testData, arguments=arguments)
+		normalizedTrain = run(algorithm, trainX, trainY, trainX, arguments=arguments)
+		if testX is not None:
+			normalizedTest = run(algorithm, trainX, trainY, testX, arguments=arguments)
 		
-	# modify references for trainData and testData
-	trainData.referenceDataFrom(normalizedTrain)
-	if testData is not None:
-		testData.referenceDataFrom(normalizedTest)
+	# modify references for trainX and testX
+	trainX.referenceDataFrom(normalizedTrain)
+	if testX is not None:
+		testX.referenceDataFrom(normalizedTest)
 
 
 def listLearningFunctions(package):

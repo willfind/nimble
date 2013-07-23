@@ -65,7 +65,7 @@ def testEverythingVolumeOne():
 
 	# use normalizeData to modify our data; we call a dimentionality reduction algorithm to
 	# simply our mostly redundant points. k is the desired number of dimensions in the output
-	normalizeData('mlpy.PCA', trainObj, testObj, arguments={'k':1})
+	normalizeData('mlpy.PCA', trainObj, testX=testObj, arguments={'k':1})
 
 	# assert that we actually do have fewer dimensions
 	assert trainObj.data[0].size == 1
@@ -143,7 +143,7 @@ def testNormalizing():
 
 	# use normalizeData to modify our data; we call a dimentionality reduction algorithm to
 	# simply our mostly redundant points. k is the desired number of dimensions in the output
-	normalizeData('mlpy.PCA', trainObj, testObj, arguments={'k':1})
+	normalizeData('mlpy.PCA', trainObj, testX=testObj, arguments={'k':1})
 
 	# assert that we actually do have fewer dimensions
 	assert trainObj.data[0].size == 1

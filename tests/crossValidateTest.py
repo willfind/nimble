@@ -15,14 +15,14 @@ if __name__ == "__main__":
 
 	allData = createData("Matrix", "myFile.txt")
 	trainX, trainY, testX, testY = splitData(allData, labelID="predictionLabels", fractionForTestSet=.15) #load and split up the data
-	normalizeData(trainX, testX, algorithm="mean") #perform mean normalization
+	normalizeData(algorithm="mean", trainX=trainX, testX=testX) #perform mean normalization
 
 	##################################################
 	#cross validate over some different possibilities#
 
 	#these are the runs we're going to try
-	run1 = 'normalizeData(trainX, testX, algorithm="dropFeatures", parameters={"start":1,"end":3}); runAlgorithmWithPeformance(trainX, trainY, testX, testY, algorithm="mlpy.svm")'
-	run2 = 'normalizeData(trainX, testX, algorithm="dropFeatures", parameters={"start":1,"end":5}); runAlgorithmWithPeformance(trainX, trainY, testX, testY, algorithm="mlpy.svm")'
+	run1 = 'normalizeData(algorithm="dropFeatures", trainX=trainX, testX=testX, parameters={"start":1,"end":3}); runAlgorithmWithPeformance(trainX, trainY, testX, testY, algorithm="mlpy.svm")'
+	run2 = 'normalizeData(algorithm="dropFeatures", trainX=trainX, testX=testX, parameters={"start":1,"end":5}); runAlgorithmWithPeformance(trainX, trainY, testX, testY, algorithm="mlpy.svm")'
 
 	#this will return the text of whichever function performed better, as well as that best performance value
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY,'min', [run1, run2], numFolds=10)
