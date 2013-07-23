@@ -20,7 +20,7 @@ from UML.data import Matrix
 from UML.data import List
 from UML.data import Base
 
-def _loadSparse(data, featureNames, fileType):
+def _loadSparse(data, featureNames, fileType, automatedRetType=False):
 	if fileType is None:
 		return Sparse(data, featureNames)
 
@@ -36,10 +36,17 @@ def _loadSparse(data, featureNames, fileType):
 
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
+
+	# if we allow the return type to be chosen by the data, and the scipy's mmread
+	# (as wrapped by loadMTXtoAuto) returns a dense matrix, then we want to return
+	# a Matrix object
+	if automatedRetType and not scipy.sparse.issparse(data):
+		return Matrix(data, featureNames)
+
 	return Sparse(data, featureNames, os.path.basename(path), path)
 
 
-def _loadMatrix(data, featureNames, fileType):
+def _loadMatrix(data, featureNames, fileType, automatedRetType=False):
 	if fileType is None:
 		return Matrix(data, featureNames)
 
@@ -47,7 +54,7 @@ def _loadMatrix(data, featureNames, fileType):
 	path = data
 	tempFeatureNames = None
 	if fileType == 'csv':
-		(data, tempFeatureNames) = _loadCSVtoMatrix(path)
+		(data, tempFeatureNames) = _loadCSVtoMatrix(path, automatedRetType)
 	elif fileType == 'mtx':
 		(data, tempFeatureNames) = _loadMTXtoAuto(path)
 	else:
@@ -55,6 +62,13 @@ def _loadMatrix(data, featureNames, fileType):
 
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
+
+	# if we allow the return type to be chosen by the data, and the scipy's mmread
+	# (as wrapped by loadMTXtoAuto) returns a sparse matrix, then we want to return
+	# a Sparse object
+	if automatedRetType and scipy.sparse.issparse(data):
+		return Sparse(data, featureNames)
+
 	return Matrix(data, featureNames, os.path.basename(path), path)
 
 
@@ -79,7 +93,7 @@ def _loadList(data, featureNames, fileType):
 
 	return List(data, featureNames, os.path.basename(path), path)
 
-def _loadCSVtoMatrix(path):
+def _loadCSVtoMatrix(path, automatedRetType=False):
 	inFile = open(path, 'rU')
 	firstLine = inFile.readline()
 	featureNames = None
@@ -103,6 +117,11 @@ def _loadCSVtoMatrix(path):
 		try:
 			num = numpy.float(datum)
 		except ValueError:
+			# if the data contains non numerical values, and we allow the automated
+			# choice of the return type, then we should try to load this data
+			# as a List
+			if automatedRetType:
+				return _loadCSVtoList(path)
 			raise ValueError("Cannot load a file with non numerical typed columns")
 
 	inFile.close()

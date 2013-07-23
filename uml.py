@@ -5,6 +5,7 @@ Module containing most of the user facing functions for the top level uml import
 
 import random
 import numpy
+import scipy.sparse
 import inspect
 import operator
 import re 
@@ -175,6 +176,7 @@ def listUMLFunctions():
 
 
 def createData(retType, data=None, featureNames=None, fileType=None, name=None, sendToLog=True):
+	automatedRetType = False
 	# determine if its a file we have to read; we assume if its a string its a path
 	if isinstance(data, basestring):
 		#we may log this event
@@ -194,10 +196,28 @@ def createData(retType, data=None, featureNames=None, fileType=None, name=None, 
 			fileType = extension
 		if fileType is None:
 			raise ArgumentException("The file must be recognizable by extension, or a type must be specified")
+		
+		if retType is None:
+			automatedRetType = True
+			if fileType == 'csv':
+				retType = 'Matrix'
+			if fileType == 'mtx':
+				retType = 'Sparse'
+
 	# if data is not a path to a file, then we don't care about the value of this flag;
 	# instead we use it as an indicator flag to directly instantiate
 	else:
 		fileType = None
+		if retType is None:
+			if isinstance(data, list):
+				retType = 'List'
+			if isinstance(data, numpy.matrix):
+				retType = 'Matrix'
+			if isinstance(data, numpy.array):
+				retType = 'Matrix'
+			if scipy.sparse.issparse(data):
+				retType = 'Sparse'
+
 
 	# these should be lowercase to avoid ambiguity
 	retType = retType.lower()
@@ -205,15 +225,15 @@ def createData(retType, data=None, featureNames=None, fileType=None, name=None, 
 	matrixAlias = ['matrix']
 	listAlias = ["list"]
 	if retType in sparseAlias:
-		ret = _loadSparse(data, featureNames, fileType)
+		ret = _loadSparse(data, featureNames, fileType, automatedRetType)
 	elif retType in matrixAlias:
-		ret = _loadMatrix(data, featureNames, fileType)
+		ret = _loadMatrix(data, featureNames, fileType, automatedRetType)
 	elif retType in listAlias:
 		ret = _loadList(data, featureNames, fileType)
 	else:
 		msg = "Unknown data type, cannot instantiate. Only allowable inputs: "
 		msg += "'List' for data in python lists, 'Matrix' for a numpy matrix, "
-		msg += "and 'Sparse' for a scipy sparse coo_matrix"
+		msg += "'Sparse' for a scipy sparse coo_matrix, and None for automated choice."
 		raise ArgumentException(msg)
 
 	if name is not None:
