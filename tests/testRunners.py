@@ -22,8 +22,8 @@ def testRunAndTestOneVsOne():
     metricFuncs = []
     metricFuncs.append(fractionIncorrect)
 
-    results1 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj1, testObj1, trainDependentVar=3,  arguments={}, performanceMetricFuncs=metricFuncs)
-    results2 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj2, testObj2, trainDependentVar=3,  arguments={}, performanceMetricFuncs=metricFuncs)
+    results1 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, performanceMetricFuncs=metricFuncs)
+    results2 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, arguments={}, performanceMetricFuncs=metricFuncs)
 
     assert results1['fractionIncorrect'] == 0.0
     assert results2['fractionIncorrect'] == 0.25

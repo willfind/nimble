@@ -183,7 +183,7 @@ def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceMe
 
 	return results
 
-def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, performanceMetricFuncs=None, negativeLabel=None, sendToLog=True):
+def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, performanceMetricFuncs=None, negativeLabel=None, sendToLog=True):
 	"""
 		Wrapper class for runOneVsOne.  Useful if you want the entire process of training,
 		testing, and computing performance measures to be handled.  Takes in a learning algorithm
@@ -198,14 +198,14 @@ def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependen
 		
 			testX: data set to be used for testing (as some form of Base object)
 		
-			trainDependentVar: used to retrieve the known class labels of the traing data. Either
+			trainY: used to retrieve the known class labels of the traing data. Either
 			contains the labels themselves (in a Base object of the same type as trainX) 
 			or an index (numerical or string) that defines their locale in the trainX object.
 		
-			testDependentVar: used to retreive the known class labels of the test data. Either
+			testY: used to retreive the known class labels of the test data. Either
 			contains the labels themselves or an index (numerical or string) that defines their locale
-			in the testX object.  If not present, it is assumed that testDependentVar is the same
-			as trainDependentVar.  
+			in the testX object.  If not present, it is assumed that testY is the same
+			as trainY.  
 			
 			arguments: optional arguments to be passed to the function specified by 'algorithm'
 
@@ -220,26 +220,26 @@ def runAndTestOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependen
 		of those metrics, computed using the predictions of 'algorithm' on testX.  
 		Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
 	"""
-	_validData(trainX, trainDependentVar, testX, testDependentVar)
+	_validData(trainX, trainY, testX, testY)
 
 	if sendToLog:
 		timer = Stopwatch()
 	else:
 		timer = None
 
-	if testDependentVar is None:
-		if not isinstance(trainDependentVar, (str, int, long)):
-			raise ArgumentException("testDependentVar is missing in runOneVsOne")
+	if testY is None:
+		if not isinstance(trainY, (str, int, long)):
+			raise ArgumentException("testY is missing in runOneVsOne")
 		else:
-			testDependentVar = testX.extractFeatures([trainDependentVar])
+			testY = testX.extractFeatures([trainY])
 	else:
-		if isinstance(testDependentVar, (str, int, long)):
-			testDependentVar = testX.extractFeatures([testDependentVar])
+		if isinstance(testY, (str, int, long)):
+			testY = testX.extractFeatures([testY])
 
-	predictions = runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = runOneVsOne(algorithm, trainX, testX, trainY, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
-	results = computeMetrics(testDependentVar, None, predictions, performanceMetricFuncs, negativeLabel)
+	results = computeMetrics(testY, None, predictions, performanceMetricFuncs, negativeLabel)
 
 	# Send this run to the log, if desired
 	if sendToLog:
