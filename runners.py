@@ -236,7 +236,7 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 		if isinstance(testY, (str, int, long)):
 			testY = testX.extractFeatures([testY])
 
-	predictions = runOneVsOne(algorithm, trainX, testX, trainY, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = runOneVsOne(algorithm, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceMetricFuncs, negativeLabel)
@@ -249,7 +249,7 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 	return results
 
 
-def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
 	"""
 	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. one method of splitting the 
@@ -262,14 +262,14 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		testX: data set to be used for testing (as some form of Base object)
 		
-		trainDependentVar: used to retrieve the known class labels of the traing data. Either
+		trainY: used to retrieve the known class labels of the traing data. Either
 		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
-		testDependentVar: used to retreive the known class labels of the test data. Either
+		testY: used to retreive the known class labels of the test data. Either
 		contains the labels themselves or an index (numerical or string) that defines their locale
-		in the testX object.  If not present, it is assumed that testDependentVar is the same
-		as trainDependentVar.  
+		in the testX object.  If not present, it is assumed that testY is the same
+		as trainY.  
 		
 		arguments: optional arguments to be passed to the function specified by 'algorithm'
 
@@ -284,28 +284,28 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	_validData(trainX, trainDependentVar, testX, testDependentVar)
+	_validData(trainX, trainY, testX, testY)
 
 	trainX = trainX.copy()
 	testX = testX.copy()
 
-	if isinstance(trainDependentVar, Base):
-		trainX.appendFeatures(trainDependentVar)
-		trainDependentVar = trainX.features() - 1
+	if isinstance(trainY, Base):
+		trainX.appendFeatures(trainY)
+		trainY = trainX.features() - 1
 
-	# If testDependentVar is missing, assume it is because it's the same as trainDependentVar
-	if testDependentVar is None:
-		testDependentVar = trainDependentVar
+	# If testY is missing, assume it is because it's the same as trainY
+	if testY is None:
+		testY = trainY
 
 	#Remove true labels from testing set
-	if isinstance(testDependentVar, (str, int, long)):
-		testTrueLabels = testX.extractFeatures(testDependentVar)
+	if isinstance(testY, (str, int, long)):
+		testTrueLabels = testX.extractFeatures(testY)
 	else:
-		testTrueLabels = testDependentVar
+		testTrueLabels = testY
 
 	# Get set of unique class labels, then generate list of all 2-combinations of
 	# class labels
-	labelVector = trainX.copyFeatures([trainDependentVar])
+	labelVector = trainX.copyFeatures([trainY])
 	labelVector.transpose()
 	labelSet = list(set(labelVector.toListOfLists()[0]))
 	labelPairs = generateAllPairs(labelSet)
@@ -324,8 +324,8 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 	predictionFeatureID = 0
 	for pair in labelPairs:
 		#get all points that have one of the labels in pair
-		pairData = trainX.extractPoints(lambda point: (point[trainDependentVar] == pair[0]) or (point[trainDependentVar] == pair[1]))
-		pairTrueLabels = pairData.extractFeatures(trainDependentVar)
+		pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
+		pairTrueLabels = pairData.extractFeatures(trainY)
 		#train classifier on that data; apply it to the test set
 		partialResults = run(algorithm, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put predictions into table of predictions
@@ -378,7 +378,7 @@ def runOneVsOne(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 
 
 	
-def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
 	"""
 	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -391,14 +391,14 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		testX: data set to be used for testing (as some form of Base object)
 		
-		trainDependentVar: used to retrieve the known class labels of the traing data. Either
+		trainY: used to retrieve the known class labels of the traing data. Either
 		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
-		testDependentVar: used to retreive the known class labels of the test data. Either
+		testY: used to retreive the known class labels of the test data. Either
 		contains the labels themselves or an index (numerical or string) that defines their locale
-		in the testX object.  If not present, it is assumed that testDependentVar is the same
-		as trainDependentVar.  
+		in the testX object.  If not present, it is assumed that testY is the same
+		as trainY.  
 		
 		arguments: optional arguments to be passed to the function specified by 'algorithm'
 
@@ -413,27 +413,27 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	_validData(trainX, trainDependentVar, testX, testDependentVar)
+	_validData(trainX, trainY, testX, testY)
 	trainX = trainX.copy()
 	testX = testX.copy()
 
 
-	# If testDependentVar is missing, assume it is because it's the same as trainDependentVar
-	if testDependentVar is None and isinstance(trainDependentVar, (str, int, long)):
-		testDependentVar = trainDependentVar
-	elif testDependentVar is None:
-		raise ArgumentException("Missing testDependentVar in runAndTestOneVsAll")
+	# If testY is missing, assume it is because it's the same as trainY
+	if testY is None and isinstance(trainY, (str, int, long)):
+		testY = trainY
+	elif testY is None:
+		raise ArgumentException("Missing testY in runAndTestOneVsAll")
 
 	#Remove true labels from from training set, if not already separated
-	if isinstance(trainDependentVar, (str, int, long)):
-		trainDependentVar = trainX.extractFeatures(trainDependentVar)
+	if isinstance(trainY, (str, int, long)):
+		trainY = trainX.extractFeatures(trainY)
 
 	#Remove true labels from test set, if not already separated
-	if isinstance(testDependentVar, (str, int, long)):
-		testDependentVar = testX.extractFeatures(testDependentVar)
+	if isinstance(testY, (str, int, long)):
+		testY = testX.extractFeatures(testY)
 
 	# Get set of unique class labels
-	labelVector = trainX.copyFeatures([trainDependentVar])
+	labelVector = trainX.copyFeatures([trainY])
 	labelVector.transpose()
 	labelSet = list(set(labelVector.toListOfLists()[0]))
 
@@ -445,7 +445,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 	timer.start('train')
 
 	# For each class label in the set of labels:  convert the true
-	# labels in trainDependentVar into boolean labels (1 if the point
+	# labels in trainY into boolean labels (1 if the point
 	# has 'label', 0 otherwise.)  Train a classifier with the processed
 	# labels and get predictions on the test set.
 	rawPredictions = None
@@ -454,7 +454,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 			if point[0] != label:
 				return 0
 			else: return 1
-		trainLabels = trainDependentVar.applyToEachPoint(relabeler)
+		trainLabels = trainY.applyToEachPoint(relabeler)
 		oneLabelResults = run(algorithm, trainX, trainLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
@@ -512,7 +512,7 @@ def runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=No
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
 
-def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar=None, arguments={}, performanceMetricFuncs=None, negativeLabel=None, sendToLog=True):
+def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, performanceMetricFuncs=None, negativeLabel=None, sendToLog=True):
 	"""
 	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -523,14 +523,14 @@ def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependen
 		
 		testX: data set to be used for testing (as some form of Base object)
 		
-		trainDependentVar: used to retrieve the known class labels of the traing data. Either
+		trainY: used to retrieve the known class labels of the traing data. Either
 		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
-		testDependentVar: used to retreive the known class labels of the test data. Either
+		testY: used to retreive the known class labels of the test data. Either
 		contains the labels themselves or an index (numerical or string) that defines their locale
-		in the testX object.  If not present, it is assumed that testDependentVar is the same
-		as trainDependentVar.  
+		in the testX object.  If not present, it is assumed that testY is the same
+		as trainY.  
 		
 		arguments: optional arguments to be passed to the function specified by 'algorithm'
 		
@@ -540,24 +540,24 @@ def runAndTestOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependen
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	_validData(trainX, trainDependentVar, testX, testDependentVar)
+	_validData(trainX, trainY, testX, testY)
 
 	if sendToLog:
 		timer = Stopwatch()
 
-	if testDependentVar is None:
-		if not isinstance(trainDependentVar, (str, int, long)):
-			raise ArgumentException("testDependentVar is missing in runOneVsOne")
+	if testY is None:
+		if not isinstance(trainY, (str, int, long)):
+			raise ArgumentException("testY is missing in runOneVsOne")
 		else:
-			testDependentVar = testX.extractFeatures([trainDependentVar])
+			testY = testX.extractFeatures([trainY])
 	else:
-		if isinstance(testDependentVar, (str, int, long)):
-			testDependentVar = testX.extractFeatures([testDependentVar])
+		if isinstance(testY, (str, int, long)):
+			testY = testX.extractFeatures([testY])
 
-	predictions = runOneVsAll(algorithm, trainX, testX, trainDependentVar, testDependentVar, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = runOneVsAll(algorithm, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
-	results = computeMetrics(testDependentVar, None, predictions, performanceMetricFuncs, negativeLabel)
+	results = computeMetrics(testY, None, predictions, performanceMetricFuncs, negativeLabel)
 
 	# Send this run to the log, if desired
 	if sendToLog:

@@ -43,9 +43,9 @@ def testRunOneVsAll():
     metricFuncs = []
     metricFuncs.append(fractionIncorrect)
 
-    results1 = runOneVsAll('sciKitLearn.LogisticRegression', trainObj1, testObj1, trainDependentVar=3,  arguments={}, scoreMode='label')
-    results2 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='bestScore')
-    results3 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='allScores')
+    results1 = runOneVsAll('sciKitLearn.LogisticRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='label')
+    results2 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='bestScore')
+    results3 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='allScores')
 
     print "Results 1 output: " + str(results1.data)
     print "Results 2 output: " + str(results2.data)
@@ -67,9 +67,9 @@ def testRunOneVsOne():
     metricFuncs = []
     metricFuncs.append(fractionIncorrect)
 
-    results1 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='label')
-    results2 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='bestScore')
-    results3 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), testObj1.copy(), trainDependentVar=3,  arguments={}, scoreMode='allScores')
+    results1 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='label')
+    results2 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='bestScore')
+    results3 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='allScores')
 
     assert results1.data[0][0] == 1.0
     assert results1.data[1][0] == 2.0

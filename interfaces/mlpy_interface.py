@@ -65,9 +65,9 @@ def mlpy(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, 
 	if multiClassStrategy != 'default':
 		trialResult = checkClassificationStrategy(_mlpyBackend, algorithm, arguments)
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll(algorithm, trainX, testX, trainY, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsAll(algorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne(algorithm, trainX, testX, trainY, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsOne(algorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
 
 	if isinstance(trainX, UML.data.Sparse):
 		raise ArgumentException("MLPY does not accept sparse input")

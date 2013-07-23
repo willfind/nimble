@@ -73,9 +73,9 @@ def sciKitLearn(algorithm, trainX, trainY=None, testX=None, arguments={}, output
 	if multiClassStrategy != 'default':
 		trialResult = checkClassificationStrategy(_sciKitLearnBackend, algorithm, arguments)
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll(algorithm, trainX, testX, trainY, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsAll(algorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne(algorithm, trainX, testX, trainY, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsOne(algorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
 
 
 	if not isinstance(trainX, UML.data.Base):
