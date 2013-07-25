@@ -193,10 +193,10 @@ def test_foldIterator_ordering():
 			curTrainY, curTestY = YIterator.next()
 		except StopIteration:	#once we've gone through all the folds, this exception gets thrown and we're done!
 			break
-		curTrainXList = curTrainX.toListOfLists()
-		curTestXList = curTestX.toListOfLists()
-		curTrainYList = curTrainY.toListOfLists()
-		curTestYList = curTestY.toListOfLists()
+		curTrainXList = curTrainX.copy(asType="python list")
+		curTestXList = curTestX.copy(asType="python list")
+		curTrainYList = curTrainY.copy(asType="python list")
+		curTestYList = curTestY.copy(asType="python list")
 
 #		import pdb
 #		pdb.set_trace()

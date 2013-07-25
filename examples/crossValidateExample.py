@@ -22,7 +22,7 @@ if __name__ == "__main__":
 	yData = allData.extractFeatures([5])
 	xData = allData
 
-	yData = yData.toMatrix()
+	yData = yData.copy(asType="Matrix")
 
 	print "data formatted"
 

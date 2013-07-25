@@ -658,10 +658,10 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
 	if not isinstance(knownValues, Matrix):
-		knownValues = knownValues.toMatrix()
+		knownValues = knownValues.copy(asType="Matrix")
 
 	if not isinstance(predictedValues, Matrix):
-		predictedValues = predictedValues.toMatrix()
+		predictedValues = predictedValues.copy(asType="Matrix")
 
 	n=0.0
 	runningTotal=0.0

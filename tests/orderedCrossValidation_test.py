@@ -35,10 +35,10 @@ def test_orderedCV_trialConstruction_actualData():
 	toTestListY = createAll(rawY, ["time"])
 
 	def returnRawInput(**args):
-		trainX = args['trainX'].toListOfLists()
-		trainY = args['trainY'].toListOfLists()
-		testX = args['testX'].toListOfLists()
-		testY = args['testY'].toListOfLists()
+		trainX = args['trainX'].copy(asType="python list")
+		trainY = args['trainY'].copy(asType="python list")
+		testX = args['testX'].copy(asType="python list")
+		testY = args['testY'].copy(asType="python list")
 		return (trainX, trainY, testX, testY)
 
 	# call OCV for each data representation type

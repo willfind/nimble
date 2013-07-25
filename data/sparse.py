@@ -634,16 +634,6 @@ class Sparse(Base):
 	def _getTypeString_implementation(self):
 		return 'Sparse'
 
-	def _toList_implementation(self):
-		"""	Returns a List object with the same data and featureNames as this one """
-		return UML.data.List(self.data.todense(), self.featureNames)
-
-
-	def _toMatrix_implementation(self):
-		""" Returns a Matrix object with the same data and featureNames as this object """
-		return UML.data.Matrix(self.data.todense(), self.featureNames)
-
-
 	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
@@ -709,9 +699,19 @@ class Sparse(Base):
 		self.data = other.data
 		self._sorted = None
 
-	def _copy_implementation(self):
-		return Sparse(self.data.copy(), copy.deepcopy(self.featureNames))
-
+	def _copy_implementation(self, asType):
+		if asType is None or asType == 'Sparse':
+			return Sparse(self.data.copy(), copy.deepcopy(self.featureNames))
+		if asType == 'List':
+			return UML.data.List(self.data.todense(), copy.deepcopy(self.featureNames))
+		if asType == 'Matrix':
+			return UML.data.Matrix(self.data.todense(), copy.deepcopy(self.featureNames))
+		if asType == 'pythonlist':
+			return self.data.todense().tolist()
+		if asType == 'numpyarray':
+			return numpy.array(self.data.todense())
+		if asType == 'numpymatrix':
+			return self.data.todense()
 
 	def _copyPoints_implementation(self, points, start, end):
 		retData = []

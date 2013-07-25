@@ -25,8 +25,8 @@ if __name__ == "__main__":
     print "trainY shape: " + str(trainY.data.shape)
 
     # sparse types aren't playing nice with the error metrics currently, so convert
-    trainY = trainY.toMatrix()
-    testY = testY.toMatrix()
+    trainY = trainY.copy(asType="Matrix")
+    testY = testY.copy(asType="Matrix")
 
     trainYList = []
     

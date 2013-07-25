@@ -492,16 +492,6 @@ class List(Base):
 				return False
 		return True
 
-
-	def _toList_implementation(self):
-		"""	Returns a List object with the same data and featureNames as this one """
-		return List(self.data, self.featureNames)
-
-	def _toMatrix_implementation(self):
-		""" Returns a Matrix object with the same data and featureNames as this object """
-		return UML.data.Matrix(self.data, self.featureNames)
-
-
 	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
@@ -567,8 +557,19 @@ class List(Base):
 
 		self.data = other.data
 
-	def _copy_implementation(self):
-		return List(copy.deepcopy(self.data), copy.deepcopy(self.featureNames))
+	def _copy_implementation(self, asType):
+		if asType == 'Sparse':
+			return UML.data.Sparse(self.data, copy.deepcopy(self.featureNames))
+		if asType is None or asType == 'List':
+			return UML.data.List(copy.deepcopy(self.data), copy.deepcopy(self.featureNames))
+		if asType == 'Matrix':
+			return UML.data.Matrix(self.data, copy.deepcopy(self.featureNames))
+		if asType == 'pythonlist':
+			return copy.deepcopy(self.data)
+		if asType == 'numpyarray':
+			return numpy.array(self.data)
+		if asType == 'numpymatrix':
+			return numpy.matrix(self.data)
 
 	def _copyPoints_implementation(self, points, start, end):
 		retData = []

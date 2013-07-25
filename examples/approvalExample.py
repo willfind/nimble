@@ -21,8 +21,8 @@ if __name__ == "__main__":
 	trainX, trainY, testX, testY = splitData(allData, labelID=5, fractionForTestSet=.2)
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
-	trainY = trainY.toMatrix()
-	testY = testY.toMatrix()
+	trainY = trainY.copy(asType="Matrix")
+	testY = testY.copy(asType="Matrix")
 
 	args = {"kernel":"GaussianKernel", "C":1}
 	results = runAndTest("shogun.MulticlassLibSVM", trainX.copy(), trainY.copy(), testX.copy(), testY.copy(), args, [fractionIncorrect])

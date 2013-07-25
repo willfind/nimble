@@ -136,7 +136,7 @@ class Base(object):
 		values = values.extractFeatures([0])
 
 		# Convert to List, so we can have easy access
-		values = values.toList()
+		values = values.copy(asType="List")
 
 		# for each value run applyToEach to produce a category point for each value
 		def makeFunc(value):
@@ -185,7 +185,7 @@ class Base(object):
 		values = values.extractFeatures([0])
 
 		# Convert to List, so we can have easy access
-		values = values.toList()
+		values = values.copy(asType="List")
 
 		mapping = {}
 		index = 0
@@ -202,24 +202,6 @@ class Base(object):
 		converted.setFeatureName(0,toConvert.featureNamesInverse[0])		
 
 		self.appendFeatures(converted)
-
-
-	def toListOfLists(self):
-		"""
-			Extract this object's data and return it as a list of lists, with 
-			featureNames as the first row in the list.  If featureNames is blank,
-			insert a blank list in the first position of the returned list.
-		"""
-		if self.points() == 0:
-			return []
-		if self.features() == 0:
-			ret = []
-			for i in xrange(self.points()):
-				ret.append([])
-			return ret
-
-		rowListContainer = self.toList()
-		return rowListContainer.data
 
 	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
 		"""
@@ -735,12 +717,6 @@ class Base(object):
 	def features(self):
 		return self._features_implementation()
 
-	def toList(self):
-		return self._toList_implementation()
-
-	def toMatrix(self):
-		return self._toMatrix_implementation()
-
 	def writeFile(self, extension, outPath, includeFeatureNames):
 		"""
 		Funciton to write the data in this object to a file with the choosen
@@ -771,17 +747,47 @@ class Base(object):
 		self.featureNamesInverse = other.featureNamesInverse
 
 
-	def copy(self):
+	def copy(self, asType=None):
 		"""
-		Return a new object which has the same data and featureNames as this object
+		Return a new object which has the same data (and featureNames, depending on
+		the return type) as this object. If asType is None, the return will be of
+		the same type the calling object. To return a specific kind of UML data
+		object, one my specify 'List', 'Matrix', or 'Sparse'. To specify a raw
+		return type (which will not include feature names), one may specify
+		'python list', 'numpy array', or 'numpy matrix'.
 
 		"""
-		return self._copy_implementation()
+		#make lower case, strip out all white space and periods, except if asType
+		# is one of the accepted UML data types
+		if asType is not None and asType not in ['List', 'Matrix', 'Sparse']:
+			asType = asType.lower()
+			asType = asType.strip()
+			tokens = asType.split(' ')
+			asType = ''.join(tokens)
+			tokens = asType.split('.')
+			asType = ''.join(tokens)
+			if asType not in ['pythonlist', 'numpyarray', 'numpymatrix']:
+				msg = "The only accepted asTypes are: 'List', 'Matrix', 'Sparse'"
+				msg +=", 'python list', 'numpy array', and 'numpy matrix'"
+				raise ArgumentException(msg)
+
+		# we enforce very specific shapes in the case of emptiness along one
+		# or both axes
+		if asType == 'pythonlist':
+			if self.points() == 0:
+				return []
+			if self.features() == 0:
+				ret = []
+				for i in xrange(self.points()):
+					ret.append([])
+				return ret
+
+		return self._copy_implementation(asType)
 
 	def copyPoints(self, points=None, start=None, end=None):
 		"""
 		Return a new object which consists only of those specified points, without mutating
-		this object.
+		the calling object object.
 		
 		"""
 		if isinstance(points, basestring):

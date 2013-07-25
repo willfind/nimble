@@ -274,38 +274,6 @@ def test_extractFeatures_handmadeWithFeatureNames():
 	extractFeatures_handmadeWithFeatureNames(constructor)
 
 
-##########################
-# toList() #
-##########################
-
-
-def test_toList_handmade_defaultFeatureNames():
-	""" Test Matrix toList with default featureNames """
-	toList_handmade_defaultFeatureNames(constructor)
-
-	
-def test_toList_handmade_assignedFeatureNames():
-	""" Test Matrix toList with assigned featureNames """
-	toList_handmade_assignedFeatureNames(constructor)
-
-
-
-##############################
-# toMatrix() #
-##############################
-
-
-def test_toMatrix_handmade_defaultFeatureNames():
-	""" Test Matrix toMatrix with default featureNames """
-	toMatrix_handmade_defaultFeatureNames(constructor)
-
-	
-def test_toMatrix_handmade_assignedFeatureNames():
-	""" Test Matrix toMatrix with assigned featureNames """
-	toMatrix_handmade_assignedFeatureNames(constructor)
-
-
-
 ############
 # writeFile #
 ############
@@ -341,6 +309,10 @@ def test_referenceDataFrom_sameReference():
 def test_copy_withZeros():
 	""" Test Matrix copy() produces an equal object and doesn't just copy the references """
 	copy_withZeros(constructor)
+
+def test_copy_rightTypeTrueCopy():
+	""" Test Matrix copy() will return all of the right type and do not show each other's modifications"""
+	copy_rightTypeTrueCopy(constructor)
 
 
 ###################

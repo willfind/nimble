@@ -52,7 +52,7 @@ if __name__ == "__main__":
 	predictionLabels.setFeatureName(0, "Predict")
 	appleStock.extractFeatures(["Adj Close Next Day"])
 
-	appleStock = appleStock.toMatrix()
+	appleStock = appleStock.copy(asType="Matrix")
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
 	toRun = 'runAndTest("sciKitLearn.LinearRegression", trainX, trainY, testX, testY, {}, [rootMeanSquareError])["rootMeanSquareError"]'

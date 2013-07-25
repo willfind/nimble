@@ -101,7 +101,7 @@ def sciKitLearn(algorithm, trainX, trainY=None, testX=None, arguments={}, output
 
 	# necessary format for skl, also makes the following ops easier
 	if trainObjY is not None:	
-		trainObjY = trainObjY.toMatrix()
+		trainObjY = trainObjY.copy(asType="Matrix")
 	
 	# pull out data from obj
 	trainRawData = trainObj.data

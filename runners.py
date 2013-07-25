@@ -307,7 +307,7 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 	# class labels
 	labelVector = trainX.copyFeatures([trainY])
 	labelVector.transpose()
-	labelSet = list(set(labelVector.toListOfLists()[0]))
+	labelSet = list(set(labelVector.copy(asType="python list")[0]))
 	labelPairs = generateAllPairs(labelSet)
 
 	#if we are logging this run, we need to start the timer
@@ -330,10 +330,10 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 		partialResults = run(algorithm, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put predictions into table of predictions
 		if rawPredictions is None:
-			rawPredictions = partialResults.toList()
+			rawPredictions = partialResults.copy(asType="List")
 		else:
 			partialResults.setFeatureName(0, 'predictions-'+str(predictionFeatureID))
-			rawPredictions.appendFeatures(partialResults.toList())
+			rawPredictions.appendFeatures(partialResults.copy(asType="List"))
 		pairData.appendFeatures(pairTrueLabels)
 		trainX.appendPoints(pairData)
 		predictionFeatureID +=1
@@ -347,7 +347,7 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
 		#label and score of that label for the corresponding row in rawPredictions
-		predictionMatrix = rawPredictions.toListOfLists()
+		predictionMatrix = rawPredictions.copy(asType="python list")
 		tempResultsList = []
 		for row in predictionMatrix:
 			scores = countWins(row)
@@ -362,7 +362,7 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 	elif scoreMode.lower() == 'allScores'.lower():
 		columnHeaders = sorted([str(i) for i in labelSet])
 		labelIndexDict = {str(v):k for k, v in zip(range(len(columnHeaders)), columnHeaders)}
-		predictionMatrix = rawPredictions.toListOfLists()
+		predictionMatrix = rawPredictions.copy(asType="python list")
 		resultsContainer = []
 		for row in predictionMatrix:
 			finalRow = [0] * len(columnHeaders)
@@ -435,7 +435,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 	# Get set of unique class labels
 	labelVector = trainX.copyFeatures([trainY])
 	labelVector.transpose()
-	labelSet = list(set(labelVector.toListOfLists()[0]))
+	labelSet = list(set(labelVector.copy(asType="python list")[0]))
 
 	#if we are logging this run, we need to start the timer
 	if sendToLog:
@@ -467,7 +467,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 			rawPredictions.appendFeatures(oneLabelResults)
 
 	if scoreMode.lower() == 'label'.lower():
-		winningPredictionIndices = rawPredictions.applyToEachPoint(extractWinningPredictionIndex).toListOfLists()
+		winningPredictionIndices = rawPredictions.applyToEachPoint(extractWinningPredictionIndex).copy(asType="python list")
 		indexToLabelMap = rawPredictions.featureNamesInverse
 		winningLabels = []
 		for winningIndex in winningPredictionIndices:
@@ -477,7 +477,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
 		#label and score of that label for the corresponding row in rawPredictions
-		predictionMatrix = rawPredictions.toListOfLists()
+		predictionMatrix = rawPredictions.copy(asType="python list")
 		labelMapInverse = rawPredictions.featureNamesInverse
 		tempResultsList = []
 		for row in predictionMatrix:
@@ -496,7 +496,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 		#create map between label and index in list, so we know where to put each value
 		labelIndexDict = {v:k for k, v in zip(range(len(columnHeaders)), columnHeaders)}
 		featureNamesInverse = rawPredictions.featureNamesInverse
-		predictionMatrix = rawPredictions.toListOfLists()
+		predictionMatrix = rawPredictions.copy(asType="python list")
 		resultsContainer = []
 		for row in predictionMatrix:
 			finalRow = [0] * len(columnHeaders)

@@ -103,7 +103,7 @@ def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionT
 	#Compute the score difference (positive label score - negative label score) for
 	#all entries in labelScoreList
 	scoreDifferenceList = []
-	labelScoreList = labelScoreList.toListOfLists()
+	labelScoreList = labelScoreList.copy(asType="python list")
 	for i in range(len(labelScoreList)):
 		positiveScore = labelScoreList[i][positiveLabelIndex]
 		negativeScore = labelScoreList[i][negativeLabelIndex]
@@ -111,7 +111,7 @@ def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionT
 		scoreDifferenceList.append(scoreDiff)
 
 	#convert knownValues to list of lists
-	listOfKnownLabels = knownValues.toListOfLists()
+	listOfKnownLabels = knownValues.copy(asType="python list")
 	knownLabels = listOfKnownLabels[0:]
 	for i in range(len(knownLabels)):
 		knownLabels[i] = knownLabels[i][0]
@@ -176,7 +176,7 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 	#Compute the score difference (positive label score - negative label score) for
 	#all entries in labelScoreList
 	scoreDifferenceList = []
-	labelScoreList = labelScoreList.toListOfLists()
+	labelScoreList = labelScoreList.copy(asType="python list")
 	for i in range(len(labelScoreList)):
 		positiveScore = labelScoreList[i][positiveLabelIndex]
 		negativeScore = labelScoreList[i][negativeLabelIndex]
@@ -184,7 +184,7 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 		scoreDifferenceList.append(scoreDiff)
 
 	#convert knownValues to list of lists; drop first row, which has featureNames
-	listOfKnownLabels = knownValues.toListOfLists()
+	listOfKnownLabels = knownValues.copy(asType="python list")
 	knownLabels = listOfKnownLabels[0:][0]
 
 	#Put together score differences and known labels, then sort by score difference,

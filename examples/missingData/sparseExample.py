@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
 	ret.setFeatureName(0, 'result')
 
-	Y = sparseY.toMatrix()
+	Y = sparseY.copy(asType="Matrix")
 
 	total = 0.
 	correct = 0.

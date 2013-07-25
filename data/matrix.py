@@ -415,16 +415,6 @@ class Matrix(Base):
 			return False
 		return numpy.array_equal(self.data,other.data)
 
-
-	def _toList_implementation(self):
-		"""	Returns a List object with the same data and featureNames as this one """
-		return UML.data.List(self.data.tolist(), self.featureNames)
-
-	def _toMatrix_implementation(self):
-		""" Returns a Matrix object with the same data and featureNames as this object """
-		return Matrix(self.data, self.featureNames)
-
-
 	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
@@ -464,7 +454,20 @@ class Matrix(Base):
 
 		self.data = other.data
 
-	def _copy_implementation(self):
+	def _copy_implementation(self, asType):
+		if asType == 'Sparse':
+			return UML.data.Sparse(self.data, deepcopy(self.featureNames))
+		if asType == 'List':
+			return UML.data.List(self.data, deepcopy(self.featureNames))
+		if asType is None or asType == 'Matrix':
+			return UML.data.Matrix(deepcopy(self.data), deepcopy(self.featureNames))
+		if asType == 'pythonlist':
+			return self.data.tolist()
+		if asType == 'numpyarray':
+			return numpy.array(self.data)
+		if asType == 'numpymatrix':
+			return deepcopy(self.data)
+
 		return Matrix(deepcopy(self.data), deepcopy(self.featureNames))
 
 	def _copyPoints_implementation(self, points, start, end):

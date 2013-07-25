@@ -7,10 +7,13 @@ directly by the class calling this backend.
 """
 
 import tempfile
+import numpy
 
 from copy import deepcopy
+from UML import createData
 from UML.data import List
 from UML.data import Matrix
+from UML.data import Sparse
 from UML.data.dataHelpers import View
 
 ##############
@@ -709,70 +712,6 @@ def extractFeatures_handmadeWithFeatureNames(constructor):
 
 
 
-	
-
-
-##########################
-# toList() #
-##########################
-
-
-def toList_handmade_defaultFeatureNames(constructor):
-	""" Test toList with default featureNames """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data)
-
-	ret = toTest.toList()
-	exp = List(data)
-
-	assert ret.isIdentical(exp)
-	assert exp.isIdentical(ret)
-
-	
-def toList_handmade_assignedFeatureNames(constructor):
-	""" Test toList with assigned featureNames """
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-
-	ret = toTest.toList()
-	exp = List(data,featureNames)
-
-	assert ret.isIdentical(exp)
-	assert exp.isIdentical(ret)
-
-
-
-##############################
-# toMatrix() #
-##############################
-
-def toMatrix_handmade_defaultFeatureNames(constructor):
-	""" Test toMatrix with default featureNames """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data)
-
-	ret = toTest.toMatrix()
-	exp = Matrix(data)
-
-	assert ret.isIdentical(exp)
-	assert exp.isIdentical(ret)
-
-	
-def toMatrix_handmade_assignedFeatureNames(constructor):
-	""" Test toMatrix with assigned featureNames """
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-
-	ret = toTest.toMatrix()
-	exp = Matrix(data,featureNames)
-
-	assert ret.isIdentical(exp)
-	assert exp.isIdentical(ret)
-
-
-
 ############
 # writeFile #
 ############
@@ -871,6 +810,57 @@ def copy_withZeros(constructor):
 	assert orig.data is not dup.data
 
 
+def copy_rightTypeTrueCopy(constructor):
+	""" Test copy() will return all of the right type and do not show each other's modifications"""
+
+	data = [[1,2,3],[1,0,3],[2,4,6],[0,0,0]]
+	featureNames = ['one', 'two', 'three']
+	orig = constructor(data, featureNames)
+	sparseObj = createData(retType="Sparse", data=data, featureNames=featureNames)
+	listObj = createData(retType="List", data=data, featureNames=featureNames)
+	matixObj = createData(retType="Matrix", data=data, featureNames=featureNames)
+
+	copySparse = orig.copy(asType='Sparse')
+	assert copySparse.isIdentical(sparseObj)
+	assert sparseObj.isIdentical(copySparse)
+	assert type(copySparse) == Sparse
+	copySparse.setFeatureName('two', '2')
+	assert 'two' in orig.featureNames
+#	copySparse[0,0] = 5 transformPoint
+	assert orig[0,0] == 1 
+
+	copyList = orig.copy(asType='List')
+	assert copyList.isIdentical(listObj)
+	assert listObj.isIdentical(copyList)
+	assert type(copyList) == List
+	copyList.setFeatureName('two', '2')
+	assert 'two' in orig.featureNames
+#	copyList[0,0] = 5  transformPoint
+	assert orig[0,0] == 1 
+
+	copyMatrix = orig.copy(asType='Matrix')
+	assert copyMatrix.isIdentical(matixObj)
+	assert matixObj.isIdentical(copyMatrix)
+	assert type(copyMatrix) == Matrix
+	copyMatrix.setFeatureName('two', '2')
+	assert 'two' in orig.featureNames
+#	copyMatrix[0,0] = 5 transformPoint
+	assert orig[0,0] == 1 
+
+	pyList = orig.copy(asType='python list')
+	assert type(pyList) == list
+	pyList[0][0] = 5
+	assert orig[0,0] == 1 
+
+	numpyArray = orig.copy(asType='numpy array')
+	assert type(numpyArray) == type(numpy.array([]))
+	numpyArray[0,0] = 5
+	assert orig[0,0] == 1 
+
+	numpyMatrix = orig.copy(asType='numpy matrix')
+	assert type(numpyMatrix) == type(numpy.matrix([]))
+	numpyMatrix[0,0] = 5
+	assert orig[0,0] == 1 
 
 
 ###################

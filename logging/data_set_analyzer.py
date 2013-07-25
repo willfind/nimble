@@ -48,7 +48,7 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     for func in funcsToApply:
         oneFuncResults = dataContainer.applyToEachFeature(func)
         oneFuncResults.transpose()
-        oneFuncResultsList = oneFuncResults.toListOfLists()
+        oneFuncResultsList = oneFuncResults.copy(asType="python list")
         appendColumns(resultsTable, oneFuncResultsList)
 
     #add Function names as the first row in the results table
@@ -124,7 +124,7 @@ def produceAggregateTable(dataContainer):
     for func in funcs:
         funcResults = dataContainer.applyToEachFeature(func)
         funcResults.transpose()
-        aggregateResults = funcResults.applyToEachFeature(mean_).toListOfLists()[0][0]
+        aggregateResults = funcResults.applyToEachFeature(mean_).copy(asType="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
     resultsDict['Points'] = shape[0] * shape[1]
