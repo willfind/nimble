@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     dataObj = convertToCooBaseData(rawTextDirPath, dirMappingMode='multiTyped', attributeMaps=attributeMaps, docIdClassLabelMaps={'approval':approvalMap, 'entryDate':entryDateMap}, requiredClassLabelTypes=set(['approval', 'entryDate']), minTermFrequency=3, featureRepresentation='tfidf')
 
-    dataObj.writeFile('mtx', '/home/ross/library/LaddersData/umlApprovalEntryDateAll.mtx', True)
+    dataObj.writeFile('/home/ross/library/LaddersData/umlApprovalEntryDateAll.mtx', includeFeatureNames=True)
     # numPointsToExtract = int(round(dataObj.points() * 0.2))
     # testData = dataObj.extractPoints(number=numPointsToExtract, randomize=True)
     # trainData = dataObj

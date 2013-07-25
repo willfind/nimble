@@ -136,7 +136,7 @@ def sciKitLearn(algorithm, trainX, trainY=None, testX=None, arguments={}, output
 
 		return outputObj
 
-	outputObj.writeFile('csv', output, False)
+	outputObj.writeFile(output, format='csv', includeFeatureNames=False)
 
 
 def _sciKitLearnBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):

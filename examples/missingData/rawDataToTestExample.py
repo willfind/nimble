@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     dataObj = convertToCooBaseData(rawTextDirPath, dirMappingMode='multiTyped', attributeMaps=attributeMaps, docIdClassLabelMaps={'approval':approvalMap}, minTermFrequency=5, featureRepresentation='tfidf')
 
-    dataObj.writeFile('csv', os.path.join(UML.UMLPath, 'datasets/umlApproval50KTfIdf.csv'), True)
+    dataObj.writeFile(os.path.join(UML.UMLPath, 'datasets/umlApproval50KTfIdf.csv'), includeFeatureNames=True)
     numPointsToExtract = int(round(dataObj.points() * 0.2))
     testData = dataObj.extractPoints(number=numPointsToExtract, randomize=True)
     trainData = dataObj

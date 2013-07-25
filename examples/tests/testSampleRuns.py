@@ -102,7 +102,7 @@ def testDataPrepExample():
 	processed.dropStringValuedFeatures()
 
 	# output the split and normalized sets for later usage
-	processed.writeFile('csv', pathOut, includeFeatureNames=True)
+	processed.writeFile(pathOut, includeFeatureNames=True)
 
 def testCrossValidateExample():
 	"""

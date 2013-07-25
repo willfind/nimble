@@ -726,7 +726,7 @@ def writeFileCSV_handmade(constructor):
 	toWrite = constructor(data, featureNames)
 
 	# call writeFile
-	toWrite.writeFile('csv', tmpFile.name, includeFeatureNames=True)
+	toWrite.writeFile(tmpFile.name, format='csv', includeFeatureNames=True)
 
 #	opened = open(tmpFile.name,'r')
 #	print opened.read()
@@ -750,7 +750,7 @@ def writeFileMTX_handmade(constructor):
 	toWrite = constructor(data, featureNames)
 
 	# call writeFile
-	toWrite.writeFile('mtx', tmpFile.name, includeFeatureNames=True)
+	toWrite.writeFile(tmpFile.name, format='mtx', includeFeatureNames=True)
 
 	# read it back into a different object, then test equality
 	readObj = constructor(data=tmpFile.name)

@@ -717,20 +717,30 @@ class Base(object):
 	def features(self):
 		return self._features_implementation()
 
-	def writeFile(self, extension, outPath, includeFeatureNames):
+	def writeFile(self, outPath, format=None, includeFeatureNames=True):
 		"""
-		Funciton to write the data in this object to a file with the choosen
-		extension. outPath is the location where we want to write the output file.
-		includeFeatureNames is boolean argument indicating whether the file should
-		start with a comment line designating featureNames.
+		Funciton to write the data in this object to a file using the specified
+		format. outPath is the location (including file name and extension) where
+		we want to write the output file. includeFeatureNames is boolean argument
+		indicating whether the file should start with a comment line designating featureNames.
 
 		"""
-		if extension.lower() == "csv":
+		# if format is not specified, we fall back on the extension in outPath
+		if format is None:
+			split = outPath.rsplit('.', 1)
+			format = None
+			if len(split) > 1:
+				format = split[1].lower()
+
+		if format.lower() == "csv":
 			return self._writeFileCSV_implementation(outPath, includeFeatureNames)
-		elif extension.lower() == "mtx":
+		elif format.lower() == "mtx":
 			return self._writeFileMTX_implementation(outPath, includeFeatureNames)
 		else:
-			raise ArgumentException("Unrecognized file extension")
+			msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
+			msg += "either be input as the format parameter, or as the extension in the "
+			msg += "outPath"
+			raise ArgumentException()
 
 	def referenceDataFrom(self, other):
 		"""

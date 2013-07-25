@@ -46,4 +46,4 @@ if __name__ == "__main__":
 
     dataObj = convertToCooBaseData(rawTextDirPath, dirMappingMode='multiTyped', attributeMaps=attributeMaps, docIdClassLabelMaps=labelMaps, minTermFrequency=3, featureRepresentation='tfidf')
 
-    dataObj.writeFile('mtx', '/home/ross/library/LaddersData/umlApproval50KTfIdfRounded.mtx', True)
+    dataObj.writeFile('/home/ross/library/LaddersData/umlApproval50KTfIdfRounded.mtx', includeFeatureNames=True)

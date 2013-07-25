@@ -330,7 +330,7 @@ def pythonIOWrapper(algorithm, trainX, trainY, testX, output, arguments, kernel,
 		outputObj.transpose()
 		return outputObj
 
-	outputObj.writeFile(fileOutType, output, False)
+	outputObj.writeFile(output, format=fileOutType, includeFeatureNames=False)
 
 
 
