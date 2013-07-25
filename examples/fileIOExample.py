@@ -27,7 +27,7 @@ if __name__ == "__main__":
 	train = createData("List", pathOrig)
 
 	#scrub the set of any string valued data
-	train.dropStringValuedFeatures()
+	train.dropFeaturesContainingType(basestring)
 
 	# split off a random test set
 	total = train.points()

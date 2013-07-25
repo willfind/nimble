@@ -37,7 +37,7 @@ if __name__ == "__main__":
 	processed.transformFeartureToIntegerFeature('income')
 
 	#scrub the rest of the string valued data -- the ones we converted are the non-redundent ones
-	processed.dropStringValuedFeatures()
+	processed.dropFeaturesContainingType(basestring)
 
 	# output the split and normalized sets for later usage
 	processed.writeFile(pathOut, includeFeatureNames=True)

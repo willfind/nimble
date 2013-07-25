@@ -40,14 +40,12 @@ def callAll(func):
 
 
 ###########################
-# dropStringValuedFeatures #
+# dropFeaturesContainingType #
 ###########################
 
-def test_dropStringValuedFeatures_emptyTest():
-	""" Test dropStringValuedFeatures() when the data is empty """
-	callAll(dropStringValuedFeatures_emptyTest)
-
-#hmmm but this only applies to representations that can have strings.
+def test_dropFeaturesContainingType_emptyTest():
+	""" Test dropFeaturesContainingType() when the data is empty """
+	callAll(dropFeaturesContainingType_emptyTest)
 
 
 

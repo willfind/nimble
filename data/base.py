@@ -94,22 +94,32 @@ class Base(object):
 	# Higher Order Operations #
 	###########################
 	
-	def dropStringValuedFeatures(self):
+	def dropFeaturesContainingType(self, typeToDrop):
 		"""
-		Modify this object so that it no longer contains features which have strings
-		as values
+		Modify this object so that it no longer contains features which have the specified
+		type as values
 
 		"""
+		if not isinstance(typeToDrop, list):
+			if not isinstance(typeToDrop, type):
+				raise ArgumentException("The only allowed inputs are a list of types or a single type, yet the input is neither a list or a type")
+			typeToDrop = [typeToDrop]
+		else:
+			for value in typeToDrop:
+				if not isinstance(value, type):
+					raise ArgumentException("When giving a list as input, every contained value must be a type")
+
 		if self.features() == 0:
 			return
 
-		def hasStrings(feature):
+		def hasType(feature):
 			for value in feature:
-				if isinstance(value, basestring):
-					return True
+				for typeValue in typeToDrop:
+					if isinstance(value, typeValue):
+						return True
 			return False
 	
-		self.extractFeatures(hasStrings)
+		self.extractFeatures(hasType)
 
 
 	def replaceFeatureWithBinaryFeatures(self, featureToReplace):

@@ -17,18 +17,18 @@ from UML.data import Sparse
 
 
 ###########################
-# dropStringValuedFeatures #
+# dropFeaturesContainingType #
 ###########################
 
 
 #hmmm but this only applies to representations that can have strings.
 
-def dropStringValuedFeatures_emptyTest(constructor):
-	""" Test dropStringValuedFeatures() when the data is empty """
+def dropFeaturesContainingType_emptyTest(constructor):
+	""" Test dropFeaturesContainingType() when the data is empty """
 	data = []
 	toTest = constructor(data)
 	unchanged = constructor(data)
-	toTest.dropStringValuedFeatures()
+	toTest.dropFeaturesContainingType(basestring)
 	assert toTest.isIdentical(unchanged)
 
 
