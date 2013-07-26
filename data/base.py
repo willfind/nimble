@@ -8,6 +8,7 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 
 import random
 import math
+import itertools
 
 import UML
 from UML.exceptions import ArgumentException
@@ -429,12 +430,17 @@ class Base(object):
 			currView[x] = result
 
 
-	def computeListOfValuesFromElements(self, valueFunction, skipZeros=False, excludeNoneResultValues=False):
-		"""Applies the valueFunction(elementValue) or valueFunction(elementValue, pointNum, featureNum) 
-		to each element, and returns a list of the resulting values. 
-		If skipZeros=True it does not apply valueFunction to elements in the dataMatrix that are 0.
-		If excludeNoneResultValues=True, any time valueFunction() returns None, that None value will not be
-		added to the list of resulting values that is returned.
+	def applyToEachElement(self, valueFunction, skipZeros=False, excludeNoneResultValues=False):
+		"""
+		Applies the valueFunction(elementValue) or valueFunction(elementValue, pointNum,
+		featureNum) to each element, and returns an object (of the same type as the
+		calling object) containing the resulting values. If skipZeros=True it does not
+		apply valueFunction to elements in the dataMatrix that are 0 and a 0 is placed in
+		it's place in the output. If excludeNoneResultValues=True, any time valueFunction()
+		returns None, the value that was input to the function will be put in the output
+		in place of None. The result of both of the flags is to modify the output, yet
+		ensure it still has the same dimensions as the calling object.
+
 		"""
 		oneArg = False
 		try:
@@ -445,24 +451,33 @@ class Base(object):
 		valueList = []
 		for currPoint in self.pointIterator():
 			currPointID = currPoint.index()
+			tempList = []
 			for j in xrange(len(currPoint)):
 				value = currPoint[j]
 				if skipZeros and value == 0:
-					continue	
+					tempList.append(0)
+					continue
 				if oneArg:
 					currRet = valueFunction(value)
 				else:
 					currRet = valueFunction(value, currPointID, j)
-				if not (excludeNoneResultValues and currRet is None):
-					valueList.append(currRet)
+				if currRet is None and excludeNoneResultValues:
+					tempList.append(value)
+				else:
+					tempList.append(currRet)
+			valueList.append(tempList)
 
-		return valueList
+		return UML.createData(self.getTypeString(), valueList)
 
 	def hashCode(self):
 		"""returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
 		that should almost always change when the values of the matrix are changed by a substantive amount"""
-		valueList = self.computeListOfValuesFromElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, skipZeros=True)
-		avg = sum(valueList)/float(self.points()*self.features())
+#		def sumFeature(featureView):
+#			currCos = math.cos(featView.index())
+#		featureSums = self.applyToEachFeature(lambda featView: ((math.sin(pointNum) + math.cos(featView.index()))/2.0) * elementValue)
+		valueObj = self.applyToEachElement(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, skipZeros=True)
+		valueList = valueObj.copy(asType="python list")
+		avg = sum(itertools.chain.from_iterable(valueList))/float(self.points()*self.features())
 		bigNum = 1000000000
 		#this should return an integer x in the range 0<= x < 1 billion
 		return int(int(round(bigNum*avg)) % bigNum)	

@@ -323,23 +323,22 @@ def test_featureIterator_exactValueViaFor():
 
 
 #####################################
-# computeListOfValuesFromElements() #
+# applyToEachElement() #
 #####################################
 
 
-def test_computeList_passthrough():
-	""" test computeListOfValuesFromElements() can construct a list by just passing values through  """
-	callAll(computeList_passthrough)
+def test_applyToEachElement_passthrough():
+	""" test applyToEachElement() can construct a list by just passing values through  """
+	callAll(applyToEachElement_passthrough)
 
-def test_computeList_passthroughSkip():
-	""" test computeListOfValuesFromElements() skipZeros flag """
-	callAll(computeList_passthroughSkip)
+def test_applyToEachElement_passthroughSkip():
+	""" test applyToEachElement() skipZeros flag """
+	callAll(applyToEachElement_passthroughSkip)
 
 
-def test_computeList_passthroughExclude():
-	""" test computeListOfValuesFromElements() excludeNoneResultValues flag  """
-	callAll(computeList_passthroughSkip)
-
+def test_applyToEachElement_passthroughExclude():
+	""" test applyToEachElement() excludeNoneResultValues flag  """
+	callAll(applyToEachElement_passthroughExclude)
 
 
 

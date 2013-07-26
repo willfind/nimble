@@ -554,64 +554,58 @@ def featureIterator_exactValueViaFor(constructor):
 
 
 #####################################
-# computeListOfValuesFromElements() #
+# applyToEachElement() #
 #####################################
 
 def passThrough(value):
 	return value
 
-def passThroughEven(value):
+def plusOne(value):
+	return (value + 1)
+
+def plusOneOnlyEven(value):
 	if value % 2 == 0:
-		return value
+		return (value + 1)
 	else:
 		return None
 
-def computeList_passthrough(constructor):
-	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+def applyToEachElement_passthrough(constructor):
+	""" test applyToEachElement can construct a list by just passing values through  """
 
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ret = toTest.computeListOfValuesFromElements(passThrough)
+	ret = toTest.applyToEachElement(passThrough)
+	retRaw = ret.copy(asType="python list")
 
-	print toTest.getTypeString()
-
-	assert 1 in ret
-	assert 2 in ret
-	assert 3 in ret
-	assert 4 in ret
-	assert 5 in ret
-	assert 6 in ret
-	assert 7 in ret
-	assert 8 in ret
-	assert 9 in ret
+	assert [1,2,3] in retRaw
+	assert [4,5,6] in retRaw
+	assert [7,8,9] in retRaw
 
 
-def computeList_passthroughSkip(constructor):
-	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+def applyToEachElement_passthroughSkip(constructor):
+	""" test applyToEachElement can construct a list by just passing values through  """
 
 	data = [[1,0,3],[0,5,6],[7,0,9]]
 	toTest = constructor(data)
-	ret = toTest.computeListOfValuesFromElements(passThrough, skipZeros=True)
+	ret = toTest.applyToEachElement(plusOne, skipZeros=True)
+	retRaw = ret.copy(asType="python list")
 
-	assert 1 in ret
-	assert 3 in ret
-	assert 5 in ret
-	assert 6 in ret
-	assert 7 in ret
-	assert 9 in ret
+	assert [2,0,4] in retRaw
+	assert [0,6,7] in retRaw
+	assert [8,0,10] in retRaw
 
 
-def computeList_passthroughExclude(constructor):
-	""" test computeListOfValuesFromElements can construct a list by just passing values through  """
+def applyToEachElement_passthroughExclude(constructor):
+	""" test applyToEachElement can construct a list by just passing values through  """
 
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ret = toTest.computeListOfValuesFromElements(passThroughEven,excludeNoneResultValues=True)
+	ret = toTest.applyToEachElement(plusOneOnlyEven,excludeNoneResultValues=True)
+	retRaw = ret.copy(asType="python list")
 
-	assert 2 in ret
-	assert 4 in ret
-	assert 6 in ret
-	assert 8 in ret
+	assert [1,3,3] in retRaw
+	assert [5,5,7] in retRaw
+	assert [7,9,9] in retRaw
 
 
 
@@ -639,15 +633,10 @@ def isApproximatelyEqual_randomTest(constructor):
 	sparse = Sparse(data)
 
 	assert toTest.isApproximatelyEqual(listObj)
-	assert listObj.isApproximatelyEqual(toTest)
 
 	assert toTest.isApproximatelyEqual(matrix)
-	assert matrix.isApproximatelyEqual(toTest)
 
 	assert toTest.isApproximatelyEqual(sparse)
-	assert sparse.isApproximatelyEqual(toTest)
-
-
 
 
 
