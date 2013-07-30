@@ -125,10 +125,10 @@ def mlpy(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, 
 
 	if output is None:
 		if scoreMode == 'bestScore':
-			outputObj.renameMultipleFeatureNames(['PredictedClassLabel', 'LabelScore'])
+			outputObj.setFeatureNamesFromList(['PredictedClassLabel', 'LabelScore'])
 		elif scoreMode == 'allScores':
 			names = sorted(list(str(i) for i in numpy.unique(trainRawDataY)))
-			outputObj.renameMultipleFeatureNames(names)
+			outputObj.setFeatureNamesFromList(names)
 		
 		return outputObj
 

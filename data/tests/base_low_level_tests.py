@@ -229,11 +229,11 @@ def test_setFeatureName_exceptionNonUnique():
 	toTest = makeAndDefine(origFeatureNames)
 	toTest.setFeatureName(oldIdentifier="three",newFeatureName="two")
 
-@raises(ArgumentException)
-def test_setFeatureName_exceptionManualAddDefault():
-	""" Test setFeatureName() for ArgumentException when given a default featureName """
-	toTest = makeAndDefine(["hello"])
-	toTest.setFeatureName("hello",DEFAULT_PREFIX + "2")
+#@raises(ArgumentException)
+#def test_setFeatureName_exceptionManualAddDefault():
+#	""" Test setFeatureName() for ArgumentException when given a default featureName """
+#	toTest = makeAndDefine(["hello"])
+#	toTest.setFeatureName("hello",DEFAULT_PREFIX + "2")
 
 @raises(ImproperActionException)
 def test_setFeatureName_exceptionNoFeatures():
@@ -261,70 +261,100 @@ def test_setFeatureName_handmade_viaFeatureName():
 
 
 ##########################
-# renameMultipleFeatureNames() #
+# setFeatureNamesFromList() #
 ##########################
 
-
 @raises(ArgumentException)
-def test_renameMultipleFeatureNames_exceptionWrongTypeObject():
-	""" Test renameMultipleFeatureNames() for ArgumentException when featureNames is an unexpected type """
+def test_setFeatureNamesFromList_exceptionWrongTypeObject():
+	""" Test setFeatureNamesFromList() for ArgumentException when featureNames is an unexpected type """
 	toTest = makeAndDefine(['one'])
-	toTest.renameMultipleFeatureNames(12)
+	toTest.setFeatureNamesFromList(12)
 
 @raises(ArgumentException)
-def test_renameMultipleFeatureNames_exceptionNonStringFeatureNameInList():
-	""" Test renameMultipleFeatureNames() for ArgumentException when a list element is not a string """
+def test_setFeatureNamesFromList_exceptionNonStringFeatureNameInList():
+	""" Test setFeatureNamesFromList() for ArgumentException when a list element is not a string """
 	toTest = makeAndDefine(['one'])
 	nonStringFeatureNames = [1,2,3]
-	toTest.renameMultipleFeatureNames(nonStringFeatureNames)
+	toTest.setFeatureNamesFromList(nonStringFeatureNames)
 
 @raises(ArgumentException)
-def test_renameMultipleFeatureNames_exceptionNonUniqueStringInList():
-	""" Test renameMultipleFeatureNames() for ArgumentException when a list element is not unique """
+def test_setFeatureNamesFromList_exceptionNonUniqueStringInList():
+	""" Test setFeatureNamesFromList() for ArgumentException when a list element is not unique """
 	toTest = makeAndDefine(['one'])
-	nonUnique = [1,2,3,1]
-	toTest.renameMultipleFeatureNames(nonUnique)
-
-@raises(ArgumentException)
-def test_renameMultipleFeatureNames_exceptionNonStringFeatureNameInDict():
-	""" Test renameMultipleFeatureNames() for ArgumentException when a dict key is not a string """
-	toTest = makeAndDefine(['one'])
-	nonStringFeatureNames = {1:1}
-	toTest.renameMultipleFeatureNames(nonStringFeatureNames)
-
-@raises(ArgumentException)
-def test_renameMultipleFeatureNames_exceptionNonIntIndexInDict():
-	""" Test renameMultipleFeatureNames() for ArgumentException when a dict value is not an int """
-	toTest = makeAndDefine(['one'])
-	nonIntIndex = {"one":"one"}
-	toTest.renameMultipleFeatureNames(nonIntIndex)
-
-
-@raises(ArgumentException)
-def test_renameMultipleFeatureNames_exceptionManualAddDefault():
-	""" Test renameMultipleFeatureNames() for ArgumentException when given a default featureName """
-	toTest = makeAndDefine(["blank","none","gone","hey"])
-	newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "2"]
-	toTest.renameMultipleFeatureNames(newFeatureNames)
+	nonUnique = ['1','2','3','1']
+	toTest.setFeatureNamesFromList(nonUnique)
 
 @raises(ImproperActionException)
-def test_renameMultipleFeatureName_exceptionNoFeatures():
+def test_setFeatureNamesFromList_exceptionNoFeatures():
+	""" Test setFeatureNamesFromList() for ArgumentException when there are no features to name """
 	toTest = makeAndDefine([])
 	toAssign = ["hey","gone","none","blank"]
-	toTest.renameMultipleFeatureNames(toAssign)
+	toTest.setFeatureNamesFromList(toAssign)
 
-def test_renameMultipleFeatureNames_handmade():
-	""" Test renameMultipleFeatureNames() against handmade output """
+def test_setFeatureNamesFromList_addDefault():
+	""" Test setFeatureNamesFromList() when given a default featureName """
+	toTest = makeAndDefine(["blank","none","gone","hey"])
+	newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "17"]
+	toTest.setFeatureNamesFromList(newFeatureNames)
+	assert toTest._nextDefaultValue > 17
+
+def test_setFeatureNamesFromList_handmade():
+	""" Test setFeatureNamesFromList() against handmade output """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
 	origFeatureNames = ["zero","one","two","three"]	
-	toTest.renameMultipleFeatureNames(origFeatureNames)
+	toTest.setFeatureNamesFromList(origFeatureNames)
 	confirmExpectedFeatureNames(toTest,origFeatureNames)
 
-def test_renameMultipleFeatureNames_handmadeReplacingWithSame():
-	""" Test renameMultipleFeatureNames() against handmade output when you're replacing the position of featureNames """
+def test_setFeatureNamesFromList_handmadeReplacingWithSame():
+	""" Test setFeatureNamesFromList() against handmade output when you're replacing the position of featureNames """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
 	toAssign = ["hey","gone","none","blank"]
-	toTest.renameMultipleFeatureNames(toAssign)
+	toTest.setFeatureNamesFromList(toAssign)
+	confirmExpectedFeatureNames(toTest,toAssign)
+
+##########################
+# setFeatureNamesFromDict() #
+##########################
+
+@raises(ArgumentException)
+def test_setFeatureNamesFromDict_exceptionWrongTypeObject():
+	""" Test setFeatureNamesFromDict() for ArgumentException when featureNames is an unexpected type """
+	toTest = makeAndDefine(['one'])
+	toTest.setFeatureNamesFromDict(12)
+
+@raises(ArgumentException)
+def test_setFeatureNamesFromDict_exceptionNonStringFeatureNameInDict():
+	""" Test setFeatureNamesFromDict() for ArgumentException when a dict key is not a string """
+	toTest = makeAndDefine(['one'])
+	nonStringFeatureNames = {1:1}
+	toTest.setFeatureNamesFromDict(nonStringFeatureNames)
+
+@raises(ArgumentException)
+def test_setFeatureNamesFromDict_exceptionNonIntIndexInDict():
+	""" Test setFeatureNamesFromDict() for ArgumentException when a dict value is not an int """
+	toTest = makeAndDefine(['one'])
+	nonIntIndex = {"one":"one"}
+	toTest.setFeatureNamesFromDict(nonIntIndex)
+
+@raises(ImproperActionException)
+def test_setFeatureNamesFromDict_exceptionNoFeatures():
+	""" Test setFeatureNamesFromDict() for ArgumentException when there are no features to name """
+	toTest = makeAndDefine([])
+	toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
+	toTest.setFeatureNamesFromDict(toAssign)
+
+def test_setFeatureNamesFromDict_handmade():
+	""" Test setFeatureNamesFromDict() against handmade output """
+	toTest = makeAndDefine(["blank","none","gone","hey"])
+	origFeatureNames = {"zero":0,"one":1,"two":2,"three":3}	
+	toTest.setFeatureNamesFromDict(origFeatureNames)
+	confirmExpectedFeatureNames(toTest,origFeatureNames)
+
+def test_setFeatureNamesFromDict_handmadeReplacingWithSame():
+	""" Test setFeatureNamesFromDict() against handmade output when you're replacing the position of featureNames """
+	toTest = makeAndDefine(["blank","none","gone","hey"])
+	toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
+	toTest.setFeatureNamesFromDict(toAssign)
 	confirmExpectedFeatureNames(toTest,toAssign)
 
 
@@ -459,13 +489,22 @@ def test_equalFeatureNames_mixedDefaultsAndActual():
 
 
 def confirmExpectedFeatureNames(toTest, expected):
-	for i in range(len(expected)):
-		expectedFeatureName = expected[i]
-		if not expectedFeatureName.startswith(DEFAULT_PREFIX):	
-			actualIndex = toTest.featureNames[expectedFeatureName]
-			actualFeatureName = toTest.featureNamesInverse[i]
-			assert (actualIndex == i)
-			assert (actualFeatureName == expectedFeatureName)
+	if isinstance(expected, list):
+		for i in range(len(expected)):
+			expectedFeatureName = expected[i]
+			if not expectedFeatureName.startswith(DEFAULT_PREFIX):	
+				actualIndex = toTest.featureNames[expectedFeatureName]
+				actualFeatureName = toTest.featureNamesInverse[i]
+				assert (actualIndex == i)
+				assert (actualFeatureName == expectedFeatureName)
+	else:
+		for k in expected.keys():
+			kIndex = expected[k]
+			assert k in toTest.featureNames
+			actualIndex = toTest.featureNames[k]
+			actualFeatureName = toTest.featureNamesInverse[kIndex]
+			assert (actualIndex == kIndex)
+			assert (actualFeatureName == k)
 
 		
 

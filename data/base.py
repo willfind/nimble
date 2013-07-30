@@ -9,6 +9,7 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 import random
 import math
 import itertools
+import copy
 
 import UML
 from UML.exceptions import ArgumentException
@@ -43,7 +44,12 @@ class Base(object):
 		super(Base, self).__init__()
 		self._nextDefaultValue = 0
 		self._setAllDefault()
-		self._renameMultipleFeatureNames_implementation(featureNames,True)
+		if isinstance(featureNames, list) or featureNames is None:
+			self.setFeatureNamesFromList(featureNames)
+		elif isinstance(featureNames, dict):
+			self.setFeatureNamesFromDict(featureNames)
+		else:
+			raise ArgumentException("featureNames may only be a list or a dict, defining a mapping between integers and featureNames")
 		if featureNames is not None and len(featureNames) != self.features():
 			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.features(): " + str(self.features()))
 		self.name = name
@@ -64,23 +70,79 @@ class Base(object):
 
 		"""
 		if len(self.featureNames) == 0:
-			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
+			raise ImproperActionException("Cannot set any feature names; this object has no features ")
 		self._setFeatureName_implementation(oldIdentifier, newFeatureName, False)
 
-	def renameMultipleFeatureNames(self, assignments=None):
+	def setFeatureNamesFromList(self, assignments=None):
 		"""
-		Rename some portion of the featureName set according to the input. 
-
-		assignments may be either a list or dict specifying new names, or None
-		to set all featureNames to new default values. If assignment is any other type, or
-		if the names are not strings, the names are not unique, the feature
-		indices are not integers, or the names begin with the default prefix,
-		then an ArgumentException will be raised.
+		Rename all of the feature names of this object according to the assignments in a list.
+		We use the mapping between names and array indices to create a new dictionary, which
+		will eventually be assigned as self.featureNames. assignments may be None to set all
+		featureNames to new default values. If assignment is an unexpected type, the names
+		are not strings, or the names are not unique, then an ArgumentException will be raised.
 
 		"""
-		if len(self.featureNames) == 0:
+		if assignments is None:
+			self._setAllDefault()
+			return
+		if not isinstance(assignments, list):
+			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
+		if self.features() == 0:
 			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
-		self._renameMultipleFeatureNames_implementation(assignments,False)
+		if len(assignments) != self.features():
+			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
+
+		#convert to dict so we only write the checking code once
+		temp = {}
+		for index in xrange(len(assignments)):
+			featureName = assignments[index]
+			if featureName in temp:
+				raise ArgumentException("Cannot input duplicate featureNames: " + str(featureName))
+			temp[featureName] = index
+		assignments = temp
+
+		self.setFeatureNamesFromDict(assignments)
+
+	def setFeatureNamesFromDict(self, assignments=None):
+		"""
+		Rename all of the feature names of this object according to the mapping in a dict.
+		We will use a copy of the input dictionary to be assigned as self.featureNames.
+		assignments may be None to set all featureNames to new default values. If assignment
+		is an unexpected type, if the names are not strings, the names are not unique,
+		or the feature indices are not integers then an ArgumentException will be raised.
+
+		"""
+		if assignments is None:
+			self._setAllDefault()
+			return
+		if not isinstance(assignments, dict):
+			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
+		if self.features() == 0:
+			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
+		if len(assignments) != self.features():
+			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
+
+		# at this point, the input must be a dict
+		#check input before performing any action
+		for featureName in assignments.keys():
+			if not isinstance(featureName, basestring):
+				raise ArgumentException("FeatureNames must be strings")
+			if not isinstance(assignments[featureName], int):
+				raise ArgumentException("Indices must be integers")
+			if assignments[featureName] < 0 or assignments[featureName] >= self.features():
+				raise ArgumentException("Indices must be within 0 to self.features() - 1")
+
+		reverseDict = {}
+		for featureName in assignments.keys():
+			if featureName.startswith(DEFAULT_PREFIX):
+				featureNameNum = int(featureName[len(DEFAULT_PREFIX):])
+				if featureNameNum >= self._nextDefaultValue:
+					self._nextDefaultValue = featureNameNum + 1
+			reverseDict[assignments[featureName]] = featureName
+
+		# have to copy the input, could be from another object
+		self.featureNames = copy.copy(assignments)
+		self.featureNamesInverse = reverseDict
 
 	def nameData(self, name):
 		"""
@@ -557,7 +619,7 @@ class Base(object):
 
 		"""
 		self._transpose_implementation()
-		self.renameMultipleFeatureNames(None)
+		self.setFeatureNamesFromDict(None)
 
 	def appendPoints(self, toAppend):
 		"""
@@ -638,7 +700,7 @@ class Base(object):
 			raise ArgumentException("Either sortBy or sortHelper must not be None")
 
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
-		self._renameMultipleFeatureNames_implementation(newFeatureNameOrder,True)
+		self.setFeatureNamesFromList(newFeatureNameOrder)
 
 
 	def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -681,7 +743,7 @@ class Base(object):
 					end = possibleEnd
 
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
-		ret._renameMultipleFeatureNames_implementation(self.featureNames,True)
+		ret.setFeatureNamesFromDict(self.featureNames)
 		return ret
 
 	def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -850,7 +912,7 @@ class Base(object):
 					raise ArgumentException("input must contain only valid indices")
 
 		retObj = self._copyPoints_implementation(points, start, end)
-		retObj._renameMultipleFeatureNames_implementation(self.featureNames,True)
+		retObj.setFeatureNamesFromDict(self.featureNames)
 		return retObj
 	
 	def copyFeatures(self, features=None, start=None, end=None):
@@ -1134,8 +1196,8 @@ class Base(object):
 		if newFeatureName is not None: 
 			if not isinstance(newFeatureName,basestring):
 				raise ArgumentException("The new featureName must be either None or a string")
-			if not allowDefaults and newFeatureName.startswith(DEFAULT_PREFIX):
-				raise ArgumentException("Cannot manually add a featureName with the default prefix")
+#			if not allowDefaults and newFeatureName.startswith(DEFAULT_PREFIX):
+#				raise ArgumentException("Cannot manually add a featureName with the default prefix")
 		if newFeatureName in self.featureNames:
 			if self.featureNamesInverse[index] == newFeatureName:
 				return
@@ -1153,61 +1215,10 @@ class Base(object):
 		self.featureNames[newFeatureName] = index
 
 		#TODO increment next default if necessary
-
-
-	def _renameMultipleFeatureNames_implementation(self, assignments=None, allowDefaults=False):
-		"""
-		Rename some portion of the featureName set according to the input. 
-
-		assignments may be either a list or dict specifying new featureName names, or None
-		to set all featureNames to new default values. If assignment is any other type, or
-		if the featureNames are not strings, the featureNames are not unique, the feature
-		indices are not integers, then an ArgumentException will be raised. If
-		allowDefault is False, then none of the new featureNames may begin with the default
-		prefix.
-
-		"""
-		# if none, we have to set up default values	
-		if assignments is None:
-			self._setAllDefault()
-			return
-		# only certain types of input are accepted
-		if (not isinstance(assignments,list)) and (not isinstance(assignments,dict)):
-			raise ArgumentException("FeatureNames may only be a list or dictionary")
-
-		if isinstance(assignments,list):
-			#convert to dict so we only write the checking code once
-			temp = {}
-			for index in xrange(len(assignments)):
-				featureName = assignments[index]
-				if featureName in temp:
-					raise ArgumentException("Cannot input duplicate featureNames: " + str(featureName))
-				temp[featureName] = index
-			assignments = temp
-
-		# at this point, the input must be a dict
-		#check input before performing any action
-		for featureName in assignments.keys():
-			if not isinstance(featureName,basestring):
-				raise ArgumentException("FeatureNames must be strings")
-			if not isinstance(assignments[featureName],int):
-				raise ArgumentException("Indices must be integers")
-			if not allowDefaults and featureName.startswith(DEFAULT_PREFIX):
-				raise ArgumentException("Cannot manually add a featureName with the default prefix")
-	
-
-		# we have to first clear the current featureNames, so if one of our 
-		# renames matches a current featureName, it doesn't throw an exception
-		for key in assignments.keys():
-			if key in self.featureNames:
-				index = self.featureNames[key]
-				del self.featureNames[key]
-				temp = DEFAULT_PREFIX + 'TEMPOARY_FOR_COLUMN:' + str(index)
-				self.featureNames[temp] = temp
-				self.featureNamesInverse[index] = temp
-		for key in assignments.keys():
-			self._setFeatureName_implementation(assignments[key],key,allowDefaults)
-
+		if newFeatureName.startswith(DEFAULT_PREFIX):
+			value = int(newFeatureName[len(DEFAULT_PREFIX):])
+			if value > self._nextDefaultValue:
+				self._nextDefaultValue = value + 1
 
 	class _foldIteratorClass():
 		def __init__(self, foldList, outerReference):
