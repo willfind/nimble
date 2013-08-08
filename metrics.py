@@ -4,7 +4,8 @@ of supervised learning algorithms.
 
 
 """
-
+import inspect
+import UML
 from math import sqrt
 from UML.exceptions import ArgumentException
 from UML.umlHelpers import computeError
@@ -223,6 +224,65 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 
 
 
+def detectBestResult(functionToCheck):
+	"""
+	Provides sample data to the function in question and evaluates the results
+	to determine whether the returned value associates correctness with
+	minimum values or maximum values.
+
+	functionToCheck may only take two or three arguments. In the two argument
+	case, the first must be a vector of desired values and the second must be
+	a vector of predicted values. In the second case, the first argument must
+	be a vector of known labes, the second argument must be an object
+	containing confidence scores for different labels, and the third argument
+	must be the value of a label value present in the data. In either cause,
+	the functions must return a float value.
+
+	"""
+	(args, varargs, keywords, defaults) = inspect.getargspec(functionToCheck)
+	# we are in the known / predicted parameter case
+	if len(args) == 2:
+		knownRaw = [[0],[1],[0],[1],[0]]
+		correctRaw = [[0],[1],[0],[1],[0]]
+		wrongRaw = [[1],[0],[1],[0],[1]]
+
+		known = UML.createData(retType="List", data=knownRaw)
+		correct = UML.createData(retType="List", data=correctRaw)
+		wrong = UML.createData(retType="List", data=wrongRaw)
+
+		correctScore = functionToCheck(known, correct)
+		wrongScore = functionToCheck(known, wrong)
+
+		if correctScore > wrongScore:
+			return "max"
+		elif correctScore < wrongScore:
+			return 'min'
+		else:
+			raise ArgumentException("Unable to differentiate best result for input funciton")
+	elif len(args) == 3:
+		knownRaw = [[1],[1],[0],[1],[0],[1],[0],[1],[0],[0]]
+		correctRaw = [[-1,1],[-.99,.99],[.95,-.95],[-.88,.88],[.85,-.85],[-.77,.77],[.75,-.75],[-.66,.66],[.65,-.65],[.55,-.55]]
+		wrongRaw = [[1,-1],[.99,-.99],[-.95,.95],[.88,-.88],[-.85,.85],[.77,-.77],[-.75,.75],[.66,-.66],[-.65,.65],[-.55,.55]]
+		
+		known = UML.createData(retType="List", data=knownRaw)
+		correct = UML.createData(retType="List", data=correctRaw, featureNames=['0','1'])
+		wrong = UML.createData(retType="List", data=wrongRaw, featureNames=['0','1'])
+
+		correctScore = functionToCheck(known, correct, 0)
+		wrongScore = functionToCheck(known, wrong, 0)
+
+		print correctScore
+		print wrongScore
+#		assert False
+
+		if correctScore > wrongScore:
+			return "max"
+		elif correctScore < wrongScore:
+			return 'min'
+		else:
+			raise ArgumentException("Unable to differentiate best result for input funciton")
+	else:
+		raise ArgumentException("function takes wrong number of parameters, unable to do detection")
 
 
 

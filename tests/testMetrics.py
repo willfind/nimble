@@ -1,11 +1,14 @@
 import numpy
 from nose.tools import *
-from UML.metrics import rootMeanSquareError, fractionIncorrect, computeError, meanAbsoluteError, fractionTrueNegativeTop50, fractionTrueNegativeTop90
+from UML.metrics import rootMeanSquareError, fractionIncorrect, computeError
+from UML.metrics import meanAbsoluteError, fractionTrueNegativeTop50
+from UML.metrics import fractionTrueNegativeTop90, fractionTrueNegativeBottom10
+from UML.metrics import fractionIncorrectBottom10, detectBestResult
 from UML.umlHelpers import computeMetrics
 from UML import createData
 from UML.exceptions import ArgumentException
 
-def testFractionTrueNegative():
+def stFractionTrueNegative():
 	"""
 	Unit test for fractionTrueNegativeTop50/Top90
 	"""
@@ -20,22 +23,23 @@ def testFractionTrueNegative():
 	knownLabelsFourBase = createData('Matrix', knownLabelsFour, sendToLog=False)
 
 	predictedScoreList = []
-	for i in range (20):
+	for i in range(20):
 		oneScore = i * 0.05
 		twoScore = 1.0 - i * 0.05
 		predictedScoreList.append([oneScore, twoScore])
 
 	predictedScoreListBase = createData('Matrix', predictedScoreList, ['1', '2'])
 
-	topHalfProportionNegativeOne = fractionTrueNegativeTop50(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
-	topNinetyProportionNegativeOne = fractionTrueNegativeTop90(knownLabelsOneBase, predictedScoreListBase, negativeLabel='1')
-	topHalfProportionNegativeTwo = fractionTrueNegativeTop50(knownLabelsTwoBase, predictedScoreListBase, negativeLabel='1')
-	topNinetyProportionNegativeTwo = fractionTrueNegativeTop90(knownLabelsTwoBase, predictedScoreListBase, negativeLabel='1')
-	topHalfProportionNegativeThree = fractionTrueNegativeTop50(knownLabelsThreeBase, predictedScoreListBase, negativeLabel='1')
-	topNinetyProportionNegativeThree = fractionTrueNegativeTop90(knownLabelsThreeBase, predictedScoreListBase, negativeLabel='1')
-	topHalfProportionNegativeFour = fractionTrueNegativeTop50(knownLabelsFourBase, predictedScoreListBase, negativeLabel='1')
-	topNinetyProportionNegativeFour = fractionTrueNegativeTop90(knownLabelsFourBase, predictedScoreListBase, negativeLabel='1')
+	topHalfProportionNegativeOne = fractionTrueNegativeTop50(knownLabelsOneBase, predictedScoreListBase, negativeLabel=1)
+	topNinetyProportionNegativeOne = fractionTrueNegativeTop90(knownLabelsOneBase, predictedScoreListBase, negativeLabel=1)
+	topHalfProportionNegativeTwo = fractionTrueNegativeTop50(knownLabelsTwoBase, predictedScoreListBase, negativeLabel=1)
+	topNinetyProportionNegativeTwo = fractionTrueNegativeTop90(knownLabelsTwoBase, predictedScoreListBase, negativeLabel=1)
+	topHalfProportionNegativeThree = fractionTrueNegativeTop50(knownLabelsThreeBase, predictedScoreListBase, negativeLabel=1)
+	topNinetyProportionNegativeThree = fractionTrueNegativeTop90(knownLabelsThreeBase, predictedScoreListBase, negativeLabel=1)
+	topHalfProportionNegativeFour = fractionTrueNegativeTop50(knownLabelsFourBase, predictedScoreListBase, negativeLabel=1)
+	topNinetyProportionNegativeFour = fractionTrueNegativeTop90(knownLabelsFourBase, predictedScoreListBase, negativeLabel=1)
 	
+	print topHalfProportionNegativeOne
 	assert topHalfProportionNegativeOne == 0.4
 	assert topNinetyProportionNegativeOne >= 0.443 and topNinetyProportionNegativeOne <= 0.445
 	assert topHalfProportionNegativeTwo == 0.0
@@ -270,3 +274,46 @@ def testMeanAbsoluteError():
 #@raises(ArgumentException)
 #def testClassificationErrorEmptyKnownValues():
 
+
+####################
+# detectBestResult #
+####################
+
+def testDectection_rootMeanSquareError():
+	result = detectBestResult(rootMeanSquareError)
+	assert result == 'min'
+
+def testDectection_meanAbsoluteError():
+	result = detectBestResult(meanAbsoluteError)
+	assert result == 'min'
+
+def testDectection_fractionIncorrect():
+	result = detectBestResult(fractionIncorrect)
+	assert result == 'min'
+
+#def testDectection_fractionTrueNegativeTop90():
+#	result = detectBestResult(fractionTrueNegativeTop90)
+#	print result
+#	assert False
+#	assert result == 'min'
+
+#def testDectection_fractionTrueNegativeTop50():
+#	import pdb
+#	pdb.set_trace()
+	result = detectBestResult(fractionTrueNegativeTop50)
+	print result
+	assert False
+	assert result == 'min'
+
+#def testDectection_fractionTrueNegativeBottom10():
+#	result = detectBestResult(fractionTrueNegativeBottom10)
+#	print result
+#	assert False
+#	assert result == 'min'
+
+#def testDectection_fractionIncorrectBottom10():
+#
+#	result = detectBestResult(fractionIncorrectBottom10)
+#	print result
+#	assert False
+#	assert result == 'min'
