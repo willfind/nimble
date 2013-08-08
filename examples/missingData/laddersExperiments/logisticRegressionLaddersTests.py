@@ -2,23 +2,22 @@
 Script that uses 50K points of job posts to try to predict approved/rejected status
 """
 
-import sys
-# add UML parent directory to sys.path
-sys.path.append(sys.path[0].rsplit('/',2)[0])
-import UML
-import UML.examples
-#import UML.examples.laddersExperiments
-__package__ = "UML.examples.laddersExperiments"
+from allowImports import boilerplate
+boilerplate()
 
 if __name__ == "__main__":
+    import UML
     from UML import crossValidateReturnBest
     from UML import functionCombinations
     from UML.umlHelpers import executeCode
     from UML import runAndTest
     from UML import createData
     from UML.metrics import fractionTrueNegativeTop90
+    import os.path
 
-    pathIn = "/home/ross/library/LaddersData/PlaygroundFull/DocVectors.mtx"
+    bigdataPath = os.path.join(os.path.dirname(UML.UMLPath), "bigdata")
+
+    pathIn = os.path.join(bigdataPath, "DocVectors.mtx")
     trainX = createData('Sparse', pathIn, fileType='mtx')
     testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(0.2*trainX.points())), randomize=True)
     trainY = trainX.extractFeatures(0)

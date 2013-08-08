@@ -9,9 +9,13 @@ boilerplate()
 
 if __name__ == "__main__":
 
+    import UML
     from UML import createData
+    import os.path
 
-    pathIn = "/media/library_/LaddersData/umlApproval50KTfIdfRoundedNoHeaders.mtx"
+    bigdataPath = os.path.join(os.path.dirname(UML.UMLPath), "bigdata")
+
+    pathIn = os.path.join(bigdataPath, "umlApproval50KTfIdfRoundedNoHeaders.mtx")
     sparseVersion = createData('Sparse', pathIn, fileType='mtx')
     
     print "Finished loading data"

@@ -3,23 +3,21 @@ Script that uses 300K points of job posts to try to predict approved/rejected st
 using orderedCrossValidate - ordered over timestamp data
 """
 
-import sys
-from datetime import timedelta
-# add UML parent directory to sys.path
-sys.path.append(sys.path[0].rsplit('/',2)[0])
-import UML
-import UML.examples
-#import UML.examples.laddersExperiments
-__package__ = "UML.examples.laddersExperiments"
+from allowImports import boilerplate
+boilerplate()
 
 if __name__ == "__main__":
+    import UML
     from UML import orderedCrossValidate
     from UML import functionCombinations
     from UML import runAndTest
     from UML import createData
     from UML.metrics import fractionTrueNegativeTop90
+    import os.path
 
-    pathIn = "/home/ross/library/LaddersData/umlApprovalEntryDate300K.mtx"
+    bigdataPath = os.path.join(os.path.dirname(UML.UMLPath), "bigdata")
+
+    pathIn = os.path.join(bigdataPath, "umlApprovalEntryDate300K.mtx")
     trainX = createData('Sparse', pathIn, fileType='mtx')
     docId = trainX.extractFeatures(0)
     trainY = trainX.extractFeatures(0)
