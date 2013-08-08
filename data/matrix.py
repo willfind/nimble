@@ -10,7 +10,6 @@ from base import Base
 from dataHelpers import View
 from UML.exceptions import ArgumentException
 
-from copy import deepcopy
 from scipy.io import mmwrite
 from scipy.sparse import isspmatrix
 import random
@@ -23,19 +22,22 @@ class Matrix(Base):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None, name=None, path=None):
-		if isspmatrix(data):
-			self.data = data.todense()
-		else:
-			self.data = numpy.matrix(data)
+	def __init__(self, data=None, featureNames=None, name=None, path=None, reuseData=False):
+		try:
+			if isspmatrix(data):
+				self.data = numpy.matrix(data.todense(), dtype=numpy.float)
+			else:
+				if reuseData and isinstance(data, type(numpy.matrix([]))):
+					self.data = data
+				else:
+					self.data = numpy.matrix(data, dtype=numpy.float)
+		except ValueError:
+			msg = "ValueError during instantiation. Matrix does not accept strings "
+			msg += "in the input (with the excpetion of those that are directly convertable, "
+			msg += "like '3' or '-11'), having included strings is the likely cause for "
+			msg += "the error"
+			raise ArgumentException(msg)
 
-		# check for any strings in the data
-		(x,y) = self.data.shape
-		for i in xrange(x):
-			for j in xrange(y):
-				if isinstance(self.data[i,j], basestring):
-					raise ArgumentException("Matrix does not accept strings in the input")
-		#print "featureNames: ", featureNames
 		super(Matrix, self).__init__(featureNames, name, path)
 		
 
@@ -87,7 +89,7 @@ class Matrix(Base):
 
 		if scorer:
 			scores = viewBasedApplyAlongAxis(scorer, 'point', self)
-			scoresObj = Matrix(scores)
+			scoresObj = Matrix(scores, reuseData=True)
 			scoresObj.transpose()
 			self.appendFeatures(scoresObj)
 			# sort by the scores, ie the most recently added feature
@@ -456,19 +458,19 @@ class Matrix(Base):
 
 	def _copy_implementation(self, asType):
 		if asType == 'Sparse':
-			return UML.data.Sparse(self.data, deepcopy(self.featureNames))
+			return UML.data.Sparse(self.data, self.featureNames)
 		if asType == 'List':
-			return UML.data.List(self.data, deepcopy(self.featureNames))
+			return UML.data.List(self.data, self.featureNames)
 		if asType is None or asType == 'Matrix':
-			return UML.data.Matrix(deepcopy(self.data), deepcopy(self.featureNames))
+			return UML.data.Matrix(self.data, self.featureNames)
 		if asType == 'pythonlist':
 			return self.data.tolist()
 		if asType == 'numpyarray':
 			return numpy.array(self.data)
 		if asType == 'numpymatrix':
-			return deepcopy(self.data)
+			return numpy.matrix(self.data)
 
-		return Matrix(deepcopy(self.data), deepcopy(self.featureNames))
+		return Matrix(self.data, self.featureNames)
 
 	def _copyPoints_implementation(self, points, start, end):
 		if points is not None:
@@ -562,7 +564,7 @@ def viewBasedApplyAlongAxis(function, axis, outerObject):
 		if axis != "feature":
 			raise ArgumentException("axis must be 'point' or 'feature'")
 		maxVal = outerObject.data.shape[1]
-	ret = numpy.zeros(maxVal)
+	ret = numpy.zeros(maxVal, dtype=numpy.float)
 
 	for i in xrange(0,maxVal):
 		funcOut = function(VectorView(outerObject,axis,i))

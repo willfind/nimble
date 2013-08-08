@@ -55,10 +55,10 @@ def replaceFeatureWithBinaryFeatures_handmade(constructor):
 	expFeatureNames = ['col=1','col=2','col=3']
 	exp = constructor(expData, expFeatureNames)
 
+#	import pdb
+#	pdb.set_trace()
 	print toTest.featureNames
-
 	assert toTest.isIdentical(exp)
-	
 
 
 #############################
@@ -624,7 +624,7 @@ def isApproximatelyEqual_randomTest(constructor):
 
 		for i in xrange(points):
 			for j in xrange(features):
-				data[i,j] = numpy.random.rand() * numpy.random.randint(1,5)
+				data[i,j] = numpy.random.rand() * numpy.random.randint(0,5)
 
 	toTest = constructor(data)
 

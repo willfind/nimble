@@ -20,11 +20,14 @@ from UML.exceptions import ImproperActionException
 
 class Sparse(Base):
 
-	def __init__(self, data=None, featureNames=None, name=None, path=None):
+	def __init__(self, data=None, featureNames=None, name=None, path=None, reuseData=False):
 		if data == [] or data == numpy.array([]):
 			raise ArgumentException("Data must not be shapeless (in other words, empty)")
 		else:
-			self.data = coo_matrix(data)
+			if reuseData and scipy.sparse.isspmatrix(data):
+				self.data = data
+			else:
+				self.data = coo_matrix(data)
 		self._sorted = None
 		super(Sparse, self).__init__(featureNames, name, path)
 
@@ -387,7 +390,7 @@ class Sparse(Base):
 		else:
 			featureNames = self.featureNames
 
-		return Sparse(ret, featureNames) 
+		return Sparse(ret, featureNames, reuseData=True) 
 
 
 	def _extractByFunction_implementation(self, toExtract, number, axisType):
@@ -468,7 +471,7 @@ class Sparse(Base):
 		else:
 			featureNames = self.featureNames
 
-		return Sparse(ret, featureNames) 
+		return Sparse(ret, featureNames, reuseData=True) 
 
 
 
@@ -531,7 +534,7 @@ class Sparse(Base):
 		else:
 			featureNames = self.featureNames
 
-		return Sparse(ret, featureNames) 
+		return Sparse(ret, featureNames, reuseData=True) 
 
 	def _transpose_implementation(self):
 		"""
@@ -701,11 +704,11 @@ class Sparse(Base):
 
 	def _copy_implementation(self, asType):
 		if asType is None or asType == 'Sparse':
-			return Sparse(self.data.copy(), copy.deepcopy(self.featureNames))
+			return Sparse(self.data, self.featureNames)
 		if asType == 'List':
-			return UML.data.List(self.data.todense(), copy.deepcopy(self.featureNames))
+			return UML.data.List(self.data, self.featureNames)
 		if asType == 'Matrix':
-			return UML.data.Matrix(self.data.todense(), copy.deepcopy(self.featureNames))
+			return UML.data.Matrix(self.data, self.featureNames)
 		if asType == 'pythonlist':
 			return self.data.todense().tolist()
 		if asType == 'numpyarray':
@@ -734,7 +737,8 @@ class Sparse(Base):
 
 			newShape = (end - start + 1, numpy.shape(self.data)[1])
 
-		return Sparse(coo_matrix((retData,(retRow,retCol)),shape=newShape), self.featureNames)
+		retData = coo_matrix((retData,(retRow,retCol)),shape=newShape)
+		return Sparse(retData, self.featureNames, reuseData=True)
 
 
 	def _copyFeatures_implementation(self, features, start, end):
@@ -766,7 +770,8 @@ class Sparse(Base):
 				value = self.featureNamesInverse[i]
 				newNames[value] = i - start
 
-		return Sparse(coo_matrix((retData,(retRow,retCol)),shape=newShape), newNames)
+		retData = coo_matrix((retData,(retRow,retCol)),shape=newShape)
+		return Sparse(retData, newNames, reuseData=True)
 	
 
 	def _getitem_implementation(self, x, y):

@@ -25,7 +25,7 @@ class List(Base):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None, name=None, path=None):
+	def __init__(self, data=None, featureNames=None, name=None, path=None, reuseData=False):
 		"""
 		Instantiate a Row List data using the given data and featureNames. data may be
 		none or an empty list to indicate an empty object, or a fully populated
@@ -35,7 +35,10 @@ class List(Base):
 		"""
 		# if input as a list, copy it
 		if isinstance(data, list):
-			data = copy.deepcopy(data)
+			if reuseData:
+				data = data
+			else:
+				data = copy.deepcopy(data)
 		# if sparse, make dense
 		if isspmatrix(data):
 				data = data.todense()
@@ -271,7 +274,7 @@ class List(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		extracted = List(satisfying)
+		extracted = List(satisfying, reuseData=True)
 		reorderToMatchExtractionList(extracted, toExtract, 'point')
 		return extracted
 
@@ -299,7 +302,7 @@ class List(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		return List(satisfying)
+		return List(satisfying, reuseData=True)
 
 	def _extractPointsByRange_implementation(self, start, end):
 		"""
@@ -320,7 +323,7 @@ class List(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		return List(inRange)
+		return List(inRange, reuseData=True)
 
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
@@ -402,7 +405,7 @@ class List(Base):
 			featureNameList.append(self.featureNamesInverse[index])
 		# toExtract was reversed (for efficiency) so we have to rereverse this to get it right
 		featureNameList.reverse()
-		return List(extractedData, featureNameList)
+		return List(extractedData, featureNameList, reuseData=True)
 
 
 	def _extractFeaturesByFunction_implementation(self, function, number):
@@ -444,7 +447,7 @@ class List(Base):
 		for index in xrange(start,end+1):
 			featureNameList.append(self.featureNamesInverse[index])
 	
-		return List(extractedData, featureNameList)
+		return List(extractedData, featureNameList, reuseData=True)
 
 	def _mapReducePoints_implementation(self, mapper, reducer):
 		mapResults = {}
@@ -469,7 +472,7 @@ class List(Base):
 			if redRet is not None:
 				(redKey,redValue) = redRet
 				ret.append([redKey,redValue])
-		return List(ret)
+		return List(ret, reuseData=True)
 
 	def _features_implementation(self):
 		return self.numFeatures
@@ -559,11 +562,11 @@ class List(Base):
 
 	def _copy_implementation(self, asType):
 		if asType == 'Sparse':
-			return UML.data.Sparse(self.data, copy.deepcopy(self.featureNames))
+			return UML.data.Sparse(self.data, self.featureNames)
 		if asType is None or asType == 'List':
-			return UML.data.List(copy.deepcopy(self.data), copy.deepcopy(self.featureNames))
+			return UML.data.List(self.data, self.featureNames)
 		if asType == 'Matrix':
-			return UML.data.Matrix(self.data, copy.deepcopy(self.featureNames))
+			return UML.data.Matrix(self.data, self.featureNames)
 		if asType == 'pythonlist':
 			return copy.deepcopy(self.data)
 		if asType == 'numpyarray':
@@ -580,7 +583,7 @@ class List(Base):
 			for i in range(start,end+1):
 				retData.append(copy.copy(self.data[i]))
 
-		return List(retData)
+		return List(retData, reuseData=True)
 
 	def _copyFeatures_implementation(self, indices, start, end):
 		ret = []
@@ -603,7 +606,7 @@ class List(Base):
 			for i in range(start,end+1):
 				featureNameList.append(self.featureNamesInverse[i])
 
-		return List(ret, featureNameList)
+		return List(ret, featureNameList, reuseData=True)
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x][y]
