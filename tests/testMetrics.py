@@ -1,14 +1,32 @@
 import numpy
+import math
 from nose.tools import *
 from UML.metrics import rootMeanSquareError, fractionIncorrect, computeError
 from UML.metrics import meanAbsoluteError, fractionTrueNegativeTop50
 from UML.metrics import fractionTrueNegativeTop90, fractionTrueNegativeBottom10
-from UML.metrics import fractionIncorrectBottom10, detectBestResult
+from UML.metrics import fractionIncorrectBottom10, detectBestResult, cosineSimilarity
 from UML.umlHelpers import computeMetrics
 from UML import createData
 from UML.exceptions import ArgumentException
 
-def stFractionTrueNegative():
+
+def testfractionIncorrectBottom10SanityCheck():
+	"""An all correct and all incorrec check on fractionIncorrectBottom10 """
+	knownsData = [[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]
+	correctData = [[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1]]
+	wrongData = [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]]
+
+	knowns = createData('List', knownsData, sendToLog=False)
+	correct = createData('List', correctData, featureNames=['0','1'], sendToLog=False)
+	wrong = createData('List', wrongData, featureNames=['0','1'], sendToLog=False)
+
+	correctScore = fractionIncorrectBottom10(knowns, correct, negativeLabel=0)
+	wrongScore = fractionIncorrectBottom10(knowns, wrong, negativeLabel=0)
+
+	assert correctScore == 0
+	assert wrongScore == 1
+
+def testFractionTrueNegative():
 	"""
 	Unit test for fractionTrueNegativeTop50/Top90
 	"""
@@ -28,7 +46,7 @@ def stFractionTrueNegative():
 		twoScore = 1.0 - i * 0.05
 		predictedScoreList.append([oneScore, twoScore])
 
-	predictedScoreListBase = createData('Matrix', predictedScoreList, ['1', '2'])
+	predictedScoreListBase = createData('Matrix', predictedScoreList, ['1.0', '2.0'])
 
 	topHalfProportionNegativeOne = fractionTrueNegativeTop50(knownLabelsOneBase, predictedScoreListBase, negativeLabel=1)
 	topNinetyProportionNegativeOne = fractionTrueNegativeTop90(knownLabelsOneBase, predictedScoreListBase, negativeLabel=1)
@@ -39,7 +57,7 @@ def stFractionTrueNegative():
 	topHalfProportionNegativeFour = fractionTrueNegativeTop50(knownLabelsFourBase, predictedScoreListBase, negativeLabel=1)
 	topNinetyProportionNegativeFour = fractionTrueNegativeTop90(knownLabelsFourBase, predictedScoreListBase, negativeLabel=1)
 	
-	print topHalfProportionNegativeOne
+#	print topHalfProportionNegativeOne
 	assert topHalfProportionNegativeOne == 0.4
 	assert topNinetyProportionNegativeOne >= 0.443 and topNinetyProportionNegativeOne <= 0.445
 	assert topHalfProportionNegativeTwo == 0.0
@@ -54,21 +72,21 @@ def stFractionTrueNegative():
 # performance combinations function #
 #####################################
 def testPerfCombinations():
-	knownLabels = numpy.array([1.0,2.0,3.0])
-	predictedLabels = numpy.array([1.0,2.0,3.0])
+	knownLabels = numpy.array([[1.0],[2.0],[3.0]])
+	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
 
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
 
 	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
-	print results
+#	print results
 	assert results['rootMeanSquareError'] == 0.0
 	assert results['meanAbsoluteError'] == 0.0
 	assert results['fractionIncorrect'] == 0.0
 
-	knownLabels = numpy.array([1.5,2.5,3.5])
-	predictedLabels = numpy.array([1.0,2.0,3.0])
+	knownLabels = numpy.array([[1.5],[2.5],[3.5]])
+	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
 
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
@@ -173,8 +191,8 @@ def testRmse():
 		all inputs are zero, and when all known values are
 		the same as predicted values.
 	"""
-	predictedLabels = numpy.array([0,0,0])
-	knownLabels = numpy.array([0,0,0])
+	predictedLabels = numpy.array([[0],[0],[0]])
+	knownLabels = numpy.array([[0],[0],[0]])
 
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
@@ -182,8 +200,8 @@ def testRmse():
 	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
 
-	predictedLabels = numpy.array([1.0, 2.0, 3.0])
-	knownLabels = numpy.array([1.0, 2.0, 3.0])
+	predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+	knownLabels = numpy.array([[1.0], [2.0], [3.0]])
 
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
@@ -191,8 +209,8 @@ def testRmse():
 	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
 
-	predictedLabels = numpy.array([1.0, 2.0, 3.0])
-	knownLabels = numpy.array([1.5, 2.5, 3.5])
+	predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+	knownLabels = numpy.array([[1.5], [2.5], [3.5]])
 
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
@@ -243,6 +261,8 @@ def testMeanAbsoluteError():
 
 	knownLabelsMatrix = createData('Matrix', knownLabels)
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix.transpose()
+	predictedLabelsMatrix.transpose()
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate == 0.0
@@ -251,7 +271,9 @@ def testMeanAbsoluteError():
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 
 	knownLabelsMatrix = createData('Matrix', knownLabels)
+	knownLabelsMatrix.transpose()
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	predictedLabelsMatrix.transpose()
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate == 0.0
@@ -260,7 +282,9 @@ def testMeanAbsoluteError():
 	knownLabels = numpy.array([1.5, 2.5, 3.5])
 
 	knownLabelsMatrix = createData('Matrix', knownLabels)
+	knownLabelsMatrix.transpose()
 	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	predictedLabelsMatrix.transpose()
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert maeRate > 0.49
@@ -274,6 +298,35 @@ def testMeanAbsoluteError():
 #@raises(ArgumentException)
 #def testClassificationErrorEmptyKnownValues():
 
+####################
+# cosineSimilarity #
+####################
+
+def test_cosineSimilarity():
+	orig = numpy.array([[1],[0]])
+	orth = numpy.array([[0],[1]])
+	neg = numpy.array([[-1],[0]])
+
+	origMatrix = createData('Matrix', orig)
+	orthMatrix = createData('Matrix', orth)
+	negMatrix = createData('Matrix', neg)
+
+	result0 = cosineSimilarity(origMatrix, origMatrix)
+	result1 = cosineSimilarity(origMatrix, orthMatrix)
+	result2 = cosineSimilarity(origMatrix, negMatrix)
+
+	assert result0 == 1
+	assert result1 == 0
+	assert result2 == -1
+
+def test_cosineSimilarityZeros():
+	zeros = [[0],[0]]
+
+	zerosMatrix = createData('Matrix', zeros)
+
+	result0 = cosineSimilarity(zerosMatrix, zerosMatrix)
+
+	assert math.isnan(result0)
 
 ####################
 # detectBestResult #
@@ -291,29 +344,22 @@ def testDectection_fractionIncorrect():
 	result = detectBestResult(fractionIncorrect)
 	assert result == 'min'
 
-#def testDectection_fractionTrueNegativeTop90():
-#	result = detectBestResult(fractionTrueNegativeTop90)
-#	print result
-#	assert False
-#	assert result == 'min'
+def testDetection_cosineSimilarity():
+	result = detectBestResult(cosineSimilarity)
+	assert result == 'max'
 
-#def testDectection_fractionTrueNegativeTop50():
-#	import pdb
-#	pdb.set_trace()
+@raises(ArgumentException)
+def testDectection_fractionTrueNegativeTop90():
+	result = detectBestResult(fractionTrueNegativeTop90)
+
+@raises(ArgumentException)
+def testDectection_fractionTrueNegativeTop50():
 	result = detectBestResult(fractionTrueNegativeTop50)
-	print result
-	assert False
+
+@raises(ArgumentException)
+def testDectection_fractionTrueNegativeBottom10():
+	result = detectBestResult(fractionTrueNegativeBottom10)
+
+def testDectection_fractionIncorrectBottom10():
+	result = detectBestResult(fractionIncorrectBottom10)
 	assert result == 'min'
-
-#def testDectection_fractionTrueNegativeBottom10():
-#	result = detectBestResult(fractionTrueNegativeBottom10)
-#	print result
-#	assert False
-#	assert result == 'min'
-
-#def testDectection_fractionIncorrectBottom10():
-#
-#	result = detectBestResult(fractionIncorrectBottom10)
-#	print result
-#	assert False
-#	assert result == 'min'

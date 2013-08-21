@@ -6,17 +6,37 @@ of supervised learning algorithms.
 """
 import inspect
 import UML
+import numpy
+import math
 from math import sqrt
 from UML.exceptions import ArgumentException
 from UML.umlHelpers import computeError
 
 
+def _validatePredictedAsLabels(predictedValues):
+	if not isinstance(predictedValues, UML.data.Base):
+		raise ArgumentException("predictedValues must be derived class of UML.data.Base")
+	if predictedValues.features() > 1:
+		raise ArgumentException("predictedValues must be labels only; this has more than one feature")
+
+
+def cosineSimilarity(knownValues, predictedValues):
+	_validatePredictedAsLabels(predictedValues)
+
+	known = knownValues.copy(asType="numpy array").flatten()
+	predicted = predictedValues.copy(asType="numpy array").flatten()
+
+	numerator = (numpy.dot(known, predicted))
+	denominator = (numpy.linalg.norm(known) * numpy.linalg.norm(predicted))
+
+	return numerator / denominator
 
 def rootMeanSquareError(knownValues, predictedValues):
 	"""
 		Compute the root mean square error.  Assumes that knownValues and predictedValues contain
 		numerical values, rather than categorical data.
 	"""
+	_validatePredictedAsLabels(predictedValues)
 	return computeError(knownValues, predictedValues, lambda x,y,z: z + (y - x)**2, lambda x,y: sqrt(x/y))
 
 def meanAbsoluteError(knownValues, predictedValues):
@@ -24,6 +44,7 @@ def meanAbsoluteError(knownValues, predictedValues):
 		Compute mean absolute error. Assumes that knownValues and predictedValues contain
 		numerical values, rather than categorical data.
 	"""
+	_validatePredictedAsLabels(predictedValues)
 	return computeError(knownValues, predictedValues, lambda x,y,z: z + abs(y - x), lambda x,y: x/y)
 
 def fractionIncorrect(knownValues, predictedValues):
@@ -31,6 +52,7 @@ def fractionIncorrect(knownValues, predictedValues):
 		Compute the proportion of incorrect predictions within a set of
 		instances.  Assumes that values in knownValues and predictedValues are categorical.
 	"""
+	_validatePredictedAsLabels(predictedValues)
 	return computeError(knownValues, predictedValues, lambda x,y,z: z if x == y else z + 1, lambda x,y: x/y)
 
 def fractionTrueNegativeTop90(knownValues, predictedValues, negativeLabel):
@@ -81,9 +103,14 @@ def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionT
 	if proportionToScore <= 0.0 or proportionToScore > 1.0:
 		raise ArgumentException("proportionToScore must be between 0 and 1.0")
 
-	#use featureNames in labelScoreList to discover what the positiveLabel is
+	if labelScoreList.getTypeString() == "Matrix":
+		negativeLabelString = str(float(negativeLabel))
+	else:
+		negativeLabelString = str(negativeLabel)
+
+	#use featureNames in labelScoreList to discover what the positiveLabelString is
 	labelNames = labelScoreList.featureNames
-	positiveLabel = ''
+	positiveLabelString = ''
 
 	#Enforce requirement that there be only 2 classes present
 	if len(labelNames) != 2:
@@ -92,14 +119,14 @@ def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionT
 	#look through featureNames; whichever isn't the negative label must be
 	#the positive label
 	for labelName in labelNames.keys():
-		if labelName == negativeLabel:
+		if labelName == negativeLabelString:
 			continue
 		else:
-			positiveLabel = labelName
+			positiveLabelString = labelName
 			break
 
-	negativeLabelIndex = labelScoreList.featureNames[negativeLabel]
-	positiveLabelIndex = labelScoreList.featureNames[positiveLabel]
+	negativeLabelIndex = labelScoreList.featureNames[negativeLabelString]
+	positiveLabelIndex = labelScoreList.featureNames[positiveLabelString]
 
 	#Compute the score difference (positive label score - negative label score) for
 	#all entries in labelScoreList
@@ -118,7 +145,7 @@ def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionT
 		knownLabels[i] = knownLabels[i][0]
 
 	#Put together score differences and known labels, then sort by score difference,
-	#so we have a list ranked by likelihood of having positiveLabel.  Generally will
+	#so we have a list ranked by likelihood of having positiveLabelString.  Generally will
 	#be in descending order, so we can look at those points that are most likely to 
 	#be positive.  
 	scoreDiffAndKnown = zip(scoreDifferenceList, knownLabels)
@@ -142,7 +169,7 @@ def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionT
 	#are predicted to be more likely to be positive labels
 	numNegativeLabels = 0
 	for knownLabel in sortedKnownValues:
-		if str(knownLabel) == negativeLabel:
+		if knownLabel == negativeLabel:
 			numNegativeLabels += 1
 
 	#return proportion of top posts that are negative
@@ -161,18 +188,23 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 	"""
 	#figure out the positive label
 	labelNames = labelScoreList.featureNames
-	positiveLabel = ''
+	positiveLabelString = ''
 	if len(labelNames) != 2:
 		raise ArgumentException("fractionTrueNegative requires a set of precisely two predicted label scores for each point")
 
+	if labelScoreList.getTypeString() == "Matrix":
+		negativeLabelString = str(float(negativeLabel))
+	else:
+		negativeLabelString = str(negativeLabel)
+
 	for labelName in labelNames.keys():
-		if labelName == negativeLabel:
+		if labelName == negativeLabelString:
 			continue
 		else:
-			positiveLabel = labelName
+			positiveLabelString = labelName
 
-	negativeLabelIndex = labelScoreList.featureNames[negativeLabel]
-	positiveLabelIndex = labelScoreList.featureNames[positiveLabel]
+	negativeLabelIndex = labelScoreList.featureNames[negativeLabelString]
+	positiveLabelIndex = labelScoreList.featureNames[positiveLabelString]
 
 	#Compute the score difference (positive label score - negative label score) for
 	#all entries in labelScoreList
@@ -186,7 +218,10 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 
 	#convert knownValues to list of lists; drop first row, which has featureNames
 	listOfKnownLabels = knownValues.copy(asType="python list")
-	knownLabels = listOfKnownLabels[0:][0]
+#	knownLabels = listOfKnownLabels[0:][0]
+	knownLabels = listOfKnownLabels[0:]
+	for i in range(len(knownLabels)):
+		knownLabels[i] = knownLabels[i][0]
 
 	#Put together score differences and known labels, then sort by score difference,
 	#so we have a list ranked, in descending order, by most likely to have negative label
@@ -196,7 +231,7 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 
 	#Get bottom of list (lowest score differences, which may be negative)
 	topProportionIndex = int(round(0.10 * len(scoreDiffAndKnown)))
-	sortedTopProportion = scoreDiffAndKnown[0:]
+	sortedTopProportion = scoreDiffAndKnown[0:topProportionIndex]
 
 	#Unzip into two lists
 	sortedScoreDiffAndKnown = ([scoreDiff for scoreDiff,known in sortedTopProportion], [known for scoreDiff,known in sortedTopProportion])
@@ -209,16 +244,16 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 	winningLabels = []
 	for scoreDiff in sortedScoreDiffAndKnown[0]:
 		if scoreDiff <= 0.0:
-			winningLabels.append(negativeLabel)
+			winningLabels.append(negativeLabelString)
 		else:
-			winningLabels.append(positiveLabel)
+			winningLabels.append(positiveLabelString)
 
-	correctPredictions = 0
+	incorrectPredictions = 0
 	for i in range(len(winningLabels)):
-		if sortedKnownValues[i] == winningLabels[i]:
-			correctPredictions += 1
+		if str(sortedKnownValues[i]) != winningLabels[i]:
+			incorrectPredictions += 1
 
-	proportionCorrect = float(correctPredictions) / float(len(sortedKnownValues))
+	proportionCorrect = float(incorrectPredictions) / float(len(sortedKnownValues))
 
 	return proportionCorrect
 
@@ -240,57 +275,201 @@ def detectBestResult(functionToCheck):
 
 	"""
 	(args, varargs, keywords, defaults) = inspect.getargspec(functionToCheck)
-	# we are in the known / predicted parameter case
+	# indicates whether functionToCheck takes a 3rd param: negativeLabel
+	# wrapper function used to call functionToCheck by providing all of the
+	# parameters it might need for the 3 param case, even if functionToCheck
+	# is only takes knowns and predicted values.
+	wrapper = None
+
 	if len(args) == 2:
-		knownRaw = [[0],[1],[0],[1],[0]]
-		correctRaw = [[0],[1],[0],[1],[0]]
-		wrongRaw = [[1],[0],[1],[0],[1]]
-
-		known = UML.createData(retType="List", data=knownRaw)
-		correct = UML.createData(retType="List", data=correctRaw)
-		wrong = UML.createData(retType="List", data=wrongRaw)
-
-		correctScore = functionToCheck(known, correct)
-		wrongScore = functionToCheck(known, wrong)
-
-		if correctScore > wrongScore:
-			return "max"
-		elif correctScore < wrongScore:
-			return 'min'
-		else:
-			raise ArgumentException("Unable to differentiate best result for input funciton")
+		def twoParam(knowns, predicted, negLabel):
+			return functionToCheck(knowns, predicted)
+		wrapper = twoParam
 	elif len(args) == 3:
-		knownRaw = [[1],[1],[0],[1],[0],[1],[0],[1],[0],[0]]
-		correctRaw = [[-1,1],[-.99,.99],[.95,-.95],[-.88,.88],[.85,-.85],[-.77,.77],[.75,-.75],[-.66,.66],[.65,-.65],[.55,-.55]]
-		wrongRaw = [[1,-1],[.99,-.99],[-.95,.95],[.88,-.88],[-.85,.85],[.77,-.77],[-.75,.75],[.66,-.66],[-.65,.65],[-.55,.55]]
-		
-		known = UML.createData(retType="List", data=knownRaw)
-		correct = UML.createData(retType="List", data=correctRaw, featureNames=['0','1'])
-		wrong = UML.createData(retType="List", data=wrongRaw, featureNames=['0','1'])
-
-		correctScore = functionToCheck(known, correct, 0)
-		wrongScore = functionToCheck(known, wrong, 0)
-
-		print correctScore
-		print wrongScore
-#		assert False
-
-		if correctScore > wrongScore:
-			return "max"
-		elif correctScore < wrongScore:
-			return 'min'
-		else:
-			raise ArgumentException("Unable to differentiate best result for input funciton")
+		def threeParam(knowns, predicted, negLabel):
+			return functionToCheck(knowns, predicted, negLabel)
+		wrapper = threeParam
 	else:
-		raise ArgumentException("function takes wrong number of parameters, unable to do detection")
+		raise ArgumentException("functionToCheck takes wrong number of parameters, unable to do detection")
+
+	resultsByType = [None, None, None]
+	trialSize = 10
+	# we can't know which format is expected in the predicted values param,
+	# so we try all three and then interpret the results
+	# 0 if predicted labels, 1 if bestScores, 2 if allScores
+	for predictionType in range(3):
+		try:
+			bestResultList = []
+			# going to run trials with three types of known values: all ones, all
+			# zeros, and some mixture
+			for knownsType in xrange(4):
+				if knownsType == 0:
+					knowns = _generateAllZeros(trialSize)
+				elif knownsType == 1:
+					knowns = _generateAllOnes(trialSize)
+				else:
+					knowns = _generateAllCorrect(trialSize)
+				# range over fixed confidence values for a trial
+				confidenceTrials = 7
+				# in a trial with predicted labels, there are no confidences, so only 1
+				# trial is needed
+				if predictionType == 0:
+					confidenceTrials = 1
+				for i in xrange(confidenceTrials):
+					predicted = _generatePredicted(knowns, predictionType)
+					# range over possible negative label value
+					for negLabel in xrange(2):
+						best = _runTrialGivenParameters(wrapper, knowns.copy(), predicted.copy(), negLabel, predictionType)
+						bestResultList.append(best)
+
+			# check that all of values in bestResultList are equal.
+			firstNonNan = None
+			for result in bestResultList:
+				if result != 'nan':
+					if firstNonNan is None:
+						firstNonNan = result
+					elif result != firstNonNan:
+						assert False
+						raise ArgumentException("functionToCheck may not be a performance function. The best result was inverted due to factors other than correctness")
+			resultsByType[predictionType] = firstNonNan
+		except Exception as e:
+			resultsByType[predictionType] = e
+
+	best = None
+	for result in resultsByType:
+		if not isinstance(result, Exception):
+			if best is not None and result != best:
+				raise ArgumentException("Unable to determine formatting for 2nd parameter to funciton to check, different inputs gave inconsistent results. The best solution would be to verify the formatting of the input and throw an exception if it is not as expected")
+			best = result
+
+	if best is None:
+		raise ArgumentException("Unable to determine formatting for 2nd parameter to funciton to check, none of the possible inputs produced accepted return values. We must conclude that it is not a performance function")
+
+	return best
 
 
+def _runTrialGivenParameters(functionWrapper, knowns, predicted, negativeLabel, predictionType):
+	"""
+	
+
+	"""
+	allCorrectScore = functionWrapper(knowns, predicted, negativeLabel)
+	# this is going to hold the output of the function. Each value will
+	# correspond to a trial that contains incrementally less correct predicted values
+	scoreList = [allCorrectScore]
+	# range over the indices of predicted values, making them incorrect one
+	# by one
+	# TODO randomize the ordering
+	for index in xrange(predicted.points()):
+		_makeIncorrect(predicted, predictionType, index)
+		scoreList.append(functionWrapper(knowns, predicted, negativeLabel))
+
+	# defining our error message in case of unexpected scores
+	errorMsg = "functionToCheck produces return values that do not "
+	errorMsg += "correspond with correctness. We must conclude that it "
+	errorMsg += "is not a performance function"	
+	allWrongScore = scoreList[len(scoreList)-1]
+
+	for score in scoreList:
+		if math.isnan(score):
+			return "nan"
+
+	if allWrongScore < allCorrectScore:
+		prevScore = allCorrectScore + 1
+		for score in scoreList:
+			if score < allWrongScore or score > allCorrectScore or score > prevScore:
+				raise ArgumentException(errorMsg)
+			prevScore = score
+		return "max"
+	elif allWrongScore > allCorrectScore:
+		prevScore = allCorrectScore - 1
+		for score in scoreList:
+			if score > allWrongScore or score < allCorrectScore or score < prevScore:
+				raise ArgumentException(errorMsg)
+			prevScore = score
+		return "min"
+	# allWrong and allCorrect must not be equal, otherwise it cannot be a measure
+	# of correct performance
+	else:
+		raise ArgumentException("functionToCheck produced the same values for trials including all correct and all incorrect predictions. We must conclude that it is not a performance function")
 
 
+def _generateAllZeros(length):
+	correct = []
+	for i in xrange(length):
+		correct.append(0)
+	correct = numpy.array(correct)
+#	correct = numpy.zeros(length, dtype=int)
+	correct = numpy.matrix(correct)
+	correct = correct.transpose()
+	correct = UML.createData(retType="List", data=correct)
+	return correct
+
+def _generateAllOnes(length):
+	correct = []
+	for i in xrange(length):
+		correct.append(1)
+	correct = numpy.array(correct)
+#	correct = numpy.ones(length, dtype=int)
+	correct = numpy.matrix(correct)
+	correct = correct.transpose()
+	correct = UML.createData(retType="List", data=correct)
+	return correct
+
+def _generateAllCorrect(length):
+	while True:
+		correct = numpy.random.randint(2, size=length)
+		if numpy.any(correct) and not numpy.all(correct):
+			break
+#	correct = numpy.random.randint(2, size=length)
+	correct = numpy.matrix(correct)
+	correct = correct.transpose()
+	correct = UML.createData(retType="List", data=correct)
+	return correct
+
+def _generatePredicted(knowns, predictionType):
+	"""
+	Predicted may mean any of the three kinds of output from run: predicted
+	labels, bestScores, or allScores. If confidences are involved, they are
+	randomly generated, yet consistent with correctness
+
+	"""
+	workingCopy = knowns.copy()
+	workingCopy.setFeatureName(0,'PredictedClassLabel')
+	if predictionType == 0:	
+		return workingCopy
+	elif predictionType == 1:
+		scores = numpy.random.randint(2, size=workingCopy.points())
+		scores = numpy.matrix(scores)
+		scores = scores.transpose()
+		scores = UML.createData(retType="List", data=scores, featureNames=['LabelScore'])
+		workingCopy.appendFeatures(scores)
+		return workingCopy
+	else:
+		dataToFill = []
+		for i in xrange(workingCopy.points()):
+			currConfidences = [None,None]
+			winner = numpy.random.randint(10) + 10 + 2
+			loser = numpy.random.randint(winner - 2) + 2 
+			if knowns.data[i][0] == 0:
+				currConfidences[0] = winner
+				currConfidences[1] = loser
+			else:
+				currConfidences[0] = loser
+				currConfidences[1] = winner
+			dataToFill.append(currConfidences)
+
+		scores = UML.createData(retType="List", data=dataToFill, featureNames=['0', '1'])
+		return scores
 
 
-
-
+def _makeIncorrect(predicted, predictionType, index):
+	if predictionType in [0,1]:
+		predicted.data[index][0] = math.fabs(predicted.data[index][0] - 1)
+	else:
+		temp = predicted.data[index][0]
+		predicted.data[index][0] = predicted.data[index][1]
+		predicted.data[index][1] = temp
 
 
 
