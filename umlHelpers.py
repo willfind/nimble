@@ -501,7 +501,7 @@ def _diffLessThan(allData, orderedFeature, startPoint, endPoint, delta):
 
 
 
-def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions, negativeLabel=None):
+def computeMetrics(dependentVar, knownData, predictedData, performanceFunction, negativeLabel=None):
 	"""
 		Calculate one or more error metrics, given a list of known labels and a list of
 		predicted labels.  Return as a dictionary associating the performance metric with
@@ -518,12 +518,12 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions,
 		Assumes that the predicted label in the nth row of predictedLabels is associated
 		with the same data point/instance as the label in the nth row of knownLabels.
 
-		performanceFunctions: list of functions that compute some kind of error metric.
-		Functions must be either a string that defines a proper function, a one-liner
-		function (see Combinations.py), or function code.  Also, they are expected to
-		take at least 2 arguments:  a vector or known labels and a vector of predicted
-		labels.  Optionally, they may take the features of the test set as a third argument,
-		as a matrix.
+		performanceFunction: single function or list of functions that compute some kind
+		of error metric. Functions must be either a string that defines a proper function,
+		a one-liner function (see Combinations.py), or function code.  Also, they are
+		expected to take at least 2 arguments:  a vector or known labels and a vector of
+		predicted labels.  Optionally, they may take the features of the test set as a
+		third argument, as a matrix.
 
 		negativeLabel: Label of the 'negative' class in the testing set.  This parameter is
 		only relevant for binary class problems; and only needed for some error metrics
@@ -547,21 +547,26 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions,
 	else:
 		raise ArgumentException("Missing indicator for known labels in computeMetrics")
 
-	results = {}
+	singleReturn = False
+	if not isinstance(performanceFunction, list):
+		performanceFunction = [performanceFunction]
+		singleReturn = True
+
+	results = []
 	parameterHash = {"knownValues":knownLabels, "predictedValues":predictedData}
-	for func in performanceFunctions:
+	for func in performanceFunction:
 		#some functions need negativeLabel as an argument.
 		if func == fractionTrueNegativeTop90 or func == fractionTrueNegativeTop50 or func == fractionTrueNegativeBottom10:
 			parameterHash["negativeLabel"] = negativeLabel
-			results[inspect.getsource(func)] = executeCode(func, parameterHash)
+			results.append(executeCode(func, parameterHash))
 			del parameterHash["negativeLabel"]
 		elif len(inspect.getargspec(func).args) == 2:
 			#the metric function only takes two arguments: we assume they
 			#are the known class labels and the predicted class labels
 			if func.__name__ != "<lambda>":
-				results[func.__name__] = executeCode(func, parameterHash)
+				results.append(executeCode(func, parameterHash))
 			else:
-				results[inspect.getsource(func)] = executeCode(func, parameterHash)
+				results.append(executeCode(func, parameterHash))
 		elif len(inspect.getargspec(func).args) == 3:
 			#the metric function takes three arguments:  known class labels,
 			#features, and predicted class labels. add features to the parameter hash
@@ -569,12 +574,16 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunctions,
 			#TODO correctly separate known labels and features in all cases
 			parameterHash["features"] = knownData
 			if func.__name__ != "<lambda>":
-				results[func.__name__] = executeCode(func, parameterHash)
+				results.append(executeCode(func, parameterHash))
 			else:
-				results[inspect.getsource(func)] = executeCode(func, parameterHash)
+				results.append(executeCode(func, parameterHash))
 		else:
 			raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
-	return results
+	
+	if singleReturn:
+		return results[0]
+	else:
+		return results
 
 def confusion_matrix_generator(knownY, predictedY):
 	""" Given two vectors, one of known class labels (as strings) and one of predicted labels,

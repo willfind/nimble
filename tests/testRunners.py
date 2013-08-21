@@ -22,11 +22,11 @@ def testRunAndTestOneVsOne():
     metricFuncs = []
     metricFuncs.append(fractionIncorrect)
 
-    results1 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, performanceMetricFuncs=metricFuncs)
-    results2 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, arguments={}, performanceMetricFuncs=metricFuncs)
+    results1 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, performanceFunction=metricFuncs)
+    results2 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, arguments={}, performanceFunction=metricFuncs)
 
-    assert results1['fractionIncorrect'] == 0.0
-    assert results2['fractionIncorrect'] == 0.25
+    assert results1[0] == 0.0
+    assert results2[0] == 0.25
 
 def testRunOneVsAll():
     variables = ["x1", "x2", "x3", "label"]
@@ -88,15 +88,17 @@ def testRunOneVsOne():
         row = results3.data[i]
         for j in range(len(row)):
             score = row[j]
+            # because our input data was matrix, we have to check feature names
+            # as they would have been generated from float data
             if i == 0:
                 if score == 2:
-                    assert results3FeatureMap[j] == str(1)
+                    assert results3FeatureMap[j] == str(float(1))
             elif i == 1:
                 if score == 2:
-                    assert results3FeatureMap[j] == str(2)
+                    assert results3FeatureMap[j] == str(float(2))
             else:
                 if score == 2:
-                    assert results3FeatureMap[j] == str(3)
+                    assert results3FeatureMap[j] == str(float(3))
 
 
 def testExtractWinningPredictionLabel():

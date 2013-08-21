@@ -460,7 +460,8 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog
 		avg = 0.
 		denom = 0.
 		for result in curResults:
-			for v in result.values():
+#			for v in result.values():
+			for v in result:
 				avg += v
 				denom += 1
 		aggregatedResults[function] = avg/denom #NOTE: this could be bad if the sets have different size!!
@@ -469,7 +470,7 @@ def crossValidate(X, Y, functionsToApply, numFolds=10, extraParams={}, sendToLog
 			logger = LogManager()
 			sortedResults = sorted(aggregatedResults.iteritems(), key=operator.itemgetter(1))
 			for result in sortedResults:
-				logger.logRun(X, None, function, {function:aggregatedResults[function]}, timer, numFolds=numFolds)
+				logger.logRun(X, None, function, [function], [aggregatedResults[function]], timer, numFolds=numFolds)
 	return aggregatedResults
 
 

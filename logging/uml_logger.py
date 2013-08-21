@@ -62,12 +62,12 @@ class UmlLogger(object):
 		self.logFile.write(message)
 		self.logFile.flush()
 
-	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
+	def logRun(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
 		"""
 		Send pertinent information about a cycle of train a learning algorithm and test its performance
 		to the log file
 		"""
-		self._logRun_implementation(trainData, testData, function, metrics, timer, extraInfo, numFolds)
+		self._logRun_implementation(trainData, testData, function, metrics, results, timer, extraInfo, numFolds)
 
 
 	def logData(self, baseDataObject):

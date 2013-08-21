@@ -86,7 +86,7 @@ class MachineReadableLogger(UmlLogger):
 
 
 
-	def _logRun_implementation(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
+	def _logRun_implementation(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
 		"""
 			Write one (data + classifer + error metrics) combination to a log file
 			in machine readable format.  Should include as much information as possible,
@@ -162,7 +162,7 @@ class MachineReadableLogger(UmlLogger):
 					logLine += createMRLineElement(key, value)
 
 		if metrics is not None:
-			for metric, result in metrics.iteritems():
+			for metric, result in zip(metrics,results):
 				if isinstance(metric, (str, unicode)):
 					logLine += createMRLineElement(str(metric), result)
 				else:
@@ -390,14 +390,15 @@ def testParseLog():
 	testData1 = Sparse(testDataBase)
 	functionStr = """def f():
 	return 0"""
-	metricsHash = {"rootMeanSquareError":0.50, "meanAbsoluteError":0.45}
+	metrics = ["rootMeanSquareError", "meanAbsoluteError"]
+	results = [0.50, 0.45]
 
 	testLogger = MachineReadableLogger("/Users/rossnoren/UMLMisc/mrTest2.txt")
-	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, Stopwatch())
+	testLogger.logRun(trainData1, testData1, functionStr, metrics, results, Stopwatch())
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, Stopwatch())
+	testLogger.logRun(trainData1, testData1, functionObj, metrics, results, Stopwatch())
 
 	logDicts = parseLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
 
@@ -429,14 +430,15 @@ def main():
 	testData1 = Sparse(testDataBase)
 	functionStr = """def f():
 	return 0"""
-	metricsHash = {"rootMeanSquareError":0.50, "meanAbsoluteError":0.45}
+	metrics = ["rootMeanSquareError", "meanAbsoluteError"]
+	results = [0.50, 0.45]
 
 	testLogger = MachineReadableLogger("~/mrTest2.txt")
-	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.0)
+	testLogger.logRun(trainData1, testData1, functionStr, metrics, results, 0.0)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.0)
+	testLogger.logRun(trainData1, testData1, functionObj, metrics, results, 0.0)
 
 
 

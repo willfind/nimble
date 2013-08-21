@@ -110,17 +110,17 @@ def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, s
 				funcString = 'regressors.' + algorithm
 			else:
 				funcString = package + '.' + algorithm
-			logManager.logRun(trainX, testX, funcString, None, timer, extraInfo=arguments)
+			logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=arguments)
 
 	return results
 
 
 
-def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceMetricFuncs, scoreMode='label', negativeLabel=None, sendToLog=True):
+def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceFunction, scoreMode='label', negativeLabel=None, sendToLog=True):
 	"""
 		Calls on run() to train and evaluate the learning algorithm defined in 'algorithm,'
-		then tests its performance using the metric function(s) found in
-		performanceMetricFunctions
+		then tests its performance using the metric function(s) found in the
+		performanceFunction parameter
 
 		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
 
@@ -139,7 +139,7 @@ def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceMe
 		
 		arguments: optional arguments to be passed to the function specified by 'algorithm'
 		
-		negativeLabel: Argument required if performanceMetricFuncs contains proportionPercentPositive90
+		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
 		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
 		applies to data sets with 2 class labels.
 		
@@ -172,18 +172,21 @@ def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceMe
 		timer.start('errorComputation')
 
 	#now we need to compute performance metric(s) for all prediction sets
-	results = computeMetrics(testY, None, rawResult, performanceMetricFuncs, negativeLabel)
+	results = computeMetrics(testY, None, rawResult, performanceFunction, negativeLabel)
 
 	if sendToLog:
 		timer.stop('errorComputation')
 
 	if sendToLog:
 		logManager = LogManager()
-		logManager.logRun(trainX, testX, algorithm, results, timer, extraInfo=arguments)
+		if not isinstance(performanceFunction, list):
+			performanceFunction = [performanceFunction]
+			results = [results]
+		logManager.logRun(trainX, testX, algorithm, performanceFunction, results, timer, extraInfo=arguments)
 
 	return results
 
-def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, performanceMetricFuncs=None, negativeLabel=None, sendToLog=True):
+def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
 		Wrapper class for runOneVsOne.  Useful if you want the entire process of training,
 		testing, and computing performance measures to be handled.  Takes in a learning algorithm
@@ -209,7 +212,7 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 			
 			arguments: optional arguments to be passed to the function specified by 'algorithm'
 
-			performanceMetricFuncs: iterable collection of functions that can take two collections
+			performanceFunction: single or iterable collection of functions that can take two collections
 			of corresponding labels - one of true labels, one of predicted labels - and return a
 			performance metric.
 		
@@ -239,12 +242,15 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 	predictions = runOneVsOne(algorithm, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
-	results = computeMetrics(testY, None, predictions, performanceMetricFuncs, negativeLabel)
+	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
 
 	# Send this run to the log, if desired
 	if sendToLog:
 		logManager = LogManager()
-		logManager.logRun(trainX, testX, algorithm, results, timer, extraInfo=arguments)
+		if not isinstance(performanceFunction, list):
+			performanceFunction = [performanceFunction]
+			results = [results]
+		logManager.logRun(trainX, testX, algorithm, performanceFunction, results, timer, extraInfo=arguments)
 
 	return results
 
@@ -368,7 +374,7 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 			finalRow = [0] * len(columnHeaders)
 			scores = countWins(row)
 			for label, score in scores.items():
-				finalIndex = labelIndexDict[str(int(label))]
+				finalIndex = labelIndexDict[str(label)]
 				finalRow[finalIndex] = score
 			resultsContainer.append(finalRow)
 
@@ -512,7 +518,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
 
-def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, performanceMetricFuncs=None, negativeLabel=None, sendToLog=True):
+def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
 	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -534,7 +540,7 @@ def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={
 		
 		arguments: optional arguments to be passed to the function specified by 'algorithm'
 		
-		performanceMetricFuncs: iterable collection of functions that can take two collections
+		performanceFunction: single or iterable collection of functions that can take two collections
 		of corresponding labels - one of true labels, one of predicted labels - and return a
 		performance metric.
 		
@@ -557,12 +563,15 @@ def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={
 	predictions = runOneVsAll(algorithm, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
-	results = computeMetrics(testY, None, predictions, performanceMetricFuncs, negativeLabel)
+	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
 
 	# Send this run to the log, if desired
 	if sendToLog:
 		logManager = LogManager()
-		logManager.logRun(trainX, testX, algorithm, results, timer, extraInfo=arguments)
+		if not isinstance(performanceFunction, list):
+			performanceFunction = [performanceFunction]
+			results = [results]
+		logManager.logRun(trainX, testX, algorithm, performanceFunction, results, timer, extraInfo=arguments)
 
 	return results
 

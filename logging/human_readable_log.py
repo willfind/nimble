@@ -53,7 +53,7 @@ class HumanReadableLogger(UmlLogger):
 			self.logMessage("Data name: "+str(name))
 
 
-	def _logRun_implementation(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
+	def _logRun_implementation(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
 		"""
 			Convert a set of objects representing one run (data used for training, data used for
 			testing, function representing a unique classifier {algorithm, parameters}, error metrics,
@@ -176,7 +176,7 @@ class HumanReadableLogger(UmlLogger):
 			metricHeaders.append("\n\nError rate")
 			metricHeaders.append("Error Metric")
 			metricTable.append(metricHeaders)
-			for metric, result in metrics.iteritems():
+			for metric, result in zip(metrics,results):
 				metricRow = []
 				metricRow.append(str(result))
 
@@ -200,15 +200,16 @@ def main():
 	testData1 = Sparse(testDataBase)
 	functionStr = """def f():
 	return 0"""
-	metricsHash = {"rootMeanSquareError":0.50, "meanAbsoluteError":0.45}
+	metrics = ["rootMeanSquareError", "meanAbsoluteError"]
+	results = [0.50,0.45]
 	extra = {"c":0.5, "folds":10, "tests": 20}
 
 	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")
-	testLogger.logRun(trainData1, testData1, functionStr, metricsHash, 0.5, extra)
+	testLogger.logRun(trainData1, testData1, functionStr, metrics, results, 0.5, extra)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metricsHash, 0.5, extra)
+	testLogger.logRun(trainData1, testData1, functionObj, metrics, results, 0.5, extra)
 
 if __name__ == "__main__":
 	main()

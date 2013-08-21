@@ -42,10 +42,10 @@ class LogManager(object):
 		self.humanReadableLog.logLoad(dataFilePath)
 		self.machineReadableLog.logLoad(dataFilePath)
 
-	def logRun(self, trainData, testData, function, metrics, timer, extraInfo=None, numFolds=None):
+	def logRun(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
 		"""
 			Pass the information about this run to both logs:  human and machine
 			readable, which will write it out to the log files.
 		"""
-		self.humanReadableLog.logRun(trainData, testData, function, metrics, timer, extraInfo, numFolds)
-		self.machineReadableLog.logRun(trainData, testData, function, metrics, timer, extraInfo, numFolds)
+		self.humanReadableLog.logRun(trainData, testData, function, metrics, results, timer, extraInfo, numFolds)
+		self.machineReadableLog.logRun(trainData, testData, function, metrics, results, timer, extraInfo, numFolds)

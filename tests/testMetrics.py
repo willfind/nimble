@@ -81,9 +81,9 @@ def testPerfCombinations():
 	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
 #	print results
-	assert results['rootMeanSquareError'] == 0.0
-	assert results['meanAbsoluteError'] == 0.0
-	assert results['fractionIncorrect'] == 0.0
+	assert results[0] == 0.0
+	assert results[1] == 0.0
+	assert results[2] == 0.0
 
 	knownLabels = numpy.array([[1.5],[2.5],[3.5]])
 	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
@@ -93,10 +93,10 @@ def testPerfCombinations():
 
 	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
-	assert results['rootMeanSquareError'] > 0.49
-	assert results['rootMeanSquareError'] < 0.51
-	assert results['meanAbsoluteError'] > 0.49
-	assert results['meanAbsoluteError'] < 0.51
+	assert results[0] > 0.49
+	assert results[0] < 0.51
+	assert results[1] > 0.49
+	assert results[1] < 0.51
 
 ############################
 # generic error calculator #

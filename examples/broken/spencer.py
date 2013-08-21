@@ -25,7 +25,7 @@ if __name__ == "__main__":
 	normalizeData('mlpy.PCA', trainX, testX=testX, arguments={'k':5})
 
 	"""
-	results = runAndTest("mlpy.Ridge", trainX, trainY, testX, testY, arguments={"lmb":1}, performanceMetricFuncs=[rootMeanSquareError, meanAbsoluteError])
+	results = runAndTest("mlpy.Ridge", trainX, trainY, testX, testY, arguments={"lmb":1}, performanceFunction=[rootMeanSquareError, meanAbsoluteError])
 
 	print "results", results
 	"""
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
 	#OLD STUFF
 
-	##results = runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, arguments={"C":1}, performanceMetricFuncs=[fractionIncorrect])
+	##results = runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, arguments={"C":1}, performanceFunction=[fractionIncorrect])
 
 	#xData = createData("Matrix", fileName, fileType="csv")
 	#allData = createData("Matrix", fileName, fileType="csv")

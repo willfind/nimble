@@ -28,9 +28,9 @@ if __name__ == "__main__":
 	metricFuncs = []
 	metricFuncs.append(fractionIncorrect)
 
-	results1 = runAndTest('sciKitLearn.LogisticRegression',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceMetricFuncs=metricFuncs)
+	results1 = runAndTest('sciKitLearn.LogisticRegression',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceFunctions=metricFuncs)
 	results2 = runOneVsOne('sciKitLearn.SVC',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, scoreMode='label', sendToLog=False)
-	results3 = runAndTestOneVsOne('sciKitLearn.SVC',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceMetricFuncs=metricFuncs, sendToLog=False)
+	results3 = runAndTestOneVsOne('sciKitLearn.SVC',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceFunctions=metricFuncs, sendToLog=False)
 	resultsBestScore = runOneVsOne('sciKitLearn.SVC',trainObj2, trainY=3, testX=testObj2, testY=3, arguments={}, scoreMode='bestScore', sendToLog=False)
 	resultsAllScores = runOneVsOne('sciKitLearn.SVC',trainObj3, trainY=3, testX=testObj2, testY=3, arguments={}, scoreMode='allScores', sendToLog=False)
 
