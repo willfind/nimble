@@ -95,8 +95,8 @@ def testSciKitLearnHandmadeSparseClustering():
 
 	ret = sciKitLearn('MiniBatchKMeans', trainData, trainY=2, testX=testData, arguments={'n_clusters':2})
 	
-	assert ret.data[0,0] == ret.data[1,0]
-	assert ret.data[0,0] != ret.data[2,0]
+	assert ret[0,0] == ret[1,0]
+	assert ret[0,0] != ret[2,0]
 
 
 def testSciKitLearnScoreMode():

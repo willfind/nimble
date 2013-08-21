@@ -82,14 +82,21 @@ def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None
 	else: # input is an object
 		testObj = testX.copy()
 	
+
+	# used to determine output type
+	outputTypeString = None
 	trainObjY = None
 	# directly assign target values, if present
 	if isinstance(trainY, UML.data.Base):
 		trainObjY = trainY.copy()
+		outputTypeString = trainY.getTypeString()
 	# otherwise, isolate the target values from training examples
 	elif trainY is not None:
-		trainObjY = trainObj.extractFeatures([trainY])		
-	# could be None for unsupervised learning	
+		trainObjY = trainObj.extractFeatures([trainY])	
+		outputTypeString = trainX.getTypeString()		
+	# trainY could be None for unsupervised learning	
+	else:
+		outputTypeString = trainX.getTypeString()	
 
 	# necessary format for shogun, also makes the following ops easier
 	if trainObjY is not None:
@@ -124,7 +131,7 @@ def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None
 	if retData is None:
 		return
 
-	outputObj = UML.createData('Matrix', retData)
+	outputObj = UML.createData(outputTypeString, retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':

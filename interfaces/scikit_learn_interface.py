@@ -77,7 +77,6 @@ def sciKitLearn(algorithm, trainX, trainY=None, testX=None, arguments={}, output
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
 			UML.runners.runOneVsOne(algorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
 
-
 	if not isinstance(trainX, UML.data.Base):
 		trainObj = UML.createData('Matrix', trainX)
 	else: # input is an object
@@ -88,16 +87,22 @@ def sciKitLearn(algorithm, trainX, trainY=None, testX=None, arguments={}, output
 		testObj = UML.createData('Matrix', testX)
 	else: # input is an object
 		testObj = testX
-	
+
+	# used to determine output type
+	outputTypeString = None
 	trainObjY = None
 	# directly assign target values, if present
 	if isinstance(trainY, UML.data.Base):
 		trainObjY = trainY
+		outputTypeString = trainY.getTypeString()
 	# otherwise, isolate the target values from training examples
 	elif trainY is not None:
 		trainObj = trainObj.copy()
-		trainObjY = trainObj.extractFeatures([trainY])		
-	# could be None for unsupervised learning	
+		trainObjY = trainObj.extractFeatures([trainY])	
+		outputTypeString = trainX.getTypeString()
+	# trainY could be None for unsupervised learning	
+	else:
+		outputTypeString = trainX.getTypeString()	
 
 	# necessary format for skl, also makes the following ops easier
 	if trainObjY is not None:	
@@ -125,7 +130,7 @@ def sciKitLearn(algorithm, trainX, trainY=None, testX=None, arguments={}, output
 	if retData is None:
 		return
 
-	outputObj = UML.createData('Matrix', retData)
+	outputObj = UML.createData(outputTypeString, retData)
 
 	if output is None:
 		if scoreMode == 'bestScore':
