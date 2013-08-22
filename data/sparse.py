@@ -24,8 +24,11 @@ class Sparse(Base):
 		if data == [] or data == numpy.array([]):
 			raise ArgumentException("Data must not be shapeless (in other words, empty)")
 		else:
-			if reuseData and scipy.sparse.isspmatrix(data):
-				self.data = data
+			if scipy.sparse.isspmatrix(data):
+				if reuseData:
+					self.data = data
+				else:
+					self.data = coo_matrix(data.copy())
 			else:
 				self.data = coo_matrix(data)
 		self._sorted = None
@@ -57,7 +60,7 @@ class Sparse(Base):
 				if self._nextID >= self._outer.points():
 					raise StopIteration
 				if self._outer._sorted != "point" or not self._stillSorted:
-					print "actually called"
+#					print "actually called"
 					self._stillSorted = False
 					value = self._outer.pointView(self._nextID)	
 				else:
@@ -91,7 +94,7 @@ class Sparse(Base):
 				if self._nextID >= self._outer.features():
 					raise StopIteration
 				if self._outer._sorted != "feature" or not self._stillSorted:
-					print "actually called"
+#					print "actually called"
 
 					self._stillSorted = False
 					value = self._outer.featureView(self._nextID)	

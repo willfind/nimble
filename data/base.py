@@ -558,29 +558,31 @@ class Base(object):
 		return True
 
 
-	def shufflePoints(self, seed=DEFAULT_SEED):
+	def shufflePoints(self, indices=None, seed=DEFAULT_SEED):
 		"""
 		Permute the indexing of the points so they are in a random order. Note: this relies on
 		python's random.shuffle() so may not be sufficiently random for large number of points.
 		See shuffle()'s documentation.
 
 		"""
-		indices = range(0, self.points())
-		random.shuffle(indices)
+		if indices is None:
+			indices = range(0, self.points())
+			random.shuffle(indices)
 		def permuter(pointView):
 			return indices[pointView.index()]
 		self.sortPoints(sortHelper=permuter)
 
 
-	def shuffleFeatures(self, seed=DEFAULT_SEED):
+	def shuffleFeatures(self, indices=None, seed=DEFAULT_SEED):
 		"""
 		Permute the indexing of the features so they are in a random order. Note: this relies on
 		python's random.shuffle() so may not be sufficiently random for large number of features.
 		See shuffle()'s documentation.
 
 		"""
-		indices = range(0, self.features())
-		random.shuffle(indices)
+		if indices is None:
+			indices = range(0, self.features())
+			random.shuffle(indices)
 		def permuter(featureView):
 			return indices[featureView.index()]
 		self.sortFeatures(sortHelper=permuter)

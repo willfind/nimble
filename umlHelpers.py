@@ -13,8 +13,9 @@ import scipy.io
 import os.path
 import re 
 import datetime
+import random
 
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, ImproperActionException
 from UML.data import Sparse
 from UML.data import Matrix
 from UML.data import List
@@ -717,3 +718,73 @@ def generateAllPairs(items):
 	return pairs
 
 
+def foldIterator(dataList, folds):
+	"""
+	Takes a list of data objects and a number of folds, returns an iterator
+	which will return a list containing the folds for each object, where
+	the list has as many (training, testing) tuples as the length of the input list
+
+	"""
+	if dataList is None or len(dataList) == 0:
+		raise ArgumentException("dataList may not be None, or empty")
+
+	points = dataList[0].points()
+	for data in dataList:
+		if data.points() == 0:
+			raise ImproperActionException("One of the objects has 0 points, which cannot be folded over")
+		if data.points() != dataList[0].points():
+			raise ArgumentException("All data objects in the list must have the same number of points and features")
+
+	# note: we want truncation here
+	numInFold = int(points / folds)
+	if numInFold == 0:
+		raise ArgumentException("Must specifiy few enough folds so there is a point in each")
+
+	# randomly select the folded portions
+	indices = range(points)
+	random.shuffle(indices)
+	foldList = []
+	for fold in xrange(folds):
+		start = fold * numInFold
+		if fold == folds - 1:
+			end = points
+		else:
+			end = (fold + 1) * numInFold
+		foldList.append(indices[start:end])
+
+	# return that lists iterator as the fold iterator 	
+	return _foldIteratorClass(dataList, foldList,)
+
+
+class _foldIteratorClass():
+	def __init__(self, dataList, foldList):
+		self.foldList= foldList
+		self.index = 0
+		self.dataList = dataList
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		if self.index >= len(self.foldList):
+			raise StopIteration
+		# we're going to be separating training and testing sets through extraction,
+		# so we have to copy the data in order not to destroy the original sets
+		# across multiple folds
+		copiedList = []
+		for data in self.dataList:
+			copiedList.append(data.copy())
+
+		# we want each training set to be permuted wrt its ordering in the original
+		# data. This is setting up a permutation to be applied to each object
+		indices = range(0, copiedList[0].points() - len(self.foldList[0]))
+		random.shuffle(indices)
+
+		resultsList = []
+		for copied in copiedList:
+			currTest = copied.extractPoints(self.foldList[self.index])
+			currTrain = copied	
+			currTrain.shufflePoints(indices)
+			resultsList.append((currTrain, currTest))
+		self.index = self.index +1
+		return resultsList

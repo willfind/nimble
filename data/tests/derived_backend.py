@@ -820,13 +820,17 @@ def copy_rightTypeTrueCopy(constructor):
 	listObj = createData(retType="List", data=data, featureNames=featureNames)
 	matixObj = createData(retType="Matrix", data=data, featureNames=featureNames)
 
+	pointsShuffleIndices = [3,1,2,0]
+	featuresshuffleIndices = [1,2,0]
+
 	copySparse = orig.copy(asType='Sparse')
 	assert copySparse.isIdentical(sparseObj)
 	assert sparseObj.isIdentical(copySparse)
 	assert type(copySparse) == Sparse
 	copySparse.setFeatureName('two', '2')
 	assert 'two' in orig.featureNames
-#	copySparse[0,0] = 5 transformPoint
+	copySparse.shufflePoints(pointsShuffleIndices)
+	copySparse.shuffleFeatures(featuresshuffleIndices)
 	assert orig[0,0] == 1 
 
 	copyList = orig.copy(asType='List')
@@ -835,7 +839,8 @@ def copy_rightTypeTrueCopy(constructor):
 	assert type(copyList) == List
 	copyList.setFeatureName('two', '2')
 	assert 'two' in orig.featureNames
-#	copyList[0,0] = 5  transformPoint
+	copyList.shufflePoints(pointsShuffleIndices)
+	copyList.shuffleFeatures(featuresshuffleIndices)
 	assert orig[0,0] == 1 
 
 	copyMatrix = orig.copy(asType='Matrix')
@@ -844,7 +849,8 @@ def copy_rightTypeTrueCopy(constructor):
 	assert type(copyMatrix) == Matrix
 	copyMatrix.setFeatureName('two', '2')
 	assert 'two' in orig.featureNames
-#	copyMatrix[0,0] = 5 transformPoint
+	copyMatrix.shufflePoints(pointsShuffleIndices)
+	copyMatrix.shuffleFeatures(featuresshuffleIndices)
 	assert orig[0,0] == 1 
 
 	pyList = orig.copy(asType='python list')

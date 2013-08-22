@@ -570,5 +570,5 @@ def viewBasedApplyAlongAxis(function, axis, outerObject):
 		funcOut = function(VectorView(outerObject,axis,i))
 		ret[i] = funcOut
 
-	print ret
+#	print ret
 	return ret
