@@ -136,8 +136,9 @@ def transpose_handmade(constructor):
 	dataObj2 = constructor(deepcopy(data))
 	dataObjT = constructor(deepcopy(dataTrans))
 	
-	dataObj1.transpose()
+	ret1 = dataObj1.transpose()
 	assert dataObj1.isIdentical(dataObjT)
+	assert dataObj1 == ret1
 	dataObj1.transpose()
 	dataObjT.transpose()
 	assert dataObj1.isIdentical(dataObj2)
@@ -175,8 +176,9 @@ def appendPoints_handmadeSingle(constructor):
 	toTest = constructor(data)
 	toAppend = constructor([[10,11,12]])
 	expected = constructor(dataExpected)
-	toTest.appendPoints(toAppend)
+	ret = toTest.appendPoints(toAppend)
 	assert toTest.isIdentical(expected)
+	assert toTest == ret
 
 def appendPoints_handmadeSequence(constructor):
 	""" Test appendPoints() against handmade output for a sequence of additions"""
@@ -187,13 +189,16 @@ def appendPoints_handmadeSequence(constructor):
 
 	dataExpected = [[1,2,3],[4,5,6],[7,8,9],[0.1,0.2,0.3],[0.01,0.02,0.03],[0,0,0],[10,11,12]]
 	toTest = constructor(data)
-	toTest.appendPoints(constructor(toAppend1))
-	toTest.appendPoints(constructor(toAppend2))
-	toTest.appendPoints(constructor(toAppend3))
+	ret0 = toTest.appendPoints(constructor(toAppend1))
+	ret1 = toTest.appendPoints(constructor(toAppend2))
+	ret2 = toTest.appendPoints(constructor(toAppend3))
 
 	expected = constructor(dataExpected)
 
 	assert toTest.isIdentical(expected)
+	assert toTest == ret0
+	assert toTest == ret1
+	assert toTest == ret2
 	
 
 ################
@@ -237,8 +242,9 @@ def appendFeatures_handmadeSingle(constructor):
 	featureNamesExpected = ['1','2','3','-1']
 	expected = constructor(dataExpected,featureNamesExpected)
 
-	toTest.appendFeatures(toAppend)
+	ret = toTest.appendFeatures(toAppend)
 	assert toTest.isIdentical(expected)
+	assert toTest == ret
 
 def appendFeatures_handmadeSequence(constructor):
 	""" Test appendFeatures() against handmade output for a sequence of additions"""
@@ -253,15 +259,18 @@ def appendFeatures_handmadeSequence(constructor):
 	toAppend3 = [[10],[11],[12]]
 	lab3 = ['10']
 
-	toTest.appendFeatures(constructor(toAppend1,lab1))
-	toTest.appendFeatures(constructor(toAppend2,lab2))
-	toTest.appendFeatures(constructor(toAppend3,lab3))
+	ret1 = toTest.appendFeatures(constructor(toAppend1,lab1))
+	ret2 = toTest.appendFeatures(constructor(toAppend2,lab2))
+	ret3 = toTest.appendFeatures(constructor(toAppend3,lab3))
 
 	featureNamesExpected = ['1','2','3','a','A','0','10']
 	dataExpected = [[1,2,3,0.1,0.01,0,10],[4,5,6,0.2,0.02,0,11],[7,8,9,0.3,0.03,0,12]]
 
 	expected = constructor(dataExpected,featureNamesExpected)
 	assert toTest.isIdentical(expected)
+	assert toTest == ret1
+	assert toTest == ret2
+	assert toTest == ret3
 
 
 
@@ -281,12 +290,13 @@ def sortPoints_naturalByFeature(constructor):
 	data = [[1,2,3],[7,1,9],[4,5,6]]
 	toTest = constructor(data)
 
-	toTest.sortPoints(sortBy=1)
+	ret = toTest.sortPoints(sortBy=1)
 
 	dataExpected = [[7,1,9],[1,2,3],[4,5,6]]
 	objExp = constructor(dataExpected)
 
 	assert toTest.isIdentical(objExp)
+	assert toTest == ret
 
 def sortPoints_scorer(constructor):
 	""" Test sortPoints() when we specify a scoring function """
@@ -301,12 +311,13 @@ def sortPoints_scorer(constructor):
 				ret += 1
 		return ret
 
-	toTest.sortPoints(sortHelper=numOdds)
+	ret = toTest.sortPoints(sortHelper=numOdds)
 
 	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.isIdentical(objExp)	
+	assert toTest.isIdentical(objExp)
+	assert toTest == ret
 
 def sortPoints_comparator(constructor):
 	""" Test sortPoints() when we specify a comparator function """
@@ -328,12 +339,13 @@ def sortPoints_comparator(constructor):
 				odds2 += 1
 		return odds1 - odds2
 
-	toTest.sortPoints(sortHelper=compOdds)
+	ret = toTest.sortPoints(sortHelper=compOdds)
 
 	dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.isIdentical(objExp)	
+	assert toTest.isIdentical(objExp)
+	assert toTest == ret
 
 
 #################
@@ -354,13 +366,14 @@ def sortFeatures_naturalByPointWithNames(constructor):
 	names = ["1","2","3"]
 	toTest = constructor(data,names)
 
-	toTest.sortFeatures(sortBy=1)
+	ret = toTest.sortFeatures(sortBy=1)
 
 	dataExpected = [[2,1,3],[1,7,9],[5,4,6]]
 	namesExp = ["2", "1", "3"]
 	objExp = constructor(dataExpected, namesExp)
 
 	assert toTest.isIdentical(objExp)
+	assert toTest == ret
 
 def sortFeatures_scorer(constructor):
 	""" Test sortFeatures() when we specify a scoring function """
@@ -374,12 +387,13 @@ def sortFeatures_scorer(constructor):
 				ret += 1
 		return ret
 
-	toTest.sortFeatures(sortHelper=numOdds)
+	ret = toTest.sortFeatures(sortHelper=numOdds)
 
 	dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.isIdentical(objExp)	
+	assert toTest.isIdentical(objExp)
+	assert toTest == ret
 
 def sortFeatures_comparator(constructor):
 	""" Test sortFeatures() when we specify a comparator function """
@@ -401,12 +415,13 @@ def sortFeatures_comparator(constructor):
 				odds2 += 1
 		return odds1 - odds2
 
-	toTest.sortFeatures(sortHelper=compOdds)
+	ret = toTest.sortFeatures(sortHelper=compOdds)
 
 	dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
 	objExp = constructor(dataExpected)
 
-	assert toTest.isIdentical(objExp)	
+	assert toTest.isIdentical(objExp)
+	assert toTest == ret
 
 
 
@@ -787,10 +802,10 @@ def referenceDataFrom_sameReference(constructor):
 	data2 = [[-1,-2,-3,]]
 	other = constructor(data2)
 
-	orig.referenceDataFrom(other)
+	ret = orig.referenceDataFrom(other)
 
 	assert orig.data is other.data
-
+	assert orig == ret
 
 #############
 # copy #

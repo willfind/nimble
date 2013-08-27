@@ -72,6 +72,7 @@ class Base(object):
 		if len(self.featureNames) == 0:
 			raise ImproperActionException("Cannot set any feature names; this object has no features ")
 		self._setFeatureName_implementation(oldIdentifier, newFeatureName, False)
+		return self
 
 	def setFeatureNamesFromList(self, assignments=None):
 		"""
@@ -102,6 +103,7 @@ class Base(object):
 		assignments = temp
 
 		self.setFeatureNamesFromDict(assignments)
+		return self
 
 	def setFeatureNamesFromDict(self, assignments=None):
 		"""
@@ -143,6 +145,7 @@ class Base(object):
 		# have to copy the input, could be from another object
 		self.featureNames = copy.copy(assignments)
 		self.featureNamesInverse = reverseDict
+		return self
 
 	def nameData(self, name):
 		"""
@@ -152,6 +155,7 @@ class Base(object):
 		if name is not None and not isinstance(name, basestring):
 			raise ArgumentException("name must be a string")
 		self.name = name
+		return self
 
 	###########################
 	# Higher Order Operations #
@@ -183,6 +187,7 @@ class Base(object):
 			return False
 	
 		self.extractFeatures(hasType)
+		return self
 
 
 	def replaceFeatureWithBinaryFeatures(self, featureToReplace):
@@ -230,6 +235,7 @@ class Base(object):
 		# remove the original feature, and combine with self
 		toConvert.extractFeatures([varName])
 		self.appendFeatures(toConvert)
+		return self
 
 
 	def transformFeartureToIntegerFeature(self, featureToConvert):
@@ -275,6 +281,7 @@ class Base(object):
 		converted.setFeatureName(0,toConvert.featureNamesInverse[0])		
 
 		self.appendFeatures(converted)
+		return self
 
 	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
 		"""
@@ -470,6 +477,7 @@ class Base(object):
 			currValue = currView[x]
 			result = function(currValue)
 			currView[x] = result
+		return self
 
 
 	def transformFeature(self, feature, function):
@@ -490,6 +498,7 @@ class Base(object):
 			currValue = currView[x]
 			result = function(currValue)
 			currView[x] = result
+		return self
 
 
 	def applyToEachElement(self, valueFunction, skipZeros=False, excludeNoneResultValues=False):
@@ -571,6 +580,7 @@ class Base(object):
 		def permuter(pointView):
 			return indices[pointView.index()]
 		self.sortPoints(sortHelper=permuter)
+		return self
 
 
 	def shuffleFeatures(self, indices=None, seed=DEFAULT_SEED):
@@ -586,6 +596,7 @@ class Base(object):
 		def permuter(featureView):
 			return indices[featureView.index()]
 		self.sortFeatures(sortHelper=permuter)
+		return self
 
 
 	#################################
@@ -622,6 +633,7 @@ class Base(object):
 		"""
 		self._transpose_implementation()
 		self.setFeatureNamesFromDict(None)
+		return self
 
 	def appendPoints(self, toAppend):
 		"""
@@ -640,6 +652,7 @@ class Base(object):
 		if not self._equalFeatureNames(toAppend):
 			raise ArgumentException("The featureNames of the two objects must match")
 		self._appendPoints_implementation(toAppend)
+		return self
 		
 	def appendFeatures(self, toAppend):
 		"""
@@ -662,6 +675,7 @@ class Base(object):
 
 		for i in xrange(toAppend.features()):
 			self._addFeatureName(toAppend.featureNamesInverse[i])
+		return self
 
 	def sortPoints(self, sortBy=None, sortHelper=None):
 		""" 
@@ -684,6 +698,7 @@ class Base(object):
 				raise ArgumentException("Either sortBy or sortHelper must not be None")
 
 		self._sortPoints_implementation(sortByIndex, sortHelper)
+		return self
 
 	def sortFeatures(self, sortBy=None, sortHelper=None):
 		""" 
@@ -703,6 +718,7 @@ class Base(object):
 
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self.setFeatureNamesFromList(newFeatureNameOrder)
+		return self
 
 
 	def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -844,6 +860,7 @@ class Base(object):
 		self._referenceDataFrom_implementation(other)
 		self.featureNames = other.featureNames
 		self.featureNamesInverse = other.featureNamesInverse
+		return self
 
 
 	def copy(self, asType=None):

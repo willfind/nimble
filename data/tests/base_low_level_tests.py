@@ -244,20 +244,23 @@ def test_setFeatureName_handmade_viaIndex():
 	""" Test setFeatureName() against handmade input when specifying the featureName by index """
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest = makeAndDefine(origFeatureNames)
-	toTest.setFeatureName(0,"ZERO")
-	toTest.setFeatureName(3,"3")
+	ret0 = toTest.setFeatureName(0,"ZERO")
+	ret3 = toTest.setFeatureName(3,"3")
 	expectedFeatureNames = ["ZERO","one","two","3"]
 	confirmExpectedFeatureNames(toTest,expectedFeatureNames)
+	assert toTest == ret0
+	assert toTest == ret3
 
 def test_setFeatureName_handmade_viaFeatureName():
 	""" Test setFeatureName() against handmade input when specifying the featureName by name """
 	origFeatureNames = ["zero","one","two","three"]	
 	toTest = makeAndDefine(origFeatureNames)
-	toTest.setFeatureName("zero","ZERO")
-	toTest.setFeatureName("three","3")
+	ret0 = toTest.setFeatureName("zero","ZERO")
+	ret3 = toTest.setFeatureName("three","3")
 	expectedFeatureNames = ["ZERO","one","two","3"]
 	confirmExpectedFeatureNames(toTest,expectedFeatureNames)
-
+	assert toTest == ret0
+	assert toTest == ret3
 
 
 ##########################
@@ -295,22 +298,25 @@ def test_setFeatureNamesFromList_addDefault():
 	""" Test setFeatureNamesFromList() when given a default featureName """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
 	newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "17"]
-	toTest.setFeatureNamesFromList(newFeatureNames)
+	ret = toTest.setFeatureNamesFromList(newFeatureNames)
 	assert toTest._nextDefaultValue > 17
+	assert toTest == ret
 
 def test_setFeatureNamesFromList_handmade():
 	""" Test setFeatureNamesFromList() against handmade output """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
 	origFeatureNames = ["zero","one","two","three"]	
-	toTest.setFeatureNamesFromList(origFeatureNames)
+	ret = toTest.setFeatureNamesFromList(origFeatureNames)
 	confirmExpectedFeatureNames(toTest,origFeatureNames)
+	assert toTest == ret
 
 def test_setFeatureNamesFromList_handmadeReplacingWithSame():
 	""" Test setFeatureNamesFromList() against handmade output when you're replacing the position of featureNames """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
 	toAssign = ["hey","gone","none","blank"]
-	toTest.setFeatureNamesFromList(toAssign)
+	ret = toTest.setFeatureNamesFromList(toAssign)
 	confirmExpectedFeatureNames(toTest,toAssign)
+	assert toTest == ret
 
 ##########################
 # setFeatureNamesFromDict() #
@@ -347,15 +353,17 @@ def test_setFeatureNamesFromDict_handmade():
 	""" Test setFeatureNamesFromDict() against handmade output """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
 	origFeatureNames = {"zero":0,"one":1,"two":2,"three":3}	
-	toTest.setFeatureNamesFromDict(origFeatureNames)
+	ret = toTest.setFeatureNamesFromDict(origFeatureNames)
 	confirmExpectedFeatureNames(toTest,origFeatureNames)
+	assert toTest == ret 
 
 def test_setFeatureNamesFromDict_handmadeReplacingWithSame():
 	""" Test setFeatureNamesFromDict() against handmade output when you're replacing the position of featureNames """
 	toTest = makeAndDefine(["blank","none","gone","hey"])
 	toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
-	toTest.setFeatureNamesFromDict(toAssign)
+	ret = toTest.setFeatureNamesFromDict(toAssign)
 	confirmExpectedFeatureNames(toTest,toAssign)
+	assert toTest == ret 
 
 
 ##########################

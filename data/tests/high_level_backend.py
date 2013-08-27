@@ -28,8 +28,9 @@ def dropFeaturesContainingType_emptyTest(constructor):
 	data = []
 	toTest = constructor(data)
 	unchanged = constructor(data)
-	toTest.dropFeaturesContainingType(basestring)
+	ret = toTest.dropFeaturesContainingType(basestring)
 	assert toTest.isIdentical(unchanged)
+	assert toTest == ret
 
 
 #################################
@@ -49,7 +50,7 @@ def replaceFeatureWithBinaryFeatures_handmade(constructor):
 	data = [[1],[2],[3]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)
-	toTest.replaceFeatureWithBinaryFeatures(0)
+	ret = toTest.replaceFeatureWithBinaryFeatures(0)
 
 	expData = [[1,0,0], [0,1,0], [0,0,1]]
 	expFeatureNames = ['col=1','col=2','col=3']
@@ -57,8 +58,9 @@ def replaceFeatureWithBinaryFeatures_handmade(constructor):
 
 #	import pdb
 #	pdb.set_trace()
-	print toTest.featureNames
+#	print toTest.featureNames
 	assert toTest.isIdentical(exp)
+	assert toTest == ret
 
 
 #############################
@@ -76,13 +78,13 @@ def transformFeartureToIntegerFeature_handmade(constructor):
 	data = [[10],[20],[30.5],[20],[10]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)
-	toTest.transformFeartureToIntegerFeature(0)
+	ret = toTest.transformFeartureToIntegerFeature(0)
 
 	assert toTest.data[0] == toTest.data[4]
 	assert toTest.data[1] == toTest.data[3]
 	assert toTest.data[0] != toTest.data[1]
 	assert toTest.data[0] != toTest.data[2]
-
+	assert toTest == ret
 
 
 
@@ -654,15 +656,17 @@ def shufflePoints_noLongerEqual(constructor):
 	# it is possible that it shuffles it into the same configuration.
 	# the odds are vanishly low that it will do so over consecutive calls
 	# however. We will pass as long as it changes once
+	returns = []
 	for i in xrange(5):
-		toTest.shufflePoints()
+		ret = toTest.shufflePoints()
+		returns.append(ret)
 		if not toTest.isApproximatelyEqual(toCompare):
-			return
+			break
 
 	assert not toTest.isApproximatelyEqual(toCompare)
 
-
-
+	for ret in returns:
+		assert ret == toTest
 
 
 
@@ -680,15 +684,17 @@ def shuffleFeatures_noLongerEqual(constructor):
 	# it is possible that it shuffles it into the same configuration.
 	# the odds are vanishly low that it will do so over consecutive calls
 	# however. We will pass as long as it changes once
+	returns = []
 	for i in xrange(5):
-		toTest.shuffleFeatures()
+		ret = toTest.shuffleFeatures()
+		returns.append(ret)
 		if not toTest.isApproximatelyEqual(toCompare):
-			return
+			break
 
 	assert not toTest.isApproximatelyEqual(toCompare)
 
-
-
+	for ret in returns:
+		assert ret == toTest
 
 
 
