@@ -235,9 +235,9 @@ def test_setFeatureName_exceptionNonUnique():
 #	toTest = makeAndDefine(["hello"])
 #	toTest.setFeatureName("hello",DEFAULT_PREFIX + "2")
 
-@raises(ImproperActionException)
+@raises(ArgumentException)
 def test_setFeatureName_exceptionNoFeatures():
-	toTest = makeAndDefine([])
+	toTest = makeAndDefine()
 	toTest.setFeatureName("hello","2")
 
 def test_setFeatureName_handmade_viaIndex():
@@ -287,12 +287,19 @@ def test_setFeatureNamesFromList_exceptionNonUniqueStringInList():
 	nonUnique = ['1','2','3','1']
 	toTest.setFeatureNamesFromList(nonUnique)
 
-@raises(ImproperActionException)
+@raises(ArgumentException)
 def test_setFeatureNamesFromList_exceptionNoFeatures():
 	""" Test setFeatureNamesFromList() for ArgumentException when there are no features to name """
-	toTest = makeAndDefine([])
+	toTest = makeAndDefine()
 	toAssign = ["hey","gone","none","blank"]
 	toTest.setFeatureNamesFromList(toAssign)
+
+def test_setFeatureNamesFromList_emptyDataAndList():
+	""" Test setFeatureNamesFromList() when both the data and the list are empty """
+	toTest = makeAndDefine()
+	toAssign = []
+	ret = toTest.setFeatureNamesFromList(toAssign)
+	assert toTest == ret
 
 def test_setFeatureNamesFromList_addDefault():
 	""" Test setFeatureNamesFromList() when given a default featureName """
@@ -342,12 +349,19 @@ def test_setFeatureNamesFromDict_exceptionNonIntIndexInDict():
 	nonIntIndex = {"one":"one"}
 	toTest.setFeatureNamesFromDict(nonIntIndex)
 
-@raises(ImproperActionException)
+@raises(ArgumentException)
 def test_setFeatureNamesFromDict_exceptionNoFeatures():
 	""" Test setFeatureNamesFromDict() for ArgumentException when there are no features to name """
 	toTest = makeAndDefine([])
 	toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
 	toTest.setFeatureNamesFromDict(toAssign)
+
+def test_setFeatureNamesFromDict_emptyDataAndList():
+	""" Test setFeatureNamesFromDict() when both the data and the list are empty """
+	toTest = makeAndDefine()
+	toAssign = {}
+	ret = toTest.setFeatureNamesFromDict(toAssign)	
+	assert toTest == ret
 
 def test_setFeatureNamesFromDict_handmade():
 	""" Test setFeatureNamesFromDict() against handmade output """

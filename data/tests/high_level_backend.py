@@ -11,6 +11,7 @@ from copy import deepcopy
 
 import numpy
 
+import UML
 from UML.data import List
 from UML.data import Matrix
 from UML.data import Sparse
@@ -20,8 +21,6 @@ from UML.data import Sparse
 # dropFeaturesContainingType #
 ###########################
 
-
-#hmmm but this only applies to representations that can have strings.
 
 def dropFeaturesContainingType_emptyTest(constructor):
 	""" Test dropFeaturesContainingType() when the data is empty """
@@ -33,16 +32,31 @@ def dropFeaturesContainingType_emptyTest(constructor):
 	assert toTest == ret
 
 
+def dropFeaturesContainingType_ListOnlyTest(constructor):
+	""" Test dropFeaturesContainingType() only on List data """
+	data = [[1,2],[3,4]]
+	toTest = constructor(data)
+	stringData = [[5, 'six']]
+	toAdd = UML.createData('List', stringData)
+	if toTest.getTypeString() == 'List':
+		toTest.appendPoints(toAdd)
+		toTest.dropFeaturesContainingType(basestring)
+		assert toTest.features() == 1
+
+
 #################################
 # replaceFeatureWithBinaryFeatures #
 #################################
 
 
-def replaceFeatureWithBinaryFeatures_emptyException(constructor):
-	""" Test replaceFeatureWithBinaryFeatures() with an empty object """
+def replaceFeatureWithBinaryFeatures_PemptyException(constructor):
+	""" Test replaceFeatureWithBinaryFeatures() with a point empty object """
 	data = []
 	toTest = constructor(data)
 	toTest.replaceFeatureWithBinaryFeatures(0)
+
+
+#def replaceFeatureWithBinaryFeatures_exception
 
 
 def replaceFeatureWithBinaryFeatures_handmade(constructor):
@@ -620,8 +634,8 @@ def isApproximatelyEqual_randomTest(constructor):
 	""" Test isApproximatelyEqual() using randomly generated data """
 
 	for x in xrange(1,2):
-		points = 200
-		features = 80
+		points = 100
+		features = 40
 		data = numpy.zeros((points,features))
 
 		for i in xrange(points):

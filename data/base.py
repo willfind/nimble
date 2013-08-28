@@ -70,7 +70,7 @@ class Base(object):
 
 		"""
 		if len(self.featureNames) == 0:
-			raise ImproperActionException("Cannot set any feature names; this object has no features ")
+			raise ArgumentException("Cannot set any feature names; this object has no features ")
 		self._setFeatureName_implementation(oldIdentifier, newFeatureName, False)
 		return self
 
@@ -85,11 +85,13 @@ class Base(object):
 		"""
 		if assignments is None:
 			self._setAllDefault()
-			return
+			return self
 		if not isinstance(assignments, list):
 			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
 		if self.features() == 0:
-			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
+			if len(assignments) > 0:
+				raise ArgumentException("assignments is too large; this object has no features ")
+			return self
 		if len(assignments) != self.features():
 			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
 
@@ -116,11 +118,13 @@ class Base(object):
 		"""
 		if assignments is None:
 			self._setAllDefault()
-			return
+			return self
 		if not isinstance(assignments, dict):
 			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
 		if self.features() == 0:
-			raise ImproperActionException("Cannot rename any feature names; this object has no features ")
+			if len(assignments) > 0:
+				raise ArgumentException("assignments is too large; this object has no features ")
+			return self
 		if len(assignments) != self.features():
 			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
 
@@ -176,8 +180,8 @@ class Base(object):
 				if not isinstance(value, type):
 					raise ArgumentException("When giving a list as input, every contained value must be a type")
 
-		if self.features() == 0:
-			return
+		if self.points() == 0 or self.features() == 0:
+			return self
 
 		def hasType(feature):
 			for value in feature:

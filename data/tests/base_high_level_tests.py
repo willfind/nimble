@@ -48,15 +48,18 @@ def test_dropFeaturesContainingType_emptyTest():
 	callAll(dropFeaturesContainingType_emptyTest)
 
 
+def test_dropFeaturesContainingType_ListOnlyTest():
+	""" Test dropFeaturesContainingType() only on List data """
+	callAll(dropFeaturesContainingType_ListOnlyTest)
 
 #################################
 # replaceFeatureWithBinaryFeatures #
 #################################
 
-@raises(ImproperActionException)
-def test_replaceFeatureWithBinaryFeatures_emptyException():
-	""" Test replaceFeatureWithBinaryFeatures() with an empty object """
-	callAll(replaceFeatureWithBinaryFeatures_emptyException)
+@raises(ArgumentException)
+def test_replaceFeatureWithBinaryFeatures_PemptyException():
+	""" Test replaceFeatureWithBinaryFeatures() with a point empty object """
+	callAll(replaceFeatureWithBinaryFeatures_PemptyException)
 
 def test_replaceFeatureWithBinaryFeatures_handmade():
 	""" Test replaceFeatureWithBinaryFeaturess() against handmade output """
