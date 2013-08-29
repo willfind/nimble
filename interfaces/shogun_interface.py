@@ -350,7 +350,7 @@ def _shogunBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=N
 	# have to undo the label name packing we performed earlier
 	if inverseMapping is not None and scoreMode != 'allScores':
 		outputObj = UML.createData('Matrix', outData)
-		outputObj.transformFeature(0, makeInverseMapper(inverseMapping))
+		outputObj.applyToElements(makeInverseMapper(inverseMapping), features=0)
 		outData = outputObj.data
 
 	return outData

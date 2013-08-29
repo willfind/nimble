@@ -326,23 +326,26 @@ def test_featureIterator_exactValueViaFor():
 
 
 #####################################
-# applyToEachElement() #
+# applyToElements() #
 #####################################
 
 
-def test_applyToEachElement_passthrough():
-	""" test applyToEachElement() can construct a list by just passing values through  """
-	callAll(applyToEachElement_passthrough)
+def test_applyToElements_passthrough():
+	""" test applyToElements() can construct a list by just passing values through  """
+	callAll(applyToElements_passthrough)
 
-def test_applyToEachElement_passthroughSkip():
-	""" test applyToEachElement() skipZeros flag """
-	callAll(applyToEachElement_passthroughSkip)
+def test_applyToElements_plusOnePreserve():
+	""" test applyToElements can modify elements other than zero """
+	callAll(applyToElements_plusOnePreserve)
 
 
-def test_applyToEachElement_passthroughExclude():
-	""" test applyToEachElement() excludeNoneResultValues flag  """
-	callAll(applyToEachElement_passthroughExclude)
+def test_applyToElements_plusOneExclude():
+	""" test applyToElements() skipNoneReturnValues flag  """
+	callAll(applyToElements_plusOneExclude)
 
+def test_applyToElements_plusOneLimited():
+	""" test applyToElements() on limited portions of the points and features """
+	callAll(applyToElements_plusOneLimited)
 
 
 ########################

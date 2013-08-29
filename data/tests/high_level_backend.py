@@ -570,7 +570,7 @@ def featureIterator_exactValueViaFor(constructor):
 
 
 #####################################
-# applyToEachElement() #
+# applyToElements() #
 #####################################
 
 def passThrough(value):
@@ -585,12 +585,20 @@ def plusOneOnlyEven(value):
 	else:
 		return None
 
-def applyToEachElement_passthrough(constructor):
-	""" test applyToEachElement can construct a list by just passing values through  """
+def applyToElements_passthrough(constructor):
+	""" test applyToElements can construct a list by just passing values through  """
 
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ret = toTest.applyToEachElement(passThrough)
+	ret = toTest.applyToElements(passThrough, inPlace=False)
+	retRaw = ret.copy(asType="python list")
+
+	assert [1,2,3] in retRaw
+	assert [4,5,6] in retRaw
+	assert [7,8,9] in retRaw
+
+	ret = toTest.applyToElements(passThrough)
+	assert ret == toTest
 	retRaw = ret.copy(asType="python list")
 
 	assert [1,2,3] in retRaw
@@ -598,12 +606,20 @@ def applyToEachElement_passthrough(constructor):
 	assert [7,8,9] in retRaw
 
 
-def applyToEachElement_passthroughSkip(constructor):
-	""" test applyToEachElement can construct a list by just passing values through  """
+def applyToElements_plusOnePreserve(constructor):
+	""" test applyToElements can modify elements other than zero  """
 
 	data = [[1,0,3],[0,5,6],[7,0,9]]
 	toTest = constructor(data)
-	ret = toTest.applyToEachElement(plusOne, skipZeros=True)
+	ret = toTest.applyToElements(plusOne, inPlace=False, preserveZeros=True)
+	retRaw = ret.copy(asType="python list")
+
+	assert [2,0,4] in retRaw
+	assert [0,6,7] in retRaw
+	assert [8,0,10] in retRaw
+
+	ret = toTest.applyToElements(plusOne, preserveZeros=True)
+	assert ret == toTest
 	retRaw = ret.copy(asType="python list")
 
 	assert [2,0,4] in retRaw
@@ -611,18 +627,45 @@ def applyToEachElement_passthroughSkip(constructor):
 	assert [8,0,10] in retRaw
 
 
-def applyToEachElement_passthroughExclude(constructor):
-	""" test applyToEachElement can construct a list by just passing values through  """
+def applyToElements_plusOneExclude(constructor):
+	""" test applyToElements() skipNoneReturnValues flag  """
 
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data)
-	ret = toTest.applyToEachElement(plusOneOnlyEven,excludeNoneResultValues=True)
+	ret = toTest.applyToElements(plusOneOnlyEven, inPlace=False, skipNoneReturnValues=True)
 	retRaw = ret.copy(asType="python list")
 
 	assert [1,3,3] in retRaw
 	assert [5,5,7] in retRaw
 	assert [7,9,9] in retRaw
 
+	ret = toTest.applyToElements(plusOneOnlyEven, skipNoneReturnValues=True)
+	assert ret == toTest
+	retRaw = ret.copy(asType="python list")
+
+	assert [1,3,3] in retRaw
+	assert [5,5,7] in retRaw
+	assert [7,9,9] in retRaw
+
+
+def applyToElements_plusOneLimited(constructor):
+	""" test applyToElements() on limited portions of the points and features """
+	data = [[1,2,3],[4,5,6],[7,8,9]]
+	names = ['one','two','three']
+	toTest = constructor(data, names)
+
+	ret = toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], inPlace=False, skipNoneReturnValues=True)
+	retRaw = ret.copy(asType="python list")
+
+	assert [5,7] in retRaw
+
+	ret = toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], skipNoneReturnValues=True)
+	assert ret == toTest
+	retRaw = ret.copy(asType="python list")
+
+	assert [1,2,3] in retRaw
+	assert [4,5,7] in retRaw
+	assert [7,8,9] in retRaw
 
 
 ########################

@@ -505,13 +505,13 @@ class Base(object):
 		return self
 
 
-	def applyToEachElement(self, valueFunction, skipZeros=False, excludeNoneResultValues=False):
+	def applyToElements(self, function, points=None, features=None, inPlace=True, preserveZeros=False, skipNoneReturnValues=False):
 		"""
-		Applies the valueFunction(elementValue) or valueFunction(elementValue, pointNum,
+		Applies the function(elementValue) or function(elementValue, pointNum,
 		featureNum) to each element, and returns an object (of the same type as the
-		calling object) containing the resulting values. If skipZeros=True it does not
-		apply valueFunction to elements in the dataMatrix that are 0 and a 0 is placed in
-		it's place in the output. If excludeNoneResultValues=True, any time valueFunction()
+		calling object) containing the resulting values. If preserveZeros=True it does not
+		apply function to elements in the dataMatrix that are 0 and a 0 is placed in
+		it's place in the output. If skipNoneReturnValues=True, any time function()
 		returns None, the value that was input to the function will be put in the output
 		in place of None. The result of both of the flags is to modify the output, yet
 		ensure it still has the same dimensions as the calling object.
@@ -519,30 +519,57 @@ class Base(object):
 		"""
 		oneArg = False
 		try:
-			valueFunction(0,0,0)
+			function(0,0,0)
 		except TypeError:
 			oneArg = True
+
+		if points is not None and not isinstance(points, list):
+			if not isinstance(points, int):
+				raise ArgumentException("Only allowable inputs to 'points' param is an int ID, a list of int ID's, or None")
+			points = [points]
+
+		if features is not None and not isinstance(features, list):
+			if not isinstance(features, int):
+				raise ArgumentException("Only allowable inputs to 'features' param is an ID, a list of int ID's, or None")
+			features = [features]
+
+		if features is not None:
+			for i in xrange(len(features)):
+				features[i] = self._getIndex(features[i])
 
 		valueList = []
 		for currPoint in self.pointIterator():
 			currPointID = currPoint.index()
+			if points is not None and currPointID not in points:
+				continue
 			tempList = []
 			for j in xrange(len(currPoint)):
+				if features is not None and j not in features:
+					continue
 				value = currPoint[j]
-				if skipZeros and value == 0:
-					tempList.append(0)
+				if preserveZeros and value == 0:
+					if not inPlace:
+						tempList.append(0)
 					continue
 				if oneArg:
-					currRet = valueFunction(value)
+					currRet = function(value)
 				else:
-					currRet = valueFunction(value, currPointID, j)
-				if currRet is None and excludeNoneResultValues:
-					tempList.append(value)
+					currRet = function(value, currPointID, j)
+				if currRet is None and skipNoneReturnValues:
+					if not inPlace:
+						tempList.append(value)
 				else:
-					tempList.append(currRet)
-			valueList.append(tempList)
+					if not inPlace:
+						tempList.append(currRet)
+					else:
+						currPoint[j] = currRet
+			if not inPlace:
+				valueList.append(tempList)
 
-		return UML.createData(self.getTypeString(), valueList)
+		if not inPlace:
+			return UML.createData(self.getTypeString(), valueList)
+		else:
+			return self
 
 	def hashCode(self):
 		"""returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
@@ -550,7 +577,7 @@ class Base(object):
 #		def sumFeature(featureView):
 #			currCos = math.cos(featView.index())
 #		featureSums = self.applyToEachFeature(lambda featView: ((math.sin(pointNum) + math.cos(featView.index()))/2.0) * elementValue)
-		valueObj = self.applyToEachElement(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, skipZeros=True)
+		valueObj = self.applyToElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, inPlace=False, preserveZeros=True)
 		valueList = valueObj.copy(asType="python list")
 		avg = sum(itertools.chain.from_iterable(valueList))/float(self.points()*self.features())
 		bigNum = 1000000000
