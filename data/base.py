@@ -520,49 +520,6 @@ class Base(object):
 				raise StopIteration
 		return featureIt(self)
 
-	def transformPoint(self, point, function):
-		"""
-		Modifies this object so that the specified point is replaced with the results
-		of passing each value of the original point to the input function.
-
-		"""
-		if self.features() == 0:
-			raise ImproperActionException("Cannot transform points in a data object with no features")
-		if point is None or function is None:
-			raise ArgumentException("point and function must not be None")
-		if not isinstance(point, int):
-			raise ArgumentException("point must be the integer index of the point to modify")
-
-		currView = self.pointView(point)
-
-		for x in xrange(self.features()):
-			currValue = currView[x]
-			result = function(currValue)
-			currView[x] = result
-		return self
-
-
-	def transformFeature(self, feature, function):
-		"""
-		Modifies this object so that the specified feature is replaced with the results
-		of passing each value of the original feature to the input function.
-
-		"""
-		if self.points() == 0:
-			raise ImproperActionException("Cannot transform features in a data object with no points")
-		if feature is None or function is None:
-			raise ArgumentException("feature and function must not be None")
-		index = self._getIndex(feature)
-
-		currView = self.featureView(index)
-
-		for x in xrange(self.points()):
-			currValue = currView[x]
-			result = function(currValue)
-			currView[x] = result
-		return self
-
-
 	def applyToElements(self, function, points=None, features=None, inPlace=True, preserveZeros=False, skipNoneReturnValues=False):
 		"""
 		Applies the function(elementValue) or function(elementValue, pointNum,
