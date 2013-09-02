@@ -108,7 +108,7 @@ def testExtractWinningPredictionLabel():
     predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
     BaseObj = createData('Matrix', predictionData)
     BaseObj.transpose()
-    predictions = BaseObj.applyToEachFeature(extractWinningPredictionLabel)
+    predictions = BaseObj.applyToFeatures(extractWinningPredictionLabel, inPlace=False)
     listPredictions = predictions.copy(asType="python list")
     
     assert listPredictions[0][0] - 3 == 0.0

@@ -25,7 +25,7 @@ if __name__ == "__main__":
 	def makeDate(point):
 		tokens = point[0].split("-")
 		return datetime.date(int(tokens[0]),int(tokens[1]),int(tokens[2]))
-	dateObjects = dateStrings.applyToEachPoint(makeDate)
+	dateObjects = dateStrings.applyToPoints(makeDate, inPlace=False)
 	dateObjects.setFeatureName(0, "Date")
 	appleStock.appendFeatures(dateObjects)
 	appleStock.sortPoints("Date")
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 	start = appleStock[0,"Date"]
 	def makeDifference(point):
 		return (point[dateNum] - start).days
-	daysSinceStart = appleStock.applyToEachPoint(makeDifference)
+	daysSinceStart = appleStock.applyToPoints(makeDifference, inPlace=False)
 	daysSinceStart.setFeatureName(0, "Time")
 	appleStock.extractFeatures("Date")
 	appleStock.appendFeatures(daysSinceStart)
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 	adjCloseNDNum = appleStock.featureNames["Adj Close Next Day"]
 	def ratioChange(point):
 		return (float(point[adjCloseNDNum]) / point[adjCloseNum]) - 1
-	predictionLabels = appleStock.applyToEachPoint(ratioChange)
+	predictionLabels = appleStock.applyToPoints(ratioChange, inPlace=False)
 	predictionLabels.setFeatureName(0, "Predict")
 	appleStock.extractFeatures(["Adj Close Next Day"])
 

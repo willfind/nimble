@@ -1153,9 +1153,15 @@ def pointView_isinstance(constructor):
 	assert pView.name() is None
 	assert pView.index() >= 0 and pView.index() < toTest.points()
 	assert len(pView) == toTest.features()
-	assert pView['one'] == 1
+	assert pView[0] == 1
 	assert pView['two'] == 2
 	assert pView['three'] == 3
+	pView[0] = -1
+	pView['two'] = -2
+	pView['three'] = -3
+	assert pView[0] == -1
+	assert pView['two'] == -2
+	assert pView['three'] == -3
 
 
 ##################
@@ -1174,6 +1180,15 @@ def featureView_isinstance(constructor):
 	assert fView.name() is not None
 	assert fView.index() >= 0 and fView.index() < toTest.features()
 	assert len(fView) == toTest.points()
+	assert fView[0] == 1
+	assert fView[1] == 4
+	assert fView[2] == 7
+	fView[0] = -1
+	fView[1] = -4
+	fView[2] = -7
+	assert fView[0] == -1
+	assert fView[1] == -4
+	assert fView[2] == -7
 
 
 

@@ -210,52 +210,83 @@ def test_foldIterator_ordering():
 
 
 ####################
-# applyToEachPoint() #
+# applyToPoints() #
 ####################
 
 @raises(ImproperActionException)
-def test_applyToEachPoint_exceptionEmpty():
-	""" Test applyToEachPoint() for ImproperActionException when object is empty """
-	callAll(applyToEachPoint_exceptionEmpty)
+def test_applyToPoints_exceptionEmpty():
+	""" Test applyToPoints() for ImproperActionException when object is empty """
+	callAll(applyToPoints_exceptionEmpty)
 
 @raises(ArgumentException)
-def test_applyToEachPoint_exceptionInputNone():
-	""" Test applyToEachPoint() for ArgumentException when function is None """
-	callAll(applyToEachPoint_exceptionInputNone)
+def test_applyToPoints_exceptionInputNone():
+	""" Test applyToPoints() for ArgumentException when function is None """
+	callAll(applyToPoints_exceptionInputNone)
 
-def test_applyToEachPoint_Handmade():
-	""" Test applyToEachPoint() with handmade output """
-	callAll(applyToEachPoint_Handmade)
+def test_applyToPoints_Handmade():
+	""" Test applyToPoints() with handmade output """
+	callAll(applyToPoints_Handmade)
 
+def test_applyToPoints_HandmadeLimited():
+	""" Test applyToPoints() with handmade output on a limited portion of points """
+	callAll(applyToPoints_HandmadeLimited)
 
-def test_applyToEachPoint_nonZeroItAndLen():
-	""" Test applyToEachPoint() for the correct usage of the nonzero iterator """
-	callAll(applyToEachPoint_nonZeroItAndLen)
+def test_applyToPoints_nonZeroItAndLen():
+	""" Test applyToPoints() for the correct usage of the nonzero iterator """
+	callAll(applyToPoints_nonZeroItAndLen)
 
+def test_applyToPoints_HandmadeInPlace():
+	""" Test applyToPoints() with handmade output. InPlace """
+	callAll(applyToPoints_HandmadeInPlace)
 
+def test_applyToPoints_HandmadeLimitedInPlace():
+	""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
+	callAll(applyToPoints_HandmadeLimitedInPlace)
+
+def test_applyToPoints_nonZeroItAndLenInPlace():
+	""" Test applyToPoints() for the correct usage of the nonzero iterator. InPlace """
+	callAll(applyToPoints_nonZeroItAndLenInPlace)
 
 #######################
-# applyToEachFeature() #
+# applyToFeatures() #
 #######################
 
 @raises(ImproperActionException)
-def test_applyToEachFeature_exceptionEmpty():
-	""" Test applyToEachFeature() for ImproperActionException when object is empty """
-	callAll(applyToEachFeature_exceptionEmpty)
+def test_applyToFeatures_exceptionEmpty():
+	""" Test applyToFeatures() for ImproperActionException when object is empty """
+	callAll(applyToFeatures_exceptionEmpty)
 
 @raises(ArgumentException)
-def test_applyToEachFeature_exceptionInputNone():
-	""" Test applyToEachFeature() for ArgumentException when function is None """
-	callAll(applyToEachFeature_exceptionInputNone)
+def test_applyToFeatures_exceptionInputNone():
+	""" Test applyToFeatures() for ArgumentException when function is None """
+	callAll(applyToFeatures_exceptionInputNone)
 
-def test_applyToEachFeature_Handmade():
-	""" Test applyToEachFeature() with handmade output """
-	callAll(applyToEachFeature_Handmade)
+def test_applyToFeatures_Handmade():
+	""" Test applyToFeatures() with handmade output """
+	callAll(applyToFeatures_Handmade)
+
+def test_applyToFeatures_HandmadeLimited():
+	""" Test applyToFeatures() with handmade output on a limited portion of features """
+	callAll(applyToFeatures_HandmadeLimited)
+
+def test_applyToFeatures_nonZeroItAndLen():
+	""" Test applyToFeatures() for the correct usage of the nonzero iterator """
+	callAll(applyToFeatures_nonZeroItAndLen)
 
 
-def test_applyToEachFeature_nonZeroItAndLen():
-	""" Test applyToEachFeature() for the correct usage of the nonzero iterator """
-	callAll(applyToEachFeature_nonZeroItAndLen)
+def test_applyToFeatures_HandmadeInPlace():
+	""" Test applyToFeatures() with handmade output. InPlace """
+	callAll(applyToFeatures_HandmadeInPlace)
+
+
+def test_applyToFeatures_HandmadeLimitedInPlace():
+	""" Test applyToFeatures() with handmade output on a limited portion of features. InPlace """
+	callAll(applyToFeatures_HandmadeLimitedInPlace)
+
+
+def test_applyToFeatures_nonZeroItAndLenInPlace():
+	""" Test applyToFeatures() for the correct usage of the nonzero iterator. InPlace """
+	callAll(applyToFeatures_nonZeroItAndLenInPlace)
 
 
 #####################

@@ -232,7 +232,7 @@ class Base(object):
 
 		for point in values.data:
 			value = point[0]
-			ret = toConvert.applyToEachPoint(makeFunc(value))
+			ret = toConvert.applyToPoints(makeFunc(value), inPlace=False)
 			ret.setFeatureName(0, varName + "=" + str(value).strip())
 			toConvert.appendFeatures(ret)
 
@@ -281,7 +281,7 @@ class Base(object):
 		def lookup(point):
 			return mapping[point[0]]
 
-		converted = toConvert.applyToEachPoint(lookup)
+		converted = toConvert.applyToPoints(lookup, inPlace=False)
 		converted.setFeatureName(0,toConvert.featureNamesInverse[0])		
 
 		self.appendFeatures(converted)
@@ -312,7 +312,7 @@ class Base(object):
 		def isSelected(point):
 			return point[len(point)-1]
 
-		selectionKeys = self.applyToEachPoint(experiment)
+		selectionKeys = self.applyToPoints(experiment, inPlace=False)
 		self.appendFeatures(selectionKeys)
 		ret = self.extractPoints(isSelected)
 		# remove the experimental data
@@ -354,25 +354,32 @@ class Base(object):
 		# return that lists iterator as the fold iterator 	
 		return self._foldIteratorClass(foldList, self)
 
-	def applyToEachPoint(self, function):
+
+	def applyToPoints(self, function, points=None, inPlace=True):
 		"""
 		Applies the given funciton to each point in this object, collecting the
 		output values into a new object that is returned upon completion.
 
 		function must not be none and accept a point as an argument
 
+		points may be None to indicate application to all points, a single point
+		ID or a list of point ID's to limit application only to those specified
+
 		"""
 		if self.points() == 0:
 			raise ImproperActionException("Function not callable if there are 0 points of data")
 		if function is None:
 			raise ArgumentException("function must not be None")
-		retData = []
-		for point in self.pointIterator():
-			currOut = function(point)
-			retData.append([currOut])
-		return UML.createData(self.getTypeString(), retData)
 
-	def applyToEachFeature(self,function):
+		if points is not None and not isinstance(points, list):
+			if not isinstance(points, int):
+				raise ArgumentException("Only allowable inputs to 'points' param is an int ID, a list of int ID's, or None")
+			points = [points]
+
+		return self._applyTo_implementation(function, points, inPlace, 'point')
+
+
+	def applyToFeatures(self, function, features=None, inPlace=True):
 		"""
 		Applies the given funciton to each feature in this object, collecting the
 		output values into a new object in the shape of a feature vector that is
@@ -380,16 +387,67 @@ class Base(object):
 
 		function must not be none and accept a feature as an argument
 
+		features may be None to indicate application to all features, a single feature
+		ID or a list of features ID's to limit application only to those specified
+
 		"""
 		if self.features() == 0:
 			raise ImproperActionException("Function not callable if there are 0 features of data")
 		if function is None:
 			raise ArgumentException("function must not be None")
-		retData = [[]]
-		for feature in self.featureIterator():
-			currOut = function(feature)
-			retData[0].append(currOut)
-		return UML.createData(self.getTypeString(), retData)
+
+		if features is not None and not isinstance(features, list):
+			if not isinstance(features, int):
+				raise ArgumentException("Only allowable inputs to 'features' param is an ID, a list of int ID's, or None")
+			features = [features]
+
+		if features is not None:
+			for i in xrange(len(features)):
+				features[i] = self._getIndex(features[i])
+
+		return self._applyTo_implementation(function, features, inPlace, 'feature')
+
+
+	def _applyTo_implementation(self, function, included, inPlace, axis):
+		if axis == 'point':
+			viewIterator = self.pointIterator()
+		else:
+			viewIterator = self.featureIterator()
+
+		retData = []
+		for view in viewIterator:
+			viewID = view.index()
+			if included is not None and viewID not in included:
+				continue
+			currOut = function(view)
+			# first we branch on whether the output has multiple values or is singular.
+			if hasattr(currOut, '__iter__'):
+				# if there are multiple values, they must be random accessible
+				if not hasattr(currOut, '__getitem__'):
+					raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
+				if inPlace:
+					for i in xrange(len(currOut)):
+						view[i] = currOut[i]
+				else:
+					toCopyInto = []
+					for value in currOut:
+						toCopyInto.append(value)
+					retData.append(toCopyInto)
+			# singular return
+			else:
+				if inPlace:
+					view[0] = currOut
+				else:
+					retData.append([currOut])
+		
+		if inPlace:
+			ret = self
+		else:
+			ret = UML.createData(self.getTypeString(), retData)
+			if axis != 'point':
+				ret.transpose()
+
+		return ret
 
 
 	def mapReducePoints(self, mapper, reducer):
@@ -576,7 +634,7 @@ class Base(object):
 		that should almost always change when the values of the matrix are changed by a substantive amount"""
 #		def sumFeature(featureView):
 #			currCos = math.cos(featView.index())
-#		featureSums = self.applyToEachFeature(lambda featView: ((math.sin(pointNum) + math.cos(featView.index()))/2.0) * elementValue)
+#		featureSums = self.applyToFeatures(lambda featView: ((math.sin(pointNum) + math.cos(featView.index()))/2.0) * elementValue, inPlace=False)
 		valueObj = self.applyToElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, inPlace=False, preserveZeros=True)
 		valueList = valueObj.copy(asType="python list")
 		avg = sum(itertools.chain.from_iterable(valueList))/float(self.points()*self.features())

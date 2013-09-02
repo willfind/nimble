@@ -109,6 +109,72 @@ class Sparse(Base):
 				return value
 		return featureIt(self)
 
+	def _applyTo_implementation(self, function, included, inPlace, axis):
+		retData = []
+		modData = []
+		modRow = []
+		modCol = []
+
+		if axis == 'point':
+			viewIterator = self.pointIterator()
+			modTarget = modRow
+			modOther = modCol
+		else:
+			viewIterator = self.featureIterator()
+			modTarget = modCol
+			modOther = modRow
+
+		for view in viewIterator:
+			viewID = view.index()
+			if included is not None and viewID not in included:
+				continue
+			currOut = function(view)
+			# first we branch on whether the output has multiple values or is singular.
+			if hasattr(currOut, '__iter__'):
+				# if there are multiple values, they must be random accessible
+				if not hasattr(currOut, '__getitem__'):
+					raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
+				if inPlace:
+					for i in xrange(len(currOut)):
+						if view[i] != 0:
+							view[i] = currOut[i]
+						else:
+							modData.append(currOut[i])
+							modTarget.append(viewID)
+							modOther.append(i)
+				else:
+					toCopyInto = []
+					for value in currOut:
+						toCopyInto.append(value)
+					retData.append(toCopyInto)
+			# singular return
+			else:
+				if inPlace:
+					if view[0] != 0:
+						view[0] = currOut
+					else:
+							modData.append(currOut[i])
+							modTarget.append(viewID)
+							modOther.append(i)
+				else:
+					retData.append([currOut])
+
+		if inPlace and len(modData) != 0:
+			newData = numpy.append(self.data.data, modData)
+			newRow = numpy.append(self.data.row, modRow)
+			newCol = numpy.append(self.data.col, modCol)
+			self.data = coo_matrix((newData,(newRow,newCol)),shape=(self.points(),self.features()))
+			self._sorted = None
+
+		if inPlace:
+			ret = self
+		else:
+			ret = UML.createData(self.getTypeString(), retData)
+			if axis != 'point':
+				ret.transpose()
+
+		return ret
+
 
 	def _appendPoints_implementation(self,toAppend):
 		"""
@@ -901,16 +967,24 @@ class VectorView(View):
 		if self._nzMap is None:
 			self._makeMap()
 
+		if isinstance(key, basestring):
+			if self._axis =='point':
+				key = self._outer.featureNames[key]
+			else:
+				raise TypeError('key is not a recognized type')
+
 		if key in self._nzMap:
 			self._outer.data.data[self._nzMap[key]] = value
 		else:
-			self._outer.data.data.append(value)
-			if self._axis == 'point':
-				self._outer.data.row.append(self._index)
-				self._outer.data.col.append(key)
-			else:
-				self._outer.data.row.append(key)
-				self._outer.data.col.append(self._index)
+			raise ArgumentException("Sparse objects do not support element level modification of zero valued entries")
+#			self._outer.data.data = numpy.append(self._outer.data.data, value)
+#			if self._axis == 'point':
+#				self._outer.data.row = numpy.append(self._outer.data.row, self._index)
+#				self._outer.data.col = numpy.append(self._outer.data.col, key)
+#			else:
+#				self._outer.data.row = numpy.append(self._outer.data.row, key)
+#				self._outer.data.col = numpy.append(self._outer.data.col, self._index)
+#			remake object?
 	def nonZeroIterator(self):
 		if self._nzMap is not None:
 			return nzItMap(self._outer, self._nzMap)

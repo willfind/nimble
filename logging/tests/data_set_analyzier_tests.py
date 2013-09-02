@@ -226,7 +226,7 @@ def testProduceAggregateTable():
 
 def testStDev():
     testRowList = createData('List', np.array([[1], [1], [3], [4], [2], [6], [12], [0]]), ['nums'])
-    stDevContainer = testRowList.applyToEachFeature(standardDeviation)
+    stDevContainer = testRowList.applyToFeatures(standardDeviation, inPlace=False)
     stDev = stDevContainer.copy(asType="python list")[0][0]
     assert_almost_equal(stDev, 3.6379, 3)
 

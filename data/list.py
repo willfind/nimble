@@ -33,6 +33,7 @@ class List(Base):
 		the init funciton of Base, to be interpreted there.
 
 		"""
+		# Format / copy the data if necessary
 		# if input as a list, copy it
 		if isinstance(data, list):
 			if reuseData:
@@ -41,12 +42,14 @@ class List(Base):
 				data = copy.deepcopy(data)
 		# if sparse, make dense
 		if isspmatrix(data):
-				data = data.todense()
+			data = data.todense()
 		# if its a numpy construct, convert it to a python list
 		try:
 			data = data.tolist()
 		except AttributeError:
 			pass
+
+		# assign attributes
 		if data is None or len(data) == 0:
 			self.numFeatures = 0
 			self.data = []
@@ -56,6 +59,8 @@ class List(Base):
 			for point in data:
 				if len(point) != self.numFeatures:
 					raise ArgumentException("Points must be of equal size")
+#				if not isinstance(point, list):
+#					raise ArgumentException("If a python list is given as input, each entry must also be a list")
 			self.data = data
 			super(List, self).__init__(featureNames, name, path)
 
@@ -106,7 +111,7 @@ class List(Base):
 		testPoint = PointView(self.featureNames, self.data[0], 0)
 		try:
 			sortHelper(testPoint)
-			indices = self.applyToEachPoint(lambda x:x.index())
+			indices = self.applyToPoints(lambda x:x.index(), inPlace=False)
 			indices.setFeatureName(0,"#UML_SORTHELPER_INDEX")
 			self.appendFeatures(indices)
 			newFeatureIndex = self.features() - 1 
@@ -660,6 +665,8 @@ class PointView(View):
 			index = self._featureNames[index]
 		return self._point[index]	
 	def __setitem__(self, key, value):
+		if isinstance(key, basestring):
+			key = self._featureNames[key]
 		self._point[key] = value
 	def nonZeroIterator(self):
 		return nzIt(self)

@@ -279,37 +279,36 @@ def foldIterator_verifyPartitions(constructor):
 
 
 ####################
-# applyToEachPoint() #
+# applyToPoints() #
 ####################
 
-def applyToEachPoint_exceptionEmpty(constructor):
-	""" Test applyToEachPoint() for ImproperActionException when object is empty """
+def applyToPoints_exceptionEmpty(constructor):
+	""" Test applyToPoints() for ImproperActionException when object is empty """
 	origData = []
 	origObj = constructor(origData)
 
 	def emitLower(point):
 		return point[origObj.featureNames['deci']]
 
-	lowerCounts = origObj.applyToEachPoint(emitLower)
+	lowerCounts = origObj.applyToPoints(emitLower)
 
-def applyToEachPoint_exceptionInputNone(constructor):
-	""" Test applyToEachPoint() for ArgumentException when function is None """
+def applyToPoints_exceptionInputNone(constructor):
+	""" Test applyToPoints() for ArgumentException when function is None """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),featureNames)
-	origObj.applyToEachPoint(None)
+	origObj.applyToPoints(None)
 
-def applyToEachPoint_Handmade(constructor):
-	""" Test applyToEachPoint() with handmade output """
+def applyToPoints_Handmade(constructor):
+	""" Test applyToPoints() with handmade output """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj = constructor(deepcopy(origData),featureNames)
-
 
 	def emitLower(point):
 		return point[origObj.featureNames['deci']]
 
-	lowerCounts = origObj.applyToEachPoint(emitLower)
+	lowerCounts = origObj.applyToPoints(emitLower, inPlace=False)
 
 	expectedOut = [[0.1], [0.1], [0.1], [0.2]]
 	exp = constructor(expectedOut)
@@ -317,34 +316,108 @@ def applyToEachPoint_Handmade(constructor):
 	assert lowerCounts.isIdentical(exp)
 
 
-def applyToEachPoint_nonZeroItAndLen(constructor):
-	""" Test applyToEachPoint() for the correct usage of the nonzero iterator """
+def applyToPoints_HandmadeLimited(constructor):
+	""" Test applyToPoints() with handmade output on a limited portion of points """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj = constructor(deepcopy(origData),featureNames)
+
+	def emitLower(point):
+		return point[origObj.featureNames['deci']]
+
+	lowerCounts = origObj.applyToPoints(emitLower, points=[3,2], inPlace=False)
+
+	expectedOut = [[0.1], [0.2]]
+	exp = constructor(expectedOut)
+
+	assert lowerCounts.isIdentical(exp)
+
+
+def applyToPoints_nonZeroItAndLen(constructor):
+	""" Test applyToPoints() for the correct usage of the nonzero iterator """
 	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
 	origObj = constructor(deepcopy(origData))
 
 	def emitNumNZ(point):
 		ret = 0
-		print len(point)
 		assert len(point) == 3
 		for value in point.nonZeroIterator():
 			ret += 1
 		return ret
 
-	counts = origObj.applyToEachPoint(emitNumNZ)
+	counts = origObj.applyToPoints(emitNumNZ, inPlace=False)
 
 	expectedOut = [[3], [2], [2], [1]]
 	exp = constructor(expectedOut)
 
 	assert counts.isIdentical(exp)
 
+def applyToPoints_HandmadeInPlace(constructor):
+	""" Test applyToPoints() with handmade output. InPlace """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj = constructor(deepcopy(origData),featureNames)
+
+	def emitAllDeci(point):
+		value = point[origObj.featureNames['deci']]
+		return [value, value, value]
+
+	lowerCounts = origObj.applyToPoints(emitAllDeci)
+
+	expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
+	exp = constructor(expectedOut, featureNames)
+
+	assert origObj == lowerCounts
+	assert lowerCounts.isIdentical(exp)
+
+def applyToPoints_HandmadeLimitedInPlace(constructor):
+	""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj = constructor(deepcopy(origData),featureNames)
+
+	def emitAllDeci(point):
+		value = point[origObj.featureNames['deci']]
+		return [value, value, value]
+
+	lowerCounts = origObj.applyToPoints(emitAllDeci, points=[3,2])
+
+	expectedOut = [[1,0.1,0.01], [1,0.1,0.02], [0.1,0.1,0.1], [0.2,0.2,0.2]]
+	exp = constructor(expectedOut, featureNames)
+
+	assert origObj == lowerCounts
+	assert lowerCounts.isIdentical(exp)
+
+
+def applyToPoints_nonZeroItAndLenInPlace(constructor):
+	""" Test applyToPoints() for the correct usage of the nonzero iterator. InPlace """
+	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+	origObj = constructor(deepcopy(origData))
+
+	def emitNumNZ(point):
+		ret = 0
+		assert len(point) == 3
+		for value in point.nonZeroIterator():
+			ret += 1
+		return [ret, ret, ret]
+
+	counts = origObj.applyToPoints(emitNumNZ)
+
+	expectedOut = [[3,3,3], [2,2,2], [2,2,2], [1,1,1]]
+	exp = constructor(expectedOut)
+
+	assert origObj == counts
+	assert counts.isIdentical(exp)
+
+
 
 
 #######################
-# applyToEachFeature() #
+# applyToFeatures() #
 #######################
 
-def applyToEachFeature_exceptionEmpty(constructor):
-	""" Test applyToEachFeature() for ImproperActionException when object is empty """
+def applyToFeatures_exceptionEmpty(constructor):
+	""" Test applyToFeatures() for ImproperActionException when object is empty """
 	origData = []
 	origObj= constructor(origData)
 
@@ -355,17 +428,17 @@ def applyToEachFeature_exceptionEmpty(constructor):
 				return 0
 		return 1
 
-	lowerCounts = origObj.applyToEachFeature(emitAllEqual)
+	lowerCounts = origObj.applyToFeatures(emitAllEqual, inPlace=False)
 
-def applyToEachFeature_exceptionInputNone(constructor):
-	""" Test applyToEachFeature() for ArgumentException when function is None """
+def applyToFeatures_exceptionInputNone(constructor):
+	""" Test applyToFeatures() for ArgumentException when function is None """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),featureNames)
-	origObj.applyToEachFeature(None)
+	origObj.applyToFeatures(None)
 
-def applyToEachFeature_Handmade(constructor):
-	""" Test applyToEachFeature() with handmade output """
+def applyToFeatures_Handmade(constructor):
+	""" Test applyToFeatures() with handmade output """
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),featureNames)
@@ -377,14 +450,32 @@ def applyToEachFeature_Handmade(constructor):
 				return 0
 		return 1
 
-	lowerCounts = origObj.applyToEachFeature(emitAllEqual)
+	lowerCounts = origObj.applyToFeatures(emitAllEqual, inPlace=False)
 	expectedOut = [[1,0,0]]	
 	assert lowerCounts.isIdentical(constructor(expectedOut))
 
 
+def applyToFeatures_HandmadeLimited(constructor):
+	""" Test applyToFeatures() with handmade output on a limited portion of features """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj= constructor(deepcopy(origData),featureNames)
 
-def applyToEachFeature_nonZeroItAndLen(constructor):
-	""" Test applyToEachFeature() for the correct usage of the nonzero iterator """
+	def emitAllEqual(feature):
+		first = feature[0]
+		for value in feature:
+			if value != first:
+				return 0
+		return 1
+
+	lowerCounts = origObj.applyToFeatures(emitAllEqual, features=[0,'centi'], inPlace=False)
+	expectedOut = [[1,0]]	
+	assert lowerCounts.isIdentical(constructor(expectedOut))
+
+
+
+def applyToFeatures_nonZeroItAndLen(constructor):
+	""" Test applyToFeatures() for the correct usage of the nonzero iterator """
 	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
 	origObj = constructor(deepcopy(origData))
 
@@ -395,12 +486,105 @@ def applyToEachFeature_nonZeroItAndLen(constructor):
 			ret += 1
 		return ret
 
-	counts = origObj.applyToEachFeature(emitNumNZ)
+	counts = origObj.applyToFeatures(emitNumNZ, inPlace=False)
 
 	expectedOut = [[3, 3, 2]]
 	exp = constructor(expectedOut)
 
 	assert counts.isIdentical(exp)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def applyToFeatures_HandmadeInPlace(constructor):
+	""" Test applyToFeatures() with handmade output. InPlace """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj= constructor(deepcopy(origData),featureNames)
+
+	def emitAllEqual(feature):
+		first = feature[0]
+		for value in feature:
+			if value != first:
+				return [0,0,0,0]
+		return [1,1,1,1]
+
+	lowerCounts = origObj.applyToFeatures(emitAllEqual)
+	expectedOut = [[1,0,0], [1,0,0], [1,0,0], [1,0,0]]	
+	exp = constructor(expectedOut, featureNames)
+	assert origObj == lowerCounts
+
+	print lowerCounts.data
+	print exp.data
+
+	assert lowerCounts.isIdentical(exp)
+
+
+def applyToFeatures_HandmadeLimitedInPlace(constructor):
+	""" Test applyToFeatures() with handmade output on a limited portion of features. InPlace """
+	featureNames = {'number':0,'centi':2,'deci':1}
+	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+	origObj= constructor(deepcopy(origData),featureNames)
+
+	def emitAllEqual(feature):
+		first = feature[0]
+		for value in feature:
+			if value != first:
+				return [0,0,0,0]
+		return [1,1,1,1]
+
+	lowerCounts = origObj.applyToFeatures(emitAllEqual, features=[0,'centi'])
+	expectedOut = [[1,0.1,0], [1,0.1,0], [1,0.1,0], [1,0.2,0]]
+	exp = constructor(expectedOut, featureNames)
+	assert origObj == lowerCounts
+
+	print lowerCounts.data
+	print exp.data
+
+	assert lowerCounts.isIdentical(exp)
+
+
+def applyToFeatures_nonZeroItAndLenInPlace(constructor):
+	""" Test applyToFeatures() for the correct usage of the nonzero iterator. InPlace """
+	origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+	origObj = constructor(deepcopy(origData))
+
+	def emitNumNZ(feature):
+		ret = 0
+		assert len(feature) == 4
+		for value in feature.nonZeroIterator():
+			ret += 1
+		return [ret, ret, ret, ret]
+
+	counts = origObj.applyToFeatures(emitNumNZ)
+
+	expectedOut = [[3,3,2], [3,3,2], [3,3,2], [3,3,2]]
+	exp = constructor(expectedOut)
+	assert origObj == counts
+
+	assert counts.isIdentical(exp)
+
+
+
+
+
 
 
 

@@ -349,7 +349,7 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 
 	#set up the return data based on which format has been requested
 	if scoreMode.lower() == 'label'.lower():
-		return rawPredictions.applyToEachPoint(extractWinningPredictionLabel)
+		return rawPredictions.applyToPoints(extractWinningPredictionLabel, inPlace=False)
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
 		#label and score of that label for the corresponding row in rawPredictions
@@ -460,7 +460,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 			if point[0] != label:
 				return 0
 			else: return 1
-		trainLabels = trainY.applyToEachPoint(relabeler)
+		trainLabels = trainY.applyToPoints(relabeler, inPlace=False)
 		oneLabelResults = run(algorithm, trainX, trainLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
@@ -473,7 +473,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 			rawPredictions.appendFeatures(oneLabelResults)
 
 	if scoreMode.lower() == 'label'.lower():
-		winningPredictionIndices = rawPredictions.applyToEachPoint(extractWinningPredictionIndex).copy(asType="python list")
+		winningPredictionIndices = rawPredictions.applyToPoints(extractWinningPredictionIndex, inPlace=False).copy(asType="python list")
 		indexToLabelMap = rawPredictions.featureNamesInverse
 		winningLabels = []
 		for winningIndex in winningPredictionIndices:

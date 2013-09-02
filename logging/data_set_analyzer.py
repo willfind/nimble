@@ -46,7 +46,7 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     transposeRow(resultsTable)
 
     for func in funcsToApply:
-        oneFuncResults = dataContainer.applyToEachFeature(func)
+        oneFuncResults = dataContainer.applyToFeatures(func, inPlace=False)
         oneFuncResults.transpose()
         oneFuncResultsList = oneFuncResults.copy(asType="python list")
         appendColumns(resultsTable, oneFuncResultsList)
@@ -122,9 +122,9 @@ def produceAggregateTable(dataContainer):
     funcs = aggregateFunctionGenerator()
     resultsDict = {}
     for func in funcs:
-        funcResults = dataContainer.applyToEachFeature(func)
+        funcResults = dataContainer.applyToFeatures(func, inPlace=False)
         funcResults.transpose()
-        aggregateResults = funcResults.applyToEachFeature(mean_).copy(asType="python list")[0][0]
+        aggregateResults = funcResults.applyToFeatures(mean_, inPlace=False).copy(asType="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
     resultsDict['Points'] = shape[0] * shape[1]
@@ -366,7 +366,7 @@ def featureType(values):
 
 def featurewiseFunctionGenerator():
     """
-    Produce a list of functions suitable for being passed to Base's applyToEachFeature
+    Produce a list of functions suitable for being passed to Base's applyToFeatures
     function.  Includes: min(), max(), mean(), median(), standardDeviation(), numUniqueValues()
     """
     functions = [min_, max_, mean_, median_, standardDeviation, numUnique]
@@ -376,7 +376,7 @@ def featurewiseFunctionGenerator():
 def aggregateFunctionGenerator():
     """
     Produce a list of functions that can be used to produce aggregate statistics on an entire
-    data set.  The functions will be applied through Base's applyToEachFeature
+    data set.  The functions will be applied through Base's applyToFeatures
     function, and their results averaged across all features.  Includes a function to calculate
     the proportion of entries that are equal to zero and the proportion of entries that are missing
     (i.e. are None or NaN).
