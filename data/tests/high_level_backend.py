@@ -51,12 +51,18 @@ def dropFeaturesContainingType_ListOnlyTest(constructor):
 
 def replaceFeatureWithBinaryFeatures_PemptyException(constructor):
 	""" Test replaceFeatureWithBinaryFeatures() with a point empty object """
-	data = []
+	data = [[],[]]
+	data = numpy.array(data).T
 	toTest = constructor(data)
 	toTest.replaceFeatureWithBinaryFeatures(0)
 
 
-#def replaceFeatureWithBinaryFeatures_exception
+def replaceFeatureWithBinaryFeatures_FemptyException(constructor):
+	""" Test replaceFeatureWithBinaryFeatures() with a feature empty object """
+	data = [[],[]]
+	data = numpy.array(data)
+	toTest = constructor(data)
+	toTest.replaceFeatureWithBinaryFeatures(0)
 
 
 def replaceFeatureWithBinaryFeatures_handmade(constructor):
@@ -64,15 +70,15 @@ def replaceFeatureWithBinaryFeatures_handmade(constructor):
 	data = [[1],[2],[3]]
 	featureNames = ['col']
 	toTest = constructor(data,featureNames)
+	getNames = constructor(data, featureNames)
 	ret = toTest.replaceFeatureWithBinaryFeatures(0)
 
 	expData = [[1,0,0], [0,1,0], [0,0,1]]
-	expFeatureNames = ['col=1','col=2','col=3']
+	expFeatureNames = []
+	for point in getNames.pointIterator():
+		expFeatureNames.append('col=' + str(point[0]))
 	exp = constructor(expData, expFeatureNames)
 
-#	import pdb
-#	pdb.set_trace()
-#	print toTest.featureNames
 	assert toTest.isIdentical(exp)
 	assert toTest == ret
 
@@ -81,9 +87,17 @@ def replaceFeatureWithBinaryFeatures_handmade(constructor):
 # transformFeartureToIntegerFeature #
 #############################
 
-def transformFeartureToIntegerFeature_emptyException(constructor):
-	""" Test transformFeartureToIntegerFeature() with an empty object """
-	data = []
+def transformFeartureToIntegerFeature_PemptyException(constructor):
+	""" Test transformFeartureToIntegerFeature() with an point empty object """
+	data = [[],[]]
+	data = numpy.array(data).T
+	toTest = constructor(data)
+	toTest.transformFeartureToIntegerFeature(0)
+
+def transformFeartureToIntegerFeature_FemptyException(constructor):
+	""" Test transformFeartureToIntegerFeature() with an feature empty object """
+	data = [[],[]]
+	data = numpy.array(data)
 	toTest = constructor(data)
 	toTest.transformFeartureToIntegerFeature(0)
 
@@ -99,92 +113,6 @@ def transformFeartureToIntegerFeature_handmade(constructor):
 	assert toTest.data[0] != toTest.data[1]
 	assert toTest.data[0] != toTest.data[2]
 	assert toTest == ret
-
-
-
-###############################
-# selectConstantOfPointsByValue #
-###############################
-
-def selectConstantOfPointsByValue_exceptionNumToSelectNone(constructor):
-	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect is None """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectConstantOfPointsByValue(None,'1')
-
-def selectConstantOfPointsByValue_exceptionNumToSelectLEzero(constructor):
-	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect <= 0 """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectConstantOfPointsByValue(0,'1')
-
-def selectConstantOfPointsByValue_handmade(constructor):
-	""" Test selectConstantOfPointsByValue() against handmade output """
-	data = [[1,2,3],[1,5,6],[1,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectConstantOfPointsByValue(2,'1')
-
-	expRet = constructor([[1,2,3],[1,8,9]],featureNames)
-	expTest = constructor([[1,5,6],],featureNames)
-
-	assert ret.isIdentical(expRet)
-	assert expTest.isIdentical(toTest)
-
-def selectConstantOfPointsByValue_handmadeLimit(constructor):
-	""" Test selectConstantOfPointsByValue() against handmade output when the constant exceeds the available points """
-	data = [[1,2,3],[1,5,6],[1,8,9],[2,11,12]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectConstantOfPointsByValue(2,'1')
-
-	expRet = constructor([[1,2,3],[1,8,9],[2,11,12]],featureNames)
-	expTest = constructor([[1,5,6],],featureNames)
-
-	assert ret.isIdentical(expRet)
-	assert expTest.isIdentical(toTest)
-
-
-
-##############################
-# selectPercentOfPointsByValue #
-##############################
-
-def selectPercentOfPointsByValue_exceptionPercentNone(constructor):
-	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is None """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfPointsByValue(None,'1')
-
-def selectPercentOfPointsByValue_exceptionPercentZero(constructor):
-	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is <= 0 """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfPointsByValue(0,'1')
-
-def selectPercentOfPointsByValue_exceptionPercentOneHundrend(constructor):
-	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is >= 100 """
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfPointsByValue(100,'1')
-
-def selectPercentOfPointsByValue_handmade(constructor):
-	""" Test selectPercentOfPointsByValue() against handmade output """
-	data = [[1,2,3],[1,5,6],[1,8,9]]
-	featureNames = ['1','2','3']
-	toTest = constructor(data,featureNames)
-	toTest.selectPercentOfPointsByValue(50,'1')
-
-	expRet = constructor([[1,2,3]],featureNames)
-	expTest = constructor([[1,5,6],[1,8,9]],featureNames)
-
-	assert ret.isIdentical(expRet)
-	assert expTest.isIdentical(toTest)
 
 
 #########################
@@ -237,9 +165,17 @@ def extractPointsByCoinToss_handmade(constructor):
 # foldIterator #
 ################
 
-def foldIterator_exceptionEmpty(constructor):
-	""" Test foldIterator() for exception when object is empty """
-	data = []
+def foldIterator_exceptionPEmpty(constructor):
+	""" Test foldIterator() for exception when object is point empty """
+	data = [[],[]]
+	data = numpy.array(data).T
+	toTest = constructor(data)
+	toTest.foldIterator(2)
+
+def foldIterator_exceptionFEmpty(constructor):
+	""" Test foldIterator() for exception when object is feature empty """
+	data = [[],[]]
+	data = numpy.array(data)
 	toTest = constructor(data)
 	toTest.foldIterator(2)
 
@@ -282,15 +218,27 @@ def foldIterator_verifyPartitions(constructor):
 # applyToPoints() #
 ####################
 
-def applyToPoints_exceptionEmpty(constructor):
-	""" Test applyToPoints() for ImproperActionException when object is empty """
-	origData = []
-	origObj = constructor(origData)
+def applyToPoints_exceptionPEmpty(constructor):
+	""" Test applyToPoints() for ImproperActionException when object is point empty """
+	data = [[],[]]
+	data = numpy.array(data).T
+	origObj = constructor(data)
 
 	def emitLower(point):
 		return point[origObj.featureNames['deci']]
 
-	lowerCounts = origObj.applyToPoints(emitLower)
+	lowerCounts = origObj.applyToPoints(emitLower, inPlace=False)
+
+def applyToPoints_exceptionFEmpty(constructor):
+	""" Test applyToPoints() for ImproperActionException when object is feature empty """
+	data = [[],[]]
+	data = numpy.array(data)
+	origObj = constructor(data)
+
+	def emitLower(point):
+		return point[origObj.featureNames['deci']]
+
+	lowerCounts = origObj.applyToPoints(emitLower, inPlace=False)
 
 def applyToPoints_exceptionInputNone(constructor):
 	""" Test applyToPoints() for ArgumentException when function is None """
@@ -416,10 +364,26 @@ def applyToPoints_nonZeroItAndLenInPlace(constructor):
 # applyToFeatures() #
 #######################
 
-def applyToFeatures_exceptionEmpty(constructor):
-	""" Test applyToFeatures() for ImproperActionException when object is empty """
-	origData = []
-	origObj= constructor(origData)
+def applyToFeatures_exceptionPEmpty(constructor):
+	""" Test applyToFeatures() for ImproperActionException when object is point empty """
+	data = [[],[]]
+	data = numpy.array(data).T
+	origObj= constructor(data)
+
+	def emitAllEqual(feature):
+		first = feature[0]
+		for value in feature:
+			if value != first:
+				return 0
+		return 1
+
+	lowerCounts = origObj.applyToFeatures(emitAllEqual, inPlace=False)
+
+def applyToFeatures_exceptionFEmpty(constructor):
+	""" Test applyToFeatures() for ImproperActionException when object is feature empty """
+	data = [[],[]]
+	data = numpy.array(data)
+	origObj= constructor(data)
 
 	def emitAllEqual(feature):
 		first = feature[0]
@@ -435,7 +399,7 @@ def applyToFeatures_exceptionInputNone(constructor):
 	featureNames = {'number':0,'centi':2,'deci':1}
 	origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
 	origObj= constructor(deepcopy(origData),featureNames)
-	origObj.applyToFeatures(None)
+	origObj.applyToFeatures(None, inPlace=False)
 
 def applyToFeatures_Handmade(constructor):
 	""" Test applyToFeatures() with handmade output """
@@ -492,25 +456,6 @@ def applyToFeatures_nonZeroItAndLen(constructor):
 	exp = constructor(expectedOut)
 
 	assert counts.isIdentical(exp)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def applyToFeatures_HandmadeInPlace(constructor):
@@ -582,12 +527,6 @@ def applyToFeatures_nonZeroItAndLenInPlace(constructor):
 	assert counts.isIdentical(exp)
 
 
-
-
-
-
-
-
 #####################
 # mapReducePoints() #
 #####################
@@ -616,7 +555,8 @@ def oddOnlyReducer(identifier, valuesList):
 
 def mapReducePoints_argumentExceptionNoFeatures(constructor):
 	""" Test mapReducePoints() for ImproperActionException when there are no features  """
-	data = [[],[],[]]
+	data = [[],[]]
+	data = numpy.array(data)
 	toTest = constructor(data)
 	toTest.mapReducePoints(simpleMapper,simpleReducer)
 
@@ -684,15 +624,30 @@ def mapReducePoints_handmadeNoneReturningReducer(constructor):
 # pointIterator() #
 #######################
 
+def pointIterator_exceptionFempty(constructor):
+	""" Test pointIterator() for exception when object is feature empty """
+	data = [[],[]]
+	data = numpy.array(data)
+	toTest = constructor(data)
+	viewIter = toTest.pointIterator()
+
+def pointIterator_noNextPempty(constructor):
+	""" test pointIterator() has no next value when object is point empty """
+	data = [[],[]]
+	data = numpy.array(data).T
+	toTest = constructor(data)
+	viewIter = toTest.pointIterator()	
+	try:
+		viewIter.next()
+	except StopIteration:
+		return
+	assert False
 
 def pointIterator_exactValueViaFor(constructor):
 	""" Test pointIterator() gives views that contain exactly the correct data """
 	featureNames = ["one","two","three"]
 	data = [[1,2,3],[4,5,6],[7,8,9]]
 	toTest = constructor(data,featureNames)
-	
-#	import pdb
-#	pdb.set_trace()
 
 	viewIter = toTest.pointIterator()
 
@@ -714,6 +669,25 @@ def pointIterator_exactValueViaFor(constructor):
 #########################
 # featureIterator() #
 #########################
+
+def featureIterator_exceptionPempty(constructor):
+	""" Test featureIterator() for exception when object is point empty """
+	data = [[],[]]
+	data = numpy.array(data).T
+	toTest = constructor(data)
+	viewIter = toTest.featureIterator()
+
+def featureIterator_noNextFempty(constructor):
+	""" test featureIterator() has no next value when object is feature empty """
+	data = [[],[]]
+	data = numpy.array(data)
+	toTest = constructor(data)
+	viewIter = toTest.featureIterator()	
+	try:
+		viewIter.next()
+	except StopIteration:
+		return
+	assert False
 
 
 def featureIterator_exactValueViaFor(constructor):
@@ -738,18 +712,6 @@ def featureIterator_exactValueViaFor(constructor):
 	assert toCheck[2][1] == 6
 	assert toCheck[2][2] == 9
 
-
-
-####################
-# transformPoint() #
-####################
-
-
-
-
-######################
-# transformFeature() #
-######################
 
 
 
@@ -887,6 +849,13 @@ def isApproximatelyEqual_randomTest(constructor):
 # shufflePoints() #
 ###################
 
+def shufflePoints_exceptionIndicesPEmpty(constructor):
+	""" tests shufflePoints() throws an exception when given invalid indices """
+	data = [[],[]]
+	data = numpy.array(data).T
+	toTest = constructor(data)
+	ret = toTest.shufflePoints([1,3])
+
 
 def shufflePoints_noLongerEqual(constructor):
 	""" Tests shufflePoints() results in a changed object """
@@ -915,6 +884,13 @@ def shufflePoints_noLongerEqual(constructor):
 # shuffleFeatures() #
 #####################
 
+
+def shuffleFeatures_exceptionIndicesFEmpty(constructor):
+	""" tests shuffleFeatures() throws an exception when given invalid indices """
+	data = [[],[]]
+	data = numpy.array(data)
+	toTest = constructor(data)
+	ret = toTest.shuffleFeatures([1,3])
 
 def shuffleFeatures_noLongerEqual(constructor):
 	""" Tests shuffleFeatures() results in a changed object """

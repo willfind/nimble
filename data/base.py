@@ -10,6 +10,7 @@ import random
 import math
 import itertools
 import copy
+import numpy
 
 import UML
 from UML.exceptions import ArgumentException
@@ -199,10 +200,10 @@ class Base(object):
 		Modify this object so that the choosen feature is removed, and binary valued
 		features are added, one for each possible value seen in the original feature.
 
-		"""
-		if self.features() == 0:
-			raise ImproperActionException("There is no possible valid input for this method; this object has 0 features")
-		
+		"""		
+		if self.points() == 0:
+			raise ImproperActionException("This action is inpossible, the object has 0 points")
+
 		index = self._getIndex(featureToReplace)
 		# extract col.
 		toConvert = self.extractFeatures([index])
@@ -249,8 +250,8 @@ class Base(object):
 		in the original feature. 
 
 		"""
-		if self.features() == 0:
-			raise ImproperActionException("There is no possible valid input for this method; this object has 0 features")
+		if self.points() == 0:
+			raise ImproperActionException("This action is inpossible, the object has 0 points")
 
 		index = self._getIndex(featureToConvert)
 
@@ -331,7 +332,11 @@ class Base(object):
 		"""
 
 		if self.points() == 0:
-			raise ImproperActionException("Cannot produce an iterator over groups of points; this object has 0 points")
+			raise ArgumentException("This object has 0 points, therefore, we cannot specify a valid number of folds")
+
+		if self.features() == 0:
+			raise ImproperActionException("We do not allow this operation on objects with 0 features")
+
 
 		# note: we want truncation here
 		numInFold = int(self.points() / numFolds)
@@ -367,7 +372,9 @@ class Base(object):
 
 		"""
 		if self.points() == 0:
-			raise ImproperActionException("Function not callable if there are 0 points of data")
+			raise ImproperActionException("We disallow this function when there are 0 points")
+		if self.features() == 0:
+			raise ImproperActionException("We disallow this function when there are 0 features")
 		if function is None:
 			raise ArgumentException("function must not be None")
 
@@ -391,8 +398,10 @@ class Base(object):
 		ID or a list of features ID's to limit application only to those specified
 
 		"""
+		if self.points() == 0:
+			raise ImproperActionException("We disallow this function when there are 0 points")
 		if self.features() == 0:
-			raise ImproperActionException("Function not callable if there are 0 features of data")
+			raise ImproperActionException("We disallow this function when there are 0 features")
 		if function is None:
 			raise ArgumentException("function must not be None")
 
@@ -451,6 +460,8 @@ class Base(object):
 
 
 	def mapReducePoints(self, mapper, reducer):
+		if self.points() == 0:
+			return UML.createData(self.getTypeString(), numpy.empty(shape=(0,0)))
 		if self.features() == 0:
 			raise ImproperActionException("We do not allow operations over points if there are 0 features")
 
@@ -592,6 +603,8 @@ class Base(object):
 #		def sumFeature(featureView):
 #			currCos = math.cos(featView.index())
 #		featureSums = self.applyToFeatures(lambda featView: ((math.sin(pointNum) + math.cos(featView.index()))/2.0) * elementValue, inPlace=False)
+		if self.points() == 0 or self.features() == 0:
+			return 0
 		valueObj = self.applyToElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, inPlace=False, preserveZeros=True)
 		valueList = valueObj.copy(asType="python list")
 		avg = sum(itertools.chain.from_iterable(valueList))/float(self.points()*self.features())
@@ -623,6 +636,13 @@ class Base(object):
 		if indices is None:
 			indices = range(0, self.points())
 			random.shuffle(indices)
+		else:
+			if len(indices) != self.points():
+				raise ArgumentException("If indices are supplied, it must be a list with all and only valid point indices")
+			for value in indices:
+				if value < 0 or value > self.points():
+					raise ArgumentException("A value in indices is out of bounds of the valid range of points")
+
 		def permuter(pointView):
 			return indices[pointView.index()]
 		self.sortPoints(sortHelper=permuter)
@@ -639,6 +659,12 @@ class Base(object):
 		if indices is None:
 			indices = range(0, self.features())
 			random.shuffle(indices)
+		else:
+			if len(indices) != self.features():
+				raise ArgumentException("If indices are supplied, it must be a list with all and only valid faetures indices")
+			for value in indices:
+				if value < 0 or value > self.features():
+					raise ArgumentException("A value in indices is out of bounds of the valid range of features")
 		def permuter(featureView):
 			return indices[featureView.index()]
 		self.sortFeatures(sortHelper=permuter)

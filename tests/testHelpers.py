@@ -95,6 +95,9 @@ def test_foldIterator_verifyMatchups():
 		data2 = [[-1],[-2],[-3],[-4],[-5],[-6],[-7]]
 		toTest2 = constructor(data2)
 
+#		import pdb
+#		pdb.set_trace()
+
 		folds = foldIterator([toTest0, toTest1, toTest2], 2)
 
 		fold0 = folds.next()

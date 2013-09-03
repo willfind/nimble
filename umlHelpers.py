@@ -777,7 +777,7 @@ class _foldIteratorClass():
 
 		# we want each training set to be permuted wrt its ordering in the original
 		# data. This is setting up a permutation to be applied to each object
-		indices = range(0, copiedList[0].points() - len(self.foldList[0]))
+		indices = range(0, copiedList[0].points() - len(self.foldList[self.index]))
 		random.shuffle(indices)
 
 		resultsList = []

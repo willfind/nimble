@@ -56,10 +56,15 @@ def test_dropFeaturesContainingType_ListOnlyTest():
 # replaceFeatureWithBinaryFeatures #
 #################################
 
-@raises(ArgumentException)
+@raises(ImproperActionException)
 def test_replaceFeatureWithBinaryFeatures_PemptyException():
 	""" Test replaceFeatureWithBinaryFeatures() with a point empty object """
 	callAll(replaceFeatureWithBinaryFeatures_PemptyException)
+
+@raises(ArgumentException)
+def test_replaceFeatureWithBinaryFeatures_FemptyException():
+	""" Test replaceFeatureWithBinaryFeatures() with a feature empty object """
+	callAll(replaceFeatureWithBinaryFeatures_FemptyException)
 
 def test_replaceFeatureWithBinaryFeatures_handmade():
 	""" Test replaceFeatureWithBinaryFeaturess() against handmade output """
@@ -72,62 +77,18 @@ def test_replaceFeatureWithBinaryFeatures_handmade():
 #############################
 
 @raises(ImproperActionException)
-def test_transformFeartureToIntegerFeature_emptyException():
-	""" Test transformFeartureToIntegerFeature() with an empty object """
-	callAll(transformFeartureToIntegerFeature_emptyException)
+def test_transformFeartureToIntegerFeature_PemptyException():
+	""" Test transformFeartureToIntegerFeature() with an point empty object """
+	callAll(transformFeartureToIntegerFeature_PemptyException)
+
+@raises(ArgumentException)
+def test_transformFeartureToIntegerFeature_FemptyException():
+	""" Test transformFeartureToIntegerFeature() with an feature empty object """
+	callAll(transformFeartureToIntegerFeature_FemptyException)
 
 def test_transformFeartureToIntegerFeature_handmade():
 	""" Test transformFeartureToIntegerFeature() against handmade output """
 	callAll(transformFeartureToIntegerFeature_handmade)
-
-
-###############################
-# selectConstantOfPointsByValue #
-###############################
-
-@raises(ArgumentException)
-def _selectConstantOfPointsByValue_exceptionNumToSelectNone():
-	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect is None """
-	callAll(selectConstantOfPointsByValue_exceptionNumToSelectNone)
-
-@raises(ArgumentException)
-def _selectConstantOfPointsByValue_exceptionNumToSelectLEzero():
-	""" Test selectConstantOfPointsByValue() for Argument exception when numToSelect <= 0 """
-	callAll(selectConstantOfPointsByValue_exceptionNumToSelectLEzero)
-
-@raises(ArgumentException)
-def _selectConstantOfPointsByValue_handmade():
-	""" Test selectConstantOfPointsByValue() against handmade output """
-	callAll(selectConstantOfPointsByValue_handmade)
-
-def _selectConstantOfPointsByValue_handmadeLimit():
-	""" Test selectConstantOfPointsByValue() against handmade output when the constant exceeds the available points """
-	callAll(selectConstantOfPointsByValue_handmadeLimit)
-
-
-##############################
-# selectPercentOfPointsByValue #
-##############################
-
-@raises(ArgumentException)
-def _selectPercentOfPointsByValue_exceptionPercentNone():
-	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is None """
-	callAll(selectPercentOfPointsByValue_exceptionPercentNone)
-
-@raises(ArgumentException)
-def _selectPercentOfPointsByValue_exceptionPercentZero():
-	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is <= 0 """
-	callAll(selectPercentOfPointsByValue_exceptionPercentZero)
-
-@raises(ArgumentException)
-def _selectPercentOfPointsByValue_exceptionPercentOneHundrend():
-	""" Test selectPercentOfPointsByValue() for ArgumentException when percent to select is >= 100 """
-	callAll(selectPercentOfPointsByValue_exceptionPercentOneHundrend)
-
-def _selectPercentOfPointsByValue_handmade():
-	""" Test selectPercentOfPointsByValue() against handmade output """
-	callAll(selectPercentOfPointsByValue_handmade)
-
 
 #########################
 # extractPointsByCoinToss #
@@ -164,16 +125,20 @@ def test_extractPointsByCoinToss_handmade():
 # foldIterator #
 ################
 
+@raises(ArgumentException)
+def test_foldIterator_exceptionPEmpty():
+	""" Test foldIterator() for exception when object is point empty """
+	callAll(foldIterator_exceptionPEmpty)
+
 @raises(ImproperActionException)
-def test_foldIterator_exceptionEmpty():
-	""" Test foldIterator() for exception when object is empty """
-	callAll(foldIterator_exceptionEmpty)
+def test_foldIterator_exceptionFEmpty():
+	""" Test foldIterator() for exception when object is feature empty """
+	callAll(foldIterator_exceptionFEmpty)
 
 @raises(ArgumentException)
 def test_foldIterator_exceptionTooManyFolds():
 	""" Test foldIterator() for exception when given too many folds """
 	callAll(foldIterator_exceptionTooManyFolds)
-
 
 def test_foldIterator_verifyPartitions():
 	""" Test foldIterator() yields the correct number and size of folds partitioning the data """
@@ -199,9 +164,6 @@ def test_foldIterator_ordering():
 		curTrainYList = curTrainY.copy(asType="python list")
 		curTestYList = curTestY.copy(asType="python list")
 
-#		import pdb
-#		pdb.set_trace()
-
 		for i in range(len(curTrainXList)):
 			assert curTrainXList[i][0] == curTrainYList[i][0]
 
@@ -214,9 +176,14 @@ def test_foldIterator_ordering():
 ####################
 
 @raises(ImproperActionException)
-def test_applyToPoints_exceptionEmpty():
-	""" Test applyToPoints() for ImproperActionException when object is empty """
-	callAll(applyToPoints_exceptionEmpty)
+def test_applyToPoints_exceptionPEmpty():
+	""" Test applyToPoints() for ImproperActionException when object is point empty """
+	callAll(applyToPoints_exceptionPEmpty)
+
+@raises(ImproperActionException)
+def test_applyToPoints_exceptionFEmpty():
+	""" Test applyToPoints() for ImproperActionException when object is feature empty """
+	callAll(applyToPoints_exceptionFEmpty)
 
 @raises(ArgumentException)
 def test_applyToPoints_exceptionInputNone():
@@ -253,8 +220,13 @@ def test_applyToPoints_nonZeroItAndLenInPlace():
 
 @raises(ImproperActionException)
 def test_applyToFeatures_exceptionEmpty():
-	""" Test applyToFeatures() for ImproperActionException when object is empty """
-	callAll(applyToFeatures_exceptionEmpty)
+	""" Test applyToFeatures() for ImproperActionException when object is point empty """
+	callAll(applyToFeatures_exceptionPEmpty)
+
+@raises(ImproperActionException)
+def test_applyToFeatures_exceptionFEmpty():
+	""" Test applyToFeatures() for ImproperActionException when object is feature empty """
+	callAll(applyToFeatures_exceptionFEmpty)
 
 @raises(ArgumentException)
 def test_applyToFeatures_exceptionInputNone():
@@ -272,7 +244,6 @@ def test_applyToFeatures_HandmadeLimited():
 def test_applyToFeatures_nonZeroItAndLen():
 	""" Test applyToFeatures() for the correct usage of the nonzero iterator """
 	callAll(applyToFeatures_nonZeroItAndLen)
-
 
 def test_applyToFeatures_HandmadeInPlace():
 	""" Test applyToFeatures() with handmade output. InPlace """
@@ -292,6 +263,11 @@ def test_applyToFeatures_nonZeroItAndLenInPlace():
 #####################
 # mapReducePoints() #
 #####################
+
+@raises(ImproperActionException)
+def test_mapReducePoints_argumentExceptionNoFeatures():
+	""" Test mapReducePoints() for ImproperActionException when there are no features  """
+	callAll(mapReducePoints_argumentExceptionNoFeatures)
 
 @raises(ArgumentException)
 def test_mapReducePoints_argumentExceptionNoneMap():
@@ -328,6 +304,14 @@ def test_mapReducePoints_handmadeNoneReturningReducer():
 # pointIterator() #
 #######################
 
+@raises(ImproperActionException)
+def test_pointIterator_exceptionFempty():
+	""" Test pointIterator() for exception when object is feature empty """
+	callAll(pointIterator_exceptionFempty)
+
+def test_pointIterator_noNextPempty():
+	""" test pointIterator() has no next value when object is point empty """
+	callAll(pointIterator_noNextPempty)
 
 def test_pointIterator_exactValueViaFor():
 	""" Test pointIterator() gives views that contain exactly the correct data """
@@ -337,22 +321,19 @@ def test_pointIterator_exactValueViaFor():
 # featureIterator() #
 #########################
 
+@raises(ImproperActionException)
+def test_featureIterator_exceptionPempty():
+	""" Test featureIterator() for exception when object is point empty """
+	callAll(featureIterator_exceptionPempty)
+
+def test_featureIterator_noNextFempty():
+	""" test featureIterator() has no next value when object is feature empty """
+	callAll(featureIterator_noNextFempty)
 
 def test_featureIterator_exactValueViaFor():
 	""" Test featureIterator() gives views that contain exactly the correct data """
 	callAll(featureIterator_exactValueViaFor)
 
-
-####################
-# transformPoint() #
-####################
-
-
-
-
-######################
-# transformFeature() #
-######################
 
 
 
@@ -394,6 +375,10 @@ def test_isApproximatelyEqual_randomTest():
 # shufflePoints() #
 ###################
 
+@raises(ArgumentException)
+def test_shufflePoints_exceptionIndicesPEmpty():
+	""" tests shufflePoints() throws an exception when given invalid indices """
+	callAll(shufflePoints_exceptionIndicesPEmpty)
 
 def test_shufflePoints_noLongerEqual():
 	""" Tests shufflePoints() results in a changed object """
@@ -405,6 +390,10 @@ def test_shufflePoints_noLongerEqual():
 # shuffleFeatures() #
 #####################
 
+@raises(ArgumentException)
+def test_shuffleFeatures_exceptionIndicesFEmpty():
+	""" tests shuffleFeatures() throws an exception when given invalid indices """
+	callAll(shuffleFeatures_exceptionIndicesFEmpty)
 
 def test_shuffleFeatures_noLongerEqual():
 	""" Tests shuffleFeatures() results in a changed object """
