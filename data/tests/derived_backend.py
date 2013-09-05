@@ -429,10 +429,6 @@ def sortFeatures_comparator(constructor):
 # extractPoints() #
 #################
 
-def extractPoints_emptyInput(constructor): #TODO 
-	""" Test extractPoints() does nothing when not provided with any input """
-	pass
-
 def extractPoints_handmadeSingle(constructor):
 	""" Test extractPoints() against handmade output when extracting one point """
 	data = [[1,2,3],[4,5,6],[7,8,9]]
@@ -1122,19 +1118,6 @@ def getitem_simpleExampeWithZeroes(constructor):
 	assert toTest[3,3] == 0
 
 	assert toTest[1,'one'] == 4
-
-
-####################
-# transformPoint #
-##################
-
-def transformPoint_AddOne(constructor):
-	featureNames = ["one","two","three"]
-	data = [[1,2,3],[4,5,6],[7,8,9]]
-	toTest = constructor(data,featureNames)
-
-#	def addOne(point):
-#		for value in poin
 
 
 

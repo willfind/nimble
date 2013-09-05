@@ -155,9 +155,6 @@ def test_sortFeatures_comparator():
 # extractPoints() #
 #################
 
-def test_extractPoints_emptyInput(): 
-	""" Test Matrix extractPoints() does nothing when not provided with any input """
-	extractPoints_emptyInput(constructor)
 
 def test_extractPoints_handmadeSingle():
 	""" Test Matrix extractPoints() against handmade output when extracting one point """

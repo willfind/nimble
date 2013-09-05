@@ -809,8 +809,8 @@ class Base(object):
 		space of possible removals.
 
 		"""
-		if self.points() == 0:
-			raise ImproperActionException("Cannot extract points from an object with 0 points")
+#		if self.points() == 0:
+#			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
 		if toExtract is not None:
 			if start is not None or end is not None:
@@ -854,8 +854,8 @@ class Base(object):
 		space of possible removals.
 
 		"""
-		if self.features() == 0:
-			raise ImproperActionException("Cannot extract features from an object with 0 features")
+#		if self.features() == 0:
+#			raise ImproperActionException("Cannot extract features from an object with 0 features")
 
 		if toExtract is not None:
 			if start is not None or end is not None:
@@ -902,6 +902,9 @@ class Base(object):
 		indicating whether the file should start with a comment line designating featureNames.
 
 		"""
+		if self.points() == 0 or self.features() == 0:
+			raise ImproperActionException("We do not allow writing to file when an object has 0 points or features")
+
 		# if format is not specified, we fall back on the extension in outPath
 		if format is None:
 			split = outPath.rsplit('.', 1)
@@ -980,6 +983,8 @@ class Base(object):
 		"""
 		if isinstance(points, basestring):
 			points = [points]
+		if self.points() == 0:
+			raise ArgumentException("Object contains 0 points, there is no valid possible input")
 		if points is None:
 			if start is not None or end is not None:
 				if start is None:
@@ -1014,6 +1019,8 @@ class Base(object):
 		"""
 		if isinstance(features, basestring):
 			features = [features]
+		if self.features() == 0:
+			raise ArgumentException("Object contains 0 features, there is no valid possible input")
 		indices = None
 		if features is None:
 			if start is not None or end is not None:
@@ -1069,10 +1076,8 @@ class Base(object):
 		to the shape or ordering of the internal data. After such a modification, there is
 		no guarantee to the validity of the results.
 		"""
-		if self.features() == 0:
-			raise ImproperActionException("This object contains no features, we do not allow point views in this case")
 		if self.points() == 0:
-			raise ImproperActionException("This object contains no points")
+			raise ImproperActionException("ID is invalid, This object contains no points")
 		if not isinstance(ID,int):
 			raise ArgumentException("Point IDs must be integers")
 		return self._pointView_implementation(ID)
@@ -1084,10 +1089,8 @@ class Base(object):
 		to the shape or ordering of the internal data. After such a modification, there is
 		no guarantee to the validity of the results.
 		"""
-		if self.points() == 0:
-			raise ImproperActionException("This object contains no points, we do not allow feature views in this case")
 		if self.features() == 0:
-			raise ImproperActionException("This object contains no features")
+			raise ArgumentException("ID is invalid, This object contains no features")
 
 		index = self._getIndex(ID)
 		return self._featureView_implementation(index)
