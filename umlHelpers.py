@@ -731,7 +731,7 @@ def foldIterator(dataList, folds):
 	points = dataList[0].points()
 	for data in dataList:
 		if data.points() == 0:
-			raise ImproperActionException("One of the objects has 0 points, which cannot be folded over")
+			raise ArgumentException("One of the objects has 0 points, it is impossible to specify a valid number of folds")
 		if data.points() != dataList[0].points():
 			raise ArgumentException("All data objects in the list must have the same number of points and features")
 

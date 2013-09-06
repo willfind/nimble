@@ -1,67 +1,53 @@
-
 from nose.tools import *
 
 import UML
 import random
+import numpy
+
 from math import fabs
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.umlHelpers import foldIterator
 
-########################
-# Object instantiation #
-########################
+##########
+# TESTER #
+##########
 
-def listInit(data,featureNames=None):
-	return UML.createData(retType='List', data=data, featureNames=featureNames)
+class FoldIteratorTester(object):
+	def __init__(self, constructor):
+		self.constructor = constructor
 
-def matrixInit(data,featureNames=None):
-	return UML.createData(retType='Matrix', data=data, featureNames=featureNames)
-
-def sparseInit(data,featureNames=None):
-	return UML.createData(retType='Sparse', data=data, featureNames=featureNames)
-
-def randInit(data,featureNames=None):
-	possible = ['List', 'Matrix', 'Sparse']
-	retType = possible[random.randint(0, 2)]
-	return UML.createData(retType=retType, data=data, featureNames=featureNames)
-
-def callAll(func):
-	func(listInit)
-	func(matrixInit)
-	func(sparseInit)
-	func(randInit)
-
-
-#########
-# TESTS #
-#########
-
-@raises(ImproperActionException)
-def test_foldIterator_exceptionEmpty():
-	""" Test foldIterator() for exception when object is empty """
-	def tester(constructor):
-		data = []
-		toTest = constructor(data)
+	@raises(ArgumentException)
+	def test_foldIterator_exceptionPEmpty(self):
+		""" Test foldIterator() for ArgumentException when object is point empty """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
 		foldIterator([toTest],2)
-	callAll(tester)
 
-@raises(ArgumentException)
-def test_foldIterator_exceptionTooManyFolds():
-	""" Test foldIterator() for exception when given too many folds """
-	def tester(constructor):
+#	@raises(ImproperActionException)
+#	def test_foldIterator_exceptionFEmpty(self):
+#		""" Test foldIterator() for ImproperActionException when object is feature empty """
+#		data = [[],[]]
+#		data = numpy.array(data)
+#		toTest = self.constructor(data)
+#		foldIterator([toTest],2)
+
+
+	@raises(ArgumentException)
+	def test_foldIterator_exceptionTooManyFolds(self):
+		""" Test foldIterator() for exception when given too many folds """
 		data = [[1],[2],[3],[4],[5]]
 		names = ['col']
-		toTest = constructor(data,names)
+		toTest = self.constructor(data,names)
 		foldIterator([toTest, toTest],6)
-	callAll(tester)
 
 
-def test_foldIterator_verifyPartitions():
-	""" Test foldIterator() yields the correct number folds and partitions the data """
-	def tester(constructor):
+
+	def test_foldIterator_verifyPartitions(self):
+		""" Test foldIterator() yields the correct number folds and partitions the data """
 		data = [[1],[2],[3],[4],[5]]
 		names = ['col']
-		toTest = constructor(data,names)
+		toTest = self.constructor(data,names)
 		folds = foldIterator([toTest],2)
 
 		[(fold1Train, fold1Test)] = folds.next()
@@ -79,24 +65,19 @@ def test_foldIterator_verifyPartitions():
 		fold1Train.appendPoints(fold1Test)
 		fold2Train.appendPoints(fold2Test)
 
-		#TODO some kind of rigourous partition check
-	callAll(tester)
 
 
-def test_foldIterator_verifyMatchups():
-	""" Test foldIterator() maintains the correct pairings when given multiple data objects """
-	def tester(constructor):
+	def test_foldIterator_verifyMatchups(self):
+		""" Test foldIterator() maintains the correct pairings when given multiple data objects """
 		data0 = [[1],[2],[3],[4],[5],[6],[7]]
-		toTest0 = constructor(data0)
+		toTest0 = self.constructor(data0)
 
 		data1 = [[1,1],[2,2],[3,3],[4,4],[5,5], [6,6], [7,7]]
-		toTest1 = constructor(data1)
+		toTest1 = self.constructor(data1)
 		
 		data2 = [[-1],[-2],[-3],[-4],[-5],[-6],[-7]]
-		toTest2 = constructor(data2)
+		toTest2 = self.constructor(data2)
 
-#		import pdb
-#		pdb.set_trace()
 
 		folds = foldIterator([toTest0, toTest1, toTest2], 2)
 
@@ -140,5 +121,36 @@ def test_foldIterator_verifyMatchups():
 				for index in xrange(test.points()):
 					assert fabs(test[index,0]) == fabs(testList[0][index,0])
 
-	callAll(tester)
 
+
+class TestList(FoldIteratorTester):
+	def __init__(self):
+		def maker(data=None, featureNames=None):
+			return UML.createData("List", data=data, featureNames=featureNames)
+
+		super(TestList, self).__init__(maker)
+
+
+class TestMatrix(FoldIteratorTester):
+	def __init__(self):
+		def maker(data, featureNames=None):
+			return UML.createData("Matrix", data=data, featureNames=featureNames)
+
+		super(TestMatrix, self).__init__(maker)
+
+
+class TestSparse(FoldIteratorTester):
+	def __init__(self):	
+		def maker(data, featureNames=None):
+			return UML.createData("Sparse", data=data, featureNames=featureNames)
+
+		super(TestSparse, self).__init__(maker)
+
+class TestRand(FoldIteratorTester):
+	def __init__(self):	
+		def maker(data, featureNames=None):
+			possible = ['List', 'Matrix', 'Sparse']
+			retType = possible[random.randint(0, 2)]
+			return UML.createData(retType=retType, data=data, featureNames=featureNames)
+
+		super(TestRand, self).__init__(maker)
