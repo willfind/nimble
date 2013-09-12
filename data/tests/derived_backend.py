@@ -29,7 +29,7 @@ class DerivedBackend(object):
 	# __init__() #
 	##############
 
-	def test_test_init_allEqual(self):
+	def test_init_allEqual(self):
 		""" Test __init__() that every way to instantiate produces equal objects """
 		# instantiate from list of lists
 		fromList = self.constructor(data=[[1,2,3]])
@@ -68,7 +68,7 @@ class DerivedBackend(object):
 		assert fromMTXCoo.isIdentical(fromCSV)
 		assert fromMTXCoo.isIdentical(fromMTXArr)
 
-	def test_test_init_allEqualWithFeatureNames(self):
+	def test_init_allEqualWithFeatureNames(self):
 		""" Test __init__() that every way to instantiate produces equal objects, with featureNames """
 		# instantiate from list of lists
 		fromList = self.constructor(data=[[1,2,3]], featureNames=['one', 'two', 'three'])
@@ -111,20 +111,18 @@ class DerivedBackend(object):
 		assert fromMTXCoo.isIdentical(fromMTXArr)
 
 
-
-
 	############
 	# isIdentical() #
 	############
 
-	def test_test_isIdentical_False(self):
+	def test_isIdentical_False(self):
 		""" Test isIdentical() against some non-equal input """
 		toTest = self.constructor([[4,5]])
 		assert not toTest.isIdentical(self.constructor([[1,1],[2,2]]))
 		assert not toTest.isIdentical(self.constructor([[1,2,3]]))
 		assert not toTest.isIdentical(self.constructor([[1,2]]))
 
-	def test_test_isIdentical_True(self):
+	def test_isIdentical_True(self):
 		""" Test isIdentical() against some actually equal input """
 		toTest1 = self.constructor([[4,5]])
 		toTest2 = self.constructor(deepcopy([[4,5]]))
@@ -132,11 +130,33 @@ class DerivedBackend(object):
 		assert toTest2.isIdentical(toTest1)
 
 
+
 	###############
 	# transpose() #
 	###############
 
-	def test_test_transpose_handmade(self):
+	def test_transpose_empty(self):
+		""" Test transpose() on different kinds of emptiness """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
+
+		toTest.transpose()
+
+		exp1 = [[],[]]
+		exp1 = numpy.array(exp1)
+		ret1 = self.constructor(exp1)
+		assert ret1.isIdentical(toTest)
+
+		toTest.transpose()
+
+		exp2 = [[],[]]
+		exp2 = numpy.array(exp2).T
+		ret2 = self.constructor(exp2)
+		assert ret2.isIdentical(toTest)
+
+
+	def test_transpose_handmade(self):
 		""" Test transpose() function against handmade output """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		dataTrans = [[1,4,7],[2,5,8],[3,6,9]]
@@ -159,14 +179,14 @@ class DerivedBackend(object):
 	#############
 
 	@raises(ArgumentException)
-	def test_test_appendPoints_exceptionNone(self):
+	def test_appendPoints_exceptionNone(self):
 		""" Test appendPoints() for ArgumentException when toAppend is None"""
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
 		toTest.appendPoints(None)
 
 	@raises(ArgumentException)
-	def test_test_appendPoints_exceptionWrongSize(self):
+	def test_appendPoints_exceptionWrongSize(self):
 		""" Test appendPoints() for ArgumentException when toAppend has too many features """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
@@ -174,14 +194,27 @@ class DerivedBackend(object):
 		toTest.appendPoints(toAppend)
 
 	@raises(ArgumentException)
-	def test_test_appendPoints_exceptionMismatchedFeatureNames(self):
+	def test_appendPoints_exceptionMismatchedFeatureNames(self):
 		""" Test appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data,['one','two','three'])
 		toAppend = self.constructor([[11, 12, 13,]], ["two", 'one', 'three'])
 		toTest.appendPoints(toAppend)
 
-	def test_test_appendPoints_handmadeSingle(self):
+	def test_appendPoints_outOfPEmpty(self):
+		""" Test appendPoints() when the calling object is point empty """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
+
+		data = [[1,2]]
+		toAdd = self.constructor(data)
+		toExp = self.constructor(data)
+
+		toTest.appendPoints(toAdd)
+		assert toTest.isIdentical(toExp)
+
+	def test_appendPoints_handmadeSingle(self):
 		""" Test appendPoints() against handmade output for a single added point """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		dataExpected = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
@@ -192,7 +225,7 @@ class DerivedBackend(object):
 		assert toTest.isIdentical(expected)
 		assert toTest == ret
 
-	def test_test_appendPoints_handmadeSequence(self):
+	def test_appendPoints_handmadeSequence(self):
 		""" Test appendPoints() against handmade output for a sequence of additions"""
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toAppend1 = [[0.1,0.2,0.3]]
@@ -218,14 +251,14 @@ class DerivedBackend(object):
 	################
 
 	@raises(ArgumentException)
-	def test_test_appendFeatures_exceptionNone(self):
+	def test_appendFeatures_exceptionNone(self):
 		""" Test appendFeatures() for ArgumentException when toAppend is None """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
 		toTest.appendFeatures(None)
 
 	@raises(ArgumentException)
-	def test_test_appendFeatures_exceptionWrongSize(self):
+	def test_appendFeatures_exceptionWrongSize(self):
 		""" Test appendFeatures() for ArgumentException when toAppend has too many points """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
@@ -244,6 +277,19 @@ class DerivedBackend(object):
 		toTest1 = self.constructor([[2,1]],["goodbye","hello"])
 		toTest2 = self.constructor([[1,2]],["hello","goodbye"])
 		toTest2.appendFeatures(toTest1)
+
+	def test_appendFeatures_outOfPEmpty(self):
+		""" Test appendFeatures() when the calling object is feature empty """
+		data = [[],[]]
+		data = numpy.array(data)
+		toTest = self.constructor(data)
+
+		data = [[1],[2]]
+		toAdd = self.constructor(data)
+		toExp = self.constructor(data)
+
+		toTest.appendFeatures(toAdd)
+		assert toTest.isIdentical(toExp)
 
 	def test_appendFeatures_handmadeSingle(self):
 		""" Test appendFeatures() against handmade output for a single added feature"""
@@ -455,6 +501,22 @@ class DerivedBackend(object):
 		expEnd = self.constructor([[4,5,6],[7,8,9]])
 		assert toTest.isIdentical(expEnd)
 
+	def test_extractPoints_ListIntoPEmpty(self):
+		""" Test extractPoints() by removing a list of all points """
+		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+		toTest = self.constructor(data)
+		expRet = self.constructor(data)
+		ret = toTest.extractPoints([0,1,2,3])
+
+		assert ret.isIdentical(expRet)
+
+		data = [[],[],[]]
+		data = numpy.array(data).T
+		exp = self.constructor(data)
+
+		toTest.isIdentical(exp)
+
+
 	def test_extractPoints_handmadeListSequence(self):
 		""" Test extractPoints() against handmade output for several list extractions """
 		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
@@ -477,6 +539,23 @@ class DerivedBackend(object):
 		assert ext1.isIdentical(exp1)
 		expEnd = self.constructor([[1,2,3], [7,8,9]])
 		assert toTest.isIdentical(expEnd)
+
+
+	def test_extractPoints_functionIntoPEmpty(self):
+		""" Test extractPoints() by removing all points using a function """
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		expRet = self.constructor(data)
+		def allTrue(point):
+			return True
+		ret = toTest.extractPoints(allTrue)
+		assert ret.isIdentical(expRet)
+
+		data = [[],[],[]]
+		data = numpy.array(data).T
+		exp = self.constructor(data)
+
+		toTest.isIdentical(exp)
 
 
 	def test_extractPoints_handmadeFunction(self):
@@ -543,6 +622,23 @@ class DerivedBackend(object):
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
+
+	def test_extractPoints_rangeIntoPEmpty(self):
+		""" Test extractPoints() removes all points using ranges """
+		featureNames = ["one","two","three"]
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data,featureNames)
+		expRet = self.constructor(data,featureNames)
+		ret = toTest.extractPoints(start=0,end=2)
+
+		assert ret.isIdentical(expRet)
+
+		data = [[],[],[]]
+		data = numpy.array(data).T
+		exp = self.constructor(data, featureNames)
+
+		toTest.isIdentical(exp)
+
 
 	def test_extractPoints_handmadeRangeWithFeatureNames(self):
 		""" Test extractPoints() against handmade output for range extraction with featureNames """
@@ -612,6 +708,22 @@ class DerivedBackend(object):
 		expEnd = self.constructor([[2,3],[5,6],[8,9]])
 		assert toTest.isIdentical(expEnd)
 
+	def test_extractFeatures_ListIntoFEmpty(self):
+		""" Test extractFeatures() by removing a list of all features """
+		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+		toTest = self.constructor(data)
+		expRet = self.constructor(data)
+		ret = toTest.extractFeatures([0,1,2])
+
+		assert ret.isIdentical(expRet)
+
+		data = [[],[],[],[]]
+		data = numpy.array(data)
+		exp = self.constructor(data)
+
+		toTest.isIdentical(exp)
+
+
 	def test_extractFeatures_handmadeListSequence(self):
 		""" Test extractFeatures() against handmade output for several extractions by list """
 		data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
@@ -639,6 +751,23 @@ class DerivedBackend(object):
 		assert ext2.isIdentical(exp2)
 		expEnd = self.constructor([[2],[5],[8]], ["two"])
 		assert toTest.isIdentical(expEnd)
+
+
+	def test_extractFeatures_functionIntoFEmpty(self):
+		""" Test extractFeatures() by removing all featuress using a function """
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		expRet = self.constructor(data)
+		def allTrue(point):
+			return True
+		ret = toTest.extractFeatures(allTrue)
+		assert ret.isIdentical(expRet)
+
+		data = [[],[],[]]
+		data = numpy.array(data)
+		exp = self.constructor(data)
+
+		toTest.isIdentical(exp)
 
 
 	def test_extractFeatures_handmadeFunction(self):
@@ -719,6 +848,23 @@ class DerivedBackend(object):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data,featureNames)
 		toTest.extractFeatures(start="two", end="one")
+
+
+	def test_extractFeatures_rangeIntoFEmpty(self):
+		""" Test extractFeatures() removes all Featuress using ranges """
+		featureNames = ["one","two","three"]
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data,featureNames)
+		expRet = self.constructor(data,featureNames)
+		ret = toTest.extractFeatures(start=0,end=2)
+
+		assert ret.isIdentical(expRet)
+
+		data = [[],[],[]]
+		data = numpy.array(data)
+		exp = self.constructor(data, featureNames)
+
+		toTest.isIdentical(exp)
 
 	def test_extractFeatures_handmadeRange(self):
 		""" Test extractFeatures() against handmade output for range extraction """
@@ -846,6 +992,100 @@ class DerivedBackend(object):
 		assert orig.data is not dup.data
 
 
+	def test_copy_Pempty(self):
+		""" test copy() produces the correct outputs when given an point empty object """
+		data = [[],[]]
+		data = numpy.array(data).T
+
+		orig = self.constructor(data)
+		sparseObj = createData(retType="Sparse", data=data)
+		listObj = createData(retType="List", data=data)
+		matixObj = createData(retType="Matrix", data=data)
+
+		copySparse = orig.copy(asType='Sparse')
+		assert copySparse.isIdentical(sparseObj)
+		assert sparseObj.isIdentical(copySparse)
+
+		copyList = orig.copy(asType='List')
+		assert copyList.isIdentical(listObj)
+		assert listObj.isIdentical(copyList)
+
+		copyMatrix = orig.copy(asType='Matrix')
+		assert copyMatrix.isIdentical(matixObj)
+		assert matixObj.isIdentical(copyMatrix)
+
+		pyList = orig.copy(asType='python list')
+		assert pyList == []
+
+		numpyArray = orig.copy(asType='numpy array')
+		assert numpyArray == data
+
+		numpyMatrix = orig.copy(asType='numpy matrix')
+		assert numpyMatrix == numpy.matrix(data)
+	
+
+	def test_copy_Fempty(self):
+		""" test copy() produces the correct outputs when given an feature empty object """
+		data = [[],[]]
+		data = numpy.array(data)
+
+		orig = self.constructor(data)
+		sparseObj = createData(retType="Sparse", data=data)
+		listObj = createData(retType="List", data=data)
+		matixObj = createData(retType="Matrix", data=data)
+
+		copySparse = orig.copy(asType='Sparse')
+		assert copySparse.isIdentical(sparseObj)
+		assert sparseObj.isIdentical(copySparse)
+
+		copyList = orig.copy(asType='List')
+		assert copyList.isIdentical(listObj)
+		assert listObj.isIdentical(copyList)
+
+		copyMatrix = orig.copy(asType='Matrix')
+		assert copyMatrix.isIdentical(matixObj)
+		assert matixObj.isIdentical(copyMatrix)
+
+		pyList = orig.copy(asType='python list')
+		assert pyList == [[],[]]
+
+		numpyArray = orig.copy(asType='numpy array')
+		assert numpyArray == data
+
+		numpyMatrix = orig.copy(asType='numpy matrix')
+		assert numpyMatrix == numpy.matrix(data)
+
+	def test_copy_Trueempty(self):
+		""" test copy() produces the correct outputs when given a point and feature empty object """
+		data = numpy.empty(shape=(0,0))
+
+		orig = self.constructor(data)
+		sparseObj = createData(retType="Sparse", data=data)
+		listObj = createData(retType="List", data=data)
+		matixObj = createData(retType="Matrix", data=data)
+
+		copySparse = orig.copy(asType='Sparse')
+		assert copySparse.isIdentical(sparseObj)
+		assert sparseObj.isIdentical(copySparse)
+
+		copyList = orig.copy(asType='List')
+		assert copyList.isIdentical(listObj)
+		assert listObj.isIdentical(copyList)
+
+		copyMatrix = orig.copy(asType='Matrix')
+		assert copyMatrix.isIdentical(matixObj)
+		assert matixObj.isIdentical(copyMatrix)
+
+		pyList = orig.copy(asType='python list')
+		assert pyList == []
+
+		numpyArray = orig.copy(asType='numpy array')
+		assert numpyArray == data
+
+		numpyMatrix = orig.copy(asType='numpy matrix')
+		assert numpyMatrix == numpy.matrix(data)
+
+
 	def test_copy_rightTypeTrueCopy(self):
 		""" Test copy() will return all of the right type and do not show each other's modifications"""
 
@@ -928,9 +1168,21 @@ class DerivedBackend(object):
 		orig.copyPoints([1,'yes'])
 
 
+	def test_copyPoints_FEmpty(self):
+		""" Test copyPoints() returns the correct data in a feature empty object """
+		data = [[],[]]
+		data = numpy.array(data)
+		toTest = self.constructor(data)
+		ret = toTest.copyPoints([0])
+
+		data = [[]]
+		data = numpy.array(data)
+		exp = self.constructor(data)
+		exp.isIdentical(ret)
+
+
 	def test_copyPoints_handmadeContents(self):
 		""" Test copyPoints() returns the correct data """
-
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
 		orig = self.constructor(data1, featureNames)
@@ -1039,6 +1291,18 @@ class DerivedBackend(object):
 		featureNames = ['one', 'two', 'three']
 		orig = self.constructor(data1, featureNames)
 		orig.copyFeatures([1,'yes'])
+
+	def test_copyFeatures_PEmpty(self):
+		""" Test copyFeatures() returns the correct data in a point empty object """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
+		ret = toTest.copyFeatures([0])
+
+		data = [[]]
+		data = numpy.array(data).T
+		exp = self.constructor(data)
+		exp.isIdentical(ret)
 
 
 	def test_copyFeatures_handmadeContents(self):
@@ -1160,6 +1424,18 @@ class DerivedBackend(object):
 	# pointView #
 	################
 
+
+	def test_pointView_FEmpty(self):
+		""" Test pointView() when accessing a feature empty object """
+		data = [[],[]]
+		data = numpy.array(data)
+		toTest = self.constructor(data)
+
+		v = toTest.pointView(0)
+
+		assert len(v) == 0
+
+
 	def test_pointView_isinstance(self):
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
@@ -1185,6 +1461,16 @@ class DerivedBackend(object):
 	##################
 	# featureView #
 	##################
+
+	def test_featureView_FEmpty(self):
+		""" Test featureView() when accessing a point empty object """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
+
+		v = toTest.featureView(0)
+
+		assert len(v) == 0
 
 	def test_featureView_isinstance(self):
 		""" Test featureView() returns an instance of the View in dataHelpers """
@@ -1214,6 +1500,20 @@ class DerivedBackend(object):
 	# points() #
 	############
 
+
+	def test_points_empty(self):
+		""" test points() when given different kinds of emptiness """
+		data = [[],[]]
+		dataPEmpty = numpy.array(data).T
+		dataFEmpty = numpy.array(data)
+
+		objPEmpty = self.constructor(dataPEmpty)
+		objFEmpty = self.constructor(dataFEmpty)
+
+		assert objPEmpty.points() == 0
+		assert objFEmpty.points() == 2
+
+
 	def test_points_vectorTest(self):
 		""" Test points() when we only have row or column vectors of data """
 		dataR = [[1,2,3]]
@@ -1231,6 +1531,20 @@ class DerivedBackend(object):
 	############
 	# features() #
 	############
+
+
+	def test_features_empty(self):
+		""" test features() when given different kinds of emptiness """
+		data = [[],[]]
+		dataPEmpty = numpy.array(data)
+		dataFEmpty = numpy.array(data).T
+
+		objPEmpty = self.constructor(dataPEmpty)
+		objFEmpty = self.constructor(dataFEmpty)
+
+		assert objPEmpty.features() == 2
+		assert objFEmpty.features() == 0
+
 
 	def test_features_vectorTest(self):
 		""" Test features() when we only have row or column vectors of data """

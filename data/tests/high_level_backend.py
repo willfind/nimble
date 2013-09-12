@@ -75,6 +75,19 @@ class HighLevelBackend(object):
 		assert toTest.isIdentical(unchanged)
 		assert toTest == ret
 
+	def test_dropFeaturesContainingType_intoFEmpty(self):
+		""" Test dropFeaturesContainingType() when dropping all features """
+		data = [[1.0],[2.0]]
+		toTest = self.constructor(data)
+		ret = toTest.dropFeaturesContainingType(float)
+
+		assert ret == toTest
+
+		exp = numpy.array([[],[]])
+		exp = numpy.array(exp)
+		exp = self.constructor(exp)
+
+		assert toTest.isIdentical(exp)
 
 	def test_dropFeaturesContainingType_ListOnlyTest(self):
 		""" Test dropFeaturesContainingType() only on List data """
@@ -195,6 +208,25 @@ class HighLevelBackend(object):
 		featureNames = ['1','2','3']
 		toTest = self.constructor(data,featureNames)
 		toTest.extractPointsByCoinToss(1)
+
+	def test_extractPointsByCoinToss_intoPEmpty(self):
+		""" Test extractPointsByCoinToss() when it removes all points """
+		data = [[1]]
+		toTest = self.constructor(data)
+		retExp = self.constructor(data)
+		while True:
+			ret = toTest.extractPointsByCoinToss(.99)
+			if ret.points() == 1:
+				break
+
+		assert retExp.isIdentical(ret)
+
+		data = [[]]
+		data = numpy.array(data).T
+		exp = self.constructor(data)
+
+		assert toTest.isIdentical(exp)
+
 
 	def test_extractPointsByCoinToss_handmade(self):
 		""" Test extractPointsByCoinToss() against handmade output with the test seed """
@@ -598,6 +630,19 @@ class HighLevelBackend(object):
 		toTest = self.constructor(data)
 		toTest.mapReducePoints(simpleMapper,simpleReducer)
 
+
+	def test_mapReducePoints_emptyResultNoPoints(self):
+		""" Test mapReducePoints() when given point empty data """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
+		ret = toTest.mapReducePoints(simpleMapper,simpleReducer)
+
+		data = numpy.empty(shape=(0,0))
+		exp = self.constructor(data)
+		assert ret.isIdentical(exp)
+
+
 	@raises(ArgumentException)
 	def test_mapReducePoints_argumentExceptionNoneMap(self):
 		""" Test mapReducePoints() for ArgumentException when mapper is None """
@@ -629,10 +674,6 @@ class HighLevelBackend(object):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data,featureNames)
 		toTest.mapReducePoints(simpleMapper,5)
-
-
-	# inconsistent output?
-
 
 
 	def test_mapReducePoints_handmade(self):

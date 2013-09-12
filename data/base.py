@@ -314,6 +314,7 @@ class Base(object):
 			return point[len(point)-1]
 
 		selectionKeys = self.applyToPoints(experiment, inPlace=False)
+		selectionKeys.setFeatureName(0,"UML__TEMP__SELECTION__KEY__")
 		self.appendFeatures(selectionKeys)
 		ret = self.extractPoints(isSelected)
 		# remove the experimental data
