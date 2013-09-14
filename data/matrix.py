@@ -30,6 +30,11 @@ class Matrix(Base):
 				if reuseData and isinstance(data, type(numpy.matrix([]))):
 					self.data = data
 				else:
+					if data == []:
+						cols = 0
+						if featureNames is not None:
+							cols = len(featureNames)
+						data = numpy.empty(shape=(0,cols))
 					self.data = numpy.matrix(data, dtype=numpy.float)
 		except ValueError:
 			msg = "ValueError during instantiation. Matrix does not accept strings "
@@ -37,8 +42,8 @@ class Matrix(Base):
 			msg += "like '3' or '-11'), having included strings is the likely cause for "
 			msg += "the error"
 			raise ArgumentException(msg)
-
-		super(Matrix, self).__init__(featureNames, name, path)
+			
+		super(Matrix, self).__init__(self.data.shape, featureNames, name, path)
 		
 
 	def _transpose_implementation(self):
@@ -330,7 +335,7 @@ class Matrix(Base):
 		"""
 		results = viewBasedApplyAlongAxis(toExtract, 'feature', self)
 		results = results.astype(numpy.int64)
-		ret = self.data[:,results]
+#		ret = self.data[:,results]
 		# need to convert our boolean array to to list of features to be removed			
 		toRemove = []
 		for i in xrange(len(results)):

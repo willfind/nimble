@@ -862,7 +862,7 @@ class DerivedBackend(object):
 
 		data = [[],[],[]]
 		data = numpy.array(data)
-		exp = self.constructor(data, featureNames)
+		exp = self.constructor(data)
 
 		toTest.isIdentical(exp)
 
@@ -1018,10 +1018,10 @@ class DerivedBackend(object):
 		assert pyList == []
 
 		numpyArray = orig.copy(asType='numpy array')
-		assert numpyArray == data
+		assert numpy.array_equal(numpyArray, data)
 
 		numpyMatrix = orig.copy(asType='numpy matrix')
-		assert numpyMatrix == numpy.matrix(data)
+		assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 	
 
 	def test_copy_Fempty(self):
@@ -1050,10 +1050,10 @@ class DerivedBackend(object):
 		assert pyList == [[],[]]
 
 		numpyArray = orig.copy(asType='numpy array')
-		assert numpyArray == data
+		assert numpy.array_equal(numpyArray, data)
 
 		numpyMatrix = orig.copy(asType='numpy matrix')
-		assert numpyMatrix == numpy.matrix(data)
+		assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
 	def test_copy_Trueempty(self):
 		""" test copy() produces the correct outputs when given a point and feature empty object """
@@ -1080,10 +1080,10 @@ class DerivedBackend(object):
 		assert pyList == []
 
 		numpyArray = orig.copy(asType='numpy array')
-		assert numpyArray == data
+		assert numpy.array_equal(numpyArray, data)
 
 		numpyMatrix = orig.copy(asType='numpy matrix')
-		assert numpyMatrix == numpy.matrix(data)
+		assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
 
 	def test_copy_rightTypeTrueCopy(self):
@@ -1536,14 +1536,14 @@ class DerivedBackend(object):
 	def test_features_empty(self):
 		""" test features() when given different kinds of emptiness """
 		data = [[],[]]
-		dataPEmpty = numpy.array(data)
-		dataFEmpty = numpy.array(data).T
+		dataPEmpty = numpy.array(data).T
+		dataFEmpty = numpy.array(data)
 
-		objPEmpty = self.constructor(dataPEmpty)
-		objFEmpty = self.constructor(dataFEmpty)
+		pEmpty = self.constructor(dataPEmpty)
+		fEmpty = self.constructor(dataFEmpty)
 
-		assert objPEmpty.features() == 2
-		assert objFEmpty.features() == 0
+		assert pEmpty.features() == 2
+		assert fEmpty.features() == 0
 
 
 	def test_features_vectorTest(self):

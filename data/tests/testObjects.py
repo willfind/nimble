@@ -68,7 +68,7 @@ class TestBase(LowLevelBackend):
 			cols = size if featureNames is None else len(featureNames)
 			specificImp = makeConst(cols)
 			UML.data.Base._features_implementation = specificImp
-			ret = UML.data.Base(featureNames)
+			ret = UML.data.Base((1,cols),featureNames)
 			ret._features_implementation = specificImp
 			return ret
 

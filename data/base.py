@@ -34,7 +34,7 @@ class Base(object):
 
 	"""
 
-	def __init__(self, featureNames=None, name=None, path=None):
+	def __init__(self, shape, featureNames=None, name=None, path=None):
 		"""
 		Instantiates the featureName book-keeping structures that are defined by this representation.
 		
@@ -43,6 +43,12 @@ class Base(object):
 
 		"""
 		super(Base, self).__init__()
+		self._pointCount = shape[0]
+		self._featureCount = shape[1]
+
+		if featureNames is not None and len(featureNames) != shape[1]:
+			raise ArgumentException("The length of the featureNames must match the features given in shape")
+
 		self._nextDefaultValue = 0
 		self._setAllDefault()
 		if isinstance(featureNames, list) or featureNames is None:
@@ -55,6 +61,18 @@ class Base(object):
 			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.features(): " + str(self.features()))
 		self.name = name
 		self.path = path
+
+	######################
+	# Property Attriutes #
+	######################
+
+	def getpointCount(self):
+		return self._pointCount
+	pointCount = property(getpointCount)
+
+	def getfeatureCount(self):
+		return self._featureCount
+	featureCount = property(getfeatureCount)
 
 	########################
 	# Low Level Operations #
@@ -191,7 +209,8 @@ class Base(object):
 						return True
 			return False
 	
-		self.extractFeatures(hasType)
+		removed = self.extractFeatures(hasType)
+		self._featureCount -= removed.features()
 		return self
 
 
@@ -240,6 +259,7 @@ class Base(object):
 		# remove the original feature, and combine with self
 		toConvert.extractFeatures([varName])
 		self.appendFeatures(toConvert)
+		self._featureCount += toConvert.features() - 1
 		return self
 
 
@@ -296,8 +316,8 @@ class Base(object):
 		parameter. Those selected values are also removed from this object.
 
 		"""
-		if self.points() == 0:
-			raise ImproperActionException("Cannot extract points from an object with 0 points")
+#		if self.points() == 0:
+#			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
 		random.seed(seed)
 		if extractionProbability is None:
@@ -313,16 +333,17 @@ class Base(object):
 		def isSelected(point):
 			return point[len(point)-1]
 
-		selectionKeys = self.applyToPoints(experiment, inPlace=False)
-		selectionKeys.setFeatureName(0,"UML__TEMP__SELECTION__KEY__")
-		self.appendFeatures(selectionKeys)
-		ret = self.extractPoints(isSelected)
+#		selectionKeys = self.applyToPoints(experiment, inPlace=False)
+#		selectionKeys.setFeatureName(0,"UML__TEMP__SELECTION__KEY__")
+#		self.appendFeatures(selectionKeys)
+		ret = self.extractPoints(experiment)
 		# remove the experimental data
-		if ret.points() > 0:
-			ret.extractFeatures([ret.features()-1])
-		if self.points() > 0:
-			self.extractFeatures([self.features()-1])
+#		if ret.points() > 0:
+#			ret.extractFeatures([ret.features()-1])
+#		if self.points() > 0:
+#			self.extractFeatures([self.features()-1])
 		
+		self._pointCount -= ret.points()
 		return ret
 
 
@@ -364,7 +385,8 @@ class Base(object):
 	def applyToPoints(self, function, points=None, inPlace=True):
 		"""
 		Applies the given funciton to each point in this object, collecting the
-		output values into a new object that is returned upon completion.
+		output values into a new object that is returned upon completion, or,
+		if the inPlace flag is True, copying the output into this object.
 
 		function must not be none and accept a point as an argument
 
@@ -390,8 +412,8 @@ class Base(object):
 	def applyToFeatures(self, function, features=None, inPlace=True):
 		"""
 		Applies the given funciton to each feature in this object, collecting the
-		output values into a new object in the shape of a feature vector that is
-		returned upon completion.
+		output values into a new object that is returned upon completion or, if
+		the inPlace flag is True, copying the output into this object.
 
 		function must not be none and accept a feature as an argument
 
@@ -706,6 +728,9 @@ class Base(object):
 		"""
 		self._transpose_implementation()
 		self.setFeatureNamesFromDict(None)
+		temp = self._pointCount
+		self._pointCount = self._featureCount
+		self._featureCount = temp
 		return self
 
 	def appendPoints(self, toAppend):
@@ -725,6 +750,7 @@ class Base(object):
 		if not self._equalFeatureNames(toAppend):
 			raise ArgumentException("The featureNames of the two objects must match")
 		self._appendPoints_implementation(toAppend)
+		self._pointCount += toAppend.points()
 		return self
 		
 	def appendFeatures(self, toAppend):
@@ -748,6 +774,7 @@ class Base(object):
 
 		for i in xrange(toAppend.features()):
 			self._addFeatureName(toAppend.featureNamesInverse[i])
+		self._featureCount += toAppend.features()
 		return self
 
 	def sortPoints(self, sortBy=None, sortHelper=None):
@@ -835,6 +862,7 @@ class Base(object):
 
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
 		ret.setFeatureNamesFromDict(self.featureNames)
+		self._pointCount -= ret.points()
 		return ret
 
 	def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -881,6 +909,7 @@ class Base(object):
 		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
+		self._featureCount -= ret.features()
 		return ret
 
 	def isIdentical(self, other):
@@ -890,10 +919,18 @@ class Base(object):
 		return self._isIdentical_implementation(other)
 
 	def points(self):
-		return self._points_implementation()
+		ret = self._points_implementation()
+#		if ret != self.pointCount:
+#			print "old=" + str(ret) + "  new=" + str(self.pointCount)
+#		assert ret == self.pointCount
+		return ret
 
 	def features(self):
-		return self._features_implementation()
+		ret = self._features_implementation()
+#		if ret != self.featureCount:
+#			print "old=" + str(ret) + "  new=" + str(self.featureCount)
+#		assert ret == self.featureCount
+		return ret
 
 	def writeFile(self, outPath, format=None, includeFeatureNames=True):
 		"""

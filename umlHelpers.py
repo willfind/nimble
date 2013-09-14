@@ -128,6 +128,8 @@ def _loadCSVtoMatrix(path, automatedRetType=False):
 	inFile.close()
 
 	data = numpy.genfromtxt(path, delimiter=',', skip_header=skip_header)
+	if len(data.shape) == 1:
+		data = numpy.matrix(data)
 	return (data, featureNames)
 
 def _loadMTXtoAuto(path):

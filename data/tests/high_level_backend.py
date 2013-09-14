@@ -167,10 +167,10 @@ class HighLevelBackend(object):
 		toTest = self.constructor(data,featureNames)
 		ret = toTest.transformFeartureToIntegerFeature(0)
 
-		assert toTest.data[0] == toTest.data[4]
-		assert toTest.data[1] == toTest.data[3]
-		assert toTest.data[0] != toTest.data[1]
-		assert toTest.data[0] != toTest.data[2]
+		assert toTest[0,0] == toTest[4,0]
+		assert toTest[1,0] == toTest[3,0]
+		assert toTest[0,0] != toTest[1,0]
+		assert toTest[0,0] != toTest[2,0]
 		assert toTest == ret
 
 
@@ -178,12 +178,12 @@ class HighLevelBackend(object):
 	# extractPointsByCoinToss #
 	#########################
 
-	@raises(ImproperActionException)
-	def test_extractPointsByCoinToss_exceptionEmpty(self):
-		""" Test extractPointsByCoinToss() for ImproperActionException when object is empty """
-		data = []
-		toTest = self.constructor(data)
-		toTest.extractPointsByCoinToss(0.5)
+#	@raises(ImproperActionException)
+#	def test_extractPointsByCoinToss_exceptionEmpty(self):
+#		""" Test extractPointsByCoinToss() for ImproperActionException when object is empty """
+#		data = []
+#		toTest = self.constructor(data)
+#		toTest.extractPointsByCoinToss(0.5)
 
 	@raises(ArgumentException)
 	def test_extractPointsByCoinToss_exceptionNoneProbability(self):
@@ -507,7 +507,8 @@ class HighLevelBackend(object):
 
 		lowerCounts = origObj.applyToFeatures(emitAllEqual, inPlace=False)
 		expectedOut = [[1,0,0]]	
-		assert lowerCounts.isIdentical(self.constructor(expectedOut))
+		exp = self.constructor(expectedOut)
+		assert lowerCounts.isIdentical(exp)
 
 
 	def test_applyToFeatures_HandmadeLimited(self):
@@ -524,8 +525,9 @@ class HighLevelBackend(object):
 			return 1
 
 		lowerCounts = origObj.applyToFeatures(emitAllEqual, features=[0,'centi'], inPlace=False)
-		expectedOut = [[1,0]]	
-		assert lowerCounts.isIdentical(self.constructor(expectedOut))
+		expectedOut = [[1,0]]
+		exp = self.constructor(expectedOut)
+		assert lowerCounts.isIdentical(exp)
 
 
 

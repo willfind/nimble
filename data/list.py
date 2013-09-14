@@ -33,6 +33,7 @@ class List(Base):
 		the init funciton of Base, to be interpreted there.
 
 		"""
+		self.numFeatures = None
 		# Format / copy the data if necessary
 		# if input as a list, copy it
 		if isinstance(data, list):
@@ -45,15 +46,22 @@ class List(Base):
 			data = data.todense()
 		# if its a numpy construct, convert it to a python list
 		try:
+			temp = data
 			data = data.tolist()
+			# if the above was successful, then we might have to exctact emptiness info
+			self.numFeatures = temp.shape[1]
 		except AttributeError:
 			pass
 
 		# assign attributes
 		if data is None or len(data) == 0:
-			self.numFeatures = 0
+			if self.numFeatures is None:
+				if featureNames is not None:
+					self.numFeatures = len(featureNames) 
+				else:
+					self.numFeatures = 0
 			self.data = []
-			super(List, self).__init__([])
+			super(List, self).__init__((0,self.numFeatures),featureNames, name, path)
 		else:
 			self.numFeatures = len(data[0])
 			for point in data:
@@ -62,7 +70,8 @@ class List(Base):
 #				if not isinstance(point, list):
 #					raise ArgumentException("If a python list is given as input, each entry must also be a list")
 			self.data = data
-			super(List, self).__init__(featureNames, name, path)
+			shape = (len(self.data), self.numFeatures)
+			super(List, self).__init__(shape, featureNames, name, path)
 
 
 	def _transpose_implementation(self):
@@ -74,7 +83,7 @@ class List(Base):
 		tempFeatures = len(self.data)
 		transposed = []
 		#load the new data with an empty point for each feature in the original
-		for i in xrange(len(self.data[0])):
+		for i in xrange(self.features()):
 			transposed.append([])
 		for point in self.data:
 			for i in xrange(len(point)):
@@ -567,6 +576,8 @@ class List(Base):
 
 	def _copy_implementation(self, asType):
 		if asType == 'Sparse':
+			if self.points() == 0 or self.features() == 0:
+				return  UML.data.Sparse(numpy.empty(shape=(self.points(), self.features())), self.featureNames)
 			return UML.data.Sparse(self.data, self.featureNames)
 		if asType is None or asType == 'List':
 			return UML.data.List(self.data, self.featureNames)
@@ -575,8 +586,12 @@ class List(Base):
 		if asType == 'pythonlist':
 			return copy.deepcopy(self.data)
 		if asType == 'numpyarray':
+			if self.points() == 0 or self.features() == 0:
+				return numpy.empty(shape=(self.points(), self.features()))
 			return numpy.array(self.data)
 		if asType == 'numpymatrix':
+			if self.points() == 0 or self.features() == 0:
+				return numpy.matrix(numpy.empty(shape=(self.points(), self.features())))
 			return numpy.matrix(self.data)
 
 	def _copyPoints_implementation(self, points, start, end):
