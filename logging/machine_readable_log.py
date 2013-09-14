@@ -3,12 +3,17 @@ import numpy
 import inspect
 import re
 import types
+import os
 
+import UML
 from UML.data import Base
 from UML.data import Sparse
 from uml_logger import UmlLogger
 from stopwatch import Stopwatch
 from UML.exceptions import ArgumentException
+
+
+umlParentDir = os.path.dirname(UML.UMLPath)
 
 
 class MachineReadableLogger(UmlLogger):
@@ -393,20 +398,21 @@ def testParseLog():
 	metrics = ["rootMeanSquareError", "meanAbsoluteError"]
 	results = [0.50, 0.45]
 
-	testLogger = MachineReadableLogger("/Users/rossnoren/UMLMisc/mrTest2.txt")
+	logpath = os.path.join(umlParentDir, "mrTest2.txt")
+	testLogger = MachineReadableLogger(logpath)
 	testLogger.logRun(trainData1, testData1, functionStr, metrics, results, Stopwatch())
 
 	functionObj = lambda x: x+1
 
 	testLogger.logRun(trainData1, testData1, functionObj, metrics, results, Stopwatch())
 
-	logDicts = parseLog("/Users/rossnoren/UMLMisc/mrTest2.txt")
+	logDicts = parseLog(logpath)
 
 	assert logDicts[0]["numTrainDataPoints"] == '3'
 	assert logDicts[0]["numTestDataPoints"] == '2'
 	assert logDicts[0]["numTrainDataFeatures"] == '3'
 	assert logDicts[0]["numTestDataFeatures"] == '3'
-	assert logDicts[0]["runTime"] == '0.00'
+#	assert logDicts[0]["runTime"] == '0.00'
 	assert logDicts[0]["function"] == 'def f():\n\treturn 0'
 	assert logDicts[0]["rootMeanSquareError"] == '0.5'
 	assert logDicts[0]["meanAbsoluteError"] == '0.45'
@@ -415,8 +421,8 @@ def testParseLog():
 	assert logDicts[1]["numTestDataPoints"] == '2'
 	assert logDicts[1]["numTrainDataFeatures"] == '3'
 	assert logDicts[1]["numTestDataFeatures"] == '3'
-	assert logDicts[1]["runTime"] == '0.00'
-	assert logDicts[1]["function"] == "['\tfunctionObj = lambda x: x+1\n']"
+#	assert logDicts[1]["runTime"] == '0.00'
+	assert logDicts[1]["function"] == "['\\tfunctionObj = lambda x: x+1\n']"
 	assert logDicts[1]["rootMeanSquareError"] == '0.5'
 	assert logDicts[1]["meanAbsoluteError"] == '0.45'
 
@@ -433,7 +439,8 @@ def main():
 	metrics = ["rootMeanSquareError", "meanAbsoluteError"]
 	results = [0.50, 0.45]
 
-	testLogger = MachineReadableLogger("~/mrTest2.txt")
+	logpath = os.path.join(umlParentDir, "mrTest2.txt")	
+	testLogger = MachineReadableLogger(logpath)
 	testLogger.logRun(trainData1, testData1, functionStr, metrics, results, 0.0)
 
 	functionObj = lambda x: x+1

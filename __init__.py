@@ -1,4 +1,7 @@
-from uml import UMLPath
+#from uml import UMLPath
+import os
+import inspect
+UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 from runners import run
 from runners import runAndTest
