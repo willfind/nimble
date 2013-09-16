@@ -210,7 +210,6 @@ class Base(object):
 			return False
 	
 		removed = self.extractFeatures(hasType)
-		self._featureCount -= removed.features()
 		return self
 
 
@@ -259,7 +258,6 @@ class Base(object):
 		# remove the original feature, and combine with self
 		toConvert.extractFeatures([varName])
 		self.appendFeatures(toConvert)
-		self._featureCount += toConvert.features() - 1
 		return self
 
 
@@ -330,20 +328,9 @@ class Base(object):
 		def experiment(point):
 			return bool(random.random() < extractionProbability)
 
-		def isSelected(point):
-			return point[len(point)-1]
-
-#		selectionKeys = self.applyToPoints(experiment, inPlace=False)
-#		selectionKeys.setFeatureName(0,"UML__TEMP__SELECTION__KEY__")
-#		self.appendFeatures(selectionKeys)
 		ret = self.extractPoints(experiment)
-		# remove the experimental data
-#		if ret.points() > 0:
-#			ret.extractFeatures([ret.features()-1])
-#		if self.points() > 0:
-#			self.extractFeatures([self.features()-1])
+
 		
-		self._pointCount -= ret.points()
 		return ret
 
 
@@ -623,9 +610,6 @@ class Base(object):
 	def hashCode(self):
 		"""returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
 		that should almost always change when the values of the matrix are changed by a substantive amount"""
-#		def sumFeature(featureView):
-#			currCos = math.cos(featView.index())
-#		featureSums = self.applyToFeatures(lambda featView: ((math.sin(pointNum) + math.cos(featView.index()))/2.0) * elementValue, inPlace=False)
 		if self.points() == 0 or self.features() == 0:
 			return 0
 		valueObj = self.applyToElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, inPlace=False, preserveZeros=True)
@@ -727,10 +711,12 @@ class Base(object):
 
 		"""
 		self._transpose_implementation()
-		self.setFeatureNamesFromDict(None)
+
 		temp = self._pointCount
 		self._pointCount = self._featureCount
 		self._featureCount = temp
+
+		self.setFeatureNamesFromDict(None)		
 		return self
 
 	def appendPoints(self, toAppend):
@@ -771,10 +757,11 @@ class Base(object):
 		if self._featureNameIntersection(toAppend):
 			raise ArgumentException("toAppend must not share any featureNames with this object")
 		self._appendFeatures_implementation(toAppend)
+		self._featureCount += toAppend.features()
 
 		for i in xrange(toAppend.features()):
 			self._addFeatureName(toAppend.featureNamesInverse[i])
-		self._featureCount += toAppend.features()
+		
 		return self
 
 	def sortPoints(self, sortBy=None, sortHelper=None):
@@ -861,8 +848,8 @@ class Base(object):
 					end = possibleEnd
 
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
-		ret.setFeatureNamesFromDict(self.featureNames)
 		self._pointCount -= ret.points()
+		ret.setFeatureNamesFromDict(self.featureNames)
 		return ret
 
 	def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -907,9 +894,9 @@ class Base(object):
 					end = possibleEnd
 
 		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
+		self._featureCount -= ret.features()
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
-		self._featureCount -= ret.features()
 		return ret
 
 	def isIdentical(self, other):
@@ -920,16 +907,16 @@ class Base(object):
 
 	def points(self):
 		ret = self._points_implementation()
-#		if ret != self.pointCount:
-#			print "old=" + str(ret) + "  new=" + str(self.pointCount)
-#		assert ret == self.pointCount
+		if ret != self.pointCount:
+			print "old=" + str(ret) + "  new=" + str(self.pointCount)
+		assert ret == self.pointCount
 		return ret
 
 	def features(self):
 		ret = self._features_implementation()
-#		if ret != self.featureCount:
-#			print "old=" + str(ret) + "  new=" + str(self.featureCount)
-#		assert ret == self.featureCount
+		if ret != self.featureCount:
+			print "old=" + str(ret) + "  new=" + str(self.featureCount)
+		assert ret == self.featureCount
 		return ret
 
 	def writeFile(self, outPath, format=None, includeFeatureNames=True):

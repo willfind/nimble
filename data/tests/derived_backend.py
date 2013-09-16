@@ -1561,3 +1561,69 @@ class DerivedBackend(object):
 		assert cFeatures == 1
 
 
+
+	############
+	# points() #
+	############
+
+
+	def test_pointCount_empty(self):
+		""" test pointCount when given different kinds of emptiness """
+		data = [[],[]]
+		dataPEmpty = numpy.array(data).T
+		dataFEmpty = numpy.array(data)
+
+		objPEmpty = self.constructor(dataPEmpty)
+		objFEmpty = self.constructor(dataFEmpty)
+
+		assert objPEmpty.pointCount == 0
+		assert objFEmpty.pointCount == 2
+
+
+	def test_pointCount_vectorTest(self):
+		""" Test pointCount when we only have row or column vectors of data """
+		dataR = [[1,2,3]]
+		dataC = [[1], [2], [3]]
+
+		toTestR = self.constructor(dataR)
+		toTestC = self.constructor(dataC)
+
+		rPoints = toTestR.pointCount
+		cPoints = toTestC.pointCount
+
+		assert rPoints == 1
+		assert cPoints == 3
+
+	############
+	# features() #
+	############
+
+
+	def test_featureCount_empty(self):
+		""" test featureCount when given different kinds of emptiness """
+		data = [[],[]]
+		dataPEmpty = numpy.array(data).T
+		dataFEmpty = numpy.array(data)
+
+		pEmpty = self.constructor(dataPEmpty)
+		fEmpty = self.constructor(dataFEmpty)
+
+		assert pEmpty.featureCount == 2
+		assert fEmpty.featureCount == 0
+
+
+	def test_featureCount_vectorTest(self):
+		""" Test featureCount when we only have row or column vectors of data """
+		dataR = [[1,2,3]]
+		dataC = [[1], [2], [3]]
+
+		toTestR = self.constructor(dataR)
+		toTestC = self.constructor(dataC)
+
+		rFeatures = toTestR.featureCount
+		cFeatures = toTestC.featureCount
+
+		assert rFeatures == 3
+		assert cFeatures == 1
+
+
