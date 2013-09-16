@@ -330,7 +330,6 @@ class Base(object):
 
 		ret = self.extractPoints(experiment)
 
-		
 		return ret
 
 
@@ -393,6 +392,8 @@ class Base(object):
 				raise ArgumentException("Only allowable inputs to 'points' param is an int ID, a list of int ID's, or None")
 			points = [points]
 
+		self.validate()
+
 		return self._applyTo_implementation(function, points, inPlace, 'point')
 
 
@@ -423,6 +424,8 @@ class Base(object):
 		if features is not None:
 			for i in xrange(len(features)):
 				features[i] = self._getIndex(features[i])
+
+		self.validate()
 
 		return self._applyTo_implementation(function, features, inPlace, 'feature')
 
@@ -481,6 +484,8 @@ class Base(object):
 			raise ArgumentException("The mapper must be callable")
 		if not hasattr(reducer, '__call__'):
 			raise ArgumentException("The reducer must be callable")
+
+		self.validate()
 
 		mapResults = {}
 		# apply the mapper to each point in the data
@@ -573,6 +578,8 @@ class Base(object):
 			for i in xrange(len(features)):
 				features[i] = self._getIndex(features[i])
 
+		self.validate()
+
 		valueList = []
 		for currPoint in self.pointIterator():
 			currPointID = currPoint.index()
@@ -625,6 +632,7 @@ class Base(object):
 		If it returns True, they probably do but you can't be absolutely sure.
 		Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
 		passed are of the same type (Matrix, Sparse, etc.)"""
+		self.validate()
 		#first check to make sure they have the same number of rows and columns
 		if self.points() != other.points(): return False
 		if self.features() != other.features(): return False
@@ -735,6 +743,9 @@ class Base(object):
 			raise ArgumentException("toAppend must have the same number of features as this object")
 		if not self._equalFeatureNames(toAppend):
 			raise ArgumentException("The featureNames of the two objects must match")
+		
+		self.validate()
+
 		self._appendPoints_implementation(toAppend)
 		self._pointCount += toAppend.points()
 		return self
@@ -756,6 +767,9 @@ class Base(object):
 			raise ArgumentException("toAppend must have the same number of points as this object")
 		if self._featureNameIntersection(toAppend):
 			raise ArgumentException("toAppend must not share any featureNames with this object")
+		
+		self.validate()
+
 		self._appendFeatures_implementation(toAppend)
 		self._featureCount += toAppend.features()
 
@@ -827,6 +841,8 @@ class Base(object):
 #		if self.points() == 0:
 #			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
+		self.validate()
+
 		if toExtract is not None:
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
@@ -873,6 +889,8 @@ class Base(object):
 #		if self.features() == 0:
 #			raise ImproperActionException("Cannot extract features from an object with 0 features")
 
+		self.validate()
+
 		if toExtract is not None:
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
@@ -907,16 +925,12 @@ class Base(object):
 
 	def points(self):
 		ret = self._points_implementation()
-		if ret != self.pointCount:
-			print "old=" + str(ret) + "  new=" + str(self.pointCount)
-		assert ret == self.pointCount
+#		assert ret == self.pointCount
 		return ret
 
 	def features(self):
 		ret = self._features_implementation()
-		if ret != self.featureCount:
-			print "old=" + str(ret) + "  new=" + str(self.featureCount)
-		assert ret == self.featureCount
+#		assert ret == self.featureCount
 		return ret
 
 	def writeFile(self, outPath, format=None, includeFeatureNames=True):
@@ -929,6 +943,8 @@ class Base(object):
 		"""
 		if self.points() == 0 or self.features() == 0:
 			raise ImproperActionException("We do not allow writing to file when an object has 0 points or features")
+
+		self.validate()
 
 		# if format is not specified, we fall back on the extension in outPath
 		if format is None:
@@ -1121,9 +1137,24 @@ class Base(object):
 		return self._featureView_implementation(index)
 	
 
+	def validate(self, level=1):
+		"""
+		Checks the integrety of the data with respect to the limitations and invariants
+		that our objects enforce.
+
+		"""
+		assert self.featureCount == len(self.featureNames)
+		assert len(self.featureNames) == len(self.featureNamesInverse)
+		if level > 0:
+			for key in self.featureNames.keys():
+				assert self.featureNamesInverse[self.featureNames[key]] == key
+
+		self._validate_implementation(level)
+
 	####################
 	# Helper functions #
 	####################
+
 
 	def _featureNameDifference(self, other):
 		"""

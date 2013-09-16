@@ -211,7 +211,8 @@ class Sparse(Base):
 		
 		numNewRows = self.points() + toAppend.points()
 		self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(numNewRows,self.features()))
-		self._sorted = None
+		if self._sorted == 'feature':
+			self._sorted = None
 
 
 	def _appendFeatures_implementation(self,toAppend):
@@ -230,6 +231,8 @@ class Sparse(Base):
 		
 		numNewCols = self.features() + toAppend.features()
 		self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(self.points(),numNewCols))
+		if self._sorted == 'point':
+			self._sorted = None
 
 
 	def _sortPoints_implementation(self, sortBy, sortHelper):
@@ -888,6 +891,27 @@ class Sparse(Base):
 				nzMap[self._data.row[i]] = i
 
 		return VectorView(self,None,None,nzMap,self.points(),ID,'feature')
+
+
+	def _validate_implementation(self, level):
+		assert self.points() == self.pointCount
+		assert self.features() == self.featureCount
+		assert isinstance(self._data, CooWithEmpty)
+
+		if level > 0:
+			for value in self._data.data:
+				assert value != 0
+
+			if self._sorted == 'point':
+				for i in xrange(len(self._data.row)):
+					if i != len(self._data.row) - 1:
+						assert self._data.row[i] <= self._data.row[i+1]
+			if self._sorted == 'feature':
+				for i in xrange(len(self._data.col)):
+					if i != len(self._data.col) - 1:
+						assert self._data.col[i] <= self._data.col[i+1]
+
+
 
 	###########
 	# Helpers #

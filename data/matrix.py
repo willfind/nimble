@@ -507,6 +507,14 @@ class Matrix(Base):
 	def _featureView_implementation(self, ID):
 		return VectorView(self, 'feature', ID)
 
+	def _validate_implementation(self, level):
+		assert self.points() == self.pointCount
+		assert self.features() == self.featureCount
+
+
+
+
+
 class VectorView(View):
 	def __init__(self, outer, axis, index):
 		self._outer = outer

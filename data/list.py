@@ -637,6 +637,19 @@ class List(Base):
 	def _featureView_implementation(self, ID):
 		return FeatureView(self.data, ID, self.featureNamesInverse[ID])
 
+
+	def _validate_implementation(self, level):
+		assert self.points() == self.pointCount
+		assert self.features() == self.featureCount
+
+		if level > 0:
+			if len(self.data) > 0:
+				expectedLength = len(self.data[0])
+			for point in self.data:
+				assert isinstance(point, list)
+				assert len(point) == expectedLength
+
+
 ###########
 # Helpers #
 ###########
