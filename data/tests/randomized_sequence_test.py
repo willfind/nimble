@@ -272,9 +272,9 @@ def randString(numCall):
 def randBList_String(numCall, dataObject, funcName):
 	ret = []
 	if 'feature' in funcName.lower():
-		length = dataObject.features()
+		length = dataObject.featureCount
 	else:
-		length = dataObject.features()
+		length = dataObject.featureCount
 
 	for i in xrange(length):
 		randString = str(numCall) + '_' + str(i)
@@ -285,9 +285,9 @@ def randBList_String(numCall, dataObject, funcName):
 def randBList_FName(numCall, dataObject, funcName):
 	ret = []
 	if 'feature' in funcName.lower():
-		length = dataObject.features()
+		length = dataObject.featureCount
 	else:
-		length = dataObject.features()
+		length = dataObject.featureCount
 
 	for i in xrange(length):
 		randString = str(numCall) + '_' + str(i)
@@ -300,13 +300,13 @@ def randBoolean():
 
 def randBInt(dataObject, funcName):
 	if 'point' in funcName.lower():
-		cap = dataObject.points() - 1
+		cap = dataObject.pointCount - 1
 	else:
-		cap = dataObject.features() - 1
+		cap = dataObject.featureCount - 1
 	return random.randint(0,cap)
 
 def randFName(dataObject):
-	numF = dataObject.features() - 1
+	numF = dataObject.featureCount - 1
 	return dataObject.featureNamesInverse[random.randint(0,numF)]
 
 def randObject(dataObject, sameType):

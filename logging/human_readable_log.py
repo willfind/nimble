@@ -148,7 +148,7 @@ class HumanReadableLogger(UmlLogger):
 				if isinstance(value, types.FunctionType):
 					extraTableValues.append(value.__name__)
 				elif isinstance(value, Base):
-					extraTableValues.append("Base: " + "(" + str(value.points()) + ", " + str(value.features()) + ")")
+					extraTableValues.append("Base: " + "(" + str(value.pointCount) + ", " + str(value.featureCount) + ")")
 				else:
 					extraTableValues.append(str(value))
 			extraTable = [extraTableHeaders, extraTableValues]

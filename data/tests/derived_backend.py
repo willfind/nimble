@@ -1445,8 +1445,8 @@ class DerivedBackend(object):
 
 		assert isinstance(pView, View)
 		assert pView.name() is None
-		assert pView.index() >= 0 and pView.index() < toTest.points()
-		assert len(pView) == toTest.features()
+		assert pView.index() >= 0 and pView.index() < toTest.pointCount
+		assert len(pView) == toTest.featureCount
 		assert pView[0] == 1
 		assert pView['two'] == 2
 		assert pView['three'] == 3
@@ -1482,8 +1482,8 @@ class DerivedBackend(object):
 
 		assert isinstance(fView, View)
 		assert fView.name() is not None
-		assert fView.index() >= 0 and fView.index() < toTest.features()
-		assert len(fView) == toTest.points()
+		assert fView.index() >= 0 and fView.index() < toTest.featureCount
+		assert len(fView) == toTest.pointCount
 		assert fView[0] == 1
 		assert fView[1] == 4
 		assert fView[2] == 7
@@ -1496,75 +1496,9 @@ class DerivedBackend(object):
 
 
 
-	############
-	# points() #
-	############
-
-
-	def test_points_empty(self):
-		""" test points() when given different kinds of emptiness """
-		data = [[],[]]
-		dataPEmpty = numpy.array(data).T
-		dataFEmpty = numpy.array(data)
-
-		objPEmpty = self.constructor(dataPEmpty)
-		objFEmpty = self.constructor(dataFEmpty)
-
-		assert objPEmpty.points() == 0
-		assert objFEmpty.points() == 2
-
-
-	def test_points_vectorTest(self):
-		""" Test points() when we only have row or column vectors of data """
-		dataR = [[1,2,3]]
-		dataC = [[1], [2], [3]]
-
-		toTestR = self.constructor(dataR)
-		toTestC = self.constructor(dataC)
-
-		rPoints = toTestR.points()
-		cPoints = toTestC.points()
-
-		assert rPoints == 1
-		assert cPoints == 3
-
-	############
-	# features() #
-	############
-
-
-	def test_features_empty(self):
-		""" test features() when given different kinds of emptiness """
-		data = [[],[]]
-		dataPEmpty = numpy.array(data).T
-		dataFEmpty = numpy.array(data)
-
-		pEmpty = self.constructor(dataPEmpty)
-		fEmpty = self.constructor(dataFEmpty)
-
-		assert pEmpty.features() == 2
-		assert fEmpty.features() == 0
-
-
-	def test_features_vectorTest(self):
-		""" Test features() when we only have row or column vectors of data """
-		dataR = [[1,2,3]]
-		dataC = [[1], [2], [3]]
-
-		toTestR = self.constructor(dataR)
-		toTestC = self.constructor(dataC)
-
-		rFeatures = toTestR.features()
-		cFeatures = toTestC.features()
-
-		assert rFeatures == 3
-		assert cFeatures == 1
-
-
-
-	############
-	# points() #
-	############
+	##############
+	# pointCount #
+	##############
 
 
 	def test_pointCount_empty(self):
@@ -1594,9 +1528,9 @@ class DerivedBackend(object):
 		assert rPoints == 1
 		assert cPoints == 3
 
-	############
-	# features() #
-	############
+	#################
+	# featuresCount #
+	#################
 
 
 	def test_featureCount_empty(self):

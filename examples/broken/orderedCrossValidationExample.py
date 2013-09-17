@@ -42,7 +42,7 @@ if __name__ == "__main__":
 	adjCloseNextDay = appleStock.copyFeatures("Adj Close")
 	adjCloseNextDay.setFeatureName(0, "Adj Close Next Day")
 	adjCloseNextDay.extractPoints(0)
-	appleStock.extractPoints(appleStock.points()-1)
+	appleStock.extractPoints(appleStock.pointCount-1)
 	appleStock.appendFeatures(adjCloseNextDay)
 	adjCloseNum = appleStock.featureNames["Adj Close"]
 	adjCloseNDNum = appleStock.featureNames["Adj Close Next Day"]

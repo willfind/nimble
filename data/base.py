@@ -57,8 +57,8 @@ class Base(object):
 			self.setFeatureNamesFromDict(featureNames)
 		else:
 			raise ArgumentException("featureNames may only be a list or a dict, defining a mapping between integers and featureNames")
-		if featureNames is not None and len(featureNames) != self.features():
-			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.features(): " + str(self.features()))
+		if featureNames is not None and len(featureNames) != self.featureCount:
+			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.featureCount: " + str(self.featureCount))
 		self.name = name
 		self.path = path
 
@@ -107,11 +107,11 @@ class Base(object):
 			return self
 		if not isinstance(assignments, list):
 			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
-		if self.features() == 0:
+		if self.featureCount == 0:
 			if len(assignments) > 0:
 				raise ArgumentException("assignments is too large; this object has no features ")
 			return self
-		if len(assignments) != self.features():
+		if len(assignments) != self.featureCount:
 			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
 
 		#convert to dict so we only write the checking code once
@@ -140,11 +140,11 @@ class Base(object):
 			return self
 		if not isinstance(assignments, dict):
 			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
-		if self.features() == 0:
+		if self.featureCount == 0:
 			if len(assignments) > 0:
 				raise ArgumentException("assignments is too large; this object has no features ")
 			return self
-		if len(assignments) != self.features():
+		if len(assignments) != self.featureCount:
 			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
 
 		# at this point, the input must be a dict
@@ -154,8 +154,8 @@ class Base(object):
 				raise ArgumentException("FeatureNames must be strings")
 			if not isinstance(assignments[featureName], int):
 				raise ArgumentException("Indices must be integers")
-			if assignments[featureName] < 0 or assignments[featureName] >= self.features():
-				raise ArgumentException("Indices must be within 0 to self.features() - 1")
+			if assignments[featureName] < 0 or assignments[featureName] >= self.featureCount:
+				raise ArgumentException("Indices must be within 0 to self.featureCount - 1")
 
 		reverseDict = {}
 		for featureName in assignments.keys():
@@ -199,7 +199,7 @@ class Base(object):
 				if not isinstance(value, type):
 					raise ArgumentException("When giving a list as input, every contained value must be a type")
 
-		if self.points() == 0 or self.features() == 0:
+		if self.pointCount == 0 or self.featureCount == 0:
 			return self
 
 		def hasType(feature):
@@ -219,7 +219,7 @@ class Base(object):
 		features are added, one for each possible value seen in the original feature.
 
 		"""		
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ImproperActionException("This action is inpossible, the object has 0 points")
 
 		index = self._getIndex(featureToReplace)
@@ -268,7 +268,7 @@ class Base(object):
 		in the original feature. 
 
 		"""
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ImproperActionException("This action is inpossible, the object has 0 points")
 
 		index = self._getIndex(featureToConvert)
@@ -314,7 +314,7 @@ class Base(object):
 		parameter. Those selected values are also removed from this object.
 
 		"""
-#		if self.points() == 0:
+#		if self.pointCount == 0:
 #			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
 		random.seed(seed)
@@ -339,27 +339,27 @@ class Base(object):
 
 		"""
 
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ArgumentException("This object has 0 points, therefore, we cannot specify a valid number of folds")
 
-		if self.features() == 0:
+		if self.featureCount == 0:
 			raise ImproperActionException("We do not allow this operation on objects with 0 features")
 
 
 		# note: we want truncation here
-		numInFold = int(self.points() / numFolds)
+		numInFold = int(self.pointCount / numFolds)
 		if numInFold == 0:
 			raise ArgumentException("Must specifiy few enough folds so there is a point in each")
 
 		# randomly select the folded portions
-		indices = range(self.points())
+		indices = range(self.pointCount)
 		random.seed(seed)
 		random.shuffle(indices)
 		foldList = []
 		for fold in xrange(numFolds):
 			start = fold * numInFold
 			if fold == numFolds - 1:
-				end = self.points()
+				end = self.pointCount
 			else:
 				end = (fold + 1) * numInFold
 			foldList.append(indices[start:end])
@@ -380,9 +380,9 @@ class Base(object):
 		ID or a list of point ID's to limit application only to those specified
 
 		"""
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ImproperActionException("We disallow this function when there are 0 points")
-		if self.features() == 0:
+		if self.featureCount == 0:
 			raise ImproperActionException("We disallow this function when there are 0 features")
 		if function is None:
 			raise ArgumentException("function must not be None")
@@ -409,9 +409,9 @@ class Base(object):
 		ID or a list of features ID's to limit application only to those specified
 
 		"""
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ImproperActionException("We disallow this function when there are 0 points")
-		if self.features() == 0:
+		if self.featureCount == 0:
 			raise ImproperActionException("We disallow this function when there are 0 features")
 		if function is None:
 			raise ArgumentException("function must not be None")
@@ -473,9 +473,9 @@ class Base(object):
 
 
 	def mapReducePoints(self, mapper, reducer):
-		if self.points() == 0:
+		if self.pointCount == 0:
 			return UML.createData(self.getTypeString(), numpy.empty(shape=(0,0)))
-		if self.features() == 0:
+		if self.featureCount == 0:
 			raise ImproperActionException("We do not allow operations over points if there are 0 features")
 
 		if mapper is None or reducer is None:
@@ -511,7 +511,7 @@ class Base(object):
 		return UML.createData(self.getTypeString(), ret)
 
 	def pointIterator(self):
-		if self.features() == 0:
+		if self.featureCount == 0:
 			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
 
 		class pointIt():
@@ -521,7 +521,7 @@ class Base(object):
 			def __iter__(self):
 				return self
 			def next(self):
-				while (self._position < self._outer.points()):
+				while (self._position < self._outer.pointCount):
 					value = self._outer.pointView(self._position)
 					self._position += 1
 					return value
@@ -529,7 +529,7 @@ class Base(object):
 		return pointIt(self)
 
 	def featureIterator(self):
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
 
 		class featureIt():
@@ -539,7 +539,7 @@ class Base(object):
 			def __iter__(self):
 				return self
 			def next(self):
-				while (self._position < self._outer.features()):
+				while (self._position < self._outer.featureCount):
 					value = self._outer.featureView(self._position)
 					self._position += 1
 					return value
@@ -617,11 +617,11 @@ class Base(object):
 	def hashCode(self):
 		"""returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
 		that should almost always change when the values of the matrix are changed by a substantive amount"""
-		if self.points() == 0 or self.features() == 0:
+		if self.pointCount == 0 or self.featureCount == 0:
 			return 0
 		valueObj = self.applyToElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, inPlace=False, preserveZeros=True)
 		valueList = valueObj.copy(asType="python list")
-		avg = sum(itertools.chain.from_iterable(valueList))/float(self.points()*self.features())
+		avg = sum(itertools.chain.from_iterable(valueList))/float(self.pointCount*self.featureCount)
 		bigNum = 1000000000
 		#this should return an integer x in the range 0<= x < 1 billion
 		return int(int(round(bigNum*avg)) % bigNum)	
@@ -634,8 +634,8 @@ class Base(object):
 		passed are of the same type (Matrix, Sparse, etc.)"""
 		self.validate()
 		#first check to make sure they have the same number of rows and columns
-		if self.points() != other.points(): return False
-		if self.features() != other.features(): return False
+		if self.pointCount != other.pointCount: return False
+		if self.featureCount != other.featureCount: return False
 		#now check if the hashes of each matrix are the same
 		if self.hashCode() != other.hashCode(): return False
 		return True
@@ -649,13 +649,13 @@ class Base(object):
 
 		"""
 		if indices is None:
-			indices = range(0, self.points())
+			indices = range(0, self.pointCount)
 			random.shuffle(indices)
 		else:
-			if len(indices) != self.points():
+			if len(indices) != self.pointCount:
 				raise ArgumentException("If indices are supplied, it must be a list with all and only valid point indices")
 			for value in indices:
-				if value < 0 or value > self.points():
+				if value < 0 or value > self.pointCount:
 					raise ArgumentException("A value in indices is out of bounds of the valid range of points")
 
 		def permuter(pointView):
@@ -672,13 +672,13 @@ class Base(object):
 
 		"""
 		if indices is None:
-			indices = range(0, self.features())
+			indices = range(0, self.featureCount)
 			random.shuffle(indices)
 		else:
-			if len(indices) != self.features():
+			if len(indices) != self.featureCount:
 				raise ArgumentException("If indices are supplied, it must be a list with all and only valid faetures indices")
 			for value in indices:
-				if value < 0 or value > self.features():
+				if value < 0 or value > self.featureCount:
 					raise ArgumentException("A value in indices is out of bounds of the valid range of features")
 		def permuter(featureView):
 			return indices[featureView.index()]
@@ -739,7 +739,7 @@ class Base(object):
 			raise ArgumentException("toAppend must not be None")
 		if not isinstance(toAppend,Base):
 			raise ArgumentException("toAppend must be a kind of data representation object")
-		if not self.features() == toAppend.features():
+		if not self.featureCount == toAppend.featureCount:
 			raise ArgumentException("toAppend must have the same number of features as this object")
 		if not self._equalFeatureNames(toAppend):
 			raise ArgumentException("The featureNames of the two objects must match")
@@ -747,7 +747,7 @@ class Base(object):
 		self.validate()
 
 		self._appendPoints_implementation(toAppend)
-		self._pointCount += toAppend.points()
+		self._pointCount += toAppend.pointCount
 		return self
 		
 	def appendFeatures(self, toAppend):
@@ -763,7 +763,7 @@ class Base(object):
 			raise ArgumentException("toAppend must not be None")
 		if not isinstance(toAppend,Base):
 			raise ArgumentException("toAppend must be a kind of data representation object")
-		if not self.points() == toAppend.points():
+		if not self.pointCount == toAppend.pointCount:
 			raise ArgumentException("toAppend must have the same number of points as this object")
 		if self._featureNameIntersection(toAppend):
 			raise ArgumentException("toAppend must not share any featureNames with this object")
@@ -771,9 +771,9 @@ class Base(object):
 		self.validate()
 
 		self._appendFeatures_implementation(toAppend)
-		self._featureCount += toAppend.features()
+		self._featureCount += toAppend.featureCount
 
-		for i in xrange(toAppend.features()):
+		for i in xrange(toAppend.featureCount):
 			self._addFeatureName(toAppend.featureNamesInverse[i])
 		
 		return self
@@ -786,7 +786,7 @@ class Base(object):
 		ordering.
 		"""
 		# its already sorted in these cases
-		if self.features() == 0 or self.points() == 0:
+		if self.featureCount == 0 or self.pointCount == 0:
 			return
 
 		sortByIndex = sortBy
@@ -810,7 +810,7 @@ class Base(object):
 
 		"""
 		# its already sorted in these cases
-		if self.features() == 0 or self.points() == 0:
+		if self.featureCount == 0 or self.pointCount == 0:
 			return
 		if sortBy is not None and sortHelper is not None:
 			raise ArgumentException("Cannot specify a feature to sort by and a helper function")
@@ -832,13 +832,13 @@ class Base(object):
 		we are to be extracted, the default None means unlimited extracttion. start and end are
 		parameters indicating range based extraction: if range based extraction is employed,
 		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.points() respectibly. randomize indicates whether random
+		other defaults to 0 and self.pointCount respectibly. randomize indicates whether random
 		sampling is to be used in conjunction with the number parameter, if randomize is False,
 		the chosen points are determined by point order, otherwise it is uniform random across the
 		space of possible removals.
 
 		"""
-#		if self.points() == 0:
+#		if self.pointCount == 0:
 #			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
 		self.validate()
@@ -850,10 +850,10 @@ class Base(object):
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.points() - 1
-			if start < 0 or start > self.points():
+				end = self.pointCount - 1
+			if start < 0 or start > self.pointCount:
 				raise ArgumentException("start must be a valid index, in the range of possible points")
-			if end < 0 or end > self.points():
+			if end < 0 or end > self.pointCount:
 				raise ArgumentException("end must be a valid index, in the range of possible points")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
@@ -864,7 +864,7 @@ class Base(object):
 					end = possibleEnd
 
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
-		self._pointCount -= ret.points()
+		self._pointCount -= ret.pointCount
 		ret.setFeatureNamesFromDict(self.featureNames)
 		return ret
 
@@ -880,13 +880,13 @@ class Base(object):
 		are to be extracted, the default None means unlimited extracttion. start and end are
 		parameters indicating range based extraction: if range based extraction is employed,
 		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.features() respectibly. randomize indicates whether random
+		other defaults to 0 and self.featureCount respectibly. randomize indicates whether random
 		sampling is to be used in conjunction with the number parameter, if randomize is False,
 		the chosen features are determined by feature order, otherwise it is uniform random across the
 		space of possible removals.
 
 		"""
-#		if self.features() == 0:
+#		if self.featureCount == 0:
 #			raise ImproperActionException("Cannot extract features from an object with 0 features")
 
 		self.validate()
@@ -898,10 +898,10 @@ class Base(object):
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.features() - 1
-			if start < 0 or start > self.features():
+				end = self.featureCount - 1
+			if start < 0 or start > self.featureCount:
 				raise ArgumentException("start must be a valid index, in the range of possible features")
-			if end < 0 or end > self.features():
+			if end < 0 or end > self.featureCount:
 				raise ArgumentException("end must be a valid index, in the range of possible features")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
@@ -912,7 +912,7 @@ class Base(object):
 					end = possibleEnd
 
 		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
-		self._featureCount -= ret.features()
+		self._featureCount -= ret.featureCount
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
 		return ret
@@ -923,16 +923,6 @@ class Base(object):
 
 		return self._isIdentical_implementation(other)
 
-	def points(self):
-		ret = self._points_implementation()
-#		assert ret == self.pointCount
-		return ret
-
-	def features(self):
-		ret = self._features_implementation()
-#		assert ret == self.featureCount
-		return ret
-
 	def writeFile(self, outPath, format=None, includeFeatureNames=True):
 		"""
 		Funciton to write the data in this object to a file using the specified
@@ -941,7 +931,7 @@ class Base(object):
 		indicating whether the file should start with a comment line designating featureNames.
 
 		"""
-		if self.points() == 0 or self.features() == 0:
+		if self.pointCount == 0 or self.featureCount == 0:
 			raise ImproperActionException("We do not allow writing to file when an object has 0 points or features")
 
 		self.validate()
@@ -1006,11 +996,11 @@ class Base(object):
 		# we enforce very specific shapes in the case of emptiness along one
 		# or both axes
 		if asType == 'pythonlist':
-			if self.points() == 0:
+			if self.pointCount == 0:
 				return []
-			if self.features() == 0:
+			if self.featureCount == 0:
 				ret = []
-				for i in xrange(self.points()):
+				for i in xrange(self.pointCount):
 					ret.append([])
 				return ret
 
@@ -1024,17 +1014,17 @@ class Base(object):
 		"""
 		if isinstance(points, basestring):
 			points = [points]
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ArgumentException("Object contains 0 points, there is no valid possible input")
 		if points is None:
 			if start is not None or end is not None:
 				if start is None:
 					start = 0
 				if end is None:
-					end = self.points() - 1
-				if start < 0 or start > self.points():
+					end = self.pointCount - 1
+				if start < 0 or start > self.pointCount:
 					raise ArgumentException("start must be a valid index, in the range of possible features")
-				if end < 0 or end > self.points():
+				if end < 0 or end > self.pointCount:
 					raise ArgumentException("end must be a valid index, in the range of possible features")
 				if start > end:
 					raise ArgumentException("start cannot be an index greater than end")
@@ -1045,7 +1035,7 @@ class Base(object):
 				raise ArgumentException("Cannot specify both IDs and a range")
 			#verify everything in list is a valid index TODO
 			for index in points:
-				if index < 0 or index >= self.points():
+				if index < 0 or index >= self.pointCount:
 					raise ArgumentException("input must contain only valid indices")
 
 		retObj = self._copyPoints_implementation(points, start, end)
@@ -1060,7 +1050,7 @@ class Base(object):
 		"""
 		if isinstance(features, basestring):
 			features = [features]
-		if self.features() == 0:
+		if self.featureCount == 0:
 			raise ArgumentException("Object contains 0 features, there is no valid possible input")
 		indices = None
 		if features is None:
@@ -1068,10 +1058,10 @@ class Base(object):
 				if start is None:
 					start = 0
 				if end is None:
-					end = self.features() - 1
-				if start < 0 or start > self.features():
+					end = self.featureCount - 1
+				if start < 0 or start > self.featureCount:
 					raise ArgumentException("start must be a valid index, in the range of possible features")
-				if end < 0 or end > self.features():
+				if end < 0 or end > self.featureCount:
 					raise ArgumentException("end must be a valid index, in the range of possible features")
 				if start > end:
 					raise ArgumentException("start cannot be an index greater than end")
@@ -1099,13 +1089,13 @@ class Base(object):
 			(x,y) = key
 		except TypeError:
 			raise ArgumentException("Must include a point and feature index")
-		if not isinstance(x,int) or x < 0 or x >= self.points():
+		if not isinstance(x,int) or x < 0 or x >= self.pointCount:
 			raise ArgumentException(str(x) + " is not a valid point ID")
 
 		if isinstance(y,basestring):
 			y = self._getIndex(y)
 
-		if not isinstance(y,int) or y < 0 or y >= self.features():
+		if not isinstance(y,int) or y < 0 or y >= self.featureCount:
 			raise ArgumentException(str(y) + " is not a valid feature ID")
 
 		return self._getitem_implementation(x,y)
@@ -1117,7 +1107,7 @@ class Base(object):
 		to the shape or ordering of the internal data. After such a modification, there is
 		no guarantee to the validity of the results.
 		"""
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ImproperActionException("ID is invalid, This object contains no points")
 		if not isinstance(ID,int):
 			raise ArgumentException("Point IDs must be integers")
@@ -1130,7 +1120,7 @@ class Base(object):
 		to the shape or ordering of the internal data. After such a modification, there is
 		no guarantee to the validity of the results.
 		"""
-		if self.features() == 0:
+		if self.featureCount == 0:
 			raise ArgumentException("ID is invalid, This object contains no features")
 
 		index = self._getIndex(ID)
@@ -1272,7 +1262,7 @@ class Base(object):
 	def _setAllDefault(self):
 		self.featureNames = {}
 		self.featureNamesInverse = {}
-		for i in xrange(self.features()):
+		for i in xrange(self.featureCount):
 			defaultFeatureName = self._nextDefaultFeatureName()
 			self.featureNamesInverse[i] = defaultFeatureName
 			self.featureNames[defaultFeatureName] = i

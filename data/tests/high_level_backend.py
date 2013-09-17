@@ -98,7 +98,7 @@ class HighLevelBackend(object):
 		if toTest.getTypeString() == 'List':
 			toTest.appendPoints(toAdd)
 			toTest.dropFeaturesContainingType(basestring)
-			assert toTest.features() == 1
+			assert toTest.featureCount == 1
 
 
 	#################################
@@ -216,7 +216,7 @@ class HighLevelBackend(object):
 		retExp = self.constructor(data)
 		while True:
 			ret = toTest.extractPointsByCoinToss(.99)
-			if ret.points() == 1:
+			if ret.pointCount == 1:
 				break
 
 		assert retExp.isIdentical(ret)
@@ -288,8 +288,8 @@ class HighLevelBackend(object):
 		except StopIteration:
 			pass
 
-		assert fold1Train.points() + fold1Test.points() == 5
-		assert fold2Train.points() + fold2Test.points() == 5
+		assert fold1Train.pointCount + fold1Test.pointCount == 5
+		assert fold2Train.pointCount + fold2Test.pointCount == 5
 
 		fold1Train.appendPoints(fold1Test)
 		fold2Train.appendPoints(fold2Test)

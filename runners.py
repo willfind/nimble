@@ -297,7 +297,7 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 
 	if isinstance(trainY, Base):
 		trainX.appendFeatures(trainY)
-		trainY = trainX.features() - 1
+		trainY = trainX.featureCount - 1
 
 	# If testY is missing, assume it is because it's the same as trainY
 	if testY is None:

@@ -85,7 +85,7 @@ class MachineReadableLogger(UmlLogger):
 			logLine += "type:" + str(baseDataObject.getTypeString())
 
 		if firstInfoAppended:
-			logLine += "," + "dimensions:(" + str(baseDataObject.points()) + ", " + str(baseDataObject.features()) + ")"
+			logLine += "," + "dimensions:(" + str(baseDataObject.pointCount) + ", " + str(baseDataObject.featureCount) + ")"
 
 		self.logMessage(logLine)
 
@@ -162,7 +162,7 @@ class MachineReadableLogger(UmlLogger):
 				elif isinstance(value, types.FunctionType):
 					logLine += createMRLineElement(key, value.__name__)
 				elif isinstance(value, Base):
-					logLine += createMRLineElement(key, str(value.points()) + ", " + str(value.features()) + ")")
+					logLine += createMRLineElement(key, str(value.pointCount) + ", " + str(value.featureCount) + ")")
 				else:
 					logLine += createMRLineElement(key, value)
 

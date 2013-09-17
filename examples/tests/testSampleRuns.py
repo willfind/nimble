@@ -32,12 +32,12 @@ def testEverythingVolumeOne():
 	partTwoX = processed
 	partTwoY = processed.extractFeatures('Type')
 
-	assert partOne.points() > 55
-	assert partOne.points() < 80
-	assert partTwoX.points() > 65
-	assert partTwoX.points() < 85
-	assert partTwoY.points() == partTwoX.points()
-	assert partOne.points() + partTwoX.points() + partOneTest.points() == 150
+	assert partOne.pointCount > 55
+	assert partOne.pointCount < 80
+	assert partTwoX.pointCount > 65
+	assert partTwoX.pointCount < 85
+	assert partTwoY.pointCount == partTwoX.pointCount
+	assert partOne.pointCount + partTwoX.pointCount + partOneTest.pointCount == 150
 
 	trainX = partOne
 	trainY = partOne.extractFeatures('Type')

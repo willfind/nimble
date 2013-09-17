@@ -463,7 +463,7 @@ def remapLabelsRange(toRemap):
 
 	view = toRemap.pointView(0)
 
-	for x in xrange(toRemap.features()):
+	for x in xrange(toRemap.featureCount):
 		value = view[x]
 		if value not in mapping:
 			mapping[value] = invIndex
@@ -492,7 +492,7 @@ def remapLabelsSpecific(toRemap, space):
 
 	view = toRemap.pointView(0)
 
-	for x in xrange(toRemap.features()):
+	for x in xrange(toRemap.featureCount):
 		value = view[x]
 		if value not in mapping:
 			mapping[value] = invIndex
@@ -501,7 +501,7 @@ def remapLabelsSpecific(toRemap, space):
 			if invIndex > maxLength:
 				raise ArgumentException("toRemap contains more values than can be mapped into the provided space.")
 
-	for x in xrange(toRemap.features()):
+	for x in xrange(toRemap.featureCount):
 		value = view[x]
 		view[x] = space[mapping[value]]
 

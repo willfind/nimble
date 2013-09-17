@@ -16,7 +16,7 @@ from UML.umlHelpers import computeError
 def _validatePredictedAsLabels(predictedValues):
 	if not isinstance(predictedValues, UML.data.Base):
 		raise ArgumentException("predictedValues must be derived class of UML.data.Base")
-	if predictedValues.features() > 1:
+	if predictedValues.featureCount > 1:
 		raise ArgumentException("predictedValues must be labels only; this has more than one feature")
 
 
@@ -360,7 +360,7 @@ def _runTrialGivenParameters(functionWrapper, knowns, predicted, negativeLabel, 
 	# range over the indices of predicted values, making them incorrect one
 	# by one
 	# TODO randomize the ordering
-	for index in xrange(predicted.points()):
+	for index in xrange(predicted.pointCount):
 		_makeIncorrect(predicted, predictionType, index)
 		scoreList.append(functionWrapper(knowns, predicted, negativeLabel))
 
@@ -439,7 +439,7 @@ def _generatePredicted(knowns, predictionType):
 	if predictionType == 0:	
 		return workingCopy
 	elif predictionType == 1:
-		scores = numpy.random.randint(2, size=workingCopy.points())
+		scores = numpy.random.randint(2, size=workingCopy.pointCount)
 		scores = numpy.matrix(scores)
 		scores = scores.transpose()
 		scores = UML.createData(retType="List", data=scores, featureNames=['LabelScore'])
@@ -447,7 +447,7 @@ def _generatePredicted(knowns, predictionType):
 		return workingCopy
 	else:
 		dataToFill = []
-		for i in xrange(workingCopy.points()):
+		for i in xrange(workingCopy.pointCount):
 			currConfidences = [None,None]
 			winner = numpy.random.randint(10) + 10 + 2
 			loser = numpy.random.randint(winner - 2) + 2 

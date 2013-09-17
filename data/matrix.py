@@ -98,7 +98,7 @@ class Matrix(Base):
 			scoresObj.transpose()
 			self.appendFeatures(scoresObj)
 			# sort by the scores, ie the most recently added feature
-			sortBy = self.features() - 1 
+			sortBy = self.featureCount - 1 
 			
 		if sortBy is None:
 			raise ArgumentException("Matrix does not support comparator based sorting")
@@ -108,7 +108,7 @@ class Matrix(Base):
 
 		# get rid of the scores we appened
 		if scorer:
-			self.extractFeatures(self.features() -1)
+			self.extractFeatures(self.featureCount -1)
 
 	def _sortFeatures_implementation(self, sortBy, sortHelper):
 		""" 
@@ -204,7 +204,7 @@ class Matrix(Base):
 				raise NotImplementedError # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
-					number = self.points()		
+					number = self.pointCount		
 				return self._extractPointsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
@@ -294,14 +294,14 @@ class Matrix(Base):
 				raise NotImplementedError # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
-					number = self.points()		
+					number = self.pointCount		
 				return self._extractFeaturesByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.points()
+				end = self.pointCount
 			if number is None:
 				number = end - start
 			if randomize:
@@ -401,24 +401,15 @@ class Matrix(Base):
 				ret.append([redKey, redValue])
 		return Matrix(ret)
 
-
-	def _features_implementation(self):
-		shape = numpy.shape(self.data)
-		return shape[1]
-
-	def _points_implementation(self):
-		shape = numpy.shape(self.data)
-		return shape[0]
-
 	def _getTypeString_implementation(self):
 		return 'Matrix'
 
 	def _isIdentical_implementation(self,other):
 		if not isinstance(other,Matrix):
 			return False
-		if self.points() != other.points():
+		if self.pointCount != other.pointCount:
 			return False
-		if self.features() != other.features():
+		if self.featureCount != other.featureCount:
 			return False
 		return numpy.array_equal(self.data,other.data)
 
@@ -431,9 +422,9 @@ class Matrix(Base):
 		header = None
 		if includeFeatureNames:
 			featureNameString = "#"
-			for i in xrange(self.features()):
+			for i in xrange(self.featureCount):
 				featureNameString += self.featureNamesInverse[i]
-				if not i == self.features() - 1:
+				if not i == self.featureCount - 1:
 					featureNameString += ','
 			header = featureNameString
 
@@ -446,9 +437,9 @@ class Matrix(Base):
 	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
 		if includeFeatureNames:
 			featureNameString = "#"
-			for i in xrange(self.features()):
+			for i in xrange(self.featureCount):
 				featureNameString += self.featureNamesInverse[i]
-				if not i == self.features() - 1:
+				if not i == self.featureCount - 1:
 					featureNameString += ','
 			
 			mmwrite(target=outPath, a=self.data, comment=featureNameString)		
@@ -508,8 +499,9 @@ class Matrix(Base):
 		return VectorView(self, 'feature', ID)
 
 	def _validate_implementation(self, level):
-		assert self.points() == self.pointCount
-		assert self.features() == self.featureCount
+		shape = numpy.shape(self.data)
+		assert shape[0] == self.pointCount
+		assert shape[1] == self.featureCount
 
 
 
@@ -522,10 +514,10 @@ class VectorView(View):
 		self._vecIndex = index
 		if axis == 'point' or axis == 0:
 			self._name = None
-			self._length = outer.features()
+			self._length = outer.featureCount
 		else:
 			self._name = outer.featureNamesInverse[index]
-			self._length = outer.points()
+			self._length = outer.pointCount
 	def __getitem__(self, key):
 		if self._axis == 'point' or self._axis == 0:
 			if isinstance(key, basestring):

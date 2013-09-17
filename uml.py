@@ -55,9 +55,9 @@ def createRandomizedData(retType, numPoints, numFeatures, sparcity, numericType=
 def splitData(toSplit, fractionForTestSet, labelID=None):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
 	It returns training X, training Y, testing X and testing Y"""
-	testXSize = int(round(fractionForTestSet*toSplit.points()))
+	testXSize = int(round(fractionForTestSet*toSplit.pointCount))
 	#pull out a testing set
-	testX = toSplit.extractPoints(start=0, end=toSplit.points(), number=testXSize, randomize=True)	
+	testX = toSplit.extractPoints(start=0, end=toSplit.pointCount, number=testXSize, randomize=True)	
 	trainY = None
 	testY = None
 	if labelID is not None:
@@ -75,15 +75,15 @@ def normalizeData(algorithm, trainX, trainY=None, testX=None, arguments={}, mode
 	"""
 	# single call normalize, combined data
 	if mode and testX is not None:
-		testLength = testX.points()
+		testLength = testX.pointCount
 		# glue training data at the end of test data
 		testX.appendPoints(trainX)
 		try:
 			normalizedAll = run(algorithm, trainX, trainY, testX, arguments=arguments)
 		except ArgumentException:
-			testX.extractPoints(start=testLength, end=normalizedAll.points())
+			testX.extractPoints(start=testLength, end=normalizedAll.pointCount)
 		# resplit normalized
-		normalizedTrain = normalizedAll.extractPoints(start=testLength, end=normalizedAll.points())
+		normalizedTrain = normalizedAll.extractPoints(start=testLength, end=normalizedAll.pointCount)
 		normalizedTest = normalizedAll
 	# two call normalize, no data combination
 	else:

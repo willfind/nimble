@@ -232,16 +232,16 @@ def testShogunScoreModeMulti():
 
 	# default scoreMode is 'label'
 	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={})
-	assert ret.points() == 2
-	assert ret.features() == 1
+	assert ret.pointCount == 2
+	assert ret.featureCount == 1
 
 	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	assert ret.pointCount == 2
+	assert ret.featureCount == 2
 
 	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
-	assert ret.points() == 2
-	assert ret.features() == 3
+	assert ret.pointCount == 2
+	assert ret.featureCount == 3
 
 
 def testShogunScoreModeBinary():
@@ -255,16 +255,16 @@ def testShogunScoreModeBinary():
 
 	# default scoreMode is 'label'
 	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={})
-	assert ret.points() == 2
-	assert ret.features() == 1
+	assert ret.pointCount == 2
+	assert ret.featureCount == 1
 
 	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	assert ret.pointCount == 2
+	assert ret.featureCount == 2
 
 	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
-	assert ret.points() == 2
-	assert ret.features() == 2
+	assert ret.pointCount == 2
+	assert ret.featureCount == 2
 
 
 def testShogunMultiClassStrategyMultiDataBinaryAlg():

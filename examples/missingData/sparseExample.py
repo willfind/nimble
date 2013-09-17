@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
 	total = 0.
 	correct = 0.
-	for i in xrange(ret.points()):
+	for i in xrange(ret.pointCount):
 		if ret.data[i,0] == Y.data[i,0]:
 			correct = correct + 1
 		total = total + 1

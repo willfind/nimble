@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     pathIn = os.path.join(bigdataPath, "tfIdfApproval50K.mtx")
     trainX = createData('Sparse', pathIn, fileType='mtx')
-    testX = trainX.extractPoints(start=0, end=trainX.points(), number=int(round(0.2*trainX.points())), randomize=True)
+    testX = trainX.extractPoints(start=0, end=trainX.pointCount, number=int(round(0.2*trainX.pointCount)), randomize=True)
     trainY = trainX.extractFeatures(0)
     testY = testX.extractFeatures(0)
     print "Finished loading data"

@@ -431,10 +431,10 @@ def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize, 
 	# the value we don't want to split from the training set
 	nonSplit = allData[endTrain,orderedFeature]
 	# we're doing a lookahead here, thus -1 from the last possible index, and  +1 to our lookup
-	while (endTrain < allData.points() - 1 and allData[endTrain+1,orderedFeature] == nonSplit):
+	while (endTrain < allData.pointCount - 1 and allData[endTrain+1,orderedFeature] == nonSplit):
 		endTrain += 1
 
-	if endTrain == allData.points() -1:
+	if endTrain == allData.pointCount -1:
 		return None
 
 	# we get the start for training by counting back from endTrain
@@ -448,12 +448,12 @@ def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize, 
 	# we get the start and end of the test set by counting forward from endTrain
 	# speciffically, we go forward by one, and as much more forward as specified by gap
 	startTest = _jumpForward(allData, orderedFeature, endTrain+1, gap)
-	if startTest >= allData.points():
+	if startTest >= allData.pointCount:
 		return None
 
 	endTest = _jumpForward(allData, orderedFeature, startTest, maxTestSize, -1)
-	if endTest >= allData.points():
-		endTest = allData.points() - 1
+	if endTest >= allData.pointCount:
+		endTest = allData.pointCount - 1
 	if _diffLessThan(allData, orderedFeature, startTest, endTest, minTestSize):
 #		return _incrementTrialWindows(allData, orderedFeature, currEndTrain+1, minTrainSize, maxTrainSize, stepSize, gap, minTestSize, maxTestSize)
 		return None
@@ -481,7 +481,7 @@ def _jumpForward(allData, orderedFeature, start, delta, intCaseOffset=0):
 		endPoint = start
 		startVal = datetime.timedelta(float(allData[start,orderedFeature]))
 		# loop as long as we don't run off the end of the data
-		while (endPoint < allData.points() - 1):
+		while (endPoint < allData.pointCount - 1):
 			if (datetime.timedelta(float(allData[endPoint+1,orderedFeature])) - startVal > delta):
 				break
 			endPoint = endPoint + 1 
@@ -664,9 +664,9 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 		compressionFunction is a function that should take two arguments: runningTotal, the final
 		output of loopFunction, and n, the number of values in knownValues/predictedValues.
 	"""
-	if knownValues is None or not isinstance(knownValues, Base) or knownValues.points == 0:
+	if knownValues is None or not isinstance(knownValues, Base) or knownValues.pointCount == 0:
 		raise ArgumentException("Empty 'knownValues' argument in error calculator")
-	elif predictedValues is None or not isinstance(predictedValues, Base) or predictedValues.points == 0:
+	elif predictedValues is None or not isinstance(predictedValues, Base) or predictedValues.pointCount == 0:
 		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
 	if not isinstance(knownValues, Matrix):
@@ -678,7 +678,7 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 	n=0.0
 	runningTotal=0.0
 	#Go through all values in known and predicted values, and pass those values to loopFunction
-	for i in xrange(predictedValues.points()):
+	for i in xrange(predictedValues.pointCount):
 		pV = predictedValues[i,0]
 		aV = knownValues[i,0]
 		runningTotal = loopFunction(aV, pV, runningTotal)
@@ -730,11 +730,11 @@ def foldIterator(dataList, folds):
 	if dataList is None or len(dataList) == 0:
 		raise ArgumentException("dataList may not be None, or empty")
 
-	points = dataList[0].points()
+	points = dataList[0].pointCount
 	for data in dataList:
-		if data.points() == 0:
+		if data.pointCount == 0:
 			raise ArgumentException("One of the objects has 0 points, it is impossible to specify a valid number of folds")
-		if data.points() != dataList[0].points():
+		if data.pointCount != dataList[0].pointCount:
 			raise ArgumentException("All data objects in the list must have the same number of points and features")
 
 	# note: we want truncation here
@@ -779,7 +779,7 @@ class _foldIteratorClass():
 
 		# we want each training set to be permuted wrt its ordering in the original
 		# data. This is setting up a permutation to be applied to each object
-		indices = range(0, copiedList[0].points() - len(self.foldList[self.index]))
+		indices = range(0, copiedList[0].pointCount - len(self.foldList[self.index]))
 		random.shuffle(indices)
 
 		resultsList = []

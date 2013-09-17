@@ -110,16 +110,16 @@ def testSciKitLearnScoreMode():
 
 	# default scoreMode is 'label'
 	ret = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={})
-	assert ret.points() == 2
-	assert ret.features() == 1
+	assert ret.pointCount == 2
+	assert ret.featureCount == 1
 
 	bestScores = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
-	assert bestScores.points() == 2
-	assert bestScores.features() == 2
+	assert bestScores.pointCount == 2
+	assert bestScores.featureCount == 2
 
 	allScores = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
-	assert allScores.points() == 2
-	assert allScores.features() == 3
+	assert allScores.pointCount == 2
+	assert allScores.featureCount == 3
 
 	checkLabelOrderingAndScoreAssociations([0,1,2], bestScores, allScores)
 
@@ -135,16 +135,16 @@ def testSciKitLearnScoreModeBinary():
 
 	# default scoreMode is 'label'
 	ret = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={})
-	assert ret.points() == 2
-	assert ret.features() == 1
+	assert ret.pointCount == 2
+	assert ret.featureCount == 1
 
 	bestScores = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
-	assert bestScores.points() == 2
-	assert bestScores.features() == 2
+	assert bestScores.pointCount == 2
+	assert bestScores.featureCount == 2
 
 	allScores = sciKitLearn("SVC", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
-	assert allScores.points() == 2
-	assert allScores.features() == 2
+	assert allScores.pointCount == 2
+	assert allScores.featureCount == 2
 
 	checkLabelOrderingAndScoreAssociations([1,2], bestScores, allScores)
 

@@ -63,7 +63,7 @@ class Sparse(Base):
 
 
 	def pointIterator(self):
-		if self.features() == 0:
+		if self.featureCount == 0:
 			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
 		self._sortInternal('point')
 
@@ -76,7 +76,7 @@ class Sparse(Base):
 			def __iter__(self):
 				return self
 			def next(self):
-				if self._nextID >= self._outer.points():
+				if self._nextID >= self._outer.pointCount:
 					raise StopIteration
 				if self._outer._sorted != "point" or not self._stillSorted:
 #					print "actually called"
@@ -87,7 +87,7 @@ class Sparse(Base):
 					#this ensures end is always in range, and always inclusive
 					while (end < len(self._outer._data.data)-1 and self._outer._data.row[end+1] == self._nextID):
 						end += 1
-					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.features(), self._nextID, 'point')
+					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.featureCount, self._nextID, 'point')
 					self._sortedPosition = end + 1
 				self._nextID += 1
 				return value
@@ -96,7 +96,7 @@ class Sparse(Base):
 
 
 	def featureIterator(self):
-		if self.points() == 0:
+		if self.pointCount == 0:
 			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
 
 		self._sortInternal('feature')
@@ -110,7 +110,7 @@ class Sparse(Base):
 			def __iter__(self):
 				return self
 			def next(self):
-				if self._nextID >= self._outer.features():
+				if self._nextID >= self._outer.featureCount:
 					raise StopIteration
 				if self._outer._sorted != "feature" or not self._stillSorted:
 #					print "actually called"
@@ -122,7 +122,7 @@ class Sparse(Base):
 					#this ensures end is always in range, and always inclusive
 					while (end < len(self._outer._data.data)-1 and self._outer._data.col[end+1] == self._nextID):
 						end += 1
-					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.points(), self._nextID, 'feature')
+					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.pointCount, self._nextID, 'feature')
 					self._sortedPosition = end + 1
 				self._nextID += 1
 				return value
@@ -182,7 +182,7 @@ class Sparse(Base):
 			newData = numpy.append(self._data.data, modData)
 			newRow = numpy.append(self._data.row, modRow)
 			newCol = numpy.append(self._data.col, modCol)
-			self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(self.points(),self.features()))
+			self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(self.pointCount,self.featureCount))
 			self._sorted = None
 
 		if inPlace:
@@ -205,12 +205,12 @@ class Sparse(Base):
 		newCol = numpy.append(self._data.col, toAppend._data.col)
 
 		# correct the row entries
-		offset = self.points()
+		offset = self.pointCount
 		for index in xrange(len(self._data.data), len(newData)):
 			newRow[index] = newRow[index] + offset
 		
-		numNewRows = self.points() + toAppend.points()
-		self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(numNewRows,self.features()))
+		numNewRows = self.pointCount + toAppend.pointCount
+		self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(numNewRows,self.featureCount))
 		if self._sorted == 'feature':
 			self._sorted = None
 
@@ -225,12 +225,12 @@ class Sparse(Base):
 		newCol = numpy.append(self._data.col, toAppend._data.col)
 
 		# correct the col entries
-		offset = self.features()
+		offset = self.featureCount
 		for index in xrange(len(self._data.data), len(newData)):
 			newCol[index] = newCol[index] + offset
 		
-		numNewCols = self.features() + toAppend.features()
-		self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(self.points(),numNewCols))
+		numNewCols = self.featureCount + toAppend.featureCount
+		self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(self.pointCount,numNewCols))
 		if self._sorted == 'point':
 			self._sorted = None
 
@@ -353,7 +353,7 @@ class Sparse(Base):
 				raise NotImplementedError # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
-					number = self.points()		
+					number = self.pointCount		
 				return self._extractByFunction_implementation(toExtract, number, "point")
 		# by range
 		if start is not None or end is not None:
@@ -402,7 +402,7 @@ class Sparse(Base):
 				raise NotImplementedError # TODO randomize in the extractFeatureByFunction case
 			else:
 				if number is None:
-					number = self.points()		
+					number = self.pointCount		
 				return self._extractByFunction_implementation(toExtract, number, "feature")
 		# by range
 		if start is not None or end is not None:
@@ -495,13 +495,13 @@ class Sparse(Base):
 			otherAxis = self._data.row
 			extractTarget = extractCols
 			extractOther = extractRows
-			maxVal = self.points()		
+			maxVal = self.pointCount		
 		else:
 			targetAxis = self._data.row
 			otherAxis = self._data.col
 			extractTarget = extractRows
 			extractOther = extractCols
-			maxVal = self.features()
+			maxVal = self.featureCount
 
 		copyIndex = 0
 		vectorStartIndex = 0
@@ -536,9 +536,9 @@ class Sparse(Base):
 					nextValue = targetAxis[i+1]
 				else:
 					if axisType == 'point':
-						nextValue = self.points()
+						nextValue = self.pointCount
 					else:
-						nextValue = self.features()
+						nextValue = self.featureCount
 				for j in xrange(targetValue+1, nextValue):
 					if toExtract(VectorView(self, None, None, {}, maxVal, j, axisType)):
 						extractedIDs.append(j)
@@ -637,11 +637,11 @@ class Sparse(Base):
 	def _mapReducePoints_implementation(self, mapper, reducer):
 		self._sortInternal("point")
 		mapperResults = {}
-		maxVal = self.features()
+		maxVal = self.featureCount
 #		for i in xrange(len(self._data.data)):
 #			rowValue = self._data.row[i]
 #			if rowValue != currIndex:
-#				currResults = mapper(VectorView(currPoint, self.features()))
+#				currResults = mapper(VectorView(currPoint, self.featureCount))
 #				for (k,v) in currResults:
 #					if not k in mapperResults:
 #						mapperResults[k] = []
@@ -652,7 +652,7 @@ class Sparse(Base):
 #			currPoint[self._data.col[i]] = self._data.data[i]
 #
 		# run the mapper on the last collected point outside the loop
-#		currResults = mapper(VectorView(currPoint, self.features()))
+#		currResults = mapper(VectorView(currPoint, self.featureCount))
 #		for (k,v) in currResults:
 #			if k not in mapperResults:
 #				mapperResults[k] = []
@@ -687,7 +687,7 @@ class Sparse(Base):
 				if i < len(self._data.data) - 1:
 					nextValue = self._data.row[i+1]
 				else:
-					nextValue = self.points()
+					nextValue = self.pointCount
 				for j in xrange(targetValue+1, nextValue):
 					currResults = mapper(VectorView(self, None, None, {}, maxVal, j, 'point'))
 					for (k,v) in currResults:
@@ -717,12 +717,6 @@ class Sparse(Base):
 			return False
 
 		return _wrapperEquals(self._data, other._data)
-
-	def _features_implementation(self):
-		return self._data.shape[1]
-
-	def _points_implementation(self):
-		return self._data.shape[0]
 
 	def _getTypeString_implementation(self):
 		return 'Sparse'
@@ -755,8 +749,8 @@ class Sparse(Base):
 
 		pointer = 0
 		pmax = len(self._data.data)
-		for i in xrange(self.points()):
-			for j in xrange(self.features()):
+		for i in xrange(self.pointCount):
+			for j in xrange(self.featureCount):
 				if pointer < pmax and i == self._data.row[pointer] and j == self._data.col[pointer]:
 					value = self._data.data[pointer]
 					pointer = pointer + 1
@@ -775,9 +769,9 @@ class Sparse(Base):
 	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
 		if includeFeatureNames:
 			featureNameString = "#"
-			for i in xrange(self.features()):
+			for i in xrange(self.featureCount):
 				featureNameString += self.featureNamesInverse[i]
-				if not i == self.features() - 1:
+				if not i == self.featureCount - 1:
 					featureNameString += ','
 			
 			mmwrite(target=outPath, a=self._data.internal, comment=featureNameString)		
@@ -880,7 +874,7 @@ class Sparse(Base):
 			if rowIndex == ID:
 				nzMap[self._data.col[i]] = i
 
-		return VectorView(self,None,None,nzMap,self.features(),ID,'point')
+		return VectorView(self,None,None,nzMap,self.featureCount,ID,'point')
 
 	def _featureView_implementation(self, ID):
 		nzMap = {}
@@ -890,12 +884,12 @@ class Sparse(Base):
 			if colIndex == ID:
 				nzMap[self._data.row[i]] = i
 
-		return VectorView(self,None,None,nzMap,self.points(),ID,'feature')
+		return VectorView(self,None,None,nzMap,self.pointCount,ID,'feature')
 
 
 	def _validate_implementation(self, level):
-		assert self.points() == self.pointCount
-		assert self.features() == self.featureCount
+		assert self._data.shape[0] == self.pointCount
+		assert self._data.shape[1] == self.featureCount
 		assert isinstance(self._data, CooWithEmpty)
 
 		if level > 0:

@@ -21,7 +21,7 @@ class List(Base):
 	"""
 	Class providing implementations of data manipulation operations on data stored
 	in a list of lists, representing a list of points of data. data is the list of
-	lists. numFeatures is the integer number of features in each point.
+	lists.
 
 	"""
 
@@ -33,7 +33,7 @@ class List(Base):
 		the init funciton of Base, to be interpreted there.
 
 		"""
-		self.numFeatures = None
+		self._numFeatures = None
 		# Format / copy the data if necessary
 		# if input as a list, copy it
 		if isinstance(data, list):
@@ -49,28 +49,28 @@ class List(Base):
 			temp = data
 			data = data.tolist()
 			# if the above was successful, then we might have to exctact emptiness info
-			self.numFeatures = temp.shape[1]
+			self._numFeatures = temp.shape[1]
 		except AttributeError:
 			pass
 
 		# assign attributes
 		if data is None or len(data) == 0:
-			if self.numFeatures is None:
+			if self._numFeatures is None:
 				if featureNames is not None:
-					self.numFeatures = len(featureNames) 
+					self._numFeatures = len(featureNames) 
 				else:
-					self.numFeatures = 0
+					self._numFeatures = 0
 			self.data = []
-			super(List, self).__init__((0,self.numFeatures),featureNames, name, path)
+			super(List, self).__init__((0,self._numFeatures),featureNames, name, path)
 		else:
-			self.numFeatures = len(data[0])
+			self._numFeatures = len(data[0])
 			for point in data:
-				if len(point) != self.numFeatures:
+				if len(point) != self._numFeatures:
 					raise ArgumentException("Points must be of equal size")
 #				if not isinstance(point, list):
 #					raise ArgumentException("If a python list is given as input, each entry must also be a list")
 			self.data = data
-			shape = (len(self.data), self.numFeatures)
+			shape = (len(self.data), self._numFeatures)
 			super(List, self).__init__(shape, featureNames, name, path)
 
 
@@ -83,14 +83,14 @@ class List(Base):
 		tempFeatures = len(self.data)
 		transposed = []
 		#load the new data with an empty point for each feature in the original
-		for i in xrange(self.features()):
+		for i in xrange(self.featureCount):
 			transposed.append([])
 		for point in self.data:
 			for i in xrange(len(point)):
 				transposed[i].append(point[i])
 		
 		self.data = transposed
-		self.numFeatures= tempFeatures
+		self._numFeatures= tempFeatures
 
 	def _appendPoints_implementation(self,toAppend):
 		"""
@@ -105,10 +105,10 @@ class List(Base):
 		Append the features from the toAppend object to right ends of the points in this object
 
 		"""	
-		for i in xrange(self.points()):
+		for i in xrange(self.pointCount):
 			for value in toAppend.data[i]:
 				self.data[i].append(value)
-		self.numFeatures= self.numFeatures+ toAppend.features()
+		self._numFeatures= self._numFeatures+ toAppend.featureCount
 
 	def _sortPoints_implementation(self, sortBy, sortHelper):
 		""" 
@@ -123,7 +123,7 @@ class List(Base):
 			indices = self.applyToPoints(lambda x:x.index(), inPlace=False)
 			indices.setFeatureName(0,"#UML_SORTHELPER_INDEX")
 			self.appendFeatures(indices)
-			newFeatureIndex = self.features() - 1 
+			newFeatureIndex = self.featureCount - 1 
 			def wrapperMaker(funcToWrap, outer):
 				def wrapped(row):
 					return funcToWrap(PointView(outer.featureNames,row[0:newFeatureIndex], row[newFeatureIndex]))
@@ -256,7 +256,7 @@ class List(Base):
 				raise NotImplementedError # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
-					number = self.points()		
+					number = self.pointCount		
 				return self._extractPointsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
@@ -277,7 +277,7 @@ class List(Base):
 		"""
 		toWrite = 0
 		satisfying = []
-		for i in xrange(self.points()):
+		for i in xrange(self.pointCount):
 			if i not in toExtract:
 				self.data[toWrite] = self.data[i]
 				toWrite += 1
@@ -326,7 +326,7 @@ class List(Base):
 		"""
 		toWrite = start
 		inRange = []
-		for i in xrange(start,self.points()):
+		for i in xrange(start,self.pointCount):
 			if i <= end:
 				inRange.append(self.data[i])		
 			else:
@@ -376,14 +376,14 @@ class List(Base):
 				raise NotImplementedError # TODO randomize in the extractFeaturesByFunction case
 			else:
 				if number is None:
-					number = self.points()		
+					number = self.pointCount		
 				return self._extractFeaturesByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
 			if start is None:
 				start = 0
 			if end is None:
-				end = self.points()
+				end = self.pointCount
 			if number is None:
 				number = end - start
 			if randomize:
@@ -411,7 +411,7 @@ class List(Base):
 			extractedPoint.reverse()
 			extractedData.append(extractedPoint)
 
-		self.numFeatures = self.numFeatures - len(toExtract)
+		self._numFeatures = self._numFeatures - len(toExtract)
 
 		# construct featureName list
 		featureNameList = []
@@ -432,7 +432,7 @@ class List(Base):
 		# all we're doing is making a list and calling extractFeaturesBy list, no need
 		# deal with featureNames or the number of features.
 		toExtract = []
-		for i in xrange(self.features()):
+		for i in xrange(self.featureCount):
 			ithView = FeatureView(self.data, i, self.featureNamesInverse[i])
 			if function(ithView):
 				toExtract.append(i)
@@ -454,7 +454,7 @@ class List(Base):
 			extractedPoint.reverse()
 			extractedData.append(extractedPoint)
 
-		self.numFeatures = self.numFeatures- len(extractedPoint)
+		self._numFeatures = self._numFeatures- len(extractedPoint)
 
 		# construct featureName list
 		featureNameList = []
@@ -466,7 +466,7 @@ class List(Base):
 	def _mapReducePoints_implementation(self, mapper, reducer):
 		mapResults = {}
 		# apply the mapper to each point in the data
-		for i in xrange(self.points()):
+		for i in xrange(self.pointCount):
 			point = self.data[i]
 			currResults = mapper(PointView(self.featureNames, point, i))
 			# the mapper will return a list of key value pairs
@@ -488,23 +488,17 @@ class List(Base):
 				ret.append([redKey,redValue])
 		return List(ret, reuseData=True)
 
-	def _features_implementation(self):
-		return self.numFeatures
-
-	def _points_implementation(self):
-		return len(self.data)
-
 	def _getTypeString_implementation(self):
 		return 'List'
 
 	def _isIdentical_implementation(self,other):
 		if not isinstance(other,List):
 			return False
-		if self.points() != other.points():
+		if self.pointCount != other.pointCount:
 			return False
-		if self.features() != other.features():
+		if self.featureCount != other.featureCount:
 			return False
-		for index in xrange(self.points()):
+		for index in xrange(self.pointCount):
 			if self.data[index] != other.data[index]:
 				return False
 		return True
@@ -559,11 +553,11 @@ class List(Base):
 				outFile.write(str(a))
 			outFile.write('\n')
 
-		outFile.write(str(self.points()) + " " + str(self.features()) + "\n")
+		outFile.write(str(self.pointCount) + " " + str(self.featureCount) + "\n")
 
 
-		for j in xrange(self.features()):
-			for i in xrange(self.points()):
+		for j in xrange(self.featureCount):
+			for i in xrange(self.pointCount):
 				value = self.data[i][j]
 				outFile.write(str(value) + '\n')
 		outFile.close()
@@ -576,8 +570,8 @@ class List(Base):
 
 	def _copy_implementation(self, asType):
 		if asType == 'Sparse':
-			if self.points() == 0 or self.features() == 0:
-				return  UML.data.Sparse(numpy.empty(shape=(self.points(), self.features())), self.featureNames)
+			if self.pointCount == 0 or self.featureCount == 0:
+				return  UML.data.Sparse(numpy.empty(shape=(self.pointCount, self.featureCount)), self.featureNames)
 			return UML.data.Sparse(self.data, self.featureNames)
 		if asType is None or asType == 'List':
 			return UML.data.List(self.data, self.featureNames)
@@ -586,12 +580,12 @@ class List(Base):
 		if asType == 'pythonlist':
 			return copy.deepcopy(self.data)
 		if asType == 'numpyarray':
-			if self.points() == 0 or self.features() == 0:
-				return numpy.empty(shape=(self.points(), self.features()))
+			if self.pointCount == 0 or self.featureCount == 0:
+				return numpy.empty(shape=(self.pointCount, self.featureCount))
 			return numpy.array(self.data)
 		if asType == 'numpymatrix':
-			if self.points() == 0 or self.features() == 0:
-				return numpy.matrix(numpy.empty(shape=(self.points(), self.features())))
+			if self.pointCount == 0 or self.featureCount == 0:
+				return numpy.matrix(numpy.empty(shape=(self.pointCount, self.featureCount)))
 			return numpy.matrix(self.data)
 
 	def _copyPoints_implementation(self, points, start, end):
@@ -639,8 +633,8 @@ class List(Base):
 
 
 	def _validate_implementation(self, level):
-		assert self.points() == self.pointCount
-		assert self.features() == self.featureCount
+		assert len(self.data) == self.pointCount
+		assert self._numFeatures == self.featureCount
 
 		if level > 0:
 			if len(self.data) > 0:

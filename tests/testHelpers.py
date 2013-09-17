@@ -59,8 +59,8 @@ class FoldIteratorTester(object):
 		except StopIteration:
 			pass
 
-		assert fold1Train.points() + fold1Test.points() == 5
-		assert fold2Train.points() + fold2Test.points() == 5
+		assert fold1Train.pointCount + fold1Test.pointCount == 5
+		assert fold2Train.pointCount + fold2Test.pointCount == 5
 
 		fold1Train.appendPoints(fold1Test)
 		fold2Train.appendPoints(fold2Test)
@@ -93,14 +93,14 @@ class FoldIteratorTester(object):
 			pass
 
 		# check that the partitions are the right size (ie, no overlap in training and testing)
-		assert fold0Train0.points() + fold0Test0.points() == 7
-		assert fold1Train0.points() + fold1Test0.points() == 7
+		assert fold0Train0.pointCount + fold0Test0.pointCount == 7
+		assert fold1Train0.pointCount + fold1Test0.pointCount == 7
 
-		assert fold0Train1.points() + fold0Test1.points() == 7
-		assert fold1Train1.points() + fold1Test1.points() == 7
+		assert fold0Train1.pointCount + fold0Test1.pointCount == 7
+		assert fold1Train1.pointCount + fold1Test1.pointCount == 7
 
-		assert fold0Train2.points() + fold0Test2.points() == 7
-		assert fold1Train2.points() + fold1Test2.points() == 7
+		assert fold0Train2.pointCount + fold0Test2.pointCount == 7
+		assert fold1Train2.pointCount + fold1Test2.pointCount == 7
 
 		# check that the data is in the same order accross objects, within
 		# the training or testing sets of a single fold
@@ -112,13 +112,13 @@ class FoldIteratorTester(object):
 				testList.append(test)
 
 			for train in trainList:
-				assert train.points() == trainList[0].points()
-				for index in xrange(train.points()):
+				assert train.pointCount == trainList[0].pointCount
+				for index in xrange(train.pointCount):
 					assert fabs(train[index,0]) == fabs(trainList[0][index,0])
 
 			for test in testList:
-				assert test.points() == testList[0].points()
-				for index in xrange(test.points()):
+				assert test.pointCount == testList[0].pointCount
+				for index in xrange(test.pointCount):
 					assert fabs(test[index,0]) == fabs(testList[0][index,0])
 
 
