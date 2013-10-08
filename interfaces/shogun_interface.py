@@ -77,7 +77,7 @@ def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None
 		trainObj = trainX.copy()
 	if not isinstance(testX, UML.data.Base):
 		if testX is None:
-			raise ArgumentException("testX may only be an object derived from Base")
+			raise ArgumentException("testX may only be an object derived from UML.data.Base")
 		testObj = UML.createData('Matrix', testX)
 	else: # input is an object
 		testObj = testX.copy()
@@ -116,7 +116,7 @@ def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None
 
 	# check some stuff that we know won't work, but shogun will not report intelligently
 	if trainRawData.shape[0] != testRawData.shape[0]:
-		raise ArgumentException("Points in the training data and testing data must be the same size")
+		raise ArgumentException("Length of points in the training data and testing data must be the same")
 
 	# call backend
 	try:
@@ -126,7 +126,7 @@ def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None
 		if not shogunPresent():
 			print "Shogun not importable."
 			print "It must be either on the search path, or have its path set by setshogunLocation()"
-		return
+		raise e
 
 	if retData is None:
 		return
@@ -189,7 +189,7 @@ def _shogunBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=N
 		if problemType == shogun.Classifier.PT_MULTICLASS:
 			inverseMapping = remapLabelsRange(tempObj)
 			if len(inverseMapping) == 1:
-				raise ArgumentException("Cannot train a multiclass classifier with data containing only one label")
+				raise ArgumentException("Cannot train a classifier with data containing only one label")
 			from shogun.Features import MulticlassLabels
 			flattened = numpy.array(tempObj.data).flatten()
 			trainLabels = MulticlassLabels(flattened.astype(float))
@@ -197,6 +197,8 @@ def _shogunBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=N
 			if scoreMode == 'test':
 				return 'binary'
 			inverseMapping = remapLabelsSpecific(tempObj, [-1,1])
+			if len(inverseMapping) == 1:
+				raise ArgumentException("Cannot train a classifier with data containing only one label")
 			from shogun.Features import BinaryLabels
 			flattened = numpy.array(tempObj.data).flatten()
 			trainLabels = BinaryLabels(flattened.astype(float))
@@ -206,7 +208,7 @@ def _shogunBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=N
 			if scoreMode != 'label':
 				raise ArgumentException("Invalid scoreMode for a regression problem; the default parameter must be used")
 		else:
-			raise ArgumentException("Algorithm problem type not supported")
+			raise ArgumentException("Algorithm problem type (" + str(problemType) + ") not supported")
 
 	except ImportError:
 		from shogun.Features import Labels
@@ -371,6 +373,7 @@ def listShogunAlgorithms():
 	import shogun
 
 	ret = []
+	seen = {}
 	subpackages = shogun.__all__
 
 	for sub in subpackages:
@@ -385,8 +388,10 @@ def listShogunAlgorithms():
 		
 		for member in contents:
 			memberContents = eval('dir(' + curr + "." + member + ')')
-			if 'train' in memberContents and 'apply' in memberContents:
-				ret.append(member)
+			if (not member in seen) and (not member in excludedAlgorithms):
+				if 'train' in memberContents and 'apply' in memberContents:
+					ret.append(member)
+					seen[member] = True
 
 	return ret
 
@@ -499,11 +504,93 @@ def remapLabelsSpecific(toRemap, space):
 			inverse.append(value)
 			invIndex += 1
 			if invIndex > maxLength:
-				raise ArgumentException("toRemap contains more values than can be mapped into the provided space.")
+				if space == [-1,1]:
+					raise ArgumentException("Multiclass training data cannot be used by a binary-only classification algorithm")
+				else:
+					raise ArgumentException("toRemap contains more values than can be mapped into the provided space.")
 
 	for x in xrange(toRemap.featureCount):
 		value = view[x]
 		view[x] = space[mapping[value]]
 
 	return inverse
+
+
+
+excludedAlgorithms = [# parent classes, not actually runable
+			'BaseMulticlassMachine', 
+			'CDistanceMachine',
+			'CSVM', 
+			'KernelMachine', 
+			'KernelMulticlassMachine',
+			'LinearLatentMachine', 
+			'LinearMachine',
+			'MKL',
+			'Machine', 
+			'MulticlassMachine', 
+			'MulticlassSVM',
+			'MultitaskLinearMachineBase',
+			'NativeMulticlassMachine',
+			'OnlineLinearMachine', 
+			'ScatterSVM', # unstable method
+			'TreeMachineWithConditionalProbabilityTreeNodeData',
+			'TreeMachineWithRelaxedTreeNodeData', 
+
+			# Should be implemented, but don't work
+			'BalancedConditionalProbabilityTree', # streaming dense features input
+			'ConditionalProbabilityTree', 	
+			'DomainAdaptationSVM',
+			'DualLibQPBMSOSVM',  # problem type 3
+			'FeatureBlockLogisticRegression',  # remapping
+			'KernelStructuredOutputMachine', # problem type 3
+			'LatentSVM', # problem type 4
+			'LibSVMOneClass',
+			'LinearMulticlassMachine', # mixes machines. is this even possible to run?
+			'LinearStructuredOutputMachine', # problem type 3
+			'MKLMulticlass', # needs combined kernel type?
+			'MKLClassification', # compute by subkernel not implemented
+			'MKLOneClass', # Interleaved MKL optimization is currently only supported with SVMlight
+			'MKLRegression',  # kernel stuff?
+			'MultitaskClusteredLogisticRegression',   # assertion error
+			'MultitaskCompositeMachine',  # takes machine as input?
+			'MultitaskL12LogisticRegression',  # assertion error
+			'MultitaskLeastSquaresRegression',  #core dump
+			'MultitaskLogisticRegression',  #core dump
+			'MultitaskTraceLogisticRegression',  # assertion error
+			'OnlineLibLinear', # needs streaming dot features
+			'OnlineSVMSGD', # needs streaming dot features
+			'PluginEstimate', # takes string inputs?
+			'RandomConditionalProbabilityTree',  # takes streaming dense features
+			'RelaxedTree', # [ERROR] Call set_machine_for_confusion_matrix before training
+			'ShareBoost', # non standard input
+			'StructuredOutputMachine', # problem type 3
+			'SubGradientSVM', #doesn't terminate
+			'VowpalWabbit',  # segfault
+			'WDSVMOcas', # string input
+
+			# functioning algorithms
+			#'AveragedPerceptron'
+			#'GaussianNaiveBayes',
+			#'GMNPSVM', 
+			#'GNPPSVM', 
+			#'GPBTSVM',
+			#'Hierarchical',
+			#'KMeans', 
+			#'KNN', 
+			#'LaRank',
+			#'LibLinear',
+			#'LibSVM',
+			#'LibSVR',
+			#'MPDSVM',
+			#'MulticlassLibLinear',
+			#'MulticlassLibSVM',
+			#'Perceptron',
+			#'SGDQN',
+			#'SVMLight',
+			#'SVMLightOneClass',
+			#'SVMLin',
+			#'SVMOcas', 
+			#'SVMSGD',
+			#'SVRLight',
+			]
 

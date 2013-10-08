@@ -97,26 +97,52 @@ def normalizeData(algorithm, trainX, trainY=None, testX=None, arguments={}, mode
 		testX.referenceDataFrom(normalizedTest)
 
 
-def listLearningFunctions(package):
-	package = package.lower()
+def listLearningFunctions(package=None):
+	listAll = False
+	if package is not None:
+		if not isinstance(package, basestring):
+			raise ArgumentException("package may only be None (to list all learning functions), or the string name of a package")
+		package = package.lower()
+		available = ['mahout', 'regressor', 'scikitlearn', 'mlpy', 'shogun']
+		if not package in available:
+			raise ArgumentException("unrecognized package, only allowed are: " + str(available))
+	else:
+		listAll = True
 	results = None
-	if package == 'mahout':
+	allResults = []
+	def addToAll(packageName, toAdd, toAppendTo):
+		for funcName in toAdd:
+			toAppendTo.append(packageName + '.' + funcName)
+	if package == 'mahout' or listAll:
 		import UML.interfaces.mahout_interface
 		results = UML.interfaces.mahout_interface.listMahoutAlgorithms()
-	elif package == 'regressor':
+		if listAll:
+			addToAll('mahout', results, allResults)
+	if package == 'regressor' or listAll:
 		import UML.interfaces.regressors_interface
 		results = UML.interfaces.regressors_interface.listRegressorAlgorithms()
-	elif package == 'scikitlearn':
+		if listAll:
+			addToAll('regressor', results, allResults)
+	if package == 'scikitlearn' or listAll:
 		import UML.interfaces.scikit_learn_interface
 		results = UML.interfaces.scikit_learn_interface.listSciKitLearnAlgorithms()
-	elif package == 'mlpy':
+		if listAll:
+			addToAll('scikitlearn', results, allResults)
+	if package == 'mlpy' or listAll:
 		import UML.interfaces.mlpy_interface
 		results = UML.interfaces.mlpy_interface.listMlpyAlgorithms()
-	elif package == 'shogun':
+		if listAll:
+			addToAll('mlpy', results, allResults)
+	if package == 'shogun' or listAll:
 		import UML.interfaces.shogun_interface
 		results = UML.interfaces.shogun_interface.listShogunAlgorithms()
+		if listAll:
+			addToAll('shogun', results, allResults)
 
-	return results
+	if listAll:
+		return allResults
+	else:
+		return results
 
 def listDataFunctions():
 	methodList = dir(UML.data.Base)

@@ -43,15 +43,27 @@ def testShogun_shapemismatchException():
 def testShogun_singleClassException():
 	""" Test shogun() raises exception when the training data only has a single label """
 	variables = ["Y","x1","x2"]
-	data = [[-1,1,0], [-1,0,1], [1,3,2]]
+	data = [[-1,1,0], [-1,0,1], [-1,0,0]]
 	trainingObj = Matrix(data,variables)
 
-	data2 = [[3]]
+	data2 = [[3,3]]
 	testObj = Matrix(data2)
 
 	args = {}
 	ret = shogun("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
+@raises(ArgumentException)
+def testShogun_multiClassDataToBinaryAlg():
+	""" Test shogun() raises ArgumentException when passing multiclass data to a binary algorithm """
+	variables = ["Y","x1","x2"]
+	data = [[5,-11,-5], [1,0,1], [2,3,2]]
+	trainingObj = Matrix(data,variables)
+
+	data2 = [[5,3], [-1,0]]
+	testObj = Matrix(data2)
+
+	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
+	ret = shogun("LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
 def testShogunHandmadeBinaryClassification():
@@ -81,6 +93,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 	testObj = Matrix(data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
+#	args = {}
 	ret = shogun("LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
@@ -101,6 +114,7 @@ def testShogunKMeans():
 	ret = shogun("KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
+	print ret.data
 
 	assert ret.data[0,0] == 0
 	assert ret.data[1,0] == 1
@@ -118,7 +132,8 @@ def testShogunMulticlassSVM():
 
 	args = {'C':.5, 'kernel':'LinearKernel'}
 #	args = {'C':1}
-	ret = shogun("MulticlassLibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+#	args = {}
+	ret = shogun("GMNPSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 
@@ -276,9 +291,6 @@ def testShogunMultiClassStrategyMultiDataBinaryAlg():
 	data2 = [[2,3],[-200,0]]
 	testObj = Matrix(data2)
 
-#	import pdb
-#	pdb.set_trace()
-
 	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, multiClassStrategy="OneVsOne")
 	
 
@@ -293,5 +305,57 @@ def testShogunListAlgorithms():
 	assert 'LibSVM' in ret
 	assert 'LibLinear' in ret
 	assert 'MulticlassLibSVM' in ret
-	assert 'SubGradientSVM' in ret
 	assert 'MulticlassOCAS' in ret
+
+
+	from shogun.Features import RealFeatures
+	from shogun.Features import BinaryLabels
+	from shogun.Features import MulticlassLabels
+	from shogun.Features import RegressionLabels
+	import shogun.Kernel
+	import shogun.Classifier
+
+	for i in xrange(len(ret)):
+		funcName = ret[i]
+
+		toCall = getattr(shogun.Classifier, funcName)
+		trialObj = toCall()
+		probType = trialObj.get_machine_problem_type()
+		if probType == 0:
+			data = [[1,0], [0,1], [3,2]]
+			labels = [[-1], [-1], [1]]
+		else:
+			data = [[0,0], [0,1], [-118,1], [-117,1], [1,191], [1,118], [-1000,-500]]
+			labels = [[0],[0],[1],[1],[2],[2],[3]]
+
+		data = numpy.array(data, dtype=numpy.float)
+		data = data.transpose()
+		labels = numpy.array(labels)
+		labels = labels.transpose()
+		labels = labels.flatten()
+		labels = labels.astype(float)
+
+		trainFeat = RealFeatures()
+		trainFeat.set_feature_matrix(numpy.array(data, dtype=numpy.float))	
+		if probType == 0:
+			trainLabels = BinaryLabels(labels)
+		elif probType == 1:
+			trainLabels = RegressionLabels(labels)
+		else:
+			trainLabels = MulticlassLabels(labels)
+		trialObj.set_labels(trainLabels)
+
+		if hasattr(trialObj, 'set_kernel'):
+			kern = shogun.Kernel.LinearKernel(trainFeat,trainFeat)
+			trialObj.set_kernel(kern)
+		if hasattr(trialObj, 'set_distance'):
+			dist = shogun.Kernel.ManhattanMetric(trainFeat, trainFeat)
+			trialObj.set_distance(dist)
+		if hasattr(trialObj, 'set_C'):
+			try:
+				trialObj.set_C(1, 1)
+			except TypeError:
+				trialObj.set_C(1)
+
+		trialObj.train(trainFeat)
+
