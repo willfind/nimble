@@ -21,6 +21,43 @@ from UML.data import Matrix
 from UML.data import List
 from UML.data import Base
 
+def _learningAlgorithmQuery(name, queryType):
+	"""
+	Takes a string of the form 'package.algorithmName' and a string defining
+	a queryType of either 'parameters' or 'defaults' then returns the results
+	of either the package's getParameters(learningAlgorithm) function or the
+	package's getDefaultValues(learningAlgorithm) function.
+
+	"""
+	[package, learningAlgorithm] = name.split('.')
+
+	if queryType == "parameters":
+		toCallName = 'getParameters'
+	elif queryType == 'defaults':
+		toCallName = 'getDefaultValues'
+	else:
+		raise ArgumentException("Unrecognized queryType: " + queryType)
+
+	if package == 'mahout':
+		import UML.interfaces.mahout_interface
+		raise ArgumentException("mahout not yet supported")
+	if package == 'regressor':
+		import UML.interfaces.regressors_interface
+		raise ArgumentException("regressors not yet supported")
+	if package == 'scikitlearn':
+		import UML.interfaces.scikit_learn_interface
+		toCall = getattr(UML.interfaces.scikit_learn_interface, toCallName)
+	if package == 'mlpy':
+		import UML.interfaces.mlpy_interface
+		toCall = getattr(UML.interfaces.mlpy_interface, toCallName)
+	if package == 'shogun':
+		import UML.interfaces.shogun_interface
+		raise ArgumentException("shogun not yet supported")
+		#toCall = getattr(UML.interfaces.shogun_interface, toCallName)
+
+	results = toCall(learningAlgorithm)
+	return results
+
 def _loadSparse(data, featureNames, fileType, automatedRetType=False):
 	if fileType is None:
 		return Sparse(data, featureNames)

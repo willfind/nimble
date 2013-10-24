@@ -15,7 +15,8 @@ from uml import splitData
 from uml import listDataFunctions
 from uml import listUMLFunctions
 from uml import listLearningFunctions
-
+from uml import learningAlgorithmParameters
+from uml import learningAlgorithmDefaultValues
 
 from uml import functionCombinations
 from uml import crossValidate

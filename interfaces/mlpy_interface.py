@@ -306,8 +306,52 @@ def listMlpyAlgorithms(includeParams=False):
 						(lastArgs,v,k,d) = inspect.getargspec(obj.transform)
 				except TypeError:
 					pass
-				
+	return ret
+
+
+def getParameters(name):
+	"""
+	Takes the name of some mlpy object or function, returns a list
+	of parameters used to instantiate that object or run that function
+
+	"""
+	(objArgs,v,k,d) = _paramQuery(name)
+	return objArgs
+
+def getDefaultValues(name):
+	"""
+	Takes the name of some mlpy object or function, returns a dict mapping
+	parameter names to their default values 
+
+	"""
+
+	(objArgs,v,k,d) = _paramQuery(name)
+	ret = {}
+	if d is not None:
+		for i in xrange(len(d)):
+			ret[objArgs[-(i+1)]] = d[-(i+1)]
 
 	return ret
 
 
+def _paramQuery(name):
+	import mlpy
+	if not hasattr(mlpy, name):
+		raise ArgumentException("Cannot find " + name + " in mlpy")
+
+	namedModule = getattr(mlpy, name)
+
+	try:
+		(objArgs,v,k,d) = inspect.getargspec(namedModule)
+		if len(objArgs) > 0 and objArgs[0] == 'self':
+			objArgs = objArgs[1:]
+		return (objArgs,v,k,d)
+	except TypeError as te:
+		try:
+			(objArgs,v,k,d) = inspect.getargspec(namedModule.__init__)
+			if len(objArgs) > 0 and objArgs[0] == 'self':
+				objArgs = objArgs[1:]
+			return (objArgs,v,k,d)
+		except TypeError as te:
+			print te
+			return None

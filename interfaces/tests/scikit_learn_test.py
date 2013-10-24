@@ -157,5 +157,15 @@ def testSciKitLearnListAlgorithms():
 	assert 'KMeans' in ret
 	assert 'LinearRegression' in ret
 
+	toExclude = ['BaseDiscreteNB', 'GaussianNB', 'libsvm']
+
+	for name in ret:
+		if name not in toExclude:
+			params = getParameters(name)
+			assert params is not None
+			defaults = getDefaultValues(name)
+			for key in defaults.keys():
+				assert key in params
+
 
 

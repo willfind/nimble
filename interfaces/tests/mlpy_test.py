@@ -5,6 +5,8 @@ Unit tests for mlpy_interface.py
 
 import numpy.testing
 
+from UML.interfaces.mlpy_interface import getParameters
+from UML.interfaces.mlpy_interface import getDefaultValues
 from test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.interfaces.mlpy_interface import *
 from UML.data import Matrix
@@ -164,6 +166,13 @@ def testMlpyListAlgorithms():
 	assert "LibLinear" in ret
 	assert "LibSvm" in ret
 
+	toExclude = ['ClassTree', 'KNN', 'KernelAdatron', 'LibLinear', 'LibSvm', 'MaximumLikelihoodC']
 
-
+	for name in ret:
+		if name not in toExclude:
+			params = getParameters(name)
+			assert params is not None
+			defaults = getDefaultValues(name)
+			for key in defaults.keys():
+				assert key in params
 

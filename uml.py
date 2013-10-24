@@ -26,6 +26,7 @@ from UML.umlHelpers import _loadMatrix
 from UML.umlHelpers import _loadList
 from UML.umlHelpers import executeCode
 from UML.umlHelpers import _incrementTrialWindows
+from UML.umlHelpers import _learningAlgorithmQuery
 
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -95,6 +96,34 @@ def normalizeData(algorithm, trainX, trainY=None, testX=None, arguments={}, mode
 	trainX.referenceDataFrom(normalizedTrain)
 	if testX is not None:
 		testX.referenceDataFrom(normalizedTest)
+
+
+def learningAlgorithmParameters(name):
+	"""
+	Takes a string of the form 'package.algorithmName' and returns a list of
+	strings which are the names of the parameters when calling package.learningAlgorithm
+
+	If the name cannot be found within the package, then an exception will be thrown.
+	If the name is found, be for some reason we cannot determine what the parameters
+	are, then we return None. Note that if we have determined that there are no
+	parameters, we return an empty list. 
+
+	"""
+	return _learningAlgorithmQuery(name, 'parameters')
+
+def learningAlgorithmDefaultValues(name):
+	"""
+	Takes a string of the form 'package.algorithmName' and returns a returns a
+	dict mapping of parameter names to their default values when calling
+	package.learningAlgorithm
+
+	If the name cannot be found within the package, then an exception will be thrown.
+	If the name is found, be for some reason we cannot determine what the parameters
+	are, then we return None. Note that if we have determined that there are no
+	parameters, we return an empty dict. 
+
+	"""
+	return _learningAlgorithmQuery(name, 'defaults')
 
 
 def listLearningFunctions(package=None):
