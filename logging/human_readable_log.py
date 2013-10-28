@@ -56,7 +56,7 @@ class HumanReadableLogger(UmlLogger):
 	def _logRun_implementation(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
 		"""
 			Convert a set of objects representing one run (data used for training, data used for
-			testing, function representing a unique classifier {algorithm, parameters}, error metrics,
+			testing, function representing a unique classifier {learningAlgorithm, parameters}, error metrics,
 			and any additional info) into a list.  This list can be appended to a second list, to create
 			a 2-dimensional table that can be passed to tableString().  The results of tableString can
 			then be printed to the log.
@@ -67,7 +67,7 @@ class HumanReadableLogger(UmlLogger):
 				# of testing data points
 				# of features in training data
 				# of features in testing data
-				Function defining the classifer (algorithm, parameters, etc.)
+				Function defining the classifer (learningAlgorithm, parameters, etc.)
 				Error metrics computed based on predictions of classifier: name/function and
 				numerical result)
 

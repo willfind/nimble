@@ -48,7 +48,7 @@ def mlpyPresent():
 	return True
 
 
-def mlpy(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
+def mlpy(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 
 
@@ -60,14 +60,14 @@ def mlpy(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, 
 	if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll' and multiClassStrategy != 'OneVsOne':
 		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
 
-	# if we have to enfore a classification strategy, we test the algorithm in question,
+	# if we have to enfore a classification strategy, we test the learning algorithm in question,
 	# and call our own strategies if necessary
 	if multiClassStrategy != 'default':
-		trialResult = checkClassificationStrategy(_mlpyBackend, algorithm, arguments)
+		trialResult = checkClassificationStrategy(_mlpyBackend, learningAlgorithm, arguments)
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll(algorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsAll(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne(algorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsOne(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
 
 	if isinstance(trainX, UML.data.Sparse):
 		raise ArgumentException("MLPY does not accept sparse input")
@@ -116,7 +116,7 @@ def mlpy(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, 
 
 	# call backend
 	try:
-		retData = _mlpyBackend(algorithm, trainRawData, trainRawDataY, testRawData, arguments, scoreMode, timer)
+		retData = _mlpyBackend(learningAlgorithm, trainRawData, trainRawDataY, testRawData, arguments, scoreMode, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not mlpyPresent():
@@ -141,7 +141,7 @@ def mlpy(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, 
 	outputObj.writeFile(output, format='csv', includeFeatureNames=False)
 
 
-def _mlpyBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):
+def _mlpyBackend(learningAlgorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to mlpy
 
@@ -171,7 +171,7 @@ def _mlpyBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=Non
 			timer.stop('train')
 
 	# make object
-	objectCall = "mlpy." + algorithm
+	objectCall = "mlpy." + learningAlgorithm
 	try:
 		(objArgs,v,k,d) = eval("inspect.getargspec(" + objectCall + ".__init__)")
 	except TypeError:
@@ -235,7 +235,7 @@ def _mlpyBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=Non
 			try:
 				scoresPerPoint = obj.pred_values(testX)
 			except AttributeError:
-				raise ArgumentException("Invalid score mode for this algorithm, does not have the api necessary to report scores")
+				raise ArgumentException("Invalid score mode for this learningAlgorithm, does not have the api necessary to report scores")
 			if numLabels == 2:
 				scoresPerPoint = generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint)
 				# this is exactly what we need returned in this case, so we just do it immediately
@@ -278,9 +278,9 @@ def _mlpyBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=Non
 
 
 
-def listMlpyAlgorithms(includeParams=False):
+def listMlpyLearningAlgorithms(includeParams=False):
 	"""
-	Function to return a list of all algorithms callable through our interface, if mlpy is present
+	Function to return a list of all learning algorithms callable through our interface, if mlpy is present
 	
 	"""
 	if not mlpyPresent():

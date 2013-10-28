@@ -155,10 +155,10 @@ def testMlpyScoreModeBinary():
 	checkLabelOrderingAndScoreAssociations([-1,1], bestScores, allScores)
 
 
-def testMlpyListAlgorithms():
-	""" Test mlpy's listMlpyAlgorithms() by checking the output for those algorithms we unit test """
+def testMlpyListLearningAlgorithms():
+	""" Test mlpy's listMlpyLearningAlgorithms() by checking the output for those learning algorithm we unit test """
 
-	ret = listMlpyAlgorithms()
+	ret = listMlpyLearningAlgorithms()
 
 	assert 'KPCA' in ret
 	assert 'PCA' in ret

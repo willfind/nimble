@@ -14,8 +14,8 @@ from UML.exceptions import ArgumentException
 			# points used for testing
 
 		Name of package (mlpy, scikit learn, etc.)
-		Name of algorithm
-		parameters of algorithm
+		Name of learningAlgorithm
+		parameters of learningAlgorithm
 		performance metric(s)
 		results of performance metric
 		Any additional information

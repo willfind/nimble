@@ -27,7 +27,7 @@ def setMahoutLocation(path):
 def getMahoutLocation():
 	return mahoutDir
 
-def mahout(algorithm, trainX, trainY, testX, arguments={}, output=None, timer=None):
+def mahout(learningAlgorithm, trainX, trainY, testX, arguments={}, output=None, timer=None):
 	"""
 
 	"""
@@ -42,7 +42,7 @@ def mahout(algorithm, trainX, trainY, testX, arguments={}, output=None, timer=No
 #		dumpFile = tempfile.NamedTemporaryFile()
 #		redirectOutputTarget = dumpFile.name
 
-	if algorithm == 'tasteBasedEstimation':
+	if learningAlgorithm == 'tasteBasedEstimation':
 		mahoutTasteRecommenderEstimation(arguments) #,redirectOutputTarget)
 		return
 
@@ -55,7 +55,7 @@ def mahout(algorithm, trainX, trainY, testX, arguments={}, output=None, timer=No
 
 	cmds = []
 
-	cmd1 = mahoutDir + '/bin/mahout -core ' + algorithm
+	cmd1 = mahoutDir + '/bin/mahout -core ' + learningAlgorithm
 	
 	# comand line argument packing	
 	if trainX is not None:
@@ -168,16 +168,16 @@ def mahoutPresent():
 	return os.path.isfile(mahoutDir + '/bin/mahout')
 
 
-def listMahoutAlgorithms():
+def listMahoutLearningAlgorithms():
 	"""
-	Function to return a list of all algorithms callable through our interface, if mahout is present
+	Function to return a list of all learning algorithms callable through our interface, if mahout is present
 	
 	"""
 	if not mahoutPresent():
 		return []
 
 	ret = []
-	# look in /src/conf/ for a file for each algorithm.
+	# look in /src/conf/ for a file for each learning algorithm.
 	contents = os.listdir(mahoutDir + '/src/conf')
 	for name in contents:
 		if name == 'driver.classes.props':

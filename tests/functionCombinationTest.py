@@ -107,7 +107,7 @@ def f(x,y):
 def apply(X,Y):
 	X.dropColumns([<0|3>])
 	<X.normalizeStdDev()|X.normalizeMean()>
-	return runAlgorithm(package="mlpy", algorithm="svm", parameters={"C":<0.1|1.0>})
+	return runAlgorithm(package="mlpy", learningAlgorithm="svm", parameters={"C":<0.1|1.0>})
 """
 
 	print ""

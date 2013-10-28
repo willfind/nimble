@@ -37,7 +37,7 @@ def testRegressorsHandmadeTrainMatrix():
 	""" Test regressor() against handmade output with a Matrix object as training input """
 
 	setRegressorLocation("/home/tpburns/Dropbox/Regressors")
-	algorithmName = 'LinearRegressor'
+	learningAlgorithm = 'LinearRegressor'
 
 	trialIn = tempfile.NamedTemporaryFile()
 	actualOut = tempfile.NamedTemporaryFile()
@@ -49,7 +49,7 @@ def testRegressorsHandmadeTrainMatrix():
 	training = Matrix(data)
 
 
-	regressor(algorithmName, training, trainY=2, testX=trialIn.name, output=actualOut.name,  arguments={})
+	regressor(learningAlgorithm, training, trainY=2, testX=trialIn.name, output=actualOut.name,  arguments={})
 
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -124,12 +124,12 @@ def testFindRegressorClassName():
 	assert result == "ConstantRegressor"
 
 
-def testRegressorsListAlgorithms():
-	""" Test Regressors's listRegressorAlgorithms() by checking the output for those algorithms we unit test """
+def testRegressorsListLearningAlgorithms():
+	""" Test Regressors's listRegressorLearningAlgorithms() by checking the output for those learning algorithms we unit test """
 	
 	setRegressorLocation('/home/tpburns/Dropbox/Regressors')
 	
-	ret = listRegressorAlgorithms()
+	ret = listRegressorLearningAlgorithms()
 	assert 'ConstantRegressor' in ret
 	assert 'LinearRegressor' in ret
 

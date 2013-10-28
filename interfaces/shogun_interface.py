@@ -52,7 +52,7 @@ def shogunPresent():
 	return True
 
 
-def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
+def shogun(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 
 
@@ -63,15 +63,15 @@ def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None
 	if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll' and multiClassStrategy != 'OneVsOne':
 		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
 
-	# if we have to enfore a classification strategy, we test the algorithm in question,
+	# if we have to enfore a classification strategy, we test the learning algorithm in question,
 	# and call our own strategies if necessary
 	if multiClassStrategy != 'default':
-		trialResult = checkClassificationStrategy(_shogunBackend, algorithm, arguments)
+		trialResult = checkClassificationStrategy(_shogunBackend, learningAlgorithm, arguments)
 		# note: these conditionals include a binary return
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll("shogun."+algorithm, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			UML.runners.runOneVsAll("shogun." + learningAlgorithm, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne("shogun."+algorithm, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			UML.runners.runOneVsOne("shogun." + learningAlgorithm, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
 
 	args = copy.copy(arguments)
 	if not isinstance(trainX, UML.data.Base):
@@ -123,7 +123,7 @@ def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None
 
 	# call backend
 	try:
-		retData = _shogunBackend(algorithm,  trainRawData, trainRawDataY, testRawData, args, scoreMode, timer)
+		retData = _shogunBackend(learningAlgorithm,  trainRawData, trainRawDataY, testRawData, args, scoreMode, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not shogunPresent():
@@ -148,21 +148,21 @@ def shogun(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None
 	outputObj.writeFile(output, format='csv', includeFeatureNames=False)
 
 
-def _shogunBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):
+def _shogunBackend(learningAlgorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to shogun
 
 	"""	
-	moduleName = findModule(algorithm, "shogun", shogunDir)		
+	moduleName = findModule(learningAlgorithm, "shogun", shogunDir)		
 
 	if moduleName is None:
-		raise ArgumentException("Could not find the algorithm")
+		raise ArgumentException("Could not find the learningAlgorithm")
 
 	putOnSearchPath(shogunDir)
 	exec "from shogun import " + moduleName in locals()
 
 	# make object
-	objectCall = moduleName + '.' + algorithm
+	objectCall = moduleName + '.' + learningAlgorithm
 	SGObj = eval(objectCall + "()")
 
 	# convert data to shogun friendly format
@@ -211,7 +211,7 @@ def _shogunBackend(algorithm, trainX, trainY, testX, algArgs, scoreMode, timer=N
 			if scoreMode != 'label':
 				raise ArgumentException("Invalid scoreMode for a regression problem; the default parameter must be used")
 		else:
-			raise ArgumentException("Algorithm problem type (" + str(problemType) + ") not supported")
+			raise ArgumentException("Learning algorithm problem type (" + str(problemType) + ") not supported")
 
 	except ImportError:
 		from shogun.Features import Labels
@@ -365,9 +365,9 @@ def makeInverseMapper(inverseMappingParam):
 		return inverseMappingParam[int(value)]
 	return inverseMapper
 
-def listShogunAlgorithms():
+def listShogunLearningAlgorithms():
 	"""
-	Function to return a list of all algorithms callable through our interface, if shogun is present
+	Function to return a list of all learning algorithms callable through our interface, if shogun is present
 	
 	"""
 	if not shogunPresent():
@@ -391,7 +391,7 @@ def listShogunAlgorithms():
 		
 		for member in contents:
 			memberContents = eval('dir(' + curr + "." + member + ')')
-			if (not member in seen) and (not member in excludedAlgorithms):
+			if (not member in seen) and (not member in excludedLearningAlgorithms):
 				if 'train' in memberContents and 'apply' in memberContents:
 					ret.append(member)
 					seen[member] = True
@@ -588,7 +588,7 @@ def getDefaultValues(name):
 
 
 
-excludedAlgorithms = [# parent classes, not actually runable
+excludedLearningAlgorithms = [# parent classes, not actually runable
 			'BaseMulticlassMachine', 
 			'CDistanceMachine',
 			'CSVM', 
@@ -639,7 +639,7 @@ excludedAlgorithms = [# parent classes, not actually runable
 			'VowpalWabbit',  # segfault
 			'WDSVMOcas', # string input
 
-			# functioning algorithms
+			# functioning learning algorithms
 			#'AveragedPerceptron'
 			#'GaussianNaiveBayes',
 			#'GMNPSVM', 

@@ -68,7 +68,7 @@ def splitData(toSplit, fractionForTestSet, labelID=None):
 
 
 
-def normalizeData(algorithm, trainX, trainY=None, testX=None, arguments={}, mode=True):
+def normalizeData(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, mode=True):
 	"""
 	Calls on the functionality of a package to train on some data and then modify both
 	the training data and a set of test data accroding to the produced model.
@@ -80,7 +80,7 @@ def normalizeData(algorithm, trainX, trainY=None, testX=None, arguments={}, mode
 		# glue training data at the end of test data
 		testX.appendPoints(trainX)
 		try:
-			normalizedAll = run(algorithm, trainX, trainY, testX, arguments=arguments)
+			normalizedAll = run(learningAlgorithm, trainX, trainY, testX, arguments=arguments)
 		except ArgumentException:
 			testX.extractPoints(start=testLength, end=normalizedAll.pointCount)
 		# resplit normalized
@@ -88,9 +88,9 @@ def normalizeData(algorithm, trainX, trainY=None, testX=None, arguments={}, mode
 		normalizedTest = normalizedAll
 	# two call normalize, no data combination
 	else:
-		normalizedTrain = run(algorithm, trainX, trainY, trainX, arguments=arguments)
+		normalizedTrain = run(learningAlgorithm, trainX, trainY, trainX, arguments=arguments)
 		if testX is not None:
-			normalizedTest = run(algorithm, trainX, trainY, testX, arguments=arguments)
+			normalizedTest = run(learningAlgorithm, trainX, trainY, testX, arguments=arguments)
 		
 	# modify references for trainX and testX
 	trainX.referenceDataFrom(normalizedTrain)
@@ -100,7 +100,7 @@ def normalizeData(algorithm, trainX, trainY=None, testX=None, arguments={}, mode
 
 def learningAlgorithmParameters(name):
 	"""
-	Takes a string of the form 'package.algorithmName' and returns a list of
+	Takes a string of the form 'package.learningAlgorithm' and returns a list of
 	strings which are the names of the parameters when calling package.learningAlgorithm
 
 	If the name cannot be found within the package, then an exception will be thrown.
@@ -113,7 +113,7 @@ def learningAlgorithmParameters(name):
 
 def learningAlgorithmDefaultValues(name):
 	"""
-	Takes a string of the form 'package.algorithmName' and returns a returns a
+	Takes a string of the form 'package.learningAlgorithm' and returns a returns a
 	dict mapping of parameter names to their default values when calling
 	package.learningAlgorithm
 
@@ -126,7 +126,7 @@ def learningAlgorithmDefaultValues(name):
 	return _learningAlgorithmQuery(name, 'defaults')
 
 
-def listLearningFunctions(package=None):
+def listLearningAlgorithms(package=None):
 	listAll = False
 	if package is not None:
 		if not isinstance(package, basestring):
@@ -144,27 +144,27 @@ def listLearningFunctions(package=None):
 			toAppendTo.append(packageName + '.' + funcName)
 	if package == 'mahout' or listAll:
 		import UML.interfaces.mahout_interface
-		results = UML.interfaces.mahout_interface.listMahoutAlgorithms()
+		results = UML.interfaces.mahout_interface.listMahoutLearningAlgorithms()
 		if listAll:
 			addToAll('mahout', results, allResults)
 	if package == 'regressor' or listAll:
 		import UML.interfaces.regressors_interface
-		results = UML.interfaces.regressors_interface.listRegressorAlgorithms()
+		results = UML.interfaces.regressors_interface.listRegressorLearningAlgorithms()
 		if listAll:
 			addToAll('regressor', results, allResults)
 	if package == 'scikitlearn' or listAll:
 		import UML.interfaces.scikit_learn_interface
-		results = UML.interfaces.scikit_learn_interface.listSciKitLearnAlgorithms()
+		results = UML.interfaces.scikit_learn_interface.listSciKitLearnLearningAlgorithms()
 		if listAll:
 			addToAll('scikitlearn', results, allResults)
 	if package == 'mlpy' or listAll:
 		import UML.interfaces.mlpy_interface
-		results = UML.interfaces.mlpy_interface.listMlpyAlgorithms()
+		results = UML.interfaces.mlpy_interface.listMlpyLearningAlgorithms()
 		if listAll:
 			addToAll('mlpy', results, allResults)
 	if package == 'shogun' or listAll:
 		import UML.interfaces.shogun_interface
-		results = UML.interfaces.shogun_interface.listShogunAlgorithms()
+		results = UML.interfaces.shogun_interface.listShogunLearningAlgorithms()
 		if listAll:
 			addToAll('shogun', results, allResults)
 

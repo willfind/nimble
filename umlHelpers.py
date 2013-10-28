@@ -23,7 +23,7 @@ from UML.data import Base
 
 def _learningAlgorithmQuery(name, queryType):
 	"""
-	Takes a string of the form 'package.algorithmName' and a string defining
+	Takes a string of the form 'package.learningAlgorithm' and a string defining
 	a queryType of either 'parameters' or 'defaults' then returns the results
 	of either the package's getParameters(learningAlgorithm) function or the
 	package's getDefaultValues(learningAlgorithm) function.

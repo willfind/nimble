@@ -1,5 +1,5 @@
 """
-All the functions which involve calling interfaces to run some algorithm on
+All the functions which involve calling interfaces to run some learning algorithm on
 the provided data. 
 
 """
@@ -49,13 +49,13 @@ def _validMultiClassStrategy(multiClassStrategy):
 		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
 
 
-def _unpackAlgorithm(algorithm):
-	splitList = algorithm.split('.',1)
+def _unpackLearningAlgorithm(learningAlgorithm):
+	splitList = learningAlgorithm.split('.',1)
 	if len(splitList) < 2:
-		raise ArgumentException("The algorithm must be prefaced with the package name and a dot. Example:'mlpy.KNN'")
+		raise ArgumentException("The learning algorithm must be prefaced with the package name and a dot. Example:'mlpy.KNN'")
 	package = splitList[0]
-	algorithm = splitList[1]
-	return (package, algorithm)
+	learningAlgorithm = splitList[1]
+	return (package, learningAlgorithm)
 
 
 def _validArguments(arguments):
@@ -77,8 +77,8 @@ def _validData(trainX, trainY, testX, testY):
 			raise ArgumentException("testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
 
 
-def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
-	(package, algorithm) = _unpackAlgorithm(algorithm)
+def run(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
+	(package, learningAlgorithm) = _unpackLearningAlgorithm(learningAlgorithm)
 	_validData(trainX, trainY, testX, None)
 	_validScoreMode(scoreMode)
 	_validMultiClassStrategy(multiClassStrategy)
@@ -90,15 +90,15 @@ def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, s
 		timer = None
 
 	if package == 'mahout':
-		results = mahout(algorithm, trainX, trainY, testX, arguments, output, timer)
+		results = mahout(learningAlgorithm, trainX, trainY, testX, arguments, output, timer)
 	elif package == 'regressor':
-		results = regressor(algorithm, trainX, trainY, testX, arguments, output, timer)
+		results = regressor(learningAlgorithm, trainX, trainY, testX, arguments, output, timer)
 	elif package == 'sciKitLearn':
-		results = sciKitLearn(algorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = sciKitLearn(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'mlpy':
-		results = mlpy(algorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = mlpy(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'shogun':
-		results = shogun(algorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
+		results = shogun(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 	elif package == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:
@@ -107,22 +107,22 @@ def run(algorithm, trainX, trainY=None, testX=None, arguments={}, output=None, s
 	if sendToLog:
 			logManager = LogManager()
 			if package == 'regressor':
-				funcString = 'regressors.' + algorithm
+				funcString = 'regressors.' + learningAlgorithm
 			else:
-				funcString = package + '.' + algorithm
+				funcString = package + '.' + learningAlgorithm
 			logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=arguments)
 
 	return results
 
 
 
-def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceFunction, scoreMode='label', negativeLabel=None, sendToLog=True):
+def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, arguments, performanceFunction, scoreMode='label', negativeLabel=None, sendToLog=True):
 	"""
-		Calls on run() to train and evaluate the learning algorithm defined in 'algorithm,'
+		Calls on run() to train and evaluate the learning algorithm defined in 'learningAlgorithm,'
 		then tests its performance using the metric function(s) found in the
 		performanceFunction parameter
 
-		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
+		learningAlgorithm: learning algorithm to be called, in the form 'package.learningAlgorithm'.
 
 		trainX: data set to be used for training (as some form of Base object)
 
@@ -137,7 +137,7 @@ def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceFu
 		that defines their locale in the testX object.  If left blank, runAndTest() assumes 
 		that testY is the same as trainY.
 		
-		arguments: optional arguments to be passed to the function specified by 'algorithm'
+		arguments: optional arguments to be passed to the function specified by 'learningAlgorithm'
 		
 		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
 		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
@@ -164,7 +164,7 @@ def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceFu
 		timer.start('train')
 
 	#rawResults contains predictions for each version of a learning function in the combos list
-	rawResult = run(algorithm, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, sendToLog=False)
+	rawResult = run(learningAlgorithm, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, sendToLog=False)
 
 	#if we are logging this run, we need to stop the timer
 	if sendToLog:
@@ -182,11 +182,11 @@ def runAndTest(algorithm, trainX, trainY, testX, testY, arguments, performanceFu
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, testX, algorithm, performanceFunction, results, timer, extraInfo=arguments)
+		logManager.logRun(trainX, testX, learningAlgorithm, performanceFunction, results, timer, extraInfo=arguments)
 
 	return results
 
-def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def runAndTestOneVsOne(learningAlgorithm, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
 		Wrapper class for runOneVsOne.  Useful if you want the entire process of training,
 		testing, and computing performance measures to be handled.  Takes in a learning algorithm
@@ -195,7 +195,7 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 
 		Arguments:
 
-			algorithm: training algorithm to be called, in the form 'package.algorithmName'.
+			learningAlgorithm: learning algorithm to be called, in the form 'package.learningAlgorithm'.
 
 			trainX: data set to be used for training (as some form of Base object)
 		
@@ -210,7 +210,7 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 			in the testX object.  If not present, it is assumed that testY is the same
 			as trainY.  
 			
-			arguments: optional arguments to be passed to the function specified by 'algorithm'
+			arguments: optional arguments to be passed to the function specified by 'learningAlgorithm'
 
 			performanceFunction: single or iterable collection of functions that can take two collections
 			of corresponding labels - one of true labels, one of predicted labels - and return a
@@ -220,7 +220,7 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 			to log file.
 
 		Returns: A dictionary associating the name or code of performance metrics with the results
-		of those metrics, computed using the predictions of 'algorithm' on testX.  
+		of those metrics, computed using the predictions of 'learningAlgorithm' on testX.  
 		Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
 	"""
 	_validData(trainX, trainY, testX, testY)
@@ -239,7 +239,7 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 		if isinstance(testY, (str, int, long)):
 			testY = testX.extractFeatures([testY])
 
-	predictions = runOneVsOne(algorithm, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = runOneVsOne(learningAlgorithm, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
@@ -250,19 +250,19 @@ def runAndTestOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, testX, algorithm, performanceFunction, results, timer, extraInfo=arguments)
+		logManager.logRun(trainX, testX, learningAlgorithm, performanceFunction, results, timer, extraInfo=arguments)
 
 	return results
 
 
-def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def runOneVsOne(learningAlgorithm, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
 	"""
-	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
+	Calls on run() to train and evaluate the learning algorithm defined in 'learningAlgorithm.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. one method of splitting the 
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
 
-		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
+		learningAlgorithm: learning algorithm to be called, in the form 'package.learningAlgorithm'.
 
 		trainX: data set to be used for training (as some form of Base object)
 		
@@ -277,7 +277,7 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 		in the testX object.  If not present, it is assumed that testY is the same
 		as trainY.  
 		
-		arguments: optional arguments to be passed to the function specified by 'algorithm'
+		arguments: optional arguments to be passed to the function specified by 'learningAlgorithm'
 
 		scoreMode:  a flag with three possible values:  label, bestScore, or allScores.  If
 		labels is selected, this function returns a single column with a predicted label for 
@@ -333,7 +333,7 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 		pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
 		pairTrueLabels = pairData.extractFeatures(trainY)
 		#train classifier on that data; apply it to the test set
-		partialResults = run(algorithm, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
+		partialResults = run(learningAlgorithm, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put predictions into table of predictions
 		if rawPredictions is None:
 			rawPredictions = partialResults.copy(asType="List")
@@ -384,14 +384,14 @@ def runOneVsOne(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 
 
 	
-def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def runOneVsAll(learningAlgorithm, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
 	"""
-	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
+	Calls on run() to train and evaluate the learning algorithm defined in 'learningAlgorithm.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
 
-		algorithm: training algorithm to be called, in the form 'package.algorithmName'.
+		learningAlgorithm: learning algorithm to be called, in the form 'package.learningAlgorithm'.
 
 		trainX: data set to be used for training (as some form of Base object)
 		
@@ -406,7 +406,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 		in the testX object.  If not present, it is assumed that testY is the same
 		as trainY.  
 		
-		arguments: optional arguments to be passed to the function specified by 'algorithm'
+		arguments: optional arguments to be passed to the function specified by 'learningAlgorithm'
 
 		scoreMode:  a flag with three possible values:  label, bestScore, or allScores.  If
 		labels is selected, this function returns a single column with a predicted label for 
@@ -461,7 +461,7 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 				return 0
 			else: return 1
 		trainLabels = trainY.applyToPoints(relabeler, inPlace=False)
-		oneLabelResults = run(algorithm, trainX, trainLabels, testX, output=None, arguments=arguments, sendToLog=False)
+		oneLabelResults = run(learningAlgorithm, trainX, trainLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
 			rawPredictions = oneLabelResults
@@ -518,9 +518,9 @@ def runOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, scor
 	else:
 		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
 
-def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def runAndTestOneVsAll(learningAlgorithm, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
-	Calls on run() to train and evaluate the learning algorithm defined in 'algorithm.'  Assumes
+	Calls on run() to train and evaluate the learning algorithm defined in 'learningAlgorithm.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
@@ -538,7 +538,7 @@ def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={
 		in the testX object.  If not present, it is assumed that testY is the same
 		as trainY.  
 		
-		arguments: optional arguments to be passed to the function specified by 'algorithm'
+		arguments: optional arguments to be passed to the function specified by 'learningAlgorithm'
 		
 		performanceFunction: single or iterable collection of functions that can take two collections
 		of corresponding labels - one of true labels, one of predicted labels - and return a
@@ -560,7 +560,7 @@ def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={
 		if isinstance(testY, (str, int, long)):
 			testY = testX.extractFeatures([testY])
 
-	predictions = runOneVsAll(algorithm, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = runOneVsAll(learningAlgorithm, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
@@ -571,7 +571,7 @@ def runAndTestOneVsAll(algorithm, trainX, trainY, testX, testY=None, arguments={
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, testX, algorithm, performanceFunction, results, timer, extraInfo=arguments)
+		logManager.logRun(trainX, testX, learningAlgorithm, performanceFunction, results, timer, extraInfo=arguments)
 
 	return results
 
