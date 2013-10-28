@@ -359,8 +359,16 @@ class List(Base):
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
-				#toExtract = random.sample(toExtract, number)
+#				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
+				indices = []
+				for i in xrange(len(toExtract)):
+					indices.append(i)
+				randomIndices = random.sample(indices, number)
+				randomIndices.sort()
+				temp = []
+				for index in randomIndices:
+					temp.append(toExtract[index])
+				temp = toExtract
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
@@ -433,7 +441,7 @@ class List(Base):
 		# deal with featureNames or the number of features.
 		toExtract = []
 		for i in xrange(self.featureCount):
-			ithView = FeatureView(self.data, i, self.featureNamesInverse[i])
+			ithView = FeatureView(self, i, self.featureNamesInverse[i])
 			if function(ithView):
 				toExtract.append(i)
 		return self._extractFeaturesByList_implementation(toExtract)
@@ -629,7 +637,7 @@ class List(Base):
 		return PointView(self.featureNames, self.data[ID], ID)
 
 	def _featureView_implementation(self, ID):
-		return FeatureView(self.data, ID, self.featureNamesInverse[ID])
+		return FeatureView(self, ID, self.featureNamesInverse[ID])
 
 
 	def _validate_implementation(self, level):
@@ -653,8 +661,9 @@ class FeatureView(View):
 	Class to simulate direct random access of a feature, along with other helpers.
 
 	"""
-	def __init__(self, data, colNum, colName):
-		self._data = data
+	def __init__(self, outer, colNum, colName):
+		self._outer = outer
+		self._data = outer.data
 		self._colNum = colNum
 		self._colName = colName
 	def __getitem__(self, index):

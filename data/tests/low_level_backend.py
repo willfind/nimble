@@ -11,6 +11,7 @@ that missing implementation.
 
 from UML.data import Base
 from UML.data.dataHelpers import DEFAULT_PREFIX
+from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nose.tools import *
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
@@ -514,4 +515,19 @@ class LowLevelBackend(object):
 		assert toTest2._equalFeatureNames(toTest1)
 
 
-			
+	########################
+	# default Object names #
+	########################
+
+	def test_default_object_names(self):
+		""" Test that default object names increment correctly """
+		toTest0 = self.constructor(['a','2'])
+		toTest1 = self.constructor(['1b','2'])
+		toTest2 = self.constructor(['c','2'])
+
+		firstNumber = int(toTest0.name[len(DEFAULT_NAME_PREFIX):])
+		second = firstNumber + 1
+		third = second + 1
+
+		assert toTest1.name == DEFAULT_NAME_PREFIX + str(second)
+		assert toTest2.name == DEFAULT_NAME_PREFIX + str(third)

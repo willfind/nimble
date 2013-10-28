@@ -751,6 +751,45 @@ class HighLevelBackend(object):
 		assert toCheck[2][1] == 8
 		assert toCheck[2][2] == 9
 
+	def test_pointIterator_allZeroVectors(self):
+		""" Test pointIterator() works when there are all zero points """
+		data = [[0,0,0],[4,5,6],[0,0,0],[7,8,9],[0,0,0],[0,0,0]]
+		toTest = self.constructor(data)
+
+		viewIter = toTest.pointIterator()
+		toCheck = []
+		for v in viewIter:
+			toCheck.append(v)
+
+		assert len(toCheck) == toTest.pointCount
+
+		assert toCheck[0][0] == 0
+		assert toCheck[0][1] == 0
+		assert toCheck[0][2] == 0
+
+		assert toCheck[1][0] == 4
+		assert toCheck[1][1] == 5
+		assert toCheck[1][2] == 6
+
+		assert toCheck[2][0] == 0
+		assert toCheck[2][1] == 0
+		assert toCheck[2][2] == 0
+
+		assert toCheck[3][0] == 7
+		assert toCheck[3][1] == 8
+		assert toCheck[3][2] == 9
+
+		assert toCheck[4][0] == 0
+		assert toCheck[4][1] == 0
+		assert toCheck[4][2] == 0
+
+		assert toCheck[5][0] == 0
+		assert toCheck[5][1] == 0
+		assert toCheck[5][2] == 0
+
+
+
+
 
 	#########################
 	# featureIterator() #
@@ -800,6 +839,49 @@ class HighLevelBackend(object):
 		assert toCheck[2][2] == 9
 
 
+	def test_featureIterator_allZeroVectors(self):
+		""" Test featureIterator() works when there are all zero points """
+		data = [[0,1,0,2,0,3,0,0],[0,4,0,5,0,6,0,0],[0,7,0,8,0,9,0,0]]
+		toTest = self.constructor(data)
+
+		viewIter = toTest.featureIterator()
+		toCheck = []
+		for v in viewIter:
+			toCheck.append(v)
+
+		assert len(toCheck) == toTest.featureCount
+		assert toCheck[0][0] == 0
+		assert toCheck[0][1] == 0
+		assert toCheck[0][2] == 0
+
+		assert toCheck[1][0] == 1
+		assert toCheck[1][1] == 4
+		assert toCheck[1][2] == 7
+
+		assert toCheck[2][0] == 0
+		assert toCheck[2][1] == 0
+		assert toCheck[2][2] == 0
+
+		assert toCheck[3][0] == 2
+		assert toCheck[3][1] == 5
+		assert toCheck[3][2] == 8
+
+		assert toCheck[4][0] == 0
+		assert toCheck[4][1] == 0
+		assert toCheck[4][2] == 0
+
+		assert toCheck[5][0] == 3
+		assert toCheck[5][1] == 6
+		assert toCheck[5][2] == 9
+
+		assert toCheck[6][0] == 0
+		assert toCheck[6][1] == 0
+		assert toCheck[6][2] == 0
+
+		assert toCheck[7][0] == 0
+		assert toCheck[7][1] == 0
+		assert toCheck[7][2] == 0
+
 
 
 	#####################################
@@ -808,6 +890,9 @@ class HighLevelBackend(object):
 
 	def test_applyToElements_passthrough(self):
 		""" test applyToElements can construct a list by just passing values through  """
+
+#		import pdb
+#		pdb.set_trace()
 
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
@@ -893,11 +978,10 @@ class HighLevelBackend(object):
 	# isApproximatelyEqual() #
 	########################
 
-
 	def test_isApproximatelyEqual_randomTest(self):
 		""" Test isApproximatelyEqual() using randomly generated data """
 
-		for x in xrange(1,2):
+		for x in xrange(2):
 			points = 100
 			features = 40
 			data = numpy.zeros((points,features))
@@ -906,17 +990,20 @@ class HighLevelBackend(object):
 				for j in xrange(features):
 					data[i,j] = numpy.random.rand() * numpy.random.randint(0,5)
 
-		toTest = self.constructor(data)
+			toTest = self.constructor(data)
 
-		listObj = List(data)
-		matrix = Matrix(data)
-		sparse = Sparse(data)
+			listObj = List(data)
+			matrix = Matrix(data)
+			sparse = Sparse(data)
 
-		assert toTest.isApproximatelyEqual(listObj)
+			assert toTest.isApproximatelyEqual(listObj)
+			assert toTest.hashCode() == listObj.hashCode()
 
-		assert toTest.isApproximatelyEqual(matrix)
+			assert toTest.isApproximatelyEqual(matrix)
+			assert toTest.hashCode() == matrix.hashCode()
 
-		assert toTest.isApproximatelyEqual(sparse)
+			assert toTest.isApproximatelyEqual(sparse)
+			assert toTest.hashCode() == sparse.hashCode()
 
 
 

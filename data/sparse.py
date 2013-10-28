@@ -84,11 +84,11 @@ class Sparse(Base):
 					value = self._outer.pointView(self._nextID)	
 				else:
 					end = self._sortedPosition
-					#this ensures end is always in range, and always inclusive
-					while (end < len(self._outer._data.data)-1 and self._outer._data.row[end+1] == self._nextID):
+					#this ensures end is always in range, and always exclusive
+					while (end < len(self._outer._data.data) and self._outer._data.row[end] == self._nextID):
 						end += 1
 					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.featureCount, self._nextID, 'point')
-					self._sortedPosition = end + 1
+					self._sortedPosition = end
 				self._nextID += 1
 				return value
 
@@ -119,11 +119,11 @@ class Sparse(Base):
 					value = self._outer.featureView(self._nextID)	
 				else:
 					end = self._sortedPosition
-					#this ensures end is always in range, and always inclusive
-					while (end < len(self._outer._data.data)-1 and self._outer._data.col[end+1] == self._nextID):
+					#this ensures end is always in range, and always exclusive
+					while (end < len(self._outer._data.data) and self._outer._data.col[end] == self._nextID):
 						end += 1
 					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.pointCount, self._nextID, 'feature')
-					self._sortedPosition = end + 1
+					self._sortedPosition = end
 				self._nextID += 1
 				return value
 		return featureIt(self)
@@ -631,7 +631,14 @@ class Sparse(Base):
 		"""
 
 		"""
+#		import pdb
+#		pdb.set_trace()
 		self._data = self._data.transpose()
+		self._sorted = None
+#		if self._sorted == 'point':
+#			self._sorted = 'feature'
+#		elif self._sorted == 'feature':
+#			self._sorted = 'point'
 
 
 	def _mapReducePoints_implementation(self, mapper, reducer):
@@ -957,8 +964,8 @@ class VectorView(View):
 		if nzMap is None and (startInData is None or endInData is None):
 			raise ArgumentException("Must provide both start and end in the data")
 		self._outer = CooObject
-		self._start = startInData
-		self._end = endInData
+		self._start = startInData # inclusive
+		self._end = endInData # exclusive
 		self._nzMap = nzMap
 		self._max = maxVal
 		self._index = index
@@ -1026,7 +1033,9 @@ class VectorView(View):
 		return self._name
 	def _makeMap(self):
 		self._nzMap = {}
-		for i in xrange(self._start, self._end+1):
+		if self._start >= len(self._outer._data.data):
+			return
+		for i in xrange(self._start, self._end):
 			if self._axis == 'point':
 				mapKey = self._outer._data.col[i]
 			else:
@@ -1054,12 +1063,12 @@ class nzItMap():
 class nzItRange():
 	def __init__(self, outer, start, end):
 		self._outer = outer
-		self._end = end
+		self._end = end # exclusive
 		self._position = start
 	def __iter__(self):
 		return self
 	def next(self):
-		if self._position > self._end:
+		if self._position >= self._end:
 			raise StopIteration
 		ret = self._outer._data.data[self._position]
 		self._position = self._position + 1

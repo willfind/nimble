@@ -16,6 +16,10 @@ DEFAULT_SEED = 'DEFAULTSEED'
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
 
+DEFAULT_NAME_PREFIX = "OBJECT_#"
+
+defaultObjectNumber = 0
+
 
 class View():
 	__metaclass__ = ABCMeta

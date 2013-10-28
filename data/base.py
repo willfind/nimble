@@ -18,11 +18,14 @@ from UML.exceptions import ImproperActionException
 from UML.logging import produceFeaturewiseReport
 from UML.logging import produceAggregateReport
 
+import dataHelpers
 # a default seed for testing and predictible trials
 from dataHelpers import DEFAULT_SEED
 
 # the prefix for default featureNames
 from dataHelpers import DEFAULT_PREFIX
+
+from dataHelpers import DEFAULT_NAME_PREFIX
 
 
 class Base(object):
@@ -59,20 +62,24 @@ class Base(object):
 			raise ArgumentException("featureNames may only be a list or a dict, defining a mapping between integers and featureNames")
 		if featureNames is not None and len(featureNames) != self.featureCount:
 			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.featureCount: " + str(self.featureCount))
-		self.name = name
+		if name is None:
+			self.name = DEFAULT_NAME_PREFIX + str(dataHelpers.defaultObjectNumber)
+			dataHelpers.defaultObjectNumber += 1
+		else:
+			self.name = name
 		self.path = path
 
 	######################
 	# Property Attriutes #
 	######################
 
-	def getpointCount(self):
+	def _getpointCount(self):
 		return self._pointCount
-	pointCount = property(getpointCount)
+	pointCount = property(_getpointCount)
 
-	def getfeatureCount(self):
+	def _getfeatureCount(self):
 		return self._featureCount
-	featureCount = property(getfeatureCount)
+	featureCount = property(_getfeatureCount)
 
 	########################
 	# Low Level Operations #
@@ -159,10 +166,7 @@ class Base(object):
 
 		reverseDict = {}
 		for featureName in assignments.keys():
-			if featureName.startswith(DEFAULT_PREFIX):
-				featureNameNum = int(featureName[len(DEFAULT_PREFIX):])
-				if featureNameNum >= self._nextDefaultValue:
-					self._nextDefaultValue = featureNameNum + 1
+			self._incrementDefaultIfNeeded(featureName)
 			reverseDict[assignments[featureName]] = featureName
 
 		# have to copy the input, could be from another object
@@ -417,7 +421,7 @@ class Base(object):
 			raise ArgumentException("function must not be None")
 
 		if features is not None and not isinstance(features, list):
-			if not isinstance(features, int):
+			if not (isinstance(features, int) or isinstance(features, basestring)):
 				raise ArgumentException("Only allowable inputs to 'features' param is an ID, a list of int ID's, or None")
 			features = [features]
 
@@ -765,8 +769,11 @@ class Base(object):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.pointCount == toAppend.pointCount:
 			raise ArgumentException("toAppend must have the same number of points as this object")
-		if self._featureNameIntersection(toAppend):
-			raise ArgumentException("toAppend must not share any featureNames with this object")
+		intersection = self._featureNameIntersection(toAppend)
+		if intersection:
+			for name in intersection:
+				if not name.startswith(DEFAULT_PREFIX):
+					raise ArgumentException("toAppend must not share any featureNames with this object")
 		
 		self.validate()
 
@@ -774,7 +781,10 @@ class Base(object):
 		self._featureCount += toAppend.featureCount
 
 		for i in xrange(toAppend.featureCount):
-			self._addFeatureName(toAppend.featureNamesInverse[i])
+			currName = toAppend.featureNamesInverse[i]
+			if currName.startswith(DEFAULT_PREFIX):
+				currName += '_' + toAppend.name
+			self._addFeatureName(currName)
 		
 		return self
 
@@ -816,6 +826,9 @@ class Base(object):
 			raise ArgumentException("Cannot specify a feature to sort by and a helper function")
 		if sortBy is None and sortHelper is None:
 			raise ArgumentException("Either sortBy or sortHelper must not be None")
+
+		if sortBy is not None and isinstance(sortBy, basestring):
+			sortBy = self._getIndex(sortBy)
 
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self.setFeatureNamesFromList(newFeatureNameOrder)
@@ -865,7 +878,8 @@ class Base(object):
 
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
 		self._pointCount -= ret.pointCount
-		ret.setFeatureNamesFromDict(self.featureNames)
+		if ret.pointCount != 0:
+			ret.setFeatureNamesFromDict(self.featureNames)
 		return ret
 
 	def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -1012,7 +1026,7 @@ class Base(object):
 		the calling object object.
 		
 		"""
-		if isinstance(points, basestring):
+		if isinstance(points, int):
 			points = [points]
 		if self.pointCount == 0:
 			raise ArgumentException("Object contains 0 points, there is no valid possible input")
@@ -1048,7 +1062,7 @@ class Base(object):
 		this object.
 		
 		"""
-		if isinstance(features, basestring):
+		if isinstance(features, basestring) or isinstance(features, int):
 			features = [features]
 		if self.featureCount == 0:
 			raise ArgumentException("Object contains 0 features, there is no valid possible input")
@@ -1285,9 +1299,7 @@ class Base(object):
 		if featureName is None:
 			featureName = self._nextDefaultFeatureName()
 
-		if featureName.startswith(DEFAULT_PREFIX):
-			featureNameNum = int(featureName[len(DEFAULT_PREFIX):])
-			self._nextDefaultValue = max(self._nextDefaultValue + 1, featureNameNum)
+		self._incrementDefaultIfNeeded(featureName)	
 
 		features = len(self.featureNamesInverse)
 		self.featureNamesInverse[features] = featureName
@@ -1354,11 +1366,21 @@ class Base(object):
 		self.featureNamesInverse[index] = newFeatureName
 		self.featureNames[newFeatureName] = index
 
-		#TODO increment next default if necessary
-		if newFeatureName.startswith(DEFAULT_PREFIX):
-			value = int(newFeatureName[len(DEFAULT_PREFIX):])
-			if value > self._nextDefaultValue:
-				self._nextDefaultValue = value + 1
+		self._incrementDefaultIfNeeded(newFeatureName)
+
+
+	def _incrementDefaultIfNeeded(self, name):
+		if name.startswith(DEFAULT_PREFIX):
+			intString = name[len(DEFAULT_PREFIX):]
+			if '_' in intString:
+				firstUnderscore = intString.index('_')
+				intString = intString[:firstUnderscore]
+			if '=' in intString:
+				firstEquals = intString.index('=')
+				intString = intString[:firstEquals]
+			nameNum = int(intString)
+			if nameNum >= self._nextDefaultValue:
+				self._nextDefaultValue = nameNum + 1
 
 	class _foldIteratorClass():
 		def __init__(self, foldList, outerReference):
