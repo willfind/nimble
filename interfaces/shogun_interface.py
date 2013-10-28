@@ -7,6 +7,8 @@ interface
 import numpy
 import scipy.sparse
 import copy
+import json
+import os.path
 
 from interface_helpers import findModule
 from interface_helpers import putOnSearchPath
@@ -14,6 +16,7 @@ from interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from interface_helpers import ovaNotOvOFormatted
 from interface_helpers import scoreModeOutputAdjustment
 from interface_helpers import checkClassificationStrategy
+from interface_helpers import makeArgString
 import UML
 
 from UML.exceptions import ArgumentException
@@ -34,7 +37,7 @@ def getShogunLocation():
 	
 
 def shogunPresent():
-	"""
+	"""`
 	Return true if shogun is importable. If true, then the interface should
 	be accessible.
 	
@@ -514,6 +517,74 @@ def remapLabelsSpecific(toRemap, space):
 		view[x] = space[mapping[value]]
 
 	return inverse
+
+
+def constructObject(objectName, allArgs):
+	"""
+	Construct the in-shogun object with the given name, taking parameters
+	out of the given arguments. Returns the constructed object.
+
+	"""
+	ret = None
+	moduleName = findModule(objectName, "shogun", shogunDir)		
+
+	if moduleName is None:
+		raise ArgumentException("Could not find a constructor for the object " + objectName)
+
+	putOnSearchPath(shogunDir)
+	exec "from shogun import " + moduleName in locals()	
+
+	# if we have shogun source, parse from in there
+	if shogunDir is not None:
+		possibleFileNames = ['C' + objectName, objectName, objectName[1:]]
+
+		pass
+	# else: use manifest
+	else:
+		# load manifest
+		manifestPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata', 'shogunConstructors')
+		manifestFile = open(manifestPath, 'r')
+		allConstructors = json.load(manifestFile)
+		if not objectName in allConstructors:
+			return ret
+
+		# get parameter orderings, see how they match with the args we have
+		paramOrderings = allConstructors[objectName]
+		argStrings = []
+		for order in paramOrderings:
+			argStrings.append(makeArgString(order,allArgs, "", "", "", False))
+
+		#we define the best one to be the longest non-None argument string
+		best = []
+		for args in argStrings:
+			if args is not None and len(args) > len(best):
+				best = args
+
+		# make object using the best args
+		objectCall = moduleName + '.' + objectName
+		ret = eval(objectCall + "(" + best + ")")
+
+	return ret
+
+
+def getParameters(name):
+	"""
+	Takes the name of some mlpy object or function, returns a list
+	of parameters used to instantiate that object or run that function
+
+	"""
+	(objArgs,v,k,d) = _paramQuery(name)
+	return objArgs
+
+def getDefaultValues(name):
+	"""
+	Takes the name of some mlpy object or function, returns a dict mapping
+	parameter names to their default values 
+
+	"""
+	if getParameters(name) == None:
+		return None
+	return {}
 
 
 
