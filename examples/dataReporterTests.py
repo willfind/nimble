@@ -9,8 +9,8 @@ from allowImports import boilerplate
 boilerplate()
 
 from UML import createData
-from UML.logging.data_set_analyzer import produceFeaturewiseReport
-from UML.logging.data_set_analyzer import produceAggregateReport
+from UML.logger.data_set_analyzer import produceFeaturewiseReport
+from UML.logger.data_set_analyzer import produceAggregateReport
 
 if __name__ == "__main__":
 	variables = ["x","y","z"]

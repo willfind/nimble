@@ -9,9 +9,9 @@ import operator
 import UML
 
 from UML.exceptions import ArgumentException
-from UML.logging import UmlLogger
-from UML.logging import LogManager
-from UML.logging import Stopwatch
+from UML.logger import UmlLogger
+from UML.logger import LogManager
+from UML.logger import Stopwatch
 from UML.data import Base
 from UML.interfaces import shogun
 from UML.interfaces import mahout

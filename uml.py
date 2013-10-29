@@ -15,9 +15,9 @@ import os
 import UML
 from UML.exceptions import ArgumentException
 
-from UML.logging import UmlLogger
-from UML.logging import LogManager
-from UML.logging import Stopwatch
+from UML.logger import UmlLogger
+from UML.logger import LogManager
+from UML.logger import Stopwatch
 
 from UML.runners import run
 
