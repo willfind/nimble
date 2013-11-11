@@ -156,7 +156,7 @@ def listLearningAlgorithms(package=None):
 		import UML.interfaces.scikit_learn_interface
 		results = UML.interfaces.scikit_learn_interface.listSciKitLearnLearningAlgorithms()
 		if listAll:
-			addToAll('scikitlearn', results, allResults)
+			addToAll('sciKitLearn', results, allResults)
 	if package == 'mlpy' or listAll:
 		import UML.interfaces.mlpy_interface
 		results = UML.interfaces.mlpy_interface.listMlpyLearningAlgorithms()

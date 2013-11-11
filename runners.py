@@ -89,24 +89,24 @@ def run(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, output
 	else:
 		timer = None
 
-	if package == 'mahout':
+	if package.lower() == 'mahout':
 		results = mahout(learningAlgorithm, trainX, trainY, testX, arguments, output, timer)
-	elif package == 'regressor':
+	elif package.lower() == 'regressor':
 		results = regressor(learningAlgorithm, trainX, trainY, testX, arguments, output, timer)
-	elif package == 'sciKitLearn':
+	elif package.lower() == 'scikitlearn':
 		results = sciKitLearn(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
-	elif package == 'mlpy':
+	elif package.lower() == 'mlpy':
 		results = mlpy(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
-	elif package == 'shogun':
+	elif package.lower() == 'shogun':
 		results = shogun(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
-	elif package == 'self':
+	elif package.lower() == 'self':
 		raise ArgumentException("self modification not yet implemented")
 	else:
 		raise ArgumentException("package not recognized")
 
 	if sendToLog:
 			logManager = LogManager()
-			if package == 'regressor':
+			if package.lower() == 'regressor':
 				funcString = 'regressors.' + learningAlgorithm
 			else:
 				funcString = package + '.' + learningAlgorithm

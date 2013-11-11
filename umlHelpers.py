@@ -38,19 +38,19 @@ def _learningAlgorithmQuery(name, queryType):
 	else:
 		raise ArgumentException("Unrecognized queryType: " + queryType)
 
-	if package == 'mahout':
+	if package.lower() == 'mahout':
 		import UML.interfaces.mahout_interface
 		raise ArgumentException("mahout not yet supported")
-	if package == 'regressor':
+	if package.lower() == 'regressor':
 		import UML.interfaces.regressors_interface
 		raise ArgumentException("regressors not yet supported")
-	if package == 'scikitlearn':
+	if package.lower() == 'scikitlearn':
 		import UML.interfaces.scikit_learn_interface
 		toCall = getattr(UML.interfaces.scikit_learn_interface, toCallName)
-	if package == 'mlpy':
+	if package.lower() == 'mlpy':
 		import UML.interfaces.mlpy_interface
 		toCall = getattr(UML.interfaces.mlpy_interface, toCallName)
-	if package == 'shogun':
+	if package.lower() == 'shogun':
 		import UML.interfaces.shogun_interface
 		raise ArgumentException("shogun not yet supported")
 		#toCall = getattr(UML.interfaces.shogun_interface, toCallName)
