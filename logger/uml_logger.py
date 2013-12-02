@@ -14,8 +14,8 @@ from UML.exceptions import ArgumentException
 			# points used for testing
 
 		Name of package (mlpy, scikit learn, etc.)
-		Name of learningAlgorithm
-		parameters of learningAlgorithm
+		Name of learner
+		parameters of learner
 		performance metric(s)
 		results of performance metric
 		Any additional information
@@ -64,7 +64,7 @@ class UmlLogger(object):
 
 	def logRun(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
 		"""
-		Send pertinent information about a cycle of train a learning algorithm and test its performance
+		Send pertinent information about a cycle of train a learner and test its performance
 		to the log file
 		"""
 		self._logRun_implementation(trainData, testData, function, metrics, results, timer, extraInfo, numFolds)

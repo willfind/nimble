@@ -52,10 +52,10 @@ def sciKitLearnPresent():
 	return True
 
 
-def sciKitLearn(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
+def sciKitLearn(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 	"""
 	Function to call on the estimator objects of the scikit-learn package.
-	It will instantiate the estimator case-sensitively matching the given learning algorithm,
+	It will instantiate the estimator case-sensitively matching the given learner,
 	using the trainX to in the .fit call, and testX in the .predict call,
 	with all matching arguments from algArgs supplied at each step. If output
 	is non-None, the output from the predict call is written to the supplied file,
@@ -68,14 +68,14 @@ def sciKitLearn(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}
 	if multiClassStrategy != 'default' and multiClassStrategy != 'OneVsAll' and multiClassStrategy != 'OneVsOne':
 		raise ArgumentException("multiClassStrategy may only be 'default' 'OneVsAll' or 'OneVsOne'")
 
-	# if we have to enfore a classification strategy, we test the learning algorithm in question,
+	# if we have to enfore a classification strategy, we test the learner in question,
 	# and call our own strategies if necessary
 	if multiClassStrategy != 'default':
-		trialResult = checkClassificationStrategy(_sciKitLearnBackend, learningAlgorithm, arguments)
+		trialResult = checkClassificationStrategy(_sciKitLearnBackend, learnerName, arguments)
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsAll(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne(learningAlgorithm, trainX, trainY, testX, arguments, output, scoreMode, timer)
+			UML.runners.runOneVsOne(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
 
 	if not isinstance(trainX, UML.data.Base):
 		trainObj = UML.createData('Matrix', trainX)
@@ -119,7 +119,7 @@ def sciKitLearn(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}
 
 	# call backend
 	try:
-		retData = _sciKitLearnBackend(learningAlgorithm, trainRawData, trainRawDataY, testRawData, arguments, scoreMode, timer)
+		retData = _sciKitLearnBackend(learnerName, trainRawData, trainRawDataY, testRawData, arguments, scoreMode, timer)
 	except ImportError as e:
 		print "ImportError: " + str(e)
 		if not sciKitLearnPresent():
@@ -144,27 +144,27 @@ def sciKitLearn(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}
 	outputObj.writeFile(output, format='csv', includeFeatureNames=False)
 
 
-def _sciKitLearnBackend(learningAlgorithm, trainX, trainY, testX, algArgs, scoreMode, timer=None):
+def _sciKitLearnBackend(learnerName, trainX, trainY, testX, algArgs, scoreMode, timer=None):
 	"""
 	Function to find, construct, and execute the wanted calls to scikit-learn
 
 	"""	
 	global locationCache
-	if learningAlgorithm in locationCache:
-		moduleName = locationCache[learningAlgorithm]
+	if learnerName in locationCache:
+		moduleName = locationCache[learnerName]
 	else: 
-		moduleName = findModule(learningAlgorithm, "sklearn", sciKitLearnDir)
-		locationCache[learningAlgorithm] = moduleName
+		moduleName = findModule(learnerName, "sklearn", sciKitLearnDir)
+		locationCache[learnerName] = moduleName
 
 	if moduleName is None:
-		print ("Could not find the learningAlgorithm")
+		print ("Could not find the learner")
 		return
 
 	putOnSearchPath(sciKitLearnDir)
 	exec ("from sklearn import " + moduleName)
 
 	# make object
-	objectCall = moduleName + "." + learningAlgorithm
+	objectCall = moduleName + "." + learnerName
 	(objArgs,v,k,d) = eval("inspect.getargspec(" + objectCall + ".__init__)")
 	argString = makeArgString(objArgs, algArgs, "", "=", ", ")
 	sklObj = eval(objectCall + "(" + argString + ")")
@@ -210,7 +210,7 @@ def _sciKitLearnBackend(learningAlgorithm, trainX, trainY, testX, algArgs, score
 		try:
 			scoresPerPoint = sklObj.decision_function(testX)
 		except AttributeError:
-			raise ArgumentException("Invalid score mode for this learningAlgorithm, does not have the api necessary to report scores")
+			raise ArgumentException("Invalid score mode for this learner, does not have the api necessary to report scores")
 		# If it was a binary problem, then only one column of scores is returned, so we must
 		# generate the other column ourselves
 		if numLabels == 2:
@@ -240,9 +240,9 @@ def _sciKitLearnBackend(learningAlgorithm, trainX, trainY, testX, algArgs, score
 
 
 
-def listSciKitLearnLearningAlgorithms():
+def listSciKitLearnLearners():
 	"""
-	Function to return a list of all learning algorithms callable through our interface, if scikit learn is present
+	Function to return a list of all learners callable through our interface, if scikit learn is present
 	
 	"""
 	if not sciKitLearnPresent():

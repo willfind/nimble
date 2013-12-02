@@ -23,7 +23,7 @@ def testSciKitLearnLocation():
 
 
 def testSciKitLearnHandmadeRegression():
-	""" Test sciKitLearn() by calling a regression learning algorithm with known output """
+	""" Test sciKitLearn() by calling on a regression learner with known output """
 	variables = ["Y","x1","x2"]
 	data = [[2,1,1], [3,1,2], [4,2,2],]
 	trainingObj = Matrix(data,variables)
@@ -41,7 +41,7 @@ def testSciKitLearnHandmadeRegression():
 	numpy.testing.assert_approx_equal(ret.data[0,0],1.)
 
 def testSciKitLearnSparseRegression():
-	""" Test sciKitLearn() by calling a sparse regression learning algorithm with an extremely large, but highly sparse, matrix """
+	""" Test sciKitLearn() by calling on a sparse regression learner with an extremely large, but highly sparse, matrix """
 
 	x = 100000
 	c = 10
@@ -60,7 +60,7 @@ def testSciKitLearnSparseRegression():
 	assert ret is not None
 
 def testSciKitLearnHandmadeClustering():
-	""" Test sciKitLearn() by calling a clustering learning algorithm with known output """
+	""" Test sciKitLearn() by calling a clustering classifier with known output """
 	variables = ["x1","x2"]
 	data = [[1,0], [3,3], [5,0],]
 	trainingObj = Matrix(data,variables)
@@ -80,7 +80,7 @@ def testSciKitLearnHandmadeClustering():
 
 
 def testSciKitLearnHandmadeSparseClustering():
-	""" Test sciKitLearn() by calling a sparse clustering learning algorithm with known output """
+	""" Test sciKitLearn() by calling on a sparse clustering learner with known output """
 	trainData = scipy.sparse.lil_matrix((3, 3))
 	trainData[0, :] = [2,3,1]
 	trainData[1, :] = [2,2,1]
@@ -149,10 +149,10 @@ def testSciKitLearnScoreModeBinary():
 	checkLabelOrderingAndScoreAssociations([1,2], bestScores, allScores)
 
 
-def testSciKitLearnListLearningAlgorithms():
-	""" Test scikit learn's listSciKitLearn:LearningAlgorithms() by checking the output for those learning algorithms we unit test """
+def testSciKitLearnListLearners():
+	""" Test scikit learn's listSciKitLearnLearners() by checking the output for those learners we unit test """
 
-	ret = listSciKitLearnLearningAlgorithms()
+	ret = listSciKitLearnLearners()
 
 	assert 'KMeans' in ret
 	assert 'LinearRegression' in ret

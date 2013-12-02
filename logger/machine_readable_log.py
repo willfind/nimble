@@ -100,7 +100,7 @@ class MachineReadableLogger(UmlLogger):
 			# of testing data points
 			# of features in training data
 			# of features in testing data
-			Function defining the classifer (learningAlgorithm, parameters, etc.)
+			Function defining the classifer (learnerName, parameters, etc.)
 			Error metrics computed based on predictions of classifier: name/function and numerical
 			result)
 			Any additional information, definedy by user, passed as 'extraInfo'

@@ -142,12 +142,12 @@ def MahoutPresent():
 
 
 # TODO re enable 
-def MahoutListLearningAlgorithms():
-	""" Test Mahout's listMahoutLearningAlgorithms() by checking the output for those learning algorithms we unit test """
+def MahoutListLearners():
+	""" Test Mahout's listMahoutLearners() by checking the output for those learners we unit test """
 	
 	setMahoutLocation('/home/tpburns/Dropbox/ML_intern_tpb/workspace/mahout-distribution-0.7')
 	
-	ret = listMahoutLearningAlgorithms()
+	ret = listMahoutLearners()
 
 
 	assert 'kmeans' in ret

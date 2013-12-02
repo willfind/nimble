@@ -39,7 +39,7 @@ def getRegressorLocation():
 
 
 # TODO outer layer regressor() interface needs to deal with multiple kinds of input
-def regressor(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, output=None, timer=None):
+def regressor(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, timer=None):
 	"""
 	Function to call on regressors in the Regression package.
 
@@ -81,17 +81,17 @@ def regressor(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, 
 	# import the type of regressor specified by the input
 	try:
 		sys.path.append(regressorsDir)
-		cmd = "import " + learningAlgorithm
+		cmd = "import " + learnerName
 		exec(cmd)
 	except ImportError as e:	
-		print "regressors_interface failed to import " + learningAlgorithm
+		print "regressors_interface failed to import " + learnerName
 		print e
 		return
 
 	# determine the name of the regressor class in the file we've just imported
-	learningAlgorithmClass = findRegressorClassName(regressorsDir + "/" + learningAlgorithm + ".py")
-	if learningAlgorithmClass is None:
-		print "Cannot find or determine a subclass of Regressor in " + learningAlgorithm
+	learnerClass = findRegressorClassName(regressorsDir + "/" + learnerName + ".py")
+	if learnerClass is None:
+		print "Cannot find or determine a subclass of Regressor in " + learnerName
 		return
 
 	#start timing of classifier training, if timer is present
@@ -99,7 +99,7 @@ def regressor(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, 
 		timer.start('train')
 
 	#initialize the regressor with the constructed matrices
-	cmd = learningAlgorithm + "." + learningAlgorithmClass + "(X=trainX,Y=trainY"
+	cmd = learnerName + "." + learnerClass + "(X=trainX,Y=trainY"
 	for key in arguments.keys():
 		cmd += "," + key + "="
 		cmd += str(arguments[key])
@@ -171,7 +171,7 @@ def findRegressorClassName(sourceFile):
 	return None
 
 
-def listRegressorLearningAlgorithms(includeParams=False):
+def listRegressorLearners(includeParams=False):
 
 	if not regressorsPresent():
 		return []

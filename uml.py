@@ -26,7 +26,7 @@ from UML.umlHelpers import _loadMatrix
 from UML.umlHelpers import _loadList
 from UML.umlHelpers import executeCode
 from UML.umlHelpers import _incrementTrialWindows
-from UML.umlHelpers import _learningAlgorithmQuery
+from UML.umlHelpers import _learnerQuery
 
 from UML.umlHelpers import computeMetrics
 from UML.umlHelpers import ArgumentIterator
@@ -72,7 +72,7 @@ def splitData(toSplit, fractionForTestSet, labelID=None):
 
 
 
-def normalizeData(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, mode=True):
+def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mode=True):
 	"""
 	Calls on the functionality of a package to train on some data and then modify both
 	the training data and a set of test data accroding to the produced model.
@@ -84,7 +84,7 @@ def normalizeData(learningAlgorithm, trainX, trainY=None, testX=None, arguments=
 		# glue training data at the end of test data
 		testX.appendPoints(trainX)
 		try:
-			normalizedAll = run(learningAlgorithm, trainX, trainY, testX, arguments=arguments)
+			normalizedAll = run(learnerName, trainX, trainY, testX, arguments=arguments)
 		except ArgumentException:
 			testX.extractPoints(start=testLength, end=normalizedAll.pointCount)
 		# resplit normalized
@@ -92,9 +92,9 @@ def normalizeData(learningAlgorithm, trainX, trainY=None, testX=None, arguments=
 		normalizedTest = normalizedAll
 	# two call normalize, no data combination
 	else:
-		normalizedTrain = run(learningAlgorithm, trainX, trainY, trainX, arguments=arguments)
+		normalizedTrain = run(learnerName, trainX, trainY, trainX, arguments=arguments)
 		if testX is not None:
-			normalizedTest = run(learningAlgorithm, trainX, trainY, testX, arguments=arguments)
+			normalizedTest = run(learnerName, trainX, trainY, testX, arguments=arguments)
 		
 	# modify references for trainX and testX
 	trainX.referenceDataFrom(normalizedTrain)
@@ -102,10 +102,10 @@ def normalizeData(learningAlgorithm, trainX, trainY=None, testX=None, arguments=
 		testX.referenceDataFrom(normalizedTest)
 
 
-def learningAlgorithmParameters(name):
+def learnerParameters(name):
 	"""
-	Takes a string of the form 'package.learningAlgorithm' and returns a list of
-	strings which are the names of the parameters when calling package.learningAlgorithm
+	Takes a string of the form 'package.learnerName' and returns a list of
+	strings which are the names of the parameters when calling package.learnerName
 
 	If the name cannot be found within the package, then an exception will be thrown.
 	If the name is found, be for some reason we cannot determine what the parameters
@@ -113,13 +113,13 @@ def learningAlgorithmParameters(name):
 	parameters, we return an empty list. 
 
 	"""
-	return _learningAlgorithmQuery(name, 'parameters')
+	return _learnerQuery(name, 'parameters')
 
-def learningAlgorithmDefaultValues(name):
+def learnerDefaultValues(name):
 	"""
-	Takes a string of the form 'package.learningAlgorithm' and returns a returns a
+	Takes a string of the form 'package.learnerName' and returns a returns a
 	dict mapping of parameter names to their default values when calling
-	package.learningAlgorithm
+	package.learnerName
 
 	If the name cannot be found within the package, then an exception will be thrown.
 	If the name is found, be for some reason we cannot determine what the parameters
@@ -127,10 +127,10 @@ def learningAlgorithmDefaultValues(name):
 	parameters, we return an empty dict. 
 
 	"""
-	return _learningAlgorithmQuery(name, 'defaults')
+	return _learnerQuery(name, 'defaults')
 
 
-def listLearningAlgorithms(package=None):
+def listLearners(package=None):
 	listAll = False
 	if package is not None:
 		if not isinstance(package, basestring):
@@ -148,27 +148,27 @@ def listLearningAlgorithms(package=None):
 			toAppendTo.append(packageName + '.' + funcName)
 	if package == 'mahout' or listAll:
 		import UML.interfaces.mahout_interface
-		results = UML.interfaces.mahout_interface.listMahoutLearningAlgorithms()
+		results = UML.interfaces.mahout_interface.listMahoutLearners()
 		if listAll:
 			addToAll('mahout', results, allResults)
 	if package == 'regressor' or listAll:
 		import UML.interfaces.regressors_interface
-		results = UML.interfaces.regressors_interface.listRegressorLearningAlgorithms()
+		results = UML.interfaces.regressors_interface.listRegressorLearners()
 		if listAll:
 			addToAll('regressor', results, allResults)
 	if package == 'scikitlearn' or listAll:
 		import UML.interfaces.scikit_learn_interface
-		results = UML.interfaces.scikit_learn_interface.listSciKitLearnLearningAlgorithms()
+		results = UML.interfaces.scikit_learn_interface.listSciKitLearnLearners()
 		if listAll:
 			addToAll('sciKitLearn', results, allResults)
 	if package == 'mlpy' or listAll:
 		import UML.interfaces.mlpy_interface
-		results = UML.interfaces.mlpy_interface.listMlpyLearningAlgorithms()
+		results = UML.interfaces.mlpy_interface.listMlpyLearners()
 		if listAll:
 			addToAll('mlpy', results, allResults)
 	if package == 'shogun' or listAll:
 		import UML.interfaces.shogun_interface
-		results = UML.interfaces.shogun_interface.listShogunLearningAlgorithms()
+		results = UML.interfaces.shogun_interface.listShogunLearners()
 		if listAll:
 			addToAll('shogun', results, allResults)
 

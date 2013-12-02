@@ -16,7 +16,7 @@ author.
 
 This third function must take the following arguments, and only the following arguments:
 
-algorithmName : some string identifying the functionality which we wish to call upon
+learnerName : some string identifying the functionality which we wish to call upon
 trainingData : a file containing data which will be used for training in whatever
 			functionality we call upon. Optionally, this is also allowed to be
 			a data representation object. If required, such as in any sort of
@@ -49,9 +49,9 @@ or conventions used by packages, functions, and arguments, that can be used to
 help automate any of the following procedures.
 
 There are three main tasks to be performed by the interface function proper:
-locating the desired algorithm, data preparation, and the actual calls.
+locating the desired learner, data preparation, and the actual calls.
 
-Locating the desired algorithm is meant to be done via some kind of automation,
+Locating the desired learner is meant to be done via some kind of automation,
 because any kind of hard coding will be susceptible to changes across different
 versions of the same library. For python libraries, we provide a helper function
 to help search a package structure, looking for the appropriate modules to import.

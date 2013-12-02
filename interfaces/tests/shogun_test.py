@@ -11,7 +11,7 @@ from nose.tools import *
 from UML.exceptions import ArgumentException
 
 from UML.interfaces import shogun
-from UML.interfaces.shogun_interface import listShogunLearningAlgorithms
+from UML.interfaces.shogun_interface import listShogunLearners
 from UML.interfaces.shogun_interface import setShogunLocation
 from UML.interfaces.shogun_interface import getShogunLocation
 from UML.data import Matrix
@@ -54,7 +54,7 @@ def testShogun_singleClassException():
 
 @raises(ArgumentException)
 def testShogun_multiClassDataToBinaryAlg():
-	""" Test shogun() raises ArgumentException when passing multiclass data to a binary learning algorithm """
+	""" Test shogun() raises ArgumentException when passing multiclass data to a binary classifier """
 	variables = ["Y","x1","x2"]
 	data = [[5,-11,-5], [1,0,1], [2,3,2]]
 	trainingObj = Matrix(data,variables)
@@ -67,7 +67,7 @@ def testShogun_multiClassDataToBinaryAlg():
 
 
 def testShogunHandmadeBinaryClassification():
-	""" Test shogun() by calling a binary linear classification learning algorithm"""
+	""" Test shogun() by calling a binary linear classifier """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,0], [-0,0,1], [1,3,2]]
 	trainingObj = Matrix(data,variables)
@@ -84,7 +84,7 @@ def testShogunHandmadeBinaryClassification():
 	assert ret.data[0,0] > 0
 
 def testShogunHandmadeBinaryClassificationWithKernel():
-	""" Test shogun() by calling a binary linear classification learning algorithm with a kernel """
+	""" Test shogun() by calling a binary linear classifier with a kernel """
 	variables = ["Y","x1","x2"]
 	data = [[5,-11,-5], [1,0,1], [1,3,2]]
 	trainingObj = Matrix(data,variables)
@@ -143,7 +143,7 @@ def testShogunMulticlassSVM():
 
 
 def testShogunSparseRegression():
-	""" Test shogun() sparse data instantiation by calling a sparse regression algorithm with a large, but highly sparse, matrix """
+	""" Test shogun() sparse data instantiation by calling on a sparse regression learner with a large, but highly sparse, matrix """
 
 	x = 100
 	c = 10
@@ -283,7 +283,7 @@ def testShogunScoreModeBinary():
 
 
 def testShogunMultiClassStrategyMultiDataBinaryAlg():
-	""" Test shogun() will correctly apply the provided strategies when given multiclass data and a binary learning algorithm"""
+	""" Test shogun() will correctly apply the provided strategies when given multiclass data and a binary learner """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
 	trainingObj = Matrix(data,variables)
@@ -297,10 +297,10 @@ def testShogunMultiClassStrategyMultiDataBinaryAlg():
 
 
 
-def testShogunListLearningAlgorithms():
-	""" Test shogun's listShogunLearningAlgorithms() by checking the output for those learning algorithms we unit test """
+def testShogunListLearners():
+	""" Test shogun's listShogunLearners() by checking the output for those learners we unit test """
 
-	ret = listShogunLearningAlgorithms()
+	ret = listShogunLearners()
 
 	assert 'LibSVM' in ret
 	assert 'LibLinear' in ret

@@ -22,15 +22,15 @@ from UML.data import Matrix
 from UML.data import List
 from UML.data import Base
 
-def _learningAlgorithmQuery(name, queryType):
+def _learnerQuery(name, queryType):
 	"""
-	Takes a string of the form 'package.learningAlgorithm' and a string defining
+	Takes a string of the form 'package.learnerName' and a string defining
 	a queryType of either 'parameters' or 'defaults' then returns the results
-	of either the package's getParameters(learningAlgorithm) function or the
-	package's getDefaultValues(learningAlgorithm) function.
+	of either the package's getParameters(learnerName) function or the
+	package's getDefaultValues(learnerName) function.
 
 	"""
-	[package, learningAlgorithm] = name.split('.')
+	[package, learnerName] = name.split('.')
 
 	if queryType == "parameters":
 		toCallName = 'getParameters'
@@ -56,7 +56,7 @@ def _learningAlgorithmQuery(name, queryType):
 		raise ArgumentException("shogun not yet supported")
 		#toCall = getattr(UML.interfaces.shogun_interface, toCallName)
 
-	results = toCall(learningAlgorithm)
+	results = toCall(learnerName)
 	return results
 
 def _loadSparse(data, featureNames, fileType, automatedRetType=False):

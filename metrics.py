@@ -1,6 +1,6 @@
 """
 Contains various error metrics to be used for evaluating the results
-of supervised learning algorithms.
+of supervised learners.
 
 
 """

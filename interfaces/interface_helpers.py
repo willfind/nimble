@@ -33,10 +33,10 @@ def makeArgString(wanted, argDict, prefix, infix, postfix):
 
 
 #TODO what about multiple levels???
-def findModule(learningAlgorithm, packageName, packageLocation):
+def findModule(learnerName, packageName, packageLocation):
 	"""
 	Import the desired python package, and search for the module containing
-	the wanted learning learning algorithm. For use by interfaces to python packages.
+	the wanted learner. For use by interfaces to python packages.
 
 	"""
 
@@ -61,7 +61,7 @@ def findModule(learningAlgorithm, packageName, packageLocation):
 		subContents = eval("dir(" + packageName + "." + moduleName + ")")
 		if ".__all__" in subContents:
 			contents = eval(packageName+ "." + moduleName + ".__all__")
-		if learningAlgorithm in subContents:
+		if learnerName in subContents:
 			return moduleName
 
 	return None
@@ -77,11 +77,11 @@ def putOnSearchPath(wantedPath):
 		sys.path.append(wantedPath)
 
 
-def checkClassificationStrategy(toCall, learningAlgorithm, algArgs):
+def checkClassificationStrategy(toCall, learnerName, algArgs):
 	"""
-	Helper to determine the classification strategy used for a given learning algorithm called
+	Helper to determine the classification strategy used for a given learner called
 	from the given backend with the given args. The backend must support the scoreMode
-	equal to 'test' flag, which will run the learning algorithm on the data passed in and return
+	equal to 'test' flag, which will run the learner on the data passed in and return
 	a string indicating the strategy, instead of the predicted results
 	"""
 
@@ -89,7 +89,7 @@ def checkClassificationStrategy(toCall, learningAlgorithm, algArgs):
 	dataY = [[0],[0],[1],[1],[2],[2],[3],[3]]
 	dataTest = [[0,0],[-100,0],[100,0],[0,-100],[0,100]]
 
-	return toCall(learningAlgorithm, dataX, dataY, dataTest,algArgs, 'test')
+	return toCall(learnerName, dataX, dataY, dataTest,algArgs, 'test')
 
 
 def ovaNotOvOFormatted(scoresPerPoint, predicedLabels, numLabels, useSize=True):
@@ -266,7 +266,7 @@ def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
 	return newScoresPerPoint
 
 
-def pythonIOWrapper(learningAlgorithm, trainX, trainY, testX, output, arguments, kernel, config):
+def pythonIOWrapper(learnerName, trainX, trainY, testX, output, arguments, kernel, config):
 
 	inType = config['inType']
 	inTypeLabels = config['inTypeLabels']
@@ -313,7 +313,7 @@ def pythonIOWrapper(learningAlgorithm, trainX, trainY, testX, output, arguments,
 
 	# call backend
 	try:
-		retData = toCall(learningAlgorithm,  trainRawData, trainRawDataY, testRawData, arguments, kernel)
+		retData = toCall(learnerName,  trainRawData, trainRawDataY, testRawData, arguments, kernel)
 	except ImportError as e:
 		if not checkPackage():
 			print "Package was not importable."

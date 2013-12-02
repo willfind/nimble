@@ -29,7 +29,7 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'],
     be used as any other Coo BaseData object or written to disk for use later on.  
 
     For files on disk, this function assumes that they contain raw text, which must be tokenized and processed
-    in order to convert each document to a form which can be passed as input to an ML learning algorithm.  The details of
+    in order to convert each document to a form which can be passed as input to an learner.  The details of
     text pre-processing can be controlled through parameters of this function.
 
     The organization of the final BaseData object will have one document per row.  The leftmost column in the
