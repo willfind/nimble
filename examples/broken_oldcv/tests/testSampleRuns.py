@@ -22,7 +22,7 @@ def testEverythingVolumeOne():
 	pathOrig = os.path.join(os.path.dirname(__file__), "../../datasets/iris.csv")
 
 	# we specify that we want a Matrix object returned, and with just the path it will
-	# decide automaticallly the format of the file that is being loaded
+	# decide automatically the format of the file that is being loaded
 	processed = createData("Matrix", pathOrig)
 
 	assert processed.data is not None
@@ -81,7 +81,7 @@ def testDataPrepExample():
 	pathOut = os.path.join(os.path.dirname(__file__), "../../datasets/adult_income_classification_tiny_numerical.csv")
 
 	# we specify that we want a Matrix object returned, and with just the path it will
-	# decide automaticallly the format of the file that is being loaded
+	# decide automatically the format of the file that is being loaded
 	processed = createData("List", pathOrig)
 
 	# this feature is a precalculated similarity rating. Lets not make it too easy....
@@ -96,7 +96,7 @@ def testDataPrepExample():
 	processed.replaceFeatureWithBinaryFeatures('native-country')
 
 	# convert 'income' column (the classification label) to a single numerical column
-	processed.transformFeartureToIntegerFeature('income')
+	processed.transformFeatureToIntegerFeature('income')
 
 	#scrub the rest of the string valued data -- the ones we converted are the non-redundent ones
 	processed.dropFeaturesContainingType(basestring)

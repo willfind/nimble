@@ -23,7 +23,7 @@ numFeatures = 4
 unTestedMethods = [
 	# Core passing
 	# -- but broken in some cases
-#	'transformFeartureToIntegerFeature', 
+#	'transformFeatureToIntegerFeature', 
 #	'replaceFeatureWithBinaryFeatures',
 #	'appendPoints',
 #	'appendFeatures',
@@ -54,7 +54,7 @@ unTestedMethods = [
 
 unavailableNoPoints = [
 	'replaceFeatureWithBinaryFeatures',
-	'transformFeartureToIntegerFeature',
+	'transformFeatureToIntegerFeature',
 	'applyToPoints',
 	'applyToFeatures',
 	'featureIterator',
@@ -71,7 +71,7 @@ unavailableNoFeatures = [
 	'setFeatureNamesFromList',
 	'setFeatureNamesFromDict',
 	'replaceFeatureWithBinaryFeatures',
-	'transformFeartureToIntegerFeature',
+	'transformFeatureToIntegerFeature',
 	'applyToPoints',
 	'applyToFeatures',
 	'mapReducePoints',

@@ -141,31 +141,31 @@ class HighLevelBackend(object):
 
 
 	#############################
-	# transformFeartureToIntegerFeature #
+	# transformFeatureToIntegerFeature #
 	#############################
 
 	@raises(ImproperActionException)
-	def test_transformFeartureToIntegerFeature_PemptyException(self):
-		""" Test transformFeartureToIntegerFeature() with an point empty object """
+	def test_transformFeatureToIntegerFeature_PemptyException(self):
+		""" Test transformFeatureToIntegerFeature() with an point empty object """
 		data = [[],[]]
 		data = numpy.array(data).T
 		toTest = self.constructor(data)
-		toTest.transformFeartureToIntegerFeature(0)
+		toTest.transformFeatureToIntegerFeature(0)
 
 	@raises(ArgumentException)
-	def test_transformFeartureToIntegerFeature_FemptyException(self):
-		""" Test transformFeartureToIntegerFeature() with an feature empty object """
+	def test_transformFeatureToIntegerFeature_FemptyException(self):
+		""" Test transformFeatureToIntegerFeature() with an feature empty object """
 		data = [[],[]]
 		data = numpy.array(data)
 		toTest = self.constructor(data)
-		toTest.transformFeartureToIntegerFeature(0)
+		toTest.transformFeatureToIntegerFeature(0)
 
-	def test_transformFeartureToIntegerFeature_handmade(self):
-		""" Test transformFeartureToIntegerFeature() against handmade output """
+	def test_transformFeatureToIntegerFeature_handmade(self):
+		""" Test transformFeatureToIntegerFeature() against handmade output """
 		data = [[10],[20],[30.5],[20],[10]]
 		featureNames = ['col']
 		toTest = self.constructor(data,featureNames)
-		ret = toTest.transformFeartureToIntegerFeature(0)
+		ret = toTest.transformFeatureToIntegerFeature(0)
 
 		assert toTest[0,0] == toTest[4,0]
 		assert toTest[1,0] == toTest[3,0]

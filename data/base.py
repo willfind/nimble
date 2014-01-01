@@ -69,9 +69,9 @@ class Base(object):
 			self.name = name
 		self.path = path
 
-	######################
-	# Property Attriutes #
-	######################
+	#######################
+	# Property Attributes #
+	#######################
 
 	def _getpointCount(self):
 		return self._pointCount
@@ -224,7 +224,7 @@ class Base(object):
 
 		"""		
 		if self.pointCount == 0:
-			raise ImproperActionException("This action is inpossible, the object has 0 points")
+			raise ImproperActionException("This action is impossible, the object has 0 points")
 
 		index = self._getIndex(featureToReplace)
 		# extract col.
@@ -265,7 +265,7 @@ class Base(object):
 		return self
 
 
-	def transformFeartureToIntegerFeature(self, featureToConvert):
+	def transformFeatureToIntegerFeature(self, featureToConvert):
 		"""
 		Modify this object so that the chosen feature in removed, and a new integer
 		valued feature is added with values 0 to n-1, one for each of n values present
@@ -273,7 +273,7 @@ class Base(object):
 
 		"""
 		if self.pointCount == 0:
-			raise ImproperActionException("This action is inpossible, the object has 0 points")
+			raise ImproperActionException("This action is impossible, the object has 0 points")
 
 		index = self._getIndex(featureToConvert)
 
@@ -313,7 +313,7 @@ class Base(object):
 	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
 		"""
 		Return a new object containing a randomly selected sample of points
-		from this object, where a random experient is performed for each
+		from this object, where a random experiment is performed for each
 		point, with the chance of selection equal to the extractionProbabilty
 		parameter. Those selected values are also removed from this object.
 
@@ -353,7 +353,7 @@ class Base(object):
 		# note: we want truncation here
 		numInFold = int(self.pointCount / numFolds)
 		if numInFold == 0:
-			raise ArgumentException("Must specifiy few enough folds so there is a point in each")
+			raise ArgumentException("Must specify few enough folds so there is a point in each")
 
 		# randomly select the folded portions
 		indices = range(self.pointCount)
@@ -374,9 +374,9 @@ class Base(object):
 
 	def applyToPoints(self, function, points=None, inPlace=True):
 		"""
-		Applies the given funciton to each point in this object, collecting the
-		output values into a new object that is returned upon completion, or,
-		if the inPlace flag is True, copying the output into this object.
+		Applies the given function to each point in this object, copying the
+		output into this object. Or, if the inPlace flag is False, collecting
+		the output values into a new object that is returned upon completion.
 
 		function must not be none and accept a point as an argument
 
@@ -393,7 +393,7 @@ class Base(object):
 
 		if points is not None and not isinstance(points, list):
 			if not isinstance(points, int):
-				raise ArgumentException("Only allowable inputs to 'points' param is an int ID, a list of int ID's, or None")
+				raise ArgumentException("Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
 			points = [points]
 
 		self.validate()
@@ -403,9 +403,9 @@ class Base(object):
 
 	def applyToFeatures(self, function, features=None, inPlace=True):
 		"""
-		Applies the given funciton to each feature in this object, collecting the
-		output values into a new object that is returned upon completion or, if
-		the inPlace flag is True, copying the output into this object.
+		Applies the given function to each feature in this object, copying the
+		output into this object. Or, if the inPlace flag is False, collecting
+		the output values into a new object that is returned upon completion.
 
 		function must not be none and accept a feature as an argument
 
@@ -422,7 +422,7 @@ class Base(object):
 
 		if features is not None and not isinstance(features, list):
 			if not (isinstance(features, int) or isinstance(features, basestring)):
-				raise ArgumentException("Only allowable inputs to 'features' param is an ID, a list of int ID's, or None")
+				raise ArgumentException("Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
 			features = [features]
 
 		if features is not None:
@@ -570,12 +570,12 @@ class Base(object):
 
 		if points is not None and not isinstance(points, list):
 			if not isinstance(points, int):
-				raise ArgumentException("Only allowable inputs to 'points' param is an int ID, a list of int ID's, or None")
+				raise ArgumentException("Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
 			points = [points]
 
 		if features is not None and not isinstance(features, list):
 			if not isinstance(features, int):
-				raise ArgumentException("Only allowable inputs to 'features' param is an ID, a list of int ID's, or None")
+				raise ArgumentException("Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
 			features = [features]
 
 		if features is not None:
@@ -680,7 +680,7 @@ class Base(object):
 			random.shuffle(indices)
 		else:
 			if len(indices) != self.featureCount:
-				raise ArgumentException("If indices are supplied, it must be a list with all and only valid faetures indices")
+				raise ArgumentException("If indices are supplied, it must be a list with all and only valid features indices")
 			for value in indices:
 				if value < 0 or value > self.featureCount:
 					raise ArgumentException("A value in indices is out of bounds of the valid range of features")
@@ -842,10 +842,10 @@ class Base(object):
 
 		toExtract may be a single identifier, a list of identifiers, or a function that when
 		given a point will return True if it is to be removed. number is the quantity of points that
-		we are to be extracted, the default None means unlimited extracttion. start and end are
+		we are to be extracted, the default None means unlimited extraction. start and end are
 		parameters indicating range based extraction: if range based extraction is employed,
 		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.pointCount respectibly. randomize indicates whether random
+		other defaults to 0 and self.pointCount respectably. randomize indicates whether random
 		sampling is to be used in conjunction with the number parameter, if randomize is False,
 		the chosen points are determined by point order, otherwise it is uniform random across the
 		space of possible removals.
@@ -891,10 +891,10 @@ class Base(object):
 
 		toExtract may be a single identifier, a list of identifiers, or a function that when
 		given a feature will return True if it is to be removed. number is the quantity of features that
-		are to be extracted, the default None means unlimited extracttion. start and end are
+		are to be extracted, the default None means unlimited extraction. start and end are
 		parameters indicating range based extraction: if range based extraction is employed,
 		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.featureCount respectibly. randomize indicates whether random
+		other defaults to 0 and self.featureCount respectably. randomize indicates whether random
 		sampling is to be used in conjunction with the number parameter, if randomize is False,
 		the chosen features are determined by feature order, otherwise it is uniform random across the
 		space of possible removals.
@@ -939,7 +939,7 @@ class Base(object):
 
 	def writeFile(self, outPath, format=None, includeFeatureNames=True):
 		"""
-		Funciton to write the data in this object to a file using the specified
+		Function to write the data in this object to a file using the specified
 		format. outPath is the location (including file name and extension) where
 		we want to write the output file. includeFeatureNames is boolean argument
 		indicating whether the file should start with a comment line designating featureNames.

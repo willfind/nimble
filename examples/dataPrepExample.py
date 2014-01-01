@@ -19,7 +19,7 @@ if __name__ == "__main__":
 	pathOut = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny_numerical.csv")
 
 	# we specify that we want a List object returned, and with just the path it will
-	# decide automaticallly the format of the file that is being loaded
+	# decide automatically the format of the file that is being loaded
 	processed = createData("List", pathOrig)
 
 	# this feature is a precalculated similarity rating. Lets not make it too easy....
@@ -34,9 +34,9 @@ if __name__ == "__main__":
 	processed.replaceFeatureWithBinaryFeatures('native-country')
 	
 	# convert 'income' column (the classification label) to a single numerical column
-	processed.transformFeartureToIntegerFeature('income')
+	processed.transformFeatureToIntegerFeature('income')
 
-	#scrub the rest of the string valued data -- the ones we converted are the non-redundent ones
+	#scrub the rest of the string valued data -- the ones we converted are the non-redundant ones
 	processed.dropFeaturesContainingType(basestring)
 
 	# output the split and normalized sets for later usage
