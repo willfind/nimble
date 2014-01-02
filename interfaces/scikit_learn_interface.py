@@ -176,7 +176,10 @@ def _sciKitLearnBackend(learnerName, trainX, trainY, testX, algArgs, scoreMode, 
 	# fit object
 	(fitArgs,v,k,d) = inspect.getargspec(sklObj.fit)
 	argString = makeArgString(fitArgs, algArgs, "", "=", ", ")
-	sklObj = eval("sklObj.fit(trainX,trainY " + argString + ")")
+	if trainY is None:
+		sklObj = eval("sklObj.fit(trainX, " + argString + ")")
+	else:
+		sklObj = eval("sklObj.fit(trainX,trainY " + argString + ")")
 
 	#stop timing training and start timing testing, if timer is present
 	if timer is not None:
