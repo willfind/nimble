@@ -1002,25 +1002,25 @@ class DerivedBackend(object):
 		listObj = createData(retType="List", data=data)
 		matixObj = createData(retType="Matrix", data=data)
 
-		copySparse = orig.copy(asType='Sparse')
+		copySparse = orig.copyAs(format='Sparse')
 		assert copySparse.isIdentical(sparseObj)
 		assert sparseObj.isIdentical(copySparse)
 
-		copyList = orig.copy(asType='List')
+		copyList = orig.copyAs(format='List')
 		assert copyList.isIdentical(listObj)
 		assert listObj.isIdentical(copyList)
 
-		copyMatrix = orig.copy(asType='Matrix')
+		copyMatrix = orig.copyAs(format='Matrix')
 		assert copyMatrix.isIdentical(matixObj)
 		assert matixObj.isIdentical(copyMatrix)
 
-		pyList = orig.copy(asType='python list')
+		pyList = orig.copyAs(format='python list')
 		assert pyList == []
 
-		numpyArray = orig.copy(asType='numpy array')
+		numpyArray = orig.copyAs(format='numpy array')
 		assert numpy.array_equal(numpyArray, data)
 
-		numpyMatrix = orig.copy(asType='numpy matrix')
+		numpyMatrix = orig.copyAs(format='numpy matrix')
 		assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 	
 
@@ -1034,25 +1034,25 @@ class DerivedBackend(object):
 		listObj = createData(retType="List", data=data)
 		matixObj = createData(retType="Matrix", data=data)
 
-		copySparse = orig.copy(asType='Sparse')
+		copySparse = orig.copyAs(format='Sparse')
 		assert copySparse.isIdentical(sparseObj)
 		assert sparseObj.isIdentical(copySparse)
 
-		copyList = orig.copy(asType='List')
+		copyList = orig.copyAs(format='List')
 		assert copyList.isIdentical(listObj)
 		assert listObj.isIdentical(copyList)
 
-		copyMatrix = orig.copy(asType='Matrix')
+		copyMatrix = orig.copyAs(format='Matrix')
 		assert copyMatrix.isIdentical(matixObj)
 		assert matixObj.isIdentical(copyMatrix)
 
-		pyList = orig.copy(asType='python list')
+		pyList = orig.copyAs(format='python list')
 		assert pyList == [[],[]]
 
-		numpyArray = orig.copy(asType='numpy array')
+		numpyArray = orig.copyAs(format='numpy array')
 		assert numpy.array_equal(numpyArray, data)
 
-		numpyMatrix = orig.copy(asType='numpy matrix')
+		numpyMatrix = orig.copyAs(format='numpy matrix')
 		assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
 	def test_copy_Trueempty(self):
@@ -1064,25 +1064,25 @@ class DerivedBackend(object):
 		listObj = createData(retType="List", data=data)
 		matixObj = createData(retType="Matrix", data=data)
 
-		copySparse = orig.copy(asType='Sparse')
+		copySparse = orig.copyAs(format='Sparse')
 		assert copySparse.isIdentical(sparseObj)
 		assert sparseObj.isIdentical(copySparse)
 
-		copyList = orig.copy(asType='List')
+		copyList = orig.copyAs(format='List')
 		assert copyList.isIdentical(listObj)
 		assert listObj.isIdentical(copyList)
 
-		copyMatrix = orig.copy(asType='Matrix')
+		copyMatrix = orig.copyAs(format='Matrix')
 		assert copyMatrix.isIdentical(matixObj)
 		assert matixObj.isIdentical(copyMatrix)
 
-		pyList = orig.copy(asType='python list')
+		pyList = orig.copyAs(format='python list')
 		assert pyList == []
 
-		numpyArray = orig.copy(asType='numpy array')
+		numpyArray = orig.copyAs(format='numpy array')
 		assert numpy.array_equal(numpyArray, data)
 
-		numpyMatrix = orig.copy(asType='numpy matrix')
+		numpyMatrix = orig.copyAs(format='numpy matrix')
 		assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
 
@@ -1099,7 +1099,7 @@ class DerivedBackend(object):
 		pointsShuffleIndices = [3,1,2,0]
 		featuresshuffleIndices = [1,2,0]
 
-		copySparse = orig.copy(asType='Sparse')
+		copySparse = orig.copyAs(format='Sparse')
 		assert copySparse.isIdentical(sparseObj)
 		assert sparseObj.isIdentical(copySparse)
 		assert type(copySparse) == Sparse
@@ -1109,7 +1109,7 @@ class DerivedBackend(object):
 		copySparse.shuffleFeatures(featuresshuffleIndices)
 		assert orig[0,0] == 1 
 
-		copyList = orig.copy(asType='List')
+		copyList = orig.copyAs(format='List')
 		assert copyList.isIdentical(listObj)
 		assert listObj.isIdentical(copyList)
 		assert type(copyList) == List
@@ -1119,7 +1119,7 @@ class DerivedBackend(object):
 		copyList.shuffleFeatures(featuresshuffleIndices)
 		assert orig[0,0] == 1 
 
-		copyMatrix = orig.copy(asType='Matrix')
+		copyMatrix = orig.copyAs(format='Matrix')
 		assert copyMatrix.isIdentical(matixObj)
 		assert matixObj.isIdentical(copyMatrix)
 		assert type(copyMatrix) == Matrix
@@ -1129,17 +1129,17 @@ class DerivedBackend(object):
 		copyMatrix.shuffleFeatures(featuresshuffleIndices)
 		assert orig[0,0] == 1 
 
-		pyList = orig.copy(asType='python list')
+		pyList = orig.copyAs(format='python list')
 		assert type(pyList) == list
 		pyList[0][0] = 5
 		assert orig[0,0] == 1 
 
-		numpyArray = orig.copy(asType='numpy array')
+		numpyArray = orig.copyAs(format='numpy array')
 		assert type(numpyArray) == type(numpy.array([]))
 		numpyArray[0,0] = 5
 		assert orig[0,0] == 1 
 
-		numpyMatrix = orig.copy(asType='numpy matrix')
+		numpyMatrix = orig.copyAs(format='numpy matrix')
 		assert type(numpyMatrix) == type(numpy.matrix([]))
 		numpyMatrix[0,0] = 5
 		assert orig[0,0] == 1 

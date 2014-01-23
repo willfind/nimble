@@ -897,7 +897,7 @@ class HighLevelBackend(object):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
 		ret = toTest.applyToElements(passThrough, inPlace=False)
-		retRaw = ret.copy(asType="python list")
+		retRaw = ret.copyAs(format="python list")
 
 		assert [1,2,3] in retRaw
 		assert [4,5,6] in retRaw
@@ -905,7 +905,7 @@ class HighLevelBackend(object):
 
 		ret = toTest.applyToElements(passThrough)
 		assert ret == toTest
-		retRaw = ret.copy(asType="python list")
+		retRaw = ret.copyAs(format="python list")
 
 		assert [1,2,3] in retRaw
 		assert [4,5,6] in retRaw
@@ -918,7 +918,7 @@ class HighLevelBackend(object):
 		data = [[1,0,3],[0,5,6],[7,0,9]]
 		toTest = self.constructor(data)
 		ret = toTest.applyToElements(plusOne, inPlace=False, preserveZeros=True)
-		retRaw = ret.copy(asType="python list")
+		retRaw = ret.copyAs(format="python list")
 
 		assert [2,0,4] in retRaw
 		assert [0,6,7] in retRaw
@@ -926,7 +926,7 @@ class HighLevelBackend(object):
 
 		ret = toTest.applyToElements(plusOne, preserveZeros=True)
 		assert ret == toTest
-		retRaw = ret.copy(asType="python list")
+		retRaw = ret.copyAs(format="python list")
 
 		assert [2,0,4] in retRaw
 		assert [0,6,7] in retRaw
@@ -939,7 +939,7 @@ class HighLevelBackend(object):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
 		ret = toTest.applyToElements(plusOneOnlyEven, inPlace=False, skipNoneReturnValues=True)
-		retRaw = ret.copy(asType="python list")
+		retRaw = ret.copyAs(format="python list")
 
 		assert [1,3,3] in retRaw
 		assert [5,5,7] in retRaw
@@ -947,7 +947,7 @@ class HighLevelBackend(object):
 
 		ret = toTest.applyToElements(plusOneOnlyEven, skipNoneReturnValues=True)
 		assert ret == toTest
-		retRaw = ret.copy(asType="python list")
+		retRaw = ret.copyAs(format="python list")
 
 		assert [1,3,3] in retRaw
 		assert [5,5,7] in retRaw
@@ -961,13 +961,13 @@ class HighLevelBackend(object):
 		toTest = self.constructor(data, names)
 
 		ret = toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], inPlace=False, skipNoneReturnValues=True)
-		retRaw = ret.copy(asType="python list")
+		retRaw = ret.copyAs(format="python list")
 
 		assert [5,7] in retRaw
 
 		ret = toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], skipNoneReturnValues=True)
 		assert ret == toTest
-		retRaw = ret.copy(asType="python list")
+		retRaw = ret.copyAs(format="python list")
 
 		assert [1,2,3] in retRaw
 		assert [4,5,7] in retRaw

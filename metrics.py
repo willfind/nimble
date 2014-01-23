@@ -23,8 +23,8 @@ def _validatePredictedAsLabels(predictedValues):
 def cosineSimilarity(knownValues, predictedValues):
 	_validatePredictedAsLabels(predictedValues)
 
-	known = knownValues.copy(asType="numpy array").flatten()
-	predicted = predictedValues.copy(asType="numpy array").flatten()
+	known = knownValues.copyAs(format="numpy array").flatten()
+	predicted = predictedValues.copyAs(format="numpy array").flatten()
 
 	numerator = (numpy.dot(known, predicted))
 	denominator = (numpy.linalg.norm(known) * numpy.linalg.norm(predicted))
@@ -131,7 +131,7 @@ def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionT
 	#Compute the score difference (positive label score - negative label score) for
 	#all entries in labelScoreList
 	scoreDifferenceList = []
-	labelScoreList = labelScoreList.copy(asType="python list")
+	labelScoreList = labelScoreList.copyAs(format="python list")
 	for i in range(len(labelScoreList)):
 		positiveScore = labelScoreList[i][positiveLabelIndex]
 		negativeScore = labelScoreList[i][negativeLabelIndex]
@@ -139,7 +139,7 @@ def fractionTrueNegative(knownValues, labelScoreList, negativeLabel, proportionT
 		scoreDifferenceList.append(scoreDiff)
 
 	#convert knownValues to list of lists
-	listOfKnownLabels = knownValues.copy(asType="python list")
+	listOfKnownLabels = knownValues.copyAs(format="python list")
 	knownLabels = listOfKnownLabels[0:]
 	for i in range(len(knownLabels)):
 		knownLabels[i] = knownLabels[i][0]
@@ -209,7 +209,7 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 	#Compute the score difference (positive label score - negative label score) for
 	#all entries in labelScoreList
 	scoreDifferenceList = []
-	labelScoreList = labelScoreList.copy(asType="python list")
+	labelScoreList = labelScoreList.copyAs(format="python list")
 	for i in range(len(labelScoreList)):
 		positiveScore = labelScoreList[i][positiveLabelIndex]
 		negativeScore = labelScoreList[i][negativeLabelIndex]
@@ -217,7 +217,7 @@ def fractionIncorrectBottom10(knownValues, labelScoreList, negativeLabel):
 		scoreDifferenceList.append(scoreDiff)
 
 	#convert knownValues to list of lists; drop first row, which has featureNames
-	listOfKnownLabels = knownValues.copy(asType="python list")
+	listOfKnownLabels = knownValues.copyAs(format="python list")
 #	knownLabels = listOfKnownLabels[0:][0]
 	knownLabels = listOfKnownLabels[0:]
 	for i in range(len(knownLabels)):

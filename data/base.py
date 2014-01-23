@@ -241,7 +241,7 @@ class Base(object):
 		values = values.extractFeatures([0])
 
 		# Convert to List, so we can have easy access
-		values = values.copy(asType="List")
+		values = values.copyAs(format="List")
 
 		# for each value run applyToEach to produce a category point for each value
 		def makeFunc(value):
@@ -291,7 +291,7 @@ class Base(object):
 		values = values.extractFeatures([0])
 
 		# Convert to List, so we can have easy access
-		values = values.copy(asType="List")
+		values = values.copyAs(format="List")
 
 		mapping = {}
 		index = 0
@@ -624,7 +624,7 @@ class Base(object):
 		if self.pointCount == 0 or self.featureCount == 0:
 			return 0
 		valueObj = self.applyToElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, inPlace=False, preserveZeros=True)
-		valueList = valueObj.copy(asType="python list")
+		valueList = valueObj.copyAs(format="python list")
 		avg = sum(itertools.chain.from_iterable(valueList))/float(self.pointCount*self.featureCount)
 		bigNum = 1000000000
 		#this should return an integer x in the range 0<= x < 1 billion
@@ -688,6 +688,14 @@ class Base(object):
 			return indices[featureView.index()]
 		self.sortFeatures(sortHelper=permuter)
 		return self
+
+	def copy(self):
+		"""
+		Return a new object which has the same data (and featureNames, depending on
+		the return type) and in the same UML format as this object.
+
+		"""
+		return self.copyAs(self.getTypeString())
 
 
 	#################################
@@ -983,33 +991,36 @@ class Base(object):
 		return self
 
 
-	def copy(self, asType=None):
+	def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
 		"""
 		Return a new object which has the same data (and featureNames, depending on
-		the return type) as this object. If asType is None, the return will be of
-		the same type the calling object. To return a specific kind of UML data
-		object, one my specify 'List', 'Matrix', or 'Sparse'. To specify a raw
-		return type (which will not include feature names), one may specify
-		'python list', 'numpy array', or 'numpy matrix'.
+		the return type) as this object. To return a specific kind of UML data
+		object, one may specify the format parameter to be 'List', 'Matrix', or
+		'Sparse'. To specify a raw return type (which will not include feature names),
+		one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr'
+		or 'scypy csc'.
 
 		"""
-		#make lower case, strip out all white space and periods, except if asType
+		#make lower case, strip out all white space and periods, except if format
 		# is one of the accepted UML data types
-		if asType is not None and asType not in ['List', 'Matrix', 'Sparse']:
-			asType = asType.lower()
-			asType = asType.strip()
-			tokens = asType.split(' ')
-			asType = ''.join(tokens)
-			tokens = asType.split('.')
-			asType = ''.join(tokens)
-			if asType not in ['pythonlist', 'numpyarray', 'numpymatrix']:
+		if format not in ['List', 'Matrix', 'Sparse']:
+			format = format.lower()
+			format = format.strip()
+			tokens = format.split(' ')
+			format = ''.join(tokens)
+			tokens = format.split('.')
+			format = ''.join(tokens)
+			if format not in ['pythonlist', 'numpyarray', 'numpymatrix', 'scipycsr', 'scipycsc']:
 				msg = "The only accepted asTypes are: 'List', 'Matrix', 'Sparse'"
-				msg +=", 'python list', 'numpy array', and 'numpy matrix'"
+				msg +=", 'python list', 'numpy array', 'numpy matrix', 'scipy csr', and 'scipy csc'"
 				raise ArgumentException(msg)
+		else:
+			if outputAs1D:
+				raise ArgumentException('Cannot output a UML format as 1D')
 
 		# we enforce very specific shapes in the case of emptiness along one
 		# or both axes
-		if asType == 'pythonlist':
+		if format == 'pythonlist':
 			if self.pointCount == 0:
 				return []
 			if self.featureCount == 0:
@@ -1017,8 +1028,11 @@ class Base(object):
 				for i in xrange(self.pointCount):
 					ret.append([])
 				return ret
+		if format.startswith('scipy'):
+			if self.pointCount == 0 or self.featureCount == 0:
+				raise ArgumentException('Cannot output a point empty object in a scipy format')
 
-		return self._copy_implementation(asType)
+		return self._copyAs_implementation(format, rowsArePoints, outputAs1D)
 
 	def copyPoints(self, points=None, start=None, end=None):
 		"""

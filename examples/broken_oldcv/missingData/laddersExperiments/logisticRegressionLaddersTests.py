@@ -28,11 +28,11 @@ if __name__ == "__main__":
 
 
     # sparse types aren't playing nice with the error metrics currently, so convert
-    #trainX = trainX.copy(asType="Matrix")
-    #testX = testX.copy(asType="Matrix")
+    #trainX = trainX.copyAs(format="Matrix")
+    #testX = testX.copyAs(format="Matrix")
 
-    trainY = trainY.copy(asType="Matrix")
-    testY = testY.copy(asType="Matrix")
+    trainY = trainY.copyAs(format="Matrix")
+    testY = testY.copyAs(format="Matrix")
 
     trainYList = []
     trainRemoveList = []

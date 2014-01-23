@@ -576,22 +576,22 @@ class List(Base):
 
 		self.data = other.data
 
-	def _copy_implementation(self, asType):
-		if asType == 'Sparse':
+	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
+		if format == 'Sparse':
 			if self.pointCount == 0 or self.featureCount == 0:
 				return  UML.data.Sparse(numpy.empty(shape=(self.pointCount, self.featureCount)), self.featureNames)
 			return UML.data.Sparse(self.data, self.featureNames)
-		if asType is None or asType == 'List':
+		if format is None or format == 'List':
 			return UML.data.List(self.data, self.featureNames)
-		if asType == 'Matrix':
+		if format == 'Matrix':
 			return UML.data.Matrix(self.data, self.featureNames)
-		if asType == 'pythonlist':
+		if format == 'pythonlist':
 			return copy.deepcopy(self.data)
-		if asType == 'numpyarray':
+		if format == 'numpyarray':
 			if self.pointCount == 0 or self.featureCount == 0:
 				return numpy.empty(shape=(self.pointCount, self.featureCount))
 			return numpy.array(self.data)
-		if asType == 'numpymatrix':
+		if format == 'numpymatrix':
 			if self.pointCount == 0 or self.featureCount == 0:
 				return numpy.matrix(numpy.empty(shape=(self.pointCount, self.featureCount)))
 			return numpy.matrix(self.data)

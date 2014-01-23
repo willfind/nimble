@@ -157,8 +157,8 @@ def testRandomSequenceOfMethods():
 	objectList = []
 	first = UML.createRandomizedData('List', points, features, sparcity, 'int')
 	objectList.append(first)
-#	objectList.append(first.copy(asType='Matrix'))
-#	objectList.append(first.copy(asType='Sparse'))
+#	objectList.append(first.copyAs(format='Matrix'))
+#	objectList.append(first.copyAs(format='Sparse'))
 	runSequence(objectList)
 
 	## dense float trial
@@ -166,8 +166,8 @@ def testRandomSequenceOfMethods():
 	objectList = []
 	first = UML.createRandomizedData('List', points, features, sparcity, 'float')
 	objectList.append(first)
-	objectList.append(first.copy(asType='Matrix'))
-	objectList.append(first.copy(asType='Sparse'))
+	objectList.append(first.copyAs(format='Matrix'))
+	objectList.append(first.copyAs(format='Sparse'))
 #	runSequence(objectList)
 
 	# sparse int trial
@@ -175,8 +175,8 @@ def testRandomSequenceOfMethods():
 	objectList = []
 	first = UML.createRandomizedData('List', points, features, sparcity, 'int')
 	objectList.append(first)
-	objectList.append(first.copy(asType='Matrix'))
-	objectList.append(first.copy(asType='Sparse'))
+	objectList.append(first.copyAs(format='Matrix'))
+	objectList.append(first.copyAs(format='Sparse'))
 #	runSequence(objectList)
 
 	# sparse float trial
@@ -184,8 +184,8 @@ def testRandomSequenceOfMethods():
 	objectList = []
 	first = UML.createRandomizedData('List', points, features, sparcity, 'float')
 	objectList.append(first)
-	objectList.append(first.copy(asType='Matrix'))
-	objectList.append(first.copy(asType='Sparse'))
+	objectList.append(first.copyAs(format='Matrix'))
+	objectList.append(first.copyAs(format='Sparse'))
 #	runSequence(objectList)
 
 
@@ -318,7 +318,7 @@ def generateRandomParameter(numCall, shape, objectList, paramName, funcName, cur
 		orig = randObject(shape, objectList[0], True)
 		retFull.append(orig)
 		for i in xrange(1,len(objectList)):
-			retFull.append(orig.copy(asType=objectList[i].getTypeString()))
+			retFull.append(orig.copyAs(format=objectList[i].getTypeString()))
 	# 'shaped_typed_object' -- a typed object matching the shapes of the data in objectList
 	elif paramType == 'shaped_typed_object':
 		retFull = []
@@ -329,7 +329,7 @@ def generateRandomParameter(numCall, shape, objectList, paramName, funcName, cur
 		orig = randObject(shape, objectList[0], True, match)
 		retFull.append(orig)
 		for i in xrange(1,len(objectList)):
-			retFull.append(orig.copy(asType=objectList[i].getTypeString()))
+			retFull.append(orig.copyAs(format=objectList[i].getTypeString()))
 	# 'assignments' either a bounded list of string or a bounded map of strings,
 	# depending on the function name
 	elif paramType == 'assignments':

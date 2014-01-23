@@ -35,10 +35,10 @@ class TestMatrix(DerivedBackend, HighLevelBackend):
 				curTrainY, curTestY = YIterator.next()
 			except StopIteration:	#once we've gone through all the folds, this exception gets thrown and we're done!
 				break
-			curTrainXList = curTrainX.copy(asType="python list")
-			curTestXList = curTestX.copy(asType="python list")
-			curTrainYList = curTrainY.copy(asType="python list")
-			curTestYList = curTestY.copy(asType="python list")
+			curTrainXList = curTrainX.copyAs(format="python list")
+			curTestXList = curTestX.copyAs(format="python list")
+			curTrainYList = curTrainY.copyAs(format="python list")
+			curTestYList = curTestY.copyAs(format="python list")
 
 			for i in range(len(curTrainXList)):
 				assert curTrainXList[i][0] == curTrainYList[i][0]

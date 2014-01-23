@@ -69,12 +69,12 @@ if __name__ == "__main__":
     trainYList = []
     testYList = []
     
-    nonzeroTrainEntries = trainY.copy(asType="python list")
+    nonzeroTrainEntries = trainY.copyAs(format="python list")
     for i in range(len(nonzeroTrainEntries)):
         label = nonzeroTrainEntries[i][0]
         trainYList.append([int(label)])
 
-    nonzeroTestEntries = testY.copy(asType="python list")
+    nonzeroTestEntries = testY.copyAs(format="python list")
     for i in range(len(nonzeroTestEntries)):
         label = nonzeroTestEntries[i][0]
         testYList.append([int(label)])

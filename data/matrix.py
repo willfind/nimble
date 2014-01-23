@@ -452,18 +452,18 @@ class Matrix(Base):
 
 		self.data = other.data
 
-	def _copy_implementation(self, asType):
-		if asType == 'Sparse':
+	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
+		if format == 'Sparse':
 			return UML.data.Sparse(self.data, self.featureNames)
-		if asType == 'List':
+		if format == 'List':
 			return UML.data.List(self.data, self.featureNames)
-		if asType is None or asType == 'Matrix':
+		if format is None or format == 'Matrix':
 			return UML.data.Matrix(self.data, self.featureNames)
-		if asType == 'pythonlist':
+		if format == 'pythonlist':
 			return self.data.tolist()
-		if asType == 'numpyarray':
+		if format == 'numpyarray':
 			return numpy.array(self.data)
-		if asType == 'numpymatrix':
+		if format == 'numpymatrix':
 			return numpy.matrix(self.data)
 
 		return Matrix(self.data, self.featureNames)

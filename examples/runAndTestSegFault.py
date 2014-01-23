@@ -20,8 +20,8 @@ if __name__ == "__main__":
 	trainX, trainY, testX, testY = splitData(allData, labelID=0, fractionForTestSet=.2)
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
-	trainY = trainY.copy(asType="Matrix")
-	testY = testY.copy(asType="Matrix")
+	trainY = trainY.copyAs(format="Matrix")
+	testY = testY.copyAs(format="Matrix")
 
 	trainYList = []
 	

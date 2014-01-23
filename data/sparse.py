@@ -793,18 +793,18 @@ class Sparse(Base):
 		self._data = other._data
 		self._sorted = None
 
-	def _copy_implementation(self, asType):
-		if asType is None or asType == 'Sparse':
+	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
+		if format is None or format == 'Sparse':
 			return Sparse(self._data.internal, self.featureNames)
-		if asType == 'List':
+		if format == 'List':
 			return UML.data.List(self._data.internal, self.featureNames)
-		if asType == 'Matrix':
+		if format == 'Matrix':
 			return UML.data.Matrix(self._data.internal, self.featureNames)
-		if asType == 'pythonlist':
+		if format == 'pythonlist':
 			return self._data.todense().tolist()
-		if asType == 'numpyarray':
+		if format == 'numpyarray':
 			return numpy.array(self._data.todense())
-		if asType == 'numpymatrix':
+		if format == 'numpymatrix':
 			return self._data.todense()
 
 	def _copyPoints_implementation(self, points, start, end):

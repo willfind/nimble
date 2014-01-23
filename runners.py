@@ -243,7 +243,7 @@ def runOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 	# class labels
 	labelVector = trainX.copyFeatures([trainY])
 	labelVector.transpose()
-	labelSet = list(set(labelVector.copy(asType="python list")[0]))
+	labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 	labelPairs = generateAllPairs(labelSet)
 
 	#if we are logging this run, we need to start the timer
@@ -266,10 +266,10 @@ def runOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 		partialResults = run(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put predictions into table of predictions
 		if rawPredictions is None:
-			rawPredictions = partialResults.copy(asType="List")
+			rawPredictions = partialResults.copyAs(format="List")
 		else:
 			partialResults.setFeatureName(0, 'predictions-'+str(predictionFeatureID))
-			rawPredictions.appendFeatures(partialResults.copy(asType="List"))
+			rawPredictions.appendFeatures(partialResults.copyAs(format="List"))
 		pairData.appendFeatures(pairTrueLabels)
 		trainX.appendPoints(pairData)
 		predictionFeatureID +=1
@@ -283,7 +283,7 @@ def runOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
 		#label and score of that label for the corresponding row in rawPredictions
-		predictionMatrix = rawPredictions.copy(asType="python list")
+		predictionMatrix = rawPredictions.copyAs(format="python list")
 		tempResultsList = []
 		for row in predictionMatrix:
 			scores = countWins(row)
@@ -298,7 +298,7 @@ def runOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 	elif scoreMode.lower() == 'allScores'.lower():
 		columnHeaders = sorted([str(i) for i in labelSet])
 		labelIndexDict = {str(v):k for k, v in zip(range(len(columnHeaders)), columnHeaders)}
-		predictionMatrix = rawPredictions.copy(asType="python list")
+		predictionMatrix = rawPredictions.copyAs(format="python list")
 		resultsContainer = []
 		for row in predictionMatrix:
 			finalRow = [0] * len(columnHeaders)
@@ -371,7 +371,7 @@ def runOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 	# Get set of unique class labels
 	labelVector = trainX.copyFeatures([trainY])
 	labelVector.transpose()
-	labelSet = list(set(labelVector.copy(asType="python list")[0]))
+	labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 
 	#if we are logging this run, we need to start the timer
 	if sendToLog:
@@ -403,7 +403,7 @@ def runOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 			rawPredictions.appendFeatures(oneLabelResults)
 
 	if scoreMode.lower() == 'label'.lower():
-		winningPredictionIndices = rawPredictions.applyToPoints(extractWinningPredictionIndex, inPlace=False).copy(asType="python list")
+		winningPredictionIndices = rawPredictions.applyToPoints(extractWinningPredictionIndex, inPlace=False).copyAs(format="python list")
 		indexToLabelMap = rawPredictions.featureNamesInverse
 		winningLabels = []
 		for winningIndex in winningPredictionIndices:
@@ -413,7 +413,7 @@ def runOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
 		#label and score of that label for the corresponding row in rawPredictions
-		predictionMatrix = rawPredictions.copy(asType="python list")
+		predictionMatrix = rawPredictions.copyAs(format="python list")
 		labelMapInverse = rawPredictions.featureNamesInverse
 		tempResultsList = []
 		for row in predictionMatrix:
@@ -432,7 +432,7 @@ def runOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 		#create map between label and index in list, so we know where to put each value
 		labelIndexDict = {v:k for k, v in zip(range(len(columnHeaders)), columnHeaders)}
 		featureNamesInverse = rawPredictions.featureNamesInverse
-		predictionMatrix = rawPredictions.copy(asType="python list")
+		predictionMatrix = rawPredictions.copyAs(format="python list")
 		resultsContainer = []
 		for row in predictionMatrix:
 			finalRow = [0] * len(columnHeaders)
