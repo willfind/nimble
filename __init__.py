@@ -18,10 +18,5 @@ from uml import listLearningAlgorithms
 from uml import learningAlgorithmParameters
 from uml import learningAlgorithmDefaultValues
 
-from uml import functionCombinations
-from uml import crossValidate
-from uml import crossValidateReturnBest
-from uml import orderedCrossValidate
-from uml import orderedCrossValidateReturnBest
 
 
