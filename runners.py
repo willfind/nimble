@@ -116,76 +116,6 @@ def run(learningAlgorithm, trainX, trainY=None, testX=None, arguments={}, output
 
 
 
-def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, arguments, performanceFunction, scoreMode='label', negativeLabel=None, sendToLog=True):
-	"""
-		Calls on run() to train and evaluate the learning algorithm defined in 'learningAlgorithm,'
-		then tests its performance using the metric function(s) found in the
-		performanceFunction parameter
-
-		learningAlgorithm: learning algorithm to be called, in the form 'package.learningAlgorithm'.
-
-		trainX: data set to be used for training (as some form of Base object)
-
-		testX: data set to be used for testing (as some form of Base object)
-		
-		trainY: used to retrieve the known class labels of the traing data. Either
-		contains the labels themselves (as a Base object) or an index (numerical or string) 
-		that defines their locale in the trainX object
-		
-		testY: used to retreive the known class labels of the test data. Either
-		contains the labels themselves (as a Base object) or an index (numerical or string) 
-		that defines their locale in the testX object.  If left blank, runAndTest() assumes 
-		that testY is the same as trainY.
-		
-		arguments: optional arguments to be passed to the function specified by 'learningAlgorithm'
-		
-		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
-		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
-		applies to data sets with 2 class labels.
-		
-		sendToLog: optional boolean valued parameter; True meaning the results should be logged
-	"""
-	_validData(trainX, trainY, testX, testY)
-
-	#Need to make copies of all data, in case it will be modified before a classifier is trained
-	trainX = trainX.copy()
-	testX = testX.copy()
-	
-	#if testY is empty, attempt to use trainY
-	if testY is None and isinstance(trainY, (str, unicode, int)):
-		testY = trainY
-
-	trainY = copyLabels(trainX, trainY)
-	testY = copyLabels(testX, testY)
-
-	#if we are logging this run, we need to start the timer
-	if sendToLog:
-		timer = Stopwatch()
-		timer.start('train')
-
-	#rawResults contains predictions for each version of a learning function in the combos list
-	rawResult = run(learningAlgorithm, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, sendToLog=False)
-
-	#if we are logging this run, we need to stop the timer
-	if sendToLog:
-		timer.stop('train')
-		timer.start('errorComputation')
-
-	#now we need to compute performance metric(s) for all prediction sets
-	results = computeMetrics(testY, None, rawResult, performanceFunction, negativeLabel)
-
-	if sendToLog:
-		timer.stop('errorComputation')
-
-	if sendToLog:
-		logManager = LogManager()
-		if not isinstance(performanceFunction, list):
-			performanceFunction = [performanceFunction]
-			results = [results]
-		logManager.logRun(trainX, testX, learningAlgorithm, performanceFunction, results, timer, extraInfo=arguments)
-
-	return results
-
 def runAndTestOneVsOne(learningAlgorithm, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
 		Wrapper class for runOneVsOne.  Useful if you want the entire process of training,
@@ -574,4 +504,93 @@ def runAndTestOneVsAll(learningAlgorithm, trainX, trainY, testX, testY=None, arg
 		logManager.logRun(trainX, testX, learningAlgorithm, performanceFunction, results, timer, extraInfo=arguments)
 
 	return results
+
+
+
+#todo clean up logging
+def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, performanceFunction, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **arguments):
+	"""
+	Supply optional algorithm parameters via **arguments as kwargs
+
+	For each argument list permutation, runAndTest uses cross validation to generate a
+	performance score for the algorithm, given the particular argument list.
+	The argument list that performed best cross validating over the training data
+	is then used as the argument list for training on the whole training data set.
+	Finally, the learned model generates predictions for the testing set, and that model's
+	performance is calculated.
+
+	If no additional arguments are supplied via **arguments, then runAndTest just returns
+	the performance of the algorithm with default arguments on the testing data.
+
+	
+	learningAlgorithm: training algorithm to be called, in the form 'package.algorithmName'.
+
+	trainX: data set to be used for training (as some form of Base object)
+
+	testX: data set to be used for testing (as some form of Base object)
+	
+	trainY: used to retrieve the known class labels of the traing data. Either
+	contains the labels themselves (as a Base object) or an index (numerical or string) 
+	that defines their locale in the trainX object
+	
+	testY: used to retreive the known class labels of the test data. Either
+	contains the labels themselves (as a Base object) or an index (numerical or string) 
+	that defines their locale in the testX object.  If left blank, runAndTest() assumes 
+	that testY is the same as trainY.
+	
+	negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
+	or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
+	applies to data sets with 2 class labels.
+	
+	sendToLog: optional boolean valued parameter; True meaning the results should be logged
+
+	arguments: optional arguments to be passed to the function specified by 'algorithm'
+	The syntax for prescribing different arguments for algorithm:
+	**arguments of the form arg1=(1,2,3), arg2=(4,5,6)
+	correspond to permutations/argument lists with one element from arg1 and one element 
+	from arg2, such that an example generated permutation/argument list would be "arg1=2, arg2=4"
+	"""
+	_validData(trainX, trainY, testX, testY)
+
+	#Need to make copies of all data, in case it will be modified before a classifier is trained
+	trainX = trainX.copy()
+	testX = testX.copy()
+	
+	#if testY is empty, attempt to use trainY
+	if testY is None and isinstance(trainY, (str, unicode, int)):
+		testY = trainY
+
+	trainY = copyLabels(trainX, trainY)
+	testY = copyLabels(testX, testY)
+
+	#if we are logging this run, we need to start the timer
+	if sendToLog:
+		timer = Stopwatch()
+		timer.start('crossValidateReturnBest')
+	#sig (learningAlgorithm, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, maximize=False, **arguments):
+	bestArgument, bestScore = UML.crossValidateReturnBest(learningAlgorithm, trainX, trainY, performanceFunction, scoreMode=scoreMode, sendToLog=False, **arguments)
+
+	if sendToLog:
+		timer.stop('crossValidateReturnBest')
+		timer.start('run')
+
+	predictions = run(learningAlgorithm, trainX, trainY, testX, bestArgument, output, scoreMode, multiClassStrategy, sendToLog)
+
+	if sendToLog:
+		timer.stop('run')
+		timer.start('errorComputation')
+
+	performance = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
+
+	if sendToLog:
+		timer.stop('errorComputation')
+
+	if sendToLog:
+		logManager = LogManager()
+		logManager.logRun(trainX, testX, learningAlgorithm, [performanceFunction], [performance], timer,)
+
+	return performance
+
+
+
 
