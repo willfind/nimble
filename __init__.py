@@ -18,5 +18,7 @@ from uml import listLearningAlgorithms
 from uml import learningAlgorithmParameters
 from uml import learningAlgorithmDefaultValues
 
-
+from uml import crossValidate
+from uml import crossValidateReturnAll
+from uml import crossValidateReturnBest
 
