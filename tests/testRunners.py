@@ -1,7 +1,12 @@
+
+import random
+
 from UML import createData
 from UML.runners import runAndTestOneVsOne
 from UML.runners import runOneVsOne
 from UML.runners import runOneVsAll
+from UML.runners import runAndTest
+
 from UML.umlHelpers import extractWinningPredictionLabel
 from UML.umlHelpers import generateAllPairs
 from UML.metrics import fractionIncorrect
@@ -143,6 +148,35 @@ def testGenerateAllPairs():
     testList2 = []
     testPairs2 = generateAllPairs(testList2)
     assert testPairs2 is None
+
+
+#todo set seed and verify that you can regenerate error several times with
+#crossValidateReturnBest, run, and your own computeMetrics
+def test_runAndTest():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    data1 = [[random.random(), random.random(), random.random(), int(random.random()*3)+1] for _pt in xrange(numPoints)]
+    # data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
+    trainObj1 = createData('Matrix', data1, variables)
+
+    testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
+    testObj1 = createData('Matrix', testData1)
+
+    #with default ie no args
+    runError = runAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect)
+    assert isinstance(runError, float)
+
+    #with one argument for the algorithm
+    runError = runAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=1)
+    assert isinstance(runError, float)
+
+    #with multiple values for one argument for the algorithm
+    runError = runAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=(1,2))
+    assert isinstance(runError, float)
+
+    #with complicated argument for the algorithm
+    runError = runAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=(1,2), p=(1,2) )
+    assert isinstance(runError, float)
 
 
 
