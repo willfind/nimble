@@ -342,6 +342,9 @@ def crossValidate(learningAlgorithm, X, Y, performanceFunction, argumentsForAlgo
 	"""
 	#using the same seed (to ensure idetical folds in X and Y and thus accurate
 	#linking between according points) make iterators containing folds
+	if not X.pointCount == Y.pointCount:
+		#todo support indexing if Y is an index for X instead
+		raise ArgumentException("X and Y must contain the same number of points.")
 	foldedXIterator = X.foldIterator(numFolds, seed=foldSeed)
 	foldedYIterator = Y.foldIterator(numFolds, seed=foldSeed)
 	assert len(foldedXIterator.foldList) == len(foldedYIterator.foldList)
