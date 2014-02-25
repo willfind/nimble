@@ -303,7 +303,7 @@ def createData(retType, data=None, featureNames=None, fileType=None, name=None, 
 #todo add support for Y as an index in X
 #todo add logging
 #todo add seed specification support to UML.foldIterator() to avoid 
-#using two harmonious iterators and zip()
+#using two harmonious iterators (methods of base) and zip()
 def crossValidate(learningAlgorithm, X, Y, performanceFunction, argumentsForAlgorithm={}, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED):
 	"""
 	K-fold cross validation.

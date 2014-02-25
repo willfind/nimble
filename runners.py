@@ -508,20 +508,22 @@ def runAndTestOneVsAll(learningAlgorithm, trainX, trainY, testX, testY=None, arg
 
 
 #todo clean up logging
+#todo write in multiClassStrategy explanation
 def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, performanceFunction, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **arguments):
 	"""
 	Supply optional algorithm parameters via **arguments as kwargs
 
-	For each argument list permutation, runAndTest uses cross validation to generate a
-	performance score for the algorithm, given the particular argument list.
-	The argument list that performed best cross validating over the training data
-	is then used as the argument list for training on the whole training data set.
-	Finally, the learned model generates predictions for the testing set, and that model's
-	performance is calculated.
+	For each permutation of 'arguments' (more below), runAndTest uses cross validation to generate a
+	performance score for the algorithm, given the particular argument permutation.
+	The argument permutation that performed best cross validating over the training data
+	is then used as the lone argument for training on the whole training data set.
+	Finally, the learned model generates predictions for the testing set, and the
+	performance of those predictions is calculated and returned.
 
 	If no additional arguments are supplied via **arguments, then runAndTest just returns
 	the performance of the algorithm with default arguments on the testing data.
 
+	ARGUMENTS:
 	
 	learningAlgorithm: training algorithm to be called, in the form 'package.algorithmName'.
 
@@ -547,8 +549,8 @@ def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, performanceFunct
 	arguments: optional arguments to be passed to the function specified by 'algorithm'
 	The syntax for prescribing different arguments for algorithm:
 	**arguments of the form arg1=(1,2,3), arg2=(4,5,6)
-	correspond to permutations/argument lists with one element from arg1 and one element 
-	from arg2, such that an example generated permutation/argument list would be "arg1=2, arg2=4"
+	correspond to permutations/argument states with one element from arg1 and one element 
+	from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
 	"""
 	_validData(trainX, trainY, testX, testY)
 
