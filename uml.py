@@ -28,6 +28,10 @@ from UML.umlHelpers import executeCode
 from UML.umlHelpers import _incrementTrialWindows
 from UML.umlHelpers import _learningAlgorithmQuery
 
+from UML.umlHelpers import computeMetrics
+from UML.umlHelpers import ArgumentIterator
+from UML.data.dataHelpers import DEFAULT_SEED
+
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
@@ -295,6 +299,121 @@ def createData(retType, data=None, featureNames=None, fileType=None, name=None, 
 		ret.nameData(name)
 	return ret
 
+
+
+#todo add support for Y as an index in X
+#todo add logging
+#todo add seed specification support to UML.foldIterator() to avoid 
+#using two harmonious iterators and zip()
+def crossValidate(learningAlgorithm, X, Y, performanceFunction, argumentsForAlgorithm={}, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED):
+	"""
+	K-fold cross validation.
+	Returns mean performance (float) across numFolds folds on a X Y.
+
+	Parameters:
+
+	learningAlgorithm (string) - UML compliant algorithm name in the form 
+	'package.algorithm' e.g. 'sciKitLearn.KNeighborsClassifier'
+
+	X (UML.Base subclass) - points/features data
+
+	Y (UML.Base subclass) - labels/data about points in X
+
+	performanceFunction (function) - Look in UML.metrics for premade options.
+	Function used by computeMetrics to generate a performance score for the run.
+	function is of the form:
+	def func(knownValues, predictedValues, negativeLabel).
+
+	argumentsForAlgorithm (dict) - dictionary mapping argument names (strings)
+	to their values. This parameter is sent to run()
+	example: {'dimensions':5, 'k':5}
+
+	numFolds (int) - the number of folds used in the cross validation. Can't
+	exceed the number of points in X, Y
+
+	scoreMode - used by computeMetrics
+
+	negativeLabel - used by computeMetrics
+
+	sendToLog (bool) - send results/timing to log
+
+	foldSeed - seed used to generate the folds, if you want to ensure the same
+	folds for two different sets of points, provided the data has the same
+	number of points, using the same seed will generate the same folds.
+	"""
+	#using the same seed (to ensure idetical folds in X and Y and thus accurate
+	#linking between according points) make iterators containing folds
+	foldedXIterator = X.foldIterator(numFolds, seed=foldSeed)
+	foldedYIterator = Y.foldIterator(numFolds, seed=foldSeed)
+	assert len(foldedXIterator.foldList) == len(foldedYIterator.foldList)
+
+	performanceListOfFolds = []
+	#for each fold get train and test sets
+	for XFold, YFold in zip(foldedXIterator, foldedYIterator):
+		
+		curTrainX, curTestingX = XFold
+		curTrainY, curTestingY = YFold
+
+		#run algorithm on the folds' training and testing sets
+		curRunResult = run(learningAlgorithm=learningAlgorithm, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=argumentsForAlgorithm, scoreMode=scoreMode, sendToLog=sendToLog)
+		#calculate error of prediction, according to performanceFunction
+		curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
+
+		performanceListOfFolds.append(curPerformance)
+
+	if len(performanceListOfFolds) == 0:
+		raise(ZeroDivisionError("crossValidate tried to average performance of ZERO runs"))
+		
+	#else average score from each fold (works for one fold as well)
+	averagePerformance = sum(performanceListOfFolds)/float(len(performanceListOfFolds))
+	return averagePerformance
+
+
+def crossValidateReturnAll(learningAlgorithm, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, **arguments):
+	"""Returns a list of tuples, where every tuple contains
+	a dict representing the argument sent to run, and
+	a float represennting the cross validated error associated
+	with that argument dict.
+	example list element: ({'arg1':2, 'arg2':'max'}, 89.0000123)
+	"""
+
+	#get an iterator for the argumet combinations- iterator
+	#handles case of arguments being {}
+	argumentCombinationIterator = ArgumentIterator(arguments)
+
+	performanceList = []
+	#make sure that the folds are identical for all trials, so that no argument combination gets
+	#a lucky/easy fold set
+	commonFoldSeed = foldSeed
+
+	for curArgumentCombination in argumentCombinationIterator:
+		#calculate cross validated performance, given the current argument dict
+		errorForArgument = crossValidate(learningAlgorithm, X, Y, performanceFunction, curArgumentCombination, numFolds, scoreMode, negativeLabel, sendToLog, foldSeed=commonFoldSeed)
+		#store the tuple with the current argument and cross validated performance	
+		performanceList.append((curArgumentCombination, errorForArgument))
+	#return the list of tuples - tracking the performance of each argument
+	return performanceList
+
+#todo get T's code to sense if maximize or minimize
+def crossValidateReturnBest(learningAlgorithm, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, maximize=False, **arguments):
+	"""For each argument combination in arguments, crossValidateReturnBest runs crossValidate to compute
+	and mean error for the argument combination. crossValidateReturnBest then 
+	RETURNS the best argument and error as a tuple:
+	(argument_as_dict, cross_validated_performance_float)
+	"""
+	resultsAll = crossValidateReturnAll(learningAlgorithm, X, Y, performanceFunction, numFolds, scoreMode, negativeLabel, sendToLog, foldSeed, **arguments)
+	bestArgumentAndScoreTuple = None
+	for curResultTuple in resultsAll:
+		curArgument, curScore = curResultTuple
+		#if curArgument is the first or best we've seen: 
+		#store its details in bestArgumentAndScoreTuple
+		if bestArgumentAndScoreTuple is None:
+			bestArgumentAndScoreTuple = curResultTuple
+		else:
+			if (maximize and curScore > bestArgumentAndScoreTuple[1]) or ((not maximize) and curScore < bestArgumentAndScoreTuple[1]):
+				bestArgumentAndScoreTuple = curResultTuple
+
+	return bestArgumentAndScoreTuple
 
 
 
