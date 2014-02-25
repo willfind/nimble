@@ -153,6 +153,12 @@ def testGenerateAllPairs():
 #todo set seed and verify that you can regenerate error several times with
 #crossValidateReturnBest, run, and your own computeMetrics
 def test_runAndTest():
+    """Assert valid results returned for different arguments to the algorithm:
+    with default ie no args
+    with one argument for the algorithm
+    with multiple values for one argument for the algorithm
+    with complicated argument for the algorithm
+    """
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
     data1 = [[random.random(), random.random(), random.random(), int(random.random()*3)+1] for _pt in xrange(numPoints)]

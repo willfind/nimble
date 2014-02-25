@@ -300,7 +300,6 @@ def createData(retType, data=None, featureNames=None, fileType=None, name=None, 
 	return ret
 
 
-
 #todo add support for Y as an index in X
 #todo add logging
 #todo add seed specification support to UML.foldIterator() to avoid 
@@ -368,7 +367,7 @@ def crossValidate(learningAlgorithm, X, Y, performanceFunction, argumentsForAlgo
 	averagePerformance = sum(performanceListOfFolds)/float(len(performanceListOfFolds))
 	return averagePerformance
 
-
+#todo improve docstring
 def crossValidateReturnAll(learningAlgorithm, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, **arguments):
 	"""Returns a list of tuples, where every tuple contains
 	a dict representing the argument sent to run, and
@@ -395,6 +394,7 @@ def crossValidateReturnAll(learningAlgorithm, X, Y, performanceFunction, numFold
 	return performanceList
 
 #todo get T's code to sense if maximize or minimize
+#todo improve docstring
 def crossValidateReturnBest(learningAlgorithm, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, maximize=False, **arguments):
 	"""For each argument combination in arguments, crossValidateReturnBest runs crossValidate to compute
 	and mean error for the argument combination. crossValidateReturnBest then 

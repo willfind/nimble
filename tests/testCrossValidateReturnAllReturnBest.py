@@ -35,6 +35,11 @@ def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLa
 
 
 def test_crossValidateReturnAll():
+	"""assert that KNeighborsClassifier generates results with default arguments
+	assert that having the same function arguments yields the same results.
+	assert that return all gives a cross validated performance for all of its 
+	parameter permutations
+	"""
 	X, Y = _randomLabeledDataSet(numPoints=1000, numFeatures=10, numLabels=5)
 	#try with no extra arguments at all:
 	result = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, 10, 'label', None, False, 'myseed', )
@@ -75,6 +80,9 @@ def test_crossValidateReturnAll():
 
 
 def test_crossValidateReturnBest():
+	"""test that the 'best' ie fittest argument combination is chosen.
+	test that best tuple is in the 'all' list of tuples.
+	"""
 	#assert that it returns the best, enforce a seed?
 	X, Y = _randomLabeledDataSet(numPoints=1000, numFeatures=10, numLabels=5)
 	#try with no extra arguments at all:
@@ -100,6 +108,9 @@ def test_crossValidateReturnBest():
 			assert curError >= resultTuple[1]
 
 def test_crossValidateReturnEtc_withDefaultArgs():
+	"""Assert that return best and return all work with default arguments as predicted
+	ie generating scores for '{}' as the arguments
+	"""
 	X, Y = _randomLabeledDataSet(numPoints=1000, numFeatures=10, numLabels=5)
 	#run with default arguments
 	bestTuple = crossValidateReturnBest('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, )

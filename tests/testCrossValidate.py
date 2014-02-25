@@ -30,8 +30,8 @@ def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLa
 	return (createData(dataType, rawFeatures), createData(dataType, labelsRaw))
 
 def test_crossValidate_XY_unchanged():
-	#assert that after running cross validate on datasets passed to 
-	# X and Y, the original data is unchanged
+	"""assert that after running cross validate on datasets passed to 
+	X and Y, the original data is unchanged"""
 	classifierAlgo = 'sciKitLearn.KNeighborsClassifier'
 	X, Y = _randomLabeledDataSet(numLabels=5)
 	copyX = X.copy()
