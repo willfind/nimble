@@ -3,12 +3,13 @@ Unit tests for mlpy_interface.py
 
 """
 
+import UML
+
 import numpy.testing
 
-from UML.interfaces.mlpy_interface import getParameters
-from UML.interfaces.mlpy_interface import getDefaultValues
+from UML.interfaces.mlpy_interface_old import setMlpyLocation
+from UML.interfaces.mlpy_interface_old import getMlpyLocation
 from test_helpers import checkLabelOrderingAndScoreAssociations
-from UML.interfaces.mlpy_interface import *
 from UML.data import Matrix
 
 def testMlpyLocation():
@@ -29,7 +30,7 @@ def testMlpyHandmadeSVMClassification():
 	data2 = [[2,3],[-200,0]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 
 	assert ret is not None
 
@@ -49,7 +50,7 @@ def testMlpyHandmadeLogisticRegression():
 	data2 = [[2,3],[-200,0]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"solver_type":"l2r_lr"})
+	ret = UML.run("mlpy.LDAC", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"solver_type":"l2r_lr"})
 
 	assert ret is not None
 
@@ -69,7 +70,7 @@ def testMlpyHandmadeKNN():
 	data2 = [[2,3],[0,0]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"k":1})
+	ret = UML.run("mlpy.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"k":1})
 
 	assert ret is not None
 
@@ -84,7 +85,7 @@ def testMlpyHandmadePCA():
 	data2 = [[4,4,4]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("PCA", trainingObj, testX=testObj, output=None, arguments={'k':1})
+	ret = UML.run("mlpy.PCA", trainingObj, testX=testObj, output=None, arguments={'k':1})
 
 	assert ret is not None
 	# check return has the right dimension
@@ -99,7 +100,7 @@ def testMlpyHandmadeKernelPCA():
 	data2 = [[4,4]]
 	testObj = Matrix(data2)
 
-	ret = mlpy("KPCA", trainObj, testX=testObj, output=None, arguments={"kernel":"KernelGaussian", 'k':1})
+	ret = UML.run("mlpy.KPCA", trainObj, testX=testObj, output=None, arguments={"kernel":"KernelGaussian", 'k':1})
 
 	assert ret is not None
 	# check return has the right dimension
@@ -116,15 +117,15 @@ def testMlpyScoreMode():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.pointCount == 2
 	assert ret.featureCount == 1
 
-	bestScores = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
+	bestScores = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.pointCount == 2
 	assert bestScores.featureCount == 2
 
-	allScores = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
+	allScores = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.pointCount == 2
 	assert allScores.featureCount == 3
 
@@ -140,15 +141,15 @@ def testMlpyScoreModeBinary():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.pointCount == 2
 	assert ret.featureCount == 1
 
-	bestScores = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
+	bestScores = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.pointCount == 2
 	assert bestScores.featureCount == 2
 
-	allScores = mlpy("LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
+	allScores = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.pointCount == 2
 	assert allScores.featureCount == 2
 
@@ -158,7 +159,7 @@ def testMlpyScoreModeBinary():
 def testMlpyListLearners():
 	""" Test mlpy's listMlpyLearners() by checking the output for those learners we unit test """
 
-	ret = listMlpyLearners()
+	ret = UML.listLearners('mlpy')
 
 	assert 'KPCA' in ret
 	assert 'PCA' in ret
@@ -170,9 +171,9 @@ def testMlpyListLearners():
 
 	for name in ret:
 		if name not in toExclude:
-			params = getParameters(name)
+			params = UML.learnerParameters('mlpy.' + name)
 			assert params is not None
-			defaults = getDefaultValues(name)
+			defaults = UML.learnerDefaultValues('mlpy.' + name)
 			for key in defaults.keys():
 				assert key in params
 

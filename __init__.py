@@ -1,7 +1,16 @@
-#from uml import UMLPath
+"""
+Universal Machine Learning
+
+UML offers interfaces into other machine learning packages,
+tools for data representation and processing, 
+
+"""
+
 import os
 import inspect
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+import UML.interfaces
 
 from runners import run
 from runners import runAndTest

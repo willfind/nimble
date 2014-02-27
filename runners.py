@@ -13,12 +13,8 @@ from UML.logger import UmlLogger
 from UML.logger import LogManager
 from UML.logger import Stopwatch
 from UML.data import Base
-from UML.interfaces import shogun
-from UML.interfaces import mahout
-from UML.interfaces import regressor
-from UML.interfaces import sciKitLearn
-from UML.interfaces import mlpy
 
+from UML.umlHelpers import findBestInterface
 from UML.umlHelpers import computeMetrics
 from UML.umlHelpers import _loadSparse
 from UML.umlHelpers import _loadMatrix
@@ -89,30 +85,25 @@ def run(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None,
 	else:
 		timer = None
 
-	if package.lower() == 'mahout':
-		results = mahout(learnerName, trainX, trainY, testX, arguments, output, timer)
-	elif package.lower() == 'regressor':
-		results = regressor(learnerName, trainX, trainY, testX, arguments, output, timer)
-	elif package.lower() == 'scikitlearn':
-		results = sciKitLearn(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
-	elif package.lower() == 'mlpy':
-		results = mlpy(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
-	elif package.lower() == 'shogun':
-		results = shogun(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
-	elif package.lower() == 'self':
-		raise ArgumentException("self modification not yet implemented")
-	else:
-		raise ArgumentException("package not recognized")
+	interface = findBestInterface(package)
+
+#	if multiClassStrategy != default:
+#		trialResult = checkClassificationStrategy(interface.run, learnerName, arguments)
+#		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
+#			UML.runners.runOneVsAll(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+#		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
+#			UML.runners.runOneVsOne(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+
+
+	results = interface.run(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 
 	if sendToLog:
-			logManager = LogManager()
-			if package.lower() == 'regressor':
-				funcString = 'regressors.' + learnerName
-			else:
-				funcString = package + '.' + learnerName
-			logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=arguments)
+		logManager = LogManager()
+		funcString = interface.getCanonicalName() + '.' + learnerName
+		logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=arguments)
 
 	return results
+	
 
 
 

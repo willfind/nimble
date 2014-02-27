@@ -8,12 +8,12 @@ import scipy.sparse
 from numpy.random import rand, randint
 from nose.tools import *
 
+import UML
+
 from UML.exceptions import ArgumentException
 
-from UML.interfaces import shogun
-from UML.interfaces.shogun_interface import listShogunLearners
-from UML.interfaces.shogun_interface import setShogunLocation
-from UML.interfaces.shogun_interface import getShogunLocation
+from UML.interfaces.shogun_interface_old import setShogunLocation
+from UML.interfaces.shogun_interface_old import getShogunLocation
 from UML.data import Matrix
 from UML.data import Sparse
 
@@ -36,7 +36,7 @@ def testShogun_shapemismatchException():
 	testObj = Matrix(data2)
 
 	args = {}
-	ret = shogun("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
 @raises(ArgumentException)
@@ -50,7 +50,7 @@ def testShogun_singleClassException():
 	testObj = Matrix(data2)
 
 	args = {}
-	ret = shogun("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 @raises(ArgumentException)
 def testShogun_multiClassDataToBinaryAlg():
@@ -63,7 +63,7 @@ def testShogun_multiClassDataToBinaryAlg():
 	testObj = Matrix(data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
-	ret = shogun("LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
 def testShogunHandmadeBinaryClassification():
@@ -76,7 +76,7 @@ def testShogunHandmadeBinaryClassification():
 	testObj = Matrix(data2)
 
 	args = {}
-	ret = shogun("LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 
@@ -94,7 +94,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
 #	args = {}
-	ret = shogun("LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 
@@ -111,7 +111,7 @@ def testShogunKMeans():
 	testObj = Matrix(data2)
 
 	args = {'distance':'ManhattanMetric'}
-	ret = shogun("KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 	print ret.data
@@ -133,7 +133,7 @@ def testShogunMulticlassSVM():
 	args = {'C':.5, 'kernel':'LinearKernel'}
 #	args = {'C':1}
 #	args = {}
-	ret = shogun("GMNPSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.GMNPSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
 
@@ -156,7 +156,7 @@ def testShogunSparseRegression():
 	labelsData = numpy.random.rand(x)
 	labels = Matrix(labelsData)
 
-	ret = shogun('MulticlassOCAS', trainX=obj, trainY=labels, testX=obj)
+	ret = UML.run('shogun.MulticlassOCAS', trainX=obj, trainY=labels, testX=obj)
 
 	assert ret is not None
 
@@ -183,16 +183,16 @@ def testShogunRossData():
 	args = {'C':1.0}
 	argsk = {'C':1.0, 'kernel':"LinearKernel"}
 
-	ret = shogun("MulticlassLibSVM", trainingObj, trainY=0, testX=testObj, output=None, arguments=argsk)
+	ret = UML.run("shogun.MulticlassLibSVM", trainingObj, trainY=0, testX=testObj, output=None, arguments=argsk)
 	assert ret is not None
 
-	ret = shogun("MulticlassLibLinear", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.MulticlassLibLinear", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
 	assert ret is not None
 
-	ret = shogun("LaRank", trainingObj, trainY=0, testX=testObj, output=None, arguments=argsk)
+	ret = UML.run("shogun.LaRank", trainingObj, trainY=0, testX=testObj, output=None, arguments=argsk)
 	assert ret is not None
 
-	ret = shogun("MulticlassOCAS", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.MulticlassOCAS", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
 	assert ret is not None
 
 
@@ -229,7 +229,7 @@ def testShogunEmbeddedRossData():
 
 	args = {'C':1.0}
 
-	ret = shogun("MulticlassOCAS", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
+	ret = UML.run("shogun.MulticlassOCAS", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
 	assert ret is not None
 
 	for value in ret.data:
@@ -246,15 +246,15 @@ def testShogunScoreModeMulti():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.run("shogun.MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.pointCount == 2
 	assert ret.featureCount == 1
 
-	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
+	ret = UML.run("shogun.MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert ret.pointCount == 2
 	assert ret.featureCount == 2
 
-	ret = shogun("MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
+	ret = UML.run("shogun.MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert ret.pointCount == 2
 	assert ret.featureCount == 3
 
@@ -269,15 +269,15 @@ def testShogunScoreModeBinary():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.run("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.pointCount == 2
 	assert ret.featureCount == 1
 
-	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
+	ret = UML.run("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert ret.pointCount == 2
 	assert ret.featureCount == 2
 
-	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
+	ret = UML.run("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert ret.pointCount == 2
 	assert ret.featureCount == 2
 
@@ -291,7 +291,7 @@ def testShogunMultiClassStrategyMultiDataBinaryAlg():
 	data2 = [[2,3],[-200,0]]
 	testObj = Matrix(data2)
 
-	ret = shogun("SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, multiClassStrategy="OneVsOne")
+	ret = UML.run("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, multiClassStrategy="OneVsOne")
 	
 
 
@@ -300,7 +300,7 @@ def testShogunMultiClassStrategyMultiDataBinaryAlg():
 def testShogunListLearners():
 	""" Test shogun's listShogunLearners() by checking the output for those learners we unit test """
 
-	ret = listShogunLearners()
+	ret = UML.listLearners('shogun')
 
 	assert 'LibSVM' in ret
 	assert 'LibLinear' in ret

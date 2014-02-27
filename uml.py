@@ -21,6 +21,7 @@ from UML.logger import Stopwatch
 
 from UML.runners import run
 
+from UML.umlHelpers import findBestInterface
 from UML.umlHelpers import _loadSparse
 from UML.umlHelpers import _loadMatrix
 from UML.umlHelpers import _loadList
@@ -131,51 +132,26 @@ def learnerDefaultValues(name):
 
 
 def listLearners(package=None):
-	listAll = False
-	if package is not None:
-		if not isinstance(package, basestring):
-			raise ArgumentException("package may only be None (to list all learning functions), or the string name of a package")
-		package = package.lower()
-		available = ['mahout', 'regressor', 'scikitlearn', 'mlpy', 'shogun']
-		if not package in available:
-			raise ArgumentException("unrecognized package, only allowed are: " + str(available))
-	else:
-		listAll = True
-	results = None
-	allResults = []
-	def addToAll(packageName, toAdd, toAppendTo):
-		for funcName in toAdd:
-			toAppendTo.append(packageName + '.' + funcName)
-	if package == 'mahout' or listAll:
-		import UML.interfaces.mahout_interface
-		results = UML.interfaces.mahout_interface.listMahoutLearners()
-		if listAll:
-			addToAll('mahout', results, allResults)
-	if package == 'regressor' or listAll:
-		import UML.interfaces.regressors_interface
-		results = UML.interfaces.regressors_interface.listRegressorLearners()
-		if listAll:
-			addToAll('regressor', results, allResults)
-	if package == 'scikitlearn' or listAll:
-		import UML.interfaces.scikit_learn_interface
-		results = UML.interfaces.scikit_learn_interface.listSciKitLearnLearners()
-		if listAll:
-			addToAll('sciKitLearn', results, allResults)
-	if package == 'mlpy' or listAll:
-		import UML.interfaces.mlpy_interface
-		results = UML.interfaces.mlpy_interface.listMlpyLearners()
-		if listAll:
-			addToAll('mlpy', results, allResults)
-	if package == 'shogun' or listAll:
-		import UML.interfaces.shogun_interface
-		results = UML.interfaces.shogun_interface.listShogunLearners()
-		if listAll:
-			addToAll('shogun', results, allResults)
+	"""
+	Takes the name of a package, and returns a list of learners that are callable through that
+	package's run() interface.
 
-	if listAll:
-		return allResults
+	"""
+	results = []
+	if package is None:
+		for interface in UML.interfaces.available:
+			packageName = interface.getCanonicalName()
+			currResults = interface.listLearners()
+			for learnerName in currResults:
+				results.append(packageName + "." + learnerName)
 	else:
-		return results
+		interface = findBestInterface(package)
+		currResults = interface.listLearners()
+		for learnerName in currResults:
+			results.append(learnerName)
+
+	return results
+
 
 def listDataFunctions():
 	methodList = dir(UML.data.Base)

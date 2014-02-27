@@ -3,7 +3,11 @@ Unit tests for mahout_interface.py
 
 """
 
-from UML.interfaces.mahout_interface import *
+import UML
+import os
+
+#from UML.interfaces.mahout_interface import setMahoutLocation
+#from UML.interfaces.mahout_interface import getMahoutLocation
 import tempfile
 
 # TODO re enable 
@@ -23,7 +27,7 @@ def MahoutHandmadeOutput():
 	trialIn.write("3,4\n")
 	trialIn.flush()
 	args = { 'numClusters':'2' }
-	mahout("kmeans", trainingIn.name, trainY=None, testX=trialIn.name, output=actualOut.name, arguments=args)
+	UML.run("mahout.Kmeans", trainingIn.name, trainY=None, testX=trialIn.name, output=actualOut.name, arguments=args)
 	
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -46,9 +50,8 @@ def MahoutTasteHandmadeOutput():
 	trainingIn.flush()
 	trialIn.write("3,2\n")
 	trialIn.flush()
-	args = {"trainingInput":trainingIn.name, "trialInput":trialIn.name, "output":actualOut.name,
-			"recommender":'ia' }
-	mahout("tasteBasedEstimation",args)
+	args = {"trainingInput":trainingIn.name, "trialInput":trialIn.name, "output":actualOut.name, "recommender":'ia'}
+	UML.run("mahout.tasteBasedEstimation",args)
 	
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -90,8 +93,8 @@ def MahoutTasteBasedPatchIntegrity():
 		batchPresent = False	
 	
 	args = {"trainingInput":trainingIn.name, "trialInput":trialIn.name, "output":actualOut.name,
-			"recommender":'ia' }
-	mahout('tasteBasedEstimation',args,'')
+			"recommender":'ia'}
+	UML.run('mahout.tasteBasedEstimation',args,'')
 
 	tempProps.seek(0)
 	propsPost = open(getMahoutLocation() + '/src/conf/driver.classes.props')
@@ -147,7 +150,7 @@ def MahoutListLearners():
 	
 	setMahoutLocation('/home/tpburns/Dropbox/ML_intern_tpb/workspace/mahout-distribution-0.7')
 	
-	ret = listMahoutLearners()
+	ret = UML.listLearners('Mahout')
 
 
 	assert 'kmeans' in ret

@@ -2,13 +2,15 @@
 Unit tests for regressors_interface.py
 
 """
+import UML
 
-from UML.interfaces.regressors_interface import *
+from UML.interfaces.regressors_interface_old import setRegressorLocation
+from UML.interfaces.regressors_interface_old import getRegressorLocation
 from UML.data import Matrix
 import tempfile
 
 
-def testRegressorsHandmade():
+def _testRegressorsHandmade():
 	""" Test regressor() by calling a regressor with known output using files """
 	setRegressorLocation("/home/tpburns/Dropbox/Regressors")
 
@@ -25,7 +27,7 @@ def testRegressorsHandmade():
 	trialIn.write("5,107,4.0\n")
 	trialIn.flush()
 
-	regressor("ConstantRegressor",trainingIn.name, trainY=2, testX=trialIn.name, output=actualOut.name, arguments={'randomObject':None})
+	UML.run("regressor.ConstantRegressor",trainingIn.name, trainY=2, testX=trialIn.name, output=actualOut.name, arguments={'randomObject':None})
 
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -33,7 +35,7 @@ def testRegressorsHandmade():
 	assert line.strip() == "4.0"
 
 
-def testRegressorsHandmadeTrainMatrix():
+def _testRegressorsHandmadeTrainMatrix():
 	""" Test regressor() against handmade output with a Matrix object as training input """
 
 	setRegressorLocation("/home/tpburns/Dropbox/Regressors")
@@ -48,8 +50,7 @@ def testRegressorsHandmadeTrainMatrix():
 	data = [[1,1,2],[2,2,4]]
 	training = Matrix(data)
 
-
-	regressor(learnerName, training, trainY=2, testX=trialIn.name, output=actualOut.name,  arguments={})
+	UML.run("regressor." + learnerName, training, trainY=2, testX=trialIn.name, output=actualOut.name,  arguments={})
 
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -59,7 +60,7 @@ def testRegressorsHandmadeTrainMatrix():
 	assert line == "6.0"
 
 
-def testRegressorsLocation():
+def _testRegressorsLocation():
 	""" Test setRegressorLocation() """
 
 	path = '/test/path'
@@ -68,7 +69,7 @@ def testRegressorsLocation():
 	assert getRegressorLocation() == path
 
 
-def testRegressorsPresent():
+def _testRegressorsPresent():
 	""" Test regressorsPresent() will return false for obviously wrong path values """
 
 	# default is none - should be false
@@ -82,7 +83,7 @@ def testRegressorsPresent():
 	assert not regressorsPresent()
 
 
-def testFindRegressorClassName():
+def _testFindRegressorClassName():
 	""" Test fineRegressorClassName() against simple inputs """
 
 	emptyFile = tempfile.NamedTemporaryFile()
@@ -124,12 +125,12 @@ def testFindRegressorClassName():
 	assert result == "ConstantRegressor"
 
 
-def testRegressorsListLearners():
+def _testRegressorsListLearners():
 	""" Test Regressors's listRegressorLearners() by checking the output for those learners we unit test """
 	
 	setRegressorLocation('/home/tpburns/Dropbox/Regressors')
 	
-	ret = listRegressorLearners()
+	ret = UML.listLearners('regressors')
 	assert 'ConstantRegressor' in ret
 	assert 'LinearRegressor' in ret
 

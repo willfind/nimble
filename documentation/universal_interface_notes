@@ -1,144 +1,4 @@
 
-*** at the end of this, I may have to review how logging / timing works
-
-
-INIT INTERFACE:
-DOES:
-	register install / source locations
-	register argument processing?
-	CLI: temp file storage?
-	first time call prep - example: shogun parsing
-
-MAIN EXECUTION:
-
-def run(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
-
-parameter Level: trainX, trainY, testX, arguments
-formatting level: output, sendToLog
-execution level: learnerName, scoreMode, multiClassStrategy
-
-
-
-
-WE WANT TO DO AS MUCH VALIDATION BEFORE WE DO ANY EXECUTION
-	- thus, we want to match arguments to different calls before we make any calls!
-	- => set up a queue of calls to make? is the order of parameter transformation going to matter?
-	- in order to match arguments to calls, we need to be able to figure out which
-	calls are going to be made to begin with
-
-# plan argument transformation
-# verify learner is available
-# check plan to see that arguments are used only once, and all are used
-# execute argument transformation
-# execute learner creation
-# encapsulate into RunState object
-# call runstate object's train function
-# call runstate object's predict function
-
-
-TASKS:
-
-def findCallable(name)
-Find reference to the callable with the given name
-	TAKES string name
-	RETURNS reference to in-package function or constructor
-
-def getParameters(name)
-Find params for instantiation and function calls 
-	TAKES string name, 
-	RETURNS list of list of param names to make the chosen call
-
-def getDefaultValues(name)
-Find default values
-	TAKES string name, 
-	RETURNS list of dict of param names to default values
-
-def executeCall()	
-execute the code given by the passed reference using the given parameters
-	TAKES string name, map of paramName to value (???????????)
-	RETURNS the constructed in package object
-
-def train(state, data=None, labels=None)
-perform training
-	TAKES a run-state object, optional: more training data? 
-	RETURNS a modified run-state object that can then be tested on
-
-def applyTo(state, data)	
-perform testing/prediction 
-	TAKES a run-state object that can be tested on 
-	RETURNS UML friendly results
-
-XXXXXXXXXXXXXXXXXXXXXX
-
-WANT
-def planArgumentTransformation(arguments)
-Considers the given arguments and determines what functions are
-going to be run during the transformation process.
-	TAKES dict of name to values
-	ACTION:
-	for each name:
-		query transformation registery.
-		registry returns function to call in order to perform registration
-			- registry has functions associated with types and names. if the
-			name of an arg has a function, that function is preferred. otherwise,
-			if the value is of a type that has a function, that function is used.
-			if nothing is registerd, use a simple pass through?
-		AND a (list?) of other arguments that will be used by the toCall return
-	RETURNS: dict of names to doubles where the double is (toCall, argument list)
-
-THEN:
-**During transformation planing, we checked that we have all the arguments necessary
-to call each transformation individually. NOW we check that in total we are using
-each argument only once, and that we use them all.
-def validateArgumentDistribution(transformationPlan, learnerParams)
-	
-
-
-
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-
-def inPackageArgument(name, arguments):
-	toCall = findCallable(name)
-	possibleParams = getParameters(name)
-	for paramList in possibleParams:
-		#check to see if they're in arguments
-		# choose the longest that is represented
-	return (toCall, bestParams)
-
-
-
-
-###################################################
-NOT INTEGRAED:
-
-helper for output processing
-	NOTE: similar to the param setup stuff, but inverted
-	TAKES output values from prediction
-	RETURNS UML friendly data
-
-query predicted values to determine their confidences
-	TAKES object?
-	RETURNS values according to scoreMode? 
-		- or should there be another layer over top?
-	EXCEPTION not implemented, or unavailable?
-^^^^^^^^^^
-NOT that simple, no guarantee that everything will match if you have to make a separate call
-
-
-
-
-
-
-
-******************************************************************
-FORMATTED!!!!!!!!
-******************************************************************
-
-#### transformation rework
-
-
-
 In order to support UML.run() and other top level UML functions which either execute functionality of an underlying package, or query details about its api and usage, we are employing object oriented programming to organize interfaces for each desired package.
 
 Objects are particularly suited for this application. Firstly, using abstract methods, we can very precisely define tasks that need to be implemented by an interface, which will make an interface easier to implement, as well as easier to use. Secondly, using inheritance, we can share code that will be necessary for multiple, and sometimes all, interfaces. Thirdly, object attributes can be used to contain and control implementation specific details shared my multiple methods. Fourthly, by instantiating an object at runtime, we are automatically given the means to do any setup, warmup, or validation of the package backend. Lastly, objects define a precise implementation boundary, and the supportive framework in UML ensures that a package implementor need only code within a single class definition, in a single file, in order to create a working interface.
@@ -214,7 +74,7 @@ Leaving _applier() entirely up to the package implementor again allows for creat
 
 Output transformation is implemented much the same way as input transformation. There is a single abstract function through which transformation is defined, named UniversalInterface._outputTransformation(). It takes as input the leaner's name (as context), the value to be transformed, and a copy of the return value of the matching earlier call to _inputTransformation(). Thus, any data about the input transformation that may be needed to perform output transformation will be available in this scope, using the formating constraints described in (1). _outputTransformation() is given total freedom in defining the return value. It is suggested that mirroring the formating of the input values as much as possible would be the most appropriate strategy.
 
-The call to perform output transformation occurs in the TrainedLearner.applyTo() method. The UniversalInterface._applier() only takes the backend learner and a transformed testX as input, but applyTo() is slightly different because it is available to the UML user. applyTo() takes two parameters: a UML formated test data set, and a flag named 'scoreMode'. The parameters to _applier() are produced as you would expect, the backend learner is passed from the TrainedLearner object and the test set input to applyTo() is transformed and passed to _applier(). The 'scoreMode' flag is meant to have the same effect as the one in UML.run() and is added at the TrainedLearner level (not the _applier() level) because it deals strictly with the format of the output. The functionality of this flag is accomplished entirely within applyTo() by making use of another abstract method named UniversalInterface.getScores(). In the case of a classifying learner (the only type that is acceptable for non default values of 'scoreMode') getScores() must be implemented to return the scores for each class on each data point. Unfortunately, this is a package level operation for which an output format must be enforced. Other than that exception, all other issues of formating for the two non default values of the flag are dealt with in applyTo().
+The call to perform output transformation occurs in the TrainedLearner.applyTo() method. The UniversalInterface._applier() only takes the backend learner and a transformed testX as input, but applyTo() is slightly different because it is available to the UML user. applyTo() takes two parameters: a UML formated test data set, and a flag named 'scoreMode'. The parameters to _applier() are produced as you would expect, the backend learner is passed from the TrainedLearner object and the test set input to applyTo() is transformed and passed to _applier(). The 'scoreMode' flag is meant to have the same effect as the one in UML.run() and is added at the TrainedLearner level (not the _applier() level) because it deals strictly with the format of the output. The functionality of this flag is accomplished entirely within applyTo() by making use of another abstract method named UniversalInterface.getScores(). In the case of a classifying learner (the only type that is acceptable for non default values of 'scoreMode') getScores() must be implemented to return the scores for each class on each data point, according to their natural ordering. Unfortunately, this is a package level operation for which an output format must be enforced. Other than that exception, all other issues of formating for the two non default values of the flag are dealt with in applyTo().
 
 *** Other abstract functions ***
 
@@ -230,32 +90,5 @@ Thirdly, note that the implementer of an interface may expose as much of the int
 
 To be made available through the top level UML functions (like run()), interface implementors need only implement a single subclass of UniversalInterface, and thus will be restricted to modifying a single file. This file must be located in the UML.interfaces subpackage. Note that nothing else is required in order to integrate the new interface with UML, this is done automatically. A helper is run from UML.interfaces.__init__ when UML is imported, checking all the files in UML.interfaces subpackage for modules that contain the class definition of a subclass of UniversalInterface. The helper then attempts to instantiate each of these classes that it has found, and the results of all successful instantiations are added to a list called UML.interfaces.available. Thus, top level UML functions (and a UML user) have access to a list of active interfaces. There are a couple of consequences to this design. Firstly, a package's __init__ method must take no arguments; if there is anything that determines how the interface operates, it is to be defined using configurable options. Secondly, an interface is only meant to be instantiated if it is currently working on that host machine. As mentioned in the introduction, object instantiation is the ideal place to do setup, warmup, and validation of the underlying package. The expected failure state, if the package is not usable, is to fail during instantiation. Thrown exceptions will be caught and registered with UML's sub system for logging warnings. Users may then review the failed instantiations at their leisure.
 
-
-
-
-
-
-
-
-
-
-
-*********************************************
-unused snipets.
-********************************************
-
-For example, in Sci-Kit Learn, their K-means clustering learner (once trained) can be used in a couple of different ways: when given an input data set there is a function which predicts which cluster those points would belong to, and there is a different function which instead returns the distance to the each cluster center. The package implementor must decide which of those two tasks will be supported by the the TrainedLearner's applyTo() method, but they may also expose both the prediction function and the transformation function by passing them to _makeTrainedLearner().
-########### need way of passing backend to exposed functions
-
-
-
-### because we validate before we do transformation, thats why we can allow implementor to
-add info to the input transformation return dict ####
-
-The key part of understanding input transformation is that it is organized by code in UniversalInterface, but that actual transformation is provided by functions implemented in the derived classes. In UniversalInterface, there is ########### an attribute inputTransformationHooks, which is provided by a derived class during instantiation. This attribute must take the form of a dict. Keys in this dict may be types (of input values), string names (of input parameter names), or a length two tuple where the first value is either of the previous two things, and the second value is a string corresponding to a learnerName, which will limit the application of that transformation rule. The value mapping to the aforementioned key will always be the transformation function to be applied in the that case. ########
-
-In planArgumentTransformation(), a concrete method of UniversalInterface, each of the input data objects (such as runs()'s parameter 'trainX') and every learner parameter defined in run()'s 'arguments' parameter, will be matched with a transformation function, by (name,learnerName), then (type,learnerName), then name, then type. If a parameter name or value does not match the given hooks, a default function (which simply returns the input) is called; though this function could be overridden by a derived class to implement more advanced functionality. These mappings will be returned in a new dict, mapping the name of the value to transform with the appropriate method and names of arguments required by that method.
-
-The reason we delay execution of the transformation, is that we want to perform as much validation as we can before execution. This includes checking that the learner is available, as well as checking the transformation plan. The concrete method UniversalInterface.validateArgumentDistribution() performs the most complicated checks: it verifies that all the arguments provided to run() will be used, and that all of the arguments each transformation function requires will be available. Once this verification has taken place, the transformation is executed.
 
 

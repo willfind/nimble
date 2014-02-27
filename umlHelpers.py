@@ -16,11 +16,31 @@ import datetime
 import random
 import copy
 
+import UML
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.data import Sparse
 from UML.data import Matrix
 from UML.data import List
 from UML.data import Base
+
+
+def findBestInterface(package):
+	"""
+	Takes the name of a possible interface provided to some other function by
+	a UML user, and attempts to find the interface which best matches that name
+	amoung those available. If it does not match any available interfaces, then
+	an exception is thrown.
+	
+	"""
+	for interface in UML.interfaces.available:
+		if package == interface.getCanonicalName():
+			return interface
+	for interface in UML.interfaces.available:
+		if interface.isAlias(package):
+			return interface
+
+	raise ArgumentException("package '" + package +"' was not associated with any of the available package interfaces")
+
 
 def _learnerQuery(name, queryType):
 	"""
@@ -33,31 +53,15 @@ def _learnerQuery(name, queryType):
 	[package, learnerName] = name.split('.')
 
 	if queryType == "parameters":
-		toCallName = 'getParameters'
+		toCallName = '_getParameterNames'
 	elif queryType == 'defaults':
-		toCallName = 'getDefaultValues'
+		toCallName = '_getDefaultValues'
 	else:
 		raise ArgumentException("Unrecognized queryType: " + queryType)
 
-	if package.lower() == 'mahout':
-		import UML.interfaces.mahout_interface
-		raise ArgumentException("mahout not yet supported")
-	if package.lower() == 'regressor':
-		import UML.interfaces.regressors_interface
-		raise ArgumentException("regressors not yet supported")
-	if package.lower() == 'scikitlearn':
-		import UML.interfaces.scikit_learn_interface
-		toCall = getattr(UML.interfaces.scikit_learn_interface, toCallName)
-	if package.lower() == 'mlpy':
-		import UML.interfaces.mlpy_interface
-		toCall = getattr(UML.interfaces.mlpy_interface, toCallName)
-	if package.lower() == 'shogun':
-		import UML.interfaces.shogun_interface
-		raise ArgumentException("shogun not yet supported")
-		#toCall = getattr(UML.interfaces.shogun_interface, toCallName)
+	interface = findBestInterface(package)
+	return getattr(interface, toCallName)(learnerName)
 
-	results = toCall(learnerName)
-	return results
 
 def _loadSparse(data, featureNames, fileType, automatedRetType=False):
 	if fileType is None:
@@ -708,10 +712,12 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
 	if not isinstance(knownValues, Matrix):
-		knownValues = knownValues.copy(asType="Matrix")
+#		knownValues = knownValues.copyAs(format="Matrix")
+		knownValues = Matrix(knownValues.data, knownValues.featureNames)
 
 	if not isinstance(predictedValues, Matrix):
-		predictedValues = predictedValues.copy(asType="Matrix")
+#		predictedValues = predictedValues.copyAs(format="Matrix")
+		predictedValues = Matrix(predictedValues.data, predictedValues.featureNames)
 
 	n=0.0
 	runningTotal=0.0
