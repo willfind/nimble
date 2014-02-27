@@ -1149,7 +1149,7 @@ class CooWithEmpty(object):
 			self.internal = internal
 
 		except ValueError as ve:
-			if ve.message == 'invalid shape':
+			if str(ve) == 'invalid shape':
 				if isinstance(arg1, tuple):
 					if shape is None:
 						self.shape = (0,0)
