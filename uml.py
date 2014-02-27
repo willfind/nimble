@@ -280,14 +280,14 @@ def createData(retType, data=None, featureNames=None, fileType=None, name=None, 
 #todo add logging
 #todo add seed specification support to UML.foldIterator() to avoid 
 #using two harmonious iterators (methods of base) and zip()
-def crossValidate(learningAlgorithm, X, Y, performanceFunction, argumentsForAlgorithm={}, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED):
+def crossValidate(learnerName, X, Y, performanceFunction, argumentsForAlgorithm={}, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED):
 	"""
 	K-fold cross validation.
 	Returns mean performance (float) across numFolds folds on a X Y.
 
 	Parameters:
 
-	learningAlgorithm (string) - UML compliant algorithm name in the form 
+	learnerName (string) - UML compliant algorithm name in the form 
 	'package.algorithm' e.g. 'sciKitLearn.KNeighborsClassifier'
 
 	X (UML.Base subclass) - points/features data
@@ -333,7 +333,7 @@ def crossValidate(learningAlgorithm, X, Y, performanceFunction, argumentsForAlgo
 		curTrainY, curTestingY = YFold
 
 		#run algorithm on the folds' training and testing sets
-		curRunResult = run(learningAlgorithm=learningAlgorithm, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=argumentsForAlgorithm, scoreMode=scoreMode, sendToLog=sendToLog)
+		curRunResult = run(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=argumentsForAlgorithm, scoreMode=scoreMode, sendToLog=sendToLog)
 		#calculate error of prediction, according to performanceFunction
 		curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
 
@@ -347,7 +347,7 @@ def crossValidate(learningAlgorithm, X, Y, performanceFunction, argumentsForAlgo
 	return averagePerformance
 
 #todo improve docstring
-def crossValidateReturnAll(learningAlgorithm, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, **arguments):
+def crossValidateReturnAll(learnerName, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, **arguments):
 	"""Returns a list of tuples, where every tuple contains
 	a dict representing the argument sent to run, and
 	a float represennting the cross validated error associated
@@ -366,7 +366,7 @@ def crossValidateReturnAll(learningAlgorithm, X, Y, performanceFunction, numFold
 
 	for curArgumentCombination in argumentCombinationIterator:
 		#calculate cross validated performance, given the current argument dict
-		errorForArgument = crossValidate(learningAlgorithm, X, Y, performanceFunction, curArgumentCombination, numFolds, scoreMode, negativeLabel, sendToLog, foldSeed=commonFoldSeed)
+		errorForArgument = crossValidate(learnerName, X, Y, performanceFunction, curArgumentCombination, numFolds, scoreMode, negativeLabel, sendToLog, foldSeed=commonFoldSeed)
 		#store the tuple with the current argument and cross validated performance	
 		performanceList.append((curArgumentCombination, errorForArgument))
 	#return the list of tuples - tracking the performance of each argument
@@ -374,13 +374,13 @@ def crossValidateReturnAll(learningAlgorithm, X, Y, performanceFunction, numFold
 
 #todo get T's code to sense if maximize or minimize
 #todo improve docstring
-def crossValidateReturnBest(learningAlgorithm, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, maximize=False, **arguments):
+def crossValidateReturnBest(learnerName, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, maximize=False, **arguments):
 	"""For each argument combination in arguments, crossValidateReturnBest runs crossValidate to compute
 	and mean error for the argument combination. crossValidateReturnBest then 
 	RETURNS the best argument and error as a tuple:
 	(argument_as_dict, cross_validated_performance_float)
 	"""
-	resultsAll = crossValidateReturnAll(learningAlgorithm, X, Y, performanceFunction, numFolds, scoreMode, negativeLabel, sendToLog, foldSeed, **arguments)
+	resultsAll = crossValidateReturnAll(learnerName, X, Y, performanceFunction, numFolds, scoreMode, negativeLabel, sendToLog, foldSeed, **arguments)
 	bestArgumentAndScoreTuple = None
 	for curResultTuple in resultsAll:
 		curArgument, curScore = curResultTuple

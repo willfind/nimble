@@ -107,7 +107,7 @@ def run(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None,
 
 
 
-def runAndTestOneVsOne(learningAlgorithm, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def runAndTestOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
 		Wrapper class for runOneVsOne.  Useful if you want the entire process of training,
 		testing, and computing performance measures to be handled.  Takes in a learner's name
@@ -500,7 +500,7 @@ def runAndTestOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments
 
 #todo clean up logging
 #todo write in multiClassStrategy explanation
-def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, performanceFunction, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **arguments):
+def runAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **arguments):
 	"""
 	Supply optional algorithm parameters via **arguments as kwargs
 
@@ -516,7 +516,7 @@ def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, performanceFunct
 
 	ARGUMENTS:
 	
-	learningAlgorithm: training algorithm to be called, in the form 'package.algorithmName'.
+	learnerName: training algorithm to be called, in the form 'package.algorithmName'.
 
 	trainX: data set to be used for training (as some form of Base object)
 
@@ -560,14 +560,14 @@ def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, performanceFunct
 	if sendToLog:
 		timer = Stopwatch()
 		timer.start('crossValidateReturnBest')
-	#sig (learningAlgorithm, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, maximize=False, **arguments):
-	bestArgument, bestScore = UML.crossValidateReturnBest(learningAlgorithm, trainX, trainY, performanceFunction, scoreMode=scoreMode, sendToLog=False, **arguments)
+	#sig (learnerName, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, maximize=False, **arguments):
+	bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, scoreMode=scoreMode, sendToLog=False, **arguments)
 
 	if sendToLog:
 		timer.stop('crossValidateReturnBest')
 		timer.start('run')
 
-	predictions = run(learningAlgorithm, trainX, trainY, testX, bestArgument, output, scoreMode, multiClassStrategy, sendToLog)
+	predictions = run(learnerName, trainX, trainY, testX, bestArgument, output, scoreMode, multiClassStrategy, sendToLog)
 
 	if sendToLog:
 		timer.stop('run')
@@ -580,7 +580,7 @@ def runAndTest(learningAlgorithm, trainX, trainY, testX, testY, performanceFunct
 
 	if sendToLog:
 		logManager = LogManager()
-		logManager.logRun(trainX, testX, learningAlgorithm, [performanceFunction], [performance], timer,)
+		logManager.logRun(trainX, testX, learnerName, [performanceFunction], [performance], timer,)
 
 	return performance
 
