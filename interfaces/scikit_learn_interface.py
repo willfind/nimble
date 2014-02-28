@@ -251,7 +251,7 @@ class SciKitLearn(UniversalInterface):
 		Returns true if the name is an accepted alias for this interface
 
 		"""
-		return name == self.getCanonicalName()
+		return name.lower() == self.getCanonicalName().lower()
 
 
 	def getCanonicalName(self):
