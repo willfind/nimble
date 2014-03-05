@@ -7,9 +7,9 @@ boilerplate()
 
 if __name__ == "__main__":
 	from UML import createData
-	from UML import runAndTest
-	from UML.runners import runOneVsOne
-	from UML.runners import runAndTestOneVsOne
+	from UML import trainAndTest
+	from UML.runners import trainAndApplyOneVsOne
+	from UML.runners import trainAndTestOneVsOne
 	from UML.metrics import fractionIncorrect
 
 	variables = ["x1","x2","x3", "label"]
@@ -28,11 +28,11 @@ if __name__ == "__main__":
 	metricFuncs = []
 	metricFuncs.append(fractionIncorrect)
 
-	results1 = runAndTest('sciKitLearn.LogisticRegression',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceFunctions=metricFuncs)
-	results2 = runOneVsOne('sciKitLearn.SVC',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, scoreMode='label', sendToLog=False)
-	results3 = runAndTestOneVsOne('sciKitLearn.SVC',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceFunctions=metricFuncs, sendToLog=False)
-	resultsBestScore = runOneVsOne('sciKitLearn.SVC',trainObj2, trainY=3, testX=testObj2, testY=3, arguments={}, scoreMode='bestScore', sendToLog=False)
-	resultsAllScores = runOneVsOne('sciKitLearn.SVC',trainObj3, trainY=3, testX=testObj2, testY=3, arguments={}, scoreMode='allScores', sendToLog=False)
+	results1 = trainAndTest('sciKitLearn.LogisticRegression',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceFunction=metricFuncs)
+	results2 = trainAndApplyOneVsOne('sciKitLearn.SVC',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, scoreMode='label', sendToLog=False)
+	results3 = trainAndTestOneVsOne('sciKitLearn.SVC',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceFunction=metricFuncs, sendToLog=False)
+	resultsBestScore = trainAndApplyOneVsOne('sciKitLearn.SVC',trainObj2, trainY=3, testX=testObj2, testY=3, arguments={}, scoreMode='bestScore', sendToLog=False)
+	resultsAllScores = trainAndApplyOneVsOne('sciKitLearn.SVC',trainObj3, trainY=3, testX=testObj2, testY=3, arguments={}, scoreMode='allScores', sendToLog=False)
 
 	print 'Standard run results: '+str(results1)
 	print 'One vs One predictions: '+repr(results2.data)

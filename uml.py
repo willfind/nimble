@@ -19,7 +19,7 @@ from UML.logger import UmlLogger
 from UML.logger import LogManager
 from UML.logger import Stopwatch
 
-from UML.runners import run
+from UML.runners import trainAndApply
 
 from UML.umlHelpers import findBestInterface
 from UML.umlHelpers import _loadSparse
@@ -85,7 +85,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mo
 		# glue training data at the end of test data
 		testX.appendPoints(trainX)
 		try:
-			normalizedAll = run(learnerName, trainX, trainY, testX, arguments=arguments)
+			normalizedAll = trainAndApply(learnerName, trainX, trainY, testX, arguments=arguments)
 		except ArgumentException:
 			testX.extractPoints(start=testLength, end=normalizedAll.pointCount)
 		# resplit normalized
@@ -93,9 +93,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mo
 		normalizedTest = normalizedAll
 	# two call normalize, no data combination
 	else:
-		normalizedTrain = run(learnerName, trainX, trainY, trainX, arguments=arguments)
+		normalizedTrain = trainAndApply(learnerName, trainX, trainY, trainX, arguments=arguments)
 		if testX is not None:
-			normalizedTest = run(learnerName, trainX, trainY, testX, arguments=arguments)
+			normalizedTest = trainAndApply(learnerName, trainX, trainY, testX, arguments=arguments)
 		
 	# modify references for trainX and testX
 	trainX.referenceDataFrom(normalizedTrain)
@@ -134,7 +134,7 @@ def learnerDefaultValues(name):
 def listLearners(package=None):
 	"""
 	Takes the name of a package, and returns a list of learners that are callable through that
-	package's run() interface.
+	package's trainAndApply() interface.
 
 	"""
 	results = []
@@ -300,7 +300,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, argumentsForAlgorithm=
 	def func(knownValues, predictedValues, negativeLabel).
 
 	argumentsForAlgorithm (dict) - dictionary mapping argument names (strings)
-	to their values. This parameter is sent to run()
+	to their values. This parameter is sent to trainAndApply()
 	example: {'dimensions':5, 'k':5}
 
 	numFolds (int) - the number of folds used in the cross validation. Can't
@@ -333,7 +333,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, argumentsForAlgorithm=
 		curTrainY, curTestingY = YFold
 
 		#run algorithm on the folds' training and testing sets
-		curRunResult = run(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=argumentsForAlgorithm, scoreMode=scoreMode, sendToLog=sendToLog)
+		curRunResult = trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=argumentsForAlgorithm, scoreMode=scoreMode, sendToLog=sendToLog)
 		#calculate error of prediction, according to performanceFunction
 		curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
 
@@ -349,7 +349,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, argumentsForAlgorithm=
 #todo improve docstring
 def crossValidateReturnAll(learnerName, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, **arguments):
 	"""Returns a list of tuples, where every tuple contains
-	a dict representing the argument sent to run, and
+	a dict representing the argument sent to trainAndApply, and
 	a float represennting the cross validated error associated
 	with that argument dict.
 	example list element: ({'arg1':2, 'arg2':'max'}, 89.0000123)

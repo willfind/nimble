@@ -2,17 +2,17 @@
 import random
 
 from UML import createData
-from UML.runners import runAndTestOneVsOne
-from UML.runners import runOneVsOne
-from UML.runners import runOneVsAll
-from UML.runners import runAndTest
+from UML.runners import trainAndTestOneVsOne
+from UML.runners import trainAndApplyOneVsOne
+from UML.runners import trainAndApplyOneVsAll
+from UML.runners import trainAndTest
 
 from UML.umlHelpers import extractWinningPredictionLabel
 from UML.umlHelpers import generateAllPairs
 from UML.metrics import fractionIncorrect
 
 
-def testRunAndTestOneVsOne():
+def testtrainAndTestOneVsOne():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
@@ -27,13 +27,13 @@ def testRunAndTestOneVsOne():
     metricFuncs = []
     metricFuncs.append(fractionIncorrect)
 
-    results1 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, performanceFunction=metricFuncs)
-    results2 = runAndTestOneVsOne('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, arguments={}, performanceFunction=metricFuncs)
+    results1 = trainAndTestOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, performanceFunction=metricFuncs)
+    results2 = trainAndTestOneVsOne('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, arguments={}, performanceFunction=metricFuncs)
 
     assert results1[0] == 0.0
     assert results2[0] == 0.25
 
-def testRunOneVsAll():
+def testtrainAndApplyOneVsAll():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
@@ -48,9 +48,9 @@ def testRunOneVsAll():
     metricFuncs = []
     metricFuncs.append(fractionIncorrect)
 
-    results1 = runOneVsAll('sciKitLearn.LogisticRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='label')
-    results2 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='bestScore')
-    results3 = runOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='allScores')
+    results1 = trainAndApplyOneVsAll('sciKitLearn.LogisticRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='label')
+    results2 = trainAndApplyOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='bestScore')
+    results3 = trainAndApplyOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='allScores')
 
     print "Results 1 output: " + str(results1.data)
     print "Results 2 output: " + str(results2.data)
@@ -61,7 +61,7 @@ def testRunOneVsAll():
 
     assert results2.copyAs(format="python list")[0][0] 
 
-def testRunOneVsOne():
+def testtrainAndApplyOneVsOne():
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     trainObj1 = createData('Matrix', data1, variables)
@@ -72,9 +72,9 @@ def testRunOneVsOne():
     metricFuncs = []
     metricFuncs.append(fractionIncorrect)
 
-    results1 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='label')
-    results2 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='bestScore')
-    results3 = runOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='allScores')
+    results1 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='label')
+    results2 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='bestScore')
+    results3 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='allScores')
 
     assert results1.data[0][0] == 1.0
     assert results1.data[1][0] == 2.0
@@ -151,8 +151,8 @@ def testGenerateAllPairs():
 
 
 #todo set seed and verify that you can regenerate error several times with
-#crossValidateReturnBest, run, and your own computeMetrics
-def test_runAndTest():
+#crossValidateReturnBest, trainAndApply, and your own computeMetrics
+def test_trainAndTest():
     """Assert valid results returned for different arguments to the algorithm:
     with default ie no args
     with one argument for the algorithm
@@ -169,19 +169,19 @@ def test_runAndTest():
     testObj1 = createData('Matrix', testData1)
 
     #with default ie no args
-    runError = runAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect)
+    runError = trainAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect)
     assert isinstance(runError, float)
 
     #with one argument for the algorithm
-    runError = runAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=1)
+    runError = trainAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=1)
     assert isinstance(runError, float)
 
     #with multiple values for one argument for the algorithm
-    runError = runAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=(1,2))
+    runError = trainAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=(1,2))
     assert isinstance(runError, float)
 
     #with complicated argument for the algorithm
-    runError = runAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=(1,2), p=(1,2) )
+    runError = trainAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=(1,2), p=(1,2))
     assert isinstance(runError, float)
 
 

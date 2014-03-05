@@ -10,7 +10,7 @@ if __name__ == "__main__":
     import UML
     from UML import orderedCrossValidate
     from UML import functionCombinations
-    from UML import runAndTest
+    from UML import trainAndTest
     from UML import createData
     from UML.metrics import fractionTrueNegativeTop90
     import os.path
@@ -53,9 +53,9 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":<0.001|0.01|0.1|1.0|5.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=True)'
+    toRun = 'trainAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":<0.001|0.01|0.1|1.0|5.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=True)'
     runs = functionCombinations(toRun)
-    extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
+    extraParams = {'trainAndTest':trainAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     stepDelta = timedelta(days=30)
     results = orderedCrossValidate(trainX, trainY, runs, orderedFeature=1, minTrainSize=24000, maxTrainSize=75000, minTestSize=9000, maxTestSize=20000, stepSize=stepDelta, gap=0, extraParams=extraParams)
 

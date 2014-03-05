@@ -9,7 +9,7 @@ boilerplate()
 
 if __name__ == "__main__":
 
-	from UML import run
+	from UML import trainAndApply
 	from UML import createData
 
 	variables = ["x1","x2"]
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 	data2 = [[1,0],[1,1],[5,1], [3,4]]
 	testObj = createData('Matrix', data2)
 
-	ret = run('sciKitLearn.KMeans', trainingObj, testX=testObj, output=None, arguments={'n_clusters':3})
+	ret = trainAndApply('sciKitLearn.KMeans', trainingObj, testX=testObj, output=None, arguments={'n_clusters':3})
 
 	# clustering returns a row vector of indices, referring to the cluster centers,
 	# we don't care about the exact numbers, this verifies that the appropriate

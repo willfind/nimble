@@ -2,7 +2,7 @@
 #which is used by
 #crossValidateReturnBest
 #crossValidateReturnAll
-#runAndTest
+#trainAndTest
 import sys
 sys.path.append('../..')
 

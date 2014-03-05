@@ -27,7 +27,7 @@ def MahoutHandmadeOutput():
 	trialIn.write("3,4\n")
 	trialIn.flush()
 	args = { 'numClusters':'2' }
-	UML.run("mahout.Kmeans", trainingIn.name, trainY=None, testX=trialIn.name, output=actualOut.name, arguments=args)
+	UML.trainAndApply("mahout.Kmeans", trainingIn.name, trainY=None, testX=trialIn.name, output=actualOut.name, arguments=args)
 	
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -51,7 +51,7 @@ def MahoutTasteHandmadeOutput():
 	trialIn.write("3,2\n")
 	trialIn.flush()
 	args = {"trainingInput":trainingIn.name, "trialInput":trialIn.name, "output":actualOut.name, "recommender":'ia'}
-	UML.run("mahout.tasteBasedEstimation",args)
+	UML.trainAndApply("mahout.tasteBasedEstimation",args)
 	
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -94,7 +94,7 @@ def MahoutTasteBasedPatchIntegrity():
 	
 	args = {"trainingInput":trainingIn.name, "trialInput":trialIn.name, "output":actualOut.name,
 			"recommender":'ia'}
-	UML.run('mahout.tasteBasedEstimation',args,'')
+	UML.trainAndApply('mahout.tasteBasedEstimation',args,'')
 
 	tempProps.seek(0)
 	propsPost = open(getMahoutLocation() + '/src/conf/driver.classes.props')

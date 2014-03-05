@@ -10,8 +10,8 @@ boilerplate()
 if __name__ == "__main__":
 	import os.path
 	import UML
-	from UML import runAndTest
-	from UML import run
+	from UML import trainAndTest
+	from UML import trainAndApply
 	from UML import createData
 	from UML import splitData
 	from UML.metrics import fractionIncorrect
@@ -26,8 +26,8 @@ if __name__ == "__main__":
 	testY = testY.copyAs(format="Matrix")
 
 	args = {"kernel":"GaussianKernel", "width":1, "C":1}
-	results = runAndTest("shogun.MulticlassLibSVM", trainX, trainY, testX, testY, args, [fractionIncorrect])
-	rawResults = run("shogun.MulticlassLibSVM", trainX, trainY, testX, arguments=args)
+	results = trainAndTest("shogun.MulticlassLibSVM", trainX, trainY, testX, testY, args, [fractionIncorrect])
+	rawResults = trainAndApply("shogun.MulticlassLibSVM", trainX, trainY, testX, arguments=args)
 	
 	print "results: "+repr(results)
 	print "raw predictions: "+repr(rawResults.data)

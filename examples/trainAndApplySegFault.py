@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	import UML
 	from UML import functionCombinations
 	from UML.umlHelpers import executeCode
-	from UML import runAndTest
+	from UML import trainAndTest
 	from UML import createData
 	from UML import splitData
 	from UML.metrics import fractionIncorrect
@@ -40,16 +40,16 @@ if __name__ == "__main__":
 	testY = createData('Matrix', testYList)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, trainY, testX, testY, {"C":<1.0>}, [fractionIncorrect])'
+	toRun = 'trainAndTest("shogun.MulticlassOCAS", trainX, trainY, testX, testY, {"C":<1.0>}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
+	extraParams = {'trainAndTest':trainAndTest, 'fractionIncorrect':fractionIncorrect}
 	results = {}
 	for run in runs:
 		dataHash={"trainX": trainX.copy(), 
 		          "testX":testX.copy(), 
 		          "trainY":trainY.copy(), 
 		          "testY":testY.copy(), 
-		          'runAndTest':runAndTest, 
+		          'trainAndTest':trainAndTest, 
 		          'fractionIncorrect':fractionIncorrect}
 		print "Run call: "+repr(run)
 		print "Run results: "+repr(executeCode(run, dataHash))

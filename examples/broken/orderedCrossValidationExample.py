@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
 	from UML import orderedCrossValidateReturnBest
 	from UML import functionCombinations
-	from UML import runAndTest
+	from UML import trainAndTest
 	from UML import createData
 	from UML.metrics import rootMeanSquareError
 
@@ -55,9 +55,9 @@ if __name__ == "__main__":
 	appleStock = appleStock.copyAs(format="Matrix")
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("sciKitLearn.LinearRegression", trainX, trainY, testX, testY, {}, [rootMeanSquareError])["rootMeanSquareError"]'
+	toRun = 'trainAndTest("sciKitLearn.LinearRegression", trainX, trainY, testX, testY, {}, [rootMeanSquareError])["rootMeanSquareError"]'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'rootMeanSquareError':rootMeanSquareError}
+	extraParams = {'trainAndTest':trainAndTest, 'rootMeanSquareError':rootMeanSquareError}
 
 	bestFunction, performance = orderedCrossValidateReturnBest(appleStock, predictionLabels, runs, mode='min', orderedFeature="Time", minTrainSize=datetime.timedelta(days=365), maxTrainSize=datetime.timedelta(days=730), stepSize=datetime.timedelta(days=90), gap=0, minTestSize=1, maxTestSize=1, extraParams=extraParams)
 	print bestFunction

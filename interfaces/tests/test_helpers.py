@@ -22,7 +22,7 @@ def test_OvOTournament():
 
 def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
 	"""
-	Given the output of the 'bestScores' and 'allScores' scoreMode flag of run(),
+	Given the output of the 'bestScores' and 'allScores' scoreMode flag of trainAndApply(),
 	do some checks to make sure the results match each other.
 
 	"""

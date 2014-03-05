@@ -73,7 +73,7 @@ def _validData(trainX, trainY, testX, testY):
 			raise ArgumentException("testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
 
 
-def run(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
+def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
 	(package, learnerName) = _unpackLearnerName(learnerName)
 	_validData(trainX, trainY, testX, None)
 	_validScoreMode(scoreMode)
@@ -88,14 +88,14 @@ def run(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None,
 	interface = findBestInterface(package)
 
 #	if multiClassStrategy != default:
-#		trialResult = checkClassificationStrategy(interface.run, learnerName, arguments)
+#		trialResult = checkClassificationStrategy(interface.trainAndApply, learnerName, arguments)
 #		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-#			UML.runners.runOneVsAll(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+#			UML.runners.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
 #		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-#			UML.runners.runOneVsOne(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+#			UML.runners.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
 
 
-	results = interface.run(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
+	results = interface.trainAndApply(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
 
 	if sendToLog:
 		logManager = LogManager()
@@ -107,9 +107,9 @@ def run(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None,
 
 
 
-def runAndTestOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
-		Wrapper class for runOneVsOne.  Useful if you want the entire process of training,
+		Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
 		testing, and computing performance measures to be handled.  Takes in a learner's name
 		and training and testing data sets, trains a learner, passes the test data to the 
 		computed model, gets results, and calculates performance based on those results.  
@@ -153,14 +153,14 @@ def runAndTestOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments
 
 	if testY is None:
 		if not isinstance(trainY, (str, int, long)):
-			raise ArgumentException("testY is missing in runOneVsOne")
+			raise ArgumentException("testY is missing in trainAndApplyOneVsOne")
 		else:
 			testY = testX.extractFeatures([trainY])
 	else:
 		if isinstance(testY, (str, int, long)):
 			testY = testX.extractFeatures([testY])
 
-	predictions = runOneVsOne(learnerName, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
@@ -176,9 +176,9 @@ def runAndTestOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments
 	return results
 
 
-def runOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
 	"""
-	Calls on run() to train and evaluate the learner defined by 'learnerName.'  Assumes
+	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. one method of splitting the 
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
@@ -254,7 +254,7 @@ def runOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 		pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
 		pairTrueLabels = pairData.extractFeatures(trainY)
 		#train classifier on that data; apply it to the test set
-		partialResults = run(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
+		partialResults = trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put predictions into table of predictions
 		if rawPredictions is None:
 			rawPredictions = partialResults.copyAs(format="List")
@@ -301,13 +301,13 @@ def runOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 
 		return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
 	else:
-		raise ArgumentException('Unknown score mode in runOneVsOne: ' + str(scoreMode))
+		raise ArgumentException('Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode))
 
 
 	
-def runOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
 	"""
-	Calls on run() to train and evaluate the learner defined by 'learnerName.'  Assumes
+	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
@@ -349,7 +349,7 @@ def runOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 	if testY is None and isinstance(trainY, (str, int, long)):
 		testY = trainY
 	elif testY is None:
-		raise ArgumentException("Missing testY in runAndTestOneVsAll")
+		raise ArgumentException("Missing testY in trainAndTestOneVsAll")
 
 	#Remove true labels from from training set, if not already separated
 	if isinstance(trainY, (str, int, long)):
@@ -382,7 +382,7 @@ def runOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 				return 0
 			else: return 1
 		trainLabels = trainY.applyToPoints(relabeler, inPlace=False)
-		oneLabelResults = run(learnerName, trainX, trainLabels, testX, output=None, arguments=arguments, sendToLog=False)
+		oneLabelResults = trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=arguments, sendToLog=False)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
 			rawPredictions = oneLabelResults
@@ -437,11 +437,11 @@ def runOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, sc
 		#wrap data in Base container
 		return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
 	else:
-		raise ArgumentException('Unknown score mode in runOneVsAll: ' + str(scoreMode))
+		raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
-def runAndTestOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
-	Calls on run() to train and evaluate the learner defined by 'learnerName.'  Assumes
+	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
@@ -474,14 +474,14 @@ def runAndTestOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments
 
 	if testY is None:
 		if not isinstance(trainY, (str, int, long)):
-			raise ArgumentException("testY is missing in runOneVsOne")
+			raise ArgumentException("testY is missing in trainAndApplyOneVsOne")
 		else:
 			testY = testX.extractFeatures([trainY])
 	else:
 		if isinstance(testY, (str, int, long)):
 			testY = testX.extractFeatures([testY])
 
-	predictions = runOneVsAll(learnerName, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
@@ -500,18 +500,18 @@ def runAndTestOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments
 
 #todo clean up logging
 #todo write in multiClassStrategy explanation
-def runAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **arguments):
+def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **arguments):
 	"""
 	Supply optional algorithm parameters via **arguments as kwargs
 
-	For each permutation of 'arguments' (more below), runAndTest uses cross validation to generate a
+	For each permutation of 'arguments' (more below), trainAndTest uses cross validation to generate a
 	performance score for the algorithm, given the particular argument permutation.
 	The argument permutation that performed best cross validating over the training data
 	is then used as the lone argument for training on the whole training data set.
 	Finally, the learned model generates predictions for the testing set, and the
 	performance of those predictions is calculated and returned.
 
-	If no additional arguments are supplied via **arguments, then runAndTest just returns
+	If no additional arguments are supplied via **arguments, then trainAndTest just returns
 	the performance of the algorithm with default arguments on the testing data.
 
 	ARGUMENTS:
@@ -526,9 +526,9 @@ def runAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, o
 	contains the labels themselves (as a Base object) or an index (numerical or string) 
 	that defines their locale in the trainX object
 	
-	testY: used to retreive the known class labels of the test data. Either
+	testY: used to retrieve the known class labels of the test data. Either
 	contains the labels themselves (as a Base object) or an index (numerical or string) 
-	that defines their locale in the testX object.  If left blank, runAndTest() assumes 
+	that defines their locale in the testX object.  If left blank, trainAndTest() assumes 
 	that testY is the same as trainY.
 	
 	negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
@@ -565,12 +565,12 @@ def runAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, o
 
 	if sendToLog:
 		timer.stop('crossValidateReturnBest')
-		timer.start('run')
+		timer.start('trainAndApply')
 
-	predictions = run(learnerName, trainX, trainY, testX, bestArgument, output, scoreMode, multiClassStrategy, sendToLog)
+	predictions = trainAndApply(learnerName, trainX, trainY, testX, bestArgument, output, scoreMode, multiClassStrategy, sendToLog)
 
 	if sendToLog:
-		timer.stop('run')
+		timer.stop('trainAndApply')
 		timer.start('errorComputation')
 
 	performance = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)

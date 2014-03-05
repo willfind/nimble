@@ -11,7 +11,7 @@ if __name__ == "__main__":
     from UML import crossValidateReturnBest
     from UML import functionCombinations
     from UML.umlHelpers import executeCode
-    from UML import runAndTest
+    from UML import trainAndTest
     from UML import createData
     from UML import splitData
     from UML.metrics import fractionIncorrect
@@ -45,9 +45,9 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("shogun.KNN", trainX, trainY, testX, testY, {"k":<1|3|5|10|15|20|25>}, [fractionIncorrect],sendToLog=False)'
+    toRun = 'trainAndTest("shogun.KNN", trainX, trainY, testX, testY, {"k":<1|3|5|10|15|20|25>}, [fractionIncorrect],sendToLog=False)'
     runs = functionCombinations(toRun)
-    extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
+    extraParams = {'trainAndTest':trainAndTest, 'fractionIncorrect':fractionIncorrect}
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
     run = run.replace('sendToLog=False', 'sendToLog=True')
@@ -55,7 +55,7 @@ if __name__ == "__main__":
               "testX":testX, 
               "trainY":trainY, 
               "testY":testY, 
-              'runAndTest':runAndTest, 
+              'trainAndTest':trainAndTest, 
               'fractionIncorrect':fractionIncorrect}
     #   print "Run call: "+repr(run)
     print "Best run code: " + str(run)
@@ -63,9 +63,9 @@ if __name__ == "__main__":
 
 
     # # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    # toRun = 'runAndTest("shogun.KNN", trainX, trainY, testX, testY, {"k":<1|3|5|10|15|20|25>}, [fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    # toRun = 'trainAndTest("shogun.KNN", trainX, trainY, testX, testY, {"k":<1|3|5|10|15|20|25>}, [fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     # runs = functionCombinations(toRun)
-    # extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
+    # extraParams = {'trainAndTest':trainAndTest, 'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
     # run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
     # run = run.replace('sendToLog=False', 'sendToLog=True')
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     #           "testX":testX, 
     #           "trainY":trainY, 
     #           "testY":testY, 
-    #           'runAndTest':runAndTest, 
+    #           'trainAndTest':trainAndTest, 
     #           'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
     # #   print "Run call: "+repr(run)
     # print "Best run code: " + str(run)

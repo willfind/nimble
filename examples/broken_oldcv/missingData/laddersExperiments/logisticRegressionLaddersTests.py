@@ -10,7 +10,7 @@ if __name__ == "__main__":
     from UML import crossValidateReturnBest
     from UML import functionCombinations
     from UML.umlHelpers import executeCode
-    from UML import runAndTest
+    from UML import trainAndTest
     from UML import createData
     from UML.metrics import fractionTrueNegativeTop90
     import os.path
@@ -69,9 +69,9 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("sciKitLearn.LogisticRegression", trainX, trainY, testX, testY, {"C":<0.000001|0.00001|0.0001|0.001|0.01|0.1|1.0|10.0|50.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    toRun = 'trainAndTest("sciKitLearn.LogisticRegression", trainX, trainY, testX, testY, {"C":<0.000001|0.00001|0.0001|0.001|0.01|0.1|1.0|10.0|50.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     runs = functionCombinations(toRun)
-    extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
+    extraParams = {'trainAndTest':trainAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
     run = run.replace('sendToLog=False', 'sendToLog=True')
@@ -79,7 +79,7 @@ if __name__ == "__main__":
               "testX":testX,
               "trainY":trainY,
               "testY":testY,
-              'runAndTest':runAndTest,
+              'trainAndTest':trainAndTest,
               'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     #   print "Run call: "+repr(run)
     print "Best run code: " + str(run)

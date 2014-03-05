@@ -8,7 +8,7 @@ boilerplate()
 if __name__ == "__main__":
     import os.path
     import UML
-    from UML import runAndTest
+    from UML import trainAndTest
     from UML import createData
     from UML import splitData
     from UML.metrics import fractionTrueNegativeTop50
@@ -43,6 +43,6 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    scores = runAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":0.75}, [fractionTrueNegativeTop90, fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)
+    scores = trainAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":0.75}, [fractionTrueNegativeTop90, fractionTrueNegativeTop50], scoreMode="allScores", negativeLabel="2", sendToLog=False)
 
     print "top 90 proportion Rejected: " + str(scores)

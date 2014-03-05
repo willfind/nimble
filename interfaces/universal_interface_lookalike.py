@@ -64,7 +64,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
 		parameters provided by a UML user.
 
 		trainX, etc. are filled with the values of the parameters of the same name
-		to a calls to run() or train(), or are empty when being called before other
+		to a calls to trainAndApply() or train(), or are empty when being called before other
 		functions. arguments is a dictionary mapping names to values of all other
 		parameters that need to be processed.
 

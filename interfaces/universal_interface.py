@@ -73,7 +73,7 @@ class UniversalInterface(object):
 	def optionNames(self):
 		return copy.copy(self._configurableOptionNames())
 
-	def run(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
+	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
 
 		# TODO remove multiclass strategy
 
@@ -373,7 +373,7 @@ class UniversalInterface(object):
 			the object methods that may be used to modify or query the backend trained learner.
 
 			learnerName: the name of the learner used in the backend
-			arguments: reference to the original arguments parameter to the run() function
+			arguments: reference to the original arguments parameter to the trainAndApply() function
 			transformedArguments: a tuple containing the return value of _inputTransformation() that was called when training the learner in the backend
 			customDict: reference to the customizable dictionary that is passed to I/O transformation, training and applying a learner
 			backend: the return value from _trainer(), a reference to a some object that is to be used by the package implementor during application
@@ -516,7 +516,7 @@ class UniversalInterface(object):
 	@abc.abstractmethod
 	def getLearnerParameterNames(self, learnerName):
 		"""
-		Find all parameters involved in a run() call to the given learner
+		Find all parameters involved in a trainAndApply() call to the given learner
 		TAKES string name of a learner, 
 		RETURNS list of list of param names
 		"""
@@ -534,7 +534,7 @@ class UniversalInterface(object):
 	@abc.abstractmethod
 	def getLearnerDefaultValues(self, learnerName):
 		"""
-		Find all default values for parameters involved in a run() call to the given learner
+		Find all default values for parameters involved in a trainAndApply() call to the given learner
 		TAKES string name of a learner, 
 		RETURNS list of dict of param names to default values
 		"""
@@ -582,7 +582,7 @@ class UniversalInterface(object):
 		parameters provided by a UML user.
 
 		trainX, etc. are filled with the values of the parameters of the same name
-		to a calls to run() or train(), or are empty when being called before other
+		to a calls to trainAndApply() or train(), or are empty when being called before other
 		functions. arguments is a dictionary mapping names to values of all other
 		parameters that need to be processed.
 

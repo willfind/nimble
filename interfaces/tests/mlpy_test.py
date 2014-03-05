@@ -30,7 +30,7 @@ def testMlpyHandmadeSVMClassification():
 	data2 = [[2,3],[-200,0]]
 	testObj = Matrix(data2)
 
-	ret = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 
 	assert ret is not None
 
@@ -50,7 +50,7 @@ def testMlpyHandmadeLogisticRegression():
 	data2 = [[2,3],[-200,0]]
 	testObj = Matrix(data2)
 
-	ret = UML.run("mlpy.LDAC", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"solver_type":"l2r_lr"})
+	ret = UML.trainAndApply("mlpy.LDAC", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"solver_type":"l2r_lr"})
 
 	assert ret is not None
 
@@ -70,7 +70,7 @@ def testMlpyHandmadeKNN():
 	data2 = [[2,3],[0,0]]
 	testObj = Matrix(data2)
 
-	ret = UML.run("mlpy.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"k":1})
+	ret = UML.trainAndApply("mlpy.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments={"k":1})
 
 	assert ret is not None
 
@@ -85,7 +85,7 @@ def testMlpyHandmadePCA():
 	data2 = [[4,4,4]]
 	testObj = Matrix(data2)
 
-	ret = UML.run("mlpy.PCA", trainingObj, testX=testObj, output=None, arguments={'k':1})
+	ret = UML.trainAndApply("mlpy.PCA", trainingObj, testX=testObj, output=None, arguments={'k':1})
 
 	assert ret is not None
 	# check return has the right dimension
@@ -100,7 +100,7 @@ def testMlpyHandmadeKernelPCA():
 	data2 = [[4,4]]
 	testObj = Matrix(data2)
 
-	ret = UML.run("mlpy.KPCA", trainObj, testX=testObj, output=None, arguments={"kernel":"KernelGaussian", 'k':1})
+	ret = UML.trainAndApply("mlpy.KPCA", trainObj, testX=testObj, output=None, arguments={"kernel":"KernelGaussian", 'k':1})
 
 	assert ret is not None
 	# check return has the right dimension
@@ -117,15 +117,15 @@ def testMlpyScoreMode():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.pointCount == 2
 	assert ret.featureCount == 1
 
-	bestScores = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
+	bestScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.pointCount == 2
 	assert bestScores.featureCount == 2
 
-	allScores = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
+	allScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.pointCount == 2
 	assert allScores.featureCount == 3
 
@@ -141,15 +141,15 @@ def testMlpyScoreModeBinary():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.pointCount == 2
 	assert ret.featureCount == 1
 
-	bestScores = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
+	bestScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.pointCount == 2
 	assert bestScores.featureCount == 2
 
-	allScores = UML.run("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
+	allScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.pointCount == 2
 	assert allScores.featureCount == 2
 

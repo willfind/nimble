@@ -76,9 +76,9 @@ if __name__ == "__main__":
     # trainY = createData('Matrix', trainYList)
     # testY = createData('Matrix', testYList)
 
-    # toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":<0.1|0.6|0.75|0.9|1.5|5.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    # toRun = 'trainAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":<0.1|0.6|0.75|0.9|1.5|5.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     # runs = functionCombinations(toRun)
-    # extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
+    # extraParams = {'trainAndTest':trainAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     # results = {}
     # run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     #           "testX":testX, 
     #           "trainY":trainY, 
     #           "testY":testY, 
-    #           'runAndTest':runAndTest, 
+    #           'trainAndTest':trainAndTest, 
     #           'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
     # #   print "Run call: "+repr(run)
     # print "Best run call: " + str(run)

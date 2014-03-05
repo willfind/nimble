@@ -19,7 +19,7 @@ class Shogun(UniversalInterfaceLookalike):
 		"""
 		super(Shogun, self).__init__()
 
-	def run(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
+	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
 		return shogun.shogun(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, sendToLog)
 
 

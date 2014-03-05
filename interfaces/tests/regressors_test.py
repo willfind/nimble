@@ -27,7 +27,7 @@ def _testRegressorsHandmade():
 	trialIn.write("5,107,4.0\n")
 	trialIn.flush()
 
-	UML.run("regressor.ConstantRegressor",trainingIn.name, trainY=2, testX=trialIn.name, output=actualOut.name, arguments={'randomObject':None})
+	UML.trainAndApply("regressor.ConstantRegressor",trainingIn.name, trainY=2, testX=trialIn.name, output=actualOut.name, arguments={'randomObject':None})
 
 	actualOut.seek(0)
 	line = actualOut.readline()
@@ -50,7 +50,7 @@ def _testRegressorsHandmadeTrainMatrix():
 	data = [[1,1,2],[2,2,4]]
 	training = Matrix(data)
 
-	UML.run("regressor." + learnerName, training, trainY=2, testX=trialIn.name, output=actualOut.name,  arguments={})
+	UML.trainAndApply("regressor." + learnerName, training, trainY=2, testX=trialIn.name, output=actualOut.name,  arguments={})
 
 	actualOut.seek(0)
 	line = actualOut.readline()

@@ -9,7 +9,7 @@ if __name__ == "__main__":
 	from UML import crossValidateReturnBest
 	from UML import functionCombinations
 	from UML.umlHelpers import executeCode
-	from UML import runAndTest
+	from UML import trainAndTest
 	from UML import createData
 	from UML import splitData
 	from UML.metrics import fractionTrueNegativeTop90
@@ -48,9 +48,9 @@ if __name__ == "__main__":
 	print "Finished converting labels to ints"
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":<0.01|0.1|0.5|1.0|10.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+	toRun = 'trainAndTest("shogun.MulticlassLibLinear", trainX, trainY, testX, testY, {"C":<0.01|0.1|0.5|1.0|10.0>}, [fractionTrueNegativeTop90], scoreMode="allScores", negativeLabel="2", sendToLog=False)'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
+	extraParams = {'trainAndTest':trainAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
 	results = {}
 	run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 		      "testX":testX.copy(), 
 		      "trainY":trainY.copy(), 
 		      "testY":testY.copy(), 
-		      'runAndTest':runAndTest, 
+		      'trainAndTest':trainAndTest, 
 		      'fractionTrueNegativeTop90':fractionTrueNegativeTop90}
 	# 	print "Run call: "+repr(run)
 	print "Best Run confirmation: "+repr(executeCode(run, dataHash))

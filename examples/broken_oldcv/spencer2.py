@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	from UML import crossValidateReturnBest
 	from UML import functionCombinations
 	from UML import createData
-	from UML import runAndTest
+	from UML import trainAndTest
 	from UML.metrics import fractionIncorrect
 
 
@@ -29,9 +29,9 @@ if __name__ == "__main__":
 	print "data formatted"
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, trainY, testX, testY, {"C":<1.0>}, [fractionIncorrect])'
+	toRun = 'trainAndTest("shogun.MulticlassOCAS", trainX, trainY, testX, testY, {"C":<1.0>}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
+	extraParams = {'trainAndTest':trainAndTest, 'fractionIncorrect':fractionIncorrect}
 
 	print "runs prepared"
 

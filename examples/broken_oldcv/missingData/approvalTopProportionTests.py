@@ -11,7 +11,7 @@ if __name__ == "__main__":
     from UML import crossValidateReturnBest
     from UML import functionCombinations
     from UML.umlHelpers import executeCode
-    from UML import runAndTest
+    from UML import trainAndTest
     from UML import createData
     from UML import splitData
     from UML.metrics import fractionTrueNegativeTop50
@@ -46,9 +46,9 @@ if __name__ == "__main__":
 
 
     # setup parameters we want to cross validate over, and the functions and metrics to evaluate
-    toRun = 'runAndTest("shogun.MulticlassOCAS", trainX, trainY, testX, testY, {"C":<0.1|0.5|0.75|1.0|5.0>}, <[fractionTrueNegativeTop90]|[fractionTrueNegativeTop50]>, scoreMode="allScores", negativeLabel="2", sendToLog=False)'
+    toRun = 'trainAndTest("shogun.MulticlassOCAS", trainX, trainY, testX, testY, {"C":<0.1|0.5|0.75|1.0|5.0>}, <[fractionTrueNegativeTop90]|[fractionTrueNegativeTop50]>, scoreMode="allScores", negativeLabel="2", sendToLog=False)'
     runs = functionCombinations(toRun)
-    extraParams = {'runAndTest':runAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90, 'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
+    extraParams = {'trainAndTest':trainAndTest, 'fractionTrueNegativeTop90':fractionTrueNegativeTop90, 'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
     run, results = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=5, extraParams=extraParams, sendToLog=True)
 
     # for run in runs:
@@ -56,7 +56,7 @@ if __name__ == "__main__":
               "testX":testX.copy(), 
               "trainY":trainY.copy(), 
               "testY":testY.copy(), 
-              'runAndTest':runAndTest, 
+              'trainAndTest':trainAndTest, 
               'fractionTrueNegativeTop90':fractionTrueNegativeTop90,
               'fractionTrueNegativeTop50':fractionTrueNegativeTop50}
     #   print "Run call: "+repr(run)

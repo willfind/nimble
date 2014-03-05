@@ -8,7 +8,7 @@ from allowImports import boilerplate
 boilerplate()
 
 if __name__ == "__main__":
-	from UML import run
+	from UML import trainAndApply
 	from UML import normalizeData
 	from UML import createData
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 	testObj = createData('Matrix', data2, variables)
 
 	normalizeData('mlpy.PCA', trainObj, testX=testObj, arguments={'k':2})
-	ret = run('sciKitLearn.KMeans', trainX=trainObj, trainY=None, testX=testObj, arguments={'n_clusters':3})
+	ret = trainAndApply('sciKitLearn.KMeans', trainX=trainObj, trainY=None, testX=testObj, arguments={'n_clusters':3})
 
 	print "returned: " + str(ret)
 	# clustering returns a row vector of indices, referring to the cluster centers,

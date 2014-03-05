@@ -11,7 +11,7 @@ boilerplate()
 if __name__ == "__main__":
 	import sys
 
-	from UML import run
+	from UML import trainAndApply
 	from UML import createData
 
 	# path to input specified by command line argument
@@ -27,9 +27,9 @@ if __name__ == "__main__":
 	sparseY2 = sparseAll2.extractFeatures(3)
 	sparseX2 = sparseAll2
 
-	ret = run('sciKitLearn.LinearRegression', trainX=sparseX, trainY=sparseY, testX=sparseX)
+	ret = trainAndApply('sciKitLearn.LinearRegression', trainX=sparseX, trainY=sparseY, testX=sparseX)
 
-	ret2 = run('sciKitLearn.LinearRegression', trainX=sparseX2, trainY=sparseY2, testX=sparseX2)
+	ret2 = trainAndApply('sciKitLearn.LinearRegression', trainX=sparseX2, trainY=sparseY2, testX=sparseX2)
 
 	print "Raw results 1: " + str(ret.data)
 	print "Raw results 2: " + str(ret2.data)

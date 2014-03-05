@@ -28,7 +28,7 @@ def testSciKitLearnHandmadeRegression():
 	data2 = [[0,1]]
 	testObj = Matrix(data2)
 
-	ret = UML.run(toCall("LinearRegression"), trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
+	ret = UML.trainAndApply(toCall("LinearRegression"), trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
 
 	assert ret is not None
 
@@ -52,7 +52,7 @@ def testSciKitLearnSparseRegression():
 	testObj = obj.copy()
 	testObj.extractFeatures(cols[0])
 
-	ret = UML.run(toCall('SGDRegressor'), trainX=obj, trainY=cols[0], testX=testObj)
+	ret = UML.trainAndApply(toCall('SGDRegressor'), trainX=obj, trainY=cols[0], testX=testObj)
 
 	assert ret is not None
 
@@ -65,7 +65,7 @@ def testSciKitLearnHandmadeClustering():
 	data2 = [[1,0],[1,1],[5,1], [3,4]]
 	testObj = Matrix(data2)
 
-	ret = UML.run(toCall("KMeans"), trainingObj, testX=testObj, output=None, arguments={'n_clusters':3})
+	ret = UML.trainAndApply(toCall("KMeans"), trainingObj, testX=testObj, output=None, arguments={'n_clusters':3})
 
 	# clustering returns a row vector of indices, referring to the cluster centers,
 	# we don't care about the exact numbers, this verifies that the appropriate
@@ -90,7 +90,7 @@ def testSciKitLearnHandmadeSparseClustering():
 	testData[2, :] = [-1,0]
 	testData = Sparse(data=testData)
 
-	ret = UML.run(toCall('MiniBatchKMeans'), trainData, trainY=2, testX=testData, arguments={'n_clusters':2})
+	ret = UML.trainAndApply(toCall('MiniBatchKMeans'), trainData, trainY=2, testX=testData, arguments={'n_clusters':2})
 	
 	assert ret[0,0] == ret[1,0]
 	assert ret[0,0] != ret[2,0]
@@ -106,15 +106,15 @@ def testSciKitLearnScoreMode():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = UML.run(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.pointCount == 2
 	assert ret.featureCount == 1
 
-	bestScores = UML.run(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
+	bestScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.pointCount == 2
 	assert bestScores.featureCount == 2
 
-	allScores = UML.run(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
+	allScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.pointCount == 2
 	assert allScores.featureCount == 3
 
@@ -131,15 +131,15 @@ def testSciKitLearnScoreModeBinary():
 	testObj = Matrix(data2)
 
 	# default scoreMode is 'label'
-	ret = UML.run(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
 	assert ret.pointCount == 2
 	assert ret.featureCount == 1
 
-	bestScores = UML.run(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
+	bestScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='bestScore')
 	assert bestScores.pointCount == 2
 	assert bestScores.featureCount == 2
 
-	allScores = UML.run(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
+	allScores = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={}, scoreMode='allScores')
 	assert allScores.pointCount == 2
 	assert allScores.featureCount == 2
 
@@ -155,9 +155,9 @@ def testSciKitLearnUnsupervisedProblemLearners():
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
 	testObj = Matrix(data2)
 
-	UML.run(toCall("GMM"), trainingObj, testX=testObj, arguments={'n_components':3})
-	UML.run(toCall("DPGMM"), trainingObj, testX=testObj)
-	UML.run(toCall("VBGMM"), trainingObj, testX=testObj)
+	UML.trainAndApply(toCall("GMM"), trainingObj, testX=testObj, arguments={'n_components':3})
+	UML.trainAndApply(toCall("DPGMM"), trainingObj, testX=testObj)
+	UML.trainAndApply(toCall("VBGMM"), trainingObj, testX=testObj)
 
 
 def testSciKitLearnObsAsArgumentName():
@@ -169,9 +169,9 @@ def testSciKitLearnObsAsArgumentName():
 	data2 = [[2,1],[1,2],[5,1], [34,4]]
 	testObj = Matrix(data2)
 
-	ret = UML.run(toCall("GMMHMM"), trainingObj, testX=testObj, arguments={'n_components':3})
-	ret = UML.run(toCall("GaussianHMM"), trainingObj, testX=testObj)
-	ret = UML.run(toCall("MultinomialHMM"), trainingObj, testX=testObj)
+	ret = UML.trainAndApply(toCall("GMMHMM"), trainingObj, testX=testObj, arguments={'n_components':3})
+	ret = UML.trainAndApply(toCall("GaussianHMM"), trainingObj, testX=testObj)
+	ret = UML.trainAndApply(toCall("MultinomialHMM"), trainingObj, testX=testObj)
 
 def testSciKitLearnArgspecFailures():
 	""" Test scikitLearn() on those learners that cannot be passed to inspect.getargspec """
@@ -185,7 +185,7 @@ def testSciKitLearnArgspecFailures():
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
 	testObj = Matrix(data2)
 
-	ret = UML.run(toCall("GaussianNB"), trainingObj, testX=testObj, trainY=trainingYObj)
+	ret = UML.trainAndApply(toCall("GaussianNB"), trainingObj, testX=testObj, trainY=trainingYObj)
 
 
 def testSciKitLearnUndiagnosed():
@@ -199,12 +199,12 @@ def testSciKitLearnUndiagnosed():
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
 	testObj = Matrix(data2)
 
-	ret = UML.run(toCall("EllipticEnvelope"), trainingObj, testX=testObj)
+	ret = UML.trainAndApply(toCall("EllipticEnvelope"), trainingObj, testX=testObj)
 	#requires Y data
-	ret = UML.run(toCall("MultinomialNB"), trainingObj, testX=testObj, trainY=trainingYObj)
-	ret = UML.run(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
-	ret = UML.run(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
-	ret = UML.run(toCall("IsotonicRegression"), trainingObj, testX=testObj)
+	ret = UML.trainAndApply(toCall("MultinomialNB"), trainingObj, testX=testObj, trainY=trainingYObj)
+	ret = UML.trainAndApply(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
+	ret = UML.trainAndApply(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
+	ret = UML.trainAndApply(toCall("IsotonicRegression"), trainingObj, testX=testObj)
 
 
 

@@ -128,7 +128,7 @@ class SciKitLearn(UniversalInterface):
 
 	def getLearnerParameterNames(self, learnerName):
 		"""
-		Find all parameters involved in a run() call to the given learner
+		Find all parameters involved in a trainAndApply() call to the given learner
 		TAKES string name of a learner, 
 		RETURNS list of list of param names
 		"""
@@ -172,7 +172,7 @@ class SciKitLearn(UniversalInterface):
 
 	def getLearnerDefaultValues(self, learnerName):
 		"""
-		Find all default values for parameters involved in a run() call to the given learner
+		Find all default values for parameters involved in a trainAndApply() call to the given learner
 		TAKES string name of a learner, 
 		RETURNS list of dict of param names to default values
 		"""
@@ -268,7 +268,7 @@ class SciKitLearn(UniversalInterface):
 		parameters provided by a UML user.
 
 		trainX, etc. are filled with the values of the parameters of the same name
-		to a calls to run() or train(), or are empty when being called before other
+		to a calls to trainAndApply() or train(), or are empty when being called before other
 		functions. arguments is a dictionary mapping names to values of all other
 		parameters that need to be processed.
 

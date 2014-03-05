@@ -69,9 +69,9 @@ def shogun(learnerName, trainX, trainY=None, testX=None, arguments={}, output=No
 		trialResult = checkClassificationStrategy(_shogunBackend, learnerName, arguments)
 		# note: these conditionals include a binary return
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			UML.runners.runOneVsAll("shogun." + learnerName, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			UML.runners.trainAndApplyOneVsAll("shogun." + learnerName, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			UML.runners.runOneVsOne("shogun." + learnerName, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
+			UML.runners.trainAndApplyOneVsOne("shogun." + learnerName, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
 
 	args = copy.copy(arguments)
 	if not isinstance(trainX, UML.data.Base):

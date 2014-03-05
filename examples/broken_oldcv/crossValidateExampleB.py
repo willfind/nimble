@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	from UML import crossValidateReturnBest
 	from UML import createData
 	from UML import splitData
-	from UML import runAndTest
+	from UML import trainAndTest
 	from UML import functionCombinations
 	from UML.metrics import fractionIncorrect
 
@@ -20,9 +20,9 @@ if __name__ == "__main__":
 	trainX, trainY, testX, testY = splitData(allData, labelID='income', fractionForTestSet=.15)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|1>,"gamma":<.01|.1|1>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
+	toRun = 'trainAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|1>,"gamma":<.01|.1|1>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
+	extraParams = {'trainAndTest':trainAndTest, 'fractionIncorrect':fractionIncorrect}
 
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=10, extraParams=extraParams)
 	print bestFunction

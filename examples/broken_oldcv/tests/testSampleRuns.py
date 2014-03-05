@@ -1,14 +1,14 @@
 from UML.examples.allowImports import boilerplate
 boilerplate()
 from UML import UMLPath
-from UML import run
+from UML import trainAndApply
 from UML import normalizeData
 from UML import createData
 from UML import crossValidateReturnBest
 from UML import crossValidate
 from UML import splitData
 from UML import functionCombinations
-from UML import runAndTest
+from UML import trainAndTest
 from UML.metrics import fractionIncorrect
 
 import os
@@ -46,9 +46,9 @@ def testEverythingVolumeOne():
 	
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRunOne = 'runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
+	toRunOne = 'trainAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
 	runsOne = functionCombinations(toRunOne)
-	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
+	extraParams = {'trainAndTest':trainAndTest, 'fractionIncorrect':fractionIncorrect}
 	fullCrossValidateResults = crossValidate(trainX, trainY, runsOne, numFolds=10, extraParams=extraParams, sendToLog=False)
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runsOne, mode='min', numFolds=10, extraParams=extraParams, sendToLog=False)
 
@@ -114,9 +114,9 @@ def testCrossValidateExample():
 	trainX, trainY, testX, testY = splitData(allData, labelID='income', fractionForTestSet=.15)
 
 	# setup parameters we want to cross validate over, and the functions and metrics to evaluate
-	toRun = 'runAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
+	toRun = 'trainAndTest("mlpy.LibSvm", trainX, trainY, testX, testY, {"C":<.01|.1|.1|10|100>,"gamma":<.01|.1|.1|10|100>,"kernel_type":"<rbf|sigmoid>"}, [fractionIncorrect])'
 	runs = functionCombinations(toRun)
-	extraParams = {'runAndTest':runAndTest, 'fractionIncorrect':fractionIncorrect}
+	extraParams = {'trainAndTest':trainAndTest, 'fractionIncorrect':fractionIncorrect}
 
 	bestFunction, performance = crossValidateReturnBest(trainX, trainY, runs, mode='min', numFolds=10, extraParams=extraParams)
 	assert bestFunction is not None
@@ -149,7 +149,7 @@ def testNormalizing():
 	assert trainObj.data[0].size == 1
 	assert testObj.data[0].size == 1
 
-	ret = run('mlpy.KNN', trainObj, trainObjY, testObj, arguments={'k':1})
+	ret = trainAndApply('mlpy.KNN', trainObj, trainObjY, testObj, arguments={'k':1})
 
 	# assert we get the correct classes
 	assert ret.data[0,0] == 1

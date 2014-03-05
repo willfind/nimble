@@ -429,8 +429,8 @@ def _generateAllCorrect(length):
 
 def _generatePredicted(knowns, predictionType):
 	"""
-	Predicted may mean any of the three kinds of output from run: predicted
-	labels, bestScores, or allScores. If confidences are involved, they are
+	Predicted may mean any of the three kinds of output formats for trainAndApply:
+	predicted labels, bestScores, or allScores. If confidences are involved, they are
 	randomly generated, yet consistent with correctness
 
 	"""
