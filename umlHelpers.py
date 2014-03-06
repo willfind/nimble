@@ -53,9 +53,9 @@ def _learnerQuery(name, queryType):
 	[package, learnerName] = name.split('.')
 
 	if queryType == "parameters":
-		toCallName = '_getParameterNames'
+		toCallName = 'getLearnerParameterNames'
 	elif queryType == 'defaults':
-		toCallName = '_getDefaultValues'
+		toCallName = 'getLearnerDefaultValues'
 	else:
 		raise ArgumentException("Unrecognized queryType: " + queryType)
 
