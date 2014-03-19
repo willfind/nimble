@@ -1074,6 +1074,8 @@ class LearnerInspector:
 
 		return self._classifyAlgorithmDecisionTree(learnerName)
 
+	#todo pull from each 'trail' function to find out what possible results it can have
+	#then make sure that you've covered all possible combinations
 	def _classifyAlgorithmDecisionTree(self, learnerName):
 		"""Implements a decision tree based off of the predicted labels returned from 
 		the datasets.
@@ -1106,6 +1108,8 @@ class LearnerInspector:
 				return 'regressor'
 			if regressorTrialResult == 'other':
 				return 'classifier'
+			#should be covered by all cases, raise exception
+			raise AttributeError('Decision tree needs to be updated to account for other results from regressorTrialResult')
 
 		# if the classifer data set genereated a low error, but not exact, it is regressor
 		elif classifierTrialResult == 'near':
@@ -1192,7 +1196,7 @@ class LearnerInspector:
 		"""Run trainAndApply on the classifer dataset and make judgments about the learner based on 
 		the results of trainAndApply.
 		"""
-		
+
 		#unpack initialized datasets
 		trainData, trainLabels, noiselessTrainLabels = self.classifierDataTrain
 		testData, testLabels, noiselessTestLabels = self.classifierDataTest

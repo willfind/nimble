@@ -399,11 +399,11 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction, numFolds=10,
 def learnerType(learnerNames):
 	"""Returns the string representation of a best guess for the type of learner
 	specified by the learner names in learnerNames.
-	If learnerNames is a single string (not a list), then only a single result is returned
-	instead of a list.
+	If learnerNames is a single string (not a list of strings), then only a single 
+	result is returned, instead of a list.
 	
-	Generates a series of artificial data sets with particular traits to look for
-	evidence of a classifier, regressor, etc.
+	On the backend, learnerType generates a series of artificial data sets with 
+	particular traits to look for heuristic evidence of a classifier, regressor, etc.
 	"""
 	if not isinstance(learnerNames, list):
 		learnerNames = [learnerNames]
