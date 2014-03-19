@@ -31,3 +31,5 @@ from uml import crossValidate
 from uml import crossValidateReturnAll
 from uml import crossValidateReturnBest
 
+from uml import learnerType
+

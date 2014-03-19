@@ -8,6 +8,12 @@ from math import fabs
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.umlHelpers import foldIterator
 
+from UML import learnerType
+from UML import createData
+from UML.umlHelpers import sumAbsoluteDifference
+from UML.umlHelpers import generateClusteredPoints
+import math
+
 ##########
 # TESTER #
 ##########
@@ -154,3 +160,157 @@ class TestRand(FoldIteratorTester):
 			return UML.createData(retType=retType, data=data, featureNames=featureNames)
 
 		super(TestRand, self).__init__(maker)
+
+
+
+def testClassifyAlgorithms(printResultsDontThrow=False):
+	"""tries the algorithm names (which are keys in knownAlgorithmToTypeHash) with learnerType().
+	Next, compares the result to the algorithm's assocaited value in knownAlgorithmToTypeHash.
+	If the algorithm types don't match, an AssertionError is thrown."""
+
+	knownAlgorithmToTypeHash = {    'sciKitLearn.KNeighborsClassifier':'classifier', 
+									'sciKitLearn.KNeighborsRegressor':'regressor',
+									'sciKitLearn.RadiusNeighborsClassifier':'classifier',
+									'sciKitLearn.RadiusNeighborsRegressor':'regressor',
+
+									'mlpy.KNN':'classifier', 
+									'mlpy.LDAC':'classifier',
+
+									# 'mlpy.kmeans':'other',
+									# 'sciKitLearn.KMeans':'other'
+									}
+
+	for curAlgorithm in knownAlgorithmToTypeHash.keys():
+		actualType = knownAlgorithmToTypeHash[curAlgorithm]
+		predictedType = UML.learnerType(curAlgorithm)
+		try:
+			assert(actualType in predictedType)
+		except AssertionError:
+			errorString = 'Classification failure. Classified ' + curAlgorithm + ' as ' + predictedType + ', when it really is a ' + actualType
+			if printResultsDontThrow:
+				print errorString
+			else:
+				raise AssertionError(errorString)
+		else:
+			if printResultsDontThrow:
+				print 'Passed test for ' + curAlgorithm
+
+def testGenerateClusteredPoints():
+	"""tests that the shape of data produced by generateClusteredPoints() is predictable and that the noisiness of the data
+	matches that requested via the addFeatureNoise and addLabelNoise flags"""
+	clusterCount = 3
+	pointsPer = 10
+	featuresPer = 5
+
+	dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=True)
+	pts, feats = noiselessLabels.pointCount, noiselessLabels.featureCount
+	for i in xrange(pts):
+		for j in xrange(feats):
+			#assert that the labels don't have noise in noiselessLabels
+			assert(noiselessLabels[i,j] % 1 == 0.0)
+
+	pts, feats = dataset.pointCount, dataset.featureCount
+	for i in xrange(pts):
+		for j in xrange(feats):
+			#assert dataset has noise for all entries
+			assert(dataset[i,j] % 1 != 0.0)
+
+	dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=False, addLabelNoise=False, addLabelColumn=True)
+	pts, feats = noiselessLabels.pointCount, noiselessLabels.featureCount
+	for i in xrange(pts):
+		for j in xrange(feats):
+			#assert that the labels don't have noise in noiselessLabels
+			assert(noiselessLabels[i,j] % 1 == 0.0)
+
+	pts, feats = dataset.pointCount, dataset.featureCount
+	for i in xrange(pts):
+		for j in xrange(feats):
+			#assert dataset has no noise for all entries
+			assert(dataset[i,j] % 1 == 0.0)
+
+	#test that addLabelColumn flag works
+	dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=False, addLabelNoise=False, addLabelColumn=False)
+	labelColumnlessRows, labelColumnlessCols = dataset.pointCount, dataset.featureCount
+	#columnLess should have one less column in the DATASET, rows should be the same
+	assert(labelColumnlessCols - feats == -1)
+	assert(labelColumnlessRows - pts == 0)
+
+
+	#test that generated points have plausible values expected from the nature of generateClusteredPoints
+	allNoiseDataset, labsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=True)
+	pts, feats = allNoiseDataset.pointCount, allNoiseDataset.featureCount
+	for curRow in xrange(pts):
+		for curCol in xrange(feats):
+			#assert dataset has no noise for all entries
+			assert(allNoiseDataset[curRow,curCol] % 1 > 0.0000000001)
+			
+			currentClusterNumber = math.floor(curRow / pointsPer)
+			expectedNoiselessValue = currentClusterNumber
+			absoluteDifference = abs(allNoiseDataset[curRow,curCol] - expectedNoiselessValue)
+			#assert that the noise is reasonable:
+			assert(absoluteDifference < 0.01)
+
+def testSumDifferenceFunction():
+	""" Function verifies that for different shaped matricies, generated via createData, sumAbsoluteDifference() throws an ArgumentException."""
+
+	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
+	data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2], [0,0,0,0]]
+	matrix1 = createData('Matrix', data1)
+	matrix2 = createData('Matrix', data2)
+	failedShape = False
+	try:
+		result = sumAbsoluteDifference(matrix1, matrix2)
+	except ArgumentException:
+		failedShape = True
+	assert(failedShape)
+
+	data1 = [[0,0,1], [1,0,2], [0,1,3], [0,0,1], [1,0,2], [0,1,3], [0,0,1], [1,0,2], [0,1,3], [0,0,1], [1,0,2], [0,1,3], [0,0,1], [1,0,2], [0,1,3], [0,0,3], [1,0,1], [0,1,2]]
+	data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
+	matrix1 = createData('Matrix', data1)
+	matrix2 = createData('Matrix', data2)
+	failedShape = False
+	try:
+		result = sumAbsoluteDifference(matrix1, matrix2)
+	except ArgumentException:
+		failedShape = True
+	assert(failedShape)
+
+	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
+	data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
+	matrix1 = createData('Matrix', data1)
+	matrix2 = createData('Matrix', data2)
+	failedShape = False
+	try:
+		result = sumAbsoluteDifference(matrix1, matrix2)
+	except ArgumentException:
+		failedShape = True
+	assert(failedShape is False)
+
+	#asserts differece function gets absolute difference correct (18 * 0.1 * 2)
+	#18 rows
+	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
+	data2 = [[1-0.1,0,0,1.1], [0-0.1,1,0,2.1], [0-0.1,0,1,3.1], [1-0.1,0,0,1.1], [0-0.1,1,0,2.1], [0-0.1,0,1,3.1], [1-0.1,0,0,1.1], [0-0.1,1,0,2.1], [0-0.1,0,1,3.1], [1-0.1,0,0,1.1], [0-0.1,1,0,2.1], [0-0.1,0,1,3.1], [1-0.1,0,0,1.1], [0-0.1,1,0,2.1], [0-0.1,0,1,3.1], [1-0.1,0,0,3.1], [0-0.1,1,0,1.1], [0-0.1,0,1,2.1]]
+	matrix1 = createData('Matrix', data1)
+	matrix2 = createData('Matrix', data2)
+	diffResult = sumAbsoluteDifference(matrix1, matrix2)
+	shouldBe = 18 * 0.1 * 2
+	# 18 entries, discrepencies of 0.1 in the first column, and the last column
+	discrepencyEffectivelyZero = (diffResult - shouldBe) < .000000001 and (diffResult - shouldBe) > -.0000000001
+	if not discrepencyEffectivelyZero:
+		raise AssertionError("difference result should be " + str(18 * 0.1 * 2) + ' but it is ' + str(diffResult))
+	# assert(diffResult == 18 * 0.1 * 2)
+
+
+def testLearnerTypeSuite():
+	"""Call all test functions."""
+	testSumDifferenceFunction(True)
+	testGenerateClusteredPoints()
+	testClassifyAlgorithms()
+
+if __name__ == "__main__":
+
+	testLearnerTypeSuite()
+
+
+
+

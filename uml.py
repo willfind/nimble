@@ -33,6 +33,8 @@ from UML.umlHelpers import computeMetrics
 from UML.umlHelpers import ArgumentIterator
 from UML.data.dataHelpers import DEFAULT_SEED
 
+from UML.umlHelpers import LearnerInspector
+
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
@@ -394,7 +396,28 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction, numFolds=10,
 
 	return bestArgumentAndScoreTuple
 
+def learnerType(learnerNames):
+	"""Returns the string representation of a best guess for the type of learner
+	specified by the learner names in learnerNames.
+	If learnerNames is a single string (not a list), then only a single result is returned
+	instead of a list.
+	
+	Generates a series of artificial data sets with particular traits to look for
+	evidence of a classifier, regressor, etc.
+	"""
+	if not isinstance(learnerNames, list):
+		learnerNames = [learnerNames]
 
+	learnerInspectorObj = LearnerInspector()
 
+	typeResults = []
+	for curLearnerName in learnerNames:
+		typeResults.append(learnerInspectorObj.learnerType(curLearnerName))
+
+	#if only one algo was requested, remove type from list an return as single string
+	if len(typeResults) == 1:
+		typeResults = typeResults[0]
+
+	return typeResults
 
 

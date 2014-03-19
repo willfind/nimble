@@ -945,6 +945,228 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex, rawArgIn
 		return listOfDicts
 
 
+#with class-based refactor:
+#todo add scale control as paramater for generateClusteredPoints - remember to scale noise term accordingly
+
+def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoint, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False, retType='Matrix'):
+	"""
+	Function to generate Data object with arbitrary number of points, number of clusters, and number of features.
+
+	The function returns the dataset in an object, 'labels' for each point in the dataset (noise optional), and 
+	the 'noiseless' labels for the points, which is the central value used to define the feature values for each point
+
+	generateClusteredPoints() outputs a dataset of the following format:
+	each point associated with a cluster has numFeaturesPerPoint features. The value of each entry in the feature vector
+	is clusterNumber+noise. Each point in the cluster has the same feature vector, with different noise.
+
+	NOTE: if addFeatureNoise and addLabelNoise are false, then the 'clusters' are actually all
+	contain just repeated points, where each point in the cluster has the same features and the same labels
+
+	returns tuple of UML.Base objects: (pointsObj, labelsObj, noiselessLabelsObj)
+	"""
+
+	pointsList = []
+	labelsList = []
+	clusterNoiselessLabelList = []
+
+	def _noiseTerm():
+		return random.random()*0.0001 - 0.00005
+
+	for curCluster in xrange(numClusters):
+		for curPoint in xrange(numPointsPerCluster):
+			curFeatureVector = [float(curCluster) for x in xrange(numFeaturesPerPoint)]
+			
+			if addFeatureNoise:
+				curFeatureVector = [_noiseTerm()+entry for entry in curFeatureVector]
+			
+			if addLabelNoise:
+				curLabel = _noiseTerm()+curCluster
+			else:
+				curLabel = curCluster
+
+			if addLabelColumn:
+				curFeatureVector.append(curLabel)
+
+			#append curLabel as a list to maintain dimensionality
+			labelsList.append([curLabel])
+
+			pointsList.append(curFeatureVector)
+			clusterNoiselessLabelList.append([float(curCluster)])
+
+
+	#todo verify that your list of lists is valid initializer for all datatypes, not just matrix
+	#then convert
+	#finally make matrix object out of the list of points w/ labels in last column of each vector/entry:
+	pointsObj = UML.createData('Matrix', pointsList)
+
+	labelsObj = UML.createData('Matrix', labelsList)
+
+	#todo change actuallavels to something like associatedClusterCentroid
+	noiselessLabelsObj = UML.createData('Matrix', clusterNoiselessLabelList)
+
+	#convert datatype if not matrix
+	if retType.lower() != 'matrix':
+		pointsObj = pointsObj.copyAs(retType)
+		labelsObj = labelsObj.copyAs(retType)
+		noiselessLabelsObj = noiselessLabelsObj.copyAs(retType)
+	
+	return (pointsObj, labelsObj, noiselessLabelsObj)
+
+
+def sumAbsoluteDifference(dataOne, dataTwo):
+	"""
+	Aggregates absolute difference between corresponding entries in base objects dataOne and dataTwo.
+
+	Checks to see that the vectors (which must be base objects) are of the same shape, first.
+	Next it iterates through the corresponding points in each vector/matrix and appends the absolute difference
+	between corresponding points to a list.
+	Finally, the function returns the sum of the absolute differences.
+	"""
+	#compare shapes
+	if dataOne.featureCount != dataTwo.featureCount:
+		raise ArgumentException("Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of features.")
+	if dataOne.pointCount != dataTwo.pointCount:
+		raise ArgumentException("Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of points.")
+
+	numpyOne = dataOne.copyAs('numpyarray')
+	numpyTwo = dataTwo.copyAs('numpyarray')
+	differences = numpyOne - numpyTwo
+
+	absoluteDifferences = numpy.abs(differences)
+
+	sumAbsoluteDifferences = numpy.sum(absoluteDifferences)
+
+	return sumAbsoluteDifferences
+
+class LearnerInspector:
+	"""Class using heirustics to classify the 'type' of problem an algorithm is meant to work on.
+	e.g. classification, regression, dimensionality reduction, etc.
+
+	Use:
+	A LearnerInspector object generates private datasets that are intentionally constructed to 
+	invite particular results when an algorithm is run on them. Once a user has a LearnerInspector
+	object, she can call learnerType(algorithmName) and get the 'best guess' type for that algorithm.
+
+	Note:
+	If characterizing multiple algorithms, use the SAME LearnerInspector object, and call learnerType()
+	once for each algorithm you are trying to classify. 
+	"""
+	def __init__(self):
+
+		self.NEAR_THRESHHOLD = .01
+		self.EXACT_THRESHHOLD = .00000001
+
+		#initialize datasets for tests
+		self.regressorDataTrain, self.regressorDataTest = self._regressorDataset()
+		#todo use classifier
+		self.classifierDataTrain, self.classifierDataTest = self._classifierDataset()
+
+	def learnerType(self, learnerName):
+		return self._classifyAlgorithmDecisionTree(learnerName)
+
+	def _classifyAlgorithmDecisionTree(self, learnerName):
+		regressorTrialResult = self._regressorTrial(learnerName)
+		classifierTrialResult = self._classifierTrial(learnerName)
+
+		#decision tree:
+		#if classifier tests gives exact results
+		if classifierTrialResult == 'exact': #could be classifier or regressor at this point
+			#if when given unrepeating labels, algorithm generates duplicate of already seen labels, 
+			#it is classifer
+			if regressorTrialResult == 'repeated_labels':
+				return 'classifier'
+			if regressorTrialResult == 'near':
+				return 'regressor'
+			if regressorTrialResult == 'other':
+				return 'classifier'
+
+		# if the classifer data set genereated a low error, but not exact, it is regressor
+		elif classifierTrialResult == 'near':
+			return 'regressor'
+
+		#if the classifier dataset doesn't see classifier or regerssor behavior, return other
+		#todo this is where to insert future sensors for other types of algorithms, but
+		#currently we can only resolve classifiers, regressors, and other.
+		else:
+			return 'other'
+
+	def _regressorDataset(self):
+		clusterCount = 3
+		pointsPer = 10
+		featuresPer = 5
+
+		regressorTrainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False)
+		regressorTestData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False)
+
+		return ((regressorTrainData, trainLabels, noiselessTrainLabels), (regressorTestData, testLabels, noiselessTestLabels))
+
+	def _classifierDataset(self):
+		clusterCount = 3
+		pointsPer = 10
+		featuresPer = 5
+
+		trainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
+		testData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
+
+		return ((trainData, trainLabels, noiselessTrainLabels), (testData, testLabels, noiselessTestLabels))
+
+	def _regressorTrial(self, learnerName):
+		#unpack already-initialized datasets
+		regressorTrainData, trainLabels, noiselessTrainLabels = self.regressorDataTrain
+		regressorTestData, testLabels, noiselessTestLabels = self.regressorDataTest
+
+		try:
+			runResults = UML.trainAndApply(learnerName, trainX=regressorTrainData, trainY=trainLabels, testX=regressorTestData)
+		except Exception:
+			return 'other'
+
+		try:
+			sumError = sumAbsoluteDifference(runResults, noiselessTestLabels)
+		except ArgumentException:
+			return 'other'
+
+		#if the labels are repeated from those that were trained on, then it is a classifier
+		#so pass back that labels are repeated
+		# if runResults are all in trainLabels, then it's repeating:
+		alreadySeenLabelsList = []
+		for curPointIndex in xrange(trainLabels.pointCount):
+			alreadySeenLabelsList.append(trainLabels[curPointIndex, 0])
+		unseenLabelFound = False
+		for curResultPointIndex in xrange(runResults.pointCount):
+			if runResults[curResultPointIndex,0] not in alreadySeenLabelsList:
+				unseenLabelFound = True
+				break
+
+		if not unseenLabelFound:
+			return 'repeated_labels'
+
+		if sumError > self.NEAR_THRESHHOLD:
+			return 'other'
+		else:
+			return 'near'
+
+
+	def _classifierTrial(self, learnerName):
+		#unpack initialized datasets
+		trainData, trainLabels, noiselessTrainLabels = self.classifierDataTrain
+		testData, testLabels, noiselessTestLabels = self.classifierDataTest
+
+		try:
+			runResults = UML.trainAndApply(learnerName, trainX=trainData, trainY=trainLabels, testX=testData)
+		except Exception:
+			return 'other'
+
+		try:
+			sumError = sumAbsoluteDifference(runResults, testLabels) #should be identical to noiselessTestLabels
+		except ArgumentException:
+			return 'other'
+
+		if sumError > self.NEAR_THRESHHOLD:
+			return 'other'
+		elif sumError > self.EXACT_THRESHHOLD:
+			return 'near'
+		else:
+			return 'exact'
 
 
 
