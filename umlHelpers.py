@@ -947,7 +947,6 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex, rawArgIn
 
 #with class-based refactor:
 #todo add scale control as paramater for generateClusteredPoints - remember to scale noise term accordingly
-
 def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoint, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False, retType='Matrix'):
 	"""
 	Function to generate Data object with arbitrary number of points, number of clusters, and number of features.
@@ -1022,7 +1021,8 @@ def sumAbsoluteDifference(dataOne, dataTwo):
 	between corresponding points to a list.
 	Finally, the function returns the sum of the absolute differences.
 	"""
-	#compare shapes
+
+	#compare shapes of data to make sure a comparison is sensible.
 	if dataOne.featureCount != dataTwo.featureCount:
 		raise ArgumentException("Can't calculate difference between corresponding entries in dataOne and dataTwo, the underlying data has different numbers of features.")
 	if dataOne.pointCount != dataTwo.pointCount:
@@ -1030,6 +1030,7 @@ def sumAbsoluteDifference(dataOne, dataTwo):
 
 	numpyOne = dataOne.copyAs('numpyarray')
 	numpyTwo = dataTwo.copyAs('numpyarray')
+
 	differences = numpyOne - numpyTwo
 
 	absoluteDifferences = numpy.abs(differences)
@@ -1051,7 +1052,11 @@ class LearnerInspector:
 	If characterizing multiple algorithms, use the SAME LearnerInspector object, and call learnerType()
 	once for each algorithm you are trying to classify. 
 	"""
+
 	def __init__(self):
+		"""Caches the regressor and classifier datasets, to speed up learnerType() calls 
+		for multiple learners.
+		"""
 
 		self.NEAR_THRESHHOLD = .01
 		self.EXACT_THRESHHOLD = .00000001
@@ -1062,9 +1067,31 @@ class LearnerInspector:
 		self.classifierDataTrain, self.classifierDataTest = self._classifierDataset()
 
 	def learnerType(self, learnerName):
+		"""Returns, as a string, the heuristically determined best guess for the type 
+		of problem the learnerName learner is designed to run on.
+		Example output: 'classifier', 'regressor', 'other'
+		"""
+
 		return self._classifyAlgorithmDecisionTree(learnerName)
 
 	def _classifyAlgorithmDecisionTree(self, learnerName):
+		"""Implements a decision tree based off of the predicted labels returned from 
+		the datasets.
+
+		Fundamentally, if the classifier dataset has no error, that means the algorithm 
+		is likely a classifier, but it could be a regressor, if its error is low, however,
+		the algorithm is likely a regressor, and if its error is high, or the algorithm 
+		crashes with the dataset, then the algorithm is likely neither classifier nor regressor.
+
+		Next, if the classifier dataset had no error, we want to see if the error on the
+		regressor dataset is low. Also, we want to see if the algorithm is capable of generating
+		labels that it hasn't seen (interpolating a la a regressor).
+
+		If the algorithm doesn't produce any new labels, despite no repeated labels, then
+		we assume it is a classifier. If the error on the classifier dataset is low, however,
+		and the algorithm interpolates labels, then we assume it is a regressor.
+		"""
+
 		regressorTrialResult = self._regressorTrial(learnerName)
 		classifierTrialResult = self._classifierTrial(learnerName)
 
@@ -1091,26 +1118,39 @@ class LearnerInspector:
 			return 'other'
 
 	def _regressorDataset(self):
+		"""Generates clustered points, where the labels of the points within a single cluster are all very similar,
+		but non-identical
+		"""
+
 		clusterCount = 3
 		pointsPer = 10
 		featuresPer = 5
 
+		#add noise to both the features and the labels
 		regressorTrainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False)
 		regressorTestData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False)
 
 		return ((regressorTrainData, trainLabels, noiselessTrainLabels), (regressorTestData, testLabels, noiselessTestLabels))
 
 	def _classifierDataset(self):
+		"""Generates clustered points, hwere the labels of the points within each cluster are all identical.
+		"""
+
 		clusterCount = 3
 		pointsPer = 10
 		featuresPer = 5
 
+		#add noise to the features only
 		trainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
 		testData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
 
 		return ((trainData, trainLabels, noiselessTrainLabels), (testData, testLabels, noiselessTestLabels))
 
 	def _regressorTrial(self, learnerName):
+		"""Run trainAndApply on the regressor dataset and make judgments about the learner based on 
+		the results of trainAndApply
+		"""
+
 		#unpack already-initialized datasets
 		regressorTrainData, trainLabels, noiselessTrainLabels = self.regressorDataTrain
 		regressorTestData, testLabels, noiselessTestLabels = self.regressorDataTest
@@ -1131,6 +1171,8 @@ class LearnerInspector:
 		alreadySeenLabelsList = []
 		for curPointIndex in xrange(trainLabels.pointCount):
 			alreadySeenLabelsList.append(trainLabels[curPointIndex, 0])
+
+		#check if the learner generated any new label (one it hadn't seen in training)
 		unseenLabelFound = False
 		for curResultPointIndex in xrange(runResults.pointCount):
 			if runResults[curResultPointIndex,0] not in alreadySeenLabelsList:
@@ -1147,6 +1189,10 @@ class LearnerInspector:
 
 
 	def _classifierTrial(self, learnerName):
+		"""Run trainAndApply on the classifer dataset and make judgments about the learner based on 
+		the results of trainAndApply.
+		"""
+		
 		#unpack initialized datasets
 		trainData, trainLabels, noiselessTrainLabels = self.classifierDataTrain
 		testData, testLabels, noiselessTestLabels = self.classifierDataTest
