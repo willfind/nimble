@@ -369,7 +369,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, argumentsForAlgorithm=
 	if not isinstance(Y, (Base, int)):
 		raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
 	if isinstance(Y, int):
-		Y = copyLabels(X, Y)
+		Y = X.extractFeatures(start=Y, end=Y)
 	
 	if not X.pointCount == Y.pointCount:
 		#todo support indexing if Y is an index for X instead
