@@ -38,7 +38,7 @@ from UML.umlHelpers import LearnerInspector
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def createRandomizedData(retType, numPoints, numFeatures, sparsity, numericType="float", featureNames=None, name=None):
+def createRandomData(retType, numPoints, numFeatures, sparsity, numericType="float", featureNames=None, name=None):
 	"""
 	Generates a data object with random contents and numPoints points and numFeatures features. 
 

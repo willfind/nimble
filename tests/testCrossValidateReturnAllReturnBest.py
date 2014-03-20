@@ -10,7 +10,7 @@ sys.path.append('../..')
 from UML import crossValidateReturnAll
 from UML import crossValidateReturnBest
 from UML import createData
-from UML import createRandomizedData
+from UML import createRandomData
 from UML.metrics import *
 import random
 from pdb import set_trace as ttt

@@ -155,7 +155,7 @@ def testRandomSequenceOfMethods():
 	# dense int trial
 	sparcity = 0.05
 	objectList = []
-	first = UML.createRandomizedData('List', points, features, sparcity, 'int')
+	first = UML.createRandomData('List', points, features, sparcity, 'int')
 	objectList.append(first)
 #	objectList.append(first.copyAs(format='Matrix'))
 #	objectList.append(first.copyAs(format='Sparse'))
@@ -164,7 +164,7 @@ def testRandomSequenceOfMethods():
 	## dense float trial
 	sparcity = 0.05
 	objectList = []
-	first = UML.createRandomizedData('List', points, features, sparcity, 'float')
+	first = UML.createRandomData('List', points, features, sparcity, 'float')
 	objectList.append(first)
 	objectList.append(first.copyAs(format='Matrix'))
 	objectList.append(first.copyAs(format='Sparse'))
@@ -173,7 +173,7 @@ def testRandomSequenceOfMethods():
 	# sparse int trial
 	sparcity = 0.9
 	objectList = []
-	first = UML.createRandomizedData('List', points, features, sparcity, 'int')
+	first = UML.createRandomData('List', points, features, sparcity, 'int')
 	objectList.append(first)
 	objectList.append(first.copyAs(format='Matrix'))
 	objectList.append(first.copyAs(format='Sparse'))
@@ -182,7 +182,7 @@ def testRandomSequenceOfMethods():
 	# sparse float trial
 	sparcity = 0.9
 	objectList = []
-	first = UML.createRandomizedData('List', points, features, sparcity, 'float')
+	first = UML.createRandomData('List', points, features, sparcity, 'float')
 	objectList.append(first)
 	objectList.append(first.copyAs(format='Matrix'))
 	objectList.append(first.copyAs(format='Sparse'))
@@ -508,7 +508,7 @@ def randObject(shape, dataObject, matchType, matchShape=None):
 	elif matchShape == 'point':	
 		features = shape[1]
 
-	return UML.createRandomizedData(dataType, points, features, .5, 'int')
+	return UML.createRandomData(dataType, points, features, .5, 'int')
 
 def simpleMapper(point):
 	idInt = point[0]

@@ -1,6 +1,6 @@
 
 from nose.tools import *
-from UML import createRandomizedData
+from UML import createRandomData
 import numpy
 
 
@@ -34,7 +34,7 @@ def testReturnsFundamentalsCorrect():
 		for curReturnType in returnTypes:
 			for curSparsity in sparsities:
 
-				returned = createRandomizedData(curReturnType, nPoints, nFeatures, curSparsity, numericType=curType)
+				returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, numericType=curType)
 				
 				assert(returned.pointCount == nPoints)
 				assert(returned.featureCount == nFeatures)
@@ -69,7 +69,7 @@ def testSparsityReturnedPlausible():
 	for curType in supportedFundamentalTypes:
 		for curReturnType in returnTypes:
 			for curSparsity in sparsities:
-				returned = createRandomizedData(curReturnType, nPoints, nFeatures, curSparsity, numericType=curType)
+				returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, numericType=curType)
 
 				if curReturnType.lower() == 'matrix' or curReturnType.lower() == 'list':
 					nonZerosCount = numpy.count_nonzero(returned.copyAs('numpyarray'))
