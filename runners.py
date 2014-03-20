@@ -498,8 +498,6 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY=None, argumen
 
 
 
-#todo clean up logging
-#todo write in multiClassStrategy explanation
 def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **arguments):
 	"""
 	Supply optional algorithm parameters via **arguments as kwargs
@@ -534,6 +532,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
 	or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
 	applies to data sets with 2 class labels.
+
+	multiClassStrategy: may only be 'default' 'OneVsAll' or 'OneVsOne'
 	
 	sendToLog: optional boolean valued parameter; True meaning the results should be logged
 
