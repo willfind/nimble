@@ -38,26 +38,71 @@ from UML.umlHelpers import LearnerInspector
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def createRandomizedData(retType, numPoints, numFeatures, sparcity, numericType="int", featureNames=None, name=None):
+def createRandomizedData(retType, numPoints, numFeatures, sparsity, numericType="float", featureNames=None, name=None):
+	"""
+	Generates a data object with random contents and numPoints points and numFeatures features. 
+
+	If numericType is 'float' (default) then the value of (point, feature) pairs are sampled from a normal
+	distribution (location 0, scale 1).
+
+	If numericType is 'int' then value of (point, feature) pairs are sampled from uniform integer distribution [1 100].
+
+	The sparsity is the likelihood that the value of a (point,feature) pair is zero.
+
+	Zeros are not counted in/do not affect the aforementioned sampling distribution.
+	"""
+
 	if numPoints < 1:
 		raise ArgumentException("must specify a positive nonzero number of points")
 	if numFeatures < 1:
 		raise ArgumentException("must specify a positive nonzero number of features")
-	if sparcity < 0 or sparcity >=1:
-		raise ArgumentException("sparcity must be greater than zero and less than one")
+	if sparsity < 0 or sparsity >=1:
+		raise ArgumentException("sparsity must be greater than zero and less than one")
 	if numericType != "int" and numericType != "float":
 		raise ArgumentException("numericType may only be 'int' or 'float'")
 
-	randData = numpy.zeros((numPoints,numFeatures))
-	for i in xrange(numPoints):
-		for j in xrange(numFeatures):
-			if random.random() > sparcity:
-				if numericType == 'int':
-					randData[i,j] = numpy.random.randint(1,100)
-				else:
-					randData[i,j] = numpy.random.rand()
+
+	#note: sparse is not stochastic sparsity, it uses rigid density measures
+	if retType.lower() == 'sparse':
+
+		density = 1.0 - float(sparsity)
+		numNonZeroValues = int(numPoints * numFeatures * density)
+
+		pointIndices = numpy.random.randint(low=0, high=numPoints, size=numNonZeroValues)
+		featureIndices = numpy.random.randint(low=0, high=numFeatures, size=numNonZeroValues)
+
+		if numericType == 'int':
+			dataVector = numpy.random.randint(low=1, high=100, size=numNonZeroValues)
+		#numeric type is float; distribution is normal
+		else: 
+			dataVector = numpy.random.normal(0, 1, size=numNonZeroValues) 
+
+		#pointIndices and featureIndices are 
+		randData = scipy.sparse.coo.coo_matrix((dataVector, (pointIndices, featureIndices)), (numPoints, numFeatures))
+			
+	#for non-sparse matrices, use numpy to generate matrices with sparsity characterics
+	else:
+		if numericType == 'int':
+			filledIntMatrix = numpy.random.randint(1, 100, (numPoints, numFeatures))
+		else:
+			filledFloatMatrix = numpy.random.normal(loc=0.0, scale=1.0, size=(numPoints,numFeatures))
+
+		#if sparsity is zero
+		if abs(float(sparsity) - 0.0) < 0.0000000001:
+			if numericType == 'int':
+				randData = filledIntMatrix
+			else:
+				randData = filledFloatMatrix
+		else:
+			binarySparsityMatrix = numpy.random.binomial(1, 1.0-sparsity, (numPoints, numFeatures))
+
+			if numericType == 'int':
+				randData = binarySparsityMatrix * filledIntMatrix
+			else:
+				randData = binarySparsityMatrix * filledFloatMatrix
 
 	return createData(retType, data=randData, featureNames=featureNames, name=name)
+
 
 
 def splitData(toSplit, fractionForTestSet, labelID=None):
