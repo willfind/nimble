@@ -64,9 +64,7 @@ def _validData(trainX, trainY, testX, testY):
 	if trainY is not None:
 		if not (isinstance(trainY, Base) or isinstance(trainY, basestring) or isinstance(trainY, int)):
 			raise ArgumentException("trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
-	if testX is None:
-		raise ArgumentException("Despite it being an optional parameter, testX must not be None. textX may only be an object derived from Base")
-	if not isinstance(testX, Base):
+	if not testX is None and not isinstance(testX, Base):
 		raise ArgumentException("testX may only be an object derived from Base")
 	if testY is not None:
 		if not (isinstance(testY, Base) or isinstance(testY, basestring) or isinstance(testY, int)):
@@ -79,6 +77,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 	_validScoreMode(scoreMode)
 	_validMultiClassStrategy(multiClassStrategy)
 	_validArguments(arguments)
+
+	if testX is None:
+		testX = trainX
 
 	if sendToLog:
 		timer = Stopwatch()

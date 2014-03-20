@@ -58,7 +58,7 @@ class Mlpy(UniversalInterfaceLookalike):
 		Returns true if the name is an accepted alias for this interface
 
 		"""
-		if name.lower() in ['mlpy']:
+		if name.lower() in ['mlpyold']:
 			return True
 		else:
 			return False
@@ -69,4 +69,4 @@ class Mlpy(UniversalInterfaceLookalike):
 		Returns the string name that will uniquely identify this interface
 
 		"""
-		return "mlpy"
+		return "mlpyOLD"

@@ -40,17 +40,10 @@ def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
 			if currBest[0] == allLabels[j]:
 				index = j
 				break
-		if currBest[1] != currAll[index]:
-			print i
-			print bestScores
-			print allScores
-			print index
 		assert currBest[1] == currAll[index]
 
 		#score in bestScore >= every score in allScores
 		for value in currAll:
 			if not value <= currBest[1]:
-#				print currBest
-#				print currAll
 				assert value <= currBest[1]
 

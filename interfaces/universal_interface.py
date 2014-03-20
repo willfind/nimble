@@ -100,11 +100,20 @@ class UniversalInterface(object):
 		# encapsulate into TrainedLearner object
 		return self.TrainedLearner(learnerName, arguments, transformedInputs, customDict, trainedBackend, self)
 
+	def _confirmValidLearner(self, learnerName):
+		allLearners = self.listLearners()
+		if not learnerName in allLearners:
+			raise ArgumentException("" + learnerName + " is not the name of a learner exposed by this interface")
+		learnerCall = self.findCallable(learnerName)
+		if learnerCall is None:
+			raise ArgumentException("" + learnerName + " was not found in this package")
+			
+
 	def _trainBackend(self, learnerName, trainX, trainY, arguments):		
 		### PLANNING ###
 
 		# verify the learner is available
-		learnerCall = self.findCallable(learnerName)
+		self._confirmValidLearner(learnerName)
 
 		#validate argument distributions
 		groupedArgsWithDefaults = self._validateArgumentDistribution(learnerName, arguments)
@@ -167,6 +176,8 @@ class UniversalInterface(object):
 		return a copy of the arguments that has been arranged for easy instantiation
 
 		"""
+#		import pdb
+#		pdb.set_trace()
 		baseCallName = learnerName
 		possibleParamSets = self.getLearnerParameterNames(learnerName)	
 		possibleDefaults = self.getLearnerDefaultValues(learnerName)
@@ -195,49 +206,62 @@ class UniversalInterface(object):
 			# is the param actually there? Is there a default associated with it?
 			present = paramName in available
 			hasDefault = paramName in currDefaults
-			if present:
-				if hasDefault:
-					paramValue = currDefaults[paramName]
-					if isinstance(paramValue, basestring) and self.findCallable(paramValue) is not None:
-						#copy state
-						availableBackup = copy.deepcopy(available)
-						allocationsBackup = copy.deepcopy(delayedAllocations)
-						# try: recursive call using default
-						try:
-							self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
-							# if succeed, add to delayedInstantiations
-							availableChanges = {}
-							for keyBackup in availableBackup:
-								valueBackup = availableBackup[keyBackup]
-								if keyBackup not in available:
-									availableChanges[keyBackup] = valueBackup
-							# TODO delayedAllocation changes
-							delayedInstantiations[paramName] = (available[paramName], availableChanges, allocationsBackup)
-						except:
-						# if fail, try recursive call using actual value and copied available
-							available = availableBackup
-							paramValue = available[paramName]
-							self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
-					else:
-						# mark down to use the real value if it isn't allocated elsewhere
-						delayedAllocations[None].append((paramName, available[paramName]))
-				else:
-					paramValue = available[paramName]
-					# is it something that needs to be instantiated and therefore needs params of its own?
-					if isinstance(paramValue, basestring) and self.findCallable(paramValue) is not None:
+
+			# In each conditional, we have three main tasks: identifying what values will
+			# be used, book keeping for that value (removal, delayed allocation / instantiation),
+			# and adding values to ret
+			if present and hasDefault:
+				def isInstantiable(name):
+					return isinstance(name, basestring) and self.findCallable(name) is not None
+				
+				paramValue = available[paramName]
+				paramDefault = currDefaults[paramName]
+				addToDelayedIfNeeded = True
+				if isInstantiable(paramValue) or isInstantiable(paramDefault):
+					availableBackup = copy.deepcopy(available)
+					allocationsBackup = copy.deepcopy(delayedAllocations)
+				
+				if isInstantiable(paramDefault):
+					# try recursive call using default value
+					try:
+						self._setupValidationRecursiveCall(paramDefault, available, ret, delayedAllocations)
+					except:
+					# if fail, try recursive call using actual value and copied available
+						available = availableBackup
 						self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
-					if paramValue in available:
-						del available[paramValue]
-					del available[paramName]
+						del available[paramName]
+						addToDelayedIfNeeded = False
+				else:
+					ret[paramName] = paramDefault
+				
+				if not isInstantiable(paramValue):
+					# mark down to use the real value if it isn't allocated elsewhere
+					delayedAllocations[None].append((paramName, paramValue))
+				else:
+					if addToDelayedIfNeeded:
+						availableChanges = {}
+						for keyBackup in availableBackup:
+							valueBackup = availableBackup[keyBackup]
+							if keyBackup not in available:
+								availableChanges[keyBackup] = valueBackup
+						delayedInstantiations[paramName] = (available[paramName], availableChanges, allocationsBackup)
+
+			elif present and not hasDefault:
+				paramValue = available[paramName]
+				# is it something that needs to be instantiated and therefore needs params of its own?
+				if isinstance(paramValue, basestring) and self.findCallable(paramValue) is not None:
+					self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
+				del available[paramName]
+				ret[paramName] = paramValue
+			elif not present and hasDefault:
+				paramValue = currDefaults[paramName]
+				# is it something that needs to be instantiated and therefore needs params of its own?
+				if isinstance(paramValue, basestring) and self.findCallable(paramValue) is not None:			
+					self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
+				ret[paramName] = currDefaults[paramName]
+			# not present and no default
 			else:
-				if hasDefault:
-					paramValue = currDefaults[paramName]
-					# is it something that needs to be instantiated and therefore needs params of its own?
-					if isinstance(paramValue, basestring) and self.findCallable(paramValue) is not None:			
-						self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
-					ret[paramName] = currDefaults[paramName]
-				else:
-					raise ArgumentException("Missing parameter named '" + paramName + "' in for call to '" + currCallName + "'")
+				raise ArgumentException("Missing parameter named '" + paramName + "' in for call to '" + currCallName + "'")
 
 		# if this pool of arguments is not shared, then this is the last subcall,
 		# and we can finalize the allocations
@@ -367,7 +391,7 @@ class UniversalInterface(object):
 
 	class TrainedLearner():
 
-		def __init__(self, learnerName, arguments, transformedArguments, customDict, backend, interfaceObject):
+		def __init__(self, learnerName, arguments, transformedInputs, customDict, backend, interfaceObject):
 			"""
 			Initialize the object wrapping the trained learner stored in backend, and setting up
 			the object methods that may be used to modify or query the backend trained learner.
@@ -382,7 +406,10 @@ class UniversalInterface(object):
 			"""
 			self.learnerName = learnerName
 			self.arguments = arguments
-			self.transformedArguments = transformedArguments
+			self.transformedTrainX = transformedInputs[0]
+			self.transformedTrainY = transformedInputs[1]
+			self.transforedTestX = transformedInputs[2]
+			self.transformedArguments = transformedInputs[3]
 			self.customDict = customDict
 			self.backend = backend
 			self.interface = interfaceObject
@@ -405,23 +432,34 @@ class UniversalInterface(object):
 			# TODO, call some kind of helper in UML to deal with the actual testing
 			pass
 
+		def _mergeArguments(self, newArguments):
+			"""
+			When calling apply, merges our fixed arguments with our provided arguments,
+			giving the new arguments precedence if needed.
+
+			"""
+			ret = copy.copy(self.transformedArguments)
+			for key in newArguments:
+				ret[key] = newArguments[key]
+			return ret
+
 		def apply(self, testX, arguments, output='match', scoreMode='label'):
 #			self.interface._validateOutputFlag(output)
 #			self.interface._validateScoreModeFlag(scoreMode)
-
+			usedArguments = self._mergeArguments(arguments)
 			copyTestX = testX
 			if isinstance(testX, UML.data.Base):
 				copyTestX = testX.copy()
 
 			# input transformation
-			(trainX, trainY, transTestX, arguments) = self.interface._inputTransformation(self.learnerName, None, None, copyTestX, arguments, self.customDict)
+			(trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None, copyTestX, usedArguments, self.customDict)
 
 			# depending on the mode, we need different information.
 			if scoreMode != 'label':
-				scores = self.getScores(testX, arguments)
+				scores = self.getScores(testX, usedArguments)
 			if scoreMode != 'allScores':
-				labels = self.interface._applier(self.backend, transTestX, arguments, self.customDict)
-				labels = self.interface._outputTransformation(self.learnerName, labels, self.transformedArguments, output, self.customDict)
+				labels = self.interface._applier(self.backend, transTestX, usedArguments, self.customDict)
+				labels = self.interface._outputTransformation(self.learnerName, labels, usedArguments, output, self.customDict)
 
 			if scoreMode == 'label':
 				return labels
@@ -455,9 +493,9 @@ class UniversalInterface(object):
 			self.interface.getAttributes(self.backend)
 
 		def getScores(self, testX, arguments):
-			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, None, self.customDict)
+			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, {}, self.customDict)
 			
-			rawOrderedScores = self.interface._getScores(self.backend, testX, arguments)
+			rawOrderedScores = self.interface._getScores(self.backend, testX, arguments, self.customDict)
 			internalOrder = self.interface._getScoresOrder(self.backend)
 			naturalOrder = sorted(internalOrder)
 			if numpy.array_equal(naturalOrder, internalOrder):
@@ -541,7 +579,7 @@ class UniversalInterface(object):
 		pass
 
 	@abc.abstractmethod
-	def _getScores(self, learner, testX, arguments):
+	def _getScores(self, learner, testX, arguments, customDict):
 		"""
 		If the learner is a classifier, then return the scores for each
 		class on each data point, otherwise raise an exception.
@@ -581,18 +619,15 @@ class UniversalInterface(object):
 		Method called before any package level function which transforms all
 		parameters provided by a UML user.
 
-		trainX, etc. are filled with the values of the parameters of the same name
-		to a calls to trainAndApply() or train(), or are empty when being called before other
-		functions. arguments is a dictionary mapping names to values of all other
-		parameters that need to be processed.
+		trainX, trainY, and testX are filled with the values of the parameters of the same name
+		to a call to trainAndApply() or train() and are sometimes empty when being called
+		by other functions. For example, a call to apply() will have trainX and trainY be None.
+		The arguments parameter is a dictionary mapping names to values of all other
+		parameters associated with the learner, each of which may need to be processed.
 
-		The return value of this function must be a dictionary mirroring the
-		structure of the inputs. Specifically, four keys and values are required:
-		keys trainX, trainY, testX, and arguments. For the first three, the associated
-		values must be the transformed values, and for the last, the value must be a
-		dictionary with the same keys as in the 'arguments' input dictionary, with
-		transformed values as the values. However, other information may be added
-		by the package implementor, for example to be used in _outputTransformation()
+		The return value of this function must be a tuple mirroring the structure of
+		the inputs. Specifically, four values are required: the transformed versions of
+		trainX, trainY, testX, and arguments in that specific order.
 
 		"""
 		pass

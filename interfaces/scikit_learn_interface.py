@@ -205,7 +205,7 @@ class SciKitLearn(UniversalInterface):
 
 		return [ret]
 
-	def _getScores(self, learner, testX, arguments):
+	def _getScores(self, learner, testX, arguments, customDict):
 		"""
 		If the learner is a classifier, then return the scores for each
 		class on each data point, otherwise raise an exception.
@@ -519,8 +519,6 @@ class SciKitLearn(UniversalInterface):
 
 		"""
 		if parent is not None and parent.lower() == 'GaussianNB'.lower():
-#			import pdb
-#			pdb.set_trace()
 			if name == '__init__':
 				ret = ([], None, None, [])
 			elif name == 'fit':
@@ -534,16 +532,6 @@ class SciKitLearn(UniversalInterface):
 			return (newArgs, ret[1], ret[2], newDefaults)
 
 		return None
-
-
-
-#		init = self._paramQuery(learnerName, None, ignore)
-#		fit = self._paramQuery('fit', learnerName, ignore)
-#		predict = self._paramQuery('predict', learnerName, ignore)
-#		transform = self._paramQuery('transform', learnerName, ignore)
-#		fitPredict = self._paramQuery('fitPredict', learnerName, ignore)
-#		fitTransform = self._paramQuery('fitTransform', learnerName, ignore)
-
 
 	def _findInPackage(self, name, parent=None):
 		"""

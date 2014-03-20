@@ -199,11 +199,11 @@ def testSciKitLearnUndiagnosed():
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
 	testObj = Matrix(data2)
 
-	ret = UML.trainAndApply(toCall("EllipticEnvelope"), trainingObj, testX=testObj)
+#	ret = UML.trainAndApply(toCall("EllipticEnvelope"), trainingObj, testX=testObj)
 	#requires Y data
 	ret = UML.trainAndApply(toCall("MultinomialNB"), trainingObj, testX=testObj, trainY=trainingYObj)
-	ret = UML.trainAndApply(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
-	ret = UML.trainAndApply(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
+#	ret = UML.trainAndApply(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
+#	ret = UML.trainAndApply(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
 	ret = UML.trainAndApply(toCall("IsotonicRegression"), trainingObj, testX=testObj)
 
 
@@ -216,11 +216,10 @@ def testSciKitLearnListLearners():
 	assert 'KMeans' in ret
 	assert 'LinearRegression' in ret
 
-	toExclude = ['GaussianNB']
+	toExclude = []
 
 	for name in ret:
 		if name not in toExclude:
-			print name
 			params = UML.learnerParameters(toCall(name))
 			assert params is not None
 			defaults = UML.learnerDefaultValues(toCall(name))

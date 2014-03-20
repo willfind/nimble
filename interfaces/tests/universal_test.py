@@ -16,7 +16,7 @@ class TestInterface(UniversalInterface):
 		super(TestInterface, self).__init__()
 
 	def listLearners(self):
-		return ['l0', 'l1', 'l2']
+		return ['l0', 'l1', 'l2', 'exposeTest']
 
 	def getLearnerParameterNames(self, name):
 		return self._getParameterNames(name)
@@ -61,7 +61,7 @@ class TestInterface(UniversalInterface):
 		return "Test"
 
 	def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
-		return {'trainX':trainX, 'trainY':trainY, 'testX':testX, 'arguments':arguments}
+		return (trainX, trainY, testX, arguments)
 
 	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputFormat, customDict):
 		return outputValue
@@ -82,7 +82,7 @@ class TestInterface(UniversalInterface):
 		return testX
 
 	def findCallable(self, name):
-		available = ['l0', 'l1', 'l2', 'l1a0', 'subFunc', 'initable', 'foo', 'bar']
+		available = ['l0', 'l1', 'l2', 'l1a0', 'subFunc', 'initable', 'foo', 'bar', 'exposeTest']
 		if name in available:
 			return name
 		else:
@@ -146,12 +146,14 @@ def test__validateArgumentDistributionExtraArgument():
 def test__validateArgumentDistributionWorking():
 	learner = 'l1'
 	arguments = {'l1a0':1}
-	TestObject._validateArgumentDistribution(learner, arguments)
+	ret = TestObject._validateArgumentDistribution(learner, arguments)
+	assert ret == {'l1a0':1}
 
 def test__validateArgumentDistributionOverlappingArgumentsNested():
 	learner = 'l2'
 	arguments = {'dup':1, 'sub':'subFunc', 'subFunc':{'dup':2}}
-	TestObject._validateArgumentDistribution(learner, arguments)
+	ret = TestObject._validateArgumentDistribution(learner, arguments)
+	assert ret == {'dup':1, 'sub':'subFunc', 'subFunc':{'dup':2}}
 
 def test__validateArgumentDistributionInstantiableDefaultValue():
 	learner = 'foo'
