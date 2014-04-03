@@ -20,7 +20,7 @@ from uml import createRandomData
 from uml import normalizeData
 from uml import splitData
 
-
+from uml import registerCustomLearner
 from uml import listDataFunctions
 from uml import listUMLFunctions
 from uml import listLearners

@@ -152,6 +152,13 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mo
 	if testX is not None:
 		testX.referenceDataFrom(normalizedTest)
 
+def registerCustomLearner(learnerClass):
+	for interface in UML.interfaces.available:
+		if interface.getCanonicalName() == 'Custom':
+			custom = interface
+
+	custom.registerLearnerClass(learnerClass)
+
 
 def learnerParameters(name):
 	"""
