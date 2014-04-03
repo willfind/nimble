@@ -32,6 +32,7 @@ from UML.umlHelpers import _jumpForward
 from UML.umlHelpers import _diffLessThan
 from UML.umlHelpers import generateAllPairs
 
+from UML.interfaces.interface_helpers import checkClassificationStrategy
 
 def _validScoreMode(scoreMode):
 	scoreMode = scoreMode.lower()
@@ -88,15 +89,18 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 
 	interface = findBestInterface(package)
 
-#	if multiClassStrategy != default:
-#		trialResult = checkClassificationStrategy(interface.trainAndApply, learnerName, arguments)
-#		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-#			UML.runners.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
-#		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-#			UML.runners.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
-
-
-	results = interface.trainAndApply(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, timer)
+	results = None
+	if multiClassStrategy != 'default':
+		trialResult = checkClassificationStrategy(interface.trainAndApply, learnerName, arguments)
+		# We only use our own version of the strategy if the internal method is different than
+		# what we want.
+		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
+			results = UML.runners.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
+			results = UML.runners.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+	
+	if results is None:
+		results = interface.trainAndApply(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
 
 	if sendToLog:
 		logManager = LogManager()

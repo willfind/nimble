@@ -6,7 +6,7 @@
 """
 
 import scikit_learn_interface_old as skl
-from UML.interfaces.universal_interface_lookalike import UniversalInterfaceLookalike
+from universal_interface_lookalike import UniversalInterfaceLookalike
 
 class SciKitLearnLookalike(UniversalInterfaceLookalike):
 	"""
@@ -19,8 +19,8 @@ class SciKitLearnLookalike(UniversalInterfaceLookalike):
 		"""
 		super(SciKitLearnLookalike, self).__init__()
 
-	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
-		return skl.sciKitLearn(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, sendToLog)
+	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', sendToLog=True):
+		return skl.sciKitLearn(learnerName, trainX, trainY, testX, arguments, output, scoreMode, 'default', sendToLog)
 
 
 	def listLearners(self):

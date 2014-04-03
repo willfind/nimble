@@ -19,8 +19,8 @@ class Regressors(UniversalInterfaceLookalike):
 		"""
 		super(Regressors, self).__init__()
 
-	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
-		return regressors.regressor(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, sendToLog)
+	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', sendToLog=True):
+		return regressors.regressor(learnerName, trainX, trainY, testX, arguments, output, sendToLog)
 
 
 	def listLearners(self):

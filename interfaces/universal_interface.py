@@ -73,10 +73,7 @@ class UniversalInterface(object):
 	def optionNames(self):
 		return copy.copy(self._configurableOptionNames())
 
-	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', timer=None):
-
-		# TODO remove multiclass strategy
-
+	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', timer=None):
 		if timer is not None:
 			timer.start('train')
 		learner = self.train(learnerName, trainX, trainY, arguments)

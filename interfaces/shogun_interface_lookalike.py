@@ -19,8 +19,8 @@ class Shogun(UniversalInterfaceLookalike):
 		"""
 		super(Shogun, self).__init__()
 
-	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
-		return shogun.shogun(learnerName, trainX, trainY, testX, arguments, output, scoreMode, multiClassStrategy, sendToLog)
+	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', sendToLog=True):
+		return shogun.shogun(learnerName, trainX, trainY, testX, arguments, output, scoreMode, 'default', sendToLog)
 
 
 	def listLearners(self):
