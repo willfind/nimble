@@ -12,6 +12,7 @@ UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 
 import UML.interfaces
 
+from runners import train
 from runners import trainAndApply
 from runners import trainAndTest
 

@@ -72,6 +72,30 @@ def _validData(trainX, trainY, testX, testY):
 			raise ArgumentException("testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
 
 
+def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='default', sendToLog=True):
+	(package, learnerName) = _unpackLearnerName(learnerName)
+	_validData(trainX, trainY, None, None)
+	_validArguments(arguments)
+
+	if sendToLog:
+		timer = Stopwatch()
+	else:
+		timer = None
+
+	interface = findBestInterface(package)
+
+	# TODO how do we do multiclassStrategy?
+
+	trainedLearner = interface.train(learnerName, trainX, trainY, arguments, timer)
+
+	# TODO logging where should the stuff below go? somewhere in UniversalInterface?
+#	if sendToLog:
+#		logManager = LogManager()
+#		funcString = interface.getCanonicalName() + '.' + learnerName
+#		logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=arguments)
+
+	return trainedLearner
+
 def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
 	(package, learnerName) = _unpackLearnerName(learnerName)
 	_validData(trainX, trainY, testX, None)

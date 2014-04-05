@@ -74,11 +74,9 @@ class UniversalInterface(object):
 		return copy.copy(self._configurableOptionNames())
 
 	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', timer=None):
+		
+		learner = self.train(learnerName, trainX, trainY, arguments, timer)
 		if timer is not None:
-			timer.start('train')
-		learner = self.train(learnerName, trainX, trainY, arguments)
-		if timer is not None:
-			timer.stop('train')
 			timer.start('test')
 		# call TrainedLearner's apply function (which is already wrapped to perform transformation)
 		ret = learner.apply(testX, {}, output, scoreMode)
@@ -87,12 +85,12 @@ class UniversalInterface(object):
 
 		return ret
 
-	def train(self, learnerName, trainX, trainY=None, arguments={}):
+	def train(self, learnerName, trainX, trainY=None, arguments={}, timer=None):
 		copyTrainX = trainX.copy()
 		copyTrainY = trainY
 		if isinstance(trainY, UML.data.Base):
 			copyTrainY = trainY.copy()
-		(trainedBackend, transformedInputs, customDict) = self._trainBackend(learnerName, copyTrainX, copyTrainY, arguments)	
+		(trainedBackend, transformedInputs, customDict) = self._trainBackend(learnerName, copyTrainX, copyTrainY, arguments, timer)	
 		
 		# encapsulate into TrainedLearner object
 		return self.TrainedLearner(learnerName, arguments, transformedInputs, customDict, trainedBackend, self)
@@ -106,7 +104,7 @@ class UniversalInterface(object):
 			raise ArgumentException("" + learnerName + " was not found in this package")
 			
 
-	def _trainBackend(self, learnerName, trainX, trainY, arguments):		
+	def _trainBackend(self, learnerName, trainX, trainY, arguments, timer):		
 		### PLANNING ###
 
 		# verify the learner is available
@@ -135,7 +133,11 @@ class UniversalInterface(object):
 		### LEARNER CREATION / TRAINING ###
 
 		# train the instantiated learner
+		if timer is not None:
+			timer.start('train')
 		trainedBackend = self._trainer(learnerName, transTrainX, transTrainY, transArguments, customDict)
+		if timer is not None:
+			timer.stop('train')
 
 		return (trainedBackend, transformedInputs, customDict)
 
@@ -173,8 +175,6 @@ class UniversalInterface(object):
 		return a copy of the arguments that has been arranged for easy instantiation
 
 		"""
-#		import pdb
-#		pdb.set_trace()
 		baseCallName = learnerName
 		possibleParamSets = self.getLearnerParameterNames(learnerName)	
 		possibleDefaults = self.getLearnerDefaultValues(learnerName)
@@ -440,7 +440,7 @@ class UniversalInterface(object):
 				ret[key] = newArguments[key]
 			return ret
 
-		def apply(self, testX, arguments, output='match', scoreMode='label'):
+		def apply(self, testX, arguments={}, output='match', scoreMode='label'):
 #			self.interface._validateOutputFlag(output)
 #			self.interface._validateScoreModeFlag(scoreMode)
 			usedArguments = self._mergeArguments(arguments)
@@ -477,14 +477,15 @@ class UniversalInterface(object):
 				return labels
 
 		def retrain(self, trainX, trainY=None):
-			(trainX, trainY, testX, arguments, extra) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments)
-			(newBackend, transformedInputs) = self.interface._trainBackend(self.learnerName, trainX, trainY, arguments)
+			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
+			(newBackend, transformedInputs, customDict) = self.interface._trainBackend(self.learnerName, trainX, trainY, arguments, None)
 			self.backend = newBackend
 			self.transformedInputs = transformedInputs
+			self.customDict = customDict
 
 		def incrementalTrain(self, trainX, trainY=None):
-			(trainX, trainY, testX, arguments, extra) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments)
-			self.backend = self.interface._incrementalTrainer(self.backend, trainX, trainY, arguments)
+			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
+			self.backend = self.interface._incrementalTrainer(self.backend, trainX, trainY, arguments, self.customDict)
 
 		def getAttributes(self):
 			self.interface.getAttributes(self.backend)

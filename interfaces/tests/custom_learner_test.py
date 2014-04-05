@@ -98,15 +98,14 @@ def testCustomLearnerValidationInstantiates():
 
 
 class LoveAtFirstSightClassifier(CustomLearner):
-	""" Always predicts the value of the first class it ever sees """
+	""" Always predicts the value of the first class it sees in the most recently trained data """
 	problemType = 'classification'
 	def incrementalTrain(self, trainX, trainY):
 		if hasattr(self, 'scope'):
-			self.scope = numpy.intersect1d(self.scope, trainY.copyAs('numpyarray'))
+			self.scope = numpy.union1d(self.scope, trainY.copyAs('numpyarray').flatten())
 		else:
 			self.scope = numpy.unique(trainY.copyAs('numpyarray'))
-		if not hasattr(self, 'prediction'):
-			self.prediction = trainY[0,0]
+		self.prediction = trainY[0,0]
 	def apply(self, testX):
 		ret = []
 		for point in testX.pointIterator():
@@ -150,10 +149,9 @@ def testCustomLearnerGetScores():
 
 
 def testCustomLearnerIncTrainCheck():
-	""" Test that a CustomLearner with incrementalTrain() but no train() works as expecte """
+	""" Test that a CustomLearner with incrementalTrain() but no train() works as expected """
 	data = [[1,3],[2,-5],[1,44]]
 	labels = [[0],[2],[1]]
-
 	trainObj = UML.createData('Matrix', data)
 	labelsObj = UML.createData('Matrix', labels)
 
@@ -162,10 +160,39 @@ def testCustomLearnerIncTrainCheck():
 
 	UML.registerCustomLearner(LoveAtFirstSightClassifier)
 
+	def verifyScores(scores, currPredIndex):
+		for rowNum in range(scores.pointCount):
+			for featNum in range(scores.featureCount):
+				value = scores[rowNum,featNum]
+				if featNum == currPredIndex:
+					assert value == 1
+				else:
+					assert value == 0
+
 	name = 'Custom.LoveAtFirstSightClassifier'
-	tlObj = UML.train(name, trainX=trainObj, trainY=labelsObj, )
+	tlObj = UML.train(name, trainX=trainObj, trainY=labelsObj)
 
-	prevAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
-	tlObj.incrementalTrain()
+	origAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
+	# label set [0,1,2] with 0 as constant prediction value
+	verifyScores(origAllScores, 0)
 
-	assert False
+	extendData = [[-343,-23]]
+	extendLabels = [[3]]
+	extTrainObj = UML.createData("Matrix", extendData)
+	extLabelsObj = UML.createData("Matrix", extendLabels)
+
+	tlObj.incrementalTrain(extTrainObj, extLabelsObj)
+
+	incAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
+	# label set now [0,1,2,3] with 3 as constant prediction value
+	verifyScores(incAllScores,3)
+
+	reData = [[11, 12], [13,14],[-22,-48]]
+	reLabels = [[-1],[-1],[-2]]
+	reTrainObj = UML.createData("Matrix", reData)
+	reLabelsObj = UML.createData('Matrix', reLabels)
+
+	tlObj.retrain(reTrainObj, reLabelsObj)
+	reAllScores = tlObj.apply(testX=testObj, scoreMode='allScores')
+	# label set now [-2,-1] with -1 as constant prediction value
+	verifyScores(reAllScores,1)

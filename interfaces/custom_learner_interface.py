@@ -1,10 +1,9 @@
 
 import copy
-import numpy
 
 import UML
 
-#from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException
 from UML.interfaces.custom_learner import CustomLearner
 from UML.interfaces.universal_interface import UniversalInterface
 
@@ -127,7 +126,10 @@ class CustomLearnerInterface(UniversalInterface):
 		to each column of the return from getScores
 
 		"""
-		return sorted(numpy.unique(learner.trainY.copyAs("numpyarray"))) 
+		if learner.problemType == 'classification':
+			return learner.labelList
+		else:
+			raise ArgumentException("Can only get scores order for a classifying learner")
 
 	def isAlias(self, name):
 		"""
@@ -200,7 +202,7 @@ class CustomLearnerInterface(UniversalInterface):
 		TAKES trained learner, transformed arguments,
 		RETURNS the learner after this batch of training
 		"""
-		return learner.incrementalTrainerForInterface(trainX, trainY, arguments)
+		return learner.incrementalTrainForInterface(trainX, trainY, arguments)
 
 	def _applier(self, learner, testX, arguments, customDict):	
 		"""

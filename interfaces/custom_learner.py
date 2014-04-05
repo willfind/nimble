@@ -1,6 +1,7 @@
 
 import abc
 import inspect
+import numpy
 
 class CustomLearner(object):
 	"""
@@ -120,17 +121,20 @@ class CustomLearner(object):
 
 	def trainForInterface(self, trainX, trainY, arguments):
 		self.trainArgs = arguments
-		self.trainX = trainX
-		self.trainY = trainY
 
 		# TODO store list of classes in trainY if classifying
+		if self.__class__.problemType == 'classification':
+			self.labelList = numpy.unique(trainY.copyAs('numpyarray'))
 
 		self.train(trainX, trainY, **arguments)
 
 		return self
 
 	def incrementalTrainForInterface(self, trainX, trainY, arguments):
-		return self.incrementalTrain(trainX, trainY)
+		if self.__class__.problemType == 'classification':
+			self.labelList = numpy.union1d(self.labelList, trainY.copyAs('numpyarray').flatten())
+		self.incrementalTrain(trainX, trainY)
+		return self
 
 	def applyForInterface(self, testX, arguments):
 		self.applyArgs = arguments
