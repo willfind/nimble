@@ -22,10 +22,10 @@ class CustomLearner(object):
 
 	@classmethod
 	def validateSubclass(cls, check):
-		# check problemType / learnerType 
+		# check learnerType 
 		accepted = ["unknown", 'regression', 'classification', 'featureselection', 'dimensionalityreduction']
-		if not hasattr(check, 'problemType') or check.problemType.lower() not in accepted:
-			raise TypeError("The custom learner must have a class variable named 'problemType' with a value from the list " + str(accepted))
+		if not hasattr(check, 'learnerType') or check.learnerType.lower() not in accepted:
+			raise TypeError("The custom learner must have a class variable named 'learnerType' with a value from the list " + str(accepted))
 
 		# check train / apply params
 		trainInfo = inspect.getargspec(check.train)
@@ -123,7 +123,7 @@ class CustomLearner(object):
 		self.trainArgs = arguments
 
 		# TODO store list of classes in trainY if classifying
-		if self.__class__.problemType == 'classification':
+		if self.__class__.learnerType == 'classification':
 			self.labelList = numpy.unique(trainY.copyAs('numpyarray'))
 
 		self.train(trainX, trainY, **arguments)
@@ -131,7 +131,7 @@ class CustomLearner(object):
 		return self
 
 	def incrementalTrainForInterface(self, trainX, trainY, arguments):
-		if self.__class__.problemType == 'classification':
+		if self.__class__.learnerType == 'classification':
 			self.labelList = numpy.union1d(self.labelList, trainY.copyAs('numpyarray').flatten())
 		self.incrementalTrain(trainX, trainY)
 		return self

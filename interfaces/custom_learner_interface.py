@@ -47,7 +47,7 @@ class CustomLearnerInterface(UniversalInterface):
 		TODO
 
 		"""
-		return self.registeredLearners[name].problemType
+		return self.registeredLearners[name].learnerType
 
 
 	def findCallable(self, name):
@@ -126,7 +126,7 @@ class CustomLearnerInterface(UniversalInterface):
 		to each column of the return from getScores
 
 		"""
-		if learner.problemType == 'classification':
+		if learner.learnerType == 'classification':
 			return learner.labelList
 		else:
 			raise ArgumentException("Can only get scores order for a classifying learner")

@@ -8,7 +8,7 @@ from UML.interfaces.custom_learner import CustomLearner
 
 @raises(TypeError)
 def testCustomLearnerValidationNoType():
-	""" Test  CustomLearner's validation for the problemType class attribute """
+	""" Test  CustomLearner's validation for the learnerType class attribute """
 	class NoType(CustomLearner):
 		def train(self, trainX, trainY):
 			return None
@@ -20,7 +20,7 @@ def testCustomLearnerValidationNoType():
 def testCustomLearnerValidationWrongParamsTrain():
 	""" Test CustomLearner's validation of required train() parameters """
 	class WrongArgs(CustomLearner):
-		problemType = 'unknown'
+		learnerType = 'unknown'
 		def train(self, trainZ, foo):
 			return None
 		def apply(self, testX):
@@ -31,7 +31,7 @@ def testCustomLearnerValidationWrongParamsTrain():
 def testCustomLearnerValidationWrongParamsIncTrain():
 	""" Test CustomLearner's validation of required incrementalTrain() parameters """
 	class WrongArgs(CustomLearner):
-		problemType = 'unknown'
+		learnerType = 'unknown'
 		def train(self, trainX, trainY):
 			return None
 		def incrementalTrain(self, trainZ, foo):
@@ -44,7 +44,7 @@ def testCustomLearnerValidationWrongParamsIncTrain():
 def testCustomLearnerValidationWrongParamsApply():
 	""" Test CustomLearner's validation of required apply() parameters """
 	class WrongArgs(CustomLearner):
-		problemType = 'unknown'
+		learnerType = 'unknown'
 		def train(self, trainX, trainY):
 			return None
 		def apply(self, testZ):
@@ -55,7 +55,7 @@ def testCustomLearnerValidationWrongParamsApply():
 def testCustomLearnerValidationNoTrainOrIncTrain():
 	""" Test CustomLearner's validation of requiring either train() or incrementalTrain() """
 	class NoTrain(CustomLearner):
-		problemType = 'unknown'
+		learnerType = 'unknown'
 		def apply(self, testX):
 			return None
 	CustomLearner.validateSubclass(NoTrain)
@@ -64,7 +64,7 @@ def testCustomLearnerValidationNoTrainOrIncTrain():
 def testCustomLearnerValidationGetScoresParamsMatch():
 	""" Test CustomLearner's validation of the match between getScores() param names and apply()"""
 	class NoType(CustomLearner):
-		problemType = 'classification'
+		learnerType = 'classification'
 
 		def train(self, trainX, trainY):
 			return None
@@ -78,7 +78,7 @@ def testCustomLearnerValidationGetScoresParamsMatch():
 def testCustomLearnerValidationInitNoParams():
 	""" Test CustomLearner's validation of __init__'s params """
 	class TooMany(CustomLearner):
-		problemType = 'classification'
+		learnerType = 'classification'
 		def __init__(self, so, many, params):
 			super(TooMany, self).__init__()
 		def train(self, trainX, trainY):
@@ -91,7 +91,7 @@ def testCustomLearnerValidationInitNoParams():
 def testCustomLearnerValidationInstantiates():
 	""" Test CustomLearner's validation actually tries to instantiation the subclass """
 	class NoApp(CustomLearner):
-		problemType = 'classification'
+		learnerType = 'classification'
 		def train(self, trainX, trainY):
 			return None
 	CustomLearner.validateSubclass(NoApp)
@@ -99,7 +99,7 @@ def testCustomLearnerValidationInstantiates():
 
 class LoveAtFirstSightClassifier(CustomLearner):
 	""" Always predicts the value of the first class it sees in the most recently trained data """
-	problemType = 'classification'
+	learnerType = 'classification'
 	def incrementalTrain(self, trainX, trainY):
 		if hasattr(self, 'scope'):
 			self.scope = numpy.union1d(self.scope, trainY.copyAs('numpyarray').flatten())
@@ -146,6 +146,7 @@ def testCustomLearnerGetScores():
 	allScores = UML.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='allScores')
 	assert allScores.pointCount == 3
 	assert allScores.featureCount == 3
+	
 
 
 def testCustomLearnerIncTrainCheck():

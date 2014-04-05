@@ -6,7 +6,7 @@ from UML.interfaces.custom_learner import CustomLearner
 
 class RidgeRegression(CustomLearner):
 
-	problemType = 'Regression'
+	learnerType = 'Regression'
 
 	def train(self, trainX, trainY, lamb=0):
 		self.lamb = lamb
