@@ -9,8 +9,6 @@ from nose.tools import *
 import numpy.testing
 
 from UML.exceptions import ArgumentException
-from UML.interfaces.mlpy_interface_old import setMlpyLocation
-from UML.interfaces.mlpy_interface_old import getMlpyLocation
 from test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.data import Matrix
 
