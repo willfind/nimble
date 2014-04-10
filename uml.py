@@ -152,12 +152,40 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mo
 	if testX is not None:
 		testX.referenceDataFrom(normalizedTest)
 
-def registerCustomLearner(learnerClass):
-	for interface in UML.interfaces.available:
-		if interface.getCanonicalName() == 'Custom':
-			custom = interface
+def registerCustomLearner(customPackageName, learnerClassObject):
+	"""
+	Register the given customLearner class so that it is callable through the top level UML
+	functions.
 
-	custom.registerLearnerClass(learnerClass)
+	customPackageName : The string name of the package preface you want to use when calling
+	the learner. If there is already an interface for a custom package with this name, the
+	learner will be accessible through that interface. If there is no interface to a custom
+	package of that name, then one will be created. You cannot register a custom learner to
+	be callable through the interface for a non-custom package (such as ScikitLearn or MLPY).
+	Therefore, customPackageName cannot be a value which is the accepted alias of another
+	package's interface.
+
+	learnerClassObject : The class object implementing the learner you want registered. It
+	will be checked using UML.interfaces.CustomLearner.validateSubclass to ensure that all
+	details of the provided implementation are acceptable.
+
+	"""
+	# detect name collision
+	for currInterface in UML.interfaces.available:
+		if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
+			if currInterface.isAlias(customPackageName):
+				raise ArgumentException("The customPackageName '" + customPackageName + "' cannot be used: it is an accepted alias of a non-custom package")
+
+	# do validation before we potentially construct an interface to a custom package
+	UML.interfaces.CustomLearner.validateSubclass(learnerClassObject)
+
+	try:
+		currInterface = findBestInterface(customPackageName)
+	except ArgumentException:
+		currInterface = UML.interfaces.CustomLearnerInterface(customPackageName)
+		UML.interfaces.available.append(currInterface)
+
+	currInterface.registerLearnerClass(learnerClassObject)
 
 
 def learnerParameters(name):

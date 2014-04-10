@@ -134,7 +134,7 @@ def testCustomLearnerGetScores():
 	tdata = [[23,2343],[23,22],[454,-44]]
 	testObj = UML.createData('Matrix', tdata)
 
-	UML.registerCustomLearner(LoveAtFirstSightClassifier)
+	UML.registerCustomLearner("Custom", LoveAtFirstSightClassifier)
 
 	name = 'Custom.LoveAtFirstSightClassifier'
 	preds = UML.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='label')
@@ -159,7 +159,7 @@ def testCustomLearnerIncTrainCheck():
 	tdata = [[23,2343],[23,22],[454,-44]]
 	testObj = UML.createData('Matrix', tdata)
 
-	UML.registerCustomLearner(LoveAtFirstSightClassifier)
+	UML.registerCustomLearner("Custom", LoveAtFirstSightClassifier)
 
 	def verifyScores(scores, currPredIndex):
 		for rowNum in range(scores.pointCount):

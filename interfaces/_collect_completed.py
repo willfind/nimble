@@ -17,7 +17,8 @@ def collect(modulePath):
 
 	# go through each possible module, import it, and check for possible interfaces
 	possibleInterfaces = []
-	seen = set()
+	# setup seen with the interfaces we know we don't want to load / try to load
+	seen = set(["UniversalInterface", "UniversalInterfaceLookalike", "CustomLearnerInterface"])
 	for toImport in pythonModules:
 		importedModule = importlib.import_module('.' + toImport, __package__)
 		contents = dir(importedModule)
@@ -27,7 +28,7 @@ def collect(modulePath):
 		for valueName in contents:
 			value = getattr(importedModule, valueName)
 			if isinstance(value, abc.ABCMeta) and issubclass(value, universal_interface.UniversalInterface):
-				if not value in seen and not value.__name__.startswith("UniversalInterface"):
+				if not value in seen:
 					seen.add(value)
 					possibleInterfaces.append(value)				
 
@@ -38,7 +39,7 @@ def collect(modulePath):
 		try:
 			tempObj = toInstantiate()
 		except TypeError as te:
-			print str(te)
+#			print str(te)
 			continue
 		instantiated.append(tempObj)
 	# key: canonical names

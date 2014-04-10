@@ -18,7 +18,7 @@ def testRidgeRegressionShapes():
 	data2 = [[5.5,5],[20,-3]]
 	testObj = Matrix(data2)
 
-	UML.registerCustomLearner(RidgeRegression)
+	UML.registerCustomLearner('Custom', RidgeRegression)
 
 	name = 'Custom.RidgeRegression'
 	ret = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':0})
@@ -36,7 +36,7 @@ def testRidgeRegressionCompare():
 	data2 = [[122,34],[76,-3]]
 	testObj = Matrix(data2)
 
-	UML.registerCustomLearner(RidgeRegression)
+	UML.registerCustomLearner('Custom', RidgeRegression)
 
 	name = 'Custom.RidgeRegression'
 	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':0})

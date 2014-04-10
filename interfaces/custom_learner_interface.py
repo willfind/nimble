@@ -14,16 +14,16 @@ class CustomLearnerInterface(UniversalInterface):
 
 	_ignoreNames = ['trainX', 'trainY', 'testX']
 
-	def __init__(self):
+	def __init__(self, packageName):
 		"""
 
 		"""
+		self.name = packageName
 		self.registeredLearners = {}
 		super(CustomLearnerInterface, self).__init__()
 
 
 	def registerLearnerClass(self, learnerClass):
-		CustomLearner.validateSubclass(learnerClass)
 		self.registeredLearners[learnerClass.__name__] = learnerClass
 
 
@@ -136,7 +136,7 @@ class CustomLearnerInterface(UniversalInterface):
 		Returns true if the name is an accepted alias for this interface
 
 		"""
-		return name.lower() == 'Custom'.lower()
+		return name.lower() == self.getCanonicalName().lower()
 
 
 	def getCanonicalName(self):
@@ -144,7 +144,7 @@ class CustomLearnerInterface(UniversalInterface):
 		Returns the string name that will uniquely identify this interface
 
 		"""
-		return "Custom"
+		return self.name
 
 	def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
 		"""
