@@ -12,10 +12,9 @@ UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 
 import UML.interfaces
 
-from runners import train
-from runners import trainAndApply
-from runners import trainAndTest
-
+from uml import train
+from uml import trainAndApply
+from uml import trainAndTest
 from uml import createData
 from uml import createRandomData
 from uml import normalizeData

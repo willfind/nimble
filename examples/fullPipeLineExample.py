@@ -8,8 +8,8 @@ boilerplate()
 if __name__ == "__main__":
 	from UML import createData
 	from UML import trainAndTest
-	from UML.runners import trainAndApplyOneVsOne
-	from UML.runners import trainAndTestOneVsOne
+	from UML.umlHelpers import trainAndApplyOneVsOne
+	from UML.umlHelpers import trainAndTestOneVsOne
 	from UML.metrics import fractionIncorrect
 
 	variables = ["x1","x2","x3", "label"]

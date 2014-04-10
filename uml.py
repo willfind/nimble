@@ -19,8 +19,6 @@ from UML.logger import UmlLogger
 from UML.logger import LogManager
 from UML.logger import Stopwatch
 
-from UML.runners import trainAndApply
-
 from UML.umlHelpers import findBestInterface
 from UML.umlHelpers import _loadSparse
 from UML.umlHelpers import _loadMatrix
@@ -28,14 +26,25 @@ from UML.umlHelpers import _loadList
 from UML.umlHelpers import executeCode
 from UML.umlHelpers import _incrementTrialWindows
 from UML.umlHelpers import _learnerQuery
-
-from UML.data import Base
+from UML.umlHelpers import _validScoreMode
+from UML.umlHelpers import _validMultiClassStrategy
+from UML.umlHelpers import _unpackLearnerName
+from UML.umlHelpers import _validArguments
+from UML.umlHelpers import _validData
+from UML.umlHelpers import LearnerInspector
 from UML.umlHelpers import copyLabels
 from UML.umlHelpers import computeMetrics
 from UML.umlHelpers import ArgumentIterator
+from UML.umlHelpers import trainAndApplyOneVsAll
+from UML.umlHelpers import trainAndApplyOneVsOne
+
+from UML.data import Base
+
 from UML.data.dataHelpers import DEFAULT_SEED
 
-from UML.umlHelpers import LearnerInspector
+from UML.interfaces.interface_helpers import checkClassificationStrategy
+
+
 
 
 
@@ -605,5 +614,155 @@ def learnerType(learnerNames):
 		typeResultsList = typeResultsList[0]
 
 	return typeResultsList
+
+
+def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='default', sendToLog=True):
+	(package, learnerName) = _unpackLearnerName(learnerName)
+	_validData(trainX, trainY, None, None)
+	_validArguments(arguments)
+
+	if sendToLog:
+		timer = Stopwatch()
+	else:
+		timer = None
+
+	interface = findBestInterface(package)
+
+	# TODO how do we do multiclassStrategy?
+
+	trainedLearner = interface.train(learnerName, trainX, trainY, arguments, timer)
+
+	# TODO logging where should the stuff below go? somewhere in UniversalInterface?
+#	if sendToLog:
+#		logManager = LogManager()
+#		funcString = interface.getCanonicalName() + '.' + learnerName
+#		logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=arguments)
+
+	return trainedLearner
+
+def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
+	(package, learnerName) = _unpackLearnerName(learnerName)
+	_validData(trainX, trainY, testX, None)
+	_validScoreMode(scoreMode)
+	_validMultiClassStrategy(multiClassStrategy)
+	_validArguments(arguments)
+
+	if testX is None:
+		testX = trainX
+
+	if sendToLog:
+		timer = Stopwatch()
+	else:
+		timer = None
+
+	interface = findBestInterface(package)
+
+	results = None
+	if multiClassStrategy != 'default':
+		trialResult = checkClassificationStrategy(interface.trainAndApply, learnerName, arguments)
+		# We only use our own version of the strategy if the internal method is different than
+		# what we want.
+		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
+			results = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
+			results = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+	
+	if results is None:
+		results = interface.trainAndApply(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+
+	if sendToLog:
+		logManager = LogManager()
+		funcString = interface.getCanonicalName() + '.' + learnerName
+		logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=arguments)
+
+	return results
+
+
+def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **arguments):
+	"""
+	Supply optional algorithm parameters via **arguments as kwargs
+
+	For each permutation of 'arguments' (more below), trainAndTest uses cross validation to generate a
+	performance score for the algorithm, given the particular argument permutation.
+	The argument permutation that performed best cross validating over the training data
+	is then used as the lone argument for training on the whole training data set.
+	Finally, the learned model generates predictions for the testing set, and the
+	performance of those predictions is calculated and returned.
+
+	If no additional arguments are supplied via **arguments, then trainAndTest just returns
+	the performance of the algorithm with default arguments on the testing data.
+
+	ARGUMENTS:
+	
+	learnerName: training algorithm to be called, in the form 'package.algorithmName'.
+
+	trainX: data set to be used for training (as some form of Base object)
+
+	testX: data set to be used for testing (as some form of Base object)
+	
+	trainY: used to retrieve the known class labels of the traing data. Either
+	contains the labels themselves (as a Base object) or an index (numerical or string) 
+	that defines their locale in the trainX object
+	
+	testY: used to retrieve the known class labels of the test data. Either
+	contains the labels themselves (as a Base object) or an index (numerical or string) 
+	that defines their locale in the testX object.  If left blank, trainAndTest() assumes 
+	that testY is the same as trainY.
+	
+	negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
+	or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
+	applies to data sets with 2 class labels.
+
+	multiClassStrategy: may only be 'default' 'OneVsAll' or 'OneVsOne'
+	
+	sendToLog: optional boolean valued parameter; True meaning the results should be logged
+
+	arguments: optional arguments to be passed to the function specified by 'algorithm'
+	The syntax for prescribing different arguments for algorithm:
+	**arguments of the form arg1=(1,2,3), arg2=(4,5,6)
+	correspond to permutations/argument states with one element from arg1 and one element 
+	from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
+	"""
+	_validData(trainX, trainY, testX, testY)
+
+	#Need to make copies of all data, in case it will be modified before a classifier is trained
+	trainX = trainX.copy()
+	testX = testX.copy()
+	
+	#if testY is empty, attempt to use trainY
+	if testY is None and isinstance(trainY, (str, unicode, int)):
+		testY = trainY
+
+	trainY = copyLabels(trainX, trainY)
+	testY = copyLabels(testX, testY)
+
+	#if we are logging this run, we need to start the timer
+	if sendToLog:
+		timer = Stopwatch()
+		timer.start('crossValidateReturnBest')
+	#sig (learnerName, X, Y, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, maximize=False, **arguments):
+	bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, scoreMode=scoreMode, sendToLog=False, **arguments)
+
+	if sendToLog:
+		timer.stop('crossValidateReturnBest')
+		timer.start('trainAndApply')
+
+	predictions = trainAndApply(learnerName, trainX, trainY, testX, bestArgument, output, scoreMode, multiClassStrategy, sendToLog)
+
+	if sendToLog:
+		timer.stop('trainAndApply')
+		timer.start('errorComputation')
+
+	performance = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
+
+	if sendToLog:
+		timer.stop('errorComputation')
+
+	if sendToLog:
+		logManager = LogManager()
+		logManager.logRun(trainX, testX, learnerName, [performanceFunction], [performance], timer,)
+
+	return performance
+
 
 
