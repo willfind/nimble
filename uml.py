@@ -163,8 +163,8 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mo
 
 def registerCustomLearner(customPackageName, learnerClassObject):
 	"""
-	Register the given customLearner class so that it is callable through the top level UML
-	functions.
+	Register the given customLearner class so that it is callable by the top level UML
+	functions through the interface of the specified custom package.
 
 	customPackageName : The string name of the package preface you want to use when calling
 	the learner. If there is already an interface for a custom package with this name, the
@@ -179,6 +179,7 @@ def registerCustomLearner(customPackageName, learnerClassObject):
 	details of the provided implementation are acceptable.
 
 	"""
+	# TODO configuration subsystem hookin
 	# detect name collision
 	for currInterface in UML.interfaces.available:
 		if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
@@ -195,6 +196,28 @@ def registerCustomLearner(customPackageName, learnerClassObject):
 		UML.interfaces.available.append(currInterface)
 
 	currInterface.registerLearnerClass(learnerClassObject)
+
+
+def deregisterCustomLearner(customPackageName, learnerName):
+	"""
+	Remove accessibility of the learner with the given name from the interface of the package
+	with the given name.
+
+	customPackageName : the name of the interface / custom package from which the learner
+	named 'learnerName' is to be removed from. If that learner was the last one grouped in
+	that custom package, then the interface is removed from the UML.interfaces.available list.
+
+	learnerName : the name of the learner to be removed from the interface / custom package with
+	the name 'customPackageName'
+
+	"""
+	currInterface = findBestInterface(customPackageName)
+	if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
+		raise ArgumentException("May only attempt to deregister learners from the interfaces of custom packages. '" + customPackageName + "' is not a custom package")
+	empty = currInterface.deregisterLearner(learnerName)
+
+	if empty:
+		UML.interfaces.available.remove(currInterface)
 
 
 def learnerParameters(name):

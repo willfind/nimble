@@ -24,8 +24,29 @@ class CustomLearnerInterface(UniversalInterface):
 
 
 	def registerLearnerClass(self, learnerClass):
+		"""
+		Record the given learnerClass as being accessible through this particular interface.
+		The parameter is assumed to be class object which is a subclass of CustomLearner and
+		has been validated by CustomLearner.validateSubclass(); no sanity checking is performed
+		in this method.
+
+		"""
 		self.registeredLearners[learnerClass.__name__] = learnerClass
 
+	def deregisterLearner(self, learnerName):
+		"""
+		Remove accessibility of the learner with the given name from this interface.
+
+		Returns True of there are other learners still accessible through this interface,
+		False if there are not.
+
+		"""
+		if not learnerName in self.registeredLearners:
+			raise ArgumentException("Given learnerName does not refer to a learner accessible through this interface")
+
+		del self.registeredLearners[learnerName]
+
+		return len(self.registeredLearners) == 0
 
 	#######################################
 	### ABSTRACT METHOD IMPLEMENTATIONS ###

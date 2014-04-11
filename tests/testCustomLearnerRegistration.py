@@ -1,5 +1,6 @@
 
 import numpy
+import copy
 from nose.tools import raises
 
 import UML
@@ -48,8 +49,39 @@ def testCustomPackageNameCollision():
 	UML.registerCustomLearner("Mlpy", LoveAtFirstSightClassifier)
 
 
+@raises(ArgumentException)
+def testDeregisterBogusPackageName():
+	""" Test deregisterCustomLearner raises an exception when passed a bogus customPackageName """
+	UML.deregisterCustomLearner("BozoPackage", 'ClownClassifier')
+
+
+@raises(ArgumentException)
+def testDeregisterFromNonCustom():
+	""" Test deregisterCustomLearner raises an exception when trying to deregister from a non-custom interface """
+	UML.deregisterCustomLearner("Mlpy", 'KNN')
+
+
+@raises(ArgumentException)
+def testDeregisterBogusLearnerName():
+	""" Test deregisterCustomLearner raises an exception when passed a bogus learnerName """
+	#save state before registration, to check against final state
+	saved = copy.copy(UML.interfaces.available)
+	try:
+		UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
+		UML.deregisterCustomLearner("Foo", 'BogusNameLearner')
+		# should never get to here
+		assert False
+	finally:
+		UML.deregisterCustomLearner("Foo", "LoveAtFirstSightClassifier")
+		assert saved == UML.interfaces.available
+
+
 def testMultipleCustomPackages():
 	""" Test registerCustomLearner correctly instantiates multiple custom packages """
+
+	#save state before registration, to check against final state
+	saved = copy.copy(UML.interfaces.available)
+
 	UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
 	UML.registerCustomLearner("Bar", RidgeRegression)
 	UML.registerCustomLearner("Baz", UncallableLearner)
@@ -62,9 +94,19 @@ def testMultipleCustomPackages():
 	assert UML.learnerParameters("Bar.RidgeRegression") == [['lamb']]
 	assert UML.learnerParameters("Baz.UncallableLearner") == [['foo']]
 
+	UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+	UML.deregisterCustomLearner("Bar", 'RidgeRegression')
+	UML.deregisterCustomLearner("Baz", 'UncallableLearner')
+
+	assert saved == UML.interfaces.available
+
 
 def testMultipleLearnersSinglePackage():
 	#TODO test is not isolated from above.
+
+	#save state before registration, to check against final state
+	saved = copy.copy(UML.interfaces.available)
+
 	UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
 	UML.registerCustomLearner("Foo", RidgeRegression)
 	UML.registerCustomLearner("Foo", UncallableLearner)
@@ -80,3 +122,14 @@ def testMultipleLearnersSinglePackage():
 	assert UML.learnerParameters("Foo.UncallableLearner") == [['foo']]
 
 
+	UML.deregisterCustomLearner("Foo", 'LoveAtFirstSightClassifier')
+
+	learners = UML.listLearners("Foo")
+	assert len(learners) == 2
+	assert "RidgeRegression" in learners
+	assert "UncallableLearner" in learners
+
+	UML.deregisterCustomLearner("Foo", 'RidgeRegression')
+	UML.deregisterCustomLearner("Foo", 'UncallableLearner')
+
+	assert saved == UML.interfaces.available
