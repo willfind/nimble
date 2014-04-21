@@ -86,11 +86,7 @@ class UniversalInterface(object):
 		return ret
 
 	def train(self, learnerName, trainX, trainY=None, arguments={}, timer=None):
-		copyTrainX = trainX.copy()
-		copyTrainY = trainY
-		if isinstance(trainY, UML.data.Base):
-			copyTrainY = trainY.copy()
-		(trainedBackend, transformedInputs, customDict) = self._trainBackend(learnerName, copyTrainX, copyTrainY, arguments, timer)	
+		(trainedBackend, transformedInputs, customDict) = self._trainBackend(learnerName, trainX, trainY, arguments, timer)	
 		
 		# encapsulate into TrainedLearner object
 		return self.TrainedLearner(learnerName, arguments, transformedInputs, customDict, trainedBackend, self)
@@ -123,7 +119,8 @@ class UniversalInterface(object):
 		customDict = {}
 
 		# separate training data / labels if needed
-		if isinstance(trainY, basestring) or isinstance(trainY, int):
+		if isinstance(trainY, (basestring, int)):
+			trainX = trainX.copy()
 			trainY = trainX.extractFeatures(toExtract=trainY)
 
 		# execute interface implementor's input transformation.
@@ -444,12 +441,9 @@ class UniversalInterface(object):
 #			self.interface._validateOutputFlag(output)
 #			self.interface._validateScoreModeFlag(scoreMode)
 			usedArguments = self._mergeArguments(arguments)
-			copyTestX = testX
-			if isinstance(testX, UML.data.Base):
-				copyTestX = testX.copy()
 
 			# input transformation
-			(trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None, copyTestX, usedArguments, self.customDict)
+			(trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, usedArguments, self.customDict)
 
 			# depending on the mode, we need different information.
 			if scoreMode != 'label':

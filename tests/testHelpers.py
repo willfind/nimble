@@ -183,7 +183,7 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
 									'sciKitLearn.RadiusNeighborsClassifier':'classifier',
 									'sciKitLearn.RadiusNeighborsRegressor':'regressor',
 
-									'mlpy.KNN':'classifier', 
+									#'mlpy.KNN':'classifier', 
 									'mlpy.LDAC':'classifier',
 
 									# 'mlpy.kmeans':'other',
@@ -338,8 +338,8 @@ def testtrainAndTestOneVsOne():
 	metricFuncs = []
 	metricFuncs.append(fractionIncorrect)
 
-	results1 = trainAndTestOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, performanceFunction=metricFuncs)
-	results2 = trainAndTestOneVsOne('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, arguments={}, performanceFunction=metricFuncs)
+	results1 = trainAndTestOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, testY=3, arguments={}, performanceFunction=metricFuncs)
+	results2 = trainAndTestOneVsOne('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, testY=3, arguments={}, performanceFunction=metricFuncs)
 
 	assert results1[0] == 0.0
 	assert results2[0] == 0.25
@@ -351,8 +351,8 @@ def testtrainAndApplyOneVsAll():
 	trainObj1 = createData('Sparse', data1, variables)
 	trainObj2 = createData('Sparse', data2, variables)
 
-	testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
-	testData2 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3], [0, 1, 1, 2]]
+	testData1 = [[1, 0, 0],[0, 1, 0],[0, 0, 1]]
+	testData2 = [[1, 0, 0],[0, 1, 0],[0, 0, 1], [0, 1, 1]]
 	testObj1 = createData('Sparse', testData1)
 	testObj2 = createData('Sparse', testData2)
 
@@ -360,8 +360,8 @@ def testtrainAndApplyOneVsAll():
 #	metricFuncs.append(fractionIncorrect)
 
 	results1 = trainAndApplyOneVsAll('sciKitLearn.LogisticRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='label')
-	results2 = trainAndApplyOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='bestScore')
-	results3 = trainAndApplyOneVsAll('sciKitLearn.LinearRegression', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='allScores')
+	results2 = trainAndApplyOneVsAll('sciKitLearn.LinearRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='bestScore')
+	results3 = trainAndApplyOneVsAll('sciKitLearn.LinearRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='allScores')
 
 	print "Results 1 output: " + str(results1.data)
 	print "Results 2 output: " + str(results2.data)
@@ -377,15 +377,15 @@ def testtrainAndApplyOneVsOne():
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
 	trainObj1 = createData('Matrix', data1, variables)
 
-	testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
+	testData1 = [[1, 0, 0],[0, 1, 0],[0, 0, 1]]
 	testObj1 = createData('Matrix', testData1)
 
 #	metricFuncs = []
 #	metricFuncs.append(fractionIncorrect)
 
-	results1 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='label')
-	results2 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='bestScore')
-	results3 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1.copy(), trainY=3, testX=testObj1.copy(), arguments={}, scoreMode='allScores')
+	results1 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='label')
+	results2 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='bestScore')
+	results3 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='allScores')
 
 	assert results1.data[0][0] == 1.0
 	assert results1.data[1][0] == 2.0
@@ -415,3 +415,8 @@ def testtrainAndApplyOneVsOne():
 			else:
 				if score == 2:
 					assert results3FeatureMap[j] == str(float(3))
+
+
+
+#def testDataIntegretyTrain():
+

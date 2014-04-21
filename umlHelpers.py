@@ -335,14 +335,21 @@ def extractWinningPredictionIndexAndScore(predictionScores, featureNamesInverse)
 	if allScores is None:
 		return None
 	else:
-		return allScores[0]
+		bestScore = float("-inf")
+		bestLabel = None
+		for key in allScores:
+			value = allScores[key]
+			if value > bestScore:
+				bestScore = value
+				bestLabel = key
+		return (bestLabel, bestScore)
 
 
 def extractConfidenceScores(predictionScores, featureNamesInverse):
 	"""
 	Provided a list of confidence scores for one point/row in a test set,
-	return an ordered list of (label, score) tuples.  List is ordered
-	by score in descending order.
+	and a dict mapping indices to featureNames, return a dict mapping
+	featureNames to scores.
 	"""
 
 	if predictionScores is None or len(predictionScores) == 0:
@@ -1254,23 +1261,41 @@ def _validArguments(arguments):
 	if not isinstance(arguments, dict):
 		raise ArgumentException("The 'arguments' parameter must be a dictionary")
 
-def _validData(trainX, trainY, testX, testY):
+
+def _validData(trainX, trainY, testX, testY, testRequired):
 	""" Check that the data parameters to train() trainAndApply(), etc. are in accepted formats """
 	if not isinstance(trainX, Base):
 		raise ArgumentException("trainX may only be an object derived from Base")
+
 	if trainY is not None:
 		if not (isinstance(trainY, Base) or isinstance(trainY, (basestring, int, long))):
 			raise ArgumentException("trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
+		if isinstance(trainY, Base):
+			if not trainY.featureCount == 1:
+				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
+			if not trainY.pointCount == trainX.pointCount:
+				raise ArgumentException("If trainY is a Data object, then it must have the same number of points as trainX")
+
 	# testX is allowed to be None, sometimes it is appropriate to have it be filled using
 	# the trainX argument (ie things which transform data, or learn internal structure)
-	if not testX is None and not isinstance(testX, Base):
-		raise ArgumentException("testX may only be an object derived from Base")
+	if testRequired[0] and testX is None:
+		raise ArgumentException("testX must be provided")
+	if testX is not None:
+		if not isinstance(testX, Base):
+			raise ArgumentException("testX may only be an object derived from Base")		
+
+	if testRequired[1] and testY is None:
+		raise ArgumentException("testY must be provided")
 	if testY is not None:
-		if not (isinstance(testY, Base) or isinstance(testY, (basestring, int, long))):
+		if not isinstance(testY, (Base, basestring, int, long)):
 			raise ArgumentException("testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
+		if isinstance(trainY, Base):
+			if not trainY.featureCount == 1:
+				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
+			if not trainY.pointCount == trainX.pointCount:
+				raise ArgumentException("If trainY is a Data object, then it must have the same number of points as trainX")
 
-
-def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
 		Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
 		testing, and computing performance measures to be handled.  Takes in a learner's name
@@ -1307,23 +1332,19 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY=None, argumen
 		of those metrics, computed using the predictions of 'learnerName' on testX.  
 		Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
 	"""
-	_validData(trainX, trainY, testX, testY)
+	_validData(trainX, trainY, testX, testY, [True, True])
 
 	if sendToLog:
 		timer = Stopwatch()
 	else:
 		timer = None
 
-	if testY is None:
-		if not isinstance(trainY, (str, int, long)):
-			raise ArgumentException("testY is missing in trainAndApplyOneVsOne")
-		else:
-			testY = testX.extractFeatures([trainY])
-	else:
-		if isinstance(testY, (str, int, long)):
-			testY = testX.extractFeatures([testY])
+	# if testY is in testX, we need to extract it before we call a trainAndApply type function
+	if isinstance(testY, (basestring, int, long)):
+		testX = testX.copy()
+		testY = testX.extractFeatures([testY])
 
-	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
@@ -1339,7 +1360,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY=None, argumen
 	return results
 
 
-def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', sendToLog=True, timer=None):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. one method of splitting the 
@@ -1374,24 +1395,13 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, testY=None, argume
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	_validData(trainX, trainY, testX, testY)
+	_validData(trainX, trainY, testX, None, [True, False])
 
-	trainX = trainX.copy()
-	testX = testX.copy()
-
+	# we want the data and the labels together in one object or this method
 	if isinstance(trainY, Base):
+		trainX = trainX.copy()
 		trainX.appendFeatures(trainY)
 		trainY = trainX.featureCount - 1
-
-	# If testY is missing, assume it is because it's the same as trainY
-	if testY is None:
-		testY = trainY
-
-	#Remove true labels from testing set
-	if isinstance(testY, (str, int, long)):
-		testTrueLabels = testX.extractFeatures(testY)
-	else:
-		testTrueLabels = testY
 
 	# Get set of unique class labels, then generate list of all 2-combinations of
 	# class labels
@@ -1467,7 +1477,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, testY=None, argume
 		raise ArgumentException('Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode))
 
 
-def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', sendToLog=True, timer=None):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -1484,11 +1494,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY=None, argume
 		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
-		testY: used to retreive the known class labels of the test data. Either
-		contains the labels themselves or an index (numerical or string) that defines their locale
-		in the testX object.  If not present, it is assumed that testY is the same
-		as trainY.  
-		
 		arguments: optional arguments to be passed to the learner specified by 'learnerName'
 
 		scoreMode:  a flag with three possible values:  label, bestScore, or allScores.  If
@@ -1502,26 +1507,34 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY=None, argume
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	_validData(trainX, trainY, testX, testY)
-	trainX = trainX.copy()
-	testX = testX.copy()
+#	_validData(trainX, trainY, testX, testY)
+#	trainX = trainX.copy()
+#	testX = testX.copy()
 
 	# If testY is missing, assume it is because it's the same as trainY
-	if testY is None and isinstance(trainY, (str, int, long)):
-		testY = trainY
-	elif testY is None:
-		raise ArgumentException("Missing testY in trainAndTestOneVsAll")
+#	if testY is None and isinstance(trainY, (str, int, long)):
+#		testY = trainY
+#	elif testY is None:
+#		raise ArgumentException("Missing testY in trainAndTestOneVsAll")
+
+	#Remove true labels from from training set, if not already separated
+#	if isinstance(trainY, (str, int, long)):
+#		trainX = trainX.copy()
+#		trainY = trainX.extractFeatures(trainY)
+
+	#Remove true labels from test set, if not already separated
+#	if isinstance(testY, (str, int, long)):
+#		testY = testX.extractFeatures(testY)
+
+	_validData(trainX, trainY, testX, None, [True, False])
 
 	#Remove true labels from from training set, if not already separated
 	if isinstance(trainY, (str, int, long)):
+		trainX = trainX.copy()
 		trainY = trainX.extractFeatures(trainY)
 
-	#Remove true labels from test set, if not already separated
-	if isinstance(testY, (str, int, long)):
-		testY = testX.extractFeatures(testY)
-
 	# Get set of unique class labels
-	labelVector = trainX.copyFeatures([trainY])
+	labelVector = trainY.copy()
 	labelVector.transpose()
 	labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 
@@ -1558,9 +1571,9 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY=None, argume
 		winningPredictionIndices = rawPredictions.applyToPoints(extractWinningPredictionIndex, inPlace=False).copyAs(format="python list")
 		indexToLabelMap = rawPredictions.featureNamesInverse
 		winningLabels = []
-		for winningIndex in winningPredictionIndices:
+		for [winningIndex] in winningPredictionIndices:
 			winningLabels.append([indexToLabelMap[winningIndex]])
-		return UML.createData(rawPredictions.getTypeString(), winningLabels, featureNames='winningLabel')
+		return UML.createData(rawPredictions.getTypeString(), winningLabels, featureNames=['winningLabel'])
 
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
@@ -1569,10 +1582,8 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY=None, argume
 		labelMapInverse = rawPredictions.featureNamesInverse
 		tempResultsList = []
 		for row in predictionMatrix:
-			scores = extractWinningPredictionIndexAndScore(row, labelMapInverse)
-			scores = sorted(scores, key=operator.itemgetter(1))
-			bestLabelAndScore = scores[0]
-			tempResultsList.append([[bestLabelAndScore[0], bestLabelAndScore[1]]])
+			bestLabelAndScore = extractWinningPredictionIndexAndScore(row, labelMapInverse)
+			tempResultsList.append([bestLabelAndScore[0], bestLabelAndScore[1]])
 		#wrap the results data in a List container
 		featureNames = ['PredictedClassLabel', 'LabelScore']
 		resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
@@ -1601,7 +1612,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY=None, argume
 		raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
 
-def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY=None, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -1629,21 +1640,17 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY=None, argumen
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
 	"""
-	_validData(trainX, trainY, testX, testY)
+	_validData(trainX, trainY, testX, testY, [True, True])
 
 	if sendToLog:
 		timer = Stopwatch()
 
-	if testY is None:
-		if not isinstance(trainY, (str, int, long)):
-			raise ArgumentException("testY is missing in trainAndApplyOneVsOne")
-		else:
-			testY = testX.extractFeatures([trainY])
-	else:
-		if isinstance(testY, (str, int, long)):
-			testY = testX.extractFeatures([testY])
+	# if testY is in testX, we need to extract it before we call a trainAndApply type function
+	if isinstance(testY, (basestring, int, long)):
+		testX = testX.copy()
+		testY = testX.extractFeatures([testY])
 
-	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, testY, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, scoreMode='label', sendToLog=False, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)

@@ -183,19 +183,10 @@ class CustomLearnerInterface(UniversalInterface):
 		trainX, trainY, testX, and arguments in that specific order.
 
 		"""
-		retTrainX = None
-		if trainX is not None:
-			retTrainX = trainX.copy()
-		retTrainY = None
-		if trainY is not None:
-			retTrainY = trainY.copy()
-		retTestX = None
-		if testX is not None:
-			retTestX = testX.copy()
 		retArgs = None
 		if arguments is not None:
 			retArgs = copy.copy(arguments)
-		return (retTrainX, retTrainY, retTestX, retArgs)
+		return (trainX, trainY, testX, retArgs)
 
 	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputFormat, customDict):
 		"""

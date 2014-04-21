@@ -87,6 +87,10 @@ class SciKitLearn(UniversalInterface):
 		TODO
 
 		"""
+		obj = self.findCallable(name)
+		if hasattr(obj, 'decision_function'):
+			return 'classifier'
+	
 		return 'UNKNOWN'
 
 	def findCallable(self, name):
@@ -283,21 +287,21 @@ class SciKitLearn(UniversalInterface):
 		"""
 		if trainX is not None:
 			customDict['match'] = trainX.getTypeString()
-			transTrainX = trainX.copyAs('numpy matrix')
-		else:
-			transTrainX = None
+			if trainX.getTypeString() == 'Matrix':
+				trainX = trainX.data
+			else:
+				trainX = trainX.copyAs('numpy matrix')
 
 		if trainY is not None:
-			transTrainY = (trainY.copyAs('numpy array')).flatten()
-		else:
-			transTrainY = None
+			trainY = (trainY.copyAs('numpy array')).flatten()
 
 		if testX is not None:
-			transTestX = testX.copyAs('numpy matrix')
-		else:
-			transTestX = None
+			if testX.getTypeString() == 'Matrix':
+				testX = testX.data
+			else:
+				testX = testX.copyAs('numpy matrix')
 
-		return (transTrainX, transTrainY, transTestX, copy.deepcopy(arguments))
+		return (trainX, trainY, testX, copy.deepcopy(arguments))
 
 
 

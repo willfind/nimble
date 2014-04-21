@@ -154,7 +154,7 @@ def testShogunSparseRegression():
 	obj = Sparse(A)
 
 	labelsData = numpy.random.rand(x)
-	labels = Matrix(labelsData)
+	labels = Matrix(labelsData.reshape((x,1)))
 
 	ret = UML.trainAndApply('shogun.MulticlassOCAS', trainX=obj, trainY=labels, testX=obj)
 

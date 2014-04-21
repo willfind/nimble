@@ -84,6 +84,10 @@ class Mlpy(UniversalInterface):
 		TODO
 
 		"""
+		obj = self.findCallable(name)
+		if hasattr(obj, 'labels'):
+			return 'classifier'
+
 		return 'UNKNOWN'
 
 	def findCallable(self, name):
@@ -267,7 +271,10 @@ class Mlpy(UniversalInterface):
 		"""
 		if trainX is not None:
 			customDict['match'] = trainX.getTypeString()
-			transTrainX = trainX.copyAs('numpy matrix')
+			if trainX.getTypeString() == 'Matrix':
+				transTrainX = trainX.data
+			else:
+				transTrainX = trainX.copyAs('numpy matrix')
 		else:
 			transTrainX = None
 
@@ -277,7 +284,10 @@ class Mlpy(UniversalInterface):
 			transTrainY = None
 
 		if testX is not None:
-			transTestX = testX.copyAs('numpy matrix')
+			if testX.getTypeString() == 'Matrix':
+				transTestX = testX.data
+			else:
+				transTestX = testX.copyAs('numpy matrix')
 		else:
 			transTestX = None
 

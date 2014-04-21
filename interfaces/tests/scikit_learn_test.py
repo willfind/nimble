@@ -162,8 +162,8 @@ def testSciKitLearnUnsupervisedProblemLearners():
 
 def testSciKitLearnObsAsArgumentName():
 	""" Test scikitLearn() by calling learners with 'obs' instead of 'X' as a fit/predict argument """
-	variables = ["x1","x2", "x3"]
-	data = [[1,3,3], [6,7,6], [50,1,3]]
+	variables = ["x1","x2"]
+	data = [[1,3], [6,7], [50,1]]
 	trainingObj = Matrix(data,variables)
 
 	data2 = [[2,1],[1,2],[5,1], [34,4]]

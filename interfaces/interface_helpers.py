@@ -86,10 +86,14 @@ def checkClassificationStrategy(toCall, learnerName, algArgs):
 	"""
 
 	dataX = [[-100,3], [-122,1], [118,1], [117,5], [1,-191], [-2,-118], [-1,200],[3,222]]
-	dataY = [[0],[0],[1],[1],[2],[2],[3],[3]]
+	xObj = UML.createData("Matrix", dataX)
+#	dataY = [[0],[0],[1],[1],[2],[2],[3],[3]]
+	dataY = [[0],[0],[1],[1],[0],[0],[1],[1]]
+	yObj = UML.createData("Matrix", dataY)
 	dataTest = [[0,0],[-100,0],[100,0],[0,-100],[0,100]]
+	testObj = UML.createData("Matrix", dataTest)
 
-	return toCall(learnerName, dataX, dataY, dataTest,algArgs, 'test')
+	return toCall(learnerName, xObj, yObj, testObj, arguments=algArgs, scoreMode='test')
 
 
 def ovaNotOvOFormatted(scoresPerPoint, predicedLabels, numLabels, useSize=True):

@@ -641,7 +641,7 @@ def learnerType(learnerNames):
 
 def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='default', sendToLog=True):
 	(package, learnerName) = _unpackLearnerName(learnerName)
-	_validData(trainX, trainY, None, None)
+	_validData(trainX, trainY, None, None, [False, False])
 	_validArguments(arguments)
 
 	if sendToLog:
@@ -665,7 +665,7 @@ def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='defaul
 
 def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
 	(package, learnerName) = _unpackLearnerName(learnerName)
-	_validData(trainX, trainY, testX, None)
+	_validData(trainX, trainY, testX, None, [False, False])
 	_validScoreMode(scoreMode)
 	_validMultiClassStrategy(multiClassStrategy)
 	_validArguments(arguments)
@@ -746,11 +746,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	correspond to permutations/argument states with one element from arg1 and one element 
 	from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
 	"""
-	_validData(trainX, trainY, testX, testY)
-
-	#Need to make copies of all data, in case it will be modified before a classifier is trained
-	trainX = trainX.copy()
-	testX = testX.copy()
+	_validData(trainX, trainY, testX, testY, [True, True])
 	
 	#if testY is empty, attempt to use trainY
 	if testY is None and isinstance(trainY, (str, unicode, int)):
