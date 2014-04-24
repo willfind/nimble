@@ -610,33 +610,56 @@ def learnerType(learnerNames):
 	If learnerNames is a single string (not a list of strings), then only a single 
 	result is returned, instead of a list.
 	
-	On the backend, learnerType generates a series of artificial data sets with 
-	particular traits to look for heuristic evidence of a classifier, regressor, etc.
+	LearnerType first queries the appropriate interface object for a definitive return
+	value. If the interface doesn't provide a satisfactory answer, then this method
+	calls a backend which generates a series of artificial data sets with particular
+	traits to look for heuristic evidence of a classifier, regressor, etc.
 	"""
 	#argument checking
 	if not isinstance(learnerNames, list):
 		learnerNames = [learnerNames]
 
-	allValidLearnerNames = listLearners()
-
+	splitNames = []
+	associated = []
 	for name in learnerNames:
 		if not isinstance(name, str):
 			raise ArgumentException("learnerNames must be a string or a list of strings.")
-		if not name in allValidLearnerNames:
+
+		splitTuple = _unpackLearnerName(name)
+		currInterface = findBestInterface(splitTuple[0])
+		allValidLearnerNames = currInterface.listLearners()
+		if not splitTuple[1] in allValidLearnerNames:
 			raise ArgumentException(name + " is not a valid learner on your machine.")
+		splitNames.append(splitTuple)
+		associated.append(currInterface)
+
+	resultsList = []
+	secondPassLearnerNames = []
+	for index in range(len(splitNames)):
+		(curPackage, curName) = splitNames[index]
+		interface = associated[index]
+		result = interface.learnerType(curName)
+		if result == 'UNKNOWN' or result == 'other' or result is None:
+			resultsList.append(None)
+			secondPassLearnerNames.append((curPackage, curName))
+		else:
+			resultsList.append(result)
+			secondPassLearnerNames.append(None)
 
 	#have valid arguments - a list of learner names
 	learnerInspectorObj = LearnerInspector()
 
-	typeResultsList = []
-	for curLearnerName in learnerNames:
-		typeResultsList.append(learnerInspectorObj.learnerType(curLearnerName))
+	for index in range(len(secondPassLearnerNames)):
+		curLearnerName = secondPassLearnerNames[index]
+		if curLearnerName is None:
+			continue
+		resultsList[index] = learnerInspectorObj.learnerType(curLearnerName)
 
 	#if only one algo was requested, remove type from list an return as single string
-	if len(typeResultsList) == 1:
-		typeResultsList = typeResultsList[0]
+	if len(resultsList) == 1:
+		resultsList = resultsList[0]
 
-	return typeResultsList
+	return resultsList
 
 
 def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='default', sendToLog=True):
@@ -665,6 +688,7 @@ def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='defaul
 
 def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', sendToLog=True):
 	(package, learnerName) = _unpackLearnerName(learnerName)
+	fullName = package + '.' + learnerName
 	_validData(trainX, trainY, testX, None, [False, False])
 	_validScoreMode(scoreMode)
 	_validMultiClassStrategy(multiClassStrategy)
@@ -686,9 +710,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 		# We only use our own version of the strategy if the internal method is different than
 		# what we want.
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			results = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+			results = trainAndApplyOneVsAll(fullName, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			results = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)
+			results = trainAndApplyOneVsOne(fullName, trainX, trainY, testX, arguments=arguments, scoreMode=scoreMode, timer=timer)
 	
 	if results is None:
 		results = interface.trainAndApply(learnerName, trainX, trainY, testX, arguments, output, scoreMode, timer)

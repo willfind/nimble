@@ -11,6 +11,7 @@ import inspect
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 import UML.interfaces
+import UML.metrics
 
 from uml import train
 from uml import trainAndApply

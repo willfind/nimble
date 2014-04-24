@@ -416,7 +416,3 @@ def testtrainAndApplyOneVsOne():
 				if score == 2:
 					assert results3FeatureMap[j] == str(float(3))
 
-
-
-#def testDataIntegretyTrain():
-

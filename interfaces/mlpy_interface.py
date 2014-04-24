@@ -85,6 +85,8 @@ class Mlpy(UniversalInterface):
 
 		"""
 		obj = self.findCallable(name)
+		if name.lower() == 'liblinear' or name.lower() == 'libsvm':
+			return "UNKNOWN"
 		if hasattr(obj, 'labels'):
 			return 'classifier'
 

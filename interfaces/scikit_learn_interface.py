@@ -88,9 +88,14 @@ class SciKitLearn(UniversalInterface):
 
 		"""
 		obj = self.findCallable(name)
-		if hasattr(obj, 'decision_function'):
+		if hasattr(obj, 'classes_') or hasattr(obj, 'label_') or hasattr(obj, 'labels_'):
 			return 'classifier'
-	
+		if "Classifier" in obj.__name__:
+			return 'classifier'
+
+		if "Regressor" in obj.__name__:
+			return 'regressor'
+		
 		return 'UNKNOWN'
 
 	def findCallable(self, name):
@@ -285,9 +290,11 @@ class SciKitLearn(UniversalInterface):
 		by the package implementor, for example to be used in _outputTransformation()
 
 		"""
+		mustCopy = ['PLSRegression']
+
 		if trainX is not None:
 			customDict['match'] = trainX.getTypeString()
-			if trainX.getTypeString() == 'Matrix':
+			if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopy:
 				trainX = trainX.data
 			else:
 				trainX = trainX.copyAs('numpy matrix')
