@@ -188,7 +188,7 @@ class CustomLearnerInterface(UniversalInterface):
 			retArgs = copy.copy(arguments)
 		return (trainX, trainY, testX, retArgs)
 
-	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputFormat, customDict):
+	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
 		"""
 		Method called before any package level function which transforms the returned
 		value into a format appropriate for a UML user.

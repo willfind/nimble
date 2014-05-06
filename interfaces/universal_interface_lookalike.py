@@ -79,7 +79,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
 		"""
 		return {'trainX':trainX, 'trainY':trainY, 'testX':testX, 'arguments':arguments}
 
-	def _outputTransformation(self, learnerName, outputValue, transformedInputs):
+	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
 		"""
 		Method called before any package level function which transforms the returned
 		value into a format appropriate for a UML user.

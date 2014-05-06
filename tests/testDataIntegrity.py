@@ -6,13 +6,9 @@ as possible
 
 """
 
-
-from nose.tools import raises
-
 import UML
 
 from UML.exceptions import ArgumentException
-from UML.interfaces.universal_interface import UniversalInterface
 
 from UML.umlHelpers import generateClusteredPoints
 

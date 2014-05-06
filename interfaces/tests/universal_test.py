@@ -63,7 +63,7 @@ class TestInterface(UniversalInterface):
 	def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
 		return (trainX, trainY, testX, arguments)
 
-	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputFormat, customDict):
+	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
 		return outputValue
 
 	def _configurableOptionNames(self):

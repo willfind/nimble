@@ -19,9 +19,6 @@ import copy
 import UML
 
 from UML.exceptions import ArgumentException
-from UML.interfaces.interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
-from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
-from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -202,27 +199,7 @@ class Mlpy(UniversalInterface):
 
 		"""
 		if hasattr(learner, 'pred_values'):
-			raw = learner.pred_values(testX)
-			order = self._getScoresOrder(learner)
-			numLabels = len(order)
-			if numLabels == 2:
-				ret = generateBinaryScoresFromHigherSortedLabelScores(raw)
-				return UML.createData("Matrix", ret)
-
-			predLabels = self._applier(learner, testX, arguments, customDict)
-			strategy = ovaNotOvOFormatted(raw, predLabels, numLabels)
-			# we want the scores to be per label, regardless of the original format, so we
-			# check the strategy, and modify it if necessary
-			if not strategy:
-				scores = []
-				for i in xrange(len(raw)):
-					combinedScores = calculateSingleLabelScoresFromOneVsOneScores(raw[i], numLabels)
-					scores.append(combinedScores)
-				scores = numpy.array(scores)
-				return UML.createData("Matrix", scores)
-			else:
-				return UML.createData("Matrix", raw)
-
+			return learner.pred_values(testX)
 		else:
 			raise ArgumentException('Cannot get scores for this learner')
 
@@ -308,17 +285,18 @@ class Mlpy(UniversalInterface):
 
 
 
-	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputFormat, customDict):
+	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
 		"""
 		Method called before any package level function which transforms the returned
 		value into a format appropriate for a UML user.
 
-		"""
-		# we are sometimes given a matrix, this will take care of that 
-		outputValue = numpy.array(outputValue).flatten()
-		#we are given a row vector, we want a column vector
-		outputValue = outputValue.reshape(len(outputValue), 1)
-
+		"""	
+		if outputFormat == "label":
+			# we are sometimes given a matrix, this will take care of that 
+			outputValue = numpy.array(outputValue).flatten()
+			#In the case of prediction we are given a row vector, yet we want a column vector
+			outputValue = outputValue.reshape(len(outputValue), 1)
+		
 		#TODO correct
 		outputFormat = 'Matrix'
 		if outputFormat == 'match':

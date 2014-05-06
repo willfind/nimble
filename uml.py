@@ -706,7 +706,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 
 	results = None
 	if multiClassStrategy != 'default':
-		trialResult = checkClassificationStrategy(interface.trainAndApply, learnerName, arguments)
+		trialResult = checkClassificationStrategy(interface, learnerName, arguments)
 		# We only use our own version of the strategy if the internal method is different than
 		# what we want.
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':

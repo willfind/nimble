@@ -13,7 +13,10 @@ import numpy
 
 import UML
 from UML.exceptions import ArgumentException
-
+from UML.interfaces.interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
+from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+from UML.interfaces.interface_helpers import ovaNotOvOFormatted
+from UML.interfaces.interface_helpers import checkClassificationStrategy
 
 class UniversalInterface(object):
 	"""
@@ -383,6 +386,38 @@ class UniversalInterface(object):
 				bestDefaults = currDefaults
 		return (bestParams, bestDefaults)
 
+	def _formatScoresToOvA(self, learnerName, learner, testX, applyResults, rawScores, arguments, customDict):
+		"""
+		Helper that takes raw scores in any of the three accepted formats (binary case best score,
+		one vs one pairwise tournament by natural label ordering, or one vs all by natural label
+		ordering) and returns them in a one vs all accepted format.
+
+		"""
+		order = self._getScoresOrder(learner)
+		numLabels = len(order)
+		if numLabels == 2 and rawScores.featureCount == 1:
+			ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
+			return UML.createData("Matrix", ret)
+
+		if applyResults is None:
+			applyResults = self._applier(learner, testX, arguments, customDict)
+			applyResults = self._outputTransformation(learnerName, applyResults, arguments, "match", "label", customDict)
+		if rawScores.featureCount != 3:
+			strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
+		else:
+			strategy = checkClassificationStrategy(self, learnerName, arguments)
+		# we want the scores to be per label, regardless of the original format, so we
+		# check the strategy, and modify it if necessary
+		if not strategy:
+			scores = []
+			for i in xrange(rawScores.pointCount):
+				combinedScores = calculateSingleLabelScoresFromOneVsOneScores(rawScores.pointView(i), numLabels)
+				scores.append(combinedScores)
+			scores = numpy.array(scores)
+			return UML.createData("Matrix", scores)
+		else:
+			return rawScores
+
 	class TrainedLearner():
 
 		def __init__(self, learnerName, arguments, transformedInputs, customDict, backend, interfaceObject):
@@ -446,11 +481,12 @@ class UniversalInterface(object):
 			(trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, usedArguments, self.customDict)
 
 			# depending on the mode, we need different information.
+			labels = None
 			if scoreMode != 'label':
 				scores = self.getScores(testX, usedArguments)
 			if scoreMode != 'allScores':
 				labels = self.interface._applier(self.backend, transTestX, usedArguments, self.customDict)
-				labels = self.interface._outputTransformation(self.learnerName, labels, usedArguments, output, self.customDict)
+				labels = self.interface._outputTransformation(self.learnerName, labels, usedArguments, output, "label", self.customDict)
 
 			if scoreMode == 'label':
 				return labels
@@ -487,11 +523,13 @@ class UniversalInterface(object):
 		def getScores(self, testX, arguments):
 			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, {}, self.customDict)
 			
-			rawOrderedScores = self.interface._getScores(self.backend, testX, arguments, self.customDict)
+			rawScores = self.interface._getScores(self.backend, testX, arguments, self.customDict)
+			umlTypeRawScores = self.interface._outputTransformation(self.learnerName, rawScores, arguments, "Matrix", "allScores", self.customDict)
+			formatedRawOrder = self.interface._formatScoresToOvA(self.learnerName, self.backend, testX, None, umlTypeRawScores, arguments, self.customDict)
 			internalOrder = self.interface._getScoresOrder(self.backend)
 			naturalOrder = sorted(internalOrder)
 			if numpy.array_equal(naturalOrder, internalOrder):
-				return rawOrderedScores
+				return formatedRawOrder
 			desiredDict = {}
 			for i in range(len(naturalOrder)):
 				label = naturalOrder[i]
@@ -500,7 +538,7 @@ class UniversalInterface(object):
 				label = internalOrder[feature.index()]
 				return desiredDict[label]
 
-			return rawOrderedScores.sortFeatures(sortHelper=sortScorer)
+			return formatedRawOrder.sortFeatures(sortHelper=sortScorer)
 
 
 	########################
@@ -625,7 +663,7 @@ class UniversalInterface(object):
 		pass
 
 	@abc.abstractmethod
-	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputFormat, customDict):
+	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
 		"""
 		Method called before any package level function which transforms the returned
 		value into a format appropriate for a UML user.

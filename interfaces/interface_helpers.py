@@ -77,46 +77,61 @@ def putOnSearchPath(wantedPath):
 		sys.path.append(wantedPath)
 
 
-def checkClassificationStrategy(toCall, learnerName, algArgs):
+def checkClassificationStrategy(interface, learnerName, algArgs):
 	"""
 	Helper to determine the classification strategy used for a given learner called
-	from the given backend with the given args. The backend must support the scoreMode
-	equal to 'test' flag, which will run the learner on the data passed in and return
-	a string indicating the strategy, instead of the predicted results
+	using the given interface with the given args. Runs a trial on data with 4 classes
+	so that we can use structural 
+	
 	"""
-
 	dataX = [[-100,3], [-122,1], [118,1], [117,5], [1,-191], [-2,-118], [-1,200],[3,222]]
 	xObj = UML.createData("Matrix", dataX)
-#	dataY = [[0],[0],[1],[1],[2],[2],[3],[3]]
-	dataY = [[0],[0],[1],[1],[0],[0],[1],[1]]
+	# we need classes > 2 to test the multiclass strategy, and we should be able
+	# to tell structurally when classes != 3
+	dataY = [[0],[0],[1],[1],[2],[2],[3],[3]]
 	yObj = UML.createData("Matrix", dataY)
 	dataTest = [[0,0],[-100,0],[100,0],[0,-100],[0,100]]
 	testObj = UML.createData("Matrix", dataTest)
 
-	return toCall(learnerName, xObj, yObj, testObj, arguments=algArgs, scoreMode='test')
+	tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs)
+	applyResults = tlObj.apply(testObj, arguments=algArgs)
+	(a, b, testTrans, c) = interface._inputTransformation(learnerName, None, None, testObj, algArgs, tlObj.customDict)
+	rawScores = interface._getScores(tlObj.backend, testTrans, algArgs, tlObj.customDict)
 
+	return ovaNotOvOFormatted(rawScores, applyResults, 4)
 
-def ovaNotOvOFormatted(scoresPerPoint, predicedLabels, numLabels, useSize=True):
+def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True):
 	"""
 	return True if the scoresPerPoint list of list has scores formatted for a
 	one vs all strategy, False if it is for a one vs one strategy. None if there
 	are no definitive cases. May throw an ArgumentException if there are conflicting
 	definitive votes for different strategies.
 	"""
-	length = len(scoresPerPoint)
-	scoreLength = len(scoresPerPoint[0])
-	if useSize and scoreLength <= numLabels and numLabels != 3:
-		return True
-	if useSize and scoreLength > numLabels:
-		return False
+	if not isinstance(scoresPerPoint, UML.data.Base):
+		scoresPerPoint = UML.data.Matrix(scoresPerPoint, reuseData=True)
+	if not isinstance(predictedLabels, UML.data.Base):
+		predictedLabels = UML.data.Matrix(predictedLabels, reuseData=True)
+	length = scoresPerPoint.pointCount
+	scoreLength = scoresPerPoint.featureCount
 
+	# let n = number of classes
+	# ova : number scores = n
+	# ovo : number scores = (n * (n-1) ) / 2
+	# only at n = 3 are they equal
+	if useSize and numLabels != 3:
+		if scoreLength == numLabels:
+			return True
+		else:
+			return False
+
+	# we want to check random points out of all the possible data
 	check = 20
 	if length < check:
 		check = length
 	checkList = random.sample(xrange(length), check)
 	results = []
 	for i in checkList:
-		strategy = verifyOvANotOvOSingleList(scoresPerPoint[i], predicedLabels[i], numLabels)
+		strategy = verifyOvANotOvOSingleList(scoresPerPoint.pointView(i), predictedLabels[i,0], numLabels)
 		results.append(strategy)
 
 	ovaVote = results.count(True)
@@ -258,12 +273,9 @@ def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
 
 	""" 
 	newScoresPerPoint = []
-	for i in xrange(len(scoresPerPoint)):
+	for i in xrange(scoresPerPoint.pointCount):
 		pointScoreList = []
-		try:
-			currScore = scoresPerPoint[i][0]
-		except IndexError:
-			currScore = scoresPerPoint[i]
+		currScore = scoresPerPoint[i,0]
 		pointScoreList.append((-1) * currScore)
 		pointScoreList.append(currScore)
 		newScoresPerPoint.append(pointScoreList)

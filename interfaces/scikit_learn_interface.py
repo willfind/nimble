@@ -16,9 +16,6 @@ import sys
 import UML
 
 from UML.exceptions import ArgumentException
-from UML.interfaces.interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
-from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
-from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -221,29 +218,17 @@ class SciKitLearn(UniversalInterface):
 
 		"""
 		if hasattr(learner, 'decision_function'):
-			raw = learner.decision_function(testX)
-			order = self._getScoresOrder(learner)
-			numLabels = len(order)
-			if numLabels == 2:
-				ret = generateBinaryScoresFromHigherSortedLabelScores(raw)
-				return UML.createData("Matrix", ret)
-
-			predLabels = self._applier(learner, testX, arguments, None)
-			strategy = ovaNotOvOFormatted(raw, predLabels, numLabels)
-			# we want the scores to be per label, regardless of the original format, so we
-			# check the strategy, and modify it if necessary
-			if not strategy:
-				scores = []
-				for i in xrange(len(raw)):
-					combinedScores = calculateSingleLabelScoresFromOneVsOneScores(raw[i], numLabels)
-					scores.append(combinedScores)
-				scores = numpy.array(scores)
-				return UML.createData("Matrix", scores)
-			else:
-				return UML.createData("Matrix", raw)
-
+			toCall = learner.decision_function
+		elif hasattr(learner, 'predict_proba'):
+			toCall = learner.predict_proba
 		else:
 			raise ArgumentException('Cannot get scores for this learner')
+		raw = toCall(testX)
+		# in binary classification, we return a row vector. need to reshape
+		if len(raw.shape) == 1:
+			return raw.reshape(len(raw), 1)
+		else:
+			return raw
 
 
 	def _getScoresOrder(self, learner):
@@ -312,14 +297,15 @@ class SciKitLearn(UniversalInterface):
 
 
 
-	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputFormat, customDict):
+	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
 		"""
 		Method called before any package level function which transforms the returned
 		value into a format appropriate for a UML user.
 
 		"""
-		#we are given a row vector, we want a column vector
-		outputValue = outputValue.reshape(len(outputValue), 1)
+		#In the case of prediction we are given a row vector, yet we want a column vector
+		if outputFormat == "label":
+			outputValue = outputValue.reshape(len(outputValue), 1)
 
 		#TODO correct
 		outputFormat = 'Matrix'
@@ -354,7 +340,7 @@ class SciKitLearn(UniversalInterface):
 
 		learner = self.findCallable(learnerName)(**initParams)
 		learner.fit(**fitParams)
-		if hasattr(learner, 'decision_function'):
+		if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba') or hasattr(learner, 'predict_log_proba'):
 			labelOrder = numpy.unique(trainY)
 			def UIgetScoreOrder():
 				return labelOrder
