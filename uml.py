@@ -187,7 +187,7 @@ def registerCustomLearner(customPackageName, learnerClassObject):
 				raise ArgumentException("The customPackageName '" + customPackageName + "' cannot be used: it is an accepted alias of a non-custom package")
 
 	# do validation before we potentially construct an interface to a custom package
-	UML.interfaces.CustomLearner.validateSubclass(learnerClassObject)
+	UML.customLearners.CustomLearner.validateSubclass(learnerClassObject)
 
 	try:
 		currInterface = findBestInterface(customPackageName)

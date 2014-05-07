@@ -3,7 +3,7 @@ import UML
 from nose.tools import *
 import numpy.testing
 
-from UML.interfaces.custom_learner import CustomLearner
+from UML.customLearners import CustomLearner
 
 
 @raises(TypeError)

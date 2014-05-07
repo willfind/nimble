@@ -2,7 +2,7 @@
 import numpy
 
 import UML
-from UML.interfaces.custom_learner import CustomLearner
+from UML.customLearners import CustomLearner
 
 class RidgeRegression(CustomLearner):
 
@@ -11,11 +11,16 @@ class RidgeRegression(CustomLearner):
 	def train(self, trainX, trainY, lamb=0):
 		self.lamb = lamb
 
+		# setup for intercept term
 #		ones = UML.createData("Matrix", numpy.ones(trainX.pointCount))
 #		ones.transpose()
+#		trainX = trainX.copy()
 #		trainX.appendFeatures(ones)
 
 		# trainX and trainY are input as points in rows, features in columns
+		# in other words: Points x Features.
+		# for X data, we want both Points x Features and Features x Points
+		# for Y data, we only want Points x Features
 		rawXPxF = trainX.copyAs("numpymatrix")
 		rawXFxP = rawXPxF.transpose()
 		rawYPxF = trainY.copyAs("numpymatrix")
@@ -28,8 +33,10 @@ class RidgeRegression(CustomLearner):
 		self.w = inv * rawXFxP * rawYPxF
 
 	def apply(self, testX):
+		# setup intercept
 #		ones = UML.createData("Matrix", numpy.ones(testX.pointCount))
 #		ones.transpose()
+#		testX = testX.copy()
 #		testX.appendFeatures(ones)
 
 		# testX input as points in rows, features in columns

@@ -4,7 +4,7 @@ import copy
 import UML
 
 from UML.exceptions import ArgumentException
-from UML.interfaces.custom_learner import CustomLearner
+from UML.customLearners import CustomLearner
 from UML.interfaces.universal_interface import UniversalInterface
 
 class CustomLearnerInterface(UniversalInterface):
@@ -237,7 +237,7 @@ class CustomLearnerInterface(UniversalInterface):
 			if not name.startswith('_') and not name in excluded:
 				ret[name] = getattr(learnerBackend, name)
 
-		return name
+		return ret
 
 	def _optionDefaults(self, option):
 		"""

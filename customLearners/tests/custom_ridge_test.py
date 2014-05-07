@@ -4,9 +4,8 @@ import UML
 from nose.tools import *
 import numpy.testing
 
-from UML.exceptions import ArgumentException
 from UML.data import Matrix
-from UML.interfaces.ridge_regression import RidgeRegression
+from UML.customLearners.ridge_regression import RidgeRegression
 
 
 def testRidgeRegressionShapes():
@@ -39,8 +38,12 @@ def testRidgeRegressionCompare():
 	UML.registerCustomLearner('Custom', RidgeRegression)
 
 	name = 'Custom.RidgeRegression'
-	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':0})
-	ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj, arguments={'alpha':0, 'fit_intercept':False})
+	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':1})
+	ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj, arguments={'alpha':1, 'fit_intercept':False})
 	
+#	print ret1.data
+#	print ret2.data
+#	assert False
+
 	assert ret1.isApproximatelyEqual(ret2)
 

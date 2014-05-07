@@ -457,9 +457,9 @@ class UniversalInterface(object):
 
 
 		def test(self, testX, testY, arguments, performanceFunction):
-			ret = self.apply(testesting in TrainedLearnertX)
+			#ret = self.apply(testesting in TrainedLearnertX)
 			# TODO, call some kind of helper in UML to deal with the actual testing
-			pass
+			raise NotImplementedError
 
 		def _mergeArguments(self, newArguments):
 			"""
@@ -518,7 +518,7 @@ class UniversalInterface(object):
 			self.backend = self.interface._incrementalTrainer(self.backend, trainX, trainY, arguments, self.customDict)
 
 		def getAttributes(self):
-			self.interface.getAttributes(self.backend)
+			return self.interface._getAttributes(self.backend)
 
 		def getScores(self, testX, arguments):
 			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, {}, self.customDict)

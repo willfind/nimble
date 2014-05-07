@@ -5,8 +5,8 @@ from nose.tools import raises
 
 import UML
 from UML.exceptions import ArgumentException
-from UML.interfaces.custom_learner import CustomLearner
-from UML.interfaces.ridge_regression import RidgeRegression
+from UML.customLearners import CustomLearner
+from UML.customLearners.ridge_regression import RidgeRegression
 
 
 class LoveAtFirstSightClassifier(CustomLearner):
