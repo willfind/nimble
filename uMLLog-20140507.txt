@@ -1,0 +1,21 @@
+
+********************************************************************************
+     Timestamp        Train Data file   Train points   Train features   Test Data file   Test points   Test features   test time   train time
+2014-05-07 11:24:40      OBJECT_#0           10              3            OBJECT_#2           5              3            0.00        0.00   
+
+lamb
+   0
+
+
+Function:
+custom.RidgeRegression
+********************************************************************************
+     Timestamp        Train Data file   Train points   Train features   Test Data file   Test points   Test features   test time   train time
+2014-05-07 11:26:33      OBJECT_#0           10              3            OBJECT_#2           5              3            0.00        0.00   
+
+lamb
+   0
+
+
+Function:
+custom.RidgeRegression
