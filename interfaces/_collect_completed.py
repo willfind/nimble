@@ -38,10 +38,11 @@ def collect(modulePath):
 		tempObj = None
 		try:
 			tempObj = toInstantiate()
-		except TypeError as te:
-#			print str(te)
+		# if ANYTHING goes wrong, just go on without that interface
+		except Exception:
 			continue
-		instantiated.append(tempObj)
+		if tempObj is not None:
+			instantiated.append(tempObj)
 	# key: canonical names
 	# value: interface using that name, or None if that name has a collision
 	nameToInterface = {}
