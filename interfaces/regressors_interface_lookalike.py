@@ -23,7 +23,7 @@ class Regressors(UniversalInterfaceLookalike):
 		return regressors.regressor(learnerName, trainX, trainY, testX, arguments, output, sendToLog)
 
 
-	def listLearners(self):
+	def _listLearnersBackend(self):
 		"""
 		Return a list of all learners callable through this interface.
 
@@ -31,13 +31,13 @@ class Regressors(UniversalInterfaceLookalike):
 		return regressors.listRegressorLearners()
 
 
-	def getLearnerParameterNames(self, name):
+	def _getLearnerParameterNamesBackend(self, name):
 		return regressors.getParameters(name)
 
-	def getLearnerDefaultValues(self, name):
+	def _getLearnerDefaultValuesBackend(self, name):
 		return regressors.getDefaultValues(name)
 
-	def _getParameterNames(self, name):
+	def _getParameterNamesBackend(self, name):
 		"""
 		Find params for instantiation and function calls 
 		TAKES string name, 
@@ -46,7 +46,7 @@ class Regressors(UniversalInterfaceLookalike):
 		return regressors.getParameters(name)
 
 
-	def _getDefaultValues(self, name):
+	def _getDefaultValuesBackend(self, name):
 		"""
 		Find default values
 		TAKES string name, 

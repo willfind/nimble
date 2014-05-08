@@ -23,7 +23,7 @@ class Mahout(UniversalInterfaceLookalike):
 		return mahout.mahout(learnerName, trainX, trainY, testX, arguments, output, sendToLog)
 
 
-	def listLearners(self):
+	def _listLearnersBackend(self):
 		"""
 		Return a list of all learners callable through this interface.
 
@@ -31,7 +31,7 @@ class Mahout(UniversalInterfaceLookalike):
 		return mahout.listMahoutLearners()
 
 
-	def _getParameterNames(self, name):
+	def _getParameterNamesBackend(self, name):
 		"""
 		Find params for instantiation and function calls 
 		TAKES string name, 
@@ -40,13 +40,13 @@ class Mahout(UniversalInterfaceLookalike):
 		return [[]]
 		#return mahout.getParameters(name)
 
-	def getLearnerDefaultValues(self, name):
+	def _getLearnerDefaultValuesBackend(self, name):
 		return [[]]
 
-	def getLearnerParameterNames(self, name):
+	def _getLearnerParameterNamesBackend(self, name):
 		return [[]]
 
-	def _getDefaultValues(self, name):
+	def _getDefaultValuesBackend(self, name):
 		"""
 		Find default values
 		TAKES string name, 

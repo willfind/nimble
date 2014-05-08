@@ -15,13 +15,13 @@ class TestInterface(UniversalInterface):
 	def __init__(self):
 		super(TestInterface, self).__init__()
 
-	def listLearners(self):
+	def _listLearnersBackend(self):
 		return ['l0', 'l1', 'l2', 'exposeTest']
 
-	def getLearnerParameterNames(self, name):
+	def _getLearnerParameterNamesBackend(self, name):
 		return self._getParameterNames(name)
 
-	def _getParameterNames(self, name):
+	def _getParameterNamesBackend(self, name):
 		if name == 'l0':
 			return [['l0a0', 'l0a1']]
 		elif name == 'l1':
@@ -39,10 +39,10 @@ class TestInterface(UniversalInterface):
 		else:
 			return [[]]
 
-	def getLearnerDefaultValues(self, name):
+	def _getLearnerDefaultValuesBackend(self, name):
 		return self._getDefaultValues(name)
 
-	def _getDefaultValues(self, name):
+	def _getDefaultValuesBackend(self, name):
 		if name == 'bar':
 			return [{'estimator':'initable'}, {'estimater2':'initable'}]
 		if name == 'foo':
@@ -81,7 +81,7 @@ class TestInterface(UniversalInterface):
 	def _applier(self, learner, testX, customDict):	
 		return testX
 
-	def findCallable(self, name):
+	def _findCallableBackend(self, name):
 		available = ['l0', 'l1', 'l2', 'l1a0', 'subFunc', 'initable', 'foo', 'bar', 'exposeTest']
 		if name in available:
 			return name

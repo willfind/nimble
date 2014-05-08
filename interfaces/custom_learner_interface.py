@@ -53,7 +53,7 @@ class CustomLearnerInterface(UniversalInterface):
 	#######################################
 
 
-	def listLearners(self):
+	def _listLearnersBackend(self):
 		"""
 		Return a list of all learners callable through this interface.
 
@@ -71,7 +71,7 @@ class CustomLearnerInterface(UniversalInterface):
 		return self.registeredLearners[name].learnerType
 
 
-	def findCallable(self, name):
+	def _findCallableBackend(self, name):
 		"""
 		Find reference to the callable with the given name
 		TAKES string name
@@ -82,7 +82,7 @@ class CustomLearnerInterface(UniversalInterface):
 		else:
 			return None
 
-	def _getParameterNames(self, name):
+	def _getParameterNamesBackend(self, name):
 		"""
 		Find params for instantiation and function calls 
 		TAKES string name, 
@@ -90,7 +90,7 @@ class CustomLearnerInterface(UniversalInterface):
 		"""
 		return self.getLearnerParameterNames(name)
 
-	def getLearnerParameterNames(self, learnerName):
+	def _getLearnerParameterNamesBackend(self, learnerName):
 		"""
 		Find all parameters involved in a trainAndApply() call to the given learner
 		TAKES string name of a learner, 
@@ -107,7 +107,7 @@ class CustomLearnerInterface(UniversalInterface):
 		
 		return ret
 
-	def _getDefaultValues(self, name):
+	def _getDefaultValuesBackend(self, name):
 		"""
 		Find default values
 		TAKES string name, 
@@ -115,7 +115,7 @@ class CustomLearnerInterface(UniversalInterface):
 		"""
 		return self.getLearnerDefaultValues(name)
 
-	def getLearnerDefaultValues(self, learnerName):
+	def _getLearnerDefaultValuesBackend(self, learnerName):
 		"""
 		Find all default values for parameters involved in a trainAndApply() call to the given learner
 		TAKES string name of a learner, 

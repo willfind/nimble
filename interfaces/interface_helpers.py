@@ -354,3 +354,17 @@ def convertTo(data, retType):
 	return eval("data.to" + retType + "()")
 
 
+
+def cacheWrapper(toWrap):
+	cache = {}
+	def wrapped(*args):
+		if args in cache:
+			return cache[args]
+		else:
+			ret = toWrap(*args)
+			cache[args] = ret
+		return ret
+	return wrapped
+
+
+

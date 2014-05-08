@@ -17,6 +17,7 @@ from UML.interfaces.interface_helpers import generateBinaryScoresFromHigherSorte
 from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
+from UML.interfaces.interface_helpers import cacheWrapper
 
 class UniversalInterface(object):
 	"""
@@ -24,6 +25,8 @@ class UniversalInterface(object):
 	"""
 
 	__metaclass__ = abc.ABCMeta
+
+	_listLearnersCached = None
 
 	def __init__(self):
 		"""
@@ -541,15 +544,123 @@ class UniversalInterface(object):
 			return formatedRawOrder.sortFeatures(sortHelper=sortScorer)
 
 
+	##############################################
+	### CACHING FRONTENDS FOR ABSTRACT METHODS ###
+	##############################################
+
+	def listLearners(self):
+		"""
+		Return a list of all learners callable through this interface.
+
+		"""
+		isCustom = isinstance(self, UML.interfaces.CustomLearnerInterface)
+		if self._listLearnersCached is None:
+			ret = self._listLearnersBackend()
+			if not isCustom:
+				self._listLearnersCached = ret
+		else:
+			ret = self._listLearnersCached
+		return ret
+
+	@cacheWrapper
+	def findCallable(self, name):
+		"""
+		Find reference to the callable with the given name
+		TAKES string name
+		RETURNS reference to in-package function or constructor
+		"""
+		return self._findCallableBackend(name)
+
+	@cacheWrapper
+	def _getParameterNames(self, name):
+		"""
+		Find params for instantiation and function calls 
+		TAKES string name, 
+		RETURNS list of list of param names to make the chosen call
+		"""
+		return self._getParameterNamesBackend(name)
+
+	@cacheWrapper
+	def getLearnerParameterNames(self, learnerName):
+		"""
+		Find all parameters involved in a trainAndApply() call to the given learner
+		TAKES string name of a learner, 
+		RETURNS list of list of param names
+		"""
+		return self._getLearnerParameterNamesBackend(learnerName)	
+
+	@cacheWrapper
+	def _getDefaultValues(self, name):
+		"""
+		Find default values
+		TAKES string name, 
+		RETURNS list of dict of param names to default values
+		"""
+		return self._getDefaultValuesBackend(name)
+
+	@cacheWrapper
+	def getLearnerDefaultValues(self, learnerName):
+		"""
+		Find all default values for parameters involved in a trainAndApply() call to the given learner
+		TAKES string name of a learner, 
+		RETURNS list of dict of param names to default values
+		"""
+		return self._getLearnerDefaultValuesBackend(learnerName)
+
 	########################
 	### ABSTRACT METHODS ###
 	########################
 
 	@abc.abstractmethod
-	def listLearners(self):
+	def _listLearnersBackend(self):
 		"""
 		Return a list of all learners callable through this interface.
 
+		"""
+		pass
+
+	@abc.abstractmethod
+	def _findCallableBackend(self, name):
+		"""
+		Find reference to the callable with the given name
+		TAKES string name
+		RETURNS reference to in-package function or constructor
+		"""
+		pass
+
+	@abc.abstractmethod
+	def _getParameterNamesBackend(self, name):
+		"""
+		Find params for instantiation and function calls 
+		TAKES string name, 
+		RETURNS list of list of param names to make the chosen call
+		"""
+		pass
+
+	@abc.abstractmethod
+	def _getLearnerParameterNamesBackend(self, learnerName):
+		"""
+		Find all parameters involved in a trainAndApply() call to the given learner
+		TAKES string name of a learner, 
+		RETURNS list of list of param names
+		"""
+		pass	
+
+	@abc.abstractmethod
+	def _getDefaultValuesBackend(self, name):
+		"""
+		Find default values
+		TAKES string name, 
+		RETURNS list of dict of param names to default values
+		"""
+		pass
+
+	@abc.abstractmethod
+	def _getLearnerDefaultValuesBackend(self, learnerName):
+		"""
+		Find all default values for parameters involved in a trainAndApply() call to the given learner
+		TAKES string name of a learner, 
+		RETURNS list of dict of param names to default values
 		"""
 		pass
 
@@ -560,51 +671,6 @@ class UniversalInterface(object):
 		classifier, regressor, featureSelection, dimensionalityReduction 
 		TODO
 
-		"""
-		pass
-
-	@abc.abstractmethod
-	def findCallable(self, name):
-		"""
-		Find reference to the callable with the given name
-		TAKES string name
-		RETURNS reference to in-package function or constructor
-		"""
-		pass
-
-	@abc.abstractmethod
-	def _getParameterNames(self, name):
-		"""
-		Find params for instantiation and function calls 
-		TAKES string name, 
-		RETURNS list of list of param names to make the chosen call
-		"""
-		pass
-
-	@abc.abstractmethod
-	def getLearnerParameterNames(self, learnerName):
-		"""
-		Find all parameters involved in a trainAndApply() call to the given learner
-		TAKES string name of a learner, 
-		RETURNS list of list of param names
-		"""
-		pass	
-
-	@abc.abstractmethod
-	def _getDefaultValues(self, name):
-		"""
-		Find default values
-		TAKES string name, 
-		RETURNS list of dict of param names to default values
-		"""
-		pass
-
-	@abc.abstractmethod
-	def getLearnerDefaultValues(self, learnerName):
-		"""
-		Find all default values for parameters involved in a trainAndApply() call to the given learner
-		TAKES string name of a learner, 
-		RETURNS list of dict of param names to default values
 		"""
 		pass
 

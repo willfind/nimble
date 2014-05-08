@@ -23,7 +23,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
 	### ABSTRACT METHODS ###
 	########################
 
-	def findCallable(self, name):
+	def _findCallableBackend(self, name):
 		"""
 		Find reference to the callable with the given name
 		TAKES string name

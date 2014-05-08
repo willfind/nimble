@@ -48,7 +48,7 @@ class SciKitLearn(UniversalInterface):
 	### ABSTRACT METHOD IMPLEMENTATIONS ###
 	#######################################
 
-	def listLearners(self):
+	def _listLearnersBackend(self):
 		"""
 		Return a list of all learners callable through this interface.
 
@@ -95,7 +95,7 @@ class SciKitLearn(UniversalInterface):
 		
 		return 'UNKNOWN'
 
-	def findCallable(self, name):
+	def _findCallableBackend(self, name):
 		"""
 		Find reference to the callable with the given name
 		TAKES string name
@@ -120,7 +120,7 @@ class SciKitLearn(UniversalInterface):
 
 		return None
 
-	def _getParameterNames(self, name):
+	def _getParameterNamesBackend(self, name):
 		"""
 		Find params for instantiation and function calls 
 		TAKES string name, 
@@ -132,7 +132,7 @@ class SciKitLearn(UniversalInterface):
 		(objArgs,v,k,d) = ret
 		return [objArgs]
 
-	def getLearnerParameterNames(self, learnerName):
+	def _getLearnerParameterNamesBackend(self, learnerName):
 		"""
 		Find all parameters involved in a trainAndApply() call to the given learner
 		TAKES string name of a learner, 
@@ -159,7 +159,7 @@ class SciKitLearn(UniversalInterface):
 
 		return [ret]
 
-	def _getDefaultValues(self, name):
+	def _getDefaultValuesBackend(self, name):
 		"""
 		Find default values
 		TAKES string name, 
@@ -176,7 +176,7 @@ class SciKitLearn(UniversalInterface):
 
 		return [ret]
 
-	def getLearnerDefaultValues(self, learnerName):
+	def _getLearnerDefaultValuesBackend(self, learnerName):
 		"""
 		Find all default values for parameters involved in a trainAndApply() call to the given learner
 		TAKES string name of a learner, 

@@ -6,6 +6,8 @@ as possible
 
 """
 
+import random
+
 import UML
 
 from UML.exceptions import ArgumentException
@@ -86,7 +88,7 @@ def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
 	return UML.umlHelpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.metrics.fractionIncorrect)
 
 
-def backend(toCall):
+def backend(toCall, portionToTest):
 	cData = generateClassificationData()
 	((cTrainX, cTrainY), (cTestX, cTestY)) = cData
 	backCTrainX = cTrainX.copy()
@@ -100,7 +102,11 @@ def backend(toCall):
 	backRTestX = rTestX.copy()
 	backRTestY = rTestY.copy()
 
-	for learner in UML.listLearners():
+	allLearners = UML.listLearners()
+	numSamples = int(len(allLearners) * portionToTest)
+	toTest = random.sample(allLearners, numSamples)
+
+	for learner in toTest:
 		package = learner.split('.',1)[0].lower()
 		if package != 'mlpy' and package != 'scikitlearn':
 			continue 
@@ -121,21 +127,27 @@ def backend(toCall):
 			assertUnchanged(learner, rData, backRTrainX, backRTrainY, backRTestX, backRTestY)
 
 def testDataIntegretyTrain():
-	backend(wrappedTrain)
+	backend(wrappedTrain, 1)
 
 def testDataIntegretyTrainAndApply():
-	backend(wrappedTrainAndApply)
+	backend(wrappedTrainAndApply, 1)
 
+# we can test smaller portions here because the backends are all being tested by
+# the previous tests. We only care about the trainAndApply One vs One and One vs
+# all code.
 def testDataIntegretyTrainAndApplyMulticlassStrategies():
-	backend(wrappedTrainAndApplyOvO)
-	backend(wrappedTrainAndApplyOvA)
+	backend(wrappedTrainAndApplyOvO, .05)
+	backend(wrappedTrainAndApplyOvA, .05)
 
 def testDataIntegretyTrainAndTest():
-	backend(wrappedTrainAndTest)
+	backend(wrappedTrainAndTest, 1)
 
+# we can test smaller portions here because the backends are all being tested by
+# the previous tests. We only care about the trainAndTest One vs One and One vs
+# all code.
 def testDataIntegretyTrainAndTestMulticlassStrategies():
-	backend(wrappedTrainAndTestOvO)
-	backend(wrappedTrainAndTestOvA)
+	backend(wrappedTrainAndTestOvO, .05)
+	backend(wrappedTrainAndTestOvA, .05)
 
 
 

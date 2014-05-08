@@ -7,6 +7,7 @@
 
 import shogun_interface_old as shogun
 from universal_interface_lookalike import UniversalInterfaceLookalike
+from interface_helpers import cacheWrapper
 
 class Shogun(UniversalInterfaceLookalike):
 	"""
@@ -23,20 +24,21 @@ class Shogun(UniversalInterfaceLookalike):
 		return shogun.shogun(learnerName, trainX, trainY, testX, arguments, output, scoreMode, 'default', sendToLog)
 
 
-	def listLearners(self):
+	@cacheWrapper
+	def _listLearnersBackend(self):
 		"""
 		Return a list of all learners callable through this interface.
 
 		"""
 		return shogun.listShogunLearners()
 
-	def getLearnerParameterNames(self, name):
+	def _getLearnerParameterNamesBackend(self, name):
 		return shogun.getParameters(name)
 
-	def getLearnerDefaultValues(self, name):
+	def _getLearnerDefaultValuesBackend(self, name):
 		return shogun.getDefaultValues(name)
 
-	def _getParameterNames(self, name):
+	def _getParameterNamesBackend(self, name):
 		"""
 		Find params for instantiation and function calls 
 		TAKES string name, 
@@ -45,7 +47,7 @@ class Shogun(UniversalInterfaceLookalike):
 		return shogun.getParameters(name)
 
 
-	def _getDefaultValues(self, name):
+	def _getDefaultValuesBackend(self, name):
 		"""
 		Find default values
 		TAKES string name, 
