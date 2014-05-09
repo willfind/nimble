@@ -12,59 +12,6 @@ from UML.read.text_processing import convertToTokens
 
 testDirectory = os.path.join(UML.UMLPath, 'read', 'tests', 'testDirectory')
 
-def test_readDirectoryIntoSparseMatrix():
-	"""
-	Unit test for readDirectoryIntoSparseMatrix function
-	"""
-	featureIndexMapOne, inverseFeatureIndexMapOne, docTermCountOne, idRowIndexMapOne, holderMatrixOne = readDirectoryIntoSparseMatrix(testDirectory)
-	assert len(featureIndexMapOne) > 0
-	assert len(inverseFeatureIndexMapOne) > 0
-	assert len(docTermCountOne) > 0
-	assert len(idRowIndexMapOne) > 0
-	assert len(holderMatrixOne) > 0
-
-	featureIndexMapTwo, inverseFeatureIndexMapTwo, docTermCountTwo, idRowIndexMapTwo, holderMatrixTwo = readDirectoryIntoSparseMatrix(testDirectory, featureMergeMode='multiTyped')
-
-	assert len(featureIndexMapTwo) > 0
-	assert len(inverseFeatureIndexMapTwo) > 0
-	assert len(docTermCountTwo) > 0
-	assert len(idRowIndexMapTwo) > 0
-	assert len(holderMatrixTwo) > 0
-
-def test_convertAttributeMapToMatrix():
-	"""
-	Unit test for convertAttributeMapToMatrix function
-	"""
-	attributeMap = {'001':'dog', '002':'cat', '003':'horse', '004':'dog', '005':'bird', '006':'horse', '007':'mouse', '008':'dog'}
-	idRowIndexMapOne, attributeDocCountOne, attributeColumnIndexMapOne, columnIndexAttributeMapOne, holderMatrixOne = convertAttributeMapToMatrix(attributeMap)
-
-	assert len(idRowIndexMapOne) > 0
-	assert len(attributeColumnIndexMapOne) > 0
-	assert len(columnIndexAttributeMapOne) > 0
-	assert len(holderMatrixOne) > 0
-
-	assert '001' in idRowIndexMapOne
-	assert '002' in idRowIndexMapOne
-	assert '003' in idRowIndexMapOne
-	assert '004' in idRowIndexMapOne
-	assert '005' in idRowIndexMapOne
-	assert '006' in idRowIndexMapOne
-	assert '007' in idRowIndexMapOne
-	assert '008' in idRowIndexMapOne
-
-	assert 'default_dog' in attributeColumnIndexMapOne
-	assert 'default_cat' in attributeColumnIndexMapOne
-	assert 'default_horse' in attributeColumnIndexMapOne
-	assert 'default_bird' in attributeColumnIndexMapOne
-	assert 'default_mouse' in attributeColumnIndexMapOne
-
-	assert attributeDocCountOne['default_dog'] == 3
-	assert attributeDocCountOne['default_cat'] == 1
-	assert attributeDocCountOne['default_horse'] == 2
-	assert attributeDocCountOne['default_bird'] == 1
-	assert attributeDocCountOne['default_mouse'] == 1
-
-	assert holderMatrixOne.nnz == 8
 
 def test_defaultConvertToTokens():
 	"""
