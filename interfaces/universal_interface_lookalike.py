@@ -31,7 +31,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
 		"""
 		pass
 
-	def getScores(self, learner, trainX, trainY=None, arguments={}):
+	def _getScores(self, learner, testX, arguments, customDict):
 		"""
 		If the learner is a classifier, then return the scores for each
 		class on each data point, otherwise raise an exception.
@@ -40,7 +40,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
 		pass
 
 
-	def _trainer(self, learnerCall, trainX=None, trainY=None, arguments={}):
+	def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
 		"""
 		build a learner and perform training with the given data
 		TAKES transformed arguments, tocall
@@ -49,7 +49,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
 		pass
 
 
-	def _applier(self, learner, testX):	
+	def _applier(self, learner, testX, arguments, customDict):	
 		"""
 		use the given learner to do testing/prediction on the given test set
 		TAKES a TrainedLearner object that can be tested on 
@@ -58,7 +58,7 @@ class UniversalInterfaceLookalike(UniversalInterface):
 		pass
 
 
-	def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments):
+	def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
 		"""
 		Method called before any package level function which transforms all
 		parameters provided by a UML user.

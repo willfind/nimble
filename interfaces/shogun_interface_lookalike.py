@@ -5,14 +5,20 @@
 
 """
 
+import importlib
+
 import shogun_interface_old as shogun
 from universal_interface_lookalike import UniversalInterfaceLookalike
 from interface_helpers import cacheWrapper
+
+locationCache = {}
 
 class Shogun(UniversalInterfaceLookalike):
 	"""
 
 	"""
+
+	
 
 	def __init__(self):
 		"""
@@ -73,4 +79,70 @@ class Shogun(UniversalInterfaceLookalike):
 
 		"""
 		return "shogun"
+
+	def _findCallableBackend(self, name):
+		"""
+		Find reference to the callable with the given name
+		TAKES string name
+		RETURNS reference to in-package function or constructor
+		"""
+		return self._findInPackage(name)
+
+	def _findInPackage(self, name, parent=None):
+		"""
+		Import the desired python package, and search for the module containing
+		the wanted learner. For use by interfaces to python packages.
+
+		"""
+		packageMod = importlib.import_module('shogun')
+
+		contents = packageMod.__all__
+
+		searchIn = packageMod
+		allowedDepth = 2
+		if parent is not None:
+			if parent in locationCache:
+				searchIn = locationCache[parent]
+			else:
+				searchIn = self._findInPackageRecursive(parent, allowedDepth, contents, packageMod)
+			allowedDepth = 0
+			contents = dir(searchIn)
+			if searchIn is None:
+				return None
+
+		if name in locationCache:
+			ret = locationCache[name]
+		else:
+			ret = self._findInPackageRecursive(name, allowedDepth, contents, searchIn)
+
+		return ret
+
+	
+	def _findInPackageRecursive(self, target, allowedDepth, contents, parent):
+		for name in contents:
+			if name.startswith("__") and name != '__init__':
+				continue
+			try:
+				subMod = getattr(parent, name)
+			except AttributeError:
+				try:		
+					subMod = importlib.import_module(parent.__name__ + "." + name)
+				except ImportError:
+					continue
+
+			# we want to add learners, and the parents of learners to the cache 
+			if hasattr(subMod, 'fit'):
+				locationCache[name] = subMod
+
+			if name == target:
+				return subMod
+
+			subContents = dir(subMod)
+
+			if allowedDepth > 0:
+				ret = self._findInPackageRecursive(target, allowedDepth-1, subContents, subMod)
+				if ret is not None:
+					return ret
+
+		return None
 

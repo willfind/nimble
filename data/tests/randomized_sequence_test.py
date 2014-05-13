@@ -32,11 +32,12 @@ unTestedMethods = [
 	'applyToPoints','applyToFeatures',
 	'pointView', 'featureView',
 #	'mapReducePoints', 
-#	'sortPoints', 'sortFeatures',   # takes a function
+	'sortPoints', 'sortFeatures',   # takes a function
 	'extractFeatures', 'extractPoints', # overloaded params, mutually exclusive params
 	'copyFeatures', 'copyPoints', # cannot specify both points and a range -- our code provides both
 #	'transpose', # Sparse is broken?
 	'copy', #something about numpy equality?
+	'copyAs', # haven't setup param generation
 	'referenceDataFrom',  # often causes contradictory shapes to be seen later
 
 	'applyToElements', # sometimes hangs????
@@ -141,8 +142,8 @@ nameToType['toExtract'] = 'sub_bounded_list_ID'
 
 
 
-
-def testRandomSequenceOfMethods():
+def disabledRandomSequenceOfMethods(): # TODO
+#def testRandomSequenceOfMethods():
 	# always use this number of points and features
 	points = numPoints
 	features = numFeatures
@@ -195,8 +196,8 @@ def runSequence(objectList):
 	availableMethods = setupMethodList()
 
 	# loop over specified number of operations
-#	for trial in xrange(numberOperations):
-	for trial in xrange(len(availableMethods)):
+	for trial in xrange(numberOperations):
+#	for trial in xrange(len(availableMethods)):
 		# random number as index into available operations list
 #		index = random.randint(0,len(availableMethods)-1)
 		index = trial
@@ -213,7 +214,8 @@ def runSequence(objectList):
 #			continue
 		print currFunc
 
-#		pdb.set_trace()
+		if currFunc == 'copyAs':
+			pdb.set_trace()
 
 		# set up parameters
 		funcToCheck = eval('Base.' + currFunc)
@@ -458,6 +460,9 @@ def randSub_bounded_list_ID(shape, objectList, funcName):
 	return ret
 
 def randBInt(shape, funcName):
+	if funcName == 'sortFeatures':
+		import pdb
+		pdb.set_trace()
 	if 'point' in funcName.lower():
 		cap = shape[0] - 1
 	else:
@@ -501,8 +506,8 @@ def randObject(shape, dataObject, matchType, matchShape=None):
 		else:
 			dataType = 'Sparse'
 
-	points = random.randint(0,numPoints)
-	features = random.randint(0,numFeatures)
+	points = random.randint(1,numPoints)
+	features = random.randint(1,numFeatures)
 	if matchShape == 'feature':
 		points = shape[0]	
 	elif matchShape == 'point':	

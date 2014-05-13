@@ -56,7 +56,8 @@ class SciKitLearn(UniversalInterface):
 		ret = []
 		subpackages = self.skl.__all__
 
-		exclude = ['BaseDiscreteNB', 'libsvm']
+		exclude = ['BaseDiscreteNB', 'libsvm', 'GMMHMM', 'GaussianHMM', 'MultinomialHMM', 
+			'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression']
 
 		for sub in subpackages:
 			curr = 'sklearn.' + sub
@@ -72,8 +73,9 @@ class SciKitLearn(UniversalInterface):
 				if member in exclude:
 					continue
 				memberContents = eval('dir(' + curr + "." + member + ')')
-				if 'fit' in memberContents and 'predict' in memberContents:
-					ret.append(member)
+				if 'fit' in memberContents:
+					if 'predict' in memberContents or 'transform' in memberContents:
+						ret.append(member)
 
 		return ret
 
@@ -138,6 +140,9 @@ class SciKitLearn(UniversalInterface):
 		TAKES string name of a learner, 
 		RETURNS list of list of param names
 		"""
+#		if learnerName == 'KernelCenterer':
+#			import pdb
+#			pdb.set_trace()
 		ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T']
 		init = self._paramQuery('__init__', learnerName, ignore)
 		fit = self._paramQuery('fit', learnerName, ignore)
@@ -285,13 +290,25 @@ class SciKitLearn(UniversalInterface):
 				trainX = trainX.copyAs('numpy matrix')
 
 		if trainY is not None:
-			trainY = (trainY.copyAs('numpy array')).flatten()
+			if trainY.featureCount > 1:
+				trainY = (trainY.copyAs('numpy array'))
+			else:
+				trainY = (trainY.copyAs('numpy array')).flatten()
 
 		if testX is not None:
 			if testX.getTypeString() == 'Matrix':
 				testX = testX.data
 			else:
 				testX = testX.copyAs('numpy matrix')
+
+		# this particular learner requires integer inputs
+		if learnerName == 'MultinomialHMM':
+			if trainX is not None:
+				trainX = numpy.array(trainX, numpy.int32)
+			if trainY is not None:
+				trainY = numpy.array(trainY, numpy.int32)
+			if testX is not None:
+				testX = numpy.array(testX, numpy.int32)
 
 		return (trainX, trainY, testX, copy.deepcopy(arguments))
 
@@ -304,7 +321,7 @@ class SciKitLearn(UniversalInterface):
 
 		"""
 		#In the case of prediction we are given a row vector, yet we want a column vector
-		if outputFormat == "label":
+		if outputFormat == "label" and len(outputValue.shape) == 1:
 			outputValue = outputValue.reshape(len(outputValue), 1)
 
 		#TODO correct
@@ -339,12 +356,19 @@ class SciKitLearn(UniversalInterface):
 			fitParams[name] = value
 
 		learner = self.findCallable(learnerName)(**initParams)
+#		import pdb
+#		pdb.set_trace()
 		learner.fit(**fitParams)
-		if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba') or hasattr(learner, 'predict_log_proba'):
-			labelOrder = numpy.unique(trainY)
+		if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba'):
+			if trainY is not None:
+				labelOrder = numpy.unique(trainY)	
+			else:
+				allLabels = learner.predict(trainX)
+				labelOrder = numpy.unique(allLabels)
 			def UIgetScoreOrder():
 				return labelOrder
 			learner.UIgetScoreOrder = UIgetScoreOrder
+
 
 		return learner
 
@@ -426,7 +450,7 @@ class SciKitLearn(UniversalInterface):
 		"""
 		Wrapper for the underlying transform function of a scikit-learn learner object
 		"""
-		return learner.fit(testX)
+		return learner.transform(testX)
 
 
 	###############
@@ -489,9 +513,6 @@ class SciKitLearn(UniversalInterface):
 		"""
 		namedModule = self._findInPackage(name,parent)
 
-#		import pdb
-#		pdb.set_trace()
-
 		if namedModule is None:
 			return None
 
@@ -515,6 +536,17 @@ class SciKitLearn(UniversalInterface):
 		automatically
 
 		"""
+		if parent is not None and parent.lower() == 'KernelCenterer'.lower():
+			if name == '__init__':
+				ret = ([], None, None, [])
+			(newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+			return (newArgs, ret[1], ret[2], newDefaults)
+		if parent is not None and parent.lower() == 'LabelEncoder'.lower():
+			if name == '__init__':
+				ret = ([], None, None, [])
+			(newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+			return (newArgs, ret[1], ret[2], newDefaults)
+
 		if parent is not None and parent.lower() == 'GaussianNB'.lower():
 			if name == '__init__':
 				ret = ([], None, None, [])

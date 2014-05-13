@@ -573,8 +573,10 @@ def getParameters(name):
 	of parameters used to instantiate that object or run that function
 
 	"""
+	if name == 'SVMOcas':
+		return [[]]
 	(objArgs,v,k,d) = _paramQuery(name)
-	return objArgs
+	return [objArgs]
 
 def getDefaultValues(name):
 	"""
@@ -584,7 +586,7 @@ def getDefaultValues(name):
 	"""
 	if getParameters(name) == None:
 		return None
-	return {}
+	return [{}]
 
 
 

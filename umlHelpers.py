@@ -1271,8 +1271,8 @@ def _validData(trainX, trainY, testX, testY, testRequired):
 		if not (isinstance(trainY, Base) or isinstance(trainY, (basestring, int, long))):
 			raise ArgumentException("trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
 		if isinstance(trainY, Base):
-			if not trainY.featureCount == 1:
-				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
+#			if not trainY.featureCount == 1:
+#				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
 			if not trainY.pointCount == trainX.pointCount:
 				raise ArgumentException("If trainY is a Data object, then it must have the same number of points as trainX")
 
@@ -1344,7 +1344,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 		testX = testX.copy()
 		testY = testX.extractFeatures([testY])
 
-	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, scoreMode='label', sendToLog=sendToLog, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
@@ -1543,7 +1543,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		if timer is None:
 			timer = Stopwatch()
 
-	timer.start('train')
+		timer.start('train')
 
 	# For each class label in the set of labels:  convert the true
 	# labels in trainY into boolean labels (1 if the point
@@ -1566,6 +1566,9 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 			#as it's added to results object, rename each column with its corresponding class label
 			oneLabelResults.setFeatureName(0, str(label))
 			rawPredictions.appendFeatures(oneLabelResults)
+
+	if sendToLog:
+		timer.stop('train')
 
 	if scoreMode.lower() == 'label'.lower():
 		winningPredictionIndices = rawPredictions.applyToPoints(extractWinningPredictionIndex, inPlace=False).copyAs(format="python list")
@@ -1650,7 +1653,7 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 		testX = testX.copy()
 		testY = testX.extractFeatures([testY])
 
-	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, scoreMode='label', sendToLog=False, timer=timer)
+	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, scoreMode='label', sendToLog=sendToLog, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)

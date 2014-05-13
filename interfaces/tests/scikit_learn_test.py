@@ -160,18 +160,17 @@ def testSciKitLearnUnsupervisedProblemLearners():
 	UML.trainAndApply(toCall("VBGMM"), trainingObj, testX=testObj)
 
 
-def testSciKitLearnObsAsArgumentName():
-	""" Test scikitLearn() by calling learners with 'obs' instead of 'X' as a fit/predict argument """
-	variables = ["x1","x2"]
-	data = [[1,3], [6,7], [50,1]]
-	trainingObj = Matrix(data,variables)
+#def testSciKitLearnObsAsArgumentName():
+#	""" Test scikitLearn() by calling learners with 'obs' instead of 'X' as a fit/predict argument """
+#	data = [[1,3,], [2,3], [0,1], [3,0], [3,2]]
+#	trainingObj = Matrix(data)
 
-	data2 = [[2,1],[1,2],[5,1], [34,4]]
-	testObj = Matrix(data2)
+#	data2 = [[2,3],[1,2],[0,1], [1,3]]
+#	testObj = Matrix(data2)
 
-	ret = UML.trainAndApply(toCall("GMMHMM"), trainingObj, testX=testObj, arguments={'n_components':3})
-	ret = UML.trainAndApply(toCall("GaussianHMM"), trainingObj, testX=testObj)
-	ret = UML.trainAndApply(toCall("MultinomialHMM"), trainingObj, testX=testObj)
+#	ret = UML.trainAndApply(toCall("GMMHMM"), trainingObj, testX=testObj, arguments={'n_components':3})
+#	ret = UML.trainAndApply(toCall("GaussianHMM"), trainingObj, testX=testObj)
+#	ret = UML.trainAndApply(toCall("MultinomialHMM"), trainingObj, testX=testObj)
 
 def testSciKitLearnArgspecFailures():
 	""" Test scikitLearn() on those learners that cannot be passed to inspect.getargspec """
@@ -185,27 +184,25 @@ def testSciKitLearnArgspecFailures():
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
 	testObj = Matrix(data2)
 
-	ret = UML.trainAndApply(toCall("GaussianNB"), trainingObj, testX=testObj, trainY=trainingYObj)
+	UML.trainAndApply(toCall("GaussianNB"), trainingObj, testX=testObj, trainY=trainingYObj)
+	# data dependent?
+	UML.trainAndApply(toCall("MultinomialNB"), trainingObj, testX=testObj, trainY=trainingYObj)
 
-
-def testSciKitLearnUndiagnosed():
-	""" Test scikitLearn on learners with previously undiagnosed crashes """
+def testSciKitLearnCrossDecomp():
+	""" Test SKL on learners which take 2d Y data """
 	variables = ["x1","x2"]
-	data = [[1,0], [3,3], [50,0]]
+	data = [[1,0], [3,3], [50,0], [12, 3], [8, 228]]
 	trainingObj = Matrix(data,variables)
-	dataY = [[0],[1],[2]]
+	dataY = [[0,1],[0,1],[2,2],[1,30], [5,21]]
 	trainingYObj = Matrix(dataY)
 
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
 	testObj = Matrix(data2)
 
-#	ret = UML.trainAndApply(toCall("EllipticEnvelope"), trainingObj, testX=testObj)
-	#requires Y data
-	ret = UML.trainAndApply(toCall("MultinomialNB"), trainingObj, testX=testObj, trainY=trainingYObj)
-#	ret = UML.trainAndApply(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
-#	ret = UML.trainAndApply(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
-	ret = UML.trainAndApply(toCall("IsotonicRegression"), trainingObj, testX=testObj)
-
+	UML.trainAndApply(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
+	UML.trainAndApply(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
+	UML.trainAndApply(toCall("PLSRegression"), trainingObj, testX=testObj, trainY=trainingYObj)
+	UML.trainAndApply(toCall("PLSSVD"), trainingObj, testX=testObj, trainY=trainingYObj)
 
 
 def testSciKitLearnListLearners():
