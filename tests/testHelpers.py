@@ -19,6 +19,7 @@ from UML.umlHelpers import generateClusteredPoints
 from UML.umlHelpers import trainAndTestOneVsOne
 from UML.umlHelpers import trainAndApplyOneVsOne
 from UML.umlHelpers import trainAndApplyOneVsAll
+from UML.umlHelpers import _mergeArguments
 from UML.metrics import fractionIncorrect
 
 
@@ -416,3 +417,21 @@ def testtrainAndApplyOneVsOne():
 				if score == 2:
 					assert results3FeatureMap[j] == str(float(3))
 
+
+@raises(ArgumentException)
+def testMergeArgumentsException():
+	""" Test umlHelpers._mergeArguments will throw the exception it should """
+	args = {1:'a', 2:'b', 3:'d'}
+	kwargs = {1:1, 2:'b'}
+
+	_mergeArguments(args, kwargs)
+
+
+def testMergeArgumentsHand():
+	""" Test umlHelpers._mergeArguments is correct on hand construsted data """
+	args = {1:'a', 2:'b', 3:'d'}
+	kwargs = {1:'a', 4:'b'}
+
+	ret = _mergeArguments(args, kwargs)
+
+	assert ret == {1:'a', 2:'b', 3:'d', 4:'b'}

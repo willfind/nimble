@@ -1261,6 +1261,32 @@ def _validArguments(arguments):
 	if not isinstance(arguments, dict):
 		raise ArgumentException("The 'arguments' parameter must be a dictionary")
 
+def _mergeArguments(argumentsParam, kwargsParam):
+	"""
+	Takes two dicts and returns a new dict of them merged together. Will throw an exception if
+	the two inputs have contradictory values for the same key.
+
+	"""
+	ret = {}
+	if len(argumentsParam) < len(kwargsParam):
+		smaller = argumentsParam
+		larger = kwargsParam
+	else:
+		smaller = kwargsParam
+		larger = argumentsParam
+
+	for k in larger:
+		ret[k] = larger[k]
+	for k in smaller:
+		val = smaller[k]
+		if k in ret and ret[k] != val:
+			raise ArgumentException("The two dicts disagree. key= " + str(k) + 
+				" | arguments value= " + str(argumentsParam[k]) + " | **kwargs value= " +
+				str(kwargsParam[k]))
+		ret[k] = val
+
+	return ret
+
 
 def _validData(trainX, trainY, testX, testY, testRequired):
 	""" Check that the data parameters to train() trainAndApply(), etc. are in accepted formats """
@@ -1295,44 +1321,55 @@ def _validData(trainX, trainY, testX, testY, testRequired):
 			if not trainY.pointCount == trainX.pointCount:
 				raise ArgumentException("If trainY is a Data object, then it must have the same number of points as trainX")
 
-def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True, **kwarguments):
 	"""
-		Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
-		testing, and computing performance measures to be handled.  Takes in a learner's name
-		and training and testing data sets, trains a learner, passes the test data to the 
-		computed model, gets results, and calculates performance based on those results.  
+	Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
+	testing, and computing performance measures to be handled.  Takes in a learner's name
+	and training and testing data sets, trains a learner, passes the test data to the 
+	computed model, gets results, and calculates performance based on those results.  
 
-		Arguments:
+	Arguments:
 
-			learnerName: name of the learner to be called, in the form 'package.learnerName'.
+		learnerName: name of the learner to be called, in the form 'package.learnerName'.
 
-			trainX: data set to be used for training (as some form of Base object)
+		trainX: data set to be used for training (as some form of Base object)
+
+		trainY: used to retrieve the known class labels of the training data. Either
+		contains the labels themselves (in a Base object of the same type as trainX) 
+		or an index (numerical or string) that defines their locale in the trainX object.
+	
+		testX: data set to be used for testing (as some form of Base object)
 		
-			testX: data set to be used for testing (as some form of Base object)
+		testY: used to retrieve the known class labels of the test data. Either
+		contains the labels themselves or an index (numerical or string) that defines their locale
+		in the testX object.
 		
-			trainY: used to retrieve the known class labels of the traing data. Either
-			contains the labels themselves (in a Base object of the same type as trainX) 
-			or an index (numerical or string) that defines their locale in the trainX object.
-		
-			testY: used to retreive the known class labels of the test data. Either
-			contains the labels themselves or an index (numerical or string) that defines their locale
-			in the testX object.  If not present, it is assumed that testY is the same
-			as trainY.  
-			
-			arguments: optional arguments to be passed to the learner specified by 'learnerName'
+		arguments: optional arguments to be passed to the learner specified by 'learnerName'
+		To be merged with **kwarguments before being passed
 
-			performanceFunction: single or iterable collection of functions that can take two collections
-			of corresponding labels - one of true labels, one of predicted labels - and return a
-			performance metric.
-		
-			sendToLog: optional boolean valued parameter; True meaning the results should be printed 
-			to log file.
+		performanceFunction: single or iterable collection of functions that can take two collections
+		of corresponding labels - one of true labels, one of predicted labels - and return a
+		performance metric.
 
-		Returns: A dictionary associating the name or code of performance metrics with the results
-		of those metrics, computed using the predictions of 'learnerName' on testX.  
-		Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
+		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
+		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
+		applies to data sets with 2 class labels.
+		sendToLog: optional boolean valued parameter; True meaning the results should be printed 
+		to log file.
+
+		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+
+		kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
+		the learner specified by 'learnerName'. To be merged with arguments before being passed
+
+	Returns: A dictionary associating the name or code of performance metrics with the results
+	of those metrics, computed using the predictions of 'learnerName' on testX.  
+	Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
 	"""
 	_validData(trainX, trainY, testX, testY, [True, True])
+	_validArguments(arguments)
+	_validArguments(kwarguments)
+	merged = _mergeArguments(arguments, kwarguments)
 
 	if sendToLog:
 		timer = Stopwatch()
@@ -1344,7 +1381,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 		testX = testX.copy()
 		testY = testX.extractFeatures([testY])
 
-	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments, scoreMode='label', sendToLog=sendToLog, timer=timer)
+	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, merged, scoreMode='label', sendToLog=sendToLog, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
@@ -1355,12 +1392,12 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, testX, learnerName, performanceFunction, results, timer, extraInfo=arguments)
+		logManager.logRun(trainX, testX, learnerName, performanceFunction, results, timer, extraInfo=merged)
 
 	return results
 
 
-def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', sendToLog=True, timer=None, **kwarguments):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. one method of splitting the 
@@ -1370,19 +1407,15 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 		learnerName: name of the learner to be called, in the form 'package.learnerName'.
 
 		trainX: data set to be used for training (as some form of Base object)
-		
-		testX: data set to be used for testing (as some form of Base object)
-		
-		trainY: used to retrieve the known class labels of the traing data. Either
+
+		trainY: used to retrieve the known class labels of the training data. Either
 		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
-		testY: used to retreive the known class labels of the test data. Either
-		contains the labels themselves or an index (numerical or string) that defines their locale
-		in the testX object.  If not present, it is assumed that testY is the same
-		as trainY.  
-		
+		testX: data set to be used for testing (as some form of Base object)
+				
 		arguments: optional arguments to be passed to the learner specified by 'learnerName'
+		To be merged with **kwarguments before being passed
 
 		scoreMode:  a flag with three possible values:  label, bestScore, or allScores.  If
 		labels is selected, this function returns a single column with a predicted label for 
@@ -1394,8 +1427,18 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 		found in featureNames.
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+
+		timer: If logging was initiated in a call higher in the stack, then the timing object
+		constructed there will be passed down through this parameter.
+
+		kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
+		the learner specified by 'learnerName'. To be merged with arguments before being passed
+
 	"""
 	_validData(trainX, trainY, testX, None, [True, False])
+	_validArguments(arguments)
+	_validArguments(kwarguments)
+	merged = _mergeArguments(arguments, kwarguments)
 
 	# we want the data and the labels together in one object or this method
 	if isinstance(trainY, Base):
@@ -1427,7 +1470,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 		pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
 		pairTrueLabels = pairData.extractFeatures(trainY)
 		#train classifier on that data; apply it to the test set
-		partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=arguments, sendToLog=False)
+		partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=merged, sendToLog=False)
 		#put predictions into table of predictions
 		if rawPredictions is None:
 			rawPredictions = partialResults.copyAs(format="List")
@@ -1477,7 +1520,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 		raise ArgumentException('Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode))
 
 
-def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', sendToLog=True, timer=None):
+def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', sendToLog=True, timer=None, **kwarguments):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -1487,14 +1530,15 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		learnerName: name of the learner to be called, in the form 'package.learnerName'.
 
 		trainX: data set to be used for training (as some form of Base object)
-		
-		testX: data set to be used for testing (as some form of Base object)
-		
-		trainY: used to retrieve the known class labels of the traing data. Either
+
+		trainY: used to retrieve the known class labels of the training data. Either
 		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
 		
+		testX: data set to be used for testing (as some form of Base object)
+				
 		arguments: optional arguments to be passed to the learner specified by 'learnerName'
+		To be merged with **kwarguments before being passed
 
 		scoreMode:  a flag with three possible values:  label, bestScore, or allScores.  If
 		labels is selected, this function returns a single column with a predicted label for 
@@ -1506,27 +1550,17 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		found in featureNames.
 		
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+
+		timer: If logging was initiated in a call higher in the stack, then the timing object
+		constructed there will be passed down through this parameter.
+
+		kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
+		the learner specified by 'learnerName'. To be merged with arguments before being passed
 	"""
-#	_validData(trainX, trainY, testX, testY)
-#	trainX = trainX.copy()
-#	testX = testX.copy()
-
-	# If testY is missing, assume it is because it's the same as trainY
-#	if testY is None and isinstance(trainY, (str, int, long)):
-#		testY = trainY
-#	elif testY is None:
-#		raise ArgumentException("Missing testY in trainAndTestOneVsAll")
-
-	#Remove true labels from from training set, if not already separated
-#	if isinstance(trainY, (str, int, long)):
-#		trainX = trainX.copy()
-#		trainY = trainX.extractFeatures(trainY)
-
-	#Remove true labels from test set, if not already separated
-#	if isinstance(testY, (str, int, long)):
-#		testY = testX.extractFeatures(testY)
-
 	_validData(trainX, trainY, testX, None, [True, False])
+	_validArguments(arguments)
+	_validArguments(kwarguments)
+	merged = _mergeArguments(arguments, kwarguments)
 
 	#Remove true labels from from training set, if not already separated
 	if isinstance(trainY, (str, int, long)):
@@ -1556,7 +1590,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 				return 0
 			else: return 1
 		trainLabels = trainY.applyToPoints(relabeler, inPlace=False)
-		oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=arguments, sendToLog=False)
+		oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged, sendToLog=False)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
 			rawPredictions = oneLabelResults
@@ -1615,35 +1649,49 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
 
-def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True):
+def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True, **kwarguments):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
 	training set into 2-label subsets. Tests performance using the metric function(s) found in 
 	performanceMetricFunctions.
 
+		learnerName: name of the learner to be called, in the form 'package.learnerName'.
+
 		trainX: data set to be used for training (as some form of Base object)
-		
-		testX: data set to be used for testing (as some form of Base object)
-		
-		trainY: used to retrieve the known class labels of the traing data. Either
+
+		trainY: used to retrieve the known class labels of the training data. Either
 		contains the labels themselves (in a Base object of the same type as trainX) 
 		or an index (numerical or string) that defines their locale in the trainX object.
+	
+		testX: data set to be used for testing (as some form of Base object)
 		
-		testY: used to retreive the known class labels of the test data. Either
-		contains the labels themselves or an index (numerical or string) that defines their locale
-		in the testX object.  If not present, it is assumed that testY is the same
-		as trainY.  
+		testY: used to retrieve the known class labels of the test data. Either contains
+		the labels themselves or an index (numerical or string) that defines their
+		location in the testX object.
 		
 		arguments: optional arguments to be passed to the learner specified by 'learnerName'
-		
+		To be merged with **kwarguments before being passed
+
 		performanceFunction: single or iterable collection of functions that can take two collections
 		of corresponding labels - one of true labels, one of predicted labels - and return a
 		performance metric.
-		
+
+		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
+		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
+		applies to data sets with 2 class labels.
+		sendToLog: optional boolean valued parameter; True meaning the results should be printed 
+		to log file.
+
 		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+
+		kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
+		the learner specified by 'learnerName'. To be merged with arguments before being passed
 	"""
 	_validData(trainX, trainY, testX, testY, [True, True])
+	_validArguments(arguments)
+	_validArguments(kwarguments)
+	merged = _mergeArguments(arguments, kwarguments)
 
 	if sendToLog:
 		timer = Stopwatch()
@@ -1653,7 +1701,7 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 		testX = testX.copy()
 		testY = testX.extractFeatures([testY])
 
-	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments, scoreMode='label', sendToLog=sendToLog, timer=timer)
+	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, merged, scoreMode='label', sendToLog=sendToLog, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
@@ -1664,7 +1712,7 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, testX, learnerName, performanceFunction, results, timer, extraInfo=arguments)
+		logManager.logRun(trainX, testX, learnerName, performanceFunction, results, timer, extraInfo=merged)
 
 	return results
 

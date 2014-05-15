@@ -19,6 +19,8 @@ from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 
+from UML.umlHelpers import _mergeArguments
+
 class UniversalInterface(object):
 	"""
 
@@ -459,26 +461,32 @@ class UniversalInterface(object):
 				setattr(self, methodName, wrapped)
 
 
-		def test(self, testX, testY, arguments, performanceFunction):
+		def test(self, testX, testY, arguments, performanceFunction, **kwarguments):
 			#ret = self.apply(testesting in TrainedLearnertX)
 			# TODO, call some kind of helper in UML to deal with the actual testing
 			raise NotImplementedError
 
-		def _mergeArguments(self, newArguments):
+		def _mergeWithTrainArguments(self, newArguments1, newArguments2):
 			"""
 			When calling apply, merges our fixed arguments with our provided arguments,
 			giving the new arguments precedence if needed.
 
 			"""
-			ret = copy.copy(self.transformedArguments)
-			for key in newArguments:
-				ret[key] = newArguments[key]
+			ret = _mergeArguments(self.transformedArguments, newArguments1)
+			ret = _mergeArguments(ret, newArguments2)
 			return ret
 
-		def apply(self, testX, arguments={}, output='match', scoreMode='label'):
+		def apply(self, testX, arguments={}, output='match', scoreMode='label', **kwarguments):
+			"""
+			Returns the application of this learner to the given test data (i.e. performing
+			prediction, transformation, etc. as appropriate to the learner). Equivalent to
+			having called trainAndApply with the same same setup as this learner was trained
+			on.
+
+			"""
 #			self.interface._validateOutputFlag(output)
 #			self.interface._validateScoreModeFlag(scoreMode)
-			usedArguments = self._mergeArguments(arguments)
+			usedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
 
 			# input transformation
 			(trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, usedArguments, self.customDict)
@@ -523,12 +531,19 @@ class UniversalInterface(object):
 		def getAttributes(self):
 			return self.interface._getAttributes(self.backend)
 
-		def getScores(self, testX, arguments):
-			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, {}, self.customDict)
+		def getScores(self, testX, arguments, **kwarguments):
+			"""
+			Returns the scores for all labels for each data point. If this TrainedLearner
+			is named foo, this operation is equivalent to calling foo.apply with
+			'scoreMode="allScores"' 
+
+			"""
+			usedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
+			(trainX, trainY, testX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, usedArguments, self.customDict)
 			
-			rawScores = self.interface._getScores(self.backend, testX, arguments, self.customDict)
-			umlTypeRawScores = self.interface._outputTransformation(self.learnerName, rawScores, arguments, "Matrix", "allScores", self.customDict)
-			formatedRawOrder = self.interface._formatScoresToOvA(self.learnerName, self.backend, testX, None, umlTypeRawScores, arguments, self.customDict)
+			rawScores = self.interface._getScores(self.backend, testX, usedArguments, self.customDict)
+			umlTypeRawScores = self.interface._outputTransformation(self.learnerName, rawScores, usedArguments, "Matrix", "allScores", self.customDict)
+			formatedRawOrder = self.interface._formatScoresToOvA(self.learnerName, self.backend, testX, None, umlTypeRawScores, usedArguments, self.customDict)
 			internalOrder = self.interface._getScoresOrder(self.backend)
 			naturalOrder = sorted(internalOrder)
 			if numpy.array_equal(naturalOrder, internalOrder):

@@ -42,13 +42,13 @@ def test_crossValidateReturnAll():
 	"""
 	X, Y = _randomLabeledDataSet(numPoints=1000, numFeatures=10, numLabels=5)
 	#try with no extra arguments at all:
-	result = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, 10, 'label', None, False, 'myseed', )
+	result = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, foldSeed='myseed', )
 	print result
 	assert result
 	assert 1 == len(result)
 	assert result[0][0] == {}
 	#try with some extra elements but all after default
-	result = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, n_neighbors=(1,2,3) )
+	result = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, n_neighbors=(1,2,3))
 	print result
 	assert result
 	assert 3 == len(result)
@@ -56,8 +56,8 @@ def test_crossValidateReturnAll():
 
 	#since the same seed is used, and these calls are effectively building the same arguments, (p=2 is default for algo)
 	#the scores in results list should be the same (though the keys will be different (one the second will have 'p':2 in the keys as well))
-	resultDifferentNeighbors = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, 10, 'label', None, False, 'myseed', n_neighbors=(1,2,3,4,5))
-	resultDifferentNeighborsButSameCombinations = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, 10, 'label', None, False, 'myseed', n_neighbors=(1,2,3,4,5), p=(2))
+	resultDifferentNeighbors = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, foldSeed='myseed', n_neighbors=(1,2,3,4,5))
+	resultDifferentNeighborsButSameCombinations = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, foldSeed='myseed', n_neighbors=(1,2,3,4,5), p=(2))
 	#assert the the resulting SCORES are identical
 	#uncertain about the order
 	resultOneScores = [curEntry[1] for curEntry in resultDifferentNeighbors]
@@ -88,10 +88,10 @@ def test_crossValidateReturnBest():
 	#try with no extra arguments at all:
 	shouldMaximizeScores = False
 
-	resultTuple = crossValidateReturnBest('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, 10, 'label', None, False, 'myseed', shouldMaximizeScores, n_neighbors=(1,2,3), p=(1,2))
+	resultTuple = crossValidateReturnBest('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, foldSeed='myseed', maximize=shouldMaximizeScores, n_neighbors=(1,2,3), p=(1,2))
 	assert resultTuple
 
-	allResultsList = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, 10, 'label', None, False, 'myseed', n_neighbors=(1,2,3), p=(1,2))
+	allResultsList = crossValidateReturnAll('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, foldSeed='myseed', n_neighbors=(1,2,3), p=(1,2))
 	#since same args were used (except return all doesn't have a 'maximize' parameter,
 	# the best tuple should be in allResultsList
 	allArguments = [curResult[0] for curResult in allResultsList]

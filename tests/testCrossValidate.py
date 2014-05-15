@@ -56,7 +56,6 @@ def test_crossValidate_runs():
 		classifierAlgos = ['sciKitLearn.KNeighborsClassifier', 'sciKitLearn.PassiveAggressiveClassifier']
 		for curAlgo in classifierAlgos:
 			result = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=random.random())
-			# crossValidate(algorithm, trainX, trainY, argumentsForAlgorithm, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED):
 			assert isinstance(result, float)
 
 
@@ -65,7 +64,6 @@ def test_crossValidate_runs():
 		classifierAlgos = ['sciKitLearn.LinearRegression', ]
 		for curAlgo in classifierAlgos:
 			result = crossValidate(curAlgo, X, Y, meanAbsoluteError, {}, numFolds=3)
-			# crossValidate(algorithm, trainX, trainY, argumentsForAlgorithm, performanceFunction, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED):
 			assert isinstance(result, float)
 		
 
