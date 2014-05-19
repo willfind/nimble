@@ -7,18 +7,12 @@ from low_level_backend import LowLevelBackend
 
 class TestList(DerivedBackend, HighLevelBackend):
 	def __init__(self):
-		def maker(data=None, featureNames=None):
-			return UML.createData("List", data=data, featureNames=featureNames)
-
-		super(TestList, self).__init__(maker)
+		super(TestList, self).__init__('List')
 
 
 class TestMatrix(DerivedBackend, HighLevelBackend):
 	def __init__(self):
-		def maker(data, featureNames=None):
-			return UML.createData("Matrix", data=data, featureNames=featureNames)
-
-		super(TestMatrix, self).__init__(maker)
+		super(TestMatrix, self).__init__('Matrix')
 
 	def test_foldIterator_ordering(self):
 		""" Test that foldIterator() yields folds in the proper order: X and Y folds should be in the same order"""
@@ -49,11 +43,8 @@ class TestMatrix(DerivedBackend, HighLevelBackend):
 
 
 class TestSparse(DerivedBackend, HighLevelBackend):
-	def __init__(self):	
-		def maker(data, featureNames=None):
-			return UML.createData("Sparse", data=data, featureNames=featureNames)
-
-		super(TestSparse, self).__init__(maker)
+	def __init__(self):
+		super(TestSparse, self).__init__("Sparse")
 
 
 class TestBase(LowLevelBackend):

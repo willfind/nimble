@@ -57,8 +57,10 @@ def plusOneOnlyEven(value):
 
 class HighLevelBackend(object):
 
-	def __init__(self, constructor):
-		self.constructor = constructor
+	def __init__(self, retType):
+		def maker(data=None, featureNames=None):
+			return UML.createData(retType, data=data, featureNames=featureNames)
+		self.constructor = maker
 #		super(HighLevelBackend, self).__init__()
 
 	###########################

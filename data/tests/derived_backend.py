@@ -11,6 +11,7 @@ import numpy
 from nose.tools import *
 
 from copy import deepcopy
+
 from UML import createData
 from UML.data import List
 from UML.data import Matrix
@@ -21,8 +22,10 @@ from UML.exceptions import ArgumentException
 
 class DerivedBackend(object):
 
-	def __init__(self, constructor):
-		self.constructor = constructor
+	def __init__(self, retType):
+		def maker(data=None, featureNames=None):
+			return createData(retType, data=data, featureNames=featureNames)
+		self.constructor = maker
 #		super(DerivedBackend, self).__init__()
 
 	##############
