@@ -4,7 +4,7 @@ import importlib
 import abc
 import universal_interface
 
-def collect(modulePath):
+def collectVisiblePythonModules(modulePath):
 	# go through files in this directory, find ones which could be python importable
 	possibleFiles = os.listdir(modulePath)
 	pythonModules = []
@@ -14,7 +14,9 @@ def collect(modulePath):
 		(name, extension) = fileName.split('.')
 		if extension == 'py' and not name.startswith('_'):
 			pythonModules.append(name)
+	return pythonModules
 
+def collectUnexpectedInterfaces(pythonModules):
 	# go through each possible module, import it, and check for possible interfaces
 	possibleInterfaces = []
 	# setup seen with the interfaces we know we don't want to load / try to load
@@ -28,9 +30,14 @@ def collect(modulePath):
 		for valueName in contents:
 			value = getattr(importedModule, valueName)
 			if isinstance(value, abc.ABCMeta) and issubclass(value, universal_interface.UniversalInterface):
-				if not value in seen:
-					seen.add(value)
+				if not valueName in seen:
+					seen.add(valueName)
 					possibleInterfaces.append(value)				
+	return possibleInterfaces
+
+def collect(modulePath):
+	pythonModules = collectVisiblePythonModules(modulePath)
+	possibleInterfaces = collectUnexpectedInterfaces(pythonModules)
 
 	# We now have a list of possible interfaces, which we will try to instantiate
 	instantiated = []

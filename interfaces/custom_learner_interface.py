@@ -52,6 +52,13 @@ class CustomLearnerInterface(UniversalInterface):
 	### ABSTRACT METHOD IMPLEMENTATIONS ###
 	#######################################
 
+	def accessible(self):
+		"""
+		Return true if the package underlying this interface is currently accessible,
+		False otherwise.
+
+		"""
+		return True
 
 	def _listLearnersBackend(self):
 		"""

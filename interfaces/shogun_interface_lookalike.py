@@ -29,6 +29,12 @@ class Shogun(UniversalInterfaceLookalike):
 	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', sendToLog=True):
 		return shogun.shogun(learnerName, trainX, trainY, testX, arguments, output, scoreMode, 'default', sendToLog)
 
+	def accessible(self):
+		try:
+			import shogun
+		except ImportError:
+			return False
+		return True
 
 	@cacheWrapper
 	def _listLearnersBackend(self):

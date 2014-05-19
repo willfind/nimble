@@ -35,6 +35,11 @@ class UniversalInterface(object):
 
 		"""
 		### Validate all the information from abstract functions ###
+		# enforce a check that the underlying package is accessible at instantiation,
+		# aborting the construction of the interface for this session of UML if
+		# it is not.
+		if not self.accessible():
+			raise ImportError("The underlying package was not accessible, aborting instantiation.")
 
 		# getCanonicalName
 		if not isinstance(self.getCanonicalName(), str):
@@ -625,6 +630,15 @@ class UniversalInterface(object):
 	########################
 	### ABSTRACT METHODS ###
 	########################
+
+	@abc.abstractmethod
+	def accessible(self):
+		"""
+		Return true if the package underlying this interface is currently accessible,
+		False otherwise.
+
+		"""
+		pass
 
 	@abc.abstractmethod
 	def _listLearnersBackend(self):

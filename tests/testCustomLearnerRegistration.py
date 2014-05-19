@@ -46,7 +46,16 @@ class UncallableLearner(CustomLearner):
 @raises(ArgumentException)
 def testCustomPackageNameCollision():
 	""" Test registerCustomLearner raises an exception when the given name collides with a real package """
-	UML.registerCustomLearner("Mlpy", LoveAtFirstSightClassifier)
+	avail = UML.interfaces.available
+	nonCustom = None
+	for inter in avail:
+		if not isinstance(inter, UML.interfaces.CustomLearnerInterface):
+			nonCustom = inter
+			break
+	if nonCustom is not None:
+		UML.registerCustomLearner(nonCustom.getCanonicalName(), LoveAtFirstSightClassifier)
+	else:
+		raise ArgumentException("Can't test, just pass")
 
 
 @raises(ArgumentException)

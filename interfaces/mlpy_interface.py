@@ -53,6 +53,15 @@ class Mlpy(UniversalInterface):
 	### ABSTRACT METHOD IMPLEMENTATIONS ###
 	#######################################
 
+
+	def accessible(self):
+		try:
+			import mlpy
+		except ImportError:
+			return False
+		return True
+
+
 	def _listLearnersBackend(self):
 		"""
 		Return a list of all learners callable through this interface.

@@ -23,6 +23,9 @@ class Mahout(UniversalInterfaceLookalike):
 		return mahout.mahout(learnerName, trainX, trainY, testX, arguments, output, sendToLog)
 
 
+	def accessible(self):
+		return False
+
 	def _listLearnersBackend(self):
 		"""
 		Return a list of all learners callable through this interface.

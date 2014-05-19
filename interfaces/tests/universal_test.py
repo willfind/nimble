@@ -15,6 +15,9 @@ class TestInterface(UniversalInterface):
 	def __init__(self):
 		super(TestInterface, self).__init__()
 
+	def accessible(self):
+		return True
+
 	def _listLearnersBackend(self):
 		return ['l0', 'l1', 'l2', 'exposeTest']
 
