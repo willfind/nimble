@@ -110,7 +110,7 @@ def testGetScoresFormat():
 					# we have to skip them in that case
 					continue
 				try:
-					scores2 = tl2.getScores(testX2, {})
+					scores2 = tl2.getScores(testX2)
 				except ArgumentException:
 					# this is to catch learners that cannot output scores
 					continue
@@ -121,7 +121,7 @@ def testGetScoresFormat():
 				except:
 					# some classifiers are binary only
 					continue
-				scores4 = tl4.getScores(testX4, {})
+				scores4 = tl4.getScores(testX4)
 				checkFormat(scores4, 4)
 
 

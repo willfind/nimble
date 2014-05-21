@@ -466,7 +466,7 @@ class UniversalInterface(object):
 				setattr(self, methodName, wrapped)
 
 
-		def test(self, testX, testY, arguments, performanceFunction, **kwarguments):
+		def test(self, testX, testY, performanceFunction, arguments={}, **kwarguments):
 			#ret = self.apply(testesting in TrainedLearnertX)
 			# TODO, call some kind of helper in UML to deal with the actual testing
 			raise NotImplementedError
@@ -536,7 +536,7 @@ class UniversalInterface(object):
 		def getAttributes(self):
 			return self.interface._getAttributes(self.backend)
 
-		def getScores(self, testX, arguments, **kwarguments):
+		def getScores(self, testX, arguments={}, **kwarguments):
 			"""
 			Returns the scores for all labels for each data point. If this TrainedLearner
 			is named foo, this operation is equivalent to calling foo.apply with
