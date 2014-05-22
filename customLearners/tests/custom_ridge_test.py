@@ -27,23 +27,3 @@ def testRidgeRegressionShapes():
 	numpy.testing.assert_approx_equal(ret[0,0], 10.5, significant=3)
 	numpy.testing.assert_approx_equal(ret[1,0], 18, significant=2)
 
-
-def testRidgeRegressionCompare():
-	data = [[0,1,2], [13,12,4], [345,233,76]]
-	trainObj = Matrix(data)
-
-	data2 = [[122,34],[76,-3]]
-	testObj = Matrix(data2)
-
-	UML.registerCustomLearner('Custom', RidgeRegression)
-
-	name = 'Custom.RidgeRegression'
-	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':1})
-	ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj, arguments={'alpha':1, 'fit_intercept':False})
-	
-#	print ret1.data
-#	print ret2.data
-#	assert False
-
-	assert ret1.isApproximatelyEqual(ret2)
-

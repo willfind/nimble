@@ -9,9 +9,13 @@ from numpy.random import rand, randint
 
 import UML
 
+from UML.customLearners import RidgeRegression
+from UML.customLearners import KNNClassifier
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.data import Matrix
 from UML.data import Sparse
+
+from UML.umlHelpers import generateClusteredPoints
 
 packageName = 'sciKitLearn'
 
@@ -225,7 +229,48 @@ def testSciKitLearnListLearners():
 					for key in dSet.keys():
 						assert key in pSet
 
+
+def testCustomRidgeRegressionCompare():
+	""" Sanity check for custom RidgeRegression, compare results to SKL's Ridge """
+	data = [[0,1,2], [13,12,4], [345,233,76]]
+	trainObj = Matrix(data)
+
+	data2 = [[122,34],[76,-3]]
+	testObj = Matrix(data2)
+
+	UML.registerCustomLearner('Custom', RidgeRegression)
+
+	name = 'Custom.RidgeRegression'
+	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':1})
+	ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj, arguments={'alpha':1, 'fit_intercept':False})
 	
 
+	assert ret1.isApproximatelyEqual(ret2)
+
+def testCustomRidgeRegressionCompareRandomized():
+	""" Sanity check for custom RidgeRegression, compare results to SKL's Ridge on random data"""
+	trainObj = UML.createRandomData("Matrix", 1000, 60, .1)
+	testObj = UML.createRandomData("Matrix", 100, 59, .1)
+
+	UML.registerCustomLearner('Custom', RidgeRegression)
+
+	name = 'Custom.RidgeRegression'
+	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':1})
+	ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj, arguments={'alpha':1, 'fit_intercept':False})
+	
+	assert ret1.isApproximatelyEqual(ret2)
 
 
+def testCustomKNNClassficationCompareRandomized():
+	""" Sanity check on custom KNNClassifier, compare to SKL's KNeighborsClassifier on random data"""
+	trainX, ignore, trainY = generateClusteredPoints(5, 10, 5, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
+	testX, ignore, testY = generateClusteredPoints(5, 5, 5, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
+
+	UML.registerCustomLearner('Custom', KNNClassifier)
+
+	cusname = 'Custom.KNNClassifier'
+	sklname = "Scikitlearn.KNeighborsClassifier"
+	ret1 = UML.trainAndApply(cusname, trainX, trainY=trainY, testX=testX, k=5)
+	ret2 = UML.trainAndApply(sklname, trainX, trainY=trainY, testX=testX, n_neighbors=5, algorithm='brute')
+	
+	assert ret1.isApproximatelyEqual(ret2)

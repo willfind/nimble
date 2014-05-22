@@ -24,7 +24,7 @@ class CustomLearner(object):
 	def validateSubclass(cls, check):
 		# check learnerType 
 		accepted = ["unknown", 'regression', 'classification', 'featureselection', 'dimensionalityreduction']
-		if not hasattr(check, 'learnerType') or check.learnerType.lower() not in accepted:
+		if not hasattr(check, 'learnerType') or check.learnerType not in accepted:
 			raise TypeError("The custom learner must have a class variable named 'learnerType' with a value from the list " + str(accepted))
 
 		# check train / apply params
