@@ -5,8 +5,6 @@ from nose.tools import *
 import numpy.testing
 
 from UML.data import Matrix
-from UML.customLearners.ridge_regression import RidgeRegression
-
 
 def testRidgeRegressionShapes():
 	""" Test ridge regression by checking the shapes of the inputs and outputs """
@@ -16,8 +14,6 @@ def testRidgeRegressionShapes():
 
 	data2 = [[5.5,5],[20,-3]]
 	testObj = Matrix(data2)
-
-	UML.registerCustomLearner('Custom', RidgeRegression)
 
 	name = 'Custom.RidgeRegression'
 	ret = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':0})

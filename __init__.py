@@ -35,3 +35,6 @@ from uml import crossValidateReturnBest
 
 from uml import learnerType
 
+# automatic registration of custom learners to be used in unit testing 
+UML.registerCustomLearner('Custom', UML.customLearners.RidgeRegression)
+UML.registerCustomLearner('Custom', UML.customLearners.KNNClassifier)

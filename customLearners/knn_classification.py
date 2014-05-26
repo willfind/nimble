@@ -20,14 +20,13 @@ class KNNClassifier(CustomLearner):
 
 	learnerType = 'classification'
 
-	def train(self, trainX, trainY, k=1):
+	def train(self, trainX, trainY, k=5):
 		self.k = k
 		self._trainX = trainX
 		self._trainY = trainY
 
 	def apply(self, testX):
-		ret = []
-		for p in testX.pointIterator():
+		def foo(p):
 			nearestPoints = self._generatePointsSortedByDistance(p)
 			results = self._voteNearest(nearestPoints)
 			# sort according to number of votes received
@@ -44,9 +43,9 @@ class KNNClassifier(CustomLearner):
 			else:
 				prediction = results[0,0]
 
-			ret.append([prediction])
+			return prediction
 
-		return UML.createData("Matrix", ret)
+		return testX.applyToPoints(foo, inPlace=False)
 
 
 	def getScores(self, testX):

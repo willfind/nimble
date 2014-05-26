@@ -97,9 +97,9 @@ class HumanReadableLogger(UmlLogger):
 			#add number of training points, # of of features to output list
 			if trainData.data is not None:
 				tableHeaders.append("Train points")
-				tableRow.append(str(trainData.data.shape[0]))
+				tableRow.append(str(trainData.pointCount))
 				tableHeaders.append("Train features")
-				tableRow.append(str(trainData.data.shape[1]))
+				tableRow.append(str(trainData.featureCount))
 			else:
 				tableHeaders.append("Train points")
 				tableHeaders.append("0")
@@ -115,9 +115,9 @@ class HumanReadableLogger(UmlLogger):
 			#add number of training points, # of of features to output list
 			if testData.data is not None:
 				tableHeaders.append("Test points")
-				tableRow.append(str(testData.data.shape[0]))
+				tableRow.append(str(testData.pointCount))
 				tableHeaders.append("Test features")
-				tableRow.append(str(testData.data.shape[1]))
+				tableRow.append(str(testData.featureCount))
 			else:
 				tableHeaders.append("Test points")
 				tableHeaders.append("0")

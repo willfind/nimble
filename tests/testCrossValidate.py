@@ -14,7 +14,7 @@ import random
 from pdb import set_trace as ttt
 
 
-def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLabels=3, seed=None):
+def _randomLabeledDataSet(dataType='matrix', numPoints=50, numFeatures=5, numLabels=3, seed=None):
 	"""returns a tuple of two data objects of type dataType
 	the first object in the tuple contains the feature information ('X' in UML language)
 	the second object in the tuple contains the labels for each feature ('Y' in UML language)
@@ -32,7 +32,7 @@ def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLa
 def test_crossValidate_XY_unchanged():
 	"""assert that after running cross validate on datasets passed to 
 	X and Y, the original data is unchanged"""
-	classifierAlgo = 'sciKitLearn.KNeighborsClassifier'
+	classifierAlgo = 'Custom.KNNClassifier'
 	X, Y = _randomLabeledDataSet(numLabels=5)
 	copyX = X.copy()
 	copyY = Y.copy()
@@ -49,11 +49,11 @@ def test_crossValidate_runs():
 	"""
 	#just scrap data to make sure it doesn't crash
 	numLabelsInSet = 3
-	numPointsInSet = 100
+	numPointsInSet = 50
 	#todo add other data types - currently crashes in sklearn interface for list and sparse
 	for dType in ['matrix',]:
 		X, Y = _randomLabeledDataSet(numPoints=numPointsInSet, numLabels=numLabelsInSet, dataType=dType)	
-		classifierAlgos = ['sciKitLearn.KNeighborsClassifier', 'sciKitLearn.PassiveAggressiveClassifier']
+		classifierAlgos = ['Custom.KNNClassifier']
 		for curAlgo in classifierAlgos:
 			result = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=random.random())
 			assert isinstance(result, float)
@@ -61,7 +61,7 @@ def test_crossValidate_runs():
 
 		#With regression dataset (no repeated labels)
 		X, Y = _randomLabeledDataSet(numLabels=None, dataType=dType)	
-		classifierAlgos = ['sciKitLearn.LinearRegression', ]
+		classifierAlgos = ['Custom.RidgeRegression']
 		for curAlgo in classifierAlgos:
 			result = crossValidate(curAlgo, X, Y, meanAbsoluteError, {}, numFolds=3)
 			assert isinstance(result, float)
@@ -86,29 +86,29 @@ def test_crossValidate_reasonable_results():
 	regressors:
 		LinearRegression - have no error when the dataset all lies on one plane
 	"""
-	classifierAlgo = 'sciKitLearn.KNeighborsClassifier'
+	classifierAlgo = 'Custom.KNNClassifier'
 	#assert that when whole dataset has the same label, crossValidated score 
 	#reflects 100% accruacy (with a classifier)
 	X, Y = _randomLabeledDataSet(numLabels=1)
 	result = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
 	assert result < 0.000001 #0 incorrect ever
 
-	#assert that a radom dataset will have accuracy roughly equal to 1/numLabels
+	#assert that a random dataset will have accuracy roughly equal to 1/numLabels
 	numLabelsList = [2,3,5]
 	for curNumLabels in numLabelsList:
-		X, Y = _randomLabeledDataSet(numPoints=1000, numLabels=curNumLabels)
+		X, Y = _randomLabeledDataSet(numPoints=50, numLabels=curNumLabels)
 		result = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, numFolds=5)
-		_assertClassifierErrorOnRandomDataPlausible(result, curNumLabels, tolerance=.1)
+		_assertClassifierErrorOnRandomDataPlausible(result, curNumLabels, tolerance=(1.0/curNumLabels))
 
 	#assert that for an easy dataset (no noise, overdetermined linear hyperplane!), 
 	#crossValidated error is perfect 
 	#for all folds, with simple LinearRegression
-	regressionAlgo = 'sciKitLearn.LinearRegression'
+	regressionAlgo = 'Custom.RidgeRegression'
 	def linearFunc(points):
 		return sum(points)
 	#make random data set where all points lie on a linear hyperplane
 	numFeats = 3
-	numPoints = 1000
+	numPoints = 50
 	points = [[random.gauss(0,1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
 	labels = [[sum(featVector)] for featVector in points]
 	X = createData('matrix', points)
@@ -127,13 +127,13 @@ def test_crossValidateShuffleSeed():
 	"""
 	numTrials = 5
 	for _ in xrange(numTrials):
-		X, Y = _randomLabeledDataSet(numPoints=1000, numFeatures=10, numLabels=5)
+		X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
 		theSeed = 'theseed'
-		resultOne = crossValidate('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=theSeed)
-		resultTwo = crossValidate('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=theSeed)
+		resultOne = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=theSeed)
+		resultTwo = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=theSeed)
 		assert resultOne == resultTwo
 	newSeed = 'newseed'
-	resultThree = crossValidate('sciKitLearn.KNeighborsClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=newSeed)
+	resultThree = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=newSeed)
 	#assert that models have diffeerent errors when different seeds are used.
 	#the idea being that different seeds create different folds
 	#which create different models, which create different accuracies

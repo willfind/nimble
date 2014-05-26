@@ -13,6 +13,7 @@ from UML import createData
 
 from UML.exceptions import ArgumentException, ImproperActionException
 
+from UML.umlHelpers import findBestInterface
 from UML.umlHelpers import foldIterator
 from UML.umlHelpers import sumAbsoluteDifference
 from UML.umlHelpers import generateClusteredPoints
@@ -179,17 +180,20 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
 	Next, compares the result to the algorithm's assocaited value in knownAlgorithmToTypeHash.
 	If the algorithm types don't match, an AssertionError is thrown."""
 
-	knownAlgorithmToTypeHash = {    'sciKitLearn.KNeighborsClassifier':'classifier', 
-									'sciKitLearn.KNeighborsRegressor':'regressor',
-									'sciKitLearn.RadiusNeighborsClassifier':'classifier',
-									'sciKitLearn.RadiusNeighborsRegressor':'regressor',
-
-									#'mlpy.KNN':'classifier', 
-									'mlpy.LDAC':'classifier',
-
-									# 'mlpy.kmeans':'other',
-									# 'sciKitLearn.KMeans':'other'
-									}
+	knownAlgorithmToTypeHash = {    'Custom.KNNClassifier':'classification', 
+									'Custom.RidgeRegression':'regression',
+								}
+	try:
+		findBestInterface('sciKitLearn')
+		knownAlgorithmToTypeHash['sciKitLearn.RadiusNeighborsClassifier'] = 'classification'
+		knownAlgorithmToTypeHash['sciKitLearn.RadiusNeighborsRegressor'] = 'regression'
+	except ArgumentException:
+		pass
+	try:
+		findBestInterface('mlpy')
+		knownAlgorithmToTypeHash['mlpy.LDAC'] = 'classification'
+	except ArgumentException:
+		pass
 
 	for curAlgorithm in knownAlgorithmToTypeHash.keys():
 		actualType = knownAlgorithmToTypeHash[curAlgorithm]
@@ -339,8 +343,8 @@ def testtrainAndTestOneVsOne():
 	metricFuncs = []
 	metricFuncs.append(fractionIncorrect)
 
-	results1 = trainAndTestOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, testY=3, arguments={}, performanceFunction=metricFuncs)
-	results2 = trainAndTestOneVsOne('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, testY=3, arguments={}, performanceFunction=metricFuncs)
+	results1 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, testY=3, performanceFunction=metricFuncs)
+	results2 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj2, trainY=3, testX=testObj2, testY=3, performanceFunction=metricFuncs)
 
 	assert results1[0] == 0.0
 	assert results2[0] == 0.25
@@ -360,9 +364,9 @@ def testtrainAndApplyOneVsAll():
 #	metricFuncs = []
 #	metricFuncs.append(fractionIncorrect)
 
-	results1 = trainAndApplyOneVsAll('sciKitLearn.LogisticRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='label')
-	results2 = trainAndApplyOneVsAll('sciKitLearn.LinearRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='bestScore')
-	results3 = trainAndApplyOneVsAll('sciKitLearn.LinearRegression', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='allScores')
+	results1 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='label')
+	results2 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='bestScore')
+	results3 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='allScores')
 
 	print "Results 1 output: " + str(results1.data)
 	print "Results 2 output: " + str(results2.data)
@@ -384,9 +388,9 @@ def testtrainAndApplyOneVsOne():
 #	metricFuncs = []
 #	metricFuncs.append(fractionIncorrect)
 
-	results1 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='label')
-	results2 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='bestScore')
-	results3 = trainAndApplyOneVsOne('sciKitLearn.SVC', trainObj1, trainY=3, testX=testObj1, arguments={}, scoreMode='allScores')
+	results1 = trainAndApplyOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='label')
+	results2 = trainAndApplyOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='bestScore')
+	results3 = trainAndApplyOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='allScores')
 
 	assert results1.data[0][0] == 1.0
 	assert results1.data[1][0] == 2.0

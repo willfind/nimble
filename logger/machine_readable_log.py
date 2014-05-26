@@ -118,8 +118,8 @@ class MachineReadableLogger(UmlLogger):
 				logLine += createMRLineElement("trainDataName", trainData.name)
 			if trainData.path is not None:
 				logLine += createMRLineElement("trainDataPath", trainData.path)
-			logLine += createMRLineElement("numTrainDataPoints", trainData.data.shape[0])
-			logLine += createMRLineElement("numTrainDataFeatures", trainData.data.shape[1])
+			logLine += createMRLineElement("numTrainDataPoints", trainData.pointCount)
+			logLine += createMRLineElement("numTrainDataFeatures", trainData.featureCount)
 
 		#log info about testing data, if present
 		if testData is not None:
@@ -127,8 +127,8 @@ class MachineReadableLogger(UmlLogger):
 				logLine += createMRLineElement("testDataName", testData.name)
 			if testData.path is not None:
 				logLine += createMRLineElement("testDataPath", testData.path)
-			logLine += createMRLineElement("numTestDataPoints", testData.data.shape[0])
-			logLine += createMRLineElement("numTestDataFeatures", testData.data.shape[1])
+			logLine += createMRLineElement("numTestDataPoints", testData.pointCount)
+			logLine += createMRLineElement("numTestDataFeatures", testData.featureCount)
 
 		#add numFolds if it is present - generally when testData is not present, as numFolds
 		#implies k-fold cross validation, in which case there is no test set

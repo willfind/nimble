@@ -111,14 +111,14 @@ def backend(toCall, portionToTest):
 		if package != 'mlpy' and package != 'scikitlearn':
 			continue 
 		lType = UML.learnerType(learner)
-		if lType == 'classifier':
+		if lType == 'classification':
 			try:
 				toCall(learner, cTrainX, cTrainY, cTestX, cTestY)
 			# this is meant to safely bypass those learners that have required arguments
 			except ArgumentException as ae:
 				print ae
 			assertUnchanged(learner, cData, backCTrainX, backCTrainY, backCTestX, backCTestY)
-		if lType == 'regressor':
+		if lType == 'regression':
 			try:
 				toCall(learner, rTrainX, rTrainY, rTestX, rTestY)
 			# this is meant to safely bypass those learners that have required arguments

@@ -86,7 +86,7 @@ class Mlpy(UniversalInterface):
 	def learnerType(self, name):
 		"""
 		Returns a string referring to the action the learner takes out of the possibilities:
-		classifier, regressor, featureSelection, dimensionalityReduction 
+		classification, regression, featureSelection, dimensionalityReduction 
 		TODO
 
 		"""
@@ -94,7 +94,7 @@ class Mlpy(UniversalInterface):
 		if name.lower() == 'liblinear' or name.lower() == 'libsvm':
 			return "UNKNOWN"
 		if hasattr(obj, 'labels'):
-			return 'classifier'
+			return 'classification'
 
 		return 'UNKNOWN'
 

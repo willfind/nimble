@@ -9,8 +9,6 @@ from numpy.random import rand, randint
 
 import UML
 
-from UML.customLearners import RidgeRegression
-from UML.customLearners import KNNClassifier
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 from UML.data import Matrix
 from UML.data import Sparse
@@ -238,8 +236,6 @@ def testCustomRidgeRegressionCompare():
 	data2 = [[122,34],[76,-3]]
 	testObj = Matrix(data2)
 
-	UML.registerCustomLearner('Custom', RidgeRegression)
-
 	name = 'Custom.RidgeRegression'
 	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':1})
 	ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj, arguments={'alpha':1, 'fit_intercept':False})
@@ -252,8 +248,6 @@ def testCustomRidgeRegressionCompareRandomized():
 	trainObj = UML.createRandomData("Matrix", 1000, 60, .1)
 	testObj = UML.createRandomData("Matrix", 100, 59, .1)
 
-	UML.registerCustomLearner('Custom', RidgeRegression)
-
 	name = 'Custom.RidgeRegression'
 	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':1})
 	ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj, arguments={'alpha':1, 'fit_intercept':False})
@@ -263,10 +257,8 @@ def testCustomRidgeRegressionCompareRandomized():
 
 def testCustomKNNClassficationCompareRandomized():
 	""" Sanity check on custom KNNClassifier, compare to SKL's KNeighborsClassifier on random data"""
-	trainX, ignore, trainY = generateClusteredPoints(5, 10, 5, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
+	trainX, ignore, trainY = generateClusteredPoints(5, 50, 5, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
 	testX, ignore, testY = generateClusteredPoints(5, 5, 5, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
-
-	UML.registerCustomLearner('Custom', KNNClassifier)
 
 	cusname = 'Custom.KNNClassifier'
 	sklname = "Scikitlearn.KNeighborsClassifier"

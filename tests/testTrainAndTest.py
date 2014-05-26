@@ -72,19 +72,19 @@ def test_trainAndTest():
 	testObj1 = createData('Matrix', testData1)
 
 	#with default ie no args
-	runError = trainAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect)
+	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect)
 	assert isinstance(runError, float)
 
 	#with one argument for the algorithm
-	runError = trainAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=1)
+	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=1)
 	assert isinstance(runError, float)
 
 	#with multiple values for one argument for the algorithm
-	runError = trainAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=(1,2))
+	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=(1,2))
 	assert isinstance(runError, float)
 
 	#with complicated argument for the algorithm
-	runError = trainAndTest('sciKitLearn.KNeighborsClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, n_neighbors=(1,2), p=(1,2))
-	assert isinstance(runError, float)
+#	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=(1,2), p=(1,2))
+#	assert isinstance(runError, float)
 
 

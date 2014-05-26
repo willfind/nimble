@@ -89,18 +89,18 @@ class SciKitLearn(UniversalInterface):
 	def learnerType(self, name):
 		"""
 		Returns a string referring to the action the learner takes out of the possibilities:
-		classifier, regressor, featureSelection, dimensionalityReduction 
+		classification, regression, featureSelection, dimensionalityReduction 
 		TODO
 
 		"""
 		obj = self.findCallable(name)
 		if hasattr(obj, 'classes_') or hasattr(obj, 'label_') or hasattr(obj, 'labels_'):
-			return 'classifier'
+			return 'classification'
 		if "Classifier" in obj.__name__:
-			return 'classifier'
+			return 'classification'
 
 		if "Regressor" in obj.__name__:
-			return 'regressor'
+			return 'regression'
 		
 		return 'UNKNOWN'
 

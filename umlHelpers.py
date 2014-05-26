@@ -1082,7 +1082,7 @@ class LearnerInspector:
 	def learnerType(self, learnerName):
 		"""Returns, as a string, the heuristically determined best guess for the type 
 		of problem the learnerName learner is designed to run on.
-		Example output: 'classifier', 'regressor', 'other'
+		Example output: 'classification', 'regression', 'other'
 		"""
 
 		return self._classifyAlgorithmDecisionTree(learnerName)
@@ -1116,17 +1116,17 @@ class LearnerInspector:
 			#if when given unrepeating labels, algorithm generates duplicate of already seen labels, 
 			#it is classifer
 			if regressorTrialResult == 'repeated_labels':
-				return 'classifier'
+				return 'classification'
 			if regressorTrialResult == 'near':
-				return 'regressor'
+				return 'regression'
 			if regressorTrialResult == 'other':
-				return 'classifier'
+				return 'classification'
 			#should be covered by all cases, raise exception
 			raise AttributeError('Decision tree needs to be updated to account for other results from regressorTrialResult')
 
 		# if the classifer data set genereated a low error, but not exact, it is regressor
 		elif classifierTrialResult == 'near':
-			return 'regressor'
+			return 'regression'
 
 		#if the classifier dataset doesn't see classifier or regerssor behavior, return other
 		#todo this is where to insert future sensors for other types of algorithms, but
@@ -1609,7 +1609,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		indexToLabelMap = rawPredictions.featureNamesInverse
 		winningLabels = []
 		for [winningIndex] in winningPredictionIndices:
-			winningLabels.append([indexToLabelMap[winningIndex]])
+			winningLabels.append([labelSet[int(winningIndex)]])
 		return UML.createData(rawPredictions.getTypeString(), winningLabels, featureNames=['winningLabel'])
 
 	elif scoreMode.lower() == 'bestScore'.lower():
