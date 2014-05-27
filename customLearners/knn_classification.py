@@ -11,7 +11,7 @@ If there is a tie, use k=1
 
 """
 
-import scipy
+import scipy.spatial
 
 import UML
 from UML.customLearners import CustomLearner
