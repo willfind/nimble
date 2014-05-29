@@ -52,8 +52,10 @@ class Base(object):
 		if featureNames is not None and len(featureNames) != shape[1]:
 			raise ArgumentException("The length of the featureNames must match the features given in shape")
 
-		self._nextDefaultValue = 0
-		self._setAllDefault()
+		self._nextDefaultValueFeature = 0
+		self._nextDefaultValuePoint = 0
+		self._setAllDefault('feature')
+		self._setAllDefault('point')
 		if isinstance(featureNames, list) or featureNames is None:
 			self.setFeatureNamesFromList(featureNames)
 		elif isinstance(featureNames, dict):
@@ -97,7 +99,7 @@ class Base(object):
 		"""
 		if len(self.featureNames) == 0:
 			raise ArgumentException("Cannot set any feature names; this object has no features ")
-		self._setFeatureName_implementation(oldIdentifier, newFeatureName, False)
+		self._setName_implementation(oldIdentifier, newFeatureName, 'feature', False)
 		return self
 
 	def setFeatureNamesFromList(self, assignments=None):
@@ -110,7 +112,7 @@ class Base(object):
 
 		"""
 		if assignments is None:
-			self._setAllDefault()
+			self._setAllDefault('feature')
 			return self
 		if not isinstance(assignments, list):
 			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
@@ -143,7 +145,7 @@ class Base(object):
 
 		"""
 		if assignments is None:
-			self._setAllDefault()
+			self._setAllDefault('feature')
 			return self
 		if not isinstance(assignments, dict):
 			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
@@ -166,7 +168,7 @@ class Base(object):
 
 		reverseDict = {}
 		for featureName in assignments.keys():
-			self._incrementDefaultIfNeeded(featureName)
+			self._incrementDefaultIfNeeded(featureName, 'feature')
 			reverseDict[assignments[featureName]] = featureName
 
 		# have to copy the input, could be from another object
@@ -226,7 +228,7 @@ class Base(object):
 		if self.pointCount == 0:
 			raise ImproperActionException("This action is impossible, the object has 0 points")
 
-		index = self._getIndex(featureToReplace)
+		index = self._getFeatureIndex(featureToReplace)
 		# extract col.
 		toConvert = self.extractFeatures([index])
 
@@ -275,7 +277,7 @@ class Base(object):
 		if self.pointCount == 0:
 			raise ImproperActionException("This action is impossible, the object has 0 points")
 
-		index = self._getIndex(featureToConvert)
+		index = self._getFeatureIndex(featureToConvert)
 
 		# extract col.
 		toConvert = self.extractFeatures([index])
@@ -427,7 +429,7 @@ class Base(object):
 
 		if features is not None:
 			for i in xrange(len(features)):
-				features[i] = self._getIndex(features[i])
+				features[i] = self._getFeatureIndex(features[i])
 
 		self.validate()
 
@@ -580,7 +582,7 @@ class Base(object):
 
 		if features is not None:
 			for i in xrange(len(features)):
-				features[i] = self._getIndex(features[i])
+				features[i] = self._getFeatureIndex(features[i])
 
 		self.validate()
 
@@ -809,7 +811,7 @@ class Base(object):
 
 		sortByIndex = sortBy
 		if sortBy is not None:
-			sortByIndex = self._getIndex(sortBy)
+			sortByIndex = self._getFeatureIndex(sortBy)
 			if sortHelper is not None:
 				raise ArgumentException("Cannot specify a feature to sort by and a helper function")
 		else:
@@ -836,7 +838,7 @@ class Base(object):
 			raise ArgumentException("Either sortBy or sortHelper must not be None")
 
 		if sortBy is not None and isinstance(sortBy, basestring):
-			sortBy = self._getIndex(sortBy)
+			sortBy = self._getFeatureIndex(sortBy)
 
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self.setFeatureNamesFromList(newFeatureNameOrder)
@@ -1100,7 +1102,7 @@ class Base(object):
 				raise ArgumentException("Cannot specify both IDs and a range")
 			indices = []
 			for identifier in features:
-				indices.append(self._getIndex(identifier))
+				indices.append(self._getFeatureIndex(identifier))
 
 		return self._copyFeatures_implementation(indices, start, end)
 
@@ -1121,7 +1123,7 @@ class Base(object):
 			raise ArgumentException(str(x) + " is not a valid point ID")
 
 		if isinstance(y,basestring):
-			y = self._getIndex(y)
+			y = self._getFeatureIndex(y)
 
 		if not isinstance(y,int) or y < 0 or y >= self.featureCount:
 			raise ArgumentException(str(y) + " is not a valid feature ID")
@@ -1151,7 +1153,7 @@ class Base(object):
 		if self.featureCount == 0:
 			raise ArgumentException("ID is invalid, This object contains no features")
 
-		index = self._getIndex(ID)
+		index = self._getFeatureIndex(ID)
 		return self._featureView_implementation(index)
 	
 
@@ -1223,130 +1225,189 @@ class Base(object):
 		return self.featureNames.viewkeys() | other.featureNames.viewkeys() 
 
 
+	def _equalPointNames(self, other):
+		if other is None or not isinstance(other, Base):
+			return False
+		return self._equalNames(self.pointNames, self.pointNamesInverse, other.pointNames, other.pointNamesInverse)
+
 	def _equalFeatureNames(self, other):
+		if other is None or not isinstance(other, Base):
+			return False
+		return self._equalNames(self.featureNames, self.featureNamesInverse, other.featureNames, other.featureNamesInverse)
+
+	def _equalNames(self, selfNames, selfNamesInv, otherNames, otherInvNames):
 		"""
-		Private function to determine equality of featureNames. It ignores
-		equality of default values, though if default values are present,
-		the number of variables and their indices must match up.
+		Private function to determine equality of either pointNames or featureNames.
+		It ignores equality of default values, though if default values are present,
+		the number of names and their indices must match up.
 
 		"""
-		if other is None:
+		if len(selfNames) != len(otherNames):
 			return False
-		if not isinstance(other, Base):
-			return False	
-		if len(self.featureNames) != len(other.featureNames):
-			return False
-		if len(self.featureNamesInverse) != len(other.featureNamesInverse):
+		if len(selfNamesInv) != len(otherInvNames):
 			return False
 		# check both featureName directions
-		for featureName in self.featureNames.keys():
-			if not featureName.startswith(DEFAULT_PREFIX) and featureName not in other.featureNames:
+		for featureName in selfNames.keys():
+			if not featureName.startswith(DEFAULT_PREFIX) and featureName not in otherNames:
 				return False
-			if not featureName.startswith(DEFAULT_PREFIX) and self.featureNames[featureName] != other.featureNames[featureName]:
+			if not featureName.startswith(DEFAULT_PREFIX) and selfNames[featureName] != otherNames[featureName]:
 				return False
-		for index in self.featureNamesInverse.keys():
-			if index not in other.featureNamesInverse:
+		for index in selfNamesInv.keys():
+			if index not in otherInvNames:
 				return False
-			if not self.featureNamesInverse[index].startswith(DEFAULT_PREFIX):
-				if self.featureNamesInverse[index] != self.featureNamesInverse[index]:
+			if not selfNamesInv[index].startswith(DEFAULT_PREFIX):
+				if selfNamesInv[index] != selfNamesInv[index]:
 					return False
-		for featureName in other.featureNames.keys():
-			if not featureName.startswith(DEFAULT_PREFIX) and featureName not in self.featureNames:
+		for featureName in otherNames.keys():
+			if not featureName.startswith(DEFAULT_PREFIX) and featureName not in selfNames:
 				return False
-			if not featureName.startswith(DEFAULT_PREFIX) and other.featureNames[featureName] != self.featureNames[featureName]:
+			if not featureName.startswith(DEFAULT_PREFIX) and otherNames[featureName] != selfNames[featureName]:
 				return False
-		for index in other.featureNamesInverse.keys():
-			if index not in self.featureNamesInverse:
+		for index in otherInvNames.keys():
+			if index not in selfNamesInv:
 				return False
-			if not other.featureNamesInverse[index].startswith(DEFAULT_PREFIX):
-				if other.featureNamesInverse[index] != other.featureNamesInverse[index]:
+			if not otherInvNames[index].startswith(DEFAULT_PREFIX):
+				if otherInvNames[index] != otherInvNames[index]:
 					return False
 		return True
 
 
-	def _getIndex(self, identifier):
+	def _getPointIndex(self, identifier):
+		return self._getIndex(identifier, self.pointNames, self.pointNamesInverse)
+
+	def _getFeatureIndex(self, identifier):
+		return self._getIndex(identifier, self.featureNames, self.featureNamesInverse)
+
+	def _getIndex(self, identifier, names, namesInv):
 		toReturn = identifier
-		if len(self.featureNames) == 0:
+		if len(names) == 0:
 			raise ArgumentException("There are no valid feature identifiers; this object has 0 features")
 		if identifier is None:
 			raise ArgumentException("An identifier cannot be None")
 		if (not isinstance(identifier,basestring)) and (not isinstance(identifier,int)):
 			raise ArgumentException("The indentifier must be either a string or integer index")
 		if isinstance(identifier,int):
-			if identifier < 0 or identifier >= len(self.featureNamesInverse):
+			if identifier < 0 or identifier >= len(namesInv):
 				raise ArgumentException("The index " + str(identifier) +" is outside of the range of possible values")
 		if isinstance(identifier,basestring):
-			if identifier not in self.featureNames:
+			if identifier not in names:
 				raise ArgumentException("The featureName '" + identifier + "' cannot be found")
 			# set as index for return
-			toReturn = self.featureNames[identifier]
+			toReturn = names[identifier]
 		return toReturn
 
-	def _nextDefaultFeatureName(self):
-		ret = DEFAULT_PREFIX + str(self._nextDefaultValue)
-		self._nextDefaultValue = self._nextDefaultValue + 1
+	def _nextDefaultName(self, axis):
+		self._validateAxis(axis)
+		if axis == 'point':
+			ret = DEFAULT_PREFIX + str(self._nextDefaultValuePoint)
+			self._nextDefaultValuePoint += 1
+		else:
+			ret = DEFAULT_PREFIX + str(self._nextDefaultValueFeature)
+			self._nextDefaultValueFeature += 1
 		return ret
 
-	def _setAllDefault(self):
-		self.featureNames = {}
-		self.featureNamesInverse = {}
+	def _setAllDefault(self, axis):
+		self._validateAxis(axis)
+		if axis == 'point':
+			self.pointNames = {}
+			self.pointNamesInverse = {}
+			names = self.pointNames
+			invNames = self.pointNamesInverse
+		else:
+			self.featureNames = {}
+			self.featureNamesInverse = {}
+			names = self.featureNames
+			invNames = self.featureNamesInverse
 		for i in xrange(self.featureCount):
-			defaultFeatureName = self._nextDefaultFeatureName()
-			self.featureNamesInverse[i] = defaultFeatureName
-			self.featureNames[defaultFeatureName] = i
+			defaultName = self._nextDefaultName(axis)
+			invNames[i] = defaultName
+			names[defaultName] = i
 
+	def _addPointName(self, pointName):
+		return self._addName(pointName, self.pointNames, self.pointNamesInverse, 'point')
 
 	def _addFeatureName(self, featureName):
-		"""
-		Name the next feature outside of the current possible range with the given featureName
+		return self._addName(featureName, self.featureNames, self.featureNamesInverse, 'feature')
 
-		featureName may be either a string, or None if you want this next feature to have a default
-		name. If the featureName is not a string, or already being used by another feature, an
+	def _addName(self, name, selfNames, selfNamesInv, axis):
+		"""
+		Name the next vector outside of the current possible range on the given axis using the
+		provided name.
+
+		name may be either a string, or None if you want a default name. If the name is
+		not a string, or already being used as another name on this axis, an
 		ArgumentException will be raised.
 
 		"""
-		if featureName is not None and not isinstance(featureName, basestring):
-			raise ArgumentException("The featureName must be a string")
-		if featureName in self.featureNames:
-			raise ArgumentException("This featureName is already in use")
+		if name is not None and not isinstance(name, basestring):
+			raise ArgumentException("The name must be a string")
+		if name in selfNames:
+			raise ArgumentException("This name is already in use")
 		
-		if featureName is None:
-			featureName = self._nextDefaultFeatureName()
+		if name is None:
+			name = self._nextDefaultName(axis)
 
-		self._incrementDefaultIfNeeded(featureName)	
+		self._incrementDefaultIfNeeded(name, axis)	
 
-		features = len(self.featureNamesInverse)
-		self.featureNamesInverse[features] = featureName
-		self.featureNames[featureName] = features
+		numInAxis = len(selfNamesInv)
+		selfNamesInv[numInAxis] = name
+		selfNames[name] = numInAxis
 
+	def _removePointNameAndShift(self, toRemove):
+		"""
+		Removes the specified name from pointNames, changing the indices
+		of other pointNames to fill in the missing index.
+
+		toRemove must be a non None string or integer, specifying either a current pointName
+		or the index of a current pointName in the given axis.
+		
+		"""
+		return self._removeNameAndShift(toRemove, 'point', self.pointNames, self.pointNamesInverse)
 
 	def _removeFeatureNameAndShift(self, toRemove):
 		"""
-		Removes the specified feature from the featureName set, changing the other featureNames to fill
-		in the missing index.
+		Removes the specified name from featureNames, changing the indices
+		of other featureNames to fill in the missing index.
 
-		toRemove must be a non None string or integer, specifying either a current featureName
-		or the index of a current featureName.
+		toRemove must be a non None string or integer, specifying either a current featureNames
+		or the index of a current featureNames in the given axis.
 		
 		"""
+		return self._removeNameAndShift(toRemove, 'feature', self.featureNames, self.featureNamesInverse)
+
+	def _removeNameAndShift(self, toRemove, axis, selfNames, selfNamesInv):
+		"""
+		Removes the specified name from the name set for the given axis, changing the indices
+		of other names to fill in the missing index.
+
+		toRemove must be a non None string or integer, specifying either a current name
+		or the index of a current name in the given axis.
+
+		axis must be either 'point' or 'feature'
+		
+		selfNames must be the names dict associated with the provided axis in this object
+
+		selfNamesInv must be the indices to names dict associated with the provided axis
+		in this object
+
+		"""
 		#this will throw the appropriate exceptions, if need be
-		index = self._getIndex(toRemove)
-		featureName = self.featureNamesInverse[index]
+		index = self._getIndex(toRemove, selfNames,selfNamesInv)
+		name = selfNamesInv[index]
 
-		del self.featureNames[featureName]
+		del selfNames[name]
 
-		features = len(self.featureNamesInverse)
-		# remaping each index starting with the one we removed
-		for i in xrange(index, features-1):
-			nextFeatureName = self.featureNamesInverse[i+1]
-			if featureName is not None:
-				self.featureNames[nextFeatureName] = i
-			self.featureNamesInverse[i] = nextFeatureName
-		#delete the last mapping, that featureName was shifted in the for loop
-		del self.featureNamesInverse[features-1]
+		numInAxis = len(selfNamesInv)
+		# remapping each index starting with the one we removed
+		for i in xrange(index, numInAxis-1):
+			nextName = selfNamesInv[i+1]
+			if name is not None:
+				selfNames[nextName] = i
+			selfNamesInv[i] = nextName
+		#delete the last mapping, that name was shifted in the for loop
+		del selfNamesInv[numInAxis-1]
 
-
-	def _setFeatureName_implementation(self, oldIdentifier, newFeatureName, allowDefaults=False):
+	def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
 		"""
 		Changes the featureName specified by previous to the supplied input featureName.
 		
@@ -1356,34 +1417,46 @@ class Base(object):
 		default prefix
 
 		"""
+		self._validateAxis(axis)
+		if axis == 'point':
+			names = self.pointNames
+			invNames = self.pointNamesInverse
+			index = self._getPointIndex(oldIdentifier)
+		else:
+			names = self.featureNames
+			invNames = self.featureNamesInverse
+			index = self._getFeatureIndex(oldIdentifier)
 
-		#this will throw the appropriate exceptions, if need be
-		index = self._getIndex(oldIdentifier)
-		if newFeatureName is not None: 
-			if not isinstance(newFeatureName,basestring):
-				raise ArgumentException("The new featureName must be either None or a string")
+		if newName is not None: 
+			if not isinstance(newName, basestring):
+				raise ArgumentException("The new name must be either None or a string")
 #			if not allowDefaults and newFeatureName.startswith(DEFAULT_PREFIX):
 #				raise ArgumentException("Cannot manually add a featureName with the default prefix")
-		if newFeatureName in self.featureNames:
-			if self.featureNamesInverse[index] == newFeatureName:
+		if newName in names:
+			if invNames[index] == newName:
 				return
 			raise ArgumentException("This featureName is already in use")
 		
-		if newFeatureName is None:
-			newFeatureName = self._nextDefaultFeatureName()
+		if newName is None:
+			newName = self._nextDefaultName(axis)
 
 		#remove the current featureName
-		oldFeatureName = self.featureNamesInverse[index]
-		del self.featureNames[oldFeatureName]		
+		oldName = invNames[index]
+		del names[oldName]		
 
 		# setup the new featureName
-		self.featureNamesInverse[index] = newFeatureName
-		self.featureNames[newFeatureName] = index
+		invNames[index] = newName
+		names[newName] = index
 
-		self._incrementDefaultIfNeeded(newFeatureName)
+		self._incrementDefaultIfNeeded(newName, axis)
 
 
-	def _incrementDefaultIfNeeded(self, name):
+	def _validateAxis(self, axis):
+		if axis != 'point' and axis != 'feature':
+			raise ArgumentException('axis parameter may only be "point" or "feature"')
+
+	def _incrementDefaultIfNeeded(self, name, axis):
+		self._validateAxis(axis)
 		if name.startswith(DEFAULT_PREFIX):
 			intString = name[len(DEFAULT_PREFIX):]
 			if '_' in intString:
@@ -1393,8 +1466,12 @@ class Base(object):
 				firstEquals = intString.index('=')
 				intString = intString[:firstEquals]
 			nameNum = int(intString)
-			if nameNum >= self._nextDefaultValue:
-				self._nextDefaultValue = nameNum + 1
+			if axis == 'point':
+				if nameNum >= self._nextDefaultValuePoint:
+					self._nextDefaultValuePoint = nameNum + 1
+			else:
+				if nameNum >= self._nextDefaultValueFeature:
+					self._nextDefaultValueFeature = nameNum + 1
 
 	class _foldIteratorClass():
 		def __init__(self, foldList, outerReference):

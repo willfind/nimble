@@ -68,9 +68,9 @@ class LowLevelBackend(object):
 	def test_addFeatureName_handmadeDefaultCounter(self):
 		""" Test _addFeatureName() changes nextDefault counter correctly """
 		toTest = self.constructor(["hello"])
-		assert toTest._nextDefaultValue == 1
+		assert toTest._nextDefaultValueFeature == 1
 		toTest._addFeatureName(DEFAULT_PREFIX +"1")
-		assert toTest._nextDefaultValue == 2
+		assert toTest._nextDefaultValueFeature == 2
 
 	def test_addFeatureName_handmade(self):
 		""" Test _addFeatureName() against handmade output """
@@ -315,7 +315,7 @@ class LowLevelBackend(object):
 		toTest = self.constructor(["blank","none","gone","hey"])
 		newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "17"]
 		ret = toTest.setFeatureNamesFromList(newFeatureNames)
-		assert toTest._nextDefaultValue > 17
+		assert toTest._nextDefaultValueFeature > 17
 		assert toTest == ret
 
 	def test_setFeatureNamesFromList_handmade(self):

@@ -285,7 +285,7 @@ class Matrix(Base):
 			# convert IDs if necessary
 			toExtractIndices = []
 			for value in toExtract:
-				toExtractIndices.append(self._getIndex(value))
+				toExtractIndices.append(self._getFeatureIndex(value))
 			return self._extractFeaturesByList_implementation(toExtractIndices)
 		# boolean function
 		if hasattr(toExtract, '__call__'):
