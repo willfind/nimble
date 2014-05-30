@@ -14,10 +14,10 @@ if __name__ == "__main__":
 
 	variables = ["x1","x2","x3", "label"]
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-	trainObj = createData('Matrix', data1, variables)
+	trainObj = createData('Matrix', data=data1, featureNames=variables)
 
 	data2 = [[1,0,0,1],[0,1,0,2],[0,0,1,3]]
-	testObj = createData('Matrix', data2, variables)
+	testObj = createData('Matrix', data=data2, featureNames=variables)
 
 	trainObj2 = trainObj.copy()
 	testObj2 = testObj.copy()

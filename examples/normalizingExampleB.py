@@ -14,10 +14,10 @@ if __name__ == "__main__":
 
 	variables = ["x1","x2","x3"]
 	data1 = [[1,0,0], [3,3,3], [5,0,0],]
-	trainObj = createData('Matrix', data1, variables)
+	trainObj = createData('Matrix', data=data1, featureNames=variables)
 
 	data2 = [[1,0,0],[1,1,1],[5,1,1], [3,4,4]]
-	testObj = createData('Matrix', data2, variables)
+	testObj = createData('Matrix', data=data2, featureNames=variables)
 
 	normalizeData('mlpy.PCA', trainObj, testX=testObj, arguments={'k':2})
 	ret = trainAndApply('sciKitLearn.KMeans', trainX=trainObj, trainY=None, testX=testObj, arguments={'n_clusters':3})

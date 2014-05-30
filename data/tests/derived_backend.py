@@ -19,14 +19,9 @@ from UML.data import Sparse
 from UML.data.dataHelpers import View
 from UML.exceptions import ArgumentException
 
+from UML.data.tests.baseObject import DataTestObject
 
-class DerivedBackend(object):
-
-	def __init__(self, retType):
-		def maker(data=None, featureNames=None):
-			return createData(retType, data=data, featureNames=featureNames)
-		self.constructor = maker
-#		super(DerivedBackend, self).__init__()
+class DerivedBackend(DataTestObject):
 
 	##############
 	# __init__() #
@@ -200,8 +195,8 @@ class DerivedBackend(object):
 	def test_appendPoints_exceptionMismatchedFeatureNames(self):
 		""" Test appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,['one','two','three'])
-		toAppend = self.constructor([[11, 12, 13,]], ["two", 'one', 'three'])
+		toTest = self.constructor(data, featureNames=['one','two','three'])
+		toAppend = self.constructor([[11, 12, 13,]], featureNames=["two", 'one', 'three'])
 		toTest.appendPoints(toAppend)
 
 	def test_appendPoints_outOfPEmpty(self):
@@ -270,15 +265,15 @@ class DerivedBackend(object):
 	@raises(ArgumentException)
 	def test_appendFeatures_exceptionSameFeatureName(self):
 		""" Test appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
-		toTest1 = self.constructor([[1]],["hello"])
-		toTest2 = self.constructor([[1,2]],["hello","goodbye"])
+		toTest1 = self.constructor([[1]], featureNames=["hello"])
+		toTest2 = self.constructor([[1,2]], featureNames=["hello","goodbye"])
 		toTest2.appendFeatures(toTest1)
 
 	@raises(ArgumentException)
 	def test_appendFeatures_exceptionMismatchedFeatureNames(self):
 		""" Test appendFeatures() for ArgumentException when toAppend and self do not have equal featureNames """
-		toTest1 = self.constructor([[2,1]],["goodbye","hello"])
-		toTest2 = self.constructor([[1,2]],["hello","goodbye"])
+		toTest1 = self.constructor([[2,1]], featureNames=["goodbye","hello"])
+		toTest2 = self.constructor([[1,2]], featureNames=["hello","goodbye"])
 		toTest2.appendFeatures(toTest1)
 
 	def test_appendFeatures_outOfPEmpty(self):
@@ -298,13 +293,13 @@ class DerivedBackend(object):
 		""" Test appendFeatures() against handmade output for a single added feature"""
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 
-		toAppend = self.constructor([[-1],[-2],[-3]],['-1'])
+		toAppend = self.constructor([[-1],[-2],[-3]], featureNames=['-1'])
 
 		dataExpected = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
 		featureNamesExpected = ['1','2','3','-1']
-		expected = self.constructor(dataExpected,featureNamesExpected)
+		expected = self.constructor(dataExpected, featureNames=featureNamesExpected)
 
 		ret = toTest.appendFeatures(toAppend)
 		assert toTest.isIdentical(expected)
@@ -314,7 +309,7 @@ class DerivedBackend(object):
 		""" Test appendFeatures() against handmade output for a sequence of additions"""
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 
 		toAppend1 = [[0.1],[0.2],[0.3]]
 		lab1 = ['a']
@@ -323,14 +318,14 @@ class DerivedBackend(object):
 		toAppend3 = [[10],[11],[12]]
 		lab3 = ['10']
 
-		ret1 = toTest.appendFeatures(self.constructor(toAppend1,lab1))
-		ret2 = toTest.appendFeatures(self.constructor(toAppend2,lab2))
-		ret3 = toTest.appendFeatures(self.constructor(toAppend3,lab3))
+		ret1 = toTest.appendFeatures(self.constructor(toAppend1, featureNames=lab1))
+		ret2 = toTest.appendFeatures(self.constructor(toAppend2, featureNames=lab2))
+		ret3 = toTest.appendFeatures(self.constructor(toAppend3, featureNames=lab3))
 
 		featureNamesExpected = ['1','2','3','a','A','0','10']
 		dataExpected = [[1,2,3,0.1,0.01,0,10],[4,5,6,0.2,0.02,0,11],[7,8,9,0.3,0.03,0,12]]
 
-		expected = self.constructor(dataExpected,featureNamesExpected)
+		expected = self.constructor(dataExpected, featureNames=featureNamesExpected)
 		assert toTest.isIdentical(expected)
 		assert toTest == ret1
 		assert toTest == ret2
@@ -429,13 +424,13 @@ class DerivedBackend(object):
 		""" Test sortFeatures() when we specify a point to sort by; includes featureNames """	
 		data = [[1,2,3],[7,1,9],[4,5,6]]
 		names = ["1","2","3"]
-		toTest = self.constructor(data,names)
+		toTest = self.constructor(data, featureNames=names)
 
 		ret = toTest.sortFeatures(sortBy=1)
 
 		dataExpected = [[2,1,3],[1,7,9],[5,4,6]]
 		namesExp = ["2", "1", "3"]
-		objExp = self.constructor(dataExpected, namesExp)
+		objExp = self.constructor(dataExpected, featureNames=namesExp)
 
 		assert toTest.isIdentical(objExp)
 		assert toTest == ret
@@ -579,15 +574,15 @@ class DerivedBackend(object):
 		""" Test extractPoints() against handmade output for function extraction with featureNames"""
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		def oneOrFour(point):
 			if 1 in point or 4 in point:
 				return True
 			return False
 		ext = toTest.extractPoints(oneOrFour)
-		exp = self.constructor([[1,2,3],[4,5,6]],featureNames)
+		exp = self.constructor([[1,2,3],[4,5,6]], featureNames=featureNames)
 		assert ext.isIdentical(exp)
-		expEnd = self.constructor([[7,8,9]],featureNames)
+		expEnd = self.constructor([[7,8,9]], featureNames=featureNames)
 		assert toTest.isIdentical(expEnd)
 
 	@raises(ArgumentException)
@@ -595,7 +590,7 @@ class DerivedBackend(object):
 		""" Test extracPoints() for ArgumentException when start is not a valid point index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractPoints(start=-1,end=2)
 
 	@raises(ArgumentException)
@@ -603,7 +598,7 @@ class DerivedBackend(object):
 		""" Test extractPoints() for ArgumentException when start is not a valid feature index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractPoints(start=1,end=5)
 
 	@raises(ArgumentException)
@@ -611,7 +606,7 @@ class DerivedBackend(object):
 		""" Test extractPoints() for ArgumentException when start comes after end """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractPoints(start=2,end=0)
 
 	def test_extractPoints_handmadeRange(self):
@@ -630,15 +625,15 @@ class DerivedBackend(object):
 		""" Test extractPoints() removes all points using ranges """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
-		expRet = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
+		expRet = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractPoints(start=0,end=2)
 
 		assert ret.isIdentical(expRet)
 
 		data = [[],[],[]]
 		data = numpy.array(data).T
-		exp = self.constructor(data, featureNames)
+		exp = self.constructor(data, featureNames=featureNames)
 
 		toTest.isIdentical(exp)
 
@@ -647,11 +642,11 @@ class DerivedBackend(object):
 		""" Test extractPoints() against handmade output for range extraction with featureNames """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractPoints(start=1,end=2)
 		
-		expectedRet = self.constructor([[4,5,6],[7,8,9]],featureNames)
-		expectedTest = self.constructor([[1,2,3]],featureNames)
+		expectedRet = self.constructor([[4,5,6],[7,8,9]], featureNames=featureNames)
+		expectedTest = self.constructor([[1,2,3]], featureNames=featureNames)
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
@@ -660,11 +655,11 @@ class DerivedBackend(object):
 		""" Test extractPoints() against handmade output for randomized range extraction with featureNames """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractPoints(start=0, end=2, number=2, randomize=True)
 		
-		expectedRet = self.constructor([[1,2,3],[4,5,6]],featureNames)
-		expectedTest = self.constructor([[7,8,9]],featureNames)
+		expectedRet = self.constructor([[1,2,3],[4,5,6]], featureNames=featureNames)
+		expectedTest = self.constructor([[7,8,9]], featureNames=featureNames)
 		
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
@@ -673,20 +668,20 @@ class DerivedBackend(object):
 		""" Test extractPoints uses the correct defaults in the case of range based extraction """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractPoints(end=1)
 		
-		expectedRet = self.constructor([[1,2,3],[4,5,6]],featureNames)
-		expectedTest = self.constructor([[7,8,9]],featureNames)
+		expectedRet = self.constructor([[1,2,3],[4,5,6]], featureNames=featureNames)
+		expectedTest = self.constructor([[7,8,9]], featureNames=featureNames)
 		
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
 
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractPoints(start=1)
 
-		expectedTest = self.constructor([[1,2,3]],featureNames)
-		expectedRet = self.constructor([[4,5,6],[7,8,9]],featureNames)
+		expectedTest = self.constructor([[1,2,3]], featureNames=featureNames)
+		expectedRet = self.constructor([[4,5,6],[7,8,9]], featureNames=featureNames)
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
@@ -745,14 +740,14 @@ class DerivedBackend(object):
 		""" Test extractFeatures() against handmade output for list extraction when specifying featureNames """
 		data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
 		featureNames = ["one","two","three","neg"]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ext1 = toTest.extractFeatures(["one"])
-		exp1 = self.constructor([[1],[4],[7]], ["one"])
+		exp1 = self.constructor([[1],[4],[7]], featureNames=["one"])
 		assert ext1.isIdentical(exp1)
 		ext2 = toTest.extractFeatures(["three","neg"])
-		exp2 = self.constructor([[3,-1],[6,-2],[9,-3]],["three","neg"])
+		exp2 = self.constructor([[3,-1],[6,-2],[9,-3]], featureNames=["three","neg"])
 		assert ext2.isIdentical(exp2)
-		expEnd = self.constructor([[2],[5],[8]], ["two"])
+		expEnd = self.constructor([[2],[5],[8]], featureNames=["two"])
 		assert toTest.isIdentical(expEnd)
 
 
@@ -792,16 +787,16 @@ class DerivedBackend(object):
 		""" Test extractFeatures() against handmade output for function extraction with featureNames """
 		data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
 		featureNames = ["one","two","three","neg"]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		def absoluteOne(feature):
 			if 1 in feature or -1 in feature:
 				return True
 			return False
 
 		ext = toTest.extractFeatures(absoluteOne)
-		exp = self.constructor([[1,-1],[4,-2],[7,-3]], ['one','neg'])
+		exp = self.constructor([[1,-1],[4,-2],[7,-3]], featureNames=['one','neg'])
 		assert ext.isIdentical(exp)
-		expEnd = self.constructor([[2,3],[5,6],[8,9]],["two","three"])	
+		expEnd = self.constructor([[2,3],[5,6],[8,9]], featureNames=["two","three"])	
 		assert toTest.isIdentical(expEnd)
 
 	@raises(ArgumentException)
@@ -809,7 +804,7 @@ class DerivedBackend(object):
 		""" Test extractFeatures() for ArgumentException when start is not a valid feature index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractFeatures(start=-1, end=2)
 
 	@raises(ArgumentException)
@@ -817,7 +812,7 @@ class DerivedBackend(object):
 		""" Test extractFeatures() for ArgumentException when start is not a valid feature FeatureName """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractFeatures(start="wrong", end=2)
 
 	@raises(ArgumentException)
@@ -825,7 +820,7 @@ class DerivedBackend(object):
 		""" Test extractFeatures() for ArgumentException when start is not a valid feature index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractFeatures(start=0, end=5)
 
 	@raises(ArgumentException)
@@ -833,7 +828,7 @@ class DerivedBackend(object):
 		""" Test extractFeatures() for ArgumentException when start is not a valid featureName """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractFeatures(start="two", end="five")
 
 	@raises(ArgumentException)
@@ -841,7 +836,7 @@ class DerivedBackend(object):
 		""" Test extractFeatures() for ArgumentException when start comes after end """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractFeatures(start=2, end=0)
 
 	@raises(ArgumentException)
@@ -849,7 +844,7 @@ class DerivedBackend(object):
 		""" Test extractFeatures() for ArgumentException when start comes after end as FeatureNames"""
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractFeatures(start="two", end="one")
 
 
@@ -857,8 +852,8 @@ class DerivedBackend(object):
 		""" Test extractFeatures() removes all Featuress using ranges """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
-		expRet = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
+		expRet = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractFeatures(start=0,end=2)
 
 		assert ret.isIdentical(expRet)
@@ -885,11 +880,11 @@ class DerivedBackend(object):
 		""" Test extractFeatures() against handmade output for range extraction with FeatureNames """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractFeatures(start=1,end=2)
 		
-		expectedRet = self.constructor([[2,3],[5,6],[8,9]],["two","three"])
-		expectedTest = self.constructor([[1],[4],[7]],["one"])
+		expectedRet = self.constructor([[2,3],[5,6],[8,9]], featureNames=["two","three"])
+		expectedTest = self.constructor([[1],[4],[7]], featureNames=["one"])
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
@@ -907,7 +902,7 @@ class DerivedBackend(object):
 		# instantiate object
 		data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		toWrite = self.constructor(data, featureNames)
+		toWrite = self.constructor(data, featureNames=featureNames)
 
 		# call writeFile
 		toWrite.writeFile(tmpFile.name, format='csv', includeFeatureNames=True)
@@ -931,7 +926,7 @@ class DerivedBackend(object):
 		# instantiate object
 		data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		toWrite = self.constructor(data, featureNames)
+		toWrite = self.constructor(data, featureNames=featureNames)
 
 		# call writeFile
 		toWrite.writeFile(tmpFile.name, format='mtx', includeFeatureNames=True)
@@ -952,10 +947,10 @@ class DerivedBackend(object):
 		""" Test referenceDataFrom() throws exception when other is not the same type """
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
 
-		type1 = List(data1,featureNames)
-		type2 = Matrix(data1,featureNames)
+		type1 = List(data1, featureNames=featureNames)
+		type2 = Matrix(data1, featureNames=featureNames)
 
 		# at least one of these two will be the wrong type
 		orig.referenceDataFrom(type1)
@@ -967,7 +962,7 @@ class DerivedBackend(object):
 
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
 
 		data2 = [[-1,-2,-3,]]
 		other = self.constructor(data2)
@@ -985,7 +980,7 @@ class DerivedBackend(object):
 		""" Test copy() produces an equal object and doesn't just copy the references """
 		data1 = [[1,2,3,0],[1,0,3,0],[2,4,6,0],[0,0,0,0]]
 		featureNames = ['one', 'two', 'three', 'four']
-		orig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
 
 		dup = orig.copy()
 
@@ -1094,7 +1089,7 @@ class DerivedBackend(object):
 
 		data = [[1,2,3],[1,0,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data, featureNames)
+		orig = self.constructor(data, featureNames=featureNames)
 		sparseObj = createData(retType="Sparse", data=data, featureNames=featureNames)
 		listObj = createData(retType="List", data=data, featureNames=featureNames)
 		matixObj = createData(retType="Matrix", data=data, featureNames=featureNames)
@@ -1158,7 +1153,7 @@ class DerivedBackend(object):
 
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
 		orig.copyPoints(None)
 
 	@raises(ArgumentException)
@@ -1167,7 +1162,7 @@ class DerivedBackend(object):
 		
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
 		orig.copyPoints([1,'yes'])
 
 
@@ -1188,11 +1183,11 @@ class DerivedBackend(object):
 		""" Test copyPoints() returns the correct data """
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data1, featureNames)
-		expOrig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
+		expOrig = self.constructor(data1, featureNames=featureNames)
 
 		data2 = [[1,2,3],[2,4,6]]
-		expRet = self.constructor(data2, featureNames)
+		expRet = self.constructor(data2, featureNames=featureNames)
 
 		ret = orig.copyPoints([1,2])
 
@@ -1204,7 +1199,7 @@ class DerivedBackend(object):
 		""" Test copyPoints() for ArgumentException when start is not a valid point index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyPoints(start=-1,end=2)
 
 	@raises(ArgumentException)
@@ -1212,7 +1207,7 @@ class DerivedBackend(object):
 		""" Test copyPoints() for ArgumentException when start is not a valid feature index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyPoints(start=1,end=5)
 
 	@raises(ArgumentException)
@@ -1220,7 +1215,7 @@ class DerivedBackend(object):
 		""" Test copyPoints() for ArgumentException when start comes after end """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyPoints(start=2,end=0)
 
 	def test_copyPoints_handmadeRange(self):
@@ -1239,11 +1234,11 @@ class DerivedBackend(object):
 		""" Test copyPoints() against handmade output for range copying with featureNames """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.copyPoints(start=1,end=2)
 		
-		expectedRet = self.constructor([[4,5,6],[7,8,9]],featureNames)
-		expectedTest = self.constructor(data,featureNames)
+		expectedRet = self.constructor([[4,5,6],[7,8,9]], featureNames=featureNames)
+		expectedTest = self.constructor(data, featureNames=featureNames)
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
@@ -1252,20 +1247,20 @@ class DerivedBackend(object):
 		""" Test copyPoints uses the correct defaults in the case of range based copying """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.copyPoints(end=1)
 		
-		expectedRet = self.constructor([[1,2,3],[4,5,6]],featureNames)
-		expectedTest = self.constructor(data,featureNames)
+		expectedRet = self.constructor([[1,2,3],[4,5,6]], featureNames=featureNames)
+		expectedTest = self.constructor(data, featureNames=featureNames)
 		
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
 
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.copyPoints(start=1)
 
-		expectedTest = self.constructor(data,featureNames)
-		expectedRet = self.constructor([[4,5,6],[7,8,9]],featureNames)
+		expectedTest = self.constructor(data, featureNames=featureNames)
+		expectedRet = self.constructor([[4,5,6],[7,8,9]], featureNames=featureNames)
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
@@ -1283,7 +1278,7 @@ class DerivedBackend(object):
 
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
 		orig.copyFeatures(None)
 
 	@raises(ArgumentException)
@@ -1292,7 +1287,7 @@ class DerivedBackend(object):
 		
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
 		orig.copyFeatures([1,'yes'])
 
 	def test_copyFeatures_PEmpty(self):
@@ -1313,12 +1308,12 @@ class DerivedBackend(object):
 
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
-		orig = self.constructor(data1, featureNames)
-		expOrig = self.constructor(data1, featureNames)
+		orig = self.constructor(data1, featureNames=featureNames)
+		expOrig = self.constructor(data1, featureNames=featureNames)
 
 		data2 = [[1,2],[1,2],[2,4],[0,0]]
 
-		expRet = self.constructor(data2, ['one','two'])
+		expRet = self.constructor(data2, featureNames=['one','two'])
 
 		ret = orig.copyFeatures([0,'two'])
 
@@ -1333,7 +1328,7 @@ class DerivedBackend(object):
 		""" Test copyFeatures() for ArgumentException when start is not a valid feature index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyFeatures(start=-1, end=2)
 
 	@raises(ArgumentException)
@@ -1341,7 +1336,7 @@ class DerivedBackend(object):
 		""" Test copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyFeatures(start="wrong", end=2)
 
 	@raises(ArgumentException)
@@ -1349,7 +1344,7 @@ class DerivedBackend(object):
 		""" Test copyFeatures() for ArgumentException when start is not a valid feature index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyFeatures(start=0, end=5)
 
 	@raises(ArgumentException)
@@ -1357,7 +1352,7 @@ class DerivedBackend(object):
 		""" Test copyFeatures() for ArgumentException when start is not a valid featureName """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyFeatures(start="two", end="five")
 
 	@raises(ArgumentException)
@@ -1365,7 +1360,7 @@ class DerivedBackend(object):
 		""" Test copyFeatures() for ArgumentException when start comes after end """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyFeatures(start=2, end=0)
 
 	@raises(ArgumentException)
@@ -1373,7 +1368,7 @@ class DerivedBackend(object):
 		""" Test copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.copyFeatures(start="two", end="one")
 
 	def test_copyFeatures_handmadeRange(self):
@@ -1392,11 +1387,11 @@ class DerivedBackend(object):
 		""" Test copyFeatures() against handmade output for range copying with FeatureNames """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.copyFeatures(start=1,end=2)
 		
-		expectedRet = self.constructor([[2,3],[5,6],[8,9]],["two","three"])
-		expectedTest = self.constructor(data, featureNames)
+		expectedRet = self.constructor([[2,3],[5,6],[8,9]], featureNames=["two","three"])
+		expectedTest = self.constructor(data, featureNames=featureNames)
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
@@ -1412,7 +1407,7 @@ class DerivedBackend(object):
 		featureNames = ["one","two","three","zero"]
 		data = [[1,2,3,0],[4,5,0,0],[7,0,9,0],[0,0,0,0]]
 
-		toTest = self.constructor(data, featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 
 		assert toTest[0,0] == 1
 		assert toTest[1,3] == 0
@@ -1442,7 +1437,7 @@ class DerivedBackend(object):
 	def test_pointView_isinstance(self):
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 
 		pView = toTest.pointView(0)
 
@@ -1479,7 +1474,7 @@ class DerivedBackend(object):
 		""" Test featureView() returns an instance of the View in dataHelpers """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 
 		fView = toTest.featureView('one')
 

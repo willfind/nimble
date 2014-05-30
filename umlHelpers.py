@@ -69,9 +69,9 @@ def _learnerQuery(name, queryType):
 	return getattr(interface, toCallName)(learnerName)
 
 
-def _loadSparse(data, featureNames, fileType, automatedRetType=False):
+def _loadSparse(data, pointNames, featureNames, fileType, automatedRetType=False):
 	if fileType is None:
-		return Sparse(data, featureNames)
+		return Sparse(data, pointNames=pointNames, featureNames=featureNames)
 
 	# since file type is not None, that is an indicator that we must read from a file
 	path = data
@@ -90,14 +90,14 @@ def _loadSparse(data, featureNames, fileType, automatedRetType=False):
 	# (as wrapped by loadMTXtoAuto) returns a dense matrix, then we want to return
 	# a Matrix object
 	if automatedRetType and not scipy.sparse.issparse(data):
-		return Matrix(data, featureNames)
+		return Matrix(data, featureNames=featureNames)
 
-	return Sparse(data, featureNames, os.path.basename(path), path)
+	return Sparse(data, pointNames=pointNames, featureNames=featureNames, name=os.path.basename(path), path=path)
 
 
-def _loadMatrix(data, featureNames, fileType, automatedRetType=False):
+def _loadMatrix(data, pointNames, featureNames, fileType, automatedRetType=False):
 	if fileType is None:
-		return Matrix(data, featureNames)
+		return Matrix(data, pointNames=pointNames, featureNames=featureNames)
 
 	# since file type is not None, that is an indicator that we must read from a file
 	path = data
@@ -116,14 +116,14 @@ def _loadMatrix(data, featureNames, fileType, automatedRetType=False):
 	# (as wrapped by loadMTXtoAuto) returns a sparse matrix, then we want to return
 	# a Sparse object
 	if automatedRetType and scipy.sparse.issparse(data):
-		return Sparse(data, featureNames)
+		return Sparse(data, pointNames=pointNames, featureNames=featureNames)
 
-	return Matrix(data, featureNames, os.path.basename(path), path)
+	return Matrix(data, pointNames=pointNames, featureNames=featureNames, name=os.path.basename(path), path=path)
 
 
-def _loadList(data, featureNames, fileType):
+def _loadList(data, pointNames, featureNames, fileType):
 	if fileType is None:
-		return List(data, featureNames)
+		return List(data, pointNames=pointNames, featureNames=featureNames)
 
 	# since file type is not None, that is an indicator that we must read from a file
 	path = data
@@ -140,7 +140,7 @@ def _loadList(data, featureNames, fileType):
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
 
-	return List(data, featureNames, os.path.basename(path), path)
+	return List(data, pointNames=pointNames, featureNames=featureNames, name=os.path.basename(path), path=path)
 
 def _loadCSVtoMatrix(path, automatedRetType=False):
 	inFile = open(path, 'rU')
@@ -725,12 +725,10 @@ def computeError(knownValues, predictedValues, loopFunction, compressionFunction
 		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
 	if not isinstance(knownValues, Matrix):
-#		knownValues = knownValues.copyAs(format="Matrix")
-		knownValues = Matrix(knownValues.data, knownValues.featureNames)
+		knownValues = knownValues.copyAs(format="Matrix")
 
 	if not isinstance(predictedValues, Matrix):
-#		predictedValues = predictedValues.copyAs(format="Matrix")
-		predictedValues = Matrix(predictedValues.data, predictedValues.featureNames)
+		predictedValues = predictedValues.copyAs(format="Matrix")
 
 	n=0.0
 	runningTotal=0.0

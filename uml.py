@@ -350,7 +350,7 @@ def listUMLFunctions():
 	return ret
 
 
-def createData(retType, data=None, featureNames=None, fileType=None, name=None, sendToLog=True):
+def createData(retType, data, pointNames=None, featureNames=None, fileType=None, name=None, sendToLog=True):
 	automatedRetType = False
 	# determine if its a file we have to read; we assume if its a string its a path
 	if isinstance(data, basestring):
@@ -400,11 +400,11 @@ def createData(retType, data=None, featureNames=None, fileType=None, name=None, 
 	matrixAlias = ['matrix']
 	listAlias = ["list"]
 	if retType in sparseAlias:
-		ret = _loadSparse(data, featureNames, fileType, automatedRetType)
+		ret = _loadSparse(data, pointNames, featureNames, fileType, automatedRetType)
 	elif retType in matrixAlias:
-		ret = _loadMatrix(data, featureNames, fileType, automatedRetType)
+		ret = _loadMatrix(data, pointNames, featureNames, fileType, automatedRetType)
 	elif retType in listAlias:
-		ret = _loadList(data, featureNames, fileType)
+		ret = _loadList(data, pointNames, featureNames, fileType)
 	else:
 		msg = "Unknown data type, cannot instantiate. Only allowable inputs: "
 		msg += "'List' for data in python lists, 'Matrix' for a numpy matrix, "

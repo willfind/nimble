@@ -18,6 +18,7 @@ from UML.data import Matrix
 from UML.data import Sparse
 from UML.exceptions import ArgumentException, ImproperActionException
 
+from UML.data.tests.baseObject import DataTestObject
 
 ### Helpers used by tests in the test class ###
 
@@ -55,13 +56,7 @@ def plusOneOnlyEven(value):
 		return None
 
 
-class HighLevelBackend(object):
-
-	def __init__(self, retType):
-		def maker(data=None, featureNames=None):
-			return UML.createData(retType, data=data, featureNames=featureNames)
-		self.constructor = maker
-#		super(HighLevelBackend, self).__init__()
+class HighLevelBackend(DataTestObject):
 
 	###########################
 	# dropFeaturesContainingType #
@@ -128,15 +123,15 @@ class HighLevelBackend(object):
 		""" Test replaceFeatureWithBinaryFeatures() against handmade output """
 		data = [[1],[2],[3]]
 		featureNames = ['col']
-		toTest = self.constructor(data,featureNames)
-		getNames = self.constructor(data, featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
+		getNames = self.constructor(data, featureNames=featureNames)
 		ret = toTest.replaceFeatureWithBinaryFeatures(0)
 
 		expData = [[1,0,0], [0,1,0], [0,0,1]]
 		expFeatureNames = []
 		for point in getNames.pointIterator():
 			expFeatureNames.append('col=' + str(point[0]))
-		exp = self.constructor(expData, expFeatureNames)
+		exp = self.constructor(expData, featureNames=expFeatureNames)
 
 		assert toTest.isIdentical(exp)
 		assert toTest == ret
@@ -166,7 +161,7 @@ class HighLevelBackend(object):
 		""" Test transformFeatureToIntegerFeature() against handmade output """
 		data = [[10],[20],[30.5],[20],[10]]
 		featureNames = ['col']
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.transformFeatureToIntegerFeature(0)
 
 		assert toTest[0,0] == toTest[4,0]
@@ -192,7 +187,7 @@ class HighLevelBackend(object):
 		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractPointsByCoinToss(None)
 
 	@raises(ArgumentException)
@@ -200,7 +195,7 @@ class HighLevelBackend(object):
 		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractPointsByCoinToss(0)
 
 	@raises(ArgumentException)
@@ -208,7 +203,7 @@ class HighLevelBackend(object):
 		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.extractPointsByCoinToss(1)
 
 	def test_extractPointsByCoinToss_intoPEmpty(self):
@@ -234,11 +229,11 @@ class HighLevelBackend(object):
 		""" Test extractPointsByCoinToss() against handmade output with the test seed """
 		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractPointsByCoinToss(0.5)
 
-		expRet = self.constructor([[4,5,6],[7,8,9]],featureNames)
-		expTest = self.constructor([[1,2,3],[10,11,12]],featureNames)
+		expRet = self.constructor([[4,5,6],[7,8,9]], featureNames=featureNames)
+		expTest = self.constructor([[1,2,3],[10,11,12]], featureNames=featureNames)
 
 		assert ret.isIdentical(expRet)
 		assert expTest.isIdentical(toTest)
@@ -270,7 +265,7 @@ class HighLevelBackend(object):
 		""" Test foldIterator() for exception when given too many folds """
 		data = [[1],[2],[3],[4],[5]]
 		names = ['col']
-		toTest = self.constructor(data,names)
+		toTest = self.constructor(data, featureNames=names)
 		toTest.foldIterator(6)
 
 
@@ -278,7 +273,7 @@ class HighLevelBackend(object):
 		""" Test foldIterator() yields the correct number folds and partitions the data """
 		data = [[1],[2],[3],[4],[5]]
 		names = ['col']
-		toTest = self.constructor(data,names)
+		toTest = self.constructor(data, featureNames=names)
 		folds = toTest.foldIterator(2)
 
 		(fold1Train, fold1Test) = folds.next()
@@ -315,7 +310,7 @@ class HighLevelBackend(object):
 		def emitLower(point):
 			return point[origObj.featureNames['deci']]
 
-		lowerCounts = origObj.applyToPoints(emitLower, inPlace=False)
+		origObj.applyToPoints(emitLower, inPlace=False)
 
 	@raises(ImproperActionException)
 	def test_applyToPoints_exceptionFEmpty(self):
@@ -327,21 +322,21 @@ class HighLevelBackend(object):
 		def emitLower(point):
 			return point[origObj.featureNames['deci']]
 
-		lowerCounts = origObj.applyToPoints(emitLower, inPlace=False)
+		origObj.applyToPoints(emitLower, inPlace=False)
 
 	@raises(ArgumentException)
 	def test_applyToPoints_exceptionInputNone(self):
 		""" Test applyToPoints() for ArgumentException when function is None """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData),featureNames)
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
 		origObj.applyToPoints(None)
 
 	def test_applyToPoints_Handmade(self):
 		""" Test applyToPoints() with handmade output """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData),featureNames)
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
 
 		def emitLower(point):
 			return point[origObj.featureNames['deci']]
@@ -358,7 +353,7 @@ class HighLevelBackend(object):
 		""" Test applyToPoints() with handmade output on a limited portion of points """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData),featureNames)
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
 
 		def emitLower(point):
 			return point[origObj.featureNames['deci']]
@@ -394,7 +389,7 @@ class HighLevelBackend(object):
 		""" Test applyToPoints() with handmade output. InPlace """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData),featureNames)
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
 
 		def emitAllDeci(point):
 			value = point[origObj.featureNames['deci']]
@@ -403,7 +398,7 @@ class HighLevelBackend(object):
 		lowerCounts = origObj.applyToPoints(emitAllDeci)
 
 		expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
-		exp = self.constructor(expectedOut, featureNames)
+		exp = self.constructor(expectedOut, featureNames=featureNames)
 
 		assert origObj == lowerCounts
 		assert lowerCounts.isIdentical(exp)
@@ -412,7 +407,7 @@ class HighLevelBackend(object):
 		""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData),featureNames)
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
 
 		def emitAllDeci(point):
 			value = point[origObj.featureNames['deci']]
@@ -421,7 +416,7 @@ class HighLevelBackend(object):
 		lowerCounts = origObj.applyToPoints(emitAllDeci, points=[3,2])
 
 		expectedOut = [[1,0.1,0.01], [1,0.1,0.02], [0.1,0.1,0.1], [0.2,0.2,0.2]]
-		exp = self.constructor(expectedOut, featureNames)
+		exp = self.constructor(expectedOut, featureNames=featureNames)
 
 		assert origObj == lowerCounts
 		assert lowerCounts.isIdentical(exp)
@@ -468,7 +463,7 @@ class HighLevelBackend(object):
 					return 0
 			return 1
 
-		lowerCounts = origObj.applyToFeatures(emitAllEqual, inPlace=False)
+		origObj.applyToFeatures(emitAllEqual, inPlace=False)
 
 	@raises(ImproperActionException)
 	def test_applyToFeatures_exceptionFEmpty(self):
@@ -484,21 +479,21 @@ class HighLevelBackend(object):
 					return 0
 			return 1
 
-		lowerCounts = origObj.applyToFeatures(emitAllEqual, inPlace=False)
+		origObj.applyToFeatures(emitAllEqual, inPlace=False)
 
 	@raises(ArgumentException)
 	def test_applyToFeatures_exceptionInputNone(self):
 		""" Test applyToFeatures() for ArgumentException when function is None """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData),featureNames)
+		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
 		origObj.applyToFeatures(None, inPlace=False)
 
 	def test_applyToFeatures_Handmade(self):
 		""" Test applyToFeatures() with handmade output """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData),featureNames)
+		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -517,7 +512,7 @@ class HighLevelBackend(object):
 		""" Test applyToFeatures() with handmade output on a limited portion of features """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData),featureNames)
+		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -557,7 +552,7 @@ class HighLevelBackend(object):
 		""" Test applyToFeatures() with handmade output. InPlace """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData),featureNames)
+		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -568,7 +563,7 @@ class HighLevelBackend(object):
 
 		lowerCounts = origObj.applyToFeatures(emitAllEqual)
 		expectedOut = [[1,0,0], [1,0,0], [1,0,0], [1,0,0]]	
-		exp = self.constructor(expectedOut, featureNames)
+		exp = self.constructor(expectedOut, featureNames=featureNames)
 		assert origObj == lowerCounts
 
 		print lowerCounts.data
@@ -581,7 +576,7 @@ class HighLevelBackend(object):
 		""" Test applyToFeatures() with handmade output on a limited portion of features. InPlace """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData),featureNames)
+		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -592,7 +587,7 @@ class HighLevelBackend(object):
 
 		lowerCounts = origObj.applyToFeatures(emitAllEqual, features=[0,'centi'])
 		expectedOut = [[1,0.1,0], [1,0.1,0], [1,0.1,0], [1,0.2,0]]
-		exp = self.constructor(expectedOut, featureNames)
+		exp = self.constructor(expectedOut, featureNames=featureNames)
 		assert origObj == lowerCounts
 
 		print lowerCounts.data
@@ -652,7 +647,7 @@ class HighLevelBackend(object):
 		""" Test mapReducePoints() for ArgumentException when mapper is None """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.mapReducePoints(None,simpleReducer)
 
 	@raises(ArgumentException)
@@ -660,7 +655,7 @@ class HighLevelBackend(object):
 		""" Test mapReducePoints() for ArgumentException when reducer is None """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.mapReducePoints(simpleMapper,None)
 
 	@raises(ArgumentException)
@@ -668,7 +663,7 @@ class HighLevelBackend(object):
 		""" Test mapReducePoints() for ArgumentException when mapper is not callable """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.mapReducePoints("hello",simpleReducer)
 
 	@raises(ArgumentException)
@@ -676,7 +671,7 @@ class HighLevelBackend(object):
 		""" Test mapReducePoints() for ArgumentException when reducer is not callable """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		toTest.mapReducePoints(simpleMapper,5)
 
 
@@ -684,26 +679,26 @@ class HighLevelBackend(object):
 		""" Test mapReducePoints() against handmade output """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.mapReducePoints(simpleMapper,simpleReducer)
 		
 		exp = self.constructor([[1,5],[4,11],[7,17]])
 
 		assert (ret.isIdentical(exp))
-		assert (toTest.isIdentical(self.constructor(data,featureNames)))
+		assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
 
 
 	def test_mapReducePoints_handmadeNoneReturningReducer(self):
 		""" Test mapReducePoints() against handmade output with a None returning Reducer """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.mapReducePoints(simpleMapper,oddOnlyReducer)
 		
 		exp = self.constructor([[1,5],[7,17]])
 
 		assert (ret.isIdentical(exp))
-		assert (toTest.isIdentical(self.constructor(data,featureNames)))
+		assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
 
 
 
@@ -717,7 +712,7 @@ class HighLevelBackend(object):
 		data = [[],[]]
 		data = numpy.array(data)
 		toTest = self.constructor(data)
-		viewIter = toTest.pointIterator()
+		toTest.pointIterator()
 
 	def test_pointIterator_noNextPempty(self):
 		""" test pointIterator() has no next value when object is point empty """
@@ -735,7 +730,7 @@ class HighLevelBackend(object):
 		""" Test pointIterator() gives views that contain exactly the correct data """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 
 		viewIter = toTest.pointIterator()
 
@@ -803,7 +798,7 @@ class HighLevelBackend(object):
 		data = [[],[]]
 		data = numpy.array(data).T
 		toTest = self.constructor(data)
-		viewIter = toTest.featureIterator()
+		toTest.featureIterator()
 
 	def test_featureIterator_noNextFempty(self):
 		""" test featureIterator() has no next value when object is feature empty """
@@ -822,7 +817,7 @@ class HighLevelBackend(object):
 		""" Test featureIterator() gives views that contain exactly the correct data """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data,featureNames)
+		toTest = self.constructor(data, featureNames=featureNames)
 		
 		viewIter = toTest.featureIterator()
 
@@ -960,7 +955,7 @@ class HighLevelBackend(object):
 		""" test applyToElements() on limited portions of the points and features """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		names = ['one','two','three']
-		toTest = self.constructor(data, names)
+		toTest = self.constructor(data, featureNames=names)
 
 		ret = toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], inPlace=False, skipNoneReturnValues=True)
 		retRaw = ret.copyAs(format="python list")
@@ -1019,7 +1014,7 @@ class HighLevelBackend(object):
 		data = [[],[]]
 		data = numpy.array(data).T
 		toTest = self.constructor(data)
-		ret = toTest.shufflePoints([1,3])
+		toTest.shufflePoints([1,3])
 
 
 	def test_shufflePoints_noLongerEqual(self):
@@ -1055,7 +1050,7 @@ class HighLevelBackend(object):
 		data = [[],[]]
 		data = numpy.array(data)
 		toTest = self.constructor(data)
-		ret = toTest.shuffleFeatures([1,3])
+		toTest.shuffleFeatures([1,3])
 
 	def test_shuffleFeatures_noLongerEqual(self):
 		""" Tests shuffleFeatures() results in a changed object """

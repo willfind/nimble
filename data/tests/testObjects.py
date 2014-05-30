@@ -1,14 +1,16 @@
 
 import UML
 
-from derived_backend import DerivedBackend
-from high_level_backend import HighLevelBackend
-from low_level_backend import LowLevelBackend
+from UML.data.tests.derived_backend import DerivedBackend
+from UML.data.tests.high_level_backend import HighLevelBackend
+from UML.data.tests.low_level_backend import LowLevelBackend
+
+
+
 
 class TestList(DerivedBackend, HighLevelBackend):
 	def __init__(self):
 		super(TestList, self).__init__('List')
-
 
 class TestMatrix(DerivedBackend, HighLevelBackend):
 	def __init__(self):
@@ -44,23 +46,24 @@ class TestMatrix(DerivedBackend, HighLevelBackend):
 
 class TestSparse(DerivedBackend, HighLevelBackend):
 	def __init__(self):
-		super(TestSparse, self).__init__("Sparse")
+		super(TestSparse, self).__init__('Sparse')
 
 
-class TestBase(LowLevelBackend):
+class TestBaseOnly(LowLevelBackend):
 	def __init__(self):
 		def makeConst(num):
 			def const(dummy=2):
 				return num
 			return const
-		def makeAndDefine(featureNames=None, size=0):
+		def makeAndDefine(pointNames=None, featureNames=None, psize=0, fsize=0):			
 			""" Make a base data object that will think it has as many features as it has featureNames,
 			even though it has no actual data """
-			cols = size if featureNames is None else len(featureNames)
+#			rows = psize if pointNames is None else len(pointNames)
+			cols = fsize if featureNames is None else len(featureNames)
 			specificImp = makeConst(cols)
 			UML.data.Base._features_implementation = specificImp
-			ret = UML.data.Base((1,cols),featureNames)
+			ret = UML.data.Base((1,cols), featureNames=featureNames)
 			ret._features_implementation = specificImp
 			return ret
 
-		super(TestBase, self).__init__(makeAndDefine)
+		self.constructor = makeAndDefine

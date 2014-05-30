@@ -48,7 +48,7 @@ def _testRegressorsHandmadeTrainMatrix():
 	trialIn.flush()
 
 	data = [[1,1,2],[2,2,4]]
-	training = Matrix(data)
+	training = UML.createData('Matrix', data)
 
 	UML.trainAndApply("regressor." + learnerName, training, trainY=2, testX=trialIn.name, output=actualOut.name,  arguments={})
 

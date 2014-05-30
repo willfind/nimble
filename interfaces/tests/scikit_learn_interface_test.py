@@ -10,8 +10,6 @@ from numpy.random import rand, randint
 import UML
 
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
-from UML.data import Matrix
-from UML.data import Sparse
 
 from UML.umlHelpers import generateClusteredPoints
 
@@ -25,17 +23,17 @@ def testSciKitLearnHandmadeRegression():
 	""" Test sciKitLearn() by calling on a regression learner with known output """
 	variables = ["Y","x1","x2"]
 	data = [[2,1,1], [3,1,2], [4,2,2],]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[0,1]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	ret = UML.trainAndApply(toCall("LinearRegression"), trainingObj, trainY="Y", testX=testObj, output=None, arguments={})
 
 	assert ret is not None
 
 	expected = [[1.]]
-	expectedObj = Matrix(expected)
+	expectedObj = UML.createData('Matrix', expected)
 
 	numpy.testing.assert_approx_equal(ret[0,0],1.)
 
@@ -50,7 +48,7 @@ def testSciKitLearnSparseRegression():
 	cols2 = randint(0,x,c)
 	data = rand(c)
 	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
-	obj = Sparse(A)
+	obj = UML.createData('Sparse', A)
 	testObj = obj.copy()
 	testObj.extractFeatures(cols[0])
 
@@ -62,10 +60,10 @@ def testSciKitLearnHandmadeClustering():
 	""" Test sciKitLearn() by calling a clustering classifier with known output """
 	variables = ["x1","x2"]
 	data = [[1,0], [3,3], [5,0],]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[1,0],[1,1],[5,1], [3,4]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	ret = UML.trainAndApply(toCall("KMeans"), trainingObj, testX=testObj, output=None, arguments={'n_clusters':3})
 
@@ -84,13 +82,13 @@ def testSciKitLearnHandmadeSparseClustering():
 	trainData[0, :] = [2,3,1]
 	trainData[1, :] = [2,2,1]
 	trainData[2, :] = [0,0,0]
-	trainData = Sparse(data=trainData)
+	trainData = UML.createData('Sparse', data=trainData)
 
 	testData = scipy.sparse.lil_matrix((3,2))
 	testData[0, :] = [3,3]
 	testData[1, :] = [3,2]
 	testData[2, :] = [-1,0]
-	testData = Sparse(data=testData)
+	testData = UML.createData('Sparse', data=testData)
 
 	ret = UML.trainAndApply(toCall('MiniBatchKMeans'), trainData, trainY=2, testX=testData, arguments={'n_clusters':2})
 	
@@ -102,10 +100,10 @@ def testSciKitLearnScoreMode():
 	""" Test sciKitLearn() scoreMode flags"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	# default scoreMode is 'label'
 	ret = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -127,10 +125,10 @@ def testSciKitLearnScoreModeBinary():
 	""" Test sciKitLearn() scoreMode flags, binary case"""
 	variables = ["Y","x1","x2"]
 	data = [[1,30,2],[2,1,1], [2,0,1],[2,-1,-1],  [1,30,3], [1,34,4]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[2,1],[25,0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	# default scoreMode is 'label'
 	ret = UML.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -152,10 +150,10 @@ def testSciKitLearnUnsupervisedProblemLearners():
 	""" Test sciKitLearn() by calling some unsupervised learners problematic in previous implementations """
 	variables = ["x1","x2"]
 	data = [[1,0], [3,3], [50,0]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	UML.trainAndApply(toCall("GMM"), trainingObj, testX=testObj, arguments={'n_components':3})
 	UML.trainAndApply(toCall("DPGMM"), trainingObj, testX=testObj)
@@ -165,10 +163,10 @@ def testSciKitLearnUnsupervisedProblemLearners():
 #def testSciKitLearnObsAsArgumentName():
 #	""" Test scikitLearn() by calling learners with 'obs' instead of 'X' as a fit/predict argument """
 #	data = [[1,3,], [2,3], [0,1], [3,0], [3,2]]
-#	trainingObj = Matrix(data)
+#	trainingObj = UML.createData('Matrix', data)
 
 #	data2 = [[2,3],[1,2],[0,1], [1,3]]
-#	testObj = Matrix(data2)
+#	testObj = UML.createData('Matrix', data2)
 
 #	ret = UML.trainAndApply(toCall("GMMHMM"), trainingObj, testX=testObj, arguments={'n_components':3})
 #	ret = UML.trainAndApply(toCall("GaussianHMM"), trainingObj, testX=testObj)
@@ -178,13 +176,13 @@ def testSciKitLearnArgspecFailures():
 	""" Test scikitLearn() on those learners that cannot be passed to inspect.getargspec """
 	variables = ["x1","x2"]
 	data = [[1,0], [3,3], [50,0]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	dataY = [[0],[1],[2]]
-	trainingYObj = Matrix(dataY)
+	trainingYObj = UML.createData('Matrix', dataY)
 
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	UML.trainAndApply(toCall("GaussianNB"), trainingObj, testX=testObj, trainY=trainingYObj)
 	# data dependent?
@@ -194,12 +192,12 @@ def testSciKitLearnCrossDecomp():
 	""" Test SKL on learners which take 2d Y data """
 	variables = ["x1","x2"]
 	data = [[1,0], [3,3], [50,0], [12, 3], [8, 228]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 	dataY = [[0,1],[0,1],[2,2],[1,30], [5,21]]
-	trainingYObj = Matrix(dataY)
+	trainingYObj = UML.createData('Matrix', dataY)
 
 	data2 = [[1,0],[1,1],[5,1], [34,4]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	UML.trainAndApply(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
 	UML.trainAndApply(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
@@ -231,10 +229,10 @@ def testSciKitLearnListLearners():
 def testCustomRidgeRegressionCompare():
 	""" Sanity check for custom RidgeRegression, compare results to SKL's Ridge """
 	data = [[0,1,2], [13,12,4], [345,233,76]]
-	trainObj = Matrix(data)
+	trainObj = UML.createData('Matrix', data)
 
 	data2 = [[122,34],[76,-3]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	name = 'Custom.RidgeRegression'
 	ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':1})

@@ -22,7 +22,7 @@ class Matrix(Base):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None, name=None, path=None, reuseData=False):
+	def __init__(self, data, pointNames=None, featureNames=None, name=None, path=None, reuseData=False):
 		try:
 			if isspmatrix(data):
 				self.data = numpy.matrix(data.todense(), dtype=numpy.float)
@@ -43,7 +43,7 @@ class Matrix(Base):
 			msg += "the error"
 			raise ArgumentException(msg)
 			
-		super(Matrix, self).__init__(self.data.shape, featureNames, name, path)
+		super(Matrix, self).__init__(self.data.shape, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
 		
 
 	def _transpose_implementation(self):
@@ -325,7 +325,7 @@ class Matrix(Base):
 		for index in toExtract:
 			featureNameList.append(self.featureNamesInverse[index])
 
-		return Matrix(ret, featureNameList)
+		return Matrix(ret, featureNames=featureNameList)
 
 	def _extractFeaturesByFunction_implementation(self, toExtract, number):
 		"""
@@ -363,7 +363,7 @@ class Matrix(Base):
 		for index in xrange(start,end+1):
 			featureNameList.append(self.featureNamesInverse[index])
 
-		return Matrix(ret, featureNameList)
+		return Matrix(ret, featureNames=featureNameList)
 
 	def _mapReducePoints_implementation(self, mapper, reducer):
 		# apply_along_axis() expects a scalar or array of scalars as output,
@@ -454,11 +454,11 @@ class Matrix(Base):
 
 	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
 		if format == 'Sparse':
-			return UML.data.Sparse(self.data, self.featureNames)
+			return UML.data.Sparse(self.data, featureNames=self.featureNames)
 		if format == 'List':
-			return UML.data.List(self.data, self.featureNames)
+			return UML.data.List(self.data, featureNames=self.featureNames)
 		if format is None or format == 'Matrix':
-			return UML.data.Matrix(self.data, self.featureNames)
+			return UML.data.Matrix(self.data, featureNames=self.featureNames)
 		if format == 'pythonlist':
 			return self.data.tolist()
 		if format == 'numpyarray':
@@ -466,7 +466,7 @@ class Matrix(Base):
 		if format == 'numpymatrix':
 			return numpy.matrix(self.data)
 
-		return Matrix(self.data, self.featureNames)
+		return Matrix(self.data, featureNames=self.featureNames)
 
 	def _copyPoints_implementation(self, points, start, end):
 		if points is not None:
@@ -487,7 +487,7 @@ class Matrix(Base):
 			for index in range(start, end+1):
 				featureNameList.append(self.featureNamesInverse[index])
 
-		return Matrix(ret, featureNameList)
+		return Matrix(ret, featureNames=featureNameList)
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x,y]

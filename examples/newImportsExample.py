@@ -14,10 +14,10 @@ if __name__ == "__main__":
 
 	variables = ["x1","x2"]
 	data1 = [[1,0], [3,3], [5,0],]
-	trainingObj = createData('Matrix', data1, variables)
+	trainingObj = createData('Matrix', data=data1, featureNames=variables)
 
 	data2 = [[1,0],[1,1],[5,1], [3,4]]
-	testObj = createData('Matrix', data2)
+	testObj = createData('Matrix', data=data2)
 
 	ret = trainAndApply('sciKitLearn.KMeans', trainingObj, testX=testObj, output=None, arguments={'n_clusters':3})
 

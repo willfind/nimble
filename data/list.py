@@ -25,7 +25,7 @@ class List(Base):
 
 	"""
 
-	def __init__(self, data=None, featureNames=None, name=None, path=None, reuseData=False):
+	def __init__(self, data, pointNames=None, featureNames=None, name=None, path=None, reuseData=False):
 		"""
 		Instantiate a Row List data using the given data and featureNames. data may be
 		none or an empty list to indicate an empty object, or a fully populated
@@ -71,7 +71,7 @@ class List(Base):
 #					raise ArgumentException("If a python list is given as input, each entry must also be a list")
 			self.data = data
 			shape = (len(self.data), self._numFeatures)
-			super(List, self).__init__(shape, featureNames, name, path)
+			super(List, self).__init__(shape, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
 
 
 	def _transpose_implementation(self):
@@ -427,7 +427,7 @@ class List(Base):
 			featureNameList.append(self.featureNamesInverse[index])
 		# toExtract was reversed (for efficiency) so we have to rereverse this to get it right
 		featureNameList.reverse()
-		return List(extractedData, featureNameList, reuseData=True)
+		return List(extractedData, featureNames=featureNameList, reuseData=True)
 
 
 	def _extractFeaturesByFunction_implementation(self, function, number):
@@ -469,7 +469,7 @@ class List(Base):
 		for index in xrange(start,end+1):
 			featureNameList.append(self.featureNamesInverse[index])
 	
-		return List(extractedData, featureNameList, reuseData=True)
+		return List(extractedData, featureNames=featureNameList, reuseData=True)
 
 	def _mapReducePoints_implementation(self, mapper, reducer):
 		mapResults = {}
@@ -579,12 +579,13 @@ class List(Base):
 	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
 		if format == 'Sparse':
 			if self.pointCount == 0 or self.featureCount == 0:
-				return  UML.data.Sparse(numpy.empty(shape=(self.pointCount, self.featureCount)), self.featureNames)
-			return UML.data.Sparse(self.data, self.featureNames)
+				emptyData = numpy.empty(shape=(self.pointCount, self.featureCount))
+				return UML.data.Sparse(emptyData, featureNames=self.featureNames)
+			return UML.data.Sparse(self.data, featureNames=self.featureNames)
 		if format is None or format == 'List':
-			return UML.data.List(self.data, self.featureNames)
+			return UML.data.List(self.data, featureNames=self.featureNames)
 		if format == 'Matrix':
-			return UML.data.Matrix(self.data, self.featureNames)
+			return UML.data.Matrix(self.data, featureNames=self.featureNames)
 		if format == 'pythonlist':
 			return copy.deepcopy(self.data)
 		if format == 'numpyarray':
@@ -628,7 +629,7 @@ class List(Base):
 			for i in range(start,end+1):
 				featureNameList.append(self.featureNamesInverse[i])
 
-		return List(ret, featureNameList, reuseData=True)
+		return List(ret, featureNames=featureNameList, reuseData=True)
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x][y]

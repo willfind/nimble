@@ -66,10 +66,10 @@ def test_trainAndTest():
 	numPoints = 20
 	data1 = [[random.random(), random.random(), random.random(), int(random.random()*3)+1] for _pt in xrange(numPoints)]
 	# data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-	trainObj1 = createData('Matrix', data1, variables)
+	trainObj1 = createData('Matrix', data=data1, featureNames=variables)
 
 	testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
-	testObj1 = createData('Matrix', testData1)
+	testObj1 = createData('Matrix', data=testData1)
 
 	#with default ie no args
 	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect)

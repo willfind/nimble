@@ -6,8 +6,6 @@ import types
 import os
 
 import UML
-from UML.data import Base
-from UML.data import Sparse
 from uml_logger import UmlLogger
 from stopwatch import Stopwatch
 from UML.exceptions import ArgumentException
@@ -30,8 +28,8 @@ class MachineReadableLogger(UmlLogger):
 
 	def _logLoad_implementation(self, dataFileName, baseDataType=None, name=None):
 		"""
-		Send information about the loading of a data file into a Base object to the log.
-		Includes: name of the data file, type of Base object it was loaded into, and the
+		Send information about the loading of a data file into a UML.data.Base object to the log.
+		Includes: name of the data file, type of UML.data.Base object it was loaded into, and the
 		name of the object, if any.
 		"""
 		logLine = "{LOAD}::"
@@ -61,7 +59,7 @@ class MachineReadableLogger(UmlLogger):
 
 	def _logData_implementation(self, baseDataObject):
 		"""
-		Send information about a Base object to the machine-readable log.  Includes
+		Send information about a UML.data.Base object to the machine-readable log.  Includes
 		name of the object, if present, the type of the object, and the dimensions of the data
 		in the object.  The human readable version of this function includes much more data
 		about the object and the data it contains.
@@ -161,7 +159,7 @@ class MachineReadableLogger(UmlLogger):
 					logLine += createMRLineElement(key, value)
 				elif isinstance(value, types.FunctionType):
 					logLine += createMRLineElement(key, value.__name__)
-				elif isinstance(value, Base):
+				elif isinstance(value, UML.data.Base):
 					logLine += createMRLineElement(key, str(value.pointCount) + ", " + str(value.featureCount) + ")")
 				else:
 					logLine += createMRLineElement(key, value)
@@ -391,8 +389,8 @@ def testParseLog():
 	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
 	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
 
-	trainData1 = Sparse(trainDataBase)
-	testData1 = Sparse(testDataBase)
+	trainData1 = UML.createData('Sparse', trainDataBase)
+	testData1 = UML.createData('Sparse', testDataBase)
 	functionStr = """def f():
 	return 0"""
 	metrics = ["rootMeanSquareError", "meanAbsoluteError"]
@@ -432,8 +430,8 @@ def main():
 	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
 	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
 
-	trainData1 = Sparse(trainDataBase)
-	testData1 = Sparse(testDataBase)
+	trainData1 = UML.createData('Sparse', trainDataBase)
+	testData1 = UML.createData('Sparse', testDataBase)
 	functionStr = """def f():
 	return 0"""
 	metrics = ["rootMeanSquareError", "meanAbsoluteError"]

@@ -14,8 +14,6 @@ from UML.exceptions import ArgumentException
 
 from UML.interfaces.shogun_interface_old import setShogunLocation
 from UML.interfaces.shogun_interface_old import getShogunLocation
-from UML.data import Matrix
-from UML.data import Sparse
 
 
 def testShogunLocation():
@@ -30,10 +28,10 @@ def testShogun_shapemismatchException():
 	""" Test shogun() raises exception when the shape of the train and test data don't match """
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,0], [-1,0,1], [1,3,2]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[3]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {}
 	ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
@@ -44,10 +42,10 @@ def testShogun_singleClassException():
 	""" Test shogun() raises exception when the training data only has a single label """
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,0], [-1,0,1], [-1,0,0]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[3,3]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {}
 	ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
@@ -57,10 +55,10 @@ def testShogun_multiClassDataToBinaryAlg():
 	""" Test shogun() raises ArgumentException when passing multiclass data to a binary classifier """
 	variables = ["Y","x1","x2"]
 	data = [[5,-11,-5], [1,0,1], [2,3,2]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[5,3], [-1,0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
 	ret = UML.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
@@ -70,10 +68,10 @@ def testShogunHandmadeBinaryClassification():
 	""" Test shogun() by calling a binary linear classifier """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,0], [-0,0,1], [1,3,2]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[3,3], [-1,0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {}
 	ret = UML.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
@@ -87,10 +85,10 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 	""" Test shogun() by calling a binary linear classifier with a kernel """
 	variables = ["Y","x1","x2"]
 	data = [[5,-11,-5], [1,0,1], [1,3,2]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[5,3], [-1,0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
 #	args = {}
@@ -105,10 +103,10 @@ def testShogunKMeans():
 	""" Test shogun() by calling the Kmeans classifier, a distance based machine """
 	variables = ["Y","x1","x2"]
 	data = [[0,0,0], [0,0,1], [1,8,1], [1,7,1], [2,1,9], [2,1,8]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[0,-10], [10,1], [1,10]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {'distance':'ManhattanMetric'}
 	ret = UML.trainAndApply("shogun.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
@@ -125,10 +123,10 @@ def testShogunMulticlassSVM():
 	""" Test shogun() by calling a multilass classifier with a kernel """
 	variables = ["Y","x1","x2"]
 	data = [[0,0,0], [0,0,1], [1,-118,1], [1,-117,1], [2,1,191], [2,1,118], [3,-1000,-500]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[0,0], [-101,1], [1,101], [1,1]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {'C':.5, 'kernel':'LinearKernel'}
 #	args = {'C':1}
@@ -151,10 +149,10 @@ def testShogunSparseRegression():
 	cols = randint(0,x,c)
 	data = rand(c)
 	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
-	obj = Sparse(A)
+	obj = UML.createData('Sparse', A)
 
 	labelsData = numpy.random.rand(x)
-	labels = Matrix(labelsData.reshape((x,1)))
+	labels = UML.createData('Matrix', labelsData.reshape((x,1)))
 
 	ret = UML.trainAndApply('shogun.MulticlassOCAS', trainX=obj, trainY=labels, testX=obj)
 
@@ -175,10 +173,10 @@ def testShogunRossData():
 
 	data = [p0,p1,p2,p3,p4,p5,p6,p7]
 
-	trainingObj = Matrix(data)
+	trainingObj = UML.createData('Matrix', data)
 
 	data2 = [[0, 0, 0, 0, 0.33], [0.55, 0, 0.67, 0.98, 0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {'C':1.0}
 	argsk = {'C':1.0, 'kernel':"LinearKernel"}
@@ -222,10 +220,10 @@ def testShogunEmbeddedRossData():
 				else:
 					numpyData[i,j] = numpy.random.rand()
 
-	trainingObj = Matrix(numpyData)
+	trainingObj = UML.createData('Matrix', numpyData)
 
 	data2 = [[0, 0, 0, 0, 0.33,0, 0, 0, 0.33], [0.55, 0, 0.67, 0.98,0.55, 0, 0.67, 0.98, 0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	args = {'C':1.0}
 
@@ -240,10 +238,10 @@ def testShogunScoreModeMulti():
 	""" Test shogun() returns the right dimensions when given different scoreMode flags, multi case"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	# default scoreMode is 'label'
 	ret = UML.trainAndApply("shogun.MulticlassOCAS", trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -263,10 +261,10 @@ def testShogunScoreModeBinary():
 	""" Test shogun() returns the right dimensions when given different scoreMode flags, binary case"""
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,1], [-1,0,1], [1,30,2], [1,30,3]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[2,1],[25,0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	# default scoreMode is 'label'
 	ret = UML.trainAndApply("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -287,10 +285,10 @@ def notRunnable():
 	""" Test shogun() will correctly apply the provided strategies when given multiclass data and a binary learner """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
-	trainingObj = Matrix(data,variables)
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
 	data2 = [[2,3],[-200,0]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	ret = UML.trainAndApply("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, multiClassStrategy="OneVsOne")
 	

@@ -332,13 +332,13 @@ def testtrainAndTestOneVsOne():
 	variables = ["x1", "x2", "x3", "label"]
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
 	data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-	trainObj1 = createData('Matrix', data1, variables)
-	trainObj2 = createData('Matrix', data2, variables)
+	trainObj1 = createData('Matrix', data=data1, featureNames=variables)
+	trainObj2 = createData('Matrix', data=data2, featureNames=variables)
 
 	testData1 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3]]
 	testData2 = [[1, 0, 0, 1],[0, 1, 0, 2],[0, 0, 1, 3], [0, 1, 1, 2]]
-	testObj1 = createData('Matrix', testData1)
-	testObj2 = createData('Matrix', testData2)
+	testObj1 = createData('Matrix', data=testData1)
+	testObj2 = createData('Matrix', data=testData2)
 
 	metricFuncs = []
 	metricFuncs.append(fractionIncorrect)
@@ -353,13 +353,13 @@ def testtrainAndApplyOneVsAll():
 	variables = ["x1", "x2", "x3", "label"]
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
 	data2 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [0,1,1,4], [0,1,1,4], [0,1,1,4], [0,1,1,4], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-	trainObj1 = createData('Sparse', data1, variables)
-	trainObj2 = createData('Sparse', data2, variables)
+	trainObj1 = createData('Sparse', data=data1, featureNames=variables)
+	trainObj2 = createData('Sparse', data=data2, featureNames=variables)
 
 	testData1 = [[1, 0, 0],[0, 1, 0],[0, 0, 1]]
 	testData2 = [[1, 0, 0],[0, 1, 0],[0, 0, 1], [0, 1, 1]]
-	testObj1 = createData('Sparse', testData1)
-	testObj2 = createData('Sparse', testData2)
+	testObj1 = createData('Sparse', data=testData1)
+	testObj2 = createData('Sparse', data=testData2)
 
 #	metricFuncs = []
 #	metricFuncs.append(fractionIncorrect)
@@ -380,10 +380,10 @@ def testtrainAndApplyOneVsAll():
 def testtrainAndApplyOneVsOne():
 	variables = ["x1", "x2", "x3", "label"]
 	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-	trainObj1 = createData('Matrix', data1, variables)
+	trainObj1 = createData('Matrix', data=data1, featureNames=variables)
 
 	testData1 = [[1, 0, 0],[0, 1, 0],[0, 0, 1]]
-	testObj1 = createData('Matrix', testData1)
+	testObj1 = createData('Matrix', data=testData1)
 
 #	metricFuncs = []
 #	metricFuncs.append(fractionIncorrect)

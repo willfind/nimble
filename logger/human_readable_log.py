@@ -4,8 +4,7 @@ import inspect
 import types
 from tableString import *
 
-from UML.data import Base
-from UML.data import Sparse
+import UML
 from UML.exceptions import ArgumentException
 from uml_logger import UmlLogger
 
@@ -26,8 +25,8 @@ class HumanReadableLogger(UmlLogger):
 		"""
 		if baseDataObject is None:
 			raise ArgumentException("logData() cannot do anything with a null data object")
-		elif not isinstance(baseDataObject, Base):
-			raise ArgumentException("logData() requires an object of type Base to work")
+		elif not isinstance(baseDataObject, UML.data.Base):
+			raise ArgumentException("logData() requires an object of type UML.data.Base to work")
 
 		self.logMessage('*'*37+" DATA "+'*'*37)
 		self.logMessage("FEATURE REPORT")
@@ -147,8 +146,8 @@ class HumanReadableLogger(UmlLogger):
 				extraTableHeaders.append(str(key))
 				if isinstance(value, types.FunctionType):
 					extraTableValues.append(value.__name__)
-				elif isinstance(value, Base):
-					extraTableValues.append("Base: " + "(" + str(value.pointCount) + ", " + str(value.featureCount) + ")")
+				elif isinstance(value, UML.data.Base):
+					extraTableValues.append("UML.data.Base: " + "(" + str(value.pointCount) + ", " + str(value.featureCount) + ")")
 				else:
 					extraTableValues.append(str(value))
 			extraTable = [extraTableHeaders, extraTableValues]
@@ -196,8 +195,8 @@ def main():
 	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
 	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
 
-	trainData1 = Sparse(trainDataBase)
-	testData1 = Sparse(testDataBase)
+	trainData1 = UML.createData('Sparse', trainDataBase)
+	testData1 = UML.createData('Sparse', testDataBase)
 	functionStr = """def f():
 	return 0"""
 	metrics = ["rootMeanSquareError", "meanAbsoluteError"]

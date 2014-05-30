@@ -16,9 +16,9 @@ def testfractionIncorrectBottom10SanityCheck():
 	correctData = [[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1]]
 	wrongData = [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]]
 
-	knowns = createData('List', knownsData, sendToLog=False)
-	correct = createData('List', correctData, featureNames=['0','1'], sendToLog=False)
-	wrong = createData('List', wrongData, featureNames=['0','1'], sendToLog=False)
+	knowns = createData('List', data=knownsData, sendToLog=False)
+	correct = createData('List', data=correctData, featureNames=['0','1'], sendToLog=False)
+	wrong = createData('List', data=wrongData, featureNames=['0','1'], sendToLog=False)
 
 	correctScore = fractionIncorrectBottom10(knowns, correct, negativeLabel=0)
 	wrongScore = fractionIncorrectBottom10(knowns, wrong, negativeLabel=0)
@@ -35,10 +35,10 @@ def testFractionTrueNegative():
 	knownLabelsThree = [[2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
 	knownLabelsFour = [[2], [1], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2]]
 
-	knownLabelsOneBase = createData('Matrix', knownLabelsOne, sendToLog=False)
-	knownLabelsTwoBase = createData('Matrix', knownLabelsTwo, sendToLog=False)
-	knownLabelsThreeBase = createData('Matrix', knownLabelsThree, sendToLog=False)
-	knownLabelsFourBase = createData('Matrix', knownLabelsFour, sendToLog=False)
+	knownLabelsOneBase = createData('Matrix', data=knownLabelsOne, sendToLog=False)
+	knownLabelsTwoBase = createData('Matrix', data=knownLabelsTwo, sendToLog=False)
+	knownLabelsThreeBase = createData('Matrix', data=knownLabelsThree, sendToLog=False)
+	knownLabelsFourBase = createData('Matrix', data=knownLabelsFour, sendToLog=False)
 
 	predictedScoreList = []
 	for i in range(20):
@@ -46,7 +46,7 @@ def testFractionTrueNegative():
 		twoScore = 1.0 - i * 0.05
 		predictedScoreList.append([oneScore, twoScore])
 
-	predictedScoreListBase = createData('Matrix', predictedScoreList, ['1.0', '2.0'])
+	predictedScoreListBase = createData('Matrix', data=predictedScoreList, featureNames=['1.0', '2.0'])
 
 	topHalfProportionNegativeOne = fractionTrueNegativeTop50(knownLabelsOneBase, predictedScoreListBase, negativeLabel=1)
 	topNinetyProportionNegativeOne = fractionTrueNegativeTop90(knownLabelsOneBase, predictedScoreListBase, negativeLabel=1)
@@ -75,8 +75,8 @@ def testPerfCombinations():
 	knownLabels = numpy.array([[1.0],[2.0],[3.0]])
 	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
@@ -88,8 +88,8 @@ def testPerfCombinations():
 	knownLabels = numpy.array([[1.5],[2.5],[3.5]])
 	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
 	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
@@ -109,8 +109,8 @@ def testGenericErrorCalculatorEmptyKnownInput():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1,2,3])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 
@@ -122,8 +122,8 @@ def testGenericErrorCalculatorEmptyPredictedInput():
 	knownLabels = numpy.array([1,2,3])
 	predictedLabels = numpy.array([])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 
@@ -136,8 +136,8 @@ def testGenericErrorCalculatorDivideByZero():
 	knownLabels = numpy.array([1,2,3])
 	predictedLabels = numpy.array([1,2,3])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: y/x)
 
@@ -145,8 +145,8 @@ def testGenericErrorCalculator():
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	sameRate = computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
 	assert sameRate == 0.0
@@ -165,8 +165,8 @@ def testRmseEmptyKnownValues():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	rootMeanSquareErrorRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -179,8 +179,8 @@ def testRmseEmptyPredictedValues():
 	predictedLabels = numpy.array([])
 	knownLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -194,8 +194,8 @@ def testRmse():
 	predictedLabels = numpy.array([[0],[0],[0]])
 	knownLabels = numpy.array([[0],[0],[0]])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
@@ -203,8 +203,8 @@ def testRmse():
 	predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
 	knownLabels = numpy.array([[1.0], [2.0], [3.0]])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate == 0.0
@@ -212,8 +212,8 @@ def testRmse():
 	predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
 	knownLabels = numpy.array([[1.5], [2.5], [3.5]])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate > 0.49
@@ -231,8 +231,8 @@ def testMeanAbsoluteErrorEmptyKnownValues():
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -245,8 +245,8 @@ def testMeanAbsoluteErrorEmptyPredictedValues():
 	predictedLabels = numpy.array([])
 	knownLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -259,8 +259,8 @@ def testMeanAbsoluteError():
 	predictedLabels = numpy.array([0,0,0])
 	knownLabels = numpy.array([0,0,0])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 	knownLabelsMatrix.transpose()
 	predictedLabelsMatrix.transpose()
 
@@ -270,9 +270,9 @@ def testMeanAbsoluteError():
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
 	knownLabelsMatrix.transpose()
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 	predictedLabelsMatrix.transpose()
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
@@ -281,9 +281,9 @@ def testMeanAbsoluteError():
 	predictedLabels = numpy.array([1.0, 2.0, 3.0])
 	knownLabels = numpy.array([1.5, 2.5, 3.5])
 
-	knownLabelsMatrix = createData('Matrix', knownLabels)
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
 	knownLabelsMatrix.transpose()
-	predictedLabelsMatrix = createData('Matrix', predictedLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 	predictedLabelsMatrix.transpose()
 
 	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
@@ -307,9 +307,9 @@ def test_cosineSimilarity():
 	orth = numpy.array([[0],[1]])
 	neg = numpy.array([[-1],[0]])
 
-	origMatrix = createData('Matrix', orig)
-	orthMatrix = createData('Matrix', orth)
-	negMatrix = createData('Matrix', neg)
+	origMatrix = createData('Matrix', data=orig)
+	orthMatrix = createData('Matrix', data=orth)
+	negMatrix = createData('Matrix', data=neg)
 
 	result0 = cosineSimilarity(origMatrix, origMatrix)
 	result1 = cosineSimilarity(origMatrix, orthMatrix)
@@ -322,7 +322,7 @@ def test_cosineSimilarity():
 def test_cosineSimilarityZeros():
 	zeros = [[0],[0]]
 
-	zerosMatrix = createData('Matrix', zeros)
+	zerosMatrix = createData('Matrix', data=zeros)
 
 	result0 = cosineSimilarity(zerosMatrix, zerosMatrix)
 

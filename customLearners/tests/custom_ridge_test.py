@@ -10,10 +10,10 @@ def testRidgeRegressionShapes():
 	""" Test ridge regression by checking the shapes of the inputs and outputs """
 
 	data = [[0,0,0], [4,3,1], [12,15,-3], ]
-	trainObj = Matrix(data)
+	trainObj = UML.createData('Matrix', data)
 
 	data2 = [[5.5,5],[20,-3]]
-	testObj = Matrix(data2)
+	testObj = UML.createData('Matrix', data2)
 
 	name = 'Custom.RidgeRegression'
 	ret = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb':0})

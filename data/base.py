@@ -37,7 +37,7 @@ class Base(object):
 
 	"""
 
-	def __init__(self, shape, featureNames=None, name=None, path=None):
+	def __init__(self, shape, pointNames=None, featureNames=None, name=None, path=None):
 		"""
 		Instantiates the featureName book-keeping structures that are defined by this representation.
 		
