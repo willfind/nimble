@@ -45,17 +45,27 @@ class Base(object):
 		featureName mapping.
 
 		"""
-		super(Base, self).__init__()
 		self._pointCount = shape[0]
 		self._featureCount = shape[1]
 
+		if pointNames is not None and len(pointNames) != shape[0]:
+			raise ArgumentException("The length of the pointNames must match the points given in shape")
 		if featureNames is not None and len(featureNames) != shape[1]:
 			raise ArgumentException("The length of the featureNames must match the features given in shape")
 
-		self._nextDefaultValueFeature = 0
 		self._nextDefaultValuePoint = 0
-		self._setAllDefault('feature')
 		self._setAllDefault('point')
+		if isinstance(pointNames, list) or pointNames is None:
+			self.setPointNamesFromList(pointNames)
+		elif isinstance(pointNames, dict):
+			self.setPointNamesFromDict(pointNames)
+		else:
+			raise ArgumentException("pointNames may only be a list or a dict, defining a mapping between integers and pointNames")
+		if pointNames is not None and len(pointNames) != self.pointCount:
+			raise ArgumentException("Cannot have different number of pointNames and points, len(pointNames): " + str(len(pointNames)) + ", self.pointCount: " + str(self.pointCount))
+
+		self._nextDefaultValueFeature = 0
+		self._setAllDefault('feature')
 		if isinstance(featureNames, list) or featureNames is None:
 			self.setFeatureNamesFromList(featureNames)
 		elif isinstance(featureNames, dict):
@@ -64,12 +74,14 @@ class Base(object):
 			raise ArgumentException("featureNames may only be a list or a dict, defining a mapping between integers and featureNames")
 		if featureNames is not None and len(featureNames) != self.featureCount:
 			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.featureCount: " + str(self.featureCount))
+		
 		if name is None:
 			self.name = DEFAULT_NAME_PREFIX + str(dataHelpers.defaultObjectNumber)
 			dataHelpers.defaultObjectNumber += 1
 		else:
 			self.name = name
 		self.path = path
+
 
 	#######################
 	# Property Attributes #
@@ -87,7 +99,22 @@ class Base(object):
 	# Low Level Operations #
 	########################
 
-	def setFeatureName(self, oldIdentifier, newFeatureName):
+	def setPointName(self, oldIdentifier, newName):
+		"""
+		Changes the pointName specified by previous to the supplied input name.
+		
+		oldIdentifier must be a non None string or integer, specifying either a current pointName
+		or the index of a current pointName. newName may be either a string not currently
+		in the pointName set, or None for an default pointName. newName cannot begin with the
+		default prefix.
+
+		"""
+		if len(self.pointNames) == 0:
+			raise ArgumentException("Cannot set any point names; this object has no points ")
+		self._setName_implementation(oldIdentifier, newName, 'point', False)
+		return self
+
+	def setFeatureName(self, oldIdentifier, newName):
 		"""
 		Changes the featureName specified by previous to the supplied input name.
 		
@@ -99,8 +126,20 @@ class Base(object):
 		"""
 		if len(self.featureNames) == 0:
 			raise ArgumentException("Cannot set any feature names; this object has no features ")
-		self._setName_implementation(oldIdentifier, newFeatureName, 'feature', False)
+		self._setName_implementation(oldIdentifier, newName, 'feature', False)
 		return self
+
+	def setPointNamesFromList(self, assignments=None):
+		"""
+		Rename all of the point names of this object according to the assignments in a list.
+		We use the mapping between names and array indices to create a new dictionary, which
+		will eventually be assigned as self.pointNames. assignments may be None to set all
+		pointNames to new default values. If assignment is an unexpected type, the names
+		are not strings, or the names are not unique, then an ArgumentException will be raised.
+
+		"""
+		return self._setNamesFromList(assignments, self.pointCount, 'point')
+
 
 	def setFeatureNamesFromList(self, assignments=None):
 		"""
@@ -111,29 +150,18 @@ class Base(object):
 		are not strings, or the names are not unique, then an ArgumentException will be raised.
 
 		"""
-		if assignments is None:
-			self._setAllDefault('feature')
-			return self
-		if not isinstance(assignments, list):
-			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
-		if self.featureCount == 0:
-			if len(assignments) > 0:
-				raise ArgumentException("assignments is too large; this object has no features ")
-			return self
-		if len(assignments) != self.featureCount:
-			raise ArgumentException("assignments may only be a list, with as many entries as there are features")
+		return self._setNamesFromList(assignments, self.featureCount, 'feature')
 
-		#convert to dict so we only write the checking code once
-		temp = {}
-		for index in xrange(len(assignments)):
-			featureName = assignments[index]
-			if featureName in temp:
-				raise ArgumentException("Cannot input duplicate featureNames: " + str(featureName))
-			temp[featureName] = index
-		assignments = temp
+	def setPointNamesFromDict(self, assignments=None):
+		"""
+		Rename all of the point names of this object according to the mapping in a dict.
+		We will use a copy of the input dictionary to be assigned as self.pointNames.
+		assignments may be None to set all pointNames to new default values. If assignment
+		is an unexpected type, if the names are not strings, the names are not unique,
+		or the point indices are not integers then an ArgumentException will be raised.
 
-		self.setFeatureNamesFromDict(assignments)
-		return self
+		"""
+		return self._setNamesFromDict(assignments, self.pointCount, 'point')
 
 	def setFeatureNamesFromDict(self, assignments=None):
 		"""
@@ -144,37 +172,8 @@ class Base(object):
 		or the feature indices are not integers then an ArgumentException will be raised.
 
 		"""
-		if assignments is None:
-			self._setAllDefault('feature')
-			return self
-		if not isinstance(assignments, dict):
-			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
-		if self.featureCount == 0:
-			if len(assignments) > 0:
-				raise ArgumentException("assignments is too large; this object has no features ")
-			return self
-		if len(assignments) != self.featureCount:
-			raise ArgumentException("assignments may only be a dict, with as many entries as there are features")
+		return self._setNamesFromDict(assignments, self.featureCount, 'feature')
 
-		# at this point, the input must be a dict
-		#check input before performing any action
-		for featureName in assignments.keys():
-			if not isinstance(featureName, basestring):
-				raise ArgumentException("FeatureNames must be strings")
-			if not isinstance(assignments[featureName], int):
-				raise ArgumentException("Indices must be integers")
-			if assignments[featureName] < 0 or assignments[featureName] >= self.featureCount:
-				raise ArgumentException("Indices must be within 0 to self.featureCount - 1")
-
-		reverseDict = {}
-		for featureName in assignments.keys():
-			self._incrementDefaultIfNeeded(featureName, 'feature')
-			reverseDict[assignments[featureName]] = featureName
-
-		# have to copy the input, could be from another object
-		self.featureNames = copy.copy(assignments)
-		self.featureNamesInverse = reverseDict
-		return self
 
 	def nameData(self, name):
 		"""
@@ -1175,6 +1174,17 @@ class Base(object):
 	# Helper functions #
 	####################
 
+	def _pointNameDifference(self, other):
+		"""
+		Returns a set containing those pointNames in this object that are not also in the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, Base):
+			raise ArgumentException("Must provide another representation type to determine pointName difference")
+		
+		return self.pointNames.viewkeys() - other.pointNames.viewkeys() 
 
 	def _featureNameDifference(self, other):
 		"""
@@ -1188,6 +1198,18 @@ class Base(object):
 		
 		return self.featureNames.viewkeys() - other.featureNames.viewkeys() 
 
+	def _pointNameIntersection(self, other):
+		"""
+		Returns a set containing only those pointNames that are shared by this object and the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, Base):
+			raise ArgumentException("Must provide another representation type to determine pointName intersection")
+		
+		return self.pointNames.viewkeys() & other.pointNames.viewkeys() 
+
 	def _featureNameIntersection(self, other):
 		"""
 		Returns a set containing only those featureNames that are shared by this object and the input object.
@@ -1199,6 +1221,19 @@ class Base(object):
 			raise ArgumentException("Must provide another representation type to determine featureName intersection")
 		
 		return self.featureNames.viewkeys() & other.featureNames.viewkeys() 
+
+
+	def _pointNameSymmetricDifference(self, other):
+		"""
+		Returns a set containing only those pointNames not shared between this object and the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, Base):
+			raise ArgumentException("Must provide another representation type to determine pointName difference")
+		
+		return self.pointNames.viewkeys() ^ other.pointNames.viewkeys() 
 
 	def _featureNameSymmetricDifference(self, other):
 		"""
@@ -1212,7 +1247,19 @@ class Base(object):
 		
 		return self.featureNames.viewkeys() ^ other.featureNames.viewkeys() 
 
-	def _featureNameUnion(self,other):
+	def _pointNameUnion(self, other):
+		"""
+		Returns a set containing all pointNames in either this object or the input object.
+
+		"""
+		if other is None:
+			raise ArgumentException("The other object cannot be None")
+		if not isinstance(other, Base):
+			raise ArgumentException("Must provide another representation type to determine pointNames union")
+		
+		return self.pointNames.viewkeys() | other.pointNames.viewkeys() 
+
+	def _featureNameUnion(self, other):
 		"""
 		Returns a set containing all featureNames in either this object or the input object.
 
@@ -1291,7 +1338,7 @@ class Base(object):
 				raise ArgumentException("The index " + str(identifier) +" is outside of the range of possible values")
 		if isinstance(identifier,basestring):
 			if identifier not in names:
-				raise ArgumentException("The featureName '" + identifier + "' cannot be found")
+				raise ArgumentException("The name '" + identifier + "' cannot be found")
 			# set as index for return
 			toReturn = names[identifier]
 		return toReturn
@@ -1313,12 +1360,14 @@ class Base(object):
 			self.pointNamesInverse = {}
 			names = self.pointNames
 			invNames = self.pointNamesInverse
+			count = self._pointCount
 		else:
 			self.featureNames = {}
 			self.featureNamesInverse = {}
 			names = self.featureNames
 			invNames = self.featureNamesInverse
-		for i in xrange(self.featureCount):
+			count = self._featureCount
+		for i in xrange(count):
 			defaultName = self._nextDefaultName(axis)
 			invNames[i] = defaultName
 			names[defaultName] = i
@@ -1435,7 +1484,7 @@ class Base(object):
 		if newName in names:
 			if invNames[index] == newName:
 				return
-			raise ArgumentException("This featureName is already in use")
+			raise ArgumentException("This name is already in use")
 		
 		if newName is None:
 			newName = self._nextDefaultName(axis)
@@ -1449,6 +1498,71 @@ class Base(object):
 		names[newName] = index
 
 		self._incrementDefaultIfNeeded(newName, axis)
+
+	def _setNamesFromList(self, assignments, count, axis):
+		self._validateAxis(axis)
+		if assignments is None:
+			self._setAllDefault(axis)
+			return self
+		if not isinstance(assignments, list):
+			raise ArgumentException("assignments may only be a list, with as many entries as this axis is long")
+		if count == 0:
+			if len(assignments) > 0:
+				raise ArgumentException("assignments is too large; this axis is empty ")
+			return self
+		if len(assignments) != count:
+			raise ArgumentException("assignments may only be a list, with as many entries as this axis is long")
+
+		#convert to dict so we only write the checking code once
+		temp = {}
+		for index in xrange(len(assignments)):
+			name = assignments[index]
+			if name in temp:
+				raise ArgumentException("Cannot input duplicate names: " + str(name))
+			temp[name] = index
+		assignments = temp
+
+		self._setNamesFromDict(assignments, count, axis)
+		return self
+
+	def _setNamesFromDict(self, assignments, count, axis):
+		self._validateAxis(axis)
+		if assignments is None:
+			self._setAllDefault(axis)
+			return self
+		if not isinstance(assignments, dict):
+			raise ArgumentException("assignments may only be a dict, with as many entries as this axis is long")
+		if count == 0:
+			if len(assignments) > 0:
+				raise ArgumentException("assignments is too large; this axis is empty ")
+			return self
+		if len(assignments) != count:
+			raise ArgumentException("assignments may only be a dict, with as many entries as this axis is long")
+
+		# at this point, the input must be a dict
+		#check input before performing any action
+		for name in assignments.keys():
+			if not isinstance(name, basestring):
+				raise ArgumentException("Names must be strings")
+			if not isinstance(assignments[name], int):
+				raise ArgumentException("Indices must be integers")
+			if assignments[name] < 0 or assignments[name] >= count:
+				countName = 'pointCount' if axis == 'point' else 'featureCount'
+				raise ArgumentException("Indices must be within 0 to self." + countName + " - 1")
+
+		reverseDict = {}
+		for name in assignments.keys():
+			self._incrementDefaultIfNeeded(name, axis)
+			reverseDict[assignments[name]] = name
+
+		# have to copy the input, could be from another object
+		if axis == 'point':
+			self.pointNames = copy.copy(assignments)
+			self.pointNamesInverse = reverseDict
+		else:
+			self.featureNames = copy.copy(assignments)
+			self.featureNamesInverse = reverseDict
+		return self
 
 
 	def _validateAxis(self, axis):

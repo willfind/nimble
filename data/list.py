@@ -61,7 +61,8 @@ class List(Base):
 				else:
 					self._numFeatures = 0
 			self.data = []
-			super(List, self).__init__((0,self._numFeatures),featureNames, name, path)
+			shape = (0,self._numFeatures)
+			super(List, self).__init__(shape, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
 		else:
 			self._numFeatures = len(data[0])
 			for point in data:

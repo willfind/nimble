@@ -58,12 +58,9 @@ class TestBaseOnly(LowLevelBackend):
 		def makeAndDefine(pointNames=None, featureNames=None, psize=0, fsize=0):			
 			""" Make a base data object that will think it has as many features as it has featureNames,
 			even though it has no actual data """
-#			rows = psize if pointNames is None else len(pointNames)
+			rows = psize if pointNames is None else len(pointNames)
 			cols = fsize if featureNames is None else len(featureNames)
-			specificImp = makeConst(cols)
-			UML.data.Base._features_implementation = specificImp
-			ret = UML.data.Base((1,cols), featureNames=featureNames)
-			ret._features_implementation = specificImp
+			ret = UML.data.Base((rows,cols), pointNames=pointNames, featureNames=featureNames)
 			return ret
 
 		self.constructor = makeAndDefine
