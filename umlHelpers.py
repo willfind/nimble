@@ -77,12 +77,14 @@ def _loadSparse(data, pointNames, featureNames, fileType, automatedRetType=False
 	path = data
 	tempFeatureNames = None
 	if fileType == 'csv':
-		(data, tempFeatureNames) = _loadCSVtoMatrix(path)
+		(data, tempPointNames, tempFeatureNames) = _loadCSVtoMatrix(path)
 	elif fileType == 'mtx':
-		(data, tempFeatureNames) = _loadMTXtoAuto(path)
+		(data, tempPointNames, tempFeatureNames) = _loadMTXtoAuto(path)
 	else:
 		raise ArgumentException("Unrecognized file type")
 
+	if tempPointNames is not None:
+		pointNames = tempPointNames
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
 
@@ -101,14 +103,17 @@ def _loadMatrix(data, pointNames, featureNames, fileType, automatedRetType=False
 
 	# since file type is not None, that is an indicator that we must read from a file
 	path = data
+	tempPointNames = None
 	tempFeatureNames = None
 	if fileType == 'csv':
-		(data, tempFeatureNames) = _loadCSVtoMatrix(path, automatedRetType)
+		(data, tempPointNames, tempFeatureNames) = _loadCSVtoMatrix(path, automatedRetType)
 	elif fileType == 'mtx':
-		(data, tempFeatureNames) = _loadMTXtoAuto(path)
+		(data, tempPointNames, tempFeatureNames) = _loadMTXtoAuto(path)
 	else:
 		raise ArgumentException("Unrecognized file type")
 
+	if tempPointNames is not None:
+		pointNames = tempPointNames
 	if tempFeatureNames is not None:
 			featureNames = tempFeatureNames
 
@@ -127,38 +132,48 @@ def _loadList(data, pointNames, featureNames, fileType):
 
 	# since file type is not None, that is an indicator that we must read from a file
 	path = data
+	tempPointNames = None
 	tempFeatureNames = None
 	if fileType == 'csv':
-		(data, tempFeatureNames) =_loadCSVtoList(data)
+		(data, tempPointNames, tempFeatureNames) =_loadCSVtoList(data)
 	elif fileType == 'mtx':
-		(data, tempFeatureNames) = _loadMTXtoAuto(data)
+		(data, tempPointNames, tempFeatureNames) = _loadMTXtoAuto(data)
 	else:
 		raise ArgumentException("Unrecognized file type")
 
 	# if we load from file, we assume that data will be read; feature names may not
 	# be, thus we check
+	if tempPointNames is not None:
+		pointNames = tempPointNames
 	if tempFeatureNames is not None:
-			featureNames = tempFeatureNames
+		featureNames = tempFeatureNames
 
 	return List(data, pointNames=pointNames, featureNames=featureNames, name=os.path.basename(path), path=path)
 
 def _loadCSVtoMatrix(path, automatedRetType=False):
 	inFile = open(path, 'rU')
-	firstLine = inFile.readline()
+	currLine = inFile.readline()
+	pointNames = None
 	featureNames = None
 	skip_header = 0
 
-	# test if this is a line defining featureNames
-	if firstLine[0] == "#":
+	def readNames(lineToRead):
 		# strip '#' from the begining of the line
-		scrubbedLine = firstLine[1:]
+		scrubbedLine = lineToRead[1:]
 		# strip newline from end of line
 		scrubbedLine = scrubbedLine.rstrip()
-		featureNames = scrubbedLine.split(',')
+		names = scrubbedLine.split(',')
 		skip_header = 1
+		return names
+
+	# test if this is a line defining names
+	if currLine[0] == "#":
+		pointNames = readNames(currLine)
+		currLine = inFile.readline()
+		featureNames = readNames(currLine)
 
 	# check the types in the first data containing line.
-	line = firstLine
+	line = currLine
 	while (line == "") or (line[0] == '#'):
 		line = inFile.readline()
 	lineList = line.split(',')
@@ -178,7 +193,7 @@ def _loadCSVtoMatrix(path, automatedRetType=False):
 	data = numpy.genfromtxt(path, delimiter=',', skip_header=skip_header)
 	if len(data.shape) == 1:
 		data = numpy.matrix(data)
-	return (data, featureNames)
+	return (data, pointNames, featureNames)
 
 def _loadMTXtoAuto(path):
 	"""
@@ -190,6 +205,7 @@ def _loadMTXtoAuto(path):
 
 	"""
 	inFile = open(path, 'rU')
+	pointNames = None
 	featureNames = None
 
 	# read through the comment lines
@@ -202,12 +218,16 @@ def _loadMTXtoAuto(path):
 			scrubbedLine = currLine[2:]
 			# strip newline from end of line
 			scrubbedLine = scrubbedLine.rstrip()
-			featureNames = scrubbedLine.split(',')
+			names = scrubbedLine.split(',')
+			if pointNames is None:
+				pointNames = names
+			else:
+				featureNames = names
 
 	inFile.close()
 
 	data = scipy.io.mmread(path)
-	return (data, featureNames)
+	return (data, pointNames, featureNames)
 
 def _intFloatOrString(inString):
 	ret = inString
@@ -238,18 +258,26 @@ def _defaultParser(line):
 def _loadCSVtoList(path):
 	inFile = open(path, 'rU')
 	firstLine = inFile.readline()
-	featureNameList = None
+	pointNames = None
+	featureNames = None
+
+#	import pdb
+#	pdb.set_trace()
+
+	def readNames(lineToRead):
+		# strip '#' from the beginning of the line
+		scrubbedLine = lineToRead[1:]
+		# strip newline from end of line
+		scrubbedLine = scrubbedLine.rstrip()
+		names = scrubbedLine.split(',')
+		return names
 
 	# test if this is a line defining featureNames
 	if firstLine[0] == "#":
-		# strip '#' from the begining of the line
-		scrubbedLine = firstLine[1:]
-		# strip newline from end of line
-		scrubbedLine = scrubbedLine.rstrip()
-		featureNameList = scrubbedLine.split(',')
-		featureNameMap = {}
-		for name in featureNameList:
-			featureNameMap[name] = featureNameList.index(name)
+		pointNames = readNames(firstLine)
+		currLine = inFile.readline()
+		featureNames = readNames(currLine)
+
 	#if not, get the iterator pointed back at the first line again	
 	else:
 		inFile.close()
@@ -265,12 +293,9 @@ def _loadCSVtoList(path):
 
 		data.append(_defaultParser(currLine))
 
-	if featureNameList == None:
-		return (data, None)
-
 	inFile.close()
 
-	return (data, featureNameMap)
+	return (data, pointNames, featureNames)
 
 
 

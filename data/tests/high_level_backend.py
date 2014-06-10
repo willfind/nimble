@@ -187,7 +187,8 @@ class HighLevelBackend(DataTestObject):
 		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data, featureNames=featureNames)
+		pointNames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 		toTest.extractPointsByCoinToss(None)
 
 	@raises(ArgumentException)
@@ -195,7 +196,8 @@ class HighLevelBackend(DataTestObject):
 		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data, featureNames=featureNames)
+		pointNames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 		toTest.extractPointsByCoinToss(0)
 
 	@raises(ArgumentException)
@@ -203,7 +205,8 @@ class HighLevelBackend(DataTestObject):
 		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data, featureNames=featureNames)
+		pointNames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 		toTest.extractPointsByCoinToss(1)
 
 	def test_extractPointsByCoinToss_intoPEmpty(self):
@@ -229,11 +232,14 @@ class HighLevelBackend(DataTestObject):
 		""" Test extractPointsByCoinToss() against handmade output with the test seed """
 		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 		featureNames = ['1','2','3']
-		toTest = self.constructor(data, featureNames=featureNames)
+		pointNames = ['1', '4', '7', '10']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 		ret = toTest.extractPointsByCoinToss(0.5)
 
-		expRet = self.constructor([[4,5,6],[7,8,9]], featureNames=featureNames)
-		expTest = self.constructor([[1,2,3],[10,11,12]], featureNames=featureNames)
+		expRetPN = ['4', '7']
+		expTestPN = ['1', '10']
+		expRet = self.constructor([[4,5,6],[7,8,9]], pointNames=expRetPN, featureNames=featureNames)
+		expTest = self.constructor([[1,2,3],[10,11,12]], pointNames=expTestPN, featureNames=featureNames)
 
 		assert ret.isIdentical(expRet)
 		assert expTest.isIdentical(toTest)
@@ -335,8 +341,9 @@ class HighLevelBackend(DataTestObject):
 	def test_applyToPoints_Handmade(self):
 		""" Test applyToPoints() with handmade output """
 		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitLower(point):
 			return point[origObj.featureNames['deci']]
@@ -352,13 +359,14 @@ class HighLevelBackend(DataTestObject):
 	def test_applyToPoints_HandmadeLimited(self):
 		""" Test applyToPoints() with handmade output on a limited portion of points """
 		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitLower(point):
 			return point[origObj.featureNames['deci']]
 
-		lowerCounts = origObj.applyToPoints(emitLower, points=[3,2], inPlace=False)
+		lowerCounts = origObj.applyToPoints(emitLower, points=['three',2], inPlace=False)
 
 		expectedOut = [[0.1], [0.2]]
 		exp = self.constructor(expectedOut)
@@ -388,8 +396,9 @@ class HighLevelBackend(DataTestObject):
 	def test_applyToPoints_HandmadeInPlace(self):
 		""" Test applyToPoints() with handmade output. InPlace """
 		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllDeci(point):
 			value = point[origObj.featureNames['deci']]
@@ -398,7 +407,7 @@ class HighLevelBackend(DataTestObject):
 		lowerCounts = origObj.applyToPoints(emitAllDeci)
 
 		expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
-		exp = self.constructor(expectedOut, featureNames=featureNames)
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 
 		assert origObj == lowerCounts
 		assert lowerCounts.isIdentical(exp)
@@ -406,17 +415,18 @@ class HighLevelBackend(DataTestObject):
 	def test_applyToPoints_HandmadeLimitedInPlace(self):
 		""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
 		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllDeci(point):
 			value = point[origObj.featureNames['deci']]
 			return [value, value, value]
 
-		lowerCounts = origObj.applyToPoints(emitAllDeci, points=[3,2])
+		lowerCounts = origObj.applyToPoints(emitAllDeci, points=[3,'two'])
 
 		expectedOut = [[1,0.1,0.01], [1,0.1,0.02], [0.1,0.1,0.1], [0.2,0.2,0.2]]
-		exp = self.constructor(expectedOut, featureNames=featureNames)
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 
 		assert origObj == lowerCounts
 		assert lowerCounts.isIdentical(exp)
@@ -489,14 +499,16 @@ class HighLevelBackend(DataTestObject):
 		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
 		origObj.applyToFeatures(None, inPlace=False)
 
+
 	def test_applyToFeatures_Handmade(self):
 		""" Test applyToFeatures() with handmade output """
 		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllEqual(feature):
-			first = feature[0]
+			first = feature['zero']
 			for value in feature:
 				if value != first:
 					return 0
@@ -511,8 +523,9 @@ class HighLevelBackend(DataTestObject):
 	def test_applyToFeatures_HandmadeLimited(self):
 		""" Test applyToFeatures() with handmade output on a limited portion of features """
 		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -551,8 +564,9 @@ class HighLevelBackend(DataTestObject):
 	def test_applyToFeatures_HandmadeInPlace(self):
 		""" Test applyToFeatures() with handmade output. InPlace """
 		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -563,11 +577,8 @@ class HighLevelBackend(DataTestObject):
 
 		lowerCounts = origObj.applyToFeatures(emitAllEqual)
 		expectedOut = [[1,0,0], [1,0,0], [1,0,0], [1,0,0]]	
-		exp = self.constructor(expectedOut, featureNames=featureNames)
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 		assert origObj == lowerCounts
-
-		print lowerCounts.data
-		print exp.data
 
 		assert lowerCounts.isIdentical(exp)
 
@@ -575,8 +586,9 @@ class HighLevelBackend(DataTestObject):
 	def test_applyToFeatures_HandmadeLimitedInPlace(self):
 		""" Test applyToFeatures() with handmade output on a limited portion of features. InPlace """
 		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -587,11 +599,8 @@ class HighLevelBackend(DataTestObject):
 
 		lowerCounts = origObj.applyToFeatures(emitAllEqual, features=[0,'centi'])
 		expectedOut = [[1,0.1,0], [1,0.1,0], [1,0.1,0], [1,0.2,0]]
-		exp = self.constructor(expectedOut, featureNames=featureNames)
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 		assert origObj == lowerCounts
-
-		print lowerCounts.data
-		print exp.data
 
 		assert lowerCounts.isIdentical(exp)
 
@@ -888,9 +897,6 @@ class HighLevelBackend(DataTestObject):
 	def test_applyToElements_passthrough(self):
 		""" test applyToElements can construct a list by just passing values through  """
 
-#		import pdb
-#		pdb.set_trace()
-
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
 		ret = toTest.applyToElements(passThrough, inPlace=False)
@@ -955,9 +961,10 @@ class HighLevelBackend(DataTestObject):
 		""" test applyToElements() on limited portions of the points and features """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		names = ['one','two','three']
-		toTest = self.constructor(data, featureNames=names)
+		pnames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=names)
 
-		ret = toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], inPlace=False, skipNoneReturnValues=True)
+		ret = toTest.applyToElements(plusOneOnlyEven, points='4', features=[1,'three'], inPlace=False, skipNoneReturnValues=True)
 		retRaw = ret.copyAs(format="python list")
 
 		assert [5,7] in retRaw
@@ -1024,7 +1031,7 @@ class HighLevelBackend(DataTestObject):
 		toCompare = self.constructor(deepcopy(data))
 
 		# it is possible that it shuffles it into the same configuration.
-		# the odds are vanishly low that it will do so over consecutive calls
+		# the odds are vanishingly low that it will do so over consecutive calls
 		# however. We will pass as long as it changes once
 		returns = []
 		for i in xrange(5):

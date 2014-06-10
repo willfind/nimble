@@ -35,6 +35,6 @@ if __name__ == "__main__":
 	test = train.extractPoints(start=0, end=total, number=num, randomize=True)
 
 	# output the split and normalized sets for later usage
-	train.writeFile(pathTrain, format='csv', includeFeatureNames=True)
-	test.writeFile(pathTest, format='csv', includeFeatureNames=True)
+	train.writeFile(pathTrain, format='csv', includeNames=True)
+	test.writeFile(pathTest, format='csv', includeNames=True)
 

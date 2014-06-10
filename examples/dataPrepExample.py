@@ -40,4 +40,4 @@ if __name__ == "__main__":
 	processed.dropFeaturesContainingType(basestring)
 
 	# output the split and normalized sets for later usage
-	processed.writeFile(pathOut, includeFeatureNames=True)
+	processed.writeFile(pathOut, includeNames=True)

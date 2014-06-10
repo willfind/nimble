@@ -346,7 +346,7 @@ def pythonIOWrapper(learnerName, trainX, trainY, testX, output, arguments, kerne
 		outputObj.transpose()
 		return outputObj
 
-	outputObj.writeFile(output, format=fileOutType, includeFeatureNames=False)
+	outputObj.writeFile(output, format=fileOutType, includeNames=False)
 
 
 

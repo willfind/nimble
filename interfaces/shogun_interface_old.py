@@ -145,7 +145,7 @@ def shogun(learnerName, trainX, trainY=None, testX=None, arguments={}, output=No
 
 		return outputObj
 
-	outputObj.writeFile(output, format='csv', includeFeatureNames=False)
+	outputObj.writeFile(output, format='csv', includeNames=False)
 
 
 def _shogunBackend(learnerName, trainX, trainY, testX, algArgs, scoreMode, timer=None):

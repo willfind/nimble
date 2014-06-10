@@ -50,4 +50,4 @@ if __name__ == "__main__":
     dataObj = convertToCooBaseData(rawTextDirPath, dirMappingMode='multiTyped', attributeMaps=attributeMaps, docIdClassLabelMaps=labelMaps, minTermFrequency=3, featureRepresentation='tfidf')
 
     outPath = os.path.join(bigdataPath, "umlApproval50KTfIdfRounded.mtx")
-    dataObj.writeFile(outPath, includeFeatureNames=True)
+    dataObj.writeFile(outPath, includeNames=True)

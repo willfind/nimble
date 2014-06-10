@@ -236,8 +236,9 @@ class Sparse(Base):
 
 
 	def _sortPoints_implementation(self, sortBy, sortHelper):
-		self.sort_general_implementation(sortBy, sortHelper, 'point')
+		indices = self.sort_general_implementation(sortBy, sortHelper, 'point')
 		self._sorted = None
+		return indices
 
 
 	def _sortFeatures_implementation(self, sortBy, sortHelper):
@@ -253,10 +254,12 @@ class Sparse(Base):
 			viewMaker = self.pointView
 			getViewIter = self.pointIterator
 			targetAxis = self._data.row
+			namesInv = self.pointNamesInverse
 		else:
 			viewMaker = self.featureView
 			targetAxis = self._data.col
 			getViewIter = self.featureIterator
+			namesInv = self.featureNamesInverse
 
 		test = viewMaker(0)
 		try:
@@ -308,16 +311,14 @@ class Sparse(Base):
 		for i in xrange(len(targetAxis)):
 			targetAxis[i] = indexMap[targetAxis[i]]
 
-		# if we are sorting features we need to return an array of the feature names
-		# in their new order
-		if axisType == 'feature':
-			# we convert the indices of the their previous location into their feature names
-			newFeatureNameOrder = []
-			for i in xrange(len(indexPosition)):
-				oldIndex = indexPosition[i]
-				newName = self.featureNamesInverse[oldIndex]
-				newFeatureNameOrder.append(newName)
-			return newFeatureNameOrder
+		# we need to return an array of the feature names in their new order.
+		# we convert the indices of the their previous location into their names
+		newNameOrder = []
+		for i in xrange(len(indexPosition)):
+			oldIndex = indexPosition[i]
+			newName = namesInv[oldIndex]
+			newNameOrder.append(newName)
+		return newNameOrder
 
 
 
@@ -473,15 +474,20 @@ class Sparse(Base):
 		# instantiate return data
 		ret = CooWithEmpty((extractData,(extractRows,extractCols)),shape=extShape)
 		
-		# get featureNames for return obj
-		featureNames = []
-		if axisType == "feature":
+		# get names for return obj
+		pnames = []
+		fnames = []
+		if axisType == 'point':
 			for index in toExtract:
-				featureNames.append(self.featureNamesInverse[index])
+				pnames.append(self.pointNamesInverse[index])
+			fnames = self.featureNames
 		else:
-			featureNames = self.featureNames
+			pnames = self.pointNames
+			for index in toExtract:
+				fnames.append(self.featureNamesInverse[index])
 
-		return Sparse(ret, featureNames=featureNames, reuseData=True) 
+
+		return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True) 
 
 
 	def _extractByFunction_implementation(self, toExtract, number, axisType):
@@ -554,18 +560,19 @@ class Sparse(Base):
 		# instantiate return data
 		ret = CooWithEmpty((extractData,(extractRows,extractCols)),shape=extShape)
 		
-		# get featureNames for return obj
-		featureNames = []
-		if axisType == "feature":
+		# get names for return obj
+		pnames = []
+		fnames = []
+		if axisType == 'point':
 			for index in extractedIDs:
-				featureNames.append(self.featureNamesInverse[index])
+				pnames.append(self.pointNamesInverse[index])
+			fnames = self.featureNames
 		else:
-			featureNames = self.featureNames
+			pnames = self.pointNames
+			for index in extractedIDs:
+				fnames.append(self.featureNamesInverse[index])
 
-		return Sparse(ret, featureNames=featureNames, reuseData=True) 
-
-
-
+		return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True) 
 
 
 	def _extractByRange_implementation(self, start, end, axisType):
@@ -617,22 +624,24 @@ class Sparse(Base):
 		# instantiate return data
 		ret = CooWithEmpty((extractData,(extractRows,extractCols)),shape=extShape)
 		
-		# get featureNames for return obj
-		featureNames = []
-		if axisType == "feature":
+		# get names for return obj
+		pnames = []
+		fnames = []
+		if axisType == 'point':
 			for i in xrange(start,end+1):
-				featureNames.append(self.featureNamesInverse[i])
+				pnames.append(self.pointNamesInverse[i])
+			fnames = self.featureNames
 		else:
-			featureNames = self.featureNames
+			pnames = self.pointNames
+			for i in xrange(start,end+1):
+				fnames.append(self.featureNamesInverse[i])
 
-		return Sparse(ret, featureNames=featureNames, reuseData=True) 
+		return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True) 
 
 	def _transpose_implementation(self):
 		"""
 
 		"""
-#		import pdb
-#		pdb.set_trace()
 		self._data = self._data.transpose()
 		self._sorted = None
 #		if self._sorted == 'point':
@@ -728,7 +737,7 @@ class Sparse(Base):
 	def _getTypeString_implementation(self):
 		return 'Sparse'
 
-	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
+	def _writeFileCSV_implementation(self, outPath, includeNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
 		path.
@@ -736,17 +745,19 @@ class Sparse(Base):
 		"""
 		outFile = open(outPath, 'w')
 	
-		if includeFeatureNames and self.featureNames != None:
-			pairs = self.featureNames.items()
-			# sort according to the value, not the key. ie sort by feature number
-			pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
-			for (a,x) in pairs:
-				if pairs.index((a,x)) == 0:
-					outFile.write('#')
-				else:
-					outFile.write(',')
-				outFile.write(str(a))
-			outFile.write('\n')
+		if includeNames:
+			def writeNames(nameIndexPairs):
+				# sort according to the value, not the key. ie sort by feature number
+				pairs = sorted(nameIndexPairs,lambda (a,x),(b,y): x-y)
+				for (a,x) in pairs:
+					if pairs.index((a,x)) == 0:
+						outFile.write('#')
+					else:
+						outFile.write(',')
+					outFile.write(str(a))
+				outFile.write('\n')
+			writeNames(self.pointNames.items())
+			writeNames(self.featureNames.items())
 
 		# sort by rows first, then columns
 		placement = numpy.lexsort((self._data.col, self._data.row))
@@ -773,15 +784,20 @@ class Sparse(Base):
 
 
 
-	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
-		if includeFeatureNames:
-			featureNameString = "#"
-			for i in xrange(self.featureCount):
-				featureNameString += self.featureNamesInverse[i]
-				if not i == self.featureCount - 1:
-					featureNameString += ','
+	def _writeFileMTX_implementation(self, outPath, includeNames):
+		if includeNames:
+			def makeNameString(count, namesInv):
+				nameString = "#"
+				for i in xrange(count):
+					nameString += namesInv[i]
+					if not i == count - 1:
+						nameString += ','
+				return nameString
+			header = makeNameString(self.pointCount, self.pointNamesInverse)
+			header += '\n'
+			header += makeNameString(self.featureCount, self.featureNamesInverse)
 			
-			mmwrite(target=outPath, a=self._data.internal, comment=featureNameString)		
+			mmwrite(target=outPath, a=self.data, comment=header)		
 		else:
 			mmwrite(target=outPath, a=self._data.internal)
 
@@ -791,15 +807,15 @@ class Sparse(Base):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self._data = other._data
-		self._sorted = None
+		self._sorted = other._sorted
 
 	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
 		if format is None or format == 'Sparse':
-			return Sparse(self._data.internal, featureNames=self.featureNames)
+			return Sparse(self._data.internal, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'List':
-			return UML.data.List(self._data.internal, featureNames=self.featureNames)
+			return UML.data.List(self._data.internal, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'Matrix':
-			return UML.data.Matrix(self._data.internal, featureNames=self.featureNames)
+			return UML.data.Matrix(self._data.internal, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'pythonlist':
 			return self._data.todense().tolist()
 		if format == 'numpyarray':
@@ -829,7 +845,7 @@ class Sparse(Base):
 			newShape = (end - start + 1, numpy.shape(self._data)[1])
 
 		retData = CooWithEmpty((retData,(retRow,retCol)),shape=newShape)
-		return Sparse(retData, featureNames=self.featureNames, reuseData=True)
+		return Sparse(retData, reuseData=True)
 
 
 	def _copyFeatures_implementation(self, features, start, end):
@@ -844,10 +860,6 @@ class Sparse(Base):
 					retCol.append(_numLessThan(self._data.col[i], features))
 
 			newShape = (numpy.shape(self._data)[0], len(features))
-			newNames = {}
-			for i in xrange(len(features)):
-				value = self.featureNamesInverse[features[i]]
-				newNames[value] = i
 		else:
 			for i in xrange(len(self._data.data)):
 				if self._data.col[i] >= start and self._data.col[i] <= end:
@@ -856,13 +868,9 @@ class Sparse(Base):
 					retCol.append(self._data.col[i] - start)
 
 			newShape = (numpy.shape(self._data)[0], end - start + 1)
-			newNames = {}
-			for i in xrange(start,end+1):
-				value = self.featureNamesInverse[i]
-				newNames[value] = i - start
 
 		retData = CooWithEmpty((retData,(retRow,retCol)),shape=newShape)
-		return Sparse(retData, featureNames=newNames, reuseData=True)
+		return Sparse(retData, reuseData=True)
 	
 
 	def _getitem_implementation(self, x, y):
@@ -973,7 +981,7 @@ class VectorView(View):
 		if axis == "feature":
 			self._name = CooObject.featureNamesInverse[index]
 		else:
-			self._name = None
+			self._name = CooObject.pointNamesInverse[index]
 	def __getitem__(self, key):
 		if self._nzMap is None:
 			self._makeMap()
@@ -998,12 +1006,19 @@ class VectorView(View):
 				raise IndexError('key is greater than the max possible value')
 			else:
 				return 0
-		elif isinstance(key, basestring) and self._axis =='point':
-			index = self._outer.featureNames[key]
-			if index in self._nzMap:
-				return self._outer._data.data[self._nzMap[index]]
+		elif isinstance(key, basestring):
+			if self._axis =='point':
+				index = self._outer.featureNames[key]
+				if index in self._nzMap:
+					return self._outer._data.data[self._nzMap[index]]
+				else:
+					return 0
 			else:
-				return 0
+				index = self._outer.pointNames[key]
+				if index in self._nzMap:
+					return self._outer._data.data[self._nzMap[index]]
+				else:
+					return 0
 		else:
 			raise TypeError('key is not a recognized type')
 	def __setitem__(self, key, value):
@@ -1014,7 +1029,7 @@ class VectorView(View):
 			if self._axis =='point':
 				key = self._outer.featureNames[key]
 			else:
-				raise TypeError('key is not a recognized type')
+				key = self._outer.pointNames[key]
 
 		if key in self._nzMap:
 			self._outer._data.data[self._nzMap[key]] = value

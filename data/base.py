@@ -397,6 +397,10 @@ class Base(object):
 				raise ArgumentException("Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
 			points = [points]
 
+		if points is not None:
+			for i in xrange(len(points)):
+				points[i] = self._getPointIndex(points[i])
+
 		self.validate()
 
 		return self._applyTo_implementation(function, points, inPlace, 'point')
@@ -570,14 +574,18 @@ class Base(object):
 			oneArg = True
 
 		if points is not None and not isinstance(points, list):
-			if not isinstance(points, int):
+			if not isinstance(points, (int, basestring)):
 				raise ArgumentException("Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
 			points = [points]
 
 		if features is not None and not isinstance(features, list):
-			if not isinstance(features, int):
+			if not isinstance(features, (int, basestring)):
 				raise ArgumentException("Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
 			features = [features]
+
+		if points is not None:
+			for i in xrange(len(points)):
+				points[i] = self._getPointIndex(points[i])
 
 		if features is not None:
 			for i in xrange(len(features)):
@@ -737,7 +745,10 @@ class Base(object):
 		self._pointCount = self._featureCount
 		self._featureCount = temp
 
-		self.setFeatureNamesFromDict(None)		
+		tempFN = self.featureNames
+		self.setFeatureNamesFromDict(self.pointNames)
+		self.setPointNamesFromDict(tempFN)	
+
 		return self
 
 	def appendPoints(self, toAppend):
@@ -756,11 +767,23 @@ class Base(object):
 			raise ArgumentException("toAppend must have the same number of features as this object")
 		if not self._equalFeatureNames(toAppend):
 			raise ArgumentException("The featureNames of the two objects must match")
-		
+		intersection = self._pointNameIntersection(toAppend)
+		if intersection:
+			for name in intersection:
+				if not name.startswith(DEFAULT_PREFIX):
+					raise ArgumentException("toAppend must not share any pointNames with this object")
+	
 		self.validate()
 
 		self._appendPoints_implementation(toAppend)
 		self._pointCount += toAppend.pointCount
+
+		for i in xrange(toAppend.pointCount):
+			currName = toAppend.pointNamesInverse[i]
+			if currName.startswith(DEFAULT_PREFIX):
+				currName += '_' + toAppend.name
+			self._addPointName(currName)
+
 		return self
 		
 	def appendFeatures(self, toAppend):
@@ -774,10 +797,12 @@ class Base(object):
 		"""	
 		if toAppend is None:
 			raise ArgumentException("toAppend must not be None")
-		if not isinstance(toAppend,Base):
+		if not isinstance(toAppend, Base):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.pointCount == toAppend.pointCount:
 			raise ArgumentException("toAppend must have the same number of points as this object")
+		if not self._equalPointNames(toAppend):
+			raise ArgumentException("The pointNames of the two objects must match")
 		intersection = self._featureNameIntersection(toAppend)
 		if intersection:
 			for name in intersection:
@@ -807,17 +832,16 @@ class Base(object):
 		# its already sorted in these cases
 		if self.featureCount == 0 or self.pointCount == 0:
 			return
+		if sortBy is not None and sortHelper is not None:
+			raise ArgumentException("Cannot specify a feature to sort by and a helper function")
+		if sortBy is None and sortHelper is None:
+			raise ArgumentException("Either sortBy or sortHelper must not be None")
 
-		sortByIndex = sortBy
-		if sortBy is not None:
-			sortByIndex = self._getFeatureIndex(sortBy)
-			if sortHelper is not None:
-				raise ArgumentException("Cannot specify a feature to sort by and a helper function")
-		else:
-			if sortHelper is None:
-				raise ArgumentException("Either sortBy or sortHelper must not be None")
+		if sortBy is not None and isinstance(sortBy, basestring):
+			sortBy = self._getPointIndex(sortBy)
 
-		self._sortPoints_implementation(sortByIndex, sortHelper)
+		newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
+		self.setPointNamesFromList(newPointNameOrder)
 		return self
 
 	def sortFeatures(self, sortBy=None, sortHelper=None):
@@ -889,6 +913,8 @@ class Base(object):
 		self._pointCount -= ret.pointCount
 		if ret.pointCount != 0:
 			ret.setFeatureNamesFromDict(self.featureNames)
+		for key in ret.pointNames.keys():
+			self._removePointNameAndShift(key)
 		return ret
 
 	def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -936,22 +962,28 @@ class Base(object):
 
 		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
 		self._featureCount -= ret.featureCount
+		if ret.featureCount != 0:
+			ret.setPointNamesFromDict(self.pointNames)
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
 		return ret
 
+
 	def isIdentical(self, other):
 		if not self._equalFeatureNames(other):
+			return False
+		if not self._equalPointNames(other):
 			return False
 
 		return self._isIdentical_implementation(other)
 
-	def writeFile(self, outPath, format=None, includeFeatureNames=True):
+	def writeFile(self, outPath, format=None, includeNames=True):
 		"""
 		Function to write the data in this object to a file using the specified
 		format. outPath is the location (including file name and extension) where
-		we want to write the output file. includeFeatureNames is boolean argument
-		indicating whether the file should start with a comment line designating featureNames.
+		we want to write the output file. includeNames is boolean argument
+		indicating whether the file should start with comment lines designating
+		pointNames and featureNames.
 
 		"""
 		if self.pointCount == 0 or self.featureCount == 0:
@@ -967,9 +999,9 @@ class Base(object):
 				format = split[1].lower()
 
 		if format.lower() == "csv":
-			return self._writeFileCSV_implementation(outPath, includeFeatureNames)
+			return self._writeFileCSV_implementation(outPath, includeNames)
 		elif format.lower() == "mtx":
-			return self._writeFileMTX_implementation(outPath, includeFeatureNames)
+			return self._writeFileMTX_implementation(outPath, includeNames)
 		else:
 			msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
 			msg += "either be input as the format parameter, or as the extension in the "
@@ -987,6 +1019,8 @@ class Base(object):
 		"""
 		# this is called first because it checks the data type
 		self._referenceDataFrom_implementation(other)
+		self.pointNames = other.pointNames
+		self.pointNamesInverse = other.pointNamesInverse
 		self.featureNames = other.featureNames
 		self.featureNamesInverse = other.featureNamesInverse
 		return self
@@ -1031,7 +1065,7 @@ class Base(object):
 				return ret
 		if format.startswith('scipy'):
 			if self.pointCount == 0 or self.featureCount == 0:
-				raise ArgumentException('Cannot output a point empty object in a scipy format')
+				raise ArgumentException('Cannot output a point or feature empty object in a scipy format')
 
 		return self._copyAs_implementation(format, rowsArePoints, outputAs1D)
 
@@ -1068,6 +1102,17 @@ class Base(object):
 					raise ArgumentException("input must contain only valid indices")
 
 		retObj = self._copyPoints_implementation(points, start, end)
+
+		# construct featureName list
+		pointNameList = []
+		if points is not None:
+			for i in points:
+				pointNameList.append(self.pointNamesInverse[i])
+		else:
+			for i in range(start,end+1):
+				pointNameList.append(self.pointNamesInverse[i])
+
+		retObj.setPointNamesFromList(pointNameList)
 		retObj.setFeatureNamesFromDict(self.featureNames)
 		return retObj
 	
@@ -1103,7 +1148,20 @@ class Base(object):
 			for identifier in features:
 				indices.append(self._getFeatureIndex(identifier))
 
-		return self._copyFeatures_implementation(indices, start, end)
+		ret = self._copyFeatures_implementation(indices, start, end)
+
+		# construct featureName list
+		featureNameList = []
+		if indices is not None:
+			for i in indices:
+				featureNameList.append(self.featureNamesInverse[i])
+		else:
+			for i in range(start,end+1):
+				featureNameList.append(self.featureNamesInverse[i])
+
+		ret.setPointNamesFromDict(self.pointNames)
+		ret.setFeatureNamesFromList(featureNameList)
+		return ret
 
 	def getTypeString(self):
 		"""
@@ -1118,12 +1176,14 @@ class Base(object):
 			(x,y) = key
 		except TypeError:
 			raise ArgumentException("Must include a point and feature index")
+		
+		if isinstance(x,basestring):
+			x = self._getPointIndex(x)
 		if not isinstance(x,int) or x < 0 or x >= self.pointCount:
 			raise ArgumentException(str(x) + " is not a valid point ID")
 
 		if isinstance(y,basestring):
 			y = self._getFeatureIndex(y)
-
 		if not isinstance(y,int) or y < 0 or y >= self.featureCount:
 			raise ArgumentException(str(y) + " is not a valid feature ID")
 
@@ -1138,9 +1198,9 @@ class Base(object):
 		"""
 		if self.pointCount == 0:
 			raise ImproperActionException("ID is invalid, This object contains no points")
-		if not isinstance(ID,int):
-			raise ArgumentException("Point IDs must be integers")
-		return self._pointView_implementation(ID)
+		
+		index = self._getPointIndex(ID)
+		return self._pointView_implementation(index)
 
 	def featureView(self, ID):
 		"""
@@ -1150,7 +1210,7 @@ class Base(object):
 		no guarantee to the validity of the results.
 		"""
 		if self.featureCount == 0:
-			raise ArgumentException("ID is invalid, This object contains no features")
+			raise ImproperActionException("ID is invalid, This object contains no features")
 
 		index = self._getFeatureIndex(ID)
 		return self._featureView_implementation(index)
@@ -1158,13 +1218,15 @@ class Base(object):
 
 	def validate(self, level=1):
 		"""
-		Checks the integrety of the data with respect to the limitations and invariants
+		Checks the integrity of the data with respect to the limitations and invariants
 		that our objects enforce.
 
 		"""
 		assert self.featureCount == len(self.featureNames)
 		assert len(self.featureNames) == len(self.featureNamesInverse)
 		if level > 0:
+			for key in self.pointNames.keys():
+				assert self.pointNamesInverse[self.pointNames[key]] == key
 			for key in self.featureNames.keys():
 				assert self.featureNamesInverse[self.featureNames[key]] == key
 
@@ -1535,6 +1597,12 @@ class Base(object):
 		if count == 0:
 			if len(assignments) > 0:
 				raise ArgumentException("assignments is too large; this axis is empty ")
+			if axis == 'point':
+				self.pointNames = {}
+				self.pointNamesInverse = {}
+			else:
+				self.featureNames = {}
+				self.featureNamesInverse = {}
 			return self
 		if len(assignments) != count:
 			raise ArgumentException("assignments may only be a dict, with as many entries as this axis is long")
@@ -1557,10 +1625,10 @@ class Base(object):
 
 		# have to copy the input, could be from another object
 		if axis == 'point':
-			self.pointNames = copy.copy(assignments)
+			self.pointNames = copy.deepcopy(assignments)
 			self.pointNamesInverse = reverseDict
 		else:
-			self.featureNames = copy.copy(assignments)
+			self.featureNames = copy.deepcopy(assignments)
 			self.featureNamesInverse = reverseDict
 		return self
 

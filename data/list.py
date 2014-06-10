@@ -118,24 +118,32 @@ class List(Base):
 		scorer = None
 		comparator = None
 		needToRemove = False
-		testPoint = PointView(self.featureNames, self.data[0], 0)
+
+		indices = self.applyToPoints(lambda x:x.index(), inPlace=False)
+		indices.setFeatureName(0,"#UML_SORTHELPER_INDEX")
+		indices.setPointNamesFromDict(self.pointNames)
+		self.appendFeatures(indices)
+		newFeatureIndex = self.featureCount - 1 
+
+		testPoint = PointView(self, self.data[0], 0)
 		try:
 			sortHelper(testPoint)
-			indices = self.applyToPoints(lambda x:x.index(), inPlace=False)
-			indices.setFeatureName(0,"#UML_SORTHELPER_INDEX")
-			self.appendFeatures(indices)
-			newFeatureIndex = self.featureCount - 1 
-			def wrapperMaker(funcToWrap, outer):
+			def wrapperMakerS(funcToWrap, outer):
 				def wrapped(row):
-					return funcToWrap(PointView(outer.featureNames,row[0:newFeatureIndex], row[newFeatureIndex]))
+					return funcToWrap(PointView(outer,row[0:newFeatureIndex], row[newFeatureIndex]))
 				return wrapped
-			scorer = wrapperMaker(sortHelper, self)
-			needToRemove = True
+			scorer = wrapperMakerS(sortHelper, self)
 		except TypeError:
 			pass
 		try:
 			sortHelper(testPoint, testPoint)
-			comparator = sortHelper
+			def wrapperMakerC(funcToWrap, outer):
+				def wrapped(row1, row2):
+					wrap1 = PointView(outer,row1[0:newFeatureIndex], row1[newFeatureIndex])
+					wrap2 = PointView(outer,row2[0:newFeatureIndex], row2[newFeatureIndex])
+					return funcToWrap(wrap1, wrap2)
+				return wrapped
+			comparator = wrapperMakerC(sortHelper, self)
 		except TypeError:
 			pass
 
@@ -144,16 +152,22 @@ class List(Base):
 
 		keyFunc = scorer
 		if sortBy is not None:
-			#this is going to get its input from self.data.sort, so it will recieve
+			#this is going to get its input from self.data.sort, so it will receive
 			# a python list object
 			def featureKey(row):
 				return row[sortBy]
 			keyFunc = featureKey
 
 		self.data.sort(key=keyFunc, cmp=comparator)
-		if needToRemove:
-			self.extractFeatures([newFeatureIndex])
 
+		oldIndices = self.extractFeatures([newFeatureIndex]).transpose().copyAs('pythonlist')[0]
+
+		newNameOrder = []
+		for i in xrange(len(oldIndices)):
+			oldIndex = oldIndices[i]
+			newName = self.pointNamesInverse[oldIndex]
+			newNameOrder.append(newName)
+		return newNameOrder
 
 	def _sortFeatures_implementation(self, sortBy, sortHelper):
 		""" 
@@ -289,8 +303,15 @@ class List(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
+		# construct pointName list
+		nameList = []
+		for index in toExtract:
+			nameList.append(self.pointNamesInverse[index])
+
 		extracted = List(satisfying, reuseData=True)
 		reorderToMatchExtractionList(extracted, toExtract, 'point')
+		extracted.setPointNamesFromList(nameList)
+
 		return extracted
 
 	def _extractPointsByFunction_implementation(self, toExtract, number):
@@ -301,14 +322,16 @@ class List(Base):
 		"""
 		toWrite = 0
 		satisfying = []
+		names = []
 		# walk through each point, copying the wanted points back to the toWrite index
 		# toWrite is only incremented when we see a wanted point; unwanted points are copied
 		# over
 		for index in xrange(len(self.data)):
 			point = self.data[index]
-			if number > 0 and toExtract(PointView(self.featureNames, point, index)):			
+			if number > 0 and toExtract(PointView(self, point, index)):			
 				satisfying.append(point)
 				number = number - 1
+				names.append(self.pointNamesInverse[index])
 			else:
 				self.data[toWrite] = point
 				toWrite += 1
@@ -317,7 +340,7 @@ class List(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		return List(satisfying, reuseData=True)
+		return List(satisfying, pointNames=names, reuseData=True)
 
 	def _extractPointsByRange_implementation(self, start, end):
 		"""
@@ -338,7 +361,12 @@ class List(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		return List(inRange, reuseData=True)
+		# construct featureName list
+		nameList = []
+		for index in xrange(start,end+1):
+			nameList.append(self.pointNamesInverse[index])
+
+		return List(inRange, pointNames=nameList, reuseData=True)
 
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
@@ -426,7 +454,7 @@ class List(Base):
 		featureNameList = []
 		for index in toExtract:
 			featureNameList.append(self.featureNamesInverse[index])
-		# toExtract was reversed (for efficiency) so we have to rereverse this to get it right
+		# toExtract was reversed (for efficiency) so we have to re-reverse this to get it right
 		featureNameList.reverse()
 		return List(extractedData, featureNames=featureNameList, reuseData=True)
 
@@ -477,7 +505,7 @@ class List(Base):
 		# apply the mapper to each point in the data
 		for i in xrange(self.pointCount):
 			point = self.data[i]
-			currResults = mapper(PointView(self.featureNames, point, i))
+			currResults = mapper(PointView(self, point, i))
 			# the mapper will return a list of key value pairs
 			for (k,v) in currResults:
 				# if key is new, we must add an empty list
@@ -512,7 +540,7 @@ class List(Base):
 				return False
 		return True
 
-	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
+	def _writeFileCSV_implementation(self, outPath, includeNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
 		path.
@@ -520,17 +548,19 @@ class List(Base):
 		"""
 		outFile = open(outPath, 'w')
 	
-		if includeFeatureNames and self.featureNames != None:
-			pairs = self.featureNames.items()
-			# sort according to the value, not the key. ie sort by feature number
-			pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
-			for (a,x) in pairs:
-				if pairs.index((a,x)) == 0:
-					outFile.write('#')
-				else:
-					outFile.write(',')
-				outFile.write(str(a))
-			outFile.write('\n')
+		if includeNames and self.featureNames != None:
+			def writeNames(nameIndexPairs):
+				# sort according to the value, not the key. ie sort by feature number
+				pairs = sorted(nameIndexPairs,lambda (a,x),(b,y): x-y)
+				for (a,x) in pairs:
+					if pairs.index((a,x)) == 0:
+						outFile.write('#')
+					else:
+						outFile.write(',')
+					outFile.write(str(a))
+				outFile.write('\n')
+			writeNames(self.pointNames.items())
+			writeNames(self.featureNames.items())
 
 		for point in self.data:
 			first = True
@@ -542,7 +572,7 @@ class List(Base):
 			outFile.write('\n')
 		outFile.close()
 
-	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
+	def _writeFileMTX_implementation(self, outPath, includeNames):
 		"""
 		Function to write the data in this object to a matrix market file at the designated
 		path.
@@ -550,17 +580,20 @@ class List(Base):
 		"""
 		outFile = open(outPath, 'w')
 		outFile.write("%%MatrixMarket matrix array real general\n")
-		if includeFeatureNames:
+		if includeNames:
 			pairs = self.featureNames.items()
-			# sort according to the value, not the key. ie sort by feature number
-			pairs = sorted(pairs,lambda (a,x),(b,y): x-y)
-			for (a,x) in pairs:
-				if pairs.index((a,x)) == 0:
-					outFile.write('%#')
-				else:
-					outFile.write(',')
-				outFile.write(str(a))
-			outFile.write('\n')
+			def writeNames(nameIndexPairs):
+				# sort according to the value, not the key. ie sort by feature number
+				pairs = sorted(nameIndexPairs,lambda (a,x),(b,y): x-y)
+				for (a,x) in pairs:
+					if pairs.index((a,x)) == 0:
+						outFile.write('%#')
+					else:
+						outFile.write(',')
+					outFile.write(str(a))
+				outFile.write('\n')
+			writeNames(self.pointNames.items())
+			writeNames(self.featureNames.items())
 
 		outFile.write(str(self.pointCount) + " " + str(self.featureCount) + "\n")
 
@@ -581,12 +614,12 @@ class List(Base):
 		if format == 'Sparse':
 			if self.pointCount == 0 or self.featureCount == 0:
 				emptyData = numpy.empty(shape=(self.pointCount, self.featureCount))
-				return UML.data.Sparse(emptyData, featureNames=self.featureNames)
-			return UML.data.Sparse(self.data, featureNames=self.featureNames)
+				return UML.data.Sparse(emptyData, pointNames=self.pointNames, featureNames=self.featureNames)
+			return UML.data.Sparse(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format is None or format == 'List':
-			return UML.data.List(self.data, featureNames=self.featureNames)
+			return UML.data.List(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'Matrix':
-			return UML.data.Matrix(self.data, featureNames=self.featureNames)
+			return UML.data.Matrix(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'pythonlist':
 			return copy.deepcopy(self.data)
 		if format == 'numpyarray':
@@ -610,6 +643,13 @@ class List(Base):
 		return List(retData, reuseData=True)
 
 	def _copyFeatures_implementation(self, indices, start, end):
+		if self.pointCount == 0:
+			ret = []
+			count = len(indices) if indices is not None else (end + 1 - start)
+			for i in range(count):
+				ret.append([])
+			return List(ret).transpose()
+
 		ret = []
 		for point in self.data:
 			retPoint = []
@@ -621,22 +661,13 @@ class List(Base):
 					retPoint.append(point[i])
 			ret.append(retPoint)
 
-		# construct featureName list
-		featureNameList = []
-		if indices is not None:
-			for i in indices:
-				featureNameList.append(self.featureNamesInverse[i])
-		else:
-			for i in range(start,end+1):
-				featureNameList.append(self.featureNamesInverse[i])
-
-		return List(ret, featureNames=featureNameList, reuseData=True)
+		return List(ret, reuseData=True)
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x][y]
 
 	def _pointView_implementation(self, ID):
-		return PointView(self.featureNames, self.data[ID], ID)
+		return PointView(self, self.data[ID], ID)
 
 	def _featureView_implementation(self, ID):
 		return FeatureView(self, ID, self.featureNamesInverse[ID])
@@ -669,10 +700,14 @@ class FeatureView(View):
 		self._colNum = colNum
 		self._colName = colName
 	def __getitem__(self, index):
+		if isinstance(index, basestring):
+			index = self._outer.pointNames[index]
 		point = self._data[index]
 		value = point[self._colNum]
 		return value	
 	def __setitem__(self, key, value):
+		if isinstance(key, basestring):
+			key = self._outer.pointNames[key]
 		point = self._data[key]
 		point[self._colNum] = value
 	def nonZeroIterator(self):
@@ -689,9 +724,10 @@ class PointView(View):
 	Class to wrap direct random access of a point, along with other helpers.
 
 	"""
-	def __init__(self, featureNames, point, index):
+	def __init__(self, outer, point, index):
+		self._outer = outer
 		self._point = point
-		self._featureNames = featureNames
+		self._featureNames = outer.featureNames
 		self._index = index
 	def __getitem__(self, index):
 		if isinstance(index, basestring):
@@ -708,7 +744,7 @@ class PointView(View):
 	def index(self):
 		return self._index
 	def name(self):
-		return None
+		return self._outer.pointNamesInverse[self._index]
 
 class nzIt():
 	def __init__(self, indexable):

@@ -9,5 +9,5 @@ class DataTestObject(object):
 #			numF = len(featureNames) if featureNames is not None else 0
 #			if data == None:
 #				data = numpy.zeros(shape=(numP,numF))
-			return UML.createData(retType, data=data, featureNames=featureNames)
+			return UML.createData(retType, data=data, pointNames=pointNames, featureNames=featureNames)
 		self.constructor = maker

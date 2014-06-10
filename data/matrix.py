@@ -72,54 +72,33 @@ class Matrix(Base):
 
 	def _sortPoints_implementation(self, sortBy, sortHelper):
 		""" 
-		
+		Modify this object so that the points are sorted using the built in python
+		sort on point views. The input arguments are passed to that function unaltered
+		This function returns a list of pointNames indicating the new order of the data.
 
 		"""
-		scorer = None
-		comparator = None
-		test = self.pointView(0)
-		try:
-			sortHelper(test)
-			scorer = sortHelper
-		except TypeError:
-			pass
-		try:
-			sortHelper(test, test)
-			comparator = sortHelper
-		except TypeError:
-			pass
-
-		if sortHelper is not None and scorer is None and comparator is None:
-			raise ArgumentException("sortHelper is neither a scorer or a comparator")
-
-		if scorer:
-			scores = viewBasedApplyAlongAxis(scorer, 'point', self)
-			scoresObj = Matrix(scores, reuseData=True)
-			scoresObj.transpose()
-			self.appendFeatures(scoresObj)
-			# sort by the scores, ie the most recently added feature
-			sortBy = self.featureCount - 1 
-			
-		if sortBy is None:
-			raise ArgumentException("Matrix does not support comparator based sorting")
-		else:
-			indices = numpy.argsort(self.data[:,sortBy],0)
-			self.data = self.data[numpy.array(indices).flatten()]
-
-		# get rid of the scores we appened
-		if scorer:
-			self.extractFeatures(self.featureCount -1)
+		return self._sort_implementation(sortBy, sortHelper, 'point')
 
 	def _sortFeatures_implementation(self, sortBy, sortHelper):
 		""" 
 		Modify this object so that the features are sorted using the built in python
-		sort on feature views. The input arguments are passed to that function unalterted
-		This funciton returns a list of featureNames indicating the new order of the data.
+		sort on feature views. The input arguments are passed to that function unaltered
+		This function returns a list of featureNames indicating the new order of the data.
 
 		"""
+		return self._sort_implementation(sortBy, sortHelper, 'feature')
+
+	def _sort_implementation(self, sortBy, sortHelper, axis):
+		if axis == 'point':
+			test = self.pointView(0)
+			viewIter = self.pointIterator()
+			namesInv = self.pointNamesInverse
+		else:
+			test = self.featureView(0)
+			viewIter = self.featureIterator()
+			namesInv = self.featureNamesInverse
 		scorer = None
 		comparator = None
-		test = self.featureView(0)
 		try:
 			sortHelper(test)
 			scorer = sortHelper
@@ -136,7 +115,6 @@ class Matrix(Base):
 
 		# make array of views
 		viewArray = []
-		viewIter = self.featureIterator()
 		for v in viewIter:
 			viewArray.append(v)
 
@@ -162,15 +140,18 @@ class Matrix(Base):
 			indexPosition = numpy.argsort(scoreArray)
 
 		# use numpy indexing to change the ordering
-		self.data = self.data[:,indexPosition]
+		if axis == 'point':
+			self.data = self.data[indexPosition, :]
+		else:
+			self.data = self.data[:,indexPosition]
 
 		# we convert the indices of the their previous location into their feature names
-		newFeatureNameOrder = []
+		newNameOrder = []
 		for i in xrange(len(indexPosition)):
 			oldIndex = indexPosition[i]
-			newName = self.featureNamesInverse[oldIndex]
-			newFeatureNameOrder.append(newName)
-		return newFeatureNameOrder
+			newName = namesInv[oldIndex]
+			newNameOrder.append(newName)
+		return newNameOrder
 
 
 	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
@@ -227,7 +208,12 @@ class Matrix(Base):
 		ret = self.data[toExtract]
 		self.data = numpy.delete(self.data,toExtract,0)
 
-		return Matrix(ret)
+		# construct featureName list
+		nameList = []
+		for index in toExtract:
+			nameList.append(self.pointNamesInverse[index])
+
+		return Matrix(ret, pointNames=nameList)
 
 	def _extractPointsByFunction_implementation(self, toExtract, number):
 		"""
@@ -245,7 +231,12 @@ class Matrix(Base):
 				toRemove.append(i)
 		self.data = numpy.delete(self.data,toRemove,0)
 
-		return Matrix(ret)
+		# construct featureName list
+		nameList = []
+		for index in toRemove:
+			nameList.append(self.pointNamesInverse[index])
+
+		return Matrix(ret, pointNames=nameList)
 
 	def _extractPointsByRange_implementation(self, start, end):
 		"""
@@ -256,7 +247,13 @@ class Matrix(Base):
 		# +1 on end in ranges, because our ranges are inclusive
 		ret = self.data[start:end+1,:]
 		self.data = numpy.delete(self.data, numpy.s_[start:end+1], 0)
-		return Matrix(ret)
+
+		# construct featureName list
+		nameList = []
+		for index in xrange(start,end+1):
+			nameList.append(self.pointNamesInverse[index])
+
+		return Matrix(ret, pointNames=nameList)
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
 		"""
@@ -413,36 +410,45 @@ class Matrix(Base):
 			return False
 		return numpy.array_equal(self.data,other.data)
 
-	def _writeFileCSV_implementation(self, outPath, includeFeatureNames):
+	def _writeFileCSV_implementation(self, outPath, includeNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
 		path.
 
 		"""
 		header = None
-		if includeFeatureNames:
-			featureNameString = "#"
-			for i in xrange(self.featureCount):
-				featureNameString += self.featureNamesInverse[i]
-				if not i == self.featureCount - 1:
-					featureNameString += ','
-			header = featureNameString
+		if includeNames:
+			def makeNameString(count, namesInv):
+				nameString = "#"
+				for i in xrange(count):
+					nameString += namesInv[i]
+					if not i == count - 1:
+						nameString += ','
+				return nameString
+			header = makeNameString(self.pointCount, self.pointNamesInverse)
+			header += '\n'
+			header += makeNameString(self.featureCount, self.featureNamesInverse)
 
 		outFile = open(outPath,'w')
 		if header is not None:
 			outFile.write(header + "\n")
-		numpy.savetxt(outFile,self.data,delimiter=',')
+		numpy.savetxt(outFile, self.data, delimiter=',')
 		outFile.close()
 
-	def _writeFileMTX_implementation(self, outPath, includeFeatureNames):
-		if includeFeatureNames:
-			featureNameString = "#"
-			for i in xrange(self.featureCount):
-				featureNameString += self.featureNamesInverse[i]
-				if not i == self.featureCount - 1:
-					featureNameString += ','
+	def _writeFileMTX_implementation(self, outPath, includeNames):
+		if includeNames:
+			def makeNameString(count, namesInv):
+				nameString = "#"
+				for i in xrange(count):
+					nameString += namesInv[i]
+					if not i == count - 1:
+						nameString += ','
+				return nameString
+			header = makeNameString(self.pointCount, self.pointNamesInverse)
+			header += '\n'
+			header += makeNameString(self.featureCount, self.featureNamesInverse)
 			
-			mmwrite(target=outPath, a=self.data, comment=featureNameString)		
+			mmwrite(target=outPath, a=self.data, comment=header)		
 		else:
 			mmwrite(target=outPath, a=self.data)
 
@@ -454,11 +460,11 @@ class Matrix(Base):
 
 	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
 		if format == 'Sparse':
-			return UML.data.Sparse(self.data, featureNames=self.featureNames)
+			return UML.data.Sparse(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'List':
-			return UML.data.List(self.data, featureNames=self.featureNames)
+			return UML.data.List(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format is None or format == 'Matrix':
-			return UML.data.Matrix(self.data, featureNames=self.featureNames)
+			return UML.data.Matrix(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'pythonlist':
 			return self.data.tolist()
 		if format == 'numpyarray':
@@ -466,7 +472,7 @@ class Matrix(Base):
 		if format == 'numpymatrix':
 			return numpy.matrix(self.data)
 
-		return Matrix(self.data, featureNames=self.featureNames)
+		return Matrix(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 
 	def _copyPoints_implementation(self, points, start, end):
 		if points is not None:
@@ -477,17 +483,12 @@ class Matrix(Base):
 		return Matrix(ret)
 
 	def _copyFeatures_implementation(self, indices, start, end):
-		featureNameList = []
 		if indices is not None:
 			ret = self.data[:,indices]
-			for index in indices:
-				featureNameList.append(self.featureNamesInverse[index])
 		else:
 			ret = self.data[:,start:end+1]
-			for index in range(start, end+1):
-				featureNameList.append(self.featureNamesInverse[index])
 
-		return Matrix(ret, featureNames=featureNameList)
+		return Matrix(ret)
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x,y]
@@ -513,7 +514,7 @@ class VectorView(View):
 		self._axis = axis
 		self._vecIndex = index
 		if axis == 'point' or axis == 0:
-			self._name = None
+			self._name = outer.pointNamesInverse[index]
 			self._length = outer.featureCount
 		else:
 			self._name = outer.featureNamesInverse[index]
@@ -522,15 +523,19 @@ class VectorView(View):
 		if self._axis == 'point' or self._axis == 0:
 			if isinstance(key, basestring):
 				key = self._outer.featureNames[key]
-			return self._outer.data[self._vecIndex,key] 
+			return self._outer.data[self._vecIndex, key] 
 		else:
-			return self._outer.data[key,self._vecIndex]
+			if isinstance(key, basestring):
+				key = self._outer.pointNames[key]
+			return self._outer.data[key, self._vecIndex]
 	def __setitem__(self, key, value):
 		if self._axis == 'point' or self._axis == 0:
 			if isinstance(key, basestring):
 				key = self._outer.featureNames[key]
 			self._outer.data[self._vecIndex,key] = value
 		else:
+			if isinstance(key, basestring):
+				key = self._outer.pointNames[key]
 			self._outer.data[key,self._vecIndex] = value
 	def nonZeroIterator(self):
 		return nzIt(self)
