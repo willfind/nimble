@@ -707,9 +707,13 @@ class Base(object):
 		return self.copyAs(self.getTypeString())
 
 
-	#################################
-	# Functions related to logging  #
-	#################################
+	########################################
+	########################################
+	###   Functions related to logging   ###
+	########################################
+	########################################
+
+
 	def featureReport(self, displayDigits=2):
 		"""
 		Produce a report, in a string formatted as a table, containing summary and statistical
@@ -727,10 +731,132 @@ class Base(object):
 		"""
 		return produceAggregateReport(self, displayDigits=displayDigits)
 
+
+	###############################################################
+	###############################################################
+	###   Subclass implemented information querying functions   ###
+	###############################################################
+	###############################################################
+
+
+	def isIdentical(self, other):
+		if not self._equalFeatureNames(other):
+			return False
+		if not self._equalPointNames(other):
+			return False
+
+		return self._isIdentical_implementation(other)
+
+
+	def writeFile(self, outPath, format=None, includeNames=True):
+		"""
+		Function to write the data in this object to a file using the specified
+		format. outPath is the location (including file name and extension) where
+		we want to write the output file. includeNames is boolean argument
+		indicating whether the file should start with comment lines designating
+		pointNames and featureNames.
+
+		"""
+		if self.pointCount == 0 or self.featureCount == 0:
+			raise ImproperActionException("We do not allow writing to file when an object has 0 points or features")
+
+		self.validate()
+
+		# if format is not specified, we fall back on the extension in outPath
+		if format is None:
+			split = outPath.rsplit('.', 1)
+			format = None
+			if len(split) > 1:
+				format = split[1].lower()
+
+		if format.lower() == "csv":
+			return self._writeFileCSV_implementation(outPath, includeNames)
+		elif format.lower() == "mtx":
+			return self._writeFileMTX_implementation(outPath, includeNames)
+		else:
+			msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
+			msg += "either be input as the format parameter, or as the extension in the "
+			msg += "outPath"
+			raise ArgumentException()
+
+
+	def getTypeString(self):
+		"""
+			Return a string representing the non-abstract type of this object (e.g. Matrix,
+			Sparse, etc.) that can be passed to createData() function to create a new object
+			of the same type.
+		"""
+		return self._getTypeString_implementation()
+
+	def __getitem__(self, key):
+		try:
+			(x,y) = key
+		except TypeError:
+			raise ArgumentException("Must include a point and feature index")
+		
+		if isinstance(x,basestring):
+			x = self._getPointIndex(x)
+		if not isinstance(x,int) or x < 0 or x >= self.pointCount:
+			raise ArgumentException(str(x) + " is not a valid point ID")
+
+		if isinstance(y,basestring):
+			y = self._getFeatureIndex(y)
+		if not isinstance(y,int) or y < 0 or y >= self.featureCount:
+			raise ArgumentException(str(y) + " is not a valid feature ID")
+
+		return self._getitem_implementation(x,y)
+
+
+	def pointView(self, ID):
+		"""
+		Returns a View object into the data of the point with the given ID. See View object
+		comments for its capabilities. This View is only valid until the next modification
+		to the shape or ordering of the internal data. After such a modification, there is
+		no guarantee to the validity of the results.
+		"""
+		if self.pointCount == 0:
+			raise ImproperActionException("ID is invalid, This object contains no points")
+		
+		index = self._getPointIndex(ID)
+		return self._pointView_implementation(index)
+
+	def featureView(self, ID):
+		"""
+		Returns a View object into the data of the point with the given ID. See View object
+		comments for its capabilities. This View is only valid until the next modification
+		to the shape or ordering of the internal data. After such a modification, there is
+		no guarantee to the validity of the results.
+		"""
+		if self.featureCount == 0:
+			raise ImproperActionException("ID is invalid, This object contains no features")
+
+		index = self._getFeatureIndex(ID)
+		return self._featureView_implementation(index)
 	
-	#################################
-	# Functions for derived classes #
-	#################################
+
+	def validate(self, level=1):
+		"""
+		Checks the integrity of the data with respect to the limitations and invariants
+		that our objects enforce.
+
+		"""
+		assert self.featureCount == len(self.featureNames)
+		assert len(self.featureNames) == len(self.featureNamesInverse)
+		if level > 0:
+			for key in self.pointNames.keys():
+				assert self.pointNamesInverse[self.pointNames[key]] == key
+			for key in self.featureNames.keys():
+				assert self.featureNamesInverse[self.featureNames[key]] == key
+
+		self._validate_implementation(level)
+
+
+	##################################################################
+	##################################################################
+	###   Subclass implemented structural manipulation functions   ###
+	##################################################################
+	##################################################################
+
 
 	def transpose(self):
 		"""
@@ -785,7 +911,7 @@ class Base(object):
 			self._addPointName(currName)
 
 		return self
-		
+
 	def appendFeatures(self, toAppend):
 		"""
 		Append the features from the toAppend object to right ends of the points in this object
@@ -969,45 +1095,6 @@ class Base(object):
 		return ret
 
 
-	def isIdentical(self, other):
-		if not self._equalFeatureNames(other):
-			return False
-		if not self._equalPointNames(other):
-			return False
-
-		return self._isIdentical_implementation(other)
-
-	def writeFile(self, outPath, format=None, includeNames=True):
-		"""
-		Function to write the data in this object to a file using the specified
-		format. outPath is the location (including file name and extension) where
-		we want to write the output file. includeNames is boolean argument
-		indicating whether the file should start with comment lines designating
-		pointNames and featureNames.
-
-		"""
-		if self.pointCount == 0 or self.featureCount == 0:
-			raise ImproperActionException("We do not allow writing to file when an object has 0 points or features")
-
-		self.validate()
-
-		# if format is not specified, we fall back on the extension in outPath
-		if format is None:
-			split = outPath.rsplit('.', 1)
-			format = None
-			if len(split) > 1:
-				format = split[1].lower()
-
-		if format.lower() == "csv":
-			return self._writeFileCSV_implementation(outPath, includeNames)
-		elif format.lower() == "mtx":
-			return self._writeFileMTX_implementation(outPath, includeNames)
-		else:
-			msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
-			msg += "either be input as the format parameter, or as the extension in the "
-			msg += "outPath"
-			raise ArgumentException()
-
 	def referenceDataFrom(self, other):
 		"""
 		Modifies the internal data of this object to refer to the same data as other. In other
@@ -1163,75 +1250,14 @@ class Base(object):
 		ret.setFeatureNamesFromList(featureNameList)
 		return ret
 
-	def getTypeString(self):
-		"""
-			Return a string representing the non-abstract type of this object (e.g. Matrix,
-			Sparse, etc.) that can be passed to createData() function to create a new object
-			of the same type.
-		"""
-		return self._getTypeString_implementation()
 
-	def __getitem__(self, key):
-		try:
-			(x,y) = key
-		except TypeError:
-			raise ArgumentException("Must include a point and feature index")
-		
-		if isinstance(x,basestring):
-			x = self._getPointIndex(x)
-		if not isinstance(x,int) or x < 0 or x >= self.pointCount:
-			raise ArgumentException(str(x) + " is not a valid point ID")
+	###############################################################
+	###############################################################
+	###   Subclass implemented numerical operation functions    ###
+	###############################################################
+	###############################################################
 
-		if isinstance(y,basestring):
-			y = self._getFeatureIndex(y)
-		if not isinstance(y,int) or y < 0 or y >= self.featureCount:
-			raise ArgumentException(str(y) + " is not a valid feature ID")
-
-		return self._getitem_implementation(x,y)
-
-	def pointView(self, ID):
-		"""
-		Returns a View object into the data of the point with the given ID. See View object
-		comments for its capabilities. This View is only valid until the next modification
-		to the shape or ordering of the internal data. After such a modification, there is
-		no guarantee to the validity of the results.
-		"""
-		if self.pointCount == 0:
-			raise ImproperActionException("ID is invalid, This object contains no points")
-		
-		index = self._getPointIndex(ID)
-		return self._pointView_implementation(index)
-
-	def featureView(self, ID):
-		"""
-		Returns a View object into the data of the point with the given ID. See View object
-		comments for its capabilities. This View is only valid until the next modification
-		to the shape or ordering of the internal data. After such a modification, there is
-		no guarantee to the validity of the results.
-		"""
-		if self.featureCount == 0:
-			raise ImproperActionException("ID is invalid, This object contains no features")
-
-		index = self._getFeatureIndex(ID)
-		return self._featureView_implementation(index)
 	
-
-	def validate(self, level=1):
-		"""
-		Checks the integrity of the data with respect to the limitations and invariants
-		that our objects enforce.
-
-		"""
-		assert self.featureCount == len(self.featureNames)
-		assert len(self.featureNames) == len(self.featureNamesInverse)
-		if level > 0:
-			for key in self.pointNames.keys():
-				assert self.pointNamesInverse[self.pointNames[key]] == key
-			for key in self.featureNames.keys():
-				assert self.featureNamesInverse[self.featureNames[key]] == key
-
-		self._validate_implementation(level)
-
 	def matrixMultiplication(self, other):
 		"""
 		Matrix multiply this UML data object against the provided other UML data
@@ -1314,9 +1340,11 @@ class Base(object):
 		return self._scalarMultiplication_implementation(scalar)
 
 
-	####################
-	# Helper functions #
-	####################
+	############################
+	############################
+	###   Helper functions   ###
+	############################
+	############################
 
 
 	def _pointNameDifference(self, other):
