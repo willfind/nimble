@@ -87,5 +87,9 @@ def reorderToMatchExtractionList(dataObject, extractionList, axis):
 	return dataObject
 
 
+def _looksNumeric(val):
+		if isinstance(val, basestring) or not hasattr(val, '__mul__'):
+			return False
+		return True
 
 

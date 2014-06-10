@@ -1232,9 +1232,92 @@ class Base(object):
 
 		self._validate_implementation(level)
 
+	def matrixMultiplication(self, other):
+		"""
+		Matrix multiply this UML data object against the provided other UML data
+		object. Both object must contain only numeric data. The featureCount of
+		the calling object must equal the pointCount of the other object. The
+		types of the two objects may be different, and the return is guaranteed
+		to be the same type as at least one out of the two, to be automatically
+		determined according to efficiency constraints. 
+
+		"""
+		if not isinstance(other, UML.data.Base):
+			raise ArgumentException("'other' must be an instance of a UML data object")
+		# Test element type self
+		if self.pointCount > 0:
+			for val in self.pointView(0):
+				if not dataHelpers._looksNumeric(val):
+					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+		# test element type other
+		if other.pointCount > 0:
+			for val in other.pointView(0):
+				if not dataHelpers._looksNumeric(val):
+					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+
+		if self.featureCount != other.pointCount:
+			raise ArgumentException("The featureCount of the calling object must equal the pointCount of the 'other' object")
+		
+		return self._matrixMultiplication_implementation(other)
+
+	def elementwiseMultiplication(self, other):
+		"""
+		Perform element wise multiplication of this UML data object against the
+		provided other UML data object. Both objects must contain only numeric
+		data. The pointCount and featureCount of both objects must be equal. The
+		types of the two objects may be different, but the returned object will
+		be the inplace modification of the calling object.
+
+		"""
+		if not isinstance(other, UML.data.Base):
+			raise ArgumentException("'other' must be an instance of a UML data object")
+		# Test element type self
+		if self.pointCount > 0:
+			for val in self.pointView(0):
+				if not dataHelpers._looksNumeric(val):
+					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+		# test element type other
+		if other.pointCount > 0:
+			for val in other.pointView(0):
+				if not dataHelpers._looksNumeric(val):
+					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+		if self.pointCount != other.pointCount:
+			raise ArgumentException("The number of points in each object must be equal.")
+		if self.featureCount != other.featureCount:
+			raise ArgumentException("The number of features in each object must be equal.")
+		
+		return self._elementwiseMultiplication_implementation(other)
+
+	def scalarMultiplication(self, scalar):
+		"""
+		Multiply every element of this UML data object by the provided scalar.
+		This object must contain only numeric data. The 'scalar' parameter must
+		be a numeric data type. The returned object will be the inplace modification
+		of the calling object.
+		
+		"""
+		# test element type self. Likely that everything in a feature will have
+		# the same type, so we can get away with doing some checks on a single point
+		if self.pointCount > 0:
+			for val in self.pointView(0):
+				if not dataHelpers._looksNumeric(val):
+					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+		# check 'scalar' looks numeric
+		if not dataHelpers._looksNumeric(scalar):
+			raise ArgumentException("'scalar' must be something you can multiply with, like an int, float, etc")
+
+		return self._scalarMultiplication_implementation(scalar)
+
+
 	####################
 	# Helper functions #
 	####################
+
 
 	def _pointNameDifference(self, other):
 		"""

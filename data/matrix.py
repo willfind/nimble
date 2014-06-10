@@ -38,7 +38,7 @@ class Matrix(Base):
 					self.data = numpy.matrix(data, dtype=numpy.float)
 		except ValueError:
 			msg = "ValueError during instantiation. Matrix does not accept strings "
-			msg += "in the input (with the excpetion of those that are directly convertable, "
+			msg += "in the input (with the exception of those that are directly convertible, "
 			msg += "like '3' or '-11'), having included strings is the likely cause for "
 			msg += "the error"
 			raise ArgumentException(msg)
@@ -505,6 +505,39 @@ class Matrix(Base):
 		assert shape[1] == self.featureCount
 
 
+	def _matrixMultiplication_implementation(self, other):
+		"""
+		Matrix multiply this UML data object against the provided other UML data
+		object. Both object must contain only numeric data. The featureCount of
+		the calling object must equal the pointCount of the other object. The
+		types of the two objects may be different, and the return is guaranteed
+		to be the same type as at least one out of the two, to be automatically
+		determined according to efficiency constraints. 
+
+		"""
+		raise NotImplementedError
+
+	def _elementwiseMultiplication_implementation(self, other):
+		"""
+		Perform element wise multiplication of this UML data object against the
+		provided other UML data object. Both objects must contain only numeric
+		data. The pointCount and featureCount of both objects must be equal. The
+		types of the two objects may be different, but the returned object will
+		be the inplace modification of the calling object.
+
+		"""
+		raise NotImplementedError
+
+	def _scalarMultiplication_implementation(self, scalar):
+		"""
+		Multiply every element of this UML data object by the provided scalar.
+		This object must contain only numeric data. The 'scalar' parameter must
+		be a numeric data type. The returned object will be the inplace modification
+		of the calling object.
+		
+		"""
+		self.data * scalar
+		return self
 
 
 
