@@ -68,17 +68,15 @@ class HighLevelBackend(DataTestObject):
 		data = []
 		toTest = self.constructor(data)
 		unchanged = self.constructor(data)
-		ret = toTest.dropFeaturesContainingType(basestring)
+		ret = toTest.dropFeaturesContainingType(basestring) # RET CHECK
 		assert toTest.isIdentical(unchanged)
-		assert toTest == ret
-
+		assert ret is None
+		
 	def test_dropFeaturesContainingType_intoFEmpty(self):
 		""" Test dropFeaturesContainingType() when dropping all features """
 		data = [[1.0],[2.0]]
 		toTest = self.constructor(data)
-		ret = toTest.dropFeaturesContainingType(float)
-
-		assert ret == toTest
+		toTest.dropFeaturesContainingType(float)
 
 		exp = numpy.array([[],[]])
 		exp = numpy.array(exp)
@@ -125,7 +123,7 @@ class HighLevelBackend(DataTestObject):
 		featureNames = ['col']
 		toTest = self.constructor(data, featureNames=featureNames)
 		getNames = self.constructor(data, featureNames=featureNames)
-		ret = toTest.replaceFeatureWithBinaryFeatures(0)
+		ret = toTest.replaceFeatureWithBinaryFeatures(0) # RET CHECK
 
 		expData = [[1,0,0], [0,1,0], [0,0,1]]
 		expFeatureNames = []
@@ -134,7 +132,7 @@ class HighLevelBackend(DataTestObject):
 		exp = self.constructor(expData, featureNames=expFeatureNames)
 
 		assert toTest.isIdentical(exp)
-		assert toTest == ret
+		assert ret is None
 
 
 	#############################
@@ -162,13 +160,13 @@ class HighLevelBackend(DataTestObject):
 		data = [[10],[20],[30.5],[20],[10]]
 		featureNames = ['col']
 		toTest = self.constructor(data, featureNames=featureNames)
-		ret = toTest.transformFeatureToIntegerFeature(0)
+		ret = toTest.transformFeatureToIntegerFeature(0) # RET CHECK
 
 		assert toTest[0,0] == toTest[4,0]
 		assert toTest[1,0] == toTest[3,0]
 		assert toTest[0,0] != toTest[1,0]
 		assert toTest[0,0] != toTest[2,0]
-		assert toTest == ret
+		assert ret is None
 
 
 	#########################
@@ -404,13 +402,13 @@ class HighLevelBackend(DataTestObject):
 			value = point[origObj.featureNames['deci']]
 			return [value, value, value]
 
-		lowerCounts = origObj.applyToPoints(emitAllDeci)
+		lowerCounts = origObj.applyToPoints(emitAllDeci) #RET CHECK
 
 		expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
 		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 
-		assert origObj == lowerCounts
-		assert lowerCounts.isIdentical(exp)
+		assert lowerCounts is None
+		assert origObj.isIdentical(exp)
 
 	def test_applyToPoints_HandmadeLimitedInPlace(self):
 		""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
@@ -423,13 +421,12 @@ class HighLevelBackend(DataTestObject):
 			value = point[origObj.featureNames['deci']]
 			return [value, value, value]
 
-		lowerCounts = origObj.applyToPoints(emitAllDeci, points=[3,'two'])
+		origObj.applyToPoints(emitAllDeci, points=[3,'two'])
 
 		expectedOut = [[1,0.1,0.01], [1,0.1,0.02], [0.1,0.1,0.1], [0.2,0.2,0.2]]
 		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 
-		assert origObj == lowerCounts
-		assert lowerCounts.isIdentical(exp)
+		assert origObj.isIdentical(exp)
 
 
 	def test_applyToPoints_nonZeroItAndLenInPlace(self):
@@ -444,13 +441,12 @@ class HighLevelBackend(DataTestObject):
 				ret += 1
 			return [ret, ret, ret]
 
-		counts = origObj.applyToPoints(emitNumNZ)
+		origObj.applyToPoints(emitNumNZ)
 
 		expectedOut = [[3,3,3], [2,2,2], [2,2,2], [1,1,1]]
 		exp = self.constructor(expectedOut)
 
-		assert origObj == counts
-		assert counts.isIdentical(exp)
+		assert origObj.isIdentical(exp)
 
 
 
@@ -575,12 +571,12 @@ class HighLevelBackend(DataTestObject):
 					return [0,0,0,0]
 			return [1,1,1,1]
 
-		lowerCounts = origObj.applyToFeatures(emitAllEqual)
+		lowerCounts = origObj.applyToFeatures(emitAllEqual) # RET CHECK
 		expectedOut = [[1,0,0], [1,0,0], [1,0,0], [1,0,0]]	
 		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-		assert origObj == lowerCounts
-
-		assert lowerCounts.isIdentical(exp)
+		
+		assert lowerCounts is None
+		assert origObj.isIdentical(exp)
 
 
 	def test_applyToFeatures_HandmadeLimitedInPlace(self):
@@ -597,12 +593,11 @@ class HighLevelBackend(DataTestObject):
 					return [0,0,0,0]
 			return [1,1,1,1]
 
-		lowerCounts = origObj.applyToFeatures(emitAllEqual, features=[0,'centi'])
+		origObj.applyToFeatures(emitAllEqual, features=[0,'centi'])
 		expectedOut = [[1,0.1,0], [1,0.1,0], [1,0.1,0], [1,0.2,0]]
 		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-		assert origObj == lowerCounts
 
-		assert lowerCounts.isIdentical(exp)
+		assert origObj.isIdentical(exp)
 
 
 	def test_applyToFeatures_nonZeroItAndLenInPlace(self):
@@ -617,13 +612,12 @@ class HighLevelBackend(DataTestObject):
 				ret += 1
 			return [ret, ret, ret, ret]
 
-		counts = origObj.applyToFeatures(emitNumNZ)
+		origObj.applyToFeatures(emitNumNZ)
 
 		expectedOut = [[3,3,2], [3,3,2], [3,3,2], [3,3,2]]
 		exp = self.constructor(expectedOut)
-		assert origObj == counts
 
-		assert counts.isIdentical(exp)
+		assert origObj.isIdentical(exp)
 
 
 	#####################
@@ -906,9 +900,9 @@ class HighLevelBackend(DataTestObject):
 		assert [4,5,6] in retRaw
 		assert [7,8,9] in retRaw
 
-		ret = toTest.applyToElements(passThrough)
-		assert ret == toTest
-		retRaw = ret.copyAs(format="python list")
+		ret = toTest.applyToElements(passThrough) # RET CHECK
+		assert ret is None
+		retRaw = toTest.copyAs(format="python list")
 
 		assert [1,2,3] in retRaw
 		assert [4,5,6] in retRaw
@@ -927,9 +921,8 @@ class HighLevelBackend(DataTestObject):
 		assert [0,6,7] in retRaw
 		assert [8,0,10] in retRaw
 
-		ret = toTest.applyToElements(plusOne, preserveZeros=True)
-		assert ret == toTest
-		retRaw = ret.copyAs(format="python list")
+		toTest.applyToElements(plusOne, preserveZeros=True)
+		retRaw = toTest.copyAs(format="python list")
 
 		assert [2,0,4] in retRaw
 		assert [0,6,7] in retRaw
@@ -948,9 +941,8 @@ class HighLevelBackend(DataTestObject):
 		assert [5,5,7] in retRaw
 		assert [7,9,9] in retRaw
 
-		ret = toTest.applyToElements(plusOneOnlyEven, skipNoneReturnValues=True)
-		assert ret == toTest
-		retRaw = ret.copyAs(format="python list")
+		toTest.applyToElements(plusOneOnlyEven, skipNoneReturnValues=True)
+		retRaw = toTest.copyAs(format="python list")
 
 		assert [1,3,3] in retRaw
 		assert [5,5,7] in retRaw
@@ -969,9 +961,8 @@ class HighLevelBackend(DataTestObject):
 
 		assert [5,7] in retRaw
 
-		ret = toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], skipNoneReturnValues=True)
-		assert ret == toTest
-		retRaw = ret.copyAs(format="python list")
+		toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], skipNoneReturnValues=True)
+		retRaw = toTest.copyAs(format="python list")
 
 		assert [1,2,3] in retRaw
 		assert [4,5,7] in retRaw
@@ -1035,7 +1026,7 @@ class HighLevelBackend(DataTestObject):
 		# however. We will pass as long as it changes once
 		returns = []
 		for i in xrange(5):
-			ret = toTest.shufflePoints()
+			ret = toTest.shufflePoints() # RET CHECK
 			returns.append(ret)
 			if not toTest.isApproximatelyEqual(toCompare):
 				break
@@ -1043,7 +1034,7 @@ class HighLevelBackend(DataTestObject):
 		assert not toTest.isApproximatelyEqual(toCompare)
 
 		for ret in returns:
-			assert ret == toTest
+			assert ret is None
 
 
 
@@ -1070,7 +1061,7 @@ class HighLevelBackend(DataTestObject):
 		# however. We will pass as long as it changes once
 		returns = []
 		for i in xrange(5):
-			ret = toTest.shuffleFeatures()
+			ret = toTest.shuffleFeatures() # RET CHECK
 			returns.append(ret)
 			if not toTest.isApproximatelyEqual(toCompare):
 				break
@@ -1078,7 +1069,7 @@ class HighLevelBackend(DataTestObject):
 		assert not toTest.isApproximatelyEqual(toCompare)
 
 		for ret in returns:
-			assert ret == toTest
+			assert ret is None
 
 
 

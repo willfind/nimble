@@ -186,7 +186,7 @@ class Sparse(Base):
 			self._sorted = None
 
 		if inPlace:
-			ret = self
+			ret = None
 		else:
 			ret = UML.createData(self.getTypeString(), retData)
 			if axis != 'point':

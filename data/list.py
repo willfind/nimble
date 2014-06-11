@@ -160,7 +160,9 @@ class List(Base):
 
 		self.data.sort(key=keyFunc, cmp=comparator)
 
-		oldIndices = self.extractFeatures([newFeatureIndex]).transpose().copyAs('pythonlist')[0]
+		oldIndicesObj = self.extractFeatures([newFeatureIndex])
+		oldIndicesObj.transpose()
+		oldIndices = oldIndicesObj.copyAs('pythonlist')[0]
 
 		newNameOrder = []
 		for i in xrange(len(oldIndices)):
@@ -648,7 +650,9 @@ class List(Base):
 			count = len(indices) if indices is not None else (end + 1 - start)
 			for i in range(count):
 				ret.append([])
-			return List(ret).transpose()
+			retObj = List(ret)
+			retObj.transpose()
+			return retObj
 
 		ret = []
 		for point in self.data:

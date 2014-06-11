@@ -396,24 +396,27 @@ class LowLevelBackend(object):
 		""" Test setPointName() against handmade input when specifying the pointName by index """
 		origNames = ["zero","one","two","three"]	
 		toTest = self.constructor(pointNames=origNames)
-		ret0 = toTest.setPointName(0, "ZERO")
-		ret3 = toTest.setPointName(3, "3")
+		toTest.setPointName(0, "ZERO")
+		toTest.setPointName(3, "3")
 		expectedNames = ["ZERO","one","two","3"]
 		confirmExpectedNames(toTest, 'point', expectedNames)
-		assert toTest == ret0
-		assert toTest == ret3
 
 	def test_setPointName_handmade_viaPointName(self):
 		""" Test setPointName() against handmade input when specifying the pointName by name """
 		origNames = ["zero","one","two","three"]	
 		toTest = self.constructor(pointNames=origNames)
-		ret0 = toTest.setPointName("zero","ZERO")
-		ret3 = toTest.setPointName("three","3")
+		toTest.setPointName("zero","ZERO")
+		toTest.setPointName("three","3")
 		expectedNames = ["ZERO","one","two","3"]
 		confirmExpectedNames(toTest, 'point', expectedNames)
-		assert toTest == ret0
-		assert toTest == ret3
-
+	
+	def test_setPointName_NoneOutput(self):
+		""" Test setPointName() return None as output """
+		origNames = ["zero","one","two","three"]	
+		toTest = self.constructor(pointNames=origNames)
+		ret = toTest.setPointName("zero","ZERO")
+		assert ret is None
+		
 
 	#################
 	# setFeatureName() #
@@ -469,23 +472,26 @@ class LowLevelBackend(object):
 		""" Test setFeatureName() against handmade input when specifying the featureName by index """
 		origFeatureNames = ["zero","one","two","three"]	
 		toTest = self.constructor(featureNames=origFeatureNames)
-		ret0 = toTest.setFeatureName(0,"ZERO")
-		ret3 = toTest.setFeatureName(3,"3")
+		toTest.setFeatureName(0,"ZERO")
+		toTest.setFeatureName(3,"3")
 		expectedFeatureNames = ["ZERO","one","two","3"]
 		confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
-		assert toTest == ret0
-		assert toTest == ret3
 
 	def test_setFeatureName_handmade_viaFeatureName(self):
 		""" Test setFeatureName() against handmade input when specifying the featureName by name """
 		origFeatureNames = ["zero","one","two","three"]	
 		toTest = self.constructor(featureNames=origFeatureNames)
-		ret0 = toTest.setFeatureName("zero","ZERO")
-		ret3 = toTest.setFeatureName("three","3")
+		toTest.setFeatureName("zero","ZERO")
+		toTest.setFeatureName("three","3")
 		expectedFeatureNames = ["ZERO","one","two","3"]
 		confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
-		assert toTest == ret0
-		assert toTest == ret3
+
+	def test_setFeatureName_NoneOutput(self):
+		""" Test setFeatureName() returns None as output """
+		origFeatureNames = ["zero","one","two","three"]	
+		toTest = self.constructor(featureNames=origFeatureNames)
+		ret = toTest.setFeatureName("zero","ZERO")
+		assert ret is None
 
 	##########################
 	# setPointNamesFromList() #
@@ -522,32 +528,30 @@ class LowLevelBackend(object):
 		""" Test setPointNamesFromList() when both the data and the list are empty """
 		toTest = self.constructor()
 		toAssign = []
-		ret = toTest.setPointNamesFromList(toAssign)
-		assert toTest == ret
+		toTest.setPointNamesFromList(toAssign)
+		assert toTest.pointNames == {}
 
 	def test_setPointNamesFromList_addDefault(self):
 		""" Test setPointNamesFromList() when given a default pointName """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		newNames = ["zero","one","two",DEFAULT_PREFIX + "17"]
-		ret = toTest.setPointNamesFromList(newNames)
+		toTest.setPointNamesFromList(newNames)
 		assert toTest._nextDefaultValuePoint > 17
-		assert toTest == ret
 
 	def test_setPointNamesFromList_handmade(self):
 		""" Test setPointNamesFromList() against handmade output """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		origNames = ["zero","one","two","three"]	
-		ret = toTest.setPointNamesFromList(origNames)
+		toTest.setPointNamesFromList(origNames)
 		confirmExpectedNames(toTest, 'point', origNames)
-		assert toTest == ret
 
 	def test_setPointNamesFromList_handmadeReplacingWithSame(self):
 		""" Test setPointNamesFromList() against handmade output when you're replacing the position of poitnNames """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		toAssign = ["hey","gone","none","blank"]
-		ret = toTest.setPointNamesFromList(toAssign)
+		ret = toTest.setPointNamesFromList(toAssign) # ret Check
 		confirmExpectedNames(toTest, 'point', toAssign)
-		assert toTest == ret
+		assert ret is None
 
 
 	##########################
@@ -585,32 +589,30 @@ class LowLevelBackend(object):
 		""" Test setFeatureNamesFromList() when both the data and the list are empty """
 		toTest = self.constructor()
 		toAssign = []
-		ret = toTest.setFeatureNamesFromList(toAssign)
-		assert toTest == ret
+		toTest.setFeatureNamesFromList(toAssign)
+		assert toTest.featureNames == {}
 
 	def test_setFeatureNamesFromList_addDefault(self):
 		""" Test setFeatureNamesFromList() when given a default featureName """
 		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
 		newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "17"]
-		ret = toTest.setFeatureNamesFromList(newFeatureNames)
+		toTest.setFeatureNamesFromList(newFeatureNames)
 		assert toTest._nextDefaultValueFeature > 17
-		assert toTest == ret
-
+		
 	def test_setFeatureNamesFromList_handmade(self):
 		""" Test setFeatureNamesFromList() against handmade output """
 		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
 		origFeatureNames = ["zero","one","two","three"]	
-		ret = toTest.setFeatureNamesFromList(origFeatureNames)
+		toTest.setFeatureNamesFromList(origFeatureNames)
 		confirmExpectedNames(toTest, 'feature', origFeatureNames)
-		assert toTest == ret
-
+		
 	def test_setFeatureNamesFromList_handmadeReplacingWithSame(self):
 		""" Test setFeatureNamesFromList() against handmade output when you're replacing the position of featureNames """
 		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
 		toAssign = ["hey","gone","none","blank"]
-		ret = toTest.setFeatureNamesFromList(toAssign)
+		ret = toTest.setFeatureNamesFromList(toAssign) # RET CHECK
 		confirmExpectedNames(toTest, 'feature', toAssign)
-		assert toTest == ret
+		assert ret is None
 
 
 	##########################
@@ -648,24 +650,23 @@ class LowLevelBackend(object):
 		""" Test setPointNamesFromDict() when both the data and the list are empty """
 		toTest = self.constructor()
 		toAssign = {}
-		ret = toTest.setPointNamesFromDict(toAssign)	
-		assert toTest == ret
+		toTest.setPointNamesFromDict(toAssign)	
+		assert toTest.pointNames == {}
 
 	def test_setPointNamesFromDict_handmade(self):
 		""" Test setPointNamesFromDict() against handmade output """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		origNames = {"zero":0,"one":1,"two":2,"three":3}	
-		ret = toTest.setPointNamesFromDict(origNames)
+		toTest.setPointNamesFromDict(origNames)
 		confirmExpectedNames(toTest, 'point', origNames)
-		assert toTest == ret 
-
+		
 	def test_setPointNamesFromDict_handmadeReplacingWithSame(self):
 		""" Test setPointNamesFromDict() against handmade output when you're replacing the position of pointNames """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
 		ret = toTest.setPointNamesFromDict(toAssign)
 		confirmExpectedNames(toTest, 'point', toAssign)
-		assert toTest == ret 
+		assert ret is None 
 
 
 	##########################
@@ -703,16 +704,15 @@ class LowLevelBackend(object):
 		""" Test setFeatureNamesFromDict() when both the data and the list are empty """
 		toTest = self.constructor()
 		toAssign = {}
-		ret = toTest.setFeatureNamesFromDict(toAssign)	
-		assert toTest == ret
+		toTest.setFeatureNamesFromDict(toAssign)	
+		assert toTest.featureNames == {}
 
 	def test_setFeatureNamesFromDict_handmade(self):
 		""" Test setFeatureNamesFromDict() against handmade output """
 		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
 		origFeatureNames = {"zero":0,"one":1,"two":2,"three":3}	
-		ret = toTest.setFeatureNamesFromDict(origFeatureNames)
+		toTest.setFeatureNamesFromDict(origFeatureNames)
 		confirmExpectedNames(toTest, 'feature', origFeatureNames)
-		assert toTest == ret 
 
 	def test_setFeatureNamesFromDict_handmadeReplacingWithSame(self):
 		""" Test setFeatureNamesFromDict() against handmade output when you're replacing the position of featureNames """
@@ -720,7 +720,7 @@ class LowLevelBackend(object):
 		toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
 		ret = toTest.setFeatureNamesFromDict(toAssign)
 		confirmExpectedNames(toTest, 'feature', toAssign)
-		assert toTest == ret 
+		assert ret is None 
 
 	##########################
 	# _removePointNameAndShift() #

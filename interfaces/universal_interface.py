@@ -561,7 +561,8 @@ class UniversalInterface(object):
 				label = internalOrder[feature.index()]
 				return desiredDict[label]
 
-			return formatedRawOrder.sortFeatures(sortHelper=sortScorer)
+			formatedRawOrder.sortFeatures(sortHelper=sortScorer)
+			return formatedRawOrder
 
 
 	##############################################

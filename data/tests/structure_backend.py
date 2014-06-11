@@ -17,7 +17,7 @@ from UML.data.tests.baseObject import DataTestObject
 class StructureBackend(DataTestObject):
 	
 
-		##############
+	##############
 	# __init__() #
 	##############
 
@@ -140,9 +140,9 @@ class StructureBackend(DataTestObject):
 		dataObj2 = self.constructor(deepcopy(data))
 		dataObjT = self.constructor(deepcopy(dataTrans))
 		
-		ret1 = dataObj1.transpose()
+		ret1 = dataObj1.transpose() # RET CHECK
 		assert dataObj1.isIdentical(dataObjT)
-		assert dataObj1 == ret1
+		assert ret1 is None
 		dataObj1.transpose()
 		dataObjT.transpose()
 		assert dataObj1.isIdentical(dataObj2)
@@ -205,9 +205,9 @@ class StructureBackend(DataTestObject):
 		toTest = self.constructor(data, pointNames=names)
 		toAppend = self.constructor([[10,11,12]], pointNames=['10'])
 		expected = self.constructor(dataExpected, pointNames=namesExp)
-		ret = toTest.appendPoints(toAppend)
+		ret = toTest.appendPoints(toAppend) # RET CHECK
 		assert toTest.isIdentical(expected)
-		assert toTest == ret
+		assert ret is None
 
 	def test_appendPoints_handmadeSequence(self):
 		""" Test appendPoints() against handmade output for a sequence of additions"""
@@ -223,17 +223,14 @@ class StructureBackend(DataTestObject):
 		dataExpected = [[1,2,3],[4,5,6],[7,8,9],[0.1,0.2,0.3],[0.01,0.02,0.03],[0,0,0],[10,11,12]]
 		namesExp = ['1', '4', '7', 'd', 'dd', '0', 'ten']
 		toTest = self.constructor(data, pointNames=names)
-		ret0 = toTest.appendPoints(self.constructor(toAppend1, pointNames=n1))
-		ret1 = toTest.appendPoints(self.constructor(toAppend2, pointNames=n2))
-		ret2 = toTest.appendPoints(self.constructor(toAppend3, pointNames=n3))
+		toTest.appendPoints(self.constructor(toAppend1, pointNames=n1))
+		toTest.appendPoints(self.constructor(toAppend2, pointNames=n2))
+		toTest.appendPoints(self.constructor(toAppend3, pointNames=n3))
 
 		expected = self.constructor(dataExpected, pointNames=namesExp)
 
 		assert toTest.isIdentical(expected)
-		assert toTest == ret0
-		assert toTest == ret1
-		assert toTest == ret2
-	
+		
 
 
 	####################
@@ -293,9 +290,9 @@ class StructureBackend(DataTestObject):
 		featureNamesExpected = ['1','2','3','-1']
 		expected = self.constructor(dataExpected, featureNames=featureNamesExpected)
 
-		ret = toTest.appendFeatures(toAppend)
+		ret = toTest.appendFeatures(toAppend) # RET CHECK
 		assert toTest.isIdentical(expected)
-		assert toTest == ret
+		assert ret is None
 
 	def test_appendFeatures_handmadeSequence(self):
 		""" Test appendFeatures() against handmade output for a sequence of additions"""
@@ -310,18 +307,15 @@ class StructureBackend(DataTestObject):
 		toAppend3 = [[10],[11],[12]]
 		lab3 = ['10']
 
-		ret1 = toTest.appendFeatures(self.constructor(toAppend1, featureNames=lab1))
-		ret2 = toTest.appendFeatures(self.constructor(toAppend2, featureNames=lab2))
-		ret3 = toTest.appendFeatures(self.constructor(toAppend3, featureNames=lab3))
+		toTest.appendFeatures(self.constructor(toAppend1, featureNames=lab1))
+		toTest.appendFeatures(self.constructor(toAppend2, featureNames=lab2))
+		toTest.appendFeatures(self.constructor(toAppend3, featureNames=lab3))
 
 		featureNamesExpected = ['1','2','3','a','A','0','10']
 		dataExpected = [[1,2,3,0.1,0.01,0,10],[4,5,6,0.2,0.02,0,11],[7,8,9,0.3,0.03,0,12]]
 
 		expected = self.constructor(dataExpected, featureNames=featureNamesExpected)
 		assert toTest.isIdentical(expected)
-		assert toTest == ret1
-		assert toTest == ret2
-		assert toTest == ret3
 
 
 
@@ -343,14 +337,14 @@ class StructureBackend(DataTestObject):
 		names = ['1', '7', '4']
 		toTest = self.constructor(data, pointNames=names)
 
-		ret = toTest.sortPoints(sortBy=1)
+		ret = toTest.sortPoints(sortBy=1) # RET CHECK
 
 		dataExpected = [[7,1,9],[1,2,3],[4,5,6]]
 		namesExp = ['7', '1', '4']
 		objExp = self.constructor(dataExpected, pointNames=namesExp)
 
 		assert toTest.isIdentical(objExp)
-		assert toTest == ret
+		assert ret is None
 
 	def test_sortPoints_scorer(self):
 		""" Test sortPoints() when we specify a scoring function """
@@ -365,14 +359,13 @@ class StructureBackend(DataTestObject):
 					ret += 1
 			return ret
 
-		ret = toTest.sortPoints(sortHelper=numOdds)
+		toTest.sortPoints(sortHelper=numOdds)
 
 		dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 		objExp = self.constructor(dataExpected)
 
 		assert toTest.isIdentical(objExp)
-		assert toTest == ret
-
+		
 	def test_sortPoints_comparator(self):
 		""" Test sortPoints() when we specify a comparator function """
 		data = [[7,1,9],[1,2,3],[4,5,6]]
@@ -393,14 +386,12 @@ class StructureBackend(DataTestObject):
 					odds2 += 1
 			return odds1 - odds2
 
-		ret = toTest.sortPoints(sortHelper=compOdds)
+		toTest.sortPoints(sortHelper=compOdds)
 
 		dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
 		objExp = self.constructor(dataExpected)
 
 		assert toTest.isIdentical(objExp)
-		assert toTest == ret
-
 
 	#################
 	# sortFeatures() #
@@ -420,14 +411,14 @@ class StructureBackend(DataTestObject):
 		names = ["1","2","3"]
 		toTest = self.constructor(data, featureNames=names)
 
-		ret = toTest.sortFeatures(sortBy=1)
+		ret = toTest.sortFeatures(sortBy=1) # RET CHECK
 
 		dataExpected = [[2,1,3],[1,7,9],[5,4,6]]
 		namesExp = ["2", "1", "3"]
 		objExp = self.constructor(dataExpected, featureNames=namesExp)
 
 		assert toTest.isIdentical(objExp)
-		assert toTest == ret
+		assert ret is None
 
 	def test_sortFeatures_scorer(self):
 		""" Test sortFeatures() when we specify a scoring function """
@@ -442,14 +433,13 @@ class StructureBackend(DataTestObject):
 					ret += 1
 			return ret
 
-		ret = toTest.sortFeatures(sortHelper=numOdds)
+		toTest.sortFeatures(sortHelper=numOdds)
 
 		dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
 		namesExp = ['2', '1', '3']
 		objExp = self.constructor(dataExpected, featureNames=namesExp)
 
 		assert toTest.isIdentical(objExp)
-		assert toTest == ret
 
 	def test_sortFeatures_comparator(self):
 		""" Test sortFeatures() when we specify a comparator function """
@@ -471,13 +461,12 @@ class StructureBackend(DataTestObject):
 					odds2 += 1
 			return odds1 - odds2
 
-		ret = toTest.sortFeatures(sortHelper=compOdds)
+		toTest.sortFeatures(sortHelper=compOdds)
 
 		dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
 		objExp = self.constructor(dataExpected)
 
 		assert toTest.isIdentical(objExp)
-		assert toTest == ret
 
 
 	#################
@@ -927,12 +916,12 @@ class StructureBackend(DataTestObject):
 		pNames = ['-1']
 		other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
 
-		ret = orig.referenceDataFrom(other)
+		ret = orig.referenceDataFrom(other) # RET CHECK
 
 		assert orig.data is other.data
-		assert '-1' in ret.pointNames.keys()
-		assert '1' in ret.featureNames.keys()
-		assert orig == ret
+		assert '-1' in orig.pointNames.keys()
+		assert '1' in orig.featureNames.keys()
+		assert ret is None
 
 
 	#############

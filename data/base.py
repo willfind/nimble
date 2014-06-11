@@ -108,11 +108,12 @@ class Base(object):
 		in the pointName set, or None for an default pointName. newName cannot begin with the
 		default prefix.
 
+		None is always returned.
+
 		"""
 		if len(self.pointNames) == 0:
 			raise ArgumentException("Cannot set any point names; this object has no points ")
 		self._setName_implementation(oldIdentifier, newName, 'point', False)
-		return self
 
 	def setFeatureName(self, oldIdentifier, newName):
 		"""
@@ -123,11 +124,12 @@ class Base(object):
 		in the featureName set, or None for an default featureName. newName cannot begin with the
 		default prefix.
 
+		None is always returned.
+
 		"""
 		if len(self.featureNames) == 0:
 			raise ArgumentException("Cannot set any feature names; this object has no features ")
 		self._setName_implementation(oldIdentifier, newName, 'feature', False)
-		return self
 
 	def setPointNamesFromList(self, assignments=None):
 		"""
@@ -136,9 +138,10 @@ class Base(object):
 		will eventually be assigned as self.pointNames. assignments may be None to set all
 		pointNames to new default values. If assignment is an unexpected type, the names
 		are not strings, or the names are not unique, then an ArgumentException will be raised.
+		None is always returned.
 
 		"""
-		return self._setNamesFromList(assignments, self.pointCount, 'point')
+		self._setNamesFromList(assignments, self.pointCount, 'point')
 
 
 	def setFeatureNamesFromList(self, assignments=None):
@@ -148,9 +151,10 @@ class Base(object):
 		will eventually be assigned as self.featureNames. assignments may be None to set all
 		featureNames to new default values. If assignment is an unexpected type, the names
 		are not strings, or the names are not unique, then an ArgumentException will be raised.
+		None is always returned.
 
 		"""
-		return self._setNamesFromList(assignments, self.featureCount, 'feature')
+		self._setNamesFromList(assignments, self.featureCount, 'feature')
 
 	def setPointNamesFromDict(self, assignments=None):
 		"""
@@ -159,9 +163,10 @@ class Base(object):
 		assignments may be None to set all pointNames to new default values. If assignment
 		is an unexpected type, if the names are not strings, the names are not unique,
 		or the point indices are not integers then an ArgumentException will be raised.
+		None is always returned.
 
 		"""
-		return self._setNamesFromDict(assignments, self.pointCount, 'point')
+		self._setNamesFromDict(assignments, self.pointCount, 'point')
 
 	def setFeatureNamesFromDict(self, assignments=None):
 		"""
@@ -170,6 +175,7 @@ class Base(object):
 		assignments may be None to set all featureNames to new default values. If assignment
 		is an unexpected type, if the names are not strings, the names are not unique,
 		or the feature indices are not integers then an ArgumentException will be raised.
+		None is always returned.
 
 		"""
 		return self._setNamesFromDict(assignments, self.featureCount, 'feature')
@@ -177,13 +183,13 @@ class Base(object):
 
 	def nameData(self, name):
 		"""
-		Copy over the name attribute of this object with the input name
+		Copy over the name attribute of this object with the input name. None
+		is always returned.
 
 		"""
 		if name is not None and not isinstance(name, basestring):
 			raise ArgumentException("name must be a string")
 		self.name = name
-		return self
 
 	###########################
 	# Higher Order Operations #
@@ -192,7 +198,7 @@ class Base(object):
 	def dropFeaturesContainingType(self, typeToDrop):
 		"""
 		Modify this object so that it no longer contains features which have the specified
-		type as values
+		type as values. None is always returned.
 
 		"""
 		if not isinstance(typeToDrop, list):
@@ -205,7 +211,7 @@ class Base(object):
 					raise ArgumentException("When giving a list as input, every contained value must be a type")
 
 		if self.pointCount == 0 or self.featureCount == 0:
-			return self
+			return
 
 		def hasType(feature):
 			for value in feature:
@@ -215,13 +221,14 @@ class Base(object):
 			return False
 	
 		removed = self.extractFeatures(hasType)
-		return self
+		return
 
 
 	def replaceFeatureWithBinaryFeatures(self, featureToReplace):
 		"""
-		Modify this object so that the choosen feature is removed, and binary valued
+		Modify this object so that the chosen feature is removed, and binary valued
 		features are added, one for each possible value seen in the original feature.
+		None is always returned.
 
 		"""		
 		if self.pointCount == 0:
@@ -263,14 +270,13 @@ class Base(object):
 		# remove the original feature, and combine with self
 		toConvert.extractFeatures([varName])
 		self.appendFeatures(toConvert)
-		return self
 
 
 	def transformFeatureToIntegerFeature(self, featureToConvert):
 		"""
 		Modify this object so that the chosen feature in removed, and a new integer
 		valued feature is added with values 0 to n-1, one for each of n values present
-		in the original feature. 
+		in the original feature. None is always returned.
 
 		"""
 		if self.pointCount == 0:
@@ -309,7 +315,6 @@ class Base(object):
 		converted.setFeatureName(0,toConvert.featureNamesInverse[0])		
 
 		self.appendFeatures(converted)
-		return self
 
 	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
 		"""
@@ -376,8 +381,9 @@ class Base(object):
 	def applyToPoints(self, function, points=None, inPlace=True):
 		"""
 		Applies the given function to each point in this object, copying the
-		output into this object. Or, if the inPlace flag is False, collecting
-		the output values into a new object that is returned upon completion.
+		output into this object and returning None. Alternatively, if the inPlace
+		flag is False, output values are collected into a new object that is
+		returned upon completion.
 
 		function must not be none and accept a point as an argument
 
@@ -409,8 +415,9 @@ class Base(object):
 	def applyToFeatures(self, function, features=None, inPlace=True):
 		"""
 		Applies the given function to each feature in this object, copying the
-		output into this object. Or, if the inPlace flag is False, collecting
-		the output values into a new object that is returned upon completion.
+		output into this object and returning None. Alternatively, if the inPlace
+		flag is False, output values are collected into a new object that is
+		returned upon completion.
 
 		function must not be none and accept a feature as an argument
 
@@ -472,7 +479,7 @@ class Base(object):
 					retData.append([currOut])
 		
 		if inPlace:
-			ret = self
+			ret = None
 		else:
 			ret = UML.createData(self.getTypeString(), retData)
 			if axis != 'point':
@@ -558,8 +565,9 @@ class Base(object):
 	def applyToElements(self, function, points=None, features=None, inPlace=True, preserveZeros=False, skipNoneReturnValues=False):
 		"""
 		Applies the function(elementValue) or function(elementValue, pointNum,
-		featureNum) to each element, and returns an object (of the same type as the
-		calling object) containing the resulting values. If preserveZeros=True it does not
+		featureNum) to each element. If inPlace == False, returns an object (of
+		the same type as the calling object) containing the resulting values, or
+		None if inPlace == True. If preserveZeros=True it does not
 		apply function to elements in the dataMatrix that are 0 and a 0 is placed in
 		it's place in the output. If skipNoneReturnValues=True, any time function()
 		returns None, the value that was input to the function will be put in the output
@@ -625,7 +633,7 @@ class Base(object):
 		if not inPlace:
 			return UML.createData(self.getTypeString(), valueList)
 		else:
-			return self
+			return None
 
 	def hashCode(self):
 		"""returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
@@ -658,7 +666,7 @@ class Base(object):
 		"""
 		Permute the indexing of the points so they are in a random order. Note: this relies on
 		python's random.shuffle() so may not be sufficiently random for large number of points.
-		See shuffle()'s documentation.
+		See shuffle()'s documentation. None is always returned.
 
 		"""
 		if indices is None:
@@ -674,14 +682,14 @@ class Base(object):
 		def permuter(pointView):
 			return indices[pointView.index()]
 		self.sortPoints(sortHelper=permuter)
-		return self
+		
 
 
 	def shuffleFeatures(self, indices=None, seed=DEFAULT_SEED):
 		"""
 		Permute the indexing of the features so they are in a random order. Note: this relies on
 		python's random.shuffle() so may not be sufficiently random for large number of features.
-		See shuffle()'s documentation.
+		See shuffle()'s documentation. None is always returned.
 
 		"""
 		if indices is None:
@@ -696,7 +704,7 @@ class Base(object):
 		def permuter(featureView):
 			return indices[featureView.index()]
 		self.sortFeatures(sortHelper=permuter)
-		return self
+		
 
 	def copy(self):
 		"""
@@ -861,8 +869,7 @@ class Base(object):
 	def transpose(self):
 		"""
 		Function to transpose the data, ie invert the feature and point indices of the data.
-	
-		Features are then given default featureNames.
+		The point and feature names are also swapped. None is always returned.
 
 		"""
 		self._transpose_implementation()
@@ -873,16 +880,14 @@ class Base(object):
 
 		tempFN = self.featureNames
 		self.setFeatureNamesFromDict(self.pointNames)
-		self.setPointNamesFromDict(tempFN)	
-
-		return self
+		self.setPointNamesFromDict(tempFN)
 
 	def appendPoints(self, toAppend):
 		"""
 		Append the points from the toAppend object to the bottom of the features in this object.
 
 		toAppend cannot be None, and must be a kind of data representation object with the same
-		number of features as the calling object.
+		number of features as the calling object. None is always returned.
 		
 		"""
 		if toAppend is None:
@@ -910,15 +915,13 @@ class Base(object):
 				currName += '_' + toAppend.name
 			self._addPointName(currName)
 
-		return self
-
 	def appendFeatures(self, toAppend):
 		"""
 		Append the features from the toAppend object to right ends of the points in this object
 
 		toAppend cannot be None, must be a kind of data representation object with the same
 		number of points as the calling object, and must not share any feature names with the calling
-		object.
+		object. None is always returned.
 		
 		"""	
 		if toAppend is None:
@@ -945,15 +948,13 @@ class Base(object):
 			if currName.startswith(DEFAULT_PREFIX):
 				currName += '_' + toAppend.name
 			self._addFeatureName(currName)
-		
-		return self
 
 	def sortPoints(self, sortBy=None, sortHelper=None):
 		""" 
 		Modify this object so that the points are sorted in place, where sortBy may
 		indicate the feature to sort by or None if the entire point is to be taken as a key,
 		sortHelper may either be comparator, a scoring function, or None to indicate the natural
-		ordering.
+		ordering. None is always returned.
 		"""
 		# its already sorted in these cases
 		if self.featureCount == 0 or self.pointCount == 0:
@@ -968,14 +969,13 @@ class Base(object):
 
 		newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
 		self.setPointNamesFromList(newPointNameOrder)
-		return self
 
 	def sortFeatures(self, sortBy=None, sortHelper=None):
 		""" 
 		Modify this object so that the features are sorted in place, where sortBy may
 		indicate the feature to sort by or None if the entire point is to be taken as a key,
 		sortHelper may either be comparator, a scoring function, or None to indicate the natural
-		ordering.
+		ordering.  None is always returned.
 
 		"""
 		# its already sorted in these cases
@@ -991,7 +991,6 @@ class Base(object):
 
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self.setFeatureNamesFromList(newFeatureNameOrder)
-		return self
 
 
 	def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -1101,7 +1100,7 @@ class Base(object):
 		words, the data wrapped by both the self and other objects resides in the
 		same place in memory. Other must be an object of the same type as
 		the calling object. Also, the shape of other should be consistent with the set
-		of featureNames currently in this object
+		of featureNames currently in this object. None is always returned.
 
 		"""
 		# this is called first because it checks the data type
@@ -1110,7 +1109,6 @@ class Base(object):
 		self.pointNamesInverse = other.pointNamesInverse
 		self.featureNames = other.featureNames
 		self.featureNamesInverse = other.featureNamesInverse
-		return self
 
 
 	def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
@@ -1265,7 +1263,8 @@ class Base(object):
 		the calling object must equal the pointCount of the other object. The
 		types of the two objects may be different, and the return is guaranteed
 		to be the same type as at least one out of the two, to be automatically
-		determined according to efficiency constraints. 
+		determined according to efficiency constraints. This is not an in-place
+		operation 
 
 		"""
 		if not isinstance(other, UML.data.Base):
@@ -1291,10 +1290,10 @@ class Base(object):
 	def elementwiseMultiplication(self, other):
 		"""
 		Perform element wise multiplication of this UML data object against the
-		provided other UML data object. Both objects must contain only numeric
-		data. The pointCount and featureCount of both objects must be equal. The
-		types of the two objects may be different, but the returned object will
-		be the inplace modification of the calling object.
+		provided other UML data object, with the result being stored in-place in
+		the calling object. Both objects must contain only numeric data. The
+		pointCount and featureCount of both objects must be equal. The types of
+		the two objects may be different. None is always returned.
 
 		"""
 		if not isinstance(other, UML.data.Base):
@@ -1322,8 +1321,7 @@ class Base(object):
 		"""
 		Multiply every element of this UML data object by the provided scalar.
 		This object must contain only numeric data. The 'scalar' parameter must
-		be a numeric data type. The returned object will be the inplace modification
-		of the calling object.
+		be a numeric data type. None is always returned.
 		
 		"""
 		# test element type self. Likely that everything in a feature will have
@@ -1546,10 +1544,10 @@ class Base(object):
 			names[defaultName] = i
 
 	def _addPointName(self, pointName):
-		return self._addName(pointName, self.pointNames, self.pointNamesInverse, 'point')
+		self._addName(pointName, self.pointNames, self.pointNamesInverse, 'point')
 
 	def _addFeatureName(self, featureName):
-		return self._addName(featureName, self.featureNames, self.featureNamesInverse, 'feature')
+		self._addName(featureName, self.featureNames, self.featureNamesInverse, 'feature')
 
 	def _addName(self, name, selfNames, selfNamesInv, axis):
 		"""
@@ -1584,7 +1582,7 @@ class Base(object):
 		or the index of a current pointName in the given axis.
 		
 		"""
-		return self._removeNameAndShift(toRemove, 'point', self.pointNames, self.pointNamesInverse)
+		self._removeNameAndShift(toRemove, 'point', self.pointNames, self.pointNamesInverse)
 
 	def _removeFeatureNameAndShift(self, toRemove):
 		"""
@@ -1595,7 +1593,7 @@ class Base(object):
 		or the index of a current featureNames in the given axis.
 		
 		"""
-		return self._removeNameAndShift(toRemove, 'feature', self.featureNames, self.featureNamesInverse)
+		self._removeNameAndShift(toRemove, 'feature', self.featureNames, self.featureNamesInverse)
 
 	def _removeNameAndShift(self, toRemove, axis, selfNames, selfNamesInv):
 		"""
@@ -1676,13 +1674,13 @@ class Base(object):
 		self._validateAxis(axis)
 		if assignments is None:
 			self._setAllDefault(axis)
-			return self
+			return
 		if not isinstance(assignments, list):
 			raise ArgumentException("assignments may only be a list, with as many entries as this axis is long")
 		if count == 0:
 			if len(assignments) > 0:
 				raise ArgumentException("assignments is too large; this axis is empty ")
-			return self
+			return
 		if len(assignments) != count:
 			raise ArgumentException("assignments may only be a list, with as many entries as this axis is long")
 
@@ -1696,13 +1694,12 @@ class Base(object):
 		assignments = temp
 
 		self._setNamesFromDict(assignments, count, axis)
-		return self
 
 	def _setNamesFromDict(self, assignments, count, axis):
 		self._validateAxis(axis)
 		if assignments is None:
 			self._setAllDefault(axis)
-			return self
+			return
 		if not isinstance(assignments, dict):
 			raise ArgumentException("assignments may only be a dict, with as many entries as this axis is long")
 		if count == 0:
@@ -1714,7 +1711,7 @@ class Base(object):
 			else:
 				self.featureNames = {}
 				self.featureNamesInverse = {}
-			return self
+			return
 		if len(assignments) != count:
 			raise ArgumentException("assignments may only be a dict, with as many entries as this axis is long")
 
@@ -1741,7 +1738,6 @@ class Base(object):
 		else:
 			self.featureNames = copy.deepcopy(assignments)
 			self.featureNamesInverse = reverseDict
-		return self
 
 
 	def _validateAxis(self, axis):
