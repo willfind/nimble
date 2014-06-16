@@ -505,7 +505,7 @@ class Matrix(Base):
 		assert shape[1] == self.featureCount
 
 
-	def _matrixMultiplication_implementation(self, other):
+	def _matrixMultiply_implementation(self, other):
 		"""
 		Matrix multiply this UML data object against the provided other UML data
 		object. Both object must contain only numeric data. The featureCount of
@@ -515,9 +515,11 @@ class Matrix(Base):
 		determined according to efficiency constraints. 
 
 		"""
-		raise NotImplementedError
+		if isinstance(other, Matrix):
+			return Matrix(self.data * other.data)
+		return Matrix(self.data * other.copyAs("numpyarray"))
 
-	def _elementwiseMultiplication_implementation(self, other):
+	def _elementwiseMultiply_implementation(self, other):
 		"""
 		Perform element wise multiplication of this UML data object against the
 		provided other UML data object. Both objects must contain only numeric
@@ -526,9 +528,9 @@ class Matrix(Base):
 		be the inplace modification of the calling object.
 
 		"""
-		raise NotImplementedError
+		self.data = numpy.matrix(self.data.getA() * other.copyAs("numpyarray"))
 
-	def _scalarMultiplication_implementation(self, scalar):
+	def _scalarMultiply_implementation(self, scalar):
 		"""
 		Multiply every element of this UML data object by the provided scalar.
 		This object must contain only numeric data. The 'scalar' parameter must
@@ -536,8 +538,8 @@ class Matrix(Base):
 		of the calling object.
 		
 		"""
-		self.data * scalar
-		return self
+		self.data = self.data * scalar
+
 
 
 

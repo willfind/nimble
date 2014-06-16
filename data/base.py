@@ -1256,7 +1256,7 @@ class Base(object):
 	###############################################################
 
 	
-	def matrixMultiplication(self, other):
+	def matrixMultiply(self, other):
 		"""
 		Matrix multiply this UML data object against the provided other UML data
 		object. Both object must contain only numeric data. The featureCount of
@@ -1281,13 +1281,15 @@ class Base(object):
 				if not dataHelpers._looksNumeric(val):
 					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
-
 		if self.featureCount != other.pointCount:
 			raise ArgumentException("The featureCount of the calling object must equal the pointCount of the 'other' object")
 		
-		return self._matrixMultiplication_implementation(other)
+		if self.pointCount == 0 or self.featureCount == 0:
+			raise ImproperActionException("Cannot matrix multiply a point or feature empty object")
 
-	def elementwiseMultiplication(self, other):
+		return self._matrixMultiply_implementation(other)
+
+	def elementwiseMultiply(self, other):
 		"""
 		Perform element wise multiplication of this UML data object against the
 		provided other UML data object, with the result being stored in-place in
@@ -1315,9 +1317,12 @@ class Base(object):
 		if self.featureCount != other.featureCount:
 			raise ArgumentException("The number of features in each object must be equal.")
 		
-		return self._elementwiseMultiplication_implementation(other)
+		if self.pointCount == 0 or self.featureCount == 0:
+			raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
 
-	def scalarMultiplication(self, scalar):
+		self._elementwiseMultiply_implementation(other)
+
+	def scalarMultiply(self, scalar):
 		"""
 		Multiply every element of this UML data object by the provided scalar.
 		This object must contain only numeric data. The 'scalar' parameter must
@@ -1335,7 +1340,10 @@ class Base(object):
 		if not dataHelpers._looksNumeric(scalar):
 			raise ArgumentException("'scalar' must be something you can multiply with, like an int, float, etc")
 
-		return self._scalarMultiplication_implementation(scalar)
+		if self.pointCount == 0 or self.featureCount == 0:
+			raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
+			
+		self._scalarMultiply_implementation(scalar)
 
 
 	############################

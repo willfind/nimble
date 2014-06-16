@@ -689,7 +689,7 @@ class List(Base):
 				assert len(point) == expectedLength
 
 
-	def _matrixMultiplication_implementation(self, other):
+	def _matrixMultiply_implementation(self, other):
 		"""
 		Matrix multiply this UML data object against the provided other UML data
 		object. Both object must contain only numeric data. The featureCount of
@@ -699,9 +699,19 @@ class List(Base):
 		determined according to efficiency constraints. 
 
 		"""
-		raise NotImplementedError
+		ret = []
+		for spNum in xrange(self.pointCount):
+			retP = []
+			for ofNum in xrange(other.featureCount):
+				runningTotal = 0
+				for opNum in xrange(other.pointCount):
+					runningTotal += self[spNum,opNum] * other[opNum,ofNum]
+				retP.append(runningTotal)
+			ret.append(retP)
+		return List(ret)
 
-	def _elementwiseMultiplication_implementation(self, other):
+
+	def _elementwiseMultiply_implementation(self, other):
 		"""
 		Perform element wise multiplication of this UML data object against the
 		provided other UML data object. Both objects must contain only numeric
@@ -710,9 +720,11 @@ class List(Base):
 		be the inplace modification of the calling object.
 
 		"""
-		raise NotImplementedError
+		for pNum in xrange(self.pointCount):
+			for fNum in xrange(self.featureCount):
+				self.data[pNum][fNum] *= other[pNum,fNum]
 
-	def _scalarMultiplication_implementation(self, scalar):
+	def _scalarMultiply_implementation(self, scalar):
 		"""
 		Multiply every element of this UML data object by the provided scalar.
 		This object must contain only numeric data. The 'scalar' parameter must
@@ -723,8 +735,6 @@ class List(Base):
 		for point in self.data:
 			for i in xrange(len(point)):
 				point[i] *= scalar
-
-		return self
 
 
 

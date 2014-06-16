@@ -921,7 +921,7 @@ class Sparse(Base):
 						assert self._data.col[i] <= self._data.col[i+1]
 
 
-	def _matrixMultiplication_implementation(self, other):
+	def _matrixMultiply_implementation(self, other):
 		"""
 		Matrix multiply this UML data object against the provided other UML data
 		object. Both object must contain only numeric data. The featureCount of
@@ -931,9 +931,14 @@ class Sparse(Base):
 		determined according to efficiency constraints. 
 
 		"""
-		raise NotImplementedError
+		# for other.data as any dense or sparse matrix
+		retData = self._data.internal * other.data
+#		if scipy.sparse.isspmatrix(retData):
+		return Sparse(retData)
+#		else:
+#			return UML.data.Matrix(retData)
 
-	def _elementwiseMultiplication_implementation(self, other):
+	def _elementwiseMultiply_implementation(self, other):
 		"""
 		Perform element wise multiplication of this UML data object against the
 		provided other UML data object. Both objects must contain only numeric
@@ -942,9 +947,23 @@ class Sparse(Base):
 		be the inplace modification of the calling object.
 
 		"""
-		raise NotImplementedError
+		# CHOICE OF OUTPUT WILL BE DETERMINED BY SCIPY!!!!!!!!!!!!
+		# for other.data as any dense or sparse matrix
+		toMul = None
+		if isinstance(other, Sparse) or isinstance(other, UML.data.Matrix):
+			toMul = other.data
+		else:
+			toMul = other.copyAs('numpyarray')
 
-	def _scalarMultiplication_implementation(self, scalar):
+		raw = self._data.internal.multiply(toMul)
+		reuse = False
+		if scipy.sparse.isspmatrix(raw):
+			raw = raw.tocoo()
+			reuse = True
+		self._data = CooWithEmpty(raw, shape=self._data.shape, reuseData=reuse)
+		
+
+	def _scalarMultiply_implementation(self, scalar):
 		"""
 		Multiply every element of this UML data object by the provided scalar.
 		This object must contain only numeric data. The 'scalar' parameter must
@@ -952,8 +971,10 @@ class Sparse(Base):
 		of the calling object.
 		
 		"""
-		self._data.data * scalar
-		return self
+		scaled = self._data.data * scalar
+		self._data.data = scaled
+		self._data.internal.data = scaled
+
 
 
 
@@ -1206,7 +1227,8 @@ class CooWithEmpty(object):
 					else:
 						self.shape = shape
 				else:
-					self.shape = arg1.shape
+					converted = numpy.array(arg1)
+					self.shape = converted.shape
 				self.nnz = 0
 				self.data = numpy.array([])
 				self.row = numpy.array([])
