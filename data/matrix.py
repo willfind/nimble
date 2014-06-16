@@ -515,9 +515,10 @@ class Matrix(Base):
 		determined according to efficiency constraints. 
 
 		"""
-		if isinstance(other, Matrix):
+		if isinstance(other, Matrix) or isinstance(other, UML.data.Sparse):
 			return Matrix(self.data * other.data)
-		return Matrix(self.data * other.copyAs("numpyarray"))
+		else:
+			return Matrix(self.data * other.copyAs("numpyarray"))
 
 	def _elementwiseMultiply_implementation(self, other):
 		"""
@@ -528,7 +529,10 @@ class Matrix(Base):
 		be the inplace modification of the calling object.
 
 		"""
-		self.data = numpy.matrix(self.data.getA() * other.copyAs("numpyarray"))
+		if isinstance(other, UML.data.Sparse):
+			self.data = numpy.matrix(other.data.multiply(self.data))
+		else:
+			self.data = numpy.multiply(self.data, other.data)
 
 	def _scalarMultiply_implementation(self, scalar):
 		"""
