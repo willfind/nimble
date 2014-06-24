@@ -4,6 +4,7 @@ Class extending Base, using a numpy dense matrix to store data.
 """
 
 import numpy
+import scipy.sparse
 
 import UML
 from base import Base
@@ -505,6 +506,14 @@ class Matrix(Base):
 		assert shape[1] == self.featureCount
 
 
+	def _containsZero_implementation(self):
+		"""
+		Returns True if there is a value that is equal to integer 0 contained
+		in this object. False otherwise
+
+		"""
+		return 0 in self.data
+
 	def _matrixMultiply_implementation(self, other):
 		"""
 		Matrix multiply this UML data object against the provided other UML data
@@ -544,6 +553,155 @@ class Matrix(Base):
 		"""
 		self.data = self.data * scalar
 
+	def _mul__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			return self._matrixMultiply_implementation(other)
+		else:
+			ret = self.copy()
+			ret._scalarMultiply_implementation(other)
+			return ret
+
+	def _add__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			ret = self.data + other.data
+		else:
+			ret = self.data + other
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+	def _radd__implementation(self, other):
+		ret = other + self.data
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+	def _iadd__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			ret = self.data + other.data
+		else:
+			ret = self.data + other
+		self.data = ret
+		return self
+
+	def _sub__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			ret = self.data - other.data
+		else:
+			ret = self.data - other
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+	def _rsub__implementation(self, other):
+		ret = other - self.data
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+	def _isub__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			ret = self.data - other.data
+		else:
+			ret = self.data - other
+		self.data = ret
+		return self
+
+	def _div__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data / other.data.todense()
+			else:
+				ret = self.data / other.data
+		else:
+			ret = self.data / other
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+
+	def _rdiv__implementation(self, other):
+		ret = other / self.data
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+	def _idiv__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data / other.data.todense()
+			else:
+				ret = self.data / other.data
+		else:
+			ret = self.data / other
+		self.data = ret
+		return self
+
+	def _truediv__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data.__truediv__(other.data.todense())
+			else:
+				ret = self.data.__truediv__(other.data)
+		else:
+			ret = self.data.__itruediv__(other)
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+	def _rtruediv__implementation(self, other):
+		ret = self.data.__rtruediv__(other)
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+	def _itruediv__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data.__itruediv__(other.data.todense())
+			else:
+				ret = self.data.__itruediv__(other.data)
+		else:
+			ret = self.data.__itruediv__(other)
+		self.data = ret
+		return self
+
+	def _floordiv__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data // other.data.todense()
+			else:
+				ret = self.data // other.data
+		else:
+			ret = self.data // other
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+
+	def _rfloordiv__implementation(self, other):
+		ret = other // self.data
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+	def _ifloordiv__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data // other.data.todense()
+			else:
+				ret = self.data // other.data
+		else:
+			ret = self.data // other
+		self.data = ret
+		return self
+
+	def _mod__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data % other.data.todense()
+			else:
+				ret = self.data % other.data
+		else:
+			ret = self.data % other
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+
+	def _rmod__implementation(self, other):
+		ret = other % self.data
+		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+
+
+	def _imod__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data % other.data.todense()
+			else:
+				ret = self.data % other.data
+		else:
+			ret = self.data % other
+		self.data = ret
+		return self
 
 
 

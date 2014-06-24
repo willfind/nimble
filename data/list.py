@@ -688,6 +688,25 @@ class List(Base):
 				assert isinstance(point, list)
 				assert len(point) == expectedLength
 
+	def _containsZero_implementation(self):
+		"""
+		Returns True if there is a value that is equal to integer 0 contained
+		in this object. False otherwise
+
+		"""
+		for point in self.pointIterator():
+			for i in range(len(point)):
+				if point[i] == 0:
+					return True
+		return False
+
+	def _mul__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			return self._matrixMultiply_implementation(other)
+		else:
+			ret = self.copy()
+			ret._scalarMultiply_implementation(other)
+			return ret
 
 	def _matrixMultiply_implementation(self, other):
 		"""
@@ -700,12 +719,12 @@ class List(Base):
 
 		"""
 		ret = []
-		for spNum in xrange(self.pointCount):
+		for sPoint in self.pointIterator():
 			retP = []
-			for ofNum in xrange(other.featureCount):
+			for oFeature in other.featureIterator():
 				runningTotal = 0
-				for opNum in xrange(other.pointCount):
-					runningTotal += self[spNum,opNum] * other[opNum,ofNum]
+				for index in xrange(other.pointCount):
+					runningTotal += sPoint[index] * oFeature[index]
 				retP.append(runningTotal)
 			ret.append(retP)
 		return List(ret)

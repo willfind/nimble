@@ -920,6 +920,13 @@ class Sparse(Base):
 					if i != len(self._data.col) - 1:
 						assert self._data.col[i] <= self._data.col[i+1]
 
+	def _containsZero_implementation(self):
+		"""
+		Returns True if there is a value that is equal to integer 0 contained
+		in this object. False otherwise
+
+		"""
+		return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
 
 	def _matrixMultiply_implementation(self, other):
 		"""
@@ -975,8 +982,13 @@ class Sparse(Base):
 		self._data.data = scaled
 		self._data.internal.data = scaled
 
-
-
+	def _mul__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			return self._matrixMultiply_implementation(other)
+		else:
+			ret = self.copy()
+			ret._scalarMultiply_implementation(other)
+			return ret
 
 	###########
 	# Helpers #

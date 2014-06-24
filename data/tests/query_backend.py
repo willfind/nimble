@@ -240,4 +240,22 @@ class QueryBackend(DataTestObject):
 		assert fView[2] == -7
 
 
+	################
+	# containsZero #
+	################
+
+
+	def test_containsZero_simple(self):
+		""" Test containsZero works as expected on simple numerical data """
+		dataAll = [[0,0,0], [0,0,0], [0,0,0]]
+		dataSome = [[1,1,1], [0.0,1,-4], [2,2,2]]
+		dataNone = [[1.1,2,12], [-2,-3,-4], [.0001, .000003, .00000004]]
+
+		dAll = self.constructor(dataAll)
+		dSome = self.constructor(dataSome)
+		dNone = self.constructor(dataNone)
+
+		assert dAll.containsZero() == True
+		assert dSome.containsZero() == True
+		assert dNone.containsZero() == False
 

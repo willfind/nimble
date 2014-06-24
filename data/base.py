@@ -11,6 +11,7 @@ import math
 import itertools
 import copy
 import numpy
+import scipy
 
 import UML
 from UML.exceptions import ArgumentException
@@ -859,6 +860,17 @@ class Base(object):
 		self._validate_implementation(level)
 
 
+	def containsZero(self):
+		"""
+		Returns True if there is a value that is equal to integer 0 contained
+		in this object. False otherwise
+
+		"""
+		# trivially False.
+		if self.pointCount == 0 or self.featureCount == 0:
+			return False
+		return self._containsZero_implementation()
+
 	##################################################################
 	##################################################################
 	###   Subclass implemented structural manipulation functions   ###
@@ -1255,40 +1267,6 @@ class Base(object):
 	###############################################################
 	###############################################################
 
-	
-	def matrixMultiply(self, other):
-		"""
-		Matrix multiply this UML data object against the provided other UML data
-		object. Both object must contain only numeric data. The featureCount of
-		the calling object must equal the pointCount of the other object. The
-		types of the two objects may be different, and the return is guaranteed
-		to be the same type as at least one out of the two, to be automatically
-		determined according to efficiency constraints. This is not an in-place
-		operation 
-
-		"""
-		if not isinstance(other, UML.data.Base):
-			raise ArgumentException("'other' must be an instance of a UML data object")
-		# Test element type self
-		if self.pointCount > 0:
-			for val in self.pointView(0):
-				if not dataHelpers._looksNumeric(val):
-					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-		# test element type other
-		if other.pointCount > 0:
-			for val in other.pointView(0):
-				if not dataHelpers._looksNumeric(val):
-					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-		if self.featureCount != other.pointCount:
-			raise ArgumentException("The featureCount of the calling object must equal the pointCount of the 'other' object")
-		
-		if self.pointCount == 0 or self.featureCount == 0:
-			raise ImproperActionException("Cannot matrix multiply a point or feature empty object")
-
-		return self._matrixMultiply_implementation(other)
-
 	def elementwiseMultiply(self, other):
 		"""
 		Perform element wise multiplication of this UML data object against the
@@ -1322,28 +1300,337 @@ class Base(object):
 
 		self._elementwiseMultiply_implementation(other)
 
-	def scalarMultiply(self, scalar):
+	def __mul__(self, other):
 		"""
-		Multiply every element of this UML data object by the provided scalar.
-		This object must contain only numeric data. The 'scalar' parameter must
-		be a numeric data type. None is always returned.
+		Perform matrix multiplication or scalar multiplication on this object depending on
+		the input 'other'
+
+		"""
+		if not isinstance(other, UML.data.Base) and not dataHelpers._looksNumeric(other):
+			return NotImplemented
 		
-		"""
-		# test element type self. Likely that everything in a feature will have
-		# the same type, so we can get away with doing some checks on a single point
+		if self.pointCount == 0 or self.featureCount == 0:
+			raise ImproperActionException("Cannot do a multiplication when points or features is empty")
+
+		# Test element type self
 		if self.pointCount > 0:
 			for val in self.pointView(0):
 				if not dataHelpers._looksNumeric(val):
 					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
-		# check 'scalar' looks numeric
-		if not dataHelpers._looksNumeric(scalar):
-			raise ArgumentException("'scalar' must be something you can multiply with, like an int, float, etc")
+		# test element type other
+		if isinstance(other, UML.data.Base):
+			if other.pointCount == 0 or other.featureCount == 0:
+				raise ImproperActionException("Cannot do a multiplication when points or features is empty")
 
-		if self.pointCount == 0 or self.featureCount == 0:
-			raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
+			if other.pointCount > 0:
+				for val in other.pointView(0):
+					if not dataHelpers._looksNumeric(val):
+						raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+			if self.featureCount != other.pointCount:
+				raise ArgumentException("The number of features in the calling object must "
+						+ "match the point in the callee object.")
 			
-		self._scalarMultiply_implementation(scalar)
+		return self._mul__implementation(other)
+	
+	def __rmul__(self, other):
+		"""	Perform scalar multiplication with this object on the right """
+		if dataHelpers._looksNumeric(other):
+			return self.__mul__(other)
+		else:
+			return NotImplemented
+
+	def __imul__(self, other):
+		"""
+		Perform in place matrix multiplication or scalar multiplication, depending in the
+		input 'other'
+
+		"""
+		ret = self.__mul__(other)
+		if ret is not NotImplemented:
+			self.referenceDataFrom(ret)
+			ret = self
+		return ret
+
+	def __add__(self, other):
+		"""
+		Perform addition on this object, element wise if 'other' is a UML data
+		object, or element wise with a scalar if other is some kind of numeric
+		value.
+
+		"""
+		return self._genericNumericBinary('__add__', other)
+
+	def __radd__(self, other):
+		""" Perform scalar addition with this object on the right """
+		return self._genericNumericBinary('__radd__', other)
+
+	def __iadd__(self, other):
+		"""
+		Perform in-place addition on this object, element wise if 'other' is a UML data
+		object, or element wise with a scalar if other is some kind of numeric
+		value.
+
+		"""
+		return self._genericNumericBinary('__iadd__', other)
+
+	def __sub__(self, other):
+		"""
+		Subtract from this object, element wise if 'other' is a UML data
+		object, or element wise by a scalar if other is some kind of numeric
+		value.
+
+		"""
+		return self._genericNumericBinary('__sub__', other)
+
+	def __rsub__(self, other):
+		"""
+		Subtract each element of this object from the given scalar
+
+		"""
+		return self._genericNumericBinary('__rsub__', other)
+
+	def __isub__(self, other):
+		"""
+		Subtract (in place) from this object, element wise if 'other' is a UML data
+		object, or element wise with a scalar if other is some kind of numeric
+		value. 
+
+		"""
+		return self._genericNumericBinary('__isub__', other)
+
+	def __div__(self, other):
+		"""
+		Perform division using this object as the numerator, element wise if 'other'
+		is a UML data object, or element wise by a scalar if other is some kind of
+		numeric value.
+
+		"""
+		return self._genericNumericBinary('__div__', other)
+
+	def __rdiv__(self, other):
+		"""
+		Perform element wise division using this object as the denominator, and the
+		given scalar value as the numerator
+
+		"""
+		return self._genericNumericBinary('__rdiv__', other)
+
+	def __idiv__(self, other):
+		"""
+		Perform division (in place) using this object as the numerator, element
+		wise if 'other' is a UML data object, or element wise by a scalar if other
+		is some kind of numeric value.
+
+		"""
+		return self._genericNumericBinary('__idiv__', other)
+
+	def __truediv__(self, other):
+		"""
+		Perform true division using this object as the numerator, element wise
+		if 'other' is a UML data object, or element wise by a scalar if other is
+		some kind of numeric value.
+
+		"""
+		return self._genericNumericBinary('__truediv__', other)
+
+	def __rtruediv__(self, other):
+		"""
+		Perform element wise true division using this object as the denominator,
+		and the given scalar value as the numerator
+
+		"""
+		return self._genericNumericBinary('__rtruediv__', other)
+
+	def __itruediv__(self, other):
+		"""
+		Perform true division (in place) using this object as the numerator, element
+		wise if 'other' is a UML data object, or element wise by a scalar if other
+		is some kind of numeric value.
+
+		"""
+		return self._genericNumericBinary('__itruediv__', other)
+
+	def __floordiv__(self, other):
+		"""
+		Perform floor division using this object as the numerator, element wise
+		if 'other' is a UML data object, or element wise by a scalar if other is
+		some kind of numeric value.
+
+		"""
+		return self._genericNumericBinary('__floordiv__', other)
+
+	def __rfloordiv__(self, other):
+		"""
+		Perform element wise floor division using this object as the denominator,
+		and the given scalar value as the numerator
+
+		"""
+		return self._genericNumericBinary('__rfloordiv__', other)
+
+	def __ifloordiv__(self, other):
+		"""
+		Perform floor division (in place) using this object as the numerator, element
+		wise if 'other' is a UML data object, or element wise by a scalar if other
+		is some kind of numeric value.
+
+		"""
+		return self._genericNumericBinary('__ifloordiv__', other)
+
+	def __mod__(self, other):
+		"""
+		Perform mod using the elements of this object as the dividends, element wise
+		if 'other' is a UML data object, or element wise by a scalar if other is
+		some kind of numeric value.
+
+		"""
+		return self._genericNumericBinary('__mod__', other)
+
+	def __rmod__(self, other):
+		"""
+		Perform mod using the elements of this object as the divisors, and the
+		given scalar value as the dividend
+
+		"""
+		return self._genericNumericBinary('__rmod__', other)
+
+	def __imod__(self, other):
+		"""
+		Perform mod (in place) using the elements of this object as the dividends,
+		element wise if 'other' is a UML data object, or element wise by a scalar
+		if other is some kind of numeric value.
+
+		"""
+		return self._genericNumericBinary('__imod__', other)
+
+	def __pow__(self, other):
+		"""
+		Perform exponentiation (iterated __mul__) using the elements of this object
+		as the bases, element wise if 'other' is a UML data object, or element wise
+		by a scalar if other is some kind of numeric value.
+
+		"""
+		if self.pointCount == 0 or self.featureCount == 0:
+			raise ImproperActionException("Cannot do ** when points or features is empty")
+		if not dataHelpers._looksNumeric(other):
+			raise ArgumentException("'other' must be an instance of a scalar")
+		if other != int(other):
+			raise ArgumentException("other may only be an integer type")
+	
+		if other == 1:
+			return self.copy()
+
+		# exact conditions in which we need to instantiate this object
+		if other == 0 or other % 2 == 0:
+			identity = UML.createData(self.getTypeString(), numpy.eye(self.pointCount))
+		if other == 0:
+			return identity
+
+		# this means that we don't start with a multiplication at the ones place,
+		# so we need to reserve the identity as the in progress return value
+		if other % 2 == 0:
+			ret = identity
+		else:
+			ret = self.copy()
+
+		# by setting up ret, we've taken care of the original ones place
+		curr = other >> 1
+		# the running binary exponent we've calculated. We've done the ones
+		# place, so this is just a copy
+		running = self.copy()
+
+		while curr != 0:
+			running = running._matrixMultiply_implementation(running)
+			if (curr % 2) == 1:
+				ret = ret._matrixMultiply_implementation(running)
+
+			# shift right to put the next digit in the ones place
+			curr = curr >> 1		
+
+		return ret
+
+	def __ipow__(self, other):
+		"""
+		Perform in-place exponentiation (iterated __mul__) using the elements
+		of this object as the bases, element wise if 'other' is a UML data
+		object, or element wise by a scalar if other is some kind of numeric
+		value.
+
+		"""
+		ret = self.__pow__(other)
+		self.referenceDataFrom(ret)
+		return self
+
+	def __pos__(self):
+		""" Return this object. """
+		return self
+
+	def __neg__(self):
+		""" Return this object where every element has been multiplied by -1 """
+		ret = self.copy()
+		ret *= -1
+		return ret
+
+	def __abs__(self):
+		""" Perform element wise absolute value on this object """
+		return self.applyToElements(abs, inPlace=False)
+
+	def _genericNumericBinary(self, opName, other):
+		isUML = isinstance(other, UML.data.Base)
+		if not isUML and not dataHelpers._looksNumeric(other):
+			raise ArgumentException("'other' must be an instance of a UML data object or a scalar")
+		# Test element type self
+		if self.pointCount > 0:
+			for val in self.pointView(0):
+				if not dataHelpers._looksNumeric(val):
+					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+		# test element type other
+		if isinstance(other, UML.data.Base):
+			if opName.startswith('__r'):
+				return NotImplemented
+			if other.pointCount > 0:
+				for val in other.pointView(0):
+					if not dataHelpers._looksNumeric(val):
+						raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+			if self.pointCount != other.pointCount:
+				raise ArgumentException("The number of points in each object must be equal.")
+			if self.featureCount != other.featureCount:
+				raise ArgumentException("The number of features in each object must be equal.")
+			
+		if self.pointCount == 0 or self.featureCount == 0:
+			raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
+
+		divNames = ['__div__','__rdiv__','__idiv__','__truediv__','__rtruediv__',
+					'__itruediv__','__floordiv__','__rfloordiv__','__ifloordiv__',
+					'__mod__','__rmod__','__imod__',]
+		if isUML and opName in divNames:
+			if other.containsZero():
+				raise ZeroDivisionError("Cannot perform " + opName + " when the second argument"
+						+ "contains any zeros")
+			if isinstance(other, UML.data.Matrix):
+				if False in numpy.isfinite(other.data):
+					raise ArgumentException("Cannot perform " + opName + " when the second argument"
+						+ "contains any NaNs or Infs")
+
+		startType = self.getTypeString()
+		implName = opName[1:] + 'implementation'
+		if startType == 'Matrix':
+			toCall = getattr(self, implName)
+			return toCall(other)
+		else:
+			selfConv = self.copyAs("Matrix")
+			toCall = getattr(selfConv, implName)
+			ret = toCall(other)
+			if opName.startswith('__i'):
+				ret = ret.copyAs(startType)
+				self.referenceDataFrom(ret)
+				return self
+			return UML.createData(startType, ret.data, pointNames=ret.pointNames,
+					featureNames=ret.featureNames)
+
 
 
 	############################
