@@ -803,13 +803,11 @@ class Base(object):
 		except TypeError:
 			raise ArgumentException("Must include a point and feature index")
 		
-		if isinstance(x,basestring):
-			x = self._getPointIndex(x)
+		x = self._getPointIndex(x)
 		if not isinstance(x,int) or x < 0 or x >= self.pointCount:
 			raise ArgumentException(str(x) + " is not a valid point ID")
 
-		if isinstance(y,basestring):
-			y = self._getFeatureIndex(y)
+		y = self._getFeatureIndex(y)
 		if not isinstance(y,int) or y < 0 or y >= self.featureCount:
 			raise ArgumentException(str(y) + " is not a valid feature ID")
 
@@ -870,6 +868,14 @@ class Base(object):
 		if self.pointCount == 0 or self.featureCount == 0:
 			return False
 		return self._containsZero_implementation()
+
+	def __eq__(self, other):
+		return self.isIdentical(other)
+
+	def __ne__(self, other):
+		return not self.__eq__(other)
+
+
 
 	##################################################################
 	##################################################################
@@ -1798,8 +1804,11 @@ class Base(object):
 		if identifier is None:
 			raise ArgumentException("An identifier cannot be None")
 		if (not isinstance(identifier,basestring)) and (not isinstance(identifier,int)):
-			raise ArgumentException("The indentifier must be either a string or integer index")
+			raise ArgumentException("The identifier must be either a string or integer index")
 		if isinstance(identifier,int):
+			if identifier < 0:
+				identifier = len(names) + identifier
+				toReturn = identifier
 			if identifier < 0 or identifier >= len(namesInv):
 				raise ArgumentException("The index " + str(identifier) +" is outside of the range of possible values")
 		if isinstance(identifier,basestring):

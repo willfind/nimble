@@ -90,6 +90,13 @@ class QueryBackend(DataTestObject):
 		assert not toTest.isIdentical(self.constructor([[1,2,3]]))
 		assert not toTest.isIdentical(self.constructor([[1,2]]))
 
+	def test_isIdentical_FalseBozoTypes(self):
+		""" Test isIdentical() against some non-equal input of crazy types """
+		toTest = self.constructor([[4,5]])
+		assert not toTest.isIdentical(numpy.matrix([[1,1],[2,2]]))
+		assert not toTest.isIdentical('self.constructor([[1,2,3]])')
+		assert not toTest.isIdentical(toTest.isIdentical)
+
 	def test_isIdentical_True(self):
 		""" Test isIdentical() against some actually equal input """
 		toTest1 = self.constructor([[4,5]])
@@ -258,4 +265,62 @@ class QueryBackend(DataTestObject):
 		assert dAll.containsZero() == True
 		assert dSome.containsZero() == True
 		assert dNone.containsZero() == False
+
+	##########
+	# __eq__ #
+	##########
+
+	def test_eq__exactlyisIdentical(self):
+		""" Test that __eq__ relies on isIdentical """
+
+		class FlagWrap(object):
+			flag = False
+
+		flag1 = FlagWrap()
+		flag2 = FlagWrap()
+		def fake(other):
+			if flag1.flag:
+				flag2.flag = True
+			flag1.flag = True
+			return True
+
+		toTest1 = self.constructor([[4,5]])
+		toTest2 = self.constructor(deepcopy([[4,5]]))
+
+		toTest1.isIdentical = fake
+		toTest2.isIdentical = fake
+
+		assert toTest1 == toTest2
+		assert toTest2 == toTest1
+		assert flag1.flag
+		assert flag2.flag
+
+	##########
+	# __ne__ #
+	##########
+
+	def test_ne__exactly__eq__(self):
+		""" Test that __ne__ relies on __eq__ """
+
+		class FlagWrap(object):
+			flag = False
+
+		flag1 = FlagWrap()
+		flag2 = FlagWrap()
+		def fake(other):
+			if flag1.flag:
+				flag2.flag = True
+			flag1.flag = True
+			return False
+
+		toTest1 = self.constructor([[4,5]])
+		toTest2 = self.constructor(deepcopy([[4,5]]))
+
+		toTest1.__eq__ = fake
+		toTest2.__eq__ = fake
+
+		assert toTest1 != toTest2
+		assert toTest2 != toTest1
+		assert flag1.flag
+		assert flag2.flag
 
