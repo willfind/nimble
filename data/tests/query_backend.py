@@ -5,8 +5,10 @@ from nose.tools import *
 
 from copy import deepcopy
 
+import UML
 from UML.data.dataHelpers import View
 from UML.data.tests.baseObject import DataTestObject
+from UML.data.dataHelpers import formatIfNeeded
 
 
 class QueryBackend(DataTestObject):
@@ -323,4 +325,64 @@ class QueryBackend(DataTestObject):
 		assert toTest2 != toTest1
 		assert flag1.flag
 		assert flag2.flag
+
+
+	############
+	# toString #
+	############
+
+	def test_toString_dataLocation(self):
+		""" test toString under default parameters """
+		randGen = UML.createRandomData("List", 9, 9, 0)
+		raw = randGen.data
+		#raw = (numpy.matrix(range(9)).T) * numpy.ones(9)
+
+		fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8']
+		pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8']
+		data = UML.createData("List", raw, pointNames=pnames, featureNames=fnames)
+		
+		for mw in [40, 50, 60,70, 80, 90]:
+			for mh in [5, 6, 7, 8, 9, 10]:
+				ret = data.toString(includeNames=False, maxWidth=mw, maxHeight=mh)
+				checkToStringRet(ret, data)
+
+
+
+def checkToStringRet(ret, data):
+	cHold = '...'
+	rHold = '|'
+	sigDigits = 3
+	rows = ret.split('\n')
+	rows = rows[:(len(rows)-1)]
+
+	negRow = False
+	for r in range(len(rows)):
+		row = rows[r]
+		spaceSplit = row.split(' ')
+		vals = []
+		for possible in spaceSplit:
+			if possible != '':
+				vals.append(possible)
+		if vals[0] == rHold:
+			negRow = True
+			continue
+
+		rDataIndex = r
+		if negRow:
+			rDataIndex = -(len(rows) - r)
+
+		negCol = False
+		for c in range(len(vals)):
+			if vals[c] == cHold:
+				negCol = True
+				continue
+
+			cDataIndex = c
+			if negCol:
+				cDataIndex = -(len(vals) - c)
+			
+			wanted = data[rDataIndex, cDataIndex]
+			wantedS = formatIfNeeded(wanted, sigDigits)
+			have = vals[c]
+			assert wantedS == have
 

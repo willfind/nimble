@@ -6,6 +6,8 @@ the main data wrapper objects defined in this module
 
 
 import copy
+import math
+
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -92,4 +94,81 @@ def _looksNumeric(val):
 			return False
 		return True
 
+def formatIfNeeded(value, sigDigits):
+	"""
+	Format the value into a string, and in the case of a float typed value,
+	limit the output to the given number of significant digits.
 
+	"""
+	if _looksNumeric(value):
+		if int(value) != value and sigDigits is not None:
+			return format(value, '.' + str(int(sigDigits)) + 'f')
+	return str(value)
+
+def indicesSplit(allowed, total):
+	if total > allowed:
+		allowed -= 1
+		
+	forward = int(math.ceil(allowed/2.0))
+	backward = int(math.floor(allowed/2.0))
+
+	fIndices = range(forward)
+	bIndices = range(-backward,0)
+
+	for i in range(len(bIndices)):
+		bIndices[i] = bIndices[i] + total
+
+	if fIndices[len(fIndices)-1] == bIndices[0]:
+		bIndices = bIndices[1:]
+
+	return (fIndices, bIndices)
+
+
+def makeNamesLines(indent, maxW, numDisplayNames, count, namesInv, nameType):
+		namesString = ""
+		(posL, posR) = indicesSplit(numDisplayNames, count)
+		possibleIndices = posL + posR
+
+		allDefault = True
+		for i in range(len(possibleIndices)):
+			if not namesInv[possibleIndices[i]].startswith(DEFAULT_PREFIX):
+				allDefault = False
+
+		if allDefault:
+			return ""
+
+		currNamesString = indent + nameType +'={'
+		newStartString = indent * 2
+		prevIndex = -1
+		for i in range(len(possibleIndices)):
+			currIndex = possibleIndices[i]
+			# means there was a gap, need to insert elipses
+			if currIndex - prevIndex > 1:
+				addition = '..., '
+				if len(currNamesString) + len(addition) > maxW:
+					namesString += currNamesString + '\n'
+					currNamesString = newStartString
+				currNamesString += addition
+			prevIndex = currIndex
+
+			# get name and truncate if needed
+			fullName = namesInv[currIndex]
+			currName = fullName
+			if len(currName) > 11:
+				currName = currName[:8] + '...'
+			addition = "'" + currName + "':" + str(currIndex)
+
+			# if it isn't the last entry, comma and space. if it is
+			# the end-cbrace
+			addition += ', ' if i != (len(possibleIndices) -1) else '}'
+
+			# if adding this would put us above the limit, add the line
+			# to namesString before, and start a new line
+			if len(currNamesString) + len(addition) > maxW:
+				namesString += currNamesString + '\n'
+				currNamesString = newStartString
+
+			currNamesString += addition
+
+		namesString += currNamesString + '\n'
+		return namesString
