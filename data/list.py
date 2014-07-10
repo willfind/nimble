@@ -257,15 +257,26 @@ class List(Base):
 			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None:
+			if number is None or len(toExtract) < number:
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
+				indices = []
+				for i in xrange(len(toExtract)):
+					indices.append(i)
+				randomIndices = random.sample(indices, number)
+				randomIndices.sort()
+				temp = []
+				for index in randomIndices:
+					temp.append(toExtract[index])
+				toExtract = temp
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
-			return self._extractPointsByList_implementation(toExtract)
+			toExtractIndices = []
+			for value in toExtract:
+				toExtractIndices.append(self._getPointIndex(value))
+			return self._extractPointsByList_implementation(toExtractIndices)
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
@@ -280,7 +291,8 @@ class List(Base):
 			if number is None:
 				number = end - start
 			if randomize:
-				toExtract = random.sample(xrange(start,end),number)
+				# +1 because range is endpoint exclusive
+				toExtract = random.sample(xrange(start,end+1),number)
 				toExtract.sort()
 				return self._extractPointsByList_implementation(toExtract)
 			else:
@@ -386,11 +398,10 @@ class List(Base):
 			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None:
+			if number is None or len(toExtract) < number:
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-#				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
 				indices = []
 				for i in xrange(len(toExtract)):
 					indices.append(i)
@@ -399,7 +410,7 @@ class List(Base):
 				temp = []
 				for index in randomIndices:
 					temp.append(toExtract[index])
-				temp = toExtract
+				toExtract = temp
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]

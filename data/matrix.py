@@ -170,11 +170,19 @@ class Matrix(Base):
 			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None:
+			if number is None or len(toExtract) < number:
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
+				indices = []
+				for i in xrange(len(toExtract)):
+					indices.append(i)
+				randomIndices = random.sample(indices, number)
+				randomIndices.sort()
+				temp = []
+				for index in randomIndices:
+					temp.append(toExtract[index])
+				toExtract = temp
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
@@ -190,7 +198,7 @@ class Matrix(Base):
 				return self._extractPointsByFunction_implementation(toExtract, number)
 		# by range
 		if start is not None or end is not None:
-			if number is None:
+			if number is None or number:
 				number = end - start
 			if randomize:
 				toExtract = random.sample(xrange(start,end),number)
@@ -271,11 +279,19 @@ class Matrix(Base):
 			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None:
+			if number is None or len(toExtract) < number:
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
+				indices = []
+				for i in xrange(len(toExtract)):
+					indices.append(i)
+				randomIndices = random.sample(indices, number)
+				randomIndices.sort()
+				temp = []
+				for index in randomIndices:
+					temp.append(toExtract[index])
+				toExtract = temp
 				#toExtract = random.sample(toExtract, number)
 			# else take the first number members of toExtract
 			else:

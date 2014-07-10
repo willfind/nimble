@@ -333,7 +333,7 @@ class QueryBackend(DataTestObject):
 
 	def test_toString_dataLocation(self):
 		""" test toString under default parameters """
-		randGen = UML.createRandomData("List", 9, 9, 0)
+		randGen = UML.createRandomData("List", 9, 9, 0, numericType='int')
 		raw = randGen.data
 		#raw = (numpy.matrix(range(9)).T) * numpy.ones(9)
 

@@ -338,11 +338,19 @@ class Sparse(Base):
 			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None:
+			if number is None or len(toExtract) < number:
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
+				indices = []
+				for i in xrange(len(toExtract)):
+					indices.append(i)
+				randomIndices = random.sample(indices, number)
+				randomIndices.sort()
+				temp = []
+				for index in randomIndices:
+					temp.append(toExtract[index])
+				toExtract = temp
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
@@ -383,12 +391,19 @@ class Sparse(Base):
 			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None:
+			if number is None or len(toExtract) < number:
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				raise NotImplementedError # TODO implement using sample(), but without losing the extraction order
-			# else take the first number members of toExtract
+				indices = []
+				for i in xrange(len(toExtract)):
+					indices.append(i)
+				randomIndices = random.sample(indices, number)
+				randomIndices.sort()
+				temp = []
+				for index in randomIndices:
+					temp.append(toExtract[index])
+				toExtract = temp			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
 			# convert IDs if necessary

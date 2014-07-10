@@ -302,8 +302,11 @@ def listDataFunctions():
 
 	ret = []
 	for methodName in visibleMethodList:
-		currMethod = eval("UML.data.Base." + methodName)
-		(args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
+		currMethod = getattr(UML.data.Base, methodName)
+		try:
+			(args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
+		except TypeError:
+			continue
 
 		retString = methodName + "("
 		for i in xrange(0, len(args)):

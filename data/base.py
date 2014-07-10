@@ -1300,19 +1300,14 @@ class Base(object):
 				raise ArgumentException("end must be a valid index, in the range of possible points")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
-			if not randomize and number is not None:
+			if number is not None:
 				#then we can do the windowing calculation here
 				possibleEnd = start + number -1
 				if possibleEnd < end:
-					end = possibleEnd
-#			if number is not None:
-#				#then we can do the windowing calculation here
-#				possibleEnd = start + number -1
-#				if possibleEnd < end:
-#					if not randomize:
-#						end = possibleEnd
-#				else:
-#					number = (end - start) +1
+					if not randomize:
+						end = possibleEnd
+				else:
+					number = (end - start) +1
 
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
 		self._pointCount -= ret.pointCount
@@ -1359,19 +1354,14 @@ class Base(object):
 				raise ArgumentException("end must be a valid index, in the range of possible features")
 			if start > end:
 				raise ArgumentException("start cannot be an index greater than end")
-			if not randomize and number is not None:
+			if number is not None:
 				#then we can do the windowing calculation here
 				possibleEnd = start + number -1
 				if possibleEnd < end:
-					end = possibleEnd
-#			if number is not None:
-#				#then we can do the windowing calculation here
-#				possibleEnd = start + number -1
-#				if possibleEnd < end:
-#					if not randomize:
-#						end = possibleEnd
-#				else:
-#					number = (end - start) +1
+					if not randomize:
+						end = possibleEnd
+				else:
+					number = (end - start) +1
 
 		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
 		self._featureCount -= ret.featureCount
@@ -1470,13 +1460,10 @@ class Base(object):
 			if start is not None or end is not None:
 				raise ArgumentException("Cannot specify both IDs and a range")
 			#verify everything in list is a valid index TODO
-			for index in points:
-				if index < 0 or index >= self.pointCount:
-					raise ArgumentException("input must contain only valid indices")
-#			indices = []
-#			for identifier in points:
-#				indices.append(self._getPointIndex(identifier))
-#			points = indices
+			indices = []
+			for identifier in points:
+				indices.append(self._getPointIndex(identifier))
+			points = indices
 
 		retObj = self._copyPoints_implementation(points, start, end)
 
