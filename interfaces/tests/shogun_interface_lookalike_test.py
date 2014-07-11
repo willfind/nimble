@@ -5,7 +5,7 @@ Unit tests for shogun_interface.py
 
 import numpy
 import scipy.sparse
-from numpy.random import rand, randint
+from UML.umlRandom import npRandom
 from nose.tools import *
 
 import UML
@@ -145,13 +145,13 @@ def testShogunSparseRegression():
 
 	x = 100
 	c = 10
-	points = randint(0,x,c)
-	cols = randint(0,x,c)
-	data = rand(c)
+	points = npRandom.randint(0,x,c)
+	cols = npRandom.randint(0,x,c)
+	data = npRandom.rand(c)
 	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
 	obj = UML.createData('Sparse', A)
 
-	labelsData = numpy.random.rand(x)
+	labelsData = npRandom.rand(x)
 	labels = UML.createData('Matrix', labelsData.reshape((x,1)))
 
 	ret = UML.trainAndApply('shogun.MulticlassOCAS', trainX=obj, trainY=labels, testX=obj)
@@ -216,9 +216,9 @@ def testShogunEmbeddedRossData():
 				numpyData[i,j] = data[i][j]
 			else:
 				if j == 0:
-					numpyData[i,j] = numpy.random.randint(2,3)
+					numpyData[i,j] = npRandom.randint(2,3)
 				else:
-					numpyData[i,j] = numpy.random.rand()
+					numpyData[i,j] = npRandom.rand()
 
 	trainingObj = UML.createData('Matrix', numpyData)
 

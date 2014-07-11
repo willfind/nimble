@@ -11,6 +11,7 @@ from UML.exceptions import ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
 
+from UML.umlRandom import npRandom
 
 def calleeConstructor(data, constructor):
 	if constructor is None:
@@ -111,8 +112,8 @@ def makeAllData(constructor, rhsCons, n, sparsity):
 	randomrf = UML.createRandomData('Matrix', n, n, sparsity)
 	lhsf = randomlf.copyAs("numpymatrix")
 	rhsf = randomrf.copyAs("numpymatrix")
-	lhsi = numpy.matrix(numpy.random.random_integers(1,10,(n,n)), dtype=float)
-	rhsi = numpy.matrix(numpy.random.random_integers(1,10,(n,n)), dtype=float)
+	lhsi = numpy.matrix(npRandom.random_integers(1,10,(n,n)), dtype=float)
+	rhsi = numpy.matrix(npRandom.random_integers(1,10,(n,n)), dtype=float)
 		
 	lhsfObj = constructor(lhsf)
 	lhsiObj = constructor(lhsi)

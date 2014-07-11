@@ -20,6 +20,8 @@ from UML.exceptions import ArgumentException, ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
 
+from UML.umlRandom import npRandom
+
 ### Helpers used by tests in the test class ###
 
 def simpleMapper(point):
@@ -983,7 +985,7 @@ class HighLevelBackend(DataTestObject):
 
 			for i in xrange(points):
 				for j in xrange(features):
-					data[i,j] = numpy.random.rand() * numpy.random.randint(0,5)
+					data[i,j] = npRandom.rand() * npRandom.randint(0,5)
 
 			toTest = self.constructor(data)
 

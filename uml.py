@@ -39,6 +39,8 @@ from UML.umlHelpers import trainAndApplyOneVsAll
 from UML.umlHelpers import trainAndApplyOneVsOne
 from UML.umlHelpers import _mergeArguments
 
+from UML.umlRandom import npRandom
+
 from UML.data import Base
 
 from UML.data.dataHelpers import DEFAULT_SEED
@@ -81,14 +83,14 @@ def createRandomData(retType, numPoints, numFeatures, sparsity, numericType="flo
 		density = 1.0 - float(sparsity)
 		numNonZeroValues = int(numPoints * numFeatures * density)
 
-		pointIndices = numpy.random.randint(low=0, high=numPoints, size=numNonZeroValues)
-		featureIndices = numpy.random.randint(low=0, high=numFeatures, size=numNonZeroValues)
+		pointIndices = npRandom.randint(low=0, high=numPoints, size=numNonZeroValues)
+		featureIndices = npRandom.randint(low=0, high=numFeatures, size=numNonZeroValues)
 
 		if numericType == 'int':
-			dataVector = numpy.random.randint(low=1, high=100, size=numNonZeroValues)
+			dataVector = npRandom.randint(low=1, high=100, size=numNonZeroValues)
 		#numeric type is float; distribution is normal
 		else: 
-			dataVector = numpy.random.normal(0, 1, size=numNonZeroValues) 
+			dataVector = npRandom.normal(0, 1, size=numNonZeroValues) 
 
 		#pointIndices and featureIndices are 
 		randData = scipy.sparse.coo.coo_matrix((dataVector, (pointIndices, featureIndices)), (numPoints, numFeatures))
@@ -96,9 +98,9 @@ def createRandomData(retType, numPoints, numFeatures, sparsity, numericType="flo
 	#for non-sparse matrices, use numpy to generate matrices with sparsity characterics
 	else:
 		if numericType == 'int':
-			filledIntMatrix = numpy.random.randint(1, 100, (numPoints, numFeatures))
+			filledIntMatrix = npRandom.randint(1, 100, (numPoints, numFeatures))
 		else:
-			filledFloatMatrix = numpy.random.normal(loc=0.0, scale=1.0, size=(numPoints,numFeatures))
+			filledFloatMatrix = npRandom.normal(loc=0.0, scale=1.0, size=(numPoints,numFeatures))
 
 		#if sparsity is zero
 		if abs(float(sparsity) - 0.0) < 0.0000000001:
@@ -107,7 +109,7 @@ def createRandomData(retType, numPoints, numFeatures, sparsity, numericType="flo
 			else:
 				randData = filledFloatMatrix
 		else:
-			binarySparsityMatrix = numpy.random.binomial(1, 1.0-sparsity, (numPoints, numFeatures))
+			binarySparsityMatrix = npRandom.binomial(1, 1.0-sparsity, (numPoints, numFeatures))
 
 			if numericType == 'int':
 				randData = binarySparsityMatrix * filledIntMatrix
