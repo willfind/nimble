@@ -5,13 +5,11 @@ boilerplate()
 
 if __name__ == "__main__":
 
-	import numpy
-
 	import UML
 	from UML.customLearners.ridge_regression import RidgeRegression
 	from UML.metrics import rootMeanSquareError as RMSE
 
-	from UML.umlRandom import npRandom
+	from UML.randomness import numpyRandom
 
 	# register your custom learner, in a custom package named 'custom'
 	UML.registerCustomLearner("custom", RidgeRegression)
@@ -20,10 +18,10 @@ if __name__ == "__main__":
 	trainPoints = 10
 	testPoints = 5
 	feats = 3
-	targetCoefs = npRandom.rand(feats, 1)
-	trainXRaw = npRandom.randint(-10, 10, (trainPoints, feats))
+	targetCoefs = numpyRandom.rand(feats, 1)
+	trainXRaw = numpyRandom.randint(-10, 10, (trainPoints, feats))
 	trainYRaw = trainXRaw.dot(targetCoefs)
-	testXRaw = npRandom.randint(-10, 10, (testPoints, feats))
+	testXRaw = numpyRandom.randint(-10, 10, (testPoints, feats))
 	testYRaw = testXRaw.dot(targetCoefs)
 
 	# encapsulate in UML data objects

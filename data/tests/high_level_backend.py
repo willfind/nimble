@@ -20,7 +20,7 @@ from UML.exceptions import ArgumentException, ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
 
-from UML.umlRandom import npRandom
+from UML.randomness import numpyRandom
 
 ### Helpers used by tests in the test class ###
 
@@ -230,16 +230,18 @@ class HighLevelBackend(DataTestObject):
 
 	def test_extractPointsByCoinToss_handmade(self):
 		""" Test extractPointsByCoinToss() against handmade output with the test seed """
+		if not UML.randomness.stillDefaultState():
+			return
 		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 		featureNames = ['1','2','3']
 		pointNames = ['1', '4', '7', '10']
 		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 		ret = toTest.extractPointsByCoinToss(0.5)
 
-		expRetPN = ['4', '7']
-		expTestPN = ['1', '10']
-		expRet = self.constructor([[4,5,6],[7,8,9]], pointNames=expRetPN, featureNames=featureNames)
-		expTest = self.constructor([[1,2,3],[10,11,12]], pointNames=expTestPN, featureNames=featureNames)
+		expRetPN = ['1', '4', '10']
+		expTestPN = ['7']
+		expRet = self.constructor([[1,2,3],[4,5,6],[10,11,12]], pointNames=expRetPN, featureNames=featureNames)
+		expTest = self.constructor([[7,8,9]], pointNames=expTestPN, featureNames=featureNames)
 
 		assert ret.isIdentical(expRet)
 		assert expTest.isIdentical(toTest)
@@ -985,7 +987,7 @@ class HighLevelBackend(DataTestObject):
 
 			for i in xrange(points):
 				for j in xrange(features):
-					data[i,j] = npRandom.rand() * npRandom.randint(0,5)
+					data[i,j] = numpyRandom.rand() * numpyRandom.randint(0,5)
 
 			toTest = self.constructor(data)
 

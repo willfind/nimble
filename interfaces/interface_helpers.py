@@ -4,12 +4,11 @@ Utility functions that could be useful in multiple interfaces
 """
 
 import numpy
-import random
 import sys
 
 import UML
 from UML.exceptions import ArgumentException
-
+from UML.randomness import pythonRandom
 
 def makeArgString(wanted, argDict, prefix, infix, postfix):
 	"""
@@ -128,7 +127,7 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True)
 	check = 20
 	if length < check:
 		check = length
-	checkList = random.sample(xrange(length), check)
+	checkList = pythonRandom.sample(xrange(length), check)
 	results = []
 	for i in checkList:
 		strategy = verifyOvANotOvOSingleList(scoresPerPoint.pointView(i), predictedLabels[i,0], numLabels)

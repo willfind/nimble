@@ -14,7 +14,6 @@ import scipy.io
 import os.path
 import re 
 import datetime
-import random
 import copy
 
 import UML
@@ -28,6 +27,8 @@ from UML.data import Sparse
 from UML.data import Matrix
 from UML.data import List
 from UML.data import Base
+
+from UML.randomness import pythonRandom
 
 
 def findBestInterface(package):
@@ -824,7 +825,7 @@ def foldIterator(dataList, folds):
 
 	# randomly select the folded portions
 	indices = range(points)
-	random.shuffle(indices)
+	pythonRandom.shuffle(indices)
 	foldList = []
 	for fold in xrange(folds):
 		start = fold * numInFold
@@ -860,7 +861,7 @@ class _foldIteratorClass():
 		# we want each training set to be permuted wrt its ordering in the original
 		# data. This is setting up a permutation to be applied to each object
 		indices = range(0, copiedList[0].pointCount - len(self.foldList[self.index]))
-		random.shuffle(indices)
+		pythonRandom.shuffle(indices)
 
 		resultsList = []
 		for copied in copiedList:
@@ -1005,7 +1006,7 @@ def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoin
 	clusterNoiselessLabelList = []
 
 	def _noiseTerm():
-		return random.random()*0.0001 - 0.00005
+		return pythonRandom.random()*0.0001 - 0.00005
 
 	for curCluster in xrange(numClusters):
 		for curPoint in xrange(numPointsPerCluster):

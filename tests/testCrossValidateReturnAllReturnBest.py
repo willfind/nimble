@@ -12,23 +12,23 @@ from UML import crossValidateReturnBest
 from UML import createData
 from UML import createRandomData
 from UML.metrics import *
-import random
+from UML.randomness import pythonRandom
+
 from pdb import set_trace as ttt
 
 
 
-def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLabels=3, seed=None):
+def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLabels=3):
 	"""returns a tuple of two data objects of type dataType
 	the first object in the tuple contains the feature information ('X' in UML language)
 	the second object in the tuple contains the labels for each feature ('Y' in UML language)
 	"""
-	random.seed(seed)
 	if numLabels is None:
-		labelsRaw = [[random.random()] for _x in xrange(numPoints)]
+		labelsRaw = [[pythonRandom.random()] for _x in xrange(numPoints)]
 	else: #labels data set
-		labelsRaw = [[int(random.random()*numLabels)] for _x in xrange(numPoints)]
+		labelsRaw = [[int(pythonRandom.random()*numLabels)] for _x in xrange(numPoints)]
 
-	rawFeatures = [[random.random() for _x in xrange(numFeatures)] for _y in xrange(numPoints)]
+	rawFeatures = [[pythonRandom.random() for _x in xrange(numFeatures)] for _y in xrange(numPoints)]
 
 	return (createData(dataType, rawFeatures), createData(dataType, labelsRaw))
 

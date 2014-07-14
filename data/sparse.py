@@ -6,7 +6,7 @@ Class extending Base, defining an object to hold and manipulate a scipy coo_matr
 
 import numpy
 import scipy
-import random
+
 from scipy.sparse import coo_matrix
 from scipy.io import mmwrite
 import copy
@@ -16,7 +16,7 @@ from base import Base
 from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
-
+from UML.randomness import pythonRandom
 
 class Sparse(Base):
 
@@ -345,7 +345,7 @@ class Sparse(Base):
 				indices = []
 				for i in xrange(len(toExtract)):
 					indices.append(i)
-				randomIndices = random.sample(indices, number)
+				randomIndices = pythonRandom.sample(indices, number)
 				randomIndices.sort()
 				temp = []
 				for index in randomIndices:
@@ -369,7 +369,7 @@ class Sparse(Base):
 			if number is None:
 				number = end - start
 			if randomize:
-				toExtract = random.sample(xrange(start,end),number)
+				toExtract = pythonRandom.sample(xrange(start,end),number)
 				toExtract.sort()
 				return self._extractByList_implementation(toExtract, 'point')
 			else:
@@ -398,7 +398,7 @@ class Sparse(Base):
 				indices = []
 				for i in xrange(len(toExtract)):
 					indices.append(i)
-				randomIndices = random.sample(indices, number)
+				randomIndices = pythonRandom.sample(indices, number)
 				randomIndices.sort()
 				temp = []
 				for index in randomIndices:
@@ -425,7 +425,7 @@ class Sparse(Base):
 			if number is None:
 				number = end - start
 			if randomize:
-				toExtract = random.sample(xrange(start,end),number)
+				toExtract = pythonRandom.sample(xrange(start,end),number)
 				toExtract.sort()
 				return self._extractByList_implementation(toExtract, 'feature')
 			else:

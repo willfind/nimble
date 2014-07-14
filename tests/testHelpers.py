@@ -1,5 +1,4 @@
 
-import random
 import numpy
 import math
 from math import fabs
@@ -22,7 +21,7 @@ from UML.umlHelpers import trainAndApplyOneVsOne
 from UML.umlHelpers import trainAndApplyOneVsAll
 from UML.umlHelpers import _mergeArguments
 from UML.metrics import fractionIncorrect
-
+from UML.randomness import pythonRandom
 
 
 
@@ -168,7 +167,7 @@ class TestRand(FoldIteratorTester):
 	def __init__(self):	
 		def maker(data, featureNames=None):
 			possible = ['List', 'Matrix', 'Sparse']
-			retType = possible[random.randint(0, 2)]
+			retType = possible[pythonRandom.randint(0, 2)]
 			return UML.createData(retType=retType, data=data, featureNames=featureNames)
 
 		super(TestRand, self).__init__(maker)

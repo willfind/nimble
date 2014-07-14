@@ -7,27 +7,37 @@ import UML
 import random
 import numpy
 
-from UML.umlRandom import pyRandom
-from UML.umlRandom import npRandom
+import UML.randomness
+from UML.randomness import pythonRandom
+from UML.randomness import numpyRandom
+
+#def testResults():
+#	print pythonRandom.random()
+#	print numpyRandom.rand()
+#	assert False
 
 def testSetRandomSeedExplicit():
 	""" Test UML.setRandomSeed yields uml accessible random objects with the correct random behavior """
+	UML.randomness.startUncontrolledSection()
 
 	expPy = random.Random(1333)
 	expNp = numpy.random.RandomState(1333)
 	UML.setRandomSeed(1333)
 
 	for i in xrange(50):
-		assert pyRandom.random() == expPy.random()
-		assert npRandom.rand() == expNp.rand()
+		assert pythonRandom.random() == expPy.random()
+		assert numpyRandom.rand() == expNp.rand()
+
+	UML.randomness.endUncontrolledSection()
 
 
 def testSetRandomSeedNone():
 	""" Test UML.setRandomSeed operates as expected when passed None (-- use system time as seed) """
+	UML.randomness.startUncontrolledSection()	
 	
 	UML.setRandomSeed(None)
-	pyState = pyRandom.getstate()
-	npState = npRandom.get_state()
+	pyState = pythonRandom.getstate()
+	npState = numpyRandom.get_state()
 
 	origPy = random.Random()
 	origPy.setstate(pyState)
@@ -36,6 +46,8 @@ def testSetRandomSeedNone():
 
 	UML.setRandomSeed(None)
 
-	assert origPy.random() != pyRandom.random()
-	assert origNp.rand() != npRandom.rand()
+	assert origPy.random() != pythonRandom.random()
+	assert origNp.rand() != numpyRandom.rand()
+
+	UML.randomness.endUncontrolledSection()
 

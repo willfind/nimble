@@ -6,13 +6,12 @@ as possible
 
 """
 
-import random
-
 import UML
 
 from UML.exceptions import ArgumentException
 
 from UML.umlHelpers import generateClusteredPoints
+from UML.randomness import pythonRandom
 
 def generateClassificationData():
 	"""
@@ -104,7 +103,7 @@ def backend(toCall, portionToTest):
 
 	allLearners = UML.listLearners()
 	numSamples = int(len(allLearners) * portionToTest)
-	toTest = random.sample(allLearners, numSamples)
+	toTest = pythonRandom.sample(allLearners, numSamples)
 
 	for learner in toTest:
 		package = learner.split('.',1)[0].lower()

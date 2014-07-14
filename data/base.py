@@ -6,7 +6,6 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 # TODO conversions
 # TODO who sorts inputs to derived implementations?
 
-import random
 import math
 import itertools
 import copy
@@ -19,6 +18,7 @@ from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
+from UML.randomness import pythonRandom
 
 import dataHelpers
 # a default seed for testing and predictible trials
@@ -330,7 +330,6 @@ class Base(object):
 #		if self.pointCount == 0:
 #			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
-		random.seed(seed)
 		if extractionProbability is None:
 			raise ArgumentException("Must provide a extractionProbability")
 		if extractionProbability <= 0:
@@ -339,7 +338,7 @@ class Base(object):
 			raise ArgumentException("extractionProbability must be less than one")
 
 		def experiment(point):
-			return bool(random.random() < extractionProbability)
+			return bool(pythonRandom.random() < extractionProbability)
 
 		ret = self.extractPoints(experiment)
 
@@ -366,8 +365,7 @@ class Base(object):
 
 		# randomly select the folded portions
 		indices = range(self.pointCount)
-		random.seed(seed)
-		random.shuffle(indices)
+		pythonRandom.shuffle(indices)
 		foldList = []
 		for fold in xrange(numFolds):
 			start = fold * numInFold
@@ -674,7 +672,7 @@ class Base(object):
 		"""
 		if indices is None:
 			indices = range(0, self.pointCount)
-			random.shuffle(indices)
+			pythonRandom.shuffle(indices)
 		else:
 			if len(indices) != self.pointCount:
 				raise ArgumentException("If indices are supplied, it must be a list with all and only valid point indices")
@@ -697,7 +695,7 @@ class Base(object):
 		"""
 		if indices is None:
 			indices = range(0, self.featureCount)
-			random.shuffle(indices)
+			pythonRandom.shuffle(indices)
 		else:
 			if len(indices) != self.featureCount:
 				raise ArgumentException("If indices are supplied, it must be a list with all and only valid features indices")

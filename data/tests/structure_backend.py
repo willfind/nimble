@@ -5,6 +5,7 @@ from nose.tools import *
 
 from copy import deepcopy
 
+import UML
 from UML import createData
 from UML.data import List
 from UML.data import Matrix
@@ -641,13 +642,15 @@ class StructureBackend(DataTestObject):
 
 	def test_extractPoints_handmadeRangeRand_FM(self):
 		""" Test extractPoints() against handmade output for randomized range extraction with featureNames """
+		if not UML.randomness.stillDefaultState():
+			return
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data, featureNames=featureNames)
 		ret = toTest.extractPoints(start=0, end=2, number=2, randomize=True)
 		
-		expectedRet = self.constructor([[1,2,3],[4,5,6]], featureNames=featureNames)
-		expectedTest = self.constructor([[7,8,9]], featureNames=featureNames)
+		expectedRet = self.constructor([[4,5,6],[7,8,9]], featureNames=featureNames)
+		expectedTest = self.constructor([[1,2,3]], featureNames=featureNames)
 		
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)

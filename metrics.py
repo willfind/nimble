@@ -12,7 +12,7 @@ from math import sqrt
 from UML.exceptions import ArgumentException
 from UML.umlHelpers import computeError
 
-from UML.umlRandom import npRandom
+from UML.randomness import numpyRandom
 
 
 def _validatePredictedAsLabels(predictedValues):
@@ -420,10 +420,10 @@ def _generateAllOnes(length):
 
 def _generateAllCorrect(length):
 	while True:
-		correct = npRandom.randint(2, size=length)
+		correct = numpyRandom.randint(2, size=length)
 		if numpy.any(correct) and not numpy.all(correct):
 			break
-#	correct = npRandom.randint(2, size=length)
+#	correct = numpyRandom.randint(2, size=length)
 	correct = numpy.matrix(correct)
 	correct = correct.transpose()
 	correct = UML.createData(retType="List", data=correct)
@@ -441,7 +441,7 @@ def _generatePredicted(knowns, predictionType):
 	if predictionType == 0:	
 		return workingCopy
 	elif predictionType == 1:
-		scores = npRandom.randint(2, size=workingCopy.pointCount)
+		scores = numpyRandom.randint(2, size=workingCopy.pointCount)
 		scores = numpy.matrix(scores)
 		scores = scores.transpose()
 		scores = UML.createData(retType="List", data=scores, featureNames=['LabelScore'])
@@ -451,8 +451,8 @@ def _generatePredicted(knowns, predictionType):
 		dataToFill = []
 		for i in xrange(workingCopy.pointCount):
 			currConfidences = [None,None]
-			winner = npRandom.randint(10) + 10 + 2
-			loser = npRandom.randint(winner - 2) + 2 
+			winner = numpyRandom.randint(10) + 10 + 2
+			loser = numpyRandom.randint(winner - 2) + 2 
 			if knowns.data[i][0] == 0:
 				currConfidences[0] = winner
 				currConfidences[1] = loser

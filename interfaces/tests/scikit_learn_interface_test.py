@@ -12,7 +12,7 @@ from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociat
 
 from UML.umlHelpers import generateClusteredPoints
 
-from UML.umlRandom import npRandom
+from UML.randomness import numpyRandom
 
 packageName = 'sciKitLearn'
 
@@ -43,11 +43,11 @@ def testSciKitLearnSparseRegression():
 
 	x = 1000
 	c = 10
-	points = npRandom.randint(0,x,c)
-	points2 = npRandom.randint(0,x,c)
-	cols = npRandom.randint(0,x,c)
-	cols2 = npRandom.randint(0,x,c)
-	data = npRandom.rand(c)
+	points = numpyRandom.randint(0,x,c)
+	points2 = numpyRandom.randint(0,x,c)
+	cols = numpyRandom.randint(0,x,c)
+	cols2 = numpyRandom.randint(0,x,c)
+	data = numpyRandom.rand(c)
 	A = scipy.sparse.coo_matrix( (data, (points,cols)), shape=(x,x))
 	obj = UML.createData('Sparse', A)
 	testObj = obj.copy()

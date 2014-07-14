@@ -4,7 +4,6 @@ Class extending Base, using a list of lists to store data.
 """
 
 import copy
-import random
 import numpy
 from scipy.sparse import isspmatrix
 
@@ -13,7 +12,7 @@ from base import Base
 from dataHelpers import View
 from dataHelpers import reorderToMatchExtractionList
 from UML.exceptions import ArgumentException
-
+from UML.randomness import pythonRandom
 
 
 
@@ -264,7 +263,7 @@ class List(Base):
 				indices = []
 				for i in xrange(len(toExtract)):
 					indices.append(i)
-				randomIndices = random.sample(indices, number)
+				randomIndices = pythonRandom.sample(indices, number)
 				randomIndices.sort()
 				temp = []
 				for index in randomIndices:
@@ -292,7 +291,7 @@ class List(Base):
 				number = end - start
 			if randomize:
 				# +1 because range is endpoint exclusive
-				toExtract = random.sample(xrange(start,end+1),number)
+				toExtract = pythonRandom.sample(xrange(start,end+1),number)
 				toExtract.sort()
 				return self._extractPointsByList_implementation(toExtract)
 			else:
@@ -405,7 +404,7 @@ class List(Base):
 				indices = []
 				for i in xrange(len(toExtract)):
 					indices.append(i)
-				randomIndices = random.sample(indices, number)
+				randomIndices = pythonRandom.sample(indices, number)
 				randomIndices.sort()
 				temp = []
 				for index in randomIndices:
@@ -437,7 +436,7 @@ class List(Base):
 			if number is None:
 				number = end - start
 			if randomize:
-				toExtract = random.sample(xrange(start,end),number)
+				toExtract = pythonRandom.sample(xrange(start,end),number)
 				toExtract.sort()
 				return self._extractFeaturesByList_implementation(toExtract)
 			else:

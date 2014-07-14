@@ -12,9 +12,9 @@ UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 
 import UML.interfaces
 import UML.metrics
-import UML.umlRandom
+import UML.randomness
 
-from UML.umlRandom import setRandomSeed
+from UML.randomness import setRandomSeed
 
 from uml import train
 from uml import trainAndApply

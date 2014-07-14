@@ -10,10 +10,11 @@ import UML
 from base import Base
 from dataHelpers import View
 from UML.exceptions import ArgumentException
+from UML.randomness import pythonRandom
 
 from scipy.io import mmwrite
 from scipy.sparse import isspmatrix
-import random
+
 
 
 class Matrix(Base):
@@ -177,7 +178,7 @@ class Matrix(Base):
 				indices = []
 				for i in xrange(len(toExtract)):
 					indices.append(i)
-				randomIndices = random.sample(indices, number)
+				randomIndices = pythonRandom.sample(indices, number)
 				randomIndices.sort()
 				temp = []
 				for index in randomIndices:
@@ -201,7 +202,7 @@ class Matrix(Base):
 			if number is None or number:
 				number = end - start
 			if randomize:
-				toExtract = random.sample(xrange(start,end),number)
+				toExtract = pythonRandom.sample(xrange(start,end),number)
 				toExtract.sort()
 				return self._extractPointsByList_implementation(toExtract)
 			else:
@@ -286,13 +287,13 @@ class Matrix(Base):
 				indices = []
 				for i in xrange(len(toExtract)):
 					indices.append(i)
-				randomIndices = random.sample(indices, number)
+				randomIndices = pythonRandom.sample(indices, number)
 				randomIndices.sort()
 				temp = []
 				for index in randomIndices:
 					temp.append(toExtract[index])
 				toExtract = temp
-				#toExtract = random.sample(toExtract, number)
+				#toExtract = pythonRandom.sample(toExtract, number)
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
@@ -319,7 +320,7 @@ class Matrix(Base):
 			if number is None:
 				number = end - start
 			if randomize:
-				toExtract = random.sample(xrange(start,end),number)
+				toExtract = pythonRandom.sample(xrange(start,end),number)
 				toExtract.sort()
 				return self._extractFeaturesByList_implementation(toExtract)
 			else:

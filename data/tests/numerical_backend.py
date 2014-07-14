@@ -1,6 +1,5 @@
 
 import numpy
-import random
 
 from nose.tools import *
 
@@ -11,11 +10,12 @@ from UML.exceptions import ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
 
-from UML.umlRandom import npRandom
+from UML.randomness import numpyRandom
+from UML.randomness import pythonRandom
 
 def calleeConstructor(data, constructor):
 	if constructor is None:
-		return random.random()
+		return pythonRandom.random()
 	else:
 		return constructor(data)
 
@@ -112,8 +112,8 @@ def makeAllData(constructor, rhsCons, n, sparsity):
 	randomrf = UML.createRandomData('Matrix', n, n, sparsity)
 	lhsf = randomlf.copyAs("numpymatrix")
 	rhsf = randomrf.copyAs("numpymatrix")
-	lhsi = numpy.matrix(npRandom.random_integers(1,10,(n,n)), dtype=float)
-	rhsi = numpy.matrix(npRandom.random_integers(1,10,(n,n)), dtype=float)
+	lhsi = numpy.matrix(numpyRandom.random_integers(1,10,(n,n)), dtype=float)
+	rhsi = numpy.matrix(numpyRandom.random_integers(1,10,(n,n)), dtype=float)
 		
 	lhsfObj = constructor(lhsf)
 	lhsiObj = constructor(lhsi)
@@ -130,7 +130,7 @@ def back_autoVsNumpyObjCallee(constructor, npOp, UMLOp, UMLinplace, sparsity):
 	""" Test operation of automated data against numpy operations """
 	trials = 1
 	for t in range(trials):
-		n = random.randint(1,15)
+		n = pythonRandom.randint(1,15)
 
 		datas = makeAllData(constructor,constructor,n, sparsity)	
 		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
@@ -155,9 +155,9 @@ def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
 	lside = UMLOp.startswith('__r')
 	trials = 5
 	for t in range(trials):
-		n = random.randint(1,10)
+		n = pythonRandom.randint(1,10)
 
-		scalar = random.randint(1,4)
+		scalar = pythonRandom.randint(1,4)
 
 		datas = makeAllData(constructor,None,n, sparsity)	
 		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
@@ -189,7 +189,7 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, spa
 	
 	for i in range(len(makers)):
 		maker = makers[i]
-		n = random.randint(1,10)
+		n = pythonRandom.randint(1,10)
 
 		datas = makeAllData(constructor,maker,n, sparsity)	
 		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
@@ -359,7 +359,7 @@ class NumericalBackend(DataTestObject):
 	
 		for i in range(len(makers)):
 			maker = makers[i]
-			n = random.randint(1,10)
+			n = pythonRandom.randint(1,10)
 
 			randomlf = UML.createRandomData('Matrix', n, n, .2)
 			randomrf = UML.createRandomData('Matrix', n, n, .2)
@@ -682,8 +682,8 @@ class NumericalBackend(DataTestObject):
 		""" Test __pow__ with automated data and a scalar argument, against numpy operations """
 		trials = 5
 		for t in range(trials):
-			n = random.randint(1,15)
-			scalar = random.randint(0,5)
+			n = pythonRandom.randint(1,15)
+			scalar = pythonRandom.randint(0,5)
 
 			datas = makeAllData(self.constructor,None,n, .02)	
 			(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
@@ -724,8 +724,8 @@ class NumericalBackend(DataTestObject):
 		""" Test __ipow__ with automated data and a scalar argument, against numpy operations """
 		trials = 5
 		for t in range(trials):
-			n = random.randint(1,15)
-			scalar = random.randint(0,5)
+			n = pythonRandom.randint(1,15)
+			scalar = pythonRandom.randint(0,5)
 
 			datas = makeAllData(self.constructor,None,n, .02)	
 			(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas

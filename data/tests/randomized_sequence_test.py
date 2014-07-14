@@ -7,7 +7,6 @@ contained values.
 
 """
 
-import random
 import inspect
 import pdb
 import functools
@@ -18,6 +17,7 @@ from UML.data import Base
 from UML.data import View
 from UML.exceptions import ArgumentException
 
+from UML.randomness import pythonRandom
 
 
 numberOperations = 100
@@ -109,10 +109,8 @@ def nope():
 	points = numPoints
 	features = numFeatures
 
-	testSeed = random.random()
+	testSeed = pythonRandom.random()
 	testSeed = 5
-	random.seed(testSeed)
-	print testSeed
 
 	# dense int trial
 	sparcity = 0.05
@@ -159,7 +157,7 @@ def runSequence(objectList):
 #	for trial in xrange(numberOperations):
 	for trial in xrange(len(availableMethods)):
 		# random number as index into available operations list
-#		index = random.randint(0,len(availableMethods)-1)
+#		index = pythonRandom.randint(0,len(availableMethods)-1)
 		index = trial
 		currFunc = availableMethods[index]
 		print currFunc
@@ -259,7 +257,7 @@ def genObj(dataObj, matchType=True, matchPoints=False, matchFeatures=False):
 	if matchType:
 		dataType = dataObj.getTypeString()
 	else:
-		trial = random.randint(0,2)
+		trial = pythonRandom.randint(0,2)
 		if trial == 0:
 			dataType = 'List'
 		elif trial == 1:
@@ -267,8 +265,8 @@ def genObj(dataObj, matchType=True, matchPoints=False, matchFeatures=False):
 		else:
 			dataType = 'Sparse'
 
-	points = random.randint(1,numPoints)
-	features = random.randint(1,numFeatures)
+	points = pythonRandom.randint(1,numPoints)
+	features = pythonRandom.randint(1,numFeatures)
 	if matchPoints:
 		points = shape[0]	
 	if matchFeatures:	
@@ -288,7 +286,7 @@ genObjMatchShape = functools.partial(genObj, matchPoints=True, matchFeatures=Tru
 genObjMatchAll = functools.partial(genObj, matchPoints=True, matchFeatures=True)
 
 def genAppFunc(dataObj, onElements=False):
-	toAdd = random.randint(0,9)
+	toAdd = pythonRandom.randint(0,9)
 	if onElements:
 		def addToElements(element):
 			return element + toAdd
@@ -304,7 +302,7 @@ def genAppFunc(dataObj, onElements=False):
 genApplyFuncElmts = functools.partial(genAppFunc, onElements=True)
 
 def genID(dataObj, axis):
-	retIntID = random.randint(0,1)	
+	retIntID = pythonRandom.randint(0,1)	
 	if axis == 'point':
 		numInAxis = dataObj.pointCount
 		source = dataObj.pointNamesInverse
@@ -312,7 +310,7 @@ def genID(dataObj, axis):
 		numInAxis = dataObj.featureCount
 		source = dataObj.featureNamesInverse
 	
-	intID = random.randint(0,numInAxis-1)
+	intID = pythonRandom.randint(0,numInAxis-1)
 	if retIntID:
 		ret = intID
 	else:
@@ -332,10 +330,10 @@ def genIDList(dataObj, axis):
 		numInAxis = dataObj.featureCount
 		source = dataObj.featureNamesInverse
 
-	numToSample = random.randint(1,numInAxis)
-	IDList = random.sample(range(numInAxis), numToSample)
+	numToSample = pythonRandom.randint(1,numInAxis)
+	IDList = pythonRandom.sample(range(numInAxis), numToSample)
 	for i in range(len(IDList)):
-		if random.randint(0,1):
+		if pythonRandom.randint(0,1):
 			IDList[i] = source[IDList[i]]
 
 	return IDList
@@ -351,7 +349,7 @@ def genPermArr(dataObj, axis):
 	else:
 		numInAxis = dataObj.featureCount
 
-	permArr = random.sample(range(numInAxis), numInAxis)
+	permArr = pythonRandom.sample(range(numInAxis), numInAxis)
 
 	return permArr
 
@@ -360,7 +358,7 @@ genFPermArr = functools.partial(genPermArr, axis='feature')
 
 
 def genBool(dataObj):
-	if random.randint(0,1): 
+	if pythonRandom.randint(0,1): 
 		return True
 	else:
 		return False
@@ -373,7 +371,7 @@ def genTrue(dataObj):
 def genCopyAsFormat(dataObj):
 	poss = ['List', 'Matrix', 'Sparse', 'pythonlist', 'numpyarray', 'numpymatrix',
 			'scipycsr', 'scipycsc']
-	return poss[random.randint(0, len(poss)-1)]
+	return poss[pythonRandom.randint(0, len(poss)-1)]
 
 def genStartEnd(dataObj, axis):
 	if axis == 'point':
@@ -381,8 +379,8 @@ def genStartEnd(dataObj, axis):
 	else:
 		numInAxis = dataObj.featureCount
 
-	start = random.randint(0, numInAxis-1)
-	end = random.randint(start, numInAxis-1)
+	start = pythonRandom.randint(0, numInAxis-1)
+	end = pythonRandom.randint(start, numInAxis-1)
 	return (start, end)
 
 genStartEndPoints = functools.partial(genStartEnd, axis='point')
@@ -394,7 +392,7 @@ def genNumLimit(dataObj, axis):
 	else:
 		numInAxis = dataObj.featureCount
 
-	return random.randint(1, numInAxis-1)
+	return pythonRandom.randint(1, numInAxis-1)
 	
 genPNumLim = functools.partial(genNumLimit, axis='point')
 genFNumLim = functools.partial(genNumLimit, axis='faeture')
@@ -487,10 +485,10 @@ def genReducer(dataObj):
 	return oddOnlyReducer
 
 def genProb(dataObj):
-	return random.random()
+	return pythonRandom.random()
 
 def genObjName(dataObj):
-	return "NAME:" + str(random.randint(0,1000))
+	return "NAME:" + str(pythonRandom.randint(0,1000))
 
 def genZero(dataObj):
 	return 0
@@ -499,7 +497,7 @@ def genOne(dataObj):
 	return 1
 
 def pickGen(dataObj, genList):
-	picked = random.randint(0, len(genList)-1)
+	picked = pythonRandom.randint(0, len(genList)-1)
 	return genList[picked](dataObj)
 
 ftp = functools.partial
@@ -593,7 +591,7 @@ def makeParams(funcName, dataObj):
 	# thing default
 	if funcName in mutuallyExclusiveParams:
 		exclusives = mutuallyExclusiveParams[funcName]
-		toKeep = random.randint(0, len(exclusives)-1)
+		toKeep = pythonRandom.randint(0, len(exclusives)-1)
 		makeDefault = []
 		for i in range(len(exclusives)):
 			curr = exclusives[i]

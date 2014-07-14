@@ -10,22 +10,22 @@ sys.path.append('../..')
 from UML import crossValidate
 from UML import createData
 from UML.metrics import *
-import random
+from UML.randomness import pythonRandom
+
 from pdb import set_trace as ttt
 
 
-def _randomLabeledDataSet(dataType='matrix', numPoints=50, numFeatures=5, numLabels=3, seed=None):
+def _randomLabeledDataSet(dataType='matrix', numPoints=50, numFeatures=5, numLabels=3):
 	"""returns a tuple of two data objects of type dataType
 	the first object in the tuple contains the feature information ('X' in UML language)
 	the second object in the tuple contains the labels for each feature ('Y' in UML language)
 	"""
-	random.seed(seed)
 	if numLabels is None:
-		labelsRaw = [[random.random()] for _x in xrange(numPoints)]
+		labelsRaw = [[pythonRandom.random()] for _x in xrange(numPoints)]
 	else: #labels data set
-		labelsRaw = [[int(random.random()*numLabels)] for _x in xrange(numPoints)]
+		labelsRaw = [[int(pythonRandom.random()*numLabels)] for _x in xrange(numPoints)]
 
-	rawFeatures = [[random.random() for _x in xrange(numFeatures)] for _y in xrange(numPoints)]
+	rawFeatures = [[pythonRandom.random() for _x in xrange(numFeatures)] for _y in xrange(numPoints)]
 
 	return (createData(dataType, rawFeatures), createData(dataType, labelsRaw))
 
@@ -55,7 +55,7 @@ def test_crossValidate_runs():
 		X, Y = _randomLabeledDataSet(numPoints=numPointsInSet, numLabels=numLabelsInSet, dataType=dType)	
 		classifierAlgos = ['Custom.KNNClassifier']
 		for curAlgo in classifierAlgos:
-			result = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=random.random())
+			result = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=pythonRandom.random())
 			assert isinstance(result, float)
 
 
@@ -109,7 +109,7 @@ def test_crossValidate_reasonable_results():
 	#make random data set where all points lie on a linear hyperplane
 	numFeats = 3
 	numPoints = 50
-	points = [[random.gauss(0,1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
+	points = [[pythonRandom.gauss(0,1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
 	labels = [[sum(featVector)] for featVector in points]
 	X = createData('matrix', points)
 	Y = createData('matrix', labels)
