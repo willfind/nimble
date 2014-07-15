@@ -43,24 +43,27 @@ def stillDefaultState():
 	assert False
 	#return _stillDefault
 
-def startUncontrolledSection():
+def startAlternateControl(seed=None):
 	"""
-	Called to open a certain section of code that needs to have system seeded randomness
-	without changing the reproducibility of later random calls outside of the section. This
-	saves the state of the UML internal random sources, and calls setRandomSeed(None).
-	The saved state can then be restored with a call to endUncontrolledSection. Meant
-	to be used in unit tests for randomness features.
+	Called to open a certain section of code that needs to a different kind of randomness
+	than the current default, without changing the reproducibility of later random
+	calls outside of the section. This saves the state of the UML internal random sources,
+	and calls setRandomSeed using the given parameter. The saved state can then be restored
+	with a call to endAlternateControl. Meant to be used in unit tests, to either protect
+	later calls from the modifications in this section, or to ensure consistency regardless
+	of the current state of randomness in UML.
 
 	"""
 	global _saved
 	_saved = (pythonRandom.getstate(), numpyRandom.get_state())
-	setRandomSeed(None)
+	setRandomSeed(seed)
 
-def endUncontrolledSection():
+def endAlternateControl():
 	"""
-	Called to close a certain section of code that needs to have system seeded randomness
-	without changing the reproducibility of later random calls outside of the section.
-	This will restore the state saved by startUncontrolledSection.
+	Called to close a certain section of code that needs to have different kind of
+	randomness than the current default without changing the reproducibility of later
+	random calls outside of the section. This will restore the state saved by
+	startAlternateControl.
 
 	"""
 	global _saved
