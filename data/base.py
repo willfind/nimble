@@ -345,40 +345,6 @@ class Base(object):
 		return ret
 
 
-	def foldIterator(self, numFolds, seed=DEFAULT_SEED):
-		"""
-		Returns an iterator object that iterates through folds of this object
-
-		"""
-
-		if self.pointCount == 0:
-			raise ArgumentException("This object has 0 points, therefore, we cannot specify a valid number of folds")
-
-		if self.featureCount == 0:
-			raise ImproperActionException("We do not allow this operation on objects with 0 features")
-
-
-		# note: we want truncation here
-		numInFold = int(self.pointCount / numFolds)
-		if numInFold == 0:
-			raise ArgumentException("Must specify few enough folds so there is a point in each")
-
-		# randomly select the folded portions
-		indices = range(self.pointCount)
-		pythonRandom.shuffle(indices)
-		foldList = []
-		for fold in xrange(numFolds):
-			start = fold * numInFold
-			if fold == numFolds - 1:
-				end = self.pointCount
-			else:
-				end = (fold + 1) * numInFold
-			foldList.append(indices[start:end])
-
-		# return that lists iterator as the fold iterator 	
-		return self._foldIteratorClass(foldList, self)
-
-
 	def applyToPoints(self, function, points=None, inPlace=True):
 		"""
 		Applies the given function to each point in this object, copying the
@@ -2324,24 +2290,3 @@ class Base(object):
 			else:
 				if nameNum >= self._nextDefaultValueFeature:
 					self._nextDefaultValueFeature = nameNum + 1
-
-	class _foldIteratorClass():
-		def __init__(self, foldList, outerReference):
-			self.foldList= foldList
-			self.index = 0
-			self.outerReference = outerReference
-
-		def __iter__(self):
-			return self
-
-		def next(self):
-			if self.index >= len(self.foldList):
-				raise StopIteration
-			copied = self.outerReference.copy()
-			dataY = copied.extractPoints(self.foldList[self.index])
-			dataX = copied
-#			dataX.shufflePoints()
-			self.index = self.index +1
-			return dataX, dataY
-
-

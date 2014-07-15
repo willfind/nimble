@@ -52,7 +52,6 @@ unTestedMethods = [
 	'getTypeString', # won't actually be equal
 	'summaryReport', # do we really care about testing this?
 	'featureReport', # floating point equality errors? / do we care?
-	'foldIterator', # deprecated.
 	'pointCount', 'featureCount', # not runnable
 	'toString'
 	]
@@ -551,7 +550,6 @@ untested = ['dropFeaturesContainingType', # how can you choose the type?
 		'getTypeString', # won't actually be equal
 		'summaryReport', # do we really care about testing this?
 		'featureReport', # floating point equality errors? / do we care?
-		'foldIterator', # deprecated.
 		'pointCount', 'featureCount', # not callable
 		'toString' # different underlying types will produce different outputs
 		]

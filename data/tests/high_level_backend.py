@@ -248,62 +248,6 @@ class HighLevelBackend(DataTestObject):
 
 
 
-	################
-	# foldIterator #
-	################
-
-	@raises(ArgumentException)
-	def test_foldIterator_exceptionPEmpty(self):
-		""" Test foldIterator() for exception when object is point empty """
-		data = [[],[]]
-		data = numpy.array(data).T
-		toTest = self.constructor(data)
-		toTest.foldIterator(2)
-
-	@raises(ImproperActionException)
-	def test_foldIterator_exceptionFEmpty(self):
-		""" Test foldIterator() for exception when object is feature empty """
-		data = [[],[]]
-		data = numpy.array(data)
-		toTest = self.constructor(data)
-		toTest.foldIterator(2)
-
-	@raises(ArgumentException)
-	def test_foldIterator_exceptionTooManyFolds(self):
-		""" Test foldIterator() for exception when given too many folds """
-		data = [[1],[2],[3],[4],[5]]
-		names = ['col']
-		toTest = self.constructor(data, featureNames=names)
-		toTest.foldIterator(6)
-
-
-	def test_foldIterator_verifyPartitions(self):
-		""" Test foldIterator() yields the correct number folds and partitions the data """
-		data = [[1],[2],[3],[4],[5]]
-		names = ['col']
-		toTest = self.constructor(data, featureNames=names)
-		folds = toTest.foldIterator(2)
-
-		(fold1Train, fold1Test) = folds.next()
-		(fold2Train, fold2Test) = folds.next()
-
-		try:
-			folds.next()
-			assert False
-		except StopIteration:
-			pass
-
-		assert fold1Train.pointCount + fold1Test.pointCount == 5
-		assert fold2Train.pointCount + fold2Test.pointCount == 5
-
-		fold1Train.appendPoints(fold1Test)
-		fold2Train.appendPoints(fold2Test)
-
-		#TODO some kind of rigourous partition check
-
-
-
-
 	####################
 	# applyToPoints() #
 	####################

@@ -37,6 +37,7 @@ from UML.umlHelpers import ArgumentIterator
 from UML.umlHelpers import trainAndApplyOneVsAll
 from UML.umlHelpers import trainAndApplyOneVsOne
 from UML.umlHelpers import _mergeArguments
+from UML.umlHelpers import foldIterator
 
 from UML.randomness import numpyRandom
 
@@ -420,8 +421,6 @@ def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
 	return ret
 
 
-#todo add seed specification support to UML.foldIterator() to avoid 
-#using two harmonious iterators (methods of base) and zip()
 def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, foldSeed=DEFAULT_SEED, **kwarguments):
 	"""
 	K-fold cross validation.
@@ -477,16 +476,12 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds
 
 	#using the same seed (to ensure idetical folds in X and Y and thus accurate
 	#linking between according points) make iterators containing folds
-	foldedXIterator = X.foldIterator(numFolds, seed=foldSeed)
-	foldedYIterator = Y.foldIterator(numFolds, seed=foldSeed)
-	assert len(foldedXIterator.foldList) == len(foldedYIterator.foldList)
+	folds = foldIterator([X,Y], numFolds)
 
 	performanceListOfFolds = []
 	#for each fold get train and test sets
-	for XFold, YFold in zip(foldedXIterator, foldedYIterator):
-		
-		curTrainX, curTestingX = XFold
-		curTrainY, curTestingY = YFold
+	for fold in folds:
+		[(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
 
 		#run algorithm on the folds' training and testing sets
 		curRunResult = trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=arguments, scoreMode=scoreMode, sendToLog=sendToLog, **kwarguments)
