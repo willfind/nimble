@@ -6,20 +6,16 @@ Tests for the UML.randUML submodule
 import UML
 import random
 import numpy
+import nose
 
 import UML.randomness
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 
-#def testResults():
-#	print pythonRandom.random()
-#	print numpyRandom.rand()
-#	assert False
 
+@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def testSetRandomSeedExplicit():
 	""" Test UML.setRandomSeed yields uml accessible random objects with the correct random behavior """
-	UML.randomness.startAlternateControl()
-
 	expPy = random.Random(1333)
 	expNp = numpy.random.RandomState(1333)
 	UML.setRandomSeed(1333)
@@ -28,13 +24,9 @@ def testSetRandomSeedExplicit():
 		assert pythonRandom.random() == expPy.random()
 		assert numpyRandom.rand() == expNp.rand()
 
-	UML.randomness.endAlternateControl()
-
-
+@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def testSetRandomSeedNone():
-	""" Test UML.setRandomSeed operates as expected when passed None (-- use system time as seed) """
-	UML.randomness.startAlternateControl()	
-	
+	""" Test UML.setRandomSeed operates as expected when passed None (-- use system time as seed) """	
 	UML.setRandomSeed(None)
 	pyState = pythonRandom.getstate()
 	npState = numpyRandom.get_state()
@@ -49,12 +41,9 @@ def testSetRandomSeedNone():
 	assert origPy.random() != pythonRandom.random()
 	assert origNp.rand() != numpyRandom.rand()
 
-	UML.randomness.endAlternateControl()
-
-
+@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def testSetRandomSeedPropagate():
 	""" Test that UML.setRandomSeed will correctly control how randomized methods in UML perform """
-	UML.randomness.startAlternateControl()	
 	data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15],[17,18,19],[2,2,2],[3,3,3],[4,4,4],[5,5,5]]
 	featureNames = ['1','2','3']
 	toTest1 = UML.createData("List", data, featureNames=featureNames)
@@ -73,4 +62,3 @@ def testSetRandomSeedPropagate():
 	assert ret1 == ret3
 	assert ret1 != ret2
 
-	UML.randomness.endAlternateControl()

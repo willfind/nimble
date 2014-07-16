@@ -230,21 +230,45 @@ class HighLevelBackend(DataTestObject):
 
 	def test_extractPointsByCoinToss_handmade(self):
 		""" Test extractPointsByCoinToss() against handmade output with the test seed """
-		if not UML.randomness.stillDefaultState():
-			return
-		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-		featureNames = ['1','2','3']
-		pointNames = ['1', '4', '7', '10']
+		data = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
+		featureNames = ['a','b','c']
+		pointNames = ['1', '2', '3', '4', '5', '6']
 		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+		orig = toTest.copy()
 		ret = toTest.extractPointsByCoinToss(0.5)
 
-		expRetPN = ['1', '4', '10']
-		expTestPN = ['7']
-		expRet = self.constructor([[1,2,3],[4,5,6],[10,11,12]], pointNames=expRetPN, featureNames=featureNames)
-		expTest = self.constructor([[7,8,9]], pointNames=expTestPN, featureNames=featureNames)
+		def checkEqual(v1, v2):
+			assert len(v1) == len(v2)
+			for i in range(len(v1)):
+				assert v1[i] == v2[i]
 
-		assert ret.isIdentical(expRet)
-		assert expTest.isIdentical(toTest)
+		# everything in ret is in orig
+		for pIndex in range(ret.pointCount):
+			currRetPoint = ret.pointView(pIndex)
+			currName = ret.pointNamesInverse[pIndex]
+			currOrigPoint = orig.pointView(currName)
+			checkEqual(currRetPoint, currOrigPoint)
+
+		# everything in toTest is in orig
+		for pIndex in range(toTest.pointCount):
+			currToTestPoint = toTest.pointView(pIndex)
+			currName = toTest.pointNamesInverse[pIndex]
+			currOrigPoint = orig.pointView(currName)
+			checkEqual(currToTestPoint, currOrigPoint)
+
+		# everything in orig in either ret or toTest
+		for pIndex in range(orig.pointCount):
+			currOrigPoint = orig.pointView(pIndex)
+			currName = orig.pointNamesInverse[pIndex]
+			if currName in ret.pointNames:
+				assert currName not in toTest.pointNames
+				checkPoint = ret.pointView(currName)
+			else:
+				assert currName in toTest.pointNames
+				assert currName not in ret.pointNames
+				checkPoint = toTest.pointView(currName)
+
+			checkEqual(checkPoint, currOrigPoint)
 
 
 

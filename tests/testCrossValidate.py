@@ -7,6 +7,8 @@
 import sys
 sys.path.append('../..')
 
+import nose
+
 from UML import crossValidate
 from UML import createData
 from UML.metrics import *
@@ -119,18 +121,21 @@ def test_crossValidate_reasonable_results():
 	#assert error essentially zero since there's no noise
 	assert result < .001 
 
-
+@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateShuffleSeed():
 	"""Assert that for a dataset, the same algorithm will generate the same model 
-	(and have the same accuracy) when the foldSeed is identical.
+	(and have the same accuracy) when presented with identical random state (and
+	therefore identical folds).
 	Assert that the model is different when the foldSeed is different
 	"""
 	numTrials = 5
 	for _ in xrange(numTrials):
 		X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
-		theSeed = 'theseed'
-		resultOne = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=theSeed)
-		resultTwo = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=theSeed)
+		seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
+		UML.setRandomSeed(seed)
+		resultOne = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
+		UML.setRandomSeed(seed)
+		resultTwo = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
 		assert resultOne == resultTwo
 	newSeed = 'newseed'
 	resultThree = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=newSeed)

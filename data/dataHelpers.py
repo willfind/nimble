@@ -40,6 +40,15 @@ class View():
 				return False
 		return True
 
+	def __str__(self):
+		ret = '['
+		for i in range(len(self)):
+			if i != 0:
+				ret +=', '
+			ret += str(self[i])
+		ret += ']'
+		return ret
+
 	@abstractmethod
 	def __getitem__(self, index):
 		pass

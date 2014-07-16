@@ -6,6 +6,7 @@
 import sys
 sys.path.append('../..')
 
+import nose
 
 from UML import crossValidateReturnAll
 from UML import crossValidateReturnBest
@@ -33,7 +34,7 @@ def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLa
 	return (createData(dataType, rawFeatures), createData(dataType, labelsRaw))
 
 
-
+@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateReturnAll():
 	"""assert that KNeighborsClassifier generates results with default arguments
 	assert that having the same function arguments yields the same results.
@@ -43,20 +44,20 @@ def test_crossValidateReturnAll():
 	X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
 	#try with no extra arguments at all:
 	result = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, foldSeed='myseed', )
-	print result
 	assert result
 	assert 1 == len(result)
 	assert result[0][0] == {}
 	#try with some extra elements but all after default
 	result = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=(1,2,3))
-	print result
 	assert result
 	assert 3 == len(result)
 
-
 	#since the same seed is used, and these calls are effectively building the same arguments, (p=2 is default for algo)
 	#the scores in results list should be the same (though the keys will be different (one the second will have 'p':2 in the keys as well))
+	seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
+	UML.setRandomSeed(seed)
 	resultDifferentNeighbors = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, foldSeed='myseed', k=(1,2,3,4,5))
+	UML.setRandomSeed(seed)
 	resultDifferentNeighborsButSameCombinations = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, foldSeed='myseed', k=(1,2,3,4,5))
 	#assert the the resulting SCORES are identical
 	#uncertain about the order
@@ -78,7 +79,7 @@ def test_crossValidateReturnAll():
 
 
 
-
+@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateReturnBest():
 	"""test that the 'best' ie fittest argument combination is chosen.
 	test that best tuple is in the 'all' list of tuples.
@@ -88,9 +89,13 @@ def test_crossValidateReturnBest():
 	#try with no extra arguments at all:
 	shouldMaximizeScores = False
 
+	# want to have a predictable random state in order to control 
+	seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
+	UML.setRandomSeed(seed)
 	resultTuple = crossValidateReturnBest('Custom.KNNClassifier', X, Y, fractionIncorrect, foldSeed='myseed', maximize=shouldMaximizeScores, k=(1,2,3))
 	assert resultTuple
 
+	UML.setRandomSeed(seed)
 	allResultsList = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, foldSeed='myseed', k=(1,2,3))
 	#since same args were used (except return all doesn't have a 'maximize' parameter,
 	# the best tuple should be in allResultsList
