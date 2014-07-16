@@ -229,7 +229,7 @@ class HighLevelBackend(DataTestObject):
 
 
 	def test_extractPointsByCoinToss_handmade(self):
-		""" Test extractPointsByCoinToss() against handmade output with the test seed """
+		""" Test extractPointsByCoinToss() produces sane results (ie a partition) """
 		data = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
 		featureNames = ['a','b','c']
 		pointNames = ['1', '2', '3', '4', '5', '6']

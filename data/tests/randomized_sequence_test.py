@@ -108,9 +108,6 @@ def nope():
 	points = numPoints
 	features = numFeatures
 
-	testSeed = pythonRandom.random()
-	testSeed = 5
-
 	# dense int trial
 	sparcity = 0.05
 	objectList = []
@@ -519,7 +516,7 @@ generators = {'appendFeatures':[genObjMatchPoints],
 		'extractFeatures':[genFIDList, None, None, genFNumLim, genBool],
 		#TODO!!!! first arg can also be function!!!!
 		'extractPoints':[genPIDList, None, None, genPNumLim, genBool], 
-		'extractPointsByCoinToss':[genProb, genZero], # TODO genZero as random seed???
+		'extractPointsByCoinToss':[genProb],
 		'featureView':[genFID],
 		'hashCode':[],
 		'isApproximatelyEqual':[genObj],
@@ -535,8 +532,8 @@ generators = {'appendFeatures':[genObjMatchPoints],
 		'setPointName':[genPID, genPName],
 		'setPointNamesFromDict':[genPNameDict],
 		'setPointNamesFromList':[genPNameList],
-		'shuffleFeatures':[genFPermArr, genZero], # TODO genZero as random seed???
-		'shufflePoints':[genPPermArr, genZero], # TODO genZero as random seed???
+		'shuffleFeatures':[genFPermArr],
+		'shufflePoints':[genPPermArr],
 		'sortFeatures':[genFID, ftp(pickGen, genList=(genScorer,genComparator))],
 		'sortPoints':[genPID, ftp(pickGen, genList=(genScorer,genComparator))],
 		'transformFeatureToIntegerFeature':[genFID],

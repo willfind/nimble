@@ -57,7 +57,7 @@ def test_crossValidate_runs():
 		X, Y = _randomLabeledDataSet(numPoints=numPointsInSet, numLabels=numLabelsInSet, dataType=dType)	
 		classifierAlgos = ['Custom.KNNClassifier']
 		for curAlgo in classifierAlgos:
-			result = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=pythonRandom.random())
+			result = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, numFolds=3)
 			assert isinstance(result, float)
 
 
@@ -126,7 +126,7 @@ def test_crossValidateShuffleSeed():
 	"""Assert that for a dataset, the same algorithm will generate the same model 
 	(and have the same accuracy) when presented with identical random state (and
 	therefore identical folds).
-	Assert that the model is different when the foldSeed is different
+	Assert that the model is different when the random state is different
 	"""
 	numTrials = 5
 	for _ in xrange(numTrials):
@@ -137,9 +137,9 @@ def test_crossValidateShuffleSeed():
 		UML.setRandomSeed(seed)
 		resultTwo = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
 		assert resultOne == resultTwo
-	newSeed = 'newseed'
-	resultThree = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3, foldSeed=newSeed)
-	#assert that models have diffeerent errors when different seeds are used.
+
+	resultThree = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
+	#assert that models have diffeerent errors when different random state is available.
 	#the idea being that different seeds create different folds
 	#which create different models, which create different accuracies
 	#for sufficiently large datasets.

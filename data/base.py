@@ -21,8 +21,6 @@ from UML.logger import produceAggregateReport
 from UML.randomness import pythonRandom
 
 import dataHelpers
-# a default seed for testing and predictible trials
-from dataHelpers import DEFAULT_SEED
 
 # the prefix for default featureNames
 from dataHelpers import DEFAULT_PREFIX
@@ -319,7 +317,7 @@ class Base(object):
 
 		self.appendFeatures(converted)
 
-	def extractPointsByCoinToss(self, extractionProbability, seed=DEFAULT_SEED):
+	def extractPointsByCoinToss(self, extractionProbability):
 		"""
 		Return a new object containing a randomly selected sample of points
 		from this object, where a random experiment is performed for each
@@ -629,7 +627,7 @@ class Base(object):
 		return True
 
 
-	def shufflePoints(self, indices=None, seed=DEFAULT_SEED):
+	def shufflePoints(self, indices=None):
 		"""
 		Permute the indexing of the points so they are in a random order. Note: this relies on
 		python's random.shuffle() so may not be sufficiently random for large number of points.
@@ -652,7 +650,7 @@ class Base(object):
 		
 
 
-	def shuffleFeatures(self, indices=None, seed=DEFAULT_SEED):
+	def shuffleFeatures(self, indices=None):
 		"""
 		Permute the indexing of the features so they are in a random order. Note: this relies on
 		python's random.shuffle() so may not be sufficiently random for large number of features.

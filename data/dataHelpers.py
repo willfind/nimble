@@ -11,10 +11,6 @@ import math
 from abc import ABCMeta
 from abc import abstractmethod
 
-
-# a default seed for testing and predictible trials
-DEFAULT_SEED = 'DEFAULTSEED'
-
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
 
