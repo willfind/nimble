@@ -800,6 +800,45 @@ def generateAllPairs(items):
 
 	return pairs
 
+def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, folds=10, scoreMode='label', negativeLabel=None, sendToLog=False, **kwarguments):
+	"""
+	Same signature as UML.crossValidate, except that the argument 'numFolds' is replaced with 'folds'
+	which is allowed to be either an int indicating the number of folds to use, or a foldIterator object
+	to use explicitly.
+	"""
+	if not isinstance(X, Base):
+		raise ArgumentException("X must be a Base object")
+	if not isinstance(Y, (Base, int)):
+		raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
+	if isinstance(Y, int):
+		Y = X.extractFeatures(start=Y, end=Y)
+	
+	if not X.pointCount == Y.pointCount:
+		#todo support indexing if Y is an index for X instead
+		raise ArgumentException("X and Y must contain the same number of points.")
+
+	if isinstance(folds, int): 
+		folds = foldIterator([X,Y], folds)
+	performanceListOfFolds = []
+	#for each fold get train and test sets
+	for fold in folds:
+		[(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
+
+		#run algorithm on the folds' training and testing sets
+		curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=arguments, scoreMode=scoreMode, sendToLog=sendToLog, **kwarguments)
+		#calculate error of prediction, according to performanceFunction
+		curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
+
+		performanceListOfFolds.append(curPerformance)
+
+	if len(performanceListOfFolds) == 0:
+		raise(ZeroDivisionError("crossValidate tried to average performance of ZERO runs"))
+		
+	#else average score from each fold (works for one fold as well)
+	averagePerformance = sum(performanceListOfFolds)/float(len(performanceListOfFolds))
+	return averagePerformance
+
+
 
 def foldIterator(dataList, folds):
 	"""
@@ -821,7 +860,7 @@ def foldIterator(dataList, folds):
 	# note: we want truncation here
 	numInFold = int(points / folds)
 	if numInFold == 0:
-		raise ArgumentException("Must specifiy few enough folds so there is a point in each")
+		raise ArgumentException("Must specify few enough folds so there is a point in each")
 
 	# randomly select the folded portions
 	indices = range(points)
@@ -841,9 +880,12 @@ def foldIterator(dataList, folds):
 
 class _foldIteratorClass():
 	def __init__(self, dataList, foldList):
-		self.foldList= foldList
+		self.foldList = foldList
 		self.index = 0
 		self.dataList = dataList
+
+	def reset(self):
+		self.index = 0
 
 	def __iter__(self):
 		return self

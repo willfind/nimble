@@ -79,7 +79,7 @@ def _assertClassifierErrorOnRandomDataPlausible(actualError, numLabels, toleranc
 
 
 def test_crossValidate_reasonable_results():
-	"""Assert that crossValidate returns reasonable erros for known algorithms
+	"""Assert that crossValidate returns reasonable errors for known algorithms
 	on cooked data sets:
 	crossValidate should do the following:
 	classifiers:

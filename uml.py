@@ -38,6 +38,7 @@ from UML.umlHelpers import trainAndApplyOneVsAll
 from UML.umlHelpers import trainAndApplyOneVsOne
 from UML.umlHelpers import _mergeArguments
 from UML.umlHelpers import foldIterator
+from UML.umlHelpers import crossValidateBackend
 
 from UML.randomness import numpyRandom
 
@@ -457,36 +458,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds
 	the learner when the learner was passed all three values of a, separately.
 
 	"""
-	if not isinstance(X, Base):
-		raise ArgumentException("X must be a Base object")
-	if not isinstance(Y, (Base, int)):
-		raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
-	if isinstance(Y, int):
-		Y = X.extractFeatures(start=Y, end=Y)
-	
-	if not X.pointCount == Y.pointCount:
-		#todo support indexing if Y is an index for X instead
-		raise ArgumentException("X and Y must contain the same number of points.")
-
-	folds = foldIterator([X,Y], numFolds)
-	performanceListOfFolds = []
-	#for each fold get train and test sets
-	for fold in folds:
-		[(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
-
-		#run algorithm on the folds' training and testing sets
-		curRunResult = trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=arguments, scoreMode=scoreMode, sendToLog=sendToLog, **kwarguments)
-		#calculate error of prediction, according to performanceFunction
-		curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
-
-		performanceListOfFolds.append(curPerformance)
-
-	if len(performanceListOfFolds) == 0:
-		raise(ZeroDivisionError("crossValidate tried to average performance of ZERO runs"))
-		
-	#else average score from each fold (works for one fold as well)
-	averagePerformance = sum(performanceListOfFolds)/float(len(performanceListOfFolds))
-	return averagePerformance
+	return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, negativeLabel, sendToLog, **kwarguments)
 
 def crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, **kwarguments):
 	"""
@@ -549,12 +521,16 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments={},
 	#handles case of merged arguments being {}
 	argumentCombinationIterator = ArgumentIterator(merged)
 
+	# we want the folds for each argument combination to be the same
+	folds = foldIterator([X,Y], numFolds)
+
 	performanceList = []
 	for curArgumentCombination in argumentCombinationIterator:
 		#calculate cross validated performance, given the current argument dict
-		errorForArgument = crossValidate(learnerName, X, Y, performanceFunction, curArgumentCombination, numFolds, scoreMode, negativeLabel, sendToLog)
+		errorForArgument = crossValidateBackend(learnerName, X, Y, performanceFunction, curArgumentCombination, folds, scoreMode, negativeLabel, sendToLog)
 		#store the tuple with the current argument and cross validated performance	
 		performanceList.append((curArgumentCombination, errorForArgument))
+		folds.reset()
 	#return the list of tuples - tracking the performance of each argument
 	return performanceList
 
