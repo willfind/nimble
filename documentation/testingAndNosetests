@@ -1,28 +1,39 @@
 
-Unit and integration testing in UML is done done with nosetests. The expected
-method of testing is by calling nosetests in the root UML directory. We are
-generally reliant on nosetests' test discovery to find the tests we want run,
-but at the same time there are some guidelines in place to encourage cleanly
-organized code, and a couple of exceptions (discussed below) where organization
+Unit and integration testing in UML is done with nosetests. The expected
+method of testing is by calling the script UML/runTests.py as main.
+During development, one may wish to call nosetests directly on some
+subsection of the UML code, for that reason, and the purpose of organization,
+there are some guidelines in place about where and how tests are placed and
+named, and a couple of exceptions (discussed below) where organization
 is strictly enforced.
 
-First, a quick description of nosetests test discovery. Nosetests will recursively
-search through everything in the called directory, looking for objects which
-have names that look like tests according to a complicated regex. Some helpful
-highlights with respect to how the regex works: if a name has a leading '_' it
-is ignored. If a name starts with 'test' then it is test related. And if your
-naming schema is lower_with_underscores and the name includes and underscore
-separated 'test' then it will be test related. for a test function to be
-run according to test discovery, it must have a test related name, and be in 
-a module with a test related name. Alternatively, it may have a test related
-name and be in a object with a test related name that is in a module with a
-test related name.
+When running the canonical testing script runTests, every python source file
+in the UML directory tree is checked for test functions or objects, so it
+is not strictly necessary that tests be placed in modules that nosetests
+will discover. However,  a quick description of nosetests test discovery is
+included for developers looking to test portions of the code only. Nosetests
+will recursively search through everything in the working directory, looking
+for objects which have names that look like tests according to a hardcoded
+regular expression. Some helpful highlights with respect to how the regex
+works: if a name has a leading '_' it is ignored. If a name starts with 'test'
+then it is test related. And if the naming schema is lower_with_underscores
+and the name includes an underscore separated 'test' then it will be test
+related. For a test function to be run according to test discovery, it must
+have a test related name, and be in  a module with a test related name.
+Alternatively, it may have a test related name and be in a object with a test
+related name that is in a module with a test related name. Note that if a
+test function or object is in a module whose name is not recognized during
+test discovery by the regular expression (for example a test in the
+hypothetical file UML/foo/bar.py), then it is still possible to call it by
+executing nosetests on that particular file (nosetests UML/foo/bar.py).
 
 The UML preferred test organization schema is to group all tests for a package
-in a subpackage named tests. Roughly, if there is code in UML/foo/bar.py,
+in a subpackage named tests in such a way that it will be tripped by test
+discovery (as a courtesy). Roughly, if there is code in UML/foo/bar.py,
 then we expect code that tests bar.py be in (one or more files named)
 UML/foo/tests/baz.py, where the name baz, and the contents of the file baz.py
-are named so that test discovery will find and run the tests. 
+are named so that test discovery will find and run the tests. Often, this
+results in a file named UML/foo/tests/barTests.py or something similar.
 
 There are two cases where the organization requirements are more stringent,
 making use of nosetests test organization at the object or package level
@@ -40,10 +51,11 @@ Secondly, UML.data defines a class hierarchy of objects which share exactly
 the same user facing API. It is inconvenient to have to define new tests
 for each class, we want instead to write tests for each forward facing
 function, and have it run once for each subclass. This is accomplished
-by grouping all the tests into the objects DerivedBackend and
-HighLevelBackend. Any subclass of UML.data.Base must have a corresponding
-test object placed in UML.data.tests.testObjects and subclass from both
-DerivedBackend and HighLevelBackend. During __init__ a call to
+by grouping all tests of forward facing methods into objects, each of
+which are subclasses of DataTestObject defined in UML.data.tests.baseObject.
+Any subclass of UML.data.Base must have a corresponding test object placed in
+UML.data.tests.testObjects and subclass from all of the method grouping
+objects (StructureBackend, QueryBackend, etc.). During __init__ a call to
 super(...).__init__ must be made with a string value to be used for the
 retType parameter of UML.createData() defining which kind of object to 
 be tested. Any further tests, for private helpers can also be placed in
