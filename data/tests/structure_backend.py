@@ -1159,6 +1159,16 @@ class StructureBackend(DataTestObject):
 		assert orig.isIdentical(expOrig)
 		assert ret.isIdentical(expRet)
 
+	def test_copyPoints_handmadeListOrdering(self):
+		""" Test copyPoints() against handmade output for out of order indices """
+		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15]]
+		names = ['1', '4', '7', '10', '13']
+		toTest = self.constructor(data, pointNames=names)
+		cop1 = toTest.copyPoints([3,4,1])
+		exp1 = self.constructor([[10,11,12],[13,14,15],[4,5,6]], pointNames=['10','13','4'])
+		assert cop1.isIdentical(exp1)
+
+
 	@raises(ArgumentException)
 	def test_copyPoints_exceptionStartInvalid(self):
 		""" Test copyPoints() for ArgumentException when start is not a valid point index """
@@ -1285,6 +1295,15 @@ class StructureBackend(DataTestObject):
 
 		assert orig.isIdentical(expOrig)
 		assert ret.isIdentical(expRet)
+
+	def test_copyFeatures_handmadeListOrdering(self):
+		""" Test copyFeatures() against handmade output for out of order indices """
+		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,122]]
+		names = ['1', '2', '3', 'dubs']
+		toTest = self.constructor(data, featureNames=names)
+		cop1 = toTest.copyFeatures([2,3,1])
+		exp1 = self.constructor([[3, 33, 2],[6, 66, 5],[9, 99, 8],[12, 122, 11]], featureNames=['3','dubs','2'])
+		assert cop1.isIdentical(exp1)
 
 
 	@raises(ArgumentException)

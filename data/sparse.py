@@ -839,6 +839,8 @@ class Sparse(Base):
 			return self._data.todense()
 
 	def _copyPoints_implementation(self, points, start, end):
+#		import pdb
+#		pdb.set_trace()
 		retData = []
 		retRow = []
 		retCol = []
@@ -846,7 +848,7 @@ class Sparse(Base):
 			for i in xrange(len(self._data.data)):
 				if self._data.row[i] in points:
 					retData.append(self._data.data[i])
-					retRow.append(_numLessThan(self._data.row[i], points))
+					retRow.append(points.index(self._data.row[i]))
 					retCol.append(self._data.col[i])
 
 			newShape = (len(points), numpy.shape(self._data)[1])
@@ -872,7 +874,7 @@ class Sparse(Base):
 				if self._data.col[i] in features:
 					retData.append(self._data.data[i])
 					retRow.append(self._data.row[i])
-					retCol.append(_numLessThan(self._data.col[i], features))
+					retCol.append(features.index(self._data.col[i]))
 
 			newShape = (numpy.shape(self._data)[0], len(features))
 		else:
@@ -1176,14 +1178,12 @@ class nzItRange():
 			return self.next()
 
 def _numLessThan(value, toCheck): # TODO caching
-	i = 0
-	while i < len(toCheck):
+	ltCount = 0
+	for i in xrange(len(toCheck)):
 		if toCheck[i] < value:
-			i = i + 1
-		else:
-			break
+			ltCount += 1
 
-	return i
+	return ltCount
 
 def _calcShapes(currShape, numExtracted, axisType):
 	(rowShape, colShape) = currShape
