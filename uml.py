@@ -613,8 +613,8 @@ def learnerType(learnerNames):
 	if not isinstance(learnerNames, list):
 		learnerNames = [learnerNames]
 
-	splitNames = []
-	associated = []
+	resultsList = []
+	secondPassLearnerNames = []
 	for name in learnerNames:
 		if not isinstance(name, str):
 			raise ArgumentException("learnerNames must be a string or a list of strings.")
@@ -624,22 +624,14 @@ def learnerType(learnerNames):
 		allValidLearnerNames = currInterface.listLearners()
 		if not splitTuple[1] in allValidLearnerNames:
 			raise ArgumentException(name + " is not a valid learner on your machine.")
-		splitNames.append(splitTuple)
-		associated.append(currInterface)
-
-	resultsList = []
-	secondPassLearnerNames = []
-	for index in range(len(splitNames)):
-		(curPackage, curName) = splitNames[index]
-		interface = associated[index]
-		result = interface.learnerType(curName)
+		result = currInterface.learnerType(splitTuple[1])
 		if result == 'UNKNOWN' or result == 'other' or result is None:
 			resultsList.append(None)
-			secondPassLearnerNames.append((curPackage, curName))
+			secondPassLearnerNames.append(name)
 		else:
 			resultsList.append(result)
 			secondPassLearnerNames.append(None)
-
+		
 	#have valid arguments - a list of learner names
 	learnerInspectorObj = LearnerInspector()
 

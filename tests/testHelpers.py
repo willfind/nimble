@@ -191,6 +191,7 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
 	try:
 		findBestInterface('mlpy')
 		knownAlgorithmToTypeHash['mlpy.LDAC'] = 'classification'
+		knownAlgorithmToTypeHash['mlpy.Ridge'] = 'regression'
 	except ArgumentException:
 		pass
 

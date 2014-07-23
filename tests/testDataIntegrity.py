@@ -37,7 +37,7 @@ def generateRegressionData():
 	a tuple containing (testX ,testY)
 
 	"""
-	clusterCount = 3
+	clusterCount = 2
 	pointsPer = 10
 	featuresPer = 5
 

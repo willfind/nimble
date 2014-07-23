@@ -1137,7 +1137,7 @@ class LearnerInspector:
 		for multiple learners.
 		"""
 
-		self.NEAR_THRESHHOLD = .01
+		self.NEAR_THRESHHOLD = .1 # TODO why is it this value??? should see how it is used and revise
 		self.EXACT_THRESHHOLD = .00000001
 
 		#initialize datasets for tests
@@ -1150,7 +1150,8 @@ class LearnerInspector:
 		of problem the learnerName learner is designed to run on.
 		Example output: 'classification', 'regression', 'other'
 		"""
-
+		if not isinstance(learnerName, basestring):
+			raise ArgumentException("learnerName must be a string")
 		return self._classifyAlgorithmDecisionTree(learnerName)
 
 	#todo pull from each 'trail' function to find out what possible results it can have
@@ -1240,12 +1241,12 @@ class LearnerInspector:
 
 		try:
 			runResults = UML.trainAndApply(learnerName, trainX=regressorTrainData, trainY=trainLabels, testX=regressorTestData)
-		except Exception:
+		except Exception as e:
 			return 'other'
 
 		try:
 			sumError = sumAbsoluteDifference(runResults, noiselessTestLabels)
-		except ArgumentException:
+		except ArgumentException as e:
 			return 'other'
 
 		#if the labels are repeated from those that were trained on, then it is a classifier
@@ -1282,7 +1283,7 @@ class LearnerInspector:
 
 		try:
 			runResults = UML.trainAndApply(learnerName, trainX=trainData, trainY=trainLabels, testX=testData)
-		except Exception:
+		except Exception as e:
 			return 'other'
 
 		try:
