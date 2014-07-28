@@ -523,8 +523,8 @@ class UniversalInterface(object):
 				return labels
 
 		def retrain(self, trainX, trainY=None):
-			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
-			(newBackend, transformedInputs, customDict) = self.interface._trainBackend(self.learnerName, trainX, trainY, arguments, None)
+#			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
+			(newBackend, transformedInputs, customDict) = self.interface._trainBackend(self.learnerName, trainX, trainY, self.arguments, None)
 			self.backend = newBackend
 			self.transformedInputs = transformedInputs
 			self.customDict = customDict

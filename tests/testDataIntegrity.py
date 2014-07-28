@@ -88,8 +88,29 @@ def wrappedTrainAndTestOvO(learnerName, trainX, trainY, testX, testY):
 def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
 	return UML.umlHelpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.metrics.fractionIncorrect)
 
+def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
+	return UML.crossValidate(learnerName, trainX, trainY, performanceFunction=UML.metrics.fractionIncorrect)
 
-def backend(toCall, portionToTest):
+def wrappedCrossValidateReturnBest(learnerName, trainX, trainY, testX, testY):
+	return UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction=UML.metrics.fractionIncorrect)
+
+def wrappedCrossValidateReturnAll(learnerName, trainX, trainY, testX, testY):
+	return UML.crossValidateReturnAll(learnerName, trainX, trainY, performanceFunction=UML.metrics.fractionIncorrect)
+
+def setupAndCallIncrementalTrain(learnerName, trainX, trainY, testX, testY):
+	tl = UML.train(learnerName, trainX, trainY)
+	tl.incrementalTrain(trainX.copyPoints([0]), trainY.copyPoints([0]))
+
+def setupAndCallRetrain(learnerName, trainX, trainY, testX, testY):
+	tl = UML.train(learnerName, trainX, trainY)
+	tl.retrain(trainX, trainY)
+
+def setupAndCallGetScores(learnerName, trainX, trainY, testX, testY):
+	tl = UML.train(learnerName, trainX, trainY)
+	tl.getScores(testX)
+
+
+def backend(toCall, portionToTest, allowRegression=True):
 	cData = generateClassificationData()
 	((cTrainX, cTrainY), (cTestX, cTestY)) = cData
 	backCTrainX = cTrainX.copy()
@@ -119,7 +140,7 @@ def backend(toCall, portionToTest):
 			except ArgumentException as ae:
 				print ae
 			assertUnchanged(learner, cData, backCTrainX, backCTrainY, backCTestX, backCTestY)
-		if lType == 'regression':
+		if lType == 'regression' and allowRegression:
 			try:
 				toCall(learner, rTrainX, rTrainY, rTestX, rTestY)
 			# this is meant to safely bypass those learners that have required arguments
@@ -128,35 +149,49 @@ def backend(toCall, portionToTest):
 			assertUnchanged(learner, rData, backRTrainX, backRTrainY, backRTestX, backRTestY)
 
 @attr('slow')
-def testDataIntegretyTrain():
+def testDataIntegrityTrain():
 	backend(wrappedTrain, 1)
 
 @attr('slow')
-def testDataIntegretyTrainAndApply():
+def testDataIntegrityTrainAndApply():
 	backend(wrappedTrainAndApply, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndApply One vs One and One vs
 # all code.
 @attr('slow')
-def testDataIntegretyTrainAndApplyMulticlassStrategies():
-	backend(wrappedTrainAndApplyOvO, .05)
-	backend(wrappedTrainAndApplyOvA, .05)
+def testDataIntegrityTrainAndApplyMulticlassStrategies():
+	backend(wrappedTrainAndApplyOvO, .1, False)
+	backend(wrappedTrainAndApplyOvA, .1, False)
 
 @attr('slow')
-def testDataIntegretyTrainAndTest():
+def testDataIntegrityTrainAndTest():
 	backend(wrappedTrainAndTest, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndTest One vs One and One vs
 # all code.
 @attr('slow')
-def testDataIntegretyTrainAndTestMulticlassStrategies():
-	backend(wrappedTrainAndTestOvO, .05)
-	backend(wrappedTrainAndTestOvA, .05)
+def testDataIntegrityTrainAndTestMulticlassStrategies():
+	backend(wrappedTrainAndTestOvO, .1, False)
+	backend(wrappedTrainAndTestOvA, .1, False)
 
+# test crossValidate x3
+@attr('slow')
+def testDataIntegrityCrossValidate():
+	backend(wrappedCrossValidate, 1)
+	backend(wrappedCrossValidateReturnAll, 1)
+	backend(wrappedCrossValidateReturnBest, 1)
 
-
+# test TrainedLearner methods
+# only those that the top level trainers, appliers, and testers are not reliant on.
+# integrity
+@attr('slow')
+def testDataIntegrityTrainLearner():
+#	backend(setupAndCallIncrementalTrain, 1) TODO
+	backend(setupAndCallRetrain, 1)
+	backend(setupAndCallGetScores, 1, False)
+#	backend for TrainedLearner.test -- or is this necessary once we've refactored the testing code? TODO
 
 
 
