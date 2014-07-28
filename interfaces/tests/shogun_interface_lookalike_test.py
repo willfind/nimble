@@ -7,6 +7,7 @@ import numpy
 import scipy.sparse
 from UML.randomness import numpyRandom
 from nose.tools import *
+from nose.plugins.attrib import attr
 
 import UML
 
@@ -193,7 +194,7 @@ def testShogunRossData():
 	ret = UML.trainAndApply("shogun.MulticlassOCAS", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
 	assert ret is not None
 
-
+@attr('slow')
 def testShogunEmbeddedRossData():
 	""" Test shogun() by MulticlassOCAS with the ross data embedded in random data """
 	
@@ -295,7 +296,7 @@ def notRunnable():
 
 
 
-
+@attr('slow')
 def testShogunListLearners():
 	""" Test shogun's listShogunLearners() by checking the output for those learners we unit test """
 

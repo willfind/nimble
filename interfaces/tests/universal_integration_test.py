@@ -6,6 +6,8 @@ the UniversalInterface api.
 """
 
 from nose.tools import raises
+from nose.plugins.attrib import attr
+#@attr('slow')
 
 import UML
 
@@ -21,8 +23,8 @@ def generateClassificationData(labels):
 
 	"""
 	clusterCount = labels
-	pointsPer = 10
-	featuresPer = 5
+	pointsPer = 4
+	featuresPer = 2
 
 	#add noise to the features only
 	trainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
@@ -49,6 +51,8 @@ def checkFormatRaw(scores, numLabels):
 	if scores.shape[1] != numLabels and scores.shape[1] != (numLabels * (numLabels-1))/2:
 		raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
 
+
+@attr('slow')
 def test__getScoresFormat():
 	"""
 	Automatically checks the _getScores() format for as many classifiers we can identify in each
@@ -91,6 +95,7 @@ def test__getScoresFormat():
 				scores4 = interface._getScores(tl4.backend, transTestX4, {}, tl4.customDict)
 				checkFormatRaw(scores4, 4)
 
+@attr('slow')
 def testGetScoresFormat():
 	"""
 	Automatically checks the TrainedLearner getScores() format for as many classifiers we

@@ -8,6 +8,8 @@ import sys
 sys.path.append('../..')
 
 import nose
+from nose.plugins.attrib import attr
+#@attr('slow')
 
 from UML import crossValidate
 from UML import createData
@@ -121,6 +123,7 @@ def test_crossValidate_reasonable_results():
 	#assert error essentially zero since there's no noise
 	assert result < .001 
 
+@attr('slow')
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateShuffleSeed():
 	"""Assert that for a dataset, the same algorithm will generate the same model 

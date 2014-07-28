@@ -46,6 +46,41 @@ class Matrix(Base):
 			raise ArgumentException(msg)
 			
 		super(Matrix, self).__init__(self.data.shape, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
+
+
+#	def _applyTo_implementation(self, function, included, inPlace, axis):
+#		if included is not None or inPlace == True:
+#			return super(Matrix, self)._applyTo_implementation(function, included, inPlace, axis)
+
+#		axisNum = 1 if axis == 'point' else 0
+#		axisLen = self.pointCount if axis == 'point' else self.featureCount
+#		keyIndex = self.featureCount if axis == 'point' else self.pointCount
+#		extFunc = self.extractFeatures if axis == 'point' else self.extractPoints
+#		appFunc = self.appendFeatures if axis == 'point' else self.appendPoints
+#		keysShape = (axisLen, 1) if axis == 'point' else (1, axisLen)
+#		keysNamesArg = {'pointNames':self.pointNames} if axis == 'point' else {'featureNames':self.featureNames}
+
+#		keysData = numpy.array(xrange(axisLen))
+#		keysData = keysData.reshape(keysShape)
+#		appFunc(Matrix(keysData, **keysNamesArg))
+
+		# outer, axis, index)
+#		def funcWrap(feature):
+#			return function(VectorView(self, axis, feature[keyIndex], True))
+
+#		retData = numpy.apply_along_axis(funcWrap, axisNum, self.data)
+#		if len(retData.shape) == 1:
+#			retData = retData.reshape(keysShape)
+
+#		ret = UML.createData('Matrix', retData)
+#		ret = Matrix(retData)
+#		if axis != 'point':
+#			ret.transpose()
+
+		# key vector cleanup
+#		extFunc(keyIndex)
+
+#		return ret
 		
 
 	def _transpose_implementation(self):
@@ -723,7 +758,7 @@ class Matrix(Base):
 
 
 class VectorView(View):
-	def __init__(self, outer, axis, index):
+	def __init__(self, outer, axis, index, ignoreLast=False):
 		self._outer = outer
 		self._axis = axis
 		self._vecIndex = index
@@ -733,26 +768,36 @@ class VectorView(View):
 		else:
 			self._name = outer.featureNamesInverse[index]
 			self._length = outer.pointCount
+		if ignoreLast:
+			self._length -= 1
 	def __getitem__(self, key):
 		if self._axis == 'point' or self._axis == 0:
 			if isinstance(key, basestring):
 				key = self._outer.featureNames[key]
+			if key >= self._length:
+				raise IndexError("Index out of bounds")
 			return self._outer.data[self._vecIndex, key] 
 		else:
 			if isinstance(key, basestring):
 				key = self._outer.pointNames[key]
+			if key >= self._length:
+				raise IndexError("Index out of bounds")
 			return self._outer.data[key, self._vecIndex]
 	def __setitem__(self, key, value):
 		if self._axis == 'point' or self._axis == 0:
 			if isinstance(key, basestring):
 				key = self._outer.featureNames[key]
+			if key >= self._length:
+				raise IndexError("Index out of bounds")
 			self._outer.data[self._vecIndex,key] = value
 		else:
 			if isinstance(key, basestring):
 				key = self._outer.pointNames[key]
+			if key >= self._length:
+				raise IndexError("Index out of bounds")
 			self._outer.data[key,self._vecIndex] = value
 	def nonZeroIterator(self):
-		return nzIt(self)
+		return nzIt(self, self._length)
 	def __len__(self):
 		return self._length
 	def index(self):
@@ -761,13 +806,14 @@ class VectorView(View):
 		return self._name
 
 class nzIt():
-	def __init__(self, indexable):
+	def __init__(self, indexable, enforcedLength):
 		self._indexable = indexable
 		self._position = 0
+		self._length = enforcedLength
 	def __iter__(self):
 		return self
 	def next(self):
-		while (self._position < len(self._indexable)):
+		while (self._position < self._length):
 			value = self._indexable[self._position]
 			self._position += 1
 			if value != 0:

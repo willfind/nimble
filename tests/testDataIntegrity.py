@@ -6,6 +6,8 @@ as possible
 
 """
 
+from nose.plugins.attrib import attr
+
 import UML
 
 from UML.exceptions import ArgumentException
@@ -125,25 +127,30 @@ def backend(toCall, portionToTest):
 				print ae
 			assertUnchanged(learner, rData, backRTrainX, backRTrainY, backRTestX, backRTestY)
 
+@attr('slow')
 def testDataIntegretyTrain():
 	backend(wrappedTrain, 1)
 
+@attr('slow')
 def testDataIntegretyTrainAndApply():
 	backend(wrappedTrainAndApply, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndApply One vs One and One vs
 # all code.
+@attr('slow')
 def testDataIntegretyTrainAndApplyMulticlassStrategies():
 	backend(wrappedTrainAndApplyOvO, .05)
 	backend(wrappedTrainAndApplyOvA, .05)
 
+@attr('slow')
 def testDataIntegretyTrainAndTest():
 	backend(wrappedTrainAndTest, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndTest One vs One and One vs
 # all code.
+@attr('slow')
 def testDataIntegretyTrainAndTestMulticlassStrategies():
 	backend(wrappedTrainAndTestOvO, .05)
 	backend(wrappedTrainAndTestOvA, .05)

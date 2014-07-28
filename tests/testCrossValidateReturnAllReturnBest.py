@@ -7,6 +7,8 @@ import sys
 sys.path.append('../..')
 
 import nose
+from nose.plugins.attrib import attr
+#@attr('slow')
 
 from UML import crossValidateReturnAll
 from UML import crossValidateReturnBest
@@ -34,6 +36,7 @@ def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLa
 	return (createData(dataType, rawFeatures), createData(dataType, labelsRaw))
 
 
+@attr('slow')
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateReturnAll():
 	"""assert that KNeighborsClassifier generates results with default arguments
@@ -77,8 +80,7 @@ def test_crossValidateReturnAll():
 		assert isinstance(curResult[1], float)
 
 
-
-
+@attr('slow')
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateReturnBest():
 	"""test that the 'best' ie fittest argument combination is chosen.
@@ -116,7 +118,7 @@ def test_crossValidateReturnEtc_withDefaultArgs():
 	"""Assert that return best and return all work with default arguments as predicted
 	ie generating scores for '{}' as the arguments
 	"""
-	X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
+	X, Y = _randomLabeledDataSet(numPoints=20, numFeatures=5, numLabels=5)
 	#run with default arguments
 	bestTuple = crossValidateReturnBest('Custom.KNNClassifier', X, Y, fractionIncorrect, )
 	assert bestTuple
