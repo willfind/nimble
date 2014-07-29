@@ -11,3 +11,4 @@ class DataTestObject(object):
 #				data = numpy.zeros(shape=(numP,numF))
 			return UML.createData(retType, data=data, pointNames=pointNames, featureNames=featureNames)
 		self.constructor = maker
+		self.retType = retType

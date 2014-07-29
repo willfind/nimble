@@ -333,9 +333,6 @@ class Sparse(Base):
 		be by order or uniform random.
 
 		"""
-		# single identifier
-		if isinstance(toExtract, int):
-			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
 			if number is None or len(toExtract) < number:
@@ -386,9 +383,6 @@ class Sparse(Base):
 		extract should be by order or uniform random.
 
 		"""
-		# single identifier
-		if isinstance(toExtract, int) or isinstance(toExtract, basestring):
-			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
 			if number is None or len(toExtract) < number:
@@ -406,11 +400,7 @@ class Sparse(Base):
 				toExtract = temp			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
-			# convert IDs if necessary
-			toExtractIndices = []
-			for value in toExtract:
-				toExtractIndices.append(self._getFeatureIndex(value))
-			return self._extractByList_implementation(toExtractIndices, "feature")
+			return self._extractByList_implementation(toExtract, "feature")
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:

@@ -925,11 +925,15 @@ class Base(object):
 		# going to add indices from the beginning and end of the data until
 		# we've used up our available space, or we've gone through all of
 		# the columns. currIndex makes use of negative indices, which is
-		# why the end condition are a window, not a single check
-		maxI = self.featureCount / 2
+		# why the end condition makes use of an exact stop value, which
+		# varies between positive and negative depending on the number of
+		# features
+		endIndex = self.featureCount / 2
+		if self.featureCount % 2 == 1:
+			endIndex *= -1
 		currIndex = 0
 		numProcessed = 0
-		while totalWidth < maxWidth and currIndex <= maxI and currIndex >= -(maxI):
+		while totalWidth < maxWidth and currIndex != endIndex:
 			currWidth = 0
 			currTable = lTable if currIndex >= 0 else rTable
 			currCol = []
@@ -1251,6 +1255,14 @@ class Base(object):
 		if toExtract is not None:
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
+			if isinstance(toExtract, basestring) or isinstance(toExtract, int):
+				toExtract = [toExtract]
+			if isinstance(toExtract, list):
+				#verify everything in list is a valid index and convert names into indices
+				indices = []
+				for identifier in toExtract:
+					indices.append(self._getPointIndex(identifier))
+				toExtract = indices
 		else:
 			if start is None:
 				start = 0
@@ -1305,6 +1317,14 @@ class Base(object):
 		if toExtract is not None:
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
+			if isinstance(toExtract, basestring) or isinstance(toExtract, int):
+				toExtract = [toExtract]
+			if isinstance(toExtract, list):
+				#verify everything in list is a valid index and convert names into indices
+				indices = []
+				for identifier in toExtract:
+					indices.append(self._getFeatureIndex(identifier))
+				toExtract = indices
 		elif start is not None or end is not None:
 			if start is None:
 				start = 0
@@ -1421,7 +1441,7 @@ class Base(object):
 		else:
 			if start is not None or end is not None:
 				raise ArgumentException("Cannot specify both IDs and a range")
-			#verify everything in list is a valid index TODO
+			#verify everything in list is a valid index and convert names into indices
 			indices = []
 			for identifier in points:
 				indices.append(self._getPointIndex(identifier))

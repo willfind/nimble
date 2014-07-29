@@ -333,18 +333,20 @@ class QueryBackend(DataTestObject):
 
 	def test_toString_dataLocation(self):
 		""" test toString under default parameters """
-		randGen = UML.createRandomData("List", 9, 9, 0, numericType='int')
-		raw = randGen.data
-		#raw = (numpy.matrix(range(9)).T) * numpy.ones(9)
-
-		fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8']
-		pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8']
-		data = UML.createData("List", raw, pointNames=pnames, featureNames=fnames)
 		
-		for mw in [40, 50, 60,70, 80, 90]:
-			for mh in [5, 6, 7, 8, 9, 10]:
-				ret = data.toString(includeNames=False, maxWidth=mw, maxHeight=mh)
-				checkToStringRet(ret, data)
+		for pNum in [3,5,7,9]:
+			for fNum in [2,4,5,7,8]:
+				randGen = UML.createRandomData("List", pNum, fNum, 0, numericType='int')
+				raw = randGen.data
+
+				fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8']
+				pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8']
+				data = UML.createData(self.retType, raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
+				
+				for mw in [40, 50, 60, 70, 80, 90]:
+					for mh in [5, 6, 7, 8, 9, 10]:
+						ret = data.toString(includeNames=False, maxWidth=mw, maxHeight=mh)
+						checkToStringRet(ret, data)
 
 
 
@@ -356,6 +358,7 @@ def checkToStringRet(ret, data):
 	rows = rows[:(len(rows)-1)]
 
 	negRow = False
+	assert len(rows) <= data.pointCount
 	for r in range(len(rows)):
 		row = rows[r]
 		spaceSplit = row.split(' ')
@@ -372,6 +375,7 @@ def checkToStringRet(ret, data):
 			rDataIndex = -(len(rows) - r)
 
 		negCol = False
+		assert len(vals) <= data.featureCount
 		for c in range(len(vals)):
 			if vals[c] == cHold:
 				negCol = True

@@ -23,38 +23,6 @@ from UML.randomness import pythonRandom
 numberOperations = 100
 numPoints = 4
 numFeatures = 4
-unTestedMethods = [
-	# Core passing
-	# -- but broken in some cases
-#	'transformFeatureToIntegerFeature', 
-#	'replaceFeatureWithBinaryFeatures',
-#	'appendPoints',
-#	'appendFeatures',
-#	'extractPointsByCoinToss',
-	'shufflePoints', 'shuffleFeatures',
-	'applyToPoints','applyToFeatures',
-	'pointView', 'featureView',
-#	'mapReducePoints', 
-	'sortPoints', 'sortFeatures',   # takes a function
-	'extractFeatures', 'extractPoints', # overloaded params, mutually exclusive params
-	'copyFeatures', 'copyPoints', # cannot specify both points and a range -- our code provides both
-#	'transpose', # Sparse is broken?
-	'copy', #something about numpy equality?
-	'copyAs', # haven't setup param generation
-	'referenceDataFrom',  # often causes contradictory shapes to be seen later
-
-	'applyToElements', # sometimes hangs????
-	
-	# Final exclusion List
-	'dropFeaturesContainingType', # how can you choose the type?
-	'featureIterator', 'pointIterator', #iterator equality isn't a sensible thing to check
-	'writeFile', # lets not test this yet
-	'getTypeString', # won't actually be equal
-	'summaryReport', # do we really care about testing this?
-	'featureReport', # floating point equality errors? / do we care?
-	'pointCount', 'featureCount', # not runnable
-	'toString'
-	]
 
 unavailableNoPoints = [
 	'replaceFeatureWithBinaryFeatures',
@@ -113,8 +81,8 @@ def nope():
 	objectList = []
 	first = UML.createRandomData('Matrix', points, features, sparcity, 'int')
 	objectList.append(first)
-#	objectList.append(first.copyAs(format='Matrix'))
-#	objectList.append(first.copyAs(format='Sparse'))
+	objectList.append(first.copyAs(format='Matrix'))
+	objectList.append(first.copyAs(format='Sparse'))
 	runSequence(objectList)
 
 	## dense float trial
@@ -407,7 +375,7 @@ def checkNameNums(dataObj, axis):
 			endJunk = 5
 			if '=' in name:
 				endJunk = name.index('=') + 1
-			currNum = int(name[endJunk:]) 
+			currNum = int(float(name[endJunk:])) 
 		if currNum > maxNum:
 			maxNum = currNum
 	return maxNum

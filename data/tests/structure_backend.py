@@ -505,7 +505,7 @@ class StructureBackend(DataTestObject):
 		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 		names = ['1', '4', '7', '10']
 		toTest = self.constructor(data, pointNames=names)
-		ext1 = toTest.extractPoints(0)
+		ext1 = toTest.extractPoints('1')
 		exp1 = self.constructor([[1,2,3]], pointNames=['1'])
 		assert ext1.isIdentical(exp1)
 		ext2 = toTest.extractPoints([1,2])

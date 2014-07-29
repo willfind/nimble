@@ -251,9 +251,6 @@ class List(Base):
 		be by order or uniform random.
 
 		"""
-		# single identifier
-		if isinstance(toExtract, int):
-			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
 			if number is None or len(toExtract) < number:
@@ -272,10 +269,7 @@ class List(Base):
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
-			toExtractIndices = []
-			for value in toExtract:
-				toExtractIndices.append(self._getPointIndex(value))
-			return self._extractPointsByList_implementation(toExtractIndices)
+			return self._extractPointsByList_implementation(toExtract)
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
@@ -392,9 +386,6 @@ class List(Base):
 		extract should be by order or uniform random.
 
 		"""
-		# single identifier
-		if isinstance(toExtract, int) or isinstance(toExtract, basestring):
-			toExtract = [toExtract]	
 		# list of identifiers
 		if isinstance(toExtract, list):
 			if number is None or len(toExtract) < number:
@@ -413,11 +404,7 @@ class List(Base):
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
-			# convert IDs if necessary
-			toExtractIndices = []
-			for value in toExtract:
-				toExtractIndices.append(self._getFeatureIndex(value))
-			return self._extractFeaturesByList_implementation(toExtractIndices)	
+			return self._extractFeaturesByList_implementation(toExtract)	
 		# boolean function
 		if hasattr(toExtract, '__call__'):
 			if randomize:
