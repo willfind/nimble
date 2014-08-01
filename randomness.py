@@ -7,6 +7,7 @@ UML functions and tests
 
 import random
 import numpy
+import sys
 
 pythonRandom = random.Random(42)
 numpyRandom = numpy.random.RandomState(42)
@@ -27,6 +28,17 @@ def setRandomSeed(seed):
 	numpyRandom.seed(seed)
 	if _saved != (None, None):
 		_stillDefault = False
+
+def generateSubsidiarySeed():
+	"""
+	Randomly generate an integer seed to be used in a call to a subroutine our
+	external system, so that even though our internal sources of randomness
+	are not used, the results are still dependent on our random state. 
+
+	"""
+	# must be zero because numpy random wants an unsigned long, and the
+	# attempted conversion will often fail
+	return pythonRandom.randint(0, sys.maxint)
 
 def stillDefaultState():
 	""" 

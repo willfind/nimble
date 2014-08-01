@@ -1023,6 +1023,31 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex, rawArgIn
 
 		return listOfDicts
 
+def generateClassificationData(labels, pointsPer, featuresPer):
+	"""
+	Randomly generate sensible data for a classification problem. Returns a tuple of tuples,
+	where the first value is a tuple containing (trainX, trainY) and the second value is
+	a tuple containing (testX ,testY)
+
+	"""
+	#add noise to the features only
+	trainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(labels, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
+	testData, testLabels, noiselessTestLabels = generateClusteredPoints(labels, 1, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
+
+	return ((trainData, noiselessTrainLabels), (testData, noiselessTestLabels))
+
+def generateRegressionData(labels, pointsPer, featuresPer):
+	"""
+	Randomly generate sensible data for a regression problem. Returns a tuple of tuples,
+	where the first value is a tuple containing (trainX, trainY) and the second value is
+	a tuple containing (testX ,testY)
+
+	"""
+	#add noise to both the features and the labels
+	regressorTrainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(labels, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False)
+	regressorTestData, testLabels, noiselessTestLabels = generateClusteredPoints(labels, 1, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False)
+
+	return ((regressorTrainData, trainLabels), (regressorTestData, testLabels))
 
 #with class-based refactor:
 #todo add scale control as paramater for generateClusteredPoints - remember to scale noise term accordingly

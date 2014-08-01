@@ -41,7 +41,15 @@ class SciKitLearn(UniversalInterface):
 			sys.path.insert(0, sciKitLearnDir)
 
 		self.skl = importlib.import_module('sklearn')
-
+#		self.skl.__all__.append('ensemble')
+#		self.skl.__all__.append('kernel_approximation')
+#		self.skl.__all__.append('manifold')
+#		self.skl.__all__.append('multiclass')
+#		self.skl.__all__.append('neural_network')
+#		self.skl.__all__.append('random_projection')
+#		self.skl.__all__.append('semi_supervised')
+#		self.skl.__all__.append('tree')
+		
 		super(SciKitLearn, self).__init__()
 
 	#######################################
@@ -526,11 +534,19 @@ class SciKitLearn(UniversalInterface):
 		try:
 			(args, v, k, d) = inspect.getargspec(namedModule)
 			(args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+			if 'random_state' in args:
+				index = args.index('random_state')
+				negdex = index - len(args)
+				d[negdex] = UML.randomness.generateSubsidiarySeed()
 			return (args, v, k, d)
 		except TypeError:
 			try:
 				(args, v, k, d) = inspect.getargspec(namedModule.__init__)
 				(args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+				if 'random_state' in args:
+					index = args.index('random_state')
+					negdex = index - len(args)
+					d[negdex] = UML.randomness.generateSubsidiarySeed()
 				return (args, v, k, d)
 			except TypeError:
 				return self._paramQueryHardCoded(name, parent, ignore)

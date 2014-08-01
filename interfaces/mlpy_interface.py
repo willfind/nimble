@@ -494,11 +494,19 @@ class Mlpy(UniversalInterface):
 			try:
 				(args, v, k, d) = inspect.getargspec(namedModule)
 				(args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+				if 'seed' in args:
+					index = args.index('seed')
+					negdex = index - len(args)
+					d[negdex] = UML.randomness.generateSubsidiarySeed()
 				return (args, v, k, d)
 			except TypeError:
 				try:
 					(args, v, k, d) = inspect.getargspec(namedModule.__init__)
 					(args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+					if 'seed' in args:
+						index = args.index('seed')
+						negdex = index - len(args)
+						d[negdex] = UML.randomness.generateSubsidiarySeed()
 					return (args, v, k, d)
 				except TypeError:
 					pass
@@ -592,7 +600,7 @@ class Mlpy(UniversalInterface):
 		elif parent.lower() == 'kmeans'.lower():
 			if name == '__init__':
 				pnames = ['k', 'plus', 'seed']
-				pdefaults = [False, 0]
+				pdefaults = [False, UML.randomness.generateSubsidiarySeed()]
 			elif name == 'learn':
 				pnames = ['x']
 			elif name == 'pred':
@@ -690,6 +698,9 @@ class _Kmeans(object):
 
 	def learn(self, x):
 		self.x = x
+
+	def labels(self):
+		return None
 
 	def pred(self):
 		import mlpy

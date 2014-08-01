@@ -5,6 +5,7 @@ the UniversalInterface api.
 
 """
 
+import nose
 from nose.tools import raises
 from nose.plugins.attrib import attr
 #@attr('slow')
@@ -14,23 +15,8 @@ import UML
 from UML.exceptions import ArgumentException
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.umlHelpers import generateClusteredPoints
-
-def generateClassificationData(labels):
-	"""
-	Randomly generate sensible data for a classification problem. Returns a tuple of tuples,
-	where the first value is a tuple containing (trainX, trainY) and the second value is
-	a tuple containing (testX ,testY)
-
-	"""
-	clusterCount = labels
-	pointsPer = 4
-	featuresPer = 2
-
-	#add noise to the features only
-	trainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
-	testData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
-
-	return ((trainData, noiselessTrainLabels), (testData, noiselessTestLabels))
+from UML.umlHelpers import generateClassificationData
+from UML.umlHelpers import generateRegressionData
 
 def checkFormat(scores, numLabels):
 	"""
@@ -58,9 +44,9 @@ def test__getScoresFormat():
 	Automatically checks the _getScores() format for as many classifiers we can identify in each
 	interface.
 	"""
-	data2 = generateClassificationData(2)
+	data2 = generateClassificationData(2, 4, 2)
 	((trainX2, trainY2), (testX2, testY2)) = data2
-	data4 = generateClassificationData(4)
+	data4 = generateClassificationData(4, 4, 2)
 	((trainX4, trainY4), (testX4, testY4)) = data4
 	for interface in UML.interfaces.available:
 		interfaceName = interface.getCanonicalName()
@@ -102,9 +88,9 @@ def testGetScoresFormat():
 	can identify in each interface
 	
 	"""
-	data2 = generateClassificationData(2)
+	data2 = generateClassificationData(2, 4, 2)
 	((trainX2, trainY2), (testX2, testY2)) = data2
-	data4 = generateClassificationData(4)
+	data4 = generateClassificationData(4, 4, 2)
 	((trainX4, trainY4), (testX4, testY4)) = data4
 	for interface in UML.interfaces.available:
 		interfaceName = interface.getCanonicalName()
@@ -136,6 +122,64 @@ def testGetScoresFormat():
 					continue
 				scores4 = tl4.getScores(testX4)
 				checkFormat(scores4, 4)
+
+
+@attr('slow')
+@nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
+def testRandomnessControl():
+	""" Test that UML takes over the control of randomness of each interface """
+
+#	assert 'RanomizedLogisticRegression' in UML.listLearners('sciKitLearn')
+
+	for interface in UML.interfaces.available:
+		interfaceName = interface.getCanonicalName()
+
+		if interfaceName == 'shogun': # TODO - remove
+			continue
+
+		listOf = UML.listLearners(interfaceName)
+
+		for learner in listOf:
+			currType = UML.learnerType(interfaceName + '.' + learner)
+			if currType == 'regression':
+				((trainData, trainLabels), (testData, testLabels)) = generateRegressionData(5, 10, 5)
+			elif currType == 'classification':
+				((trainData, trainLabels), (testData, testLabels)) = generateClassificationData(2, 10, 5)
+			else:
+				continue
+
+			result1 = None
+			try:
+				UML.setRandomSeed(50)
+				result1 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+
+				UML.setRandomSeed(50)
+				result2 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+
+				UML.setRandomSeed(None)
+				result3 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+
+				UML.setRandomSeed(13)
+				result4 = UML.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+
+#				print interfaceName + '.' + learner 
+#				if interfaceName == 'sciKitLearn':
+#					args = UML.learnerParameters(interfaceName + '.' + learner)
+#					if 'random_state' in args[0]:
+#						print "   ^^^^"
+			except Exception as e:
+				print interfaceName + '.' + learner + ' BANG: ' + str(e)
+				continue
+
+			if result1 is not None:
+				assert result1 == result2
+				if result1 != result3:
+					assert result1 != result4
+					assert result3 != result4
+
+
+#	assert False
+
 
 
 # TODO

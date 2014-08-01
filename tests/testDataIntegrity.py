@@ -12,43 +12,10 @@ import UML
 
 from UML.exceptions import ArgumentException
 
-from UML.umlHelpers import generateClusteredPoints
+
+from UML.umlHelpers import generateClassificationData
+from UML.umlHelpers import generateRegressionData
 from UML.randomness import pythonRandom
-
-def generateClassificationData():
-	"""
-	Randomly generate sensible data for a classification problem. Returns a tuple of tuples,
-	where the first value is a tuple containing (trainX, trainY) and the second value is
-	a tuple containing (testX ,testY)
-
-	"""
-	clusterCount = 2
-	pointsPer = 10
-	featuresPer = 5
-
-	#add noise to the features only
-	trainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
-	testData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)
-
-	return ((trainData, noiselessTrainLabels), (testData, noiselessTestLabels))
-
-def generateRegressionData():
-	"""
-	Randomly generate sensible data for a regression problem. Returns a tuple of tuples,
-	where the first value is a tuple containing (trainX, trainY) and the second value is
-	a tuple containing (testX ,testY)
-
-	"""
-	clusterCount = 2
-	pointsPer = 10
-	featuresPer = 5
-
-	#add noise to both the features and the labels
-	regressorTrainData, trainLabels, noiselessTrainLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False)
-	regressorTestData, testLabels, noiselessTestLabels = generateClusteredPoints(clusterCount, 1, featuresPer, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False)
-
-	return ((regressorTrainData, trainLabels), (regressorTestData, testLabels))
-
 
 def assertUnchanged(learnerName, passed, trainX, trainY, testX, testY):
 	"""
@@ -111,13 +78,13 @@ def setupAndCallGetScores(learnerName, trainX, trainY, testX, testY):
 
 
 def backend(toCall, portionToTest, allowRegression=True):
-	cData = generateClassificationData()
+	cData = generateClassificationData(2, 10, 5)
 	((cTrainX, cTrainY), (cTestX, cTestY)) = cData
 	backCTrainX = cTrainX.copy()
 	backCTrainY = cTrainY.copy()
 	backCTestX = cTestX.copy()
 	backCTestY = cTestY.copy()
-	rData = generateRegressionData()
+	rData = generateRegressionData(2, 10, 5)
 	((rTrainX, rTrainY), (rTestX, rTestY)) = rData
 	backRTrainX = rTrainX.copy()
 	backRTrainY = rTrainY.copy()
