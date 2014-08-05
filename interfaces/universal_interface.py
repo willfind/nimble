@@ -263,6 +263,8 @@ class UniversalInterface(object):
 			elif not present and hasDefault:
 				paramValue = currDefaults[paramName]
 				# is it something that needs to be instantiated and therefore needs params of its own?
+				# TODO is findCallable really the most reliable trigger for this? maybe we should check
+				# that you can get params from it too ....
 				if isinstance(paramValue, basestring) and self.findCallable(paramValue) is not None:			
 					self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
 				ret[paramName] = currDefaults[paramName]

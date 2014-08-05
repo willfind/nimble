@@ -41,15 +41,30 @@ class SciKitLearn(UniversalInterface):
 			sys.path.insert(0, sciKitLearnDir)
 
 		self.skl = importlib.import_module('sklearn')
-#		self.skl.__all__.append('ensemble')
-#		self.skl.__all__.append('kernel_approximation')
-#		self.skl.__all__.append('manifold')
-#		self.skl.__all__.append('multiclass')
-#		self.skl.__all__.append('neural_network')
-#		self.skl.__all__.append('random_projection')
-#		self.skl.__all__.append('semi_supervised')
-#		self.skl.__all__.append('tree')
-		
+
+#		oldList = self._listLearnersBackend()
+
+		# __all__ has been known to not have some subpackages that we want
+		# so we check the root directory of sklearn for names that we can
+		# attempt to import
+		names = os.listdir(self.skl.__path__[0])
+		possibilities = []
+		for name in names:
+			splitList = name.split('.')
+			if len(splitList) == 1 or splitList[1] in ['py', 'pyc']:
+				if splitList[0] not in self.skl.__all__ and not splitList[0].startswith('_'):
+					possibilities.append(splitList[0])
+
+		possibilities = numpy.unique(possibilities).tolist()
+		if 'utils' in possibilities:
+			possibilities.remove('utils')
+		self.skl.__all__.extend(possibilities)
+
+#		self.newLearners = []
+#		for name in self._listLearnersBackend():
+#			if name not in oldList:
+#				self.newLearners.append(name)
+
 		super(SciKitLearn, self).__init__()
 
 	#######################################
@@ -72,7 +87,7 @@ class SciKitLearn(UniversalInterface):
 		subpackages = self.skl.__all__
 
 		exclude = ['BaseDiscreteNB', 'libsvm', 'GMMHMM', 'GaussianHMM', 'MultinomialHMM', 
-			'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression']
+			'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression', '_ConstantPredictor']
 
 		for sub in subpackages:
 			curr = 'sklearn.' + sub
@@ -566,6 +581,12 @@ class SciKitLearn(UniversalInterface):
 			return (newArgs, ret[1], ret[2], newDefaults)
 		if parent is not None and parent.lower() == 'LabelEncoder'.lower():
 			if name == '__init__':
+				ret = ([], None, None, [])
+			(newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+			return (newArgs, ret[1], ret[2], newDefaults)
+		if parent is not None and parent.lower() == 'DummyRegressor'.lower():
+			if name == '__init__':
+#				ret = (['strategy', 'constant'], None, None, ['mean', None])
 				ret = ([], None, None, [])
 			(newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
 			return (newArgs, ret[1], ret[2], newDefaults)
