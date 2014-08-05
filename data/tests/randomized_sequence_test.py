@@ -8,9 +8,11 @@ contained values.
 """
 
 import inspect
+import sys
 import pdb
 import functools
 import numpy
+import random
 
 import UML
 from UML.data import Base
@@ -79,7 +81,7 @@ def nope():
 	# dense int trial
 	sparcity = 0.05
 	objectList = []
-	first = UML.createRandomData('Matrix', points, features, sparcity, 'int')
+	first = UML.createRandomData('List', points, features, sparcity, 'int')
 	objectList.append(first)
 	objectList.append(first.copyAs(format='Matrix'))
 	objectList.append(first.copyAs(format='Sparse'))
@@ -133,13 +135,16 @@ def runSequence(objectList):
 			if currFunc in unavailableNoFeatures:
 				continue
 
+#		if currFunc == 'transformFeatureToIntegerFeature':
+#			import pdb
+#			pdb.set_trace()
+
 		# set up parameters
-		funcToCheck = eval('Base.' + currFunc)
-		(args, varargs, keywords, defaults) = inspect.getargspec(funcToCheck)
 		paramsPerObj = []
+		randomseed = UML.randomness.pythonRandom.randint(0, sys.maxint)
 		for i in xrange(len(objectList)):
-			paramsPerObj.append(makeParams(currFunc, objectList[i]))
-	
+			paramsPerObj.append(makeParams(currFunc, objectList[i], randomseed))
+
 		# call method on each object, collect results
 		results = []
 		for i in xrange(len(objectList)):
@@ -216,12 +221,13 @@ def oddOnlyReducer(identifier, valuesList):
 		total += value
 	return (identifier,total)
 
-def genObj(dataObj, matchType=True, matchPoints=False, matchFeatures=False):
+def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False):
+	random.seed(seed)
 	shape = (dataObj.pointCount, dataObj.featureCount)
 	if matchType:
 		dataType = dataObj.getTypeString()
 	else:
-		trial = pythonRandom.randint(0,2)
+		trial = random.randint(0,2)
 		if trial == 0:
 			dataType = 'List'
 		elif trial == 1:
@@ -229,8 +235,8 @@ def genObj(dataObj, matchType=True, matchPoints=False, matchFeatures=False):
 		else:
 			dataType = 'Sparse'
 
-	points = pythonRandom.randint(1,numPoints)
-	features = pythonRandom.randint(1,numFeatures)
+	points = random.randint(1,numPoints)
+	features = random.randint(1,numFeatures)
 	if matchPoints:
 		points = shape[0]	
 	if matchFeatures:	
@@ -241,7 +247,11 @@ def genObj(dataObj, matchType=True, matchPoints=False, matchFeatures=False):
 		ret = UML.createData('Matrix', rawData)
 		ret = ret.copyAs(dataType)
 	else:
-		ret = UML.createRandomData(dataType, points, features, .5, 'int')
+		UML.randomness.startAlternateControl()
+		UML.setRandomSeed(random.randint(0, sys.maxint))
+		ret = UML.createRandomData("Matrix", points, features, .5, 'int')
+		ret = ret.copyAs(dataType)
+		UML.randomness.endAlternateControl()
 	return ret
 
 genObjMatchFeatures = functools.partial(genObj, matchFeatures=True)
@@ -249,8 +259,9 @@ genObjMatchPoints = functools.partial(genObj, matchPoints=True)
 genObjMatchShape = functools.partial(genObj, matchPoints=True, matchFeatures=True)
 genObjMatchAll = functools.partial(genObj, matchPoints=True, matchFeatures=True)
 
-def genAppFunc(dataObj, onElements=False):
-	toAdd = pythonRandom.randint(0,9)
+def genAppFunc(dataObj, seed, onElements=False):
+	random.seed(seed)
+	toAdd = random.randint(0,9)
 	if onElements:
 		def addToElements(element):
 			return element + toAdd
@@ -265,8 +276,9 @@ def genAppFunc(dataObj, onElements=False):
 
 genApplyFuncElmts = functools.partial(genAppFunc, onElements=True)
 
-def genID(dataObj, axis):
-	retIntID = pythonRandom.randint(0,1)	
+def genID(dataObj, seed, axis):
+	random.seed(seed)
+	retIntID = random.randint(0,1)	
 	if axis == 'point':
 		numInAxis = dataObj.pointCount
 		source = dataObj.pointNamesInverse
@@ -274,7 +286,7 @@ def genID(dataObj, axis):
 		numInAxis = dataObj.featureCount
 		source = dataObj.featureNamesInverse
 	
-	intID = pythonRandom.randint(0,numInAxis-1)
+	intID = random.randint(0,numInAxis-1)
 	if retIntID:
 		ret = intID
 	else:
@@ -286,7 +298,8 @@ def genID(dataObj, axis):
 		dataObj._getFeatureIndex(ret)
 	return ret
 
-def genIDList(dataObj, axis):
+def genIDList(dataObj, seed, axis):
+	random.seed(seed)
 	if axis == 'point':
 		numInAxis = dataObj.pointCount
 		source = dataObj.pointNamesInverse
@@ -294,10 +307,10 @@ def genIDList(dataObj, axis):
 		numInAxis = dataObj.featureCount
 		source = dataObj.featureNamesInverse
 
-	numToSample = pythonRandom.randint(1,numInAxis)
-	IDList = pythonRandom.sample(range(numInAxis), numToSample)
+	numToSample = random.randint(1,numInAxis)
+	IDList = random.sample(range(numInAxis), numToSample)
 	for i in range(len(IDList)):
-		if pythonRandom.randint(0,1):
+		if random.randint(0,1):
 			IDList[i] = source[IDList[i]]
 
 	return IDList
@@ -307,13 +320,14 @@ genFID = functools.partial(genID, axis='feature')
 genPIDList = functools.partial(genIDList, axis='point')
 genFIDList = functools.partial(genIDList, axis='feature')
 
-def genPermArr(dataObj, axis):
+def genPermArr(dataObj, seed, axis):
+	random.seed(seed)
 	if axis == 'point':
 		numInAxis = dataObj.pointCount
 	else:
 		numInAxis = dataObj.featureCount
 
-	permArr = pythonRandom.sample(range(numInAxis), numInAxis)
+	permArr = random.sample(range(numInAxis), numInAxis)
 
 	return permArr
 
@@ -321,42 +335,46 @@ genPPermArr = functools.partial(genPermArr, axis='point')
 genFPermArr = functools.partial(genPermArr, axis='feature')
 
 
-def genBool(dataObj):
-	if pythonRandom.randint(0,1): 
+def genBool(dataObj, seed):
+	random.seed(seed)
+	if random.randint(0,1): 
 		return True
 	else:
 		return False
 
-def genFalse(dataObj):
+def genFalse(dataObj, seed):
 	return False
-def genTrue(dataObj):
+def genTrue(dataObj, seed):
 	return True
 
-def genCopyAsFormat(dataObj):
+def genCopyAsFormat(dataObj, seed):
+	random.seed(seed)
 	poss = ['List', 'Matrix', 'Sparse', 'pythonlist', 'numpyarray', 'numpymatrix',
 			'scipycsr', 'scipycsc']
-	return poss[pythonRandom.randint(0, len(poss)-1)]
+	return poss[random.randint(0, len(poss)-1)]
 
-def genStartEnd(dataObj, axis):
+def genStartEnd(dataObj, seed, axis):
+	random.seed(seed)
 	if axis == 'point':
 		numInAxis = dataObj.pointCount
 	else:
 		numInAxis = dataObj.featureCount
 
-	start = pythonRandom.randint(0, numInAxis-1)
-	end = pythonRandom.randint(start, numInAxis-1)
+	start = random.randint(0, numInAxis-1)
+	end = random.randint(start, numInAxis-1)
 	return (start, end)
 
 genStartEndPoints = functools.partial(genStartEnd, axis='point')
 genStartEndFeatures = functools.partial(genStartEnd, axis='feature')
 
-def genNumLimit(dataObj, axis):
+def genNumLimit(dataObj, seed, axis):
+	random.seed(seed)
 	if axis == 'point':
 		numInAxis = dataObj.pointCount
 	else:
 		numInAxis = dataObj.featureCount
 
-	return pythonRandom.randint(1, numInAxis-1)
+	return random.randint(1, numInAxis-1)
 	
 genPNumLim = functools.partial(genNumLimit, axis='point')
 genFNumLim = functools.partial(genNumLimit, axis='faeture')
@@ -380,7 +398,7 @@ def checkNameNums(dataObj, axis):
 			maxNum = currNum
 	return maxNum
 
-def genName(dataObj, axis):
+def genName(dataObj, seed, axis):
 	if axis == 'point':
 		name = 'PNAME'
 	else:
@@ -393,7 +411,7 @@ def genName(dataObj, axis):
 genPName = functools.partial(genName, axis='point')
 genFName = functools.partial(genName, axis='feature')
 
-def genNameList(dataObj, axis):
+def genNameList(dataObj, seed, axis):
 	if axis == 'point':
 		retLen = dataObj.pointCount
 		name = 'PNAME'
@@ -404,7 +422,7 @@ def genNameList(dataObj, axis):
 	ret = []
 	if retLen == 0:
 		return ret
-	first = genName(dataObj, axis)
+	first = genName(dataObj, seed, axis)
 	next = int(first[5:]) + 1
 	ret.append(first)
 	for i in range(1,retLen):
@@ -416,8 +434,8 @@ def genNameList(dataObj, axis):
 genPNameList = functools.partial(genNameList, axis='point')
 genFNameList = functools.partial(genNameList, axis='feature')
 
-def genNameDict(dataObj, axis):
-	retList = genNameList(dataObj, axis)
+def genNameDict(dataObj, seed, axis):
+	retList = genNameList(dataObj, seed, axis)
 	ret = {}
 	for i in range(len(retList)):
 		ret[retList[i]] = i
@@ -426,7 +444,7 @@ def genNameDict(dataObj, axis):
 genPNameDict = functools.partial(genNameDict, axis='point')
 genFNameDict = functools.partial(genNameDict, axis='feature')
 
-def genScorer(dataObj):
+def genScorer(dataObj, seed):
 	def sumScorer(view):
 		total = 0
 		for value in view:
@@ -434,7 +452,7 @@ def genScorer(dataObj):
 		return value
 	return sumScorer
 
-def genComparator(dataObj):
+def genComparator(dataObj, seed):
 	def firstValComparator(view):
 		if len(view) == 0:
 			return None
@@ -442,27 +460,30 @@ def genComparator(dataObj):
 			return view[0]
 	return firstValComparator
 
-def genMapper(dataObj):
+def genMapper(dataObj, seed):
 	return simpleMapper
 
-def genReducer(dataObj):
+def genReducer(dataObj, seed):
 	return oddOnlyReducer
 
-def genProb(dataObj):
-	return pythonRandom.random()
+def genProb(dataObj, seed):
+	random.seed(seed)
+	return random.random()
 
-def genObjName(dataObj):
-	return "NAME:" + str(pythonRandom.randint(0,1000))
+def genObjName(dataObj, seed):
+	random.seed(seed)
+	return "NAME:" + str(random.randint(0,1000))
 
-def genZero(dataObj):
+def genZero(dataObj, seed):
 	return 0
 
-def genOne(dataObj):
+def genOne(dataObj, seed):
 	return 1
 
-def pickGen(dataObj, genList):
-	picked = pythonRandom.randint(0, len(genList)-1)
-	return genList[picked](dataObj)
+def pickGen(dataObj, seed, genList):
+	random.seed(seed)
+	picked = random.randint(0, len(genList)-1)
+	return genList[picked](dataObj, seed)
 
 ftp = functools.partial
 
@@ -520,11 +541,12 @@ untested = ['dropFeaturesContainingType', # how can you choose the type?
 		]
 
 
-def makeParams(funcName, dataObj):
+def makeParams(funcName, dataObj, seed):
+	random.seed(seed)
 	generatorList = generators[funcName]
 	(args, varargs, keywords, defaults) = inspect.getargspec(getattr(dataObj,funcName))	
 	
-#	if funcName.startswith('extract'):
+#	if funcName.startswith('appendFeatures'):
 #		pdb.set_trace()
 
 	argList = []
@@ -536,9 +558,9 @@ def makeParams(funcName, dataObj):
 	# +1 because we're ranging over negative indices
 	startEnd = None
 	if 'feature' in funcName.lower():
-		startEnd = genStartEndFeatures(dataObj)
+		startEnd = genStartEndFeatures(dataObj, seed)
 	else:
-		startEnd = genStartEndPoints(dataObj)
+		startEnd = genStartEndPoints(dataObj, seed)
 	# we start by just generating values for everything
 	for i in range(len(argList)):
 		if generatorList[i] is None:
@@ -547,14 +569,14 @@ def makeParams(funcName, dataObj):
 			else:
 				toUse = startEnd[1]
 		else:
-			toUse = generatorList[i](dataObj)
+			toUse = generatorList[i](dataObj, seed)
 		argList[i] = toUse
 
 	# deal with exclusive params by making everything except one
 	# thing default
 	if funcName in mutuallyExclusiveParams:
 		exclusives = mutuallyExclusiveParams[funcName]
-		toKeep = pythonRandom.randint(0, len(exclusives)-1)
+		toKeep = random.randint(0, len(exclusives)-1)
 		makeDefault = []
 		for i in range(len(exclusives)):
 			curr = exclusives[i]
@@ -600,7 +622,7 @@ def testMakeParamsExclusivity():
 	for funcName in mutuallyExclusiveParams.keys():
 		# random trials
 		for i in range(50):
-			genArgs = makeParams(funcName, dobj)
+			genArgs = makeParams(funcName, dobj, UML.randomness.pythonRandom.random())
 			(args, v, k, defaults) = inspect.getargspec(getattr(dobj,funcName))
 			seenNonDefault = False
 			for ex in mutuallyExclusiveParams[funcName]:
