@@ -931,6 +931,7 @@ class Base(object):
 		endIndex = self.featureCount / 2
 		if self.featureCount % 2 == 1:
 			endIndex *= -1
+			endIndex -= 1
 		currIndex = 0
 		numProcessed = 0
 		while totalWidth < maxWidth and currIndex != endIndex:
@@ -1120,6 +1121,8 @@ class Base(object):
 		self.setFeatureNamesFromDict(self.pointNames)
 		self.setPointNamesFromDict(tempFN)
 
+		self.validate()
+
 	def appendPoints(self, toAppend):
 		"""
 		Append the points from the toAppend object to the bottom of the features in this object.
@@ -1141,8 +1144,6 @@ class Base(object):
 			for name in intersection:
 				if not name.startswith(DEFAULT_PREFIX):
 					raise ArgumentException("toAppend must not share any pointNames with this object")
-	
-		self.validate()
 
 		self._appendPoints_implementation(toAppend)
 		self._pointCount += toAppend.pointCount
@@ -1152,6 +1153,8 @@ class Base(object):
 			if currName.startswith(DEFAULT_PREFIX):
 				currName += '_' + toAppend.name
 			self._addPointName(currName)
+
+		self.validate()
 
 	def appendFeatures(self, toAppend):
 		"""
@@ -1175,8 +1178,6 @@ class Base(object):
 			for name in intersection:
 				if not name.startswith(DEFAULT_PREFIX):
 					raise ArgumentException("toAppend must not share any featureNames with this object")
-		
-		self.validate()
 
 		self._appendFeatures_implementation(toAppend)
 		self._featureCount += toAppend.featureCount
@@ -1186,6 +1187,8 @@ class Base(object):
 			if currName.startswith(DEFAULT_PREFIX):
 				currName += '_' + toAppend.name
 			self._addFeatureName(currName)
+
+		self.validate()
 
 	def sortPoints(self, sortBy=None, sortHelper=None):
 		""" 
@@ -1207,6 +1210,8 @@ class Base(object):
 
 		newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
 		self.setPointNamesFromList(newPointNameOrder)
+
+		self.validate()
 
 	def sortFeatures(self, sortBy=None, sortHelper=None):
 		""" 
@@ -1230,6 +1235,8 @@ class Base(object):
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self.setFeatureNamesFromList(newFeatureNameOrder)
 
+		self.validate()
+
 
 	def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
 		"""
@@ -1249,8 +1256,6 @@ class Base(object):
 		"""
 #		if self.pointCount == 0:
 #			raise ImproperActionException("Cannot extract points from an object with 0 points")
-
-		self.validate()
 
 		if toExtract is not None:
 			if start is not None or end is not None:
@@ -1289,6 +1294,8 @@ class Base(object):
 			ret.setFeatureNamesFromDict(self.featureNames)
 		for key in ret.pointNames.keys():
 			self._removePointNameAndShift(key)
+
+		self.validate()
 		return ret
 
 	def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
@@ -1311,8 +1318,6 @@ class Base(object):
 		"""
 #		if self.featureCount == 0:
 #			raise ImproperActionException("Cannot extract features from an object with 0 features")
-
-		self.validate()
 
 		if toExtract is not None:
 			if start is not None or end is not None:
@@ -1351,6 +1356,8 @@ class Base(object):
 			ret.setPointNamesFromDict(self.pointNames)
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
+
+		self.validate()
 		return ret
 
 
@@ -1369,6 +1376,11 @@ class Base(object):
 		self.pointNamesInverse = other.pointNamesInverse
 		self.featureNames = other.featureNames
 		self.featureNamesInverse = other.featureNamesInverse
+
+		self._pointCount = other._pointCount
+		self._featureCount = other._featureCount
+
+		self.validate()
 
 
 	def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
@@ -1548,6 +1560,7 @@ class Base(object):
 			raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
 
 		self._elementwiseMultiply_implementation(other)
+		self.validate()
 
 	def __mul__(self, other):
 		"""

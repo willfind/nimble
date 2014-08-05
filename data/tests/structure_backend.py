@@ -149,6 +149,30 @@ class StructureBackend(DataTestObject):
 		assert dataObj1.isIdentical(dataObj2)
 		assert dataObj2.isIdentical(dataObjT)
 
+	def test_transpose_handmadeWithZeros(self):
+		""" Test transpose() function against handmade output """
+		data = [[1,2,3],[4,5,6],[7,8,9],[0,0,0],[11,12,13]]
+		dataTrans = [[1,4,7,0,11],[2,5,8,0,12],[3,6,9,0,13]]
+
+		dataObj1 = self.constructor(deepcopy(data))
+		dataObj2 = self.constructor(deepcopy(data))
+		dataObjT = self.constructor(deepcopy(dataTrans))
+
+#		print repr(dataObj1)
+#		print repr(dataObj1)
+
+		ret1 = dataObj1.transpose() # RET CHECK
+#		import pdb
+#		pdb.set_trace()
+#		print dataObj1[0,4]
+
+		assert dataObj1.isIdentical(dataObjT)
+		assert ret1 is None
+#		assert False
+		dataObj1.transpose()
+		dataObjT.transpose()
+		assert dataObj1.isIdentical(dataObj2)
+		assert dataObj2.isIdentical(dataObjT)
 
 	#############
 	# appendPoints() #

@@ -334,8 +334,8 @@ class QueryBackend(DataTestObject):
 	def test_toString_dataLocation(self):
 		""" test toString under default parameters """
 		
-		for pNum in [3,5,7,9]:
-			for fNum in [2,4,5,7,8]:
+		for pNum in [3,9]:
+			for fNum in [2,5,8]:
 				randGen = UML.createRandomData("List", pNum, fNum, 0, numericType='int')
 				raw = randGen.data
 
@@ -343,8 +343,8 @@ class QueryBackend(DataTestObject):
 				pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8']
 				data = UML.createData(self.retType, raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
 				
-				for mw in [40, 50, 60, 70, 80, 90]:
-					for mh in [5, 6, 7, 8, 9, 10]:
+				for mw in [40, 60, 80,]:
+					for mh in [5, 7, 10]:
 						ret = data.toString(includeNames=False, maxWidth=mw, maxHeight=mh)
 						checkToStringRet(ret, data)
 

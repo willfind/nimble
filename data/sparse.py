@@ -649,6 +649,7 @@ class Sparse(Base):
 		"""
 		self._data = self._data.transpose()
 		self._sorted = None
+		_resync(self._data)
 #		if self._sorted == 'point':
 #			self._sorted = 'feature'
 #		elif self._sorted == 'feature':
@@ -737,7 +738,7 @@ class Sparse(Base):
 		if self._data.shape != other._data.shape:
 			return False
 
-		return _wrapperEquals(self._data, other._data)
+		return self._data == other._data
 
 	def _getTypeString_implementation(self):
 		return 'Sparse'
@@ -917,6 +918,10 @@ class Sparse(Base):
 		if level > 0:
 			for value in self._data.data:
 				assert value != 0
+			if scipy.sparse.isspmatrix(self._data.internal):
+				assert numpy.array_equal(self._data.data, self._data.internal.data)
+				assert numpy.array_equal(self._data.row, self._data.internal.row)
+				assert numpy.array_equal(self._data.col, self._data.internal.col)
 
 			if self._sorted == 'point':
 				for i in xrange(len(self._data.row)):
@@ -1192,30 +1197,19 @@ def _calcShapes(currShape, numExtracted, axisType):
 
 	return ((selfRowShape,selfColShape),(extRowShape,extColShape))
 
-
-def _wrapperEquals(left, right):
-		wrappedLeft = isinstance(left, CooWithEmpty)
-		wrappedRight = isinstance(right, CooWithEmpty)
-		if not wrappedLeft and wrappedRight:
-			return False
-
-		if left.shape != right.shape:
-			return False
-
-		leftSparse = scipy.sparse.isspmatrix(left.internal)
-		rightSparse = scipy.sparse.isspmatrix(right.internal)
-		if leftSparse:
-			if rightSparse:
-				# == for scipy sparse types is inconsistent. This is testing how many are
-				# nonzero after substracting one from the other.
-				return abs(left.internal - right.internal).nnz == 0
-			else:
-				return False
-		else:
-			if rightSparse:
-				return False
-			else:
-				return True
+def _resync(obj):
+	if 0 in obj.internal.shape:
+		obj.nnz = 0
+		obj.data = numpy.array([])
+		obj.row = numpy.array([])
+		obj.col = numpy.array([])
+		obj.shape = obj.internal.shape
+	else:
+		obj.nnz = obj.internal.nnz
+		obj.data = obj.internal.data
+		obj.row = obj.internal.row
+		obj.col = obj.internal.col
+		obj.shape = obj.internal.shape
 
 class CooWithEmpty(object):
 
@@ -1252,7 +1246,6 @@ class CooWithEmpty(object):
 				self.col = numpy.array([])
 				self.internal = numpy.empty(self.shape)
 
-
 	def transpose(self):
 		self.internal = self.internal.transpose()
 		self.shape = self.internal.shape
@@ -1264,4 +1257,27 @@ class CooWithEmpty(object):
 		else:
 			return numpy.empty(self.shape)
 
+	def __eq__(self, other):
+		wrappedRight = isinstance(other, CooWithEmpty)
+		if not wrappedRight:
+			return False
+
+		if self.shape != other.shape:
+			return False
+
+		leftSparse = scipy.sparse.isspmatrix(self.internal)
+		rightSparse = scipy.sparse.isspmatrix(other.internal)
+		if leftSparse:
+			if rightSparse:
+				# == for scipy sparse types is inconsistent. This is testing how many are
+				# nonzero after subtracting one from the other.
+				ret = abs(self.internal - other.internal).nnz == 0
+				return ret
+			else:
+				return False
+		else:
+			if rightSparse:
+				return False
+			else:
+				return True
 
