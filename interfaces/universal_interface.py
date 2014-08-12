@@ -57,7 +57,7 @@ class UniversalInterface(object):
 		
 		# _exposedFunctions
 		exposedFunctions = self._exposedFunctions()
-		if exposedFunctions is not None and not isinstance(exposedFunctions, list):
+		if exposedFunctions is None or not isinstance(exposedFunctions, list):
 			raise TypeError("Improper implementation of _exposedFunctions(), must return a list of methods to be bundled with TrainedLearner")
 		for exposed in exposedFunctions:
 			# is callable
@@ -193,6 +193,14 @@ class UniversalInterface(object):
 		(ret, ignore) = self._validateArgumentDistributionHelper(baseCallName, neededParams, availableDefaults, available, False)
 		return ret
 
+	def _isInstantiable(self, val, hasDefault, defVal):
+			if hasDefault and isinstance(defVal, basestring):
+				return False
+			if isinstance(val, basestring) and self.findCallable(val) is not None:
+				return True
+
+			return False
+
 	def _validateArgumentDistributionHelper(self, currCallName, currNeededParams, currDefaults, available, sharedPool):
 		"""
 		Recursive function for actually performing _validateArgumentDistribution. Will recurse
@@ -217,18 +225,15 @@ class UniversalInterface(object):
 			# In each conditional, we have three main tasks: identifying what values will
 			# be used, book keeping for that value (removal, delayed allocation / instantiation),
 			# and adding values to ret
-			if present and hasDefault:
-				def isInstantiable(name):
-					return isinstance(name, basestring) and self.findCallable(name) is not None
-				
+			if present and hasDefault:				
 				paramValue = available[paramName]
 				paramDefault = currDefaults[paramName]
 				addToDelayedIfNeeded = True
-				if isInstantiable(paramValue) or isInstantiable(paramDefault):
+				if self._isInstantiable(paramValue, True, paramDefault) or self._isInstantiable(paramDefault, True, paramDefault):
 					availableBackup = copy.deepcopy(available)
 					allocationsBackup = copy.deepcopy(delayedAllocations)
 				
-				if isInstantiable(paramDefault):
+				if self._isInstantiable(paramDefault, True, paramDefault):
 					# try recursive call using default value
 					try:
 						self._setupValidationRecursiveCall(paramDefault, available, ret, delayedAllocations)
@@ -241,7 +246,7 @@ class UniversalInterface(object):
 				else:
 					ret[paramName] = paramDefault
 				
-				if not isInstantiable(paramValue):
+				if not self._isInstantiable(paramValue, True, paramDefault):
 					# mark down to use the real value if it isn't allocated elsewhere
 					delayedAllocations[None].append((paramName, paramValue))
 				else:
@@ -256,7 +261,7 @@ class UniversalInterface(object):
 			elif present and not hasDefault:
 				paramValue = available[paramName]
 				# is it something that needs to be instantiated and therefore needs params of its own?
-				if isinstance(paramValue, basestring) and self.findCallable(paramValue) is not None:
+				if self._isInstantiable(paramValue, False, None):
 					self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
 				del available[paramName]
 				ret[paramName] = paramValue
@@ -265,8 +270,8 @@ class UniversalInterface(object):
 				# is it something that needs to be instantiated and therefore needs params of its own?
 				# TODO is findCallable really the most reliable trigger for this? maybe we should check
 				# that you can get params from it too ....
-				if isinstance(paramValue, basestring) and self.findCallable(paramValue) is not None:			
-					self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
+				#if isInstantiable(paramValue, True, paramValue):		
+				#	self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
 				ret[paramName] = currDefaults[paramName]
 			# not present and no default
 			else:
@@ -374,9 +379,13 @@ class UniversalInterface(object):
 			paramValue = toProcess[paramName]
 			if isinstance(paramValue, basestring):
 				toCall = self.findCallable(paramValue)
-				if toCall is not None:			
-					# this has already been set up to be guaranteed to be in a walled garden
+				# if we can find an object for it, and we've prepped the arguments,
+				# then we actually instantiate an object
+				if toCall is not None and paramValue in toProcess:
 					subInitParams = toProcess[paramValue]
+					if subInitParams is None:
+						ret[paramName] = paramValue
+						continue
 					instantiatedParams = self._instantiateArgumentsHelper(subInitParams)
 					paramValue = toCall(**instantiatedParams)
 			

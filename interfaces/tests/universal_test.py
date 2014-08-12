@@ -10,6 +10,16 @@ import UML
 from UML.exceptions import ArgumentException
 from UML.interfaces.universal_interface import UniversalInterface
 
+class Initable(object):
+	def __init__(self, C=1, thresh=0.5):
+		self.C = C
+		self.thresh = thresh
+
+	def __eq__(self, other):
+		if self.C == other.C and self.thresh == other.thresh:
+			return True
+		return False
+
 class TestInterface(UniversalInterface):
 
 	def __init__(self):
@@ -39,6 +49,8 @@ class TestInterface(UniversalInterface):
 			return [['estimator']]
 		elif name == 'initable':
 			return [['C', 'thresh']]
+		elif name == 'initable2':
+			return [['C', 'thresh']]
 		else:
 			return [[]]
 
@@ -49,8 +61,10 @@ class TestInterface(UniversalInterface):
 		if name == 'bar':
 			return [{'estimator':'initable'}, {'estimater2':'initable'}]
 		if name == 'foo':
-			return [{'estimator':'initable'}]
+			return [{'estimator':Initable()}]
 		if name == 'initable':
+			return [{'C':1, 'thresh':0.5}]
+		if name == 'initable2':
 			return [{'C':1, 'thresh':0.5}]
 		return [{}]
 
@@ -85,7 +99,11 @@ class TestInterface(UniversalInterface):
 		return testX
 
 	def _findCallableBackend(self, name):
-		available = ['l0', 'l1', 'l2', 'l1a0', 'subFunc', 'initable', 'foo', 'bar', 'exposeTest']
+		if name == 'initable':
+			return Initable
+		if name == 'initable2':
+			return Initable
+		available = ['l0', 'l1', 'l2', 'l1a0', 'subFunc', 'foo', 'bar', 'exposeTest']
 		if name in available:
 			return name
 		else:
@@ -162,19 +180,25 @@ def test__validateArgumentDistributionInstantiableDefaultValue():
 	learner = 'foo'
 	arguments = {}
 	ret = TestObject._validateArgumentDistribution(learner, arguments)
-	assert ret == {'estimator':'initable', 'initable':{'C':1, 'thresh':0.5}}
+	assert ret == {'estimator':Initable()}
 
-def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsSeparate():
-	learner = 'foo'
-	arguments = {'initable':{'C':11}}
-	ret = TestObject._validateArgumentDistribution(learner, arguments)
-	assert ret == {'estimator':'initable', 'initable':{'C':11, 'thresh':0.5}}
+###############
+# ignoring this test for now, since the code now works under the assumption that an interaces'
+# default values will not be set up in a way to take advantage of our argument instantiation
+# conventions. If a default value is a string, it should STAY a string, even if that string
+# corresponds to an instantiable object
+#def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsSeparate():
+#	learner = 'foo'
+#	arguments = {'initable':{'C':11}}
+#	ret = TestObject._validateArgumentDistribution(learner, arguments)
+#	assert ret == {'estimator':'initable', 'initable':{'C':11, 'thresh':0.5}}
+##############
 
 def test__validateArgumentDistributionInstantiableDelayedAllocationOfSubArgsInFlat():
 	learner = 'foo'
-	arguments = {'C':11}
+	arguments = {'estimator':'initable2', 'C':11}
 	ret = TestObject._validateArgumentDistribution(learner, arguments)
-	assert ret == {'estimator':'initable', 'initable':{'C':11, 'thresh':0.5}}
+	assert ret == {'estimator':'initable2', 'initable2':{'C':11, 'thresh':0.5}}
 
 def test__validateArgumentDistributionInstantiableArgWithDefaultValue():
 	learner = 'foo'

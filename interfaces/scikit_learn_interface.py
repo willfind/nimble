@@ -16,6 +16,7 @@ import sys
 import UML
 
 from UML.exceptions import ArgumentException
+from UML.interfaces.interface_helpers import PythonSearcher
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -65,6 +66,19 @@ class SciKitLearn(UniversalInterface):
 #			if name not in oldList:
 #				self.newLearners.append(name)
 
+		def isLearner(obj):
+			hasFit = hasattr(obj, 'fit')
+			hasPred = hasattr(obj, 'predict')
+			hasTrans = hasattr(obj, 'transform')
+			hasFitPred = hasattr(obj, 'fit_predict')
+			hasFitTrans = hasattr(obj, 'fit_transform')
+
+			if (hasFit and (hasPred or hasTrans)) or hasFitPred or hasFitTrans:
+				return True
+			return False
+
+		self._searcher = PythonSearcher(self.skl, self.skl.__all__, {}, isLearner, 2)
+
 		super(SciKitLearn, self).__init__()
 
 	#######################################
@@ -79,33 +93,15 @@ class SciKitLearn(UniversalInterface):
 		return True
 
 	def _listLearnersBackend(self):
-		"""
-		Return a list of all learners callable through this interface.
-
-		"""
-		ret = []
-		subpackages = self.skl.__all__
+		possibilities = self._searcher.allLearners()
 
 		exclude = ['BaseDiscreteNB', 'libsvm', 'GMMHMM', 'GaussianHMM', 'MultinomialHMM', 
-			'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression', '_ConstantPredictor']
-
-		for sub in subpackages:
-			curr = 'sklearn.' + sub
-			try:
-				exec('import ' + curr)
-			except ImportError:
-				# no guarantee __all__ is accurate, if something doesn't import, just skip ahead
-				continue
-
-			contents = eval('dir(' + curr + ')')
-			
-			for member in contents:
-				if member in exclude:
-					continue
-				memberContents = eval('dir(' + curr + "." + member + ')')
-				if 'fit' in memberContents:
-					if 'predict' in memberContents or 'transform' in memberContents:
-						ret.append(member)
+			'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression', 'LogOddsEstimator',
+			'PriorProbabilityEstimator', 'MeanEstimator', 'TransformerMixin', 'ClusterMixin',]
+		ret = []
+		for name in possibilities:
+			if not name in exclude:
+				ret.append(name)
 
 		return ret
 
@@ -133,24 +129,7 @@ class SciKitLearn(UniversalInterface):
 		TAKES string name
 		RETURNS reference to in-package function or constructor
 		"""
-		subpackages = self.skl.__all__
-
-		for sub in subpackages:
-			try:
-				currSubModule = importlib.import_module('sklearn.' + sub)
-			except ImportError:
-				# no guarantee __all__ is accurate, if something doesn't import, just skip ahead
-				continue
-
-			contents = dir(currSubModule)
-			
-			for member in contents:
-				memberObj = getattr(currSubModule, member)
-				if member == name:
-
-					return memberObj
-
-		return None
+		return self._searcher.findInPackage(None, name)
 
 	def _getParameterNamesBackend(self, name):
 		"""
@@ -178,8 +157,8 @@ class SciKitLearn(UniversalInterface):
 		fit = self._paramQuery('fit', learnerName, ignore)
 		predict = self._paramQuery('predict', learnerName, ignore)
 		transform = self._paramQuery('transform', learnerName, ignore)
-		fitPredict = self._paramQuery('fitPredict', learnerName, ignore)
-		fitTransform = self._paramQuery('fitTransform', learnerName, ignore)
+		fitPredict = self._paramQuery('fit_predict', learnerName, ignore)
+		fitTransform = self._paramQuery('fit_transform', learnerName, ignore)
 
 		if predict is not None:
 			ret = init[0] + fit[0] + predict[0]
@@ -222,8 +201,8 @@ class SciKitLearn(UniversalInterface):
 		fit = self._paramQuery('fit', learnerName, ignore)
 		predict = self._paramQuery('predict', learnerName, ignore)
 		transform = self._paramQuery('transform', learnerName, ignore)
-		fitPredict = self._paramQuery('fitPredict', learnerName, ignore)
-		fitTransform = self._paramQuery('fitTransform', learnerName, ignore)
+		fitPredict = self._paramQuery('fit_predict', learnerName, ignore)
+		fitTransform = self._paramQuery('fit_transform', learnerName, ignore)
 
 		if predict is not None:
 			toProcess = [init, fit, predict]
@@ -541,7 +520,7 @@ class SciKitLearn(UniversalInterface):
 		None if the desired thing cannot be found
 
 		"""
-		namedModule = self._findInPackage(name,parent)
+		namedModule = self._searcher.findInPackage(parent, name)
 
 		if namedModule is None:
 			return None
@@ -603,64 +582,6 @@ class SciKitLearn(UniversalInterface):
 
 			(newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
 			return (newArgs, ret[1], ret[2], newDefaults)
-
-		return None
-
-	def _findInPackage(self, name, parent=None):
-		"""
-		Import the desired python package, and search for the module containing
-		the wanted learner. For use by interfaces to python packages.
-
-		"""
-		packageMod = importlib.import_module('sklearn')
-
-		contents = packageMod.__all__
-
-		searchIn = packageMod
-		allowedDepth = 2
-		if parent is not None:
-			if parent in locationCache:
-				searchIn = locationCache[parent]
-			else:
-				searchIn = self._findInPackageRecursive(parent, allowedDepth, contents, packageMod)
-			allowedDepth = 0
-			contents = dir(searchIn)
-			if searchIn is None:
-				return None
-
-		if name in locationCache:
-			ret = locationCache[name]
-		else:
-			ret = self._findInPackageRecursive(name, allowedDepth, contents, searchIn)
-
-		return ret
-
-	
-	def _findInPackageRecursive(self, target, allowedDepth, contents, parent):
-		for name in contents:
-			if name.startswith("__") and name != '__init__':
-				continue
-			try:
-				subMod = getattr(parent, name)
-			except AttributeError:
-				try:		
-					subMod = importlib.import_module(parent.__name__ + "." + name)
-				except ImportError:
-					continue
-
-			# we want to add learners, and the parents of learners to the cache 
-			if hasattr(subMod, 'fit'):
-				locationCache[name] = subMod
-
-			if name == target:
-				return subMod
-
-			subContents = dir(subMod)
-
-			if allowedDepth > 0:
-				ret = self._findInPackageRecursive(target, allowedDepth-1, subContents, subMod)
-				if ret is not None:
-					return ret
 
 		return None
 

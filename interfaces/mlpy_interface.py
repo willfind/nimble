@@ -28,6 +28,7 @@ mlpyDir = None
 locationCache = {}
 
 from UML.interfaces.universal_interface import UniversalInterface
+from UML.interfaces.interface_helpers import PythonSearcher
 
 class Mlpy(UniversalInterface):
 	"""
@@ -47,6 +48,17 @@ class Mlpy(UniversalInterface):
 
 		self.mlpy = importlib.import_module('mlpy')
 
+		def isLearner(obj):
+			hasLearn = hasattr(obj, 'learn')
+			hasPred = hasattr(obj, 'pred')
+			hasTrans = hasattr(obj, 'transform')
+
+			if hasLearn and (hasPred or hasTrans):
+				return True
+			return False
+
+		self._searcher = PythonSearcher(self.mlpy, dir(self.mlpy), {}, isLearner, 1)
+
 		super(Mlpy, self).__init__()
 
 	#######################################
@@ -61,22 +73,14 @@ class Mlpy(UniversalInterface):
 			return False
 		return True
 
-
 	def _listLearnersBackend(self):
-		"""
-		Return a list of all learners callable through this interface.
+		possibilities = self._searcher.allLearners()
 
-		"""
+		exclude = ['OLS', 'LARS']
 		ret = []
-		contents = dir(self.mlpy)
-
-		toExclude = ['OLS', 'LARS']
-
-		for member in contents:
-			subContents = dir(getattr(self.mlpy, member))
-			if 'learn' in subContents and ('pred' in subContents or 'transform' in subContents):
-				if not member in toExclude:
-					ret.append(member)
+		for name in possibilities:
+			if not name in exclude:
+				ret.append(name)
 
 		ret.append('MFastHCluster')
 		ret.append('kmeans')
@@ -104,18 +108,13 @@ class Mlpy(UniversalInterface):
 		TAKES string name
 		RETURNS reference to in-package function or constructor
 		"""
-		contents = dir(self.mlpy)
-
 		if name == 'kmeans':
 			return _Kmeans
 		if name == 'MFastHCluster':
 			return _MFastHCluster
 
-		for member in contents:
-			if member == name:
-				return getattr(self.mlpy, member)
+		return self._searcher.findInPackage(None, name)
 
-		return None
 
 	def _getParameterNamesBackend(self, name):
 		"""
@@ -488,7 +487,7 @@ class Mlpy(UniversalInterface):
 		None if the desired thing cannot be found
 
 		"""
-		namedModule = self._findInPackage(name,parent)
+		namedModule = self._searcher.findInPackage(parent, name)
 
 		if not namedModule is None:
 			try:
@@ -614,80 +613,6 @@ class Mlpy(UniversalInterface):
 		ret = (pnames, pvarargs, pkeywords, pdefaults)
 		(newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
 		return (newArgs, ret[1], ret[2], newDefaults)
-
-
-	def _findInPackage(self, name, parent=None):
-		"""
-		Import the desired python package, and search for the module containing
-		the wanted learner. For use by interfaces to python packages.
-
-		"""
-
-		if name == 'kmeans':
-			return _Kmeans
-		if parent == 'kmeans':
-			if not hasattr(_Kmeans, name):
-				return None
-			return getattr(_Kmeans, name)
-		if name == 'MFastHCluster':
-			return _MFastHCluster
-		if parent == 'MFastHCluster':
-			if not hasattr(_MFastHCluster, name):
-				return None
-			return getattr(_MFastHCluster, name)
-
-
-		packageMod = self.mlpy
-
-		contents = dir(packageMod)
-
-		searchIn = packageMod
-		allowedDepth = 0
-		if parent is not None:
-			if parent in locationCache:
-				searchIn = locationCache[parent]
-			else:
-				searchIn = self._findInPackageRecursive(parent, allowedDepth, contents, packageMod)
-			allowedDepth = 0
-			contents = dir(searchIn)
-			if searchIn is None:
-				return None
-
-		if name in locationCache:
-			ret = locationCache[name]
-		else:
-			ret = self._findInPackageRecursive(name, allowedDepth, contents, searchIn)
-
-		return ret
-
-	
-	def _findInPackageRecursive(self, target, allowedDepth, contents, parent):
-		for name in contents:
-			if name.startswith("__") and name != '__init__':
-				continue
-			try:
-				subMod = getattr(parent, name)
-			except AttributeError:
-				try:		
-					subMod = importlib.import_module(parent.__name__ + "." + name)
-				except ImportError:
-					continue
-
-			# we want to add learners, and the parents of learners to the cache 
-			if hasattr(subMod, 'learn'):
-				locationCache[name] = subMod
-
-			if name == target:
-				return subMod
-
-			subContents = dir(subMod)
-
-			if allowedDepth > 0:
-				ret = self._findInPackageRecursive(target, allowedDepth-1, subContents, subMod)
-				if ret is not None:
-					return ret
-
-		return None
 
 
 class _Kmeans(object):

@@ -5,6 +5,7 @@ Utility functions that could be useful in multiple interfaces
 
 import numpy
 import sys
+import importlib
 
 import UML
 from UML.exceptions import ArgumentException
@@ -29,6 +30,103 @@ def makeArgString(wanted, argDict, prefix, infix, postfix):
 				value = str(value)
 			argString += prefix + arg + infix + value + postfix
 	return argString
+
+
+
+class PythonSearcher(object):
+
+	def __init__(self, baseModule, baseContents, specialCases, isLearner, allowedDepth):
+		self._baseModule = baseModule
+		self._baseContents = baseContents
+		self._specialCases = specialCases
+		self._isLearner = isLearner
+		self._allowedDepth = allowedDepth
+
+		self._locationCache = {}
+		self._havePopulated = False
+
+	def allLearners(self):
+		"""
+		Return a list of names of modules that satisfy the isLearner function found
+		according the search parameters defined in this object
+		"""
+		# We make an impossible to satisfy search query, as a consequence, we populate
+		# the cache with every possible learner
+		if not self._havePopulated:
+			self.findInPackage(None, None)
+		self._havePopulated = True
+
+		ret = []
+		# the location cache holds names to object mappings
+		for name in self._locationCache.keys():
+			val = self._locationCache[name]
+			if self._isLearner(val):
+				ret.append(name)
+
+		return ret
+
+
+	def findInPackage(self, parent, name):
+		"""
+		Import the desired python package, and search for the module containing
+		the wanted learner. For use by interfaces to python packages.
+
+		"""
+		specialKey = parent + '.' + name if parent is not None else name
+		if specialKey in self._specialCases:
+			return self._specialCases[specialKey]
+
+		contents = self._baseContents
+
+		searchIn = self._baseModule
+		allowedDepth = self._allowedDepth
+		if parent is not None:
+			if parent in self._locationCache:
+				searchIn = self._locationCache[parent]
+			else:
+				searchIn = self._findInPackageRecursive(searchIn, parent, allowedDepth, contents)
+			allowedDepth = 0
+			contents = searchIn.__all__ if hasattr(searchIn, '__all__') else dir(searchIn)
+			if searchIn is None:
+				return None
+
+		if name in self._locationCache:
+			ret = self._locationCache[name]
+		else:
+			ret = self._findInPackageRecursive(searchIn, name, allowedDepth, contents)
+
+		return ret
+
+	def _findInPackageRecursive(self, parent, target, allowedDepth, contents):
+		for name in contents:
+			if name.startswith("_") and name != '__init__':
+				continue
+			try:
+				subMod = getattr(parent, name)
+			except AttributeError:
+				try:		
+					subMod = importlib.import_module(parent.__name__ + "." + name)
+				except ImportError:
+					continue
+
+			# we want to add learners, and the parents of learners to the cache 
+			# NOTE: this adds learners regardless of the state of the target
+			if self._isLearner(subMod):
+				self._locationCache[str(name)] = subMod
+
+			if name == target:
+				return subMod
+
+			subContents = subMod.__all__ if hasattr(subMod, '__all__') else dir(subMod)
+
+			if allowedDepth > 0:
+				ret = self._findInPackageRecursive(subMod, target, allowedDepth-1, subContents)
+				if ret is not None:
+					return ret
+
+		return None
+
+
 
 
 #TODO what about multiple levels???
@@ -281,80 +379,12 @@ def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
 	return newScoresPerPoint
 
 
-def pythonIOWrapper(learnerName, trainX, trainY, testX, output, arguments, kernel, config):
-
-	inType = config['inType']
-	inTypeLabels = config['inTypeLabels']
-	
-	toCall = config['toCall']
-	checkPackage = config['checkPackage']
-	pythonOutType = config['pythonOutType']
-	fileOutType = config['fileOutType']
-
-
-	if not isinstance(trainX, UML.data.Base):
-		trainObj = UML.createData(inType, data=trainX)
-	else: # input is an object
-		trainObj = convertTo(trainObj, inType)
-	if not isinstance(testX, UML.data.Base):
-		testObj = UML.createData(inType, data=testX)
-	else: # input is an object
-		testObj = convertTo(testObj, inType)
-	
-	trainObjY = None
-	# directly assign target values, if present
-	if isinstance(trainY, UML.data.Base):
-		trainObjY = trainY
-	# otherwise, isolate the target values from training examples
-	elif trainY is not None:
-		trainCopy = trainObj.copy()
-		trainObjY = trainCopy.extractFeatures([trainY])		
-	# could be None for unsupervised learning, in which case it remains none
-
-	# get the correct type for the labels
-	if trainObjY is not None:	
-		trainObjY = convertTo(trainObjY, inTypeLabels)
-	
-	# pull out data from obj
-	trainObj.transpose()
-	trainRawData = trainObj.data
-	if trainObjY is not None:
-		# corrects the dimensions of the matrix data to be just an array
-		trainRawDataY = numpy.array(trainObjY.data).flatten()
-	else:
-		trainRawDataY = None
-	testObj.transpose()
-	testRawData = testObj.data
-
-	# call backend
-	try:
-		retData = toCall(learnerName,  trainRawData, trainRawDataY, testRawData, arguments, kernel)
-	except ImportError as e:
-		if not checkPackage():
-			print "Package was not importable."
-			print "It must be either on the search path, or have its location set in UML"
-		raise e
-
-	if retData is None:
-		return
-
-	outputObj = UML.createData(pythonOutType, data=retData)
-
-	if output is None:
-		# we want to return a column vector
-		outputObj.transpose()
-		return outputObj
-
-	outputObj.writeFile(output, format=fileOutType, includeNames=False)
-
-
-
-def convertTo(data, retType):
-	return eval("data.to" + retType + "()")
-
-
 
 def cacheWrapper(toWrap):
+	"""
+	Decorator to be used in universal Interface which will record the results of
+	call so that they can be easily returned again if the same call is made later.
+	"""
 	cache = {}
 	def wrapped(*args):
 		if args in cache:
