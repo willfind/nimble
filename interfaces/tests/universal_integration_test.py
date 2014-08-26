@@ -51,9 +51,6 @@ def test__getScoresFormat():
 	for interface in UML.interfaces.available:
 		interfaceName = interface.getCanonicalName()
 
-		if interfaceName == 'shogun': # TODO - remove
-			continue
-
 		learners = interface.listLearners()
 		for lName in learners:
 			fullName = interfaceName + '.' + lName
@@ -95,11 +92,11 @@ def testGetScoresFormat():
 	for interface in UML.interfaces.available:
 		interfaceName = interface.getCanonicalName()
 
-		if interfaceName == 'shogun': # TODO - remove
-			continue
-
 		learners = interface.listLearners()
 		for lName in learners:
+			if interfaceName == 'shogun':
+				print lName
+
 			fullName = interfaceName + '.' + lName
 			if UML.learnerType(fullName) == 'classifier':
 				try:
@@ -133,13 +130,14 @@ def testRandomnessControl():
 
 	for interface in UML.interfaces.available:
 		interfaceName = interface.getCanonicalName()
-
-		if interfaceName == 'shogun': # TODO - remove
-			continue
+#		if interfaceName != 'shogun':
+#			continue
 
 		listOf = UML.listLearners(interfaceName)
 
 		for learner in listOf:
+			if interfaceName == 'shogun':
+				print learner
 			currType = UML.learnerType(interfaceName + '.' + learner)
 			if currType == 'regression':
 				((trainData, trainLabels), (testData, testLabels)) = generateRegressionData(5, 10, 5)

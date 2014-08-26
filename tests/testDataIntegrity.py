@@ -97,22 +97,35 @@ def backend(toCall, portionToTest, allowRegression=True):
 
 	for learner in toTest:
 		package = learner.split('.',1)[0].lower()
-		if package != 'mlpy' and package != 'scikitlearn':
-			continue 
+#		if package != 'mlpy' and package != 'scikitlearn':
+#			continue 
+#		if package == 'shogun':
+#			print learner
+#		else:
+#			continue
 		lType = UML.learnerType(learner)
 		if lType == 'classification':
 			try:
 				toCall(learner, cTrainX, cTrainY, cTestX, cTestY)
 			# this is meant to safely bypass those learners that have required arguments
 			except ArgumentException as ae:
-				print ae
+				pass
+				#print ae
+			# this is generally how shogun explodes
+			except SystemError as se:
+				pass
+				#print se
 			assertUnchanged(learner, cData, backCTrainX, backCTrainY, backCTestX, backCTestY)
 		if lType == 'regression' and allowRegression:
 			try:
 				toCall(learner, rTrainX, rTrainY, rTestX, rTestY)
 			# this is meant to safely bypass those learners that have required arguments
 			except ArgumentException as ae:
-				print ae
+				pass
+				#print ae
+			except SystemError as se:
+				pass
+				#print se
 			assertUnchanged(learner, rData, backRTrainX, backRTrainY, backRTestX, backRTestY)
 
 @attr('slow')
@@ -154,7 +167,7 @@ def testDataIntegrityCrossValidate():
 # only those that the top level trainers, appliers, and testers are not reliant on.
 # integrity
 @attr('slow')
-def testDataIntegrityTrainLearner():
+def testDataIntegrityTrainedLearner():
 #	backend(setupAndCallIncrementalTrain, 1) TODO
 	backend(setupAndCallRetrain, 1)
 	backend(setupAndCallGetScores, 1, False)

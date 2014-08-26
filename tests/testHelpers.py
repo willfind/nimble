@@ -194,6 +194,12 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
 		knownAlgorithmToTypeHash['mlpy.Ridge'] = 'regression'
 	except ArgumentException:
 		pass
+	try:
+		findBestInterface('shogun')
+		knownAlgorithmToTypeHash['shogun.MulticlassOCAS'] = 'classification'
+		knownAlgorithmToTypeHash['shogun.LibSVR'] = 'regression'
+	except ArgumentException:
+		pass
 
 	for curAlgorithm in knownAlgorithmToTypeHash.keys():
 		actualType = knownAlgorithmToTypeHash[curAlgorithm]

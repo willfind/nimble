@@ -13,16 +13,6 @@ import UML
 
 from UML.exceptions import ArgumentException
 
-from UML.interfaces.shogun_interface_old import setShogunLocation
-from UML.interfaces.shogun_interface_old import getShogunLocation
-
-
-def testShogunLocation():
-	""" Test setShogunLocation() """
-	path = '/test/path/shogun'
-	setShogunLocation(path)
-
-	assert getShogunLocation() == path
 
 @raises(ArgumentException)
 def testShogun_shapemismatchException():
@@ -62,6 +52,7 @@ def testShogun_multiClassDataToBinaryAlg():
 	testObj = UML.createData('Matrix', data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
+
 	ret = UML.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
@@ -91,7 +82,8 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 	data2 = [[5,3], [-1,0]]
 	testObj = UML.createData('Matrix', data2)
 
-	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
+	args = {'st':1, 'kernel':'GaussianKernel', 'w':2, 'size':10}
+
 #	args = {}
 	ret = UML.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
@@ -110,6 +102,7 @@ def testShogunKMeans():
 	testObj = UML.createData('Matrix', data2)
 
 	args = {'distance':'ManhattanMetric'}
+
 	ret = UML.trainAndApply("shogun.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
@@ -129,7 +122,8 @@ def testShogunMulticlassSVM():
 	data2 = [[0,0], [-101,1], [1,101], [1,1]]
 	testObj = UML.createData('Matrix', data2)
 
-	args = {'C':.5, 'kernel':'LinearKernel'}
+	args = {'C':.5, 'k':'LinearKernel'}
+
 #	args = {'C':1}
 #	args = {}
 	ret = UML.trainAndApply("shogun.GMNPSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
@@ -180,7 +174,7 @@ def testShogunRossData():
 	testObj = UML.createData('Matrix', data2)
 
 	args = {'C':1.0}
-	argsk = {'C':1.0, 'kernel':"LinearKernel"}
+	argsk = {'C':1.0, 'k':"LinearKernel"}
 
 	ret = UML.trainAndApply("shogun.MulticlassLibSVM", trainingObj, trainY=0, testX=testObj, output=None, arguments=argsk)
 	assert ret is not None
@@ -307,55 +301,12 @@ def testShogunListLearners():
 	assert 'MulticlassLibSVM' in ret
 	assert 'MulticlassOCAS' in ret
 
-
-	from shogun.Features import RealFeatures
-	from shogun.Features import BinaryLabels
-	from shogun.Features import MulticlassLabels
-	from shogun.Features import RegressionLabels
-	import shogun.Kernel
-	import shogun.Classifier
-
-	for i in xrange(len(ret)):
-		funcName = ret[i]
-
-		toCall = getattr(shogun.Classifier, funcName)
-		trialObj = toCall()
-		probType = trialObj.get_machine_problem_type()
-		if probType == 0:
-			data = [[1,0], [0,1], [3,2]]
-			labels = [[-1], [-1], [1]]
-		else:
-			data = [[0,0], [0,1], [-118,1], [-117,1], [1,191], [1,118], [-1000,-500]]
-			labels = [[0],[0],[1],[1],[2],[2],[3]]
-
-		data = numpy.array(data, dtype=numpy.float)
-		data = data.transpose()
-		labels = numpy.array(labels)
-		labels = labels.transpose()
-		labels = labels.flatten()
-		labels = labels.astype(float)
-
-		trainFeat = RealFeatures()
-		trainFeat.set_feature_matrix(numpy.array(data, dtype=numpy.float))	
-		if probType == 0:
-			trainLabels = BinaryLabels(labels)
-		elif probType == 1:
-			trainLabels = RegressionLabels(labels)
-		else:
-			trainLabels = MulticlassLabels(labels)
-		trialObj.set_labels(trainLabels)
-
-		if hasattr(trialObj, 'set_kernel'):
-			kern = shogun.Kernel.LinearKernel(trainFeat,trainFeat)
-			trialObj.set_kernel(kern)
-		if hasattr(trialObj, 'set_distance'):
-			dist = shogun.Kernel.ManhattanMetric(trainFeat, trainFeat)
-			trialObj.set_distance(dist)
-		if hasattr(trialObj, 'set_C'):
-			try:
-				trialObj.set_C(1, 1)
-			except TypeError:
-				trialObj.set_C(1)
-
-		trialObj.train(trainFeat)
+	for name in ret:
+		params = UML.learnerParameters('shogun.' + name)
+		assert params is not None
+		defaults = UML.learnerDefaultValues('shogun.' + name)
+		for pSet in params:
+			for dSet in defaults:
+				for key in dSet.keys():
+					assert key in pSet
 
