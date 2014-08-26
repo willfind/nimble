@@ -80,7 +80,8 @@ class UniversalInterface(object):
 			# if in configuration, use that
 			# elif in _optionDefaults(optionName), use that
 			# else
-			self._configurableOptions[optionName] = None 
+			optionDefault = self._optionDefaults(optionName)
+			self._configurableOptions[optionName] = optionDefault 
 
 	@property
 	def optionNames(self):
@@ -188,7 +189,10 @@ class UniversalInterface(object):
 		baseCallName = learnerName
 		possibleParamSets = self.getLearnerParameterNames(learnerName)	
 		possibleDefaults = self.getLearnerDefaultValues(learnerName)
-		(neededParams, availableDefaults) = self._chooseBestParameterSet(possibleParamSets, possibleDefaults, arguments)
+		bestIndex = self._chooseBestParameterSet(possibleParamSets, possibleDefaults, arguments)
+#		if bestSet is None:
+#			raise ArgumentException("Missing arguments")
+		(neededParams, availableDefaults) = (possibleParamSets[bestIndex], possibleDefaults[bestIndex])
 		available = copy.deepcopy(arguments)
 		(ret, ignore) = self._validateArgumentDistributionHelper(baseCallName, neededParams, availableDefaults, available, False)
 		return ret
@@ -218,6 +222,9 @@ class UniversalInterface(object):
 		delayedInstantiations = {}
 		#work through this level's needed parameters
 		for paramName in currNeededParams:
+#			if paramName == 'kernel':
+#				import pdb
+#				pdb.set_trace()
 			# is the param actually there? Is there a default associated with it?
 			present = paramName in available
 			hasDefault = paramName in currDefaults
@@ -289,14 +296,14 @@ class UniversalInterface(object):
 					# undo the changes made by the default call
 					used.update(available)
 					# make recursive call instead with the actual value
-					try:
-						self._setupValidationRecursiveCall(value, used, ret, delayedAllocations)
-						available = used
-						ret[key] = value
-						del available[key]
-					except:
+					#try:
+					self._setupValidationRecursiveCall(value, used, ret, delayedAllocations)
+					available = used
+					ret[key] = value
+					del available[key]
+					#except:
 						# if fail, keep the results of the call with the default
-						pass
+					#	pass
 
 			# work through a list of possible keys for the delayedAllocations dict,
 			# if there are allocations associated with that key, perform them. 
@@ -310,11 +317,11 @@ class UniversalInterface(object):
 							ret[possibleKey][k] = v
 						del available[k]
 
-			delayedAllocations = {}			
-
 			# at this point, everything should have been used, and then removed.
 			if len(available) != 0:
 				raise ArgumentException("Extra params in arguments: " + str(available))
+
+			delayedAllocations = {}		
 
 		return (ret, delayedAllocations)
 
@@ -341,7 +348,8 @@ class UniversalInterface(object):
 			subParamGroup = self._getParameterNames(paramValue)
 			subDefaults = self._getDefaultValues(paramValue)
 
-		(subParamGroup, subDefaults) = self._chooseBestParameterSet(subParamGroup, subDefaults, subSource)
+		bestIndex = self._chooseBestParameterSet(subParamGroup, subDefaults, subSource)
+		(subParamGroup, subDefaults) = (subParamGroup[bestIndex], subDefaults[bestIndex])
 
 		(ret, allocations) = self._validateArgumentDistributionHelper(paramValue, subParamGroup, subDefaults, subSource, subShared)
 
@@ -374,10 +382,12 @@ class UniversalInterface(object):
 		are in another dictionary.
 
 		"""
+		ignoreKeys = []
 		ret = {}
 		for paramName in toProcess:
 			paramValue = toProcess[paramName]
 			if isinstance(paramValue, basestring):
+				ignoreKeys.append(paramValue)
 				toCall = self.findCallable(paramValue)
 				# if we can find an object for it, and we've prepped the arguments,
 				# then we actually instantiate an object
@@ -391,21 +401,37 @@ class UniversalInterface(object):
 			
 			ret[paramName] = paramValue
 
+		for key in ignoreKeys:
+			if key in ret:
+				del ret[key]
+
 		return ret 
 
 	def _chooseBestParameterSet(self, possibleParamsSets, matchingDefaults, arguments):
+#		import pdb
+#		pdb.set_trace()
+#		print possibleParamsSets
+#		print arguments
+		success = False
+		missing = []
 		bestParams = []
-		bestDefaults = {}
+		for i in range(len(possibleParamsSets)):
+				missing.append([])
+		bestIndex = None
 		for i in range(len(possibleParamsSets)):
 			currParams = possibleParamsSets[i]
 			currDefaults = matchingDefaults[i]
+			allIn = True
 			for param in currParams:
 				if param not in arguments and param not in currDefaults:
-					continue
-			if len(currParams) > len(bestParams):
-				bestParams = currParams
-				bestDefaults = currDefaults
-		return (bestParams, bestDefaults)
+					allIn = False
+					missing[i].append(param)
+			if allIn and len(currParams) >= len(bestParams):
+				bestIndex = i
+				success = True
+		if not success:
+			raise ArgumentException("Missing required params in each possible set: " + str(missing))
+		return bestIndex
 
 	def _formatScoresToOvA(self, learnerName, learner, testX, applyResults, rawScores, arguments, customDict):
 		"""

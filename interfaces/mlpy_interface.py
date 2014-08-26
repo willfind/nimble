@@ -306,10 +306,10 @@ class Mlpy(UniversalInterface):
 			outputValue = outputValue.reshape(len(outputValue), 1)
 		
 		#TODO correct
-		outputFormat = 'Matrix'
-		if outputFormat == 'match':
-			outputFormat = customDict['match']
-		return UML.createData(outputFormat, outputValue)
+		outputType = 'Matrix'
+		if outputType == 'match':
+			outputType = customDict['match']
+		return UML.createData(outputType, outputValue)
 
 
 	def _trainer(self, learnerName, trainX, trainY, arguments, customDict):

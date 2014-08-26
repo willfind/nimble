@@ -4,6 +4,8 @@ import importlib
 import abc
 import universal_interface
 
+displayErrors = False
+
 def collectVisiblePythonModules(modulePath):
 	# go through files in this directory, find ones which could be python importable
 	possibleFiles = os.listdir(modulePath)
@@ -46,7 +48,9 @@ def collect(modulePath):
 		try:
 			tempObj = toInstantiate()
 		# if ANYTHING goes wrong, just go on without that interface
-		except Exception:
+		except Exception as e:
+			if displayErrors:
+				print str(e)
 			continue
 		if tempObj is not None:
 			instantiated.append(tempObj)
