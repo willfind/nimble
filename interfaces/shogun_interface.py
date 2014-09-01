@@ -779,8 +779,8 @@ excludedLearners2 = [# parent classes, not actually runnable
 			'MultitaskLeastSquaresRegression',  #core dump
 			'MultitaskLogisticRegression',  #core dump
 			#'MultitaskTraceLogisticRegression',  # assertion error
-			#'OnlineLibLinear', # needs streaming dot features
-			#'OnlineSVMSGD', # needs streaming dot features
+			'OnlineLibLinear', # needs streaming dot features
+			'OnlineSVMSGD', # needs streaming dot features
 			#'PluginEstimate', # takes string inputs?
 			#'RandomConditionalProbabilityTree',  # takes streaming dense features
 			#'RelaxedTree', # [ERROR] Call set_machine_for_confusion_matrix before training
