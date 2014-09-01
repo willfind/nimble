@@ -7,7 +7,7 @@
 
 # TODO?
 # * online learning
-# * different feature types (sparse, for other problem types)
+# * different feature types (streaming, for other problem types)
 # *
 
 import importlib
@@ -17,6 +17,7 @@ import sys
 import os
 import clang.cindex
 import json
+import distutils.version
 
 import UML
 
@@ -46,6 +47,7 @@ class Shogun(UniversalInterface):
 		super(Shogun, self).__init__()
 
 		self.shogun = importlib.import_module('shogun')
+		self.versionString = None
 
 		def isLearner(obj):
 			hasTrain = hasattr(obj, 'train')
@@ -179,10 +181,7 @@ class Shogun(UniversalInterface):
 		Find default values
 		TAKES string name, 
 		RETURNS list of dict of param names to default values
-		"""
-#		import pdb
-#		pdb.set_trace()
-		
+		"""		
 		allNames = self._getParameterNamesBackend(name)
 		return self._setupDefaultsGivenBaseNames(name, allNames)
 
@@ -302,7 +301,7 @@ class Shogun(UniversalInterface):
 		trainXTrans = None
 		if trainX is not None:
 			customDict['match'] = trainX.getTypeString()
-			trainXTrans = self._inputTransDataHelper(trainX)
+			trainXTrans = self._inputTransDataHelper(trainX, learnerName)
 			
 		trainYTrans = None
 		if trainY is not None:
@@ -310,7 +309,7 @@ class Shogun(UniversalInterface):
 			
 		testXTrans = None
 		if testX is not None:
-			testXTrans = self._inputTransDataHelper(testX)
+			testXTrans = self._inputTransDataHelper(testX, learnerName)
 
 		delkeys = []
 		for key in arguments:
@@ -521,7 +520,13 @@ class Shogun(UniversalInterface):
 		"""
 		Return a string designating the version of the package underlying this interface
 		"""
-		return self.shogun.Library.Version_get_version_release()
+		if self.versionString is None:
+			shogunLib = importlib.import_module('shogun.Library')
+#			import pdb
+#			pdb.set_trace()
+			self.versionString = shogunLib.Version_get_version_release()
+
+		return self.versionString
 
 	######################
 	### METHOD HELPERS ###
@@ -551,28 +556,34 @@ class Shogun(UniversalInterface):
 		except Exception as e:
 			print str(e) # send it to warning log?
 			allowDiscovery = False
-			# TODO abort -- but wait, even if we can't run discovery, we still want to load
-			# the manifest: it still might be helpful
 
-		manifestPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata', 'shogunParameterManifest')
+		# find most likely manifest file
+		metadataPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata')
+		best = self._findBestManifest(metadataPath)
+		exists = os.path.exists(best)
+
 		shogunSourcePath = self._configurableOptions['sourceLobcation']
 
+		ranDiscovery = False
 		# if file missing:
-		exists = os.path.exists(manifestPath)
 		if not exists and allowDiscovery:
 			self._paramsManifest = discoverConstructors(shogunSourcePath)
+			ranDiscovery = True
 		# manifest file present
 		else:
-			with open(manifestPath, 'r') as fp:
-				self._paramsManifest = json.load(fp)
+			with open(best, 'r') as fp:
+				self._paramsManifest = json.load(fp, object_hook=_enforceNonUnicodeStrings)
 			accurate = None
 			empty = (self._paramsManifest == {})
 			# grab version data
 			if not empty:
 				accurate = True # TODO: actually do some checks
+				if os.path.basename(best).split('_', 1)[1] != self.version():
+					accurate = False
 			# if empty or different version:
 			if (empty or not accurate) and allowDiscovery:
 				self._paramsManifest = discoverConstructors(shogunSourcePath)
+				ranDiscovery = True
 
 		modified = False
 		# check params for each learner in listLearner
@@ -581,9 +592,64 @@ class Shogun(UniversalInterface):
 		# but wait, do we really want this ???
 
 		# has it been written to a file? did we modify the manifest in memory?
-		if not exists or modified:
-			with open(manifestPath, 'w') as fp:
+		if ranDiscovery or modified:
+			writePath = os.path.join(metadataPath, ('shogunParameterManifest_' + self.version()))
+			with open(writePath, 'w') as fp:
 				json.dump(self._paramsManifest, fp, indent=4)
+
+
+	def _findBestManifest(self, metadataPath):
+		"""
+		Returns absolute path to the manifest file that is the closest match for
+		this version of shogun
+
+		"""
+		ourVersion = self.version()
+		ourVersion = distutils.version.LooseVersion(ourVersion.split('_')[0])
+
+		possible = os.listdir(metadataPath)
+		if len(possible) == 0:
+			return None
+	
+		ours = (ourVersion, None, None)
+		toSort = [ours]
+		for name in possible:
+			if name.startswith("shogunParameterManifest"):
+				pieces = name.split('_')
+				currVersion = distutils.version.LooseVersion(pieces[1])
+				toSort.append((currVersion, name, ))
+		sortedPairs = sorted(toSort, key=(lambda p: p[0]))
+		ourIndex = sortedPairs.index(ours)
+
+		left, right = None, None
+		if ourIndex != 0:
+			left = sortedPairs[ourIndex - 1]
+		if ourIndex != len(sortedPairs) -1:
+			right = sortedPairs[ourIndex + 1]
+
+		best = None
+		if left is None:
+			best = right
+		elif right is None:
+			best = left
+		# at least one of them must be non-None, so this must mean both
+		# are non None
+		else:
+			best = left[1]
+			for index in range(len(ourVersion.version)):
+				currOurs = ourVersion.version[index]
+				currL = left[0].version[index]
+				currR = right[0].version[index]
+
+				if currL == currOurs and currR != currOurs:
+					best = left[1]
+					break
+				if currL !=currOurs and currR == currOurs:
+					best = right[1]
+					break
+
+		return os.path.join(metadataPath, best[1])
+
 
 
 	def _inputTransLabelHelper(self, labelsObj, learnerName, customDict):
@@ -619,18 +685,22 @@ class Shogun(UniversalInterface):
 
 		return labels
 
-	def _inputTransDataHelper(self, dataObj):
+	def _inputTransDataHelper(self, dataObj, learnerName):
 		typeString = dataObj.getTypeString()
 		if typeString == 'Sparse':
 			raw = dataObj.data.tocsc().astype(numpy.float)
 			raw = raw.transpose()
 			trans = self.shogun.Features.SparseRealFeatures()
 			trans.set_sparse_feature_matrix(raw)
+			if 'Online' in learnerName:
+				trans = self.shogun.Features.StreamingSparseRealFeatures(trans)
 		else:
 			raw = dataObj.copyAs('numpyarray').astype(numpy.float)
 			raw = raw.transpose()
 			trans = self.shogun.Features.RealFeatures()
 			trans.set_feature_matrix(raw)
+			if 'Online' in learnerName:
+				trans = self.shogun.Features.StreamingRealFeatures()
 		return trans
 
 	def _queryParamManifest(self, name):
@@ -709,8 +779,8 @@ excludedLearners2 = [# parent classes, not actually runnable
 			'MultitaskLeastSquaresRegression',  #core dump
 			'MultitaskLogisticRegression',  #core dump
 			#'MultitaskTraceLogisticRegression',  # assertion error
-			'OnlineLibLinear', # needs streaming dot features
-			'OnlineSVMSGD', # needs streaming dot features
+			#'OnlineLibLinear', # needs streaming dot features
+			#'OnlineSVMSGD', # needs streaming dot features
 			#'PluginEstimate', # takes string inputs?
 			#'RandomConditionalProbabilityTree',  # takes streaming dense features
 			#'RelaxedTree', # [ERROR] Call set_machine_for_confusion_matrix before training
@@ -745,6 +815,14 @@ excludedLearners2 = [# parent classes, not actually runnable
 			#'SVMSGD',
 			#'SVRLight',
 			]
+
+def _enforceNonUnicodeStrings(manifest):
+	for name in manifest:
+		groupList = manifest[name]
+		for group in groupList:
+			for i in xrange(len(group)):
+				group[i] = str(group[i])
+	return manifest
 
 
 def _remapLabelsRange(toRemap):
@@ -811,7 +889,7 @@ def _remapLabelsSpecific(toRemap, space):
 
 
 
-def discoverConstructors(path, desiredFile=None, desiredExt=['.cpp', '.h']):
+def discoverConstructors(path, desiredFile=None, desiredExt=['.cpp']):
 	"""
 	Recursively visit all directories in the given path, calling
 	findConstructors for each cpp source file
@@ -863,20 +941,19 @@ def findConstructorsBackend(node, results, targetDirectory):
 #		for child in node.get_children():
 #			print child.kind
 	if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
-#		if 'SVM' in node.spelling or 'Linear' in node.spelling 
-#			import pdb
-#			pdb.set_trace()
+		constructorName = node.spelling
 		args = []
 		for value in node.get_arguments():
 			args.append(value.spelling)
 			# TODO value.type.spelling
-		constructorName = node.spelling
+		
 		#print "%s%s" % (constructorName, str(args))
 		if not constructorName in results:
 			results[constructorName] = []
 		if args not in results[constructorName]:
 			results[constructorName].append(args)
-	# Recurse for children of this node
-	for child in node.get_children():
-		findConstructorsBackend(child, results, targetDirectory)
+	# Recurse for children of this node if it isn't a constructor
+	else:
+		for child in node.get_children():
+			findConstructorsBackend(child, results, targetDirectory)
 

@@ -16,7 +16,7 @@ from UML.exceptions import ArgumentException
 
 @raises(ArgumentException)
 def testShogun_shapemismatchException():
-	""" Test shogun() raises exception when the shape of the train and test data don't match """
+	""" Test shogun raises exception when the shape of the train and test data don't match """
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,0], [-1,0,1], [1,3,2]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -30,7 +30,7 @@ def testShogun_shapemismatchException():
 
 @raises(ArgumentException)
 def testShogun_singleClassException():
-	""" Test shogun() raises exception when the training data only has a single label """
+	""" Test shogun raises exception when the training data only has a single label """
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,0], [-1,0,1], [-1,0,0]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -57,7 +57,7 @@ def testShogun_multiClassDataToBinaryAlg():
 
 
 def testShogunHandmadeBinaryClassification():
-	""" Test shogun() by calling a binary linear classifier """
+	""" Test shogun by calling a binary linear classifier """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,0], [-0,0,1], [1,3,2]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -74,7 +74,7 @@ def testShogunHandmadeBinaryClassification():
 	assert ret.data[0,0] > 0
 
 def testShogunHandmadeBinaryClassificationWithKernel():
-	""" Test shogun() by calling a binary linear classifier with a kernel """
+	""" Test shogun by calling a binary linear classifier with a kernel """
 	variables = ["Y","x1","x2"]
 	data = [[5,-11,-5], [1,0,1], [1,3,2]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -93,7 +93,7 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 	assert ret.data[0,0] > 0
 
 def testShogunKMeans():
-	""" Test shogun() by calling the Kmeans classifier, a distance based machine """
+	""" Test shogun by calling the Kmeans classifier, a distance based machine """
 	variables = ["Y","x1","x2"]
 	data = [[0,0,0], [0,0,1], [1,8,1], [1,7,1], [2,1,9], [2,1,8]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -114,7 +114,7 @@ def testShogunKMeans():
 
 
 def testShogunMulticlassSVM():
-	""" Test shogun() by calling a multilass classifier with a kernel """
+	""" Test shogun by calling a multilass classifier with a kernel """
 	variables = ["Y","x1","x2"]
 	data = [[0,0,0], [0,0,1], [1,-118,1], [1,-117,1], [2,1,191], [2,1,118], [3,-1000,-500]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -136,7 +136,7 @@ def testShogunMulticlassSVM():
 
 
 def testShogunSparseRegression():
-	""" Test shogun() sparse data instantiation by calling on a sparse regression learner with a large, but highly sparse, matrix """
+	""" Test shogun sparse data instantiation by calling on a sparse regression learner with a large, but highly sparse, matrix """
 
 	x = 100
 	c = 10
@@ -155,7 +155,7 @@ def testShogunSparseRegression():
 
 
 def testShogunRossData():
-	""" Test shogun() by calling classifers using the problematic data from Ross """
+	""" Test shogun by calling classifers using the problematic data from Ross """
 	
 	p0 = [1,  0,    0,    0,    0.21,  0.12]
 	p1 = [2,  0,    0.56, 0.77, 0,     0]
@@ -190,7 +190,7 @@ def testShogunRossData():
 
 @attr('slow')
 def testShogunEmbeddedRossData():
-	""" Test shogun() by MulticlassOCAS with the ross data embedded in random data """
+	""" Test shogun by MulticlassOCAS with the ross data embedded in random data """
 	
 	p0 = [3,  0,    0,    0,    0.21,  0.12]
 	p1 = [2,  0,    0.56, 0.77, 0,     0]
@@ -230,7 +230,7 @@ def testShogunEmbeddedRossData():
 
 
 def testShogunScoreModeMulti():
-	""" Test shogun() returns the right dimensions when given different scoreMode flags, multi case"""
+	""" Test shogun returns the right dimensions when given different scoreMode flags, multi case"""
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -253,7 +253,7 @@ def testShogunScoreModeMulti():
 
 
 def testShogunScoreModeBinary():
-	""" Test shogun() returns the right dimensions when given different scoreMode flags, binary case"""
+	""" Test shogun returns the right dimensions when given different scoreMode flags, binary case"""
 	variables = ["Y","x1","x2"]
 	data = [[-1,1,1], [-1,0,1], [1,30,2], [1,30,3]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -275,9 +275,22 @@ def testShogunScoreModeBinary():
 	assert ret.featureCount == 2
 
 
+def testOnlineLearners():
+	""" Test shogun can call online learners """
+	variables = ["Y","x1","x2"]
+	data = [[0,1,1], [0,0,1], [0,3,2], [1,-300,-25]]
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
+
+	data2 = [[2,3],[-200,0]]
+	testObj = UML.createData('Matrix', data2)
+
+	ret = UML.trainAndApply("shogun.OnlineLibLinear", trainingObj, trainY="Y", testX=testObj, arguments={})
+	ret = UML.trainAndApply("shogun.OnlineSVMSGD", trainingObj, trainY="Y", testX=testObj, arguments={})
+		
+
 # TODO def testShogunMultiClassStrategyMultiDataBinaryAlg():
 def notRunnable():
-	""" Test shogun() will correctly apply the provided strategies when given multiclass data and a binary learner """
+	""" Test shogun will correctly apply the provided strategies when given multiclass data and a binary learner """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
