@@ -1215,9 +1215,27 @@ class CooWithEmpty(object):
 
 	def __init__(self, arg1, shape=None, dtype=None, copy=False, reuseData=False):
 		self.ndim = 2
-		try:
-			if isinstance(arg1, CooWithEmpty):
-				arg1 = arg1.internal
+		if isinstance(arg1, CooWithEmpty):
+			arg1 = arg1.internal
+
+		if isinstance(arg1, numpy.matrix):
+			shape = arg1.shape
+
+		if shape is not None and (shape[0] == 0 or shape[1] == 0):
+			if isinstance(arg1, tuple):
+				if shape is None:
+					self.shape = (0,0)
+				else:
+					self.shape = shape
+			else:
+				converted = numpy.array(arg1)
+				self.shape = converted.shape
+			self.nnz = 0
+			self.data = numpy.array([])
+			self.row = numpy.array([])
+			self.col = numpy.array([])
+			self.internal = numpy.empty(self.shape)
+		else:
 			if reuseData:
 				internal = arg1
 			else:
@@ -1230,21 +1248,6 @@ class CooWithEmpty(object):
 			self.shape = internal.shape
 			self.internal = internal
 
-		except ValueError as ve:
-			if str(ve) == 'invalid shape':
-				if isinstance(arg1, tuple):
-					if shape is None:
-						self.shape = (0,0)
-					else:
-						self.shape = shape
-				else:
-					converted = numpy.array(arg1)
-					self.shape = converted.shape
-				self.nnz = 0
-				self.data = numpy.array([])
-				self.row = numpy.array([])
-				self.col = numpy.array([])
-				self.internal = numpy.empty(self.shape)
 
 	def transpose(self):
 		self.internal = self.internal.transpose()
