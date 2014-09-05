@@ -9,6 +9,7 @@ UML. Run as main to execute.
 import warnings
 import inspect
 import os
+import os.path
 import nose
 import sys
 from nose.plugins.base import Plugin
@@ -20,10 +21,17 @@ import nose.pyversion
 from nose.util import ln
 from StringIO import StringIO
 
+UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+sys.path.append(os.path.dirname(UMLPath))
+import UML
+available = UML.interfaces.available
+
+
+
 class ExtensionPlugin(Plugin):
 
     name = "ExtensionPlugin"
-
+    
     def options(self, parser, env):
         Plugin.options(self,parser,env)
 
@@ -34,12 +42,42 @@ class ExtensionPlugin(Plugin):
     # Controls which files are checked for tests. In this case, we check every
     # file we discover, as long as it ends with '.py'
     def wantFile(self, file):
-        return file.endswith('.py')
+        # TODO fix selection of files in interfaces/tests
+        if not file.endswith('.py'):
+            return False
 
-    def wantDirectory(self,directory):
+        dname = os.path.dirname(file)
+        if dname == os.path.join(UMLPath, 'interfaces', 'tests'):
+            fname = os.path.basename(file)
+            
+            #need to confirm that fname is associated with an interface
+            associated = False
+            for intName in os.listdir(dname):
+                if not intName.endswith('.py'):
+                    continue
+                intName = intName.split('.')[0]
+                if intName in fname:
+                    associated = True
+                    break
+            # if it is associated with an interface, we only want to run it
+            # if it is associated with an available interface.
+            if associated:
+                associated = False
+                for interface in UML.interfaces.available:
+                    if interface.__module__.rsplit('.',1)[1] in fname:
+                        associated = True
+                        break
+                if not associated:
+                    return False
+
         return True
 
-    def wantModule(self,file):
+    def wantDirectory(self, directory):
+        if os.path.basename(directory) == 'broken':
+            return False
+        return True
+
+    def wantModule(self, file):
         return True
 
 
@@ -136,7 +174,6 @@ if __name__ == '__main__':
     # TODO: check for -w and override???
 
     # setup so that this only tests the UML dir, regardless of where it has been called
-    UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     workingDirDef = ["-w", UMLPath]
     args.extend(workingDirDef)
 
