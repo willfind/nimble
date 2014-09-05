@@ -39,7 +39,7 @@ class UniversalInterface(object):
 		# aborting the construction of the interface for this session of UML if
 		# it is not.
 		if not self.accessible():
-			raise ImportError("The underlying package was not accessible, aborting instantiation.")
+			raise ImportError("The underlying package for " + self.getCanonicalName() + " was not accessible, aborting instantiation.")
 
 		# getCanonicalName
 		if not isinstance(self.getCanonicalName(), str):

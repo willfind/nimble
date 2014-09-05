@@ -73,9 +73,19 @@ class SciKitLearn(UniversalInterface):
 			hasFitPred = hasattr(obj, 'fit_predict')
 			hasFitTrans = hasattr(obj, 'fit_transform')
 
-			if (hasFit and (hasPred or hasTrans)) or hasFitPred or hasFitTrans:
-				return True
-			return False
+			if not ((hasFit and (hasPred or hasTrans)) or hasFitPred or hasFitTrans):
+				return False
+
+			try:
+				instantiated = obj()
+			except TypeError:
+				# We're using a failed init call as a cue that object in question
+				# is a kind of intermediate class (which we want to ignore). All
+				# the working estimators seem to have full defaults for all params
+				# to __init__
+				return False
+
+			return True
 
 		self._searcher = PythonSearcher(self.skl, self.skl.__all__, {}, isLearner, 2)
 
@@ -97,7 +107,8 @@ class SciKitLearn(UniversalInterface):
 
 		exclude = ['BaseDiscreteNB', 'libsvm', 'GMMHMM', 'GaussianHMM', 'MultinomialHMM', 
 			'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression', 'LogOddsEstimator',
-			'PriorProbabilityEstimator', 'MeanEstimator', 'TransformerMixin', 'ClusterMixin',]
+			'PriorProbabilityEstimator', 'MeanEstimator', 'TransformerMixin', 'ClusterMixin',
+			'BaggingClassifier',]
 		ret = []
 		for name in possibilities:
 			if not name in exclude:
@@ -569,7 +580,10 @@ class SciKitLearn(UniversalInterface):
 				ret = ([], None, None, [])
 			(newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
 			return (newArgs, ret[1], ret[2], newDefaults)
-
+		if parent is not None and parent.lower() == 'ZeroEstimator'.lower():
+			if name == '__init__':
+				return ([], None, None, [])
+			
 		if parent is not None and parent.lower() == 'GaussianNB'.lower():
 			if name == '__init__':
 				ret = ([], None, None, [])

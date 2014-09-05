@@ -15,9 +15,9 @@ import numpy
 import copy
 import sys
 import os
-import clang.cindex
 import json
 import distutils.version
+
 
 import UML
 
@@ -45,6 +45,13 @@ class Shogun(UniversalInterface):
 
 		"""
 		super(Shogun, self).__init__()
+
+		self.allowDiscovery = True
+		try:
+			self.clang.cindex = importlib.import_module("clang.cindex")
+		except ImportError as ie:
+			self.allowDiscovery = False
+			#raise ie
 
 		self.shogun = importlib.import_module('shogun')
 		self.versionString = None
@@ -540,22 +547,16 @@ class Shogun(UniversalInterface):
 		associated with self._configurableOptions['location'].
 
 		"""
-#		import pdb
-#		pdb.set_trace()
+		# issue: protecting users from a failed clang import
 		# TODO: generalize. need some path variables or something???
 		location = "/home/tpburns/Lib/llvm-build/Debug+Asserts/lib/libclang.so"
-		clang.cindex.Config.set_library_file(location)
-
-		# is there a way we can guess default values by looking at the calls made directly
-		# after the function declaration?
-
-		# issue: protecting users from a failed clang import
-		allowDiscovery = True
+		
 		try:
+			clang.cindex.Config.set_library_file(location)
 			clang.cindex.Index.create()
 		except Exception as e:
-			print str(e) # send it to warning log?
-			allowDiscovery = False
+			#print str(e) # send it to warning log?
+			self.allowDiscovery = False
 
 		# find most likely manifest file
 		metadataPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata')
@@ -566,7 +567,7 @@ class Shogun(UniversalInterface):
 
 		ranDiscovery = False
 		# if file missing:
-		if not exists and allowDiscovery:
+		if not exists and self.allowDiscovery:
 			self._paramsManifest = discoverConstructors(shogunSourcePath)
 			ranDiscovery = True
 		# manifest file present
@@ -581,7 +582,7 @@ class Shogun(UniversalInterface):
 				if os.path.basename(best).split('_', 1)[1] != self.version():
 					accurate = False
 			# if empty or different version:
-			if (empty or not accurate) and allowDiscovery:
+			if (empty or not accurate) and self.allowDiscovery:
 				self._paramsManifest = discoverConstructors(shogunSourcePath)
 				ranDiscovery = True
 
@@ -761,11 +762,15 @@ excludedLearners2 = [# parent classes, not actually runnable
 			# Should be implemented, but don't work
 			#'BalancedConditionalProbabilityTree', # streaming dense features input
 			#'ConditionalProbabilityTree', 	 # requires streaming features
+			'DomainAdaptationSVMLinear', #segfault
+			'DomainAdaptationMulticlassLibLinear', # segFault
 			'DomainAdaptationSVM',
 			#'DualLibQPBMSOSVM',  # problem type 3
 			'FeatureBlockLogisticRegression',  # remapping
+			'KernelRidgeRegression', #segfault
 			#'KernelStructuredOutputMachine', # problem type 3
 			#'LatentSVM', # problem type 4
+			'LibLinearRegression',
 			#'LibSVMOneClass',
 			#'LinearMulticlassMachine', # mixes machines. is this even possible to run?
 			#'LinearStructuredOutputMachine', # problem type 3
@@ -806,6 +811,7 @@ excludedLearners2 = [# parent classes, not actually runnable
 			#'MPDSVM',
 			#'MulticlassLibLinear',
 			#'MulticlassLibSVM',
+			'NewtonSVM',
 			#'Perceptron',
 			#'SGDQN',
 			#'SVMLight',
