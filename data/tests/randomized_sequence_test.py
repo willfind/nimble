@@ -72,8 +72,8 @@ mutuallyExclusiveParams['copyFeatures'] = ('features', ('start', 'end'))
 mutuallyExclusiveParams['copyPoints'] = ('points', ('start', 'end'))
 
 
-def nope():
-#def testRandomSequenceOfMethods():
+#def nope():
+def testRandomSequenceOfMethods():
 	# always use this number of points and features
 	points = numPoints
 	features = numFeatures
@@ -135,9 +135,9 @@ def runSequence(objectList):
 			if currFunc in unavailableNoFeatures:
 				continue
 
-#		if currFunc == 'transformFeatureToIntegerFeature':
-#			import pdb
-#			pdb.set_trace()
+		if currFunc == 'extractFeatures':
+			import pdb
+			pdb.set_trace()
 
 		# set up parameters
 		paramsPerObj = []
@@ -165,6 +165,8 @@ def runSequence(objectList):
 			for j in xrange(i+1, len(objectList)):
 				jthDataObject = objectList[j]
 				assert ithDataObject.isApproximatelyEqual(jthDataObject)
+				assert ithDataObject._equalPointNames(jthDataObject)
+				assert ithDataObject._equalFeatureNames(jthDataObject)
 
 
 def equalityWrapper(left, right):

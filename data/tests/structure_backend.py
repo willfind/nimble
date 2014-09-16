@@ -373,7 +373,7 @@ class StructureBackend(DataTestObject):
 
 	def test_sortPoints_scorer(self):
 		""" Test sortPoints() when we specify a scoring function """
-		data = [[7,1,9],[1,2,3],[4,5,6]]
+		data = [[1,2,3],[4,5,6],[7,1,9],[0,0,0]]
 		toTest = self.constructor(data)
 
 		def numOdds(point):
@@ -386,19 +386,15 @@ class StructureBackend(DataTestObject):
 
 		toTest.sortPoints(sortHelper=numOdds)
 
-		dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
+		dataExpected = [[0,0,0],[4,5,6],[1,2,3],[7,1,9]]
 		objExp = self.constructor(dataExpected)
 
 		assert toTest.isIdentical(objExp)
 		
 	def test_sortPoints_comparator(self):
 		""" Test sortPoints() when we specify a comparator function """
-		data = [[7,1,9],[1,2,3],[4,5,6]]
+		data = [[1,2,3],[4,5,6],[7,1,9],[0,0,0]]
 		toTest = self.constructor(data)
-
-		# comparator sort currently disabled for Matrix
-		if isinstance(toTest, Matrix):
-			return
 
 		def compOdds(point1, point2):
 			odds1 = 0
@@ -413,7 +409,7 @@ class StructureBackend(DataTestObject):
 
 		toTest.sortPoints(sortHelper=compOdds)
 
-		dataExpected = [[4,5,6],[1,2,3],[7,1,9]]
+		dataExpected = [[0,0,0],[4,5,6],[1,2,3],[7,1,9]]
 		objExp = self.constructor(dataExpected)
 
 		assert toTest.isIdentical(objExp)
@@ -447,8 +443,8 @@ class StructureBackend(DataTestObject):
 
 	def test_sortFeatures_scorer(self):
 		""" Test sortFeatures() when we specify a scoring function """
-		data = [[7,1,9],[1,2,3],[4,2,9]]
-		names = ["1","2","3"]
+		data = [[7,1,9,0],[1,2,3,0],[4,2,9,0]]
+		names = ["2","1","3","0"]
 		toTest = self.constructor(data, featureNames=names)
 
 		def numOdds(feature):
@@ -460,20 +456,16 @@ class StructureBackend(DataTestObject):
 
 		toTest.sortFeatures(sortHelper=numOdds)
 
-		dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
-		namesExp = ['2', '1', '3']
+		dataExpected = [[0,1,7,9],[0,2,1,3],[0,2,4,9]]
+		namesExp = ['0', '1', '2', '3']
 		objExp = self.constructor(dataExpected, featureNames=namesExp)
 
 		assert toTest.isIdentical(objExp)
 
 	def test_sortFeatures_comparator(self):
 		""" Test sortFeatures() when we specify a comparator function """
-		data = [[7,1,9],[1,2,3],[4,2,9]]
+		data = [[7,1,9,0],[1,2,3,0],[4,2,9,0]]
 		toTest = self.constructor(data)
-
-		# comparator sort currently disabled for Matrix
-		if isinstance(toTest, Matrix):
-			return
 
 		def compOdds(point1, point2):
 			odds1 = 0
@@ -488,7 +480,7 @@ class StructureBackend(DataTestObject):
 
 		toTest.sortFeatures(sortHelper=compOdds)
 
-		dataExpected = [[1,7,9],[2,1,3],[2,4,9]]
+		dataExpected = [[0,1,7,9],[0,2,1,3],[0,2,4,9]]
 		objExp = self.constructor(dataExpected)
 
 		assert toTest.isIdentical(objExp)
@@ -732,6 +724,22 @@ class StructureBackend(DataTestObject):
 
 		toTest.isIdentical(exp)
 
+	def test_extractFeatures_ListIntoFEmptyOutOfOrder(self):
+		""" Test extractFeatures() by removing a list of all features """
+		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+		toTest = self.constructor(data)
+		expData = [[3,1,2], [6,4,5], [9,7,8], [12,10,11]]
+		expRet = self.constructor(expData)
+		ret = toTest.extractFeatures([2,0,1])
+
+		assert ret.isIdentical(expRet)
+
+		data = [[],[],[],[]]
+		data = numpy.array(data)
+		exp = self.constructor(data)
+
+		toTest.isIdentical(exp)
+
 
 	def test_extractFeatures_handmadeListSequence(self):
 		""" Test extractFeatures() against handmade output for several extractions by list """
@@ -741,8 +749,8 @@ class StructureBackend(DataTestObject):
 		ext1 = toTest.extractFeatures([0])
 		exp1 = self.constructor([[1],[4],[7]], pointNames=pointNames)
 		assert ext1.isIdentical(exp1)
-		ext2 = toTest.extractFeatures([1,2])
-		exp2 = self.constructor([[3,-1],[6,-2],[9,-3]], pointNames=pointNames)
+		ext2 = toTest.extractFeatures([2,1])
+		exp2 = self.constructor([[-1,3],[-2,6],[-3,9]], pointNames=pointNames)
 		assert ext2.isIdentical(exp2)
 		expEndData = [[2],[5],[8]]
 		expEnd = self.constructor(expEndData, pointNames=pointNames)

@@ -206,14 +206,15 @@ class List(Base):
 			for i in xrange(len(viewArray)):
 				indexPosition.append(viewArray[i].index())
 		else:
-			scoreArray = viewArray
+			#scoreArray = viewArray
+			scoreArray = []
 			if scorer is not None:
 				# use scoring function to turn views into values
 				for i in xrange(len(viewArray)):
-					scoreArray[i] = scorer(viewArray[i])
+					scoreArray.append(scorer(viewArray[i]))
 			else:
 				for i in xrange(len(viewArray)):
-					scoreArray[i] = viewArray[i][sortBy]
+					scoreArray.append(viewArray[i][sortBy])
 
 			# use numpy.argsort to make desired index array
 			# this results in an array whole ith index contains the the
@@ -221,16 +222,12 @@ class List(Base):
 			# position
 			indexPosition = numpy.argsort(scoreArray)
 
-		# run through array making curr index to new index map
-		indexMap = {}
-		for i in xrange(len(indexPosition)):
-			indexMap[indexPosition[i]] = i
 		# run through target axis and change indices
 		for i in xrange(len(self.data)):
 			currPoint = self.data[i]
 			temp = copy.copy(currPoint)
-			for j in xrange(len(currPoint)):
-				currPoint[j] = temp[indexMap[j]]
+			for j in xrange(len(indexPosition)):
+				currPoint[j] = temp[indexPosition[j]]
 
 		# we convert the indices of the their previous location into their feature names
 		newFeatureNameOrder = []
@@ -437,14 +434,16 @@ class List(Base):
 		they had previously. It does not modify the featureNames for the calling object.
 
 		"""
+		targetPos = {}
+		for index in xrange(len(toExtract)):
+			targetPos[toExtract[index]] = index
 		toExtract.sort()
 		toExtract.reverse()
 		extractedData = []
 		for point in self.data:
-			extractedPoint = []
-			for index in toExtract:
-				extractedPoint.append(point.pop(index))
-			extractedPoint.reverse()
+			extractedPoint = [None] * len(toExtract)
+			for pid in toExtract:
+				extractedPoint[targetPos[pid]] = point.pop(pid)
 			extractedData.append(extractedPoint)
 
 		self._numFeatures = self._numFeatures - len(toExtract)
