@@ -29,8 +29,9 @@ class View():
 			return False
 		if self.index() != other.index():
 			return False
-		if self.name() != other.name():
-			return False
+		if not self.name().startswith(DEFAULT_PREFIX) and not other.name().startswith(DEFAULT_PREFIX):
+			if self.name() != other.name():
+				return False
 		for i in xrange(len(self)):
 			if self[i] != other[i]:
 				return False

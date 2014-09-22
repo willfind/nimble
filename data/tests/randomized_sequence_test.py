@@ -94,7 +94,7 @@ def testRandomSequenceOfMethods():
 	objectList.append(first)
 	objectList.append(first.copyAs(format='Matrix'))
 	objectList.append(first.copyAs(format='Sparse'))
-#	runSequence(objectList)
+	runSequence(objectList)
 
 	# sparse int trial
 	sparcity = 0.9
@@ -103,7 +103,7 @@ def testRandomSequenceOfMethods():
 	objectList.append(first)
 	objectList.append(first.copyAs(format='Matrix'))
 	objectList.append(first.copyAs(format='Sparse'))
-#	runSequence(objectList)
+	runSequence(objectList)
 
 	# sparse float trial
 	sparcity = 0.9
@@ -112,7 +112,7 @@ def testRandomSequenceOfMethods():
 	objectList.append(first)
 	objectList.append(first.copyAs(format='Matrix'))
 	objectList.append(first.copyAs(format='Sparse'))
-#	runSequence(objectList)
+	runSequence(objectList)
 
 
 def runSequence(objectList):
@@ -135,9 +135,9 @@ def runSequence(objectList):
 			if currFunc in unavailableNoFeatures:
 				continue
 
-		if currFunc == 'extractFeatures':
-			import pdb
-			pdb.set_trace()
+#		if currFunc == 'mapReducePoints':
+#			import pdb
+#			pdb.set_trace()
 
 		# set up parameters
 		paramsPerObj = []
@@ -148,8 +148,10 @@ def runSequence(objectList):
 		# call method on each object, collect results
 		results = []
 		for i in xrange(len(objectList)):
-			funcToCall = eval('objectList[i].' + currFunc)
+			funcToCall = getattr(objectList[i], currFunc) #eval('objectList[i].' + currFunc)
+			UML.randomness.startAlternateControl(randomseed)
 			currResult = funcToCall(*paramsPerObj[i])
+			UML.randomness.endAlternateControl()
 			results.append(currResult)	
 
 		# need to check equality of results
@@ -208,7 +210,7 @@ def equalityWrapper(left, right):
 def simpleMapper(point):
 	idInt = point[0]
 	intList = []
-	for i in xrange(1, len(point)):
+	for i in xrange(0, len(point)):
 		intList.append(point[i])
 	ret = []
 	for value in intList:
@@ -218,6 +220,12 @@ def simpleMapper(point):
 def oddOnlyReducer(identifier, valuesList):
 	if identifier % 2 == 0:
 		return None
+	total = 0
+	for value in valuesList:
+		total += value
+	return (identifier,total)
+
+def addingReducer(identifier, valuesList):
 	total = 0
 	for value in valuesList:
 		total += value
@@ -525,8 +533,8 @@ generators = {'appendFeatures':[genObjMatchPoints],
 		'setPointNamesFromList':[genPNameList],
 		'shuffleFeatures':[genFPermArr],
 		'shufflePoints':[genPPermArr],
-		'sortFeatures':[genFID, ftp(pickGen, genList=(genScorer,genComparator))],
-		'sortPoints':[genPID, ftp(pickGen, genList=(genScorer,genComparator))],
+		'sortFeatures':[genPID, ftp(pickGen, genList=(genScorer,genComparator))],
+		'sortPoints':[genFID, ftp(pickGen, genList=(genScorer,genComparator))],
 		'transformFeatureToIntegerFeature':[genFID],
 		'transpose':[],
 		'validate':[genOne],	

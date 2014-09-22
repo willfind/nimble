@@ -371,6 +371,23 @@ class StructureBackend(DataTestObject):
 		assert toTest.isIdentical(objExp)
 		assert ret is None
 
+	def test_sortPoints_naturalByFeatureName(self):
+		""" Test sortPoints() when we specify a feature name to sort by """	
+		data = [[1,2,3],[7,1,9],[4,5,6]]
+		pnames = ['1', '7', '4']
+		fnames = ['1', '2', '3']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+		ret = toTest.sortPoints(sortBy='2') # RET CHECK
+
+		dataExpected = [[7,1,9],[1,2,3],[4,5,6]]
+		namesExp = ['7', '1', '4']
+		objExp = self.constructor(dataExpected, pointNames=namesExp, featureNames=fnames)
+
+		assert toTest.isIdentical(objExp)
+		assert ret is None
+
+
 	def test_sortPoints_scorer(self):
 		""" Test sortPoints() when we specify a scoring function """
 		data = [[1,2,3],[4,5,6],[7,1,9],[0,0,0]]
@@ -440,6 +457,23 @@ class StructureBackend(DataTestObject):
 
 		assert toTest.isIdentical(objExp)
 		assert ret is None
+
+	def test_sortFeatures_naturalByPointNameWithFNames(self):
+		""" Test sortFeatures() when we specify a point name to sort by; includes featureNames """	
+		data = [[1,2,3],[7,1,9],[4,5,6]]
+		pnames = ['1', '7', '4']
+		fnames = ["1","2","3"]
+		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+		ret = toTest.sortFeatures(sortBy='7') # RET CHECK
+
+		dataExpected = [[2,1,3],[1,7,9],[5,4,6]]
+		namesExp = ["2", "1", "3"]
+		objExp = self.constructor(dataExpected, pointNames=pnames, featureNames=namesExp)
+
+		assert toTest.isIdentical(objExp)
+		assert ret is None
+
 
 	def test_sortFeatures_scorer(self):
 		""" Test sortFeatures() when we specify a scoring function """

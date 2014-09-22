@@ -22,17 +22,22 @@ class Sparse(Base):
 
 	def __init__(self, data, pointNames=None, featureNames=None, name=None, path=None, reuseData=False):
 		self._sorted = None
-		if data == [] or (hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0)):
-			rowShape = 0
-			colShape = 0
-			if hasattr(data,'shape'):
-				rowShape = data.shape[0] 
-				colShape = data.shape[1]
-			if featureNames is not None and colShape == 0:
-				colShape = len(featureNames)
-				data = numpy.empty(shape=(rowShape,colShape))
+		if data == [] or  (hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0)):
 			if isinstance(data, CooWithEmpty):
 				data = data.internal
+			else:
+				rowShape = 0
+				colShape = 0
+				if hasattr(data,'shape'):
+					rowShape = data.shape[0] 
+					colShape = data.shape[1]
+				if featureNames is not None and colShape == 0:
+					colShape = len(featureNames)
+				if pointNames is not None and rowShape == 0:
+					rowShape = len(pointNames)
+				
+				data = numpy.empty(shape=(rowShape,colShape))
+			
 			data = numpy.matrix(data, dtype=numpy.float)
 			self._data = CooWithEmpty(data)
 		else:
@@ -618,7 +623,7 @@ class Sparse(Base):
 					targetAxis[copyIndex] = targetAxis[i]
 				else:
 					# end is inclusive, so we subtract end + 1
-					targetAxis[copyIndex] = targetAxis[i] - (end + 1)
+					targetAxis[copyIndex] = targetAxis[i] - rangeLength
 				copyIndex = copyIndex + 1
 
 		# reinstantiate self

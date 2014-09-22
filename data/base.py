@@ -1206,7 +1206,7 @@ class Base(object):
 			raise ArgumentException("Either sortBy or sortHelper must not be None")
 
 		if sortBy is not None and isinstance(sortBy, basestring):
-			sortBy = self._getPointIndex(sortBy)
+			sortBy = self._getFeatureIndex(sortBy)
 
 		newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
 		self.setPointNamesFromList(newPointNameOrder)
@@ -1230,7 +1230,7 @@ class Base(object):
 			raise ArgumentException("Either sortBy or sortHelper must not be None")
 
 		if sortBy is not None and isinstance(sortBy, basestring):
-			sortBy = self._getFeatureIndex(sortBy)
+			sortBy = self._getPointIndex(sortBy)
 
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
 		self.setFeatureNamesFromList(newFeatureNameOrder)
@@ -1406,9 +1406,10 @@ class Base(object):
 				msg = "The only accepted asTypes are: 'List', 'Matrix', 'Sparse'"
 				msg +=", 'python list', 'numpy array', 'numpy matrix', 'scipy csr', and 'scipy csc'"
 				raise ArgumentException(msg)
-		else:
-			if outputAs1D:
-				raise ArgumentException('Cannot output a UML format as 1D')
+		
+		if outputAs1D:
+			if format != 'numpyarray':
+				raise ArgumentException("Cannot output as 1D if format != 'numpy array'")
 
 		# we enforce very specific shapes in the case of emptiness along one
 		# or both axes
