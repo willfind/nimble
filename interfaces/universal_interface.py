@@ -91,9 +91,20 @@ class UniversalInterface(object):
 		
 		learner = self.train(learnerName, trainX, trainY, arguments, timer)
 		if timer is not None:
-			timer.start('test')
-		# call TrainedLearner's apply function (which is already wrapped to perform transformation)
+			timer.start('apply')
+		# call TrainedLearner's apply method (which is already wrapped to perform transformation)
 		ret = learner.apply(testX, {}, output, scoreMode)
+		if timer is not None:
+			timer.stop('apply')
+
+		return ret
+
+	def trainAndTest(self, learnerName, trainX, trainY, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', negativeLabel=None, timer=None, **kwarguments):
+		learner = self.train(learnerName, trainX, trainY, arguments, timer)
+		if timer is not None:
+			timer.start('test')
+		# call TrainedLearner's test method (which is already wrapped to perform transformation)
+		ret = learner.test(testX, testY, performanceFunction, {}, output, scoreMode, negativeLabel)
 		if timer is not None:
 			timer.stop('test')
 
@@ -502,11 +513,18 @@ class UniversalInterface(object):
 					wrapped.__doc__ = 'Wrapped version of the ' + methodName + ' function where the "self" parameter has been fixed to be ' + str(interfaceObject) 
 				setattr(self, methodName, wrapped)
 
+		def test(self, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', negativeLabel=None, **kwarguments):
+			"""
+			Returns the evaluation of predictions of testX using the argument
+			performanceFunction to do the evalutation. Equivalent to having called
+			this interface's trainAndTest method, as long as the data and parameter
+			setup for training was the same.
 
-		def test(self, testX, testY, performanceFunction, arguments={}, **kwarguments):
-			#ret = self.apply(testesting in TrainedLearnertX)
-			# TODO, call some kind of helper in UML to deal with the actual testing
-			raise NotImplementedError
+			"""
+			pred = self.apply(testX, arguments, output, scoreMode, **kwarguments)
+			performance = UML.umlHelpers.computeMetrics(testY, None, pred, performanceFunction, negativeLabel)
+
+			return performance
 
 		def _mergeWithTrainArguments(self, newArguments1, newArguments2):
 			"""
@@ -551,7 +569,7 @@ class UniversalInterface(object):
 				# find scores matching predicted labels
 				def grabValue(row):
 					pointIndex = row.index()
-					rowIndex = scoreOrder.index(labels[pointIndex,0])
+					rowIndex = scoreOrder.index(labels[pointIndex, 0])
 					return row[rowIndex]
 
 				scoreVector = scores.applyToPoints(grabValue, inPlace=False)
@@ -600,7 +618,6 @@ class UniversalInterface(object):
 
 			formatedRawOrder.sortFeatures(sortHelper=sortScorer)
 			return formatedRawOrder
-
 
 	##############################################
 	### CACHING FRONTENDS FOR ABSTRACT METHODS ###

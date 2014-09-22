@@ -771,7 +771,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 			results = trainAndApplyOneVsAll(fullName, trainX, trainY, testX, arguments=merged, scoreMode=scoreMode, timer=timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
 			results = trainAndApplyOneVsOne(fullName, trainX, trainY, testX, arguments=merged, scoreMode=scoreMode, timer=timer)
-	
+
 	if results is None:
 		results = interface.trainAndApply(learnerName, trainX, trainY, testX, merged, output, scoreMode, timer)
 
@@ -783,7 +783,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 	return results
 
 
-def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, arguments={}, output=None, scoreMode='label', negativeLabel=None, multiClassStrategy='default', sendToLog=False, **kwarguments):
+def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, arguments={}, output=None, scoreMode='label', negativeLabel=None, sendToLog=False, **kwarguments):
 	"""
 	For each permutation of the merge of 'arguments' and 'kwarguments' (more below),
 	trainAndTest uses cross validation to generate a performance score for the algorithm,
@@ -798,7 +798,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	on the testing data.
 
 	ARGUMENTS:
-	
+
 	learnerName: training algorithm to be called, in the form 'package.algorithmName'.
 
 	trainX: data set to be used for training (as some form of Base object)
@@ -808,7 +808,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	that defines their locale in the trainX object
 
 	testX: data set to be used for testing (as some form of Base object)
-	
+
 	testY: used to retrieve the known class labels of the test data. Either
 	contains the labels themselves (as a Base object) or an index (numerical or string) 
 	that defines their location in the testX object.
@@ -823,13 +823,13 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	different arguments for algorithm: arguments of the form {arg1=(1,2,3), arg2=(4,5,6)}
 	correspond to permutations/argument states with one element from arg1 and one element 
 	from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
-	
+
 	negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
 	or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
 	applies to data sets with 2 class labels.
 
 	multiClassStrategy: may only be 'default' 'OneVsAll' or 'OneVsOne'
-	
+
 	sendToLog: optional boolean valued parameter; True meaning the results should be logged
 
 	kwarguments: optional arguments to be passed to the specified learner. Will be merged
@@ -838,8 +838,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	**kwarguments of the form arg1=(1,2,3), arg2=(4,5,6)
 	correspond to permutations/argument states with one element from arg1 and one element 
 	from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
-	
+
 	"""
+	(package, trueLearnerName) = _unpackLearnerName(learnerName)
 	_validData(trainX, trainY, testX, testY, [True, True])
 	_validArguments(arguments)
 	_validArguments(kwarguments)
@@ -848,33 +849,24 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	trainY = copyLabels(trainX, trainY)
 	testY = copyLabels(testX, testY)
 
+	interface = findBestInterface(package)
+	
 	#if we are logging this run, we need to start the timer
 	if sendToLog:
 		timer = Stopwatch()
 		timer.start('crossValidateReturnBest')
+	else:
+		timer = None
 	#sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, sendToLog=False, maximize=False, **kwarguments):
 	bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged, scoreMode=scoreMode, sendToLog=False)
 
 	if sendToLog:
 		timer.stop('crossValidateReturnBest')
-		timer.start('trainAndApply')
 
-	predictions = trainAndApply(learnerName, trainX, trainY, testX, bestArgument, output, scoreMode, multiClassStrategy, sendToLog)
-
-	if sendToLog:
-		timer.stop('trainAndApply')
-		timer.start('errorComputation')
-
-	performance = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
-
-	if sendToLog:
-		timer.stop('errorComputation')
+	performance = interface.trainAndTest(trueLearnerName, trainX, trainY, testX, testY, performanceFunction, arguments=bestArgument, output=output, scoreMode=scoreMode, negativeLabel=negativeLabel, timer=timer)
 
 	if sendToLog:
 		logManager = LogManager()
 		logManager.logRun(trainX, testX, learnerName, [performanceFunction], [performance], timer,)
 
 	return performance
-
-
-

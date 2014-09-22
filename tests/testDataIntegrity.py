@@ -165,13 +165,9 @@ def testDataIntegrityCrossValidate():
 
 # test TrainedLearner methods
 # only those that the top level trainers, appliers, and testers are not reliant on.
-# integrity
+# Exclusions for above reason: apply(), test()
 @attr('slow')
 def testDataIntegrityTrainedLearner():
 #	backend(setupAndCallIncrementalTrain, 1) TODO
 	backend(setupAndCallRetrain, 1)
 	backend(setupAndCallGetScores, 1, False)
-#	backend for TrainedLearner.test -- or is this necessary once we've refactored the testing code? TODO
-
-
-
