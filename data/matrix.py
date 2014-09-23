@@ -501,7 +501,7 @@ class Matrix(Base):
 
 		self.data = other.data
 
-	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
+	def _copyAs_implementation(self, format):
 		if format == 'Sparse':
 			return UML.data.Sparse(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'List':
@@ -514,6 +514,10 @@ class Matrix(Base):
 			return numpy.array(self.data)
 		if format == 'numpymatrix':
 			return numpy.matrix(self.data)
+		if format == 'scipycsc':
+			return scipy.sparse.csc_matrix(self.data)
+		if format == 'scipycsr':
+			return scipy.sparse.csr_matrix(self.data)
 
 		return Matrix(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
 

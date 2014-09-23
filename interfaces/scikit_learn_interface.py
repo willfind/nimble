@@ -313,7 +313,7 @@ class SciKitLearn(UniversalInterface):
 			if trainY.featureCount > 1:
 				trainY = (trainY.copyAs('numpy array'))
 			else:
-				trainY = (trainY.copyAs('numpy array')).flatten()
+				trainY = trainY.copyAs('numpy array', outputAs1D=True)
 
 		if testX is not None:
 			if testX.getTypeString() == 'Matrix':

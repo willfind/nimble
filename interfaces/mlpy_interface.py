@@ -266,7 +266,7 @@ class Mlpy(UniversalInterface):
 			transTrainX = None
 
 		if trainY is not None:
-			transTrainY = (trainY.copyAs('numpy array')).flatten()
+			transTrainY = trainY.copyAs('numpy array', outputAs1D=True)
 		else:
 			transTrainY = None
 

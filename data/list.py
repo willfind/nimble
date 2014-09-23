@@ -5,6 +5,7 @@ Class extending Base, using a list of lists to store data.
 
 import copy
 import numpy
+import scipy
 from scipy.sparse import isspmatrix
 
 import UML
@@ -608,7 +609,7 @@ class List(Base):
 
 		self.data = other.data
 
-	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
+	def _copyAs_implementation(self, format):
 		if format == 'Sparse':
 			if self.pointCount == 0 or self.featureCount == 0:
 				emptyData = numpy.empty(shape=(self.pointCount, self.featureCount))
@@ -628,6 +629,10 @@ class List(Base):
 			if self.pointCount == 0 or self.featureCount == 0:
 				return numpy.matrix(numpy.empty(shape=(self.pointCount, self.featureCount)))
 			return numpy.matrix(self.data)
+		if format == 'scipycsc':
+			return scipy.sparse.csc_matrix(numpy.array(self.data))
+		if format == 'scipycsr':
+			return scipy.sparse.csr_matrix(numpy.array(self.data))
 
 	def _copyPoints_implementation(self, points, start, end):
 		retData = []

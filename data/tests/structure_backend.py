@@ -1,6 +1,7 @@
 
 import tempfile
 import numpy
+import scipy.sparse
 from nose.tools import *
 
 from copy import deepcopy
@@ -1171,6 +1172,91 @@ class StructureBackend(DataTestObject):
 		assert type(numpyMatrix) == type(numpy.matrix([]))
 		numpyMatrix[0,0] = 5
 		assert orig[0,0] == 1 
+
+		spcsc = orig.copyAs(format='scipy csc')
+		assert type(spcsc) == type(scipy.sparse.csc_matrix(numpy.matrix([])))
+		spcsc[0,0] = 5
+		assert orig[0,0] == 1
+
+		spcsr = orig.copyAs(format='scipy csr')
+		assert type(spcsr) == type(scipy.sparse.csr_matrix(numpy.matrix([])))
+		spcsr[0,0] = 5
+		assert orig[0,0] == 1
+
+	def test_copy_rowsArePointsFalse(self):
+		""" Test copyAs() will return data in the right places when rowsArePoints is False"""
+		data = [[1,2,3],[1,0,3],[2,4,6],[0,0,0]]
+		featureNames = ['one', 'two', 'three']
+		pointNames = ['1', 'one', '2', '0']
+		orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		out = orig.copyAs(orig.getTypeString(), rowsArePoints=False)
+
+		orig.transpose()
+
+		assert out == orig
+
+	def test_copy_outputAs1DWrongFormat(self):
+		""" Test copyAs will raise exception when given an unallowed format """
+		data = [[1,2,3],[1,0,3],[2,4,6],[0,0,0]]
+		featureNames = ['one', 'two', 'three']
+		pointNames = ['1', 'one', '2', '0']
+		orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		try:
+			orig.copyAs("List", outputAs1D=True)
+			assert False
+		except ArgumentException as ae:
+			print ae
+		try:
+			orig.copyAs("Matrix", outputAs1D=True)
+			assert False
+		except ArgumentException as ae:
+			print ae
+		try:
+			orig.copyAs("Sparse", outputAs1D=True)
+			assert False
+		except ArgumentException as ae:
+			print ae
+		try:
+			orig.copyAs("numpy matrix", outputAs1D=True)
+			assert False
+		except ArgumentException as ae:
+			print ae
+		try:
+			orig.copyAs("scipy csr", outputAs1D=True)
+			assert False
+		except ArgumentException as ae:
+			print ae
+		try:
+			orig.copyAs("scipy csc", outputAs1D=True)
+			assert False
+		except ArgumentException as ae:
+			print ae
+
+	@raises(ArgumentException)
+	def test_copy_outputAs1DWrongShape(self):
+		""" Test copyAs will raise exception when given an unallowed shape """
+		data = [[1,2,3],[1,0,3],[2,4,6],[0,0,0]]
+		featureNames = ['one', 'two', 'three']
+		pointNames = ['1', 'one', '2', '0']
+		orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		orig.copyAs("numpy array", outputAs1D=True)
+
+
+	def test_copy_outpuAs1DTrue(self):
+		""" Test copyAs() will return successfully output 1d for all allowable possibilities"""
+		dataPv = [[1,2, 0, 3]]
+		dataFV = [[1],[2],[3],[0]]
+		origPV = self.constructor(dataPv)
+		origFV = self.constructor(dataFV)
+
+		outPV = origPV.copyAs('python list', outputAs1D=True)
+		assert outPV == [1,2,0,3]
+
+		outFV = origFV.copyAs('numpy array', outputAs1D=True)
+		assert numpy.array_equal(outFV, numpy.array([1,2,3,0]))
 
 
 	###################

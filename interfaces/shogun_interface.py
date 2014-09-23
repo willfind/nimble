@@ -665,23 +665,23 @@ class Shogun(UniversalInterface):
 				customDict['remap'] = inverseMapping
 				if len(inverseMapping) == 1:
 					raise ArgumentException("Cannot train a classifier with data containing only one label")
-				flattened = labelsObj.copyAs('numpyarray').flatten()
+				flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
 				labels = self.shogun.Features.MulticlassLabels(flattened.astype(float))
 			elif problemType == self.shogun.Classifier.PT_BINARY:
 				inverseMapping = _remapLabelsSpecific(labelsObj, [-1,1])
 				customDict['remap'] = inverseMapping
 				if len(inverseMapping) == 1:
 					raise ArgumentException("Cannot train a classifier with data containing only one label")
-				flattened = labelsObj.copyAs('numpyarray').flatten()
+				flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
 				labels = self.shogun.Features.BinaryLabels(flattened.astype(float))
 			elif problemType == self.shogun.Classifier.PT_REGRESSION:
-				flattened = labelsObj.copyAs('numpyarray').flatten()
+				flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
 				labels = self.shogun.Features.RegressionLabels(flattened.astype(float))
 			else:
 				raise ArgumentException("Learner problem type (" + str(problemType) + ") not supported")
 		except ImportError:
 			from shogun.Features import Labels
-			flattened = labelsObj.copyAs('numpyarray').flatten()
+			flattened = labelsObj.copyAs('numpyarray', outputAs1D=True)
 			labels = Labels(labelsObj.astype(float))
 
 		return labels
@@ -689,15 +689,17 @@ class Shogun(UniversalInterface):
 	def _inputTransDataHelper(self, dataObj, learnerName):
 		typeString = dataObj.getTypeString()
 		if typeString == 'Sparse':
-			raw = dataObj.data.tocsc().astype(numpy.float)
-			raw = raw.transpose()
+			#raw = dataObj.data.tocsc().astype(numpy.float)
+			#raw = raw.transpose()
+			raw = dataObj.copyAs("scipy csc", rowsArePoints=False)
 			trans = self.shogun.Features.SparseRealFeatures()
 			trans.set_sparse_feature_matrix(raw)
 			if 'Online' in learnerName:
 				trans = self.shogun.Features.StreamingSparseRealFeatures(trans)
 		else:
-			raw = dataObj.copyAs('numpyarray').astype(numpy.float)
-			raw = raw.transpose()
+			#raw = dataObj.copyAs('numpyarray').astype(numpy.float)
+			#raw = raw.transpose()
+			raw = dataObj.copyAs('numpyarray', rowsArePoints=False)
 			trans = self.shogun.Features.RealFeatures()
 			trans.set_feature_matrix(raw)
 			if 'Online' in learnerName:

@@ -820,7 +820,9 @@ class Sparse(Base):
 		self._data = other._data
 		self._sorted = other._sorted
 
-	def _copyAs_implementation(self, format, rowsArePoints, outputAs1D):
+	def _copyAs_implementation(self, format):
+#		import pdb
+#		pdb.set_trace()
 		if format is None or format == 'Sparse':
 			return Sparse(self._data.internal, pointNames=self.pointNames, featureNames=self.featureNames)
 		if format == 'List':
@@ -833,6 +835,10 @@ class Sparse(Base):
 			return numpy.array(self._data.todense())
 		if format == 'numpymatrix':
 			return self._data.todense()
+		if format == 'scipycsc':
+			return self._data.internal.tocsc()
+		if format == 'scipycsr':
+			return self._data.internal.tocsr()
 
 	def _copyPoints_implementation(self, points, start, end):
 #		import pdb

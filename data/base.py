@@ -1408,8 +1408,19 @@ class Base(object):
 				raise ArgumentException(msg)
 		
 		if outputAs1D:
+			if format != 'numpyarray' and format != 'pythonlist':
+				raise ArgumentException("Cannot output as 1D if format != 'numpy array' or 'python list'")
+			if self.pointCount != 1 and self.featureCount != 1:
+				raise ArgumentException("To output as 1D there may either be only one point or one feature")
+			if self.pointCount == 0 or self.featureCount == 0:
+				if format == 'numpyarray':
+					return numpy.array([])
+				if format == 'pythonlist':
+					return []
+			raw = self._copyAs_implementation('numpyarray').flatten()
 			if format != 'numpyarray':
-				raise ArgumentException("Cannot output as 1D if format != 'numpy array'")
+				raw = raw.tolist()
+			return raw
 
 		# we enforce very specific shapes in the case of emptiness along one
 		# or both axes
@@ -1425,7 +1436,17 @@ class Base(object):
 			if self.pointCount == 0 or self.featureCount == 0:
 				raise ArgumentException('Cannot output a point or feature empty object in a scipy format')
 
-		return self._copyAs_implementation(format, rowsArePoints, outputAs1D)
+		ret = self._copyAs_implementation(format)
+
+		if not rowsArePoints:
+			if format in ['List', 'Matrix', 'Sparse']:
+				ret.transpose()
+			elif format != 'pythonlist':
+				ret = ret.transpose()
+			else:
+				ret = numpy.transpose(ret).tolist()
+
+		return ret
 
 	def copyPoints(self, points=None, start=None, end=None):
 		"""
