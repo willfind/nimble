@@ -742,15 +742,23 @@ class Base(object):
 			if len(split) > 1:
 				format = split[1].lower()
 
-		if format.lower() == "csv":
-			return self._writeFileCSV_implementation(outPath, includeNames)
-		elif format.lower() == "mtx":
-			return self._writeFileMTX_implementation(outPath, includeNames)
-		else:
+		if format not in ['csv', 'mtx']:
 			msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
 			msg += "either be input as the format parameter, or as the extension in the "
 			msg += "outPath"
-			raise ArgumentException()
+			raise ArgumentException(msg)
+
+		try:
+			self._writeFile_implementation(outPath, format, includeNames)
+		except Exception:
+			if format.lower() == "csv":
+				toOut = self.copyAs("Matrix")
+				toOut._writeFile_implementation(outPath, format, includeNames)
+				return
+			if format.lower() == "mtx":
+				toOut = self.copyAs('Sparse')
+				toOut._writeFile_implementation(outPath, format, includeNames)
+				return	
 
 
 	def getTypeString(self):

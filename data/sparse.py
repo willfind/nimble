@@ -793,7 +793,25 @@ class Sparse(Base):
 
 		outFile.close()
 
+	def _writeFile_implementation(self, outPath, format=None, includeNames=True):
+		"""
+		Function to write the data in this object to a file using the specified
+		format. outPath is the location (including file name and extension) where
+		we want to write the output file. includeNames is boolean argument
+		indicating whether the file should start with comment lines designating
+		pointNames and featureNames.
 
+		"""
+		if format not in ['csv', 'mtx']:
+			msg = "Unrecognized file format. Accepted types are 'csv' and 'mtx'. They may "
+			msg += "either be input as the format parameter, or as the extension in the "
+			msg += "outPath"
+			raise ArgumentException(msg)
+
+		if format == 'csv':
+			return self._writeFileCSV_implementation(outPath, includeNames)
+		if format == 'mtx':
+			return self._writeFileMTX_implementation(outPath, includeNames)
 
 	def _writeFileMTX_implementation(self, outPath, includeNames):
 		if includeNames:

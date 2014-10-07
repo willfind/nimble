@@ -111,7 +111,7 @@ class QueryBackend(DataTestObject):
 	# writeFile #
 	############
 
-	def test_writeFileCSV_handmade(self):
+	def test_writeFile_CSVhandmade(self):
 		""" Test writeFile() for csv extension with both data and featureNames """
 		tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
 
@@ -130,8 +130,31 @@ class QueryBackend(DataTestObject):
 		assert readObj.isIdentical(toWrite)
 		assert toWrite.isIdentical(readObj)
 
+	def test_writeFile_CSVauto(self):
+		""" Test writeFile() will (if needed) autoconvert to Matrix to use its CSV output """
+		tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
 
-	def test_writeFileMTX_handmade(self):
+		# instantiate object
+		data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+		pointNames = ['1', 'one', '2', '0']
+		featureNames = ['one', 'two', 'three']
+		toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		# cripple all but cannonical implementation
+		if self.retType != 'Matrix':
+			toWrite._writeFile_implementation = None
+
+		# call writeFile
+		toWrite.writeFile(tmpFile.name, format='csv', includeNames=True)
+
+		# read it back into a different object, then test equality
+		readObj = self.constructor(data=tmpFile.name)
+
+		assert readObj.isIdentical(toWrite)
+		assert toWrite.isIdentical(readObj)
+
+
+	def test_writeFile_MTXhandmade(self):
 		""" Test writeFile() for mtx extension with both data and featureNames """
 		tmpFile = tempfile.NamedTemporaryFile(suffix=".mtx")
 
@@ -150,6 +173,28 @@ class QueryBackend(DataTestObject):
 		assert readObj.isIdentical(toWrite)
 		assert toWrite.isIdentical(readObj)
 
+	def test_writeFile_MTXauto(self):
+		""" Test writeFile() will (if needed) autoconvert to Matrix to use its MTX output """
+		tmpFile = tempfile.NamedTemporaryFile(suffix=".mtx")
+
+		# instantiate object
+		data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+		featureNames = ['one', 'two', 'three']
+		pointNames = ['1', 'one', '2', '0']
+		toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		# cripple all but cannonical implementation
+		if self.retType != 'Sparse':
+			toWrite._writeFile_implementation = None
+
+		# call writeFile
+		toWrite.writeFile(tmpFile.name, format='mtx', includeNames=True)
+
+		# read it back into a different object, then test equality
+		readObj = self.constructor(data=tmpFile.name)
+
+		assert readObj.isIdentical(toWrite)
+		assert toWrite.isIdentical(readObj)
 
 	##############
 	# __getitem__#
