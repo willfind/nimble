@@ -274,8 +274,8 @@ def testShogunScoreModeBinary():
 	assert ret.pointCount == 2
 	assert ret.featureCount == 2
 
-
-def testOnlineLearners():
+def onlineLearneres():
+#def testOnlineLearners():
 	""" Test shogun can call online learners """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [0,3,2], [1,-300,-25]]

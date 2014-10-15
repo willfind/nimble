@@ -19,11 +19,6 @@ from UML.logger import LogManager
 from UML.logger import Stopwatch
 
 from UML.umlHelpers import findBestInterface
-from UML.umlHelpers import _loadSparse
-from UML.umlHelpers import _loadMatrix
-from UML.umlHelpers import _loadList
-from UML.umlHelpers import executeCode
-from UML.umlHelpers import _incrementTrialWindows
 from UML.umlHelpers import _learnerQuery
 from UML.umlHelpers import _validScoreMode
 from UML.umlHelpers import _validMultiClassStrategy
@@ -32,17 +27,17 @@ from UML.umlHelpers import _validArguments
 from UML.umlHelpers import _validData
 from UML.umlHelpers import LearnerInspector
 from UML.umlHelpers import copyLabels
-from UML.umlHelpers import computeMetrics
 from UML.umlHelpers import ArgumentIterator
 from UML.umlHelpers import trainAndApplyOneVsAll
 from UML.umlHelpers import trainAndApplyOneVsOne
 from UML.umlHelpers import _mergeArguments
 from UML.umlHelpers import foldIterator
 from UML.umlHelpers import crossValidateBackend
+from UML.umlHelpers import isAllowedRaw
+from UML.umlHelpers import initDataObject
+from UML.umlHelpers import createDataFromFile
 
 from UML.randomness import numpyRandom
-
-from UML.data import Base
 
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 
@@ -355,6 +350,25 @@ def listUMLFunctions():
 
 
 def createData(retType, data, pointNames=None, featureNames=None, fileType=None, name=None, sendToLog=True):
+	retAllowed = ['List', 'Matrix', 'Sparse', None]
+	if retType not in retAllowed:
+		raise ArgumentException("retType must be a value in " + str(retAllowed))
+
+	if isAllowedRaw(data):
+		return initDataObject(retType, data, pointNames, featureNames, name)
+	elif isinstance(data, basestring):
+		(tempData, tempPNames, tempFNames) = createDataFromFile(retType, data, fileType)
+		if pointNames is None:
+			pointNames = tempPNames
+		if featureNames is None:
+			featureNames = tempFNames
+		return initDataObject(retType, tempData, pointNames, featureNames, name)
+	else:
+		raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
+
+
+
+def createDataOld(retType, data, pointNames=None, featureNames=None, fileType=None, name=None, sendToLog=True):
 	automatedRetType = False
 	# determine if its a file we have to read; we assume if its a string its a path
 	if isinstance(data, basestring):

@@ -69,89 +69,73 @@ def _learnerQuery(name, queryType):
 	interface = findBestInterface(package)
 	return getattr(interface, toCallName)(learnerName)
 
+def isAllowedRaw(data):
+	if scipy.sparse.issparse(data):
+		return True
+	if type(data) in [tuple, list, numpy.ndarray, numpy.matrixlib.defmatrix.matrix]:
+		return True
 
-def _loadSparse(data, pointNames, featureNames, fileType, automatedRetType=False):
-	if fileType is None:
-		return Sparse(data, pointNames=pointNames, featureNames=featureNames)
+	return False
 
-	# since file type is not None, that is an indicator that we must read from a file
-	path = data
-	tempFeatureNames = None
-	if fileType == 'csv':
-		(data, tempPointNames, tempFeatureNames) = _loadCSVtoMatrix(path)
-	elif fileType == 'mtx':
-		(data, tempPointNames, tempFeatureNames) = _loadMTXtoAuto(path)
+def initDataObject(retType, rawData, pointNames, featureNames, name):
+	if scipy.sparse.issparse(rawData):
+		autoType = 'Sparse'
 	else:
-		raise ArgumentException("Unrecognized file type")
+		autoType = 'Matrix'
+	
+	if retType is None:
+		retType = autoType
+	
+	initMethod = getattr(UML.data, retType)
+	try:
+		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
+	except Exception as e:
+		#something went wrong. instead, try to auto load and then convert
+		autoMethod = getattr(UML.data, autoType)
+		ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
+		ret = ret.copyAs(retType)		
 
-	if tempPointNames is not None:
-		pointNames = tempPointNames
-	if tempFeatureNames is not None:
-			featureNames = tempFeatureNames
+	return ret
 
-	# if we allow the return type to be chosen by the data, and the scipy's mmread
-	# (as wrapped by loadMTXtoAuto) returns a dense matrix, then we want to return
-	# a Matrix object
-	if automatedRetType and not scipy.sparse.issparse(data):
-		return Matrix(data, featureNames=featureNames)
+def createDataFromFile(retType, data, fileType):
+	"""
+	Helper for createData which deals with the case of loading data
+	from a file. Returns a triple containing the raw data, pointNames,
+	and featureNames (the later two being None if they were not specified
+	in the file)
 
-	return Sparse(data, pointNames=pointNames, featureNames=featureNames, name=os.path.basename(path), path=path)
-
-
-def _loadMatrix(data, pointNames, featureNames, fileType, automatedRetType=False):
+	"""
+	# Use the path' extension if fileType isn't specified
 	if fileType is None:
-		return Matrix(data, pointNames=pointNames, featureNames=featureNames)
+		split = data.rsplit('.', 1)
+		extension = None
+		if len(split) > 1:
+			extension = split[1].lower()
+		if extension is None:
+			msg = "The file must be recognizable by extension, or a type must "
+			msg += "be specified using the 'fileType' parameter"
+			raise ArgumentException(msg)
+		fileType = extension
 
-	# since file type is not None, that is an indicator that we must read from a file
-	path = data
-	tempPointNames = None
-	tempFeatureNames = None
-	if fileType == 'csv':
-		(data, tempPointNames, tempFeatureNames) = _loadCSVtoMatrix(path, automatedRetType)
-	elif fileType == 'mtx':
-		(data, tempPointNames, tempFeatureNames) = _loadMTXtoAuto(path)
+	# Choose what code to use to load the file. Take into consideration the end
+	# result we are trying to load into.
+	directPath = "_load" + fileType + "For" + retType
+	# try to get loading function
+	retData, retPNames, retFNames = None, None, None
+	if directPath in locals():
+		loader = locals()[directPath]
+		(retData, retPNames, retFNames) = loader(data)
 	else:
-		raise ArgumentException("Unrecognized file type")
+		if fileType == 'csv':
+			(retData, retPNames, retFNames) = _loadcsvForMatrix(data)
+		if fileType == 'mtx':
+			(retData, retPNames, retFNames) = _loadmtxForAuto(data)
 
-	if tempPointNames is not None:
-		pointNames = tempPointNames
-	if tempFeatureNames is not None:
-			featureNames = tempFeatureNames
-
-	# if we allow the return type to be chosen by the data, and the scipy's mmread
-	# (as wrapped by loadMTXtoAuto) returns a sparse matrix, then we want to return
-	# a Sparse object
-	if automatedRetType and scipy.sparse.issparse(data):
-		return Sparse(data, pointNames=pointNames, featureNames=featureNames)
-
-	return Matrix(data, pointNames=pointNames, featureNames=featureNames, name=os.path.basename(path), path=path)
+	# raw data, pointNames, featureNames
+	return (retData, retPNames, retFNames)
 
 
-def _loadList(data, pointNames, featureNames, fileType):
-	if fileType is None:
-		return List(data, pointNames=pointNames, featureNames=featureNames)
-
-	# since file type is not None, that is an indicator that we must read from a file
-	path = data
-	tempPointNames = None
-	tempFeatureNames = None
-	if fileType == 'csv':
-		(data, tempPointNames, tempFeatureNames) =_loadCSVtoList(data)
-	elif fileType == 'mtx':
-		(data, tempPointNames, tempFeatureNames) = _loadMTXtoAuto(data)
-	else:
-		raise ArgumentException("Unrecognized file type")
-
-	# if we load from file, we assume that data will be read; feature names may not
-	# be, thus we check
-	if tempPointNames is not None:
-		pointNames = tempPointNames
-	if tempFeatureNames is not None:
-		featureNames = tempFeatureNames
-
-	return List(data, pointNames=pointNames, featureNames=featureNames, name=os.path.basename(path), path=path)
-
-def _loadCSVtoMatrix(path, automatedRetType=False):
+def _loadcsvForMatrix(path):
 	inFile = open(path, 'rU')
 	currLine = inFile.readline()
 	pointNames = None
@@ -182,11 +166,6 @@ def _loadCSVtoMatrix(path, automatedRetType=False):
 		try:
 			num = numpy.float(datum)
 		except ValueError:
-			# if the data contains non numerical values, and we allow the automated
-			# choice of the return type, then we should try to load this data
-			# as a List
-			if automatedRetType:
-				return _loadCSVtoList(path)
 			raise ValueError("Cannot load a file with non numerical typed columns")
 
 	inFile.close()
@@ -196,7 +175,13 @@ def _loadCSVtoMatrix(path, automatedRetType=False):
 		data = numpy.matrix(data)
 	return (data, pointNames, featureNames)
 
-def _loadMTXtoAuto(path):
+def _loadmtxForMatrix(path):
+	return _loadmtxForAuto(path)
+
+def _loadmtxForSparse(path):
+	return _loadmtxForAuto(path)
+
+def _loadmtxForAuto(path):
 	"""
 	Uses scipy helpers to read a matrix market file; returning whatever is most
 	appropriate for the file. If it is a matrix market array type, a numpy
@@ -256,14 +241,11 @@ def _defaultParser(line):
 	return ret
 
 
-def _loadCSVtoList(path):
+def _loadcsvForList(path):
 	inFile = open(path, 'rU')
 	firstLine = inFile.readline()
 	pointNames = None
 	featureNames = None
-
-#	import pdb
-#	pdb.set_trace()
 
 	def readNames(lineToRead):
 		# strip '#' from the beginning of the line

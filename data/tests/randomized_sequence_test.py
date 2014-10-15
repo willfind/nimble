@@ -72,8 +72,8 @@ mutuallyExclusiveParams['copyFeatures'] = ('features', ('start', 'end'))
 mutuallyExclusiveParams['copyPoints'] = ('points', ('start', 'end'))
 
 
-#def nope():
-def testRandomSequenceOfMethods():
+def nope():
+#def testRandomSequenceOfMethods():
 	# always use this number of points and features
 	points = numPoints
 	features = numFeatures

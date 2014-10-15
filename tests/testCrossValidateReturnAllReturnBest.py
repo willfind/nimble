@@ -21,7 +21,7 @@ from pdb import set_trace as ttt
 
 
 
-def _randomLabeledDataSet(dataType='matrix', numPoints=100, numFeatures=5, numLabels=3):
+def _randomLabeledDataSet(dataType='Matrix', numPoints=100, numFeatures=5, numLabels=3):
 	"""returns a tuple of two data objects of type dataType
 	the first object in the tuple contains the feature information ('X' in UML language)
 	the second object in the tuple contains the labels for each feature ('Y' in UML language)

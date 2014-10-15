@@ -19,7 +19,7 @@ from UML.randomness import pythonRandom
 from pdb import set_trace as ttt
 
 
-def _randomLabeledDataSet(dataType='matrix', numPoints=50, numFeatures=5, numLabels=3):
+def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):
 	"""returns a tuple of two data objects of type dataType
 	the first object in the tuple contains the feature information ('X' in UML language)
 	the second object in the tuple contains the labels for each feature ('Y' in UML language)
@@ -55,7 +55,7 @@ def test_crossValidate_runs():
 	numLabelsInSet = 3
 	numPointsInSet = 50
 	#todo add other data types - currently crashes in sklearn interface for list and sparse
-	for dType in ['matrix',]:
+	for dType in ['Matrix',]:
 		X, Y = _randomLabeledDataSet(numPoints=numPointsInSet, numLabels=numLabelsInSet, dataType=dType)	
 		classifierAlgos = ['Custom.KNNClassifier']
 		for curAlgo in classifierAlgos:
@@ -115,8 +115,8 @@ def test_crossValidate_reasonable_results():
 	numPoints = 50
 	points = [[pythonRandom.gauss(0,1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
 	labels = [[sum(featVector)] for featVector in points]
-	X = createData('matrix', points)
-	Y = createData('matrix', labels)
+	X = createData('Matrix', points)
+	Y = createData('Matrix', labels)
 	
 	#run in crossValidate
 	result = crossValidate(regressionAlgo, X, Y, meanAbsoluteError, {}, numFolds=5)
