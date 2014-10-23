@@ -71,18 +71,6 @@ class UniversalInterface(object):
 			if args[0] != 'self':
 				raise TypeError("Improper implementation of _exposedFunctions each member's first argument must be 'self', interpreted as a TrainedLearner")
 
-		### setup configurable options ###
-
-		# TODO
-		# query for defaults
-		self._configurableOptions = {}
-		for optionName in self._configurableOptionNames():
-			# if in configuration, use that
-			# elif in _optionDefaults(optionName), use that
-			# else
-			optionDefault = self._optionDefaults(optionName)
-			self._configurableOptions[optionName] = optionDefault 
-
 	@property
 	def optionNames(self):
 		return copy.copy(self._configurableOptionNames())
@@ -166,27 +154,26 @@ class UniversalInterface(object):
 	def setOption(self, option, value):
 		if option not in self.optionNames:
 			raise ArgumentException(str(option) + " is not one of the accepted configurable option names")
-		self._configurableOptions[option] = value
+		
+		UML.settings.set(self.getCanonicalName(), option, value)
 
 	def getOption(self, option):
 		if option not in self.optionNames:
 			raise ArgumentException(str(option) + " is not one of the accepted configurable option names")
-		return self._configurableOptions[option]
-
-	def setDefaultOption(self, option, value):
-		if option not in self.optionNames:
-			raise ArgumentException(str(option) + " is not one of the accepted configurable option names")
-		# TODO UML.configure set ... getAlias(), option, value
-		pass
-
-	def getDefaultOption(self, option):
-		if option not in self.optionNames:
-			raise ArgumentException(str(option) + " is not one of the accepted configurable option names")
-		# TODO UML.configure get ... getAlias(), option, value
-		pass
-
-	def allOptions(self):
-		return copy.deepcopy(self._configurableOptions)
+		
+		# empty string is the sentinal value indicating that the configuration
+		# file has an option of that name, but the UML user hasn't set a value
+		# for it.
+		ret = ''
+		try:
+			ret = UML.settings.get(self.getCanonicalName(), option)
+		except:
+			# it is possible that the config file doesn't have an option of
+			# this name yet. Just pass through and grab the hardcoded default
+			pass
+		if ret == '':
+			ret = self._optionDefaults(option)
+		return ret
 
 
 	def _validateArgumentDistribution(self, learnerName, arguments):

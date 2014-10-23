@@ -51,7 +51,6 @@ class CustomLearner(object):
 			if not incrementalImplemented:
 				raise TypeError("Must provide an implementation for train()")
 			else:
-#				hello = check.foofoo
 				check.train = check.incrementalTrain
 				newVal = check.__abstractmethods__ - frozenset(['train'])
 				check.__abstractmethods__ = newVal

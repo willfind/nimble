@@ -383,7 +383,7 @@ class Mlpy(UniversalInterface):
 		these values will always be used the first time an interface is instantiated.
 
 		"""
-		return {}
+		return None
 
 	def _configurableOptionNames(self):
 		"""

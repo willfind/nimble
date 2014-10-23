@@ -20,6 +20,7 @@ class CustomLearnerInterface(UniversalInterface):
 		"""
 		self.name = packageName
 		self.registeredLearners = {}
+		self._configurableOptionNamesAvailable = []
 		super(CustomLearnerInterface, self).__init__()
 
 
@@ -33,6 +34,8 @@ class CustomLearnerInterface(UniversalInterface):
 		"""
 		self.registeredLearners[learnerClass.__name__] = learnerClass
 
+		# TODO add option names as learnerClass.__name__ + '.' + optName
+
 	def deregisterLearner(self, learnerName):
 		"""
 		Remove accessibility of the learner with the given name from this interface.
@@ -45,6 +48,8 @@ class CustomLearnerInterface(UniversalInterface):
 			raise ArgumentException("Given learnerName does not refer to a learner accessible through this interface")
 
 		del self.registeredLearners[learnerName]
+
+		# TODO remove option names
 
 		return len(self.registeredLearners) == 0
 
@@ -253,7 +258,7 @@ class CustomLearnerInterface(UniversalInterface):
 		these values will always be used the first time an interface is instantiated.
 
 		"""
-		{}
+		return None
 
 
 	def _configurableOptionNames(self):
@@ -263,7 +268,7 @@ class CustomLearnerInterface(UniversalInterface):
 		file.
 
 		"""
-		return []
+		return self._configurableOptionNamesAvailable
 
 	def _exposedFunctions(self):
 		"""

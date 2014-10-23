@@ -12,17 +12,20 @@ from UML.customLearners.ridge_regression import RidgeRegression
 class LoveAtFirstSightClassifier(CustomLearner):
 	""" Always predicts the value of the first class it sees in the most recently trained data """
 	learnerType = 'classification'
+	
 	def incrementalTrain(self, trainX, trainY):
 		if hasattr(self, 'scope'):
 			self.scope = numpy.union1d(self.scope, trainY.copyAs('numpyarray').flatten())
 		else:
 			self.scope = numpy.unique(trainY.copyAs('numpyarray'))
 		self.prediction = trainY[0,0]
+	
 	def apply(self, testX):
 		ret = []
 		for point in testX.pointIterator():
 			ret.append([self.prediction])
 		return UML.createData("Matrix", ret)
+	
 	def getScores(self, testX):
 		ret = []
 		for point in testX.pointIterator():
@@ -36,11 +39,13 @@ class LoveAtFirstSightClassifier(CustomLearner):
 		return UML.createData("Matrix", ret)
 
 class UncallableLearner(CustomLearner):
-		learnerType = 'classification'
-		def train(self, trainX, trainY, foo):
-			return None
-		def apply(self, testX):
-			return None
+	learnerType = 'classification'
+	
+	def train(self, trainX, trainY, foo):
+		return None
+	
+	def apply(self, testX):
+		return None
 
 
 @raises(ArgumentException)

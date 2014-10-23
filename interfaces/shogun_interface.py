@@ -494,10 +494,7 @@ class Shogun(UniversalInterface):
 		these values will always be used the first time an interface is instantiated.
 
 		"""
-		if option == 'sourceLobcation':
-			return '/home/tpburns/Lib/shogun-2.1.0/src/shogun'
 		return None
-
 
 
 	def _configurableOptionNames(self):
@@ -507,7 +504,7 @@ class Shogun(UniversalInterface):
 		file.
 
 		"""
-		return ['location', 'sourceLobcation']
+		return ['location', 'sourceLocation', 'libclangLocation']
 
 
 	def _exposedFunctions(self):
@@ -544,13 +541,12 @@ class Shogun(UniversalInterface):
 		Load manifest containing parameter names and defaults for all relevant objects
 		in shogun. If manifest is missing, empty, or outdated then run the discovery code.
 		The discovery code attempts to parse header and source files in the directory
-		associated with self._configurableOptions['location'].
+		associated with the 'location' option.
 
 		"""
 		# issue: protecting users from a failed clang import
-		# TODO: generalize. need some path variables or something???
-		location = "/home/tpburns/Lib/llvm-build/Debug+Asserts/lib/libclang.so"
-		
+		location = self.getOption('libclangLocation')
+
 		try:
 			clang.cindex.Config.set_library_file(location)
 			clang.cindex.Index.create()
@@ -563,7 +559,7 @@ class Shogun(UniversalInterface):
 		best = self._findBestManifest(metadataPath)
 		exists = os.path.exists(best)
 
-		shogunSourcePath = self._configurableOptions['sourceLobcation']
+		shogunSourcePath = self.getOption('sourceLocation')
 
 		ranDiscovery = False
 		# if file missing:

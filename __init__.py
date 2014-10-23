@@ -10,6 +10,12 @@ import os
 import inspect
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
+
+
+# load settings from configuration file
+import UML.configuration
+settings = UML.configuration.loadSettings()
+
 import UML.interfaces
 import UML.metrics
 import UML.randomness
@@ -41,3 +47,7 @@ from uml import learnerType
 # automatic registration of custom learners to be used in unit testing 
 UML.registerCustomLearner('Custom', UML.customLearners.RidgeRegression)
 UML.registerCustomLearner('Custom', UML.customLearners.KNNClassifier)
+
+# Now that we have loaded everything else, sync up the the settings object
+# as needed.
+UML.configuration.syncWithInteraces(UML.settings)
