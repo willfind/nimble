@@ -96,6 +96,56 @@ def testCustomLearnerValidationInstantiates():
 			return None
 	CustomLearner.validateSubclass(NoApp)
 
+@raises(TypeError)
+def testCustomLearnerValidationOptionsType():
+	""" Test CustomLearner's validation the options() return type """
+	class WrongOptType(CustomLearner):
+		learnerType = 'classification'
+		def __init__(self):
+			super(WrongOptType, self).__init__()
+		def train(self, trainX, trainY):
+			return None
+		def apply(self, testX, foo):
+			return None
+		@classmethod
+		def options(self):
+			return {}
+
+	CustomLearner.validateSubclass(WrongOptType)
+
+
+@raises(TypeError)
+def testCustomLearnerValidationOptionsSubType():
+	""" Test CustomLearner's validation of options() value type """
+	class WrongOptSubType(CustomLearner):
+		learnerType = 'classification'
+		def __init__(self):
+			super(WrongOptSubType, self).__init__()
+		def train(self, trainX, trainY):
+			return None
+		def apply(self, testX, foo):
+			return None
+		@classmethod
+		def options(self):
+			return ['hello', 5]
+
+	CustomLearner.validateSubclass(WrongOptSubType)
+
+@raises(TypeError)
+def testCustomLearnerValidationOptionsMethodOveride():
+	""" Test CustomLearner's validation of options() value type """
+	class WrongOptSubType(CustomLearner):
+		learnerType = 'classification'
+		def __init__(self):
+			super(WrongOptSubType, self).__init__()
+		def train(self, trainX, trainY):
+			return None
+		def apply(self, testX, foo):
+			return None
+		def options(self):
+			return ['hello']
+
+	CustomLearner.validateSubclass(WrongOptSubType)
 
 class LoveAtFirstSightClassifier(CustomLearner):
 	""" Always predicts the value of the first class it sees in the most recently trained data """

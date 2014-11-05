@@ -34,7 +34,20 @@ class CustomLearnerInterface(UniversalInterface):
 		"""
 		self.registeredLearners[learnerClass.__name__] = learnerClass
 
-		# TODO add option names as learnerClass.__name__ + '.' + optName
+		options = learnerClass.options()
+		
+#		if isinstance(options, list):
+#			temp = {}
+#			for name in options:
+#				temp[name] = ''
+#			options = temp
+
+#		for (k,v) in options.items():
+#			fullKey = learnerClass.__name__ + '.' + k
+#			self._configurableOptionNamesAvailable[fullKey] = v
+		for name in options:
+			fullName = learnerClass.__name__ + '.' + name
+			self._configurableOptionNamesAvailable.append(fullName)
 
 	def deregisterLearner(self, learnerName):
 		"""
@@ -47,9 +60,18 @@ class CustomLearnerInterface(UniversalInterface):
 		if not learnerName in self.registeredLearners:
 			raise ArgumentException("Given learnerName does not refer to a learner accessible through this interface")
 
-		del self.registeredLearners[learnerName]
-
 		# TODO remove option names
+		toRemove = self.registeredLearners[learnerName].options()
+		fullNameToRemove = map(lambda x: learnerName + '.' + x, toRemove)
+
+		temp = []
+		for opName in self._configurableOptionNamesAvailable:
+			if not opName in fullNameToRemove:
+				temp.append(opName)
+
+		self._configurableOptionNamesAvailable = temp
+
+		del self.registeredLearners[learnerName]
 
 		return len(self.registeredLearners) == 0
 

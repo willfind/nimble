@@ -62,10 +62,19 @@ class CustomLearner(object):
 			if getScoresInfo != applyInfo:
 				raise TypeError("The signature for the getScores() method must be the same as the apply() method")
 
+		# check the return type of options() is legit
+		options = check.options()
+		if not isinstance(options, list):
+			raise TypeError("The classmethod options must return a list of stings")
+		for name in options:
+			if not isinstance(name, basestring):
+				raise TypeError("The classmethod options must return a list of stings")
+
 		# check that we can instantiate this subclass
 		initInfo = inspect.getargspec(check.__init__)
 		if len(initInfo[0]) > 1 or initInfo[0][0] != 'self':
 			raise TypeError("The __init__() method for this class must only have self as an argument")
+
 
 		# instantiate it so that the abc stuff gets validated
 		check()	
@@ -107,6 +116,10 @@ class CustomLearner(object):
 			for i in xrange(len(d)):
 				ret[objArgs[-(i+1)]] = d[-(i+1)]
 		return ret
+
+	@classmethod
+	def options(self):
+		return []
 
 	def getScores(self, testX):
 		"""
