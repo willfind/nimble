@@ -15,6 +15,7 @@ import os.path
 import re 
 import datetime
 import copy
+import importlib
 
 import UML
 
@@ -280,6 +281,20 @@ def _loadcsvForList(path):
 
 	return (data, pointNames, featureNames)
 
+
+def autoRegisterFromSettings():
+	"""Helper which looks at the learners listed in UML.settings under
+	the 'RegisteredLearners' section and makes sure they are registered"""
+
+	# query for all entries in 'RegisteredLearners' section
+	toRegister = UML.settings.get('RegisteredLearners', None)
+	# call register custom learner on them
+	for key in toRegister:
+		(packName, learnerName) = key.split('.')
+		(modPath, attrName) = toRegister[key].rsplit('.', 1)
+		module = importlib.import_module(modPath)
+		learnerClass = getattr(module, attrName)
+		UML.registerCustomLearner(packName, learnerClass)
 
 
 def countWins(predictions):

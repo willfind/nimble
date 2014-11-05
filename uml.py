@@ -198,7 +198,6 @@ def registerCustomLearner(customPackageName, learnerClassObject):
 	details of the provided implementation are acceptable.
 
 	"""
-	# TODO configuration subsystem hookin
 	# detect name collision
 	for currInterface in UML.interfaces.available:
 		if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
@@ -216,6 +215,14 @@ def registerCustomLearner(customPackageName, learnerClassObject):
 
 	currInterface.registerLearnerClass(learnerClassObject)
 
+	opName = customPackageName + "." + learnerClassObject.__name__
+	opValue = learnerClassObject.__module__ + '.' + learnerClassObject.__name__
+	UML.settings.set('RegisteredLearners', opName, opValue)
+	UML.settings.saveChanges('RegisteredLearners', opName)
+	
+	# check if new option names introduced, call sync if needed
+	if learnerClassObject.options() != []:
+		UML.configuration.syncWithInterfaces(UML.settings)
 
 def deregisterCustomLearner(customPackageName, learnerName):
 	"""
@@ -233,10 +240,24 @@ def deregisterCustomLearner(customPackageName, learnerName):
 	currInterface = findBestInterface(customPackageName)
 	if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
 		raise ArgumentException("May only attempt to deregister learners from the interfaces of custom packages. '" + customPackageName + "' is not a custom package")
+	origOptions = currInterface.optionNames
 	empty = currInterface.deregisterLearner(learnerName)
+	newOptions = currInterface.optionNames
+
+	# remove options
+	for optName in origOptions:
+		if optName not in newOptions:
+			UML.settings.delete(customPackageName, optName)
 
 	if empty:
 		UML.interfaces.available.remove(currInterface)
+		#remove section
+		UML.settings.delete(customPackageName, None)
+
+	regOptName = customPackageName + '.' + learnerName
+	# delete from registered learner list
+	UML.settings.delete('RegisteredLearners', regOptName)
+	UML.settings.saveChanges('RegisteredLearners')
 
 
 def learnerParameters(name):

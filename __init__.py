@@ -10,8 +10,6 @@ import os
 import inspect
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-
-
 # load settings from configuration file
 import UML.configuration
 settings = UML.configuration.loadSettings()
@@ -44,10 +42,15 @@ from uml import crossValidateReturnBest
 
 from uml import learnerType
 
-# automatic registration of custom learners to be used in unit testing 
-UML.registerCustomLearner('Custom', UML.customLearners.RidgeRegression)
-UML.registerCustomLearner('Custom', UML.customLearners.KNNClassifier)
+# These learners are required for unit testing, so we ensure they will
+# be automatically registered by making surey they have entries in
+# UML.settings.
+UML.settings.set("RegisteredLearners", "Custom.RidgeRegression", 'UML.customLearners.RidgeRegression')
+UML.settings.set("RegisteredLearners", "Custom.KNNClassifier", 'UML.customLearners.KNNClassifier')
+
+# register those custom learners listed in UML.settings
+UML.umlHelpers.autoRegisterFromSettings()
 
 # Now that we have loaded everything else, sync up the the settings object
 # as needed.
-UML.configuration.syncWithInteraces(UML.settings)
+UML.configuration.syncWithInterfaces(UML.settings)
