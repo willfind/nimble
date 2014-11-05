@@ -7,11 +7,42 @@ with the undlying structures being used.
 import tempfile
 import copy
 import os
+import ConfigParser
 
 from nose.tools import raises
 
 import UML
 from UML.exceptions import ArgumentException
+
+def safetyWrapper(toWrap):
+	"""Decorator which ensures the safety of the the UML.settings and
+	the configuraiton file during the unit tests"""
+	def wrapped(*args):
+		backupFile = tempfile.TemporaryFile()
+		configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
+		backupFile.write(configurationFile.read())
+		configurationFile.close()
+		
+		backupChanges = copy.copy(UML.settings.changes)
+		backupAvailable = copy.copy(UML.interfaces.available)
+
+		try:
+			toWrap(*args)
+		finally:
+			backupFile.seek(0)
+			configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
+			configurationFile.write(backupFile.read())
+			configurationFile.close()
+
+			UML.settings = UML.configuration.loadSettings()
+			UML.settings.changes = backupChanges
+			UML.interfaces.available = backupAvailable
+
+	wrapped.func_name = toWrap.func_name
+	wrapped.__doc__ = toWrap.__doc__
+
+	return wrapped 
+
 
 def fileEqualObjOutput(fp, obj):
 	resultFile = tempfile.TemporaryFile()
@@ -158,92 +189,175 @@ def test_settings_GetSet():
 			# check again
 			assert UML.settings.get(name, option) == origValue
 
-	# confirm that changes is empty
+	# confirm that changes is the same
 	assert UML.settings.changes == origChangeSet
 
+@safetyWrapper
+def test_settings_GetSectionOnly():
+	""" Test UML.settings.get when only specifying a section """
+	UML.settings.set("TestSec1", "op1", '1')
+	UML.settings.set("TestSec1", "op2", '2')
+	
+	allSec1 = UML.settings.get("TestSec1", None)
+	assert allSec1["op1"] == '1'
+	assert allSec1['op2'] == '2'
 
 
+
+#@safetyWrapper
+#def test_settings_getFormatting():
+#	""" Test the format flags  """
+#	UML.settings.set("FormatTest", "numOp", 1)
+#	asInt = UML.settings.get("FormatTest", "numOp", asFormat='int')
+#	asFloat = UML.settings.get("FormatTest", "numOp", asFormat='float')
+
+#	assert asInt == 1
+#	assert asFloat == 1.0
+
+
+@safetyWrapper
 def test_settings_saving():
 	""" Test UML.settings will save its in memory changes """
-	# back up configuration.ini
-	backup = backupConfigurationFile()
+	# make some change via UML.settings. save it,
+	UML.settings.set("bogusSectionName", "bogus.Option.Name", '1')
+	UML.settings.saveChanges()
 
+	# reload it with the starup function, make sure settings saved.
+	UML.settings = UML.configuration.loadSettings()
+	assert UML.settings.get("bogusSectionName", 'bogus.Option.Name') == '1'
+
+@safetyWrapper
+def test_settings_savingSection():
+	""" Test UML.settings.saveChanges when specifying a section """
+	UML.settings.set("TestSec1", "op1", '1')
+	UML.settings.set("TestSec1", "op2", '2')
+	UML.settings.set("TestSec2", "op1", '1')
+	UML.settings.saveChanges("TestSec1")
+
+	# assert that other changes are still in effect
+	assert len(UML.settings.changes) == 1
+	assert UML.settings.get("TestSec2", "op1") == '1'
+
+	# reload it with the starup function, make sure settings saved.
+	temp = UML.configuration.loadSettings()
+	assert temp.get('TestSec1', "op1") == '1'
+	assert temp.get('TestSec1', "op2") == '2'
+	# confirm that the change outside the section was not saved
 	try:
-		# make some change via UML.settings. save it,
-		UML.settings.set("bogusSectionName", "bogus.Option.Name", '1')
-		UML.settings.saveChanges()
+		val = temp.get('TestSec2', "op1")
+		assert False
+	except ConfigParser.NoSectionError:
+		pass
 
-		# reload it with the starup function, make sure settings saved.
-		UML.settings = UML.configuration.loadSettings()
-		assert UML.settings.get("bogusSectionName", 'bogus.Option.Name') == '1'
-	finally:
-		# copy backup file over
-		copyBackupOverConfigurationFile(backup)
+@safetyWrapper
+def test_settings_savingOption():
+	""" Test UML.settings.saveChanges when specifying a section and option """
+	UML.settings.set("TestSec1", "op1", '1')
+	UML.settings.set("TestSec1", "op2", '2')
+	UML.settings.set("TestSec2", "op1", '1')
+	UML.settings.saveChanges("TestSec1", "op2")
 
+	# assert that other changes are still in effect
+	assert len(UML.settings.changes) == 2
+	assert UML.settings.get("TestSec2", "op1") == '1'
+	assert UML.settings.get("TestSec1", "op1") == '1'
 
-def test_settings_syncing():
-	""" Test UML.configuration.syncWithInteraces correctly modifies file """
-	# back up configuration
-	backup = backupConfigurationFile()
-	backupAvailable = copy.copy(UML.interfaces.available)
-
+	# reload it with the starup function, make that option was saved.
+	temp = UML.configuration.loadSettings()
+	assert temp.get('TestSec1', "op2") == '2'
+	# confirm that the other changes were not saved
 	try:
-		tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-		UML.interfaces.available.append(tempInterface)
-
-		# run sync
-		UML.configuration.syncWithInteraces(UML.settings)
-
-		# reload settings
-		UML.settings = UML.configuration.loadSettings()
-
-		# make sure new section and name was correctly added
-		# '' is default value when adding options from interfaces
-		assert UML.settings.get('Test', 'Temp0') == ''
-		assert UML.settings.get('Test', 'Temp1') == ''
-	finally:
-		# restore available interfaces
-		UML.interfaces.available = backupAvailable
-		# retore config file
-		copyBackupOverConfigurationFile(backup)
-		# have to reload UML.settings too
-		UML.settings = UML.configuration.loadSettings()
+		val = temp.get('TestSec2', "op1")
+		assert False
+	except ConfigParser.NoSectionError:
+		pass
+	try:
+		val = temp.get('TestSec1', "op1") == '1'
+		assert False
+	except ConfigParser.NoOptionError:
+		pass
 
 
-# test that when you sync an interface, it doesn't wipe out the values
-# you already have in place
+@safetyWrapper
+def test_settings_syncingNewInterface():
+	""" Test UML.configuration.syncWithInterfaces correctly modifies file """
+	tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
+	UML.interfaces.available.append(tempInterface)
+	ignoreInterface = OptionNamedLookalike("ig", [])
+	UML.interfaces.available.append(ignoreInterface)
+
+	# run sync
+	UML.configuration.syncWithInterfaces(UML.settings)
+
+	# reload settings - to make sure the syncing was recorded
+	UML.settings = UML.configuration.loadSettings()
+
+	# make sure there is no section associated with the optionless
+	# interface
+	assert not UML.settings.cp.has_section('ig') 
+
+	# make sure new section and name was correctly added
+	# '' is default value when adding options from interfaces
+	assert UML.settings.get('Test', 'Temp0') == ''
+	assert UML.settings.get('Test', 'Temp1') == ''
+
+@safetyWrapper
 def test_settings_syncingSafety():
 	""" Test that syncing preserves values already in the config file """
-	# back up configuration
-	backup = backupConfigurationFile()
-	backupAvailable = copy.copy(UML.interfaces.available)
+	tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
+	UML.interfaces.available.append(tempInterface1)
 
+	# run sync, then reload
+	UML.configuration.syncWithInterfaces(UML.settings)
+	UML.settings = UML.configuration.loadSettings()
+
+	UML.settings.set('Test', 'Temp0', '0')
+	UML.settings.set('Test', 'Temp1', '1')
+	UML.settings.saveChanges()
+
+	# now set up another trigger for syncing
+	tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
+	UML.interfaces.available.append(tempInterface2)
+
+	# run sync, then reload
+	UML.configuration.syncWithInterfaces(UML.settings)
+	UML.settings = UML.configuration.loadSettings()
+	
+	assert UML.settings.get("Test", 'Temp0') == '0'
+	assert UML.settings.get("Test", 'Temp1') == '1'
+
+@safetyWrapper
+def test_settings_syncingChanges():
+	""" Test that syncing interfaces properly saves current changes """
+	tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
+	tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
+	UML.interfaces.available.append(tempInterface1)
+	UML.interfaces.available.append(tempInterface2)
+
+	# run sync, then reload
+	UML.configuration.syncWithInterfaces(UML.settings)
+	UML.settings = UML.configuration.loadSettings()
+
+	UML.settings.set('Test', 'Temp0', '0')
+	UML.settings.set('Test', 'Temp1', '1')
+	UML.settings.set('TestOther', 'Temp0', 'unchanged')
+
+	assert UML.settings.get('Test', 'Temp0') == '0'
+	
+	# change Test option names and resync
+	tempInterface1.optionNames[1] = 'NotTemp1'
+	UML.configuration.syncWithInterfaces(UML.settings)
+
+	# check values of both changed and unchanged names
+	assert UML.settings.get('Test', 'Temp0') == '0'
 	try:
-		tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-		UML.interfaces.available.append(tempInterface1)
+		UML.settings.get('Test', 'Temp1') 
+	except ConfigParser.NoOptionError:
+		pass
+	assert UML.settings.get('Test', 'NotTemp1') == ''
 
-		# run sync, then reload
-		UML.configuration.syncWithInteraces(UML.settings)
-		UML.settings = UML.configuration.loadSettings()
-
-		UML.settings.set('Test', 'Temp0', '0')
-		UML.settings.set('Test', 'Temp1', '1')
-		UML.settings.saveChanges()
-
-		# now set up another trigger for syncing
-		tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-		UML.interfaces.available.append(tempInterface2)
-
-		# run sync, then reload
-		UML.configuration.syncWithInteraces(UML.settings)
-		UML.settings = UML.configuration.loadSettings()
-		
-		assert UML.settings.get("Test", 'Temp0') == '0'
-		assert UML.settings.get("Test", 'Temp1') == '1'
-	finally:
-		UML.interfaces.available = backupAvailable
-		copyBackupOverConfigurationFile(backup)
-		UML.settings = UML.configuration.loadSettings()
+	# check that the temp value for testOther is unaffeected
+	assert UML.settings.get('TestOther', 'Temp0') == 'unchanged'
 
 
 @raises(ArgumentException)
@@ -255,8 +369,6 @@ def test_settings_allowedNames():
 	UML.settings.changes = {}
 
 
-
-#test register and deregister custom learner?
 
 
 ###############
@@ -271,16 +383,3 @@ class OptionNamedLookalike(object):
 		
 	def getCanonicalName(self):
 		return self.name
-
-
-def backupConfigurationFile():
-	backup = tempfile.TemporaryFile()
-	configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
-	backup.write(configurationFile.read())
-	configurationFile.close()
-	return backup
-
-def copyBackupOverConfigurationFile(backup):
-	backup.seek(0)
-	configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
-	configurationFile.write(backup.read())

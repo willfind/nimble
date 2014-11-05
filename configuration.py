@@ -21,6 +21,7 @@ will ensure that the configuration file reflects all available options.
 
 import ConfigParser
 import os
+import copy
 
 import UML
 from UML.exceptions import ArgumentException
@@ -215,11 +216,58 @@ class SessionConfiguration(object):
 
 		self.changes = {}
 
+	def delete(self, section, option):
+		success = False
+
+		if section is not None:
+			# Deleting a specific option in a specific section
+			if option is not None:		
+				if (section, option) in self.changes:
+					del self.changes[(section,option)]
+					success = True
+				if self.cp.has_section(section):
+					self.cp.remove_option(section, option)
+			# deleting an entire section
+			else:
+				for (k,v) in self.changes:
+					if k == section:
+						del self.changes[(k,v)]
+						success = True
+				if self.cp.has_section(section):
+					self.cp.remove_section(section)
+		else:
+			if option is not None:
+				msg = "If specifying and option, one must also specify "
+				msg += "a section"
+				raise ArgumentException(msg)
+			else:
+				pass  # if None, None is specified, we will return false
+		return success
+
+
 	def get(self, section, option):
-		fromFile = self.cp.get(section, option)
-		if (section, option) in self.changes:
-			return self.changes[(section, option)]
-		return fromFile
+		# Treat this as a request for an entire section
+		if section is not None and option is None:
+			found = False
+			ret = {}
+			if self.cp.has_section(section):
+				found = True
+				for (k,v) in self.cp.items(section):
+					ret[k] = v
+			for (kSec,kOpt) in self.changes:
+				if kSec == section:
+					found = True
+					ret[kOpt] = self.changes[(kSec,kOpt)]
+			if not found:
+				raise ConfigParser.NoSectionError()
+			return ret
+		# Otherwise, treat it as a request for a single option,
+		# and let the helpers deal with the failure modes
+		else:
+			if (section, option) in self.changes:
+				return self.changes[(section, option)]
+			fromFile = self.cp.get(section, option)
+			return fromFile
 
 	def set(self, section, option, value):
 		"""
@@ -245,9 +293,10 @@ class SessionConfiguration(object):
 			ignore = False
 			acceptedNames = interface.optionNames
 			if option not in acceptedNames:
-				msg = section + " is a section associated with an interface "
-				msg += "which only allows these options: " 
+				msg = section + " is associated with an interface "
+				msg += "which only allows options: " 
 				msg += str(acceptedNames)
+				msg += " but " + option + " was given"
 				raise ArgumentException(msg)
 		except ArgumentException as e:
 			if not ignore:
@@ -277,6 +326,7 @@ class SessionConfiguration(object):
 				if not self.cp.has_section(sec):
 					self.cp.add_section(sec)
 				self.cp.set(sec, opt, self.changes[(sec,opt)])
+			self.changes = {}
 		else:
 			if option is None:
 				#save section
@@ -286,6 +336,7 @@ class SessionConfiguration(object):
 					if not self.cp.has_section(sec):
 						self.cp.add_section(sec)
 					self.cp.set(sec, opt, self.changes[(sec,opt)])
+					del self.changes[(sec,opt)]
 			else:
 				# save specific
 				for (sec, opt) in self.changes.keys():
@@ -294,15 +345,11 @@ class SessionConfiguration(object):
 					if not self.cp.has_section(sec):
 						self.cp.add_section(sec)
 					self.cp.set(sec, opt, self.changes[(sec,opt)])
+					del self.changes[(sec,opt)]
 
 		fp = open(self.path, 'w')
 		self.cp.write(fp)
 		fp.close()
-
-		# What used to be in changes is now in the ConfigParser
-		# and in the file
-		self.changes = {}
-
 
 
 def loadSettings():
@@ -315,15 +362,17 @@ def loadSettings():
 	ret = SessionConfiguration(target)
 	return ret
 
-def syncWithInteraces(settingsObj):
-	assert settingsObj.changes == {}
+def syncWithInterfaces(settingsObj):
+	origChanges = copy.copy(settingsObj.changes)
+	newChanges = {}
+	settingsObj.changes == {}
 
 	# iterate through interfaces?
 	for interface in UML.interfaces.available:
 		interfaceName = interface.getCanonicalName()
 		optionNames = interface.optionNames
 
-		# check that all present are names
+		# check that all present are valid names
 		if settingsObj.cp.has_section(interfaceName):
 			for (opName, value) in settingsObj.cp.items(interfaceName):
 				if opName not in optionNames:
@@ -340,6 +389,14 @@ def syncWithInteraces(settingsObj):
 				settingsObj.get(interfaceName, opName)
 			except ConfigParser.NoOptionError:
 				settingsObj.set(interfaceName, opName, "")
+			if (interfaceName, opName) in origChanges:
+				newChanges[(interfaceName, opName)] = origChanges[(interfaceName, opName)]
 
 	# save all changes that were made
 	settingsObj.saveChanges()
+
+	# NOTE: this is after the save. If a non-empty change set was in place
+	# during the save operation, those changes would be reflected in
+	# the file, which we don't want. We instead want to preserve the
+	# user changes, and only save them because of user intervention.
+	settingsObj.changes = newChanges
