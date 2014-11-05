@@ -4,6 +4,7 @@ import math
 from math import fabs
 
 from nose.tools import *
+from nose.plugins.attrib import attr
 
 import UML
 
@@ -173,7 +174,7 @@ class TestRand(FoldIteratorTester):
 		super(TestRand, self).__init__(maker)
 
 
-
+@attr('slow')
 def testClassifyAlgorithms(printResultsDontThrow=False):
 	"""tries the algorithm names (which are keys in knownAlgorithmToTypeHash) with learnerType().
 	Next, compares the result to the algorithm's assocaited value in knownAlgorithmToTypeHash.
@@ -321,7 +322,7 @@ def testSumDifferenceFunction():
 		raise AssertionError("difference result should be " + str(18 * 0.1 * 2) + ' but it is ' + str(diffResult))
 	# assert(diffResult == 18 * 0.1 * 2)
 
-
+@attr('slow')
 def testLearnerTypeSuite():
 	"""Call all test functions."""
 	testSumDifferenceFunction()
