@@ -50,9 +50,15 @@ class Base(object):
 		self._featureCount = shape[1]
 
 		if pointNames is not None and len(pointNames) != shape[0]:
-			raise ArgumentException("The length of the pointNames must match the points given in shape")
+			msg = "The length of the pointNames (" + str(len(pointNames))
+			msg += ") must match the points given in shape (" + str(shape[0])
+			msg += ")"
+			raise ArgumentException(msg)
 		if featureNames is not None and len(featureNames) != shape[1]:
-			raise ArgumentException("The length of the featureNames must match the features given in shape")
+			msg = "The length of the featureNames (" + str(len(pointNames))
+			msg += ") must match the features given in shape ("
+			msg += str(shape[0]) + ")"
+			raise ArgumentException(msg)
 
 		self._nextDefaultValuePoint = 0
 		self._setAllDefault('point')
@@ -313,7 +319,8 @@ class Base(object):
 			return mapping[point[0]]
 
 		converted = toConvert.applyToPoints(lookup, inPlace=False)
-		converted.setFeatureName(0,toConvert.featureNamesInverse[0])		
+		converted.setPointNamesFromDict(toConvert.pointNames)
+		converted.setFeatureName(0, toConvert.featureNamesInverse[0])
 
 		self.appendFeatures(converted)
 
@@ -2266,13 +2273,20 @@ class Base(object):
 			self._setAllDefault(axis)
 			return
 		if not isinstance(assignments, list):
-			raise ArgumentException("assignments may only be a list, with as many entries as this axis is long")
+			msg = "assignments was not a List. assignments may only be a list,"
+			msg += "with as many entries as this axis is long (" + str(count) + ")"
+			raise ArgumentException(msg)
 		if count == 0:
 			if len(assignments) > 0:
-				raise ArgumentException("assignments is too large; this axis is empty ")
+				msg = "assignments is too large (" + str(len(assignments))
+				msg += "); this axis is empty"
+				raise ArgumentException(msg)
 			return
 		if len(assignments) != count:
-			raise ArgumentException("assignments may only be a list, with as many entries as this axis is long")
+			msg = "assignments may only be a list, with as many entries ("
+			msg += str(len(assignments)) + ") as this axis is long ("
+			msg += str(count) + ")"
+			raise ArgumentException(msg)
 
 		#convert to dict so we only write the checking code once
 		temp = {}

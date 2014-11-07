@@ -13,6 +13,8 @@ class ArgumentException (Exception):
 		self.value = value
 	def __str__(self):
 		return repr(self.value)
+	def __repr__(self):
+		return "ArgumentException(" + repr(self.value) + ")"
 
 class MissingEntryException (Exception):
 	"""

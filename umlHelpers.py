@@ -92,9 +92,14 @@ def initDataObject(retType, rawData, pointNames, featureNames, name):
 		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
 	except Exception as e:
 		#something went wrong. instead, try to auto load and then convert
-		autoMethod = getattr(UML.data, autoType)
-		ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
-		ret = ret.copyAs(retType)		
+		try:
+			autoMethod = getattr(UML.data, autoType)
+			ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
+			ret = ret.copyAs(retType)
+		# If it didn't work, report the error on the thing the user ACTUALLY
+		# wanted
+		except:
+			raise e
 
 	return ret
 
@@ -123,8 +128,8 @@ def createDataFromFile(retType, data, fileType):
 	directPath = "_load" + fileType + "For" + retType
 	# try to get loading function
 	retData, retPNames, retFNames = None, None, None
-	if directPath in locals():
-		loader = locals()[directPath]
+	if directPath in globals():
+		loader = globals()[directPath]
 		(retData, retPNames, retFNames) = loader(data)
 	else:
 		if fileType == 'csv':
@@ -150,12 +155,16 @@ def _loadcsvForMatrix(path):
 		scrubbedLine = scrubbedLine.rstrip()
 		names = scrubbedLine.split(',')
 		skip_header = 1
+		if names == ['']:
+			return None
 		return names
 
 	# test if this is a line defining names
 	if currLine[0] == "#":
 		pointNames = readNames(currLine)
 		currLine = inFile.readline()
+		if currLine[0] != '#':
+			raise ArgumentException("If comment lines are used, two are required, one each for specifying Point, then Feature names")
 		featureNames = readNames(currLine)
 
 	# check the types in the first data containing line.
@@ -254,12 +263,16 @@ def _loadcsvForList(path):
 		# strip newline from end of line
 		scrubbedLine = scrubbedLine.rstrip()
 		names = scrubbedLine.split(',')
+		if names == ['']:
+			return None
 		return names
 
 	# test if this is a line defining featureNames
 	if firstLine[0] == "#":
 		pointNames = readNames(firstLine)
 		currLine = inFile.readline()
+		if currLine[0] != '#':
+			raise ArgumentException("If comment lines are used, two are required, one each for specifying Point, then Feature names")
 		featureNames = readNames(currLine)
 
 	#if not, get the iterator pointed back at the first line again	

@@ -162,7 +162,7 @@ class HighLevelBackend(DataTestObject):
 		data = [[10],[20],[30.5],[20],[10]]
 		featureNames = ['col']
 		toTest = self.constructor(data, featureNames=featureNames)
-		ret = toTest.transformFeatureToIntegerFeature(0) # RET CHECK
+		ret = toTest.transformFeatureToIntegerFeature(0)  # RET CHECK
 
 		assert toTest[0,0] == toTest[4,0]
 		assert toTest[1,0] == toTest[3,0]
@@ -170,6 +170,39 @@ class HighLevelBackend(DataTestObject):
 		assert toTest[0,0] != toTest[2,0]
 		assert ret is None
 
+	def test_transformFeatureToIntegerFeature_pointNames(self):
+		""" Test transformFeatureToIntegerFeature preserves pointNames """
+		data = [[10],[20],[30.5],[20],[10]]
+		pnames = ['1a', '2a', '3', '2b', '1b']
+		fnames = ['col']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+		ret = toTest.transformFeatureToIntegerFeature(0)  # RET CHECK
+
+		assert toTest.pointNamesInverse[0] == '1a'
+		assert toTest.pointNamesInverse[1] == '2a'
+		assert toTest.pointNamesInverse[2] == '3'
+		assert toTest.pointNamesInverse[3] == '2b'
+		assert toTest.pointNamesInverse[4] == '1b'
+		assert ret is None
+
+	def test_transformFeatureToIntegerFeature_positioning(self):
+		""" Test transformFeatureToIntegerFeature preserves featurename mapping """
+		data = [[10,0],[20,1],[30.5,2],[20,3],[10,4]]
+		pnames = ['1a', '2a', '3', '2b', '1b']
+		fnames = ['col','pos']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+		ret = toTest.transformFeatureToIntegerFeature(0)  # RET CHECK
+
+		assert toTest[0,1] == toTest[4,1]
+		assert toTest[1,1] == toTest[3,1]
+		assert toTest[0,1] != toTest[1,1]
+		assert toTest[0,1] != toTest[2,1]
+
+		assert toTest[0,0] == 0
+		assert toTest[1,0] == 1
+		assert toTest[2,0] == 2
+		assert toTest[3,0] == 3
+		assert toTest[4,0] == 4
 
 	#########################
 	# extractPointsByCoinToss #
