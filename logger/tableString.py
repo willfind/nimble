@@ -1,4 +1,5 @@
 import copy
+import math
 
 class TableError(Exception):
 	pass
@@ -20,7 +21,7 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
 	if len(table) == 0: return ""
 	if not isinstance(table[0], (list, tuple)): raise TableError("table elements be lists or tuples. You gave: " + str(objectClass(table[0])))
 	
-	table = copy.deepcopy(table)	#So that the table doesn't get destroyed in the process!
+	table = copy.deepcopy(table)  # So that the table doesn't get destroyed in the process!
 	colWidths = []
 	#rows = len(table)
 	cols = 0
@@ -33,18 +34,18 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
 	
 	for r in xrange(len(table)):
 		for c in xrange(len(table[r])):
-			if roundDigits != None and isinstance(table[r][c], float):
+			if roundDigits is not None and isinstance(table[r][c], float):
 				table[r][c] = format(table[r][c], roundDigits)
 			else: table[r][c] = str(table[r][c])
 			if(len(table[r][c]) > colWidths[c]): colWidths[c] = len(table[r][c])
 	
-	if headers != None:
+	if headers is not None:
 		if len(headers) != cols: raise TableError("Number of table columns (" + str(cols) + ")  does not match number of header columns (" + str(len(headers)) + ")!")
 		for c in xrange(len(headers)):
 			if colWidths[c] < len(headers[c]): colWidths[c] = len(headers[c])
 	
 	#if there is a limit to how many rows we can show, delete the middle rows and replace them with a "..." row
-	if maxRowsToShow != None:	
+	if maxRowsToShow is not None:	
 		numToDelete = max(len(table)-maxRowsToShow, 0)
 		if numToDelete > 0:
 			firstToDelete = int(math.ceil((len(table)/2.0)-(numToDelete/2.0)))
@@ -52,8 +53,8 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
 			table = table[:firstToDelete] + [["..."]*len(table[firstToDelete])] + table[lastToDelete+1:]
 	#if we want to imply the existence of more rows, but they are not currently present in the table, so
 	#we just add an elipses at the specified index
-	elif snipIndex != None and snipIndex > 0:
-		table = table[:snipIndex] + [["..."]*len(table[firstToDelete])] + table[snipIndex+1:]
+	elif snipIndex is not None and snipIndex > 0:
+		table = table[:snipIndex] + [["..."]*len(table[0])] + table[snipIndex+1:]
 	
 	#modify the text in each column to give it the right length
 	for r in xrange(len(table)): 

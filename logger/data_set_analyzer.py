@@ -84,14 +84,17 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
 
     #If the data object is too big to print out info about each feature,
     #extract a subset of features from the data set and 
-    if shape[0] > maxFeaturesToCover:
+    if shape[1] > maxFeaturesToCover:
         if maxFeaturesToCover % 2 == 0:
             leftIndicesToSelect = range(maxFeaturesToCover / 2)
-            rightIndicesToSelect = range(shape[0] - (maxFeaturesToCover / 2), shape[0])
+            rightIndicesToSelect = range(shape[1] - (maxFeaturesToCover / 2), shape[1])
         else:
             leftIndicesToSelect = range(math.floor(maxFeaturesToCover / 2))
-            rightIndicesToSelect = range(shape[0] - ((maxFeaturesToCover / 2) + 1), shape[0])
-        dataContainer = dataContainer.copyFeatures(leftIndicesToSelect.append(rightIndicesToSelect))
+            rightIndicesToSelect = range(shape[1] - ((maxFeaturesToCover / 2) + 1), shape[1])
+        subsetIndices = []
+        subsetIndices.extend(leftIndicesToSelect)
+        subsetIndices.extend(rightIndicesToSelect)
+        dataContainer = dataContainer.copyFeatures(subsetIndices)
         isSubset = True
     else:
         isSubset = False
@@ -127,7 +130,8 @@ def produceAggregateTable(dataContainer):
         aggregateResults = funcResults.applyToFeatures(mean_, inPlace=False).copyAs(format="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
-    resultsDict['Points'] = shape[0] * shape[1]
+    resultsDict['Values'] = shape[0] * shape[1]
+    resultsDict['Points'] = shape[0]
     resultsDict['Features'] = shape[1]
 
     headers = []

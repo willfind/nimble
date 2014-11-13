@@ -218,10 +218,12 @@ def testProduceAggregateTable():
             assert rawTable[1][i] == 0.0
         elif funcName == "proportionMissing":
             assert rawTable[1][i] == 0.0
-        elif funcName == "Points":
+        elif funcName == "Values":
             assert rawTable[1][i] == 12
         elif funcName == "Features":
             assert rawTable[1][i] == 4
+        elif funcName == "points":
+            assert rawTable[1][i] == 3
 
 
 def testStDev():
