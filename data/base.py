@@ -1535,7 +1535,7 @@ class Base(object):
 				if start > end:
 					raise ArgumentException("start cannot be an index greater than end")
 			else:
-				raise ArgumentException("must specify something to copy")
+				raise ArgumentException("must specify something to copy; 'features', 'start', and 'end' were all None")
 		else:
 			if start is not None or end is not None:
 				raise ArgumentException("Cannot specify both IDs and a range")
@@ -2272,20 +2272,28 @@ class Base(object):
 		if assignments is None:
 			self._setAllDefault(axis)
 			return
-		if not isinstance(assignments, list):
-			msg = "assignments was not a List. assignments may only be a list,"
-			msg += "with as many entries as this axis is long (" + str(count) + ")"
+		if not hasattr(assignments, '__getitem__') or not hasattr(assignments, '__len__'):
+			msg = "assignments may only be an ordered container type, with "
+			msg += "implentations for both __len__ and __getitem__, where "
+			msg += "__getitem__ accepts non-negative integers"
 			raise ArgumentException(msg)
 		if count == 0:
 			if len(assignments) > 0:
 				msg = "assignments is too large (" + str(len(assignments))
 				msg += "); this axis is empty"
 				raise ArgumentException(msg)
-			return
+			return		
 		if len(assignments) != count:
-			msg = "assignments may only be a list, with as many entries ("
-			msg += str(len(assignments)) + ") as this axis is long ("
-			msg += str(count) + ")"
+			msg = "assignments may only be an ordered container type, with as "
+			msg += "many entries (" + str(len(assignments)) + ") as this axis "
+			msg += "is long (" + str(count) + ")"
+			raise ArgumentException(msg)
+		try:
+			assignments[0]
+		except IndexError:
+			msg = "assignments may only be an ordered container type, with "
+			msg += "implentations for both __len__ and __getitem__, where "
+			msg += "__getitem__ accepts non-negative integers"
 			raise ArgumentException(msg)
 
 		#convert to dict so we only write the checking code once
