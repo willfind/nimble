@@ -55,9 +55,9 @@ class Base(object):
 			msg += ")"
 			raise ArgumentException(msg)
 		if featureNames is not None and len(featureNames) != shape[1]:
-			msg = "The length of the featureNames (" + str(len(pointNames))
+			msg = "The length of the featureNames (" + str(len(featureNames))
 			msg += ") must match the features given in shape ("
-			msg += str(shape[0]) + ")"
+			msg += str(shape[1]) + ")"
 			raise ArgumentException(msg)
 
 		self._nextDefaultValuePoint = 0
@@ -66,8 +66,11 @@ class Base(object):
 			self.setPointNamesFromList(pointNames)
 		elif isinstance(pointNames, dict):
 			self.setPointNamesFromDict(pointNames)
+		# could still be an ordered container, pass it on to the list helper
+		elif hasattr(pointNames, '__len__') and hasattr(pointNames, '__getitem__'):
+			self.setPointNamesFromList(pointNames)
 		else:
-			raise ArgumentException("pointNames may only be a list or a dict, defining a mapping between integers and pointNames")
+			raise ArgumentException("pointNames may only be a list, an ordered container, or a dict, defining a mapping between integers and pointNames")
 		if pointNames is not None and len(pointNames) != self.pointCount:
 			raise ArgumentException("Cannot have different number of pointNames and points, len(pointNames): " + str(len(pointNames)) + ", self.pointCount: " + str(self.pointCount))
 
@@ -77,8 +80,11 @@ class Base(object):
 			self.setFeatureNamesFromList(featureNames)
 		elif isinstance(featureNames, dict):
 			self.setFeatureNamesFromDict(featureNames)
+		# could still be an ordered container, pass it on to the list helper
+		elif hasattr(featureNames, '__len__') and hasattr(featureNames, '__getitem__'):
+			self.setFeatureNamesFromList(featureNames)
 		else:
-			raise ArgumentException("featureNames may only be a list or a dict, defining a mapping between integers and featureNames")
+			raise ArgumentException("featureNames may only be a list, an ordered container, or a dict, defining a mapping between integers and featureNames")
 		if featureNames is not None and len(featureNames) != self.featureCount:
 			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.featureCount: " + str(self.featureCount))
 		
@@ -694,13 +700,13 @@ class Base(object):
 	########################################
 
 
-	def featureReport(self, displayDigits=2):
+	def featureReport(self, maxFeaturesToCover=50, displayDigits=2):
 		"""
 		Produce a report, in a string formatted as a table, containing summary and statistical
 		information about each feature in the data set, up to 50 features.  If there are more
 		than 50 features, only information about 50 of those features will be reported.
 		"""
-		return produceFeaturewiseReport(self, displayDigits=displayDigits)
+		return produceFeaturewiseReport(self, maxFeaturesToCover=maxFeaturesToCover, displayDigits=displayDigits)
 
 	def summaryReport(self, displayDigits=2):
 		"""
