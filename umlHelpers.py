@@ -16,6 +16,8 @@ import re
 import datetime
 import copy
 import importlib
+import StringIO
+import sys
 
 import UML
 
@@ -78,6 +80,41 @@ def isAllowedRaw(data):
 
 	return False
 
+def extractNamesFromRawList(rawData, pnamesID, fnamesID):
+	"""Takes a raw python list of lists and if specified remove those
+	rows or columns that correspond to names, returning the remaining
+	data, and the two name objects (or None in their place if they were
+	not specified for extraction). pnamesID may either be None, or an
+	integer ID corresponding to the column of point names. fnamesID
+	may eith rbe None, or an integer ID corresponding to the row of
+	feature names. """
+	retPNames = None
+	if pnamesID is not None:
+		temp = []
+		for i in xrange(len(rawData)):
+			# grab and remove each value in the feature associated
+			# with point names
+			currVal = rawData[i].pop(pnamesID)
+			# have to skip the index of the feature names, if they are also
+			# in the data
+			if fnamesID is not None and i != fnamesID:  
+				# we wrap it with the string constructor in case the
+				# values in question AREN'T strings
+				temp.append(str(currVal))
+		retPNames = temp
+
+	retFNames = None
+	if fnamesID is not None:
+		# don't have to worry about an overlap entry with point names;
+		# if they existed we had already removed those values.
+		# Therefore: just pop that entire point
+		temp = rawData.pop(fnamesID)
+		for i in xrange(len(temp)):
+			temp[i] = str(temp[i]) 
+		retFNames = temp
+
+	return (rawData, retPNames, retFNames)
+
 def initDataObject(retType, rawData, pointNames, featureNames, name):
 	if scipy.sparse.issparse(rawData):
 		autoType = 'Sparse'
@@ -86,11 +123,58 @@ def initDataObject(retType, rawData, pointNames, featureNames, name):
 	
 	if retType is None:
 		retType = autoType
-	
+
+	# check if we need to do name extraction; setup new variables.
+	pnamesID = None
+	if isinstance(pointNames, int):
+		pnamesID = pointNames
+		pointNames = None
+	fnamesID = None
+	if isinstance(featureNames, int):
+		fnamesID = featureNames
+		featureNames = None
+
+	# check a bundle of cases where we would need to extract out of the
+	# raw data
+	if pnamesID is not None or fnamesID is not None:
+		# this means we could have string type values, and we have to extract
+		# here, because objects other than 'List' can't deal with string typed
+		# values
+		extracted = True
+		if isinstance(rawData, list) and retType != 'List':
+			temp = extractNamesFromRawList(rawData, pnamesID, fnamesID)
+		# Matrices auto convert into float types. So in most cases we
+		# want to extract the names before we get there.
+		elif retType == 'Matrix':
+			# can skip list check, overlaps with previous if clause.
+			if isinstance(rawData, numpy.ndarray) or isinstance(rawData, numpy.matrix):
+				temp = extractNamesFromNumpy(rawData, pnamesID, fnamesID)
+			elif scipy.sparse.issparse(rawData):
+				if not isinstance(rawData, scipy.sparse.coo_matrix):
+					rawData = scipy.sparse.coo_matrix(rawData)
+				temp = extractNamesFromCoo(rawData, pnamesID, fnamesID)
+			else:
+				msg = "Unrecognized raw data type to be used with point /"
+				msg += " feature name extraction."
+				raise ArgumentException(msg)
+		else:
+			extracted = False
+
+		# extracion done, set these as None so we don't trip a different
+		# extraction step
+		if extracted:
+			pnamesID = None
+			fnamesID = None
+			(rawData, extPNames, extFNames) = temp
+			# only want to replace if names are not explicitly specified
+			pointNames = extPNames if pointNames is None else pointNames
+			featureNames = extFNames if featureNames is None else featureNames
+
 	initMethod = getattr(UML.data, retType)
 	try:
 		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
 	except Exception as e:
+#		einfo = sys.exc_info()
 		#something went wrong. instead, try to auto load and then convert
 		try:
 			autoMethod = getattr(UML.data, autoType)
@@ -99,11 +183,52 @@ def initDataObject(retType, rawData, pointNames, featureNames, name):
 		# If it didn't work, report the error on the thing the user ACTUALLY
 		# wanted
 		except:
+#			raise einfo[1], None, einfo[2]
 			raise e
+
+	# extract names out of the data object if still needed
+	ret = extractNamesFromDataObject(ret, pnamesID, fnamesID)
 
 	return ret
 
-def createDataFromFile(retType, data, fileType):
+def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
+	"""Extracts and sets (if needed) the point and feature names from the
+	given UML data object, returning the modified object. pointNamesID may
+	be either None, or an integer ID corresponding to a feature in the data
+	object. featureNamesID may b either None, or an integer ID corresponding
+	to a point in the data object. """
+	ret = data
+	praw = None
+	if pointNamesID is not None:
+		# extract the feature of point names
+		pnames = ret.extractFeatures(pointNamesID)
+		if featureNamesID is not None:
+			# discard the point of feature names that pulled along since we
+			# extracted these first
+			pnames.extractPoints(featureNamesID)
+		praw = pnames.copyAs('numpyarray', outputAs1D=True)
+		praw = numpy.vectorize(str)(praw)
+		
+
+	fraw = None
+	if featureNamesID is not None:
+		# extract the point of feature names
+		fnames = ret.extractPoints(featureNamesID)
+		# extracted point names first, so if they existed, they aren't in
+		# ret anymore. So we DON'T need to extract them from this object
+		fraw = fnames.copyAs('numpyarray', outputAs1D=True)
+		fraw = numpy.vectorize(str)(fraw)
+		
+	# have to wait for everything to be extracted before we add the names,
+	# because otherwise the lenths won't be correct
+	if praw is not None:
+		ret.setPointNamesFromList(praw)
+	if fraw is not None:
+		ret.setFeatureNamesFromList(fraw)	
+
+	return ret
+
+def createDataFromFile(retType, data, fileType, pointNames, featureNames):
 	"""
 	Helper for createData which deals with the case of loading data
 	from a file. Returns a triple containing the raw data, pointNames,
@@ -111,6 +236,15 @@ def createDataFromFile(retType, data, fileType):
 	in the file)
 
 	"""
+	if not isinstance(pointNames, int) and pointNames is not None:
+		msg = "pointNames may only be an int specifying the column containing "
+		msg += "the desired names, or None if they are not in the data"
+		raise ArgumentException(msg)
+	if not isinstance(featureNames, int) and featureNames is not None:
+		msg = "featureNames may only be an int specifying the row containing "
+		msg += "the desired names, or None if they are not in the data"
+		raise ArgumentException(msg)
+
 	# Use the path' extension if fileType isn't specified
 	if fileType is None:
 		split = data.rsplit('.', 1)
@@ -123,6 +257,14 @@ def createDataFromFile(retType, data, fileType):
 			raise ArgumentException(msg)
 		fileType = extension
 
+	if retType is None:
+		if fileType == 'csv':
+			retType = 'Matrix'
+		elif fileType == 'mtx':
+			retType = 'Auto'
+		else:
+			retType = 'Matrix'
+
 	# Choose what code to use to load the file. Take into consideration the end
 	# result we are trying to load into.
 	directPath = "_load" + fileType + "For" + retType
@@ -130,22 +272,22 @@ def createDataFromFile(retType, data, fileType):
 	retData, retPNames, retFNames = None, None, None
 	if directPath in globals():
 		loader = globals()[directPath]
-		(retData, retPNames, retFNames) = loader(data)
+		(retData, retPNames, retFNames) = loader(data, pointNames, featureNames)
 	else:
 		if fileType == 'csv':
-			(retData, retPNames, retFNames) = _loadcsvForMatrix(data)
+			(retData, retPNames, retFNames) = _loadcsvForMatrix(data, pointNames, featureNames)
 		if fileType == 'mtx':
-			(retData, retPNames, retFNames) = _loadmtxForAuto(data)
+			(retData, retPNames, retFNames) = _loadmtxForAuto(data, pointNames, featureNames)
 
 	# raw data, pointNames, featureNames
 	return (retData, retPNames, retFNames)
 
 
-def _loadcsvForMatrix(path):
+def _loadcsvForMatrix(path, pointNames, featureNames):
 	inFile = open(path, 'rU')
 	currLine = inFile.readline()
-	pointNames = None
-	featureNames = None
+	retPNames = None
+	retFNames = None
 	skip_header = 0
 
 	def readNames(lineToRead):
@@ -161,37 +303,74 @@ def _loadcsvForMatrix(path):
 
 	# test if this is a line defining names
 	if currLine[0] == "#":
-		pointNames = readNames(currLine)
+		retPNames = readNames(currLine)
 		currLine = inFile.readline()
 		if currLine[0] != '#':
 			raise ArgumentException("If comment lines are used, two are required, one each for specifying Point, then Feature names")
-		featureNames = readNames(currLine)
+		retFNames = readNames(currLine)
 
 	# check the types in the first data containing line.
 	line = currLine
 	while (line == "") or (line[0] == '#'):
 		line = inFile.readline()
+	if featureNames == 0:
+		line = inFile.readline()
+
 	lineList = line.split(',')
-	for datum in lineList:
-		try:
-			num = numpy.float(datum)
-		except ValueError:
-			raise ValueError("Cannot load a file with non numerical typed columns")
+	for i in xrange(len(lineList)):
+		datum = lineList[i]
+		if i != pointNames:
+			try:
+				num = numpy.float(datum)
+			except ValueError:
+				raise ValueError("Cannot load a file with non numerical typed columns")
 
 	inFile.close()
 
-	data = numpy.genfromtxt(path, delimiter=',', skip_header=skip_header)
-	if len(data.shape) == 1:
-		data = numpy.matrix(data)
-	return (data, pointNames, featureNames)
+	# generate tiny obect, so we know what dtype we actually want
+	lineIn = StringIO.StringIO(line)
+	trialObj = numpy.genfromtxt(lineIn, delimiter=',')
 
-def _loadmtxForMatrix(path):
-	return _loadmtxForAuto(path)
+	data = numpy.genfromtxt(path, delimiter=',', skip_header=skip_header, dtype=None)
 
-def _loadmtxForSparse(path):
-	return _loadmtxForAuto(path)
+	#if len(data.shape) == 1:
+	data = numpy.matrix(data)
 
-def _loadmtxForAuto(path):
+	pnamesID = pointNames if isinstance(pointNames, int) else None
+	fnamesID = featureNames if isinstance(featureNames, int) else None
+	(data, extPNames, extFNames) = extractNamesFromNumpy(data, pnamesID, fnamesID)
+	retPNames = extPNames if retPNames is None else retPNames
+	retFNames = extFNames if retFNames is None else retFNames
+
+	# names are extracted, convert if needed.
+	if data.dtype != trialObj.dtype:
+		data = numpy.matrix(data, dtype=float)
+
+	return (data, retPNames, retFNames)
+
+def extractNamesFromNumpy(data, pnamesID, fnamesID):
+	retPNames = None
+	retFNames = None
+	if pnamesID is not None:
+		retPNames = numpy.array(data[:,pnamesID]).flatten()
+		data = numpy.delete(data, pnamesID, 1)
+		if isinstance(fnamesID, int):
+			retPNames = numpy.delete(retPNames, fnamesID)
+		retPNames = numpy.vectorize(str)(retPNames)
+	if fnamesID is not None:
+		retFNames = numpy.array(data[fnamesID]).flatten()
+		data = numpy.delete(data, fnamesID, 0)
+		retFNames = numpy.vectorize(str)(retFNames)
+
+	return (data, retPNames, retFNames)
+
+def _loadmtxForMatrix(path, pointNames, featureNames):
+	return _loadmtxForAuto(path, pointNames, featureNames)
+
+def _loadmtxForSparse(path, pointNames, featureNames):
+	return _loadmtxForAuto(path, pointNames, featureNames)
+
+def _loadmtxForAuto(path, pointNames, featureNames):
 	"""
 	Uses scipy helpers to read a matrix market file; returning whatever is most
 	appropriate for the file. If it is a matrix market array type, a numpy
@@ -201,8 +380,8 @@ def _loadmtxForAuto(path):
 
 	"""
 	inFile = open(path, 'rU')
-	pointNames = None
-	featureNames = None
+	retPNames = None
+	retFNames = None
 
 	# read through the comment lines
 	while True:
@@ -215,15 +394,121 @@ def _loadmtxForAuto(path):
 			# strip newline from end of line
 			scrubbedLine = scrubbedLine.rstrip()
 			names = scrubbedLine.split(',')
-			if pointNames is None:
-				pointNames = names
+			if retPNames is None:
+				retPNames = names
 			else:
-				featureNames = names
+				retFNames = names
 
 	inFile.close()
 
 	data = scipy.io.mmread(path)
-	return (data, pointNames, featureNames)
+
+	temp = (data, None, None)
+	if not scipy.sparse.issparse(data):
+		temp = extractNamesFromNumpy(data, pointNames, featureNames)
+	elif isinstance(pointNames, int) or isinstance(featureNames, int):
+		temp = extractNamesFromCoo(data, pointNames, featureNames)		
+
+	(data, extPNames, extFNames) = temp
+	retPNames = extPNames if retPNames is None else retPNames
+	retFNames = extFNames if retFNames is None else retFNames
+
+	return (data, retPNames, retFNames)
+
+
+def extractNamesFromCoo(data, pnamesID, fnamesID):
+	# run through the entries in the returned coo_matrix to get
+	# point / feature Names.
+
+	# We justify this time expense by noting that unless this
+	# matrix has an inappropriate number of non-zero entries,
+	# the names we find will likely be a significant proportion
+	# of the present data. 
+	
+	# these will be ID -> name mappings
+	tempPointNames = {}
+	tempFeatureNames = {}
+	newLen = len(data.data) - data.shape[0] - data.shape[1] + 1
+	newRows = numpy.empty(newLen, dtype=data.row.dtype)
+	newCols = numpy.empty(newLen, dtype=data.col.dtype)
+	newData = numpy.empty(newLen, dtype=data.dtype)
+	writeIndex = 0
+	# adjust the sentinal value for easier index modification
+	pnamesID = sys.maxint if pnamesID is None else pnamesID
+	fnamesID = sys.maxint if fnamesID is None else fnamesID
+	for i in xrange(len(data.data)):
+		row = data.row[i]
+		setRow = row if row < fnamesID else row-1
+		col = data.col[i]
+		setCol = col if col < pnamesID else col-1
+		val = data.data[i]
+
+		colEq = col == pnamesID
+		rowEq = row == fnamesID
+
+		# a true value entry, copy it over
+		if not colEq and not rowEq:
+			# need to adjust the row/col values if we are past the
+			# vector of names
+			newRows[writeIndex] = setRow
+			newCols[writeIndex] = setCol
+			newData[writeIndex] = val
+			writeIndex += 1
+		# inidicates a point name
+		elif colEq and not rowEq:
+			if str(val) in tempPointNames:
+				msg = "The point name " + str(val) + " was given more "
+				msg += "than once in this file"
+				raise ArgumentException(msg)
+			tempPointNames[setRow] = str(val)
+		# indicates a feature name
+		elif rowEq and not colEq:
+			if str(val) in tempFeatureNames:
+				msg = "The feature name " + str(val) + " was given more "
+				msg += "than once in this file"
+				raise ArgumentException(msg)
+			tempFeatureNames[setCol] = str(val)
+		# intersection of point and feature names. ignore
+		else:
+			pass
+
+	inTup = (newData, (newRows, newCols))
+	rshape = data.shape[0] if fnamesID == sys.maxint else data.shape[0]-1
+	cshape = data.shape[1] if pnamesID == sys.maxint else data.shape[1]-1
+	data = scipy.sparse.coo_matrix(inTup, shape=(rshape, cshape))
+
+	# process our results: fill in a zero entry if missing on
+	# each axis and validate
+	def processTempNames(temp, axisName, axisNum):
+		retNames = []
+		zeroPlaced = None
+		for i in xrange(data.shape[axisNum]):
+			if i not in temp:
+				if zeroPlaced is not None:
+					msg = axisName + " names not fully specified in the "
+					msg += "data, at least one of the rows "
+					msg += str(zeroPlaced) + " and " + str(i) + " must "
+					msg += "have a non zero value"
+					raise ArgumentException(msg)
+				# make a zero of the same dtype as the data
+				name = str(numpy.array([0], dtype=data.dtype)[0])
+				zeroPlaced = i
+			else:
+				name = temp[i]
+			if name in retNames:
+					msg = "The " + axisName + " name " + name + " was "
+					msg += "given more than once in this file"
+					raise ArgumentException(msg)
+			retNames.append(name)
+		return retNames
+
+	if tempPointNames != {}:
+		retPNames = processTempNames(tempPointNames, 'point', 0)
+	if tempFeatureNames != {}:
+		retFNames = processTempNames(tempFeatureNames, 'feature', 1)
+
+	return (data, retPNames, retFNames)
+
 
 def _intFloatOrString(inString):
 	ret = inString
@@ -251,11 +536,11 @@ def _defaultParser(line):
 	return ret
 
 
-def _loadcsvForList(path):
+def _loadcsvForList(path, pointNames, featureNames):
 	inFile = open(path, 'rU')
 	firstLine = inFile.readline()
-	pointNames = None
-	featureNames = None
+	retPNames = None
+	retFNames = None
 
 	def readNames(lineToRead):
 		# strip '#' from the beginning of the line
@@ -267,13 +552,13 @@ def _loadcsvForList(path):
 			return None
 		return names
 
-	# test if this is a line defining featureNames
+	# test if this are comment lines defining names
 	if firstLine[0] == "#":
-		pointNames = readNames(firstLine)
+		retPNames = readNames(firstLine)
 		currLine = inFile.readline()
 		if currLine[0] != '#':
 			raise ArgumentException("If comment lines are used, two are required, one each for specifying Point, then Feature names")
-		featureNames = readNames(currLine)
+		retFNames = readNames(currLine)
 
 	#if not, get the iterator pointed back at the first line again	
 	else:
@@ -292,7 +577,12 @@ def _loadcsvForList(path):
 
 	inFile.close()
 
-	return (data, pointNames, featureNames)
+	if isinstance(pointNames, int):
+		retPNames = pointNames
+	if isinstance(featureNames, int):
+		retFNames = featureNames
+
+	return (data, retPNames, retFNames)
 
 
 def autoRegisterFromSettings():

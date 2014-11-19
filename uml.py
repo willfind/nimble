@@ -378,10 +378,12 @@ def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
 	if isAllowedRaw(data):
 		return initDataObject(retType, data, pointNames, featureNames, name)
 	elif isinstance(data, basestring):
-		(tempData, tempPNames, tempFNames) = createDataFromFile(retType, data, fileType)
-		if pointNames is None:
+		inPN = pointNames if isinstance(pointNames, int) else None
+		inFN = featureNames if isinstance(featureNames, int) else None
+		(tempData, tempPNames, tempFNames) = createDataFromFile(retType, data, fileType, inPN, inFN)
+		if pointNames is None or isinstance(pointNames, int):
 			pointNames = tempPNames
-		if featureNames is None:
+		if featureNames is None or isinstance(featureNames, int):
 			featureNames = tempFNames
 		return initDataObject(retType, tempData, pointNames, featureNames, name)
 	else:
