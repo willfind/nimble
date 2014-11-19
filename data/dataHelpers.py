@@ -114,7 +114,10 @@ def formatIfNeeded(value, sigDigits):
 def indicesSplit(allowed, total):
 	if total > allowed:
 		allowed -= 1
-		
+	
+	if allowed == 1 or total == 1:
+		return ([0], [])
+
 	forward = int(math.ceil(allowed/2.0))
 	backward = int(math.floor(allowed/2.0))
 
