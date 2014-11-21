@@ -22,6 +22,7 @@ will ensure that the configuration file reflects all available options.
 import ConfigParser
 import os
 import copy
+import sys
 
 import UML
 from UML.exceptions import ArgumentException
@@ -178,11 +179,11 @@ class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
 						# exception but keep going. the exception will be
 						# raised at the end of the file and will contain a
 						# list of all bogus lines
-						if not e:
+						if e is None:
 							e = ConfigParser.ParsingError(fpname)
 						e.append(lineno, repr(line))
 		# if any parsing errors occurred, raise an exception
-		if e:
+		if e is not None:
 			raise e
 
 		# join the multi-line values collected while reading
@@ -298,9 +299,10 @@ class SessionConfiguration(object):
 				msg += str(acceptedNames)
 				msg += " but " + option + " was given"
 				raise ArgumentException(msg)
-		except ArgumentException as e:
+		except ArgumentException:
+			einfo = sys.exc_info()
 			if not ignore:
-				raise e
+				raise einfo[1], None, einfo[2]
 		self.changes[(section, option)] = value
 
 	def saveChanges(self, section=None, option=None):

@@ -174,7 +174,7 @@ def initDataObject(retType, rawData, pointNames, featureNames, name):
 	try:
 		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
 	except Exception as e:
-#		einfo = sys.exc_info()
+		einfo = sys.exc_info()
 		#something went wrong. instead, try to auto load and then convert
 		try:
 			autoMethod = getattr(UML.data, autoType)
@@ -183,8 +183,7 @@ def initDataObject(retType, rawData, pointNames, featureNames, name):
 		# If it didn't work, report the error on the thing the user ACTUALLY
 		# wanted
 		except:
-#			raise einfo[1], None, einfo[2]
-			raise e
+			raise einfo[1], None, einfo[2]
 
 	# extract names out of the data object if still needed
 	ret = extractNamesFromDataObject(ret, pnamesID, fnamesID)
