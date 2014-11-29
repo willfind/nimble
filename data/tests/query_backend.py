@@ -1,4 +1,5 @@
 
+import math
 import tempfile
 import numpy
 from nose.tools import *
@@ -9,6 +10,7 @@ import UML
 from UML.data.dataHelpers import View
 from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
+from UML.exceptions import ArgumentException
 
 
 class QueryBackend(DataTestObject):
@@ -394,6 +396,197 @@ class QueryBackend(DataTestObject):
 						checkToStringRet(ret, data)
 
 
+	##################### #######################
+	# pointSimilarities # # featureSimilarities #
+	##################### #######################
+
+	@raises(ArgumentException)
+	def test_pointSimilaritesInvalidParamType(self):
+		""" Test pointSimilarities raise exception for unexpected param type """
+		self.backend_InvalidParamType(True)
+
+	@raises(ArgumentException)
+	def test_featureSimilaritesInvalidParamType(self):
+		""" Test featureSimilarities raise exception for unexpected param type """
+		self.backend_InvalidParamType(False)
+
+	def backend_InvalidParamType(self, axis):
+		data = [[1,2],[3,4]]
+		obj = self.constructor(data)
+
+		if axis:
+			obj.pointSimilarities({"hello":5})
+		else:
+			obj.featureSimilarities({"hello":5})
+
+	@raises(ArgumentException)
+	def test_pointSimilaritesUnexpectedString(self):
+		""" Test pointSimilarities raise exception for unexpected string value """
+		self.backend_UnexpectedString(True)
+
+	@raises(ArgumentException)
+	def test_featureSimilaritesUnexpectedString(self):
+		""" Test featureSimilarities raise exception for unexpected string value """
+		self.backend_UnexpectedString(False)
+
+	def backend_UnexpectedString(self, axis):
+		data = [[1,2],[3,4]]
+		obj = self.constructor(data)
+
+		if axis:
+			obj.pointSimilarities("foo")
+		else:
+			obj.featureSimilarities("foo")
+
+
+	# test results covariance
+	def test_pointSimilaritesCovarianceResult(self):
+		""" Test pointSimilarities returns correct covariance results """
+		self.backend_CovarianceResult(True)
+
+	def test_featureSimilaritesCovarianceResult(self):
+		""" Test featureSimilarities returns correct covariance results """
+		self.backend_CovarianceResult(False)
+
+	def backend_CovarianceResult(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointSimilarities("covariance")
+		else:
+			orig.transpose()
+			ret = orig.featureSimilarities("covariance")
+			ret.transpose()
+			orig.transpose()
+
+		# hand computed results
+		expRow0 = [2,      (4./3),  (2./3) ]
+		expRow1 = [(4./3), (15./9), (-2./9)]
+		expRow2 = [(2./3), (-2./9), (8./9) ]
+		expData = [expRow0, expRow1, expRow2]
+		expObj = self.constructor(expData)
+
+		assert expObj == ret
+		assert sameAsOrig == orig
+
+	# test results correlation
+	def test_pointSimilaritesCorrelationResult(self):
+		""" Test pointSimilarities returns correct correlation results """
+		self.backend_CorrelationResult(True)
+
+	def test_featureSimilaritesCorrelationResult(self):
+		""" Test featureSimilarities returns correct correlation results """
+		self.backend_CorrelationResult(False)
+
+	def backend_CorrelationResult(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointSimilarities("correlation")
+		else:
+			orig.transpose()
+			ret = orig.featureSimilarities("correlation")
+			ret.transpose()
+			orig.transpose()
+
+
+		tempRow0 = [0, 0, 0]
+		tempRow1 = [(-2./3 * math.sqrt(14./9)), (1./3 * math.sqrt(14./9)), (1./3 * math.sqrt(14./9))]
+		tempRow2 = [(2./3 * math.sqrt(8./9)), (-1./3 * math.sqrt(8./9)), (-1./3 * math.sqrt(8./9))]
+		tempData = [tempRow0, tempRow1, tempRow2]
+		tempObj = self.constructor(tempData)
+
+		expObj = tempObj.featureSimilarities("covariance")
+
+		assert expObj == ret
+		assert sameAsOrig == orig
+
+	# test results dot product
+	def test_pointSimilaritesDotProductResult(self):
+		""" Test pointSimilarities returns correct dot product results """
+		self.backend_DotProductResult(True)
+
+	def test_featureSimilaritesDotProductResult(self):
+		""" Test featureSimilarities returns correct dot product results """
+		self.backend_DotProductResult(False)
+
+	def backend_DotProductResult(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = obj.pointSimilarities("dotproduct")
+		else:
+			orig.transpose()
+			ret = obj.featureSimilarities("dotproduct")
+			ret.transpose()
+			orig.transpose()
+
+		expData = [[3, 2, 1], [2, 2, 0], [1, 0, 1]]
+		expObj = self.constructor(expData)
+
+		assert expObj == ret
+		assert sameAsOrig == orig
+
+	# test input function validation
+	@raises(ArgumentException)
+	def test_pointSimilaritesFuncValidation(self):
+		""" Test pointSimilarities raises exception for invalid funcitions """
+		self.backend_FuncValidation(True)
+
+	@raises(ArgumentException)
+	def test_featureSimilaritesFuncValidation(self):
+		""" Test featureSimilarities raises exception for invalid funcitions """
+		self.backend_FuncValidation(False)
+
+	def backend_FuncValidation(self, axis):
+		data = [[1,2],[3,4]]
+		obj = self.constructor(data)
+
+		def singleArg(one):
+			return one
+
+		if axis:
+			obj.pointSimilarities(singleArg)
+		else:
+			obj.featureSimilarities(singleArg)
+
+	# test results passed function
+	def test_pointSimilariteGivenFuncResults(self):
+		""" Test pointSimilarities returns correct results for given function """
+		self.backend_GivenFuncResults(True)
+
+	def test_featureSimilaritesGivenFuncResults(self):
+		""" Test featureSimilarities returns correct results for given function """
+		self.backend_GivenFuncResults(False)
+
+	def backend_GivenFuncResults(self, axis):
+		assert False
+		data = [[1,2],[3,4]]
+		obj = self.constructor(data)
+
+		def euclideanDistance(left, right):
+			assert False
+
+		if axis:
+			obj.pointSimilarities(euclideanDistance)
+		else:
+			obj.featureSimilarities(euclideanDistance)
+
+	##################### #######################
+	# pointStatistics # # featureStatistics #
+	##################### #######################
+
+
+
+###########
+# Helpers #
+###########
 
 def checkToStringRet(ret, data):
 	cHold = '...'
@@ -434,4 +627,3 @@ def checkToStringRet(ret, data):
 			wantedS = formatIfNeeded(wanted, sigDigits)
 			have = vals[c]
 			assert wantedS == have
-
