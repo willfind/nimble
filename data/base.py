@@ -783,11 +783,28 @@ class Base(object):
 		return self._getTypeString_implementation()
 
 	def __getitem__(self, key):
-		try:
-			(x,y) = key
-		except TypeError:
-			raise ArgumentException("Must include a point and feature index")
-		
+		if isinstance(key, (int, basestring)):
+			if self.pointCount == 1:
+				x = 0
+				y = key
+			elif self.featureCount == 1:
+				x = key
+				y = 0
+			else:
+				msg = "Must include a point and feature index; or, "
+				msg += "since this is vector chaped, a single index "
+				msg += "into the axis whose length > 1"
+				raise ArgumentException(msg)
+		else:
+			try:
+				(x,y) = key
+			except TypeError:
+				msg = "Must include a point and feature index; or, "
+				msg += "if this has only a single point or feature, "
+				msg += "you may specify a single index "
+				msg += "into the axis whose length > 1"
+				raise ArgumentException(msg)
+
 		x = self._getPointIndex(x)
 		if not isinstance(x,int) or x < 0 or x >= self.pointCount:
 			raise ArgumentException(str(x) + " is not a valid point ID")
