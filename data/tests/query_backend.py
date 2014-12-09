@@ -437,16 +437,16 @@ class QueryBackend(DataTestObject):
 	##################### #######################
 
 	@raises(ArgumentException)
-	def atest_pointSimilaritesInvalidParamType(self):
+	def test_pointSimilaritesInvalidParamType(self):
 		""" Test pointSimilarities raise exception for unexpected param type """
-		self.backend_InvalidParamType(True)
+		self.backend_Sim_InvalidParamType(True)
 
 	@raises(ArgumentException)
-	def atest_featureSimilaritesInvalidParamType(self):
+	def test_featureSimilaritesInvalidParamType(self):
 		""" Test featureSimilarities raise exception for unexpected param type """
-		self.backend_InvalidParamType(False)
+		self.backend_Sim_InvalidParamType(False)
 
-	def backend_InvalidParamType(self, axis):
+	def backend_Sim_InvalidParamType(self, axis):
 		data = [[1,2],[3,4]]
 		obj = self.constructor(data)
 
@@ -456,16 +456,16 @@ class QueryBackend(DataTestObject):
 			obj.featureSimilarities({"hello":5})
 
 	@raises(ArgumentException)
-	def atest_pointSimilaritesUnexpectedString(self):
+	def test_pointSimilaritesUnexpectedString(self):
 		""" Test pointSimilarities raise exception for unexpected string value """
-		self.backend_UnexpectedString(True)
+		self.backend_Sim_UnexpectedString(True)
 
 	@raises(ArgumentException)
-	def atest_featureSimilaritesUnexpectedString(self):
+	def test_featureSimilaritesUnexpectedString(self):
 		""" Test featureSimilarities raise exception for unexpected string value """
-		self.backend_UnexpectedString(False)
+		self.backend_Sim_UnexpectedString(False)
 
-	def backend_UnexpectedString(self, axis):
+	def backend_Sim_UnexpectedString(self, axis):
 		data = [[1,2],[3,4]]
 		obj = self.constructor(data)
 
@@ -476,16 +476,16 @@ class QueryBackend(DataTestObject):
 
 
 	# test results covariance
-	def atest_pointSimilaritesCovarianceResult(self):
-		""" Test pointSimilarities returns correct covariance results """
-		self.backend_CovarianceResult(True)
+	def test_pointSimilaritesSampleCovarianceResult(self):
+		""" Test pointSimilarities returns correct sample covariance results """
+		self.backend_Sim_SampleCovarianceResult(True)
 
-	def atest_featureSimilaritesCovarianceResult(self):
-		""" Test featureSimilarities returns correct covariance results """
-		self.backend_CovarianceResult(False)
+	def test_featureSimilaritesSampleCovarianceResult(self):
+		""" Test featureSimilarities returns correct sample covariance results """
+		self.backend_Sim_SampleCovarianceResult(False)
 
-	def backend_CovarianceResult(self, axis):
-		data = [[1,1,1],[0,1,1], [1,0,0]]
+	def backend_Sim_SampleCovarianceResult(self, axis):
+		data = [[3,0,3],[0,0,3], [3,0,0]]
 		orig = self.constructor(data)
 		sameAsOrig = self.constructor(data)
 
@@ -493,31 +493,100 @@ class QueryBackend(DataTestObject):
 			ret = orig.pointSimilarities("covariance")
 		else:
 			orig.transpose()
-			ret = orig.featureSimilarities("covariance")
+			ret = orig.featureSimilarities("samplecovariance")
 			ret.transpose()
 			orig.transpose()
 
 		# hand computed results
-		expRow0 = [2,      (4./3),  (2./3) ]
-		expRow1 = [(4./3), (15./9), (-2./9)]
-		expRow2 = [(2./3), (-2./9), (8./9) ]
+		expRow0 = [3, 1.5, 1.5]
+		expRow1 = [1.5, 3, -1.5]
+		expRow2 = [1.5, -1.5, 3]
 		expData = [expRow0, expRow1, expRow2]
 		expObj = self.constructor(expData)
 
-		assert expObj == ret
+		# numpy computted result -- bias=0 -> divisor of n-1
+		npExpRaw = numpy.cov(data, bias=0)
+		npExpObj = self.constructor(npExpRaw)
+		assert ret.isApproximatelyEqual(npExpObj)
+
+		assert expObj.isApproximatelyEqual(ret)
 		assert sameAsOrig == orig
 
+	def test_pointSimilaritesPopulationCovarianceResult(self):
+		""" Test pointSimilarities returns correct population covariance results """
+		self.backend_Sim_populationCovarianceResult(True)
+
+	def test_featureSimilaritesPopulationCovarianceResult(self):
+		""" Test featureSimilarities returns correct population covariance results """
+		self.backend_Sim_populationCovarianceResult(False)
+
+	def backend_Sim_populationCovarianceResult(self, axis):
+		data = [[3,0,3],[0,0,3], [3,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointSimilarities("populationcovariance")
+		else:
+			orig.transpose()
+			ret = orig.featureSimilarities("populationcovariance")
+			ret.transpose()
+			orig.transpose()
+
+		# hand computed results
+		expRow0 = [2, 1, 1]
+		expRow1 = [1, 2, -1]
+		expRow2 = [1, -1, 2]
+		expData = [expRow0, expRow1, expRow2]
+		expObj = self.constructor(expData)
+
+		# numpy computted result -- bias=1 -> divisor of n
+		npExpRaw = numpy.cov(data, bias=1)
+		npExpObj = self.constructor(npExpRaw)
+		assert ret.isApproximatelyEqual(npExpObj)
+
+		assert expObj.isApproximatelyEqual(ret)
+		assert sameAsOrig == orig
+
+	def test_pointSimilaritesSTDandVarianceIdentity(self):
+		""" Test identity between population covariance and population std of points """
+		self.backend_Sim_STDandVarianceIdentity(True)
+
+	def test_featureSimilaritesSTDandVarianceIdentity(self):
+		""" Test identity between population covariance and population std of features """
+		self.backend_Sim_STDandVarianceIdentity(False)
+
+	def backend_Sim_STDandVarianceIdentity(self, axis):
+		data = [[3,0,3],[0,0,3], [3,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointSimilarities("populationcovariance")
+			stdVector = orig.pointStatistics("populationstd")
+		else:
+			orig.transpose()
+			ret = orig.featureSimilarities("populationcovariance")
+			stdVector = orig.featureStatistics("populationstd")
+			ret.transpose()
+			orig.transpose()
+
+		numpy.testing.assert_approx_equal(ret[0,0], stdVector[0] * stdVector[0])
+		numpy.testing.assert_approx_equal(ret[1,1], stdVector[1] * stdVector[1])
+		numpy.testing.assert_approx_equal(ret[2,2], stdVector[2] * stdVector[2])
+
+
 	# test results correlation
-	def atest_pointSimilaritesCorrelationResult(self):
+	def test_pointSimilaritesCorrelationResult(self):
 		""" Test pointSimilarities returns correct correlation results """
-		self.backend_CorrelationResult(True)
+		self.backend_Sim_CorrelationResult(True)
 
-	def atest_featureSimilaritesCorrelationResult(self):
+	def test_featureSimilaritesCorrelationResult(self):
 		""" Test featureSimilarities returns correct correlation results """
-		self.backend_CorrelationResult(False)
+		self.backend_Sim_CorrelationResult(False)
 
-	def backend_CorrelationResult(self, axis):
-		data = [[1,1,1],[0,1,1], [1,0,0]]
+	def backend_Sim_CorrelationResult(self, axis):
+		data = [[3,0,3],[0,0,3], [3,0,0]]
 		orig = self.constructor(data)
 		sameAsOrig = self.constructor(data)
 
@@ -529,37 +598,97 @@ class QueryBackend(DataTestObject):
 			ret.transpose()
 			orig.transpose()
 
+		expRow0 = [1,      (1./2),  (1./2)]
+		expRow1 = [(1./2), 1,       (-1./2)]
+		expRow2 = [(1./2), (-1./2), 1]
+		expData = [expRow0, expRow1, expRow2]
+		expObj = self.constructor(expData)
 
-		tempRow0 = [0, 0, 0]
-		tempRow1 = [(-2./3 * math.sqrt(14./9)), (1./3 * math.sqrt(14./9)), (1./3 * math.sqrt(14./9))]
-		tempRow2 = [(2./3 * math.sqrt(8./9)), (-1./3 * math.sqrt(8./9)), (-1./3 * math.sqrt(8./9))]
-		tempData = [tempRow0, tempRow1, tempRow2]
-		tempObj = self.constructor(tempData)
+		npExpRaw = numpy.corrcoef(data)
+		npExpObj = self.constructor(npExpRaw)
 
-		expObj = tempObj.featureSimilarities("covariance")
-
-		assert expObj == ret
+		assert ret.isApproximatelyEqual(npExpObj)
+		assert expObj.isApproximatelyEqual(ret)
 		assert sameAsOrig == orig
 
+	def test_pointSimilaritesCorrelationHelpersEquiv(self):
+		""" Compare pointSimilarities correlation using the various possible helpers """
+		self.backend_Sim_CorrelationHelpersEquiv(True)
+
+	def test_featureSimilaritesCorrelationHelpersEquiv(self):
+		""" Compare featureSimilarities correlation using the various possible helpers """
+		self.backend_Sim_CorrelationHelpersEquiv(False)
+
+	def backend_Sim_CorrelationHelpersEquiv(self, axis):
+		data = [[3,0,3],[0,0,3], [3,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		def explicitCorr(X, X_T, sample=True):
+			sampleStdVector = X.pointStatistics('samplestd')
+			popStdVector = X.pointStatistics('populationstd')
+			stdVector = sampleStdVector if sample else popStdVector
+						
+			stdVector_T = stdVector.copy()
+			stdVector_T.transpose()
+
+			if sample:
+				cov = X.pointSimilarities('samplecovariance')
+			else:
+				cov = X.pointSimilarities('populationcovariance')
+
+			stdMatrix = stdVector * stdVector_T
+			ret = cov / stdMatrix
+
+			return ret
+
+		if axis:
+			ret = orig.pointSimilarities("correlation")
+			trans = orig.copy()
+			trans.transpose()
+			sampRet = explicitCorr(orig, True)
+			popRet = explicitCorr(orig, False)
+		else:
+			trans = orig.copy()
+			orig.transpose()
+			ret = orig.featureSimilarities("correlation")
+			sampRet = explicitCorr(trans, orig, True)
+			popRet = explicitCorr(trans, orig, False)
+			ret.transpose()
+			orig.transpose()
+
+		npExpRawB0 = numpy.corrcoef(data, bias=0)
+		npExpRawB1 = numpy.corrcoef(data, bias=1)
+		npExpB0 = self.constructor(npExpRawB0)
+		npExpB1 = self.constructor(npExpRawB1)
+
+		assert ret.isApproximatelyEqual(sampRet)
+		assert ret.isApproximatelyEqual(popRet)
+		assert sampRet.isApproximatelyEqual(popRet)
+		assert ret.isApproximatelyEqual(npExpB0)
+		assert ret.isApproximatelyEqual(npExpB1)
+		
+
+
 	# test results dot product
-	def atest_pointSimilaritesDotProductResult(self):
+	def test_pointSimilaritesDotProductResult(self):
 		""" Test pointSimilarities returns correct dot product results """
-		self.backend_DotProductResult(True)
+		self.backend_Sim_DotProductResult(True)
 
-	def atest_featureSimilaritesDotProductResult(self):
+	def test_featureSimilaritesDotProductResult(self):
 		""" Test featureSimilarities returns correct dot product results """
-		self.backend_DotProductResult(False)
+		self.backend_Sim_DotProductResult(False)
 
-	def backend_DotProductResult(self, axis):
+	def backend_Sim_DotProductResult(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
 		orig = self.constructor(data)
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = obj.pointSimilarities("dotproduct")
+			ret = orig.pointSimilarities("dotproduct")
 		else:
 			orig.transpose()
-			ret = obj.featureSimilarities("dotproduct")
+			ret = orig.featureSimilarities("dotproduct")
 			ret.transpose()
 			orig.transpose()
 
@@ -571,16 +700,17 @@ class QueryBackend(DataTestObject):
 
 	# test input function validation
 	@raises(ArgumentException)
-	def atest_pointSimilaritesFuncValidation(self):
+	def todotest_pointSimilaritesFuncValidation(self):
 		""" Test pointSimilarities raises exception for invalid funcitions """
-		self.backend_FuncValidation(True)
+		self.backend_Sim_FuncValidation(True)
 
 	@raises(ArgumentException)
-	def atest_featureSimilaritesFuncValidation(self):
+	def todotest_featureSimilaritesFuncValidation(self):
 		""" Test featureSimilarities raises exception for invalid funcitions """
-		self.backend_FuncValidation(False)
+		self.backend_Sim_FuncValidation(False)
 
-	def backend_FuncValidation(self, axis):
+	def backend_Sim_FuncValidation(self, axis):
+		assert False
 		data = [[1,2],[3,4]]
 		obj = self.constructor(data)
 
@@ -593,15 +723,15 @@ class QueryBackend(DataTestObject):
 			obj.featureSimilarities(singleArg)
 
 	# test results passed function
-	def atest_pointSimilariteGivenFuncResults(self):
+	def todotest_pointSimilariteGivenFuncResults(self):
 		""" Test pointSimilarities returns correct results for given function """
-		self.backend_GivenFuncResults(True)
+		self.backend_Sim_GivenFuncResults(True)
 
-	def atest_featureSimilaritesGivenFuncResults(self):
+	def todotest_featureSimilaritesGivenFuncResults(self):
 		""" Test featureSimilarities returns correct results for given function """
-		self.backend_GivenFuncResults(False)
+		self.backend_Sim_GivenFuncResults(False)
 
-	def backend_GivenFuncResults(self, axis):
+	def backend_Sim_GivenFuncResults(self, axis):
 		assert False
 		data = [[1,2],[3,4]]
 		obj = self.constructor(data)
@@ -614,11 +744,325 @@ class QueryBackend(DataTestObject):
 		else:
 			obj.featureSimilarities(euclideanDistance)
 
-	##################### #######################
-	# pointStatistics # # featureStatistics #
-	##################### #######################
+	################### ####################
+	# pointStatistics # #featureStatistics #
+	################### ####################
+
+	def test_pointStatistics_max(self):
+		""" Test pointStatistics returns correct max results """
+		self.backend_Stat_max(True)
+
+	def test_featureStatistics_max(self):
+		""" Test featureStatistics returns correct max results """
+		self.backend_Stat_max(False)
+
+	def backend_Stat_max(self, axis):
+		data = [[1,2,1],[-10,-1,-21], [-1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("MAx")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			
+			ret = orig.featureStatistics("max")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+
+			ret.transpose()
+			orig.transpose()
+
+		expRaw = [[2],[-1],[0]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj == ret
+		assert sameAsOrig == orig			
+
+	def test_pointStatistics_mean(self):
+		""" Test pointStatistics returns correct mean results """
+		self.backend_Stat_mean(True)
+
+	def test_featureStatistics_mean(self):
+		""" Test featureStatistics returns correct mean results """
+		self.backend_Stat_mean(False)
+
+	def backend_Stat_mean(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("Mean")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("MEAN")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+			ret.transpose()
+			orig.transpose()
+
+		expRaw = [[1],[2./3],[1./3]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj == ret
+		assert sameAsOrig == orig
+
+	def test_pointStatistics_median(self):
+		""" Test pointStatistics returns correct median results """
+		self.backend_Stat_median(True)
+
+	def test_featureStatistics_median(self):
+		""" Test featureStatistics returns correct median results """
+		self.backend_Stat_median(False)
+
+	def backend_Stat_median(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("MeDian")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("median")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+			ret.transpose()
+			orig.transpose()
+
+		expRaw = [[1],[1],[0]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj == ret
+		assert sameAsOrig == orig
 
 
+	def test_pointStatistics_min(self):
+		""" Test pointStatistics returns correct min results """
+		self.backend_Stat_min(True)
+
+	def test_featureStatistics_min(self):
+		""" Test featureStatistics returns correct min results """
+		self.backend_Stat_min(False)
+
+	def backend_Stat_min(self, axis):
+		data = [[1,2,1],[-10,-1,-21], [-1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("mIN")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("min")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+			ret.transpose()
+			orig.transpose()
+
+		expRaw = [[1],[-21],[-1]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj == ret
+		assert sameAsOrig == orig
+
+	def test_pointStatistics_uniqueCount(self):
+		""" Test pointStatistics returns correct uniqueCount results """
+		self.backend_Stat_uniqueCount(True)
+
+	def test_featureStatistics_uniqueCount(self):
+		""" Test featureStatistics returns correct uniqueCount results """
+		self.backend_Stat_uniqueCount(False)
+
+	def backend_Stat_uniqueCount(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,-1]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("uniqueCount")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("UniqueCount")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+			ret.transpose()
+			orig.transpose()
+
+		expRaw = [[1],[2],[3]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj == ret
+		assert sameAsOrig == orig
+
+	def todotest_pointStatistics_proportionMissing(self):
+		""" Test pointStatistics returns correct proportionMissing results """
+		self.backend_Stat_proportionMissing(True)
+
+	def todotest_featureStatistics_proportionMissing(self):
+		""" Test featureStatistics returns correct proportionMissing results """
+		self.backend_Stat_proportionMissing(False)
+
+	def backend_Stat_proportionMissing(self, axis):
+		data = [[1,None,1],[0,1,float('nan')], [1,float('nan'),None]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("ProportionMissing")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("proportionmissing")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+			ret.transpose()
+			orig.transpose()
+
+		expRaw = [[1./3],[1./3],[2./3]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj == ret
+		assert sameAsOrig == orig
+
+	def test_pointStatistics_proportionZero(self):
+		""" Test pointStatistics returns correct proportionZero results """
+		self.backend_Stat_proportionZero(True)
+
+	def test_featureStatistics_proportionZero(self):
+		""" Test featureStatistics returns correct proportionZero results """
+		self.backend_Stat_proportionZero(False)
+
+	def backend_Stat_proportionZero(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("proportionZero")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("proportionZero")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+			ret.transpose()
+			orig.transpose()
+
+		expRaw = [[0],[1./3],[2./3]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj == ret
+		assert sameAsOrig == orig
+
+	def test_pointStatistics_samplestd(self):
+		""" Test pointStatistics returns correct sample std results """
+		self.backend_Stat_sampleStandardDeviation(True)
+
+	def test_featureStatistics_samplestd(self):
+		""" Test featureStatistics returns correct sample std results """
+		self.backend_Stat_sampleStandardDeviation(False)
+
+	def backend_Stat_sampleStandardDeviation(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("samplestd")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("standarddeviation")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+			ret.transpose()
+			orig.transpose()
+
+		npExpRaw = numpy.std(data, axis=1, ddof=1, keepdims=True)
+		npExpObj = self.constructor(npExpRaw)
+
+		assert npExpObj.isApproximatelyEqual(ret)
+
+		expRaw = [[0],[math.sqrt(3./9)],[math.sqrt(3./9)]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj.isApproximatelyEqual(ret)
+		assert sameAsOrig == orig
+
+
+	def test_pointStatistics_populationstd(self):
+		""" Test pointStatistics returns correct population std results """
+		self.backend_Stat_populationStandardDeviation(True)
+
+	def test_featureStatistics_populationstd(self):
+		""" Test featureStatistics returns correct population std results """
+		self.backend_Stat_populationStandardDeviation(False)
+
+	def backend_Stat_populationStandardDeviation(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("populationstd")
+			assert ret.pointCount == 3
+			assert ret.featureCount == 1
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("populationstandarddeviation")
+			assert ret.pointCount == 1
+			assert ret.featureCount == 3
+			ret.transpose()
+			orig.transpose()
+
+		npExpRaw = numpy.std(data, axis=1, ddof=0, keepdims=True)
+		npExpObj = self.constructor(npExpRaw)
+
+		assert npExpObj.isApproximatelyEqual(ret)
+
+		expRaw = [[0],[math.sqrt(2./9)],[math.sqrt(2./9)]]
+		expObj = self.constructor(expRaw)
+
+		assert expObj.isApproximatelyEqual(ret)
+		assert sameAsOrig == orig
+
+	@raises(ArgumentException)
+	def test_pointStatistics_unexpectedString(self):
+		""" Test pointStatistics returns correct std results """
+		self.backend_Stat_unexpectedString(True)
+
+	@raises(ArgumentException)
+	def test_featureStatistics_unexpectedString(self):
+		""" Test featureStatistics returns correct std results """
+		self.backend_Stat_unexpectedString(False)
+
+	def backend_Stat_unexpectedString(self, axis):
+		data = [[1,1,1],[0,1,1], [1,0,0]]
+		orig = self.constructor(data)
+		sameAsOrig = self.constructor(data)
+
+		if axis:
+			ret = orig.pointStatistics("hello")
+		else:
+			orig.transpose()
+			ret = orig.featureStatistics("meanie")
+			ret.transpose()
+			orig.transpose()
 
 ###########
 # Helpers #

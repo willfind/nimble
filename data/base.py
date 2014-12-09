@@ -1918,7 +1918,10 @@ class Base(object):
 						raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
 			if self.pointCount != other.pointCount:
-				raise ArgumentException("The number of points in each object must be equal.")
+				msg = "The number of points in each object must be equal. "
+				msg +="(self=" + str(self.pointCount) + " vs other="
+				msg +=str(other.pointCount) + ")"
+				raise ArgumentException(msg)
 			if self.featureCount != other.featureCount:
 				raise ArgumentException("The number of features in each object must be equal.")
 			
@@ -1953,6 +1956,151 @@ class Base(object):
 			return UML.createData(startType, ret.data, pointNames=ret.pointNames,
 					featureNames=ret.featureNames)
 
+
+	#################################
+	#################################
+	###   Statistical functions   ###
+	#################################
+	#################################
+
+
+	def pointSimilarities(self, similarityFunction):
+		""" """
+		return self._axisSimilaritiesBackend(similarityFunction, 'point')
+
+	def featureSimilarities(self, similarityFunction):
+		""" """
+		return self._axisSimilaritiesBackend(similarityFunction, 'feature')
+
+	def _axisSimilaritiesBackend(self, similarityFunction, axis):
+		accepted = [
+			'correlation', 'covariance', 'dotproduct', 'samplecovariance',
+			'populationcovariance'
+		]
+		
+		msg = "The similarityFunction must be one of the following: "
+		msg += str(accepted) + ", but '" + str(similarityFunction) + "' was "
+		msg += "given instead. Note: casing is ignored for the inputs."
+		
+		if not isinstance(similarityFunction, basestring):
+			raise ArgumentException(msg)
+
+		lowerCaseFunc = similarityFunction.lower()
+
+		if lowerCaseFunc not in accepted:
+			raise ArgumentException(msg)
+
+		def dotProd(X, X_T):
+			return X * X_T
+		
+		def covariance(X, X_T, sample=True):
+			pointMeansVector = X.pointStatistics('mean')
+			fill = lambda x: [x[0]] * X.featureCount
+			pointMeans = pointMeansVector.applyToPoints(fill, inPlace=False)
+			pointMeans_T = pointMeans.copy()
+			pointMeans_T.transpose()
+
+			XminusEofX = X - pointMeans
+			X_TminusEofX_T = X_T - pointMeans_T
+
+			# doing sample covariance calculation
+			if sample:
+				divisor = X.featureCount - 1
+			# doing population covariance calculation
+			else:
+				divisor = X.featureCount
+
+			ret = (XminusEofX * X_TminusEofX_T) / divisor
+
+			return ret
+
+		def populationCovariance(X, X_T):
+			return covariance(X, X_T, False)
+
+		def correlation(X, X_T):
+			stdVector = X.pointStatistics('populationstd')
+			stdVector_T = stdVector.copy()
+			stdVector_T.transpose()
+
+			cov = covariance(X, X_T, False)
+			stdMatrix = stdVector * stdVector_T
+			ret = cov / stdMatrix
+
+			return ret
+
+		if lowerCaseFunc == 'correlation':
+			toCall = correlation
+		elif lowerCaseFunc == 'covariance' or lowerCaseFunc == 'samplecovariance':
+			toCall = covariance
+		elif lowerCaseFunc == 'populationcovariance':
+			toCall = populationCovariance
+		elif lowerCaseFunc == 'dotproduct':
+			toCall = dotProd
+
+		transposed = self.copy()
+		transposed.transpose()
+
+		if axis == 'point':
+			ret = toCall(self, transposed)
+		else:
+			ret = toCall(transposed, self)
+
+		# TODO validation or result.
+
+		return ret
+
+	def pointStatistics(self, statisticsFunction):
+		""" """
+		return self._axisStatisticsBackend(statisticsFunction, 'point')
+
+	def featureStatistics(self, statisticsFunction):
+		""" """
+		return self._axisStatisticsBackend(statisticsFunction, 'feature')
+
+	def _axisStatisticsBackend(self, statisticsFunction, axis):
+		accepted = [
+			'max', 'mean', 'median', 'min', 'uniquecount', 'proportionmissing',
+			'proportionzero', 'standarddeviation', 'std', 'populationstd',
+			'populationstandarddeviation', 'samplestd', 
+			'samplestandarddeviation'
+			]
+		lowerCaseFunc = statisticsFunction.lower()
+
+		if lowerCaseFunc not in accepted:
+			msg = "The statisticsFunction must be one of the following: "
+			msg += str(accepted) + ", but " + str(statisticsFunction) + " was "
+			msg += "given instead. Note: casing is ignored for the inputs."
+			raise ArgumentException(msg)
+
+		if lowerCaseFunc == 'max':
+			toCall = UML.logger.data_set_analyzer.max_
+		elif lowerCaseFunc == 'mean':
+			toCall = UML.logger.data_set_analyzer.mean_
+		elif lowerCaseFunc == 'median':
+			toCall = UML.logger.data_set_analyzer.median_
+		elif lowerCaseFunc == 'min':
+			toCall = UML.logger.data_set_analyzer.min_
+		elif lowerCaseFunc == 'uniquecount':
+			toCall = UML.logger.data_set_analyzer.numUnique
+		elif lowerCaseFunc == 'proportionmissing':
+			toCall = UML.logger.data_set_analyzer.proportionMissing
+		elif lowerCaseFunc == 'proportionzero':
+			toCall = UML.logger.data_set_analyzer.proportionZero
+		elif lowerCaseFunc == 'std' or lowerCaseFunc == 'standarddeviation':
+			def sampleStandardDeviation(values):
+				return UML.logger.data_set_analyzer.standardDeviation(values, True)
+			toCall = sampleStandardDeviation
+		elif lowerCaseFunc == 'samplestd' or lowerCaseFunc == 'samplestandarddeviation':
+			def sampleStandardDeviation(values):
+				return UML.logger.data_set_analyzer.standardDeviation(values, True)
+			toCall = sampleStandardDeviation
+		elif lowerCaseFunc == 'populationstd' or lowerCaseFunc == 'populationstandarddeviation':
+			toCall = UML.logger.data_set_analyzer.standardDeviation
+
+		if axis == 'point':
+			return self.applyToPoints(toCall, inPlace=False)
+		else:
+			return self.applyToFeatures(toCall, inPlace=False)
 
 
 	############################

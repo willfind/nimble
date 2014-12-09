@@ -303,7 +303,7 @@ def median_(values):
     return median
 
 
-def standardDeviation(values):
+def standardDeviation(values, sample=False):
     """
     Given a 1D vector of values, find the standard deviation.  If the values are
     not numerical, return None.
@@ -329,7 +329,14 @@ def standardDeviation(values):
         squaredDifferenceTotal += numZeros * mean**2
         numericalCount += numZeros
 
-    stDev = math.sqrt(squaredDifferenceTotal / float(numericalCount))
+    # doing sample covariance calculation
+    if sample:
+        divisor = numericalCount - 1
+    # doing population covariance calculation
+    else:
+        divisor = numericalCount
+
+    stDev = math.sqrt(squaredDifferenceTotal / float(divisor))
     return stDev
 
 
