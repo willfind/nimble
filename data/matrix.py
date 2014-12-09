@@ -451,7 +451,12 @@ class Matrix(Base):
 			return False
 		if self.featureCount != other.featureCount:
 			return False
-		return numpy.array_equal(self.data,other.data)
+
+		try:
+			numpy.testing.assert_equal(self.data,other.data)
+		except AssertionError:
+			return False
+		return True
 
 	def _writeFile_implementation(self, outPath, format=None, includeNames=True):
 		"""
