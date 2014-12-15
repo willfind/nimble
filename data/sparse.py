@@ -1019,9 +1019,12 @@ class Sparse(Base):
 		of the calling object.
 		
 		"""
-		scaled = self._data.data * scalar
-		self._data.data = scaled
-		self._data.internal.data = scaled
+		if scalar != 0:
+			scaled = self._data.data * scalar
+			self._data.data = scaled
+			self._data.internal.data = scaled
+		else:
+			self._data = CooWithEmpty(([],([],[])),shape=(self.pointCount,self.featureCount))
 
 	def _mul__implementation(self, other):
 		if isinstance(other, UML.data.Base):
