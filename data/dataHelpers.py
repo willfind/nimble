@@ -66,6 +66,38 @@ class View():
 		pass
 
 
+def mergeNonDefaultNames(baseSource, otherSource):
+	""" Merges the point and feature names of the the two source objects,
+	returning a double of the merged point names on the left and the
+	merged feature names on the right. A merged name is either the
+	baseSource's if both have default prefixes (or are equal). Otherwise,
+	it is the name which doesn't have a default prefix from either source.
+
+	Assumptions: (1) Both objects are the same shape. (2) The point names
+	and feature names of both objects are consistent (any non-default
+	names in the same positions are equal)
+
+	"""
+	# merge helper
+	def mergeNames(baseNamesInv, otherNamesInv):
+		ret = {}
+		for i in baseNamesInv.keys():
+			baseName = baseNamesInv[i]
+			otherName = otherNamesInv[i]
+			baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
+			otherIsDefault = otherName.startswith(DEFAULT_PREFIX)
+
+			if baseIsDefault and not otherIsDefault:
+				ret[otherName] = i
+			else:
+				ret[baseName] = i
+
+		return ret
+
+	retPNames = mergeNames(baseSource.pointNamesInverse, otherSource.pointNamesInverse)
+	retFNames = mergeNames(baseSource.featureNamesInverse, otherSource.featureNamesInverse)
+
+	return (retPNames, retFNames)
 
 def reorderToMatchExtractionList(dataObject, extractionList, axis):
 	"""

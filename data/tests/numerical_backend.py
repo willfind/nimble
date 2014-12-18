@@ -1,4 +1,5 @@
 
+import sys
 import numpy
 
 from nose.tools import *
@@ -18,6 +19,169 @@ def calleeConstructor(data, constructor):
 		return pythonRandom.random()
 	else:
 		return constructor(data)
+
+
+def back_unary_name_preservations(callerCon, op):
+	""" Test that point / feature names are preserved when calling a unary op """
+	data = [[1,1,1], [1,1,1], [1,1,1]]
+	pnames = {'p1':0, 'p2':1, 'p3':2}
+	fnames = {'f1':0, 'f2':1, 'f3':2}
+
+	caller = callerCon(data, pnames, fnames)
+	toCall = getattr(caller, op)
+	ret = toCall()
+
+	assert ret.pointNames == pnames
+	assert ret.featureNames == fnames
+
+	caller.setPointName('p1', 'p0')
+
+	assert 'p1' in ret.pointNames
+	assert 'p0' not in ret.pointNames
+	assert 'p0' in caller.pointNames
+	assert 'p1' not in caller.pointNames
+
+def back_binaryscalar_name_preservations(callerCon, op, inplace):
+	""" Test that p/f names are preserved when calling a binary scalar op """
+	data = [[1,1,1], [1,1,1], [1,1,1]]
+	pnames = {'p1':0, 'p2':1, 'p3':2}
+	fnames = {'f1':0, 'f2':1, 'f3':2}
+
+	for num in [-2, 0, 1, 4]:
+		try:
+			caller = callerCon(data, pnames, fnames)
+			toCall = getattr(caller, op)
+			ret = toCall(num)
+
+			assert ret.pointNames == pnames
+			assert ret.featureNames == fnames
+
+			caller.setPointName('p1', 'p0')
+			if inplace:
+				assert 'p0' in ret.pointNames
+				assert 'p1' not in ret.pointNames
+			else:
+				assert 'p0' not in ret.pointNames
+				assert 'p1' in ret.pointNames
+			assert 'p0' in caller.pointNames
+			assert 'p1' not in caller.pointNames
+		except AssertionError:
+			einfo = sys.exc_info()
+			raise einfo[1], None, einfo[2]
+#		except ArgumentException:
+#			einfo = sys.exc_info()
+#			raise einfo[1], None, einfo[2]
+		except:
+			pass
+
+def back_binaryelementwise_name_preservations(callerCon, op, inplace):
+	""" Test that p/f names are preserved when calling a binary element wise op """
+	data = [[1,1,1], [1,1,1], [1,1,1]]
+	pnames = {'p1':0, 'p2':1, 'p3':2}
+	fnames = {'f1':0, 'f2':1, 'f3':2}
+	
+	otherRaw = [[1,1,1], [1,1,1], [1,1,1]]
+
+	# names not the same
+	caller = callerCon(data, pnames, fnames)
+	opnames = pnames
+	ofnames = {'f0':0, 'f1':1, 'f2':2}
+	other = callerCon(otherRaw, opnames, ofnames)
+	try:
+		toCall = getattr(caller, op)
+		ret = toCall(other)
+		if ret != NotImplemented:
+			assert False
+	except ArgumentException:
+		pass
+	# if it isn't the exception we expect, pass it on
+	except:
+		einfo = sys.exc_info()
+		raise einfo[1], None, einfo[2]
+
+	# names interwoven
+	other = callerCon(otherRaw, pnames, None)
+	caller = callerCon(data, None, fnames)
+	toCall = getattr(caller, op)
+	ret = toCall(other)
+
+	if ret != NotImplemented:
+		assert ret.pointNames == pnames
+		assert ret.featureNames == fnames
+
+	# both names same
+	caller = callerCon(data, pnames, fnames)
+	other = callerCon(otherRaw, pnames, fnames)
+	toCall = getattr(caller, op)
+	ret = toCall(other)
+
+	if ret != NotImplemented:
+		assert ret.pointNames == pnames
+		assert ret.featureNames == fnames
+
+		caller.setPointName('p1', 'p0')
+		if inplace:
+			assert 'p0' in ret.pointNames
+			assert 'p1' not in ret.pointNames
+		else:
+			assert 'p0' not in ret.pointNames
+			assert 'p1' in ret.pointNames
+		assert 'p0' in caller.pointNames
+		assert 'p1' not in caller.pointNames
+
+def back_matrixmul_name_preservations(callerCon, op, inplace):
+	""" Test that p/f names are preserved when calling a binary element wise op """
+	data = [[1,1,1], [1,1,1], [1,1,1]]
+	pnames = {'p1':0, 'p2':1, 'p3':2}
+	fnames = {'f1':0, 'f2':1, 'f3':2}
+	
+	# [p x f1] time [f2 xp] where f1 != f2
+	caller = callerCon(data, pnames, fnames)
+	ofnames = {'f0':0, 'f1':1, 'f2':2}
+	other = callerCon(data, ofnames, pnames)
+	try:
+		toCall = getattr(caller, op)
+		ret = toCall(other)
+		if ret != NotImplemented:
+			assert False
+	except ArgumentException:
+		pass
+	# if it isn't the exception we expect, pass it on
+	except:
+		einfo = sys.exc_info()
+		raise einfo[1], None, einfo[2]
+
+	# names interwoven
+	caller = callerCon(data, pnames, fnames)
+	other = callerCon(data, None, fnames)
+	other.setPointName(0, 'f1')
+	other.setPointName(1, 'f2')
+	toCall = getattr(caller, op)
+	ret = toCall(other)
+
+	if ret != NotImplemented:
+		assert ret.pointNames == pnames
+		assert ret.featureNames == fnames
+
+	# both names same
+	caller = callerCon(data, pnames, pnames)
+	other = callerCon(data, pnames, fnames)
+	toCall = getattr(caller, op)
+	ret = toCall(other)
+
+	if ret != NotImplemented:
+		assert ret.pointNames == pnames
+		assert ret.featureNames == fnames
+
+		caller.setPointName('p1', 'p0')
+		if inplace:
+			assert 'p0' in ret.pointNames
+			assert 'p1' not in ret.pointNames
+		else:
+			assert 'p0' not in ret.pointNames
+			assert 'p1' in ret.pointNames
+		assert 'p0' in caller.pointNames
+		assert 'p1' not in caller.pointNames
 
 def back_otherObjectExceptions(callerCon, op):
 	""" Test operation raises exception when param is not a UML data object """
@@ -383,7 +547,50 @@ class NumericalBackend(DataTestObject):
 
 			assert expfObj.isApproximatelyEqual(lhsfObj)
 			assert expiObj.isIdentical(lhsiObj)
-			
+	
+	def test_elementwiseMultipy_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwiseMultipy"""
+		data = [[1,1,1], [1,1,1], [1,1,1]]
+		pnames = {'p1':0, 'p2':1, 'p3':2}
+		fnames = {'f1':0, 'f2':1, 'f3':2}
+		
+		otherRaw = [[1,1,1], [1,1,1], [1,1,1]]
+
+		# names not the same
+		caller = self.constructor(data, pnames, fnames)
+		opnames = pnames
+		ofnames = {'f0':0, 'f1':1, 'f2':2}
+		other = self.constructor(otherRaw, opnames, ofnames)
+		try:
+			toCall = getattr(caller, 'elementwiseMultiply')
+			ret = toCall(other)
+			assert False
+		except ArgumentException:
+			pass
+		# if it isn't the exception we expect, pass it on
+		except:
+			einfo = sys.exc_info()
+			raise einfo[1], None, einfo[2]
+
+		# names interwoven
+		other = self.constructor(otherRaw, pnames, None)
+		caller = self.constructor(data, None, fnames)
+		toCall = getattr(caller, 'elementwiseMultiply')
+		ret = toCall(other)
+
+		assert ret is None
+		assert caller.pointNames == pnames
+		assert caller.featureNames == fnames
+
+		# both names same
+		caller = self.constructor(data, pnames, fnames)
+		other = self.constructor(otherRaw, pnames, fnames)
+		toCall = getattr(caller, 'elementwiseMultiply')
+		ret = toCall(other)
+
+		assert caller.pointNames == pnames
+		assert caller.featureNames == fnames
+
 	###########
 	# __mul__ #
 	###########
@@ -442,6 +649,14 @@ class NumericalBackend(DataTestObject):
 		""" Test __mul__ against generated data with different UML types of objects """
 		back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
+	def test_mul_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __mul__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__mul__', False)
+
+	def test_mul_matrixmul_name_preservations(self):
+		""" Test p/f names are preserved when calling __mul__ with obj arg"""
+		back_matrixmul_name_preservations(self.constructor, '__mul__', False)
+
 	############
 	# __rmul__ #
 	############
@@ -449,6 +664,14 @@ class NumericalBackend(DataTestObject):
 	def test_rmul_autoScalar(self):
 		""" Test __rmul__ of a scalar against automated data """
 		back_autoVsNumpyScalar(self.constructor, numpy.multiply, '__rmul__', False, 0.2)
+
+	def test_rmul_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __rmul__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__rmul__', False)
+
+	def test_rmul_matrixmul_name_preservations(self):
+		""" Test p/f names are preserved when calling __rmul__ with obj arg"""
+		back_matrixmul_name_preservations(self.constructor, '__rmul__', False)
 
 
 	############
@@ -509,6 +732,14 @@ class NumericalBackend(DataTestObject):
 		""" Test __mul__ against generated data with different UML types of objects """
 		back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
+	def test_imul_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __imul__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__imul__', True)
+
+	def test_imul_matrixmul_name_preservations(self):
+		""" Test p/f names are preserved when calling __imul__ with obj arg"""
+		back_matrixmul_name_preservations(self.constructor, '__imul__', True)
+
 
 	############
 	# __add__ #
@@ -518,6 +749,15 @@ class NumericalBackend(DataTestObject):
 		""" __add__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backend(self.constructor, numpy.add, '__add__', False, 0.2)
 
+	def test_add_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __add__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__add__', False)
+
+	def test_add_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __add__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__add__', False)
+
+
 	############
 	# __radd__ #
 	############
@@ -525,6 +765,15 @@ class NumericalBackend(DataTestObject):
 	def test_radd_fullSuite(self):
 		""" __radd__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backend_rOp(self.constructor, numpy.add, '__radd__', False, 0.2)
+
+	def test_radd_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __radd__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__radd__', False)
+
+	def test_radd_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __radd__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__radd__', False)
+
 
 	############
 	# __iadd__ #
@@ -534,6 +783,15 @@ class NumericalBackend(DataTestObject):
 		""" __iadd__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backend(self.constructor, numpy.add, '__iadd__', True, 0.2)
 
+	def test_iadd_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __iadd__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__iadd__', True)
+
+	def test_iadd_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __iadd__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__iadd__', True)
+
+
 	############
 	# __sub__ #
 	############
@@ -541,6 +799,15 @@ class NumericalBackend(DataTestObject):
 	def test_sub_fullSuite(self):
 		""" __sub__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backend(self.constructor, numpy.subtract, '__sub__', False, 0.2)
+
+	def test_sub_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __sub__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__sub__', False)
+
+	def test_sub_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __sub__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__sub__', False)
+
 
 	############
 	# __rsub__ #
@@ -550,6 +817,15 @@ class NumericalBackend(DataTestObject):
 		""" __rsub__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backend_rOp(self.constructor, numpy.subtract, '__rsub__', False, 0.2)
 
+	def test_rsub_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __rsub__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__rsub__', False)
+
+	def test_rsub_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __rsub__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__rsub__', False)
+
+
 	############
 	# __isub__ #
 	############
@@ -557,6 +833,15 @@ class NumericalBackend(DataTestObject):
 	def test_isub_fullSuite(self):
 		""" __isub__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backend(self.constructor, numpy.subtract, '__isub__', True, 0.2)
+
+	def test_isub_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __isub__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__isub__', True)
+
+	def test_isub_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __isub__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__isub__', True)
+
 
 	############
 	# __div__ #
@@ -566,6 +851,15 @@ class NumericalBackend(DataTestObject):
 		""" __div__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod(self.constructor, numpy.divide, '__div__', False, 0)
 
+	def test_div_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __div__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__div__', False)
+
+	def test_div_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __div__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__div__', False)
+
+
 	############
 	# __rdiv__ #
 	############
@@ -574,6 +868,15 @@ class NumericalBackend(DataTestObject):
 		""" __rdiv__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod_rop(self.constructor, numpy.divide, '__rdiv__', False, 0)
 
+	def test_rdiv_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __rdiv__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__rdiv__', False)
+
+	def test_rdiv_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __rdiv__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__rdiv__', False)
+
+
 	############
 	# __idiv__ #
 	############
@@ -581,6 +884,14 @@ class NumericalBackend(DataTestObject):
 	def test_idiv_fullSuite(self):
 		""" __idiv__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod(self.constructor, numpy.divide, '__idiv__', True, 0)
+
+	def test_idiv_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __idiv__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__idiv__', True)
+
+	def test_idiv_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __idiv__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__idiv__', True)
 
 
 	###############
@@ -591,6 +902,15 @@ class NumericalBackend(DataTestObject):
 		""" __truediv__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod(self.constructor, numpy.true_divide, '__truediv__', False, 0)
 
+	def test_truediv_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __truediv__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__truediv__', False)
+
+	def test_truediv_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __truediv__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__truediv__', False)
+
+
 	################
 	# __rtruediv__ #
 	################
@@ -599,6 +919,15 @@ class NumericalBackend(DataTestObject):
 		""" __rtruediv__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod_rop(self.constructor, numpy.true_divide, '__rtruediv__', False, 0)
 
+	def test_rtruediv_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __rtruediv__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__rtruediv__', False)
+
+	def test_rtruediv_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __rtruediv__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__rtruediv__', False)
+
+
 	################
 	# __itruediv__ #
 	################
@@ -606,6 +935,14 @@ class NumericalBackend(DataTestObject):
 	def test_itruediv_fullSuite(self):
 		""" __itruediv__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod(self.constructor, numpy.true_divide, '__itruediv__', True, 0)
+
+	def test_itruediv_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __itruediv__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__itruediv__', True)
+
+	def test_itruediv_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __itruediv__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__itruediv__', True)
 
 
 	###############
@@ -616,6 +953,15 @@ class NumericalBackend(DataTestObject):
 		""" __floordiv__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod(self.constructor, numpy.floor_divide, '__floordiv__', False, 0)
 
+	def test_floordiv_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __floordiv__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__floordiv__', False)
+
+	def test_floordiv_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __floordiv__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__floordiv__', False)
+
+
 	################
 	# __rfloordiv__ #
 	################
@@ -623,6 +969,15 @@ class NumericalBackend(DataTestObject):
 	def test_rfloordiv_fullSuite(self):
 		""" __rfloordiv__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod_rop(self.constructor, numpy.floor_divide, '__rfloordiv__', False, 0)
+
+	def test_rfloordiv_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __rfloordiv__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__rfloordiv__', False)
+
+	def test_rfloordiv_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __rfloordiv__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__rfloordiv__', False)
+
 
 	################
 	# __ifloordiv__ #
@@ -632,6 +987,16 @@ class NumericalBackend(DataTestObject):
 		""" __ifloordiv__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod(self.constructor, numpy.floor_divide, '__ifloordiv__', True, 0)
 
+	def test_ifloordiv_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __ifloordiv__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__ifloordiv__', True)
+
+
+	def test_ifloordiv_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __ifloordiv__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__ifloordiv__', True)
+
+
 	###############
 	# __mod__ #
 	###############
@@ -639,6 +1004,15 @@ class NumericalBackend(DataTestObject):
 	def test_mod_fullSuite(self):
 		""" __mod__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod(self.constructor, numpy.mod, '__mod__', False, 0)
+
+	def test_mod_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __mod__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__mod__', False)
+
+	def test_mod_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __mod__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__mod__', False)
+
 
 	################
 	# __rmod__ #
@@ -648,6 +1022,15 @@ class NumericalBackend(DataTestObject):
 		""" __rmod__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod_rop(self.constructor, numpy.mod, '__rmod__', False, 0)
 
+	def test_rmod_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __rmod__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__rmod__', False)
+
+	def test_rmod_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __rmod__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__rmod__', False)
+
+
 	################
 	# __imod__ #
 	################
@@ -655,6 +1038,17 @@ class NumericalBackend(DataTestObject):
 	def test_imod_fullSuite(self):
 		""" __imod__ Run the full standardized suite of tests for a binary numeric op """
 		run_full_backendDivMod(self.constructor, numpy.mod, '__imod__', True, 0)
+
+
+	def test_imod_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __imod__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__imod__', True)
+
+	def test_imod_binaryelementwise_name_preservations(self):
+		""" Test p/f names are preserved when calling elementwise __imod__"""
+		back_binaryelementwise_name_preservations(self.constructor, '__imod__', True)
+
+
 
 
 
@@ -698,6 +1092,10 @@ class NumericalBackend(DataTestObject):
 
 			assert expfObj.isApproximatelyEqual(resfObj)
 			assert expiObj.isIdentical(resiObj)
+
+	def test_pow_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __pow__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__pow__', False)
 
 
 	###########
@@ -743,6 +1141,9 @@ class NumericalBackend(DataTestObject):
 			assert resfObj.isIdentical(lhsfObj)
 			assert resiObj.isIdentical(lhsiObj)
 
+	def test_ipow_binaryscalar_name_preservations(self):
+		""" Test p/f names are preserved when calling __ipow__ with scalar arg"""
+		back_binaryscalar_name_preservations(self.constructor, '__ipow__', True)
 
 
 	###########
@@ -759,6 +1160,11 @@ class NumericalBackend(DataTestObject):
 
 		assert caller.isIdentical(ret1)
 		assert caller.isIdentical(ret2)
+
+	def test_pos_unary_name_preservations(self):
+		""" Test that point / feature names are preserved when calling __pos__ """
+		back_unary_name_preservations(self.constructor, '__pos__')
+
 
 	###########
 	# __neg__ #
@@ -777,6 +1183,11 @@ class NumericalBackend(DataTestObject):
 		assert exp.isIdentical(ret1)
 		assert exp.isIdentical(ret2)
 
+	def test_neg_unary_name_preservations(self):
+		""" Test that point / feature names are preserved when calling __neg__ """
+		back_unary_name_preservations(self.constructor, '__neg__')
+
+
 	###########
 	# __abs__ #
 	###########
@@ -793,5 +1204,7 @@ class NumericalBackend(DataTestObject):
 
 		assert exp.isIdentical(ret1)
 		assert exp.isIdentical(ret2)
-	
-	
+
+	def test_abs_unary_name_preservations(self):
+		""" Test that point / feature names are preserved when calling __abs__ """
+		back_unary_name_preservations(self.constructor, '__abs__')

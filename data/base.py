@@ -1619,7 +1619,16 @@ class Base(object):
 		if self.pointCount == 0 or self.featureCount == 0:
 			raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
 
+		if not self._equalPointNames(other):
+			raise ArgumentException("Point names must not be inconsistent when calling element wise operations")
+		if not self._equalFeatureNames(other):
+			raise ArgumentException("Feature names must not be inconsistent when calling element wise operations")
+
 		self._elementwiseMultiply_implementation(other)
+
+		(retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
+		self.setPointNamesFromDict(retPNames)
+		self.setFeatureNamesFromDict(retFNames)
 		self.validate()
 
 	def __mul__(self, other):
@@ -1653,8 +1662,20 @@ class Base(object):
 			if self.featureCount != other.pointCount:
 				raise ArgumentException("The number of features in the calling object must "
 						+ "match the point in the callee object.")
-			
-		return self._mul__implementation(other)
+		
+			if not self._equalNames(self.featureNames, self.featureNamesInverse, other.pointNames, other.pointNamesInverse):
+				msg = "Cannot perform matrix multiplication if the feature "
+				msg += "names of the calling object are inconsistent with the "
+				msg += "point names of the callee object"
+				raise ArgumentException(msg)
+
+		ret = self._mul__implementation(other)
+
+		if isinstance(other, UML.data.Base):
+			ret.setPointNamesFromDict(self.pointNames)
+			ret.setFeatureNamesFromDict(other.featureNames)
+
+		return ret
 	
 	def __rmul__(self, other):
 		"""	Perform scalar multiplication with this object on the right """
@@ -1839,13 +1860,19 @@ class Base(object):
 			raise ArgumentException("'other' must be an instance of a scalar")
 		if other != int(other):
 			raise ArgumentException("other may only be an integer type")
+		if other < 0:
+			raise ArgumentException("other must be greater than zero")
 	
+		retPNames = copy.copy(self.pointNames)
+		retFNames = copy.copy(self.featureNames)
+
 		if other == 1:
 			return self.copy()
 
 		# exact conditions in which we need to instantiate this object
 		if other == 0 or other % 2 == 0:
-			identity = UML.createData(self.getTypeString(), numpy.eye(self.pointCount))
+			identity = UML.createData(self.getTypeString(), numpy.eye(self.pointCount),
+				pointNames=retPNames, featureNames=retFNames)
 		if other == 0:
 			return identity
 
@@ -1868,7 +1895,10 @@ class Base(object):
 				ret = ret._matrixMultiply_implementation(running)
 
 			# shift right to put the next digit in the ones place
-			curr = curr >> 1		
+			curr = curr >> 1
+
+		ret.setPointNamesFromDict(retPNames)
+		ret.setFeatureNamesFromDict(retFNames)
 
 		return ret
 
@@ -1886,7 +1916,7 @@ class Base(object):
 
 	def __pos__(self):
 		""" Return this object. """
-		return self
+		return self.copy()
 
 	def __neg__(self):
 		""" Return this object where every element has been multiplied by -1 """
@@ -1896,7 +1926,10 @@ class Base(object):
 
 	def __abs__(self):
 		""" Perform element wise absolute value on this object """
-		return self.applyToElements(abs, inPlace=False)
+		ret = self.applyToElements(abs, inPlace=False)
+		ret.setPointNamesFromDict(self.pointNames)
+		ret.setFeatureNamesFromDict(self.featureNames)
+		return ret
 
 	def _genericNumericBinary(self, opName, other):
 		isUML = isinstance(other, UML.data.Base)
@@ -1909,7 +1942,7 @@ class Base(object):
 					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
 		# test element type other
-		if isinstance(other, UML.data.Base):
+		if isUML:
 			if opName.startswith('__r'):
 				return NotImplemented
 			if other.pointCount > 0:
@@ -1928,6 +1961,13 @@ class Base(object):
 		if self.pointCount == 0 or self.featureCount == 0:
 			raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
 
+		# check name restrictions
+		if isUML:
+			if not self._equalPointNames(other):
+				raise ArgumentException("Point names must not be inconsistent when calling element wise operations")
+			if not self._equalFeatureNames(other):
+				raise ArgumentException("Feature names must not be inconsistent when calling element wise operations")
+		
 		divNames = ['__div__','__rdiv__','__idiv__','__truediv__','__rtruediv__',
 					'__itruediv__','__floordiv__','__rfloordiv__','__ifloordiv__',
 					'__mod__','__rmod__','__imod__',]
@@ -1939,12 +1979,26 @@ class Base(object):
 				if False in numpy.isfinite(other.data):
 					raise ArgumentException("Cannot perform " + opName + " when the second argument"
 						+ "contains any NaNs or Infs")
+		if not isUML and opName in divNames:
+			if other == 0:
+				msg = "Cannot perform " + opName + " when the second argument"
+				msg += + "is zero"
+				raise ZeroDivisionError(msg)
+
+		# figure out return obj's point / feature names
+		# if unary:
+		if opName in ['__pos__', '__neg__', '__abs__'] or isinstance(other, int):
+			retPNames = self.pointNames
+			retFNames = self.featureNames
+		# else (everything else that uses this helper is a binary scalar op)
+		else:
+			(retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
 
 		startType = self.getTypeString()
 		implName = opName[1:] + 'implementation'
 		if startType == 'Matrix':
 			toCall = getattr(self, implName)
-			return toCall(other)
+			ret = toCall(other)
 		else:
 			selfConv = self.copyAs("Matrix")
 			toCall = getattr(selfConv, implName)
@@ -1952,10 +2006,14 @@ class Base(object):
 			if opName.startswith('__i'):
 				ret = ret.copyAs(startType)
 				self.referenceDataFrom(ret)
-				return self
-			return UML.createData(startType, ret.data, pointNames=ret.pointNames,
-					featureNames=ret.featureNames)
+				ret = self
+			else:
+				ret = UML.createData(startType, ret.data)
 
+		ret.setPointNamesFromDict(retPNames)
+		ret.setFeatureNamesFromDict(retFNames)
+
+		return ret
 
 	#################################
 	#################################
@@ -2218,7 +2276,7 @@ class Base(object):
 			return False
 		return self._equalNames(self.featureNames, self.featureNamesInverse, other.featureNames, other.featureNamesInverse)
 
-	def _equalNames(self, selfNames, selfNamesInv, otherNames, otherInvNames):
+	def _equalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
 		"""
 		Private function to determine equality of either pointNames or featureNames.
 		It ignores equality of default values, though if default values are present,
@@ -2227,31 +2285,33 @@ class Base(object):
 		"""
 		if len(selfNames) != len(otherNames):
 			return False
-		if len(selfNamesInv) != len(otherInvNames):
+		if len(selfNamesInv) != len(otherNamesInv):
 			return False
-		# check both featureName directions
-		for featureName in selfNames.keys():
-			if not featureName.startswith(DEFAULT_PREFIX) and featureName not in otherNames:
-				return False
-			if not featureName.startswith(DEFAULT_PREFIX) and selfNames[featureName] != otherNames[featureName]:
-				return False
+		# check both name directions
 		for index in selfNamesInv.keys():
-			if index not in otherInvNames:
+			if index not in otherNamesInv:
 				return False
 			if not selfNamesInv[index].startswith(DEFAULT_PREFIX):
-				if selfNamesInv[index] != selfNamesInv[index]:
-					return False
-		for featureName in otherNames.keys():
-			if not featureName.startswith(DEFAULT_PREFIX) and featureName not in selfNames:
-				return False
-			if not featureName.startswith(DEFAULT_PREFIX) and otherNames[featureName] != selfNames[featureName]:
-				return False
-		for index in otherInvNames.keys():
+				if not otherNamesInv[index].startswith(DEFAULT_PREFIX):
+					if selfNamesInv[index] != otherNamesInv[index]:
+						return False
+				else:
+					# if a name in one is mirrored by a default name,
+					# then it must not appear in any other index
+					if selfNamesInv[index] in otherNames.keys():
+						return False
+		for index in otherNamesInv.keys():
 			if index not in selfNamesInv:
 				return False
-			if not otherInvNames[index].startswith(DEFAULT_PREFIX):
-				if otherInvNames[index] != otherInvNames[index]:
-					return False
+			if not otherNamesInv[index].startswith(DEFAULT_PREFIX):
+				if not selfNamesInv[index].startswith(DEFAULT_PREFIX):
+					if otherNamesInv[index] != selfNamesInv[index]:
+						return False
+				else:
+					# if a name in one is mirrored by a default name,
+					# then it must not appear in any other index
+					if otherNamesInv[index] in selfNames.keys():
+						return False
 		return True
 
 
