@@ -1963,6 +1963,7 @@ class Base(object):
 
 		# check name restrictions
 		if isUML:
+			#self._validateEqualNames('point', 'point', opName, other)
 			if not self._equalPointNames(other):
 				raise ArgumentException("Point names must not be inconsistent when calling element wise operations")
 			if not self._equalFeatureNames(other):
@@ -2277,42 +2278,75 @@ class Base(object):
 		return self._equalNames(self.featureNames, self.featureNamesInverse, other.featureNames, other.featureNamesInverse)
 
 	def _equalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
-		"""
-		Private function to determine equality of either pointNames or featureNames.
-		It ignores equality of default values, though if default values are present,
-		the number of names and their indices must match up.
+		"""Private function to determine equality of either pointNames of
+		featureNames. It ignores equality of default values, considering only
+		whether non default names consistent (position by position) and
+		uniquely positioned (if a non default name is present in both, then
+		it is in the same position in both).
 
 		"""
 		if len(selfNames) != len(otherNames):
 			return False
 		if len(selfNamesInv) != len(otherNamesInv):
 			return False
+
+		unequalNames = self._unequalNames(selfNames, selfNamesInv, otherNames, otherNamesInv)
+		return unequalNames == {}
+
+	def _validateEqualNames(self, leftAxis, rightAxis, callSym, other):
+		lnames = self.pointNames if leftAxis == 'point' else self.featureNames
+		lnamesInv = self.pointNamesInverse if leftAxis == 'point' else self.featureNamesInverse
+		rnames = other.pointNames if leftAxis == 'point' else other.featureNames
+		rnamesInv = other.pointNamesInverse if leftAxis == 'point' else other.featureNamesInverse	
+		inconsistencies = self._unequalNames(lnames, lnamesInv, rnames, rnamesInv)
+
+		if inconsistencies != {}:
+			table = [['left', 'ID', 'right']]
+			for i in sorted(inconsistencies.keys()):
+				lname = '"' + lnamesInv[i] + '"'
+				rname = '"' + rnamesInv[i] + '"'
+				table.append([lname, str(i), rname])
+
+			msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
+			msg += "calling left." + callSym + "(right) \n"
+			msg += UML.logger.tableString.tableString(table)
+			print >>sys.stderr, msg
+			raise ArgumentException(msg)
+
+	def _unequalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
+		"""Private function to find and return all name inconsistencies
+		between the given two sets. It ignores equality of default values,
+		considering only whether non default names consistent (position by
+		position) and uniquely positioned (if a non default name is present
+		in both, then it is in the same position in both). The return value
+		is a dict between integer IDs and the pair of offending names at
+		that position in both objects.
+
+		Assumptions: the size of the two name sets is equal.
+
+		"""
+		inconsistencies = {}
+
+		def checkFromLeftKeys(ret, leftNamesInv, rightNames, rightNamesInv):
+			for index in leftNamesInv.keys():
+				lname = leftNamesInv[index]
+				rname = rightNamesInv[index]
+				if not lname.startswith(DEFAULT_PREFIX):
+					if not rname.startswith(DEFAULT_PREFIX):
+						if lname != rname:
+							ret[index] = (lname, rname)
+					else:
+						# if a name in one is mirrored by a default name,
+						# then it must not appear in any other index
+						if lname in rightNames.keys():
+							ret[index] = (lname, rname)
+							ret[rightNames[lname]] = (lname, rname)
+
 		# check both name directions
-		for index in selfNamesInv.keys():
-			if index not in otherNamesInv:
-				return False
-			if not selfNamesInv[index].startswith(DEFAULT_PREFIX):
-				if not otherNamesInv[index].startswith(DEFAULT_PREFIX):
-					if selfNamesInv[index] != otherNamesInv[index]:
-						return False
-				else:
-					# if a name in one is mirrored by a default name,
-					# then it must not appear in any other index
-					if selfNamesInv[index] in otherNames.keys():
-						return False
-		for index in otherNamesInv.keys():
-			if index not in selfNamesInv:
-				return False
-			if not otherNamesInv[index].startswith(DEFAULT_PREFIX):
-				if not selfNamesInv[index].startswith(DEFAULT_PREFIX):
-					if otherNamesInv[index] != selfNamesInv[index]:
-						return False
-				else:
-					# if a name in one is mirrored by a default name,
-					# then it must not appear in any other index
-					if otherNamesInv[index] in selfNames.keys():
-						return False
-		return True
+		checkFromLeftKeys(inconsistencies, selfNamesInv, otherNames, otherNamesInv)
+		checkFromLeftKeys(inconsistencies, otherNamesInv, selfNames, selfNamesInv)
+
+		return inconsistencies
 
 
 	def _getPointIndex(self, identifier):
