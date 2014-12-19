@@ -2299,7 +2299,7 @@ class Base(object):
 			msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
 			msg += "calling left." + callSym + "(right) \n"
 			msg += UML.logger.tableString.tableString(table)
-			#print >>sys.stderr, msg
+			print >>sys.stderr, msg
 			raise ArgumentException(msg)
 
 	def _unequalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
