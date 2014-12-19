@@ -1175,8 +1175,7 @@ class Base(object):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.featureCount == toAppend.featureCount:
 			raise ArgumentException("toAppend must have the same number of features as this object")
-		if not self._equalFeatureNames(toAppend):
-			raise ArgumentException("The featureNames of the two objects must match")
+		self._validateEqualNames('feature', 'feature', 'toAppend', toAppend)
 		intersection = self._pointNameIntersection(toAppend)
 		if intersection:
 			for name in intersection:
@@ -1209,8 +1208,7 @@ class Base(object):
 			raise ArgumentException("toAppend must be a kind of data representation object")
 		if not self.pointCount == toAppend.pointCount:
 			raise ArgumentException("toAppend must have the same number of points as this object")
-		if not self._equalPointNames(toAppend):
-			raise ArgumentException("The pointNames of the two objects must match")
+		self._validateEqualNames('point', 'point', 'toAppend', toAppend)
 		intersection = self._featureNameIntersection(toAppend)
 		if intersection:
 			for name in intersection:
@@ -1619,10 +1617,8 @@ class Base(object):
 		if self.pointCount == 0 or self.featureCount == 0:
 			raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
 
-		if not self._equalPointNames(other):
-			raise ArgumentException("Point names must not be inconsistent when calling element wise operations")
-		if not self._equalFeatureNames(other):
-			raise ArgumentException("Feature names must not be inconsistent when calling element wise operations")
+		self._validateEqualNames('point', 'point', 'elementwiseMultiply', other)
+		self._validateEqualNames('feature', 'feature', 'elementwiseMultiply', other)
 
 		self._elementwiseMultiply_implementation(other)
 
@@ -1663,11 +1659,7 @@ class Base(object):
 				raise ArgumentException("The number of features in the calling object must "
 						+ "match the point in the callee object.")
 		
-			if not self._equalNames(self.featureNames, self.featureNamesInverse, other.pointNames, other.pointNamesInverse):
-				msg = "Cannot perform matrix multiplication if the feature "
-				msg += "names of the calling object are inconsistent with the "
-				msg += "point names of the callee object"
-				raise ArgumentException(msg)
+			self._validateEqualNames('feature', 'point', '__mul__', other)
 
 		ret = self._mul__implementation(other)
 
@@ -1963,12 +1955,9 @@ class Base(object):
 
 		# check name restrictions
 		if isUML:
-			#self._validateEqualNames('point', 'point', opName, other)
-			if not self._equalPointNames(other):
-				raise ArgumentException("Point names must not be inconsistent when calling element wise operations")
-			if not self._equalFeatureNames(other):
-				raise ArgumentException("Feature names must not be inconsistent when calling element wise operations")
-		
+			self._validateEqualNames('point', 'point', opName, other)
+			self._validateEqualNames('feature', 'feature', opName, other)
+
 		divNames = ['__div__','__rdiv__','__idiv__','__truediv__','__rtruediv__',
 					'__itruediv__','__floordiv__','__rfloordiv__','__ifloordiv__',
 					'__mod__','__rmod__','__imod__',]
@@ -2296,8 +2285,8 @@ class Base(object):
 	def _validateEqualNames(self, leftAxis, rightAxis, callSym, other):
 		lnames = self.pointNames if leftAxis == 'point' else self.featureNames
 		lnamesInv = self.pointNamesInverse if leftAxis == 'point' else self.featureNamesInverse
-		rnames = other.pointNames if leftAxis == 'point' else other.featureNames
-		rnamesInv = other.pointNamesInverse if leftAxis == 'point' else other.featureNamesInverse	
+		rnames = other.pointNames if rightAxis == 'point' else other.featureNames
+		rnamesInv = other.pointNamesInverse if rightAxis == 'point' else other.featureNamesInverse	
 		inconsistencies = self._unequalNames(lnames, lnamesInv, rnames, rnamesInv)
 
 		if inconsistencies != {}:
@@ -2310,7 +2299,7 @@ class Base(object):
 			msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
 			msg += "calling left." + callSym + "(right) \n"
 			msg += UML.logger.tableString.tableString(table)
-			print >>sys.stderr, msg
+			#print >>sys.stderr, msg
 			raise ArgumentException(msg)
 
 	def _unequalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
