@@ -20,3 +20,41 @@ def cosineSimilarity(knownValues, predictedValues):
 	denominator = (numpy.linalg.norm(known) * numpy.linalg.norm(predicted))
 
 	return numerator / denominator
+
+
+def correlation(X, X_T=None):
+	if X_T is None:
+		X_T = X.copy()
+		X_T.transpose()
+	stdVector = X.pointStatistics('populationstd')
+	stdVector_T = stdVector.copy()
+	stdVector_T.transpose()
+
+	cov = covariance(X, X_T, False)
+	stdMatrix = stdVector * stdVector_T
+	ret = cov / stdMatrix
+
+	return ret
+
+def covariance(X, X_T=None, sample=True):
+	if X_T is None:
+		X_T = X.copy()
+		X_T.transpose()
+	pointMeansVector = X.pointStatistics('mean')
+	fill = lambda x: [x[0]] * X.featureCount
+	pointMeans = pointMeansVector.applyToPoints(fill, inPlace=False)
+	pointMeans_T = pointMeans.copy()
+	pointMeans_T.transpose()
+
+	XminusEofX = X - pointMeans
+	X_TminusEofX_T = X_T - pointMeans_T
+
+	# doing sample covariance calculation
+	if sample:
+		divisor = X.featureCount - 1
+	# doing population covariance calculation
+	else:
+		divisor = X.featureCount
+
+	ret = (XminusEofX * X_TminusEofX_T) / divisor
+	return ret

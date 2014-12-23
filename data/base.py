@@ -2038,51 +2038,17 @@ class Base(object):
 		if lowerCaseFunc not in accepted:
 			raise ArgumentException(msg)
 
-		def dotProd(X, X_T):
-			return X * X_T
-		
-		def covariance(X, X_T, sample=True):
-			pointMeansVector = X.pointStatistics('mean')
-			fill = lambda x: [x[0]] * X.featureCount
-			pointMeans = pointMeansVector.applyToPoints(fill, inPlace=False)
-			pointMeans_T = pointMeans.copy()
-			pointMeans_T.transpose()
-
-			XminusEofX = X - pointMeans
-			X_TminusEofX_T = X_T - pointMeans_T
-
-			# doing sample covariance calculation
-			if sample:
-				divisor = X.featureCount - 1
-			# doing population covariance calculation
-			else:
-				divisor = X.featureCount
-
-			ret = (XminusEofX * X_TminusEofX_T) / divisor
-
-			return ret
-
-		def populationCovariance(X, X_T):
-			return covariance(X, X_T, False)
-
-		def correlation(X, X_T):
-			stdVector = X.pointStatistics('populationstd')
-			stdVector_T = stdVector.copy()
-			stdVector_T.transpose()
-
-			cov = covariance(X, X_T, False)
-			stdMatrix = stdVector * stdVector_T
-			ret = cov / stdMatrix
-
-			return ret
-
 		if lowerCaseFunc == 'correlation':
-			toCall = correlation
+			toCall = UML.calculate.correlation
 		elif lowerCaseFunc == 'covariance' or lowerCaseFunc == 'samplecovariance':
-			toCall = covariance
+			toCall = UML.calculate.covariance
 		elif lowerCaseFunc == 'populationcovariance':
+			def populationCovariance(X, X_T):
+				return UML.calculate.covariance(X, X_T, False)
 			toCall = populationCovariance
 		elif lowerCaseFunc == 'dotproduct':
+			def dotProd(X, X_T):
+				return X * X_T
 			toCall = dotProd
 
 		transposed = self.copy()
