@@ -2,6 +2,8 @@ from loss import fractionIncorrect
 from loss import fractionIncorrectBottom10
 from loss import meanAbsoluteError
 from loss import rootMeanSquareError
+from matrix import elementwiseMultiply
+from matrix import elementwisePower
 from similarity import correlation
 from similarity import cosineSimilarity
 from similarity import covariance

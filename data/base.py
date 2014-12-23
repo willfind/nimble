@@ -1627,6 +1627,39 @@ class Base(object):
 		self.setFeatureNamesFromDict(retFNames)
 		self.validate()
 
+	def elementwisePower(self, other):
+		# other is UML
+		if not isinstance(other, UML.data.Base):
+			raise ArgumentException("'other' must be an instance of a UML data object")
+
+		# Test element type self
+		if self.pointCount > 0:
+			for val in self.pointView(0):
+				if not dataHelpers._looksNumeric(val):
+					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+		# test element type other
+		if other.pointCount > 0:
+			for val in other.pointView(0):
+				if not dataHelpers._looksNumeric(val):
+					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+		# same shape
+		if self.pointCount != other.pointCount:
+			raise ArgumentException("The number of points in each object must be equal.")
+		if self.featureCount != other.featureCount:
+			raise ArgumentException("The number of features in each object must be equal.")
+		if self.pointCount == 0 or self.featureCount == 0:
+			raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
+
+		def powFromRight(val, pnum, fnum):
+			return val ** other[pnum,fnum]
+
+		self.applyToElements(powFromRight)
+		self.validate()
+
+
+
 	def __mul__(self, other):
 		"""
 		Perform matrix multiplication or scalar multiplication on this object depending on

@@ -431,6 +431,66 @@ def run_full_backend_rOp(constructor, npEquiv, UMLOp, inplace, sparsity):
 
 class NumericalBackend(DataTestObject):
 
+	####################
+	# elementwisePower #
+	####################
+
+	@raises(ArgumentException)
+	def test_elementwisePower_otherObjectExceptions(self):
+		""" Test elementwiseMultiply raises exception when param is not a UML data object """
+		back_otherObjectExceptions(self.constructor, 'elementwisePower')
+
+	@raises(ArgumentException)
+	def test_elementwisePower_selfNotNumericException(self):
+		""" Test elementwisePower raises exception if self has non numeric data """
+		back_selfNotNumericException(self.constructor, self.constructor, 'elementwisePower')
+
+	@raises(ArgumentException)
+	def test_elementwisePower_otherNotNumericException(self):
+		""" Test elementwisePower raises exception if param object has non numeric data """
+		back_otherNotNumericException(self.constructor, self.constructor, 'elementwisePower')
+
+	@raises(ArgumentException)
+	def test_elementwisePower_pShapeException(self):
+		""" Test elementwisePower raises exception the shapes of the object don't fit correctly """
+		back_pShapeException(self.constructor, self.constructor, 'elementwisePower')
+
+	@raises(ArgumentException)
+	def test_elementwisePower_fShapeException(self):
+		""" Test elementwisePower raises exception the shapes of the object don't fit correctly """
+		back_fShapeException(self.constructor, self.constructor, 'elementwisePower')
+
+	@raises(ImproperActionException)
+	def test_elementwisePower_pEmptyException(self):
+		""" Test elementwisePower raises exception for point empty data """
+		back_pEmptyException(self.constructor, self.constructor, 'elementwisePower')
+
+	@raises(ImproperActionException)
+	def test_elementwisePower_fEmptyException(self):
+		""" Test elementwisePower raises exception for feature empty data """
+		back_fEmptyException(self.constructor, self.constructor, 'elementwisePower')
+
+	def test_elementwisePower_handmade(self):
+		""" Test elementwisePower on handmade data """
+		data = [[1.0,2], [4,5], [7,4]]
+		exponents = [[0,-1], [-.5,2], [2,.5]]
+		exp1 = [[1,.5], [.5,25], [49,2]]
+		callerpnames = ['1', '2', '3']
+
+		calleepnames = ['I', 'dont', 'match']
+		calleefnames = ['one', 'two']
+
+		makers = [UML.data.List, UML.data.Matrix, UML.data.Sparse]
+		for maker in makers:
+			caller = self.constructor(data, pointNames=callerpnames)
+			exponentsObj = maker(exponents, pointNames=calleepnames, featureNames=calleefnames)
+			caller.elementwisePower(exponentsObj)
+
+			exp1Obj = self.constructor(exp1, pointNames=callerpnames)
+
+			assert exp1Obj.isIdentical(caller)
+
+
 	#############################
 	# elementwiseMultiply #
 	#############################
