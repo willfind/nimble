@@ -915,10 +915,6 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction, 
 		Returns: a dictionary associating each performance metric with the (presumably)
 		numerical value computed by running the function over the known labels & predicted labels
 	"""
-	from UML.metrics import fractionTrueNegativeTop90
-	from UML.metrics import fractionTrueNegativeTop50
-	from UML.metrics import fractionTrueNegativeBottom10
-
 	if isinstance(dependentVar, (list, Base)):
 		#The known Indicator argument already contains all known
 		#labels, so we do not need to do any further processing
@@ -939,11 +935,7 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction, 
 	parameterHash = {"knownValues":knownLabels, "predictedValues":predictedData}
 	for func in performanceFunction:
 		#some functions need negativeLabel as an argument.
-		if func == fractionTrueNegativeTop90 or func == fractionTrueNegativeTop50 or func == fractionTrueNegativeBottom10:
-			parameterHash["negativeLabel"] = negativeLabel
-			results.append(executeCode(func, parameterHash))
-			del parameterHash["negativeLabel"]
-		elif len(inspect.getargspec(func).args) == 2:
+		if len(inspect.getargspec(func).args) == 2:
 			#the metric function only takes two arguments: we assume they
 			#are the known class labels and the predicted class labels
 			if func.__name__ != "<lambda>":
@@ -1031,50 +1023,6 @@ def checkPrintConfusionMatrix():
 	confusionMatrix = confusionMatrixResults["confusion_matrix_generator"]
 	print_confusion_matrix(confusionMatrix)
 
-
-
-def computeError(knownValues, predictedValues, loopFunction, compressionFunction):
-	"""
-		A generic function to compute different kinds of error metrics.  knownValues
-		is a 1d Base object with one known label (or number) per row. predictedValues is a 1d Base
-		object with one predictedLabel (or score) per row.  The ith row in knownValues should refer
-		to the same point as the ith row in predictedValues. loopFunction is a function to be applied
-		to each row in knownValues/predictedValues, that takes 3 arguments: a known class label,
-		a predicted label, and runningTotal, which contains the successive output of loopFunction.
-		compressionFunction is a function that should take two arguments: runningTotal, the final
-		output of loopFunction, and n, the number of values in knownValues/predictedValues.
-	"""
-	if knownValues is None or not isinstance(knownValues, Base) or knownValues.pointCount == 0:
-		raise ArgumentException("Empty 'knownValues' argument in error calculator")
-	elif predictedValues is None or not isinstance(predictedValues, Base) or predictedValues.pointCount == 0:
-		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
-
-	if not isinstance(knownValues, Matrix):
-		knownValues = knownValues.copyAs(format="Matrix")
-
-	if not isinstance(predictedValues, Matrix):
-		predictedValues = predictedValues.copyAs(format="Matrix")
-
-	n=0.0
-	runningTotal=0.0
-	#Go through all values in known and predicted values, and pass those values to loopFunction
-	for i in xrange(predictedValues.pointCount):
-		pV = predictedValues[i,0]
-		aV = knownValues[i,0]
-		runningTotal = loopFunction(aV, pV, runningTotal)
-		n += 1
-	if n > 0:
-		try:
-			#provide the final value from loopFunction to compressionFunction, along with the
-			#number of values looped over
-			runningTotal = compressionFunction(runningTotal, n)
-		except ZeroDivisionError:
-			raise ZeroDivisionError('Tried to divide by zero when calculating performance metric')
-			return
-	else:
-		raise ArgumentException("Empty argument(s) in error calculator")
-
-	return runningTotal
 
 
 

@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	from UML import trainAndTest
 	from UML import createData
 	from UML import splitData
-	from UML.metrics import fractionIncorrect
+	from UML.calculate import fractionIncorrect
 
 	pathIn = os.path.join(UML.UMLPath, "datasets/sparseSampleReal.mtx")
 	allData = createData("Sparse", pathIn, fileType="mtx")

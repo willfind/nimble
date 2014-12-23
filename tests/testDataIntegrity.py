@@ -47,22 +47,22 @@ def wrappedTrainAndApplyOvA(learnerName, trainX, trainY, testX, testY):
 
 def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
 	# our performance function doesn't actually matter, we're just checking the data
-	return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.metrics.fractionIncorrect)
+	return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def wrappedTrainAndTestOvO(learnerName, trainX, trainY, testX, testY):
-	return UML.umlHelpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.metrics.fractionIncorrect)
+	return UML.umlHelpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
-	return UML.umlHelpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.metrics.fractionIncorrect)
+	return UML.umlHelpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
-	return UML.crossValidate(learnerName, trainX, trainY, performanceFunction=UML.metrics.fractionIncorrect)
+	return UML.crossValidate(learnerName, trainX, trainY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def wrappedCrossValidateReturnBest(learnerName, trainX, trainY, testX, testY):
-	return UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction=UML.metrics.fractionIncorrect)
+	return UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def wrappedCrossValidateReturnAll(learnerName, trainX, trainY, testX, testY):
-	return UML.crossValidateReturnAll(learnerName, trainX, trainY, performanceFunction=UML.metrics.fractionIncorrect)
+	return UML.crossValidateReturnAll(learnerName, trainX, trainY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def setupAndCallIncrementalTrain(learnerName, trainX, trainY, testX, testY):
 	tl = UML.train(learnerName, trainX, trainY)

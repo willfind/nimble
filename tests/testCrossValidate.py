@@ -2,21 +2,53 @@
 # crossValidate
 
 
-
 #so you can run as main:
 import sys
 sys.path.append('../..')
 
+import numpy
+
 import nose
 from nose.plugins.attrib import attr
-#@attr('slow')
+
+import UML
 
 from UML import crossValidate
 from UML import createData
-from UML.metrics import *
+from UML.calculate import *
 from UML.randomness import pythonRandom
+from UML.umlHelpers import computeMetrics
 
-from pdb import set_trace as ttt
+#####################################
+# performance combinations function #
+#####################################
+def testPerfCombinations():
+	knownLabels = numpy.array([[1.0],[2.0],[3.0]])
+	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
+
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
+	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
+	assert results[0] == 0.0
+	assert results[1] == 0.0
+	assert results[2] == 0.0
+
+	knownLabels = numpy.array([[1.5],[2.5],[3.5]])
+	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
+
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
+	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
+	assert results[0] > 0.49
+	assert results[0] < 0.51
+	assert results[1] > 0.49
+	assert results[1] < 0.51
+
+
 
 
 def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):

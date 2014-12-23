@@ -10,11 +10,12 @@ import nose
 from nose.plugins.attrib import attr
 #@attr('slow')
 
+import UML
 from UML import crossValidateReturnAll
 from UML import crossValidateReturnBest
 from UML import createData
 from UML import createRandomData
-from UML.metrics import *
+from UML.calculate import *
 from UML.randomness import pythonRandom
 
 from pdb import set_trace as ttt

@@ -1,8 +1,8 @@
 """
 Universal Machine Learning
 
-UML offers interfaces into other machine learning packages,
-tools for data representation and processing, 
+UML offers interfaces into other machine learning packages and
+tools for data representation and processing.
 
 """
 
@@ -15,7 +15,7 @@ import UML.configuration
 settings = UML.configuration.loadSettings()
 
 import UML.interfaces
-import UML.metrics
+import UML.calculate
 import UML.randomness
 
 from UML.randomness import setRandomSeed

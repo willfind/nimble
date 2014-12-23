@@ -471,7 +471,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds
 
 	Y (UML.Base subclass or int index for X) - labels/data about points in X
 
-	performanceFunction (function) - Look in UML.metrics for premade options.
+	performanceFunction (function) - Look in UML.calculate for premade options.
 	Function used by computeMetrics to generate a performance score for the run.
 	function is of the form:
 	def func(knownValues, predictedValues, negativeLabel).
@@ -525,7 +525,7 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments={},
 
 	Y (UML.Base subclass or int index for X) - labels/data about points in X
 
-	performanceFunction (function) - Look in UML.metrics for premade options.
+	performanceFunction (function) - Look in UML.calculate for premade options.
 	Function used by computeMetrics to generate a performance score for the run.
 	function is of the form:
 	def func(knownValues, predictedValues, negativeLabel).
@@ -589,7 +589,7 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments={}
 
 	Y (UML.Base subclass or int index for X) - labels/data about points in X
 
-	performanceFunction (function) - Look in UML.metrics for premade options.
+	performanceFunction (function) - Look in UML.calculate for premade options.
 	Function used by computeMetrics to generate a performance score for the run.
 	function is of the form:
 	def func(knownValues, predictedValues, negativeLabel).
@@ -852,7 +852,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 
 	performanceFunction: Function used by computeMetrics to generate a performance score
 	for the run. function is of the form: def func(knownValues, predictedValues, negativeLabel).
-	Look in UML.metrics for pre-made options.
+	Look in UML.calculate for pre-made options.
 
 	arguments: dict containing the parameters to be passed to the learner, in the
 	form of a mapping between (string) parameter names, and values. Will be merged

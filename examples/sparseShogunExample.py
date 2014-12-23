@@ -14,7 +14,7 @@ if __name__ == "__main__":
 	from UML import trainAndApply
 	from UML import createData
 	from UML import splitData
-	from UML.metrics import fractionIncorrect
+	from UML.calculate import fractionIncorrect
 
 	pathIn = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny_numerical.csv")
 	allData = createData("Sparse", pathIn, fileType="csv")

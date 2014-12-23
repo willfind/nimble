@@ -3,7 +3,7 @@ from UML import createData
 from UML import trainAndTest
 from UML.umlHelpers import extractWinningPredictionLabel
 from UML.umlHelpers import generateAllPairs
-from UML.metrics import fractionIncorrect
+from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
 
 def testExtractWinningPredictionLabel():
@@ -83,5 +83,7 @@ def test_trainAndTest():
 	#with complicated argument for the algorithm
 #	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=(1,2), p=(1,2))
 #	assert isinstance(runError, float)
+
+
 
 

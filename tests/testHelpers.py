@@ -21,7 +21,7 @@ from UML.umlHelpers import trainAndTestOneVsOne
 from UML.umlHelpers import trainAndApplyOneVsOne
 from UML.umlHelpers import trainAndApplyOneVsAll
 from UML.umlHelpers import _mergeArguments
-from UML.metrics import fractionIncorrect
+from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
 
 

@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
 	import UML
 	from UML.customLearners.ridge_regression import RidgeRegression
-	from UML.metrics import rootMeanSquareError as RMSE
+	from UML.calculate import rootMeanSquareError as RMSE
 
 	from UML.randomness import numpyRandom
 
