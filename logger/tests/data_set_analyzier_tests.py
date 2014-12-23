@@ -20,22 +20,22 @@ def testMatrix():
     funcNames = rawTable[0]
     for i in range(len(funcNames)):
         funcName = funcNames[i]
-        if funcName == "mean_" or funcName == "mean":
+        if funcName == "mean":
             assert_almost_equal(rawTable[1][i], 1.6667, 3)
             assert_almost_equal(rawTable[2][i], 2.000, 3)
             assert_almost_equal(rawTable[3][i], 3.000, 3)
             assert_almost_equal(rawTable[4][i], 2.6667, 3)
-        elif funcName == "min_" or funcName == "min":
+        elif funcName == "minimum":
             assert_equal(rawTable[1][i], 1)
             assert_equal(rawTable[2][i], 1)
             assert_equal(rawTable[3][i], 1)
             assert_equal(rawTable[4][i], 1)
-        elif funcName == "max_" or funcName == "max":
+        elif funcName == "maximum":
             assert_equal(rawTable[1][i], 3)
             assert_equal(rawTable[2][i], 3)
             assert_equal(rawTable[3][i], 5)
             assert_equal(rawTable[4][i], 5)
-        elif funcName == "numUnique":
+        elif funcName == "uniqueCount":
             assert_equal(rawTable[1][i], 2)
             assert_equal(rawTable[2][i], 3)
             assert_equal(rawTable[3][i], 3)
@@ -45,7 +45,7 @@ def testMatrix():
             assert_almost_equal(rawTable[2][i], 0.8165, 3)
             assert_almost_equal(rawTable[3][i], 1.633, 3)
             assert_almost_equal(rawTable[4][i], 1.6997, 3)
-        elif funcName == "median_" or funcName == "median":
+        elif funcName == "median":
             assert_equal(rawTable[1][i], 1.0)
             assert_equal(rawTable[2][i], 2.0)
             assert_equal(rawTable[3][i], 3.0)
@@ -71,28 +71,28 @@ def testSparse():
     funcNames = rawTable[0]
     for i in range(len(funcNames)):
         funcName = funcNames[i]
-        if funcName == "mean_" or funcName == "mean":
+        if funcName == "mean":
             assert_almost_equal(rawTable[1][i], 0.3333, 3)
             assert_almost_equal(rawTable[2][i], 0.3333, 3)
             assert_almost_equal(rawTable[3][i], 0.1667, 3)
             assert_almost_equal(rawTable[4][i], 0.4000, 3)
             assert_almost_equal(rawTable[5][i], 0.5000, 3)
             assert_almost_equal(rawTable[6][i], 0.1667, 3)
-        elif funcName == "min_" or funcName == "min":
+        elif funcName == "minimum":
             assert_equal(rawTable[1][i], 0)
             assert_equal(rawTable[2][i], 0)
             assert_equal(rawTable[3][i], 0)
             assert_equal(rawTable[4][i], 0)
             assert_equal(rawTable[5][i], 0)
             assert_equal(rawTable[6][i], 0)
-        elif funcName == "max_" or funcName == "max":
+        elif funcName == "maximum":
             assert_equal(rawTable[1][i], 1)
             assert_equal(rawTable[2][i], 1)
             assert_equal(rawTable[3][i], 1)
             assert_equal(rawTable[4][i], 1)
             assert_equal(rawTable[5][i], 1)
             assert_equal(rawTable[6][i], 1)
-        elif funcName == "numUnique":
+        elif funcName == "uniqueCount":
             assert_equal(rawTable[1][i], 2)
             assert_equal(rawTable[2][i], 2)
             assert_equal(rawTable[3][i], 2)
@@ -106,7 +106,7 @@ def testSparse():
             assert_almost_equal(rawTable[4][i], 0.4899, 3)
             assert_almost_equal(rawTable[5][i], 0.500, 3)
             assert_almost_equal(rawTable[6][i], 0.3727, 3)
-        elif funcName == "median_" or funcName == "median":
+        elif funcName == "median":
             assert_equal(rawTable[1][i], 0)
             assert_equal(rawTable[2][i], 0)
             assert_equal(rawTable[3][i], 0)
@@ -115,7 +115,7 @@ def testSparse():
             assert_equal(rawTable[6][i], 0)
 
 
-def testRowList():
+def testList():
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
 
@@ -125,22 +125,22 @@ def testRowList():
     funcNames = rawTable[0]
     for i in range(len(funcNames)):
         funcName = funcNames[i]
-        if funcName == "mean_" or funcName == "mean":
+        if funcName == "mean":
             assert_almost_equal(rawTable[1][i], 1.6667, 3)
             assert_almost_equal(rawTable[2][i], 2.000, 3)
             assert_almost_equal(rawTable[3][i], 3.000, 3)
             assert_almost_equal(rawTable[4][i], 2.6667, 3)
-        elif funcName == "min_" or funcName == "min":
+        elif funcName == "minimum":
             assert_equal(rawTable[1][i], 1)
             assert_equal(rawTable[2][i], 1)
             assert_equal(rawTable[3][i], 1)
             assert_equal(rawTable[4][i], 1)
-        elif funcName == "max_" or funcName == "max":
+        elif funcName == "maximum":
             assert_equal(rawTable[1][i], 3)
             assert_equal(rawTable[2][i], 3)
             assert_equal(rawTable[3][i], 5)
             assert_equal(rawTable[4][i], 5)
-        elif funcName == "numUnique":
+        elif funcName == "uniqueCount":
             assert_equal(rawTable[1][i], 2)
             assert_equal(rawTable[2][i], 3)
             assert_equal(rawTable[3][i], 3)
@@ -150,7 +150,7 @@ def testRowList():
             assert_almost_equal(rawTable[2][i], 0.8165, 3)
             assert_almost_equal(rawTable[3][i], 1.633, 3)
             assert_almost_equal(rawTable[4][i], 1.6997, 3)
-        elif funcName == "median_" or funcName == "median":
+        elif funcName == "median":
             assert_equal(rawTable[1][i], 1.0)
             assert_equal(rawTable[2][i], 2.0)
             assert_equal(rawTable[3][i], 3.0)
