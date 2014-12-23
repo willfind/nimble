@@ -2121,29 +2121,29 @@ class Base(object):
 			raise ArgumentException(msg)
 
 		if lowerCaseFunc == 'max':
-			toCall = UML.logger.data_set_analyzer.max_
+			toCall = UML.calculate.maximum
 		elif lowerCaseFunc == 'mean':
-			toCall = UML.logger.data_set_analyzer.mean_
+			toCall = UML.calculate.mean
 		elif lowerCaseFunc == 'median':
-			toCall = UML.logger.data_set_analyzer.median_
+			toCall = UML.calculate.median
 		elif lowerCaseFunc == 'min':
-			toCall = UML.logger.data_set_analyzer.min_
+			toCall = UML.calculate.minimum
 		elif lowerCaseFunc == 'uniquecount':
-			toCall = UML.logger.data_set_analyzer.numUnique
+			toCall = UML.calculate.uniqueCount
 		elif lowerCaseFunc == 'proportionmissing':
-			toCall = UML.logger.data_set_analyzer.proportionMissing
+			toCall = UML.calculate.proportionMissing
 		elif lowerCaseFunc == 'proportionzero':
-			toCall = UML.logger.data_set_analyzer.proportionZero
+			toCall = UML.calculate.proportionZero
 		elif lowerCaseFunc == 'std' or lowerCaseFunc == 'standarddeviation':
 			def sampleStandardDeviation(values):
-				return UML.logger.data_set_analyzer.standardDeviation(values, True)
+				return UML.calculate.standardDeviation(values, True)
 			toCall = sampleStandardDeviation
 		elif lowerCaseFunc == 'samplestd' or lowerCaseFunc == 'samplestandarddeviation':
 			def sampleStandardDeviation(values):
-				return UML.logger.data_set_analyzer.standardDeviation(values, True)
+				return UML.calculate.standardDeviation(values, True)
 			toCall = sampleStandardDeviation
 		elif lowerCaseFunc == 'populationstd' or lowerCaseFunc == 'populationstandarddeviation':
-			toCall = UML.logger.data_set_analyzer.standardDeviation
+			toCall = UML.calculate.standardDeviation
 
 		if axis == 'point':
 			return self.applyToPoints(toCall, inPlace=False)
