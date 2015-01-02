@@ -47,6 +47,8 @@ from uml import learnerType
 # UML.settings.
 UML.settings.set("RegisteredLearners", "Custom.RidgeRegression", 'UML.customLearners.RidgeRegression')
 UML.settings.set("RegisteredLearners", "Custom.KNNClassifier", 'UML.customLearners.KNNClassifier')
+UML.settings.set("RegisteredLearners", "Custom.MeanConstant", 'UML.customLearners.MeanConstant')
+
 
 # register those custom learners listed in UML.settings
 UML.umlHelpers.autoRegisterFromSettings()
