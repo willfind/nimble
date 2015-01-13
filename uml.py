@@ -118,8 +118,10 @@ def splitData(toSplit, fractionForTestSet, labelID=None):
 	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
 	It returns training X, training Y, testing X and testing Y"""
 	testXSize = int(round(fractionForTestSet*toSplit.pointCount))
+	#shuffle data before pulling anything out
+	toSplit.shufflePoints()
 	#pull out a testing set
-	testX = toSplit.extractPoints(start=0, end=toSplit.pointCount, number=testXSize, randomize=True)	
+	testX = toSplit.extractPoints(start=0, end=testXSize)	
 	trainY = None
 	testY = None
 	if labelID is not None:
@@ -167,7 +169,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mo
 		except ArgumentException:
 			testX.extractPoints(start=testLength, end=normalizedAll.pointCount)
 		# resplit normalized
-		normalizedTrain = normalizedAll.extractPoints(start=testLength, end=normalizedAll.pointCount)
+		normalizedTrain = normalizedAll.extractPoints(start=testLength)
 		normalizedTest = normalizedAll
 	# two call normalize, no data combination
 	else:
