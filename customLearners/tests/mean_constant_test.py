@@ -15,6 +15,9 @@ def testMeanConstantSimple():
 	name = 'Custom.MeanConstant'
 	ret = UML.trainAndApply(name, trainX=trainX, trainY=trainY, testX=trainX)
 
+	assert ret.pointCount == 6
+	assert ret.featureCount == 1
+
 	assert ret[0] == .5
 	assert ret[1] == .5
 	assert ret[2] == .5
