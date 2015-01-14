@@ -14,12 +14,15 @@ def test_simpleCSV():
 		fromList = UML.createData(retType=t, data=[[1,2,3]])
 
 		# instantiate from csv file
-		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
-		tmpCSV.write("1,2,3\n")
-		tmpCSV.flush()
-		fromCSV = UML.createData(retType=t, data=tmpCSV.name)
-		tmpCSV.close()
-		assert fromList == fromCSV
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,3\n")
+			tmpCSV.flush()
+			objName = 'fromCSV'
+			fromCSV = UML.createData(retType=t, data=tmpCSV.name, name=objName)
+
+			assert fromList == fromCSV
+			assert fromCSV.name == objName
+			assert fromCSV.path == tmpCSV.name
 
 def test_simpleMTXArr():
 	""" Test of createData() loading a mtx (arr format) file, default params """
@@ -27,19 +30,24 @@ def test_simpleMTXArr():
 		fromList = UML.createData(retType=t, data=[[1,2,3]])
 
 		# instantiate from mtx array file
-		tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx")
-		tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
-		tmpMTXArr.write("1 3\n")
-		tmpMTXArr.write("1\n")
-		tmpMTXArr.write("2\n")
-		tmpMTXArr.write("3\n")
-		tmpMTXArr.flush()
-		fromMTXArr = UML.createData(retType=t, data=tmpMTXArr.name)
-		tmpMTXArr.close()
-		if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
-			assert fromList.isApproximatelyEqual(fromMTXArr)
-		else:
-			assert fromList == fromMTXArr
+		with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+			tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+			tmpMTXArr.write("1 3\n")
+			tmpMTXArr.write("1\n")
+			tmpMTXArr.write("2\n")
+			tmpMTXArr.write("3\n")
+			tmpMTXArr.flush()
+			objName = 'fromMTXArr'
+			fromMTXArr = UML.createData(retType=t, data=tmpMTXArr.name, name=objName)
+		
+			if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
+				assert fromList.isApproximatelyEqual(fromMTXArr)
+			else:
+				assert fromList == fromMTXArr
+
+			assert fromMTXArr.name == objName
+			assert fromMTXArr.path == tmpMTXArr.name
+
 
 
 def test_simpleMTXCoo():
@@ -48,19 +56,24 @@ def test_simpleMTXCoo():
 		fromList = UML.createData(retType=t, data=[[1,2,3]])
 
 		# instantiate from mtx coordinate file
-		tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
-		tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
-		tmpMTXCoo.write("1 3 3\n")
-		tmpMTXCoo.write("1 1 1\n")
-		tmpMTXCoo.write("1 2 2\n")
-		tmpMTXCoo.write("1 3 3\n")
-		tmpMTXCoo.flush()
-		fromMTXCoo = UML.createData(retType=t, data=tmpMTXCoo.name)
-		tmpMTXCoo.close()
-		if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
-			assert fromList.isApproximatelyEqual(fromMTXCoo)
-		else:
-			assert fromList == fromMTXCoo
+		with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+			tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+			tmpMTXCoo.write("1 3 3\n")
+			tmpMTXCoo.write("1 1 1\n")
+			tmpMTXCoo.write("1 2 2\n")
+			tmpMTXCoo.write("1 3 3\n")
+			tmpMTXCoo.flush()
+			objName = 'fromMTXCoo'
+			fromMTXCoo = UML.createData(retType=t, data=tmpMTXCoo.name, name=objName)
+			tmpMTXCoo.close()
+			if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
+				assert fromList.isApproximatelyEqual(fromMTXCoo)
+			else:
+				assert fromList == fromMTXCoo
+
+			assert tmpMTXCoo.name == objName
+			assert tmpMTXCoo.path == tmpMTXCoo.name
+
 
 def test_namesInCommentCSV():
 	""" Test of createData() loading a csv file and comment Names """

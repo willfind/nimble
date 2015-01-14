@@ -115,7 +115,7 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
 
 	return (rawData, retPNames, retFNames)
 
-def initDataObject(retType, rawData, pointNames, featureNames, name):
+def initDataObject(retType, rawData, pointNames, featureNames, name, path=None):
 	if scipy.sparse.issparse(rawData):
 		autoType = 'Sparse'
 	else:
@@ -172,13 +172,13 @@ def initDataObject(retType, rawData, pointNames, featureNames, name):
 
 	initMethod = getattr(UML.data, retType)
 	try:
-		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
+		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
 	except Exception as e:
 		einfo = sys.exc_info()
 		#something went wrong. instead, try to auto load and then convert
 		try:
 			autoMethod = getattr(UML.data, autoType)
-			ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name)
+			ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
 			ret = ret.copyAs(retType)
 		# If it didn't work, report the error on the thing the user ACTUALLY
 		# wanted

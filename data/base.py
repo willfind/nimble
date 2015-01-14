@@ -1331,6 +1331,8 @@ class Base(object):
 		for key in ret.pointNames.keys():
 			self._removePointNameAndShift(key)
 
+		ret.path = self.path
+
 		self.validate()
 		return ret
 
@@ -1392,6 +1394,8 @@ class Base(object):
 			ret.setPointNamesFromDict(self.pointNames)
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
+
+		ret.path = self.path
 
 		self.validate()
 		return ret
@@ -1473,6 +1477,10 @@ class Base(object):
 				raise ArgumentException('Cannot output a point or feature empty object in a scipy format')
 
 		ret = self._copyAs_implementation(format)
+
+		if format in ['List', 'Matrix', 'Sparse']:
+			ret.name = self.name
+			ret.path = self.path
 
 		if not rowsArePoints:
 			if format in ['List', 'Matrix', 'Sparse']:

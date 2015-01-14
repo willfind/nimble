@@ -535,6 +535,16 @@ class StructureBackend(DataTestObject):
 		expEnd = self.constructor([[4,5,6],[7,8,9]])
 		assert toTest.isIdentical(expEnd)
 
+	def test_extractPoints_PathPreserve(self):
+		""" Test extractPoints() preserves the path in the output """
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		toTest.path = 'testPath'
+		ext1 = toTest.extractPoints(0)
+		
+		assert ext1.path == 'testPath'
+
+
 	def test_extractPoints_ListIntoPEmpty(self):
 		""" Test extractPoints() by removing a list of all points """
 		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
@@ -743,6 +753,15 @@ class StructureBackend(DataTestObject):
 		assert ext1.isIdentical(exp1)
 		expEnd = self.constructor([[2,3],[5,6],[8,9]])
 		assert toTest.isIdentical(expEnd)
+
+	def test_extractFeatures_PathPreserve(self):
+		""" Test extractFeatures() preserves the path in the output """
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		toTest.path = 'testPath'
+		ext1 = toTest.extractFeatures(0)
+		
+		assert ext1.path == 'testPath'
 
 	def test_extractFeatures_ListIntoFEmpty(self):
 		""" Test extractFeatures() by removing a list of all features """
@@ -1245,7 +1264,7 @@ class StructureBackend(DataTestObject):
 		orig.copyAs("numpy array", outputAs1D=True)
 
 
-	def test_copy_outpuAs1DTrue(self):
+	def test_copyAs_outpuAs1DTrue(self):
 		""" Test copyAs() will return successfully output 1d for all allowable possibilities"""
 		dataPv = [[1,2, 0, 3]]
 		dataFV = [[1],[2],[3],[0]]
@@ -1257,6 +1276,33 @@ class StructureBackend(DataTestObject):
 
 		outFV = origFV.copyAs('numpy array', outputAs1D=True)
 		assert numpy.array_equal(outFV, numpy.array([1,2,3,0]))
+
+	def test_copyAs_NameAndPath(self):
+		""" Test copyAs() will preserve name and path attributes"""
+
+		data = [[1,2,3],[1,0,3],[2,4,6],[0,0,0]]
+		name = 'copyAsTestName'
+		orig = self.constructor(data)
+		with tempfile.NamedTemporaryFile(suffix=".csv") as source:
+			orig.writeFile(source.name, 'csv', includeNames=False)
+			orig = self.constructor(source.name, name=name)
+			path = source.name
+
+		assert orig.name == name
+		assert orig.path == path
+
+		copySparse = orig.copyAs(format='Sparse')
+		assert copySparse.name == orig.name
+		assert copySparse.path == orig.path
+		
+		copyList = orig.copyAs(format='List')
+		assert copyList.name == orig.name
+		assert copyList.path == orig.path
+
+		copyMatrix = orig.copyAs(format='Matrix')
+		assert copyMatrix.name == orig.name
+		assert copyMatrix.path == orig.path
+
 
 
 	###################
