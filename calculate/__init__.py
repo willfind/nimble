@@ -1,3 +1,4 @@
+from confidence import confidenceIntervalHelper
 from loss import fractionIncorrect
 from loss import fractionIncorrectBottom10
 from loss import meanAbsoluteError
