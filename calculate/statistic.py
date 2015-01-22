@@ -169,6 +169,9 @@ def standardDeviation(values, sample=False):
     else:
         divisor = numericalCount
 
+    if divisor == 0:
+        return 0
+
     stDev = math.sqrt(squaredDifferenceTotal / float(divisor))
     return stDev
 
