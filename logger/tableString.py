@@ -21,6 +21,9 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
 	if len(table) == 0: return ""
 	if not isinstance(table[0], (list, tuple)): raise TableError("table elements be lists or tuples. You gave: " + str(objectClass(table[0])))
 	
+	if isinstance(roundDigits, int):
+		roundDigits = "." + str(roundDigits) + "f"
+
 	table = copy.deepcopy(table)  # So that the table doesn't get destroyed in the process!
 	colWidths = []
 	#rows = len(table)
