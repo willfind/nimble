@@ -14,7 +14,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 		raise ArgumentException("The errors vector may only have one feature")
 
 	if transform is None:
-		transform = lambda x: x
+		wrappedTransform = lambda x: x
 	# we want to ensure that the transform will scale negative values, even
 	# if negative values are not within its domain
 	else:
