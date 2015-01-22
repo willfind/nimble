@@ -204,6 +204,10 @@ class Base(object):
 			raise ArgumentException("name must be a string")
 		self.name = name
 
+	def nameIsNonDefault(self):
+		"""Returns True if self.name has a non-default value"""
+		return not self.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+
 	###########################
 	# Higher Order Operations #
 	###########################
@@ -1636,9 +1640,10 @@ class Base(object):
 		self.validate()
 
 	def elementwisePower(self, other):
-		# other is UML
-		if not isinstance(other, UML.data.Base):
-			raise ArgumentException("'other' must be an instance of a UML data object")
+		# other is UML or single numerical value
+		singleValue = dataHelpers._looksNumeric(other)
+		if not singleValue and not isinstance(other, UML.data.Base):
+			raise ArgumentException("'other' must be an instance of a UML data object or a single numeric value")
 
 		# Test element type self
 		if self.pointCount > 0:
@@ -1647,23 +1652,30 @@ class Base(object):
 					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
 		# test element type other
-		if other.pointCount > 0:
-			for val in other.pointView(0):
-				if not dataHelpers._looksNumeric(val):
-					raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+		if isinstance(other, UML.data.Base):
+			if other.pointCount > 0:
+				for val in other.pointView(0):
+					if not dataHelpers._looksNumeric(val):
+						raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
-		# same shape
-		if self.pointCount != other.pointCount:
-			raise ArgumentException("The number of points in each object must be equal.")
-		if self.featureCount != other.featureCount:
-			raise ArgumentException("The number of features in each object must be equal.")
+			# same shape
+			if self.pointCount != other.pointCount:
+				raise ArgumentException("The number of points in each object must be equal.")
+			if self.featureCount != other.featureCount:
+				raise ArgumentException("The number of features in each object must be equal.")
+		
 		if self.pointCount == 0 or self.featureCount == 0:
 			raise ImproperActionException("Cannot do elementwiseMultiply when points or features is emtpy")
 
-		def powFromRight(val, pnum, fnum):
-			return val ** other[pnum,fnum]
+		if isinstance(other, UML.data.Base):
+			def powFromRight(val, pnum, fnum):
+				return val ** other[pnum,fnum]
+			self.applyToElements(powFromRight)
+		else: 
+			def powFromRight(val, pnum, fnum):
+				return val ** other
+			self.applyToElements(powFromRight)
 
-		self.applyToElements(powFromRight)
 		self.validate()
 
 

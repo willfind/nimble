@@ -490,6 +490,22 @@ class NumericalBackend(DataTestObject):
 
 			assert exp1Obj.isIdentical(caller)
 
+	def test_elementwisePower_handmadeScalar(self):
+		""" Test elementwisePower on handmade data with scalar parameter"""
+		data = [[1.0,2], [4,5], [7,4]]
+		exponent = 2
+		exp1 = [[1,4], [16,25], [49,16]]
+		callerpnames = ['1', '2', '3']
+
+		makers = [UML.data.List, UML.data.Matrix, UML.data.Sparse]
+		for maker in makers:
+			caller = self.constructor(data, pointNames=callerpnames)
+			caller.elementwisePower(exponent)
+
+			exp1Obj = self.constructor(exp1, pointNames=callerpnames)
+
+			assert exp1Obj.isIdentical(caller)
+
 
 	#############################
 	# elementwiseMultiply #
