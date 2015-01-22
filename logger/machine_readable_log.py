@@ -89,7 +89,9 @@ class MachineReadableLogger(UmlLogger):
 
 
 
-	def _logRun_implementation(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
+	def _logRun_implementation(self, trainData, trainLabels, testData, testLabels,
+								function, metrics, predictions, performance, timer,
+								extraInfo=None, numFolds=None):
 		"""
 			Write one (data + classifer + error metrics) combination to a log file
 			in machine readable format.  Should include as much information as possible,
@@ -165,7 +167,7 @@ class MachineReadableLogger(UmlLogger):
 					logLine += createMRLineElement(key, value)
 
 		if metrics is not None:
-			for metric, result in zip(metrics,results):
+			for metric, result in zip(metrics,performance):
 				if isinstance(metric, (str, unicode)):
 					logLine += createMRLineElement(str(metric), result)
 				else:
@@ -398,11 +400,11 @@ def testParseLog():
 
 	logpath = os.path.join(umlParentDir, "mrTest2.txt")
 	testLogger = MachineReadableLogger(logpath)
-	testLogger.logRun(trainData1, testData1, functionStr, metrics, results, Stopwatch())
+	testLogger.logRun(trainData1, None, testData1, None, functionStr, metrics, None, results, Stopwatch())
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metrics, results, Stopwatch())
+	testLogger.logRun(trainData1, None, testData1, None, functionObj, metrics, None, results, Stopwatch())
 
 	logDicts = parseLog(logpath)
 
@@ -439,12 +441,13 @@ def main():
 
 	logpath = os.path.join(umlParentDir, "mrTest2.txt")	
 	testLogger = MachineReadableLogger(logpath)
-	testLogger.logRun(trainData1, testData1, functionStr, metrics, results, 0.0)
+	testLogger.logRun(trainData1, None, testData1, None, functionStr, metrics, None, results, 0.0)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metrics, results, 0.0)
+	testLogger.logRun(trainData1, None, testData1, None, functionObj, metrics, None, results, 0.0)
 
+	assert False
 
 
 if __name__ == "__main__":

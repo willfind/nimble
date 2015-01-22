@@ -733,10 +733,10 @@ def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='defaul
 	trainedLearner = interface.train(learnerName, trainX, trainY, merged, timer)
 
 	# TODO logging where should the stuff below go? somewhere in UniversalInterface?
-#	if sendToLog:
-#		logManager = LogManager()
-#		funcString = interface.getCanonicalName() + '.' + learnerName
-#		logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=merged)
+	if sendToLog:
+		logManager = LogManager()
+		funcString = interface.getCanonicalName() + '.' + learnerName
+		logManager.logRun(trainX, trainY, None, None, funcString, None, None, None, timer, extraInfo=merged)
 
 	return trainedLearner
 
@@ -817,7 +817,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 	if sendToLog:
 		logManager = LogManager()
 		funcString = interface.getCanonicalName() + '.' + learnerName
-		logManager.logRun(trainX, testX, funcString, None, None, timer, extraInfo=merged)
+		logManager.logRun(trainX, trainY, testX, None, funcString, None, results, None, timer, extraInfo=merged)
 
 	return results
 
@@ -902,10 +902,12 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	if sendToLog:
 		timer.stop('crossValidateReturnBest')
 
-	performance = interface.trainAndTest(trueLearnerName, trainX, trainY, testX, testY, performanceFunction, arguments=bestArgument, output=output, scoreMode=scoreMode, negativeLabel=negativeLabel, timer=timer)
+	predictions = interface.trainAndApply(trueLearnerName, trainX, trainY, testX, arguments=bestArgument, output=output, scoreMode=scoreMode, timer=timer)
+	performance = UML.umlHelpers.computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
 
 	if sendToLog:
 		logManager = LogManager()
-		logManager.logRun(trainX, testX, learnerName, [performanceFunction], [performance], timer,)
+		funcString = interface.getCanonicalName() + '.' + learnerName
+		logManager.logRun(trainX, trainY, testX, testY, funcString, [performanceFunction], predictions, [performance], timer, bestArgument)
 
 	return performance

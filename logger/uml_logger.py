@@ -62,12 +62,14 @@ class UmlLogger(object):
 		self.logFile.write(message)
 		self.logFile.flush()
 
-	def logRun(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
+	def logRun(self, trainData, trainLabels, testData, testLabels, function, metrics,
+				predictions, performance, timer, extraInfo=None, numFolds=None):
 		"""
 		Send pertinent information about a cycle of train a learner and test its performance
 		to the log file
 		"""
-		self._logRun_implementation(trainData, testData, function, metrics, results, timer, extraInfo, numFolds)
+		self._logRun_implementation(trainData, trainLabels, testData, testLabels,
+				function, metrics, predictions, performance, timer, extraInfo, numFolds)
 
 
 	def logData(self, baseDataObject):
@@ -84,5 +86,4 @@ class UmlLogger(object):
 		if dataFileName is None and baseDataType is None and name is None:
 			raise ArgumentException("logLoad requires at least one non-None argument")
 		else:
-			self._logRun_implementation(dataFileName, baseDataType, name)
-
+			self._logLoad_implementation(dataFileName, baseDataType, name)

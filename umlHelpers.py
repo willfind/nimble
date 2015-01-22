@@ -1731,7 +1731,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, testX, learnerName, performanceFunction, results, timer, extraInfo=merged)
+		logManager.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results, timer, extraInfo=merged)
 
 	return results
 
@@ -2051,7 +2051,7 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, testX, learnerName, performanceFunction, results, timer, extraInfo=merged)
+		logManager.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results, timer, extraInfo=merged)
 
 	return results
 

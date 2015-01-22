@@ -52,8 +52,10 @@ class HumanReadableLogger(UmlLogger):
 			self.logMessage("Data name: "+str(name))
 
 
-	def _logRun_implementation(self, trainData, testData, function, metrics, results, timer, extraInfo=None, numFolds=None):
-		"""
+	def _logRun_implementation(self, trainData, trainLabels, testData, testLabels,
+								function, metrics, predictions, performance, timer,
+								extraInfo=None, numFolds=None):
+		"""timer
 			Convert a set of objects representing one run (data used for training, data used for
 			testing, function representing a unique classifier {learnerName, parameters}, error metrics,
 			and any additional info) into a list.  This list can be appended to a second list, to create
@@ -78,65 +80,35 @@ class HumanReadableLogger(UmlLogger):
 
 		self.logMessage('*'*80)
 
-		tableHeaders = []
-		tableRow = []
-
 		#Add current time to the basic log table
-		tableHeaders.append("Timestamp")
-		tableRow.append(time.strftime('%Y-%m-%d %H:%M:%S'))
+		self.logMessage("Timestamp " + time.strftime('%Y-%m-%d %H:%M:%S'))
 
+		#Write the function defining the classifier to the log. If it is
+		#a string, write it directly.  Else use inspect to turn the function
+		#into a string
+		if isinstance(function, (str, unicode)):
+			self.logMessage("Function: " + str(function))
+		else:
+			self.logMessage("Function: ")
+			funcLines = inspect.getsourcelines(function)[0]
+			for funcLine in funcLines:
+				self.logMessage(str(funcLine))
+
+		self.logMessage("")
+
+		# Table formated info on training data, if available
 		if trainData is not None:
-			#if the data matrix was sourced from a file, add the file name and path
-			if trainData.name is not None:
-				tableHeaders.append("Train Data file")
-				tableRow.append(trainData.name)
-			if trainData.path is not None:
-				tableHeaders.append("Train Data path")
-				tableRow.append(trainData.path)
-			#add number of training points, # of of features to output list
-			if trainData.data is not None:
-				tableHeaders.append("Train points")
-				tableRow.append(str(trainData.pointCount))
-				tableHeaders.append("Train features")
-				tableRow.append(str(trainData.featureCount))
-			else:
-				tableHeaders.append("Train points")
-				tableHeaders.append("0")
+			trainTable = _dataInfo(trainData, 'Train')
+			self.logMessage(trainTable)
 
+		# Table formated info on training data, if available
 		if testData is not None:
-			#add name and path, if present
-			if testData.name is not None and testData.name != trainData.name:
-				tableHeaders.append("Test Data file")
-				tableRow.append(testData.name)
-			if testData.path is not None and testData.path != trainData.path:
-				tableHeaders.append("Test Data path")
-				tableRow.append(testData.path)
-			#add number of training points, # of of features to output list
-			if testData.data is not None:
-				tableHeaders.append("Test points")
-				tableRow.append(str(testData.pointCount))
-				tableHeaders.append("Test features")
-				tableRow.append(str(testData.featureCount))
-			else:
-				tableHeaders.append("Test points")
-				tableHeaders.append("0")
+			testTable = _dataInfo(testData, 'Test')			
+			self.logMessage(testTable)
 
 		if numFolds is not None:
-			tableHeaders.append("# of folds")
-			tableRow.append(str(numFolds))
-
-
-		if timer is not None:
-			for header in timer.cumulativeTimes.keys():
-				duration = timer.calcRunTime(header)
-				tableHeaders.append(header+" time")
-				tableRow.append("{0:.2f}".format(duration))
-
-		#Print table w/basic info to the log
-		basicTable = [tableHeaders, tableRow]
-		basicTableStr = tableString(basicTable, True, None, roundDigits=4)
-		self.logMessage(basicTableStr)
-
+			self.logMessage("# of folds: " + str(numFolds))
+		
 		#if extraInfo is not null, we create a new table and add all values in
 		#extraInfo
 		if extraInfo is not None:
@@ -153,62 +125,97 @@ class HumanReadableLogger(UmlLogger):
 			extraTable = [extraTableHeaders, extraTableValues]
 			self.logMessage(tableString(extraTable, True, None, roundDigits=4))
 
-
-		#Write the function defining the classifier to the log. If it is
-		#a string, write it directly.  Else use inspect to turn the function
-		#into a string
-		self.logMessage("")
-		self.logMessage("Function:")
-		if isinstance(function, (str, unicode)):
-			self.logMessage(str(function))
-		else:
-			funcLines = inspect.getsourcelines(function)[0]
-			for funcLine in funcLines:
-				self.logMessage(str(funcLine))
-
 		#Print out the name/function text of the error metric being used (if there
 		#is only one), or the rate & name/function text if more than one is being
 		#used
 		if metrics is not None:
 			metricTable = []
 			metricHeaders = []
-			metricHeaders.append("\n\nError rate")
 			metricHeaders.append("Error Metric")
+			metricHeaders.append("95% CI low")
+			metricHeaders.append("Error Value")
+			metricHeaders.append("95% CI high")
 			metricTable.append(metricHeaders)
-			for metric, result in zip(metrics,results):
+			for metric, result in zip(metrics,performance):
 				metricRow = []
-				metricRow.append(str(result))
-
+				# first column: Error metric
 				if inspect.isfunction(metric):
-					metricFuncLines = inspect.getsourcelines(metric)[0]
-					metricString = ""
-					for metricFuncLine in metricFuncLines:
-						metricString += metricFuncLine
+					metricString = metric.__name__
+#					metricFuncLines = inspect.getsourcelines(metric)[0]
+#					metricString = ""
+#					for metricFuncLine in metricFuncLines:
+#						metricString += metricFuncLine
 				else:
 					metricString = str(metric)
 				metricRow.append(metricString)
+
+#				# second column: Error value
+#				metricRow.append(result)
+
+				intervalGenName = metricString + 'ConfidenceInterval'
+				interval = None
+				if hasattr(UML.calculate.confidence, intervalGenName):
+					if testLabels is not None and predictions is not None:
+						intervalGen = getattr(UML.calculate.confidence, intervalGenName)
+						interval = intervalGen(testLabels, predictions)
+				if interval is None:
+					metricRow.append("")
+					metricRow.append(result)
+					metricRow.append("")
+				else:
+					metricRow.append(interval[0])
+					metricRow.append(result)
+					metricRow.append(interval[1])
+
+				
 				metricTable.append(metricRow)
 			self.logMessage(tableString(metricTable, True, None, roundDigits=4))
 
+		if timer is not None:
+			for header in timer.cumulativeTimes.keys():
+				duration = timer.calcRunTime(header)
+				self.logMessage(header+" time: " + "{0:.2f}".format(duration))
 
-def main():
+		self.logMessage("")
+
+def _dataInfo(dataObj, objName):
+	tableHeaders = []
+	tableRow = []
+
+	#if the data matrix was sourced from a file, add the file name and path
+	if dataObj.name is not None and dataObj.nameIsNonDefault():
+		tableHeaders.append(objName + " Data file")
+		tableRow.append(dataObj.name)
+	if dataObj.path is not None:
+		tableHeaders.append(objName + " Data path")
+		tableRow.append(dataObj.path)
+	#add number of training points, # of of features to output list
+	tableHeaders.append(objName + " points")
+	tableRow.append(str(dataObj.pointCount))
+	tableHeaders.append(objName + " features")
+	tableRow.append(str(dataObj.featureCount))
+	
+	#Print table w/basic info to the log
+	basicTable = [tableHeaders, tableRow]
+	basicTableStr = tableString(basicTable, True, None, roundDigits=4)
+	return basicTableStr
+
+
+def testBasic():
 	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
 	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
 
 	trainData1 = UML.createData('Sparse', trainDataBase)
 	testData1 = UML.createData('Sparse', testDataBase)
-	functionStr = """def f():
-	return 0"""
 	metrics = ["rootMeanSquareError", "meanAbsoluteError"]
 	results = [0.50,0.45]
 	extra = {"c":0.5, "folds":10, "tests": 20}
 
 	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")
-	testLogger.logRun(trainData1, testData1, functionStr, metrics, results, 0.5, extra)
 
 	functionObj = lambda x: x+1
 
-	testLogger.logRun(trainData1, testData1, functionObj, metrics, results, 0.5, extra)
+	testLogger.logRun(trainData1, None, testData1, None, functionObj, metrics, None, results, 0.5, extra)
 
 if __name__ == "__main__":
 	main()
