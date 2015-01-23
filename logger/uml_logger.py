@@ -3,7 +3,7 @@ import numpy
 from UML.exceptions import ArgumentException
 
 """
-	Handle logging of creating and testing classifiers.  Currently
+	Handle logging of creating and testing learners.  Currently
 	creates two versions of a log for each run:  one that is human-readable,
 	and one that is machine-readable (csv).
 	Should report, for each run:

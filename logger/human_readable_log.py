@@ -52,7 +52,7 @@ class HumanReadableLogger(UmlLogger):
 			self.logMessage("Data name: "+str(name))
 
 
-	def _logRun_implementation(self, trainData, trainLabels, testData, testLabels,
+	def _logRun_implementation(self, trainX, trainY, testX, testY,
 								function, metrics, predictions, performance, timer,
 								extraInfo=None, numFolds=None):
 		"""timer
@@ -74,131 +74,158 @@ class HumanReadableLogger(UmlLogger):
 
 				Any additional information contained in extraInfo dict (optional).
 		"""
-		#if the log file is not available, try to create it
-		if not self.isAvailable:
-			self.setup()
 
-		self.logMessage('*'*80)
+		tableList = []
 
-		#Add current time to the basic log table
-		self.logMessage("Timestamp " + time.strftime('%Y-%m-%d %H:%M:%S'))
+		#Pack the function defining the learner
+		tableList.append([["Learner", str(function)]])
 
-		#Write the function defining the classifier to the log. If it is
-		#a string, write it directly.  Else use inspect to turn the function
-		#into a string
-		if isinstance(function, (str, unicode)):
-			self.logMessage("Function: " + str(function))
-		else:
-			self.logMessage("Function: ")
-			funcLines = inspect.getsourcelines(function)[0]
-			for funcLine in funcLines:
-				self.logMessage(str(funcLine))
+		# TODO: need kind of call? train vs trainAndApply?
+#		if numFolds is not None:
+#			self.logMessage("# of folds: " + str(numFolds))
 
-		self.logMessage("")
+		tableList.append(_packDataInfo([trainX, trainY, testX, testY]))
 
-		# Table formated info on training data, if available
-		if trainData is not None:
-			trainTable = _dataInfo(trainData, 'Train')
-			self.logMessage(trainTable)
-
-		# Table formated info on training data, if available
-		if testData is not None:
-			testTable = _dataInfo(testData, 'Test')			
-			self.logMessage(testTable)
-
-		if numFolds is not None:
-			self.logMessage("# of folds: " + str(numFolds))
-		
 		#if extraInfo is not null, we create a new table and add all values in
 		#extraInfo
-		if extraInfo is not None:
-			extraTableHeaders = []
-			extraTableValues = []
-			for key, value in extraInfo.iteritems():
-				extraTableHeaders.append(str(key))
-				if isinstance(value, types.FunctionType):
-					extraTableValues.append(value.__name__)
-				elif isinstance(value, UML.data.Base):
-					extraTableValues.append("UML.data.Base: " + "(" + str(value.pointCount) + ", " + str(value.featureCount) + ")")
-				else:
-					extraTableValues.append(str(value))
-			extraTable = [extraTableHeaders, extraTableValues]
-			self.logMessage(tableString(extraTable, True, None, roundDigits=4))
+		if extraInfo is not None and extraInfo != {}:
+			tableList.append(_packExtraInfo(extraInfo))
 
 		#Print out the name/function text of the error metric being used (if there
 		#is only one), or the rate & name/function text if more than one is being
 		#used
 		if metrics is not None:
-			metricTable = []
-			metricHeaders = []
-			metricHeaders.append("Error Metric")
-			metricHeaders.append("95% CI low")
-			metricHeaders.append("Error Value")
-			metricHeaders.append("95% CI high")
-			metricTable.append(metricHeaders)
-			for metric, result in zip(metrics,performance):
-				metricRow = []
-				# first column: Error metric
-				if inspect.isfunction(metric):
-					metricString = metric.__name__
-#					metricFuncLines = inspect.getsourcelines(metric)[0]
-#					metricString = ""
-#					for metricFuncLine in metricFuncLines:
-#						metricString += metricFuncLine
-				else:
-					metricString = str(metric)
-				metricRow.append(metricString)
-
-#				# second column: Error value
-#				metricRow.append(result)
-
-				intervalGenName = metricString + 'ConfidenceInterval'
-				interval = None
-				if hasattr(UML.calculate.confidence, intervalGenName):
-					if testLabels is not None and predictions is not None:
-						intervalGen = getattr(UML.calculate.confidence, intervalGenName)
-						interval = intervalGen(testLabels, predictions)
-				if interval is None:
-					metricRow.append("")
-					metricRow.append(result)
-					metricRow.append("")
-				else:
-					metricRow.append(interval[0])
-					metricRow.append(result)
-					metricRow.append(interval[1])
-
-				
-				metricTable.append(metricRow)
-			self.logMessage(tableString(metricTable, True, None, roundDigits=4))
+			metricTable = _packMetricInfo(testY, metrics, predictions, performance)
+			tableList.append(metricTable)
 
 		if timer is not None:
+			timerHeaders = []
+			timerList = []
 			for header in timer.cumulativeTimes.keys():
 				duration = timer.calcRunTime(header)
-				self.logMessage(header+" time: " + "{0:.2f}".format(duration))
+				timerHeaders.append(header + " time")
+				timerList.append("{0:.2f}".format(duration))
+			tableList.append([timerHeaders, timerList])
 
-		self.logMessage("")
+		self._log_EntryOfTables(tableList)
 
-def _dataInfo(dataObj, objName):
-	tableHeaders = []
-	tableRow = []
+	def _log_EntryOfTables(self, toLog):
+		"""Takes a list of dicts specifying a sequence of tables to be 
+		generated as strings and then written to the log file
+		
+		"""
+		toOutput = '*'*80 + '\n'
 
-	#if the data matrix was sourced from a file, add the file name and path
-	if dataObj.name is not None and dataObj.nameIsNonDefault():
-		tableHeaders.append(objName + " Data file")
-		tableRow.append(dataObj.name)
-	if dataObj.path is not None:
-		tableHeaders.append(objName + " Data path")
-		tableRow.append(dataObj.path)
-	#add number of training points, # of of features to output list
-	tableHeaders.append(objName + " points")
-	tableRow.append(str(dataObj.pointCount))
-	tableHeaders.append(objName + " features")
-	tableRow.append(str(dataObj.featureCount))
-	
-	#Print table w/basic info to the log
-	basicTable = [tableHeaders, tableRow]
-	basicTableStr = tableString(basicTable, True, None, roundDigits=4)
-	return basicTableStr
+		timestamp = [["Timestamp", time.strftime('%Y-%m-%d %H:%M:%S')]]
+		toOutput += tableString(timestamp) + '\n'
+
+		for table in toLog:
+			rowHeaders = False
+			if table[0][0] == 'Data':
+				rowHeaders = True
+			toOutput += tableString(table, rowHeaders, roundDigits=4) + '\n'
+
+		self.logMessage(toOutput)
+
+
+def _packMetricInfo(testY, metrics, predictions, performance):
+	metricTable = []
+	metricHeaders = []
+	metricHeaders.append("Error Metric")
+	metricHeaders.append("95% CI low")
+	metricHeaders.append("Error Value")
+	metricHeaders.append("95% CI high")
+	metricTable.append(metricHeaders)
+	for metric, result in zip(metrics,performance):
+		metricRow = []
+		metricString = str(metric.__name__)
+		metricRow.append(metricString)
+
+		intervalGenName = metricString + 'ConfidenceInterval'
+		interval = None
+		if hasattr(UML.calculate.confidence, intervalGenName):
+			if testY is not None and predictions is not None:
+				intervalGen = getattr(UML.calculate.confidence, intervalGenName)
+				interval = intervalGen(testY, predictions)
+		if interval is None:
+			metricRow.append("")
+			metricRow.append(result)
+			metricRow.append("")
+		else:
+			metricRow.append(interval[0])
+			metricRow.append(result)
+			metricRow.append(interval[1])
+
+		metricTable.append(metricRow)
+	return metricTable
+
+
+def _packExtraInfo(extraInfo):
+	extraTableHeaders = []
+	extraTableValues = []
+	for key, value in extraInfo.iteritems():
+		extraTableHeaders.append(str(key))
+		if isinstance(value, types.FunctionType):
+			extraTableValues.append(value.__name__)
+		elif isinstance(value, UML.data.Base):
+			extraTableValues.append("UML.data.Base: " + "(" + str(value.pointCount) + ", " + str(value.featureCount) + ")")
+		else:
+			extraTableValues.append(str(value))
+	extraTable = [extraTableHeaders, extraTableValues]
+	return extraTable
+
+def _packDataInfo(dataObjects):
+	assert len(dataObjects) == 4
+
+	# TODO currently ignore labels Obj from data, should record it somehow instead
+	for i in range(4):
+		if isinstance(dataObjects[i], (int, basestring)):
+			dataObjects[i] = None
+
+	tableHeaders = ["Data"]
+
+	# check to see if there are meaningful values of name and path for any
+	# of the objects
+	includeName = False
+	includePath = False
+	for d in dataObjects:
+		if d is not None:
+			if d.name is not None and d.nameIsNonDefault():
+				includeName = True
+			if d.path is not None:
+				includePath = True
+
+	# set up headers
+	if includeName:
+		tableHeaders.append("Name")
+	if includePath:
+		tableHeaders.append("Path")
+	tableHeaders.append("# points")
+	tableHeaders.append("# features")
+
+	# pack row for each non None object
+	rowHeaders = ['trainX', 'trainY', 'testX', 'testY']
+	rawTable = [tableHeaders]
+	for i in range(4):
+		currRow = [rowHeaders[i]]
+		d = dataObjects[i]
+		if d is not None:
+			if includeName:
+				if d.name is not None and d.nameIsNonDefault():
+					currRow.append(d.name)
+				else:
+					currRow.append("")
+			if includePath:
+				if d.path is not None:
+					currRow.append(d.path)
+				else:
+					currRow.append("")
+			currRow.append(d.pointCount)
+			currRow.append(d.featureCount)
+
+			rawTable.append(currRow)
+
+	return rawTable
 
 
 def testBasic():
