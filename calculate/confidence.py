@@ -14,17 +14,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 		raise ArgumentException("The errors vector may only have one feature")
 
 	if transform is None:
-		wrappedTransform = lambda x: x
-	# we want to ensure that the transform will scale negative values, even
-	# if negative values are not within its domain
-	else:
-		def wrappedTransform(value):
-			isNegative = value < 0
-			pos = abs(value)
-			ret = transform(pos)
-			if isNegative:
-				ret = -ret
-			return ret
+		transform = lambda x: x
 
 	halfConfidence = 1 - ((1-confidence)/2.0)
 	boundaryOnNormalScale = scipy.stats.norm.ppf(halfConfidence)
@@ -33,8 +23,8 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 	mean = errors.featureStatistics('mean')[0,0]
 	std = errors.featureStatistics('SampleStandardDeviation')[0,0]
 
-	low = wrappedTransform(mean - (boundaryOnNormalScale * (std / sqrtN)))
-	high = wrappedTransform(mean + (boundaryOnNormalScale * (std / sqrtN)))
+	low = transform(mean - (boundaryOnNormalScale * (std / sqrtN)))
+	high = transform(mean + (boundaryOnNormalScale * (std / sqrtN)))
 
 	return (low, high)
 
@@ -42,7 +32,13 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 def rootMeanSquareErrorConfidenceInterval(known, predicted, confidence=0.95):
 	errors = known - predicted
 	errors.elementwisePower(2)
-	return confidenceIntervalHelper(errors, math.sqrt, confidence)
+
+	def wrappedSqrt(value):
+		if value < 0:
+			return 0
+		return math.sqrt(value)
+
+	return confidenceIntervalHelper(errors, wrappedSqrt, confidence)
 
 def meanAbsoluteErrorConfidenceInterval(known, predicted, confidence=0.95):
 	errors = known - predicted
