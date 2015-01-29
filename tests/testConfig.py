@@ -165,6 +165,7 @@ def testSCPCP_whitespaceIgnored():
 		pass
 
 
+
 def test_settings_GetSet():
 	""" Test UML.settings getters and setters """
 	#orig changes
@@ -191,6 +192,53 @@ def test_settings_GetSet():
 
 	# confirm that changes is the same
 	assert UML.settings.changes == origChangeSet
+
+@raises(ArgumentException)
+@safetyWrapper
+def test_settings_HooksException_unCallable():
+	""" Test SeesionConfiguration.hook() throws exception on bad input """
+	UML.settings.hook("TestS", "TestOp", 5)
+
+
+@raises(ArgumentException)
+@safetyWrapper
+def test_settings_HooksException_unHookable():
+	""" Test SeesionConfiguration.hook() throws exception for unhookable combo """
+	UML.settings.hook("TestS", "TestOp", None)
+
+	def nothing(value):
+		pass
+
+	UML.settings.hook("TestS", "TestOp", nothing)
+
+@raises(ArgumentException)
+@safetyWrapper
+def test_settings_HooksException_wrongSig():
+	""" Test SeesionConfiguration.hook() throws exception on incorrect signature """
+	UML.settings.hook("TestS", "TestOp", None)
+
+	def twoArg(value, value2):
+		pass
+
+	UML.settings.hook("TestS", "TestOp", twoArg)
+
+
+@safetyWrapper
+def test_settings_Hooks():
+	""" Test the on-change hooks for a SessionConfiguration object """
+	history = []
+
+	def appendToHistory(newValue):
+		history.append(newValue)
+
+	UML.settings.hook("TestS", "TestOp", appendToHistory)
+
+	UML.settings.set("TestS", "TestOp", 5)
+	UML.settings.set("TestS", "TestOp", 4)
+	UML.settings.set("TestS", "TestOp", 1)
+	UML.settings.set("TestS", "TestOp", "Bang")
+
+	assert history == [5,4,1,"Bang"]
 
 @safetyWrapper
 def test_settings_GetSectionOnly():

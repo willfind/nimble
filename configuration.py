@@ -23,6 +23,7 @@ import ConfigParser
 import os
 import copy
 import sys
+import inspect
 
 import UML
 from UML.exceptions import ArgumentException
@@ -216,6 +217,7 @@ class SessionConfiguration(object):
 		self.path = path
 
 		self.changes = {}
+		self.hooks = {}
 
 	def delete(self, section, option):
 		success = False
@@ -270,6 +272,37 @@ class SessionConfiguration(object):
 			fromFile = self.cp.get(section, option)
 			return fromFile
 
+	def hook(self, section, option, toCall):
+		"""
+		Assign a function to be called the next time the value of the
+		specified section/option combination is changed. The provided
+		function (parameter toCall) may only take one argument: the
+		new value of the option. This function is called directly
+		after the successful set call.
+
+		None is a sentinal value that may be assigned as a hook.
+		It disallows hooking on for this section option combination
+		for the remainder of the session.
+
+		"""
+		key = (section, option)
+		if key in self.hooks and self.hooks[key] is None:
+			msg = "The hook for (" + str(key) + ") has been previously set as "
+			msg += "None, subsequently disabling this featre on that section /"
+			msg += " option combination"
+			raise ArgumentException(msg)
+
+		if toCall is not None:
+			if not hasattr(toCall, '__call__'):
+				msg = 'toCall must be callable (function, method, etc) or None'
+				raise ArgumentException(msg)
+			if len(inspect.getargspec(toCall)[0]) != 1:
+				msg = 'toCall may only take one argument'
+				raise ArgumentException(msg)
+
+		self.hooks[key] = toCall
+
+
 	def set(self, section, option, value):
 		"""
 		Set an option for this session.
@@ -304,6 +337,13 @@ class SessionConfiguration(object):
 			if not ignore:
 				raise einfo[1], None, einfo[2]
 		self.changes[(section, option)] = value
+
+		# call hook if available
+		key = (section, option)
+#		import pdb
+#		pdb.set_trace()
+		if key in self.hooks and self.hooks[key] is not None:
+			self.hooks[key](value)
 
 	def saveChanges(self, section=None, option=None):
 		"""
