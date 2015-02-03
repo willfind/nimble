@@ -16,9 +16,9 @@ def testfractionIncorrectBottom10SanityCheck():
 	correctData = [[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1]]
 	wrongData = [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]]
 
-	knowns = createData('List', data=knownsData, sendToLog=False)
-	correct = createData('List', data=correctData, featureNames=['0','1'], sendToLog=False)
-	wrong = createData('List', data=wrongData, featureNames=['0','1'], sendToLog=False)
+	knowns = createData('List', data=knownsData)
+	correct = createData('List', data=correctData, featureNames=['0','1'])
+	wrong = createData('List', data=wrongData, featureNames=['0','1'])
 
 	correctScore = fractionIncorrectBottom10(knowns, correct, negativeLabel=0)
 	wrongScore = fractionIncorrectBottom10(knowns, wrong, negativeLabel=0)
