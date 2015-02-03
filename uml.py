@@ -15,7 +15,6 @@ import UML
 from UML.exceptions import ArgumentException
 
 from UML.logger import UmlLogger
-from UML.logger import LogManager
 from UML.logger import Stopwatch
 
 from UML.umlHelpers import findBestInterface
@@ -402,7 +401,7 @@ def createDataOld(retType, data, pointNames=None, featureNames=None, fileType=No
 			if isinstance(sendToLog, UmlLogger):
 				logger = sendToLog
 			else:
-				logger = LogManager()
+				logger = UML.logger.LogManager()
 			#logger.logLoad(retType, data, name)
 		# determine the extension, call the appropriate helper
 		split = data.rsplit('.', 1)
@@ -734,9 +733,8 @@ def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='defaul
 
 	# TODO logging where should the stuff below go? somewhere in UniversalInterface?
 	if sendToLog:
-		logManager = LogManager()
 		funcString = interface.getCanonicalName() + '.' + learnerName
-		logManager.logRun(trainX, trainY, None, None, funcString, None, None, None, timer, extraInfo=merged)
+		UML.logger.active.logRun(trainX, trainY, None, None, funcString, None, None, None, timer, extraInfo=merged)
 
 	return trainedLearner
 
@@ -815,9 +813,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 		results = interface.trainAndApply(learnerName, trainX, trainY, testX, merged, output, scoreMode, timer)
 
 	if sendToLog:
-		logManager = LogManager()
 		funcString = interface.getCanonicalName() + '.' + learnerName
-		logManager.logRun(trainX, trainY, testX, None, funcString, None, results, None, timer, extraInfo=merged)
+		UML.logger.active.logRun(trainX, trainY, testX, None, funcString, None, results, None, timer, extraInfo=merged)
 
 	return results
 
@@ -906,8 +903,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	performance = UML.umlHelpers.computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
 
 	if sendToLog:
-		logManager = LogManager()
 		funcString = interface.getCanonicalName() + '.' + learnerName
-		logManager.logRun(trainX, trainY, testX, testY, funcString, [performanceFunction], predictions, [performance], timer, bestArgument)
+		UML.logger.active.logRun(trainX, trainY, testX, testY, funcString, [performanceFunction], predictions, [performance], timer, bestArgument)
 
 	return performance

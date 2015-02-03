@@ -21,8 +21,6 @@ import sys
 
 import UML
 
-from UML.logger import UmlLogger
-from UML.logger import LogManager
 from UML.logger import Stopwatch
 
 from UML.exceptions import ArgumentException, ImproperActionException
@@ -1727,11 +1725,10 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 
 	# Send this run to the log, if desired
 	if sendToLog:
-		logManager = LogManager()
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results, timer, extraInfo=merged)
+		UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results, timer, extraInfo=merged)
 
 	return results
 
@@ -2047,11 +2044,9 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 
 	# Send this run to the log, if desired
 	if sendToLog:
-		logManager = LogManager()
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
-		logManager.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results, timer, extraInfo=merged)
+		UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results, timer, extraInfo=merged)
 
 	return results
-

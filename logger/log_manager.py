@@ -9,20 +9,14 @@
 import os
 import datetime
 
+import UML
 from human_readable_log import HumanReadableLogger
 from machine_readable_log import MachineReadableLogger
 
 
 class LogManager(object):
 
-	def __init__(self, logLocation=None, logName=None):
-		if logLocation is None:
-			logLocation = '../'
-
-		if logName is None:
-			currDate = datetime.datetime.now()
-			logName = "uMLLog-" + currDate.strftime("%Y%m%d")
-
+	def __init__(self, logLocation, logName):
 		fullLogDesignator = os.path.join(logLocation, logName)
 
 		self.humanReadableLog = HumanReadableLogger(fullLogDesignator + ".txt")
@@ -51,3 +45,31 @@ class LogManager(object):
 		"""
 		self.humanReadableLog.logRun(trainData, trainLabels, testData, testLabels, function, metrics, predictions, performance, timer, extraInfo, numFolds)
 		self.machineReadableLog.logRun(trainData, trainLabels, testData, testLabels, function, metrics, predictions, performance, timer, extraInfo, numFolds)
+
+def initLoggerAndLogConfig():
+	try:
+		location = UML.settings.get("logger", "location")
+	except:
+		location = './logs-UML'
+		UML.settings.set("logger", "location", location)
+		UML.settings.saveChanges("logger", "location")
+	finally:
+	#	def cleanThenReInit(newLocation):
+
+	#	UML.settings.hook("logger", "location")
+		pass
+	try:
+		name = UML.settings.get("logger", "name")
+	except:
+		name = "log-UML"
+		UML.settings.set("logger", "name", name)
+		UML.settings.saveChanges("logger", "name")
+
+	try:
+		loggingEnabled = UML.settings.get("logger", "enabled")
+	except:
+		loggingEnabled = 'True'
+		UML.settings.set("logger", "enabled", loggingEnabled)
+		UML.settings.saveChanges("logger", "enabled")
+
+	UML.logger.active = UML.logger.log_manager.LogManager(location, name)
