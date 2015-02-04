@@ -167,6 +167,27 @@ class CaptureError(Plugin):
                       """Captured stderr output.""")        
 
 
+class LoggerControl(object):
+    def __enter__(self):
+        self._backup = UML.settings.get('logger', 'name')
+        
+        # delete previous testing logs:
+        location = UML.settings.get("logger", 'location')
+        hrPath = os.path.join(location, 'log-UML-unitTests.txt')
+        mrPath = os.path.join(location, 'log-UML-unitTests.mr')
+        os.remove(hrPath)
+        os.remove(mrPath)
+
+        # change name of log file (settings hook will init new log
+        # files after .set())
+        UML.settings.set("logger", 'name', 'log-UML-unitTests')
+        UML.settings.saveChanges("logger", 'name')
+
+    def __exit__(self, type, value, traceback):
+        UML.settings.set("logger", 'name', self._backup)
+        UML.settings.saveChanges("logger", 'name')
+
+
 if __name__ == '__main__':
     # any args passed to this script will be passed down into nose
     args = sys.argv
@@ -177,10 +198,12 @@ if __name__ == '__main__':
     workingDirDef = ["-w", UMLPath]
     args.extend(workingDirDef)
 
-    # suppress all warnings -- nosetests only captures std out, not stderr,
-    # and there are some tests that call learners in unfortunate ways, causing
-    # ALOT of annoying warnings.
-    with warnings.catch_warnings():
-        nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)
+    # Set options so that the logger outputs to a different file than
+    # during the course of normal operations
+    with LoggerControl():
+        # suppress all warnings -- nosetests only captures std out, not stderr,
+        # and there are some tests that call learners in unfortunate ways, causing
+        # ALOT of annoying warnings.
+        with warnings.catch_warnings():
+            nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)
     exit(0)
-
