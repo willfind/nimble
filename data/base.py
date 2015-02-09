@@ -787,6 +787,15 @@ class Base(object):
 		return self._getTypeString_implementation()
 
 	def __getitem__(self, key):
+		if isinstance(key, float):
+			intVal = int(key)
+			if intVal != key:
+				msg = "A float valued key of value x is only accepted if x == "
+				msg += "int(x). The given value was " + str(key) + " yet int("
+				msg += str(key) + ") = " + str(intVal)
+				raise ArgumentException(msg)
+			key = intVal
+
 		if isinstance(key, (int, basestring)):
 			if self.pointCount == 1:
 				x = 0
@@ -802,6 +811,24 @@ class Base(object):
 		else:
 			try:
 				(x,y) = key
+				if isinstance(x, float):
+					intValX = int(x)
+					if intValX != x:
+						msg = "A key with a float valued index of value x is only "
+						msg += "accepted if x == int(x). The point ID (left hand "
+						msg += "side of the tuple) was given as " + str(x) + " yet"
+						msg += " int(" + str(x) + ") = " + str(intValX)
+						raise ArgumentException(msg) 
+					x = intValX
+				if isinstance(y, float):
+					intValY = int(y)
+					if intValY != y:
+						msg = "A key with a float valued index of value y is only "
+						msg += "accepted if y == int(y). The feature ID (right hand "
+						msg += "side of the tuple) was given as " + str(y) + " yet"
+						msg += " int(" + str(y) + ") = " + str(intValY)
+						raise ArgumentException(msg) 
+					y = intValY
 			except TypeError:
 				msg = "Must include a point and feature index; or, "
 				msg += "if this has only a single point or feature, "

@@ -218,6 +218,38 @@ class QueryBackend(DataTestObject):
 
 		assert toTest[1,'one'] == 4
 
+	@raises(ArgumentException)
+	def test_getitem_nonIntConvertableFloatSingleKey(self):
+		data = [[0,1,2,3]]
+		toTest = self.constructor(data)
+
+		assert toTest[0.1] == 0
+
+	@raises(ArgumentException)
+	def test_getitem_nonIntConvertableFloatTupleKey(self):
+		data = [[0,1],[2,3]]
+		toTest = self.constructor(data)
+
+		assert toTest[0,1.1] == 1
+
+	def test_getitem_floatKeys(self):
+		""" Test __getitem__ correctly interprets float valued keys """
+		featureNames = ["one","two","three","zero"]
+		pnames = ['1', '4', '7', '0']
+		data = [[1,2,3,0],[4,5,0,0],[7,0,9,0],[0,0,0,0]]
+
+		toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+
+		assert toTest[0.0,0] == 1
+		assert toTest[1.0,3.0] == 0
+
+		data = [[0,1,2,3]]
+		toTest = self.constructor(data)
+
+		assert toTest[0.0] == 0
+		assert toTest[1.0] == 1
+
+
 	def test_getitem_SinglePoint(self):
 		""" Test __getitem__ has vector style access for one point object """
 		pnames = ['single']
