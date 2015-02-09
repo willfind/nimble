@@ -63,12 +63,12 @@ class Base(object):
 		self._nextDefaultValuePoint = 0
 		self._setAllDefault('point')
 		if isinstance(pointNames, list) or pointNames is None:
-			self.setPointNamesFromList(pointNames)
+			self.setPointNames(pointNames)
 		elif isinstance(pointNames, dict):
-			self.setPointNamesFromDict(pointNames)
+			self.setPointNames(pointNames)
 		# could still be an ordered container, pass it on to the list helper
 		elif hasattr(pointNames, '__len__') and hasattr(pointNames, '__getitem__'):
-			self.setPointNamesFromList(pointNames)
+			self.setPointNames(pointNames)
 		else:
 			raise ArgumentException("pointNames may only be a list, an ordered container, or a dict, defining a mapping between integers and pointNames")
 		if pointNames is not None and len(pointNames) != self.pointCount:
@@ -77,12 +77,12 @@ class Base(object):
 		self._nextDefaultValueFeature = 0
 		self._setAllDefault('feature')
 		if isinstance(featureNames, list) or featureNames is None:
-			self.setFeatureNamesFromList(featureNames)
+			self.setFeatureNames(featureNames)
 		elif isinstance(featureNames, dict):
-			self.setFeatureNamesFromDict(featureNames)
+			self.setFeatureNames(featureNames)
 		# could still be an ordered container, pass it on to the list helper
 		elif hasattr(featureNames, '__len__') and hasattr(featureNames, '__getitem__'):
-			self.setFeatureNamesFromList(featureNames)
+			self.setFeatureNames(featureNames)
 		else:
 			raise ArgumentException("featureNames may only be a list, an ordered container, or a dict, defining a mapping between integers and featureNames")
 		if featureNames is not None and len(featureNames) != self.featureCount:
@@ -144,55 +144,48 @@ class Base(object):
 			raise ArgumentException("Cannot set any feature names; this object has no features ")
 		self._setName_implementation(oldIdentifier, newName, 'feature', False)
 
-	def setPointNamesFromList(self, assignments=None):
-		"""
-		Rename all of the point names of this object according to the assignments in a list.
-		We use the mapping between names and array indices to create a new dictionary, which
-		will eventually be assigned as self.pointNames. assignments may be None to set all
-		pointNames to new default values. If assignment is an unexpected type, the names
-		are not strings, or the names are not unique, then an ArgumentException will be raised.
-		None is always returned.
 
+	def setPointNames(self, assignments=None): 
 		"""
-		self._setNamesFromList(assignments, self.pointCount, 'point')
-
-
-	def setFeatureNamesFromList(self, assignments=None):
-		"""
-		Rename all of the feature names of this object according to the assignments in a list.
-		We use the mapping between names and array indices to create a new dictionary, which
-		will eventually be assigned as self.featureNames. assignments may be None to set all
-		featureNames to new default values. If assignment is an unexpected type, the names
-		are not strings, or the names are not unique, then an ArgumentException will be raised.
-		None is always returned.
+		Rename all of the point names of this object according to the values
+		specified by the assignments parameter. If given a list, then we use
+		the mapping between names and array indices to define the point
+		names. If given a dict, then that mapping will be used to define the
+		point names. If assignments is None, then all point names will be
+		given new default values. If assignment is an unexpected type, the names
+		are not strings, the names are not unique, or point indices are missing,
+		then an ArgumentException will be raised. None is always returned.
 
 		"""
-		self._setNamesFromList(assignments, self.featureCount, 'feature')
+		if assignments is None or isinstance(assignments, list):
+			self._setNamesFromList(assignments, self.pointCount, 'point')
+		elif isinstance(assignments, dict):
+			self._setNamesFromDict(assignments, self.pointCount, 'point')
+		else:
+			msg = "'assignments' parameter may only be a list, a dict, or None, "
+			msg += "yet a value of type " + str(type(assignments)) + " was given"
+			raise ArgumentException(msg)
 
-	def setPointNamesFromDict(self, assignments=None):
+	def setFeatureNames(self, assignments=None): 
 		"""
-		Rename all of the point names of this object according to the mapping in a dict.
-		We will use a copy of the input dictionary to be assigned as self.pointNames.
-		assignments may be None to set all pointNames to new default values. If assignment
-		is an unexpected type, if the names are not strings, the names are not unique,
-		or the point indices are not integers then an ArgumentException will be raised.
-		None is always returned.
-
-		"""
-		self._setNamesFromDict(assignments, self.pointCount, 'point')
-
-	def setFeatureNamesFromDict(self, assignments=None):
-		"""
-		Rename all of the feature names of this object according to the mapping in a dict.
-		We will use a copy of the input dictionary to be assigned as self.featureNames.
-		assignments may be None to set all featureNames to new default values. If assignment
-		is an unexpected type, if the names are not strings, the names are not unique,
-		or the feature indices are not integers then an ArgumentException will be raised.
-		None is always returned.
+		Rename all of the feature names of this object according to the values
+		specified by the assignments parameter. If given a list, then we use
+		the mapping between names and array indices to define the feature
+		names. If given a dict, then that mapping will be used to define the
+		feature names. If assignments is None, then all feature names will be
+		given new default values. If assignment is an unexpected type, the names
+		are not strings, the names are not unique, or feature indices are missing,
+		then an ArgumentException will be raised. None is always returned.
 
 		"""
-		return self._setNamesFromDict(assignments, self.featureCount, 'feature')
-
+		if assignments is None or isinstance(assignments, list):
+			self._setNamesFromList(assignments, self.featureCount, 'feature')
+		elif isinstance(assignments, dict):
+			self._setNamesFromDict(assignments, self.featureCount, 'feature')
+		else:
+			msg = "'assignments' parameter may only be a list, a dict, or None, "
+			msg += "yet a value of type " + str(type(assignments)) + " was given"
+			raise ArgumentException(msg)
 
 	def nameData(self, name):
 		"""
@@ -329,7 +322,7 @@ class Base(object):
 			return mapping[point[0]]
 
 		converted = toConvert.applyToPoints(lookup, inPlace=False)
-		converted.setPointNamesFromDict(toConvert.pointNames)
+		converted.setPointNames(toConvert.pointNames)
 		converted.setFeatureName(0, toConvert.featureNamesInverse[0])
 
 		self.appendFeatures(converted)
@@ -1187,8 +1180,8 @@ class Base(object):
 		self._featureCount = temp
 
 		tempFN = self.featureNames
-		self.setFeatureNamesFromDict(self.pointNames)
-		self.setPointNamesFromDict(tempFN)
+		self.setFeatureNames(self.pointNames)
+		self.setPointNames(tempFN)
 
 		self.validate()
 
@@ -1276,7 +1269,7 @@ class Base(object):
 			sortBy = self._getFeatureIndex(sortBy)
 
 		newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
-		self.setPointNamesFromList(newPointNameOrder)
+		self.setPointNames(newPointNameOrder)
 
 		self.validate()
 
@@ -1300,7 +1293,7 @@ class Base(object):
 			sortBy = self._getPointIndex(sortBy)
 
 		newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
-		self.setFeatureNamesFromList(newFeatureNameOrder)
+		self.setFeatureNames(newFeatureNameOrder)
 
 		self.validate()
 
@@ -1358,7 +1351,7 @@ class Base(object):
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
 		self._pointCount -= ret.pointCount
 		if ret.pointCount != 0:
-			ret.setFeatureNamesFromDict(self.featureNames)
+			ret.setFeatureNames(self.featureNames)
 		for key in ret.pointNames.keys():
 			self._removePointNameAndShift(key)
 
@@ -1422,7 +1415,7 @@ class Base(object):
 		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
 		self._featureCount -= ret.featureCount
 		if ret.featureCount != 0:
-			ret.setPointNamesFromDict(self.pointNames)
+			ret.setPointNames(self.pointNames)
 		for key in ret.featureNames.keys():
 			self._removeFeatureNameAndShift(key)
 
@@ -1567,8 +1560,8 @@ class Base(object):
 			for i in range(start,end+1):
 				pointNameList.append(self.pointNamesInverse[i])
 
-		retObj.setPointNamesFromList(pointNameList)
-		retObj.setFeatureNamesFromDict(self.featureNames)
+		retObj.setPointNames(pointNameList)
+		retObj.setFeatureNames(self.featureNames)
 		return retObj
 	
 	def copyFeatures(self, features=None, start=None, end=None):
@@ -1614,8 +1607,8 @@ class Base(object):
 			for i in range(start,end+1):
 				featureNameList.append(self.featureNamesInverse[i])
 
-		ret.setPointNamesFromDict(self.pointNames)
-		ret.setFeatureNamesFromList(featureNameList)
+		ret.setPointNames(self.pointNames)
+		ret.setFeatureNames(featureNameList)
 		return ret
 
 
@@ -1662,8 +1655,8 @@ class Base(object):
 		self._elementwiseMultiply_implementation(other)
 
 		(retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
-		self.setPointNamesFromDict(retPNames)
-		self.setFeatureNamesFromDict(retFNames)
+		self.setPointNames(retPNames)
+		self.setFeatureNames(retFNames)
 		self.validate()
 
 	def elementwisePower(self, other):
@@ -1744,8 +1737,8 @@ class Base(object):
 		ret = self._mul__implementation(other)
 
 		if isinstance(other, UML.data.Base):
-			ret.setPointNamesFromDict(self.pointNames)
-			ret.setFeatureNamesFromDict(other.featureNames)
+			ret.setPointNames(self.pointNames)
+			ret.setFeatureNames(other.featureNames)
 
 		return ret
 	
@@ -1969,8 +1962,8 @@ class Base(object):
 			# shift right to put the next digit in the ones place
 			curr = curr >> 1
 
-		ret.setPointNamesFromDict(retPNames)
-		ret.setFeatureNamesFromDict(retFNames)
+		ret.setPointNames(retPNames)
+		ret.setFeatureNames(retFNames)
 
 		return ret
 
@@ -1999,8 +1992,8 @@ class Base(object):
 	def __abs__(self):
 		""" Perform element wise absolute value on this object """
 		ret = self.applyToElements(abs, inPlace=False)
-		ret.setPointNamesFromDict(self.pointNames)
-		ret.setFeatureNamesFromDict(self.featureNames)
+		ret.setPointNames(self.pointNames)
+		ret.setFeatureNames(self.featureNames)
 		return ret
 
 	def _genericNumericBinary(self, opName, other):
@@ -2080,8 +2073,8 @@ class Base(object):
 			else:
 				ret = UML.createData(startType, ret.data)
 
-		ret.setPointNamesFromDict(retPNames)
-		ret.setFeatureNamesFromDict(retFNames)
+		ret.setPointNames(retPNames)
+		ret.setFeatureNames(retFNames)
 
 		return ret
 

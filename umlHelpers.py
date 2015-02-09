@@ -219,9 +219,9 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 	# have to wait for everything to be extracted before we add the names,
 	# because otherwise the lenths won't be correct
 	if praw is not None:
-		ret.setPointNamesFromList(praw)
+		ret.setPointNames(list(praw))
 	if fraw is not None:
-		ret.setFeatureNamesFromList(fraw)	
+		ret.setFeatureNames(list(fraw))
 
 	return ret
 
@@ -354,10 +354,12 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
 		if isinstance(fnamesID, int):
 			retPNames = numpy.delete(retPNames, fnamesID)
 		retPNames = numpy.vectorize(str)(retPNames)
+		retPNames = list(retPNames)
 	if fnamesID is not None:
 		retFNames = numpy.array(data[fnamesID]).flatten()
 		data = numpy.delete(data, fnamesID, 0)
 		retFNames = numpy.vectorize(str)(retFNames)
+		retFNames = list(retFNames)
 
 	return (data, retPNames, retFNames)
 

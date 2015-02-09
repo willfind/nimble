@@ -121,7 +121,7 @@ class List(Base):
 
 		indices = self.applyToPoints(lambda x:x.index(), inPlace=False)
 		indices.setFeatureName(0,"#UML_SORTHELPER_INDEX")
-		indices.setPointNamesFromDict(self.pointNames)
+		indices.setPointNames(self.pointNames)
 		self.appendFeatures(indices)
 		newFeatureIndex = self.featureCount - 1 
 
@@ -315,7 +315,7 @@ class List(Base):
 
 		extracted = List(satisfying, reuseData=True)
 		reorderToMatchExtractionList(extracted, toExtract, 'point')
-		extracted.setPointNamesFromList(nameList)
+		extracted.setPointNames(nameList)
 
 		return extracted
 

@@ -44,8 +44,7 @@ unavailableNoPoints = [
 
 unavailableNoFeatures = [
 	'setFeatureName',
-	'setFeatureNamesFromList',
-	'setFeatureNamesFromDict',
+	'setFeatureNames',
 	'replaceFeatureWithBinaryFeatures',
 	'transformFeatureToIntegerFeature',
 	'applyToPoints',
@@ -441,9 +440,6 @@ def genNameList(dataObj, seed, axis):
 
 	return ret
 
-genPNameList = functools.partial(genNameList, axis='point')
-genFNameList = functools.partial(genNameList, axis='feature')
-
 def genNameDict(dataObj, seed, axis):
 	retList = genNameList(dataObj, seed, axis)
 	ret = {}
@@ -451,8 +447,16 @@ def genNameDict(dataObj, seed, axis):
 		ret[retList[i]] = i
 	return ret
 
-genPNameDict = functools.partial(genNameDict, axis='point')
-genFNameDict = functools.partial(genNameDict, axis='feature')
+def genNewNames(dataObj, seed, axis):
+	random.seed(seed)
+	coinFlip = random.randint(0, 1)
+	if coinFlip:
+		genNameList(dataObj, seed, axis)
+	else:
+		genNameDict(dataObj, seed, axis)
+
+genPNamesNew = functools.partial(genNewNames, axis='point')
+genFNamesNew = functools.partial(genNewNames, axis='feature')
 
 def genScorer(dataObj, seed):
 	def sumScorer(view):
@@ -526,11 +530,9 @@ generators = {'appendFeatures':[genObjMatchPoints],
 		'referenceDataFrom':[genObjMatchAll],
 		'replaceFeatureWithBinaryFeatures':[genFID],
 		'setFeatureName':[genFID, genFName],
-		'setFeatureNamesFromDict':[genFNameDict],
-		'setFeatureNamesFromList':[genFNameList],
+		'setFeatureNames':[genFNamesNew],
 		'setPointName':[genPID, genPName],
-		'setPointNamesFromDict':[genPNameDict],
-		'setPointNamesFromList':[genPNameList],
+		'setPointNames':[genPNamesNew],
 		'shuffleFeatures':[genFPermArr],
 		'shufflePoints':[genPPermArr],
 		'sortFeatures':[genPID, ftp(pickGen, genList=(genScorer,genComparator))],

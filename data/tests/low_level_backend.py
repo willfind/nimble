@@ -493,234 +493,213 @@ class LowLevelBackend(object):
 		ret = toTest.setFeatureName("zero","ZERO")
 		assert ret is None
 
-	##########################
-	# setPointNamesFromList() #
-	##########################
+	###################
+	# setPointNames() #
+	###################
 
 	@raises(ArgumentException)
-	def test_setPointNamesFromList_exceptionWrongTypeObject(self):
-		""" Test setPointNamesFromList() for ArgumentException when pointNames is an unexpected type """
+	def test_setPointNames_exceptionWrongTypeObject(self):
+		""" Test setPointNames() for ArgumentException when pointNames is an unexpected type """
 		toTest = self.constructor(pointNames=['one'])
-		toTest.setPointNamesFromList(12)
+		toTest.setPointNames(12)
 
 	@raises(ArgumentException)
-	def test_setPointNamesFromList_exceptionNonStringPointNameInList(self):
-		""" Test setPointNamesFromList() for ArgumentException when a list element is not a string """
+	def test_setPointNames_exceptionNonStringPointNameInList(self):
+		""" Test setPointNames() for ArgumentException when a list element is not a string """
 		toTest = self.constructor(pointNames=['one'])
 		nonStringNames = [1,2,3]
-		toTest.setPointNamesFromList(nonStringNames)
+		toTest.setPointNames(nonStringNames)
 
 	@raises(ArgumentException)
-	def test_setPointNamesFromList_exceptionNonUniqueStringInList(self):
-		""" Test setPointNamesFromList() for ArgumentException when a list element is not unique """
+	def test_setPointNames_exceptionNonUniqueStringInList(self):
+		""" Test setPointNames() for ArgumentException when a list element is not unique """
 		toTest = self.constructor(pointNames=['one'])
 		nonUnique = ['1','2','3','1']
-		toTest.setPointNamesFromList(nonUnique)
+		toTest.setPointNames(nonUnique)
 
 	@raises(ArgumentException)
-	def test_setPointNamesFromList_exceptionNoPoints(self):
-		""" Test setPointNamesFromList() for ArgumentException when there are no points to name """
+	def test_setPointNames_exceptionNoPointsList(self):
+		""" Test setPointNames() for ArgumentException when there are no points to name """
 		toTest = self.constructor()
 		toAssign = ["hey","gone","none","blank"]
-		toTest.setPointNamesFromList(toAssign)
+		toTest.setPointNames(toAssign)
 
-	def test_setPointNamesFromList_emptyDataAndList(self):
-		""" Test setPointNamesFromList() when both the data and the list are empty """
+	def test_setPointNames_emptyDataAndList(self):
+		""" Test setPointNames() when both the data and the list are empty """
 		toTest = self.constructor()
 		toAssign = []
-		toTest.setPointNamesFromList(toAssign)
+		toTest.setPointNames(toAssign)
 		assert toTest.pointNames == {}
 
-	def test_setPointNamesFromList_addDefault(self):
-		""" Test setPointNamesFromList() when given a default pointName """
+	def test_setPointNames_addDefault(self):
+		""" Test setPointNames() when given a default pointName """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		newNames = ["zero","one","two",DEFAULT_PREFIX + "17"]
-		toTest.setPointNamesFromList(newNames)
+		toTest.setPointNames(newNames)
 		assert toTest._nextDefaultValuePoint > 17
 
-	def test_setPointNamesFromList_handmade(self):
-		""" Test setPointNamesFromList() against handmade output """
+	def test_setPointNames_handmadeList(self):
+		""" Test setPointNames() against handmade output """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		origNames = ["zero","one","two","three"]	
-		toTest.setPointNamesFromList(origNames)
+		toTest.setPointNames(origNames)
 		confirmExpectedNames(toTest, 'point', origNames)
 
-	def test_setPointNamesFromList_handmadeReplacingWithSame(self):
-		""" Test setPointNamesFromList() against handmade output when you're replacing the position of poitnNames """
+	def test_setPointNames_handmadeReplacingWithSameList(self):
+		""" Test setPointNames() against handmade output when you're replacing the position of poitnNames """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		toAssign = ["hey","gone","none","blank"]
-		ret = toTest.setPointNamesFromList(toAssign) # ret Check
+		ret = toTest.setPointNames(toAssign)  # ret Check
 		confirmExpectedNames(toTest, 'point', toAssign)
 		assert ret is None
 
-
-	##########################
-	# setFeatureNamesFromList() #
-	##########################
-
 	@raises(ArgumentException)
-	def test_setFeatureNamesFromList_exceptionWrongTypeObject(self):
-		""" Test setFeatureNamesFromList() for ArgumentException when featureNames is an unexpected type """
-		toTest = self.constructor(featureNames=['one'])
-		toTest.setFeatureNamesFromList(12)
-
-	@raises(ArgumentException)
-	def test_setFeatureNamesFromList_exceptionNonStringFeatureNameInList(self):
-		""" Test setFeatureNamesFromList() for ArgumentException when a list element is not a string """
-		toTest = self.constructor(featureNames=['one'])
-		nonStringFeatureNames = [1,2,3]
-		toTest.setFeatureNamesFromList(nonStringFeatureNames)
-
-	@raises(ArgumentException)
-	def test_setFeatureNamesFromList_exceptionNonUniqueStringInList(self):
-		""" Test setFeatureNamesFromList() for ArgumentException when a list element is not unique """
-		toTest = self.constructor(featureNames=['one'])
-		nonUnique = ['1','2','3','1']
-		toTest.setFeatureNamesFromList(nonUnique)
-
-	@raises(ArgumentException)
-	def test_setFeatureNamesFromList_exceptionNoFeatures(self):
-		""" Test setFeatureNamesFromList() for ArgumentException when there are no features to name """
-		toTest = self.constructor()
-		toAssign = ["hey","gone","none","blank"]
-		toTest.setFeatureNamesFromList(toAssign)
-
-	def test_setFeatureNamesFromList_emptyDataAndList(self):
-		""" Test setFeatureNamesFromList() when both the data and the list are empty """
-		toTest = self.constructor()
-		toAssign = []
-		toTest.setFeatureNamesFromList(toAssign)
-		assert toTest.featureNames == {}
-
-	def test_setFeatureNamesFromList_addDefault(self):
-		""" Test setFeatureNamesFromList() when given a default featureName """
-		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
-		newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "17"]
-		toTest.setFeatureNamesFromList(newFeatureNames)
-		assert toTest._nextDefaultValueFeature > 17
-		
-	def test_setFeatureNamesFromList_handmade(self):
-		""" Test setFeatureNamesFromList() against handmade output """
-		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
-		origFeatureNames = ["zero","one","two","three"]	
-		toTest.setFeatureNamesFromList(origFeatureNames)
-		confirmExpectedNames(toTest, 'feature', origFeatureNames)
-		
-	def test_setFeatureNamesFromList_handmadeReplacingWithSame(self):
-		""" Test setFeatureNamesFromList() against handmade output when you're replacing the position of featureNames """
-		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
-		toAssign = ["hey","gone","none","blank"]
-		ret = toTest.setFeatureNamesFromList(toAssign) # RET CHECK
-		confirmExpectedNames(toTest, 'feature', toAssign)
-		assert ret is None
-
-
-	##########################
-	# setPointNamesFromDict() #
-	##########################
-
-	@raises(ArgumentException)
-	def test_setPointNamesFromDict_exceptionWrongTypeObject(self):
-		""" Test setPointNamesFromDict() for ArgumentException when pointNames is an unexpected type """
-		toTest = self.constructor(pointNames=['one'])
-		toTest.setPointNamesFromDict(12)
-
-	@raises(ArgumentException)
-	def test_setPointNamesFromDict_exceptionNonStringPointNameInDict(self):
-		""" Test setPointNamesFromDict() for ArgumentException when a dict key is not a string """
+	def test_setPointNames_exceptionNonStringPointNameInDict(self):
+		""" Test setPointNames() for ArgumentException when a dict key is not a string """
 		toTest = self.constructor(pointNames=['one'])
 		nonStringNames = {1:1}
-		toTest.setPointNamesFromDict(nonStringNames)
+		toTest.setPointNames(nonStringNames)
 
 	@raises(ArgumentException)
-	def test_setPointNamesFromDict_exceptionNonIntIndexInDict(self):
-		""" Test setPointNamesFromDict() for ArgumentException when a dict value is not an int """
+	def test_setPointNames_exceptionNonIntIndexInDict(self):
+		""" Test setPointNames() for ArgumentException when a dict value is not an int """
 		toTest = self.constructor(pointNames=['one'])
 		nonIntIndex = {"one":"one"}
-		toTest.setPointNamesFromDict(nonIntIndex)
+		toTest.setPointNames(nonIntIndex)
 
 	@raises(ArgumentException)
-	def test_setPointNamesFromDict_exceptionNoPoints(self):
-		""" Test setPointNamesFromDict() for ArgumentException when there are no points to name """
+	def test_setPointNames_exceptionNoPointsDict(self):
+		""" Test setPointNames() for ArgumentException when there are no points to name """
 		toTest = self.constructor(pointNames=[])
 		toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
-		toTest.setPointNamesFromDict(toAssign)
+		toTest.setPointNames(toAssign)
 
-	def test_setPointNamesFromDict_emptyDataAndList(self):
-		""" Test setPointNamesFromDict() when both the data and the list are empty """
+	def test_setPointNames_emptyDataAndDict(self):
+		""" Test setPointNames() when both the data and the dict are empty """
 		toTest = self.constructor()
 		toAssign = {}
-		toTest.setPointNamesFromDict(toAssign)	
+		toTest.setPointNames(toAssign)	
 		assert toTest.pointNames == {}
 
-	def test_setPointNamesFromDict_handmade(self):
-		""" Test setPointNamesFromDict() against handmade output """
+	def test_setPointNames_handmadeDict(self):
+		""" Test setPointNames() against handmade output """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		origNames = {"zero":0,"one":1,"two":2,"three":3}	
-		toTest.setPointNamesFromDict(origNames)
+		toTest.setPointNames(origNames)
 		confirmExpectedNames(toTest, 'point', origNames)
 		
-	def test_setPointNamesFromDict_handmadeReplacingWithSame(self):
-		""" Test setPointNamesFromDict() against handmade output when you're replacing the position of pointNames """
+	def test_setPointNames_handmadeReplacingWithSameDict(self):
+		""" Test setPointNames() against handmade output when you're replacing the position of pointNames """
 		toTest = self.constructor(pointNames=["blank","none","gone","hey"])
 		toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
-		ret = toTest.setPointNamesFromDict(toAssign)
+		ret = toTest.setPointNames(toAssign)
 		confirmExpectedNames(toTest, 'point', toAssign)
 		assert ret is None 
 
 
-	##########################
-	# setFeatureNamesFromDict() #
-	##########################
+	#####################
+	# setFeatureNames() #
+	#####################
 
 	@raises(ArgumentException)
-	def test_setFeatureNamesFromDict_exceptionWrongTypeObject(self):
-		""" Test setFeatureNamesFromDict() for ArgumentException when featureNames is an unexpected type """
+	def test_setFeatureNames_exceptionWrongTypeObject(self):
+		""" Test setFeatureNames() for ArgumentException when featureNames is an unexpected type """
 		toTest = self.constructor(featureNames=['one'])
-		toTest.setFeatureNamesFromDict(12)
+		toTest.setFeatureNames(12)
 
 	@raises(ArgumentException)
-	def test_setFeatureNamesFromDict_exceptionNonStringFeatureNameInDict(self):
-		""" Test setFeatureNamesFromDict() for ArgumentException when a dict key is not a string """
+	def test_setFeatureNames_exceptionNonStringFeatureNameInDict(self):
+		""" Test setFeatureNames() for ArgumentException when a dict key is not a string """
 		toTest = self.constructor(featureNames=['one'])
 		nonStringFeatureNames = {1:1}
-		toTest.setFeatureNamesFromDict(nonStringFeatureNames)
+		toTest.setFeatureNames(nonStringFeatureNames)
 
 	@raises(ArgumentException)
-	def test_setFeatureNamesFromDict_exceptionNonIntIndexInDict(self):
-		""" Test setFeatureNamesFromDict() for ArgumentException when a dict value is not an int """
+	def test_setFeatureNames_exceptionNonIntIndexInDict(self):
+		""" Test setFeatureNames() for ArgumentException when a dict value is not an int """
 		toTest = self.constructor(featureNames=['one'])
 		nonIntIndex = {"one":"one"}
-		toTest.setFeatureNamesFromDict(nonIntIndex)
+		toTest.setFeatureNames(nonIntIndex)
 
 	@raises(ArgumentException)
-	def test_setFeatureNamesFromDict_exceptionNoFeatures(self):
-		""" Test setFeatureNamesFromDict() for ArgumentException when there are no features to name """
+	def test_setFeatureNames_exceptionNoFeaturesDict(self):
+		""" Test setFeatureNames() for ArgumentException when there are no features to name """
 		toTest = self.constructor(featureNames=[])
 		toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
-		toTest.setFeatureNamesFromDict(toAssign)
+		toTest.setFeatureNames(toAssign)
 
-	def test_setFeatureNamesFromDict_emptyDataAndList(self):
-		""" Test setFeatureNamesFromDict() when both the data and the list are empty """
+	def test_setFeatureNames_emptyDataAndDict(self):
+		""" Test setFeatureNames() when both the data and the dict are empty """
 		toTest = self.constructor()
 		toAssign = {}
-		toTest.setFeatureNamesFromDict(toAssign)	
+		toTest.setFeatureNames(toAssign)	
 		assert toTest.featureNames == {}
 
-	def test_setFeatureNamesFromDict_handmade(self):
-		""" Test setFeatureNamesFromDict() against handmade output """
+	def test_setFeatureNames_handmadeDict(self):
+		""" Test setFeatureNames() against handmade output """
 		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
 		origFeatureNames = {"zero":0,"one":1,"two":2,"three":3}	
-		toTest.setFeatureNamesFromDict(origFeatureNames)
+		toTest.setFeatureNames(origFeatureNames)
 		confirmExpectedNames(toTest, 'feature', origFeatureNames)
 
-	def test_setFeatureNamesFromDict_handmadeReplacingWithSame(self):
-		""" Test setFeatureNamesFromDict() against handmade output when you're replacing the position of featureNames """
+	def test_setFeatureNames_handmadeReplacingWithSameDict(self):
+		""" Test setFeatureNames() against handmade output when you're replacing the position of featureNames """
 		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
 		toAssign = {"hey":0,"gone":1,"none":2,"blank":3}
-		ret = toTest.setFeatureNamesFromDict(toAssign)
+		ret = toTest.setFeatureNames(toAssign)
 		confirmExpectedNames(toTest, 'feature', toAssign)
 		assert ret is None 
+
+	@raises(ArgumentException)
+	def test_setFeatureNames_exceptionNonStringFeatureNameInList(self):
+		""" Test setFeatureNames() for ArgumentException when a list element is not a string """
+		toTest = self.constructor(featureNames=['one'])
+		nonStringFeatureNames = [1,2,3]
+		toTest.setFeatureNames(nonStringFeatureNames)
+
+	@raises(ArgumentException)
+	def test_setFeatureNames_exceptionNonUniqueStringInList(self):
+		""" Test setFeatureNames() for ArgumentException when a list element is not unique """
+		toTest = self.constructor(featureNames=['one'])
+		nonUnique = ['1','2','3','1']
+		toTest.setFeatureNames(nonUnique)
+
+	@raises(ArgumentException)
+	def test_setFeatureNames_exceptionNoFeaturesList(self):
+		""" Test setFeatureNames() for ArgumentException when there are no features to name """
+		toTest = self.constructor()
+		toAssign = ["hey","gone","none","blank"]
+		toTest.setFeatureNames(toAssign)
+
+	def test_setFeatureNames_emptyDataAndList(self):
+		""" Test setFeatureNames() when both the data and the list are empty """
+		toTest = self.constructor()
+		toAssign = []
+		toTest.setFeatureNames(toAssign)
+		assert toTest.featureNames == {}
+
+	def test_setFeatureNames_addDefault(self):
+		""" Test setFeatureNames() when given a default featureName """
+		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
+		newFeatureNames = ["zero","one","two",DEFAULT_PREFIX + "17"]
+		toTest.setFeatureNames(newFeatureNames)
+		assert toTest._nextDefaultValueFeature > 17
+		
+	def test_setFeatureNames_handmadeList(self):
+		""" Test setFeatureNames() against handmade output """
+		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
+		origFeatureNames = ["zero","one","two","three"]	
+		toTest.setFeatureNames(origFeatureNames)
+		confirmExpectedNames(toTest, 'feature', origFeatureNames)
+		
+	def test_setFeatureNames_handmadeReplacingWithSameList(self):
+		""" Test setFeatureNames() against handmade output when you're replacing the position of featureNames """
+		toTest = self.constructor(featureNames=["blank","none","gone","hey"])
+		toAssign = ["hey","gone","none","blank"]
+		ret = toTest.setFeatureNames(toAssign)  # RET CHECK
+		confirmExpectedNames(toTest, 'feature', toAssign)
+		assert ret is None
+
 
 	##########################
 	# _removePointNameAndShift() #
