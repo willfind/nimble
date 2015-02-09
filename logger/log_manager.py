@@ -22,6 +22,10 @@ class LogManager(object):
 		self.humanReadableLog = HumanReadableLogger(fullLogDesignator + ".txt")
 		self.machineReadableLog = MachineReadableLogger(fullLogDesignator + ".mr")
 
+	def cleanup(self):
+		self.humanReadableLog.cleanup()
+		self.machineReadableLog.cleanup()
+
 	def logData(self, baseDataObject):
 		"""
 		Send information about a data set to the log(s).
@@ -54,22 +58,31 @@ def initLoggerAndLogConfig():
 		UML.settings.set("logger", "location", location)
 		UML.settings.saveChanges("logger", "location")
 	finally:
-	#	def cleanThenReInit(newLocation):
+		def cleanThenReInit_Loc(newLocation):
+			UML.logger.active.cleanup()
+			currName = UML.settings.get("logger", 'name')
+			UML.logger.active = UML.logger.log_manager.LogManager(newLocation, currName)
 
-	#	UML.settings.hook("logger", "location")
-		pass
+		UML.settings.hook("logger", "location", cleanThenReInit_Loc)
 	try:
 		name = UML.settings.get("logger", "name")
 	except:
 		name = "log-UML"
 		UML.settings.set("logger", "name", name)
 		UML.settings.saveChanges("logger", "name")
+	finally:
+		def cleanThenReInit_Name(newName):
+			UML.logger.active.cleanup()
+			currLoc = UML.settings.get("logger", 'location')
+			UML.logger.active = UML.logger.log_manager.LogManager(currLoc, newName)
+
+		UML.settings.hook("logger", "name", cleanThenReInit_Name)
 
 	try:
-		loggingEnabled = UML.settings.get("logger", "enabled")
+		loggingEnabled = UML.settings.get("logger", "enabledByDefault")
 	except:
 		loggingEnabled = 'True'
-		UML.settings.set("logger", "enabled", loggingEnabled)
-		UML.settings.saveChanges("logger", "enabled")
+		UML.settings.set("logger", "enabledByDefault", loggingEnabled)
+		UML.settings.saveChanges("logger", "enabledByDefault")
 
 	UML.logger.active = UML.logger.log_manager.LogManager(location, name)

@@ -39,6 +39,11 @@ class UmlLogger(object):
 		self.logFile = open(self.logFileName, 'a')
 		self.isAvailable = True
 
+	def cleanup(self):
+		# only need to call if we have previously called setup
+		if self.isAvailable:
+			self.logFile.close()
+
 	def logMessage(self, message, addNewLine=True):
 		"""
 			Generic function to write a message to this object's log file.  Does

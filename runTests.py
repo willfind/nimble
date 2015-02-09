@@ -169,22 +169,27 @@ class CaptureError(Plugin):
 
 class LoggerControl(object):
     def __enter__(self):
-        self._backup = UML.settings.get('logger', 'name')
+        self._backupLoc = UML.settings.get('logger', 'location')
+        self._backupName = UML.settings.get('logger', 'name')
         
         # delete previous testing logs:
-        location = UML.settings.get("logger", 'location')
+        location = os.path.join(UMLPath, 'logs-UML')
         hrPath = os.path.join(location, 'log-UML-unitTests.txt')
         mrPath = os.path.join(location, 'log-UML-unitTests.mr')
-        os.remove(hrPath)
-        os.remove(mrPath)
+        if os.path.exists(hrPath):
+            os.remove(hrPath)
+        if os.path.exists(mrPath):
+            os.remove(mrPath)
 
         # change name of log file (settings hook will init new log
         # files after .set())
+        UML.settings.set('logger', 'location', location)
         UML.settings.set("logger", 'name', 'log-UML-unitTests')
-        UML.settings.saveChanges("logger", 'name')
+        UML.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
-        UML.settings.set("logger", 'name', self._backup)
+        UML.settings.set("logger", 'location', self._backupLoc)
+        UML.settings.set("logger", 'name', self._backupName)
         UML.settings.saveChanges("logger", 'name')
 
 
