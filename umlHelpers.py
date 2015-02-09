@@ -1045,7 +1045,7 @@ def generateAllPairs(items):
 
 	return pairs
 
-def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, folds=10, scoreMode='label', negativeLabel=None, sendToLog=False, **kwarguments):
+def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, folds=10, scoreMode='label', negativeLabel=None, useLog=None, **kwarguments):
 	"""
 	Same signature as UML.crossValidate, except that the argument 'numFolds' is replaced with 'folds'
 	which is allowed to be either an int indicating the number of folds to use, or a foldIterator object
@@ -1070,7 +1070,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 		[(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
 
 		#run algorithm on the folds' training and testing sets
-		curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=arguments, scoreMode=scoreMode, sendToLog=sendToLog, **kwarguments)
+		curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=arguments, scoreMode=scoreMode, useLog=False, **kwarguments)
 		#calculate error of prediction, according to performanceFunction
 		curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
 
@@ -1658,7 +1658,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
 			if not trainY.pointCount == trainX.pointCount:
 				raise ArgumentException("If trainY is a Data object, then it must have the same number of points as trainX")
 
-def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True, **kwarguments):
+def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, useLog=None, **kwarguments):
 	"""
 	Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
 	testing, and computing performance measures to be handled.  Takes in a learner's name
@@ -1691,10 +1691,12 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
 		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
 		applies to data sets with 2 class labels.
-		sendToLog: optional boolean valued parameter; True meaning the results should be printed 
-		to log file.
 
-		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+		useLog - local control for whether to send results/timing to the logger.
+		If None (default), use the value as specified in the "logger"
+		"enabledByDefault" configuration option. If True, send to the logger
+		regardless of the global option. If False, do NOT send to the logger,
+		regardless of the global option.
 
 		kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
 		the learner specified by 'learnerName'. To be merged with arguments before being passed
@@ -1708,23 +1710,24 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 	_validArguments(kwarguments)
 	merged = _mergeArguments(arguments, kwarguments)
 
-	if sendToLog:
-		timer = Stopwatch()
-	else:
-		timer = None
+	if useLog is None:
+		useLog = UML.settings.get("logger", "enabledByDefault")
+		useLog = True if useLog.lower() == 'true' else False
+
+	timer = Stopwatch() if useLog else None
 
 	# if testY is in testX, we need to extract it before we call a trainAndApply type function
 	if isinstance(testY, (basestring, int, long)):
 		testX = testX.copy()
 		testY = testX.extractFeatures([testY])
 
-	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, merged, scoreMode='label', sendToLog=sendToLog, timer=timer)
+	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
 
 	# Send this run to the log, if desired
-	if sendToLog:
+	if useLog:
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
@@ -1733,7 +1736,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 	return results
 
 
-def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', sendToLog=True, timer=None, **kwarguments):
+def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None, **kwarguments):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. one method of splitting the 
@@ -1762,7 +1765,11 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 		so the list of scores in each row is not sorted by score, but by the order of class label
 		found in featureNames.
 		
-		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+		useLog - local control for whether to send results/timing to the logger.
+		If None (default), use the value as specified in the "logger"
+		"enabledByDefault" configuration option. If True, send to the logger
+		regardless of the global option. If False, do NOT send to the logger,
+		regardless of the global option.
 
 		timer: If logging was initiated in a call higher in the stack, then the timing object
 		constructed there will be passed down through this parameter.
@@ -1789,8 +1796,12 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 	labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 	labelPairs = generateAllPairs(labelSet)
 
+	if useLog is None:
+		useLog = UML.settings.get("logger", "enabledByDefault")
+		useLog = True if useLog.lower() == 'true' else False
+
 	#if we are logging this run, we need to start the timer
-	if sendToLog:
+	if useLog:
 		if timer is None:
 			timer = Stopwatch()
 
@@ -1806,7 +1817,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 		pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
 		pairTrueLabels = pairData.extractFeatures(trainY)
 		#train classifier on that data; apply it to the test set
-		partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=merged, sendToLog=False)
+		partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=merged, useLog=False)
 		#put predictions into table of predictions
 		if rawPredictions is None:
 			rawPredictions = partialResults.copyAs(format="List")
@@ -1815,9 +1826,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 			rawPredictions.appendFeatures(partialResults.copyAs(format="List"))
 		pairData.appendFeatures(pairTrueLabels)
 		trainX.appendPoints(pairData)
-		predictionFeatureID +=1
+		predictionFeatureID += 1
 
-	if sendToLog:
+	if useLog:
 		timer.stop('train')
 
 	#set up the return data based on which format has been requested
@@ -1856,7 +1867,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 		raise ArgumentException('Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode))
 
 
-def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', sendToLog=True, timer=None, **kwarguments):
+def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None, **kwarguments):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -1885,7 +1896,11 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		so the list of scores in each row is not sorted by score, but by the order of class label
 		found in featureNames.
 		
-		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+		useLog - local control for whether to send results/timing to the logger.
+		If None (default), use the value as specified in the "logger"
+		"enabledByDefault" configuration option. If True, send to the logger
+		regardless of the global option. If False, do NOT send to the logger,
+		regardless of the global option.
 
 		timer: If logging was initiated in a call higher in the stack, then the timing object
 		constructed there will be passed down through this parameter.
@@ -1908,8 +1923,12 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 	labelVector.transpose()
 	labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 
+	if useLog is None:
+		useLog = UML.settings.get("logger", "enabledByDefault")
+		useLog = True if useLog.lower() == 'true' else False
+
 	#if we are logging this run, we need to start the timer
-	if sendToLog:
+	if useLog:
 		if timer is None:
 			timer = Stopwatch()
 
@@ -1926,7 +1945,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 				return 0
 			else: return 1
 		trainLabels = trainY.applyToPoints(relabeler, inPlace=False)
-		oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged, sendToLog=False)
+		oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged, useLog=False)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
 			rawPredictions = oneLabelResults
@@ -1937,7 +1956,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 			oneLabelResults.setFeatureName(0, str(label))
 			rawPredictions.appendFeatures(oneLabelResults)
 
-	if sendToLog:
+	if useLog:
 		timer.stop('train')
 
 	if scoreMode.lower() == 'label'.lower():
@@ -1985,7 +2004,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
 
-def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, sendToLog=True, **kwarguments):
+def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, useLog=None, **kwarguments):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -2016,10 +2035,12 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
 		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
 		applies to data sets with 2 class labels.
-		sendToLog: optional boolean valued parameter; True meaning the results should be printed 
-		to log file.
 
-		sendToLog: optional boolean valued parameter; True meaning the results should be logged
+		useLog - local control for whether to send results/timing to the logger.
+		If None (default), use the value as specified in the "logger"
+		"enabledByDefault" configuration option. If True, send to the logger
+		regardless of the global option. If False, do NOT send to the logger,
+		regardless of the global option.
 
 		kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
 		the learner specified by 'learnerName'. To be merged with arguments before being passed
@@ -2029,21 +2050,24 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 	_validArguments(kwarguments)
 	merged = _mergeArguments(arguments, kwarguments)
 
-	if sendToLog:
-		timer = Stopwatch()
+	if useLog is None:
+		useLog = UML.settings.get("logger", "enabledByDefault")
+		useLog = True if useLog.lower() == 'true' else False
+
+	timer = Stopwatch() if useLog else None
 
 	# if testY is in testX, we need to extract it before we call a trainAndApply type function
 	if isinstance(testY, (basestring, int, long)):
 		testX = testX.copy()
 		testY = testX.extractFeatures([testY])
 
-	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, merged, scoreMode='label', sendToLog=sendToLog, timer=timer)
+	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
 	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
 
 	# Send this run to the log, if desired
-	if sendToLog:
+	if useLog:
 		if not isinstance(performanceFunction, list):
 			performanceFunction = [performanceFunction]
 			results = [results]
