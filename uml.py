@@ -130,7 +130,7 @@ def splitData(toSplit, fractionForTestSet, labelID=None):
 
 
 
-def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mode=True, **kwarguments):
+def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **kwarguments):
 	"""
 	Calls on the functionality of a package to train on some data and then modify both
 	the training data and a set of test data according to the produced model.
@@ -142,44 +142,38 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, mo
 	trainX: data to be used for training (as some form of UML data Base object)
 
 	trainY: used to retrieve the known class labels of the training data. Either
-	contains the labels themselves (as a Base object) or an index (numerical or string) 
-	that defines their placement in the trainX object as a feature ID.
+	contains the labels themselves (as a Base object) or an identifier (numerical
+	index or string name) that defines their placement in the trainX object as a
+	feature ID.
 
 	testX: data set to be used for testing (as some form of Base object)
 
-	arguments : dictionary mapping argument names (strings) to their values. The
-	parameter is sent to trainAndApply() through its arguments parameter.
-	example: {'dimensions':5, 'k':5}
+	arguments : dictionary mapping argument names (strings) to their values,
+	to be used during training and application. example: {'dimensions':5, 'k':5}
 
-	mode : 
-
-	kwarguments : kwargs specified variables that are passed to the learner. Same
-	format as the arguments parameter. These keys and values will be passed directly
-	on to trainAndApply() through its own **kwarguments mechanism.
+	**kwarguments : kwargs specified variables that are passed to the learner. Same
+	format as the arguments parameter.
 
 	"""
-	# single call normalize, combined data
-	if mode and testX is not None:
-		testLength = testX.pointCount
-		# glue training data at the end of test data
-		testX.appendPoints(trainX)
-		try:
-			normalizedAll = trainAndApply(learnerName, trainX, trainY, testX, arguments=arguments, **kwarguments)
-		except ArgumentException:
-			testX.extractPoints(start=testLength, end=normalizedAll.pointCount)
-		# resplit normalized
-		normalizedTrain = normalizedAll.extractPoints(start=testLength)
-		normalizedTest = normalizedAll
-	# two call normalize, no data combination
-	else:
-		normalizedTrain = trainAndApply(learnerName, trainX, trainY, trainX, arguments=arguments,**kwarguments)
-		if testX is not None:
-			normalizedTest = trainAndApply(learnerName, trainX, trainY, testX, arguments=arguments, **kwarguments)
-		
-	# modify references for trainX and testX
+	(packName, trueLearnerName) = _unpackLearnerName(learnerName)
+
+	tl = UML.train(learnerName, trainX, trainY, arguments, **kwarguments)
+	normalizedTrain = tl.apply(trainX, arguments=arguments, **kwarguments)
+	if normalizedTrain.getTypeString() != trainX.getTypeString():
+		normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
+
+	if testX is not None:
+		normalizedTest = tl.apply(testX, arguments=arguments, **kwarguments)
+		if normalizedTest.getTypeString() != testX.getTypeString():
+			normalizedTest = normalizedTest.copyAs(testX.getTypeString())
+
+	# modify references and names for trainX and testX
 	trainX.referenceDataFrom(normalizedTrain)
+	trainX.name = trainX.name + " " + trueLearnerName
+
 	if testX is not None:
 		testX.referenceDataFrom(normalizedTest)
+		testX.name = testX.name + " " + trueLearnerName
 
 def registerCustomLearner(customPackageName, learnerClassObject):
 	"""
