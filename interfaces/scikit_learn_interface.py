@@ -270,6 +270,8 @@ class SciKitLearn(UniversalInterface):
 		Returns true if the name is an accepted alias for this interface
 
 		"""
+		if name.lower() == 'skl':
+			return True
 		return name.lower() == self.getCanonicalName().lower()
 
 

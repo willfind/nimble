@@ -19,6 +19,22 @@ packageName = 'sciKitLearn'
 def toCall(learner):
 	return packageName + '.' + learner 
 
+def testScikitLearnAliases():
+	""" Test availability of correct aliases for 'sciKitLearn' """
+	variables = ["Y","x1","x2"]
+	data = [[2,1,1], [3,1,2], [4,2,2],]
+	trainingObj = UML.createData('Matrix', data, featureNames=variables)
+
+	data2 = [[0,1]]
+	testObj = UML.createData('Matrix', data2)
+
+	# make a bundle of calls, don't care about the results, only
+	# that they work.
+	UML.trainAndApply("scikitlearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
+	UML.trainAndApply("SKL.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
+	UML.trainAndApply("skl.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
+	UML.trainAndApply("SciKitLearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
+
 
 def testSciKitLearnHandmadeRegression():
 	""" Test sciKitLearn() by calling on a regression learner with known output """
