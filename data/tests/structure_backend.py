@@ -108,6 +108,11 @@ class StructureBackend(DataTestObject):
 		assert fromMTXCoo.isIdentical(fromMTXArr)
 
 
+	@raises(ArgumentException, TypeError)
+	def test_init_noThriceNestedListInputs(self):
+		self.constructor([[[1,2,3]]])
+
+
 	###############
 	# transpose() #
 	###############

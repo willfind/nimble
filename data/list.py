@@ -37,6 +37,11 @@ class List(Base):
 		# Format / copy the data if necessary
 		# if input as a list, copy it
 		if isinstance(data, list):
+			if len(data) > 0 and hasattr(data[0], "__len__") and len(data[0]) > 0:
+				if isinstance(data[0][0], list):
+					msg = "python lists are not allowed as elements for our "
+					msg += "List datatype"
+					raise ArgumentException(msg)
 			if reuseData:
 				data = data
 			else:
