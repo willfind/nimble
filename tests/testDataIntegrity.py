@@ -13,8 +13,8 @@ import UML
 from UML.exceptions import ArgumentException
 
 
-from UML.umlHelpers import generateClassificationData
-from UML.umlHelpers import generateRegressionData
+from UML.helpers import generateClassificationData
+from UML.helpers import generateRegressionData
 from UML.randomness import pythonRandom
 
 def assertUnchanged(learnerName, passed, trainX, trainY, testX, testY):
@@ -40,20 +40,20 @@ def wrappedTrainAndApply(learnerName, trainX, trainY, testX, testY):
 	return UML.trainAndApply(learnerName, trainX, trainY, testX)
 
 def wrappedTrainAndApplyOvO(learnerName, trainX, trainY, testX, testY):
-	return UML.umlHelpers.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX)
+	return UML.helpers.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX)
 
 def wrappedTrainAndApplyOvA(learnerName, trainX, trainY, testX, testY):
-	return UML.umlHelpers.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX)
+	return UML.helpers.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX)
 
 def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
 	# our performance function doesn't actually matter, we're just checking the data
 	return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def wrappedTrainAndTestOvO(learnerName, trainX, trainY, testX, testY):
-	return UML.umlHelpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.calculate.fractionIncorrect)
+	return UML.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
-	return UML.umlHelpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.calculate.fractionIncorrect)
+	return UML.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=UML.calculate.fractionIncorrect)
 
 def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
 	return UML.crossValidate(learnerName, trainX, trainY, performanceFunction=UML.calculate.fractionIncorrect)

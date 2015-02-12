@@ -17,24 +17,24 @@ from UML.exceptions import ArgumentException
 from UML.logger import UmlLogger
 from UML.logger import Stopwatch
 
-from UML.umlHelpers import findBestInterface
-from UML.umlHelpers import _learnerQuery
-from UML.umlHelpers import _validScoreMode
-from UML.umlHelpers import _validMultiClassStrategy
-from UML.umlHelpers import _unpackLearnerName
-from UML.umlHelpers import _validArguments
-from UML.umlHelpers import _validData
-from UML.umlHelpers import LearnerInspector
-from UML.umlHelpers import copyLabels
-from UML.umlHelpers import ArgumentIterator
-from UML.umlHelpers import trainAndApplyOneVsAll
-from UML.umlHelpers import trainAndApplyOneVsOne
-from UML.umlHelpers import _mergeArguments
-from UML.umlHelpers import foldIterator
-from UML.umlHelpers import crossValidateBackend
-from UML.umlHelpers import isAllowedRaw
-from UML.umlHelpers import initDataObject
-from UML.umlHelpers import createDataFromFile
+from UML.helpers import findBestInterface
+from UML.helpers import _learnerQuery
+from UML.helpers import _validScoreMode
+from UML.helpers import _validMultiClassStrategy
+from UML.helpers import _unpackLearnerName
+from UML.helpers import _validArguments
+from UML.helpers import _validData
+from UML.helpers import LearnerInspector
+from UML.helpers import copyLabels
+from UML.helpers import ArgumentIterator
+from UML.helpers import trainAndApplyOneVsAll
+from UML.helpers import trainAndApplyOneVsOne
+from UML.helpers import _mergeArguments
+from UML.helpers import foldIterator
+from UML.helpers import crossValidateBackend
+from UML.helpers import isAllowedRaw
+from UML.helpers import initDataObject
+from UML.helpers import createDataFromFile
 
 from UML.randomness import numpyRandom
 
@@ -863,7 +863,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 		timer.stop('crossValidateReturnBest')
 
 	predictions = interface.trainAndApply(trueLearnerName, trainX, trainY, testX, arguments=bestArgument, output=output, scoreMode=scoreMode, timer=timer)
-	performance = UML.umlHelpers.computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
+	performance = UML.helpers.computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
 
 	if useLog:
 		funcString = interface.getCanonicalName() + '.' + learnerName

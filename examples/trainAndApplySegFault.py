@@ -9,7 +9,7 @@ if __name__ == "__main__":
 	import os.path
 	import UML
 	from UML import functionCombinations
-	from UML.umlHelpers import executeCode
+	from UML.helpers import executeCode
 	from UML import trainAndTest
 	from UML import createData
 	from UML import splitData

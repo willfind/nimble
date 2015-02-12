@@ -323,7 +323,7 @@ class SessionConfiguration(object):
 		try:
 			ignore = True
 			# raises argument exception if not an interface name
-			interface = UML.umlHelpers.findBestInterface(section)
+			interface = UML.helpers.findBestInterface(section)
 			ignore = False
 			acceptedNames = interface.optionNames
 			if option not in acceptedNames:

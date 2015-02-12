@@ -6,8 +6,8 @@
 import sys
 sys.path.append('../..')
 
-from UML.umlHelpers import ArgumentIterator
-from UML.umlHelpers import _buildArgPermutationsList
+from UML.helpers import ArgumentIterator
+from UML.helpers import _buildArgPermutationsList
 
 	# example call to _buildArgPermutationsList:
 	# if rawArgInput is {'a':(1,2,3), 'b':(4,5)}

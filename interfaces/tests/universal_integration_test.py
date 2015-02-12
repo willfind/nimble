@@ -14,9 +14,9 @@ import UML
 
 from UML.exceptions import ArgumentException
 from UML.interfaces.universal_interface import UniversalInterface
-from UML.umlHelpers import generateClusteredPoints
-from UML.umlHelpers import generateClassificationData
-from UML.umlHelpers import generateRegressionData
+from UML.helpers import generateClusteredPoints
+from UML.helpers import generateClassificationData
+from UML.helpers import generateRegressionData
 
 def checkFormat(scores, numLabels):
 	"""

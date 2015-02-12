@@ -57,7 +57,7 @@ UML.settings.set("RegisteredLearners", "Custom.KNNClassifier", 'UML.customLearne
 UML.settings.set("RegisteredLearners", "Custom.MeanConstant", 'UML.customLearners.MeanConstant')
 
 # register those custom learners listed in UML.settings
-UML.umlHelpers.autoRegisterFromSettings()
+UML.helpers.autoRegisterFromSettings()
 
 # Now that we have loaded everything else, sync up the the settings object
 # as needed.

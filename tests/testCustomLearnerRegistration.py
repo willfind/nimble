@@ -269,7 +269,7 @@ def test_settings_autoRegister():
 	""" Test that the auto registration helper correctly registers learners """
 	# establish that this custom package does not currently exist
 	try:
-		fooInt = UML.umlHelpers.findBestInterface('Foo')
+		fooInt = UML.helpers.findBestInterface('Foo')
 		assert False
 	except ArgumentException:
 		pass
@@ -280,7 +280,7 @@ def test_settings_autoRegister():
 	UML.settings.set("RegisteredLearners", name, value)
 
 	# call helper
-	UML.umlHelpers.autoRegisterFromSettings()
+	UML.helpers.autoRegisterFromSettings()
 
 	# check that correct learners are available through UML.interfaces.available
 	assert 'LoveAtFirstSightClassifier' in UML.listLearners('Foo')

@@ -19,7 +19,7 @@ from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 
-from UML.umlHelpers import _mergeArguments
+from UML.helpers import _mergeArguments
 
 class UniversalInterface(object):
 	"""
@@ -509,7 +509,7 @@ class UniversalInterface(object):
 
 			"""
 			pred = self.apply(testX, arguments, output, scoreMode, **kwarguments)
-			performance = UML.umlHelpers.computeMetrics(testY, None, pred, performanceFunction, negativeLabel)
+			performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction, negativeLabel)
 
 			return performance
 

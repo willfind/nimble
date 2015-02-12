@@ -10,7 +10,7 @@ import UML
 
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 
-from UML.umlHelpers import generateClusteredPoints
+from UML.helpers import generateClusteredPoints
 
 from UML.randomness import numpyRandom
 

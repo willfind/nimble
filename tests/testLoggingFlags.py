@@ -12,7 +12,7 @@ from nose.plugins.attrib import attr
 
 import UML
 
-from UML.umlHelpers import generateClassificationData
+from UML.helpers import generateClassificationData
 from UML.calculate import fractionIncorrect
 
 learnerName = 'custom.KNNClassifier'
@@ -112,13 +112,13 @@ def test_trainAndApply():
 
 #def test_trainAndApplyOvO():
 #	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return UML.umlHelpers.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, useLog=useLog)
+#		return UML.helpers.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, useLog=useLog)
 
 #	backend(wrapped)
 
 #def test_trainAndApplyOvA():
 #	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return UML.umlHelpers.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, useLog=useLog)
+#		return UML.helpers.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, useLog=useLog)
 
 #	backend(wrapped)
 
@@ -130,13 +130,13 @@ def test_trainAndTest():
 
 #def test_trainAndTestOvO():
 #	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return UML.umlHelpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
+#		return UML.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
 
 #	backend(wrapped)
 
 #def test_trainAndTestOvA():
 #	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return UML.umlHelpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
+#		return UML.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
 
 #	backend(wrapped)
 

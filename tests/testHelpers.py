@@ -13,14 +13,14 @@ from UML import createData
 
 from UML.exceptions import ArgumentException, ImproperActionException
 
-from UML.umlHelpers import findBestInterface
-from UML.umlHelpers import foldIterator
-from UML.umlHelpers import sumAbsoluteDifference
-from UML.umlHelpers import generateClusteredPoints
-from UML.umlHelpers import trainAndTestOneVsOne
-from UML.umlHelpers import trainAndApplyOneVsOne
-from UML.umlHelpers import trainAndApplyOneVsAll
-from UML.umlHelpers import _mergeArguments
+from UML.helpers import findBestInterface
+from UML.helpers import foldIterator
+from UML.helpers import sumAbsoluteDifference
+from UML.helpers import generateClusteredPoints
+from UML.helpers import trainAndTestOneVsOne
+from UML.helpers import trainAndApplyOneVsOne
+from UML.helpers import trainAndApplyOneVsAll
+from UML.helpers import _mergeArguments
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
 
@@ -431,7 +431,7 @@ def testtrainAndApplyOneVsOne():
 
 @raises(ArgumentException)
 def testMergeArgumentsException():
-	""" Test umlHelpers._mergeArguments will throw the exception it should """
+	""" Test helpers._mergeArguments will throw the exception it should """
 	args = {1:'a', 2:'b', 3:'d'}
 	kwargs = {1:1, 2:'b'}
 
@@ -439,7 +439,7 @@ def testMergeArgumentsException():
 
 
 def testMergeArgumentsHand():
-	""" Test umlHelpers._mergeArguments is correct on hand construsted data """
+	""" Test helpers._mergeArguments is correct on hand construsted data """
 	args = {1:'a', 2:'b', 3:'d'}
 	kwargs = {1:'a', 4:'b'}
 

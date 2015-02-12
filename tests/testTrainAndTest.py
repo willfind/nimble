@@ -1,8 +1,8 @@
 
 from UML import createData
 from UML import trainAndTest
-from UML.umlHelpers import extractWinningPredictionLabel
-from UML.umlHelpers import generateAllPairs
+from UML.helpers import extractWinningPredictionLabel
+from UML.helpers import generateAllPairs
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
 

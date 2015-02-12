@@ -17,7 +17,7 @@ from UML import crossValidate
 from UML import createData
 from UML.calculate import *
 from UML.randomness import pythonRandom
-from UML.umlHelpers import computeMetrics
+from UML.helpers import computeMetrics
 
 #####################################
 # performance combinations function #
