@@ -9,36 +9,29 @@ scripts contained in the above folder.
 import os
 import sys
 
+import UML
 #ensures UML.examples.allowImports is in sys.modules
 import UML.examples.allowImports
 
 
 def test_callAllAsMain():
 	"""
-	Test which calls each script in the examples folder individually, and
-	confirms that it does not throw any sort of exception.
+	Calls each script in examples, confirms complete with an exception.
 
 	"""
 
-	# bind an the name allowImports to the appropriate, already loaded, module
+	# bind the name allowImports to the appropriate, already loaded, module
 	# needed because each script we call imports a function from allowImports,
 	# but since we are calling from a different context, the import as given
 	# fails.
 	sys.modules['allowImports'] = sys.modules['UML.examples.allowImports']
 
-	cwd = os.getcwd()
-	parent = os.path.dirname(cwd)
+	examplesDir = os.path.join(UML.UMLPath, 'examples')
 
-	# this just makes the calls easier
-	os.chdir(parent)
-
-	examples = os.listdir(parent)
-#	ladderExamples = os.listdir(os.path.join(parent,"laddersExperiments"))
-#	for x in ladderExamples:
-#		examples.append(os.path.join("laddersExperiments", x))
+	examplesFiles = os.listdir(examplesDir)
 
 	cleaned = []
-	for fileName in examples:
+	for fileName in examplesFiles:
 		if fileName.endswith('.py') and not fileName.startswith("__"):
 			cleaned.append(fileName)
 
@@ -51,16 +44,22 @@ def test_callAllAsMain():
 	for script in cleaned:
 		results[script] = None
 		try:
-			execfile(script)
+			execfile(os.path.join(examplesDir, script))
 		except Exception as e:
-			results[script] = e
+			results[script] = (e, sys.exc_info())
 
 	print ""
 	print "*** Results ***"
 	print ""
+	print ""
 	sortedKeys = sorted(results.keys())
 	for key in sortedKeys:
-		print key +" : " + str(results[key])
-		assert results[key] is None
+		val = results[key]
+		print key + " : " + str(val)
+		print ""
+		#if isinstance(val, tuple) and len(val) > 0 and isinstance(val[0], Exception):
+			#raise val[1][1], None, val[1][2]
+			#print key
+			#print val[1][1], None, val[1][2]
 
 #	assert False
