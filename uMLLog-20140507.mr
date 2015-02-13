@@ -1,3 +1,0 @@
-
-{RUN}::timestamp:"2014-05-07 11\:24\:40",trainDataName:"OBJECT_#0",numTrainDataPoints:10,numTrainDataFeatures:3,testDataName:"OBJECT_#2",numTestDataPoints:5,numTestDataFeatures:3,test:"0.00",train:"0.00",function:"custom.RidgeRegression",lamb:0
-{RUN}::timestamp:"2014-05-07 11\:26\:33",trainDataName:"OBJECT_#0",numTrainDataPoints:10,numTrainDataFeatures:3,testDataName:"OBJECT_#2",numTestDataPoints:5,numTestDataFeatures:3,test:"0.00",train:"0.00",function:"custom.RidgeRegression",lamb:0
