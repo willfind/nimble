@@ -51,6 +51,11 @@ class LogManager(object):
 		self.machineReadableLog.logRun(trainData, trainLabels, testData, testLabels, function, metrics, predictions, performance, timer, extraInfo, numFolds)
 
 def initLoggerAndLogConfig():
+	"""Sets up or reads configuration options associated with logging,
+	and initializes the currently active logger object using those
+	options.
+
+	"""
 	try:
 		location = UML.settings.get("logger", "location")
 	except:
@@ -64,6 +69,7 @@ def initLoggerAndLogConfig():
 			UML.logger.active = UML.logger.log_manager.LogManager(newLocation, currName)
 
 		UML.settings.hook("logger", "location", cleanThenReInit_Loc)
+
 	try:
 		name = UML.settings.get("logger", "name")
 	except:
@@ -84,5 +90,12 @@ def initLoggerAndLogConfig():
 		loggingEnabled = 'True'
 		UML.settings.set("logger", "enabledByDefault", loggingEnabled)
 		UML.settings.saveChanges("logger", "enabledByDefault")
+
+	try:
+		mirror = UML.settings.get("logger", "mirrorToStandardOut")
+	except:
+		mirror = 'False'
+		UML.settings.set("logger", "mirrorToStandardOut", mirror)
+		UML.settings.saveChanges("logger", "mirrorToStandardOut")
 
 	UML.logger.active = UML.logger.log_manager.LogManager(location, name)

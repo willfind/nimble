@@ -19,6 +19,18 @@ class HumanReadableLogger(UmlLogger):
 		super(HumanReadableLogger, self).__init__(logFileName)
 
 
+	def logMessage(self, message, addNewLine=True):
+		"""
+			Generic function to write a message to this object's log file.  Does
+			no formatting; just writes whatever is in 'message' to the file.  Attempt
+			to open the log file if it has not yet been opened.  By default, adds a
+			new line to each message sent, but if addNewLine is false, will not put
+			the message on a new line.
+		"""
+		super(HumanReadableLogger, self).logMessage(message, addNewLine)
+		if UML.settings.get('logger', 'mirrorToStandardOut').lower() == 'true':
+			print message
+
 	def _logData_implementation(self, baseDataObject):
 		"""
 		Log information about a data object
