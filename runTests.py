@@ -189,8 +189,10 @@ class LoggerControl(object):
 
     def __exit__(self, type, value, traceback):
         UML.settings.set("logger", 'location', self._backupLoc)
+        UML.settings.saveChanges("logger", 'location')
         UML.settings.set("logger", 'name', self._backupName)
         UML.settings.saveChanges("logger", 'name')
+
 
 
 if __name__ == '__main__':
