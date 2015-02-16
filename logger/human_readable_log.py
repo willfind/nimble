@@ -143,8 +143,8 @@ def _packMetricInfo(testY, metrics, predictions, performance):
 	metricTable = []
 	metricHeaders = []
 	metricHeaders.append("Error Metric")
-	metricHeaders.append("95% CI low")
 	metricHeaders.append("Error Value")
+	metricHeaders.append("95% CI low")
 	metricHeaders.append("95% CI high")
 	metricTable.append(metricHeaders)
 	for metric, result in zip(metrics,performance):
@@ -163,8 +163,8 @@ def _packMetricInfo(testY, metrics, predictions, performance):
 			metricRow.append(result)
 			metricRow.append("")
 		else:
-			metricRow.append(interval[0])
 			metricRow.append(result)
+			metricRow.append(interval[0])
 			metricRow.append(interval[1])
 
 		metricTable.append(metricRow)
