@@ -67,8 +67,7 @@ class HumanReadableLogger(UmlLogger):
 	def _logRun_implementation(self, trainX, trainY, testX, testY,
 								function, metrics, predictions, performance, timer,
 								extraInfo=None, numFolds=None):
-		"""timer
-			Convert a set of objects representing one run (data used for training, data used for
+		"""Convert a set of objects representing one run (data used for training, data used for
 			testing, function representing a unique classifier {learnerName, parameters}, error metrics,
 			and any additional info) into a list.  This list can be appended to a second list, to create
 			a 2-dimensional table that can be passed to tableString().  The results of tableString can
@@ -238,23 +237,3 @@ def _packDataInfo(dataObjects):
 			rawTable.append(currRow)
 
 	return rawTable
-
-
-def testBasic():
-	trainDataBase = numpy.array([(1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0)])
-	testDataBase = numpy.array([(1.0, 1.0, 1.0), (0.0, 1.0, 0.0)])
-
-	trainData1 = UML.createData('Sparse', trainDataBase)
-	testData1 = UML.createData('Sparse', testDataBase)
-	metrics = ["rootMeanSquareError", "meanAbsoluteError"]
-	results = [0.50,0.45]
-	extra = {"c":0.5, "folds":10, "tests": 20}
-
-	testLogger = HumanReadableRunLog("/Users/rossnoren/UMLMisc/hrTest1.txt")
-
-	functionObj = lambda x: x+1
-
-	testLogger.logRun(trainData1, None, testData1, None, functionObj, metrics, None, results, 0.5, extra)
-
-if __name__ == "__main__":
-	main()
