@@ -1064,6 +1064,14 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 		#todo support indexing if Y is an index for X instead
 		raise ArgumentException("X and Y must contain the same number of points.")
 
+	if useLog is None:
+		useLog = UML.settings.get("logger", "enabledByDefault")
+		useLog = True if useLog.lower() == 'true' else False
+	deepLog = False
+	if useLog:
+		deepLog = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
+		deepLog = True if deepLog.lower() == 'true' else False
+
 	if isinstance(folds, int): 
 		folds = foldIterator([X,Y], folds)
 	performanceListOfFolds = []
@@ -1072,7 +1080,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 		[(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
 
 		#run algorithm on the folds' training and testing sets
-		curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=arguments, scoreMode=scoreMode, useLog=False, **kwarguments)
+		curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=arguments, scoreMode=scoreMode, useLog=deepLog, **kwarguments)
 		#calculate error of prediction, according to performanceFunction
 		curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
 
@@ -1801,6 +1809,10 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 	if useLog is None:
 		useLog = UML.settings.get("logger", "enabledByDefault")
 		useLog = True if useLog.lower() == 'true' else False
+	deepLog = False
+	if useLog:
+		deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+		deepLog = True if deepLog.lower() == 'true' else False
 
 	#if we are logging this run, we need to start the timer
 	if useLog:
@@ -1819,7 +1831,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 		pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
 		pairTrueLabels = pairData.extractFeatures(trainY)
 		#train classifier on that data; apply it to the test set
-		partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=merged, useLog=False)
+		partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=merged, useLog=deepLog)
 		#put predictions into table of predictions
 		if rawPredictions is None:
 			rawPredictions = partialResults.copyAs(format="List")
@@ -1928,6 +1940,10 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 	if useLog is None:
 		useLog = UML.settings.get("logger", "enabledByDefault")
 		useLog = True if useLog.lower() == 'true' else False
+	deepLog = False
+	if useLog:
+		deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+		deepLog = True if deepLog.lower() == 'true' else False
 
 	#if we are logging this run, we need to start the timer
 	if useLog:
@@ -1947,7 +1963,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 				return 0
 			else: return 1
 		trainLabels = trainY.applyToPoints(relabeler, inPlace=False)
-		oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged, useLog=False)
+		oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged, useLog=deepLog)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
 			rawPredictions = oneLabelResults

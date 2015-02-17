@@ -49,7 +49,7 @@ def safetyWrapper(toWrap):
 
 
 # helper function which checks log staus
-def runAndCheck(toCall, useLog, expectChange):
+def runAndCheck(toCall, useLog):
 	# generate data
 	cData = generateClassificationData(2, 10, 5)
 	((trainX, trainY), (testX, testY)) = cData
@@ -75,11 +75,7 @@ def runAndCheck(toCall, useLog, expectChange):
 	else:
 		endSize = 0
 
-	if expectChange:
-		assert startSize != endSize
-	else:
-		assert startSize == endSize
-
+	return (startSize, endSize)
 
 @safetyWrapper
 def backend(toCall):
@@ -87,16 +83,27 @@ def backend(toCall):
 
 	UML.settings.set('logger', 'enabledByDefault', 'True')
 
-	runAndCheck(toCall, useLog=True, expectChange=True)
-	runAndCheck(toCall, useLog=None, expectChange=True)
-	runAndCheck(toCall, useLog=False, expectChange=False)
+	(start, end) = runAndCheck(toCall, useLog=True)
+	assert start != end
+
+	(start, end) = runAndCheck(toCall, useLog=None)
+	assert start != end
+	
+	(start, end) = runAndCheck(toCall, useLog=False)
+	assert start == end
 
 	UML.settings.set('logger', 'enabledByDefault', 'False')
 
-	runAndCheck(toCall, useLog=True, expectChange=True)
-	runAndCheck(toCall, useLog=None, expectChange=False)
-	runAndCheck(toCall, useLog=False, expectChange=False)
+	(start, end) = runAndCheck(toCall, useLog=True)
+	assert start != end
+	
+	(start, end) = runAndCheck(toCall, useLog=None)
+	assert start == end
+	
+	(start, end) = runAndCheck(toCall, useLog=False)
+	assert start == end
 
+	
 
 def test_train():
 	def wrapped(trainX, trainY, testX, testY, useLog):
@@ -186,3 +193,126 @@ def test_crossValidateReturnBest():
 # incremental train?
 # reTrain?
 # createData?
+
+@safetyWrapper
+def backendDeep(toCall, setter):
+	UML.settings.set('logger', 'enabledByDefault', 'True')
+	setter('True')
+
+	# the deep logging flag is continget on global and local
+	# control, so we confirm that in those instances where
+	# logging should be disable, it is still disabled
+	(startT1, endT1) = runAndCheck(toCall, useLog=True)
+	(startT2, endT2) = runAndCheck(toCall, useLog=None)
+	(startT3, endT3) = runAndCheck(toCall, useLog=False)
+	assert startT3 == endT3
+
+	setter('False')
+
+	(startF1, endF1) = runAndCheck(toCall, useLog=True)
+	(startF2, endF2) = runAndCheck(toCall, useLog=None)
+	(startF3, endF3) = runAndCheck(toCall, useLog=False)
+	assert startF3 == endF3
+
+	# next we compare the differences between the calls when
+	# the deep flag is different
+	assert (endT1 - startT1) > (endF1 - startF1)
+	assert (endT2 - startT2) > (endF2 - startF2)
+
+	UML.settings.set('logger', 'enabledByDefault', 'False')
+	setter('True')
+
+	# the deep logging flag is continget on global and local
+	# control, so we confirm that logging is called or
+	# not appropriately
+	(startT1, endT1) = runAndCheck(toCall, useLog=True)
+	(startT2, endT2) = runAndCheck(toCall, useLog=None)
+	assert startT2 == endT2
+	(startT3, endT3) = runAndCheck(toCall, useLog=False)
+	assert startT3 == endT3
+
+	setter('False')
+
+	(startF1, endF1) = runAndCheck(toCall, useLog=True)
+	(startF2, endF2) = runAndCheck(toCall, useLog=None)
+	assert startF2 == endF2
+	(startF3, endF3) = runAndCheck(toCall, useLog=False)
+	assert startF3 == endF3
+
+	# next we compare the differences between the calls when
+	# the deep flag is different
+	assert (endT1 - startT1) > (endF1 - startF1)
+
+
+def test_Deep_crossValidate():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.crossValidate(learnerName, trainX, trainY, performanceFunction=fractionIncorrect, useLog=useLog)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+def test_Deep_crossValidateReturnAll():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.crossValidateReturnAll(learnerName, trainX, trainY, performanceFunction=fractionIncorrect, useLog=useLog)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+def test_Deep_crossValidateReturnBest():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction=fractionIncorrect, useLog=useLog)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+def test_Deep_trainAndTest():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+
+def test_Deep_TrainAndApplyOvO():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.trainAndApply(learnerName, trainX, trainY, testX, multiClassStrategy='OneVsOne', useLog=useLog)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+def test_Deep_trainAndApplyOVA():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.trainAndApply(learnerName, trainX, trainY, testX, multiClassStrategy='OneVsAll', useLog=useLog)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+def test_Deep_TrainAndTestOvO():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, multiClassStrategy='OneVsOne', useLog=useLog)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+def test_Deep_trainAndTestOVA():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, multiClassStrategy='OneVsAll', useLog=useLog)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
+
+	backendDeep(wrapped, setter)

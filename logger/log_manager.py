@@ -98,4 +98,19 @@ def initLoggerAndLogConfig():
 		UML.settings.set("logger", "mirrorToStandardOut", mirror)
 		UML.settings.saveChanges("logger", "mirrorToStandardOut")
 
+	try:
+		deepCV = UML.settings.get("logger", 'enableCrossValidationDeepLogging')
+	except:
+		deepCV = 'False'
+		UML.settings.set("logger", 'enableCrossValidationDeepLogging', deepCV)
+		UML.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
+
+	try:
+		deepMulti = UML.settings.get("logger", 'enableMultiClassStrategyDeepLogging')
+	except:
+		deepMulti = 'False'
+		UML.settings.set("logger", 'enableMultiClassStrategyDeepLogging', deepMulti)
+		UML.settings.saveChanges("logger", 'enableMultiClassStrategyDeepLogging')
+
+
 	UML.logger.active = UML.logger.log_manager.LogManager(location, name)
