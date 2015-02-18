@@ -966,3 +966,85 @@ class LowLevelBackend(object):
 
 		assert toTest1.name == DEFAULT_NAME_PREFIX + str(second)
 		assert toTest2.name == DEFAULT_NAME_PREFIX + str(third)
+
+
+	#################
+	# getPointNames #
+	#################
+
+	def test_getPointNames_Empty(self):
+		toTest = self.constructor(psize=0, fsize=2)
+
+		ret = toTest.getPointNames()
+		assert ret == []
+
+	def test_getPointNames_basic(self):
+		pnames = {'zero':0, 'one':1, 'hello':2}
+		toTest = self.constructor(pointNames=pnames, fsize=2)
+
+		ret = toTest.getPointNames()
+		assert ret == ['zero', 'one', 'hello']
+
+	def test_getPointNames_mixedDefault(self):
+		pnames = {'zero':0, 'one':1, 'hello':2}
+		toTest = self.constructor(pointNames=pnames, fsize=2)
+		toTest.setPointName(0, None)
+
+		ret = toTest.getPointNames()
+		assert ret[0].startswith(DEFAULT_PREFIX)
+		assert ret[1] == 'one'
+		assert ret[2] == 'hello'
+
+	def test_getPointNames_unmodifiable(self):
+		pnames = {'zero':0, 'one':1, 'hello':2}
+		toTest = self.constructor(pointNames=pnames, fsize=2)
+
+		ret = toTest.getPointNames()
+
+		ret[0] = 'modified'
+		toTest.setPointName(1, 'modified')
+
+		assert ret[1] == 'one'
+		assert toTest.pointNames['zero'] == 0
+		assert toTest.pointNamesInverse[0] == 'zero'
+
+
+	###################
+	# getFeatureNames #
+	###################
+
+	def test_getFeatureNames_Empty(self):
+		toTest = self.constructor(psize=2, fsize=0)
+
+		ret = toTest.getFeatureNames()
+		assert ret == []
+
+	def test_getFeatureNames_basic(self):
+		fnames = {'zero':0, 'one':1, 'hello':2}
+		toTest = self.constructor(featureNames=fnames, psize=2)
+
+		ret = toTest.getFeatureNames()
+		assert ret == ['zero', 'one', 'hello']
+
+	def test_getFeatureNames_mixedDefault(self):
+		fnames = {'zero':0, 'one':1, 'hello':2}
+		toTest = self.constructor(featureNames=fnames, psize=2)
+		toTest.setFeatureName(0, None)
+
+		ret = toTest.getFeatureNames()
+		assert ret[0].startswith(DEFAULT_PREFIX)
+		assert ret[1] == 'one'
+		assert ret[2] == 'hello'
+
+	def test_getFeatureNames_unmodifiable(self):
+		fnames = {'zero':0, 'one':1, 'hello':2}
+		toTest = self.constructor(featureNames=fnames, psize=2)
+
+		ret = toTest.getFeatureNames()
+
+		ret[0] = 'modified'
+		toTest.setFeatureName(1, 'modified')
+
+		assert ret[1] == 'one'
+		assert toTest.featureNames['zero'] == 0
+		assert toTest.featureNamesInverse[0] == 'zero'

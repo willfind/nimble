@@ -201,6 +201,30 @@ class Base(object):
 		"""Returns True if self.name has a non-default value"""
 		return not self.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 
+	def getPointNames(self):
+		"""Returns a list containing all point names, where their index
+		in the list is the same as the index of the point they correspond
+		to.
+
+		"""
+		ret = []
+		for i in xrange(self.pointCount):
+			ret.append(self.pointNamesInverse[i])
+
+		return ret
+
+	def getFeatureNames(self):
+		"""Returns a list containing all feature names, where their index
+		in the list is the same as the index of the feature they
+		correspond to.
+
+		"""
+		ret = []
+		for i in xrange(self.featureCount):
+			ret.append(self.featureNamesInverse[i])
+
+		return ret
+
 	###########################
 	# Higher Order Operations #
 	###########################
