@@ -138,31 +138,31 @@ class HighLevelBackend(DataTestObject):
 
 
 	#############################
-	# transformFeatureToIntegerFeature #
+	# transformFeatureToIntegers #
 	#############################
 
 	@raises(ImproperActionException)
-	def test_transformFeatureToIntegerFeature_PemptyException(self):
-		""" Test transformFeatureToIntegerFeature() with an point empty object """
+	def test_transformFeatureToIntegers_PemptyException(self):
+		""" Test transformFeatureToIntegers() with an point empty object """
 		data = [[],[]]
 		data = numpy.array(data).T
 		toTest = self.constructor(data)
-		toTest.transformFeatureToIntegerFeature(0)
+		toTest.transformFeatureToIntegers(0)
 
 	@raises(ArgumentException)
-	def test_transformFeatureToIntegerFeature_FemptyException(self):
-		""" Test transformFeatureToIntegerFeature() with an feature empty object """
+	def test_transformFeatureToIntegers_FemptyException(self):
+		""" Test transformFeatureToIntegers() with an feature empty object """
 		data = [[],[]]
 		data = numpy.array(data)
 		toTest = self.constructor(data)
-		toTest.transformFeatureToIntegerFeature(0)
+		toTest.transformFeatureToIntegers(0)
 
-	def test_transformFeatureToIntegerFeature_handmade(self):
-		""" Test transformFeatureToIntegerFeature() against handmade output """
+	def test_transformFeatureToIntegers_handmade(self):
+		""" Test transformFeatureToIntegers() against handmade output """
 		data = [[10],[20],[30.5],[20],[10]]
 		featureNames = ['col']
 		toTest = self.constructor(data, featureNames=featureNames)
-		ret = toTest.transformFeatureToIntegerFeature(0)  # RET CHECK
+		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
 
 		assert toTest[0,0] == toTest[4,0]
 		assert toTest[1,0] == toTest[3,0]
@@ -170,13 +170,13 @@ class HighLevelBackend(DataTestObject):
 		assert toTest[0,0] != toTest[2,0]
 		assert ret is None
 
-	def test_transformFeatureToIntegerFeature_pointNames(self):
-		""" Test transformFeatureToIntegerFeature preserves pointNames """
+	def test_transformFeatureToIntegers_pointNames(self):
+		""" Test transformFeatureToIntegers preserves pointNames """
 		data = [[10],[20],[30.5],[20],[10]]
 		pnames = ['1a', '2a', '3', '2b', '1b']
 		fnames = ['col']
 		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-		ret = toTest.transformFeatureToIntegerFeature(0)  # RET CHECK
+		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
 
 		assert toTest.pointNamesInverse[0] == '1a'
 		assert toTest.pointNamesInverse[1] == '2a'
@@ -185,13 +185,13 @@ class HighLevelBackend(DataTestObject):
 		assert toTest.pointNamesInverse[4] == '1b'
 		assert ret is None
 
-	def test_transformFeatureToIntegerFeature_positioning(self):
-		""" Test transformFeatureToIntegerFeature preserves featurename mapping """
+	def test_transformFeatureToIntegers_positioning(self):
+		""" Test transformFeatureToIntegers preserves featurename mapping """
 		data = [[10,0],[20,1],[30.5,2],[20,3],[10,4]]
 		pnames = ['1a', '2a', '3', '2b', '1b']
 		fnames = ['col','pos']
 		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-		ret = toTest.transformFeatureToIntegerFeature(0)  # RET CHECK
+		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
 
 		assert toTest[0,1] == toTest[4,1]
 		assert toTest[1,1] == toTest[3,1]

@@ -28,7 +28,7 @@ numFeatures = 4
 
 unavailableNoPoints = [
 	'replaceFeatureWithBinaryFeatures',
-	'transformFeatureToIntegerFeature',
+	'transformFeatureToIntegers',
 	'applyToPoints',
 	'applyToFeatures',
 	'featureIterator',
@@ -46,7 +46,7 @@ unavailableNoFeatures = [
 	'setFeatureName',
 	'setFeatureNames',
 	'replaceFeatureWithBinaryFeatures',
-	'transformFeatureToIntegerFeature',
+	'transformFeatureToIntegers',
 	'applyToPoints',
 	'applyToFeatures',
 	'mapReducePoints',
@@ -537,7 +537,7 @@ generators = {'appendFeatures':[genObjMatchPoints],
 		'shufflePoints':[genPPermArr],
 		'sortFeatures':[genPID, ftp(pickGen, genList=(genScorer,genComparator))],
 		'sortPoints':[genFID, ftp(pickGen, genList=(genScorer,genComparator))],
-		'transformFeatureToIntegerFeature':[genFID],
+		'transformFeatureToIntegers':[genFID],
 		'transpose':[],
 		'validate':[genOne],	
 		}

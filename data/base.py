@@ -306,7 +306,7 @@ class Base(object):
 		self.appendFeatures(toConvert)
 
 
-	def transformFeatureToIntegerFeature(self, featureToConvert):
+	def transformFeatureToIntegers(self, featureToConvert):
 		"""
 		Modify this object so that the chosen feature in removed, and a new integer
 		valued feature is added with values 0 to n-1, one for each of n values present

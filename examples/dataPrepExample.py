@@ -34,7 +34,7 @@ if __name__ == "__main__":
 	processed.replaceFeatureWithBinaryFeatures('native-country')
 	
 	# convert 'income' column (the classification label) to a single numerical column
-	processed.transformFeatureToIntegerFeature('income')
+	processed.transformFeatureToIntegers('income')
 
 	#scrub the rest of the string valued data -- the ones we converted are the non-redundant ones
 	processed.dropFeaturesContainingType(basestring)
