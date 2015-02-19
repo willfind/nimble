@@ -22,7 +22,7 @@ from UML.randomness import pythonRandom
 
 import dataHelpers
 
-# the prefix for default featureNames
+# the prefix for default point and feature names
 from dataHelpers import DEFAULT_PREFIX
 
 from dataHelpers import DEFAULT_NAME_PREFIX
@@ -124,7 +124,7 @@ class Base(object):
 		None is always returned.
 
 		"""
-		if len(self.pointNames) == 0:
+		if self.pointCount == 0:
 			raise ArgumentException("Cannot set any point names; this object has no points ")
 		self._setName_implementation(oldIdentifier, newName, 'point', False)
 
@@ -140,7 +140,7 @@ class Base(object):
 		None is always returned.
 
 		"""
-		if len(self.featureNames) == 0:
+		if self.featureCount == 0:
 			raise ArgumentException("Cannot set any feature names; this object has no features ")
 		self._setName_implementation(oldIdentifier, newName, 'feature', False)
 
@@ -209,7 +209,7 @@ class Base(object):
 		"""
 		ret = []
 		for i in xrange(self.pointCount):
-			ret.append(self.pointNamesInverse[i])
+			ret.append(self.getPointName(i))
 
 		return ret
 
@@ -221,9 +221,21 @@ class Base(object):
 		"""
 		ret = []
 		for i in xrange(self.featureCount):
-			ret.append(self.featureNamesInverse[i])
+			ret.append(self.getFeatureName(i))
 
 		return ret
+
+	def getPointName(self, index):
+		return self.pointNamesInverse[index]
+
+	def getPointIndex(self, name):
+		return self.pointNames[name]
+
+	def getFeatureName(self, index):
+		return self.featureNamesInverse[index]
+
+	def getFeatureIndex(self, name):
+		return self.featureNames[name]
 
 	###########################
 	# Higher Order Operations #
@@ -293,7 +305,7 @@ class Base(object):
 				return 0
 			return equalTo
 
-		varName = toConvert.featureNamesInverse[0]
+		varName = toConvert.getFeatureName(0)
 
 		for point in values.data:
 			value = point[0]
@@ -346,8 +358,8 @@ class Base(object):
 			return mapping[point[0]]
 
 		converted = toConvert.applyToPoints(lookup, inPlace=False)
-		converted.setPointNames(toConvert.pointNames)
-		converted.setFeatureName(0, toConvert.featureNamesInverse[0])
+		converted.setPointNames(toConvert.getPointNames())
+		converted.setFeatureName(0, toConvert.getFeatureName(0))
 
 		self.appendFeatures(converted)
 
@@ -897,13 +909,14 @@ class Base(object):
 		that our objects enforce.
 
 		"""
-		assert self.featureCount == len(self.featureNames)
-		assert len(self.featureNames) == len(self.featureNamesInverse)
+		assert self.featureCount == len(self.getFeatureNames())
+		assert self.pointCount == len(self.getPointNames())
+
 		if level > 0:
-			for key in self.pointNames.keys():
-				assert self.pointNamesInverse[self.pointNames[key]] == key
-			for key in self.featureNames.keys():
-				assert self.featureNamesInverse[self.featureNames[key]] == key
+			for key in self.getPointNames():
+				assert self.getPointName(self.getPointIndex(key)) == key
+			for key in self.getFeatureNames():
+				assert self.getFeatureName(self.getFeatureIndex(key)) == key
 
 		self._validate_implementation(level)
 
@@ -979,7 +992,7 @@ class Base(object):
 		for sourceIndex in range(2):
 			source = list([tRowIDs, bRowIDs])[sourceIndex]
 			for i in source:
-				pname = self.pointNamesInverse[i]
+				pname = self.getPointName(i)
 				if len(pname) > nameLim:
 					pname = pname[:nameCutIndex] + nameHolder
 				if includeNames:
@@ -1030,7 +1043,7 @@ class Base(object):
 				nameIndex = currIndex
 				if currIndex < 0:
 					nameIndex = self.featureCount + currIndex
-				currName = self.featureNamesInverse[nameIndex]
+				currName = self.getFeatureName(nameIndex)
 				if len(currName) > nameLim:
 					currName = currName[:nameCutIndex] + nameHolder
 				nameLen = len(currName)
@@ -1203,9 +1216,9 @@ class Base(object):
 		self._pointCount = self._featureCount
 		self._featureCount = temp
 
-		tempFN = self.featureNames
+		temp = self.featureNames
 		self.setFeatureNames(self.pointNames)
-		self.setPointNames(tempFN)
+		self.setPointNames(temp)
 
 		self.validate()
 
@@ -1234,7 +1247,7 @@ class Base(object):
 		self._pointCount += toAppend.pointCount
 
 		for i in xrange(toAppend.pointCount):
-			currName = toAppend.pointNamesInverse[i]
+			currName = toAppend.getPointName(i)
 			if currName.startswith(DEFAULT_PREFIX):
 				currName += '_' + toAppend.name
 			self._addPointName(currName)
@@ -1267,7 +1280,7 @@ class Base(object):
 		self._featureCount += toAppend.featureCount
 
 		for i in xrange(toAppend.featureCount):
-			currName = toAppend.featureNamesInverse[i]
+			currName = toAppend.getFeatureName(i)
 			if currName.startswith(DEFAULT_PREFIX):
 				currName += '_' + toAppend.name
 			self._addFeatureName(currName)
@@ -1375,8 +1388,8 @@ class Base(object):
 		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
 		self._pointCount -= ret.pointCount
 		if ret.pointCount != 0:
-			ret.setFeatureNames(self.featureNames)
-		for key in ret.pointNames.keys():
+			ret.setFeatureNames(self.getFeatureNames())
+		for key in ret.getPointNames():
 			self._removePointNameAndShift(key)
 
 		ret.path = self.path
@@ -1429,18 +1442,18 @@ class Base(object):
 				raise ArgumentException("start cannot be an index greater than end")
 			if number is not None:
 				#then we can do the windowing calculation here
-				possibleEnd = start + number -1
+				possibleEnd = start + number - 1
 				if possibleEnd < end:
 					if not randomize:
 						end = possibleEnd
 				else:
-					number = (end - start) +1
+					number = (end - start) + 1
 
 		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
 		self._featureCount -= ret.featureCount
 		if ret.featureCount != 0:
-			ret.setPointNames(self.pointNames)
-		for key in ret.featureNames.keys():
+			ret.setPointNames(self.getPointNames())
+		for key in ret.getFeatureNames():
 			self._removeFeatureNameAndShift(key)
 
 		ret.path = self.path
@@ -1579,13 +1592,13 @@ class Base(object):
 		pointNameList = []
 		if points is not None:
 			for i in points:
-				pointNameList.append(self.pointNamesInverse[i])
+				pointNameList.append(self.getPointName(i))
 		else:
 			for i in range(start,end+1):
-				pointNameList.append(self.pointNamesInverse[i])
+				pointNameList.append(self.getPointName(i))
 
 		retObj.setPointNames(pointNameList)
-		retObj.setFeatureNames(self.featureNames)
+		retObj.setFeatureNames(self.getFeatureNames())
 		return retObj
 	
 	def copyFeatures(self, features=None, start=None, end=None):
@@ -1626,12 +1639,12 @@ class Base(object):
 		featureNameList = []
 		if indices is not None:
 			for i in indices:
-				featureNameList.append(self.featureNamesInverse[i])
+				featureNameList.append(self.getFeatureName(i))
 		else:
 			for i in range(start,end+1):
-				featureNameList.append(self.featureNamesInverse[i])
+				featureNameList.append(self.getFeatureName(i))
 
-		ret.setPointNames(self.pointNames)
+		ret.setPointNames(self.getPointNames())
 		ret.setFeatureNames(featureNameList)
 		return ret
 
@@ -1761,8 +1774,8 @@ class Base(object):
 		ret = self._mul__implementation(other)
 
 		if isinstance(other, UML.data.Base):
-			ret.setPointNames(self.pointNames)
-			ret.setFeatureNames(other.featureNames)
+			ret.setPointNames(self.getPointNames())
+			ret.setFeatureNames(other.getFeatureNames())
 
 		return ret
 	
@@ -1952,8 +1965,8 @@ class Base(object):
 		if other < 0:
 			raise ArgumentException("other must be greater than zero")
 	
-		retPNames = copy.copy(self.pointNames)
-		retFNames = copy.copy(self.featureNames)
+		retPNames = self.getPointNames()
+		retFNames = self.getFeatureNames()
 
 		if other == 1:
 			return self.copy()
@@ -2016,8 +2029,8 @@ class Base(object):
 	def __abs__(self):
 		""" Perform element wise absolute value on this object """
 		ret = self.applyToElements(abs, inPlace=False)
-		ret.setPointNames(self.pointNames)
-		ret.setFeatureNames(self.featureNames)
+		ret.setPointNames(self.getPointNames())
+		ret.setFeatureNames(self.getFeatureNames())
 		return ret
 
 	def _genericNumericBinary(self, opName, other):

@@ -290,16 +290,16 @@ def genID(dataObj, seed, axis):
 	retIntID = random.randint(0,1)	
 	if axis == 'point':
 		numInAxis = dataObj.pointCount
-		source = dataObj.pointNamesInverse
+		source = dataObj.getPointName
 	else:
 		numInAxis = dataObj.featureCount
-		source = dataObj.featureNamesInverse
+		source = dataObj.getFeatureName
 	
 	intID = random.randint(0,numInAxis-1)
 	if retIntID:
 		ret = intID
 	else:
-		ret = source[intID]
+		ret = source(intID)
 	assert ret is not None
 	if axis == 'point':
 		dataObj._getPointIndex(ret)
@@ -311,16 +311,16 @@ def genIDList(dataObj, seed, axis):
 	random.seed(seed)
 	if axis == 'point':
 		numInAxis = dataObj.pointCount
-		source = dataObj.pointNamesInverse
+		source = dataObj.getPointName
 	else:
 		numInAxis = dataObj.featureCount
-		source = dataObj.featureNamesInverse
+		source = dataObj.getFeatureName
 
 	numToSample = random.randint(1,numInAxis)
 	IDList = random.sample(range(numInAxis), numToSample)
 	for i in range(len(IDList)):
 		if random.randint(0,1):
-			IDList[i] = source[IDList[i]]
+			IDList[i] = source(IDList[i])
 
 	return IDList
 
@@ -390,13 +390,15 @@ genFNumLim = functools.partial(genNumLimit, axis='faeture')
 
 def checkNameNums(dataObj, axis):
 	if axis == 'point':
-		source = dataObj.pointNamesInverse
+		source = dataObj.getPointName
+		length = dataObj.pointCount
 	else:
-		source = dataObj.featureNamesInverse
+		source = dataObj.getFeatureName
+		length = dataObj.featureCount
 
 	maxNum = 0
-	for i in range(len(source)):
-		name = source[i]
+	for i in range(length):
+		name = source(i)
 		currNum = 0
 		if name.startswith('FNAME') or name.startswith('PNAME'):
 			endJunk = 5

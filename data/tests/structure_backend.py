@@ -1008,8 +1008,8 @@ class StructureBackend(DataTestObject):
 		ret = orig.referenceDataFrom(other) # RET CHECK
 
 		assert orig.data is other.data
-		assert '-1' in orig.pointNames.keys()
-		assert '1' in orig.featureNames.keys()
+		assert '-1' in orig.getPointNames()
+		assert '1' in orig.getFeatureNames()
 		assert ret is None
 
 
@@ -1152,8 +1152,8 @@ class StructureBackend(DataTestObject):
 		assert type(copySparse) == Sparse
 		copySparse.setFeatureName('two', '2')
 		copySparse.setPointName('one', 'WHAT')
-		assert 'two' in orig.featureNames
-		assert 'one' in orig.pointNames
+		assert 'two' in orig.getFeatureNames()
+		assert 'one' in orig.getPointNames()
 		copySparse.shufflePoints(pointsShuffleIndices)
 		copySparse.shuffleFeatures(featuresshuffleIndices)
 		assert orig[0,0] == 1 
@@ -1164,8 +1164,8 @@ class StructureBackend(DataTestObject):
 		assert type(copyList) == List
 		copyList.setFeatureName('two', '2')
 		copyList.setPointName('one', 'WHAT')
-		assert 'two' in orig.featureNames
-		assert 'one' in orig.pointNames
+		assert 'two' in orig.getFeatureNames()
+		assert 'one' in orig.getPointNames()
 		copyList.shufflePoints(pointsShuffleIndices)
 		copyList.shuffleFeatures(featuresshuffleIndices)
 		assert orig[0,0] == 1 
@@ -1176,8 +1176,8 @@ class StructureBackend(DataTestObject):
 		assert type(copyMatrix) == Matrix
 		copyMatrix.setFeatureName('two', '2')
 		copyMatrix.setPointName('one', 'WHAT')
-		assert 'two' in orig.featureNames
-		assert 'one' in orig.pointNames
+		assert 'two' in orig.getFeatureNames()
+		assert 'one' in orig.getPointNames()
 		copyMatrix.shufflePoints(pointsShuffleIndices)
 		copyMatrix.shuffleFeatures(featuresshuffleIndices)
 		assert orig[0,0] == 1 

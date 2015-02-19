@@ -129,11 +129,11 @@ class Matrix(Base):
 		if axis == 'point':
 			test = self.pointView(0)
 			viewIter = self.pointIterator()
-			namesInv = self.pointNamesInverse
+			nameGetter = self.getPointName
 		else:
 			test = self.featureView(0)
 			viewIter = self.featureIterator()
-			namesInv = self.featureNamesInverse
+			nameGetter = self.getFeatureName
 		scorer = None
 		comparator = None
 		try:
@@ -186,7 +186,7 @@ class Matrix(Base):
 		newNameOrder = []
 		for i in xrange(len(indexPosition)):
 			oldIndex = indexPosition[i]
-			newName = namesInv[oldIndex]
+			newName = nameGetter(oldIndex)
 			newNameOrder.append(newName)
 		return newNameOrder
 
@@ -253,7 +253,7 @@ class Matrix(Base):
 		# construct featureName list
 		nameList = []
 		for index in toExtract:
-			nameList.append(self.pointNamesInverse[index])
+			nameList.append(self.getPointName(index))
 
 		return Matrix(ret, pointNames=nameList)
 
@@ -276,7 +276,7 @@ class Matrix(Base):
 		# construct featureName list
 		nameList = []
 		for index in toRemove:
-			nameList.append(self.pointNamesInverse[index])
+			nameList.append(self.getPointName(index))
 
 		return Matrix(ret, pointNames=nameList)
 
@@ -293,7 +293,7 @@ class Matrix(Base):
 		# construct featureName list
 		nameList = []
 		for index in xrange(start,end+1):
-			nameList.append(self.pointNamesInverse[index])
+			nameList.append(self.getPointName(index))
 
 		return Matrix(ret, pointNames=nameList)
 
@@ -528,11 +528,11 @@ class Matrix(Base):
 
 	def _copyAs_implementation(self, format):
 		if format == 'Sparse':
-			return UML.data.Sparse(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
+			return UML.data.Sparse(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'List':
-			return UML.data.List(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
+			return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format is None or format == 'Matrix':
-			return UML.data.Matrix(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
+			return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'pythonlist':
 			return self.data.tolist()
 		if format == 'numpyarray':
@@ -544,7 +544,7 @@ class Matrix(Base):
 		if format == 'scipycsr':
 			return scipy.sparse.csr_matrix(self.data)
 
-		return Matrix(self.data, pointNames=self.pointNames, featureNames=self.featureNames)
+		return Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
 	def _copyPoints_implementation(self, points, start, end):
 		if points is not None:
@@ -637,11 +637,11 @@ class Matrix(Base):
 			ret = self.data + other.data
 		else:
 			ret = self.data + other
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _radd__implementation(self, other):
 		ret = other + self.data
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _iadd__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -656,11 +656,11 @@ class Matrix(Base):
 			ret = self.data - other.data
 		else:
 			ret = self.data - other
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _rsub__implementation(self, other):
 		ret = other - self.data
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _isub__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -678,12 +678,12 @@ class Matrix(Base):
 				ret = self.data / other.data
 		else:
 			ret = self.data / other
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
 	def _rdiv__implementation(self, other):
 		ret = other / self.data
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _idiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -704,11 +704,11 @@ class Matrix(Base):
 				ret = self.data.__truediv__(other.data)
 		else:
 			ret = self.data.__itruediv__(other)
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _rtruediv__implementation(self, other):
 		ret = self.data.__rtruediv__(other)
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _itruediv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -729,12 +729,12 @@ class Matrix(Base):
 				ret = self.data // other.data
 		else:
 			ret = self.data // other
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
 	def _rfloordiv__implementation(self, other):
 		ret = other // self.data
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _ifloordiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -755,12 +755,12 @@ class Matrix(Base):
 				ret = self.data % other.data
 		else:
 			ret = self.data % other
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
 	def _rmod__implementation(self, other):
 		ret = other % self.data
-		return Matrix(ret, pointNames=self.pointNames, featureNames=self.featureNames, reuseData=True)
+		return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
 	def _imod__implementation(self, other):
@@ -782,36 +782,36 @@ class VectorView(View):
 		self._axis = axis
 		self._vecIndex = index
 		if axis == 'point' or axis == 0:
-			self._name = outer.pointNamesInverse[index]
+			self._name = outer.getPointName(index)
 			self._length = outer.featureCount
 		else:
-			self._name = outer.featureNamesInverse[index]
+			self._name = outer.getFeatureName(index)
 			self._length = outer.pointCount
 		if ignoreLast:
 			self._length -= 1
 	def __getitem__(self, key):
 		if self._axis == 'point' or self._axis == 0:
 			if isinstance(key, basestring):
-				key = self._outer.featureNames[key]
+				key = self._outer.getFeatureIndex(key)
 			if key >= self._length:
 				raise IndexError("Index out of bounds")
 			return self._outer.data[self._vecIndex, key] 
 		else:
 			if isinstance(key, basestring):
-				key = self._outer.pointNames[key]
+				key = self._outer.getPointIndex(key)
 			if key >= self._length:
 				raise IndexError("Index out of bounds")
 			return self._outer.data[key, self._vecIndex]
 	def __setitem__(self, key, value):
 		if self._axis == 'point' or self._axis == 0:
 			if isinstance(key, basestring):
-				key = self._outer.featureNames[key]
+				key = self._outer.getFeatureIndex(key)
 			if key >= self._length:
 				raise IndexError("Index out of bounds")
 			self._outer.data[self._vecIndex,key] = value
 		else:
 			if isinstance(key, basestring):
-				key = self._outer.pointNames[key]
+				key = self._outer.getPointIndex(key)
 			if key >= self._length:
 				raise IndexError("Index out of bounds")
 			self._outer.data[key,self._vecIndex] = value

@@ -178,11 +178,11 @@ class HighLevelBackend(DataTestObject):
 		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
 		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
 
-		assert toTest.pointNamesInverse[0] == '1a'
-		assert toTest.pointNamesInverse[1] == '2a'
-		assert toTest.pointNamesInverse[2] == '3'
-		assert toTest.pointNamesInverse[3] == '2b'
-		assert toTest.pointNamesInverse[4] == '1b'
+		assert toTest.getPointName(0) == '1a'
+		assert toTest.getPointName(1) == '2a'
+		assert toTest.getPointName(2) == '3'
+		assert toTest.getPointName(3) == '2b'
+		assert toTest.getPointName(4) == '1b'
 		assert ret is None
 
 	def test_transformFeatureToIntegers_positioning(self):
@@ -278,27 +278,27 @@ class HighLevelBackend(DataTestObject):
 		# everything in ret is in orig
 		for pIndex in range(ret.pointCount):
 			currRetPoint = ret.pointView(pIndex)
-			currName = ret.pointNamesInverse[pIndex]
+			currName = ret.getPointName(pIndex)
 			currOrigPoint = orig.pointView(currName)
 			checkEqual(currRetPoint, currOrigPoint)
 
 		# everything in toTest is in orig
 		for pIndex in range(toTest.pointCount):
 			currToTestPoint = toTest.pointView(pIndex)
-			currName = toTest.pointNamesInverse[pIndex]
+			currName = toTest.getPointName(pIndex)
 			currOrigPoint = orig.pointView(currName)
 			checkEqual(currToTestPoint, currOrigPoint)
 
 		# everything in orig in either ret or toTest
 		for pIndex in range(orig.pointCount):
 			currOrigPoint = orig.pointView(pIndex)
-			currName = orig.pointNamesInverse[pIndex]
-			if currName in ret.pointNames:
-				assert currName not in toTest.pointNames
+			currName = orig.getPointName(pIndex)
+			if currName in ret.getPointNames():
+				assert currName not in toTest.getPointNames()
 				checkPoint = ret.pointView(currName)
 			else:
-				assert currName in toTest.pointNames
-				assert currName not in ret.pointNames
+				assert currName in toTest.getPointNames()
+				assert currName not in ret.getPointNames()
 				checkPoint = toTest.pointView(currName)
 
 			checkEqual(checkPoint, currOrigPoint)
@@ -317,7 +317,7 @@ class HighLevelBackend(DataTestObject):
 		origObj = self.constructor(data)
 
 		def emitLower(point):
-			return point[origObj.featureNames['deci']]
+			return point[origObj.getFeatureIndex('deci')]
 
 		origObj.applyToPoints(emitLower, inPlace=False)
 
@@ -329,7 +329,7 @@ class HighLevelBackend(DataTestObject):
 		origObj = self.constructor(data)
 
 		def emitLower(point):
-			return point[origObj.featureNames['deci']]
+			return point[origObj.getFeatureIndex('deci')]
 
 		origObj.applyToPoints(emitLower, inPlace=False)
 
@@ -349,7 +349,7 @@ class HighLevelBackend(DataTestObject):
 		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitLower(point):
-			return point[origObj.featureNames['deci']]
+			return point[origObj.getFeatureIndex('deci')]
 
 		lowerCounts = origObj.applyToPoints(emitLower, inPlace=False)
 
@@ -367,7 +367,7 @@ class HighLevelBackend(DataTestObject):
 		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitLower(point):
-			return point[origObj.featureNames['deci']]
+			return point[origObj.getFeatureIndex('deci')]
 
 		lowerCounts = origObj.applyToPoints(emitLower, points=['three',2], inPlace=False)
 
@@ -404,7 +404,7 @@ class HighLevelBackend(DataTestObject):
 		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllDeci(point):
-			value = point[origObj.featureNames['deci']]
+			value = point[origObj.getFeatureIndex('deci')]
 			return [value, value, value]
 
 		lowerCounts = origObj.applyToPoints(emitAllDeci) #RET CHECK
@@ -423,7 +423,7 @@ class HighLevelBackend(DataTestObject):
 		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllDeci(point):
-			value = point[origObj.featureNames['deci']]
+			value = point[origObj.getFeatureIndex('deci')]
 			return [value, value, value]
 
 		origObj.applyToPoints(emitAllDeci, points=[3,'two'])

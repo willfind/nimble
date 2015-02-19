@@ -259,12 +259,12 @@ class Sparse(Base):
 			viewMaker = self.pointView
 			getViewIter = self.pointIterator
 			targetAxis = self._data.row
-			namesInv = self.pointNamesInverse
+			nameGetter = self.getPointName
 		else:
 			viewMaker = self.featureView
 			targetAxis = self._data.col
 			getViewIter = self.featureIterator
-			namesInv = self.featureNamesInverse
+			nameGetter = self.getFeatureName
 
 		test = viewMaker(0)
 		try:
@@ -321,7 +321,7 @@ class Sparse(Base):
 		newNameOrder = []
 		for i in xrange(len(indexPosition)):
 			oldIndex = indexPosition[i]
-			newName = namesInv[oldIndex]
+			newName = nameGetter(oldIndex)
 			newNameOrder.append(newName)
 		return newNameOrder
 
@@ -489,12 +489,12 @@ class Sparse(Base):
 		fnames = []
 		if axisType == 'point':
 			for index in toExtract:
-				pnames.append(self.pointNamesInverse[index])
-			fnames = self.featureNames
+				pnames.append(self.getPointName(index))
+			fnames = self.getFeatureNames()
 		else:
-			pnames = self.pointNames
+			pnames = self.getPointNames()
 			for index in toExtract:
-				fnames.append(self.featureNamesInverse[index])
+				fnames.append(self.getFeatureName(index))
 
 
 		return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True) 
@@ -575,12 +575,12 @@ class Sparse(Base):
 		fnames = []
 		if axisType == 'point':
 			for index in extractedIDs:
-				pnames.append(self.pointNamesInverse[index])
-			fnames = self.featureNames
+				pnames.append(self.getPointName(index))
+			fnames = self.getFeatureNames()
 		else:
-			pnames = self.pointNames
+			pnames = self.getPointNames()
 			for index in extractedIDs:
-				fnames.append(self.featureNamesInverse[index])
+				fnames.append(self.getFeatureName(index))
 
 		return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True) 
 
@@ -639,12 +639,12 @@ class Sparse(Base):
 		fnames = []
 		if axisType == 'point':
 			for i in xrange(start,end+1):
-				pnames.append(self.pointNamesInverse[i])
-			fnames = self.featureNames
+				pnames.append(self.getPointName(i))
+			fnames = self.getFeatureNames()
 		else:
-			pnames = self.pointNames
+			pnames = self.getPointNames()
 			for i in xrange(start,end+1):
-				fnames.append(self.featureNamesInverse[i])
+				fnames.append(self.getFeatureName(i))
 
 		return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True) 
 
@@ -839,14 +839,12 @@ class Sparse(Base):
 		self._sorted = other._sorted
 
 	def _copyAs_implementation(self, format):
-#		import pdb
-#		pdb.set_trace()
 		if format is None or format == 'Sparse':
-			return Sparse(self._data.internal, pointNames=self.pointNames, featureNames=self.featureNames)
+			return Sparse(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'List':
-			return UML.data.List(self._data.internal, pointNames=self.pointNames, featureNames=self.featureNames)
+			return UML.data.List(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'Matrix':
-			return UML.data.Matrix(self._data.internal, pointNames=self.pointNames, featureNames=self.featureNames)
+			return UML.data.Matrix(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'pythonlist':
 			return self._data.todense().tolist()
 		if format == 'numpyarray':
@@ -1091,9 +1089,9 @@ class VectorView(View):
 		self._index = index
 		self._axis = axis
 		if axis == "feature":
-			self._name = CooObject.featureNamesInverse[index]
+			self._name = CooObject.getFeatureName(index)
 		else:
-			self._name = CooObject.pointNamesInverse[index]
+			self._name = CooObject.getPointName(index)
 	def __getitem__(self, key):
 		if self._nzMap is None:
 			self._makeMap()
@@ -1120,13 +1118,13 @@ class VectorView(View):
 				return 0
 		elif isinstance(key, basestring):
 			if self._axis =='point':
-				index = self._outer.featureNames[key]
+				index = self._outer.getFeatureIndex(key)
 				if index in self._nzMap:
 					return self._outer._data.data[self._nzMap[index]]
 				else:
 					return 0
 			else:
-				index = self._outer.pointNames[key]
+				index = self._outer.getPointIndex(key)
 				if index in self._nzMap:
 					return self._outer._data.data[self._nzMap[index]]
 				else:
@@ -1139,9 +1137,9 @@ class VectorView(View):
 
 		if isinstance(key, basestring):
 			if self._axis =='point':
-				key = self._outer.featureNames[key]
+				key = self._outer.getFeatureIndex(key)
 			else:
-				key = self._outer.pointNames[key]
+				key = self._outer.getPointIndex(key)
 
 		if key in self._nzMap:
 			self._outer._data.data[self._nzMap[key]] = value

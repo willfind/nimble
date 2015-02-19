@@ -40,9 +40,9 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
         label = func.__name__.rstrip('_')
         columnLabels.append(label)
 
-    resultsTable = [None] * len(dataContainer.featureNames)
-    for featureName, index in dataContainer.featureNames.iteritems():
-        resultsTable[index] = featureName
+    resultsTable = [None] * dataContainer.featureCount
+    for index in xrange(dataContainer.featureCount):
+        resultsTable[index] = dataContainer.getFeatureName(index)
 
     transposeRow(resultsTable)
 

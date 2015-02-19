@@ -529,7 +529,7 @@ class LowLevelBackend(object):
 		toTest = self.constructor()
 		toAssign = []
 		toTest.setPointNames(toAssign)
-		assert toTest.pointNames == {}
+		assert toTest.getPointNames() == []
 
 	def test_setPointNames_addDefault(self):
 		""" Test setPointNames() when given a default pointName """
@@ -579,7 +579,7 @@ class LowLevelBackend(object):
 		toTest = self.constructor()
 		toAssign = {}
 		toTest.setPointNames(toAssign)	
-		assert toTest.pointNames == {}
+		assert toTest.getPointNames() == []
 
 	def test_setPointNames_handmadeDict(self):
 		""" Test setPointNames() against handmade output """
@@ -633,7 +633,7 @@ class LowLevelBackend(object):
 		toTest = self.constructor()
 		toAssign = {}
 		toTest.setFeatureNames(toAssign)	
-		assert toTest.featureNames == {}
+		assert toTest.getFeatureNames() == []
 
 	def test_setFeatureNames_handmadeDict(self):
 		""" Test setFeatureNames() against handmade output """
@@ -676,7 +676,7 @@ class LowLevelBackend(object):
 		toTest = self.constructor()
 		toAssign = []
 		toTest.setFeatureNames(toAssign)
-		assert toTest.featureNames == {}
+		assert toTest.getFeatureNames() == []
 
 	def test_setFeatureNames_addDefault(self):
 		""" Test setFeatureNames() when given a default featureName """
@@ -1005,8 +1005,8 @@ class LowLevelBackend(object):
 		toTest.setPointName(1, 'modified')
 
 		assert ret[1] == 'one'
-		assert toTest.pointNames['zero'] == 0
-		assert toTest.pointNamesInverse[0] == 'zero'
+		assert toTest.getPointIndex('zero') == 0
+		assert toTest.getPointName(0) == 'zero'
 
 
 	###################
@@ -1046,5 +1046,5 @@ class LowLevelBackend(object):
 		toTest.setFeatureName(1, 'modified')
 
 		assert ret[1] == 'one'
-		assert toTest.featureNames['zero'] == 0
-		assert toTest.featureNamesInverse[0] == 'zero'
+		assert toTest.getFeatureIndex('zero') == 0
+		assert toTest.getFeatureName(0) == 'zero'
