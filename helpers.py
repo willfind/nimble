@@ -1072,30 +1072,59 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 		deepLog = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
 		deepLog = True if deepLog.lower() == 'true' else False
 
-	if isinstance(folds, int): 
-		folds = foldIterator([X,Y], folds)
-	performanceListOfFolds = []
-	#for each fold get train and test sets
+	merged = _mergeArguments(arguments, kwarguments)
+
+	#get an iterator for the argument combinations- iterator
+	#handles case of merged arguments being {}
+	argumentCombinationIterator = ArgumentIterator(merged)
+
+	# we want the folds for each argument combination to be the same
+	folds = makeFoldIterator([X,Y], folds)
+
+	# setup container for outputs, a tuple entry for each arg set, containing
+	# a list for the results of those args on each fold
+	numArgSets = argumentCombinationIterator.numPermutations
+	performanceOfEachCombination = [[None, []]] * numArgSets
+	
+	# Folding should be the same for each argset (and is expensive) so
+	# iterate over folds first
 	for fold in folds:
 		[(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
+		argSetIndex = 0
 
-		#run algorithm on the folds' training and testing sets
-		curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=arguments, scoreMode=scoreMode, useLog=deepLog, **kwarguments)
-		#calculate error of prediction, according to performanceFunction
-		curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
+		# given this fold, do a run for each argument combination
+		for curArgumentCombination in argumentCombinationIterator:
+			#run algorithm on the folds' training and testing sets
+			curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=curArgumentCombination, scoreMode=scoreMode, useLog=deepLog)
+			#calculate error of prediction, according to performanceFunction
+			curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
 
-		performanceListOfFolds.append(curPerformance)
+			performanceOfEachCombination[argSetIndex][0] = curArgumentCombination
+			performanceOfEachCombination[argSetIndex][1].append(curPerformance)
+			argSetIndex += 1
 
-	if len(performanceListOfFolds) == 0:
-		raise(ZeroDivisionError("crossValidate tried to average performance of ZERO runs"))
-		
-	#else average score from each fold (works for one fold as well)
-	averagePerformance = sum(performanceListOfFolds)/float(len(performanceListOfFolds))
-	return averagePerformance
+	# now, we run through the results and calculate the average for each set
+	# over all folds
+	for i in xrange(len(performanceOfEachCombination)):
+		curArgSet = performanceOfEachCombination[i][0]
+		performanceListOfFolds = performanceOfEachCombination[i][1]
+
+		if len(performanceListOfFolds) == 0:
+			raise(ZeroDivisionError("crossValidate tried to average performance of ZERO runs"))
+	
+		#else average score from each fold (works for one fold as well)
+		averagePerformance = sum(performanceListOfFolds)/float(len(performanceListOfFolds))
+
+		# we use the current results container to be the return value
+		performanceOfEachCombination[i] = (curArgSet, averagePerformance)
+
+	#return the list of tuples - tracking the performance of each argument
+	return performanceOfEachCombination
+	
 
 
 
-def foldIterator(dataList, folds):
+def makeFoldIterator(dataList, folds):
 	"""
 	Takes a list of data objects and a number of folds, returns an iterator
 	which will return a list containing the folds for each object, where
@@ -1139,9 +1168,6 @@ class _foldIteratorClass():
 		self.index = 0
 		self.dataList = dataList
 
-	def reset(self):
-		self.index = 0
-
 	def __iter__(self):
 		return self
 
@@ -1166,7 +1192,7 @@ class _foldIteratorClass():
 			currTrain = copied	
 			currTrain.shufflePoints(indices)
 			resultsList.append((currTrain, currTest))
-		self.index = self.index +1
+		self.index = self.index + 1
 		return resultsList
 
 

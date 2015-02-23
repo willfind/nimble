@@ -30,7 +30,6 @@ from UML.helpers import ArgumentIterator
 from UML.helpers import trainAndApplyOneVsAll
 from UML.helpers import trainAndApplyOneVsOne
 from UML.helpers import _mergeArguments
-from UML.helpers import foldIterator
 from UML.helpers import crossValidateBackend
 from UML.helpers import isAllowedRaw
 from UML.helpers import initDataObject
@@ -427,7 +426,9 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds
 	the learner when the learner was passed all three values of a, separately.
 
 	"""
-	return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, negativeLabel, useLog, **kwarguments)
+	bestResult = crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, negativeLabel, useLog, **kwarguments)
+	return bestResult[1]
+	#return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, negativeLabel, useLog, **kwarguments)
 
 def crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, useLog=None, **kwarguments):
 	"""
@@ -487,25 +488,8 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments={},
 	generate an error score for the learner when the learner was passed all
 	three values of a, separately.
 
-	"""
-	merged = _mergeArguments(arguments, kwarguments)
-
-	#get an iterator for the argument combinations- iterator
-	#handles case of merged arguments being {}
-	argumentCombinationIterator = ArgumentIterator(merged)
-
-	# we want the folds for each argument combination to be the same
-	folds = foldIterator([X,Y], numFolds)
-
-	performanceList = []
-	for curArgumentCombination in argumentCombinationIterator:
-		#calculate cross validated performance, given the current argument dict
-		errorForArgument = crossValidateBackend(learnerName, X, Y, performanceFunction, curArgumentCombination, folds, scoreMode, negativeLabel, useLog)
-		#store the tuple with the current argument and cross validated performance	
-		performanceList.append((curArgumentCombination, errorForArgument))
-		folds.reset()
-	#return the list of tuples - tracking the performance of each argument
-	return performanceList
+	"""	
+	return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, negativeLabel, useLog, **kwarguments)
 
 
 def crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, useLog=None, maximize=False, **kwarguments):

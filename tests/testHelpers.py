@@ -14,7 +14,7 @@ from UML import createData
 from UML.exceptions import ArgumentException, ImproperActionException
 
 from UML.helpers import findBestInterface
-from UML.helpers import foldIterator
+from UML.helpers import makeFoldIterator
 from UML.helpers import sumAbsoluteDifference
 from UML.helpers import generateClusteredPoints
 from UML.helpers import trainAndTestOneVsOne
@@ -35,38 +35,38 @@ class FoldIteratorTester(object):
 		self.constructor = constructor
 
 	@raises(ArgumentException)
-	def test_foldIterator_exceptionPEmpty(self):
-		""" Test foldIterator() for ArgumentException when object is point empty """
+	def test_makeFoldIterator_exceptionPEmpty(self):
+		""" Test makeFoldIterator() for ArgumentException when object is point empty """
 		data = [[],[]]
 		data = numpy.array(data).T
 		toTest = self.constructor(data)
-		foldIterator([toTest],2)
+		makeFoldIterator([toTest],2)
 
 #	@raises(ImproperActionException)
-#	def test_foldIterator_exceptionFEmpty(self):
-#		""" Test foldIterator() for ImproperActionException when object is feature empty """
+#	def test_makeFoldIterator_exceptionFEmpty(self):
+#		""" Test makeFoldIterator() for ImproperActionException when object is feature empty """
 #		data = [[],[]]
 #		data = numpy.array(data)
 #		toTest = self.constructor(data)
-#		foldIterator([toTest],2)
+#		makeFoldIterator([toTest],2)
 
 
 	@raises(ArgumentException)
-	def test_foldIterator_exceptionTooManyFolds(self):
-		""" Test foldIterator() for exception when given too many folds """
+	def test_makeFoldIterator_exceptionTooManyFolds(self):
+		""" Test makeFoldIterator() for exception when given too many folds """
 		data = [[1],[2],[3],[4],[5]]
 		names = ['col']
 		toTest = self.constructor(data,names)
-		foldIterator([toTest, toTest],6)
+		makeFoldIterator([toTest, toTest],6)
 
 
 
-	def test_foldIterator_verifyPartitions(self):
-		""" Test foldIterator() yields the correct number folds and partitions the data """
+	def test_makeFoldIterator_verifyPartitions(self):
+		""" Test makeFoldIterator() yields the correct number folds and partitions the data """
 		data = [[1],[2],[3],[4],[5]]
 		names = ['col']
 		toTest = self.constructor(data,names)
-		folds = foldIterator([toTest],2)
+		folds = makeFoldIterator([toTest],2)
 
 		[(fold1Train, fold1Test)] = folds.next()
 		[(fold2Train, fold2Test)] = folds.next()
@@ -85,8 +85,8 @@ class FoldIteratorTester(object):
 
 
 
-	def test_foldIterator_verifyMatchups(self):
-		""" Test foldIterator() maintains the correct pairings when given multiple data objects """
+	def test_makeFoldIterator_verifyMatchups(self):
+		""" Test makeFoldIterator() maintains the correct pairings when given multiple data objects """
 		data0 = [[1],[2],[3],[4],[5],[6],[7]]
 		toTest0 = self.constructor(data0)
 
@@ -97,7 +97,7 @@ class FoldIteratorTester(object):
 		toTest2 = self.constructor(data2)
 
 
-		folds = foldIterator([toTest0, toTest1, toTest2], 2)
+		folds = makeFoldIterator([toTest0, toTest1, toTest2], 2)
 
 		fold0 = folds.next()
 		fold1 = folds.next()
