@@ -609,7 +609,7 @@ def learnerType(learnerNames):
 	return resultsList
 
 
-def train(learnerName, trainX, trainY, arguments={},  multiClassStrategy='default', useLog=None, **kwarguments):
+def train(learnerName, trainX, trainY=None, arguments={},  multiClassStrategy='default', useLog=None, **kwarguments):
 	"""
 	Trains and returns the specified learner using the provided data. The return value is a
 	UniversalInterface.trainedLearner object.
