@@ -149,7 +149,7 @@ def testShogunSparseRegression():
 	labelsData = numpyRandom.rand(x)
 	labels = UML.createData('Matrix', labelsData.reshape((x,1)))
 
-	ret = UML.trainAndApply('shogun.MulticlassOCAS', trainX=obj, trainY=labels, testX=obj)
+	ret = UML.trainAndApply('shogun.MulticlassOCAS', trainX=obj, trainY=labels, testX=obj, max_train_time=10)
 
 	assert ret is not None
 
