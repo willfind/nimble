@@ -3,3 +3,4 @@ from custom_learner import CustomLearner
 from ridge_regression import RidgeRegression
 from knn_classification import KNNClassifier
 from mean_constant import MeanConstant
+from multioutput_ridge_regression import MultiOutputRidgeRegression
