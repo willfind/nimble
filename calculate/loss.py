@@ -65,6 +65,24 @@ def rootMeanSquareError(knownValues, predictedValues):
 	_validatePredictedAsLabels(predictedValues)
 	return _computeError(knownValues, predictedValues, lambda x,y,z: z + (y - x)**2, lambda x,y: sqrt(x/y))
 
+def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
+	"""For 2d prediction data, compute the RMSE of each feature, then average
+	the results.
+	"""
+	if knownValues.featureCount != predictedValues.featureCount:
+		raise ArgumentException("The known and predicted data must have the same number of features")
+	if knownValues.pointCount != predictedValues.pointCount:
+		raise ArgumentException("The known and predicted data must have the same number of points")
+
+	results = []
+	for i in xrange(knownValues.featureCount):
+		currKnown = knownValues.copyFeatures(i)
+		currPred = predictedValues.copyFeatures(i)
+		results.append(rootMeanSquareError(currKnown, currPred))
+
+	return float(sum(results)) / knownValues.featureCount
+
+
 def meanAbsoluteError(knownValues, predictedValues):
 	"""
 		Compute mean absolute error. Assumes that knownValues and predictedValues contain

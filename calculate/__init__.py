@@ -2,6 +2,7 @@ from confidence import confidenceIntervalHelper
 from loss import fractionIncorrect
 from loss import fractionIncorrectBottom10
 from loss import meanAbsoluteError
+from loss import meanFeaturewiseRootMeanSquareError
 from loss import rootMeanSquareError
 from matrix import elementwiseMultiply
 from matrix import elementwisePower

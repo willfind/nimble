@@ -9,6 +9,7 @@ from UML.exceptions import ArgumentException
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 from UML.calculate import fractionIncorrectBottom10
+from UML.calculate import meanFeaturewiseRootMeanSquareError
 
 def testfractionIncorrectBottom10SanityCheck():
 	"""An all correct and all incorrec check on fractionIncorrectBottom10 """
@@ -223,3 +224,38 @@ def testRmse():
 	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 	assert rmseRate > 0.49
 	assert rmseRate < 0.51
+
+
+######################################
+# meanFeaturewiseRootMeanSquareError #
+######################################
+
+@raises(ArgumentException)
+def testMFRMSE_badshapePoints():
+	predictedLabels = numpy.array([[0,2], [0,2], [0,2], [0,2]])
+	knownLabels = numpy.array([[0,0], [0,0], [0,0]])
+
+	knowns = createData('Matrix', data=knownLabels)
+	predicted = createData('Matrix', data=predictedLabels)
+
+	meanFeaturewiseRootMeanSquareError(knowns, predicted)
+
+@raises(ArgumentException)
+def testMFRMSE_badshapeFeatures():
+	predictedLabels = numpy.array([[0], [0], [0], [0]])
+	knownLabels = numpy.array([[0,0], [0,0], [0,0], [0,0]])
+
+	knowns = createData('Matrix', data=knownLabels)
+	predicted = createData('Matrix', data=predictedLabels)
+
+	meanFeaturewiseRootMeanSquareError(knowns, predicted)
+
+def testMFRMSE_simpleSuccess():
+	predictedLabels = numpy.array([[0,2], [0,2], [0,2], [0,2]])
+	knownLabels = numpy.array([[0,0], [0,0], [0,0], [0,0]])
+
+	knowns = createData('Matrix', data=knownLabels)
+	predicted = createData('Matrix', data=predictedLabels)
+
+	mfrmseRate = meanFeaturewiseRootMeanSquareError(knowns, predicted)
+	assert mfrmseRate == 1.0
