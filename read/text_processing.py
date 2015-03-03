@@ -1,6 +1,9 @@
 import nltk
+import bs4
 import types
 import math
+import importlib
+
 from collections import Counter
 from scipy import *
 from scipy.sparse import *
@@ -113,7 +116,9 @@ def convertToTokens(text,
 		raise ArgumentException("convertToTokens requires a non-empty input string")
 
 	if cleanHtml:
-		text = nltk.clean_html(text)
+		#text = nltk.clean_html(text)
+		soup = bs4.BeautifulSoup(text)
+		text = soup.get_text()
 
 	if tokenizer == 'default':
 		tokenizer = PunktWordTokenizer()
@@ -128,8 +133,8 @@ def convertToTokens(text,
 		else:
 			moduleName = "nltk.tokenize"+tokenizer.rpartition('.')[0]
 		className = tokenizer.rpartition('.')[2]
-		exec("from "+moduleName+" import "+className)
-		exec("tokenizerObj = "+className+"()")
+		classObj = importlib.import_module(className, moduleName)
+		tokenizerObj = classObj()
 		tokens = tokenizerObj.tokenize(text)
 	else:
 		raise ArgumentException("convertToTokens requires a tokenizer")
@@ -166,25 +171,26 @@ def convertToTokens(text,
 		tokens = flagSymbolFilteredSet
 
 	if skipSymbolSet is not None:
+		translate_table = dict((ord(c), None) for c in skipSymbolSet)
 		filteredSet = []
 		for token in tokens:
 			if token == '':
 				if not removeBlankTokens:
 					filteredSet.append(token)
 			else:
-				filteredToken = token.translate(None, skipSymbolSet)
+				filteredToken = token.translate(translate_table)
 				if filteredToken != '':
 					filteredSet.append(filteredToken)
 		tokens = filteredSet
 
 	if not keepNumbers:
+		translate_table = dict((ord(c), None) for c in numericalChars)
 		filteredSet = []
-		numbersSet = numericalChars
 		for token in tokens:
 			if token == '' and not removeBlankTokens:
 				filteredSet.append(token)
 			else:
-				filteredToken = token.translate(None, numbersSet)
+				filteredToken = token.translate(translate_table)
 				if filteredToken != '':
 					filteredSet.append(filteredToken)
 		tokens = filteredSet
