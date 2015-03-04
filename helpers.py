@@ -1057,11 +1057,12 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 	"""
 	if not isinstance(X, Base):
 		raise ArgumentException("X must be a Base object")
-	if not isinstance(Y, (Base, int)):
+	if not isinstance(Y, (Base, int, basestring, list)):
 		raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
-	if isinstance(Y, int):
-		Y = X.extractFeatures(start=Y, end=Y)
-	
+	if isinstance(Y, (int, basestring, list)):
+		X = X.copy()
+		Y = X.extractFeatures(Y)
+
 	if not X.pointCount == Y.pointCount:
 		#todo support indexing if Y is an index for X instead
 		raise ArgumentException("X and Y must contain the same number of points.")

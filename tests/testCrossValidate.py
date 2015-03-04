@@ -126,6 +126,50 @@ def test_crossValidate_reasonable_results():
 	#assert error essentially zero since there's no noise
 	assert result < .001 
 
+	index = X.featureCount
+	X.appendFeatures(Y)
+	result = crossValidate(regressionAlgo, X, index, meanAbsoluteError, {}, numFolds=5)
+	#assert error essentially zero since there's no noise
+	assert result < .001
+
+	# ensures nonmodification of X data object when getting Y data
+	assert X.featureCount == 4
+	X.setFeatureNames(['X1', 'X2', 'X3', 'Y'])
+	result = crossValidate(regressionAlgo, X, 'Y', meanAbsoluteError, {}, numFolds=5)
+	#assert error essentially zero since there's no noise
+	assert result < .001
+
+
+def test_crossValidate_2d_api_check():
+	"""Check that crossValidate is callable with 2d data given to the Y argument
+	"""
+	#assert that for an easy dataset (no noise, overdetermined linear hyperplane!), 
+	#crossValidated error is perfect 
+	#for all folds, with simple LinearRegression
+	regressionAlgo = 'Custom.RidgeRegression'
+
+	#make random data set where all points lie on a linear hyperplane
+	numFeats = 3
+	numPoints = 50
+	points = [[pythonRandom.gauss(0,1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
+	labels = [[sum(featVector), sum(featVector)] for featVector in points]
+	X = createData('Matrix', points)
+	Y = createData('Matrix', labels)
+	
+	#run in crossValidate
+	metric = meanFeaturewiseRootMeanSquareError
+	result = crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5)
+	#assert error essentially zero since there's no noise
+	assert result < .001
+
+	index = X.featureCount
+	X.appendFeatures(Y)
+	X.setFeatureNames(['X1', 'X2', 'X3', 'Y1', 'Y2'])
+	result = crossValidate(regressionAlgo, X, [index, 'Y2'], metric, {}, numFolds=5)
+	#assert error essentially zero since there's no noise
+	assert result < .001
+
+
 @attr('slow')
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateShuffleSeed():
