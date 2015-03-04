@@ -7,6 +7,7 @@ import sys
 import numpy
 
 import nose
+from nose.tools import *
 from nose.plugins.attrib import attr
 
 import UML
@@ -16,6 +17,7 @@ from UML import crossValidateReturnAll
 from UML import crossValidateReturnBest
 from UML import createData
 
+from UML.exceptions import ArgumentException
 from UML.calculate import *
 from UML.randomness import pythonRandom
 from UML.helpers import computeMetrics
@@ -168,6 +170,60 @@ def test_crossValidate_2d_api_check():
 	result = crossValidate(regressionAlgo, X, [index, 'Y2'], metric, {}, numFolds=5)
 	#assert error essentially zero since there's no noise
 	assert result < .001
+
+def test_crossValidate_2d_Non_label_scoremodes_disallowed():
+	"""Check that crossValidate is callable with 2d data given to the Y argument
+	"""
+	#assert that for an easy dataset (no noise, overdetermined linear hyperplane!), 
+	#crossValidated error is perfect 
+	#for all folds, with simple LinearRegression
+	regressionAlgo = 'Custom.RidgeRegression'
+
+	#make random data set where all points lie on a linear hyperplane
+	numFeats = 3
+	numPoints = 50
+	points = [[pythonRandom.gauss(0,1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
+	labels = [[sum(featVector), sum(featVector)] for featVector in points]
+	X = createData('Matrix', points)
+	Y = createData('Matrix', labels)
+	
+	#run in crossValidate
+	metric = meanFeaturewiseRootMeanSquareError
+	try:
+		crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
+		assert False
+	except ArgumentException:
+		pass
+
+	try:
+		crossValidate(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
+		assert False
+	except ArgumentException:
+		pass
+
+	try:
+		crossValidateReturnAll(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
+		assert False
+	except ArgumentException:
+		pass
+
+	try:
+		crossValidateReturnAll(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
+		assert False
+	except ArgumentException:
+		pass
+
+	try:
+		crossValidateReturnBest(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='bestScore')
+		assert False
+	except ArgumentException:
+		pass
+
+	try:
+		crossValidateReturnBest(regressionAlgo, X, Y, metric, {}, numFolds=5, scoreMode='allScores')
+		assert False
+	except ArgumentException:
+		pass
 
 
 @attr('slow')

@@ -1063,6 +1063,11 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 		X = X.copy()
 		Y = X.extractFeatures(Y)
 
+	if Y.featureCount > 1 and scoreMode != 'label':
+		msg = "When dealing with multi dimentional outputs / predictions, "
+		msg += "then the scoreMode flag is required to be set to 'label'"
+		raise ArgumentException(msg)
+
 	if not X.pointCount == Y.pointCount:
 		#todo support indexing if Y is an index for X instead
 		raise ArgumentException("X and Y must contain the same number of points.")
