@@ -21,34 +21,6 @@ from UML.randomness import pythonRandom
 from UML.helpers import computeMetrics
 
 
-#####################################
-# performance combinations function #
-#####################################
-def testPerfCombinations():
-	knownLabels = numpy.array([[1.0],[2.0],[3.0]])
-	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
-
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
-
-	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
-	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
-	assert results[0] == 0.0
-	assert results[1] == 0.0
-	assert results[2] == 0.0
-
-	knownLabels = numpy.array([[1.5],[2.5],[3.5]])
-	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
-
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
-
-	metricFunctions = [rootMeanSquareError, meanAbsoluteError, fractionIncorrect]
-	results = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
-	assert results[0] > 0.49
-	assert results[0] < 0.51
-	assert results[1] > 0.49
-	assert results[1] < 0.51
 
 
 def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):

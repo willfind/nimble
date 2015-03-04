@@ -882,83 +882,85 @@ def _diffLessThan(allData, orderedFeature, startPoint, endPoint, delta):
 
 
 
-
+#def evaluate(metric, knownData, knownLabels, predictedLabels, negativeLabel=None)
 
 def computeMetrics(dependentVar, knownData, predictedData, performanceFunction, negativeLabel=None):
 	"""
-		Calculate one or more error metrics, given a list of known labels and a list of
-		predicted labels.  Return as a dictionary associating the performance metric with
-		its numerical result.
+		Using the provided metric, compare the known data or labels to the
+		predicted data or labels and calculate the performance of the learner
+		which produced the predicted data.
 
-		dependentVar: either an int/string representing a column index in knownData
-		containing the known labels, or an n x 1 matrix that contains the known labels
+		dependentVar: either an int/string (or list of int/string) indicating the
+		feature IDs in knownData containing the known labels, or a data object
+		that contains the known labels.
 
-		knownData: matrix containing the known labels of the test set, as well as the
-		features of the test set. Can be None if 'knownIndicator' contains the labels,
-		and none of the performance functions needs features as input.
+		knownData: data object containing the known labels of the training set,
+		as well as the features of the training set. Can be None if 'dependentVar'
+		is an object containing the labels.
 
-		predictedData: Matrix containing predicted class labels for a testing set.
-		Assumes that the predicted label in the nth row of predictedLabels is associated
-		with the same data point/instance as the label in the nth row of knownLabels.
+		predictedData: data object containing predicted labels/data. Assumes
+		that the predicted label (or labels) in the nth row of predictedLabels
+		is associated with the same data point/instance as the label in the nth
+		row of knownLabels.
 
-		performanceFunction: single function or list of functions that compute some kind
-		of error metric. Functions must be either a string that defines a proper function,
-		a one-liner function (see Combinations.py), or function code.  Also, they are
-		expected to take at least 2 arguments:  a vector or known labels and a vector of
-		predicted labels.  Optionally, they may take the features of the test set as a
-		third argument, as a matrix.
+		performanceFunction: a python function that returns a single numeric value
+		evaluating performance. The function must take either two or three args.
+		In the two arg case, they must be two sets of data or labels to be compared.
+		In the three arg case, the first two args are the same as in the two arg
+		case, and the third arg must take the value of what is to be considered
+		the negative label in this binary classification problem. See UML.calculate
+		for a number of built in examples.
 
-		negativeLabel: Label of the 'negative' class in the testing set.  This parameter is
-		only relevant for binary class problems; and only needed for some error metrics
-		(proportionPerentNegative50/90).
+		negativeLabel: Label of the 'negative' class in the testing set. This
+		parameter is only relevant for binary classification problems; and only
+		needed for some error metrics.
 
-		Returns: a dictionary associating each performance metric with the (presumably)
-		numerical value computed by running the function over the known labels & predicted labels
+		Returns: a single numeric value measuring the performance of the learner
+		that produced the given data.
 	"""
-	if isinstance(dependentVar, (list, Base)):
+	if isinstance(dependentVar, Base):
 		#The known Indicator argument already contains all known
 		#labels, so we do not need to do any further processing
 		knownLabels = dependentVar
 	elif dependentVar is not None:
-		#known Indicator is an index; we extract the column it indicates
-		#from knownValues
-		knownLabels = knownData.copyColumns([dependentVar])
+		#known Indicator is a feature ID or group of IDs; we extract the
+		# columns it indicates from knownValues
+		knownLabels = knownData.copyFeatures(dependentVar)
 	else:
 		raise ArgumentException("Missing indicator for known labels in computeMetrics")
 
-	singleReturn = False
-	if not isinstance(performanceFunction, list):
-		performanceFunction = [performanceFunction]
-		singleReturn = True
+	try:
+		(args, vargs, kw, defaults) = inspect.getargspec(performanceFunction)
+	except TypeError:
+		msg = "performanceFunction is only allowed to be a python function"
+		raise ArgumentException(msg)
+	if len(args) != 2 and len(args) != 3:
+		msg = "performanceFunction may only be a python function which takes either "
+		msg += "two or three args. In the two arg case, it is to be two sets of data "
+		msg += "or labels to be compared. In the three arg case, the first two args "
+		msg += "are the same as in the two arg case, and the third arg must take "
+		msg += "the value of what is to be considered the positive label in this "
+		msg += "binary classification problem"
+		raise ArgumentException(msg)
 
-	results = []
-	parameterHash = {"knownValues":knownLabels, "predictedValues":predictedData}
-	for func in performanceFunction:
-		#some functions need negativeLabel as an argument.
-		if len(inspect.getargspec(func).args) == 2:
-			#the metric function only takes two arguments: we assume they
-			#are the known class labels and the predicted class labels
-			if func.__name__ != "<lambda>":
-				results.append(executeCode(func, parameterHash))
-			else:
-				results.append(executeCode(func, parameterHash))
-		elif len(inspect.getargspec(func).args) == 3:
-			#the metric function takes three arguments:  known class labels,
-			#features, and predicted class labels. add features to the parameter hash
-			#divide X into labels and features
-			#TODO correctly separate known labels and features in all cases
-			parameterHash["features"] = knownData
-			if func.__name__ != "<lambda>":
-				results.append(executeCode(func, parameterHash))
-			else:
-				results.append(executeCode(func, parameterHash))
-		else:
-			raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
-	
-	if singleReturn:
-		return results[0]
+	if isinstance(performanceFunction, list):
+		raise ArgumentException("performanceFunction")
+
+	#some functions need negativeLabel as an argument.
+	if len(args) == 2:
+		#the metric function only takes two arguments: we assume they
+		#are the known class labels and the predicted class labels
+		result = performanceFunction(knownLabels, predictedData)
+	elif len(args) == 3:
+		#the metric function takes three arguments:  known class labels,
+		#features, and predicted class labels. add features to the parameter hash
+		#divide X into labels and features
+		#TODO correctly separate known labels and features in all cases
+		result = performanceFunction(knownLabels, predictedData, negativeLabel)
 	else:
-		return results
+		raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
+	
+	return result
 
 def confusion_matrix_generator(knownY, predictedY):
 	""" Given two vectors, one of known class labels (as strings) and one of predicted labels,

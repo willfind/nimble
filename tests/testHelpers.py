@@ -21,6 +21,9 @@ from UML.helpers import trainAndTestOneVsOne
 from UML.helpers import trainAndApplyOneVsOne
 from UML.helpers import trainAndApplyOneVsAll
 from UML.helpers import _mergeArguments
+from UML.helpers import computeMetrics
+from UML.calculate import rootMeanSquareError
+from UML.calculate import meanAbsoluteError
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
 
@@ -322,18 +325,6 @@ def testSumDifferenceFunction():
 		raise AssertionError("difference result should be " + str(18 * 0.1 * 2) + ' but it is ' + str(diffResult))
 	# assert(diffResult == 18 * 0.1 * 2)
 
-@attr('slow')
-def testLearnerTypeSuite():
-	"""Call all test functions."""
-	testSumDifferenceFunction()
-	testGenerateClusteredPoints()
-	testClassifyAlgorithms()
-
-if __name__ == "__main__":
-
-	testLearnerTypeSuite()
-
-
 
 def testtrainAndTestOneVsOne():
 	variables = ["x1", "x2", "x3", "label"]
@@ -347,11 +338,10 @@ def testtrainAndTestOneVsOne():
 	testObj1 = createData('Matrix', data=testData1)
 	testObj2 = createData('Matrix', data=testData2)
 
-	metricFuncs = []
-	metricFuncs.append(fractionIncorrect)
+	metricFunc = fractionIncorrect
 
-	results1 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, testY=3, performanceFunction=metricFuncs)
-	results2 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj2, trainY=3, testX=testObj2, testY=3, performanceFunction=metricFuncs)
+	results1 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, testY=3, performanceFunction=metricFunc)
+	results2 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj2, trainY=3, testX=testObj2, testY=3, performanceFunction=metricFunc)
 
 	assert results1[0] == 0.0
 	assert results2[0] == 0.25
@@ -367,9 +357,6 @@ def testtrainAndApplyOneVsAll():
 	testData2 = [[1, 0, 0],[0, 1, 0],[0, 0, 1], [0, 1, 1]]
 	testObj1 = createData('Sparse', data=testData1)
 	testObj2 = createData('Sparse', data=testData2)
-
-#	metricFuncs = []
-#	metricFuncs.append(fractionIncorrect)
 
 	results1 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='label')
 	results2 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='bestScore')
@@ -446,3 +433,112 @@ def testMergeArgumentsHand():
 	ret = _mergeArguments(args, kwargs)
 
 	assert ret == {1:'a', 2:'b', 3:'d', 4:'b'}
+
+
+
+def test_computeMetrics_1d_2arg():
+	knownLabels = numpy.array([[1.0],[2.0],[3.0]])
+	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
+
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+	metricFunctions = rootMeanSquareError
+	result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
+	assert result == 0.0
+
+	knownLabels = numpy.array([[1.5],[2.5],[3.5]])
+	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
+
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+	metricFunctions = meanAbsoluteError
+	result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
+	assert result > 0.49
+	assert result < 0.51
+
+def test_computeMetrics_1d_labelsInData():
+	training = numpy.array([[1.0, 5],[2.0, 27],[3.0, 42]])
+	predictedLabels = numpy.array([[1.0],[2.0],[3.0]])
+
+	trainingObj = createData('Matrix', data=training)
+	predictedObj = createData('Matrix', data=predictedLabels)
+
+	metricFunctions = rootMeanSquareError
+	result = computeMetrics(0, trainingObj, predictedObj, metricFunctions)
+	assert result == 0.0
+
+	result = computeMetrics([0], trainingObj, predictedObj, metricFunctions)
+	assert result == 0.0
+
+
+# single val labels, three arg metric
+def test_computeMetrics_1d_3arg():
+	knownsData = [[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]
+	correctData = [[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1]]
+	wrongData = [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]]
+
+	knowns = createData('List', data=knownsData)
+	correct = createData('List', data=correctData, featureNames=['0','1'])
+	wrong = createData('List', data=wrongData, featureNames=['0','1'])
+
+	metric = UML.calculate.fractionIncorrectBottom10
+
+	correctScore = computeMetrics(knowns, None, correct, metric, negativeLabel=0)
+	wrongScore = computeMetrics(knowns, None, wrong, metric, negativeLabel=0)
+
+	assert correctScore == 0
+	assert wrongScore == 1
+
+
+# multi val, two arg metric
+def test_computeMetrics_2d_2arg():
+	knownLabels = numpy.array([[1.0, 1.0], [2.0, 2.0],[3.0, 3.0]])
+	predictedLabels = numpy.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
+
+	knownLabelsMatrix = createData('Matrix', data=knownLabels)
+	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+
+	metricFunctions = UML.calculate.meanFeaturewiseRootMeanSquareError
+	result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
+	assert isinstance(result, float)
+	assert result == 0.0
+
+def test_computeMetrics_2d_labelsInData():
+	training = numpy.array([[1.0, 5, 1.0],[2.0, 27, 2.0],[3.0, 42, 3.0]])
+	predictedLabels = numpy.array([[1.0, 1.0],[2.0, 2.0],[3.0, 3.0]])
+
+	trainingObj = createData('Matrix', data=training)
+	predictedObj = createData('Matrix', data=predictedLabels)
+
+	metricFunctions = UML.calculate.meanFeaturewiseRootMeanSquareError
+	result = computeMetrics([0,2], trainingObj, predictedObj, metricFunctions)
+	assert result == 0.0
+
+
+# TODO multi val, three arg metric. do we have one of those?
+
+# single val, symetric two arg metric (similarity)
+def test_computeMetrics_1d_2d_symmetric():	
+	origData = numpy.array([[1.0],[2.0],[3.0]])
+	outputData = numpy.array([[1.0],[2.0],[3.0]])
+
+	origObj = createData('Matrix', data=origData)
+	outObj = createData('Matrix', data=outputData)
+
+	metricFunctions = UML.calculate.cosineSimilarity
+	result = computeMetrics(origObj, None, outObj, metricFunctions)
+	assert result == 1.0
+
+# multi metrics should not be allowed
+@raises(ArgumentException)
+def test_cocmputeMetrics_multiple_metrics_disallowed():
+	origData = numpy.array([[1.0],[2.0],[3.0]])
+	outputData = numpy.array([[1.0],[2.0],[3.0]])
+
+	origObj = createData('Matrix', data=origData)
+	outObj = createData('Matrix', data=outputData)
+
+	metricFunctions = [UML.calculate.cosineSimilarity, rootMeanSquareError]
+	computeMetrics(origObj, None, outObj, metricFunctions)
