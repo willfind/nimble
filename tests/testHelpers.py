@@ -13,6 +13,8 @@ from UML import createData
 
 from UML.exceptions import ArgumentException, ImproperActionException
 
+from UML.helpers import extractWinningPredictionLabel
+from UML.helpers import generateAllPairs
 from UML.helpers import findBestInterface
 from UML.helpers import makeFoldIterator
 from UML.helpers import sumAbsoluteDifference

@@ -1697,10 +1697,33 @@ def _validData(trainX, trainY, testX, testY, testRequired):
 		if not isinstance(testY, (Base, basestring, int, long)):
 			raise ArgumentException("testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
 		if isinstance(trainY, Base):
-			if not trainY.featureCount == 1:
-				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
+#			if not trainY.featureCount == 1:
+#				raise ArgumentException("If trainY is a Data object, then it may only have one feature")
 			if not trainY.pointCount == trainX.pointCount:
 				raise ArgumentException("If trainY is a Data object, then it must have the same number of points as trainX")
+
+
+def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
+	outputData = X if Y is None else Y
+	if isinstance(outputData, Base):
+		needToCheck = outputData.featureCount > 1
+	elif isinstance(outputData, (list, tuple)):
+		needToCheck = len(outputData) > 1
+	elif isinstance(outputData, bool):
+		needToCheck = outputData
+	else:
+		needToCheck = False
+
+	if needToCheck:
+		if scoreMode is not None and scoreMode != 'label':
+			msg = "When dealing with multi dimentional outputs / predictions, "
+			msg += "the scoreMode flag is required to be set to 'label'"
+			raise ArgumentException(msg)
+		if multiClassStrategy is not None and multiClassStrategy != 'default':
+			msg = "When dealing with multi dimentional outputs / predictions, "
+			msg += "the multiClassStrategy flag is required to be set to 'default'"
+			raise ArgumentException(msg)
+
 
 def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, useLog=None, **kwarguments):
 	"""

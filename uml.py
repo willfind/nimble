@@ -24,6 +24,7 @@ from UML.helpers import _validMultiClassStrategy
 from UML.helpers import _unpackLearnerName
 from UML.helpers import _validArguments
 from UML.helpers import _validData
+from UML.helpers import _2dOutputFlagCheck
 from UML.helpers import LearnerInspector
 from UML.helpers import copyLabels
 from UML.helpers import ArgumentIterator
@@ -645,6 +646,7 @@ def train(learnerName, trainX, trainY=None, arguments={},  multiClassStrategy='d
 	_validData(trainX, trainY, None, None, [False, False])
 	_validArguments(arguments)
 	_validArguments(kwarguments)
+	_2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
 	merged = _mergeArguments(arguments, kwarguments)
 
 	if useLog is None:
@@ -721,6 +723,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 	_validMultiClassStrategy(multiClassStrategy)
 	_validArguments(arguments)
 	_validArguments(kwarguments)
+	_2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
 	merged = _mergeArguments(arguments, kwarguments)
 
 	if testX is None:
@@ -822,6 +825,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	_validData(trainX, trainY, testX, testY, [True, True])
 	_validArguments(arguments)
 	_validArguments(kwarguments)
+	#_2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+
+	_2dOutputFlagCheck(trainX, trainY, scoreMode, None)
 	merged = _mergeArguments(arguments, kwarguments)
 
 	trainY = copyLabels(trainX, trainY)

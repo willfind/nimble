@@ -101,8 +101,15 @@ class UniversalInterface(object):
 	def train(self, learnerName, trainX, trainY=None, arguments={}, timer=None):
 		(trainedBackend, transformedInputs, customDict) = self._trainBackend(learnerName, trainX, trainY, arguments, timer)	
 		
+		has2dOutput = False
+		outputData = trainX if trainY is None else trainY
+		if isinstance(outputData, UML.data.Base):
+			has2dOutput = outputData.featureCount > 1
+		elif isinstance(outputData, (list, tuple)):
+			has2dOutput = len(outputData) > 1
+
 		# encapsulate into TrainedLearner object
-		return self.TrainedLearner(learnerName, arguments, transformedInputs, customDict, trainedBackend, self)
+		return self.TrainedLearner(learnerName, arguments, transformedInputs, customDict, trainedBackend, self, has2dOutput)
 
 	def _confirmValidLearner(self, learnerName):
 		allLearners = self.listLearners()
@@ -465,7 +472,7 @@ class UniversalInterface(object):
 
 	class TrainedLearner():
 
-		def __init__(self, learnerName, arguments, transformedInputs, customDict, backend, interfaceObject):
+		def __init__(self, learnerName, arguments, transformedInputs, customDict, backend, interfaceObject, has2dOutput):
 			"""
 			Initialize the object wrapping the trained learner stored in backend, and setting up
 			the object methods that may be used to modify or query the backend trained learner.
@@ -487,6 +494,7 @@ class UniversalInterface(object):
 			self.customDict = customDict
 			self.backend = backend
 			self.interface = interfaceObject
+			self.has2dOutput = has2dOutput
 
 			exposedFunctions = self.interface._exposedFunctions()
 			for exposed in exposedFunctions:
@@ -508,6 +516,9 @@ class UniversalInterface(object):
 			setup for training was the same.
 
 			"""
+			#UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, multiClassStrategy)
+			UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
+
 			pred = self.apply(testX, arguments, output, scoreMode, **kwarguments)
 			performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction, negativeLabel)
 
@@ -531,6 +542,8 @@ class UniversalInterface(object):
 			on.
 
 			"""
+			UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
+
 #			self.interface._validateOutputFlag(output)
 #			self.interface._validateScoreModeFlag(scoreMode)
 			usedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
@@ -565,11 +578,19 @@ class UniversalInterface(object):
 				return labels
 
 		def retrain(self, trainX, trainY=None):
+			has2dOutput = False
+			outputData = trainX if trainY is None else trainY
+			if isinstance(outputData, UML.data.Base):
+				has2dOutput = outputData.featureCount > 1
+			elif isinstance(outputData, (list, tuple)):
+				has2dOutput = len(outputData) > 1
+
 #			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
 			(newBackend, transformedInputs, customDict) = self.interface._trainBackend(self.learnerName, trainX, trainY, self.arguments, None)
 			self.backend = newBackend
 			self.transformedInputs = transformedInputs
 			self.customDict = customDict
+			self.has2dOutput = has2dOutput
 
 		def incrementalTrain(self, trainX, trainY=None):
 			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
