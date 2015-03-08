@@ -3,12 +3,13 @@ from nose.tools import *
 import tempfile
 import scipy
 import numpy
+import os
 
 import UML
 
 retTypes = ['List', 'Matrix', 'Sparse', None]  # None for auto
 
-def test_simpleCSV():
+def test_createData_CSV_data():
 	""" Test of createData() loading a csv file, default params """
 	for t in retTypes:
 		fromList = UML.createData(retType=t, data=[[1,2,3]])
@@ -21,10 +22,8 @@ def test_simpleCSV():
 			fromCSV = UML.createData(retType=t, data=tmpCSV.name, name=objName)
 
 			assert fromList == fromCSV
-			assert fromCSV.name == objName
-			assert fromCSV.path == tmpCSV.name
 
-def test_simpleMTXArr():
+def test_createData_MTXArr_data():
 	""" Test of createData() loading a mtx (arr format) file, default params """
 	for t in retTypes:
 		fromList = UML.createData(retType=t, data=[[1,2,3]])
@@ -45,12 +44,8 @@ def test_simpleMTXArr():
 			else:
 				assert fromList == fromMTXArr
 
-			assert fromMTXArr.name == objName
-			assert fromMTXArr.path == tmpMTXArr.name
 
-
-
-def test_simpleMTXCoo():
+def test_createData_MTXCoo_data():
 	""" Test of createData() loading a mtx (coo format) file, default params """
 	for t in retTypes:
 		fromList = UML.createData(retType=t, data=[[1,2,3]])
@@ -65,14 +60,71 @@ def test_simpleMTXCoo():
 			tmpMTXCoo.flush()
 			objName = 'fromMTXCoo'
 			fromMTXCoo = UML.createData(retType=t, data=tmpMTXCoo.name, name=objName)
-			tmpMTXCoo.close()
+
 			if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
 				assert fromList.isApproximatelyEqual(fromMTXCoo)
 			else:
 				assert fromList == fromMTXCoo
 
-			assert tmpMTXCoo.name == objName
-			assert tmpMTXCoo.path == tmpMTXCoo.name
+
+def test_createData_objName_and_path_CSV():
+	for t in retTypes:
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,3\n")
+			tmpCSV.flush()
+
+			objName = 'fromCSV'
+			ret = UML.createData(retType=t, data=tmpCSV.name, name=objName)
+			assert ret.name == objName
+			assert ret.path == tmpCSV.name
+
+			retDefName = UML.createData(retType=t, data=tmpCSV.name)
+			tokens = tmpCSV.name.rsplit(os.path.sep)
+			assert retDefName.name == tokens[len(tokens)-1]
+
+
+def test_createData_objName_and_path_MTXArr():
+	for t in retTypes:
+		# instantiate from mtx array file
+		with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+			tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+			tmpMTXArr.write("1 3\n")
+			tmpMTXArr.write("1\n")
+			tmpMTXArr.write("2\n")
+			tmpMTXArr.write("3\n")
+			tmpMTXArr.flush()
+			
+			objName = 'fromMTXArr'
+			ret = UML.createData(retType=t, data=tmpMTXArr.name, name=objName)
+			assert ret.name == objName
+			assert ret.path == tmpMTXArr.name
+
+			retDefName = UML.createData(retType=t, data=tmpMTXArr.name)
+			tokens = tmpMTXArr.name.rsplit(os.path.sep)
+			assert retDefName.name == tokens[len(tokens)-1]
+			
+
+def test_createData_objName_and_path_MTXCoo():
+	for t in retTypes:
+		# instantiate from mtx coordinate file
+		with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+			tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+			tmpMTXCoo.write("1 3 3\n")
+			tmpMTXCoo.write("1 1 1\n")
+			tmpMTXCoo.write("1 2 2\n")
+			tmpMTXCoo.write("1 3 3\n")
+			tmpMTXCoo.flush()
+
+			objName = 'fromMTXCoo'
+			ret = UML.createData(retType=t, data=tmpMTXCoo.name, name=objName)
+			assert ret.name == objName
+			assert ret.path == tmpMTXCoo.name
+
+			retDefName = UML.createData(retType=t, data=tmpMTXCoo.name)
+			tokens = tmpMTXCoo.name.rsplit(os.path.sep)
+			assert retDefName.name == tokens[len(tokens)-1]
+			
 
 
 def test_namesInCommentCSV():

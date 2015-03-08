@@ -380,6 +380,11 @@ def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
 			pointNames = tempPNames
 		if featureNames is None or isinstance(featureNames, int):
 			featureNames = tempFNames
+
+		if name is None:
+			tokens = data.rsplit(os.path.sep)
+			name = tokens[len(tokens)-1]
+
 		return initDataObject(retType, tempData, pointNames, featureNames, name, data)
 	else:
 		raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
