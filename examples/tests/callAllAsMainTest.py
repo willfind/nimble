@@ -19,6 +19,7 @@ def test_callAllAsMain():
 	Calls each script in examples, confirms complete with an exception.
 
 	"""
+	assert False  # Disabled until examples are all fixed.
 
 	# bind the name allowImports to the appropriate, already loaded, module
 	# needed because each script we call imports a function from allowImports,
@@ -61,5 +62,3 @@ def test_callAllAsMain():
 			#raise val[1][1], None, val[1][2]
 			#print key
 			#print val[1][1], None, val[1][2]
-
-#	assert False
