@@ -281,35 +281,20 @@ def createDataFromFile(retType, data, fileType, pointNames, featureNames):
 
 
 def _loadcsvForMatrix(path, pointNames, featureNames):
-	inFile = open(path, 'rU')
-	currLine = inFile.readline()
 	retPNames = None
 	retFNames = None
 	skip_header = 0
 
-	def readNames(lineToRead):
-		# strip '#' from the begining of the line
-		scrubbedLine = lineToRead[1:]
-		# strip newline from end of line
-		scrubbedLine = scrubbedLine.rstrip()
-		names = scrubbedLine.split(',')
-		skip_header = 1
-		if names == ['']:
-			return None
-		return names
+	(pointNames, featureNames) = _checkCSV_for_Names(path, pointNames, featureNames)
 
-	# test if this is a line defining names
-	if currLine[0] == "#":
-		retPNames = readNames(currLine)
-		currLine = inFile.readline()
-		if currLine[0] != '#':
-			raise ArgumentException("If comment lines are used, two are required, one each for specifying Point, then Feature names")
-		retFNames = readNames(currLine)
+	inFile = open(path, 'rU')
+	currLine = inFile.readline()
 
 	# check the types in the first data containing line.
 	line = currLine
-	while (line == "") or (line[0] == '#'):
+	while (line.strip() == "") or (line[0] == '#'):
 		line = inFile.readline()
+	# this ensures our data type checking line isn't full of feature names
 	if featureNames == 0:
 		line = inFile.readline()
 
@@ -534,48 +519,58 @@ def _defaultParser(line):
 		ret.append(_intFloatOrString(entry))
 	return ret
 
+def _checkCSV_for_Names(path, pointNames, featureNames):
+	inFile = open(path, 'rU')
+
+	# walk past all the comments
+	currLine = "#"
+	while currLine.startswith('#'):
+		currLine = inFile.readline()
+
+	# check for two empty lines in a row to denote that first data line
+	# contains feature names
+	if currLine.strip() == '':
+		currLine = inFile.readline()
+		if currLine.strip() == '':
+			# specified location for names overides auto detection
+			if featureNames is None:
+				# we set this so the names are extracted later
+				featureNames = 0
+
+	# find the first data line and attempt to auto detect point names,
+	# but only if we think the feature names are in that first row
+	if featureNames == 0:
+		while currLine.startswith('#') or currLine.strip() == '':
+			currLine = inFile.readline()
+
+		if currLine.startswith('point_names,'):
+			pointNames = 0
+
+	# reset everyting to make the loop easier
+	inFile.close()
+
+	return (pointNames, featureNames)
+
 
 def _loadcsvForList(path, pointNames, featureNames):
+	(pointNames, featureNames) = _checkCSV_for_Names(path, pointNames, featureNames)
+
 	inFile = open(path, 'rU')
-	firstLine = inFile.readline()
-	retPNames = None
-	retFNames = None
-
-	def readNames(lineToRead):
-		# strip '#' from the beginning of the line
-		scrubbedLine = lineToRead[1:]
-		# strip newline from end of line
-		scrubbedLine = scrubbedLine.rstrip()
-		names = scrubbedLine.split(',')
-		if names == ['']:
-			return None
-		return names
-
-	# test if this are comment lines defining names
-	if firstLine[0] == "#":
-		retPNames = readNames(firstLine)
-		currLine = inFile.readline()
-		if currLine[0] != '#':
-			raise ArgumentException("If comment lines are used, two are required, one each for specifying Point, then Feature names")
-		retFNames = readNames(currLine)
-
-	#if not, get the iterator pointed back at the first line again	
-	else:
-		inFile.close()
-		inFile = open(path, 'rU')
 
 	#list of datapoints in the file, where each data point is a list
 	data = []
 	for currLine in inFile:
 		currLine = currLine.rstrip()
-		#ignore empty lines
-		if len(currLine) == 0:
+		#ignore empty lines and comment lines
+		if len(currLine) == 0 or currLine[0] == '#':
 			continue
 
 		data.append(_defaultParser(currLine))
 
 	inFile.close()
 
+	retPNames = None
+	retFNames = None
 	if isinstance(pointNames, int):
 		retPNames = pointNames
 	if isinstance(featureNames, int):

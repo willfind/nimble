@@ -4,10 +4,17 @@ import tempfile
 import scipy
 import numpy
 import os
+import copy
 
 import UML
 
-retTypes = ['List', 'Matrix', 'Sparse', None]  # None for auto
+#retTypes = ['List', 'Matrix', 'Sparse', None]  # None for auto
+retTypes = copy.copy(UML.data.available)
+retTypes.append(None)
+
+###########################
+# Data values correctness #
+###########################
 
 def test_createData_CSV_data():
 	""" Test of createData() loading a csv file, default params """
@@ -67,6 +74,11 @@ def test_createData_MTXCoo_data():
 				assert fromList == fromMTXCoo
 
 
+############################
+# Name and path attributes #
+############################
+
+
 def test_createData_objName_and_path_CSV():
 	for t in retTypes:
 		# instantiate from csv file
@@ -124,11 +136,31 @@ def test_createData_objName_and_path_MTXCoo():
 			retDefName = UML.createData(retType=t, data=tmpMTXCoo.name)
 			tokens = tmpMTXCoo.name.rsplit(os.path.sep)
 			assert retDefName.name == tokens[len(tokens)-1]
+
 			
 
+###################################
+# Point / Feature names from File #
+###################################
 
-def test_namesInCommentCSV():
-	""" Test of createData() loading a csv file and comment Names """
+def test_extractNames_CSV():
+	""" Test of createData() loading a csv file and extracting names """
+	pNames = ['pn1'] 
+	fNames = ['one', 'two', 'three']
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+
+		# instantiate from csv file
+		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+		tmpCSV.write("1,2,pn1,3\n")
+		tmpCSV.write('one,two,ignore,three')
+		tmpCSV.flush()
+		fromCSV = UML.createData(retType=t, data=tmpCSV.name, pointNames=2, featureNames=1)
+		tmpCSV.close()
+		assert fromList == fromCSV
+
+
+def test_names_AutoDetected_CSV():
 	pNames = ['pn1']
 	fNames = ['one', 'two', 'three']
 	for t in retTypes:
@@ -136,15 +168,72 @@ def test_namesInCommentCSV():
 
 		# instantiate from csv file
 		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
-		tmpCSV.write("#pn1\n")
-		tmpCSV.write("#one,two,three\n")
-		tmpCSV.write("1,2,3\n")
+		tmpCSV.write("\n")
+		tmpCSV.write("\n")
+		tmpCSV.write("point_names,one,two,three\n")
+		tmpCSV.write("pn1,1,2,3\n")
 		tmpCSV.flush()
+
 		fromCSV = UML.createData(retType=t, data=tmpCSV.name)
 		tmpCSV.close()
 		assert fromList == fromCSV
 
-def test_namesInCommentMTXArr():
+
+def test_featNamesOnly_AutoDetected_CSV():
+	fNames = ['one', 'two', 'three']
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2,3]], featureNames=fNames)
+
+		# instantiate from csv file
+		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+		tmpCSV.write("\n")
+		tmpCSV.write("\n")
+		tmpCSV.write("one,two,three\n")
+		tmpCSV.write("1,2,3\n")
+		tmpCSV.flush()
+
+		fromCSV = UML.createData(retType=t, data=tmpCSV.name)
+		tmpCSV.close()
+		assert fromList == fromCSV
+
+def test_pointNames_AutoDetected_from_specified_featNames_CSV():
+	fNames = ['one', 'two', 'three']
+	pNames = ['pn1']
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+
+		# instantiate from csv file
+		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+		tmpCSV.write("\n")
+		tmpCSV.write("\n")
+		tmpCSV.write("point_names,one,two,three\n")
+		tmpCSV.write("pn1,1,2,3\n")
+		tmpCSV.flush()
+		fromCSV = UML.createData(retType=t, data=tmpCSV.name, featureNames=0)
+		tmpCSV.close()
+		assert fromList == fromCSV
+
+
+def test_extractNames_overides_autoDetect_CSV():
+	pNames = ['pn1'] 
+	fNames = ['one', 'two', 'three']
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+
+		# instantiate from csv file
+		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+		tmpCSV.write("\n")
+		tmpCSV.write("\n")
+		tmpCSV.write("1,2,pn1,3\n")
+		tmpCSV.write('one,two,ignore,three')
+		tmpCSV.flush()
+		fromCSV = UML.createData(retType=t, data=tmpCSV.name, pointNames=2, featureNames=1)
+		tmpCSV.close()
+		assert fromList == fromCSV
+
+
+
+def test_namesInComment_MTXArr():
 	""" Test of createData() loading a mtx (arr format) file and comment Names """
 	pNames = ['pn1']
 	fNames = ['one', 'two', 'three']
@@ -168,7 +257,7 @@ def test_namesInCommentMTXArr():
 		else:
 			assert fromList == fromMTXArr
 
-def test_namesInCommentMTXCoo():
+def test_namesInComment_MTXCoo():
 	""" Test of createData() loading a mtx (coo format) file and comment Names """
 	pNames = ['pn1']
 	fNames = ['one', 'two', 'three']
@@ -192,24 +281,8 @@ def test_namesInCommentMTXCoo():
 		else:
 			assert fromList == fromMTXCoo
 
-def test_extractNamesCSV():
-	""" Test of createData() loading a csv file and extracting names """
-	pNames = ['pn1'] 
-	fNames = ['one', 'two', 'three']
-	for t in retTypes:
-		fromList = UML.createData(retType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
 
-		# instantiate from csv file
-		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
-		tmpCSV.write("1,2,pn1,3\n")
-		tmpCSV.write('one,two,ignore,three')
-		tmpCSV.flush()
-		fromCSV = UML.createData(retType=t, data=tmpCSV.name, pointNames=2, featureNames=1)
-		tmpCSV.close()
-		assert fromList == fromCSV
-
-
-def test_extractNamesMTXArr():
+def test_extractNames_MTXArr():
 	""" Test of createData() loading a mtx (arr format) file and extracting names """
 	pNames = ['11']
 	fNames = ['21', '22', '23']
@@ -238,8 +311,7 @@ def test_extractNamesMTXArr():
 
 
 
-
-def test_extractNamesMTXCoo():
+def test_extractNames_MTXCoo():
 	""" Test of createData() loading a mtx (coo format) file and extracting names """
 	pNames = ['11']
 	fNames = ['21', '22', '23']
@@ -268,7 +340,13 @@ def test_extractNamesMTXCoo():
 
 
 
-def test_extractNamesList():
+
+##################################
+# Point / Feature names from Raw #
+##################################
+
+
+def test_extractNames_pythonList():
 	""" Test of createData() given python list, extracting names """
 	pNames = ['pn1'] 
 	fNames = ['one', '2', 'three']
@@ -280,7 +358,7 @@ def test_extractNamesList():
 		specified = UML.createData(retType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
 		assert inData == specified
 
-def test_extractNamesNPArray():
+def test_extractNames_NPArray():
 	""" Test of createData() given numpy array, extracting names """
 	pNames = ['11'] 
 	fNames = ['21', '22', '23']
@@ -293,7 +371,7 @@ def test_extractNamesNPArray():
 		assert inData == specified
 
 
-def test_extractNamesNPMatrix():
+def test_extractNames_NPMatrix():
 	""" Test of createData() given numpy matrix, extracting names """
 	pNames = ['11'] 
 	fNames = ['21', '22', '23']
@@ -306,7 +384,7 @@ def test_extractNamesNPMatrix():
 		assert inData == specified
 
 
-def test_extractNamesCooSparse():
+def test_extractNames_CooSparse():
 	""" Test of createData() given scipy Coo matrix, extracting names """
 	pNames = ['11'] 
 	fNames = ['21', '22', '23']
@@ -334,3 +412,7 @@ def test_extractNamesCooSparse():
 
 # test fileType parameter : overide from extension, or no
 # extension data
+
+
+# unit tests demonstrating our file loaders can handle arbitrarly placed blank lines
+# comment lines

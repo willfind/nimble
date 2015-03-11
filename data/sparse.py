@@ -748,7 +748,7 @@ class Sparse(Base):
 	def _getTypeString_implementation(self):
 		return 'Sparse'
 
-	def _writeFileCSV_implementation(self, outPath, includeNames):
+	def _writeFileCSV_implementation(self, outPath, includePointNames, includeFeatureNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
 		path.
@@ -756,19 +756,20 @@ class Sparse(Base):
 		"""
 		outFile = open(outPath, 'w')
 	
-		if includeNames:
-			def writeNames(nameIndexPairs):
-				# sort according to the value, not the key. ie sort by feature number
-				pairs = sorted(nameIndexPairs,lambda (a,x),(b,y): x-y)
-				for (a,x) in pairs:
-					if pairs.index((a,x)) == 0:
-						outFile.write('#')
-					else:
-						outFile.write(',')
-					outFile.write(str(a))
-				outFile.write('\n')
-			writeNames(self.pointNames.items())
-			writeNames(self.featureNames.items())
+		if includeFeatureNames:
+			# to signal that the first line contains feature Names
+			outFile.write('\n\n')
+
+			def combine(a, b):
+				return a + ',' + b
+
+			fnames = self.getFeatureNames()
+			fnamesLine = reduce(combine, fnames)
+			fnamesLine += '\n'
+			if includePointNames:
+				outFile.write('point_names,')
+
+			outFile.write(fnamesLine)
 
 		# sort by rows first, then columns
 		placement = numpy.lexsort((self._data.col, self._data.row))
@@ -779,6 +780,10 @@ class Sparse(Base):
 		pointer = 0
 		pmax = len(self._data.data)
 		for i in xrange(self.pointCount):
+			currPname = self.getPointName(i)
+			if includePointNames:
+				outFile.write(currPname)
+				outFile.write(',')
 			for j in xrange(self.featureCount):
 				if pointer < pmax and i == self._data.row[pointer] and j == self._data.col[pointer]:
 					value = self._data.data[pointer]
@@ -793,7 +798,7 @@ class Sparse(Base):
 
 		outFile.close()
 
-	def _writeFile_implementation(self, outPath, format=None, includeNames=True):
+	def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
 		"""
 		Function to write the data in this object to a file using the specified
 		format. outPath is the location (including file name and extension) where
@@ -809,21 +814,23 @@ class Sparse(Base):
 			raise ArgumentException(msg)
 
 		if format == 'csv':
-			return self._writeFileCSV_implementation(outPath, includeNames)
+			return self._writeFileCSV_implementation(outPath, includePointNames, includeFeatureNames)
 		if format == 'mtx':
-			return self._writeFileMTX_implementation(outPath, includeNames)
+			return self._writeFileMTX_implementation(outPath, includePointNames, includeFeatureNames)
 
-	def _writeFileMTX_implementation(self, outPath, includeNames):
-		if includeNames:
-			def makeNameString(count, namesInv):
+	def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
+		def makeNameString(count, namesInv):
 				nameString = "#"
 				for i in xrange(count):
 					nameString += namesInv[i]
 					if not i == count - 1:
 						nameString += ','
 				return nameString
+
+		if includePointNames:
 			header = makeNameString(self.pointCount, self.pointNamesInverse)
 			header += '\n'
+		if includeFeatureNames:
 			header += makeNameString(self.featureCount, self.featureNamesInverse)
 			
 			mmwrite(target=outPath, a=self.data, comment=header)		
@@ -857,8 +864,6 @@ class Sparse(Base):
 			return self._data.internal.tocsr()
 
 	def _copyPoints_implementation(self, points, start, end):
-#		import pdb
-#		pdb.set_trace()
 		retData = []
 		retRow = []
 		retCol = []

@@ -862,18 +862,21 @@ class LowLevelBackend(object):
 		assert toTest2._equalPointNames(toTest1)
 
 	def test__equalPointNames_mixedDefaultsAndActual(self):
-		""" Test _equalPointNames() for equality of default named objects mixed with actual pointNames """
 		toTest1 = self.constructor(pointNames=['1','2'])
 		toTest2 = self.constructor(pointNames=['1','2'])
 		toTest1.setPointName(0,None)
 		toTest1.setPointName(1, '1')
 		toTest2.setPointName(1,None)
+		# have: test1 [Default, '1']
+		# test2 ['1', Default]
 		assert not toTest1._equalPointNames(toTest2)
 		assert not toTest2._equalPointNames(toTest1)
 		toTest1.setPointName(1,'2')
 		toTest1.setPointName(1,None)
-		assert toTest1._equalPointNames(toTest2)
-		assert toTest2._equalPointNames(toTest1)
+		# have: test1 [Default, '2']
+		# test2: ['1', Default]
+		assert not toTest1._equalPointNames(toTest2)
+		assert not toTest2._equalPointNames(toTest1)
 
 
 
@@ -936,19 +939,22 @@ class LowLevelBackend(object):
 		assert toTest2._equalFeatureNames(toTest1)
 
 	def test_equalFeatureNames_mixedDefaultsAndActual(self):
-		""" Test _equalFeatureNames() for equality of default named objects mixed with actual featureNames """
 		toTest1 = self.constructor(featureNames=['1','2'])
 		toTest2 = self.constructor(featureNames=['1','2'])
 		toTest1.setFeatureName(0,None)
 		toTest1.setFeatureName(1, '1')
 		toTest2.setFeatureName(1,None)
+		# have: test1 [Default, '1']
+		# test2 ['1', Default]
 		assert not toTest1._equalFeatureNames(toTest2)
 		assert not toTest2._equalFeatureNames(toTest1)
 		toTest1.setFeatureName(1,'2')
 		toTest1.setFeatureName(1,None)
-		assert toTest1._equalFeatureNames(toTest2)
-		assert toTest2._equalFeatureNames(toTest1)
-
+		# have: test1 [Default, '2']
+		# test2: ['1', Default]
+		assert not toTest1._equalFeatureNames(toTest2)
+		assert not toTest2._equalFeatureNames(toTest1)
+		
 
 	########################
 	# default Object names #

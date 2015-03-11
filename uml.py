@@ -10,6 +10,7 @@ import operator
 import re 
 import datetime
 import os
+import copy
 
 import UML
 from UML.exceptions import ArgumentException
@@ -366,7 +367,9 @@ def listUMLFunctions():
 
 
 def createData(retType, data, pointNames=None, featureNames=None, fileType=None, name=None, useLog=None):
-	retAllowed = ['List', 'Matrix', 'Sparse', None]
+	#retAllowed = ['List', 'Matrix', 'Sparse', None]
+	retAllowed = copy.copy(UML.data.available)
+	retAllowed.append(None)
 	if retType not in retAllowed:
 		raise ArgumentException("retType must be a value in " + str(retAllowed))
 

@@ -794,16 +794,34 @@ class Base(object):
 			msg += "outPath"
 			raise ArgumentException(msg)
 
+		includePointNames = includeNames
+		if includePointNames:
+			seen = False
+			for name in self.getPointNames():
+				if not name.startswith(DEFAULT_PREFIX):
+					seen = True
+			if not seen:
+				includePointNames = False
+
+		includeFeatureNames = includeNames
+		if includeFeatureNames:
+			seen = False
+			for name in self.getFeatureNames():
+				if not name.startswith(DEFAULT_PREFIX):
+					seen = True
+			if not seen:
+				includeFeatureNames = False
+
 		try:
-			self._writeFile_implementation(outPath, format, includeNames)
+			self._writeFile_implementation(outPath, format, includePointNames, includeFeatureNames)
 		except Exception:
 			if format.lower() == "csv":
 				toOut = self.copyAs("Matrix")
-				toOut._writeFile_implementation(outPath, format, includeNames)
+				toOut._writeFile_implementation(outPath, format, includePointNames, includeFeatureNames)
 				return
 			if format.lower() == "mtx":
 				toOut = self.copyAs('Sparse')
-				toOut._writeFile_implementation(outPath, format, includeNames)
+				toOut._writeFile_implementation(outPath, format, includePointNames, includeFeatureNames)
 				return	
 
 
@@ -2363,7 +2381,7 @@ class Base(object):
 		lnamesInv = self.pointNamesInverse if leftAxis == 'point' else self.featureNamesInverse
 		rnames = other.pointNames if rightAxis == 'point' else other.featureNames
 		rnamesInv = other.pointNamesInverse if rightAxis == 'point' else other.featureNamesInverse	
-		inconsistencies = self._unequalNames(lnames, lnamesInv, rnames, rnamesInv)
+		inconsistencies = self._inconsistentNames(lnames, lnamesInv, rnames, rnamesInv)
 
 		if inconsistencies != {}:
 			table = [['left', 'ID', 'right']]
@@ -2378,7 +2396,7 @@ class Base(object):
 			print >>sys.stderr, msg
 			raise ArgumentException(msg)
 
-	def _unequalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
+	def _inconsistentNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
 		"""Private function to find and return all name inconsistencies
 		between the given two sets. It ignores equality of default values,
 		considering only whether non default names consistent (position by
@@ -2406,6 +2424,44 @@ class Base(object):
 						if lname in rightNames.keys():
 							ret[index] = (lname, rname)
 							ret[rightNames[lname]] = (lname, rname)
+
+
+		# check both name directions
+		checkFromLeftKeys(inconsistencies, selfNamesInv, otherNames, otherNamesInv)
+		checkFromLeftKeys(inconsistencies, otherNamesInv, selfNames, selfNamesInv)
+
+		return inconsistencies
+
+
+	def _unequalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
+		"""Private function to find and return all name inconsistencies
+		between the given two sets. It ignores equality of default values,
+		considering only whether non default names consistent (position by
+		position) and uniquely positioned (if a non default name is present
+		in both, then it is in the same position in both). The return value
+		is a dict between integer IDs and the pair of offending names at
+		that position in both objects.
+
+		Assumptions: the size of the two name sets is equal.
+
+		"""
+		inconsistencies = {}
+
+		def checkFromLeftKeys(ret, leftNamesInv, rightNames, rightNamesInv):
+			for index in leftNamesInv.keys():
+				lname = leftNamesInv[index]
+				rname = rightNamesInv[index]
+				if not lname.startswith(DEFAULT_PREFIX):
+					if not rname.startswith(DEFAULT_PREFIX):
+						if lname != rname:
+							ret[index] = (lname, rname)
+					else:
+						# if a name in one is mirrored by a default name,
+						# then it must not appear in any other index
+						#if lname in rightNames.keys():
+						#	ret[index] = (lname, rname)
+						#	ret[rightNames[lname]] = (lname, rname)
+						ret[index] = (lname, rname)
 
 		# check both name directions
 		checkFromLeftKeys(inconsistencies, selfNamesInv, otherNames, otherNamesInv)

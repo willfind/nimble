@@ -458,7 +458,7 @@ class Matrix(Base):
 			return False
 		return True
 
-	def _writeFile_implementation(self, outPath, format=None, includeNames=True):
+	def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
 		"""
 		Function to write the data in this object to a file using the specified
 		format. outPath is the location (including file name and extension) where
@@ -474,46 +474,59 @@ class Matrix(Base):
 			raise ArgumentException(msg)
 
 		if format == 'csv':
-			return self._writeFileCSV_implementation(outPath, includeNames)
+			return self._writeFileCSV_implementation(outPath, includePointNames, includeFeatureNames)
 		if format == 'mtx':
-			return self._writeFileMTX_implementation(outPath, includeNames)
+			return self._writeFileMTX_implementation(outPath, includePointNames, includeFeatureNames)
 
-	def _writeFileCSV_implementation(self, outPath, includeNames):
+	def _writeFileCSV_implementation(self, outPath, includePointNames, includeFeatureNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
 		path.
 
 		"""
-		header = None
-		if includeNames:
-			def makeNameString(count, namesInv):
-				nameString = "#"
-				for i in xrange(count):
-					nameString += namesInv[i]
-					if not i == count - 1:
-						nameString += ','
-				return nameString
-			header = makeNameString(self.pointCount, self.pointNamesInverse)
-			header += '\n'
-			header += makeNameString(self.featureCount, self.featureNamesInverse)
-
 		outFile = open(outPath,'w')
-		if header is not None:
-			outFile.write(header + "\n")
-		numpy.savetxt(outFile, self.data, delimiter=',')
+
+		if includeFeatureNames:
+			# to signal that the first line contains feature Names
+			outFile.write('\n\n')
+
+			def combine(a, b):
+				return a + ',' + b
+
+			fnames = self.getFeatureNames()
+			fnamesLine = reduce(combine, fnames)
+			fnamesLine += '\n'
+			if includePointNames:
+				outFile.write('point_names,')
+
+			outFile.write(fnamesLine)
+
+		if includeFeatureNames:
+			pnames = numpy.matrix(self.getPointNames())
+			pnames = pnames.transpose()
+
+			viewData = self.data.view()
+			toWrite = numpy.concatenate((pnames, viewData),1)
+
+			numpy.savetxt(outFile, toWrite, delimiter=',', fmt='%s')
+		else:
+			numpy.savetxt(outFile, self.data, delimiter=',')
 		outFile.close()
 
-	def _writeFileMTX_implementation(self, outPath, includeNames):
-		if includeNames:
-			def makeNameString(count, namesInv):
-				nameString = "#"
-				for i in xrange(count):
-					nameString += namesInv[i]
-					if not i == count - 1:
-						nameString += ','
-				return nameString
+
+	def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
+		def makeNameString(count, namesInv):
+			nameString = "#"
+			for i in xrange(count):
+				nameString += namesInv[i]
+				if not i == count - 1:
+					nameString += ','
+			return nameString
+
+		if includePointNames:
 			header = makeNameString(self.pointCount, self.pointNamesInverse)
 			header += '\n'
+		if includeFeatureNames:
 			header += makeNameString(self.featureCount, self.featureNamesInverse)
 			
 			mmwrite(target=outPath, a=self.data, comment=header)		
@@ -843,10 +856,6 @@ class nzIt():
 def viewBasedApplyAlongAxis(function, axis, outerObject):
 	""" applies the given function to each view along the given axis, returning the results
 	of the function in numpy array """
-
-#	import pdb
-#	pdb.set_trace()
-
 	if axis == "point":
 		maxVal = outerObject.data.shape[0]
 	else:
@@ -859,5 +868,4 @@ def viewBasedApplyAlongAxis(function, axis, outerObject):
 		funcOut = function(VectorView(outerObject,axis,i))
 		ret[i] = funcOut
 
-#	print ret
 	return ret

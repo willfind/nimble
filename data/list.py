@@ -544,7 +544,7 @@ class List(Base):
 				return False
 		return True
 
-	def _writeFile_implementation(self, outPath, format=None, includeNames=True):
+	def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
 		"""
 		Function to write the data in this object to a file using the specified
 		format. outPath is the location (including file name and extension) where
@@ -560,11 +560,11 @@ class List(Base):
 			raise ArgumentException(msg)
 
 		if format == 'csv':
-			return self._writeFileCSV_implementation(outPath, includeNames)
+			return self._writeFileCSV_implementation(outPath, includePointNames, includeFeatureNames)
 		if format == 'mtx':
-			return self._writeFileMTX_implementation(outPath, includeNames)
+			return self._writeFileMTX_implementation(outPath, includePointNames, includeFeatureNames)
 
-	def _writeFileCSV_implementation(self, outPath, includeNames):
+	def _writeFileCSV_implementation(self, outPath, includePointNames, includeFeatureNames):
 		"""
 		Function to write the data in this object to a CSV file at the designated
 		path.
@@ -572,22 +572,28 @@ class List(Base):
 		"""
 		outFile = open(outPath, 'w')
 	
-		if includeNames and self.featureNames != None:
-			def writeNames(nameIndexPairs):
-				# sort according to the value, not the key. ie sort by feature number
-				pairs = sorted(nameIndexPairs,lambda (a,x),(b,y): x-y)
-				for (a,x) in pairs:
-					if pairs.index((a,x)) == 0:
-						outFile.write('#')
-					else:
-						outFile.write(',')
-					outFile.write(str(a))
-				outFile.write('\n')
-			writeNames(self.pointNames.items())
-			writeNames(self.featureNames.items())
+		if includeFeatureNames:
+			# to signal that the first line contains feature Names
+			outFile.write('\n\n')
 
-		for point in self.data:
+			def combine(a, b):
+				return a + ',' + b
+
+			fnames = self.getFeatureNames()
+			fnamesLine = reduce(combine, fnames)
+			fnamesLine += '\n'
+			if includePointNames:
+				outFile.write('point_names,')
+
+			outFile.write(fnamesLine)
+
+		for point in self.pointIterator():
+			currPname = self.getPointName(point.index())
 			first = True
+			if includePointNames:
+				outFile.write(currPname)
+				first = False
+
 			for value in point:
 				if not first:
 					outFile.write(',')		
@@ -596,7 +602,7 @@ class List(Base):
 			outFile.write('\n')
 		outFile.close()
 
-	def _writeFileMTX_implementation(self, outPath, includeNames):
+	def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
 		"""
 		Function to write the data in this object to a matrix market file at the designated
 		path.
@@ -604,23 +610,24 @@ class List(Base):
 		"""
 		outFile = open(outPath, 'w')
 		outFile.write("%%MatrixMarket matrix array real general\n")
-		if includeNames:
-			#pairs = self.featureNames.items()
-			def writeNames(nameIndexPairs):
-				# sort according to the value, not the key. ie sort by feature number
-				pairs = sorted(nameIndexPairs,lambda (a,x),(b,y): x-y)
-				for (a,x) in pairs:
-					if pairs.index((a,x)) == 0:
-						outFile.write('%#')
-					else:
-						outFile.write(',')
-					outFile.write(str(a))
-				outFile.write('\n')
+		
+		def writeNames(nameIndexPairs):
+			# sort according to the value, not the key. ie sort by feature number
+			pairs = sorted(nameIndexPairs,lambda (a,x),(b,y): x-y)
+			for (a,x) in pairs:
+				if pairs.index((a,x)) == 0:
+					outFile.write('%#')
+				else:
+					outFile.write(',')
+				outFile.write(str(a))
+			outFile.write('\n')
+
+		if includePointNames:
 			writeNames(self.pointNames.items())
+		if includeFeatureNames:
 			writeNames(self.featureNames.items())
 
 		outFile.write(str(self.pointCount) + " " + str(self.featureCount) + "\n")
-
 
 		for j in xrange(self.featureCount):
 			for i in xrange(self.pointCount):

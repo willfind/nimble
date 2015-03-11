@@ -122,6 +122,7 @@ class QueryBackend(DataTestObject):
 		pointNames = ['1', 'one', '2', '0']
 		featureNames = ['one', 'two', 'three']
 		toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+		orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
 		# call writeFile
 		toWrite.writeFile(tmpFile.name, format='csv', includeNames=True)
@@ -131,6 +132,8 @@ class QueryBackend(DataTestObject):
 
 		assert readObj.isIdentical(toWrite)
 		assert toWrite.isIdentical(readObj)
+
+		assert toWrite == orig
 
 	def test_writeFile_CSVauto(self):
 		""" Test writeFile() will (if needed) autoconvert to Matrix to use its CSV output """
@@ -154,6 +157,9 @@ class QueryBackend(DataTestObject):
 
 		assert readObj.isIdentical(toWrite)
 		assert toWrite.isIdentical(readObj)
+
+
+# TODO tests for excluding all default point or feature name sets
 
 
 	def test_writeFile_MTXhandmade(self):
