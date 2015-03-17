@@ -225,7 +225,7 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 	return ret
 
-def createDataFromFile(retType, data, fileType, pointNames, featureNames):
+def createDataFromFile(retType, data, pointNames, featureNames, fileType, name):
 	"""
 	Helper for createData which deals with the case of loading data
 	from a file. Returns a triple containing the raw data, pointNames,
@@ -244,7 +244,18 @@ def createDataFromFile(retType, data, fileType, pointNames, featureNames):
 
 	# Use the path' extension if fileType isn't specified
 	if fileType is None:
-		split = data.rsplit('.', 1)
+		path = data
+		if not isinstance(path, basestring):
+			try:
+				path = data.name
+			except AttributeError:
+				msg = "The file must be recognizable by it's extension, or a type must "
+				msg += "be specified using the 'fileType' parameter. However, since an "
+				msg += "open file object was passed which didn't have a name attribute, we "
+				msg += "cannot determine the type of the file"
+				raise ArgumentException(msg)
+
+		split = path.rsplit('.', 1)
 		extension = None
 		if len(split) > 1:
 			extension = split[1].lower()
@@ -254,49 +265,69 @@ def createDataFromFile(retType, data, fileType, pointNames, featureNames):
 			raise ArgumentException(msg)
 		fileType = extension
 
-	if retType is None:
+	loadType = retType
+	if loadType is None:
 		if fileType == 'csv':
-			retType = 'Matrix'
+			loadType = 'Matrix'
 		elif fileType == 'mtx':
-			retType = 'Auto'
+			loadType = 'Auto'
 		else:
-			retType = 'Matrix'
+			loadType = 'Matrix'
 
 	# Choose what code to use to load the file. Take into consideration the end
 	# result we are trying to load into.
-	directPath = "_load" + fileType + "For" + retType
+	directPath = "_load" + fileType + "For" + loadType
 	# try to get loading function
 	retData, retPNames, retFNames = None, None, None
+
+	toPass = data
+	if isinstance(toPass, basestring):
+		toPass = open(data, 'rU')
 	if directPath in globals():
 		loader = globals()[directPath]
-		(retData, retPNames, retFNames) = loader(data, pointNames, featureNames)
+		(retData, retPNames, retFNames) = loader(toPass, pointNames, featureNames)
 	else:
 		if fileType == 'csv':
-			(retData, retPNames, retFNames) = _loadcsvForMatrix(data, pointNames, featureNames)
+			(retData, retPNames, retFNames) = _loadcsvForMatrix(toPass, pointNames, featureNames)
 		if fileType == 'mtx':
-			(retData, retPNames, retFNames) = _loadmtxForAuto(data, pointNames, featureNames)
+			(retData, retPNames, retFNames) = _loadmtxForAuto(toPass, pointNames, featureNames)
 
-	# raw data, pointNames, featureNames
-	return (retData, retPNames, retFNames)
+	if pointNames is None or isinstance(pointNames, int):
+		pointNames = retPNames
+	if featureNames is None or isinstance(featureNames, int):
+		featureNames = retFNames
+
+	# auto set name if unspecified, and is possible
+	if isinstance(data, basestring):
+		path = data
+	elif hasattr(data, 'name'):
+		path = data.name
+	else:
+		path = None
+
+	if path is not None and name is None:
+		tokens = path.rsplit(os.path.sep)
+		name = tokens[len(tokens)-1]
+
+	return initDataObject(retType, retData, pointNames, featureNames, name, path)
 
 
-def _loadcsvForMatrix(path, pointNames, featureNames):
+def _loadcsvForMatrix(openFile, pointNames, featureNames):
 	retPNames = None
 	retFNames = None
 	skip_header = 0
 
-	(pointNames, featureNames) = _checkCSV_for_Names(path, pointNames, featureNames)
-
-	inFile = open(path, 'rU')
-	currLine = inFile.readline()
+	(pointNames, featureNames) = _checkCSV_for_Names(openFile, pointNames, featureNames)
+	startPosition = openFile.tell()
+	currLine = openFile.readline()
 
 	# check the types in the first data containing line.
 	line = currLine
 	while (line.strip() == "") or (line[0] == '#'):
-		line = inFile.readline()
+		line = openFile.readline()
 	# this ensures our data type checking line isn't full of feature names
 	if featureNames == 0:
-		line = inFile.readline()
+		line = openFile.readline()
 
 	lineList = line.split(',')
 	for i in xrange(len(lineList)):
@@ -307,13 +338,13 @@ def _loadcsvForMatrix(path, pointNames, featureNames):
 			except ValueError:
 				raise ValueError("Cannot load a file with non numerical typed columns")
 
-	inFile.close()
+	openFile.seek(startPosition)
 
 	# generate tiny obect, so we know what dtype we actually want
 	lineIn = StringIO.StringIO(line)
 	trialObj = numpy.genfromtxt(lineIn, delimiter=',')
 
-	data = numpy.genfromtxt(path, delimiter=',', skip_header=skip_header, dtype=None)
+	data = numpy.genfromtxt(openFile, delimiter=',', skip_header=skip_header, dtype=None)
 
 	#if len(data.shape) == 1:
 	data = numpy.matrix(data)
@@ -348,13 +379,13 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
 
 	return (data, retPNames, retFNames)
 
-def _loadmtxForMatrix(path, pointNames, featureNames):
-	return _loadmtxForAuto(path, pointNames, featureNames)
+def _loadmtxForMatrix(openFile, pointNames, featureNames):
+	return _loadmtxForAuto(openFile, pointNames, featureNames)
 
-def _loadmtxForSparse(path, pointNames, featureNames):
-	return _loadmtxForAuto(path, pointNames, featureNames)
+def _loadmtxForSparse(openFile, pointNames, featureNames):
+	return _loadmtxForAuto(openFile, pointNames, featureNames)
 
-def _loadmtxForAuto(path, pointNames, featureNames):
+def _loadmtxForAuto(openFile, pointNames, featureNames):
 	"""
 	Uses scipy helpers to read a matrix market file; returning whatever is most
 	appropriate for the file. If it is a matrix market array type, a numpy
@@ -363,13 +394,13 @@ def _loadmtxForAuto(path, pointNames, featureNames):
 	they are also read.
 
 	"""
-	inFile = open(path, 'rU')
+	startPosition = openFile.tell()
 	retPNames = None
 	retFNames = None
 
 	# read through the comment lines
 	while True:
-		currLine = inFile.readline()
+		currLine = openFile.readline()
 		if currLine[0] != '%':
 			break
 		if len(currLine) > 1 and currLine[1] == "#":
@@ -383,9 +414,9 @@ def _loadmtxForAuto(path, pointNames, featureNames):
 			else:
 				retFNames = names
 
-	inFile.close()
+	openFile.seek(startPosition)
 
-	data = scipy.io.mmread(path)
+	data = scipy.io.mmread(openFile)
 
 	temp = (data, None, None)
 	if not scipy.sparse.issparse(data):
@@ -519,18 +550,18 @@ def _defaultParser(line):
 		ret.append(_intFloatOrString(entry))
 	return ret
 
-def _checkCSV_for_Names(path, pointNames, featureNames):
-	inFile = open(path, 'rU')
+def _checkCSV_for_Names(openFile, pointNames, featureNames):
+	startPosition = openFile.tell()
 
 	# walk past all the comments
 	currLine = "#"
 	while currLine.startswith('#'):
-		currLine = inFile.readline()
+		currLine = openFile.readline()
 
 	# check for two empty lines in a row to denote that first data line
 	# contains feature names
 	if currLine.strip() == '':
-		currLine = inFile.readline()
+		currLine = openFile.readline()
 		if currLine.strip() == '':
 			# specified location for names overides auto detection
 			if featureNames is None:
@@ -541,25 +572,25 @@ def _checkCSV_for_Names(path, pointNames, featureNames):
 	# but only if we think the feature names are in that first row
 	if featureNames == 0:
 		while currLine.startswith('#') or currLine.strip() == '':
-			currLine = inFile.readline()
+			currLine = openFile.readline()
 
 		if currLine.startswith('point_names,'):
 			pointNames = 0
 
 	# reset everyting to make the loop easier
-	inFile.close()
+	openFile.seek(startPosition)
 
 	return (pointNames, featureNames)
 
 
-def _loadcsvForList(path, pointNames, featureNames):
-	(pointNames, featureNames) = _checkCSV_for_Names(path, pointNames, featureNames)
+def _loadcsvForList(openFile, pointNames, featureNames):
+	(pointNames, featureNames) = _checkCSV_for_Names(openFile, pointNames, featureNames)
 
-	inFile = open(path, 'rU')
+	startPosition = openFile.tell()
 
 	#list of datapoints in the file, where each data point is a list
 	data = []
-	for currLine in inFile:
+	for currLine in openFile:
 		currLine = currLine.rstrip()
 		#ignore empty lines and comment lines
 		if len(currLine) == 0 or currLine[0] == '#':
@@ -567,7 +598,7 @@ def _loadcsvForList(path, pointNames, featureNames):
 
 		data.append(_defaultParser(currLine))
 
-	inFile.close()
+	openFile.seek(startPosition)
 
 	retPNames = None
 	retFNames = None

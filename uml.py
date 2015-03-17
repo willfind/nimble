@@ -373,22 +373,18 @@ def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
 	if retType not in retAllowed:
 		raise ArgumentException("retType must be a value in " + str(retAllowed))
 
+	def looksFileLike(toCheck):
+		hasRead = hasattr(toCheck, 'read')
+		hasWrite = hasattr(toCheck, 'write')
+		return (hasRead and hasWrite)
+
+	# input is raw data
 	if isAllowedRaw(data):
 		return initDataObject(retType, data, pointNames, featureNames, name)
-	elif isinstance(data, basestring):
-		inPN = pointNames if isinstance(pointNames, int) else None
-		inFN = featureNames if isinstance(featureNames, int) else None
-		(tempData, tempPNames, tempFNames) = createDataFromFile(retType, data, fileType, inPN, inFN)
-		if pointNames is None or isinstance(pointNames, int):
-			pointNames = tempPNames
-		if featureNames is None or isinstance(featureNames, int):
-			featureNames = tempFNames
-
-		if name is None:
-			tokens = data.rsplit(os.path.sep)
-			name = tokens[len(tokens)-1]
-
-		return initDataObject(retType, tempData, pointNames, featureNames, name, data)
+	# input is an open file or a path to a file
+	elif isinstance(data, basestring) or looksFileLike(data):
+		return createDataFromFile(retType, data, pointNames, featureNames, fileType, name)
+	# no other allowed inputs
 	else:
 		raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
 

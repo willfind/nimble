@@ -394,11 +394,126 @@ def test_extractNames_CooSparse():
 		inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
 		specRaw = numpy.array([[1,-1,-3]])
 		specRaw = scipy.sparse.coo_matrix(specRaw)
-#		import pdb
-#		pdb.set_trace()
+
 		inData = UML.createData(retType=t, data=inDataRaw, pointNames=3, featureNames=0)
 		specified = UML.createData(retType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
 		assert inData == specified
+
+def test_extractNames_CscSparse():
+	""" Test of createData() given scipy Coo matrix, extracting names """
+	pNames = ['11'] 
+	fNames = ['21', '22', '23']
+
+	for t in retTypes:
+		inDataRaw = numpy.array([[21,22,23,-111],[1,-1,-3,11]])
+		inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
+		specRaw = numpy.array([[1,-1,-3]])
+		specRaw = scipy.sparse.coo_matrix(specRaw)
+
+		inData = UML.createData(retType=t, data=inDataRaw, pointNames=3, featureNames=0)
+		specified = UML.createData(retType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+		assert inData == specified
+
+
+
+
+###############################
+# Open file as source of data #
+###############################
+
+class NamelessFile(object):
+	def __init__(self, toWrap):
+		self.inner = toWrap
+
+	def __getattr__(self, name):
+		if name != 'name':
+			return getattr(self.inner, name)
+		else:
+			raise AttributeError
+
+	def __iter__(self):
+		return self.inner.__iter__()
+
+def test_createData_CSV_passedOpen():
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2,3]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,3\n")
+			tmpCSV.flush()
+			objName = 'fromCSV'
+			openFile = open(tmpCSV.name, 'rU')
+			fromCSV = UML.createData(retType=t, data=openFile, name=objName)
+			openFile.close()
+
+			assert fromList == fromCSV
+
+			openFile = open(openFile.name, 'rU')
+			namelessOpenFile = NamelessFile(openFile)
+			fromCSV = UML.createData(retType=t, data=namelessOpenFile, fileType='csv')
+			assert fromCSV.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+			assert fromCSV.path is None
+
+def test_createData_MTXArr_passedOpen():
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2,3]])
+
+		# instantiate from mtx array file
+		with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+			tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+			tmpMTXArr.write("1 3\n")
+			tmpMTXArr.write("1\n")
+			tmpMTXArr.write("2\n")
+			tmpMTXArr.write("3\n")
+			tmpMTXArr.flush()
+			objName = 'fromMTXArr'
+			openFile = open(tmpMTXArr.name, 'rU')
+			fromMTXArr = UML.createData(retType=t, data=openFile, name=objName)
+			openFile.close()
+
+			if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
+				assert fromList.isApproximatelyEqual(fromMTXArr)
+			else:
+				assert fromList == fromMTXArr
+
+			openFile = open(tmpMTXArr.name, 'rU')
+			namelessOpenFile = NamelessFile(openFile)
+			fromMTXArr = UML.createData(retType=t, data=namelessOpenFile, fileType='mtx')
+			assert fromMTXArr.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+			assert fromMTXArr.path is None
+
+
+def test_createData_MTXCoo_passedOpen():
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2,3]])
+
+		# instantiate from mtx coordinate file
+		with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+			tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+			tmpMTXCoo.write("1 3 3\n")
+			tmpMTXCoo.write("1 1 1\n")
+			tmpMTXCoo.write("1 2 2\n")
+			tmpMTXCoo.write("1 3 3\n")
+			tmpMTXCoo.flush()
+			objName = 'fromMTXCoo'
+			openFile = open(tmpMTXCoo.name, 'rU')
+			fromMTXCoo = UML.createData(retType=t, data=openFile, name=objName)
+			openFile.close()
+
+			if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
+				assert fromList.isApproximatelyEqual(fromMTXCoo)
+			else:
+				assert fromList == fromMTXCoo
+
+			openFile = open(tmpMTXCoo.name, 'rU')
+			namelessOpenFile = NamelessFile(openFile)
+			fromMTXCoo = UML.createData(retType=t, data=namelessOpenFile, fileType='mtx')
+			assert fromMTXCoo.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+			assert fromMTXCoo.path is None
+
+
+
 
 
 # tests for combination of one name set being specified and one set being
