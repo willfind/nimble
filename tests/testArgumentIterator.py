@@ -65,11 +65,14 @@ def test_ArgumentIterator():
 	assert iterationCount == len(_buildArgPermutationsList([], {}, 0, argumentDict))
 
 
-def main():
-	test_buildArgPermutationsList()
-	test_ArgumentIterator()
 
-if __name__ == '__main__':
-	main()
+def test_ArgumentIterator_stringsAndTuples():
+	arguments = {'a':'hello', 'b':(1,2,5)}
 
+	returned = ArgumentIterator(arguments)
 
+	for curr in returned:
+		assert curr['a'] == 'hello'
+		assert curr['b'] in (1,2,5)
+
+		assert len(curr.keys()) == 2

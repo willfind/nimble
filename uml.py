@@ -831,8 +831,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 		timer.start('crossValidateReturnBest')
 	else:
 		timer = None
-	#sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, useLog=None, maximize=False, **kwarguments):
-	bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged, scoreMode=scoreMode, useLog=useLog)
+
+	# perform CV (if needed)
+	argCheck = ArgumentIterator(merged)
+	if argCheck.numPermutations != 1:
+		#sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, useLog=None, maximize=False, **kwarguments):
+		bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged, scoreMode=scoreMode, useLog=useLog)
+	else:
+		bestArgument = merged
 
 	if useLog:
 		timer.stop('crossValidateReturnBest')

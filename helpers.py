@@ -1258,7 +1258,8 @@ class ArgumentIterator:
 			self.numPermutations = 1
 			for key in rawArgumentInput.keys():
 				try:
-					self.numPermutations *= len(rawArgumentInput[key])
+					if isinstance(rawArgumentInput[key], tuple):
+						self.numPermutations *= len(rawArgumentInput[key])
 				except(TypeError): #taking len of non tuple
 					pass #numPermutations not increased
 			self.permutationsList = _buildArgPermutationsList([],{},0,rawArgumentInput)
@@ -1319,6 +1320,8 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex, rawArgIn
 		curValues = rawArgInput[curKey]
 
 		try:
+			if not isinstance(curValues, tuple):
+				raise TypeError()
 			#if there are multiple values, add one key-value pair to the
 			#the current dict, make recursive call to build the rest of the dict
 			#then after it returns, remove current key-value pair and add the
