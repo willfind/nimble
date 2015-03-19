@@ -13,12 +13,11 @@ if __name__ == "__main__":
 	from UML import trainAndTest
 	from UML import trainAndApply
 	from UML import createData
-	from UML import splitData
 	from UML.calculate import fractionIncorrect
 
 	pathIn = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny_numerical.csv")
 	allData = createData("Sparse", pathIn, fileType="csv")
-	trainX, trainY, testX, testY = splitData(allData, labelID="income", fractionForTestSet=.2)
+	trainX, trainY, testX, testY = allData.trainAndTestSets(testPortion=.2, labels="income")
 	print "Finished loading data"
 
 	# sparse types aren't playing nice with the error metrics currently, so convert

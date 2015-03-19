@@ -13,19 +13,18 @@ if __name__ == "__main__":
 	from UML import trainAndTest
 	from UML import trainAndApply
 	from UML import createData
-	from UML import splitData
-	from UML.metrics import fractionIncorrect
+	from UML.calculate import fractionIncorrect
 
 	pathIn = os.path.join(UML.UMLPath, "datasets/sparseSample.mtx")
 	allData = createData("Sparse", pathIn, fileType="mtx")
-	trainX, trainY, testX, testY = splitData(allData, labelID=5, fractionForTestSet=.2)
+	trainX, trainY, testX, testY = allData.trainAndTestSets(testPortion=.2, labels=5)
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
 	trainY = trainY.copyAs(format="Matrix")
 	testY = testY.copyAs(format="Matrix")
 
 	args = {"kernel":"GaussianKernel", "C":1}
-	results = trainAndTest("shogun.MulticlassLibSVM", trainX.copy(), trainY.copy(), testX.copy(), testY.copy(), args, [fractionIncorrect])
+	results = trainAndTest("shogun.MulticlassLibSVM", trainX.copy(), trainY.copy(), testX.copy(), testY.copy(), fractionIncorrect, arguments=args)
 	rawResults = trainAndApply("shogun.MulticlassLibSVM", trainX, trainY, testX, args)
 	
 	print results

@@ -11,6 +11,7 @@ from copy import deepcopy
 from nose.tools import *
 
 import numpy
+import tempfile
 
 import UML
 from UML.data import List
@@ -1078,4 +1079,169 @@ class HighLevelBackend(DataTestObject):
 
 
 
+	######################
+	# trainAndTestSets() #
+	######################
 
+	# simple sucess - no labels
+	def test_trainAndTestSets_simple_nolabels(self):
+		data = [[1,5,-1,3,33],[2,5,-2,6,66],[3,5,-2,9,99],[4,5,-4,12,111]]
+		featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
+		toTest = self.constructor(data, featureNames=featureNames)
+
+		trX, teX = toTest.trainAndTestSets(.5)
+
+		assert trX.pointCount == 2
+		assert trX.featureCount == 5
+		assert teX.pointCount == 2
+		assert teX.featureCount == 5
+
+	# simple sucess - single label
+	def test_trainAndTestSets_simple_singlelabel(self):
+		data = [[1,5,-1,3,33],[2,5,-2,6,66],[3,5,-2,9,99],[4,5,-4,12,111]]
+		featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
+		toTest = self.constructor(data, featureNames=featureNames)
+
+		trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0)
+
+		assert trX.pointCount == 2
+		assert trX.featureCount == 4
+		assert trY.pointCount == 2
+		assert trY.featureCount == 1
+		assert teX.pointCount == 2
+		assert teX.featureCount == 4
+		assert teY.pointCount == 2
+		assert teY.featureCount == 1
+
+	# simple sucess - multi label
+	def test_trainAndTestSets_simple_multilabel(self):
+		data = [[1,5,-1,3,33],[2,5,-2,6,66],[3,5,-2,9,99],[4,5,-4,12,111]]
+		featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
+		toTest = self.constructor(data, featureNames=featureNames)
+
+		trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=[0, 'labs2'])
+
+		assert trX.pointCount == 2
+		assert trX.featureCount == 3
+		assert trY.pointCount == 2
+		assert trY.featureCount == 2
+		assert teX.pointCount == 2
+		assert teX.featureCount == 3
+		assert teY.pointCount == 2
+		assert teY.featureCount == 2
+
+	# edge cases 0/1 test portions
+	def test_trainAndTestSets_0or1_testPortion(self):
+		data = [[1,2,3,33],[2,5,6,66],[3,8,9,99],[4,11,12,111]]
+		toTest = self.constructor(data)
+
+		trX, trY, teX, teY = toTest.trainAndTestSets(0, 0)
+
+		assert trX.pointCount == 4
+		assert trY.pointCount == 4
+		assert teX.pointCount == 0
+		assert teY.pointCount == 0
+
+		trX, trY, teX, teY = toTest.trainAndTestSets(1, 0)
+
+		assert trX.pointCount == 0
+		assert trY.pointCount == 0
+		assert teX.pointCount == 4
+		assert teY.pointCount == 4
+
+	# each returned set independant of calling set
+	def test_trainAndTestSets_unconnectedReturn(self):
+		data = [[1,1],[2,2],[3,3],[4,4]]
+		toTest = self.constructor(data)
+
+		trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+
+		assert trX == trY
+		assert teX == teY
+
+		def changeFirst(point):
+			ret = []
+			first = True
+			for val in point:
+				if first:
+					ret.append(-val)
+					first = False
+				else:
+					ret.append(val)
+			return ret
+
+		# change the origin data
+		toTest.applyToPoints(changeFirst)
+		assert toTest[0,0] == -1
+
+		# assert our returned sets are unaffected
+		assert trX == trY
+		assert teX == teY
+
+	def test_trainAndTestSets_nameAppend_PathPreserve(self):
+		data = [[1,1,1,1],[2,2,2,2],[3,3,3,3],[4,4,4,4]]
+		toTest = self.constructor(data,)
+		tmpFile = tempfile.NamedTemporaryFile(suffix='.csv')
+		toTest.writeFile(tmpFile.name, format='csv')
+
+		toTest = self.constructor(tmpFile.name, name='toTest')
+
+		trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+
+		assert trX.name == 'toTest trainX'
+		assert trX.path == tmpFile.name
+		assert trY.name == 'toTest trainY'
+		assert trY.path == tmpFile.name
+		assert teX.name == 'toTest testX'
+		assert teX.path == tmpFile.name
+		assert teY.name == 'toTest testY'
+		assert teY.path == tmpFile.name
+
+
+	def test_trainAndTestSets_PandFnamesPerserved(self):
+		data = [[1,5,-1,3,33],[2,5,-2,6,66],[3,5,-2,9,99],[4,5,-4,12,111]]
+		pnames = ['one', 'two', 'three', 'four']
+		fnames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+		trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0)
+
+		assert trX.getPointNames() == ['one', 'two']
+		assert trX.getFeatureNames() == ['fives', 'labs2', 'bozo', 'long']
+
+		assert trY.getPointNames() == ['one', 'two']
+		assert trY.getFeatureNames() == ['labs1']
+
+		assert teX.getPointNames() == ['three', 'four']
+		assert teX.getFeatureNames() == ['fives', 'labs2', 'bozo', 'long']
+
+		assert teY.getPointNames() == ['three', 'four']
+		assert teY.getFeatureNames() == ['labs1']
+
+
+	def test_trainAndTestSets_randomOrder(self):
+		data = [[1,1],[2,2],[3,3],[4,4]]
+		toTest = self.constructor(data)
+
+		for i in xrange(100):
+			trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+
+			assert trX == trY
+			assert trX[0] == 1
+			assert trX[1] == 2
+
+			assert teX == teY
+			assert teX[0] == 3
+			assert teX[1] == 4
+
+		for i in xrange(100):
+			trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0, randomOrder=True)
+
+			# just to make sure everything looks right
+			assert trX == trY
+			assert teX == teY
+			# this means point ordering was randomized, so we return successfully
+			if trX[0] != 1:
+				return
+
+		assert False  # implausible number of checks for random order were unsucessful

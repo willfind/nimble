@@ -725,6 +725,59 @@ class Base(object):
 		"""
 		return self.copyAs(self.getTypeString())
 
+	def trainAndTestSets(self, testPortion, labels=None, randomOrder=False):
+		"""Partitions this object into training / testing, data / labels
+		sets, returning a new object for each as needed.
+
+		testPortion: the fraction of the data to be placed in the testing
+		sets. If randomOrder is False, then the points are taken from the
+		end of this object. 
+
+		labels: may be None, a single feature ID, or a list of feature
+		IDs depending on whether one is dealing with data for unsupervised
+		learning, single variable supervised learning, or multi-output
+		supervised learning. Consequently, if labels is None, then only two
+		data sets (training and testing) are returned, otherwise, four sets
+		are returned (data and labels each for both training and testing).
+
+		randomOrder: controls whether the order of the points in the returns
+		sets matches that of the original object, or if their order is
+		randomized.
+
+		"""
+		toSplit = self.copy()
+		if randomOrder:
+			toSplit.shufflePoints()
+
+		testXSize = int(round(testPortion * self.pointCount))
+		startIndex = self.pointCount - testXSize
+
+		#pull out a testing set
+		if testXSize == 0:
+			testX = toSplit.extractPoints([])
+		else:
+			testX = toSplit.extractPoints(start=startIndex)
+
+		if labels is None:
+			toSplit.name = self.name + " trainX"
+			testX.name = self.name + " testX"
+			return toSplit, testX
+
+		# safety for empty objects
+		toExtract = labels
+		if testXSize == 0:
+			toExtract = []
+
+		trainY = toSplit.extractFeatures(toExtract)
+		testY = testX.extractFeatures(toExtract)
+	
+		toSplit.name = self.name + " trainX"
+		trainY.name = self.name + " trainY"
+		testX.name = self.name + " testX"
+		testY.name = self.name + " testY"
+
+		return toSplit, trainY, testX, testY
+
 
 	########################################
 	########################################

@@ -31,7 +31,6 @@ from uml import trainAndTest
 from uml import createData
 from uml import createRandomData
 from uml import normalizeData
-from uml import splitData
 
 from uml import registerCustomLearner
 from uml import deregisterCustomLearner

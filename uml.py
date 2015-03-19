@@ -113,24 +113,6 @@ def createRandomData(retType, numPoints, numFeatures, sparsity, numericType="flo
 	return createData(retType, data=randData, featureNames=featureNames, name=name)
 
 
-
-def splitData(toSplit, fractionForTestSet, labelID=None):
-	"""this is a helpful function that makes it easy to do the common task of loading a dataset and splitting it into training and testing sets.
-	It returns training X, training Y, testing X and testing Y"""
-	testXSize = int(round(fractionForTestSet*toSplit.pointCount))
-	#shuffle data before pulling anything out
-	toSplit.shufflePoints()
-	#pull out a testing set
-	testX = toSplit.extractPoints(start=0, end=testXSize)	
-	trainY = None
-	testY = None
-	if labelID is not None:
-		trainY = toSplit.extractFeatures(labelID)	#construct the column vector of training labels
-		testY = testX.extractFeatures(labelID)	#construct the column vector of testing labels
-	return toSplit, trainY, testX, testY
-
-
-
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **kwarguments):
 	"""
 	Calls on the functionality of a package to train on some data and then modify both
@@ -850,7 +832,6 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 	else:
 		timer = None
 	#sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, useLog=None, maximize=False, **kwarguments):
-	# we explicitly set useLog=False here, 
 	bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged, scoreMode=scoreMode, useLog=useLog)
 
 	if useLog:
