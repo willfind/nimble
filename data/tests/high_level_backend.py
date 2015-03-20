@@ -1154,7 +1154,7 @@ class HighLevelBackend(DataTestObject):
 		data = [[1,1],[2,2],[3,3],[4,4]]
 		toTest = self.constructor(data)
 
-		trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+		trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0, randomOrder=False)
 
 		assert trX == trY
 		assert teX == teY
@@ -1204,7 +1204,7 @@ class HighLevelBackend(DataTestObject):
 		fnames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
 		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-		trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0)
+		trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0, randomOrder=False)
 
 		assert trX.getPointNames() == ['one', 'two']
 		assert trX.getFeatureNames() == ['fives', 'labs2', 'bozo', 'long']
@@ -1224,7 +1224,7 @@ class HighLevelBackend(DataTestObject):
 		toTest = self.constructor(data)
 
 		for i in xrange(100):
-			trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+			trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0, randomOrder=False)
 
 			assert trX == trY
 			assert trX[0] == 1
@@ -1235,7 +1235,7 @@ class HighLevelBackend(DataTestObject):
 			assert teX[1] == 4
 
 		for i in xrange(100):
-			trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0, randomOrder=True)
+			trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
 
 			# just to make sure everything looks right
 			assert trX == trY

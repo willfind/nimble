@@ -725,7 +725,7 @@ class Base(object):
 		"""
 		return self.copyAs(self.getTypeString())
 
-	def trainAndTestSets(self, testPortion, labels=None, randomOrder=False):
+	def trainAndTestSets(self, testPortion, labels=None, randomOrder=True):
 		"""Partitions this object into training / testing, data / labels
 		sets, returning a new object for each as needed.
 
