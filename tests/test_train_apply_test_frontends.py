@@ -18,8 +18,8 @@ def test_trainAndTest():
 	"""Assert valid results returned for different arguments to the algorithm:
 	with default ie no args
 	with one argument for the algorithm
-	with multiple values for one argument for the algorithm
-	with complicated argument for the algorithm
+	with multiple values for one argument for the algorithm (triggers CV)
+	with multiple values and a small dataset (triggers CV with intelligent folding)
 	"""
 	variables = ["x1", "x2", "x3", "label"]
 	numPoints = 20
@@ -42,9 +42,11 @@ def test_trainAndTest():
 	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=(1,2))
 	assert isinstance(runError, float)
 
-	#with complicated argument for the algorithm
-#	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=(1,2), p=(1,2))
-#	assert isinstance(runError, float)
+	#with small data set
+	data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2]]
+	trainObj1 = createData('Matrix', data=data1, featureNames=variables)
+	runError = trainAndTest('Custom.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect, k=(1,2))
+	assert isinstance(runError, float)
 
 
 
