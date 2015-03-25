@@ -225,7 +225,7 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 	return ret
 
-def createDataFromFile(retType, data, pointNames, featureNames, fileType, name):
+def createDataFromFile(retType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures):
 	"""
 	Helper for createData which deals with the case of loading data
 	from a file. Returns a triple containing the raw data, pointNames,
@@ -285,12 +285,12 @@ def createDataFromFile(retType, data, pointNames, featureNames, fileType, name):
 		toPass = open(data, 'rU')
 	if directPath in globals():
 		loader = globals()[directPath]
-		(retData, retPNames, retFNames) = loader(toPass, pointNames, featureNames)
+		(retData, retPNames, retFNames) = loader(toPass, pointNames, featureNames, ignoreNonNumericalFeatures)
 	else:
 		if fileType == 'csv':
-			(retData, retPNames, retFNames) = _loadcsvForMatrix(toPass, pointNames, featureNames)
+			(retData, retPNames, retFNames) = _loadcsvForMatrix(toPass, pointNames, featureNames, ignoreNonNumericalFeatures)
 		if fileType == 'mtx':
-			(retData, retPNames, retFNames) = _loadmtxForAuto(toPass, pointNames, featureNames)
+			(retData, retPNames, retFNames) = _loadmtxForAuto(toPass, pointNames, featureNames, ignoreNonNumericalFeatures)
 
 	if pointNames is None or isinstance(pointNames, int):
 		pointNames = retPNames
@@ -311,55 +311,86 @@ def createDataFromFile(retType, data, pointNames, featureNames, fileType, name):
 
 	return initDataObject(retType, retData, pointNames, featureNames, name, path)
 
+def _loadcsvForList(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
+	(data, pointNames, featureNames) = _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
 
-def _loadcsvForMatrix(openFile, pointNames, featureNames):
-	retPNames = None
-	retFNames = None
-	skip_header = 0
+	ret = data.tolist()
+	del data
 
-	(pointNames, featureNames) = _checkCSV_for_Names(openFile, pointNames, featureNames)
+	def numeric(val):
+		ret = val
+		try:
+			ret = int(val)
+		except ValueError:
+			ret = float(val)
+		# this will return an int or float if either of the above two are successful
+		finally:
+			return ret
+
+	def onEach(row):
+		return map(numeric, row)
+
+	ret = map(onEach, ret)
+
+	return ret, pointNames, featureNames
+
+
+def _loadcsvForMatrix(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
+	(data, pointNames, featureNames) = _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
+	print "after helper"
+
+	ret = numpy.matrix(data, dtype=float)
+	del data
+
+	return (ret, pointNames, featureNames)
+
+def _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
 	startPosition = openFile.tell()
-	currLine = openFile.readline()
+	(pointNames, featureNames) = _checkCSV_for_Names(openFile, pointNames, featureNames)
 
-	# check the types in the first data containing line.
-	line = currLine
-	while (line.strip() == "") or (line[0] == '#'):
-		line = openFile.readline()
-	# this ensures our data type checking line isn't full of feature names
-	if featureNames == 0:
-		line = openFile.readline()
+	# those characters specifying "array protocol" type strings of numeric data
+	# in numpy
+	numericShorthand = ['i', 'u', 'f', 'c']
+	usecols = None
+	if ignoreNonNumericalFeatures:
+		# dtype=None so that if we have non-homogeneous data, it will be loaded
+		# as a structured array, so we can check the types of each column. 
+		data = numpy.genfromtxt(openFile, delimiter=',', dtype=None)
+		openFile.seek(startPosition)
 
-	lineList = line.split(',')
-	for i in xrange(len(lineList)):
-		datum = lineList[i]
-		if i != pointNames:
-			try:
-				num = numpy.float(datum)
-			except ValueError:
-				raise ValueError("Cannot load a file with non numerical typed columns")
+		if len(data.shape) > 1:
+			pointLen = len(data[0])
+		elif data.dtype.kind == 'V':
+			pointLen = len(data.dtype.names)
+		else:
+			pointLen = len(data)
 
-	openFile.seek(startPosition)
+		blacklist = []
+		if data.dtype.kind == 'V':
+			for i in xrange(len(data.dtype)):
+				if not data.dtype[i].kind in numericShorthand and i != pointNames:
+					blacklist.append(i)
 
-	# generate tiny obect, so we know what dtype we actually want
-	lineIn = StringIO.StringIO(line)
-	trialObj = numpy.genfromtxt(lineIn, delimiter=',')
+		# turn the blacklist into a whitelist
+		usecols = []
+		for i in xrange(pointLen):
+			if i not in blacklist:
+				usecols.append(i)
 
-	data = numpy.genfromtxt(openFile, delimiter=',', skip_header=skip_header, dtype=None)
+		del data
 
-	#if len(data.shape) == 1:
-	data = numpy.matrix(data)
+	# should now only contain numeric data and the names
+	if usecols is not None:
+		data = numpy.genfromtxt(openFile, delimiter=',', dtype=str, usecols=usecols)
+	else:
+		data = numpy.genfromtxt(openFile, delimiter=',', dtype=str)
 
-	pnamesID = pointNames if isinstance(pointNames, int) else None
-	fnamesID = featureNames if isinstance(featureNames, int) else None
-	(data, extPNames, extFNames) = extractNamesFromNumpy(data, pnamesID, fnamesID)
-	retPNames = extPNames if retPNames is None else retPNames
-	retFNames = extFNames if retFNames is None else retFNames
+	# extract names if needed
+	(data, pointNames, featureNames) = extractNamesFromNumpy(data, pointNames, featureNames)
 
-	# names are extracted, convert if needed.
-	if data.dtype != trialObj.dtype:
-		data = numpy.matrix(data, dtype=float)
+	data = numpy.atleast_2d(data)
 
-	return (data, retPNames, retFNames)
+	return (data, pointNames, featureNames)
 
 def extractNamesFromNumpy(data, pnamesID, fnamesID):
 	retPNames = None
@@ -379,13 +410,13 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
 
 	return (data, retPNames, retFNames)
 
-def _loadmtxForMatrix(openFile, pointNames, featureNames):
-	return _loadmtxForAuto(openFile, pointNames, featureNames)
+def _loadmtxForMatrix(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
+	return _loadmtxForAuto(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
 
-def _loadmtxForSparse(openFile, pointNames, featureNames):
-	return _loadmtxForAuto(openFile, pointNames, featureNames)
+def _loadmtxForSparse(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
+	return _loadmtxForAuto(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
 
-def _loadmtxForAuto(openFile, pointNames, featureNames):
+def _loadmtxForAuto(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
 	"""
 	Uses scipy helpers to read a matrix market file; returning whatever is most
 	appropriate for the file. If it is a matrix market array type, a numpy
@@ -570,7 +601,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
 
 	# find the first data line and attempt to auto detect point names,
 	# but only if we think the feature names are in that first row
-	if featureNames == 0:
+	if featureNames == 0 and pointNames is None:
 		while currLine.startswith('#') or currLine.strip() == '':
 			currLine = openFile.readline()
 
@@ -583,7 +614,8 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
 	return (pointNames, featureNames)
 
 
-def _loadcsvForList(openFile, pointNames, featureNames):
+#def _loadcsvForList(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
+def tempIgnore(openFile, pointNames, featureNames):
 	(pointNames, featureNames) = _checkCSV_for_Names(openFile, pointNames, featureNames)
 
 	startPosition = openFile.tell()

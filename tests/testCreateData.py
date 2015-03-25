@@ -8,7 +8,7 @@ import copy
 
 import UML
 
-#retTypes = ['List', 'Matrix', 'Sparse', None]  # None for auto
+#retTypes = ['Matrix', 'Sparse', None]  # None for auto
 retTypes = copy.copy(UML.data.available)
 retTypes.append(None)
 
@@ -29,6 +29,19 @@ def test_createData_CSV_data():
 			fromCSV = UML.createData(retType=t, data=tmpCSV.name, name=objName)
 
 			assert fromList == fromCSV
+
+def test_createData_CSV_data_ListOnly():
+	fromList = UML.createData(retType="List", data=[[1,2,'three'], [4,5,'six']])
+
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,three\n")
+		tmpCSV.write("4,5,six\n")
+		tmpCSV.flush()
+		objName = 'fromCSV'
+		fromCSV = UML.createData(retType="List", data=tmpCSV.name, name=objName)
+
+		assert fromList == fromCSV
 
 def test_createData_MTXArr_data():
 	""" Test of createData() loading a mtx (arr format) file, default params """
@@ -155,6 +168,7 @@ def test_extractNames_CSV():
 		tmpCSV.write("1,2,pn1,3\n")
 		tmpCSV.write('one,two,ignore,three')
 		tmpCSV.flush()
+
 		fromCSV = UML.createData(retType=t, data=tmpCSV.name, pointNames=2, featureNames=1)
 		tmpCSV.close()
 		assert fromList == fromCSV
@@ -514,6 +528,47 @@ def test_createData_MTXCoo_passedOpen():
 
 
 
+
+###########################
+# ignoreNonNumericalFeatures flag #
+###########################
+
+
+def test_createData_ignoreNonNumericalFeaturesCSV():
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,3], [5,7]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,two,3.0,four\n")
+			tmpCSV.write("5,six,7,8\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(retType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+			if t == 'List':
+				fromCSV = UML.createData(retType=t, data=tmpCSV.name)
+				assert fromCSV.featureCount == 4
+
+def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2,3,4], [5,6,7,8]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,3,4\n")
+			tmpCSV.write("5,6,7,8\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(retType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+			if t == 'List':
+				fromCSV = UML.createData(retType=t, data=tmpCSV.name)
+				assert fromCSV.featureCount == 4
 
 
 # tests for combination of one name set being specified and one set being

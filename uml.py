@@ -348,7 +348,48 @@ def listUMLFunctions():
 	return ret
 
 
-def createData(retType, data, pointNames=None, featureNames=None, fileType=None, name=None, useLog=None):
+def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
+				name=None, ignoreNonNumericalFeatures=False, useLog=None):
+	"""Function to instantiate one of the UML data container types.
+
+	retType: string (or None) indicating which kind of UML data type you want
+	returned. If None is given, UML will attempt to detect the type most
+	appropriate for the data. Currently accepted are the strings "List",
+	"Matri, and "Sparse"
+
+	data: the source of the data to be loaded into the returned object. The
+	source may be any number of in python objects (lists, numpy arrays, numpy
+	matrices, scipy sparse objects) as long as they specify a 2d matrix of
+	data. Alternatively, the data may be read from a  file, specified either
+	as a string path, or a currently open file-like object.
+
+	pointNames:
+
+	featureNames:
+
+	fileType: when loading from a file, this indicates the format of the file.
+	It will override the file extension: for example, if loading "data.mtx"
+	with fileType='csv', createData will attempt to load the file as a csv
+	file. This is ignored if loading from a python object. Currently accepted
+	values are "csv" and "mtx" 
+
+	name: When not None, this value is set as the name attribute of the
+	returned object
+
+	ignoreNonNumericalFeatures: True or False (default False) value indicating
+	whether, when loading from a file, features containing non numercal data
+	shouldn't be loaded into the final object. For example, you may be loading
+	a file which has a column of strings; setting this flag to true will allow
+	you to load that file into a Matrix object (which may contain floats only).
+	Currently only has an effect on csv files, as the matrix market format
+	does not support non numerical values.
+
+	useLog: True, False, or None (default) valued flag indicating whether this
+	call should be logged by the UML logger. If None, the configurable	global
+	default is used.
+
+	"""
+
 	#retAllowed = ['List', 'Matrix', 'Sparse', None]
 	retAllowed = copy.copy(UML.data.available)
 	retAllowed.append(None)
@@ -365,7 +406,7 @@ def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
 		return initDataObject(retType, data, pointNames, featureNames, name)
 	# input is an open file or a path to a file
 	elif isinstance(data, basestring) or looksFileLike(data):
-		return createDataFromFile(retType, data, pointNames, featureNames, fileType, name)
+		return createDataFromFile(retType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures)
 	# no other allowed inputs
 	else:
 		raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
