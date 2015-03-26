@@ -545,7 +545,7 @@ class StructureBackend(DataTestObject):
 		""" Test extractPoints() preserves the path in the output """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
-		toTest.path = 'testPath'
+		toTest._path = 'testPath'
 		ext1 = toTest.extractPoints(0)
 		
 		assert ext1.path == 'testPath'
@@ -764,7 +764,7 @@ class StructureBackend(DataTestObject):
 		""" Test extractFeatures() preserves the path in the output """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
-		toTest.path = 'testPath'
+		toTest._path = 'testPath'
 		ext1 = toTest.extractFeatures(0)
 		
 		assert ext1.path == 'testPath'

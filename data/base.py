@@ -89,11 +89,11 @@ class Base(object):
 			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.featureCount: " + str(self.featureCount))
 		
 		if name is None:
-			self.name = DEFAULT_NAME_PREFIX + str(dataHelpers.defaultObjectNumber)
+			self._name = DEFAULT_NAME_PREFIX + str(dataHelpers.defaultObjectNumber)
 			dataHelpers.defaultObjectNumber += 1
 		else:
-			self.name = name
-		self.path = path
+			self._name = name
+		self._path = path
 
 
 	#######################
@@ -102,11 +102,27 @@ class Base(object):
 
 	def _getpointCount(self):
 		return self._pointCount
-	pointCount = property(_getpointCount)
+
+	pointCount = property(_getpointCount, doc="The number of points in this object")
 
 	def _getfeatureCount(self):
 		return self._featureCount
-	featureCount = property(_getfeatureCount)
+	featureCount = property(_getfeatureCount, doc="The number of features in this object")
+
+	def _getObjName(self):
+		return self._name
+
+	def _setObjName(self, value):
+		if value is not None and not isinstance(value,basestring):
+			msg = "The name of an object may only be a string, or the value None"
+			raise ValueError(msg)
+		self._name = value
+	name = property(_getObjName, _setObjName, doc="A name to be displayed when printing or logging this object")
+
+	def _getPath(self):
+		return self._path
+	path = property(_getPath, doc="The path to the file this data originated from")
+
 
 	########################
 	# Low Level Operations #
@@ -1463,7 +1479,7 @@ class Base(object):
 		for key in ret.getPointNames():
 			self._removePointNameAndShift(key)
 
-		ret.path = self.path
+		ret._path = self.path
 
 		self.validate()
 		return ret
@@ -1527,7 +1543,7 @@ class Base(object):
 		for key in ret.getFeatureNames():
 			self._removeFeatureNameAndShift(key)
 
-		ret.path = self.path
+		ret._path = self.path
 
 		self.validate()
 		return ret
@@ -1611,8 +1627,8 @@ class Base(object):
 		ret = self._copyAs_implementation(format)
 
 		if format in ['List', 'Matrix', 'Sparse']:
-			ret.name = self.name
-			ret.path = self.path
+			ret._name = self.name
+			ret._path = self.path
 
 		if not rowsArePoints:
 			if format in ['List', 'Matrix', 'Sparse']:
