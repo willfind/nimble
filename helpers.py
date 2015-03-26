@@ -337,7 +337,6 @@ def _loadcsvForList(openFile, pointNames, featureNames, ignoreNonNumericalFeatur
 
 def _loadcsvForMatrix(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
 	(data, pointNames, featureNames) = _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
-	print "after helper"
 
 	ret = numpy.matrix(data, dtype=float)
 	del data
