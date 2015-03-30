@@ -2,6 +2,7 @@
 import tempfile
 import numpy
 import scipy.sparse
+import os.path
 from nose.tools import *
 
 from copy import deepcopy
@@ -545,10 +546,13 @@ class StructureBackend(DataTestObject):
 		""" Test extractPoints() preserves the path in the output """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
-		toTest._path = 'testPath'
+		toTest._absPath = 'testPathFull'
+		toTest._relPath = 'testPathRel'
 		ext1 = toTest.extractPoints(0)
 		
-		assert ext1.path == 'testPath'
+		assert ext1.path == 'testPathFull'
+		assert ext1.absolutePath == 'testPathFull'
+		assert ext1.relativePath == 'testPathRel'
 
 
 	def test_extractPoints_ListIntoPEmpty(self):
@@ -764,10 +768,13 @@ class StructureBackend(DataTestObject):
 		""" Test extractFeatures() preserves the path in the output """
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
-		toTest._path = 'testPath'
+		toTest._absPath = 'testPathFull'
+		toTest._relPath = 'testPathRel'
 		ext1 = toTest.extractFeatures(0)
 		
-		assert ext1.path == 'testPath'
+		assert ext1.path == 'testPathFull'
+		assert ext1.absolutePath == 'testPathFull'
+		assert ext1.relativePath == 'testPathRel'
 
 	def test_extractFeatures_ListIntoFEmpty(self):
 		""" Test extractFeatures() by removing a list of all features """
@@ -1296,18 +1303,26 @@ class StructureBackend(DataTestObject):
 
 		assert orig.name == name
 		assert orig.path == path
+		assert orig.absolutePath == path
+		assert orig.relativePath == os.path.relpath(path)
 
 		copySparse = orig.copyAs(format='Sparse')
 		assert copySparse.name == orig.name
 		assert copySparse.path == orig.path
+		assert copySparse.absolutePath == path
+		assert copySparse.relativePath == os.path.relpath(path)
 		
 		copyList = orig.copyAs(format='List')
 		assert copyList.name == orig.name
 		assert copyList.path == orig.path
+		assert copyList.absolutePath == path
+		assert copyList.relativePath == os.path.relpath(path)
 
 		copyMatrix = orig.copyAs(format='Matrix')
 		assert copyMatrix.name == orig.name
 		assert copyMatrix.path == orig.path
+		assert copyMatrix.absolutePath == path
+		assert copyMatrix.relativePath == os.path.relpath(path)
 
 
 

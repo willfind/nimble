@@ -3,6 +3,8 @@ import tempfile
 import sys
 import os
 import numpy
+import time
+import StringIO
 
 import UML
 from UML.logger.human_readable_log import HumanReadableLogger
@@ -31,6 +33,38 @@ def test_mirrorTostandardOut():
 		assert startSize != endSize
 	finally:
 		sys.stdout = sys.__stdout__
+
+@safetyWrapper
+def test_HR_logger_output_fromFile_trainAndApply():
+	UML.settings.set('logger', 'mirrorToStandardOut', 'True')
+	
+	trainData = [[1,2,3], [4,5,6], [7,8,9]]
+	trainOrig = UML.createData(retType="Matrix", data=trainData)
+
+	trainLab = UML.createData(retType="Matrix", data=[[1],[0],[1]])
+	testOrig = UML.createData(retType="Matrix", data=[[10,11,12]])
+
+	buf = StringIO.StringIO()
+	savedOut = sys.stdout
+	sys.stdout = buf
+
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		trainOrig.writeFile(tmpCSV.name)
+
+		fromFileTrain = UML.createData(retType="Matrix", data=tmpCSV.name)
+
+		UML.trainAndApply("custom.RidgeRegression",fromFileTrain, trainLab, testOrig)
+
+	sys.stdout = savedOut
+
+	fullOutput = buf.getvalue()
+
+#	print fullOutput.split('\n')
+
+	assert False  # incomplete. revise when logger output is finalized
+
+	#time.strptime("2015-03-30 13:38:15", '%Y-%m-%d %H:%M:%S')
 
 
 def TODO_HR_Basic():  # redo test

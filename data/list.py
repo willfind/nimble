@@ -25,7 +25,7 @@ class List(Base):
 
 	"""
 
-	def __init__(self, data, pointNames=None, featureNames=None, name=None, path=None, reuseData=False):
+	def __init__(self, data, pointNames=None, featureNames=None, name=None, paths=(None,None), reuseData=False):
 		"""
 		Instantiate a Row List data using the given data and featureNames. data may be
 		none or an empty list to indicate an empty object, or a fully populated
@@ -67,7 +67,7 @@ class List(Base):
 					self._numFeatures = 0
 			self.data = []
 			shape = (0,self._numFeatures)
-			super(List, self).__init__(shape, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
+			super(List, self).__init__(shape, pointNames=pointNames, featureNames=featureNames, name=name, paths=paths)
 		else:
 			self._numFeatures = len(data[0])
 			for point in data:
@@ -77,7 +77,7 @@ class List(Base):
 #					raise ArgumentException("If a python list is given as input, each entry must also be a list")
 			self.data = data
 			shape = (len(self.data), self._numFeatures)
-			super(List, self).__init__(shape, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
+			super(List, self).__init__(shape, pointNames=pointNames, featureNames=featureNames, name=name, paths=paths)
 
 
 	def _transpose_implementation(self):

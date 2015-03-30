@@ -103,6 +103,10 @@ def test_createData_objName_and_path_CSV():
 			ret = UML.createData(retType=t, data=tmpCSV.name, name=objName)
 			assert ret.name == objName
 			assert ret.path == tmpCSV.name
+			assert ret.absolutePath == tmpCSV.name
+
+			relExp = os.path.relpath(ret.absolutePath)
+			assert ret.relativePath == relExp
 
 			retDefName = UML.createData(retType=t, data=tmpCSV.name)
 			tokens = tmpCSV.name.rsplit(os.path.sep)
@@ -124,6 +128,10 @@ def test_createData_objName_and_path_MTXArr():
 			ret = UML.createData(retType=t, data=tmpMTXArr.name, name=objName)
 			assert ret.name == objName
 			assert ret.path == tmpMTXArr.name
+			assert ret.absolutePath == tmpMTXArr.name
+
+			relExp = os.path.relpath(ret.absolutePath)
+			assert ret.relativePath == relExp
 
 			retDefName = UML.createData(retType=t, data=tmpMTXArr.name)
 			tokens = tmpMTXArr.name.rsplit(os.path.sep)
@@ -145,6 +153,10 @@ def test_createData_objName_and_path_MTXCoo():
 			ret = UML.createData(retType=t, data=tmpMTXCoo.name, name=objName)
 			assert ret.name == objName
 			assert ret.path == tmpMTXCoo.name
+			assert ret.absolutePath == tmpMTXCoo.name
+
+			relExp = os.path.relpath(ret.absolutePath)
+			assert ret.relativePath == relExp
 
 			retDefName = UML.createData(retType=t, data=tmpMTXCoo.name)
 			tokens = tmpMTXCoo.name.rsplit(os.path.sep)
@@ -463,11 +475,18 @@ def test_createData_CSV_passedOpen():
 
 			assert fromList == fromCSV
 
+			assert fromCSV.path == openFile.name
+			assert fromCSV.absolutePath == openFile.name
+			assert fromCSV.relativePath == os.path.relpath(openFile.name)
+
 			openFile = open(openFile.name, 'rU')
 			namelessOpenFile = NamelessFile(openFile)
 			fromCSV = UML.createData(retType=t, data=namelessOpenFile, fileType='csv')
 			assert fromCSV.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 			assert fromCSV.path is None
+			assert fromCSV.absolutePath is None
+			assert fromCSV.relativePath is None
+
 
 def test_createData_MTXArr_passedOpen():
 	for t in retTypes:
@@ -491,11 +510,17 @@ def test_createData_MTXArr_passedOpen():
 			else:
 				assert fromList == fromMTXArr
 
+			assert fromMTXArr.path == openFile.name
+			assert fromMTXArr.absolutePath == openFile.name
+			assert fromMTXArr.relativePath == os.path.relpath(openFile.name)
+
 			openFile = open(tmpMTXArr.name, 'rU')
 			namelessOpenFile = NamelessFile(openFile)
 			fromMTXArr = UML.createData(retType=t, data=namelessOpenFile, fileType='mtx')
 			assert fromMTXArr.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 			assert fromMTXArr.path is None
+			assert fromMTXArr.absolutePath is None
+			assert fromMTXArr.relativePath is None
 
 
 def test_createData_MTXCoo_passedOpen():
@@ -520,11 +545,17 @@ def test_createData_MTXCoo_passedOpen():
 			else:
 				assert fromList == fromMTXCoo
 
+			assert fromMTXCoo.path == openFile.name
+			assert fromMTXCoo.absolutePath == openFile.name
+			assert fromMTXCoo.relativePath == os.path.relpath(openFile.name)
+
 			openFile = open(tmpMTXCoo.name, 'rU')
 			namelessOpenFile = NamelessFile(openFile)
 			fromMTXCoo = UML.createData(retType=t, data=namelessOpenFile, fileType='mtx')
 			assert fromMTXCoo.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 			assert fromMTXCoo.path is None
+			assert fromMTXCoo.absolutePath is None
+			assert fromMTXCoo.relativePath is None
 
 
 

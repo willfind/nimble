@@ -12,6 +12,7 @@ import copy
 import numpy
 import scipy
 import sys
+import os.path
 
 import UML
 from UML.exceptions import ArgumentException
@@ -38,7 +39,7 @@ class Base(object):
 
 	"""
 
-	def __init__(self, shape, pointNames=None, featureNames=None, name=None, path=None):
+	def __init__(self, shape, pointNames=None, featureNames=None, name=None, paths=(None,None)):
 		"""
 		Instantiates the featureName book-keeping structures that are defined by this representation.
 		
@@ -93,7 +94,16 @@ class Base(object):
 			dataHelpers.defaultObjectNumber += 1
 		else:
 			self._name = name
-		self._path = path
+
+		if paths[0] is not None and not isinstance(paths[0], basestring):
+			raise ArgumentException("paths[0] must be None or an absolute path to the file from which the data originates")
+		if paths[0] is not None and not os.path.isabs(paths[0]):
+			raise ArgumentException("paths[0] must be an absolute path")
+		self._absPath = paths[0]
+
+		if paths[1] is not None and not isinstance(paths[1], basestring):
+			raise ArgumentException("paths[1] must be None or a relative path to the file from which the data originates")
+		self._relPath = paths[1]
 
 
 	#######################
@@ -119,10 +129,17 @@ class Base(object):
 		self._name = value
 	name = property(_getObjName, _setObjName, doc="A name to be displayed when printing or logging this object")
 
-	def _getPath(self):
-		return self._path
-	path = property(_getPath, doc="The path to the file this data originated from")
+	def _getAbsPath(self):
+		return self._absPath
+	absolutePath = property(_getAbsPath, doc="The path to the file this data originated from, in absolute form")
 
+	def _getRelPath(self):
+		return self._relPath
+	relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
+
+	def _getPath(self):
+		return self.absolutePath
+	path = property(_getPath, doc="The path to the file this data originated from")
 
 	########################
 	# Low Level Operations #
@@ -1479,7 +1496,8 @@ class Base(object):
 		for key in ret.getPointNames():
 			self._removePointNameAndShift(key)
 
-		ret._path = self.path
+		ret._relPath = self.relativePath
+		ret._absPath = self.absolutePath
 
 		self.validate()
 		return ret
@@ -1543,7 +1561,8 @@ class Base(object):
 		for key in ret.getFeatureNames():
 			self._removeFeatureNameAndShift(key)
 
-		ret._path = self.path
+		ret._relPath = self.relativePath
+		ret._absPath = self.absolutePath
 
 		self.validate()
 		return ret
@@ -1626,9 +1645,10 @@ class Base(object):
 
 		ret = self._copyAs_implementation(format)
 
-		if format in ['List', 'Matrix', 'Sparse']:
+		if isinstance(ret, UML.data.Base):
 			ret._name = self.name
-			ret._path = self.path
+			ret._relPath = self.relativePath
+			ret._absPath = self.absolutePath
 
 		if not rowsArePoints:
 			if format in ['List', 'Matrix', 'Sparse']:

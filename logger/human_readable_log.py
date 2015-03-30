@@ -2,6 +2,7 @@ import time
 import numpy
 import inspect
 import types
+import os.path
 from tableString import *
 
 import UML
@@ -210,29 +211,37 @@ def _packDataInfo(dataObjects):
 	if includeName:
 		tableHeaders.append("Name")
 	if includePath:
-		tableHeaders.append("Path")
+		tableHeaders.append("File Name")
 	tableHeaders.append("# points")
 	tableHeaders.append("# features")
+	if includePath:
+		tableHeaders.append("Path")
 
 	# pack row for each non None object
 	rowHeaders = ['trainX', 'trainY', 'testX', 'testY']
 	rawTable = [tableHeaders]
-	for i in range(4):
+	for i in range(len(rowHeaders)):
 		currRow = [rowHeaders[i]]
 		d = dataObjects[i]
 		if d is not None:
+			# Append Name of Object
 			if includeName:
-				if d.name is not None and d.nameIsNonDefault():
-					currRow.append(d.name)
-				else:
-					currRow.append("")
+				toAppend = d.name if d.name is not None else ""
+				currRow.append(toAppend)
+			
+			# Append FileName
 			if includePath:
-				if d.path is not None:
-					currRow.append(d.path)
-				else:
-					currRow.append("")
+				toAppend = os.path.basename(d.path) if d.path is not None else ""
+				currRow.append(toAppend)
+
+			# Append Point, then Feature counts
 			currRow.append(d.pointCount)
 			currRow.append(d.featureCount)
+
+			# Append Path
+			if includePath:
+				toAppend = d.path if d.path is not None else ""
+				currRow.append(toAppend)
 
 			rawTable.append(currRow)
 

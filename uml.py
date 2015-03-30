@@ -403,7 +403,7 @@ def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
 
 	# input is raw data
 	if isAllowedRaw(data):
-		return initDataObject(retType, data, pointNames, featureNames, name)
+		return initDataObject(retType, data, pointNames, featureNames, name, None)
 	# input is an open file or a path to a file
 	elif isinstance(data, basestring) or looksFileLike(data):
 		return createDataFromFile(retType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures)

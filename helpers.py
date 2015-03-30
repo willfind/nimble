@@ -113,7 +113,7 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
 
 	return (rawData, retPNames, retFNames)
 
-def initDataObject(retType, rawData, pointNames, featureNames, name, path=None):
+def initDataObject(retType, rawData, pointNames, featureNames, name, path):
 	if scipy.sparse.issparse(rawData):
 		autoType = 'Sparse'
 	else:
@@ -168,15 +168,25 @@ def initDataObject(retType, rawData, pointNames, featureNames, name, path=None):
 			pointNames = extPNames if pointNames is None else pointNames
 			featureNames = extFNames if featureNames is None else featureNames
 
+	pathsToPass = (None,None)
+	if path is not None:
+		if os.path.isabs(path):
+			absPath = path
+			relPath = os.path.relpath(path)
+		else:
+			absPath = os.path.abspath(path)
+			relPath = path
+		pathsToPass = (absPath, relPath)
+
 	initMethod = getattr(UML.data, retType)
 	try:
-		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
+		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass)
 	except Exception as e:
 		einfo = sys.exc_info()
 		#something went wrong. instead, try to auto load and then convert
 		try:
 			autoMethod = getattr(UML.data, autoType)
-			ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
+			ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass)
 			ret = ret.copyAs(retType)
 		# If it didn't work, report the error on the thing the user ACTUALLY
 		# wanted

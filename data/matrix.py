@@ -24,7 +24,7 @@ class Matrix(Base):
 
 	"""
 
-	def __init__(self, data, pointNames=None, featureNames=None, name=None, path=None, reuseData=False):
+	def __init__(self, data, pointNames=None, featureNames=None, name=None, paths=(None,None), reuseData=False):
 		try:
 			if isspmatrix(data):
 				self.data = numpy.matrix(data.todense(), dtype=numpy.float)
@@ -45,7 +45,7 @@ class Matrix(Base):
 			msg += "the error"
 			raise ArgumentException(msg)
 			
-		super(Matrix, self).__init__(self.data.shape, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
+		super(Matrix, self).__init__(self.data.shape, pointNames=pointNames, featureNames=featureNames, name=name, paths=paths)
 
 
 #	def _applyTo_implementation(self, function, included, inPlace, axis):

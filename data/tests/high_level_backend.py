@@ -10,6 +10,7 @@ objects provided.
 from copy import deepcopy
 from nose.tools import *
 
+import os.path
 import numpy
 import tempfile
 
@@ -1190,12 +1191,26 @@ class HighLevelBackend(DataTestObject):
 
 		assert trX.name == 'toTest trainX'
 		assert trX.path == tmpFile.name
+		assert trX.absolutePath == tmpFile.name
+		assert trX.relativePath == os.path.relpath(tmpFile.name)
+
 		assert trY.name == 'toTest trainY'
 		assert trY.path == tmpFile.name
+		assert trY.path == tmpFile.name
+		assert trY.absolutePath == tmpFile.name
+		assert trY.relativePath == os.path.relpath(tmpFile.name)
+
 		assert teX.name == 'toTest testX'
 		assert teX.path == tmpFile.name
+		assert teX.path == tmpFile.name
+		assert teX.absolutePath == tmpFile.name
+		assert teX.relativePath == os.path.relpath(tmpFile.name)
+
 		assert teY.name == 'toTest testY'
 		assert teY.path == tmpFile.name
+		assert teY.path == tmpFile.name
+		assert teY.absolutePath == tmpFile.name
+		assert teY.relativePath == os.path.relpath(tmpFile.name)
 
 
 	def test_trainAndTestSets_PandFnamesPerserved(self):

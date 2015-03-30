@@ -20,7 +20,7 @@ from UML.randomness import pythonRandom
 
 class Sparse(Base):
 
-	def __init__(self, data, pointNames=None, featureNames=None, name=None, path=None, reuseData=False):
+	def __init__(self, data, pointNames=None, featureNames=None, name=None, paths=(None,None), reuseData=False):
 		self._sorted = None
 		if data == [] or  (hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0)):
 			if isinstance(data, CooWithEmpty):
@@ -50,7 +50,7 @@ class Sparse(Base):
 				self._data = CooWithEmpty(data)
 		
 		shape = scipy.shape(self._data)
-		super(Sparse, self).__init__(shape, pointNames=pointNames, featureNames=featureNames, name=name, path=path)
+		super(Sparse, self).__init__(shape, pointNames=pointNames, featureNames=featureNames, name=name, paths=paths)
 
 
 	def getdata(self):
