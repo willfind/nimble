@@ -90,8 +90,7 @@ class Base(object):
 			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.featureCount: " + str(self.featureCount))
 		
 		if name is None:
-			self._name = DEFAULT_NAME_PREFIX + str(dataHelpers.defaultObjectNumber)
-			dataHelpers.defaultObjectNumber += 1
+			self._name = dataHelpers.nextDefaultObjectName()
 		else:
 			self._name = name
 
@@ -1884,6 +1883,10 @@ class Base(object):
 			ret.setPointNames(self.getPointNames())
 			ret.setFeatureNames(other.getFeatureNames())
 
+		pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
+
+		dataHelpers.binaryOpNamePathMerge(self, other, ret, None, pathSource)
+
 		return ret
 	
 	def __rmul__(self, other):
@@ -1903,6 +1906,11 @@ class Base(object):
 		if ret is not NotImplemented:
 			self.referenceDataFrom(ret)
 			ret = self
+
+		pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
+
+		dataHelpers.binaryOpNamePathMerge(self, other, ret, 'self', pathSource)
+
 		return ret
 
 	def __add__(self, other):
@@ -2076,7 +2084,9 @@ class Base(object):
 		retFNames = self.getFeatureNames()
 
 		if other == 1:
-			return self.copy()
+			ret = self.copy()
+			ret._name = dataHelpers.nextDefaultObjectName()
+			return ret
 
 		# exact conditions in which we need to instantiate this object
 		if other == 0 or other % 2 == 0:
@@ -2109,6 +2119,8 @@ class Base(object):
 		ret.setPointNames(retPNames)
 		ret.setFeatureNames(retFNames)
 
+		ret._name = dataHelpers.nextDefaultObjectName()
+
 		return ret
 
 	def __ipow__(self, other):
@@ -2125,12 +2137,17 @@ class Base(object):
 
 	def __pos__(self):
 		""" Return this object. """
-		return self.copy()
+		ret = self.copy()
+		ret._name = dataHelpers.nextDefaultObjectName()
+
+		return ret
 
 	def __neg__(self):
 		""" Return this object where every element has been multiplied by -1 """
 		ret = self.copy()
 		ret *= -1
+		ret._name = dataHelpers.nextDefaultObjectName()
+
 		return ret
 
 	def __abs__(self):
@@ -2138,9 +2155,16 @@ class Base(object):
 		ret = self.applyToElements(abs, inPlace=False)
 		ret.setPointNames(self.getPointNames())
 		ret.setFeatureNames(self.getFeatureNames())
+		
+		ret._name = dataHelpers.nextDefaultObjectName()
+		ret._absPath = self._absPath
+		ret._relPath = self._relPath
 		return ret
 
 	def _genericNumericBinary(self, opName, other):
+		nameSource = 'self' if opName.startswith('__i') else None
+		pathSource = 'self'
+
 		isUML = isinstance(other, UML.data.Base)
 		if not isUML and not dataHelpers._looksNumeric(other):
 			raise ArgumentException("'other' must be an instance of a UML data object or a scalar")
@@ -2161,12 +2185,13 @@ class Base(object):
 
 			if self.pointCount != other.pointCount:
 				msg = "The number of points in each object must be equal. "
-				msg +="(self=" + str(self.pointCount) + " vs other="
-				msg +=str(other.pointCount) + ")"
+				msg += "(self=" + str(self.pointCount) + " vs other="
+				msg += str(other.pointCount) + ")"
 				raise ArgumentException(msg)
 			if self.featureCount != other.featureCount:
 				raise ArgumentException("The number of features in each object must be equal.")
-			
+			pathSource = 'merge'
+
 		if self.pointCount == 0 or self.featureCount == 0:
 			raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
 
@@ -2219,6 +2244,8 @@ class Base(object):
 
 		ret.setPointNames(retPNames)
 		ret.setFeatureNames(retFNames)
+
+		dataHelpers.binaryOpNamePathMerge(self, other, ret, nameSource, pathSource)
 
 		return ret
 

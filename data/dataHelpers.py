@@ -66,6 +66,51 @@ class View():
 		pass
 
 
+def nextDefaultObjectName():
+	global defaultObjectNumber
+	ret = DEFAULT_NAME_PREFIX + str(defaultObjectNumber)
+	defaultObjectNumber = defaultObjectNumber + 1
+	return ret
+
+def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
+	"""Helper to set names and pathes of a return object when dealing
+	with some kind of binary operation on data objects. nameSource
+	is expected to be either 'self' (indicating take the name from
+	the calling object) or None (take a default name). pathSource
+	is expected to be either 'self' or 'merge' (meaning to take
+	a path only if one of the caller or other has a path specified,
+	else use default values)
+
+	"""
+
+	# determine return value's name
+	if nameSource == 'self':
+		ret._name = caller._name
+	else:
+		ret._name = nextDefaultObjectName()
+
+	if pathSource == 'self':
+		ret._absPath = caller.absolutePath
+		ret._relPath = caller.relativePath
+	elif pathSource == 'merge':
+		if caller.absolutePath is not None and other.absolutePath is None:
+			ret._absPath = caller.absolutePath
+		elif caller.absolutePath is None and other.absolutePath is not None:
+			ret._absPath = other.absolutePath
+		else:
+			ret._absPath = None
+
+		if caller.relativePath is not None and other.relativePath is None:
+			ret._relPath = caller.relativePath
+		elif caller.relativePath is None and other.relativePath is not None:
+			ret._relPath = other.relativePath
+		else:
+			ret._relPath = None
+	else:
+		ret._absPath = None
+		ret._relPath = None
+
+
 def mergeNonDefaultNames(baseSource, otherSource):
 	""" Merges the point and feature names of the the two source objects,
 	returning a double of the merged point names on the left and the
