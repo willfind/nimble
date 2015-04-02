@@ -99,6 +99,20 @@ class HighLevelBackend(DataTestObject):
 			toTest.dropFeaturesContainingType(basestring)
 			assert toTest.featureCount == 1
 
+	def test_dropFeaturesContainingType_NamePath_preservation(self):
+		data = [[1.0],[2.0]]
+		toTest = self.constructor(data)
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.dropFeaturesContainingType(float)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
 
 	#################################
 	# replaceFeatureWithBinaryFeatures #
@@ -137,6 +151,21 @@ class HighLevelBackend(DataTestObject):
 
 		assert toTest.isIdentical(exp)
 		assert ret is None
+
+	def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
+		data = [[1],[2],[3]]
+		featureNames = ['col']
+		toTest = self.constructor(data, featureNames=featureNames)
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.replaceFeatureWithBinaryFeatures(0)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
 
 
 	#############################
@@ -205,6 +234,23 @@ class HighLevelBackend(DataTestObject):
 		assert toTest[2,0] == 2
 		assert toTest[3,0] == 3
 		assert toTest[4,0] == 4
+
+	def test_transformFeatureToIntegers_NamePath_preservation(self):
+		data = [[10],[20],[30.5],[20],[10]]
+		featureNames = ['col']
+		toTest = self.constructor(data, featureNames=featureNames)
+		
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.transformFeatureToIntegers(0)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
 
 	#########################
 	# extractPointsByCoinToss #
@@ -306,6 +352,26 @@ class HighLevelBackend(DataTestObject):
 			checkEqual(checkPoint, currOrigPoint)
 
 
+	def test_extractPointsByCoinToss_NamePath_preservation(self):
+		data = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
+		featureNames = ['a','b','c']
+		pointNames = ['1', '2', '3', '4', '5', '6']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.extractPointsByCoinToss(0.5)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'TestAbsPath'
+		assert ret.relativePath == 'testRelPath'
+
 
 	####################
 	# applyToPoints() #
@@ -360,6 +426,29 @@ class HighLevelBackend(DataTestObject):
 
 		assert lowerCounts.isIdentical(exp)
 
+	def test_applyToPoints_NamePathPreservation(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitLower(point):
+			return point[toTest.getFeatureIndex('deci')]
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.applyToPoints(emitLower, inPlace=False)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'TestAbsPath'
+		assert ret.relativePath == 'testRelPath'
+
 
 	def test_applyToPoints_HandmadeLimited(self):
 		""" Test applyToPoints() with handmade output on a limited portion of points """
@@ -409,13 +498,33 @@ class HighLevelBackend(DataTestObject):
 			value = point[origObj.getFeatureIndex('deci')]
 			return [value, value, value]
 
-		lowerCounts = origObj.applyToPoints(emitAllDeci) #RET CHECK
+		lowerCounts = origObj.applyToPoints(emitAllDeci)  # RET CHECK
 
 		expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
 		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
 
 		assert lowerCounts is None
 		assert origObj.isIdentical(exp)
+
+	def test_applyToPoints_Inplace_NamePath_preservation(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllDeci(point):
+			value = point[toTest.getFeatureIndex('deci')]
+			return [value, value, value]
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.applyToPoints(emitAllDeci)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
 
 	def test_applyToPoints_HandmadeLimitedInPlace(self):
 		""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
@@ -523,12 +632,41 @@ class HighLevelBackend(DataTestObject):
 		assert lowerCounts.isIdentical(exp)
 
 
+
+	def test_applyToFeatures_NamePath_preservation(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		toTest = self.constructor(origData, pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllEqual(feature):
+			first = feature['zero']
+			for value in feature:
+				if value != first:
+					return 0
+			return 1
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.applyToFeatures(emitAllEqual, inPlace=False)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == "TestAbsPath"
+		assert ret.relativePath == 'testRelPath'
+
+
 	def test_applyToFeatures_HandmadeLimited(self):
 		""" Test applyToFeatures() with handmade output on a limited portion of features """
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -584,6 +722,31 @@ class HighLevelBackend(DataTestObject):
 		
 		assert lowerCounts is None
 		assert origObj.isIdentical(exp)
+
+
+	def test_applyToFeatures_InPlace_NamePath_preservation(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return [0,0,0,0]
+			return [1,1,1,1]
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.applyToFeatures(emitAllEqual)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
 
 
 	def test_applyToFeatures_HandmadeLimitedInPlace(self):
@@ -697,6 +860,25 @@ class HighLevelBackend(DataTestObject):
 		assert (ret.isIdentical(exp))
 		assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
 
+	def test_mapReducePoints_NamePath_preservation(self):
+		featureNames = ["one","two","three"]
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data, featureNames=featureNames)
+		
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.mapReducePoints(simpleMapper, simpleReducer)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == "TestAbsPath"
+		assert ret.relativePath == 'testRelPath'
+
 
 	def test_mapReducePoints_handmadeNoneReturningReducer(self):
 		""" Test mapReducePoints() against handmade output with a None returning Reducer """
@@ -793,9 +975,6 @@ class HighLevelBackend(DataTestObject):
 		assert toCheck[5][0] == 0
 		assert toCheck[5][1] == 0
 		assert toCheck[5][2] == 0
-
-
-
 
 
 	#########################
@@ -914,6 +1093,39 @@ class HighLevelBackend(DataTestObject):
 		assert [1,2,3] in retRaw
 		assert [4,5,6] in retRaw
 		assert [7,8,9] in retRaw
+
+
+	def test_applyToElements_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.applyToElements(passThrough, inPlace=False)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == "TestAbsPath"
+		assert ret.relativePath == 'testRelPath'
+
+	def test_applyToElements_Inplace_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.applyToElements(passThrough)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
 
 
 	def test_applyToElements_plusOnePreserve(self):
@@ -1044,6 +1256,27 @@ class HighLevelBackend(DataTestObject):
 			assert ret is None
 
 
+	def test_shufflePoints_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+		toTest = self.constructor(deepcopy(data))
+		toCompare = self.constructor(deepcopy(data))
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		# it is possible that it shuffles it into the same configuration.
+		# we only test after we're sure we've done something
+		while True:
+			toTest.shufflePoints()  # RET CHECK
+			if not toTest.isApproximatelyEqual(toCompare):
+				break
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
 
 	#####################
 	# shuffleFeatures() #
@@ -1078,6 +1311,26 @@ class HighLevelBackend(DataTestObject):
 		for ret in returns:
 			assert ret is None
 
+
+	def test_shuffleFeatures_NamePath_preservation(self):
+		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,1111111]]
+		toTest = self.constructor(deepcopy(data))
+		toCompare = self.constructor(deepcopy(data))
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		# it is possible that it shuffles it into the same configuration.
+		# we only test after we're sure we've done something
+		while True:
+			toTest.shuffleFeatures()  # RET CHECK
+			if not toTest.isApproximatelyEqual(toCompare):
+				break
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
 
 
 	######################

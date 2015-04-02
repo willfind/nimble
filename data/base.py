@@ -442,7 +442,13 @@ class Base(object):
 
 		self.validate()
 
-		return self._applyTo_implementation(function, points, inPlace, 'point')
+		ret = self._applyTo_implementation(function, points, inPlace, 'point')
+
+		if ret is not None:
+			ret._absPath = self._absPath
+			ret._relPath = self._relPath
+
+		return ret
 
 
 	def applyToFeatures(self, function, features=None, inPlace=True):
@@ -476,7 +482,11 @@ class Base(object):
 
 		self.validate()
 
-		return self._applyTo_implementation(function, features, inPlace, 'feature')
+		ret = self._applyTo_implementation(function, features, inPlace, 'feature')
+		if ret is not None:
+			ret._absPath = self._absPath
+			ret._relPath = self._relPath
+		return ret
 
 
 	def _applyTo_implementation(self, function, included, inPlace, axis):
@@ -557,7 +567,12 @@ class Base(object):
 			if redRet is not None:
 				(redKey,redValue) = redRet
 				ret.append([redKey,redValue])
-		return UML.createData(self.getTypeString(), ret)
+		ret = UML.createData(self.getTypeString(), ret)
+
+		ret._absPath = self._absPath
+		ret._relPath = self._relPath
+
+		return ret
 
 	def pointIterator(self):
 		if self.featureCount == 0:
@@ -664,7 +679,12 @@ class Base(object):
 				valueList.append(tempList)
 
 		if not inPlace:
-			return UML.createData(self.getTypeString(), valueList)
+			ret = UML.createData(self.getTypeString(), valueList)
+
+			ret._absPath = self._absPath
+			ret._relPath = self._relPath
+
+			return ret
 		else:
 			return None
 
