@@ -55,7 +55,7 @@ def back_unary_NamePath_preservations(callerCon, op):
 	ret = toCall()
 
 	assert ret.name != "TestName"
-	assert not ret.nameIsNonDefault()
+	assert ret.nameIsDefault()
 	assert caller.name == "TestName"
 	assert ret.absolutePath == "TestAbsPath"
 	assert caller.absolutePath == "TestAbsPath"
@@ -113,7 +113,7 @@ def back_binaryscalar_NamePath_preservations(callerCon, op):
 		assert ret.name == "TestName"
 	else:
 		assert ret.name != "TestName"
-		assert not ret.nameIsNonDefault()
+		assert ret.nameIsDefault()
 	assert ret.absolutePath == "TestAbsPath"
 	assert ret.path == "TestAbsPath"
 	assert ret.relativePath == "TestRelPath"
@@ -191,7 +191,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 
 	### emptry caller, full other ###
 
-	assert not caller.nameIsNonDefault()
+	assert caller.nameIsDefault()
 	assert caller.absolutePath is None
 	assert caller.relativePath is None
 
@@ -208,14 +208,14 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 	# name should be default, path should be pulled from other
 	if ret is not None and ret != NotImplemented:
 		assert ret.name != "TestNameOther"
-		assert not ret.nameIsNonDefault()
+		assert ret.nameIsDefault()
 		assert ret.absolutePath == "TestAbsPathOther"
 		assert ret.path == "TestAbsPathOther"
 		assert ret.relativePath == "TestRelPathOther"
 
 	# if in place, ret == caller. if not, then values should be unchanged
 	if not inplace:
-		assert not caller.nameIsNonDefault()
+		assert caller.nameIsDefault()
 		assert caller.absolutePath is None
 		assert caller.path is None
 		assert caller.relativePath is None
@@ -250,7 +250,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 			assert ret.name == "TestNameCaller"
 		else:
 			assert ret.name != "TestNameCaller"
-			assert not ret.nameIsNonDefault()
+			assert ret.nameIsDefault()
 	
 		assert ret.absolutePath == "TestAbsPathCaller"
 		assert ret.path == "TestAbsPathCaller"
@@ -264,7 +264,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 		assert caller.relativePath == "TestRelPathCaller"
 
 	# confirm that othe remains unchanged
-	assert not other.nameIsNonDefault()
+	assert other.nameIsDefault()
 	assert other.absolutePath is None
 	assert other.path is None
 	assert other.relativePath is None
@@ -292,7 +292,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 		if inplace:
 			assert ret.name == "TestNameCaller"
 		else:
-			assert not ret.nameIsNonDefault()
+			assert ret.nameIsDefault()
 			
 		assert ret.absolutePath is None
 		assert ret.path is None

@@ -202,7 +202,7 @@ def _packDataInfo(dataObjects):
 	includePath = False
 	for d in dataObjects:
 		if d is not None:
-			if d.name is not None and d.nameIsNonDefault():
+			if d.name is not None and not d.nameIsDefault():
 				includeName = True
 			if d.path is not None:
 				includePath = True

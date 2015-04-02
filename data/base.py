@@ -219,19 +219,9 @@ class Base(object):
 			msg += "yet a value of type " + str(type(assignments)) + " was given"
 			raise ArgumentException(msg)
 
-	def nameData(self, name):
-		"""
-		Copy over the name attribute of this object with the input name. None
-		is always returned.
-
-		"""
-		if name is not None and not isinstance(name, basestring):
-			raise ArgumentException("name must be a string")
-		self.name = name
-
-	def nameIsNonDefault(self):
-		"""Returns True if self.name has a non-default value"""
-		return not self.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+	def nameIsDefault(self):
+		"""Returns True if self.name has a default value"""
+		return self.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 
 	def getPointNames(self):
 		"""Returns a list containing all point names, where their index
