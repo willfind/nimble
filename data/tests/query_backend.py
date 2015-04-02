@@ -385,9 +385,9 @@ class QueryBackend(DataTestObject):
 		dSome = self.constructor(dataSome)
 		dNone = self.constructor(dataNone)
 
-		assert dAll.containsZero() == True
-		assert dSome.containsZero() == True
-		assert dNone.containsZero() == False
+		assert dAll.containsZero() is True
+		assert dSome.containsZero() is True
+		assert dNone.containsZero() is False
 
 	##########
 	# __eq__ #
@@ -782,6 +782,43 @@ class QueryBackend(DataTestObject):
 		else:
 			obj.featureSimilarities(euclideanDistance)
 
+	def backend_Sim_NamePath_Preservation(self, axis):
+		data = [[3,0,3],[0,0,3], [3,0,0]]
+		orig = self.constructor(data)
+
+		possible = [
+			'correlation', 'covariance', 'dotproduct', 'samplecovariance',
+			'populationcovariance'
+		]
+
+		orig._name = "TestName"
+		orig._absPath = "TestAbsPath"
+		orig._relPath = "testRelPath"
+
+		for curr in possible:
+			if axis:
+				ret = orig.pointSimilarities(curr)
+			else:
+				orig.transpose()
+				ret = orig.featureSimilarities(curr)
+				ret.transpose()
+				orig.transpose()
+
+			assert orig.name == "TestName"
+			assert orig.absolutePath == "TestAbsPath"
+			assert orig.relativePath == 'testRelPath'
+
+			assert ret.nameIsDefault()
+			assert ret.absolutePath == 'TestAbsPath'
+			assert ret.relativePath == 'testRelPath'
+
+	def test_pointSimilaritesDot_NamePath_preservation(self):
+		self.backend_Sim_NamePath_Preservation(True)
+
+	def test_featureSimilarites_NamePath_preservation(self):
+		self.backend_Sim_NamePath_Preservation(False)
+
+
 	################### ####################
 	# pointStatistics # #featureStatistics #
 	################### ####################
@@ -1101,6 +1138,44 @@ class QueryBackend(DataTestObject):
 			ret = orig.featureStatistics("meanie")
 			ret.transpose()
 			orig.transpose()
+
+	def backend_Stat_NamePath_preservation(self, axis):
+		data = [[1,2,1],[-10,-1,-21], [-1,0,0]]
+		orig = self.constructor(data)
+
+		accepted = [
+			'max', 'mean', 'median', 'min', 'uniquecount', 'proportionmissing',
+			'proportionzero', 'standarddeviation', 'std', 'populationstd',
+			'populationstandarddeviation', 'samplestd', 
+			'samplestandarddeviation'
+			]
+
+		orig._name = "TestName"
+		orig._absPath = "TestAbsPath"
+		orig._relPath = "testRelPath"
+
+		for curr in accepted:
+			if axis:
+				ret = orig.pointStatistics(curr)
+			else:
+				orig.transpose()
+				ret = orig.featureStatistics(curr)
+				ret.transpose()
+				orig.transpose()
+
+			assert orig.name == "TestName"
+			assert orig.absolutePath == "TestAbsPath"
+			assert orig.relativePath == 'testRelPath'
+
+			assert ret.nameIsDefault()
+			assert ret.absolutePath == 'TestAbsPath'
+			assert ret.relativePath == 'testRelPath'
+
+	def test_pointStatistics_NamePath_preservations(self):
+		self.backend_Stat_NamePath_preservation(True)
+
+	def test_featureStatistics_NamePath_preservations(self):
+		self.backend_Stat_NamePath_preservation(False)
 
 ###########
 # Helpers #

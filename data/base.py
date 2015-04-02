@@ -2315,6 +2315,9 @@ class Base(object):
 
 		# TODO validation or result.
 
+		ret._absPath = self._absPath
+		ret._relPath = self._relPath
+
 		return ret
 
 	def pointStatistics(self, statisticsFunction):
