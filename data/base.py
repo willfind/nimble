@@ -1596,6 +1596,9 @@ class Base(object):
 		self._pointCount = other._pointCount
 		self._featureCount = other._featureCount
 
+		self._absPath = other._absPath
+		self._relPath = other._relPath
+
 		self.validate()
 
 
@@ -1715,6 +1718,10 @@ class Base(object):
 
 		retObj.setPointNames(pointNameList)
 		retObj.setFeatureNames(self.getFeatureNames())
+
+		retObj._absPath = self._absPath
+		retObj._relPath = self._relPath
+
 		return retObj
 	
 	def copyFeatures(self, features=None, start=None, end=None):
@@ -1762,6 +1769,10 @@ class Base(object):
 
 		ret.setPointNames(self.getPointNames())
 		ret.setFeatureNames(featureNameList)
+
+		ret._absPath = self._absPath
+		ret._relPath = self._relPath
+
 		return ret
 
 
@@ -1916,10 +1927,6 @@ class Base(object):
 		if ret is not NotImplemented:
 			self.referenceDataFrom(ret)
 			ret = self
-
-		pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
-
-		dataHelpers.binaryOpNamePathMerge(self, other, ret, 'self', pathSource)
 
 		return ret
 

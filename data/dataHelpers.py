@@ -97,6 +97,8 @@ def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
 			ret._absPath = caller.absolutePath
 		elif caller.absolutePath is None and other.absolutePath is not None:
 			ret._absPath = other.absolutePath
+#		elif caller.absolutePath == other.absolutePath:
+#			ret._absPath = caller.absolutePath
 		else:
 			ret._absPath = None
 
@@ -104,6 +106,8 @@ def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
 			ret._relPath = caller.relativePath
 		elif caller.relativePath is None and other.relativePath is not None:
 			ret._relPath = other.relativePath
+#		elif caller.relativePath == other.relativePath:
+#			ret._relPath = caller.relativePath
 		else:
 			ret._relPath = None
 	else:

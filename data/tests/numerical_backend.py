@@ -291,9 +291,11 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 		# but the paths still obliterate each other
 		if inplace:
 			assert ret.name == "TestNameCaller"
+#			assert ret.absolutePath == "TestAbsPathOther"
+#			assert ret.path == "TestAbsPathOther"
+#			assert ret.relativePath == "TestRelPathOther"
 		else:
 			assert ret.nameIsDefault()
-			
 		assert ret.absolutePath is None
 		assert ret.path is None
 		assert ret.relativePath is None

@@ -358,18 +358,18 @@ class HighLevelBackend(DataTestObject):
 		pointNames = ['1', '2', '3', '4', '5', '6']
 		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
 		toTest._relPath = "testRelPath"
 
 		ret = toTest.extractPointsByCoinToss(0.5)
 
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
 		assert toTest.relativePath == 'testRelPath'
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == 'TestAbsPath'
+		assert ret.absolutePath == 'testAbsPath'
 		assert ret.relativePath == 'testRelPath'
 
 

@@ -166,21 +166,30 @@ class StructureBackend(DataTestObject):
 		dataObj2 = self.constructor(deepcopy(data))
 		dataObjT = self.constructor(deepcopy(dataTrans))
 
-#		print repr(dataObj1)
-#		print repr(dataObj1)
-
 		ret1 = dataObj1.transpose() # RET CHECK
-#		import pdb
-#		pdb.set_trace()
-#		print dataObj1[0,4]
 
 		assert dataObj1.isIdentical(dataObjT)
 		assert ret1 is None
-#		assert False
+
 		dataObj1.transpose()
 		dataObjT.transpose()
 		assert dataObj1.isIdentical(dataObj2)
 		assert dataObj2.isIdentical(dataObjT)
+
+	def test_transpose_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9],[0,0,0],[11,12,13]]
+		
+		dataObj1 = self.constructor(deepcopy(data))
+
+		dataObj1._name = "TestName"
+		dataObj1._absPath = "TestAbsPath"
+		dataObj1._relPath = "testRelPath"
+
+		dataObj1.transpose()
+
+		assert dataObj1.name == "TestName"
+		assert dataObj1.absolutePath == "TestAbsPath"
+		assert dataObj1.relativePath == 'testRelPath'
 
 	#############
 	# appendPoints() #
@@ -263,7 +272,27 @@ class StructureBackend(DataTestObject):
 		expected = self.constructor(dataExpected, pointNames=namesExp)
 
 		assert toTest.isIdentical(expected)
-		
+	
+	def test_appendPoints_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		names = ['1', '4', '7']
+
+		toTest = self.constructor(data, pointNames=names)
+		toAppend = self.constructor([[10,11,12]], pointNames=['10'])
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toAppend._name = "TestNameOther"
+		toAppend._absPath = "TestAbsPathOther"
+		toAppend._relPath = "testRelPathOther"
+
+		toTest.appendPoints(toAppend)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
 
 
 	####################
@@ -350,6 +379,26 @@ class StructureBackend(DataTestObject):
 		expected = self.constructor(dataExpected, featureNames=featureNamesExpected)
 		assert toTest.isIdentical(expected)
 
+	def test_appendFeatures_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		featureNames = ['1','2','3']
+		toTest = self.constructor(data, featureNames=featureNames)
+
+		toAppend = self.constructor([[-1],[-2],[-3]], featureNames=['-1'])
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toAppend._name = "TestNameOther"
+		toAppend._absPath = "TestAbsPathOther"
+		toAppend._relPath = "testRelPathOther"
+
+		toTest.appendFeatures(toAppend)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
 
 
 	##############
@@ -542,17 +591,24 @@ class StructureBackend(DataTestObject):
 		expEnd = self.constructor([[4,5,6],[7,8,9]])
 		assert toTest.isIdentical(expEnd)
 
-	def test_extractPoints_PathPreserve(self):
-		""" Test extractPoints() preserves the path in the output """
+	def test_extractPoints_index_NamePath_Preserve(self):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
-		toTest._absPath = 'testPathFull'
-		toTest._relPath = 'testPathRel'
+		
+		toTest._name = 'testName'
+		toTest._absPath = 'testAbsPath'
+		toTest._relPath = 'testRelPath'
+		
 		ext1 = toTest.extractPoints(0)
 		
-		assert ext1.path == 'testPathFull'
-		assert ext1.absolutePath == 'testPathFull'
-		assert ext1.relativePath == 'testPathRel'
+		assert ext1.nameIsDefault()
+		assert ext1.path == 'testAbsPath'
+		assert ext1.absolutePath == 'testAbsPath'
+		assert ext1.relativePath == 'testRelPath'
+
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
+		assert toTest.relativePath == 'testRelPath'
 
 
 	def test_extractPoints_ListIntoPEmpty(self):
@@ -628,6 +684,28 @@ class StructureBackend(DataTestObject):
 		expEnd = self.constructor([[7,8,9]])
 		assert toTest.isIdentical(expEnd)
 
+	def test_extractPoints_func_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		def oneOrFour(point):
+			if 1 in point or 4 in point:
+				return True
+			return False
+		
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ext = toTest.extractPoints(oneOrFour)
+
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ext.nameIsDefault()
+		assert ext.absolutePath == 'testAbsPath'
+		assert ext.relativePath == 'testRelPath'
+
 	def test_extractPoints_handmadeFuncionWithFeatureNames(self):
 		""" Test extractPoints() against handmade output for function extraction with featureNames"""
 		featureNames = ["one","two","three"]
@@ -678,6 +756,25 @@ class StructureBackend(DataTestObject):
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
+
+	def test_extractPoints_range_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.extractPoints(start=1,end=2)
+		
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'testAbsPath'
+		assert ret.relativePath == 'testRelPath'
+
 
 	def test_extractPoints_rangeIntoPEmpty(self):
 		""" Test extractPoints() removes all points using ranges """
@@ -764,17 +861,23 @@ class StructureBackend(DataTestObject):
 		expEnd = self.constructor([[2,3],[5,6],[8,9]])
 		assert toTest.isIdentical(expEnd)
 
-	def test_extractFeatures_PathPreserve(self):
-		""" Test extractFeatures() preserves the path in the output """
+	def test_extractFeatures_List_NamePath_Preserve(self):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
-		toTest._absPath = 'testPathFull'
-		toTest._relPath = 'testPathRel'
+
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
+		toTest._relPath = "testRelPath"
+
 		ext1 = toTest.extractFeatures(0)
 		
-		assert ext1.path == 'testPathFull'
-		assert ext1.absolutePath == 'testPathFull'
-		assert ext1.relativePath == 'testPathRel'
+		assert toTest.path == 'testAbsPath'
+		assert toTest.absolutePath == 'testAbsPath'
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ext1.nameIsDefault()
+		assert ext1.absolutePath == 'testAbsPath'
+		assert ext1.relativePath == 'testRelPath'
 
 	def test_extractFeatures_ListIntoFEmpty(self):
 		""" Test extractFeatures() by removing a list of all features """
@@ -870,6 +973,29 @@ class StructureBackend(DataTestObject):
 		assert toTest.isIdentical(expEnd)
 
 
+	def test_extractFeatures_func_NamePath_preservation(self):
+		data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
+		toTest = self.constructor(data)
+		
+		def absoluteOne(feature):
+			if 1 in feature or -1 in feature:
+				return True
+			return False
+
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ext = toTest.extractFeatures(absoluteOne)
+
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ext.nameIsDefault()
+		assert ext.absolutePath == 'testAbsPath'
+		assert ext.relativePath == 'testRelPath'
+
 	def test_extractFeatures_handmadeFunctionWithFeatureName(self):
 		""" Test extractFeatures() against handmade output for function extraction with featureNames """
 		data = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
@@ -964,6 +1090,25 @@ class StructureBackend(DataTestObject):
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
 
+	def test_extractFeatures_range_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.extractFeatures(start=1, end=2)
+		
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'testAbsPath'
+		assert ret.relativePath == 'testRelPath'
+
+
 	def test_extractFeatures_handmadeWithFeatureNames(self):
 		""" Test extractFeatures() against handmade output for range extraction with FeatureNames """
 		featureNames = ["one","two","three"]
@@ -1019,6 +1164,37 @@ class StructureBackend(DataTestObject):
 		assert '-1' in orig.getPointNames()
 		assert '1' in orig.getFeatureNames()
 		assert ret is None
+
+	def test_referenceDataFrom_NamePath(self):
+
+		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+		featureNames = ['one', 'two', 'three']
+		pNames = ['1', 'one', '2', '0']
+		orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+		data2 = [[-1,-2,-3,]]
+		featureNames = ['1', '2', '3']
+		pNames = ['-1']
+		other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
+
+		orig._name = "testName"
+		orig._absPath = "testAbsPath"
+		orig._relPath = "testRelPath"
+
+		other._name = "testNameother"
+		other._absPath = "testAbsPathother"
+		other._relPath = "testRelPathother"
+
+		orig.referenceDataFrom(other)
+
+		assert orig.name == "testName"
+		assert orig.absolutePath == "testAbsPathother"
+		assert orig.relativePath == 'testRelPathother'
+
+		assert other.name == "testNameother"
+		assert other.absolutePath == "testAbsPathother"
+		assert other.relativePath == 'testRelPathother'
+
 
 
 	#############
@@ -1378,6 +1554,27 @@ class StructureBackend(DataTestObject):
 		assert orig.isIdentical(expOrig)
 		assert ret.isIdentical(expRet)
 
+	def test_copyPoints_list_NamePath(self):
+		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+		featureNames = ['one', 'two', 'three']
+		pnames = ['1', 'one', '2', '0']
+		orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
+	
+		orig._name = "testName"
+		orig._absPath = "testAbsPath"
+		orig._relPath = "testRelPath"
+
+		ret = orig.copyPoints([1,2])
+
+		assert orig.name == "testName"
+		assert orig.absolutePath == "testAbsPath"
+		assert orig.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'testAbsPath'
+		assert ret.relativePath == 'testRelPath'
+
+
 	def test_copyPoints_handmadeListOrdering(self):
 		""" Test copyPoints() against handmade output for out of order indices """
 		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15]]
@@ -1423,6 +1620,25 @@ class StructureBackend(DataTestObject):
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
+
+	def test_copyPoints_range_NamePath(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.copyPoints(start=1,end=2)
+
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'testAbsPath'
+		assert ret.relativePath == 'testRelPath'
+		
 
 	def test_copyPoints_handmadeRangeWithFeatureNames(self):
 		""" Test copyPoints() against handmade output for range copying with featureNames """
@@ -1515,6 +1731,28 @@ class StructureBackend(DataTestObject):
 		assert orig.isIdentical(expOrig)
 		assert ret.isIdentical(expRet)
 
+
+	def test_copyFeatures_list_NamePath(self):
+		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+		featureNames = ['one', 'two', 'three']
+		pnames = ['1', 'one', '2', '0']
+		orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
+
+		orig._name = "testName"
+		orig._absPath = "testAbsPath"
+		orig._relPath = "testRelPath"
+
+		ret = orig.copyFeatures([0,'two'])
+
+		assert orig.name == "testName"
+		assert orig.absolutePath == "testAbsPath"
+		assert orig.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'testAbsPath'
+		assert ret.relativePath == 'testRelPath'
+
+
 	def test_copyFeatures_handmadeListOrdering(self):
 		""" Test copyFeatures() against handmade output for out of order indices """
 		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,122]]
@@ -1584,6 +1822,25 @@ class StructureBackend(DataTestObject):
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
+
+	def test_copyFeatures_range_NamePath(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.copyFeatures(start=1, end=2)
+		
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'testAbsPath'
+		assert ret.relativePath == 'testRelPath'
+
 
 	def test_copyFeatures_handmadeWithFeatureNames(self):
 		""" Test copyFeatures() against handmade output for range copying with FeatureNames """
