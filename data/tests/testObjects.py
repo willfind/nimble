@@ -1,24 +1,25 @@
 
 import UML
 
-from UML.data.tests.numerical_backend import NumericalBackend
+from UML.data.tests.numerical_backend import AllNumerical
 from UML.data.tests.query_backend import QueryBackend
-from UML.data.tests.structure_backend import StructureBackend
-from UML.data.tests.high_level_backend import HighLevelBackend
+from UML.data.tests.high_level_backend import HighLevelAll
 from UML.data.tests.low_level_backend import LowLevelBackend
+from UML.data.tests.structure_backend import StructureAll
 
 
 
 
-class TestList(HighLevelBackend, NumericalBackend, QueryBackend, StructureBackend):
+
+class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
 	def __init__(self):
 		super(TestList, self).__init__('List')
 
-class TestMatrix(HighLevelBackend, NumericalBackend, QueryBackend, StructureBackend):
+class TestMatrix(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
 	def __init__(self):
 		super(TestMatrix, self).__init__('Matrix')
 
-class TestSparse(HighLevelBackend, NumericalBackend, QueryBackend, StructureBackend):
+class TestSparse(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
 	def __init__(self):
 		super(TestSparse, self).__init__('Sparse')
 

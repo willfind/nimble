@@ -7,6 +7,15 @@ in the derived class, so all of these tests make a call to self.constructor inst
 of directly instantiating a Base object. This function temporarily fills in
 that missing implementation.
 
+Methods tested in this file (none modify the data):
+_addPointName, _addFeatureName, _pointNameDifference, _featureNameDifference,
+_pointNameIntersection, _featureNameIntersection, _pointNameSymmetricDifference,
+_featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
+setPointName, setFeatureName, setPointNames, setFeatureNames,
+_removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
+_equalFeatureNames, getPointNames, getFeatureNames, 
+
+
 """
 
 from UML.data import Base

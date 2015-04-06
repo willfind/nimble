@@ -5,6 +5,20 @@ Since these functions rely on implementations provided by a derived class, these
 functions are to be called by unit tests of the derived class, with the appropiate
 objects provided.
 
+Methods tested in this file:
+
+In object HighLevelDataSafe:
+applyToPoints, applyToFeatures, mapReducePoints, pointIterator,
+featureIterator, applyToElements, isApproximatelyEqual,
+trainAndTestSets
+
+In object HighLevelModifying:
+dropFeaturesContainingType, replaceFeatureWithBinaryFeatures, 
+transformFeatureToIntegers, extractPointsByCoinToss,
+applyToPoints, applyToFeatures, applyToElements, shufflePoints,
+shuffleFeatures, 
+
+
 """
 
 from copy import deepcopy
@@ -60,317 +74,7 @@ def plusOneOnlyEven(value):
 		return None
 
 
-class HighLevelBackend(DataTestObject):
-
-	###########################
-	# dropFeaturesContainingType #
-	###########################
-
-
-	def test_dropFeaturesContainingType_emptyTest(self):
-		""" Test dropFeaturesContainingType() when the data is empty """
-		data = []
-		toTest = self.constructor(data)
-		unchanged = self.constructor(data)
-		ret = toTest.dropFeaturesContainingType(basestring) # RET CHECK
-		assert toTest.isIdentical(unchanged)
-		assert ret is None
-		
-	def test_dropFeaturesContainingType_intoFEmpty(self):
-		""" Test dropFeaturesContainingType() when dropping all features """
-		data = [[1.0],[2.0]]
-		toTest = self.constructor(data)
-		toTest.dropFeaturesContainingType(float)
-
-		exp = numpy.array([[],[]])
-		exp = numpy.array(exp)
-		exp = self.constructor(exp)
-
-		assert toTest.isIdentical(exp)
-
-	def test_dropFeaturesContainingType_ListOnlyTest(self):
-		""" Test dropFeaturesContainingType() only on List data """
-		data = [[1,2],[3,4]]
-		toTest = self.constructor(data)
-		stringData = [[5, 'six']]
-		toAdd = UML.createData('List', stringData)
-		if toTest.getTypeString() == 'List':
-			toTest.appendPoints(toAdd)
-			toTest.dropFeaturesContainingType(basestring)
-			assert toTest.featureCount == 1
-
-	def test_dropFeaturesContainingType_NamePath_preservation(self):
-		data = [[1.0],[2.0]]
-		toTest = self.constructor(data)
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.dropFeaturesContainingType(float)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-
-	#################################
-	# replaceFeatureWithBinaryFeatures #
-	#################################
-
-	@raises(ImproperActionException)
-	def test_replaceFeatureWithBinaryFeatures_PemptyException(self):
-		""" Test replaceFeatureWithBinaryFeatures() with a point empty object """
-		data = [[],[]]
-		data = numpy.array(data).T
-		toTest = self.constructor(data)
-		toTest.replaceFeatureWithBinaryFeatures(0)
-
-	@raises(ArgumentException)
-	def test_replaceFeatureWithBinaryFeatures_FemptyException(self):
-		""" Test replaceFeatureWithBinaryFeatures() with a feature empty object """
-		data = [[],[]]
-		data = numpy.array(data)
-		toTest = self.constructor(data)
-		toTest.replaceFeatureWithBinaryFeatures(0)
-
-
-	def test_replaceFeatureWithBinaryFeatures_handmade(self):
-		""" Test replaceFeatureWithBinaryFeatures() against handmade output """
-		data = [[1],[2],[3]]
-		featureNames = ['col']
-		toTest = self.constructor(data, featureNames=featureNames)
-		getNames = self.constructor(data, featureNames=featureNames)
-		ret = toTest.replaceFeatureWithBinaryFeatures(0) # RET CHECK
-
-		expData = [[1,0,0], [0,1,0], [0,0,1]]
-		expFeatureNames = []
-		for point in getNames.pointIterator():
-			expFeatureNames.append('col=' + str(point[0]))
-		exp = self.constructor(expData, featureNames=expFeatureNames)
-
-		assert toTest.isIdentical(exp)
-		assert ret is None
-
-	def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
-		data = [[1],[2],[3]]
-		featureNames = ['col']
-		toTest = self.constructor(data, featureNames=featureNames)
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.replaceFeatureWithBinaryFeatures(0)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-
-	#############################
-	# transformFeatureToIntegers #
-	#############################
-
-	@raises(ImproperActionException)
-	def test_transformFeatureToIntegers_PemptyException(self):
-		""" Test transformFeatureToIntegers() with an point empty object """
-		data = [[],[]]
-		data = numpy.array(data).T
-		toTest = self.constructor(data)
-		toTest.transformFeatureToIntegers(0)
-
-	@raises(ArgumentException)
-	def test_transformFeatureToIntegers_FemptyException(self):
-		""" Test transformFeatureToIntegers() with an feature empty object """
-		data = [[],[]]
-		data = numpy.array(data)
-		toTest = self.constructor(data)
-		toTest.transformFeatureToIntegers(0)
-
-	def test_transformFeatureToIntegers_handmade(self):
-		""" Test transformFeatureToIntegers() against handmade output """
-		data = [[10],[20],[30.5],[20],[10]]
-		featureNames = ['col']
-		toTest = self.constructor(data, featureNames=featureNames)
-		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
-
-		assert toTest[0,0] == toTest[4,0]
-		assert toTest[1,0] == toTest[3,0]
-		assert toTest[0,0] != toTest[1,0]
-		assert toTest[0,0] != toTest[2,0]
-		assert ret is None
-
-	def test_transformFeatureToIntegers_pointNames(self):
-		""" Test transformFeatureToIntegers preserves pointNames """
-		data = [[10],[20],[30.5],[20],[10]]
-		pnames = ['1a', '2a', '3', '2b', '1b']
-		fnames = ['col']
-		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
-
-		assert toTest.getPointName(0) == '1a'
-		assert toTest.getPointName(1) == '2a'
-		assert toTest.getPointName(2) == '3'
-		assert toTest.getPointName(3) == '2b'
-		assert toTest.getPointName(4) == '1b'
-		assert ret is None
-
-	def test_transformFeatureToIntegers_positioning(self):
-		""" Test transformFeatureToIntegers preserves featurename mapping """
-		data = [[10,0],[20,1],[30.5,2],[20,3],[10,4]]
-		pnames = ['1a', '2a', '3', '2b', '1b']
-		fnames = ['col','pos']
-		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
-
-		assert toTest[0,1] == toTest[4,1]
-		assert toTest[1,1] == toTest[3,1]
-		assert toTest[0,1] != toTest[1,1]
-		assert toTest[0,1] != toTest[2,1]
-
-		assert toTest[0,0] == 0
-		assert toTest[1,0] == 1
-		assert toTest[2,0] == 2
-		assert toTest[3,0] == 3
-		assert toTest[4,0] == 4
-
-	def test_transformFeatureToIntegers_NamePath_preservation(self):
-		data = [[10],[20],[30.5],[20],[10]]
-		featureNames = ['col']
-		toTest = self.constructor(data, featureNames=featureNames)
-		
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.transformFeatureToIntegers(0)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-
-
-	#########################
-	# extractPointsByCoinToss #
-	#########################
-
-#	@raises(ImproperActionException)
-#	def test_extractPointsByCoinToss_exceptionEmpty(self):
-#		""" Test extractPointsByCoinToss() for ImproperActionException when object is empty """
-#		data = []
-#		toTest = self.constructor(data)
-#		toTest.extractPointsByCoinToss(0.5)
-
-	@raises(ArgumentException)
-	def test_extractPointsByCoinToss_exceptionNoneProbability(self):
-		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		featureNames = ['1','2','3']
-		pointNames = ['1', '4', '7']
-		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-		toTest.extractPointsByCoinToss(None)
-
-	@raises(ArgumentException)
-	def test_extractPointsByCoinToss_exceptionLEzero(self):
-		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		featureNames = ['1','2','3']
-		pointNames = ['1', '4', '7']
-		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-		toTest.extractPointsByCoinToss(0)
-
-	@raises(ArgumentException)
-	def test_extractPointsByCoinToss_exceptionGEone(self):
-		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		featureNames = ['1','2','3']
-		pointNames = ['1', '4', '7']
-		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-		toTest.extractPointsByCoinToss(1)
-
-	def test_extractPointsByCoinToss_intoPEmpty(self):
-		""" Test extractPointsByCoinToss() when it removes all points """
-		data = [[1]]
-		toTest = self.constructor(data)
-		retExp = self.constructor(data)
-		while True:
-			ret = toTest.extractPointsByCoinToss(.99)
-			if ret.pointCount == 1:
-				break
-
-		assert retExp.isIdentical(ret)
-
-		data = [[]]
-		data = numpy.array(data).T
-		exp = self.constructor(data)
-
-		assert toTest.isIdentical(exp)
-
-
-	def test_extractPointsByCoinToss_handmade(self):
-		""" Test extractPointsByCoinToss() produces sane results (ie a partition) """
-		data = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
-		featureNames = ['a','b','c']
-		pointNames = ['1', '2', '3', '4', '5', '6']
-		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-		orig = toTest.copy()
-		ret = toTest.extractPointsByCoinToss(0.5)
-
-		def checkEqual(v1, v2):
-			assert len(v1) == len(v2)
-			for i in range(len(v1)):
-				assert v1[i] == v2[i]
-
-		# everything in ret is in orig
-		for pIndex in range(ret.pointCount):
-			currRetPoint = ret.pointView(pIndex)
-			currName = ret.getPointName(pIndex)
-			currOrigPoint = orig.pointView(currName)
-			checkEqual(currRetPoint, currOrigPoint)
-
-		# everything in toTest is in orig
-		for pIndex in range(toTest.pointCount):
-			currToTestPoint = toTest.pointView(pIndex)
-			currName = toTest.getPointName(pIndex)
-			currOrigPoint = orig.pointView(currName)
-			checkEqual(currToTestPoint, currOrigPoint)
-
-		# everything in orig in either ret or toTest
-		for pIndex in range(orig.pointCount):
-			currOrigPoint = orig.pointView(pIndex)
-			currName = orig.getPointName(pIndex)
-			if currName in ret.getPointNames():
-				assert currName not in toTest.getPointNames()
-				checkPoint = ret.pointView(currName)
-			else:
-				assert currName in toTest.getPointNames()
-				assert currName not in ret.getPointNames()
-				checkPoint = toTest.pointView(currName)
-
-			checkEqual(checkPoint, currOrigPoint)
-
-
-	def test_extractPointsByCoinToss_NamePath_preservation(self):
-		data = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
-		featureNames = ['a','b','c']
-		pointNames = ['1', '2', '3', '4', '5', '6']
-		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-		toTest._name = "testName"
-		toTest._absPath = "testAbsPath"
-		toTest._relPath = "testRelPath"
-
-		ret = toTest.extractPointsByCoinToss(0.5)
-
-		assert toTest.name == "testName"
-		assert toTest.absolutePath == "testAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-		assert ret.nameIsDefault()
-		assert ret.absolutePath == 'testAbsPath'
-		assert ret.relativePath == 'testRelPath'
+class HighLevelDataSafe(DataTestObject):
 
 
 	####################
@@ -401,13 +105,6 @@ class HighLevelBackend(DataTestObject):
 
 		origObj.applyToPoints(emitLower, inPlace=False)
 
-	@raises(ArgumentException)
-	def test_applyToPoints_exceptionInputNone(self):
-		""" Test applyToPoints() for ArgumentException when function is None """
-		featureNames = {'number':0,'centi':2,'deci':1}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
-		origObj.applyToPoints(None)
 
 	def test_applyToPoints_Handmade(self):
 		""" Test applyToPoints() with handmade output """
@@ -486,84 +183,6 @@ class HighLevelBackend(DataTestObject):
 		exp = self.constructor(expectedOut)
 
 		assert counts.isIdentical(exp)
-
-	def test_applyToPoints_HandmadeInPlace(self):
-		""" Test applyToPoints() with handmade output. InPlace """
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllDeci(point):
-			value = point[origObj.getFeatureIndex('deci')]
-			return [value, value, value]
-
-		lowerCounts = origObj.applyToPoints(emitAllDeci)  # RET CHECK
-
-		expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
-		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-
-		assert lowerCounts is None
-		assert origObj.isIdentical(exp)
-
-	def test_applyToPoints_Inplace_NamePath_preservation(self):
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllDeci(point):
-			value = point[toTest.getFeatureIndex('deci')]
-			return [value, value, value]
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.applyToPoints(emitAllDeci)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-	def test_applyToPoints_HandmadeLimitedInPlace(self):
-		""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllDeci(point):
-			value = point[origObj.getFeatureIndex('deci')]
-			return [value, value, value]
-
-		origObj.applyToPoints(emitAllDeci, points=[3,'two'])
-
-		expectedOut = [[1,0.1,0.01], [1,0.1,0.02], [0.1,0.1,0.1], [0.2,0.2,0.2]]
-		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-
-		assert origObj.isIdentical(exp)
-
-
-	def test_applyToPoints_nonZeroItAndLenInPlace(self):
-		""" Test applyToPoints() for the correct usage of the nonzero iterator. InPlace """
-		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
-		origObj = self.constructor(deepcopy(origData))
-
-		def emitNumNZ(point):
-			ret = 0
-			assert len(point) == 3
-			for value in point.nonZeroIterator():
-				ret += 1
-			return [ret, ret, ret]
-
-		origObj.applyToPoints(emitNumNZ)
-
-		expectedOut = [[3,3,3], [2,2,2], [2,2,2], [1,1,1]]
-		exp = self.constructor(expectedOut)
-
-		assert origObj.isIdentical(exp)
-
 
 
 
@@ -680,8 +299,6 @@ class HighLevelBackend(DataTestObject):
 		exp = self.constructor(expectedOut)
 		assert lowerCounts.isIdentical(exp)
 
-
-
 	def test_applyToFeatures_nonZeroItAndLen(self):
 		""" Test applyToFeatures() for the correct usage of the nonzero iterator """
 		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
@@ -700,94 +317,6 @@ class HighLevelBackend(DataTestObject):
 		exp = self.constructor(expectedOut)
 
 		assert counts.isIdentical(exp)
-
-
-	def test_applyToFeatures_HandmadeInPlace(self):
-		""" Test applyToFeatures() with handmade output. InPlace """
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllEqual(feature):
-			first = feature[0]
-			for value in feature:
-				if value != first:
-					return [0,0,0,0]
-			return [1,1,1,1]
-
-		lowerCounts = origObj.applyToFeatures(emitAllEqual) # RET CHECK
-		expectedOut = [[1,0,0], [1,0,0], [1,0,0], [1,0,0]]	
-		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-		
-		assert lowerCounts is None
-		assert origObj.isIdentical(exp)
-
-
-	def test_applyToFeatures_InPlace_NamePath_preservation(self):
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllEqual(feature):
-			first = feature[0]
-			for value in feature:
-				if value != first:
-					return [0,0,0,0]
-			return [1,1,1,1]
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.applyToFeatures(emitAllEqual)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-
-
-	def test_applyToFeatures_HandmadeLimitedInPlace(self):
-		""" Test applyToFeatures() with handmade output on a limited portion of features. InPlace """
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllEqual(feature):
-			first = feature[0]
-			for value in feature:
-				if value != first:
-					return [0,0,0,0]
-			return [1,1,1,1]
-
-		origObj.applyToFeatures(emitAllEqual, features=[0,'centi'])
-		expectedOut = [[1,0.1,0], [1,0.1,0], [1,0.1,0], [1,0.2,0]]
-		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-
-		assert origObj.isIdentical(exp)
-
-
-	def test_applyToFeatures_nonZeroItAndLenInPlace(self):
-		""" Test applyToFeatures() for the correct usage of the nonzero iterator. InPlace """
-		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
-		origObj = self.constructor(deepcopy(origData))
-
-		def emitNumNZ(feature):
-			ret = 0
-			assert len(feature) == 4
-			for value in feature.nonZeroIterator():
-				ret += 1
-			return [ret, ret, ret, ret]
-
-		origObj.applyToFeatures(emitNumNZ)
-
-		expectedOut = [[3,3,2], [3,3,2], [3,3,2], [3,3,2]]
-		exp = self.constructor(expectedOut)
-
-		assert origObj.isIdentical(exp)
 
 
 	#####################
@@ -1069,31 +598,9 @@ class HighLevelBackend(DataTestObject):
 		assert toCheck[7][2] == 0
 
 
-
 	#####################################
 	# applyToElements() #
 	#####################################
-
-	def test_applyToElements_passthrough(self):
-		""" test applyToElements can construct a list by just passing values through  """
-
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		ret = toTest.applyToElements(passThrough, inPlace=False)
-		retRaw = ret.copyAs(format="python list")
-
-		assert [1,2,3] in retRaw
-		assert [4,5,6] in retRaw
-		assert [7,8,9] in retRaw
-
-		ret = toTest.applyToElements(passThrough) # RET CHECK
-		assert ret is None
-		retRaw = toTest.copyAs(format="python list")
-
-		assert [1,2,3] in retRaw
-		assert [4,5,6] in retRaw
-		assert [7,8,9] in retRaw
-
 
 	def test_applyToElements_NamePath_preservation(self):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
@@ -1112,80 +619,6 @@ class HighLevelBackend(DataTestObject):
 		assert ret.nameIsDefault()
 		assert ret.absolutePath == "TestAbsPath"
 		assert ret.relativePath == 'testRelPath'
-
-	def test_applyToElements_Inplace_NamePath_preservation(self):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.applyToElements(passThrough)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-
-	def test_applyToElements_plusOnePreserve(self):
-		""" test applyToElements can modify elements other than zero  """
-
-		data = [[1,0,3],[0,5,6],[7,0,9]]
-		toTest = self.constructor(data)
-		ret = toTest.applyToElements(plusOne, inPlace=False, preserveZeros=True)
-		retRaw = ret.copyAs(format="python list")
-
-		assert [2,0,4] in retRaw
-		assert [0,6,7] in retRaw
-		assert [8,0,10] in retRaw
-
-		toTest.applyToElements(plusOne, preserveZeros=True)
-		retRaw = toTest.copyAs(format="python list")
-
-		assert [2,0,4] in retRaw
-		assert [0,6,7] in retRaw
-		assert [8,0,10] in retRaw
-
-
-	def test_applyToElements_plusOneExclude(self):
-		""" test applyToElements() skipNoneReturnValues flag  """
-
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		ret = toTest.applyToElements(plusOneOnlyEven, inPlace=False, skipNoneReturnValues=True)
-		retRaw = ret.copyAs(format="python list")
-
-		assert [1,3,3] in retRaw
-		assert [5,5,7] in retRaw
-		assert [7,9,9] in retRaw
-
-		toTest.applyToElements(plusOneOnlyEven, skipNoneReturnValues=True)
-		retRaw = toTest.copyAs(format="python list")
-
-		assert [1,3,3] in retRaw
-		assert [5,5,7] in retRaw
-		assert [7,9,9] in retRaw
-
-
-	def test_applyToElements_plusOneLimited(self):
-		""" test applyToElements() on limited portions of the points and features """
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		names = ['one','two','three']
-		pnames = ['1', '4', '7']
-		toTest = self.constructor(data, pointNames=pnames, featureNames=names)
-
-		ret = toTest.applyToElements(plusOneOnlyEven, points='4', features=[1,'three'], inPlace=False, skipNoneReturnValues=True)
-		retRaw = ret.copyAs(format="python list")
-
-		assert [5,7] in retRaw
-
-		toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], skipNoneReturnValues=True)
-		retRaw = toTest.copyAs(format="python list")
-
-		assert [1,2,3] in retRaw
-		assert [4,5,7] in retRaw
-		assert [7,8,9] in retRaw
 
 
 	########################
@@ -1218,119 +651,6 @@ class HighLevelBackend(DataTestObject):
 
 			assert toTest.isApproximatelyEqual(sparse)
 			assert toTest.hashCode() == sparse.hashCode()
-
-
-
-	###################
-	# shufflePoints() #
-	###################
-
-	@raises(ArgumentException)
-	def test_shufflePoints_exceptionIndicesPEmpty(self):
-		""" tests shufflePoints() throws an ArgumentException when given invalid indices """
-		data = [[],[]]
-		data = numpy.array(data).T
-		toTest = self.constructor(data)
-		toTest.shufflePoints([1,3])
-
-
-	def test_shufflePoints_noLongerEqual(self):
-		""" Tests shufflePoints() results in a changed object """
-		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-		toTest = self.constructor(deepcopy(data))
-		toCompare = self.constructor(deepcopy(data))
-
-		# it is possible that it shuffles it into the same configuration.
-		# the odds are vanishingly low that it will do so over consecutive calls
-		# however. We will pass as long as it changes once
-		returns = []
-		for i in xrange(5):
-			ret = toTest.shufflePoints() # RET CHECK
-			returns.append(ret)
-			if not toTest.isApproximatelyEqual(toCompare):
-				break
-
-		assert not toTest.isApproximatelyEqual(toCompare)
-
-		for ret in returns:
-			assert ret is None
-
-
-	def test_shufflePoints_NamePath_preservation(self):
-		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-		toTest = self.constructor(deepcopy(data))
-		toCompare = self.constructor(deepcopy(data))
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		# it is possible that it shuffles it into the same configuration.
-		# we only test after we're sure we've done something
-		while True:
-			toTest.shufflePoints()  # RET CHECK
-			if not toTest.isApproximatelyEqual(toCompare):
-				break
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-
-
-	#####################
-	# shuffleFeatures() #
-	#####################
-
-	@raises(ArgumentException)
-	def test_shuffleFeatures_exceptionIndicesFEmpty(self):
-		""" tests shuffleFeatures() throws an ArgumentException when given invalid indices """
-		data = [[],[]]
-		data = numpy.array(data)
-		toTest = self.constructor(data)
-		toTest.shuffleFeatures([1,3])
-
-	def test_shuffleFeatures_noLongerEqual(self):
-		""" Tests shuffleFeatures() results in a changed object """
-		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,1111111]]
-		toTest = self.constructor(deepcopy(data))
-		toCompare = self.constructor(deepcopy(data))
-
-		# it is possible that it shuffles it into the same configuration.
-		# the odds are vanishly low that it will do so over consecutive calls
-		# however. We will pass as long as it changes once
-		returns = []
-		for i in xrange(5):
-			ret = toTest.shuffleFeatures() # RET CHECK
-			returns.append(ret)
-			if not toTest.isApproximatelyEqual(toCompare):
-				break
-
-		assert not toTest.isApproximatelyEqual(toCompare)
-
-		for ret in returns:
-			assert ret is None
-
-
-	def test_shuffleFeatures_NamePath_preservation(self):
-		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,1111111]]
-		toTest = self.constructor(deepcopy(data))
-		toCompare = self.constructor(deepcopy(data))
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		# it is possible that it shuffles it into the same configuration.
-		# we only test after we're sure we've done something
-		while True:
-			toTest.shuffleFeatures()  # RET CHECK
-			if not toTest.isApproximatelyEqual(toCompare):
-				break
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
 
 
 	######################
@@ -1513,3 +833,716 @@ class HighLevelBackend(DataTestObject):
 				return
 
 		assert False  # implausible number of checks for random order were unsucessful
+
+
+
+class HighLevelModifying(DataTestObject):
+
+	###########################
+	# dropFeaturesContainingType #
+	###########################
+
+	def test_dropFeaturesContainingType_emptyTest(self):
+		""" Test dropFeaturesContainingType() when the data is empty """
+		data = []
+		toTest = self.constructor(data)
+		unchanged = self.constructor(data)
+		ret = toTest.dropFeaturesContainingType(basestring) # RET CHECK
+		assert toTest.isIdentical(unchanged)
+		assert ret is None
+		
+	def test_dropFeaturesContainingType_intoFEmpty(self):
+		""" Test dropFeaturesContainingType() when dropping all features """
+		data = [[1.0],[2.0]]
+		toTest = self.constructor(data)
+		toTest.dropFeaturesContainingType(float)
+
+		exp = numpy.array([[],[]])
+		exp = numpy.array(exp)
+		exp = self.constructor(exp)
+
+		assert toTest.isIdentical(exp)
+
+	def test_dropFeaturesContainingType_ListOnlyTest(self):
+		""" Test dropFeaturesContainingType() only on List data """
+		data = [[1,2],[3,4]]
+		toTest = self.constructor(data)
+		stringData = [[5, 'six']]
+		toAdd = UML.createData('List', stringData)
+		if toTest.getTypeString() == 'List':
+			toTest.appendPoints(toAdd)
+			toTest.dropFeaturesContainingType(basestring)
+			assert toTest.featureCount == 1
+
+	def test_dropFeaturesContainingType_NamePath_preservation(self):
+		data = [[1.0],[2.0]]
+		toTest = self.constructor(data)
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.dropFeaturesContainingType(float)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
+	#################################
+	# replaceFeatureWithBinaryFeatures #
+	#################################
+
+	@raises(ImproperActionException)
+	def test_replaceFeatureWithBinaryFeatures_PemptyException(self):
+		""" Test replaceFeatureWithBinaryFeatures() with a point empty object """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
+		toTest.replaceFeatureWithBinaryFeatures(0)
+
+	@raises(ArgumentException)
+	def test_replaceFeatureWithBinaryFeatures_FemptyException(self):
+		""" Test replaceFeatureWithBinaryFeatures() with a feature empty object """
+		data = [[],[]]
+		data = numpy.array(data)
+		toTest = self.constructor(data)
+		toTest.replaceFeatureWithBinaryFeatures(0)
+
+
+	def test_replaceFeatureWithBinaryFeatures_handmade(self):
+		""" Test replaceFeatureWithBinaryFeatures() against handmade output """
+		data = [[1],[2],[3]]
+		featureNames = ['col']
+		toTest = self.constructor(data, featureNames=featureNames)
+		getNames = self.constructor(data, featureNames=featureNames)
+		ret = toTest.replaceFeatureWithBinaryFeatures(0) # RET CHECK
+
+		expData = [[1,0,0], [0,1,0], [0,0,1]]
+		expFeatureNames = []
+		for point in getNames.pointIterator():
+			expFeatureNames.append('col=' + str(point[0]))
+		exp = self.constructor(expData, featureNames=expFeatureNames)
+
+		assert toTest.isIdentical(exp)
+		assert ret is None
+
+	def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
+		data = [[1],[2],[3]]
+		featureNames = ['col']
+		toTest = self.constructor(data, featureNames=featureNames)
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.replaceFeatureWithBinaryFeatures(0)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
+	#############################
+	# transformFeatureToIntegers #
+	#############################
+
+	@raises(ImproperActionException)
+	def test_transformFeatureToIntegers_PemptyException(self):
+		""" Test transformFeatureToIntegers() with an point empty object """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
+		toTest.transformFeatureToIntegers(0)
+
+	@raises(ArgumentException)
+	def test_transformFeatureToIntegers_FemptyException(self):
+		""" Test transformFeatureToIntegers() with an feature empty object """
+		data = [[],[]]
+		data = numpy.array(data)
+		toTest = self.constructor(data)
+		toTest.transformFeatureToIntegers(0)
+
+	def test_transformFeatureToIntegers_handmade(self):
+		""" Test transformFeatureToIntegers() against handmade output """
+		data = [[10],[20],[30.5],[20],[10]]
+		featureNames = ['col']
+		toTest = self.constructor(data, featureNames=featureNames)
+		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+
+		assert toTest[0,0] == toTest[4,0]
+		assert toTest[1,0] == toTest[3,0]
+		assert toTest[0,0] != toTest[1,0]
+		assert toTest[0,0] != toTest[2,0]
+		assert ret is None
+
+	def test_transformFeatureToIntegers_pointNames(self):
+		""" Test transformFeatureToIntegers preserves pointNames """
+		data = [[10],[20],[30.5],[20],[10]]
+		pnames = ['1a', '2a', '3', '2b', '1b']
+		fnames = ['col']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+
+		assert toTest.getPointName(0) == '1a'
+		assert toTest.getPointName(1) == '2a'
+		assert toTest.getPointName(2) == '3'
+		assert toTest.getPointName(3) == '2b'
+		assert toTest.getPointName(4) == '1b'
+		assert ret is None
+
+	def test_transformFeatureToIntegers_positioning(self):
+		""" Test transformFeatureToIntegers preserves featurename mapping """
+		data = [[10,0],[20,1],[30.5,2],[20,3],[10,4]]
+		pnames = ['1a', '2a', '3', '2b', '1b']
+		fnames = ['col','pos']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+		ret = toTest.transformFeatureToIntegers(0)  # RET CHECK
+
+		assert toTest[0,1] == toTest[4,1]
+		assert toTest[1,1] == toTest[3,1]
+		assert toTest[0,1] != toTest[1,1]
+		assert toTest[0,1] != toTest[2,1]
+
+		assert toTest[0,0] == 0
+		assert toTest[1,0] == 1
+		assert toTest[2,0] == 2
+		assert toTest[3,0] == 3
+		assert toTest[4,0] == 4
+
+	def test_transformFeatureToIntegers_NamePath_preservation(self):
+		data = [[10],[20],[30.5],[20],[10]]
+		featureNames = ['col']
+		toTest = self.constructor(data, featureNames=featureNames)
+		
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.transformFeatureToIntegers(0)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+	#########################
+	# extractPointsByCoinToss #
+	#########################
+
+#	@raises(ImproperActionException)
+#	def test_extractPointsByCoinToss_exceptionEmpty(self):
+#		""" Test extractPointsByCoinToss() for ImproperActionException when object is empty """
+#		data = []
+#		toTest = self.constructor(data)
+#		toTest.extractPointsByCoinToss(0.5)
+
+	@raises(ArgumentException)
+	def test_extractPointsByCoinToss_exceptionNoneProbability(self):
+		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is None """
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		featureNames = ['1','2','3']
+		pointNames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+		toTest.extractPointsByCoinToss(None)
+
+	@raises(ArgumentException)
+	def test_extractPointsByCoinToss_exceptionLEzero(self):
+		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is <= 0 """
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		featureNames = ['1','2','3']
+		pointNames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+		toTest.extractPointsByCoinToss(0)
+
+	@raises(ArgumentException)
+	def test_extractPointsByCoinToss_exceptionGEone(self):
+		""" Test extractPointsByCoinToss() for ArgumentException when extractionProbability is >= 1 """
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		featureNames = ['1','2','3']
+		pointNames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+		toTest.extractPointsByCoinToss(1)
+
+	def test_extractPointsByCoinToss_intoPEmpty(self):
+		""" Test extractPointsByCoinToss() when it removes all points """
+		data = [[1]]
+		toTest = self.constructor(data)
+		retExp = self.constructor(data)
+		while True:
+			ret = toTest.extractPointsByCoinToss(.99)
+			if ret.pointCount == 1:
+				break
+
+		assert retExp.isIdentical(ret)
+
+		data = [[]]
+		data = numpy.array(data).T
+		exp = self.constructor(data)
+
+		assert toTest.isIdentical(exp)
+
+
+	def test_extractPointsByCoinToss_handmade(self):
+		""" Test extractPointsByCoinToss() produces sane results (ie a partition) """
+		data = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
+		featureNames = ['a','b','c']
+		pointNames = ['1', '2', '3', '4', '5', '6']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+		orig = toTest.copy()
+		ret = toTest.extractPointsByCoinToss(0.5)
+
+		def checkEqual(v1, v2):
+			assert len(v1) == len(v2)
+			for i in range(len(v1)):
+				assert v1[i] == v2[i]
+
+		# everything in ret is in orig
+		for pIndex in range(ret.pointCount):
+			currRetPoint = ret.pointView(pIndex)
+			currName = ret.getPointName(pIndex)
+			currOrigPoint = orig.pointView(currName)
+			checkEqual(currRetPoint, currOrigPoint)
+
+		# everything in toTest is in orig
+		for pIndex in range(toTest.pointCount):
+			currToTestPoint = toTest.pointView(pIndex)
+			currName = toTest.getPointName(pIndex)
+			currOrigPoint = orig.pointView(currName)
+			checkEqual(currToTestPoint, currOrigPoint)
+
+		# everything in orig in either ret or toTest
+		for pIndex in range(orig.pointCount):
+			currOrigPoint = orig.pointView(pIndex)
+			currName = orig.getPointName(pIndex)
+			if currName in ret.getPointNames():
+				assert currName not in toTest.getPointNames()
+				checkPoint = ret.pointView(currName)
+			else:
+				assert currName in toTest.getPointNames()
+				assert currName not in ret.getPointNames()
+				checkPoint = toTest.pointView(currName)
+
+			checkEqual(checkPoint, currOrigPoint)
+
+
+	def test_extractPointsByCoinToss_NamePath_preservation(self):
+		data = [[1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
+		featureNames = ['a','b','c']
+		pointNames = ['1', '2', '3', '4', '5', '6']
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		toTest._name = "testName"
+		toTest._absPath = "testAbsPath"
+		toTest._relPath = "testRelPath"
+
+		ret = toTest.extractPointsByCoinToss(0.5)
+
+		assert toTest.name == "testName"
+		assert toTest.absolutePath == "testAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+		assert ret.nameIsDefault()
+		assert ret.absolutePath == 'testAbsPath'
+		assert ret.relativePath == 'testRelPath'
+
+
+
+	####################
+	# applyToPoints() #
+	####################
+
+
+	@raises(ArgumentException)
+	def test_applyToPoints_exceptionInputNone(self):
+		""" Test applyToPoints() for ArgumentException when function is None """
+		featureNames = {'number':0,'centi':2,'deci':1}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj.applyToPoints(None)
+
+	def test_applyToPoints_HandmadeInPlace(self):
+		""" Test applyToPoints() with handmade output. InPlace """
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllDeci(point):
+			value = point[origObj.getFeatureIndex('deci')]
+			return [value, value, value]
+
+		lowerCounts = origObj.applyToPoints(emitAllDeci)  # RET CHECK
+
+		expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
+
+		assert lowerCounts is None
+		assert origObj.isIdentical(exp)
+
+	def test_applyToPoints_Inplace_NamePath_preservation(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllDeci(point):
+			value = point[toTest.getFeatureIndex('deci')]
+			return [value, value, value]
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.applyToPoints(emitAllDeci)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+	def test_applyToPoints_HandmadeLimitedInPlace(self):
+		""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllDeci(point):
+			value = point[origObj.getFeatureIndex('deci')]
+			return [value, value, value]
+
+		origObj.applyToPoints(emitAllDeci, points=[3,'two'])
+
+		expectedOut = [[1,0.1,0.01], [1,0.1,0.02], [0.1,0.1,0.1], [0.2,0.2,0.2]]
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
+
+		assert origObj.isIdentical(exp)
+
+
+	def test_applyToPoints_nonZeroItAndLenInPlace(self):
+		""" Test applyToPoints() for the correct usage of the nonzero iterator. InPlace """
+		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+		origObj = self.constructor(deepcopy(origData))
+
+		def emitNumNZ(point):
+			ret = 0
+			assert len(point) == 3
+			for value in point.nonZeroIterator():
+				ret += 1
+			return [ret, ret, ret]
+
+		origObj.applyToPoints(emitNumNZ)
+
+		expectedOut = [[3,3,3], [2,2,2], [2,2,2], [1,1,1]]
+		exp = self.constructor(expectedOut)
+
+		assert origObj.isIdentical(exp)
+
+
+
+	#######################
+	# applyToFeatures() #
+	#######################
+
+
+	def test_applyToFeatures_HandmadeInPlace(self):
+		""" Test applyToFeatures() with handmade output. InPlace """
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return [0,0,0,0]
+			return [1,1,1,1]
+
+		lowerCounts = origObj.applyToFeatures(emitAllEqual) # RET CHECK
+		expectedOut = [[1,0,0], [1,0,0], [1,0,0], [1,0,0]]	
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
+		
+		assert lowerCounts is None
+		assert origObj.isIdentical(exp)
+
+
+	def test_applyToFeatures_InPlace_NamePath_preservation(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return [0,0,0,0]
+			return [1,1,1,1]
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.applyToFeatures(emitAllEqual)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
+
+	def test_applyToFeatures_HandmadeLimitedInPlace(self):
+		""" Test applyToFeatures() with handmade output on a limited portion of features. InPlace """
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return [0,0,0,0]
+			return [1,1,1,1]
+
+		origObj.applyToFeatures(emitAllEqual, features=[0,'centi'])
+		expectedOut = [[1,0.1,0], [1,0.1,0], [1,0.1,0], [1,0.2,0]]
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
+
+		assert origObj.isIdentical(exp)
+
+
+	def test_applyToFeatures_nonZeroItAndLenInPlace(self):
+		""" Test applyToFeatures() for the correct usage of the nonzero iterator. InPlace """
+		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+		origObj = self.constructor(deepcopy(origData))
+
+		def emitNumNZ(feature):
+			ret = 0
+			assert len(feature) == 4
+			for value in feature.nonZeroIterator():
+				ret += 1
+			return [ret, ret, ret, ret]
+
+		origObj.applyToFeatures(emitNumNZ)
+
+		expectedOut = [[3,3,2], [3,3,2], [3,3,2], [3,3,2]]
+		exp = self.constructor(expectedOut)
+
+		assert origObj.isIdentical(exp)
+
+
+	#####################################
+	# applyToElements() #
+	#####################################
+
+	def test_applyToElements_passthrough(self):
+		""" test applyToElements can construct a list by just passing values through  """
+
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		ret = toTest.applyToElements(passThrough, inPlace=False)
+		retRaw = ret.copyAs(format="python list")
+
+		assert [1,2,3] in retRaw
+		assert [4,5,6] in retRaw
+		assert [7,8,9] in retRaw
+
+		ret = toTest.applyToElements(passThrough) # RET CHECK
+		assert ret is None
+		retRaw = toTest.copyAs(format="python list")
+
+		assert [1,2,3] in retRaw
+		assert [4,5,6] in retRaw
+		assert [7,8,9] in retRaw
+
+
+	def test_applyToElements_Inplace_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.applyToElements(passThrough)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
+	def test_applyToElements_plusOnePreserve(self):
+		""" test applyToElements can modify elements other than zero  """
+
+		data = [[1,0,3],[0,5,6],[7,0,9]]
+		toTest = self.constructor(data)
+		ret = toTest.applyToElements(plusOne, inPlace=False, preserveZeros=True)
+		retRaw = ret.copyAs(format="python list")
+
+		assert [2,0,4] in retRaw
+		assert [0,6,7] in retRaw
+		assert [8,0,10] in retRaw
+
+		toTest.applyToElements(plusOne, preserveZeros=True)
+		retRaw = toTest.copyAs(format="python list")
+
+		assert [2,0,4] in retRaw
+		assert [0,6,7] in retRaw
+		assert [8,0,10] in retRaw
+
+
+	def test_applyToElements_plusOneExclude(self):
+		""" test applyToElements() skipNoneReturnValues flag  """
+
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		ret = toTest.applyToElements(plusOneOnlyEven, inPlace=False, skipNoneReturnValues=True)
+		retRaw = ret.copyAs(format="python list")
+
+		assert [1,3,3] in retRaw
+		assert [5,5,7] in retRaw
+		assert [7,9,9] in retRaw
+
+		toTest.applyToElements(plusOneOnlyEven, skipNoneReturnValues=True)
+		retRaw = toTest.copyAs(format="python list")
+
+		assert [1,3,3] in retRaw
+		assert [5,5,7] in retRaw
+		assert [7,9,9] in retRaw
+
+
+	def test_applyToElements_plusOneLimited(self):
+		""" test applyToElements() on limited portions of the points and features """
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		names = ['one','two','three']
+		pnames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+
+		ret = toTest.applyToElements(plusOneOnlyEven, points='4', features=[1,'three'], inPlace=False, skipNoneReturnValues=True)
+		retRaw = ret.copyAs(format="python list")
+
+		assert [5,7] in retRaw
+
+		toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], skipNoneReturnValues=True)
+		retRaw = toTest.copyAs(format="python list")
+
+		assert [1,2,3] in retRaw
+		assert [4,5,7] in retRaw
+		assert [7,8,9] in retRaw
+
+
+	###################
+	# shufflePoints() #
+	###################
+
+	@raises(ArgumentException)
+	def test_shufflePoints_exceptionIndicesPEmpty(self):
+		""" tests shufflePoints() throws an ArgumentException when given invalid indices """
+		data = [[],[]]
+		data = numpy.array(data).T
+		toTest = self.constructor(data)
+		toTest.shufflePoints([1,3])
+
+
+	def test_shufflePoints_noLongerEqual(self):
+		""" Tests shufflePoints() results in a changed object """
+		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+		toTest = self.constructor(deepcopy(data))
+		toCompare = self.constructor(deepcopy(data))
+
+		# it is possible that it shuffles it into the same configuration.
+		# the odds are vanishingly low that it will do so over consecutive calls
+		# however. We will pass as long as it changes once
+		returns = []
+		for i in xrange(5):
+			ret = toTest.shufflePoints() # RET CHECK
+			returns.append(ret)
+			if not toTest.isApproximatelyEqual(toCompare):
+				break
+
+		assert not toTest.isApproximatelyEqual(toCompare)
+
+		for ret in returns:
+			assert ret is None
+
+
+	def test_shufflePoints_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+		toTest = self.constructor(deepcopy(data))
+		toCompare = self.constructor(deepcopy(data))
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		# it is possible that it shuffles it into the same configuration.
+		# we only test after we're sure we've done something
+		while True:
+			toTest.shufflePoints()  # RET CHECK
+			if not toTest.isApproximatelyEqual(toCompare):
+				break
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
+
+	#####################
+	# shuffleFeatures() #
+	#####################
+
+	@raises(ArgumentException)
+	def test_shuffleFeatures_exceptionIndicesFEmpty(self):
+		""" tests shuffleFeatures() throws an ArgumentException when given invalid indices """
+		data = [[],[]]
+		data = numpy.array(data)
+		toTest = self.constructor(data)
+		toTest.shuffleFeatures([1,3])
+
+	def test_shuffleFeatures_noLongerEqual(self):
+		""" Tests shuffleFeatures() results in a changed object """
+		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,1111111]]
+		toTest = self.constructor(deepcopy(data))
+		toCompare = self.constructor(deepcopy(data))
+
+		# it is possible that it shuffles it into the same configuration.
+		# the odds are vanishly low that it will do so over consecutive calls
+		# however. We will pass as long as it changes once
+		returns = []
+		for i in xrange(5):
+			ret = toTest.shuffleFeatures() # RET CHECK
+			returns.append(ret)
+			if not toTest.isApproximatelyEqual(toCompare):
+				break
+
+		assert not toTest.isApproximatelyEqual(toCompare)
+
+		for ret in returns:
+			assert ret is None
+
+
+	def test_shuffleFeatures_NamePath_preservation(self):
+		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,1111111]]
+		toTest = self.constructor(deepcopy(data))
+		toCompare = self.constructor(deepcopy(data))
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		# it is possible that it shuffles it into the same configuration.
+		# we only test after we're sure we've done something
+		while True:
+			toTest.shuffleFeatures()  # RET CHECK
+			if not toTest.isApproximatelyEqual(toCompare):
+				break
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
+class HighLevelAll(HighLevelDataSafe, HighLevelModifying):
+	pass

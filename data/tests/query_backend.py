@@ -1,3 +1,13 @@
+"""
+
+Methods tested in this file (none modify the data):
+
+pointCount, featuresCount, isIdentical, writeFile, __getitem__, pointView, 
+featureView, containsZero, __eq__, __ne__, toString, pointSimilarities,
+featureSimilarities, pointStatistics, featureStatistics, 
+
+"""
+
 
 import math
 import tempfile
