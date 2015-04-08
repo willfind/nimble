@@ -199,7 +199,7 @@ class UniversalInterface(object):
 #			raise ArgumentException("Missing arguments")
 		(neededParams, availableDefaults) = (possibleParamSets[bestIndex], possibleDefaults[bestIndex])
 		available = copy.deepcopy(arguments)
-		(ret, ignore) = self._validateArgumentDistributionHelper(baseCallName, neededParams, availableDefaults, available, False)
+		(ret, ignore) = self._validateArgumentDistributionHelper(baseCallName, neededParams, availableDefaults, available, False, arguments)
 		return ret
 
 	def _isInstantiable(self, val, hasDefault, defVal):
@@ -210,7 +210,7 @@ class UniversalInterface(object):
 
 			return False
 
-	def _validateArgumentDistributionHelper(self, currCallName, currNeededParams, currDefaults, available, sharedPool):
+	def _validateArgumentDistributionHelper(self, currCallName, currNeededParams, currDefaults, available, sharedPool, original):
 		"""
 		Recursive function for actually performing _validateArgumentDistribution. Will recurse
 		when encountering shorthand for making in package calls, where the desired arguments
@@ -248,11 +248,11 @@ class UniversalInterface(object):
 				if self._isInstantiable(paramDefault, True, paramDefault):
 					# try recursive call using default value
 					try:
-						self._setupValidationRecursiveCall(paramDefault, available, ret, delayedAllocations)
+						self._setupValidationRecursiveCall(paramDefault, available, ret, delayedAllocations, original)
 					except:
 					# if fail, try recursive call using actual value and copied available
 						available = availableBackup
-						self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
+						self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations, original)
 						del available[paramName]
 						addToDelayedIfNeeded = False
 				else:
@@ -274,7 +274,7 @@ class UniversalInterface(object):
 				paramValue = available[paramName]
 				# is it something that needs to be instantiated and therefore needs params of its own?
 				if self._isInstantiable(paramValue, False, None):
-					self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
+					self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations, original)
 				del available[paramName]
 				ret[paramName] = paramValue
 			elif not present and hasDefault:
@@ -283,11 +283,32 @@ class UniversalInterface(object):
 				# TODO is findCallable really the most reliable trigger for this? maybe we should check
 				# that you can get params from it too ....
 				#if isInstantiable(paramValue, True, paramValue):		
-				#	self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations)
+				#	self._setupValidationRecursiveCall(paramValue, available, ret, delayedAllocations, original)
 				ret[paramName] = currDefaults[paramName]
 			# not present and no default
 			else:
-				raise ArgumentException("Missing parameter named '" + paramName + "' in for call to '" + currCallName + "'")
+				if currCallName in self.listLearners():
+					subParamGroup = self.getLearnerParameterNames(currCallName)
+				else:
+					subParamGroup = self._getParameterNames(currCallName)
+
+				msg = "MISSING LEARNERING PARAMETER! "
+				msg += "When trying to validate arguments for "
+				msg += currCallName + ", "
+				msg += "we couldn't find a value for the parameter named "
+				msg += "'" + str(paramName) + "'. "
+				msg += "The allowed parameters were: "
+				msg += str(currNeededParams) + ", "
+				msg += "which was choosen as the best guess given the inputs out "
+				msg += "of the following list of possible parameter sets: "
+				msg += str(subParamGroup) + ". "
+				msg += "Out of the allowed parameters, the following could be omited, "
+				msg += "which would result in the associated default value being used: "
+				msg += str(currDefaults) + ". "
+				msg += "The full mapping of inputs actually provided was: "
+				msg += str(original) + ". "
+
+				raise ArgumentException(msg)
 
 		# if this pool of arguments is not shared, then this is the last subcall,
 		# and we can finalize the allocations
@@ -302,7 +323,7 @@ class UniversalInterface(object):
 					used.update(available)
 					# make recursive call instead with the actual value
 					#try:
-					self._setupValidationRecursiveCall(value, used, ret, delayedAllocations)
+					self._setupValidationRecursiveCall(value, used, ret, delayedAllocations, original)
 					available = used
 					ret[key] = value
 					del available[key]
@@ -324,13 +345,31 @@ class UniversalInterface(object):
 
 			# at this point, everything should have been used, and then removed.
 			if len(available) != 0:
-				raise ArgumentException("Extra params in arguments: " + str(available))
+				if currCallName in self.listLearners():
+					subParamGroup = self.getLearnerParameterNames(currCallName)
+				else:
+					subParamGroup = self._getParameterNames(currCallName)
+
+				msg = "EXTRA LEARNER PARAMETER! "
+				msg += "When trying to validate arguments for "
+				msg += currCallName + ", "
+				msg += "the following list of parameter names were not matched: "
+				msg += str(available.keys()) + ". "
+				msg += "The allowed parameters were: "
+				msg += str(currNeededParams) + ", "
+				msg += "which was choosen as the best guess given the inputs out "
+				msg += "of the following list of possible parameter sets: "
+				msg += str(subParamGroup) + ". "
+				msg += "The full mapping of inputs actually provided was: "
+				msg += str(original) + ". "
+
+				raise ArgumentException(msg)
 
 			delayedAllocations = {}		
 
 		return (ret, delayedAllocations)
 
-	def _setupValidationRecursiveCall(self, paramValue, available, callingRet, callingAllocations):
+	def _setupValidationRecursiveCall(self, paramValue, available, callingRet, callingAllocations, original):
 		# are the params for this value in a restricted argument pool?
 		if paramValue in available:
 			subSource = available[paramValue]
@@ -356,7 +395,7 @@ class UniversalInterface(object):
 		bestIndex = self._chooseBestParameterSet(subParamGroup, subDefaults, subSource)
 		(subParamGroup, subDefaults) = (subParamGroup[bestIndex], subDefaults[bestIndex])
 
-		(ret, allocations) = self._validateArgumentDistributionHelper(paramValue, subParamGroup, subDefaults, subSource, subShared)
+		(ret, allocations) = self._validateArgumentDistributionHelper(paramValue, subParamGroup, subDefaults, subSource, subShared, original)
 
 		# integrate the returned values into the state of the calling frame
 		callingRet[paramValue] = ret
