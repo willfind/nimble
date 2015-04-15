@@ -364,7 +364,7 @@ def _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFea
 	if ignoreNonNumericalFeatures:
 		# dtype=None so that if we have non-homogeneous data, it will be loaded
 		# as a structured array, so we can check the types of each column. 
-		data = numpy.genfromtxt(openFile, delimiter=',', dtype=None)
+		data = numpy.genfromtxt(openFile, delimiter=',', dtype=None, comments=None)
 		openFile.seek(startPosition)
 
 		if len(data.shape) > 1:
@@ -390,9 +390,9 @@ def _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFea
 
 	# should now only contain numeric data and the names
 	if usecols is not None:
-		data = numpy.genfromtxt(openFile, delimiter=',', dtype=str, usecols=usecols)
+		data = numpy.genfromtxt(openFile, delimiter=',', dtype=str, usecols=usecols, comments=None)
 	else:
-		data = numpy.genfromtxt(openFile, delimiter=',', dtype=str)
+		data = numpy.genfromtxt(openFile, delimiter=',', dtype=str, comments=None)
 
 	# extract names if needed
 	(data, pointNames, featureNames) = extractNamesFromNumpy(data, pointNames, featureNames)

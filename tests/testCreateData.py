@@ -30,6 +30,21 @@ def test_createData_CSV_data():
 
 			assert fromList == fromCSV
 
+def test_createData_CSV_data_noComment():
+	for t in retTypes:
+		fromList = UML.createData(retType=t, data=[[1,2], [1,2]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,#3\n")
+			tmpCSV.write("1,2,3\n")
+			tmpCSV.flush()
+			objName = 'fromCSV'
+			fromCSV = UML.createData(retType=t, data=tmpCSV.name, name=objName, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+
 def test_createData_CSV_data_ListOnly():
 	fromList = UML.createData(retType="List", data=[[1,2,'three'], [4,5,'six']])
 
@@ -37,6 +52,19 @@ def test_createData_CSV_data_ListOnly():
 	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
 		tmpCSV.write("1,2,three\n")
 		tmpCSV.write("4,5,six\n")
+		tmpCSV.flush()
+		objName = 'fromCSV'
+		fromCSV = UML.createData(retType="List", data=tmpCSV.name, name=objName)
+
+		assert fromList == fromCSV
+
+def test_createData_CSV_data_ListOnly_noComment():
+	fromList = UML.createData(retType="List", data=[[1,2,'three'], [4,5,'#six']])
+
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,three\n")
+		tmpCSV.write("4,5,#six\n")
 		tmpCSV.flush()
 		objName = 'fromCSV'
 		fromCSV = UML.createData(retType="List", data=tmpCSV.name, name=objName)
