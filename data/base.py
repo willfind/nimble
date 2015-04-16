@@ -767,11 +767,11 @@ class Base(object):
 		"""
 		return self.copyAs(self.getTypeString())
 
-	def trainAndTestSets(self, testPortion, labels=None, randomOrder=True):
+	def trainAndTestSets(self, testFraction, labels=None, randomOrder=True):
 		"""Partitions this object into training / testing, data / labels
 		sets, returning a new object for each as needed.
 
-		testPortion: the fraction of the data to be placed in the testing
+		testFraction: the fraction of the data to be placed in the testing
 		sets. If randomOrder is False, then the points are taken from the
 		end of this object. 
 
@@ -791,7 +791,7 @@ class Base(object):
 		if randomOrder:
 			toSplit.shufflePoints()
 
-		testXSize = int(round(testPortion * self.pointCount))
+		testXSize = int(round(testFraction * self.pointCount))
 		startIndex = self.pointCount - testXSize
 
 		#pull out a testing set

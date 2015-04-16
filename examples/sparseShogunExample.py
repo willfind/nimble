@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
 	pathIn = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny_numerical.csv")
 	allData = createData("Sparse", pathIn, fileType="csv")
-	trainX, trainY, testX, testY = allData.trainAndTestSets(testPortion=.2, labels="income")
+	trainX, trainY, testX, testY = allData.trainAndTestSets(testFraction=.2, labels="income")
 	print "Finished loading data"
 
 	# sparse types aren't playing nice with the error metrics currently, so convert

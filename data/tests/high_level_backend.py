@@ -705,7 +705,7 @@ class HighLevelDataSafe(DataTestObject):
 		assert teY.featureCount == 2
 
 	# edge cases 0/1 test portions
-	def test_trainAndTestSets_0or1_testPortion(self):
+	def test_trainAndTestSets_0or1_testFraction(self):
 		data = [[1,2,3,33],[2,5,6,66],[3,8,9,99],[4,11,12,111]]
 		toTest = self.constructor(data)
 

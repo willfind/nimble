@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
 	pathIn = os.path.join(UML.UMLPath, "datasets/sparseSample.mtx")
 	allData = createData("Sparse", pathIn, fileType="mtx")
-	trainX, trainY, testX, testY = allData.trainAndTestSets(testPortion=.2, labels=5)
+	trainX, trainY, testX, testY = allData.trainAndTestSets(testFraction=.2, labels=5)
 
 	# sparse types aren't playing nice with the error metrics currently, so convert
 	trainY = trainY.copyAs(format="Matrix")
