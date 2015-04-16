@@ -152,7 +152,7 @@ def _generateAllZeros(length):
 #	correct = numpy.zeros(length, dtype=int)
 	correct = numpy.matrix(correct)
 	correct = correct.transpose()
-	correct = UML.createData(retType="List", data=correct)
+	correct = UML.createData(returnType="List", data=correct)
 	return correct
 
 def _generateAllOnes(length):
@@ -163,7 +163,7 @@ def _generateAllOnes(length):
 #	correct = numpy.ones(length, dtype=int)
 	correct = numpy.matrix(correct)
 	correct = correct.transpose()
-	correct = UML.createData(retType="List", data=correct)
+	correct = UML.createData(returnType="List", data=correct)
 	return correct
 
 def _generateAllCorrect(length):
@@ -174,7 +174,7 @@ def _generateAllCorrect(length):
 #	correct = numpyRandom.randint(2, size=length)
 	correct = numpy.matrix(correct)
 	correct = correct.transpose()
-	correct = UML.createData(retType="List", data=correct)
+	correct = UML.createData(returnType="List", data=correct)
 	return correct
 
 def _generatePredicted(knowns, predictionType):
@@ -192,7 +192,7 @@ def _generatePredicted(knowns, predictionType):
 		scores = numpyRandom.randint(2, size=workingCopy.pointCount)
 		scores = numpy.matrix(scores)
 		scores = scores.transpose()
-		scores = UML.createData(retType="List", data=scores, featureNames=['LabelScore'])
+		scores = UML.createData(returnType="List", data=scores, featureNames=['LabelScore'])
 		workingCopy.appendFeatures(scores)
 		return workingCopy
 	else:
@@ -209,7 +209,7 @@ def _generatePredicted(knowns, predictionType):
 				currConfidences[1] = winner
 			dataToFill.append(currConfidences)
 
-		scores = UML.createData(retType="List", data=dataToFill, featureNames=['0', '1'])
+		scores = UML.createData(returnType="List", data=dataToFill, featureNames=['0', '1'])
 		return scores
 
 

@@ -39,10 +39,10 @@ def test_HR_logger_output_fromFile_trainAndApply():
 	UML.settings.set('logger', 'mirrorToStandardOut', 'True')
 	
 	trainData = [[1,2,3], [4,5,6], [7,8,9]]
-	trainOrig = UML.createData(retType="Matrix", data=trainData)
+	trainOrig = UML.createData(returnType="Matrix", data=trainData)
 
-	trainLab = UML.createData(retType="Matrix", data=[[1],[0],[1]])
-	testOrig = UML.createData(retType="Matrix", data=[[10,11,12]])
+	trainLab = UML.createData(returnType="Matrix", data=[[1],[0],[1]])
+	testOrig = UML.createData(returnType="Matrix", data=[[10,11,12]])
 
 	buf = StringIO.StringIO()
 	savedOut = sys.stdout
@@ -52,7 +52,7 @@ def test_HR_logger_output_fromFile_trainAndApply():
 	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
 		trainOrig.writeFile(tmpCSV.name)
 
-		fromFileTrain = UML.createData(retType="Matrix", data=tmpCSV.name)
+		fromFileTrain = UML.createData(returnType="Matrix", data=tmpCSV.name)
 
 		UML.trainAndApply("custom.RidgeRegression",fromFileTrain, trainLab, testOrig)
 

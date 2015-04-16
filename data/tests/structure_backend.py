@@ -68,9 +68,9 @@ class StructureDataSafe(DataTestObject):
 		data = numpy.array(data).T
 
 		orig = self.constructor(data)
-		sparseObj = createData(retType="Sparse", data=data)
-		listObj = createData(retType="List", data=data)
-		matixObj = createData(retType="Matrix", data=data)
+		sparseObj = createData(returnType="Sparse", data=data)
+		listObj = createData(returnType="List", data=data)
+		matixObj = createData(returnType="Matrix", data=data)
 
 		copySparse = orig.copyAs(format='Sparse')
 		assert copySparse.isIdentical(sparseObj)
@@ -100,9 +100,9 @@ class StructureDataSafe(DataTestObject):
 		data = numpy.array(data)
 
 		orig = self.constructor(data)
-		sparseObj = createData(retType="Sparse", data=data)
-		listObj = createData(retType="List", data=data)
-		matixObj = createData(retType="Matrix", data=data)
+		sparseObj = createData(returnType="Sparse", data=data)
+		listObj = createData(returnType="List", data=data)
+		matixObj = createData(returnType="Matrix", data=data)
 
 		copySparse = orig.copyAs(format='Sparse')
 		assert copySparse.isIdentical(sparseObj)
@@ -130,9 +130,9 @@ class StructureDataSafe(DataTestObject):
 		data = numpy.empty(shape=(0,0))
 
 		orig = self.constructor(data)
-		sparseObj = createData(retType="Sparse", data=data)
-		listObj = createData(retType="List", data=data)
-		matixObj = createData(retType="Matrix", data=data)
+		sparseObj = createData(returnType="Sparse", data=data)
+		listObj = createData(returnType="List", data=data)
+		matixObj = createData(returnType="Matrix", data=data)
 
 		copySparse = orig.copyAs(format='Sparse')
 		assert copySparse.isIdentical(sparseObj)
@@ -163,9 +163,9 @@ class StructureDataSafe(DataTestObject):
 		featureNames = ['one', 'two', 'three']
 		pointNames = ['1', 'one', '2', '0']
 		orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-		sparseObj = createData(retType="Sparse", data=data, pointNames=pointNames, featureNames=featureNames)
-		listObj = createData(retType="List", data=data, pointNames=pointNames, featureNames=featureNames)
-		matixObj = createData(retType="Matrix", data=data, pointNames=pointNames, featureNames=featureNames)
+		sparseObj = createData(returnType="Sparse", data=data, pointNames=pointNames, featureNames=featureNames)
+		listObj = createData(returnType="List", data=data, pointNames=pointNames, featureNames=featureNames)
+		matixObj = createData(returnType="Matrix", data=data, pointNames=pointNames, featureNames=featureNames)
 
 		pointsShuffleIndices = [3,1,2,0]
 		featuresshuffleIndices = [1,2,0]

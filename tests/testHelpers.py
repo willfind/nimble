@@ -173,8 +173,8 @@ class TestRand(FoldIteratorTester):
 	def __init__(self):	
 		def maker(data, featureNames=None):
 			possible = ['List', 'Matrix', 'Sparse']
-			retType = possible[pythonRandom.randint(0, 2)]
-			return UML.createData(retType=retType, data=data, featureNames=featureNames)
+			returnType = possible[pythonRandom.randint(0, 2)]
+			return UML.createData(returnType=returnType, data=data, featureNames=featureNames)
 
 		super(TestRand, self).__init__(maker)
 

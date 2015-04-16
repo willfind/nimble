@@ -156,7 +156,7 @@ class QueryBackend(DataTestObject):
 		toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
 		# cripple all but cannonical implementation
-		if self.retType != 'Matrix':
+		if self.returnType != 'Matrix':
 			toWrite._writeFile_implementation = None
 
 		# call writeFile
@@ -202,7 +202,7 @@ class QueryBackend(DataTestObject):
 		toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
 		# cripple all but cannonical implementation
-		if self.retType != 'Sparse':
+		if self.returnType != 'Sparse':
 			toWrite._writeFile_implementation = None
 
 		# call writeFile
@@ -472,7 +472,7 @@ class QueryBackend(DataTestObject):
 
 				fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8']
 				pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8']
-				data = UML.createData(self.retType, raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
+				data = UML.createData(self.returnType, raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
 				
 				for mw in [40, 60, 80,]:
 					for mh in [5, 7, 10]:

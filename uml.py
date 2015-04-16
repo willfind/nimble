@@ -47,7 +47,7 @@ from UML.interfaces.interface_helpers import checkClassificationStrategy
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def createRandomData(retType, numPoints, numFeatures, sparsity, numericType="float", featureNames=None, name=None):
+def createRandomData(returnType, numPoints, numFeatures, sparsity, numericType="float", featureNames=None, name=None):
 	"""
 	Generates a data object with random contents and numPoints points and numFeatures features. 
 
@@ -72,7 +72,7 @@ def createRandomData(retType, numPoints, numFeatures, sparsity, numericType="flo
 
 
 	#note: sparse is not stochastic sparsity, it uses rigid density measures
-	if retType.lower() == 'sparse':
+	if returnType.lower() == 'sparse':
 
 		density = 1.0 - float(sparsity)
 		numNonZeroValues = int(numPoints * numFeatures * density)
@@ -110,7 +110,7 @@ def createRandomData(retType, numPoints, numFeatures, sparsity, numericType="flo
 			else:
 				randData = binarySparsityMatrix * filledFloatMatrix
 
-	return createData(retType, data=randData, featureNames=featureNames, name=name)
+	return createData(returnType, data=randData, featureNames=featureNames, name=name)
 
 
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **kwarguments):
@@ -348,11 +348,11 @@ def listUMLFunctions():
 	return ret
 
 
-def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
+def createData(returnType, data, pointNames=None, featureNames=None, fileType=None,
 				name=None, ignoreNonNumericalFeatures=False, useLog=None):
 	"""Function to instantiate one of the UML data container types.
 
-	retType: string (or None) indicating which kind of UML data type you want
+	returnType: string (or None) indicating which kind of UML data type you want
 	returned. If None is given, UML will attempt to detect the type most
 	appropriate for the data. Currently accepted are the strings "List",
 	"Matri, and "Sparse"
@@ -393,8 +393,8 @@ def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
 	#retAllowed = ['List', 'Matrix', 'Sparse', None]
 	retAllowed = copy.copy(UML.data.available)
 	retAllowed.append(None)
-	if retType not in retAllowed:
-		raise ArgumentException("retType must be a value in " + str(retAllowed))
+	if returnType not in retAllowed:
+		raise ArgumentException("returnType must be a value in " + str(retAllowed))
 
 	def looksFileLike(toCheck):
 		hasRead = hasattr(toCheck, 'read')
@@ -403,10 +403,10 @@ def createData(retType, data, pointNames=None, featureNames=None, fileType=None,
 
 	# input is raw data
 	if isAllowedRaw(data):
-		return initDataObject(retType, data, pointNames, featureNames, name, None)
+		return initDataObject(returnType, data, pointNames, featureNames, name, None)
 	# input is an open file or a path to a file
 	elif isinstance(data, basestring) or looksFileLike(data):
-		return createDataFromFile(retType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures)
+		return createDataFromFile(returnType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures)
 	# no other allowed inputs
 	else:
 		raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
@@ -721,7 +721,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 	with the contents of **kwarguments before being passed on.
 
 	output: The kind of UML data object that the output of this function should be
-	in. Any of the normal string inputs to the createData 'retType' parameter are
+	in. Any of the normal string inputs to the createData 'returnType' parameter are
 	accepted here. Alternatively, the value 'match' will indicate to use the type
 	of the 'trainX' parameter.
 

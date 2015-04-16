@@ -57,7 +57,7 @@ Any subclass of UML.data.Base must have a corresponding test object placed in
 UML.data.tests.testObjects and subclass from all of the method grouping
 objects (StructureBackend, QueryBackend, etc.). During __init__ a call to
 super(...).__init__ must be made with a string value to be used for the
-retType parameter of UML.createData() defining which kind of object to 
+returnType parameter of UML.createData() defining which kind of object to 
 be tested. Any further tests, for private helpers can also be placed in
 that test object. We disallow all other ways of testing UML.data.Base
 subclasses.

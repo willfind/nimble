@@ -113,14 +113,14 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
 
 	return (rawData, retPNames, retFNames)
 
-def initDataObject(retType, rawData, pointNames, featureNames, name, path):
+def initDataObject(returnType, rawData, pointNames, featureNames, name, path):
 	if scipy.sparse.issparse(rawData):
 		autoType = 'Sparse'
 	else:
 		autoType = 'Matrix'
 	
-	if retType is None:
-		retType = autoType
+	if returnType is None:
+		returnType = autoType
 
 	# check if we need to do name extraction; setup new variables.
 	pnamesID = None
@@ -139,11 +139,11 @@ def initDataObject(retType, rawData, pointNames, featureNames, name, path):
 		# here, because objects other than 'List' can't deal with string typed
 		# values
 		extracted = True
-		if isinstance(rawData, list) and retType != 'List':
+		if isinstance(rawData, list) and returnType != 'List':
 			temp = extractNamesFromRawList(rawData, pnamesID, fnamesID)
 		# Matrices auto convert into float types. So in most cases we
 		# want to extract the names before we get there.
-		elif retType == 'Matrix':
+		elif returnType == 'Matrix':
 			# can skip list check, overlaps with previous if clause.
 			if isinstance(rawData, numpy.ndarray) or isinstance(rawData, numpy.matrix):
 				temp = extractNamesFromNumpy(rawData, pnamesID, fnamesID)
@@ -178,7 +178,7 @@ def initDataObject(retType, rawData, pointNames, featureNames, name, path):
 			relPath = path
 		pathsToPass = (absPath, relPath)
 
-	initMethod = getattr(UML.data, retType)
+	initMethod = getattr(UML.data, returnType)
 	try:
 		ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass)
 	except Exception as e:
@@ -187,7 +187,7 @@ def initDataObject(retType, rawData, pointNames, featureNames, name, path):
 		try:
 			autoMethod = getattr(UML.data, autoType)
 			ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass)
-			ret = ret.copyAs(retType)
+			ret = ret.copyAs(returnType)
 		# If it didn't work, report the error on the thing the user ACTUALLY
 		# wanted
 		except:
@@ -235,7 +235,7 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 	return ret
 
-def createDataFromFile(retType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures):
+def createDataFromFile(returnType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures):
 	"""
 	Helper for createData which deals with the case of loading data
 	from a file. Returns a triple containing the raw data, pointNames,
@@ -275,7 +275,7 @@ def createDataFromFile(retType, data, pointNames, featureNames, fileType, name, 
 			raise ArgumentException(msg)
 		fileType = extension
 
-	loadType = retType
+	loadType = returnType
 	if loadType is None:
 		if fileType == 'csv':
 			loadType = 'Matrix'
@@ -319,7 +319,7 @@ def createDataFromFile(retType, data, pointNames, featureNames, fileType, name, 
 		tokens = path.rsplit(os.path.sep)
 		name = tokens[len(tokens)-1]
 
-	return initDataObject(retType, retData, pointNames, featureNames, name, path)
+	return initDataObject(returnType, retData, pointNames, featureNames, name, path)
 
 def _loadcsvForList(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
 	(data, pointNames, featureNames) = _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
@@ -1410,7 +1410,7 @@ def generateRegressionData(labels, pointsPer, featuresPer):
 
 #with class-based refactor:
 #todo add scale control as paramater for generateClusteredPoints - remember to scale noise term accordingly
-def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoint, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False, retType='Matrix'):
+def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoint, addFeatureNoise=True, addLabelNoise=True, addLabelColumn=False, returnType='Matrix'):
 	"""
 	Function to generate Data object with arbitrary number of points, number of clusters, and number of features.
 
@@ -1467,10 +1467,10 @@ def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoin
 	noiselessLabelsObj = UML.createData('Matrix', clusterNoiselessLabelList)
 
 	#convert datatype if not matrix
-	if retType.lower() != 'matrix':
-		pointsObj = pointsObj.copyAs(retType)
-		labelsObj = labelsObj.copyAs(retType)
-		noiselessLabelsObj = noiselessLabelsObj.copyAs(retType)
+	if returnType.lower() != 'matrix':
+		pointsObj = pointsObj.copyAs(returnType)
+		labelsObj = labelsObj.copyAs(returnType)
+		noiselessLabelsObj = noiselessLabelsObj.copyAs(returnType)
 	
 	return (pointsObj, labelsObj, noiselessLabelsObj)
 
