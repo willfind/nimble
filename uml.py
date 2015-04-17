@@ -355,23 +355,41 @@ def createData(returnType, data, pointNames=None, featureNames=None, fileType=No
 	returnType: string (or None) indicating which kind of UML data type you want
 	returned. If None is given, UML will attempt to detect the type most
 	appropriate for the data. Currently accepted are the strings "List",
-	"Matri, and "Sparse"
+	"Matrix", and "Sparse" -- which are case sensitive.
 
 	data: the source of the data to be loaded into the returned object. The
-	source may be any number of in python objects (lists, numpy arrays, numpy
+	source may be any number of in-python objects (lists, numpy arrays, numpy
 	matrices, scipy sparse objects) as long as they specify a 2d matrix of
-	data. Alternatively, the data may be read from a  file, specified either
+	data. Alternatively, the data may be read from a file, specified either
 	as a string path, or a currently open file-like object.
 
-	pointNames:
+	pointNames: the source for point names in the returned object. They may
+	be specified explictly by some list-like or dict-like object, so long
+	as all points in the data are assigned a name and the names for each
+	point are unique.. If the point names are imbedded in the data, then a
+	valid point index may be passed to this argument, and that point will be
+	extracted and assigned (note: this works regardless of whether the data
+	is sourced from an in-python object or a file). Finally, if this argument
+	is None, and the data is being loaded from a file, then it is possible
+	the names will be automatically assigned.
 
-	featureNames:
+	featureNames: the source for feature names in the returned object. They may
+	be specified explictly by some list-like or dict-like object, so long
+	as all points in the data are assigned a name and the names for each
+	feature are unique. If the feature names are imbedded in the data, then a
+	valid feature index may be passed to this argument, and that feature will
+	be extracted and assigned as the names (note: this works regardless of
+	whether the data is sourced from an in-python object or	a file). Finally,
+	if this argument is None, and the data is being loaded from a file, then it
+	is possible the names will be automatically assigned.
 
-	fileType: when loading from a file, this indicates the format of the file.
-	It will override the file extension: for example, if loading "data.mtx"
-	with fileType='csv', createData will attempt to load the file as a csv
-	file. This is ignored if loading from a python object. Currently accepted
-	values are "csv" and "mtx" 
+	fileType: allows the user to explictly specify the format expected when
+	loading from a file. Normally, if a file is being loaded, the extension
+	of the file name is used to indicate the format. However, if fileType is
+	specified, it will override the file extension. Also, when loading from a
+	file with no extension, the user is requred to specify a format via
+	fileType. This argument is ignored if loading from a python object.
+	Currently accepted values are "csv" and "mtx", with a default value of None
 
 	name: When not None, this value is set as the name attribute of the
 	returned object
