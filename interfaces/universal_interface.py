@@ -459,14 +459,18 @@ class UniversalInterface(object):
 		success = False
 		missing = []
 		bestParams = []
+		nonDefaults = []
 		for i in range(len(possibleParamsSets)):
 				missing.append([])
 		bestIndex = None
 		for i in range(len(possibleParamsSets)):
 			currParams = possibleParamsSets[i]
 			currDefaults = matchingDefaults[i]
+			nonDefaults.append([])
 			allIn = True
 			for param in currParams:
+				if param not in currDefaults:
+					nonDefaults[i].append(param)
 				if param not in arguments and param not in currDefaults:
 					allIn = False
 					missing[i].append(param)
@@ -474,7 +478,24 @@ class UniversalInterface(object):
 				bestIndex = i
 				success = True
 		if not success:
-			raise ArgumentException("Missing required params in each possible set: " + str(missing))
+			msg = "MISSING LEARNERING PARAMETER(S)! "
+			msg += "When trying to validate arguments, "
+			msg += "we must pick the set of required parameters that best match "
+			msg += "the given input. However, from each possible parameter set, the "
+			msg += " following parameter names were missing "
+			msg += "'" + str(missing) + "'. "
+			msg += "The following is a list of required names in each of the possible "
+			msg += "parameter sets, which are in the same order as the list of missing "
+			msg += "names:"
+			msg += str(nonDefaults) + ". "
+			msg += "The full mapping of inputs actually provided was: "
+			msg += str(arguments) + ". "
+
+			raise ArgumentException(msg)
+
+
+			msg = "Missing required params in each possible set: " + str(missing)
+			raise ArgumentException(msg)
 		return bestIndex
 
 	def _formatScoresToOvA(self, learnerName, learner, testX, applyResults, rawScores, arguments, customDict):
