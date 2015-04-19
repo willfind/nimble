@@ -2625,7 +2625,10 @@ class Base(object):
 				identifier = len(names) + identifier
 				toReturn = identifier
 			if identifier < 0 or identifier >= len(namesInv):
-				raise ArgumentException("The index " + str(identifier) +" is outside of the range of possible values")
+				msg = "The given index " + str(identifier) + " is outside of the range "
+				msg += "of possible indices in this axis (0 to " + str(len(namesInv)-1)
+				msg += ")."
+				raise ArgumentException(msg)
 		if isinstance(identifier,basestring):
 			if identifier not in names:
 				raise ArgumentException("The name '" + identifier + "' cannot be found")
