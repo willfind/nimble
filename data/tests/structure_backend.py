@@ -1354,6 +1354,24 @@ class StructureModifying(DataTestObject):
 
 		toTest.isIdentical(exp)
 
+	def test_extractPoints_function_returnPointEmpty(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		exp = self.constructor(data)
+		def takeNone(point):
+			return False
+
+#		import pdb
+#		pdb.set_trace()
+
+		ret = toTest.extractPoints(takeNone)
+
+		data = [[],[],[]]
+		data = numpy.array(data).T
+		expRet = self.constructor(data)
+
+		assert ret.isIdentical(expRet)
+		assert toTest.isIdentical(exp)
 
 	def test_extractPoints_handmadeFunction(self):
 		""" Test extractPoints() against handmade output for function extraction """
@@ -1405,6 +1423,7 @@ class StructureModifying(DataTestObject):
 		assert ext.isIdentical(exp)
 		expEnd = self.constructor([[7,8,9]], featureNames=featureNames)
 		assert toTest.isIdentical(expEnd)
+
 
 	@raises(ArgumentException)
 	def test_extractPoints_exceptionStartInvalid(self):
@@ -1641,6 +1660,22 @@ class StructureModifying(DataTestObject):
 		exp = self.constructor(data)
 
 		toTest.isIdentical(exp)
+
+	def test_extractFeatures_function_returnPointEmpty(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		exp = self.constructor(data)
+		def takeNone(point):
+			return False
+
+		ret = toTest.extractFeatures(takeNone)
+
+		data = [[],[],[]]
+		data = numpy.array(data)
+		expRet = self.constructor(data)
+
+		assert ret.isIdentical(expRet)
+		assert toTest.isIdentical(exp)
 
 
 	def test_extractFeatures_handmadeFunction(self):

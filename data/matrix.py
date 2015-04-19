@@ -5,6 +5,7 @@ Class extending Base, using a numpy dense matrix to store data.
 
 import numpy
 import scipy.sparse
+import sys
 
 import UML
 from base import Base
@@ -39,6 +40,9 @@ class Matrix(Base):
 						data = numpy.empty(shape=(0,cols))
 					self.data = numpy.matrix(data, dtype=numpy.float)
 		except ValueError:
+			einfo = sys.exc_info()
+			#if not ignore:
+			#	raise einfo[1], None, einfo[2]
 			msg = "ValueError during instantiation. Matrix does not accept strings "
 			msg += "in the input (with the exception of those that are directly convertible, "
 			msg += "like '3' or '-11'), having included strings is the likely cause for "
@@ -265,7 +269,7 @@ class Matrix(Base):
 		"""
 		results = viewBasedApplyAlongAxis(toExtract,'point',self)
 		results = results.astype(numpy.int)
-		ret = self.data[numpy.nonzero(results),:]
+		ret = self.data[numpy.flatnonzero(results),:]
 		# need to convert our boolean array to to list of points to be removed	
 		toRemove = []
 		for i in xrange(len(results)):
