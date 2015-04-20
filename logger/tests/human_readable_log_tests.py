@@ -9,11 +9,11 @@ import StringIO
 import UML
 from UML.logger.human_readable_log import HumanReadableLogger
 
-from UML.tests.testConfig import safetyWrapper
+from UML.configuration import configSafetyWrapper
 
 
 
-@safetyWrapper
+@configSafetyWrapper
 def test_mirrorTostandardOut():
 	UML.settings.set('logger', 'mirrorToStandardOut', 'True')
 
@@ -34,7 +34,7 @@ def test_mirrorTostandardOut():
 	finally:
 		sys.stdout = sys.__stdout__
 
-@safetyWrapper
+@configSafetyWrapper
 def test_HR_logger_output_fromFile_trainAndApply():
 	UML.settings.set('logger', 'mirrorToStandardOut', 'True')
 	

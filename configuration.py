@@ -24,6 +24,7 @@ import os
 import copy
 import sys
 import inspect
+import tempfile
 
 import UML
 from UML.exceptions import ArgumentException
@@ -442,3 +443,42 @@ def syncWithInterfaces(settingsObj):
 	# the file, which we don't want. We instead want to preserve the
 	# user changes, and only save them because of user intervention.
 	settingsObj.changes = newChanges
+
+def configSafetyWrapper(toWrap):
+	"""Decorator which ensures the safety of UML.settings, the configuraiton
+	file, and associated global UML state. To be used to wrap unit tests
+	which intersect with configuration functionality"""
+	def wrapped(*args):
+		backupFile = tempfile.TemporaryFile()
+		configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
+		backupFile.write(configurationFile.read())
+		configurationFile.close()
+		
+		backupChanges = copy.copy(UML.settings.changes)
+		backupHooks = copy.copy(UML.settings.hooks)
+		backupAvailable = copy.copy(UML.interfaces.available)
+
+		try:
+			toWrap(*args)
+		finally:
+			backupFile.seek(0)
+			configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
+			configurationFile.write(backupFile.read())
+			configurationFile.close()
+
+			UML.settings = UML.configuration.loadSettings()
+			UML.settings.changes = backupChanges
+			UML.settings.hooks = backupHooks
+			UML.interfaces.available = backupAvailable
+
+			# this guarantees that if these options had been changed in the wrapped
+			# function, that active logger will have the correct open files before
+			# we continue on
+			UML.settings.set("logger", 'location', UML.settings.get("logger", 'location'))
+			UML.settings.set("logger", 'name', UML.settings.get("logger", 'name'))
+			UML.settings.saveChanges("logger")
+
+	wrapped.func_name = toWrap.func_name
+	wrapped.__doc__ = toWrap.__doc__
+
+	return wrapped 

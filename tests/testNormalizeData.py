@@ -7,7 +7,7 @@ import UML
 
 from UML.customLearners import CustomLearner
 
-from UML.tests.testConfig import safetyWrapper
+from UML.configuration import configSafetyWrapper
 
 
 # successful run no testX
@@ -50,7 +50,7 @@ def test_normalizeData_namesChanged():
 
 
 # referenceData safety
-@safetyWrapper
+@configSafetyWrapper
 def test_mormalizeData_referenceDataSafety():
 
 	class ListOutputer(CustomLearner):

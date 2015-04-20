@@ -5,8 +5,6 @@ mechanisms for controlling logging are functioning as expected.
 """
 
 import os
-import tempfile
-import copy
 
 from nose.plugins.attrib import attr
 
@@ -14,38 +12,9 @@ import UML
 
 from UML.helpers import generateClassificationData
 from UML.calculate import fractionIncorrect
+from UML.configuration import configSafetyWrapper
 
 learnerName = 'custom.KNNClassifier'
-
-
-def safetyWrapper(toWrap):
-	"""Decorator which ensures the safety of the the UML.settings and
-	the configuraiton file during the unit tests"""
-	def wrapped(*args):
-		backupFile = tempfile.TemporaryFile()
-		configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
-		backupFile.write(configurationFile.read())
-		configurationFile.close()
-		
-		backupChanges = copy.copy(UML.settings.changes)
-		backupAvailable = copy.copy(UML.interfaces.available)
-
-		try:
-			toWrap(*args)
-		finally:
-			backupFile.seek(0)
-			configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
-			configurationFile.write(backupFile.read())
-			configurationFile.close()
-
-			UML.settings = UML.configuration.loadSettings()
-			UML.settings.changes = backupChanges
-			UML.interfaces.available = backupAvailable
-
-	wrapped.func_name = toWrap.func_name
-	wrapped.__doc__ = toWrap.__doc__
-
-	return wrapped 
 
 
 # helper function which checks log staus
@@ -77,7 +46,7 @@ def runAndCheck(toCall, useLog):
 
 	return (startSize, endSize)
 
-@safetyWrapper
+@configSafetyWrapper
 def backend(toCall):
 	# for each combination of local and global, call and check
 
@@ -194,7 +163,7 @@ def test_crossValidateReturnBest():
 # reTrain?
 # createData?
 
-@safetyWrapper
+@configSafetyWrapper
 def backendDeep(toCall, setter):
 	UML.settings.set('logger', 'enabledByDefault', 'True')
 	setter('True')

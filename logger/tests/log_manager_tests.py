@@ -8,47 +8,28 @@ associated configuration options
 import tempfile
 import shutil
 import os
-import copy
 
 import UML
 from UML.helpers import generateClassificationData
+from UML.configuration import configSafetyWrapper
 
-def safetyWrapper(toWrap):
-	"""Decorator which ensures the safety of the the UML.settings and
-	the configuraiton file during the unit tests"""
-	def wrapped(*args):
-		backupFile = tempfile.TemporaryFile()
-		configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
-		backupFile.write(configurationFile.read())
-		configurationFile.close()
-		
-		backupChanges = copy.copy(UML.settings.changes)
-		backupAvailable = copy.copy(UML.interfaces.available)
 
-		try:
-			toWrap(*args)
-		finally:
-			backupFile.seek(0)
-			configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
-			configurationFile.write(backupFile.read())
-			configurationFile.close()
-
-			UML.settings = UML.configuration.loadSettings()
-			UML.settings.changes = backupChanges
-			UML.interfaces.available = backupAvailable
-
-	wrapped.func_name = toWrap.func_name
-	wrapped.__doc__ = toWrap.__doc__
-
-	return wrapped 
-
-@safetyWrapper
+@configSafetyWrapper
 def test_logger_location_init():
 	tempDirPath = tempfile.mkdtemp()
+	backupName = UML.settings.get("logger", "name")
+	backupLoc = UML.settings.get("logger", "location")
 	try:
 		location = os.path.join(tempDirPath, 'logs-UML')
+
+		oldDirHR = UML.logger.active.humanReadableLog.logFileName
+		oldDirMR = UML.logger.active.machineReadableLog.logFileName
+
 		UML.settings.set("logger", "location", location)
-		
+
+		assert UML.logger.active.humanReadableLog.logFileName != oldDirHR
+		assert UML.logger.active.machineReadableLog.logFileName != oldDirMR
+
 		cData = generateClassificationData(2, 10, 5)
 		((trainX, trainY), (testX, testY)) = cData
 		learner = 'custom.KNNClassifier'

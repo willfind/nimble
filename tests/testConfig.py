@@ -13,35 +13,7 @@ from nose.tools import raises
 
 import UML
 from UML.exceptions import ArgumentException
-
-def safetyWrapper(toWrap):
-	"""Decorator which ensures the safety of the the UML.settings and
-	the configuraiton file during the unit tests"""
-	def wrapped(*args):
-		backupFile = tempfile.TemporaryFile()
-		configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
-		backupFile.write(configurationFile.read())
-		configurationFile.close()
-		
-		backupChanges = copy.copy(UML.settings.changes)
-		backupAvailable = copy.copy(UML.interfaces.available)
-
-		try:
-			toWrap(*args)
-		finally:
-			backupFile.seek(0)
-			configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
-			configurationFile.write(backupFile.read())
-			configurationFile.close()
-
-			UML.settings = UML.configuration.loadSettings()
-			UML.settings.changes = backupChanges
-			UML.interfaces.available = backupAvailable
-
-	wrapped.func_name = toWrap.func_name
-	wrapped.__doc__ = toWrap.__doc__
-
-	return wrapped 
+from UML.configuration import configSafetyWrapper
 
 
 def fileEqualObjOutput(fp, obj):
@@ -194,14 +166,14 @@ def test_settings_GetSet():
 	assert UML.settings.changes == origChangeSet
 
 @raises(ArgumentException)
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_HooksException_unCallable():
 	""" Test SeesionConfiguration.hook() throws exception on bad input """
 	UML.settings.hook("TestS", "TestOp", 5)
 
 
 @raises(ArgumentException)
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_HooksException_unHookable():
 	""" Test SeesionConfiguration.hook() throws exception for unhookable combo """
 	UML.settings.hook("TestS", "TestOp", None)
@@ -212,7 +184,7 @@ def test_settings_HooksException_unHookable():
 	UML.settings.hook("TestS", "TestOp", nothing)
 
 @raises(ArgumentException)
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_HooksException_wrongSig():
 	""" Test SeesionConfiguration.hook() throws exception on incorrect signature """
 	UML.settings.hook("TestS", "TestOp", None)
@@ -223,7 +195,7 @@ def test_settings_HooksException_wrongSig():
 	UML.settings.hook("TestS", "TestOp", twoArg)
 
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_Hooks():
 	""" Test the on-change hooks for a SessionConfiguration object """
 	history = []
@@ -240,7 +212,7 @@ def test_settings_Hooks():
 
 	assert history == [5,4,1,"Bang"]
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_GetSectionOnly():
 	""" Test UML.settings.get when only specifying a section """
 	UML.settings.set("TestSec1", "op1", '1')
@@ -252,7 +224,7 @@ def test_settings_GetSectionOnly():
 
 
 
-#@safetyWrapper
+#@configSafetyWrapper
 #def test_settings_getFormatting():
 #	""" Test the format flags  """
 #	UML.settings.set("FormatTest", "numOp", 1)
@@ -263,7 +235,7 @@ def test_settings_GetSectionOnly():
 #	assert asFloat == 1.0
 
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_saving():
 	""" Test UML.settings will save its in memory changes """
 	# make some change via UML.settings. save it,
@@ -274,7 +246,7 @@ def test_settings_saving():
 	UML.settings = UML.configuration.loadSettings()
 	assert UML.settings.get("bogusSectionName", 'bogus.Option.Name') == '1'
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_savingSection():
 	""" Test UML.settings.saveChanges when specifying a section """
 	UML.settings.set("TestSec1", "op1", '1')
@@ -297,7 +269,7 @@ def test_settings_savingSection():
 	except ConfigParser.NoSectionError:
 		pass
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_savingOption():
 	""" Test UML.settings.saveChanges when specifying a section and option """
 	UML.settings.set("TestSec1", "op1", '1')
@@ -326,7 +298,7 @@ def test_settings_savingOption():
 		pass
 
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_syncingNewInterface():
 	""" Test UML.configuration.syncWithInterfaces correctly modifies file """
 	tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
@@ -349,7 +321,7 @@ def test_settings_syncingNewInterface():
 	assert UML.settings.get('Test', 'Temp0') == ''
 	assert UML.settings.get('Test', 'Temp1') == ''
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_syncingSafety():
 	""" Test that syncing preserves values already in the config file """
 	tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
@@ -374,7 +346,7 @@ def test_settings_syncingSafety():
 	assert UML.settings.get("Test", 'Temp0') == '0'
 	assert UML.settings.get("Test", 'Temp1') == '1'
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_syncingChanges():
 	""" Test that syncing interfaces properly saves current changes """
 	tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])

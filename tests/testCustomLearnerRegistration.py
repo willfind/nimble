@@ -10,34 +10,7 @@ import UML
 from UML.exceptions import ArgumentException
 from UML.customLearners import CustomLearner
 from UML.customLearners.ridge_regression import RidgeRegression
-
-def safetyWrapper(toWrap):
-	"""Decorator which ensures the safety of the the UML.settings and
-	the configuraiton file during the unit tests"""
-	def wrapped(*args):
-		backupFile = tempfile.TemporaryFile()
-		configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
-		backupFile.write(configurationFile.read())
-		configurationFile.close()
-		
-		backupChanges = copy.copy(UML.settings.changes)
-		backupAvailable = copy.copy(UML.interfaces.available)
-
-		try:
-			toWrap(*args)
-		finally:
-			backupFile.seek(0)
-			configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
-			configurationFile.write(backupFile.read())
-			configurationFile.close()
-
-			UML.settings = UML.configuration.loadSettings()
-			UML.settings.changes = backupChanges
-			UML.interfaces.available = backupAvailable
-
-	wrapped.func_name = toWrap.func_name
-	wrapped.__doc__ = toWrap.__doc__
-	return wrapped
+from UML.configuration import configSafetyWrapper
 
 class LoveAtFirstSightClassifier(CustomLearner):
 	""" Always predicts the value of the first class it sees in the most recently trained data """
@@ -87,7 +60,7 @@ class UncallableLearner(CustomLearner):
 
 
 @raises(ArgumentException)
-@safetyWrapper
+@configSafetyWrapper
 def testCustomPackageNameCollision():
 	""" Test registerCustomLearner raises an exception when the given name collides with a real package """
 	avail = UML.interfaces.available
@@ -103,21 +76,21 @@ def testCustomPackageNameCollision():
 
 
 @raises(ArgumentException)
-@safetyWrapper
+@configSafetyWrapper
 def testDeregisterBogusPackageName():
 	""" Test deregisterCustomLearner raises an exception when passed a bogus customPackageName """
 	UML.deregisterCustomLearner("BozoPackage", 'ClownClassifier')
 
 
 @raises(ArgumentException)
-@safetyWrapper
+@configSafetyWrapper
 def testDeregisterFromNonCustom():
 	""" Test deregisterCustomLearner raises an exception when trying to deregister from a non-custom interface """
 	UML.deregisterCustomLearner("Mlpy", 'KNN')
 
 
 @raises(ArgumentException)
-@safetyWrapper
+@configSafetyWrapper
 def testDeregisterBogusLearnerName():
 	""" Test deregisterCustomLearner raises an exception when passed a bogus learnerName """
 	#save state before registration, to check against final state
@@ -131,7 +104,7 @@ def testDeregisterBogusLearnerName():
 		UML.deregisterCustomLearner("Foo", "LoveAtFirstSightClassifier")
 		assert saved == UML.interfaces.available
 
-@safetyWrapper
+@configSafetyWrapper
 def testMultipleCustomPackages():
 	""" Test registerCustomLearner correctly instantiates multiple custom packages """
 
@@ -156,7 +129,7 @@ def testMultipleCustomPackages():
 
 	assert saved == UML.interfaces.available
 
-@safetyWrapper
+@configSafetyWrapper
 def testMultipleLearnersSinglePackage():
 	""" Test multiple learners grouped in the same custom package """
 	#TODO test is not isolated from above.
@@ -194,7 +167,7 @@ def testMultipleLearnersSinglePackage():
 
 # test that register and deregister learner records the
 # registartion to UML.settings / the config file
-@safetyWrapper
+@configSafetyWrapper
 def testEffectToSettings():
 	""" Test that (de)registering is correctly recorded by UML.settings """
 	UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
@@ -221,7 +194,7 @@ def testEffectToSettings():
 
 # test that registering a sample custom learner with option names
 # will affect UML.settings and the config file
-@safetyWrapper
+@configSafetyWrapper
 def testRegisterLearnerWithOptionNames():
 	""" Test the availability of a custom learner's options """
 	UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
@@ -234,7 +207,7 @@ def testRegisterLearnerWithOptionNames():
 
 # test what happens when you deregister a custom learner that has
 # in memory changes to its options in UML.settings
-@safetyWrapper
+@configSafetyWrapper
 def testDeregisterWithSettingsChanges():
 	""" Safety check: unsaved options discarded after deregistration """
 	UML.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
@@ -264,7 +237,7 @@ def testDeregisterWithSettingsChanges():
 	except ConfigParser.NoSectionError:
 		pass
 
-@safetyWrapper
+@configSafetyWrapper
 def test_settings_autoRegister():
 	""" Test that the auto registration helper correctly registers learners """
 	# establish that this custom package does not currently exist
