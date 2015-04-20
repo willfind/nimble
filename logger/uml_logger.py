@@ -1,4 +1,4 @@
-import numpy
+import os
 
 from UML.exceptions import ArgumentException
 
@@ -35,7 +35,11 @@ class UmlLogger(object):
 		"""
 		if newFileName is not None and isinstance(newFileName, (str, unicode)):
 			self.logFileName = newFileName
-		else: pass
+
+		dirPath = os.path.dirname(self.logFileName)
+		if not os.path.exists(dirPath):
+			os.makedirs(dirPath)
+
 		self.logFile = open(self.logFileName, 'a')
 		self.isAvailable = True
 
