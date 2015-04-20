@@ -2607,31 +2607,42 @@ class Base(object):
 
 
 	def _getPointIndex(self, identifier):
-		return self._getIndex(identifier, self.pointNames, self.pointNamesInverse)
+		return self._getIndex(identifier, 'point')
 
 	def _getFeatureIndex(self, identifier):
-		return self._getIndex(identifier, self.featureNames, self.featureNamesInverse)
+		return self._getIndex(identifier, 'feature')
 
-	def _getIndex(self, identifier, names, namesInv):
+	def _getIndex(self, identifier, axis):
+		names = self.pointNames if axis == 'point' else self.featureNames
+		namesInv = self.pointNamesInverse if axis == 'point' else self.featureNamesInverse
+		
 		toReturn = identifier
 		if len(names) == 0:
-			raise ArgumentException("There are no valid feature identifiers; this object has 0 features")
+			msg = "There are no valid " + axis + " identifiers; this object has 0 "
+			msg += axis + "s"
+			raise ArgumentException(msg)
 		if identifier is None:
-			raise ArgumentException("An identifier cannot be None")
+			msg = "An identifier cannot be None."
+			raise ArgumentException(msg)
 		if (not isinstance(identifier,basestring)) and (not isinstance(identifier,int)):
-			raise ArgumentException("The identifier must be either a string or integer index")
+			axisCount = self.pointCount if axis == 'point' else self.featureCount
+			msg = "The identifier must be either a string (a valid " + axis
+			msg += " name) or an integer index between 0 and " + str(axisCount-1) 
+			msg += " inclusive"
+			raise ArgumentException(msg)
 		if isinstance(identifier,int):
 			if identifier < 0:
 				identifier = len(names) + identifier
 				toReturn = identifier
 			if identifier < 0 or identifier >= len(namesInv):
 				msg = "The given index " + str(identifier) + " is outside of the range "
-				msg += "of possible indices in this axis (0 to " + str(len(namesInv)-1)
-				msg += ")."
+				msg += "of possible indices in the " + axis + " axis (0 to " 
+				msg += str(len(namesInv)-1) + ")."
 				raise ArgumentException(msg)
 		if isinstance(identifier,basestring):
 			if identifier not in names:
-				raise ArgumentException("The name '" + identifier + "' cannot be found")
+				msg = "The " + axis + " name '" + identifier + "' cannot be found."
+				raise ArgumentException(msg)
 			# set as index for return
 			toReturn = names[identifier]
 		return toReturn
@@ -2734,7 +2745,7 @@ class Base(object):
 
 		"""
 		#this will throw the appropriate exceptions, if need be
-		index = self._getIndex(toRemove, selfNames,selfNamesInv)
+		index = self._getIndex(toRemove, axis)
 		name = selfNamesInv[index]
 
 		del selfNames[name]
