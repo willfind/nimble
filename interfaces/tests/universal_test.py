@@ -1,14 +1,18 @@
 """
-Unit tests for the universal interface function.
+Unit tests for the universal interface object.
 
 """
 
 from nose.tools import raises
+import sys
+import tempfile
+import os
 
 import UML
 
 from UML.exceptions import ArgumentException
 from UML.interfaces.universal_interface import UniversalInterface
+from UML.helpers import generateClassificationData
 
 class Initable(object):
 	def __init__(self, C=1, thresh=0.5):
@@ -95,7 +99,7 @@ class TestInterface(UniversalInterface):
 	def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
 		return (learnerName, trainX, trainY, arguments)
 
-	def _applier(self, learner, testX, customDict):	
+	def _applier(self, learner, testX, arguments, customDict):	
 		return testX
 
 	def _findCallableBackend(self, name):
@@ -112,7 +116,7 @@ class TestInterface(UniversalInterface):
 	def _getScores(self, learner, trainX, trainY, arguments):
 		pass
 
-	def _getScoresOrder(self, learner, testX):
+	def _getScoresOrder(self, learner):
 		pass
 
 	def learnerType(self, name):
@@ -135,8 +139,8 @@ class TestInterface(UniversalInterface):
 		return 3
 
 
-
 TestObject = TestInterface()
+
 
 #######################################
 ### _validateArgumentDistribution() ###
@@ -221,6 +225,257 @@ def test_eachExposedPresent():
 	assert tl.exposedTwo() == 2
 	assert hasattr(tl, 'exposedThree')
 	assert tl.exposedThree() == 3
+
+
+
+#####################
+### OutputCapture ###
+#####################
+
+class AlwaysWarnInterface(UniversalInterface):
+
+	def __init__(self):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		super(AlwaysWarnInterface, self).__init__()
+
+	def accessible(self):
+		return True
+
+	def _listLearnersBackend(self):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return ['foo']
+
+	def _findCallableBackend(self, name):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return 'fooCallableBackend'
+
+	def _getParameterNamesBackend(self, name):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return [[]]
+
+	def _getLearnerParameterNamesBackend(self, name):
+		return self._getParameterNames(name)		
+
+	def _getDefaultValuesBackend(self, name):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return [{}]
+
+	def _getLearnerDefaultValuesBackend(self, name):
+		return self._getDefaultValues(name)
+
+	def learnerType(self, name):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		pass
+
+	def _getScores(self, learner, testX, arguments, customDict):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		num = testX.pointCount
+		raw = [0] * num 
+		return UML.createData("Matrix", raw)
+
+	def _getScoresOrder(self, learner):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return [0,1]
+
+	def isAlias(self, name):
+		if name.lower() in ['alwayswarn']:
+			return True
+		else:
+			return False
+
+	def getCanonicalName(self):
+		return "AlwaysWarn"
+
+	def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return (trainX, trainY, testX, arguments)
+
+	def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return outputValue
+
+	def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return (learnerName, trainX, trainY, arguments)
+
+	def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		pass
+
+	def _applier(self, learner, testX, arguments, customDict):	
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		return testX
+
+	def _getAttributes(self, learnerBackend):
+		sys.stderr.write('WARN TEST\n')
+		sys.stderr.flush()
+		pass
+
+	def _optionDefaults(self, option):
+		return []
+
+	def _configurableOptionNames(self):
+		return []
+
+	def _exposedFunctions(self):
+		return []
+
+
+
+#def test_warningscapture_init():
+#	AWObject = AlwaysWarnInterface()
+
+def backend_warningscapture(toCall, prepCall=None):
+	tempErr = tempfile.NamedTemporaryFile()
+	backup = sys.stderr
+	sys.stderr = tempErr
+	
+	try:
+		
+		if prepCall is not None:
+			AWObject = AlwaysWarnInterface()
+			arg = prepCall(AWObject)
+		else:
+			arg = AlwaysWarnInterface()
+
+		startSizeErr = os.path.getsize(tempErr.name)
+		startSizeCap = os.path.getsize(UML.capturedErr.name)
+
+		toCall(arg)
+
+		endSizeErr = os.path.getsize(tempErr.name)
+		endSizeCap = os.path.getsize(UML.capturedErr.name)
+
+		assert startSizeErr == endSizeErr
+		assert startSizeCap != endSizeCap
+	finally:
+		sys.stderr = backup
+
+def test_warningscapture_trainAndApply():
+	def wrapped(AWObject):
+		AWObject.trainAndApply('foo', None)
+
+	backend_warningscapture(wrapped)
+
+
+def test_warningscapture_trainAndTest():
+	cData = generateClassificationData(2, 10, 5)
+	((trainX, trainY), (testX, testY)) = cData
+	def metric(x,y):
+		return 0
+	def wrapped(AWObject):
+		AWObject.trainAndTest('foo', trainX, trainY, testX, testY, metric)
+
+	backend_warningscapture(wrapped)
+
+def test_warningscapture_train():
+	def wrapped(AWObject):
+		AWObject.train('foo', None)
+
+	backend_warningscapture(wrapped)
+
+def test_warningscapture_TL_test():
+	cData = generateClassificationData(2, 10, 5)
+	((trainX, trainY), (testX, testY)) = cData
+	def metric(x,y):
+		return 0
+	def prep(AWObject):
+		return AWObject.train('foo', trainX, trainY)
+	def wrapped(arg):
+		arg.test(testX, testY, metric)
+
+	backend_warningscapture(wrapped, prep)
+
+def test_warningscapture_TL_apply():
+	cData = generateClassificationData(2, 10, 5)
+	((trainX, trainY), (testX, testY)) = cData
+	def prep(AWObject):
+		return AWObject.train('foo', trainX, trainY)
+	def wrapped(arg):
+		arg.apply(testX)
+
+	backend_warningscapture(wrapped, prep)
+
+
+def test_warningscapture_TL_retrain():
+	cData = generateClassificationData(2, 10, 5)
+	((trainX, trainY), (testX, testY)) = cData
+	def prep(AWObject):
+		return AWObject.train('foo', trainX, trainY)
+	def wrapped(arg):
+		arg.retrain(testX, testY)
+
+	backend_warningscapture(wrapped, prep)
+
+
+def test_warningscapture_TL_incrementalTrain():
+	cData = generateClassificationData(2, 10, 5)
+	((trainX, trainY), (testX, testY)) = cData
+	def prep(AWObject):
+		return AWObject.train('foo', trainX, trainY)
+	def wrapped(arg):
+		arg.incrementalTrain(testX, testY)
+
+	backend_warningscapture(wrapped, prep)
+
+def test_warningscapture_TL_getAttributes():
+	cData = generateClassificationData(2, 10, 5)
+	((trainX, trainY), (testX, testY)) = cData
+	def prep(AWObject):
+		return AWObject.train('foo', trainX, trainY)
+	def wrapped(arg):
+		arg.getAttributes()
+
+	backend_warningscapture(wrapped, prep)
+
+def test_warningscapture_TL_getScores():
+	cData = generateClassificationData(2, 10, 5)
+	((trainX, trainY), (testX, testY)) = cData
+	def prep(AWObject):
+		return AWObject.train('foo', trainX, trainY)
+	def wrapped(arg):
+		arg.getScores(testX)
+
+	backend_warningscapture(wrapped, prep)
+
+def test_warningscapture_listLearners():
+	def wrapped(AWObject):
+		AWObject.listLearners()
+
+	backend_warningscapture(wrapped)
+
+def test_warningscapture_findCallable():
+	def wrapped(AWObject):
+		AWObject.findCallable('foo')
+
+	backend_warningscapture(wrapped)
+
+def test_warningscapture_getLearnerParameterNames():
+	def wrapped(AWObject):
+		AWObject.getLearnerParameterNames('foo')
+
+	backend_warningscapture(wrapped)
+
+def test_warningscapture_getLearnerDefaultValues():
+	def wrapped(AWObject):
+		AWObject.getLearnerDefaultValues('foo')
+
+	backend_warningscapture(wrapped)
+
+
 
 
 

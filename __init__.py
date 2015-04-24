@@ -10,6 +10,9 @@ import os
 import inspect
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
+import tempfile
+capturedErr = tempfile.NamedTemporaryFile()
+
 # load settings from configuration file
 import UML.configuration
 settings = UML.configuration.loadSettings()

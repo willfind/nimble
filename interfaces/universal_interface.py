@@ -10,6 +10,7 @@ import copy
 import abc
 import functools
 import numpy
+import sys
 
 import UML
 from UML.exceptions import ArgumentException
@@ -20,6 +21,23 @@ from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 
 from UML.helpers import _mergeArguments
+
+def captureOutput(toWrap):
+	"""Decorator which will safefly redirect standard error within the
+	wrapped function to the temp file at UML.capturedErr
+
+	"""
+	def wrapped(*args, **kwarguments):
+		backupErr = sys.stderr
+		sys.stderr = UML.capturedErr
+		try:
+			ret = toWrap(*args, **kwarguments)
+		finally:
+			sys.stderr = backupErr
+		return ret
+
+	return wrapped
+
 
 class UniversalInterface(object):
 	"""
@@ -75,6 +93,7 @@ class UniversalInterface(object):
 	def optionNames(self):
 		return copy.copy(self._configurableOptionNames())
 
+	@captureOutput
 	def trainAndApply(self, learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', timer=None):
 		
 		learner = self.train(learnerName, trainX, trainY, arguments, timer)
@@ -87,6 +106,7 @@ class UniversalInterface(object):
 
 		return ret
 
+	@captureOutput
 	def trainAndTest(self, learnerName, trainX, trainY, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', negativeLabel=None, timer=None, **kwarguments):
 		learner = self.train(learnerName, trainX, trainY, arguments, timer)
 		if timer is not None:
@@ -98,6 +118,7 @@ class UniversalInterface(object):
 
 		return ret
 
+	@captureOutput
 	def train(self, learnerName, trainX, trainY=None, arguments={}, timer=None):
 		(trainedBackend, transformedInputs, customDict) = self._trainBackend(learnerName, trainX, trainY, arguments, timer)	
 		
@@ -568,6 +589,7 @@ class UniversalInterface(object):
 					wrapped.__doc__ = 'Wrapped version of the ' + methodName + ' function where the "self" parameter has been fixed to be ' + str(interfaceObject) 
 				setattr(self, methodName, wrapped)
 
+		@captureOutput
 		def test(self, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', negativeLabel=None, **kwarguments):
 			"""
 			Returns the evaluation of predictions of testX using the argument
@@ -594,6 +616,7 @@ class UniversalInterface(object):
 			ret = _mergeArguments(ret, newArguments2)
 			return ret
 
+		@captureOutput
 		def apply(self, testX, arguments={}, output='match', scoreMode='label', **kwarguments):
 			"""
 			Returns the application of this learner to the given test data (i.e. performing
@@ -637,6 +660,7 @@ class UniversalInterface(object):
 
 				return labels
 
+		@captureOutput
 		def retrain(self, trainX, trainY=None):
 			has2dOutput = False
 			outputData = trainX if trainY is None else trainY
@@ -652,13 +676,16 @@ class UniversalInterface(object):
 			self.customDict = customDict
 			self.has2dOutput = has2dOutput
 
+		@captureOutput
 		def incrementalTrain(self, trainX, trainY=None):
 			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
 			self.backend = self.interface._incrementalTrainer(self.backend, trainX, trainY, arguments, self.customDict)
 
+		@captureOutput
 		def getAttributes(self):
 			return self.interface._getAttributes(self.backend)
 
+		@captureOutput
 		def getScores(self, testX, arguments={}, **kwarguments):
 			"""
 			Returns the scores for all labels for each data point. If this TrainedLearner
@@ -691,6 +718,7 @@ class UniversalInterface(object):
 	### CACHING FRONTENDS FOR ABSTRACT METHODS ###
 	##############################################
 
+	@captureOutput
 	def listLearners(self):
 		"""
 		Return a list of all learners callable through this interface.
@@ -705,6 +733,7 @@ class UniversalInterface(object):
 			ret = self._listLearnersCached
 		return ret
 
+	@captureOutput
 	@cacheWrapper
 	def findCallable(self, name):
 		"""
@@ -723,6 +752,7 @@ class UniversalInterface(object):
 		"""
 		return self._getParameterNamesBackend(name)
 
+	@captureOutput
 	@cacheWrapper
 	def getLearnerParameterNames(self, learnerName):
 		"""
@@ -741,6 +771,7 @@ class UniversalInterface(object):
 		"""
 		return self._getDefaultValuesBackend(name)
 
+	@captureOutput
 	@cacheWrapper
 	def getLearnerDefaultValues(self, learnerName):
 		"""
@@ -961,5 +992,3 @@ class UniversalInterface(object):
 
 		"""
 		pass
-
-
