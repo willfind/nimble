@@ -142,33 +142,36 @@ class HumanReadableLogger(UmlLogger):
 
 def _packMetricInfo(testY, metrics, predictions, performance):
 	metricTable = []
+	
+	# CI calculation prep
+	metricName = str(metrics[0].__name__)
+	intervalGenName = metricName + 'ConfidenceInterval'
+	interval = None
+	if hasattr(UML.calculate.confidence, intervalGenName):
+		if testY is not None and predictions is not None:
+			intervalGen = getattr(UML.calculate.confidence, intervalGenName)
+			interval = intervalGen(testY, predictions)
+
+	# First row: headers
 	metricHeaders = []
 	metricHeaders.append("Error Metric")
 	metricHeaders.append("Error Value")
-	metricHeaders.append("95% CI low")
-	metricHeaders.append("95% CI high")
+	if interval is not None:
+		metricHeaders.append("95% CI low")
+		metricHeaders.append("95% CI high")
+
 	metricTable.append(metricHeaders)
-	for metric, result in zip(metrics,performance):
-		metricRow = []
-		metricString = str(metric.__name__)
-		metricRow.append(metricString)
 
-		intervalGenName = metricString + 'ConfidenceInterval'
-		interval = None
-		if hasattr(UML.calculate.confidence, intervalGenName):
-			if testY is not None and predictions is not None:
-				intervalGen = getattr(UML.calculate.confidence, intervalGenName)
-				interval = intervalGen(testY, predictions)
-		if interval is None:
-			metricRow.append("")
-			metricRow.append(result)
-			metricRow.append("")
-		else:
-			metricRow.append(result)
-			metricRow.append(interval[0])
-			metricRow.append(interval[1])
+	# Second row: values
+	metricRow = []	
+	metricRow.append(metricName)
+	metricRow.append(performance[0])
+	if interval is not None:
+		metricRow.append(interval[0])
+		metricRow.append(interval[1])
 
-		metricTable.append(metricRow)
+	metricTable.append(metricRow)
+
 	return metricTable
 
 
