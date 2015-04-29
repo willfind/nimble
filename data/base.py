@@ -122,10 +122,13 @@ class Base(object):
 		return self._name
 
 	def _setObjName(self, value):
-		if value is not None and not isinstance(value,basestring):
-			msg = "The name of an object may only be a string, or the value None"
-			raise ValueError(msg)
-		self._name = value
+		if value is None:
+			self._name = dataHelpers.nextDefaultObjectName()
+		else:
+			if not isinstance(value,basestring):
+				msg = "The name of an object may only be a string, or the value None"
+				raise ValueError(msg)
+			self._name = value
 	name = property(_getObjName, _setObjName, doc="A name to be displayed when printing or logging this object")
 
 	def _getAbsPath(self):
@@ -1308,6 +1311,13 @@ class Base(object):
 
 	def __str__(self):
 		return self.toString()
+
+	def show(self, includeObjectName=True, includeAxisNames=True, maxWidth=80,
+			maxHeight=40, sigDigits=3):
+
+		if includeObjectName:
+			print self.name + ":"
+		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits)
 
 
 	##################################################################
