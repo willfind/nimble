@@ -96,7 +96,11 @@ class HumanReadableLogger(UmlLogger):
 #		if numFolds is not None:
 #			self.logMessage("# of folds: " + str(numFolds))
 
-		tableList.append(_packDataInfo([trainX, trainY, testX, testY]))
+		(dataInfo0, dataInfo1) = _packDataInfo([trainX, trainY, testX, testY])
+		if dataInfo0 is not None:
+			tableList.append(dataInfo0)
+		if dataInfo1 is not None:
+			tableList.append(dataInfo1)
 
 		#if extraInfo is not null, we create a new table and add all values in
 		#extraInfo
@@ -197,55 +201,58 @@ def _packDataInfo(dataObjects):
 		if isinstance(dataObjects[i], (int, basestring)):
 			dataObjects[i] = None
 
-	tableHeaders = ["Data"]
-
 	# check to see if there are meaningful values of name and path for any
 	# of the objects
-	includeName = False
-	includePath = False
+	hasName = False
+	hasPath = False
 	for d in dataObjects:
 		if d is not None:
 			if d.name is not None and not d.nameIsDefault():
-				includeName = True
+				hasName = True
 			if d.path is not None:
-				includePath = True
+				hasPath = True
 
+	rowHeaders = ['trainX', 'trainY', 'testX', 'testY']
+
+	# setup path table, if needed
+	rawPathTable = None
+	if hasPath:
+		# set up headers: path table
+		pathTableHeaders = ["Data", "Path to originating file"]
+		rawPathTable = [pathTableHeaders]
+		for i in range(len(rowHeaders)):
+			currRow = [rowHeaders[i]]
+			d = dataObjects[i]
+			if d is not None:		
+				# Append FileName
+				if hasPath:
+					toAppend = d.path if d.path is not None else ""
+					currRow.append(toAppend)
+				rawPathTable.append(currRow)
+
+	# Now, setup shape table
 	# set up headers
-	if includeName:
-		tableHeaders.append("Name")
-	if includePath:
-		tableHeaders.append("File Name")
-	tableHeaders.append("# points")
-	tableHeaders.append("# features")
-	if includePath:
-		tableHeaders.append("Path")
+	shapeTableHeaders = ["Data"]
+	if hasName:
+		shapeTableHeaders.append("Name")
+	shapeTableHeaders.append("# points")
+	shapeTableHeaders.append("# features")
 
 	# pack row for each non None object
-	rowHeaders = ['trainX', 'trainY', 'testX', 'testY']
-	rawTable = [tableHeaders]
+	rawShapeTable = [shapeTableHeaders]
 	for i in range(len(rowHeaders)):
 		currRow = [rowHeaders[i]]
 		d = dataObjects[i]
 		if d is not None:
 			# Append Name of Object
-			if includeName:
+			if hasName:
 				toAppend = d.name if d.name is not None else ""
 				currRow.append(toAppend)
 			
-			# Append FileName
-			if includePath:
-				toAppend = os.path.basename(d.path) if d.path is not None else ""
-				currRow.append(toAppend)
-
 			# Append Point, then Feature counts
 			currRow.append(d.pointCount)
 			currRow.append(d.featureCount)
 
-			# Append Path
-			if includePath:
-				toAppend = d.path if d.path is not None else ""
-				currRow.append(toAppend)
+			rawShapeTable.append(currRow)
 
-			rawTable.append(currRow)
-
-	return rawTable
+	return (rawPathTable, rawShapeTable)
