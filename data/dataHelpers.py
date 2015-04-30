@@ -214,6 +214,16 @@ def indicesSplit(allowed, total):
 	return (fIndices, bIndices)
 
 
+def hasNonDefault(possibleIndices, obj, axis):
+	namesInv = obj.pointNamesInverse if axis == 'point' else obj.featureNamesInverse
+
+	ret = False
+	for index in possibleIndices:
+		if not namesInv[index].startswith(DEFAULT_PREFIX):
+			ret = True
+
+	return ret
+
 def makeNamesLines(indent, maxW, numDisplayNames, count, namesInv, nameType):
 		namesString = ""
 		(posL, posR) = indicesSplit(numDisplayNames, count)

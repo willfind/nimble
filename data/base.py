@@ -1055,20 +1055,20 @@ class Base(object):
 		return not self.__eq__(other)
 
 
-	def toString(self, includeNames=True, maxWidth=80, maxHeight=40, sigDigits=3):
+	def toString(self, includeNames=True, maxWidth=80, maxHeight=30,
+				sigDigits=3, nameLength=11):
 		if self.pointCount == 0 or self.featureCount == 0:
 			return ""
 
 		columnSeperator = '  '
-		columnHolder = '...'
+		columnHolder = '--'
 		cHoldWidth = len(columnHolder)
 		cHoldTotal = len(columnSeperator) + cHoldWidth
 		rowHolder = '|'
 
 		corner = 'NAMES'
-		nameLim = 11
 		nameHolder = '...'
-		nameCutIndex = nameLim - len(nameHolder)
+		nameCutIndex = nameLength - len(nameHolder)
 
 		holderOrientation = 'center'
 		dataOrientation = 'center'
@@ -1084,9 +1084,20 @@ class Base(object):
 			maxWidth = float('inf')
 
 		if includeNames:
-			maxRows = min(maxHeight, self.pointCount + 1)
-			maxDataRows = maxRows - 1
-		else:
+			pRange = xrange(self.pointCount)
+			fRange = xrange(self.featureCount)
+			includePnames = dataHelpers.hasNonDefault(pRange, self, 'point')
+			includeFnames = dataHelpers.hasNonDefault(fRange, self, 'feature')
+			if not includePnames and not includeFnames:
+				includeNames = False
+			if includeNames:
+				maxRows = min(maxHeight, self.pointCount + 1)
+				maxDataRows = maxRows - 1
+		# this is an explicit check, not an 'else' because the value
+		# of includeNames could have changed above.
+		if not includeNames:
+			includePnames = False
+			includeFnames = False
 			maxRows = min(maxHeight, self.pointCount)
 			maxDataRows = maxRows
 
@@ -1108,8 +1119,11 @@ class Base(object):
 		for sourceIndex in range(2):
 			source = list([tRowIDs, bRowIDs])[sourceIndex]
 			for i in source:
-				pname = self.getPointName(i)
-				if len(pname) > nameLim:
+				if includePnames:
+					pname = self.getPointName(i)
+				else:
+					pname = ""
+				if len(pname) > nameLength:
 					pname = pname[:nameCutIndex] + nameHolder
 				if includeNames:
 					lTable.append([pname])
@@ -1159,8 +1173,11 @@ class Base(object):
 				nameIndex = currIndex
 				if currIndex < 0:
 					nameIndex = self.featureCount + currIndex
-				currName = self.getFeatureName(nameIndex)
-				if len(currName) > nameLim:
+				if includeFnames:
+					currName = self.getFeatureName(nameIndex)
+				else:
+					currName = ""
+				if len(currName) > nameLength:
 					currName = currName[:nameCutIndex] + nameHolder
 				nameLen = len(currName)
 				if nameLen > currWidth:
@@ -1313,11 +1330,11 @@ class Base(object):
 		return self.toString()
 
 	def show(self, includeObjectName=True, includeAxisNames=True, maxWidth=80,
-			maxHeight=40, sigDigits=3):
+			maxHeight=30, sigDigits=3, nameLength=11):
 
 		if includeObjectName:
 			print self.name + ":"
-		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits)
+		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, nameLength)
 
 
 	##################################################################

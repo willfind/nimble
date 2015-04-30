@@ -1192,7 +1192,7 @@ class QueryBackend(DataTestObject):
 ###########
 
 def checkToStringRet(ret, data):
-	cHold = '...'
+	cHold = '--'
 	rHold = '|'
 	sigDigits = 3
 	rows = ret.split('\n')
