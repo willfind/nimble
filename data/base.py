@@ -1119,9 +1119,8 @@ class Base(object):
 		for sourceIndex in range(2):
 			source = list([tRowIDs, bRowIDs])[sourceIndex]
 			for i in source:
-				if includePnames:
-					pname = self.getPointName(i)
-				else:
+				pname = self.getPointName(i)
+				if pname.startswith(DEFAULT_PREFIX):
 					pname = ""
 				if len(pname) > nameLength:
 					pname = pname[:nameCutIndex] + nameHolder
@@ -1173,9 +1172,8 @@ class Base(object):
 				nameIndex = currIndex
 				if currIndex < 0:
 					nameIndex = self.featureCount + currIndex
-				if includeFnames:
-					currName = self.getFeatureName(nameIndex)
-				else:
+				currName = self.getFeatureName(nameIndex)
+				if currName.startswith(DEFAULT_PREFIX):
 					currName = ""
 				if len(currName) > nameLength:
 					currName = currName[:nameCutIndex] + nameHolder
@@ -1333,7 +1331,10 @@ class Base(object):
 			maxHeight=30, sigDigits=3, nameLength=11):
 
 		if includeObjectName:
-			print self.name + ":"
+			toPrint = self.name + "\n    "
+			toPrint += "pointCount=" + str(self.pointCount) + "    "
+			toPrint += "featureCount=" + str(self.featureCount)
+			print toPrint
 		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, nameLength)
 
 
