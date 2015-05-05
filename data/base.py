@@ -13,6 +13,7 @@ import numpy
 import scipy
 import sys
 import os.path
+import inspect
 
 import UML
 from UML.exceptions import ArgumentException
@@ -1371,18 +1372,11 @@ class Base(object):
 		number of features as the calling object. None is always returned.
 		
 		"""
-		if toAppend is None:
-			raise ArgumentException("toAppend must not be None")
-		if not isinstance(toAppend,Base):
-			raise ArgumentException("toAppend must be a kind of data representation object")
-		if not self.featureCount == toAppend.featureCount:
-			raise ArgumentException("toAppend must have the same number of features as this object")
+		self._validateValueIsNotNone("toAppend", toAppend)
+		self._validateValueIsUMLDataObject("toAppend", toAppend)
+		self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
 		self._validateEqualNames('feature', 'feature', 'toAppend', toAppend)
-		intersection = self._pointNameIntersection(toAppend)
-		if intersection:
-			for name in intersection:
-				if not name.startswith(DEFAULT_PREFIX):
-					raise ArgumentException("toAppend must not share any pointNames with this object")
+		self._validateEmptyNamesIntersection("point", "toAppend", toAppend)
 
 		self._appendPoints_implementation(toAppend)
 		self._pointCount += toAppend.pointCount
@@ -1404,18 +1398,11 @@ class Base(object):
 		object. None is always returned.
 		
 		"""	
-		if toAppend is None:
-			raise ArgumentException("toAppend must not be None")
-		if not isinstance(toAppend, Base):
-			raise ArgumentException("toAppend must be a kind of data representation object")
-		if not self.pointCount == toAppend.pointCount:
-			raise ArgumentException("toAppend must have the same number of points as this object")
+		self._validateValueIsNotNone("toAppend", toAppend)
+		self._validateValueIsUMLDataObject("toAppend", toAppend)
+		self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
 		self._validateEqualNames('point', 'point', 'toAppend', toAppend)
-		intersection = self._featureNameIntersection(toAppend)
-		if intersection:
-			for name in intersection:
-				if not name.startswith(DEFAULT_PREFIX):
-					raise ArgumentException("toAppend must not share any featureNames with this object")
+		self._validateEmptyNamesIntersection('feature', "toAppend", toAppend)
 
 		self._appendFeatures_implementation(toAppend)
 		self._featureCount += toAppend.featureCount
@@ -2937,3 +2924,68 @@ class Base(object):
 			else:
 				if nameNum >= self._nextDefaultValueFeature:
 					self._nextDefaultValueFeature = nameNum + 1
+
+
+	def _validateValueIsNotNone(self, name, value):
+		if value is None:
+			msg = "The argument named " + name + " must not have a value of None"
+			raise ArgumentException(msg)
+
+	def _validateValueIsUMLDataObject(self, name, value):
+		if not isinstance(value, UML.data.Base):
+			msg = "The argument named " + name + " must be an instance "
+			msg += "of the UML.data.Base class. The value we recieved was "
+			msg += str(value) + ", had the type " + str(type(value)) 
+			msg += ", and a method resolution order of "
+			msg += str(inspect.getmro(value.__class__))
+			raise ArgumentException(msg)
+
+	def _validateObjHasSameNumberOfFeatures(self, argName, argValue):
+		selfFeats = self.featureCount
+		argValueFeats = argValue.featureCount
+		if selfFeats != argValueFeats:
+			msg = "The argument named " + argName + " must have the same number "
+			msg += "of features as the caller object. " + argName + " has "
+			msg += str(argValueFeats) + " and the caller has " + str(selfFeats)
+			raise ArgumentException(msg)
+
+	def _validateObjHasSameNumberOfPoints(self, argName, argValue):
+		selfPoints = self.pointCount
+		argValuePoints = argValue.pointCount
+		if selfPoints != argValuePoints:
+			msg = "The argument named " + argName + " must have the same number "
+			msg += "of points as the caller object. " + argName + " has "
+			msg += str(argValuePoints) + " and the caller has " + str(selfPoints)
+			raise ArgumentException(msg)
+
+	def _validateEmptyNamesIntersection(self, axis, argName, argValue):
+		if axis == 'point':
+			intersection = self._pointNameIntersection(argValue)
+			nString = 'pointNames'
+		elif axis == 'feature':
+			intersection = self._featureNameIntersection(argValue)
+			nString = 'featureNames'
+		else:
+			raise ArgumentException("invalid axis")
+
+		shared = []
+		if intersection:
+			for name in intersection:
+				if not name.startswith(DEFAULT_PREFIX):
+					shared.append(name)
+
+		if shared != []:
+			truncated = False
+			if len(shared) > 10:
+				full = len(shared)
+				shared = shared[:10]
+				truncated = True
+
+			msg = "The argument named " + argName + " must not share any "
+			msg += nString + " with the calling object, yet the following "
+			msg += "names occured in both: "
+			msg += UML.data.dataHelpers.prettyListString(shared)
+			if truncated:
+				msg += "... (only first 10 entries out of " + str(full)
+				msg += " total)"
+			raise ArgumentException(msg)
