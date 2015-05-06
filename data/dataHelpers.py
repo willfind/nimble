@@ -272,3 +272,12 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesInv, nameType):
 
 		namesString += currNamesString + '\n'
 		return namesString
+
+def prettyListString(inList):
+	ret = ""
+	for i in xrange(len(inList)):
+		value = inList[i]
+		if i > 0:
+			ret += ', '
+		ret += str(value)
+	return ret
