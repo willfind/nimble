@@ -14,6 +14,8 @@ import sys
 
 import UML
 from UML.exceptions import ArgumentException
+from UML.exceptions import prettyListString
+from UML.exceptions import prettyDictString
 from UML.interfaces.interface_helpers import generateBinaryScoresFromHigherSortedLabelScores
 from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from UML.interfaces.interface_helpers import ovaNotOvOFormatted
@@ -319,15 +321,24 @@ class UniversalInterface(object):
 				msg += "we couldn't find a value for the parameter named "
 				msg += "'" + str(paramName) + "'. "
 				msg += "The allowed parameters were: "
-				msg += str(currNeededParams) + ", "
-				msg += "which was choosen as the best guess given the inputs out "
-				msg += "of the following list of possible parameter sets: "
-				msg += str(subParamGroup) + ". "
-				msg += "Out of the allowed parameters, the following could be omited, "
-				msg += "which would result in the associated default value being used: "
-				msg += str(currDefaults) + ". "
-				msg += "The full mapping of inputs actually provided was: "
-				msg += str(original) + ". "
+				msg += prettyListString(currNeededParams, useAnd=True)
+				msg += ". These were choosen as the best guess given the inputs"
+				msg += " out of the following (numbered) list of possible parameter sets: "
+				msg += prettyListString(subParamGroup, numberItems=True, itemStr=prettyListString)
+
+				if len(currDefaults) == 0:
+					msg += ". Out of the allowed parameters, all required values "
+					msg += "specified by the user"
+				else:
+					msg += ". Out of the allowed parameters, the following could be omited, "
+					msg += "which would result in the associated default value being used: "
+					msg += prettyDictString(currDefaults, useAnd=True)
+
+				if len(original) == 0:
+					msg += ". However, no arguments were inputed."
+				else:
+					msg += ". The full mapping of inputs actually provided was: "
+					msg += prettyDictString(original) + ". "
 
 				raise ArgumentException(msg)
 
@@ -375,14 +386,14 @@ class UniversalInterface(object):
 				msg += "When trying to validate arguments for "
 				msg += currCallName + ", "
 				msg += "the following list of parameter names were not matched: "
-				msg += str(available.keys()) + ". "
-				msg += "The allowed parameters were: "
-				msg += str(currNeededParams) + ", "
-				msg += "which was choosen as the best guess given the inputs out "
-				msg += "of the following list of possible parameter sets: "
-				msg += str(subParamGroup) + ". "
-				msg += "The full mapping of inputs actually provided was: "
-				msg += str(original) + ". "
+				msg += prettyListString(available.keys(), useAnd=True)
+				msg += ". The allowed parameters were: "
+				msg += prettyListString(currNeededParams, useAnd=True)
+				msg += ". These were choosen as the best guess given the inputs"
+				msg += " out of the following (numbered) list of possible parameter sets: "
+				msg += prettyListString(subParamGroup, numberItems=True, itemStr=prettyListString)
+				msg += ". The full mapping of inputs actually provided was: "
+				msg += prettyDictString(original) + ". "
 
 				raise ArgumentException(msg)
 
@@ -473,18 +484,18 @@ class UniversalInterface(object):
 		return ret 
 
 	def _chooseBestParameterSet(self, possibleParamsSets, matchingDefaults, arguments):
-#		import pdb
-#		pdb.set_trace()
-#		print possibleParamsSets
-#		print arguments
 		success = False
 		missing = []
 		bestParams = []
 		nonDefaults = []
-		for i in range(len(possibleParamsSets)):
+		length = len(possibleParamsSets)
+		if length == 1:
+			return 0
+
+		for i in range(length):
 				missing.append([])
 		bestIndex = None
-		for i in range(len(possibleParamsSets)):
+		for i in range(length):
 			currParams = possibleParamsSets[i]
 			currDefaults = matchingDefaults[i]
 			nonDefaults.append([])
@@ -502,15 +513,17 @@ class UniversalInterface(object):
 			msg = "MISSING LEARNERING PARAMETER(S)! "
 			msg += "When trying to validate arguments, "
 			msg += "we must pick the set of required parameters that best match "
-			msg += "the given input. However, from each possible parameter set, the "
-			msg += " following parameter names were missing "
-			msg += "'" + str(missing) + "'. "
-			msg += "The following is a list of required names in each of the possible "
-			msg += "parameter sets, which are in the same order as the list of missing "
-			msg += "names:"
-			msg += str(nonDefaults) + ". "
-			msg += "The full mapping of inputs actually provided was: "
-			msg += str(arguments) + ". "
+			msg += "the given input. However, from each possible (numbered) parameter"
+			msg += " set, the following parameter names were missing "
+			msg += prettyListString(missing, numberItems=True, itemStr=prettyListString)
+			msg += ". The following lists the required names in each of the possible "
+			msg += "(numbered) parameter sets: "
+			msg += prettyListString(nonDefaults, numberItems=True, itemStr=prettyListString)
+			if len(arguments) == 0:
+				msg += ". However, no arguments were inputed."
+			else:
+				msg += ". The full mapping of inputs actually provided was: "
+				msg += prettyDictString(arguments) + ". "
 
 			raise ArgumentException(msg)
 

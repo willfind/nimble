@@ -3004,7 +3004,7 @@ class Base(object):
 			msg = "The argument named " + argName + " must not share any "
 			msg += nString + " with the calling object, yet the following "
 			msg += "names occured in both: "
-			msg += UML.data.dataHelpers.prettyListString(shared)
+			msg += UML.exceptions.prettyListString(shared)
 			if truncated:
 				msg += "... (only first 10 entries out of " + str(full)
 				msg += " total)"

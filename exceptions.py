@@ -56,3 +56,33 @@ class EmptyFileException (Exception):
 	def __str__(self):
 		return repr(self.value)
 
+def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
+	ret = ""
+	number = 0
+	for i in xrange(len(inList)):
+		value = inList[i]
+		if i > 0:
+			ret += ', '
+			if useAnd and i == len(inList) - 1:
+				ret += 'and '
+		if numberItems:
+			ret += '(' + str(number) + ') '
+		ret += itemStr(value)
+	return ret
+
+def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str, delim='=',
+					valueStr=str):
+	ret = ""
+	number = 0
+	keyList = inDict.keys()
+	for i in xrange(len(keyList)):
+		key = keyList[i]
+		value = inDict[key]
+		if i > 0:
+			ret += ', '
+			if useAnd and i == len(keyList) - 1:
+				ret += 'and '
+		if numberItems:
+			ret += '(' + str(number) + ') '
+		ret += keyStr(key) + delim + valueStr(value)
+	return ret
