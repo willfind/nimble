@@ -1698,10 +1698,16 @@ def _validMultiClassStrategy(multiClassStrategy):
 
 
 def _unpackLearnerName(learnerName):
-	""" Split a learnerName parameter into the portion defining the package, and the portion defining the learner """
+	"""Split a learnerName parameter into the portion defining the package,
+	and the portion defining the learner.
+
+	"""
 	splitList = learnerName.split('.',1)
 	if len(splitList) < 2:
-		raise ArgumentException("The learner must be prefaced with the package name and a dot. Example:'mlpy.KNN'")
+		msg = "Recieved the ill formed learner name '" + learnerName + "'. "
+		msg += "The learner name must identify both the desired package and learner"
+		msg += ", separated by a dot. Example:'mlpy.KNN'"
+		raise ArgumentException(msg)
 	package = splitList[0]
 	learnerName = splitList[1]
 	return (package, learnerName)
