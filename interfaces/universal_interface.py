@@ -696,7 +696,32 @@ class UniversalInterface(object):
 
 		@captureOutput
 		def getAttributes(self):
-			return self.interface._getAttributes(self.backend)
+			""" Returns the attributes of the trained learner (and sub objects).
+			The returned value will be a dict, mapping names of attribtues to
+			values of attributes. In the case of collisions (especially when getting
+			attributes from nested objects) the attribute names may be prefaced with
+			the name of the object from which they originate. 
+
+			The input learner params provided by the user for initilization and
+			training will always be included in the output. If there is a collision
+			between an input and an attribute of the same name discovered by the
+			learner, and their values do not match, then the discovered attribute's
+			name will be prefaced with the learner name. Similarly for nested objects
+			such as sub-learners and kenerls.
+
+			"""
+			discovered = self.interface._getAttributes(self.backend)
+			inputs = self.arguments
+
+			for key in inputs.keys():
+				value = inputs[key]
+				if key in discovered.keys():
+					if value != discovered[key]:
+						newKey = self.learnerName + '.' + key
+						discovered[newKey] = discovered[key]
+					discovered[key] = value
+
+			return discovered 
 
 		@captureOutput
 		def getScores(self, testX, arguments={}, **kwarguments):

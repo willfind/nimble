@@ -12,11 +12,13 @@ import copy
 import numpy
 import os
 import sys
+import functools
 
 import UML
 
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
+from UML.interfaces.interface_helpers import collectAttributes
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -422,11 +424,23 @@ class SciKitLearn(UniversalInterface):
 
 	def _getAttributes(self, learnerBackend):
 		"""
-		Returns whatever attributes might be available for the given learner. For
-		example, in the case of linear regression, TODO
+		Returns whatever attributes might be available for the given learner,
+		in the form of a dictionary. For example, in the case of linear
+		regression, one might expect to find an intercept and a list of
+		coefficients in the output. Makes use of the
+		UML.interfaces.interface_helpers.collectAttributes function to
+		automatically generate the results.
 
 		"""
-		return learnerBackend.get_params()
+		obj = learnerBackend
+		generators = None
+		checkers = []
+		checkers.append(UML.interfaces.interface_helpers.noLeading__)
+		checkers.append(UML.interfaces.interface_helpers.notCallable)
+		checkers.append(UML.interfaces.interface_helpers.notABCAssociated)
+
+		ret = collectAttributes(obj, generators, checkers)
+		return ret
 
 	def _optionDefaults(self, option):
 		"""

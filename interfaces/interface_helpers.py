@@ -396,4 +396,70 @@ def cacheWrapper(toWrap):
 	return wrapped
 
 
+def collectAttributes(obj, generators, checkers, recursive=True):
+	"""Helper to collect, validate, and return all (relevant) attributes
+	associated with a python object (learner, kernel, etc.). The returned
+	value will be a dict, mapping names of attribtues to values of attributes.
+	In the case of collisions (especially in the recursive case) the attribute
+	names will be prefaced with the name of the object from which they originate.
 
+	obj: the python object we are collection from. will be passed as the first
+	argument to all checker functions
+
+	generators: list of functions which generate possible attributes. Each
+	will be called with a single argument: the obj parameter, and must return
+	a dict. If None is passed, we will automatically use attributes as
+	accessed via dir(obj) as the only possiblities.
+
+	checkers: list of functions which will be called to see if a possible
+	attribute is to be included in the output. Each checker function must
+	take three arguments: the object, the name of the possible attribute,
+	and finally the value of the possible attribute. If the possible
+	attribute is to be included in the output, the function must return
+	True.
+
+	"""
+	if generators is None:
+		def wrappedDir(obj):
+			ret = {}
+			keys = dir(obj)
+			for k in keys:
+				try:
+					val = getattr(obj, k)
+					ret[k] = val
+				# safety against any sort of error someone may have in their
+				# property code.
+				except:
+					pass
+			return ret
+		generators = [wrappedDir]
+
+	ret = {}
+
+	for gen in generators:
+		possibleDict = gen(obj)
+		for possibleName in possibleDict:
+			possibleValue = possibleDict[possibleName]
+			add = True
+			for check in checkers:
+				if not check(obj, possibleName, possibleValue):
+					add = False
+			if add:
+				ret[possibleName] = possibleValue
+
+	return ret
+
+def noLeading__(obj, name, value):
+	if name.startswith('__'):
+		return False
+	return True
+
+def notCallable(obj, name, value):
+	if hasattr(value, '__call__'):
+		return False
+	return True
+
+def notABCAssociated(obj, name, value):
+	if name.startswith("_abc"):
+		return False
+	return True

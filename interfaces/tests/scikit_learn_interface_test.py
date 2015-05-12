@@ -5,6 +5,7 @@ Unit tests for scikit_learn_interface.py
 
 import numpy.testing
 import scipy.sparse
+from nose.plugins.attrib import attr
 
 import UML
 
@@ -13,6 +14,9 @@ from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociat
 from UML.helpers import generateClusteredPoints
 
 from UML.randomness import numpyRandom
+from UML.exceptions import ArgumentException
+from UML.helpers import generateClassificationData
+from UML.helpers import generateRegressionData
 
 packageName = 'sciKitLearn'
 
@@ -281,3 +285,38 @@ def testCustomKNNClassficationCompareRandomized():
 	ret2 = UML.trainAndApply(sklname, trainX, trainY=trainY, testX=testX, n_neighbors=5, algorithm='brute')
 	
 	assert ret1.isApproximatelyEqual(ret2)
+
+@attr('slow')
+def testGetAttributesCallable():
+	""" Demonstrate getAttribtues will work for each learner (with default params) """
+	cData = generateClassificationData(2, 10, 5)
+	((cTrainX, cTrainY), (cTestX, cTestY)) = cData
+	rData = generateRegressionData(2, 10, 5)
+	((rTrainX, rTrainY), (rTestX, rTestY)) = rData
+
+	allLearners = UML.listLearners('scikitlearn')
+	toTest = allLearners
+
+	for learner in toTest:
+#		print learner
+		fullName = 'scikitlearn.' + learner
+		lType = UML.learnerType(fullName)
+		if lType == 'classification':
+			try:
+				tl = UML.train(fullName, cTrainX, cTrainY)
+			# this is meant to safely bypass those learners that have required arguments
+			except ArgumentException as ae:
+				pass
+			# this is generally how shogun explodes
+			except SystemError as se:
+				pass
+			tl.getAttributes()
+		if lType == 'regression':
+			try:
+				tl = UML.train(fullName, rTrainX, rTrainY)
+			# this is meant to safely bypass those learners that have required arguments
+			except ArgumentException as ae:
+				pass
+			except SystemError as se:
+				pass
+			tl.getAttributes()
