@@ -137,7 +137,7 @@ class HumanReadableLogger(UmlLogger):
 
 		for table in toLog:
 			rowHeaders = False
-			if table[0][0] == 'Data':
+			if len(table) > 0 and len(table[0]) > 0 and table[0][0] == 'Data':
 				rowHeaders = True
 			toOutput += tableString(table, rowHeaders, roundDigits=4) + '\n'
 

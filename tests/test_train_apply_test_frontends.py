@@ -95,6 +95,12 @@ def test_multioutput_learners_callable_from_all():
 	ret_TT_0 = UML.trainAndTest(wrappedName, trainX=trainX, trainY=trainY0, testX=testX, testY=testY0, performanceFunction=metric, lamb=1)
 	ret_TT_1 = UML.trainAndTest(wrappedName, trainX=trainX, trainY=trainY1, testX=testX, testY=testY1, performanceFunction=metric, lamb=1)
 
+	# trainAndTestOnTrainingData()
+	ret_TTTD_multi = UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric, lamb=1)
+	ret_TTTD_0 = UML.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric, lamb=1)
+	ret_TTTD_1 = UML.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY1, performanceFunction=metric, lamb=1)
+
+
 	# tl.test()
 	ret_TLT_multi = TLmulti.test(testX, testY, metric)
 	ret_TLT_0 = TL0.test(testX, testY0, metric)
@@ -116,6 +122,9 @@ def test_multioutput_learners_callable_from_all():
 
 	assert ret_TT_multi == ret_TT_0
 	assert ret_TT_multi == ret_TT_1
+
+	assert ret_TTTD_multi == ret_TTTD_0
+	assert ret_TTTD_multi == ret_TTTD_1
 
 	assert ret_TLT_multi == ret_TLT_0
 	assert ret_TLT_multi == ret_TLT_1
@@ -205,6 +214,20 @@ def test_trainAndTest_scoreMode_disallowed_multioutput():
 
 
 @raises(ArgumentException)
+def test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput():
+	data = [[0,1,0], [0,0,2], [12,0,0], [2,2,2], [0,1,0], [0,0,2], [12,0,0], [2,2,2], [0,1,0], [0,0,2],]
+	trainX = UML.createData('Matrix', data)
+
+	data = [[10, -10], [2, -2], [1200, -1200], [222,-222], [10, -10], [2, -2], [1200, -1200], [222,-222], [10, -10], [2, -2]]
+	trainY = UML.createData('Matrix', data)
+
+	testName = 'Custom.MultiOutputRidgeRegression'
+	metric = UML.calculate.meanFeaturewiseRootMeanSquareError
+
+	UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric, scoreMode="allScores", lamb=1)
+
+
+@raises(ArgumentException)
 def test_trainAndTest_multiclassStrat_disallowed_multioutput():
 	data = [[0,1,0], [0,0,2], [12,0,0], [2,2,2], [0,1,0], [0,0,2], [12,0,0], [2,2,2], [0,1,0], [0,0,2],]
 	trainX = UML.createData('Matrix', data)
@@ -222,3 +245,16 @@ def test_trainAndTest_multiclassStrat_disallowed_multioutput():
 	metric = UML.calculate.meanFeaturewiseRootMeanSquareError
 
 	UML.trainAndTest(testName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, performanceFunction=metric, multiClassStrategy="OneVsOne", lamb=1)
+
+@raises(ArgumentException)
+def test_trainAndTestOnTrainingData_multiclassStrat_disallowed_multioutput():
+	data = [[0,1,0], [0,0,2], [12,0,0], [2,2,2], [0,1,0], [0,0,2], [12,0,0], [2,2,2], [0,1,0], [0,0,2],]
+	trainX = UML.createData('Matrix', data)
+
+	data = [[10, -10], [2, -2], [1200, -1200], [222,-222], [10, -10], [2, -2], [1200, -1200], [222,-222], [10, -10], [2, -2]]
+	trainY = UML.createData('Matrix', data)
+
+	testName = 'Custom.MultiOutputRidgeRegression'
+	metric = UML.calculate.meanFeaturewiseRootMeanSquareError
+
+	UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric, multiClassStrategy="OneVsOne", lamb=1)

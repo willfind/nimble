@@ -912,3 +912,143 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 		UML.logger.active.logRun(trainX, trainY, testX, testY, funcString, [performanceFunction], predictions, [performance], timer, bestArgument)
 
 	return performance
+
+
+def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
+			crossValidationError=False, numFolds=10, arguments={}, output=None,
+			scoreMode='label', negativeLabel=None, useLog=None, **kwarguments):
+	"""
+	trainAndTestOnTrainingData is the function for doing learner creation
+	and evaluation in a single step with only a single data set (no withheld
+	testing set). By default, this will calculate training error for the
+	learner trained on that data set. However, cross validation error can
+	instead be calculated by setting the parameter crossVadiationError to be
+	true. In that case, we will partition the training set into a parameter
+	controlled number of folds, and iteratively withhold each single fold to be
+	used as the testing set of the learner trained on the rest of the data.
+
+	ARGUMENTS:
+
+	learnerName: training algorithm to be called, in the form 'package.algorithmName'.
+
+	trainX: data set to be used for training (as some form of Base object)
+
+	trainY: used to retrieve the known class labels of the training data. Either
+	contains the labels themselves (as a Base object) or an index (numerical or string) 
+	that defines their locale in the trainX object
+
+	performanceFunction: Function used by computeMetrics to generate a performance score
+	for the run. function is of the form: def func(knownValues, predictedValues, negativeLabel).
+	Look in UML.calculate for pre-made options.
+
+	crossValidationError: True or False, according to whether we will calculate
+	cross validation error or training error. In True case, the training data
+	is split in the numFolds number of partitions. Each of those is iteratively
+	withheld and used as the testing set for a learner trained on the combination
+	of all of the non-withheld data. The performance results for each of those
+	tests are then averaged together to act as the return value. In the False
+	case, we train on the training data, and then use the same data as the
+	withheld testing data. By default, this flag is set to False.
+
+	numFolds: the (int) number of folds used in the cross validation. Can't
+	exceed the number of points in X, Y. Default is 10.
+
+	arguments: dict containing the parameters to be passed to the learner, in the
+	form of a mapping between (string) parameter names, and values. Will be merged
+	with the contents of **kwarguments before being passed on. The syntax for prescribing
+	different arguments for algorithm: arguments of the form {arg1=(1,2,3), arg2=(4,5,6)}
+	correspond to permutations/argument states with one element from arg1 and one element 
+	from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
+
+	output: Can be used to force a format on the data object resulting from applying
+	the learner to whatever is considered the testing data. This object is not seen
+	by the user, but will be used by the input performanceFunction, and if the user
+	has prior knowledge of requirements of that function, then they can enforced
+	by UML instead of manually. By default, this parameter is set to None, indicating
+	to match the formatting of the training data objects.
+
+	negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
+	or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
+	applies to data sets with 2 class labels.
+
+	multiClassStrategy: may only be 'default' 'OneVsAll' or 'OneVsOne'
+
+	useLog - local control for whether to send results/timing to the logger.
+	If None (default), use the value as specified in the "logger"
+	"enabledByDefault" configuration option. If True, send to the logger
+	regardless of the global option. If False, do NOT send to the logger,
+	regardless of the global option.
+
+	kwarguments: optional arguments to be passed to the specified learner. Will be merged
+	with the arguments parameter before being passed on to the learner.
+	The syntax for prescribing different arguments for algorithm:
+	**kwarguments of the form arg1=(1,2,3), arg2=(4,5,6)
+	correspond to permutations/argument states with one element from arg1 and one element 
+	from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
+
+	"""
+	(package, trueLearnerName) = _unpackLearnerName(learnerName)
+	_validData(trainX, trainY, None, None, [False, False])
+	_validArguments(arguments)
+	_validArguments(kwarguments)
+	#_2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+
+	_2dOutputFlagCheck(trainX, trainY, scoreMode, None)
+	merged = _mergeArguments(arguments, kwarguments)
+
+	trainY = copyLabels(trainX, trainY)
+
+	interface = findBestInterface(package)
+	
+	if useLog is None:
+		useLog = UML.settings.get("logger", "enabledByDefault")
+		useLog = True if useLog.lower() == 'true' else False
+
+	# check that there are no free parameters?
+	argCheck = ArgumentIterator(merged)
+	if argCheck.numPermutations != 1:
+		wrong = []
+		for k in merged:
+			v = merged[k]
+			if isinstance(v, tuple):
+				wrong.append((k,v))
+
+		def kvFormater(kv):
+			return str(k) + ":" + str(v)
+
+		msg = "trainAndTestOnTrainingData() requires that there be no free parameters "
+		msg += "in the input. "
+		#msg += "When calling UML.trainAndTest(), passing a tuple as the "
+		#msg += "value for any learner parameters indicates to UML to be select a "
+		#msg += "a value using cross validation. However, in this function, cross "
+		#msg += "validation is reserved for measuring prediction error.
+		msg += "Therefore, the following inputed learner parameters (given as "
+		msg += "key:value pairs) must be changed to have non-tuple values: "
+		msg += UML.exceptions.prettyListString(wrong, useAnd=True, itemStr=kvFormater)
+
+		raise ArgumentException(msg)
+
+	# if we are logging this run, we need to setup the timer, to be passed
+	# downward
+	if useLog:
+		timer = Stopwatch()
+	else:
+		timer = None
+
+	if crossValidationError:
+		if useLog:
+			timer.start('crossValidationError')
+		predictions = None
+		#sig: crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', negativeLabel=None, useLog=None, **kwarguments):
+		performance = crossValidate(learnerName, trainX, trainY, performanceFunction, arguments=merged, numFolds=numFolds, scoreMode=scoreMode, negativeLabel=negativeLabel, useLog=useLog)
+		if useLog:
+			timer.stop('crossValidationError')
+	else:
+		predictions = interface.trainAndApply(trueLearnerName, trainX, trainY, trainX, arguments=merged, output=output, scoreMode=scoreMode, timer=timer)
+		performance = UML.helpers.computeMetrics(trainY, None, predictions, performanceFunction, negativeLabel)
+
+	if useLog:
+		funcString = interface.getCanonicalName() + '.' + learnerName
+		UML.logger.active.logRun(trainX, trainY, None, None, funcString, [performanceFunction], predictions, [performance], timer, merged)
+
+	return performance

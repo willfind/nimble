@@ -104,6 +104,18 @@ def test_trainAndTest():
 
 	backend(wrapped)
 
+def test_trainAndTestOnTrainingData_trainError():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction=fractionIncorrect, crossValidationError=False, useLog=useLog)
+
+	backend(wrapped)
+
+def test_trainAndTestOnTrainingData_CVError():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		return UML.trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction=fractionIncorrect, crossValidationError=True, useLog=useLog)
+
+	backend(wrapped)
+
 #def test_trainAndTestOvO():
 #	def wrapped(trainX, trainY, testX, testY, useLog):
 #		return UML.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
@@ -249,6 +261,8 @@ def test_Deep_trainAndTest():
 
 	backendDeep(wrapped, setter)
 
+#def test_Deep_trainAndTestOnTrainingData_CVError():
+	# TODO
 
 def test_Deep_TrainAndApplyOvO():
 	def wrapped(trainX, trainY, testX, testY, useLog):

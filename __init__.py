@@ -31,6 +31,7 @@ from UML.randomness import setRandomSeed
 from uml import train
 from uml import trainAndApply
 from uml import trainAndTest
+from uml import trainAndTestOnTrainingData
 from uml import createData
 from uml import createRandomData
 from uml import normalizeData
