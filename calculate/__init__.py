@@ -16,5 +16,6 @@ from statistic import minimum
 from statistic import uniqueCount
 from statistic import proportionMissing
 from statistic import proportionZero
+from statistic import quartiles
 from statistic import standardDeviation
 from utility import detectBestResult

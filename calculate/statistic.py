@@ -204,6 +204,56 @@ def featureType(values):
 
     return "Unknown"
 
+def quartiles(values):
+    """
+    From the vector of values, return a 3-tuple containing the
+    lower quartile, the median, and the upper quartile.
+
+    """
+    n = len(values)
+    if not _isNumericalFeatureGuesser(values):
+        return (None, None, None)
+   
+    # edge case
+    if n == 1:
+        val = values[0]
+        return (val, val, val)
+
+    # sorted always yields a python list
+    sortedValues = sorted(values)
+
+    ret = [None, None, None]
+    # evens case
+    if n % 2 == 0:
+        mid0 = n/2 - 1
+        mid1 = n/2
+        ret[0] = median(sortedValues[:mid1])
+        ret[1] = (sortedValues[mid0] + sortedValues[mid1]) / 2.0
+        ret[2] = median(sortedValues[mid1:])
+        return tuple(ret)
+    # have to do some weighted averages when
+    # n % 2 == 1,3
+    elif n % 4 == 1:
+        qlower = ((n-1)/4) - 1
+        mid = (n-1)/2
+        qupper = (n-1)/4 * 3 
+
+        ret[0] = (sortedValues[qlower] * .25) + (sortedValues[qlower+1] * .75)
+        ret[1] = sortedValues[mid]
+        ret[2] = (sortedValues[qupper] * .75) + (sortedValues[qupper+1] * .25)
+        return tuple(ret)
+    # n % 2 == 3 case
+    else:
+        qlower = (n-1)/4
+        mid = (n-1)/2
+        qupper = ((n-1)/4 * 3) + 1
+        
+        ret[0] = (sortedValues[qlower] * .75) + (sortedValues[qlower+1] * .25)
+        ret[1] = sortedValues[mid]
+        ret[2] = (sortedValues[qupper] * .25) + (sortedValues[qupper+1] * .75)
+        return tuple(ret)
+
+
 def _isMissing(point):
     """
     Determine if a point is missing or not.  If the point is None or NaN, return True.
