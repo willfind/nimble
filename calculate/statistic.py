@@ -1,4 +1,6 @@
 import math
+import numpy
+import UML
 
 
 def proportionMissing(values):
@@ -205,6 +207,21 @@ def featureType(values):
     return "Unknown"
 
 def quartiles(values):
+    """
+    From the vector of values, return a 3-tuple containing the
+    lower quartile, the median, and the upper quartile.
+
+    """
+    if isinstance(values, UML.data.Base):
+        values = values.copyAs("numpyarray")
+
+    ret = numpy.percentile(values, (25,50,75))
+
+    return tuple(ret)
+
+
+
+def _quartiles(values):
     """
     From the vector of values, return a 3-tuple containing the
     lower quartile, the median, and the upper quartile.
