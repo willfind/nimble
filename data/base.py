@@ -6,6 +6,12 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 # TODO conversions
 # TODO who sorts inputs to derived implementations?
 
+try:
+	import matplotlib
+	mplError = None
+except ImportError as mplError:
+	pass
+
 import math
 import itertools
 import copy
@@ -14,6 +20,7 @@ import scipy
 import sys
 import os.path
 import inspect
+from multiprocessing import Process
 
 import UML
 from UML.exceptions import ArgumentException
@@ -1338,6 +1345,155 @@ class Base(object):
 			print toPrint
 		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, nameLength)
 
+	def plot(self, includeColorbar=False):
+		self._validateMatPlotLibImport(mplError, 'plot')
+
+		def plotter(d):
+			import matplotlib.pyplot as plt
+			plt.matshow(d, cmap=matplotlib.cm.gray)
+
+			if includeColorbar:
+				plt.colorbar()
+
+			if not self.name.startswith(DEFAULT_NAME_PREFIX):
+				#plt.title("Heatmap of " + self.name)
+				plt.title(self.name)
+			plt.xlabel("Feature Values", labelpad=10)
+			plt.ylabel("Point Values")
+
+			plt.show()
+
+		toPlot = self.copyAs('numpyarray')
+		p = Process(target=plotter, kwargs={'d':self.data})
+		p.start()
+
+
+	def plotPointDistribution(self, point):
+		"""
+
+		Bin width is calculated using Freedman-Diaconis' rule.
+		
+		"""
+		self._validateMatPlotLibImport(mplError, 'plotPointDistribution')
+		self._plotDistribution('point', point)
+
+	def plotFeatureDistribution(self, feature):
+		"""
+
+		Bin width is calculated using Freedman-Diaconis' rule.
+		"""
+		self._validateMatPlotLibImport(mplError, 'plotFeatureDistribution')
+		self._plotDistribution('feature', feature)
+
+	def _plotDistribution(self, axis, identifier):
+		index = self._getIndex(identifier, axis)
+		if axis == 'point':
+			getter = self.pointView
+			name = self.getPointName(index)
+		else:
+			getter = self.featureView
+			name = self.getFeatureName(index)
+
+#		getter = self.pointView if axis == 'point' else self.featureView
+		toPlot = getter(index)
+
+		quartiles = UML.calculate.quartiles(toPlot)
+
+		IQR = quartiles[2] - quartiles[0]
+		binWidth = (2 * IQR) / (len(toPlot) ** (1./3))
+		# TODO: replace with calculate points after it subsumes
+		# pointStatistics?
+		valMax = max(toPlot)
+		valMin = min(toPlot)
+		if binWidth == 0:
+			binCount = 1
+		else:
+			binCount = math.ceil((valMax - valMin) / binWidth)
+
+		def plotter(d):
+			import matplotlib.pyplot as plt
+			plt.hist(d, binCount)
+			
+			if name.startswith(DEFAULT_PREFIX):
+				titlemsg = '#' + str(index)
+			else:
+				titlemsg = "named: " + name
+			plt.title("Distribution of " + axis + " " + titlemsg)
+			plt.xlabel("Values")
+			plt.ylabel("Number of values")
+
+			plt.show()
+
+		p = Process(target=plotter, kwargs={'d':toPlot})
+		p.start()
+
+
+	def plotPointCross(self, x, y):
+		self._validateMatPlotLibImport(mplError, 'plotPointComparison')
+		
+		self._plotCross(x, 'point', y, 'point')
+
+	def plotFeatureCross(self, x, y):
+		self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
+		
+		self._plotCross(x, 'feature', y, 'feature')
+
+	def plotCross(self, x, xAxis, y, yAxis):
+		raise NotImplementedError()		
+
+
+	def _plotCross(self, x, xAxis, y, yAxis):
+		xIndex = self._getIndex(x, xAxis)
+		yIndex = self._getIndex(y, yAxis)
+
+		def customGetter(index, axis):
+			copyied = self.copyPoints(index) if axis == 'point' else self.copyFeatures(index)
+			return copyied.copyAs('numpyarray', outputAs1D=True)
+
+		def pGetter(index):
+			return customGetter(index, 'point')
+		def fGetter(index):
+			return customGetter(index, 'feature')
+
+		if xAxis == 'point':
+			xGetter = pGetter
+			xName = self.getPointName(xIndex)
+		else:
+			xGetter = fGetter
+			xName = self.getFeatureName(xIndex)
+
+		if yAxis == 'point':
+			yGetter = pGetter
+			yName = self.getPointName(yIndex)
+		else:
+			yGetter = fGetter
+			yName = self.getFeatureName(yIndex)
+
+		xToPlot = xGetter(xIndex)
+		yToPlot = yGetter(yIndex)
+
+		def plotter(inX, inY):
+			import matplotlib.pyplot as plt
+			#plt.scatter(inX, inY)
+			plt.scatter(inX, inY, marker='.')
+			
+			if not self.name.startswith(DEFAULT_PREFIX):
+				plt.title("Comparison of data in object " + self.name)
+			
+			if xName.startswith(DEFAULT_PREFIX):
+				plt.xlabel(xAxis + ' #' + str(xIndex))
+			else:
+				plt.xlabel(xName)
+			if yName.startswith(DEFAULT_PREFIX):
+				plt.ylabel(yAxis + ' #' + str(yIndex))
+			else:
+				plt.ylabel(yName)
+
+			plt.show()
+
+		p = Process(target=plotter, kwargs={'inX':xToPlot, 'inY':yToPlot})
+		p.start()
+
 
 	##################################################################
 	##################################################################
@@ -1423,7 +1579,7 @@ class Base(object):
 		ordering. None is always returned.
 		"""
 		# its already sorted in these cases
-		if self.featureCount == 0 or self.pointCount == 0:
+		if self.featureCount == 0 or self.pointCount == 0 or self.pointCount == 1:
 			return
 		if sortBy is not None and sortHelper is not None:
 			raise ArgumentException("Cannot specify a feature to sort by and a helper function")
@@ -1447,7 +1603,7 @@ class Base(object):
 
 		"""
 		# its already sorted in these cases
-		if self.featureCount == 0 or self.pointCount == 0:
+		if self.featureCount == 0 or self.pointCount == 0 or self.featureCount == 1:
 			return
 		if sortBy is not None and sortHelper is not None:
 			raise ArgumentException("Cannot specify a feature to sort by and a helper function")
@@ -3009,3 +3165,13 @@ class Base(object):
 				msg += "... (only first 10 entries out of " + str(full)
 				msg += " total)"
 			raise ArgumentException(msg)
+
+	def _validateMatPlotLibImport(self, error, name):
+		if error is not None:
+			msg = "The module matplotlib is required to be installed "
+			msg += "in order to call the " + name + "() method. "
+			msg += "However, when trying to import, an ImportError with "
+			msg += "the following message was raised: '"
+			msg += str(error) + "'"
+
+			raise ImportError(msg)
