@@ -2,10 +2,11 @@
 
 import UML
 from UML.customLearners.multioutput_linear_regression import MultiOutputLinearRegression
+from UML.configuration import configSafetyWrapper
 
 # test for failure to import?
 
-
+@configSafetyWrapper
 def test_MultiOutputLinearRegression_simple():
 	data = [[0,1,0], [0,0,2], [12,0,0], [2,2,2]]
 	trainX = UML.createData('Matrix', data)

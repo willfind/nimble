@@ -4,7 +4,7 @@ from nose.tools import *
 import numpy.testing
 
 from UML.customLearners import CustomLearner
-
+from UML.configuration import configSafetyWrapper
 
 @raises(TypeError)
 def testCustomLearnerValidationNoType():
@@ -173,6 +173,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
 			ret.append(currScores)
 		return UML.createData("Matrix", ret)
 
+@configSafetyWrapper
 def testCustomLearnerGetScores():
 	""" Test that a CustomLearner with getScores can actually call that method """
 	data = [[1,3],[2,-5],[1,44]]
@@ -198,7 +199,7 @@ def testCustomLearnerGetScores():
 	assert allScores.featureCount == 3
 	
 
-
+@configSafetyWrapper
 def testCustomLearnerIncTrainCheck():
 	""" Test that a CustomLearner with incrementalTrain() but no train() works as expected """
 	data = [[1,3],[2,-5],[1,44]]
