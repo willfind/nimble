@@ -661,9 +661,18 @@ def autoRegisterFromSettings():
 	for key in toRegister:
 		(packName, learnerName) = key.split('.')
 		(modPath, attrName) = toRegister[key].rsplit('.', 1)
-		module = importlib.import_module(modPath)
-		learnerClass = getattr(module, attrName)
-		UML.registerCustomLearner(packName, learnerClass)
+		try:
+			module = importlib.import_module(modPath)
+			learnerClass = getattr(module, attrName)
+			UML.registerCustomLearner(packName, learnerClass)
+		except ImportError:
+			msg = "When trying to automatically register a custom "
+			msg += "learner at " + key + " we were unable to import "
+			msg += "the learner object from the location " + toRegister[key]
+			msg += " and have therefore ignored that configuration "
+			msg += "entry"
+			print >>sys.stderr, msg
+		
 
 
 def countWins(predictions):

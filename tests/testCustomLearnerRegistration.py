@@ -257,3 +257,14 @@ def test_settings_autoRegister():
 
 	# check that correct learners are available through UML.interfaces.available
 	assert 'LoveAtFirstSightClassifier' in UML.listLearners('Foo')
+
+@configSafetyWrapper
+def test_settings_autoRegister_safety():
+	""" Test that the auto registration will not crash on strange inputs """
+	
+	name = "Foo.Bar"
+	value = "Bogus.Attribute"
+	UML.settings.set("RegisteredLearners", name, value)
+
+	# should throw warning, not exception
+	UML.helpers.autoRegisterFromSettings()
