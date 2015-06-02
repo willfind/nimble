@@ -1368,24 +1368,47 @@ class Base(object):
 		p.start()
 
 
-	def plotPointDistribution(self, point):
-		"""
+	def plotPointDistribution(self, point, xMin=None, xMax=None):
+		"""Plot a histogram of the distribution of values in the specified
+		point. Along the x axis of the plot will be the values seen in
+		the point, grouped into bins; along the y axis will be the number
+		of values in each bin. Bin width is calculated using
+		Freedman-Diaconis' rule. Control over the width of the x axis
+		is also given, with the warning that user specified values
+		can obscure data that would otherwise be plotted given default
+		inputs.
 
-		Bin width is calculated using Freedman-Diaconis' rule.
+		point: the identifier (index of name) of the point to show
+
+		xMin: the least value shown on the x axis of the resultant plot.
+
+		xMax: the largest value shown on the x axis of teh resultant plot
 		
 		"""
 		self._validateMatPlotLibImport(mplError, 'plotPointDistribution')
-		self._plotDistribution('point', point)
+		self._plotDistribution('point', point, xMin, xMax)
 
-	def plotFeatureDistribution(self, feature):
-		"""
+	def plotFeatureDistribution(self, feature, xMin=None, xMax=None):
+		"""Plot a histogram of the distribution of values in the specified
+		Feature. Along the x axis of the plot will be the values seen in
+		the feature, grouped into bins; along the y axis will be the number
+		of values in each bin. Bin width is calculated using
+		Freedman-Diaconis' rule. Control over the width of the x axis
+		is also given, with the warning that user specified values
+		can obscure data that would otherwise be plotted given default
+		inputs.
 
-		Bin width is calculated using Freedman-Diaconis' rule.
+		feature: the identifier (index of name) of the feature to show
+
+		xMin: the least value shown on the x axis of the resultant plot.
+
+		xMax: the largest value shown on the x axis of teh resultant plot
+		
 		"""
 		self._validateMatPlotLibImport(mplError, 'plotFeatureDistribution')
-		self._plotDistribution('feature', feature)
+		self._plotDistribution('feature', feature, xMin, xMax)
 
-	def _plotDistribution(self, axis, identifier):
+	def _plotDistribution(self, axis, identifier, xMin, xMax):
 		index = self._getIndex(identifier, axis)
 		if axis == 'point':
 			getter = self.pointView
@@ -1410,7 +1433,7 @@ class Base(object):
 		else:
 			binCount = math.ceil((valMax - valMin) / binWidth)
 
-		def plotter(d):
+		def plotter(d, xLim):
 			import matplotlib.pyplot as plt
 			plt.hist(d, binCount)
 			
@@ -1422,23 +1445,68 @@ class Base(object):
 			plt.xlabel("Values")
 			plt.ylabel("Number of values")
 
+			plt.xlim(xLim)
 			plt.show()
 
-		p = Process(target=plotter, kwargs={'d':toPlot})
+		p = Process(target=plotter, kwargs={'d':toPlot, 'xLim':(xMin,xMax)})
 		p.start()
 
 
-	def plotPointAgainstPoint(self, x, y):
+	def plotPointAgainstPoint(self, x, y, xMin=None, xMax=None, yMin=None,
+				yMax=None):
+		"""Plot a scatter plot of the two input points using the pairwise
+		combination of their values as coordinates. Control over the width
+		of the both axes is given, with the warning that user specified
+		values can obscure data that would otherwise be plotted given default
+		inputs.
+
+		x: the identifier (index of name) of the point from which we
+		draw x-axis coordinates
+
+		y: the identifier (index of name) of the point from which we
+		draw y-axis coordinates
+
+		xMin: the least value shown on the x axis of the resultant plot.
+
+		xMax: the largest value shown on the x axis of teh resultant plot
+
+		yMin: the least value shown on the y axis of the resultant plot.
+
+		yMax: the largest value shown on the y axis of teh resultant plot
+		
+		"""
 		self._validateMatPlotLibImport(mplError, 'plotPointComparison')
 		
-		self._plotCross(x, 'point', y, 'point')
+		self._plotCross(x, 'point', y, 'point', xMin, xMax, yMin, yMax)
 
-	def plotFeatureAgainstFeature(self, x, y):
+	def plotFeatureAgainstFeature(self, x, y, xMin=None, xMax=None, yMin=None,
+				yMax=None):
+		"""Plot a scatter plot of the two input features using the pairwise
+		combination of their values as coordinates. Control over the width
+		of the both axes is given, with the warning that user specified
+		values can obscure data that would otherwise be plotted given default
+		inputs.
+
+		x: the identifier (index of name) of the feature from which we
+		draw x-axis coordinates
+
+		y: the identifier (index of name) of the feature from which we
+		draw y-axis coordinates
+
+		xMin: the least value shown on the x axis of the resultant plot.
+
+		xMax: the largest value shown on the x axis of the resultant plot
+
+		yMin: the least value shown on the y axis of the resultant plot.
+
+		yMax: the largest value shown on the y axis of the resultant plot
+		
+		"""
 		self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
 		
-		self._plotCross(x, 'feature', y, 'feature')
+		self._plotCross(x, 'feature', y, 'feature', xMin, xMax, yMin, yMax)
 
-	def _plotCross(self, x, xAxis, y, yAxis):
+	def _plotCross(self, x, xAxis, y, yAxis, xMin, xMax, yMin, yMax):
 		xIndex = self._getIndex(x, xAxis)
 		yIndex = self._getIndex(y, yAxis)
 
@@ -1468,7 +1536,7 @@ class Base(object):
 		xToPlot = xGetter(xIndex)
 		yToPlot = yGetter(yIndex)
 
-		def plotter(inX, inY):
+		def plotter(inX, inY, xLim, yLim):
 			import matplotlib.pyplot as plt
 			#plt.scatter(inX, inY)
 			plt.scatter(inX, inY, marker='.')
@@ -1485,9 +1553,12 @@ class Base(object):
 			else:
 				plt.ylabel(yName)
 
+			plt.xlim(xLim)
+			plt.ylim(yLim)
+
 			plt.show()
 
-		p = Process(target=plotter, kwargs={'inX':xToPlot, 'inY':yToPlot})
+		p = Process(target=plotter, kwargs={'inX':xToPlot, 'inY':yToPlot, 'xLim':(xMin,xMax), 'yLim':(yMin,yMax)})
 		p.start()
 
 
