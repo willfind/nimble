@@ -37,7 +37,7 @@ if __name__ == "__main__":
 		#obj1.setFeatureName(0, "[0, 1) random noise")
 		obj1.setFeatureName(1, "(Feature 0 * 3) + noise")
 		obj1.name = "Noise"
-		obj1.plotFeatureCross(0,1)
+		obj1.plotFeatureAgainstFeature(0,1)
 
 
 

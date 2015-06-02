@@ -1428,19 +1428,15 @@ class Base(object):
 		p.start()
 
 
-	def plotPointCross(self, x, y):
+	def plotPointAgainstPoint(self, x, y):
 		self._validateMatPlotLibImport(mplError, 'plotPointComparison')
 		
 		self._plotCross(x, 'point', y, 'point')
 
-	def plotFeatureCross(self, x, y):
+	def plotFeatureAgainstFeature(self, x, y):
 		self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
 		
 		self._plotCross(x, 'feature', y, 'feature')
-
-	def plotCross(self, x, xAxis, y, yAxis):
-		raise NotImplementedError()		
-
 
 	def _plotCross(self, x, xAxis, y, yAxis):
 		xIndex = self._getIndex(x, xAxis)
