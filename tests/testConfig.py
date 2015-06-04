@@ -239,12 +239,12 @@ def test_settings_GetSectionOnly():
 def test_settings_saving():
 	""" Test UML.settings will save its in memory changes """
 	# make some change via UML.settings. save it,
-	UML.settings.set("bogusSectionName", "bogus.Option.Name", '1')
+	UML.settings.set("newSectionName", "new.Option.Name", '1')
 	UML.settings.saveChanges()
 
 	# reload it with the starup function, make sure settings saved.
 	UML.settings = UML.configuration.loadSettings()
-	assert UML.settings.get("bogusSectionName", 'bogus.Option.Name') == '1'
+	assert UML.settings.get("newSectionName", 'new.Option.Name') == '1'
 
 @configSafetyWrapper
 def test_settings_savingSection():
@@ -278,6 +278,8 @@ def test_settings_savingOption():
 	UML.settings.saveChanges("TestSec1", "op2")
 
 	# assert that other changes are still in effect
+	assert len(UML.settings.changes["TestSec1"]) == 1
+	assert len(UML.settings.changes["TestSec2"]) == 1
 	assert len(UML.settings.changes) == 2
 	assert UML.settings.get("TestSec2", "op1") == '1'
 	assert UML.settings.get("TestSec1", "op1") == '1'
@@ -389,6 +391,186 @@ def test_settings_allowedNames():
 	UML.settings.changes = {}
 
 
+@configSafetyWrapper
+@raises(ConfigParser.NoSectionError)
+# test that set witout save is temporary
+def test_settings_set_without_save1():
+	# make some change via UML.settings.
+	UML.settings.set("tempSectionName", "temp.Option.Name", '1')
+
+	UML.settings.get("tempSectionName", 'temp.Option.Name') == '1'
+
+	# reload it with the starup function, try to load something which
+	# shouldn't be there
+	UML.settings = UML.configuration.loadSettings()
+	UML.settings.get("tempSectionName", 'temp.Option.Name')
+
+@configSafetyWrapper
+@raises(ConfigParser.NoSectionError)
+# test that set witout save is temporary
+def test_settings_set_without_save2():
+	# make some change via UML.settings.
+	UML.settings.set("tempSectionName", "temp.Option.Name", '1')
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name') == '1'
+
+	# reload it with the starup function, try to load something which
+	# shouldn't be there
+	UML.settings = UML.configuration.loadSettings()
+	UML.settings.get("tempSectionName", 'temp.Option.Name')
+
+@configSafetyWrapper
+# test that delete then save will change file - value
+def test_settings_deleteThenSaveAValue():
+	UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
+	UML.settings.set("tempSectionName", "temp.Option.Name2", '2')
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+	
+	UML.settings.saveChanges()
+
+	# change reflected in memory
+	UML.settings.delete("tempSectionName", "temp.Option.Name1")
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoOptionError
+	except ConfigParser.NoOptionError:
+		pass
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+
+	# change isn't reflected in file
+	UML.settings = UML.configuration.loadSettings()
+	# previous delete wasn't saved, so this should still work
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+	UML.settings.delete("tempSectionName", "temp.Option.Name1")
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoOptionError
+	except ConfigParser.NoOptionError:
+		pass
+
+	UML.settings.saveChanges()
+
+	# change should now be reflected in file
+	UML.settings = UML.configuration.loadSettings()
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoOptionError
+	except ConfigParser.NoOptionError:
+		pass
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+
+
+
+
+@configSafetyWrapper
+# test that delete then save will change file - section
+def test_settings_deleteThenSaveASection():
+	UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
+	UML.settings.set("tempSectionName", "temp.Option.Name2", '2')
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+	UML.settings.saveChanges()
+
+	# change reflected in memory
+	UML.settings.delete("tempSectionName", None)
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name2')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+
+	# change isn't reflected in file
+	UML.settings = UML.configuration.loadSettings()
+	# previous delete wasn't saved, so this should still work
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+	UML.settings.delete("tempSectionName", None)
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name2')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+
+	UML.settings.saveChanges()
+
+	# change should now be reflected in file
+	UML.settings = UML.configuration.loadSettings()
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name2')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+
+
+@configSafetyWrapper
+# test that deleteing an unsaved set is a cycle - value
+def test_settings_setThenDeleteCycle_value():
+	UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
+	UML.settings.set("tempSectionName", "temp.Option.Name2", '2')
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+
+	# change reflected in memory
+	UML.settings.delete("tempSectionName", "temp.Option.Name1")
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoOptionError
+	except ConfigParser.NoOptionError:
+		pass
+
+	# change should now be reflected in file
+	UML.settings = UML.configuration.loadSettings()
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+
+
+@configSafetyWrapper
+# test that deleteing an unsaved set is a cycle - section
+def test_settings_setThenDeleteCycle_section():
+	UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
+	UML.settings.set("tempSectionName", "temp.Option.Name2", '2')
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+
+	# change reflected in memory
+	UML.settings.delete("tempSectionName", None)
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+
+	# change never saved, shouldn't be in file
+	UML.settings = UML.configuration.loadSettings()
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+
+def testToDeleteSentinalObject():
+	val = UML.configuration.ToDelete()
+
+	assert isinstance(val, UML.configuration.ToDelete)
 
 
 ###############

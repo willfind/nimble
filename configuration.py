@@ -197,6 +197,9 @@ class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
 					options[name] = '\n'.join(val)
 
 
+class ToDelete(object):
+	pass
+
 
 class SessionConfiguration(object):
 	"""
@@ -217,7 +220,7 @@ class SessionConfiguration(object):
 		self.cp.read(path)
 		self.path = path
 
-		self.changes = {}
+		self.changes = {} # dict of section name to dict of option name to value
 		self.hooks = {}
 
 	def delete(self, section, option):
@@ -226,17 +229,27 @@ class SessionConfiguration(object):
 		if section is not None:
 			# Deleting a specific option in a specific section
 			if option is not None:		
-				if (section, option) in self.changes:
-					del self.changes[(section,option)]
+				if section in self.changes:
+					if option in self.changes[section]:
+						del self.changes[section][option]
+						if len(self.changes[section]) == 0:
+							del self.changes[section]
 					success = True
 				if self.cp.has_section(section):
 					self.cp.remove_option(section, option)
 			# deleting an entire section
 			else:
-				for (k,v) in self.changes:
+				delList = []
+				for k in self.changes:
 					if k == section:
-						del self.changes[(k,v)]
-						success = True
+						for v in self.changes[section]:
+							delList.append(v)
+							success = True
+				for v in delList:
+					del self.changes[section][v]
+					if len(self.changes[section]) == 0:
+						del self.changes[section]
+
 				if self.cp.has_section(section):
 					self.cp.remove_section(section)
 		else:
@@ -258,18 +271,26 @@ class SessionConfiguration(object):
 				found = True
 				for (k,v) in self.cp.items(section):
 					ret[k] = v
-			for (kSec,kOpt) in self.changes:
+			for kSec in self.changes:
 				if kSec == section:
 					found = True
-					ret[kOpt] = self.changes[(kSec,kOpt)]
+					for kOpt in self.changes[kSec]:
+						ret[kOpt] = self.changes[kSec][kOpt]
 			if not found:
 				raise ConfigParser.NoSectionError()
 			return ret
 		# Otherwise, treat it as a request for a single option,
 		# and let the helpers deal with the failure modes
 		else:
-			if (section, option) in self.changes:
-				return self.changes[(section, option)]
+			if section in self.changes:
+				if option in self.changes[section]:
+					return self.changes[section][option]
+				else:
+					try:
+						fromFile = self.cp.get(section, option)
+						return fromFile
+					except ConfigParser.NoSectionError:
+						raise ConfigParser.NoOptionError(section,option)
 			fromFile = self.cp.get(section, option)
 			return fromFile
 
@@ -314,9 +335,12 @@ class SessionConfiguration(object):
 		try:
 			inFile = self.cp.get(section, option)
 			if inFile == value:
-				if (section, option) in self.changes:
-					del self.changes[(section, option)]
-					return
+				if section in self.changes:
+					if option in self.changes[section]:
+						del self.changes[section][option]
+						if len(self.changes[section]) == 0:
+							del self.changes[section]
+						return
 		except:  # TODO make this specific
 			pass
 
@@ -337,7 +361,9 @@ class SessionConfiguration(object):
 			einfo = sys.exc_info()
 			if not ignore:
 				raise einfo[1], None, einfo[2]
-		self.changes[(section, option)] = value
+		if not section in self.changes:
+			self.changes[section] = {}
+		self.changes[section][option] = value
 
 		# call hook if available
 		key = (section, option)
@@ -359,36 +385,46 @@ class SessionConfiguration(object):
 		"""
 		# if no changes have been made, nothing needs to be saved.
 		if self.changes == {}:
+			fp = open(self.path, 'w')
+			self.cp.write(fp)
+			fp.close()
 			return
 
 		if section is None:
 			if option is not None:
 				raise UML.exceptions.ArgumentException("If section is None, option must also be None")
 			# save all
-			for (sec, opt) in self.changes.keys():
+			for sec in self.changes.keys():
 				if not self.cp.has_section(sec):
 					self.cp.add_section(sec)
-				self.cp.set(sec, opt, self.changes[(sec,opt)])
+				for opt in self.changes[sec]:
+					self.cp.set(sec, opt, self.changes[sec][opt])
 			self.changes = {}
 		else:
 			if option is None:
 				#save section
-				for (sec, opt) in self.changes.keys():
+				for sec in self.changes.keys():
 					if sec != section:
 						continue
 					if not self.cp.has_section(sec):
 						self.cp.add_section(sec)
-					self.cp.set(sec, opt, self.changes[(sec,opt)])
-					del self.changes[(sec,opt)]
+					for opt in self.changes[sec]:
+						self.cp.set(sec, opt, self.changes[sec][opt])
+						
+				del self.changes[section]
 			else:
 				# save specific
-				for (sec, opt) in self.changes.keys():
-					if sec != section or opt != option:
-						continue
-					if not self.cp.has_section(sec):
-						self.cp.add_section(sec)
-					self.cp.set(sec, opt, self.changes[(sec,opt)])
-					del self.changes[(sec,opt)]
+				for sec in self.changes.keys():
+					for opt in self.changes[sec]:
+						if sec != section or opt != option:
+							continue
+						if not self.cp.has_section(sec):
+							self.cp.add_section(sec)
+						self.cp.set(sec, opt, self.changes[sec][opt])
+						del self.changes[sec][opt]
+						if len(self.changes[sec]) == 0:
+							del self.changes[sec]
+						break
 
 		fp = open(self.path, 'w')
 		self.cp.write(fp)
