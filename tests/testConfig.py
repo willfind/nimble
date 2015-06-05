@@ -567,6 +567,62 @@ def test_settings_setThenDeleteCycle_section():
 	except ConfigParser.NoSectionError:
 		pass
 
+@configSafetyWrapper
+def test_settings_setDefault():
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name2')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+
+	UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
+	UML.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+
+	# Name2 should be reflected in file, but not Name1
+	UML.settings = UML.configuration.loadSettings()
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoOptionError
+	except ConfigParser.NoOptionError:
+		pass
+
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+
+@configSafetyWrapper
+def test_settings_deleteDefault():
+
+	UML.settings.setDefault("tempSectionName", "temp.Option.Name1", '1')
+	UML.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+
+	# Establish a baseline
+	UML.settings = UML.configuration.loadSettings()
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+
+	UML.settings.deleteDefault("tempSectionName", 'temp.Option.Name1')
+
+	UML.settings = UML.configuration.loadSettings()
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoOptionError
+	except ConfigParser.NoOptionError:
+		pass
+
+	assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
+	
+	UML.settings.deleteDefault("tempSectionName", None)
+	UML.settings = UML.configuration.loadSettings()
+	try:
+		UML.settings.get("tempSectionName", 'temp.Option.Name1')
+		assert False  # expected ConfigParser.NoSectionError
+	except ConfigParser.NoSectionError:
+		pass
+
+
 def testToDeleteSentinalObject():
 	val = UML.configuration.ToDelete()
 

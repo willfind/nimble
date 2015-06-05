@@ -324,6 +324,14 @@ class SessionConfiguration(object):
 
 		self.hooks[key] = toCall
 
+	def setDefault(self, section, option, value):
+		self.set(section, option, value)
+		self.saveChanges(section, option)
+
+	def deleteDefault(self, section, option):
+		self.delete(section, option)
+		self.saveChanges(section, option)
+
 
 	def set(self, section, option, value):
 		"""
@@ -411,7 +419,8 @@ class SessionConfiguration(object):
 					for opt in self.changes[sec]:
 						self.cp.set(sec, opt, self.changes[sec][opt])
 						
-				del self.changes[section]
+				if section in self.changes:
+					del self.changes[section]
 			else:
 				# save specific
 				for sec in self.changes.keys():
