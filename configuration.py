@@ -229,32 +229,19 @@ class SessionConfiguration(object):
 		if section is not None:
 			# Deleting a specific option in a specific section
 			if option is not None:		
-				if section in self.changes:
-					if option in self.changes[section]:
-						del self.changes[section][option]
-						if len(self.changes[section]) == 0:
-							del self.changes[section]
-					success = True
-				if self.cp.has_section(section):
-					self.cp.remove_option(section, option)
+				if not section in self.changes:
+					self.changes[section] = {}
+
+				if not isinstance(self.changes[section], ToDelete):
+					self.changes[section][option] = ToDelete()
+				success = True
+				
 			# deleting an entire section
 			else:
-				delList = []
-				for k in self.changes:
-					if k == section:
-						for v in self.changes[section]:
-							delList.append(v)
-							success = True
-				for v in delList:
-					del self.changes[section][v]
-					if len(self.changes[section]) == 0:
-						del self.changes[section]
-
-				if self.cp.has_section(section):
-					self.cp.remove_section(section)
+				self.changes[section] = ToDelete()
 		else:
 			if option is not None:
-				msg = "If specifying and option, one must also specify "
+				msg = "If specifying an option, one must also specify "
 				msg += "a section"
 				raise ArgumentException(msg)
 			else:
@@ -273,19 +260,30 @@ class SessionConfiguration(object):
 					ret[k] = v
 			for kSec in self.changes:
 				if kSec == section:
-					found = True
-					for kOpt in self.changes[kSec]:
-						ret[kOpt] = self.changes[kSec][kOpt]
+					# toDelete sentinal value, therefore we treat it as not being there
+					if isinstance(self.changes[kSec], ToDelete):
+						found = False
+					else:
+						found = True
+						for kOpt in self.changes[kSec]:
+							if isinstance(self.changes[kSec][kOpt], ToDelete):
+								del ret[kOpt]
+							else:
+								ret[kOpt] = self.changes[kSec][kOpt]
 			if not found:
 				raise ConfigParser.NoSectionError()
 			return ret
 		# Otherwise, treat it as a request for a single option,
-		# and let the helpers deal with the failure modes
 		else:
 			if section in self.changes:
+				if isinstance(self.changes[section], ToDelete):
+					raise ConfigParser.NoSectionError(section)
 				if option in self.changes[section]:
-					return self.changes[section][option]
-				else:
+					ret = self.changes[section][option]
+					if isinstance(ret, ToDelete):
+						raise ConfigParser.NoOptionError(section,option)
+					return ret
+				else:  # option not in self.change[section]
 					try:
 						fromFile = self.cp.get(section, option)
 						return fromFile
@@ -338,18 +336,32 @@ class SessionConfiguration(object):
 		Set an option for this session.
 		"""
 		# if we are setting a value which matches the
-		# value in file, we should remove the entry
-		# from the changes dict
+		# value in file, we should adjust the changes
+		# dict accordingly
 		try:
 			inFile = self.cp.get(section, option)
 			if inFile == value:
 				if section in self.changes:
-					if option in self.changes[section]:
-						del self.changes[section][option]
-						if len(self.changes[section]) == 0:
-							del self.changes[section]
-						return
-		except:  # TODO make this specific
+					# indicates we previously wanted to delete everything
+					if isinstance(self.changes[section], ToDelete):
+						optNames = self.cp.options(section)
+						# if there are other options other than
+						# the one we are setting, then they need
+						# to be individually marked for deletion
+						if len(optNames) > 1:
+							self.changes[section] = {}
+							for name in optNames:
+								if name != option:
+									self.changes[section][name] = ToDelete()
+					else:
+						if option in self.changes[section]:
+							del self.changes[section][option]
+							if len(self.changes[section]) == 0:
+								del self.changes[section]
+							return
+		except ConfigParser.NoSectionError:
+			pass
+		except ConfigParser.NoOptionError:
 			pass
 
 		# check: is this section the name of an interface
@@ -361,22 +373,23 @@ class SessionConfiguration(object):
 			acceptedNames = interface.optionNames
 			if option not in acceptedNames:
 				msg = section + " is associated with an interface "
-				msg += "which only allows options: " 
+				msg += "which only allows the options: " 
 				msg += str(acceptedNames)
-				msg += " but " + option + " was given"
+				msg += " but " + option + " was given instead"
 				raise ArgumentException(msg)
+		# if ignore is true, this exception comes from the findBestInterface
+		# call, and means that the section is not related to an interface.
 		except ArgumentException:
 			einfo = sys.exc_info()
 			if not ignore:
 				raise einfo[1], None, einfo[2]
-		if not section in self.changes:
+
+		if not section in self.changes or isinstance(self.changes[section], ToDelete):
 			self.changes[section] = {}
 		self.changes[section][option] = value
 
 		# call hook if available
 		key = (section, option)
-#		import pdb
-#		pdb.set_trace()
 		if key in self.hooks and self.hooks[key] is not None:
 			self.hooks[key](value)
 
@@ -393,47 +406,60 @@ class SessionConfiguration(object):
 		"""
 		# if no changes have been made, nothing needs to be saved.
 		if self.changes == {}:
-			fp = open(self.path, 'w')
-			self.cp.write(fp)
-			fp.close()
 			return
+
+		def changeIndividual(changeSec, changeOpt, changeVal):
+			exists = self.cp.has_section(changeSec)
+
+			if isinstance(changeVal, ToDelete):
+				if exists:
+					self.cp.remove_option(changeSec, changeOpt)
+				# Don't need the else case, the change and the file
+				# agree
+			else:  # Case: not isinstance(changeVal, ToDelete):
+				if not exists:
+					self.cp.add_section(changeSec)
+				self.cp.set(changeSec, changeOpt, changeVal)	
+
 
 		if section is None:
 			if option is not None:
-				raise UML.exceptions.ArgumentException("If section is None, option must also be None")
+				msg = "If section is None, option must also be None"
+				raise UML.exceptions.ArgumentException(msg)
 			# save all
 			for sec in self.changes.keys():
-				if not self.cp.has_section(sec):
-					self.cp.add_section(sec)
-				for opt in self.changes[sec]:
-					self.cp.set(sec, opt, self.changes[sec][opt])
+				if isinstance(self.changes[sec], ToDelete):
+					self.cp.remove_section(sec)
+				else:
+					for opt in self.changes[sec]:
+						optVal = self.changes[sec][opt]
+						changeIndividual(sec, opt, optVal)
+
 			self.changes = {}
 		else:
 			if option is None:
 				#save section
-				for sec in self.changes.keys():
-					if sec != section:
-						continue
-					if not self.cp.has_section(sec):
-						self.cp.add_section(sec)
-					for opt in self.changes[sec]:
-						self.cp.set(sec, opt, self.changes[sec][opt])
-						
 				if section in self.changes:
+					if isinstance(self.changes[section], ToDelete):
+						self.cp.remove_section(section)
+					else:
+						for opt in self.changes[section]:
+							changeIndividual(section, opt, self.changes[section][opt])
+						
 					del self.changes[section]
 			else:
 				# save specific
-				for sec in self.changes.keys():
-					for opt in self.changes[sec]:
-						if sec != section or opt != option:
-							continue
-						if not self.cp.has_section(sec):
-							self.cp.add_section(sec)
-						self.cp.set(sec, opt, self.changes[sec][opt])
-						del self.changes[sec][opt]
-						if len(self.changes[sec]) == 0:
-							del self.changes[sec]
-						break
+				if section in self.changes:
+					secVal = self.changes[section]
+					if isinstance(secVal, ToDelete):
+						optVal = ToDelete()
+					else:
+						if option in self.changes[section]:
+							optVal = self.changes[section][option]
+							changeIndividual(section, option, optVal)
+							del self.changes[section][option]
+							if len(self.changes[section]) == 0:
+								del self.changes[section]
 
 		fp = open(self.path, 'w')
 		self.cp.write(fp)
