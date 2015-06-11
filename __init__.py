@@ -59,7 +59,7 @@ UML.settings.set("RegisteredLearners", "Custom.RidgeRegression", 'UML.customLear
 UML.settings.set("RegisteredLearners", "Custom.KNNClassifier", 'UML.customLearners.KNNClassifier')
 UML.settings.set("RegisteredLearners", "Custom.MeanConstant", 'UML.customLearners.MeanConstant')
 UML.settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression", 'UML.customLearners.MultiOutputRidgeRegression')
-
+UML.settings.saveChanges("RegisteredLearners")
 
 # register those custom learners listed in UML.settings
 UML.helpers.autoRegisterFromSettings()

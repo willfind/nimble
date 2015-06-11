@@ -672,6 +672,65 @@ def autoRegisterFromSettings():
 			msg += " and have therefore ignored that configuration "
 			msg += "entry"
 			print >>sys.stderr, msg
+
+
+def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
+	# detect name collision
+	for currInterface in UML.interfaces.available:
+		if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
+			if currInterface.isAlias(customPackageName):
+				raise ArgumentException("The customPackageName '" + customPackageName + "' cannot be used: it is an accepted alias of a non-custom package")
+
+	# do validation before we potentially construct an interface to a custom package
+	UML.customLearners.CustomLearner.validateSubclass(learnerClassObject)
+
+	try:
+		currInterface = findBestInterface(customPackageName)
+	except ArgumentException:
+		currInterface = UML.interfaces.CustomLearnerInterface(customPackageName)
+		UML.interfaces.available.append(currInterface)
+
+	currInterface.registerLearnerClass(learnerClassObject)
+
+	opName = customPackageName + "." + learnerClassObject.__name__
+	opValue = learnerClassObject.__module__ + '.' + learnerClassObject.__name__
+
+	UML.settings.set('RegisteredLearners', opName, opValue)
+	if save:
+		UML.settings.saveChanges('RegisteredLearners', opName)
+	
+	# check if new option names introduced, call sync if needed
+	if learnerClassObject.options() != []:
+		UML.configuration.syncWithInterfaces(UML.settings)
+
+
+def deregisterCustomLearnerBacked(customPackageName, learnerName, save):
+	currInterface = findBestInterface(customPackageName)
+	if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
+		raise ArgumentException("May only attempt to deregister learners from the interfaces of custom packages. '" + customPackageName + "' is not a custom package")
+	origOptions = currInterface.optionNames
+	empty = currInterface.deregisterLearner(learnerName)
+	newOptions = currInterface.optionNames
+
+	# remove options
+	for optName in origOptions:
+		if optName not in newOptions:
+			UML.settings.delete(customPackageName, optName)
+			if save:
+				UML.settings.saveChanges(customPackageName, optName)
+
+	if empty:
+		UML.interfaces.available.remove(currInterface)
+		#remove section
+		UML.settings.delete(customPackageName, None)
+		if save:
+			UML.settings.saveChanges(customPackageName)
+
+	regOptName = customPackageName + '.' + learnerName
+	# delete from registered learner list
+	UML.settings.delete('RegisteredLearners', regOptName)
+	if save:
+		UML.settings.saveChanges('RegisteredLearners', regOptName)
 		
 
 

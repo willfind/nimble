@@ -11,6 +11,7 @@ import re
 import datetime
 import os
 import copy
+import ConfigParser
 
 import UML
 from UML.exceptions import ArgumentException
@@ -158,10 +159,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **
 		testX.referenceDataFrom(normalizedTest)
 		testX.name = testX.name + " " + trueLearnerName
 
-def registerCustomLearner(customPackageName, learnerClassObject):
-	"""
-	Register the given customLearner class so that it is callable by the top level UML
-	functions through the interface of the specified custom package.
+def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
+	""" Register the given customLearner class so that it is callable by the
+	top level UML functions through the interface of the specified custom
+	package. This operation modifies the saved configuration file so that
+	this change will be reflected during future sesssions.
 
 	customPackageName : The string name of the package preface you want to use when calling
 	the learner. If there is already an interface for a custom package with this name, the
@@ -176,36 +178,38 @@ def registerCustomLearner(customPackageName, learnerClassObject):
 	details of the provided implementation are acceptable.
 
 	"""
-	# detect name collision
-	for currInterface in UML.interfaces.available:
-		if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
-			if currInterface.isAlias(customPackageName):
-				raise ArgumentException("The customPackageName '" + customPackageName + "' cannot be used: it is an accepted alias of a non-custom package")
+	UML.helpers.registerCustomLearnerBackend(customPackageName, learnerClassObject, True)
 
-	# do validation before we potentially construct an interface to a custom package
-	UML.customLearners.CustomLearner.validateSubclass(learnerClassObject)
-
-	try:
-		currInterface = findBestInterface(customPackageName)
-	except ArgumentException:
-		currInterface = UML.interfaces.CustomLearnerInterface(customPackageName)
-		UML.interfaces.available.append(currInterface)
-
-	currInterface.registerLearnerClass(learnerClassObject)
-
-	opName = customPackageName + "." + learnerClassObject.__name__
-	opValue = learnerClassObject.__module__ + '.' + learnerClassObject.__name__
-	UML.settings.set('RegisteredLearners', opName, opValue)
-	UML.settings.saveChanges('RegisteredLearners', opName)
-	
-	# check if new option names introduced, call sync if needed
-	if learnerClassObject.options() != []:
-		UML.configuration.syncWithInterfaces(UML.settings)
-
-def deregisterCustomLearner(customPackageName, learnerName):
+def registerCustomLearner(customPackageName, learnerClassObject):
 	"""
-	Remove accessibility of the learner with the given name from the interface of the package
-	with the given name.
+	Register the given customLearner class so that it is callable by the
+	top level UML functions through the interface of the specified custom
+	package. Though this operation by itself is temporary, it has effects
+	in UML.settings, so subsequent saveChanges operations may cause it to
+	be reflected in future sessions.
+
+	customPackageName : The string name of the package preface you want to use when calling
+	the learner. If there is already an interface for a custom package with this name, the
+	learner will be accessible through that interface. If there is no interface to a custom
+	package of that name, then one will be created. You cannot register a custom learner to
+	be callable through the interface for a non-custom package (such as ScikitLearn or MLPY).
+	Therefore, customPackageName cannot be a value which is the accepted alias of another
+	package's interface.
+
+	learnerClassObject : The class object implementing the learner you want registered. It
+	will be checked using UML.interfaces.CustomLearner.validateSubclass to ensure that all
+	details of the provided implementation are acceptable.
+
+	"""
+	UML.helpers.registerCustomLearnerBackend(customPackageName, learnerClassObject, False)
+
+
+def deregisterCustomLearnerAsDefault(customPackageName, learnerName):
+	"""
+	Remove accessibility of the learner with the given name from the
+	interface of the package with the given name permenantly. This
+	operation modifies the saved configuration file so that this
+	change will be reflected during future sesssions.
 
 	customPackageName : the name of the interface / custom package from which the learner
 	named 'learnerName' is to be removed from. If that learner was the last one grouped in
@@ -215,27 +219,24 @@ def deregisterCustomLearner(customPackageName, learnerName):
 	the name 'customPackageName'
 
 	"""
-	currInterface = findBestInterface(customPackageName)
-	if not isinstance(currInterface, UML.interfaces.CustomLearnerInterface):
-		raise ArgumentException("May only attempt to deregister learners from the interfaces of custom packages. '" + customPackageName + "' is not a custom package")
-	origOptions = currInterface.optionNames
-	empty = currInterface.deregisterLearner(learnerName)
-	newOptions = currInterface.optionNames
+	UML.helpers._deregisterCustomLearnerBackend(customPackageName, learnerName, True)
 
-	# remove options
-	for optName in origOptions:
-		if optName not in newOptions:
-			UML.settings.delete(customPackageName, optName)
+def deregisterCustomLearner(customPackageName, learnerName):
+	"""
+	Remove accessibility of the learner with the given name from the
+	interface of the package with the given name temporarily in this
+	session. This has effects in UML.settings, so subsequent saveChanges
+	operations may cause it to be reflected in future sessions.
 
-	if empty:
-		UML.interfaces.available.remove(currInterface)
-		#remove section
-		UML.settings.delete(customPackageName, None)
+	customPackageName : the name of the interface / custom package from which the learner
+	named 'learnerName' is to be removed from. If that learner was the last one grouped in
+	that custom package, then the interface is removed from the UML.interfaces.available list.
 
-	regOptName = customPackageName + '.' + learnerName
-	# delete from registered learner list
-	UML.settings.delete('RegisteredLearners', regOptName)
-	UML.settings.saveChanges('RegisteredLearners')
+	learnerName : the name of the learner to be removed from the interface / custom package with
+	the name 'customPackageName'
+
+	"""
+	UML.helpers.deregisterCustomLearnerBacked(customPackageName, learnerName, False)
 
 
 def learnerParameters(name):
