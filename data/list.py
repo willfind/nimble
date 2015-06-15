@@ -277,7 +277,7 @@ class List(Base):
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractPointByFunction case
+				raise NotImplementedError  # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
 					number = self.pointCount		
@@ -350,7 +350,15 @@ class List(Base):
 		for index in xrange(toWrite,len(self.data)):
 			self.data.pop()
 
-		return List(satisfying, pointNames=names, reuseData=True)
+		if len(satisfying) == 0:
+			rawTrans = []
+			for i in xrange(self.featureCount):
+				rawTrans.append([])
+			ret = List(rawTrans)
+			ret.transpose()
+			return ret
+		else:
+			return List(satisfying, pointNames=names, reuseData=True)
 
 	def _extractPointsByRange_implementation(self, start, end):
 		"""
