@@ -1345,8 +1345,22 @@ class Base(object):
 			print toPrint
 		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, nameLength)
 
-	def plot(self, includeColorbar=False):
+
+	def plot(self, outPath=None, includeColorbar=False):
+		self._plot(outPath, includeColorbar)
+
+
+	def _setupOutFormatForPlotting(self, outPath):
+		outFormat = None
+		if isinstance(outPath, basestring):
+			(path, ext) = os.path.splitext(outPath)
+			if len(ext) == 0:
+				outFormat = 'png'
+		return outFormat
+
+	def _plot(self, outPath=None, includeColorbar=False):
 		self._validateMatPlotLibImport(mplError, 'plot')
+		outFormat = self._setupOutFormatForPlotting(outPath)
 
 		def plotter(d):
 			import matplotlib.pyplot as plt
@@ -1361,14 +1375,18 @@ class Base(object):
 			plt.xlabel("Feature Values", labelpad=10)
 			plt.ylabel("Point Values")
 
-			plt.show()
+			if outPath is None:
+				plt.show()
+			else:
+				plt.savefig(outPath, format=outFormat)
 
 		toPlot = self.copyAs('numpyarray')
 		p = Process(target=plotter, kwargs={'d':self.data})
 		p.start()
+		return p
 
 
-	def plotPointDistribution(self, point, xMin=None, xMax=None):
+	def plotPointDistribution(self, point, outPath=None, xMin=None, xMax=None):
 		"""Plot a histogram of the distribution of values in the specified
 		point. Along the x axis of the plot will be the values seen in
 		the point, grouped into bins; along the y axis will be the number
@@ -1385,10 +1403,13 @@ class Base(object):
 		xMax: the largest value shown on the x axis of teh resultant plot
 		
 		"""
-		self._validateMatPlotLibImport(mplError, 'plotPointDistribution')
-		self._plotDistribution('point', point, xMin, xMax)
+		self._plotDistribution(point, outPath, xMin, xMax)
 
-	def plotFeatureDistribution(self, feature, xMin=None, xMax=None):
+	def _plotPointDistribution(self, point, outPath, xMin=None, xMax=None):
+		self._validateMatPlotLibImport(mplError, 'plotPointDistribution')
+		return self._plotDistribution('point', point, outPath, xMin, xMax)
+
+	def plotFeatureDistribution(self, feature, outPath=None, xMin=None, xMax=None):
 		"""Plot a histogram of the distribution of values in the specified
 		Feature. Along the x axis of the plot will be the values seen in
 		the feature, grouped into bins; along the y axis will be the number
@@ -1405,10 +1426,14 @@ class Base(object):
 		xMax: the largest value shown on the x axis of teh resultant plot
 		
 		"""
-		self._validateMatPlotLibImport(mplError, 'plotFeatureDistribution')
-		self._plotDistribution('feature', feature, xMin, xMax)
+		self._plotFeatureDistribution(feature, outPath, xMin, xMax)
 
-	def _plotDistribution(self, axis, identifier, xMin, xMax):
+	def _plotFeatureDistribution(self, feature, outPath=None, xMin=None, xMax=None):
+		self._validateMatPlotLibImport(mplError, 'plotFeatureDistribution')
+		return self._plotDistribution('feature', feature, outPath, xMin, xMax)
+
+	def _plotDistribution(self, axis, identifier, outPath, xMin, xMax):
+		outFormat = self._setupOutFormatForPlotting(outPath)
 		index = self._getIndex(identifier, axis)
 		if axis == 'point':
 			getter = self.pointView
@@ -1446,13 +1471,18 @@ class Base(object):
 			plt.ylabel("Number of values")
 
 			plt.xlim(xLim)
-			plt.show()
+			
+			if outPath is None:
+				plt.show()
+			else:
+				plt.savefig(outPath, format=outFormat)
 
 		p = Process(target=plotter, kwargs={'d':toPlot, 'xLim':(xMin,xMax)})
 		p.start()
+		return p
 
 
-	def plotPointAgainstPoint(self, x, y, xMin=None, xMax=None, yMin=None,
+	def plotPointAgainstPoint(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
 				yMax=None):
 		"""Plot a scatter plot of the two input points using the pairwise
 		combination of their values as coordinates. Control over the width
@@ -1475,11 +1505,14 @@ class Base(object):
 		yMax: the largest value shown on the y axis of teh resultant plot
 		
 		"""
-		self._validateMatPlotLibImport(mplError, 'plotPointComparison')
-		
-		self._plotCross(x, 'point', y, 'point', xMin, xMax, yMin, yMax)
+		self._plotPointAgainstPoint(x, y, outPath, xMin, xMax, yMin, yMax)
 
-	def plotFeatureAgainstFeature(self, x, y, xMin=None, xMax=None, yMin=None,
+	def _plotPointAgainstPoint(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
+				yMax=None):
+		self._validateMatPlotLibImport(mplError, 'plotPointComparison')
+		return self._plotCross(x, 'point', y, 'point', outPath, xMin, xMax, yMin, yMax)
+
+	def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
 				yMax=None):
 		"""Plot a scatter plot of the two input features using the pairwise
 		combination of their values as coordinates. Control over the width
@@ -1502,11 +1535,15 @@ class Base(object):
 		yMax: the largest value shown on the y axis of the resultant plot
 		
 		"""
-		self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
-		
-		self._plotCross(x, 'feature', y, 'feature', xMin, xMax, yMin, yMax)
+		self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax)
 
-	def _plotCross(self, x, xAxis, y, yAxis, xMin, xMax, yMin, yMax):
+	def _plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
+				yMax=None):
+		self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
+		return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax, yMin, yMax)
+
+	def _plotCross(self, x, xAxis, y, yAxis, outPath, xMin, xMax, yMin, yMax):
+		outFormat = self._setupOutFormatForPlotting(outPath)
 		xIndex = self._getIndex(x, xAxis)
 		yIndex = self._getIndex(y, yAxis)
 
@@ -1556,11 +1593,14 @@ class Base(object):
 			plt.xlim(xLim)
 			plt.ylim(yLim)
 
-			plt.show()
+			if outPath is None:
+				plt.show()
+			else:
+				plt.savefig(outPath, format=outFormat)
 
 		p = Process(target=plotter, kwargs={'inX':xToPlot, 'inY':yToPlot, 'xLim':(xMin,xMax), 'yLim':(yMin,yMax)})
 		p.start()
-
+		return p
 
 	##################################################################
 	##################################################################

@@ -1,6 +1,8 @@
 """
 Script demonstrating the various options available for plotting UML
-data objects.
+data objects. By default, outputs plots to the screen. If a directory
+is passed as an argument to the script, then plots will instead
+be written as files in that directory
 
 """
 
@@ -10,19 +12,34 @@ boilerplate()
 if __name__ == "__main__":
 	import UML
 	import numpy
+	import sys
+	import os
+
+	outDir = None
+	if len(sys.argv) > 1:
+		outDir = sys.argv[1]
 
 	rawNorm = numpy.random.normal(loc=0, scale=1, size=(1000,1))
 	objNorm = UML.createData("Matrix", rawNorm, featureNames=["N(0,1)"])
 
 	# 1000 samples of N(0,1)
 	def plotDistributionNormal():
-		objNorm.plotFeatureDistribution(0)
+		outPath = None
+		if outDir is not None:
+			print "hello"
+			outPath = os.path.join(outDir, "NormalDistribution")
+
+		objNorm.plotFeatureDistribution(0, outPath=outPath)
 
 	# 1000 samples of N(0,1), squared
 	def plotDistributionNormalSquared():
 		objNorm.elementwisePower(2)
 		objNorm.setFeatureName(0,"N(0,1) squared")
-		objNorm.plotFeatureDistribution(0)
+
+		outPath = None
+		if outDir is not None:
+			outPath = os.path.join(outDir, "NormalSquared")
+		objNorm.plotFeatureDistribution(0, outPath=outPath)
 
 
 	#compare two columns: col1= rand noise, col2 =3* col1 + noise
@@ -37,7 +54,11 @@ if __name__ == "__main__":
 		#obj1.setFeatureName(0, "[0, 1) random noise")
 		obj1.setFeatureName(1, "(Feature 0 * 3) + noise")
 		obj1.name = "Noise"
-		obj1.plotFeatureAgainstFeature(0,1)
+
+		outPath = None
+		if outDir is not None:
+			outPath = os.path.join(outDir, "NoiseVsScaled")
+		obj1.plotFeatureAgainstFeature(0,1, outPath=outPath)
 
 
 
@@ -67,11 +88,17 @@ if __name__ == "__main__":
 	# plot
 	#heatMap: checkboard pattern, even columns 0s, odds = 1's, offset every other point
 	def plotCheckerboad():
-		checkObj.plot()
+		outPath = None
+		if outDir is not None:
+			outPath = os.path.join(outDir, "checkerboard")
+		checkObj.plot(outPath=outPath)
 
 	# heatmap: another one to show a gradient from a given formula (linear?)
 	def plotCheckeredGradient():
-		checkGradObj.plot(True)
+		outPath = None
+		if outDir is not None:
+			outPath = os.path.join(outDir, "checkerboardWithBar")
+		checkGradObj.plot(includeColorbar=True, outPath=outPath)
 
 	# one function for each plot being drawn.
 	plotDistributionNormal()

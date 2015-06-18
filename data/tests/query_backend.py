@@ -12,6 +12,7 @@ featureSimilarities, pointStatistics, featureStatistics,
 import math
 import tempfile
 import numpy
+import os
 from nose.tools import *
 
 from copy import deepcopy
@@ -1186,6 +1187,104 @@ class QueryBackend(DataTestObject):
 
 	def test_featureStatistics_NamePath_preservations(self):
 		self.backend_Stat_NamePath_preservation(False)
+
+
+	########
+	# plot #
+	########
+
+	def test_plot_fileOutput(self):
+		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+			path = outFile.name
+			startSize = os.path.getsize(path)
+			assert startSize == 0
+
+			obj = UML.createRandomData(self.returnType, 10,10,0)
+			#we call the leading underscore version, because it
+			# returns the process
+			p = obj._plot(outPath=path)
+			p.join()
+
+			endSize = os.path.getsize(path)
+			assert startSize < endSize
+
+	#########################
+	# plotPointDistribution #
+	#########################
+
+	def test_plotPointDistribution_fileOutput(self):
+		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+			path = outFile.name
+			startSize = os.path.getsize(path)
+			assert startSize == 0
+
+			obj = UML.createRandomData(self.returnType, 10,10,0)
+			#we call the leading underscore version, because it
+			# returns the process
+			p = obj._plotPointDistribution(point=0, outPath=path)
+			p.join()
+
+			endSize = os.path.getsize(path)
+			assert startSize < endSize
+
+	###########################
+	# plotFeatureDistribution #
+	###########################
+
+	def test_plotFeatureDistribution_fileOutput(self):
+		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+			path = outFile.name
+			startSize = os.path.getsize(path)
+			assert startSize == 0
+
+			obj = UML.createRandomData(self.returnType, 10,10,0)
+			#we call the leading underscore version, because it
+			# returns the process
+			p = obj._plotFeatureDistribution(feature=0, outPath=path)
+			p.join()
+
+			endSize = os.path.getsize(path)
+			assert startSize < endSize
+
+	#########################
+	# plotPointAgainstPoint #
+	#########################
+
+	def test_plotPointAgainstPoint_fileOutput(self):
+		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+			path = outFile.name
+			startSize = os.path.getsize(path)
+			assert startSize == 0
+
+			obj = UML.createRandomData(self.returnType, 10,10,0)
+			#we call the leading underscore version, because it
+			# returns the process
+			p = obj._plotPointAgainstPoint(x=0, y=1, outPath=path)
+			p.join()
+
+			endSize = os.path.getsize(path)
+			assert startSize < endSize
+
+	#############################
+	# plotFeatureAgainstFeature #
+	#############################
+
+	def test_plotFeatureAgainstFeature_fileOutput(self):
+		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
+			path = outFile.name
+			startSize = os.path.getsize(path)
+			assert startSize == 0
+
+			obj = UML.createRandomData(self.returnType, 10,10,0)
+			#we call the leading underscore version, because it
+			# returns the process
+			p = obj._plotFeatureAgainstFeature(x=0, y=1, outPath=path)
+			p.join()
+
+			endSize = os.path.getsize(path)
+			assert startSize < endSize
+
+
 
 ###########
 # Helpers #

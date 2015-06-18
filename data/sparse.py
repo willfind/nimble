@@ -133,6 +133,15 @@ class Sparse(Base):
 				return value
 		return featureIt(self)
 
+	def plot(self, outPath=None, includeColorbar=False):
+		toPlot = self.copyAs("Matrix")
+		toPlot.plot(outPath, includeColorbar)
+
+	def _plot(self, outPath=None, includeColorbar=False):
+		toPlot = self.copyAs("Matrix")
+		return toPlot._plot(outPath, includeColorbar)
+
+
 	def _applyTo_implementation(self, function, included, inPlace, axis):
 		retData = []
 		modData = []
@@ -428,10 +437,6 @@ class Sparse(Base):
 
 
 	def _extractByList_implementation(self, toExtract, axisType):
-		"""
-		
-
-		"""
 		extractLength = len(toExtract)
 		extractData = []
 		extractRows = []
@@ -586,10 +591,6 @@ class Sparse(Base):
 
 
 	def _extractByRange_implementation(self, start, end, axisType):
-		"""
-		
-
-		"""
 		rangeLength = end - start + 1
 		extractData = []
 		extractRows = []
@@ -649,9 +650,6 @@ class Sparse(Base):
 		return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True) 
 
 	def _transpose_implementation(self):
-		"""
-
-		"""
 		self._data = self._data.transpose()
 		self._sorted = None
 		_resync(self._data)
