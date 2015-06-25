@@ -193,6 +193,14 @@ def formatIfNeeded(value, sigDigits):
 	return str(value)
 
 def indicesSplit(allowed, total):
+	"""Given the total length of a list, and a limit to
+	how many indices we are allowed to display, return
+	two lists of indices defining a middle ommision.
+	In the tupple return, the first list are positive indices
+	growing up from zero. The second list are negative indices
+	growing up to negative one.	
+
+	"""
 	if total > allowed:
 		allowed -= 1
 	
@@ -214,7 +222,12 @@ def indicesSplit(allowed, total):
 	return (fIndices, bIndices)
 
 
-def hasNonDefault(possibleIndices, obj, axis):
+def hasNonDefault(obj, axis):
+	if axis == 'point':
+		possibleIndices = xrange(obj.pointCount)
+	else:
+		possibleIndices = xrange(obj.featureCount)
+		
 	namesInv = obj.pointNamesInverse if axis == 'point' else obj.featureNamesInverse
 
 	ret = False

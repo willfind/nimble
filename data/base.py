@@ -1062,208 +1062,86 @@ class Base(object):
 	def __ne__(self, other):
 		return not self.__eq__(other)
 
-
 	def toString(self, includeNames=True, maxWidth=80, maxHeight=30,
 				sigDigits=3, nameLength=11):
-		if self.pointCount == 0 or self.featureCount == 0:
-			return ""
-
-		columnSeperator = '  '
-		columnHolder = '--'
-		cHoldWidth = len(columnHolder)
-		cHoldTotal = len(columnSeperator) + cHoldWidth
-		rowHolder = '|'
-
-		corner = 'NAMES'
+		# setup a bundle of fixed constants
+		colSep = ' '
+		colHold = '--'
+		rowHold = '|'
+		pnameSep = ' '
 		nameHolder = '...'
-		nameCutIndex = nameLength - len(nameHolder)
-
 		holderOrientation = 'center'
 		dataOrientation = 'center'
 		pNameOrientation = 'rjust'
 		fNameOrientation = 'center'
 
-		# format style: float round or E ???
-
 		#setup a bundle of default values
-		if maxHeight is None:
-			maxHeight = self.pointCount
-		if maxWidth is None:
-			maxWidth = float('inf')
+		maxHeight = self.pointCount if maxHeight is None else maxHeight
+		maxWidth = float('inf') if maxWidth is None else maxWidth
+		maxRows = min(maxHeight, self.pointCount)
+		maxDataRows = maxRows
+		includePNames = False
+		includeFNames = False
 
 		if includeNames:
-			pRange = xrange(self.pointCount)
-			fRange = xrange(self.featureCount)
-			includePnames = dataHelpers.hasNonDefault(pRange, self, 'point')
-			includeFnames = dataHelpers.hasNonDefault(fRange, self, 'feature')
-			if not includePnames and not includeFnames:
-				includeNames = False
-			if includeNames:
-				maxRows = min(maxHeight, self.pointCount + 1)
-				maxDataRows = maxRows - 1
-		# this is an explicit check, not an 'else' because the value
-		# of includeNames could have changed above.
-		if not includeNames:
-			includePnames = False
-			includeFnames = False
-			maxRows = min(maxHeight, self.pointCount)
-			maxDataRows = maxRows
+			includePNames = dataHelpers.hasNonDefault(self, 'point')
+			includeFNames = dataHelpers.hasNonDefault(self, 'feature')
+			if includeFNames:
+				# plus or minus 2 because we will be dealing with both
+				# feature names and a gap row
+				maxRows = min(maxHeight, self.pointCount + 2)
+				maxDataRows = maxRows - 2
 
-		(tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxDataRows, self.pointCount)
-		combinedRowIDs = tRowIDs + bRowIDs
-		if len(combinedRowIDs) < self.pointCount:
-			rowHolderIndex = len(tRowIDs)
-		else:
-			rowHolderIndex = sys.maxint
+		# Set up point Names and determine how much space they take up
+		pnames = None
+		pnamesWidth = None
+		maxDataWidth = maxWidth
+		if includePNames:
+			pnames, pnamesWidth = self._arrangePointNames(maxRows, nameLength,
+					rowHold, nameHolder)
+			# The available space for the data is reduced by the width of the
+			# pnames, a column separator, the pnames seperator, and another
+			# column seperator 
+			maxDataWidth = maxWidth - (pnamesWidth + 2 * len(colSep) + len(pnameSep))	
 
-		# grab the names for those rows we will use, calc their width.
-		# the base value is the width of "NAMES"
-		pnamesWidth = len(corner)
-		lTable, rTable = [], []
-		lColWidths, rColWidths = [], []
-		if includeNames:
-			lTable, rTable = [[corner]], [[]]
-		# have to populate lTable with lists whether we include names or not 
-		for sourceIndex in range(2):
-			source = list([tRowIDs, bRowIDs])[sourceIndex]
-			for i in source:
-				pname = self.getPointName(i)
-				if pname.startswith(DEFAULT_PREFIX):
-					pname = ""
-				if len(pname) > nameLength:
-					pname = pname[:nameCutIndex] + nameHolder
-				if includeNames:
-					lTable.append([pname])
-				else:
-					lTable.append([])
-				rTable.append([])
-				if len(pname) > pnamesWidth: pnamesWidth = len(pname)
-			if sourceIndex == 0 and len(combinedRowIDs) < self.pointCount:
-				rowHolderIndex = len(lTable)
-				if includeNames:
-					lTable.append([rowHolder])
-				else:
-					lTable.append([])
-				rTable.append([])
+		# Set up data values to fit in the available space
+		dataTable, colWidths = self._arrangeDataWithLimits(maxDataWidth, maxDataRows,
+				sigDigits, colSep, colHold, rowHold)
 
-		if includeNames:
-			lColWidths.append(pnamesWidth)
+		# set up feature names list, record widths
+		fnames = None
+		fnamesWidth = None
+		if includeFNames:
+			fnames, fnamesWidth = self._arrangeFeatureNames(maxWidth, nameLength,
+					colSep, colHold, nameHolder)
 
+			# adjust data or fnames according to the more restrictive set
+			# of col widths
+			self._makeConsistentFNamesAndData(fnames, fnamesWidth, dataTable,
+					colWidths, colHold)
 
-		# total width will always include the column placeholder column,
-		# until it is shown that it isn't needed
-		totalWidth = cHoldTotal
-		# if names are included, then the previous block of code will have already
-		# taken away from our available space.
-		if includeNames:
-			totalWidth += pnamesWidth 
+		# combine names into finalized table
+		finalTable, finalWidths = self._arrangeFinalTable(pnames, pnamesWidth,
+				dataTable, colWidths, fnames, fnamesWidth, pnameSep)
 
-		# going to add indices from the beginning and end of the data until
-		# we've used up our available space, or we've gone through all of
-		# the columns. currIndex makes use of negative indices, which is
-		# why the end condition makes use of an exact stop value, which
-		# varies between positive and negative depending on the number of
-		# features
-		endIndex = self.featureCount / 2
-		if self.featureCount % 2 == 1:
-			endIndex *= -1
-			endIndex -= 1
-		currIndex = 0
-		numProcessed = 0
-		while totalWidth < maxWidth and currIndex != endIndex:
-			currWidth = 0
-			currTable = lTable if currIndex >= 0 else rTable
-			currCol = []
-
-			# adjust Width for featureNames after having done all the values
-			if includeNames:
-				nameIndex = currIndex
-				if currIndex < 0:
-					nameIndex = self.featureCount + currIndex
-				currName = self.getFeatureName(nameIndex)
-				if currName.startswith(DEFAULT_PREFIX):
-					currName = ""
-				if len(currName) > nameLength:
-					currName = currName[:nameCutIndex] + nameHolder
-				nameLen = len(currName)
-				if nameLen > currWidth:
-					currWidth = nameLen
-
-				currCol.append(currName)
-
-			# check all values in this column (in the accepted rows)
-			for i in range(len(combinedRowIDs)):
-				rID = combinedRowIDs[i]
-				val = self[rID, currIndex]
-				valFormed = formatIfNeeded(val, sigDigits)
-				valLen = len(valFormed)
-				if valLen > currWidth:
-					currWidth = valLen
-				tableIndex = i
-				# if we have names, then the index in the rowIDs will be one off
-				if includeNames:
-					tableIndex += 1
-				# If these are equal, it is time to add the holders
-				if tableIndex == rowHolderIndex:
-					currCol.append(rowHolder)
-				# if the index is equal or greater, then we have to shift by one
-				# again, to account for the holders
-				if tableIndex >= rowHolderIndex:
-					tableIndex += 1
-				
-				currCol.append(valFormed)
-
-			totalWidth += currWidth + len(columnSeperator)
-			# test: total width is under max without column holder
-			allCols = totalWidth - (cHoldTotal) < maxWidth
-			# test: the column we are tyring to add is the last one possible
-			allCols = allCols and (numProcessed == (self.featureCount - 1))
-			# only add this column if it won't put us over the limit
-			if totalWidth < maxWidth or allCols:
-				for i in range(len(currCol)):
-					currTable[i].append(currCol[i])
-
-				# the width value goes in different lists depending on the index
-				if currIndex < 0:
-					currIndex = abs(currIndex)
-					rColWidths.append(currWidth)
-				else:
-					currIndex = (-1 * currIndex) - 1
-					lColWidths.append(currWidth)
-			numProcessed += 1
-
-
-		rColWidths.reverse()
-		if numProcessed != self.featureCount:
-			colWidths = lColWidths + [cHoldWidth] + rColWidths	
-		else:
-			colWidths = lColWidths + rColWidths
-
-		# combine the tables. Have to reverse rTable because entries were appended
-		# in a right to left order
-		for rowIndex in range(len(lTable)):
-			rTable[rowIndex].reverse()
-			if numProcessed == self.featureCount:
-				lTable[rowIndex] += rTable[rowIndex]	
-			else:
-				lTable[rowIndex] += [columnHolder] + rTable[rowIndex]
-			
+		# set up output string
 		out = ""
-		for r in xrange(len(lTable)):
-			row = lTable[r]
+		for r in xrange(len(finalTable)):
+			row = finalTable[r]
 			for c in xrange(len(row)):
 				val = row[c]
-				if c == 0 and includeNames:
-					padded = getattr(val, pNameOrientation)(colWidths[c])
-				elif r == 0 and includeNames:
-					padded = getattr(val, fNameOrientation)(colWidths[c])
+				if c == 0 and includePNames:
+					padded = getattr(val, pNameOrientation)(finalWidths[c])
+				elif r == 0 and includeFNames:
+					padded = getattr(val, fNameOrientation)(finalWidths[c])
 				else:
-					padded = getattr(val, dataOrientation)(colWidths[c])
-				row[c] = padded 
-			line = columnSeperator.join(lTable[r]) + "\n"
+					padded = getattr(val, dataOrientation)(finalWidths[c])
+				row[c] = padded
+			line = colSep.join(finalTable[r]) + "\n"
 			out += line
 
-		return out 
+		return out
+
 
 
 	def __repr__(self):
@@ -2664,6 +2542,299 @@ class Base(object):
 	###   Helper functions   ###
 	############################
 	############################
+
+	def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,
+			fnames, fnamesWidth, pnameSep):
+
+		# We make extensive use of list addition in this helper in order
+		# to prepend single values onto lists.
+
+		# glue point names onto the left of the data
+		if pnames is not None:
+			for i in xrange(len(dataTable)):
+				dataTable[i] = [pnames[i], pnameSep] + dataTable[i]
+			dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
+
+		# glue feature names onto the top of the data
+		if fnames is not None:
+			# adjust with the empty space in the upper left corner, if needed
+			if pnames is not None:
+				fnames = ["", ""] + fnames
+				fnamesWidth = [0, 0] + fnamesWidth
+
+			# make gap row:
+			gapRow = [""] * len(fnames)
+
+			dataTable = [fnames, gapRow] + dataTable
+			# finalize widths by taking the largest of the two possibilities
+			for i in xrange(len(fnames)):
+				nameWidth = fnamesWidth[i]
+				valWidth = dataWidths[i]
+				dataWidths[i] = max(nameWidth, valWidth)
+
+		return dataTable, dataWidths
+
+	def _makeConsistentFNamesAndData(self, fnames, fnamesWidth, dataTable, dataWidths,
+				colHold):
+		"""Adjust the inputs to be a consistent length by removing
+		values and columns from the middle. Returns None.
+
+		"""
+		if len(fnamesWidth) == len(dataWidths):
+			# inputs consistent, don't have to do anything
+			return 
+		elif len(fnamesWidth) > len(dataWidths):
+			targetLength = len(dataWidths)
+			remNum = len(fnamesWidth) - targetLength
+			removalVals = [fnames]
+			removalWidths = fnamesWidth
+
+		# len(fnamesWidth) < len(dataWidths)
+		else:
+			targetLength = len(fnamesWidth)
+			remNum = len(dataWidths) - targetLength
+			removalVals = dataTable
+			removalWidths = dataWidths
+
+		removeIndex = math.ceil(targetLength/2.0)
+
+		for row in removalVals:
+			for i in xrange(remNum):
+				row.pop(removeIndex)
+
+		for i in xrange(remNum):
+			removalWidths.pop(removeIndex)
+
+
+	def _arrangeFeatureNames(self, maxWidth, nameLength, colSep, colHold, nameHold):
+		colHoldWidth = len(colHold)
+		colHoldTotal = len(colSep) + colHoldWidth
+		nameCutIndex = nameLength - len(nameHold)
+
+		lNames, rNames = [], []
+		lColWidths, rColWidths = [], []
+
+		# total width will always include the column placeholder column,
+		# until it is shown that it isn't needed
+		totalWidth = colHoldTotal
+
+		# going to add indices from the beginning and end of the data until
+		# we've used up our available space, or we've gone through all of
+		# the columns. currIndex makes use of negative indices, which is
+		# why the end condition makes use of an exact stop value, which
+		# varies between positive and negative depending on the number of
+		# features
+		endIndex = self.featureCount / 2
+		if self.featureCount % 2 == 1:
+			endIndex *= -1
+			endIndex -= 1
+		currIndex = 0
+		numAdded = 0
+		while totalWidth < maxWidth and currIndex != endIndex:
+			nameIndex = currIndex
+			if currIndex < 0:
+				nameIndex = self.featureCount + currIndex
+
+			currName = self.featureNamesInverse[nameIndex]
+
+			if currName.startswith(DEFAULT_PREFIX):
+				currName = ""
+			if len(currName) > nameLength:
+				currName = currName[:nameCutIndex] + nameHold
+			currWidth = len(currName)
+
+			currNames = lNames if currIndex >= 0 else rNames
+
+			totalWidth += currWidth + len(colSep)
+			# test: total width is under max without column holder
+			rawStillUnder = totalWidth - (colHoldTotal) < maxWidth
+			# test: the column we are trying to add is the last one possible
+			allCols = rawStillUnder and (numAdded == (self.featureCount - 1))
+			# only add this column if it won't put us over the limit,
+			# OR if it is the last one (and under the limit without the col
+			# holder)
+			if totalWidth < maxWidth or allCols:
+				numAdded += 1
+				currNames.append(currName)
+
+				# the width value goes in different lists depending on the index
+				if currIndex < 0:
+					currIndex = abs(currIndex)
+					rColWidths.append(currWidth)
+				else:
+					currIndex = (-1 * currIndex) - 1
+					lColWidths.append(currWidth)
+			
+
+		# combine the tables. Have to reverse rTable because entries were appended
+		# in a right to left order
+		if len(rNames) > 0:
+			lColWidths += rColWidths
+			rNames.reverse()
+			if numAdded == self.featureCount:
+				lNames += rNames
+			else:
+				lNames += [colHold] + rNames
+
+		return lNames, lColWidths
+
+	def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
+		"""Prepare point names for string output. Grab only those names that
+		fit according to the given row limitation, process them for length,
+		omit them if they are default. Returns a list of prepared names, and
+		a int bounding the length of each name representation.
+
+		"""
+		names = []
+		pnamesWidth = 0
+		nameCutIndex = nameLength - len(nameHold)
+		(tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxRows, self.pointCount)
+
+		# we pull indices from two lists: tRowIDs and bRowIDs
+		for sourceIndex in range(2):
+			source = list([tRowIDs, bRowIDs])[sourceIndex]
+			
+			# add in the rowHolder, if needed
+			if sourceIndex == 1 and len(bRowIDs) + len(tRowIDs) < self.pointCount:
+				names.append(rowHolder)
+
+			for i in source:
+				pname = self.getPointName(i)
+				# omit default valued names
+				if pname.startswith(DEFAULT_PREFIX):
+					pname = ""
+				
+				# truncate names which extend past the given length
+				if len(pname) > nameLength:
+					pname = pname[:nameCutIndex] + nameHold
+				
+				names.append(pname)
+
+				# keep track of bound.
+				if len(pname) > pnamesWidth:
+					pnamesWidth = len(pname)
+							
+		return names, pnamesWidth
+
+	def _arrangeDataWithLimits(self, maxWidth=80, maxHeight=30, sigDigits=3,
+				colSep=' ', colHold='--', rowHold='|'):
+		"""
+		Arrange the data in this object into a table structure, while
+		respecting the given boundaries. If there is more data than
+		what fits within the limitations, then omit points or features
+		from the middle portions of the data.
+
+		Returns a list of list of strings. The length of the outer list
+		is less than or equal to maxHeight. The length of the inner lists
+		will all be the same, a length we will designate as n. The sum of
+		the individual strings in each inner list will be less than or
+		equal to maxWidth - ((n-1) * len(colSep)). 
+
+		"""
+		if self.pointCount == 0 or self.featureCount == 0:
+			return [[]], []
+
+		if maxHeight < 2 and maxHeight != self.pointCount:
+			msg = "If the number of points in this object is two or greater, "
+			msg += "then we require that the input argument maxHeight also "
+			msg += "be greater than or equal to two."
+			raise ArgumentException(msg)
+
+		cHoldWidth = len(colHold)
+		cHoldTotal = len(colSep) + cHoldWidth
+
+		#setup a bundle of default values
+		if maxHeight is None:
+			maxHeight = self.pointCount
+		if maxWidth is None:
+			maxWidth = float('inf')
+
+		maxRows = min(maxHeight, self.pointCount)
+		maxDataRows = maxRows
+
+		(tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxDataRows, self.pointCount)
+		combinedRowIDs = tRowIDs + bRowIDs
+		if len(combinedRowIDs) < self.pointCount:
+			rowHolderIndex = len(tRowIDs)
+		else:
+			rowHolderIndex = sys.maxint
+
+		lTable, rTable = [], []
+		lColWidths, rColWidths = [], []
+
+		# total width will always include the column placeholder column,
+		# until it is shown that it isn't needed
+		totalWidth = cHoldTotal
+
+		# going to add indices from the beginning and end of the data until
+		# we've used up our available space, or we've gone through all of
+		# the columns. currIndex makes use of negative indices, which is
+		# why the end condition makes use of an exact stop value, which
+		# varies between positive and negative depending on the number of
+		# features
+		endIndex = self.featureCount / 2
+		if self.featureCount % 2 == 1:
+			endIndex *= -1
+			endIndex -= 1
+		currIndex = 0
+		numAdded = 0
+		while totalWidth < maxWidth and currIndex != endIndex:
+			currWidth = 0
+			currTable = lTable if currIndex >= 0 else rTable
+			currCol = []
+
+			# check all values in this column (in the accepted rows)
+			for i in range(len(combinedRowIDs)):
+				rID = combinedRowIDs[i]
+				val = self[rID, currIndex]
+				valFormed = formatIfNeeded(val, sigDigits)
+				valLen = len(valFormed)
+				if valLen > currWidth:
+					currWidth = valLen
+
+				# If these are equal, it is time to add the holders
+				if i == rowHolderIndex:
+					currCol.append(rowHold)
+				
+				currCol.append(valFormed)
+
+			totalWidth += currWidth + len(colSep)
+			# test: total width is under max without column holder
+			allCols = totalWidth - (cHoldTotal) < maxWidth
+			# test: the column we are trying to add is the last one possible
+			allCols = allCols and (numAdded == (self.featureCount - 1))
+			# only add this column if it won't put us over the limit
+			if totalWidth < maxWidth or allCols:
+				numAdded += 1
+				for i in range(len(currCol)):
+					if len(currTable) != len(currCol):
+						currTable.append([currCol[i]])
+					else:
+						currTable[i].append(currCol[i])
+
+				# the width value goes in different lists depending on the index
+				if currIndex < 0:
+					currIndex = abs(currIndex)
+					rColWidths.append(currWidth)
+				else:
+					currIndex = (-1 * currIndex) - 1
+					lColWidths.append(currWidth)
+
+		# combine the tables. Have to reverse rTable because entries were appended
+		# in a right to left order
+		if len(rTable) > 0:
+			if numAdded == self.featureCount:
+				lColWidths += rColWidths
+			else:
+				lColWidths += [cHoldTotal] + rColWidths
+			for rowIndex in range(len(lTable)):
+				rTable[rowIndex].reverse()
+				if numAdded == self.featureCount:
+					lTable[rowIndex] += rTable[rowIndex]	
+				else:
+					lTable[rowIndex] += [colHold] + rTable[rowIndex]
+
+		return lTable, lColWidths
 
 
 	def _pointNameDifference(self, other):

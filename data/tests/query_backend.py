@@ -465,20 +465,66 @@ class QueryBackend(DataTestObject):
 
 	def test_toString_dataLocation(self):
 		""" test toString under default parameters """
-		
 		for pNum in [3,9]:
-			for fNum in [2,5,8]:
+			for fNum in [2,5,8,15]:
 				randGen = UML.createRandomData("List", pNum, fNum, 0, numericType='int')
 				raw = randGen.data
 
-				fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8']
-				pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8']
+#				fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc', 'fnd', 'fne']
+				fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e']
+				pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8', 'pn9', 'pna', 'pnb', 'pnc', 'pnd', 'pne']
 				data = UML.createData(self.returnType, raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
 				
-				for mw in [40, 60, 80,]:
-					for mh in [5, 7, 10]:
+				for mw in [40, 60, 80, None]:
+					for mh in [5, 7, 10, None]:
 						ret = data.toString(includeNames=False, maxWidth=mw, maxHeight=mh)
 						checkToStringRet(ret, data)
+
+	@raises(ArgumentException)
+	def test_arrangeDataWithLimits_exception_maxH(self):
+		randGen = UML.createRandomData("List", 5, 5, 0, numericType='int')
+		randGen._arrangeDataWithLimits(maxHeight=1)
+
+	def test_arrangeDataWithLimits(self):
+		def makeUniformLength(rType, p, f, l):
+			raw = []
+			val = 10 ** (l - 1)
+			for i in range(p):
+				raw.append([])
+				for j in range(f):
+					raw[i].append(val)
+
+			return UML.createData(rType, raw)
+
+		def runTrial(pNum, fNum, valLen, maxW, maxH, colSep):
+			if pNum == 0 and fNum == 0:
+				return
+			elif pNum == 0:
+				data = makeUniformLength("List", 1, fNum, valLen)
+				data.extractPoints(0)
+			elif fNum == 0:
+				data = makeUniformLength("List", pNum, 1, valLen)
+				data.extractFeatures(0)
+			else:
+				data = makeUniformLength("List", pNum, fNum, valLen)
+#			raw = data.data	
+			ret, widths = data._arrangeDataWithLimits(maxW, maxH, colSep=colSep)
+
+			assert len(ret) <= maxH
+			for pRep in ret:
+				assert len(pRep) == len(widths)
+				lenSum = 0
+				for val in pRep:
+					lenSum += len(val)
+				assert lenSum <= (maxW - ((len(pRep)-1) * len(colSep)))
+
+		for pNum in [0,1,2,4,5,7,10]:
+			for fNum in [0,1,2,4,5,7,10]:
+				for valLen in [1,2,4,5]:
+					for maxW in [10,20,40,80]:
+						for maxH in [2,5,10]:
+							for colSep in ['', ' ', ' ']:
+								runTrial(pNum, fNum, valLen, maxW, maxH, colSep)
 
 
 	##################### #######################
