@@ -1415,14 +1415,48 @@ class Base(object):
 	def __str__(self):
 		return self.toString()
 
-	def show(self, includeObjectName=True, includeAxisNames=True, maxWidth=80,
+	def show(self, description, includeObjectName=True, includeAxisNames=True, maxWidth=80,
 			maxHeight=30, sigDigits=3, nameLength=11):
+		"""Method to simplify printing a representation of this data object,
+		with some context. The backend is the toString() method, and this
+		method includes control over all of the same functionality via
+		arguments. Prior to the names and data, it additionally prints a
+		description provided by the user, (optionally) this object's name
+		attribute, and the number of points and features that are in the
+		data.
+
+		description: Unless None, this is printed as-is before the rest of
+		the output.
+
+		includeObjectName: if True, the object's name attribute will be
+		printed.
+
+		includeAxisNames: if True, the point and feature names will be
+		printed.
+
+		maxWidth: a bound on the maximum number of characters printed on
+		each line of the output.
+
+		maxHeight: a bound on the maximum number of lines printed in the
+		outout.
+
+		sigDigits: the number of decimal places to show when printing
+		float valued data.
+
+		nameLength: a bound on the maximum number of characters we allow
+		for each point or feature name.
+
+		"""
+		if description is not None:
+			print description
 
 		if includeObjectName:
-			toPrint = self.name + "\n    "
-			toPrint += "pointCount=" + str(self.pointCount) + "    "
-			toPrint += "featureCount=" + str(self.featureCount)
-			print toPrint
+			context = self.name + " : "
+		else:
+			context = ""
+		context += str(self.pointCount) + "pt x "
+		context += str(self.featureCount) + "ft"
+		print context
 		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, nameLength)
 
 
