@@ -908,7 +908,7 @@ class QueryBackend(DataTestObject):
 			orig.transpose()
 
 		expRaw = [[2],[-1],[0]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, featureNames=["max"])
 
 		assert expObj == ret
 		assert sameAsOrig == orig			
@@ -939,7 +939,7 @@ class QueryBackend(DataTestObject):
 			orig.transpose()
 
 		expRaw = [[1],[2./3],[1./3]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, featureNames=["mean"])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -970,7 +970,7 @@ class QueryBackend(DataTestObject):
 			orig.transpose()
 
 		expRaw = [[1],[1],[0]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, featureNames=["median"])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1002,7 +1002,7 @@ class QueryBackend(DataTestObject):
 			orig.transpose()
 
 		expRaw = [[1],[-21],[-1]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, featureNames=['min'])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1033,7 +1033,7 @@ class QueryBackend(DataTestObject):
 			orig.transpose()
 
 		expRaw = [[1],[2],[3]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, featureNames=['uniquecount'])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1064,7 +1064,7 @@ class QueryBackend(DataTestObject):
 			orig.transpose()
 
 		expRaw = [[1./3],[1./3],[2./3]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, featureNames=['proportionmissing'])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1095,7 +1095,7 @@ class QueryBackend(DataTestObject):
 			orig.transpose()
 
 		expRaw = [[0],[1./3],[2./3]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, featureNames=['proportionzero'])
 
 		assert expObj == ret
 		assert sameAsOrig == orig

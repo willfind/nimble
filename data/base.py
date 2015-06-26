@@ -2745,10 +2745,12 @@ class Base(object):
 			toCall = UML.calculate.standardDeviation
 
 		if axis == 'point':
-			return self.applyToPoints(toCall, inPlace=False)
+			ret = self.applyToPoints(toCall, inPlace=False)
+			ret.setFeatureName(0, cleanFuncName)
 		else:
-			return self.applyToFeatures(toCall, inPlace=False)
-
+			ret = self.applyToFeatures(toCall, inPlace=False)
+			ret.setPointName(0, cleanFuncName)
+		return ret
 
 	############################
 	############################
