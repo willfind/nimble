@@ -7,6 +7,7 @@ the main data wrapper objects defined in this module
 
 import copy
 import math
+import string
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -285,3 +286,14 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesInv, nameType):
 
 		namesString += currNamesString + '\n'
 		return namesString
+
+
+def cleanKeywordInput(s):
+	"""Processes the input string such that it is in lower case, and all
+	whitespace is removed. Such a string is then considered 'cleaned' and
+	ready for comparison against lists of accepted values of keywords.
+
+	"""
+	s = s.lower()
+	s = "".join(s.split())
+	return s

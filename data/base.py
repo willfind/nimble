@@ -2640,32 +2640,35 @@ class Base(object):
 		return self._axisSimilaritiesBackend(similarityFunction, 'feature')
 
 	def _axisSimilaritiesBackend(self, similarityFunction, axis):
-		accepted = [
-			'correlation', 'covariance', 'dotproduct', 'samplecovariance',
-			'populationcovariance'
+		acceptedPretty = [
+			'correlation', 'covariance', 'dot product', 'sample covariance',
+			'population covariance'
 		]
-		
-		msg = "The similarityFunction must be one of the following: "
-		msg += str(accepted) + ", but '" + str(similarityFunction) + "' was "
-		msg += "given instead. Note: casing is ignored for the inputs."
-		
+		accepted = map(dataHelpers.cleanKeywordInput, acceptedPretty)
+
+		msg = "The similarityFunction must be equivaltent to one of the "
+		msg += "following: "
+		msg += str(acceptedPretty) + ", but '" + str(similarityFunction)
+		msg += "' was given instead. Note: casing and whitespace is "
+		msg += "ignored when checking the input."
+
 		if not isinstance(similarityFunction, basestring):
 			raise ArgumentException(msg)
 
-		lowerCaseFunc = similarityFunction.lower()
+		cleanFuncName = dataHelpers.cleanKeywordInput(similarityFunction)
 
-		if lowerCaseFunc not in accepted:
+		if cleanFuncName not in accepted:
 			raise ArgumentException(msg)
 
-		if lowerCaseFunc == 'correlation':
+		if cleanFuncName == 'correlation':
 			toCall = UML.calculate.correlation
-		elif lowerCaseFunc == 'covariance' or lowerCaseFunc == 'samplecovariance':
+		elif cleanFuncName == 'covariance' or cleanFuncName == 'samplecovariance':
 			toCall = UML.calculate.covariance
-		elif lowerCaseFunc == 'populationcovariance':
+		elif cleanFuncName == 'populationcovariance':
 			def populationCovariance(X, X_T):
 				return UML.calculate.covariance(X, X_T, False)
 			toCall = populationCovariance
-		elif lowerCaseFunc == 'dotproduct':
+		elif cleanFuncName == 'dotproduct':
 			def dotProd(X, X_T):
 				return X * X_T
 			toCall = dotProd
@@ -2694,43 +2697,51 @@ class Base(object):
 		return self._axisStatisticsBackend(statisticsFunction, 'feature')
 
 	def _axisStatisticsBackend(self, statisticsFunction, axis):
-		accepted = [
-			'max', 'mean', 'median', 'min', 'uniquecount', 'proportionmissing',
-			'proportionzero', 'standarddeviation', 'std', 'populationstd',
-			'populationstandarddeviation', 'samplestd', 
-			'samplestandarddeviation'
+		acceptedPretty = [
+			'max', 'mean', 'median', 'min', 'unique count', 'proportion missing',
+			'proportion zero', 'standard deviation', 'std', 'population std',
+			'population standard deviation', 'sample std', 
+			'sample standard deviation'
 			]
-		lowerCaseFunc = statisticsFunction.lower()
+		accepted = map(dataHelpers.cleanKeywordInput, acceptedPretty)
 
-		if lowerCaseFunc not in accepted:
-			msg = "The statisticsFunction must be one of the following: "
-			msg += str(accepted) + ", but " + str(statisticsFunction) + " was "
-			msg += "given instead. Note: casing is ignored for the inputs."
+		msg = "The statisticsFunction must be equivaltent to one of the "
+		msg += "following: "
+		msg += str(acceptedPretty) + ", but '" + str(statisticsFunction)
+		msg += "' was given instead. Note: casing and whitespace is "
+		msg += "ignored when checking the input."
+
+		if not isinstance(statisticsFunction, basestring):
 			raise ArgumentException(msg)
 
-		if lowerCaseFunc == 'max':
+		cleanFuncName = dataHelpers.cleanKeywordInput(statisticsFunction)
+
+		if cleanFuncName not in accepted:
+			raise ArgumentException(msg)
+
+		if cleanFuncName == 'max':
 			toCall = UML.calculate.maximum
-		elif lowerCaseFunc == 'mean':
+		elif cleanFuncName == 'mean':
 			toCall = UML.calculate.mean
-		elif lowerCaseFunc == 'median':
+		elif cleanFuncName == 'median':
 			toCall = UML.calculate.median
-		elif lowerCaseFunc == 'min':
+		elif cleanFuncName == 'min':
 			toCall = UML.calculate.minimum
-		elif lowerCaseFunc == 'uniquecount':
+		elif cleanFuncName == 'uniquecount':
 			toCall = UML.calculate.uniqueCount
-		elif lowerCaseFunc == 'proportionmissing':
+		elif cleanFuncName == 'proportionmissing':
 			toCall = UML.calculate.proportionMissing
-		elif lowerCaseFunc == 'proportionzero':
+		elif cleanFuncName == 'proportionzero':
 			toCall = UML.calculate.proportionZero
-		elif lowerCaseFunc == 'std' or lowerCaseFunc == 'standarddeviation':
+		elif cleanFuncName == 'std' or cleanFuncName == 'standarddeviation':
 			def sampleStandardDeviation(values):
 				return UML.calculate.standardDeviation(values, True)
 			toCall = sampleStandardDeviation
-		elif lowerCaseFunc == 'samplestd' or lowerCaseFunc == 'samplestandarddeviation':
+		elif cleanFuncName == 'samplestd' or cleanFuncName == 'samplestandarddeviation':
 			def sampleStandardDeviation(values):
 				return UML.calculate.standardDeviation(values, True)
 			toCall = sampleStandardDeviation
-		elif lowerCaseFunc == 'populationstd' or lowerCaseFunc == 'populationstandarddeviation':
+		elif cleanFuncName == 'populationstd' or cleanFuncName == 'populationstandarddeviation':
 			toCall = UML.calculate.standardDeviation
 
 		if axis == 'point':

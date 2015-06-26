@@ -585,10 +585,10 @@ class QueryBackend(DataTestObject):
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = orig.pointSimilarities("covariance")
+			ret = orig.pointSimilarities("covariance ")
 		else:
 			orig.transpose()
-			ret = orig.featureSimilarities("samplecovariance")
+			ret = orig.featureSimilarities("sample\tcovariance")
 			ret.transpose()
 			orig.transpose()
 
@@ -621,7 +621,7 @@ class QueryBackend(DataTestObject):
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = orig.pointSimilarities("populationcovariance")
+			ret = orig.pointSimilarities("population COvariance")
 		else:
 			orig.transpose()
 			ret = orig.featureSimilarities("populationcovariance")
@@ -657,12 +657,12 @@ class QueryBackend(DataTestObject):
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = orig.pointSimilarities("populationcovariance")
-			stdVector = orig.pointStatistics("populationstd")
+			ret = orig.pointSimilarities(" populationcovariance")
+			stdVector = orig.pointStatistics("population std")
 		else:
 			orig.transpose()
 			ret = orig.featureSimilarities("populationcovariance")
-			stdVector = orig.featureStatistics("populationstd")
+			stdVector = orig.featureStatistics("\npopulationstd")
 			ret.transpose()
 			orig.transpose()
 
@@ -689,7 +689,7 @@ class QueryBackend(DataTestObject):
 			ret = orig.pointSimilarities("correlation")
 		else:
 			orig.transpose()
-			ret = orig.featureSimilarities("correlation")
+			ret = orig.featureSimilarities("corre lation")
 			ret.transpose()
 			orig.transpose()
 
@@ -728,9 +728,9 @@ class QueryBackend(DataTestObject):
 			stdVector_T.transpose()
 
 			if sample:
-				cov = X.pointSimilarities('samplecovariance')
+				cov = X.pointSimilarities('sample covariance')
 			else:
-				cov = X.pointSimilarities('populationcovariance')
+				cov = X.pointSimilarities('population Covariance')
 
 			stdMatrix = stdVector * stdVector_T
 			ret = cov / stdMatrix
@@ -780,10 +780,10 @@ class QueryBackend(DataTestObject):
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = orig.pointSimilarities("dotproduct")
+			ret = orig.pointSimilarities("Dot Product")
 		else:
 			orig.transpose()
-			ret = orig.featureSimilarities("dotproduct")
+			ret = orig.featureSimilarities("dotproduct\n")
 			ret.transpose()
 			orig.transpose()
 
@@ -900,7 +900,7 @@ class QueryBackend(DataTestObject):
 		else:
 			orig.transpose()
 			
-			ret = orig.featureStatistics("max")
+			ret = orig.featureStatistics("max ")
 			assert ret.pointCount == 1
 			assert ret.featureCount == 3
 
@@ -932,7 +932,7 @@ class QueryBackend(DataTestObject):
 			assert ret.featureCount == 1
 		else:
 			orig.transpose()
-			ret = orig.featureStatistics("MEAN")
+			ret = orig.featureStatistics(" MEAN")
 			assert ret.pointCount == 1
 			assert ret.featureCount == 3
 			ret.transpose()
@@ -1021,7 +1021,7 @@ class QueryBackend(DataTestObject):
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = orig.pointStatistics("uniqueCount")
+			ret = orig.pointStatistics("unique Count")
 			assert ret.pointCount == 3
 			assert ret.featureCount == 1
 		else:
@@ -1052,7 +1052,7 @@ class QueryBackend(DataTestObject):
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = orig.pointStatistics("ProportionMissing")
+			ret = orig.pointStatistics("Proportion Missing ")
 			assert ret.pointCount == 3
 			assert ret.featureCount == 1
 		else:
@@ -1088,7 +1088,7 @@ class QueryBackend(DataTestObject):
 			assert ret.featureCount == 1
 		else:
 			orig.transpose()
-			ret = orig.featureStatistics("proportionZero")
+			ret = orig.featureStatistics("proportion Zero")
 			assert ret.pointCount == 1
 			assert ret.featureCount == 3
 			ret.transpose()
@@ -1114,12 +1114,12 @@ class QueryBackend(DataTestObject):
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = orig.pointStatistics("samplestd")
+			ret = orig.pointStatistics("samplestd  ")
 			assert ret.pointCount == 3
 			assert ret.featureCount == 1
 		else:
 			orig.transpose()
-			ret = orig.featureStatistics("standarddeviation")
+			ret = orig.featureStatistics("standard deviation")
 			assert ret.pointCount == 1
 			assert ret.featureCount == 3
 			ret.transpose()
@@ -1151,12 +1151,12 @@ class QueryBackend(DataTestObject):
 		sameAsOrig = self.constructor(data)
 
 		if axis:
-			ret = orig.pointStatistics("populationstd")
+			ret = orig.pointStatistics("popu  lationstd")
 			assert ret.pointCount == 3
 			assert ret.featureCount == 1
 		else:
 			orig.transpose()
-			ret = orig.featureStatistics("populationstandarddeviation")
+			ret = orig.featureStatistics("population standarddeviation")
 			assert ret.pointCount == 1
 			assert ret.featureCount == 3
 			ret.transpose()
