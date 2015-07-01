@@ -21,6 +21,7 @@ import UML
 from UML.data.dataHelpers import View
 from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
+from UML.data.dataHelpers import makeConsistentFNamesAndData
 from UML.exceptions import ArgumentException
 
 
@@ -463,22 +464,231 @@ class QueryBackend(DataTestObject):
 	# toString #
 	############
 
-	def test_toString_dataLocation(self):
-		""" test toString under default parameters """
+	def test_toString_nameAndValRecreation_randomized(self):
+		""" Regression test with random data and limits. Recreates expected results """
 		for pNum in [3,9]:
 			for fNum in [2,5,8,15]:
 				randGen = UML.createRandomData("List", pNum, fNum, 0, numericType='int')
 				raw = randGen.data
 
-#				fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc', 'fnd', 'fne']
-				fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e']
+				fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc', 'fnd', 'fne']
+#				fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e']
 				pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8', 'pn9', 'pna', 'pnb', 'pnc', 'pnd', 'pne']
 				data = UML.createData(self.returnType, raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
 				
 				for mw in [40, 60, 80, None]:
 					for mh in [5, 7, 10, None]:
-						ret = data.toString(includeNames=False, maxWidth=mw, maxHeight=mh)
-						checkToStringRet(ret, data)
+						for inc in [False, True]:
+							ret = data.toString(includeNames=inc, maxWidth=mw, maxHeight=mh)
+							checkToStringRet(ret, data, inc)
+
+
+	# makeConsistentFNamesAndData(fnames, dataTable, dataWidths,colHold):
+	def test_makeConsistentFNamesAndData_completeData(self):
+		colHold = '--'
+		chLen = len(colHold)
+
+		fnames = ['one', colHold, 'four']
+		data = [['333', '4444', '22', '1']]
+		dataWidths = [3, 4, 2, 1]
+
+		makeConsistentFNamesAndData(fnames, data, dataWidths, colHold)
+
+		expNames = ['one', colHold, 'four']
+		expData = [['333', colHold, '1']]
+		expDataWidhts = [3, chLen, 1]
+
+		assert fnames == expNames
+		assert data == expData
+		assert dataWidths == expDataWidhts
+
+	def test_makeConsistentFNamesAndData_completeNames(self):
+		colHold = '--'
+		chLen = len(colHold)
+
+		fnames = ['one', 'two', 'three', 'four']
+		data = [['333', colHold, '1']]
+		dataWidths = [3, chLen, 1]
+
+		makeConsistentFNamesAndData(fnames, data, dataWidths, colHold)
+
+		expNames = ['one', colHold, 'four']
+		expData = [['333', colHold, '1']]
+		expDataWidhts = [3, chLen, 1]
+
+		assert fnames == expNames
+		assert data == expData
+		assert dataWidths == expDataWidhts
+
+	def test_makeConsistentFNamesAndData_allComplete(self):
+		colHold = '--'
+		chLen = len(colHold)
+
+		fnames = ['one', 'two', 'three', 'four']
+		data = [['333', '22', '666666', '1']]
+		dataWidths = [3, 2, 6, 1]
+
+		makeConsistentFNamesAndData(fnames, data, dataWidths, colHold)
+
+		expNames = ['one', 'two', 'three', 'four']
+		expData = [['333', '22', '666666', '1']]
+		expDataWidhts = [3, 2, 6, 1]
+
+		assert fnames == expNames
+		assert data == expData
+		assert dataWidths == expDataWidhts
+
+	def test_makeConsistentFNamesAndData_bothIncomplete(self):
+		colHold = '--'
+		chLen = len(colHold)
+
+		fnames = ['one', 'two', colHold, 'five']
+		data = [['333', '22', colHold, '4444', '1']]
+		dataWidths = [3, 2, chLen, 4, 1]
+
+		makeConsistentFNamesAndData(fnames, data, dataWidths, colHold)
+
+		expNames = ['one', 'two', colHold, 'five']
+		expData = [['333', '22', colHold, '1']]
+		expDataWidhts = [3, 2, chLen, 1]
+
+		assert fnames == expNames
+		assert data == expData
+		assert dataWidths == expDataWidhts
+
+	def test_makeConsistentFNamesAndData_incompleteIsSameLength(self):
+		colHold = '--'
+		chLen = len(colHold)
+
+		fnames = ['one', 'two', colHold, 'five']
+		data = [['333', '22', '4444', '1']]
+		dataWidths = [3, 2, 4, 1]
+
+		makeConsistentFNamesAndData(fnames, data, dataWidths, colHold)
+
+		expNames = ['one', 'two', colHold, 'five']
+		expData = [['333', '22', colHold, '1']]
+		expDataWidhts = [3, 2, chLen, 1]
+
+		assert fnames == expNames
+		assert data == expData
+		assert dataWidths == expDataWidhts
+
+
+	def test_makeConsistentFNamesAndData_largeLengthDifference(self):
+		colHold = '--'
+		chLen = len(colHold)
+
+		fnames = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+		data = [['333', '22', colHold, '1']]
+		dataWidths = [3, 2, chLen, 1]
+
+		makeConsistentFNamesAndData(fnames, data, dataWidths, colHold)
+
+		expNames = ['1', '2', colHold, '9']
+		expData = [['333', '22', colHold, '1']]
+		expDataWidhts = [3, 2, chLen, 1]
+
+		assert fnames == expNames
+		assert data == expData
+		assert dataWidths == expDataWidhts
+
+
+
+	# _arrangeFeatureNames(self, maxWidth, nameLength, colSep, colHold, nameHold):
+	def test_arrangeFeatureNames_correctSplit(self):
+		colSep = ' '
+		colHold = '--'
+		nameHold = '...'
+
+		raw = [[300, 310, 320, 330], [301, 311, 321, 331], [302, 312, 322, 332]]
+		initnames = ['zero', 'one', 'two', 'three']
+		obj = UML.createData(self.returnType, raw, featureNames=initnames)
+
+		fnames = obj._arrangeFeatureNames(9, 11, colSep, colHold, nameHold)
+		assert fnames == ['zero', '--']
+
+	def test_arrangeFeatureNames_correctTruncation(self):
+		colSep = ' '
+		colHold = '--'
+		nameHold = '...'
+
+		raw = [[300, 310, 320, 330], [301, 311, 321, 331], [302, 312, 322, 332]]
+		initnames = ['zerooo', 'one', 'two', 'threee']
+		obj = UML.createData(self.returnType, raw, featureNames=initnames)
+
+		fnames = obj._arrangeFeatureNames(80, 3, colSep, colHold, nameHold)
+		assert fnames == ['...', 'one', 'two', '...']
+
+	def test_arrangeFeatureNames_omitDefault(self):
+		colSep = ' '
+		colHold = '--'
+		nameHold = '...'
+
+		raw = [[300, 310, 320, 330], [301, 311, 321, 331], [302, 312, 322, 332]]
+		initnames = ['zero', 'one', 'two', 'three']
+		obj = UML.createData(self.returnType, raw, featureNames=initnames)
+
+		obj.setFeatureName(0,None)
+		obj.setFeatureName(2, None)
+
+		fnames = obj._arrangeFeatureNames(80, 11, colSep, colHold, nameHold)
+		assert fnames == ['', 'one', '', 'three']
+
+
+	# _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold)
+	def test_arrangePointNames_correctSplit(self):
+		rowHolder = '|'
+		nameHold = '...'
+
+		raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312], [303, 313, 313], [303, 313, 313]]
+		initnames = ['zero', 'one', 'two', 'three', 'four']
+		obj = UML.createData(self.returnType, raw, pointNames=initnames)
+
+		pnames, bound = obj._arrangePointNames(2,11,rowHolder, nameHold)
+		assert pnames == ['zero', rowHolder]
+		assert bound == len('zero')
+		
+		pnames, bound = obj._arrangePointNames(3,11,rowHolder, nameHold)
+		assert pnames == ['zero', rowHolder, 'four']
+		assert bound == len('four')
+
+		pnames, bound = obj._arrangePointNames(4,11,rowHolder, nameHold)
+		assert pnames == ['zero', 'one', rowHolder, 'four']
+		assert bound == len('four')
+
+		pnames, bound = obj._arrangePointNames(5,11,rowHolder, nameHold)
+		assert pnames == ['zero', 'one', 'two', 'three', 'four']
+		assert bound == len('three')
+
+
+	def test_arrangePointNames_correctTruncation(self):
+		rowHolder = '|'
+		nameHold = '...'
+
+		raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312], [303, 313, 313]]
+		initnames = ['zerooo', 'one', 'two', 'threee']
+		obj = UML.createData(self.returnType, raw, pointNames=initnames)
+
+		pnames, bound = obj._arrangePointNames(4,3,rowHolder, nameHold)
+		assert pnames == ['...', 'one', 'two', '...']
+		assert bound == 3
+
+	
+	def test_arrangePointNames_omitDefault(self):
+		rowHolder = '|'
+		nameHold = '...'
+
+		raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312], [303, 313, 313]]
+		initnames = ['zero', 'one', 'two', 'three']
+		obj = UML.createData(self.returnType, raw, pointNames=initnames)
+
+		obj.setPointName(0,None)
+		obj.setPointName(2, None)
+
+		pnames, bound = obj._arrangePointNames(4,11,rowHolder, nameHold)
+		assert pnames == ['', 'one', '', 'three']
+		assert bound == len('three')
 
 	@raises(ArgumentException)
 	def test_arrangeDataWithLimits_exception_maxH(self):
@@ -488,7 +698,10 @@ class QueryBackend(DataTestObject):
 	def test_arrangeDataWithLimits(self):
 		def makeUniformLength(rType, p, f, l):
 			raw = []
-			val = 10 ** (l - 1)
+			if l is not None:
+				val = 10 ** (l - 1)
+			else:
+				val = 1
 			for i in range(p):
 				raw.append([])
 				for j in range(f):
@@ -506,7 +719,10 @@ class QueryBackend(DataTestObject):
 				data = makeUniformLength("List", pNum, 1, valLen)
 				data.extractFeatures(0)
 			else:
-				data = makeUniformLength("List", pNum, fNum, valLen)
+				if valLen is None:
+					data = UML.createRandomData("List", pNum, fNum, .25, numericType='int')
+				else:
+					data = makeUniformLength("List", pNum, fNum, valLen)
 #			raw = data.data	
 			ret, widths = data._arrangeDataWithLimits(maxW, maxH, colSep=colSep)
 
@@ -518,9 +734,18 @@ class QueryBackend(DataTestObject):
 					lenSum += len(val)
 				assert lenSum <= (maxW - ((len(pRep)-1) * len(colSep)))
 
+			if len(ret) > 0:
+				for fIndex in xrange(len(ret[0])):
+					widthBound = 0
+					for pRep in ret:
+						val = pRep[fIndex]
+						if len(val) > widthBound:
+							widthBound = len(val)
+					assert widths[fIndex] == widthBound
+
 		for pNum in [0,1,2,4,5,7,10]:
 			for fNum in [0,1,2,4,5,7,10]:
-				for valLen in [1,2,4,5]:
+				for valLen in [1,2,4,5,None]:
 					for maxW in [10,20,40,80]:
 						for maxH in [2,5,10]:
 							for colSep in ['', ' ', ' ']:
@@ -1336,18 +1561,38 @@ class QueryBackend(DataTestObject):
 # Helpers #
 ###########
 
-def checkToStringRet(ret, data):
+def checkToStringRet(ret, data, includeNames):
 	cHold = '--'
 	rHold = '|'
+	pnameSep = '   '
+	colSep = ' '
 	sigDigits = 3
 	rows = ret.split('\n')
 	rows = rows[:(len(rows)-1)]
 
 	negRow = False
-	assert len(rows) <= data.pointCount
-	for r in range(len(rows)):
+
+	if includeNames:
+		rowOffset = 2
+		fnamesRaw = rows[0]
+		fnamesSplit = fnamesRaw.split(colSep)
+		fnames = []
+		for val in fnamesSplit:
+			if len(val) != 0:
+				fnames.append(val)
+		# -1 for the fnames,  -1 for the blank row
+		assert len(rows) - 2 <= data.pointCount
+	else:
+		rowOffset = 0
+		assert len(rows) <= data.pointCount
+
+	for r in range(rowOffset, len(rows)):
 		row = rows[r]
-		spaceSplit = row.split(' ')
+		if includeNames:
+			namesSplit = row.split(pnameSep, 1)
+			pname = namesSplit[0]
+			row = namesSplit[1]
+		spaceSplit = row.split(colSep)
 		vals = []
 		for possible in spaceSplit:
 			if possible != '':
@@ -1356,12 +1601,14 @@ def checkToStringRet(ret, data):
 			negRow = True
 			continue
 
-		rDataIndex = r
+		rDataIndex = r - rowOffset
 		if negRow:
 			rDataIndex = -(len(rows) - r)
 
 		negCol = False
 		assert len(vals) <= data.featureCount
+		if includeNames:
+			assert len(fnames) == len(vals)
 		for c in range(len(vals)):
 			if vals[c] == cHold:
 				negCol = True
@@ -1375,3 +1622,13 @@ def checkToStringRet(ret, data):
 			wantedS = formatIfNeeded(wanted, sigDigits)
 			have = vals[c]
 			assert wantedS == have
+
+			if includeNames:
+				# generate name from indices
+				offset = data.pointCount if negRow else 0
+				fromIndexPname = data.getPointName(offset + rDataIndex)
+				assert fromIndexPname == pname
+
+				offset = data.featureCount if negCol else 0
+				fromIndexFname = data.getFeatureName(offset + cDataIndex)
+				assert fromIndexFname == fnames[cDataIndex]

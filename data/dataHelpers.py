@@ -297,3 +297,67 @@ def cleanKeywordInput(s):
 	s = s.lower()
 	s = "".join(s.split())
 	return s
+
+def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
+	"""Adjust the inputs to be a consistent length and with
+	consistent omission by removing
+	values and columns from the middle. Returns None.
+
+	"""
+	namesOmitIndex = int(math.floor(len(fnames) / 2.0))
+	dataOmitIndx = int(math.floor(len(dataWidths) / 2.0))
+	namesOmitted = fnames[namesOmitIndex] == colHold
+	dataOmitted = False
+	if len(data) > 0:
+		dataOmitted = data[0][dataOmitIndx] == colHold
+
+	if len(fnames) == len(dataWidths):
+		# inputs consistent, don't have to do anything
+		if namesOmitted and dataOmitted:
+			return
+		elif namesOmitted:
+			desiredLength = len(dataWidths)
+			remNum = 0
+			removalVals = data
+			removalWidths = dataWidths
+		elif dataOmitted:
+			desiredLength = len(fnames)
+			remNum = 0
+			removalVals = [fnames]
+			removalWidths = None
+		else:  # inputs consistent, don't have to do anything
+			return 
+	elif len(fnames) > len(dataWidths):
+		desiredLength = len(dataWidths)
+		remNum = len(fnames) - desiredLength
+		removalVals = [fnames]
+		removalWidths = None
+	else:  # len(fnames) < len(dataWidths)
+		desiredLength = len(fnames)
+		remNum = len(dataWidths) - desiredLength
+		removalVals = data
+		removalWidths = dataWidths
+
+	if desiredLength % 2 == 0:
+		removeIndex = int(math.ceil(desiredLength/2.0))
+	else:  # desiredLength % 2 == 1
+		removeIndex = int(math.floor(desiredLength/2.0))
+
+	# remove values so that we reach the target length
+	for row in removalVals:
+		for i in xrange(remNum):
+			row.pop(removeIndex)
+
+	# now that we are at the target length, we have to modify
+	# a column to indicat that values were omitted
+	for row in removalVals:
+		row[removeIndex] = colHold
+
+	if removalWidths is not None:
+		# remove those widths associated with omitted values
+		for i in xrange(remNum):
+			removalWidths.pop(removeIndex)
+
+		# modify the width associated with the colHold
+		if removalWidths is not None:
+			removalWidths[removeIndex] = len(colHold)
