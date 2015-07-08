@@ -2,13 +2,43 @@
 import UML
 
 from UML.data.tests.numerical_backend import AllNumerical
+from UML.data.tests.numerical_backend import NumericalDataSafe
+
 from UML.data.tests.query_backend import QueryBackend
+
 from UML.data.tests.high_level_backend import HighLevelAll
+from UML.data.tests.high_level_backend import HighLevelDataSafe
+
 from UML.data.tests.low_level_backend import LowLevelBackend
+
 from UML.data.tests.structure_backend import StructureAll
+from UML.data.tests.structure_backend import StructureDataSafe
 
 
 
+#class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
+#	def __init__(self):
+#		def maker(data, pointNames=None, featureNames=None, name=None):
+#			orig = UML.createData("List", data=data, pointNames=pointNames,
+#					featureNames=featureNames, name=name)
+#			return orig.view()
+#		super(TestListView, self).__init__('ListView', maker)
+
+#class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
+#	def __init__(self):
+#		def maker(data, pointNames=None, featureNames=None, name=None):
+#			orig = UML.createData("Matrix", data=data, pointNames=pointNames,
+#					featureNames=featureNames, name=name)
+#			return orig.view()
+#		super(TestMatrixView, self).__init__('MatrixView', maker)
+
+#class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
+#	def __init__(self):
+#		def maker(data, pointNames=None, featureNames=None, name=None):
+#			orig = UML.createData("Sparse", data=data, pointNames=pointNames,
+#					featureNames=featureNames, name=name)
+#			return orig.view()
+#		super(TestSparseView, self).__init__('SparseView', maker)
 
 
 class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll):

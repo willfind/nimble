@@ -9,6 +9,7 @@ import sys
 
 import UML
 from base import Base
+from base_view import BaseView
 from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.randomness import pythonRandom
@@ -589,6 +590,22 @@ class Matrix(Base):
 
 	def _featureView_implementation(self, ID):
 		return VectorView(self, 'feature', ID)
+
+	def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
+		class MatrixView(BaseView, Matrix):
+			def __init__(self, **kwds):
+				super(MatrixView, self).__init__(**kwds)
+
+		kwds = {}
+		kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]
+		kwds['source'] = self
+		kwds['pointStart'] = pointStart
+		kwds['pointEnd'] = pointEnd
+		kwds['featureStart'] = featureStart
+		kwds['featureEnd'] = featureEnd
+		kwds['reuseData'] = True
+
+		return MatrixView(**kwds)
 
 	def _validate_implementation(self, level):
 		shape = numpy.shape(self.data)

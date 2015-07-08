@@ -52,10 +52,28 @@ class Base(object):
 	def __init__(self, shape, pointNames=None, featureNames=None, name=None,
 			paths=(None,None), **kwds):
 		"""
-		Instantiates the featureName book-keeping structures that are defined by this representation.
+		Instantiates the book-keeping structures that are taken to be common
+		across all data types. Specifically, this includes point and feature
+		names, an object name, and originating pathes for the data in this
+		object. Note: this method (as should all other __init__ methods in
+		this hierarchy) makes use of super()
 		
-		featureNames may be None if the object is to have default names, or a list or dict defining the
-		featureName mapping.
+		pointNames: may be a list or dict mapping names to indices. None is
+		given if default names are desired.
+
+		featureNames: may be a list or dict mapping names to indices. None is
+		given if default names are desired.
+
+		name: the name to be associated with this object.
+
+		pathes: a tuple, where the first entry is taken to be the string
+		representing the absolute path to the source file of the data and
+		the second entry is taken to be the relative path. Both may be
+		None if these values are to be unspecified.
+
+		**kwds: potentially full of arguments further up the class hierarchy,
+		as following best practices for use of super(). Note however, that
+		this class is the root of the object hierarchy as statically defined. 
 
 		"""
 		self._pointCount = shape[0]
@@ -72,39 +90,43 @@ class Base(object):
 			msg += str(shape[1]) + ")"
 			raise ArgumentException(msg)
 
+		# Set up point names
 		self._nextDefaultValuePoint = 0
 		self._setAllDefault('point')
-		if isinstance(pointNames, list) or pointNames is None:
+		if isinstance(pointNames, list):
 			self.setPointNames(pointNames)
 		elif isinstance(pointNames, dict):
 			self.setPointNames(pointNames)
 		# could still be an ordered container, pass it on to the list helper
 		elif hasattr(pointNames, '__len__') and hasattr(pointNames, '__getitem__'):
 			self.setPointNames(pointNames)
+		elif pointNames is None:
+			pass
 		else:
 			raise ArgumentException("pointNames may only be a list, an ordered container, or a dict, defining a mapping between integers and pointNames")
-		if pointNames is not None and len(pointNames) != self.pointCount:
-			raise ArgumentException("Cannot have different number of pointNames and points, len(pointNames): " + str(len(pointNames)) + ", self.pointCount: " + str(self.pointCount))
 
+		# Set up feature names
 		self._nextDefaultValueFeature = 0
 		self._setAllDefault('feature')
-		if isinstance(featureNames, list) or featureNames is None:
+		if isinstance(featureNames, list):
 			self.setFeatureNames(featureNames)
 		elif isinstance(featureNames, dict):
 			self.setFeatureNames(featureNames)
 		# could still be an ordered container, pass it on to the list helper
 		elif hasattr(featureNames, '__len__') and hasattr(featureNames, '__getitem__'):
 			self.setFeatureNames(featureNames)
+		elif featureNames is None:
+			pass
 		else:
 			raise ArgumentException("featureNames may only be a list, an ordered container, or a dict, defining a mapping between integers and featureNames")
-		if featureNames is not None and len(featureNames) != self.featureCount:
-			raise ArgumentException("Cannot have different number of featureNames and features, len(featureNames): " + str(len(featureNames)) + ", self.featureCount: " + str(self.featureCount))
 		
+		# Set up object name
 		if name is None:
 			self._name = dataHelpers.nextDefaultObjectName()
 		else:
 			self._name = name
 
+		# Set up paths
 		if paths[0] is not None and not isinstance(paths[0], basestring):
 			raise ArgumentException("paths[0] must be None or an absolute path to the file from which the data originates")
 		if paths[0] is not None and not os.path.isabs(paths[0]):
@@ -115,6 +137,7 @@ class Base(object):
 			raise ArgumentException("paths[1] must be None or a relative path to the file from which the data originates")
 		self._relPath = paths[1]
 
+		# call for safety
 		super(Base,self).__init__(**kwds)
 
 
@@ -1031,6 +1054,20 @@ class Base(object):
 		index = self._getFeatureIndex(ID)
 		return self._featureView_implementation(index)
 	
+	def view(self, pointStart=None, pointEnd=None, featureStart=None,
+			featureEnd=None):
+		
+		if pointStart is None:
+			pointStart = 0
+		if pointEnd is None:
+			pointEnd = self.pointCount
+		if featureStart is None:
+			featureStart = 0
+		if featureEnd is None:
+			featureEnd = self.featureCount
+
+		return self._view_implementation(pointStart, pointEnd, featureStart,
+				featureEnd)
 
 	def validate(self, level=1):
 		"""
