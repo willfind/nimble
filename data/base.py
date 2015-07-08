@@ -49,7 +49,8 @@ class Base(object):
 
 	"""
 
-	def __init__(self, shape, pointNames=None, featureNames=None, name=None, paths=(None,None)):
+	def __init__(self, shape, pointNames=None, featureNames=None, name=None,
+			paths=(None,None), **kwds):
 		"""
 		Instantiates the featureName book-keeping structures that are defined by this representation.
 		
@@ -113,6 +114,8 @@ class Base(object):
 		if paths[1] is not None and not isinstance(paths[1], basestring):
 			raise ArgumentException("paths[1] must be None or a relative path to the file from which the data originates")
 		self._relPath = paths[1]
+
+		super(Base,self).__init__(**kwds)
 
 
 	#######################
