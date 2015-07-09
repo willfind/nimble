@@ -269,7 +269,7 @@ class Base(object):
 
 		"""
 		ret = []
-		for i in xrange(self.pointCount):
+		for i in xrange(len(self.pointNamesInverse)):
 			ret.append(self.getPointName(i))
 
 		return ret
@@ -281,7 +281,7 @@ class Base(object):
 
 		"""
 		ret = []
-		for i in xrange(self.featureCount):
+		for i in xrange(len(self.featureNamesInverse)):
 			ret.append(self.getFeatureName(i))
 
 		return ret
@@ -2468,8 +2468,8 @@ class Base(object):
 		# figure out return obj's point / feature names
 		# if unary:
 		if opName in ['__pos__', '__neg__', '__abs__'] or isinstance(other, int):
-			retPNames = self.pointNames
-			retFNames = self.featureNames
+			retPNames = self.getPointNames()
+			retFNames = self.getFeatureNames()
 		# else (everything else that uses this helper is a binary scalar op)
 		else:
 			(retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
@@ -3004,14 +3004,14 @@ class Base(object):
 	def _equalPointNames(self, other):
 		if other is None or not isinstance(other, Base):
 			return False
-		return self._equalNames(self.pointNames, self.pointNamesInverse, other.pointNames, other.pointNamesInverse)
+		return self._equalNames(self.getPointNames(), other.getPointNames())
 
 	def _equalFeatureNames(self, other):
 		if other is None or not isinstance(other, Base):
 			return False
-		return self._equalNames(self.featureNames, self.featureNamesInverse, other.featureNames, other.featureNamesInverse)
+		return self._equalNames(self.getFeatureNames(), other.getFeatureNames())
 
-	def _equalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
+	def _equalNames(self, selfNames, otherNames):
 		"""Private function to determine equality of either pointNames of
 		featureNames. It ignores equality of default values, considering only
 		whether non default names consistent (position by position) and
@@ -3021,24 +3021,20 @@ class Base(object):
 		"""
 		if len(selfNames) != len(otherNames):
 			return False
-		if len(selfNamesInv) != len(otherNamesInv):
-			return False
 
-		unequalNames = self._unequalNames(selfNames, selfNamesInv, otherNames, otherNamesInv)
+		unequalNames = self._unequalNames(selfNames, otherNames)
 		return unequalNames == {}
 
 	def _validateEqualNames(self, leftAxis, rightAxis, callSym, other):
-		lnames = self.pointNames if leftAxis == 'point' else self.featureNames
-		lnamesInv = self.pointNamesInverse if leftAxis == 'point' else self.featureNamesInverse
-		rnames = other.pointNames if rightAxis == 'point' else other.featureNames
-		rnamesInv = other.pointNamesInverse if rightAxis == 'point' else other.featureNamesInverse	
-		inconsistencies = self._inconsistentNames(lnames, lnamesInv, rnames, rnamesInv)
+		lnames = self.getPointNames() if leftAxis == 'point' else self.getFeatureNames()
+		rnames = other.getPointNames() if rightAxis == 'point' else other.getFeatureNames()
+		inconsistencies = self._inconsistentNames(lnames, rnames)
 
 		if inconsistencies != {}:
 			table = [['left', 'ID', 'right']]
 			for i in sorted(inconsistencies.keys()):
-				lname = '"' + lnamesInv[i] + '"'
-				rname = '"' + rnamesInv[i] + '"'
+				lname = '"' + lnames[i] + '"'
+				rname = '"' + rnames[i] + '"'
 				table.append([lname, str(i), rname])
 
 			msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
@@ -3047,7 +3043,7 @@ class Base(object):
 			print >>sys.stderr, msg
 			raise ArgumentException(msg)
 
-	def _inconsistentNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
+	def _inconsistentNames(self, selfNames, otherNames):
 		"""Private function to find and return all name inconsistencies
 		between the given two sets. It ignores equality of default values,
 		considering only whether non default names consistent (position by
@@ -3061,30 +3057,31 @@ class Base(object):
 		"""
 		inconsistencies = {}
 
-		def checkFromLeftKeys(ret, leftNamesInv, rightNames, rightNamesInv):
-			for index in leftNamesInv.keys():
-				lname = leftNamesInv[index]
-				rname = rightNamesInv[index]
+		def checkFromLeftKeys(ret, leftNames, rightNames):
+			for index in xrange(len(leftNames)):
+				lname = leftNames[index]
+				rname = rightNames[index]
 				if not lname.startswith(DEFAULT_PREFIX):
 					if not rname.startswith(DEFAULT_PREFIX):
 						if lname != rname:
 							ret[index] = (lname, rname)
 					else:
 						# if a name in one is mirrored by a default name,
-						# then it must not appear in any other index
-						if lname in rightNames.keys():
+						# then it must not appear in any other index;
+						# and therefore, must not appear at all.
+						if rightNames.count(lname) > 0:
 							ret[index] = (lname, rname)
 							ret[rightNames[lname]] = (lname, rname)
 
 
 		# check both name directions
-		checkFromLeftKeys(inconsistencies, selfNamesInv, otherNames, otherNamesInv)
-		checkFromLeftKeys(inconsistencies, otherNamesInv, selfNames, selfNamesInv)
+		checkFromLeftKeys(inconsistencies, selfNames, otherNames)
+		checkFromLeftKeys(inconsistencies, otherNames, selfNames)
 
 		return inconsistencies
 
 
-	def _unequalNames(self, selfNames, selfNamesInv, otherNames, otherNamesInv):
+	def _unequalNames(self, selfNames, otherNames):
 		"""Private function to find and return all name inconsistencies
 		between the given two sets. It ignores equality of default values,
 		considering only whether non default names consistent (position by
@@ -3098,25 +3095,20 @@ class Base(object):
 		"""
 		inconsistencies = {}
 
-		def checkFromLeftKeys(ret, leftNamesInv, rightNames, rightNamesInv):
-			for index in leftNamesInv.keys():
-				lname = leftNamesInv[index]
-				rname = rightNamesInv[index]
+		def checkFromLeftKeys(ret, leftNames, rightNames):
+			for index in xrange(len(leftNames)):
+				lname = leftNames[index]
+				rname = rightNames[index]
 				if not lname.startswith(DEFAULT_PREFIX):
 					if not rname.startswith(DEFAULT_PREFIX):
 						if lname != rname:
 							ret[index] = (lname, rname)
 					else:
-						# if a name in one is mirrored by a default name,
-						# then it must not appear in any other index
-						#if lname in rightNames.keys():
-						#	ret[index] = (lname, rname)
-						#	ret[rightNames[lname]] = (lname, rname)
 						ret[index] = (lname, rname)
 
 		# check both name directions
-		checkFromLeftKeys(inconsistencies, selfNamesInv, otherNames, otherNamesInv)
-		checkFromLeftKeys(inconsistencies, otherNamesInv, selfNames, selfNamesInv)
+		checkFromLeftKeys(inconsistencies, selfNames, otherNames)
+		checkFromLeftKeys(inconsistencies, otherNames, selfNames)
 
 		return inconsistencies
 
@@ -3128,8 +3120,8 @@ class Base(object):
 		return self._getIndex(identifier, 'feature')
 
 	def _getIndex(self, identifier, axis):
-		names = self.pointNames if axis == 'point' else self.featureNames
-		namesInv = self.pointNamesInverse if axis == 'point' else self.featureNamesInverse
+		names = self.getPointNames() if axis == 'point' else self.getFeatureNames()
+		nameGetter = self.getPointIndex if axis == 'point' else self.getFeatureIndex
 		
 		toReturn = identifier
 		if len(names) == 0:
@@ -3149,17 +3141,17 @@ class Base(object):
 			if identifier < 0:
 				identifier = len(names) + identifier
 				toReturn = identifier
-			if identifier < 0 or identifier >= len(namesInv):
+			if identifier < 0 or identifier >= len(names):
 				msg = "The given index " + str(identifier) + " is outside of the range "
 				msg += "of possible indices in the " + axis + " axis (0 to " 
-				msg += str(len(namesInv)-1) + ")."
+				msg += str(len(names)-1) + ")."
 				raise ArgumentException(msg)
 		if isinstance(identifier,basestring):
-			if identifier not in names:
+			try:
+				toReturn = nameGetter(identifier)
+			except KeyError:
 				msg = "The " + axis + " name '" + identifier + "' cannot be found."
 				raise ArgumentException(msg)
-			# set as index for return
-			toReturn = names[identifier]
 		return toReturn
 
 	def _nextDefaultName(self, axis):
