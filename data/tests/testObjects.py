@@ -14,6 +14,17 @@ from UML.data.tests.low_level_backend import LowLevelBackend
 from UML.data.tests.structure_backend import StructureAll
 from UML.data.tests.structure_backend import StructureDataSafe
 
+def viewMakerMaker(concreteType):
+	def maker(data, pointNames=None, featureNames=None, name=None, path=(None,None)):
+		if isinstance(data, basestring):
+			orig = UML.createData(concreteType, data=data, pointNames=pointNames,
+					featureNames=featureNames, name=name)
+		else:
+			orig = UML.helpers.initDataObject(concreteType, rawData=data,
+						pointNames=pointNames, featureNames=featureNames,
+						name=name, path=path)
+		return orig.view()
+	return maker
 
 
 #class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
@@ -24,13 +35,9 @@ from UML.data.tests.structure_backend import StructureDataSafe
 #			return orig.view()
 #		super(TestListView, self).__init__('ListView', maker)
 
-#class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
-#	def __init__(self):
-#		def maker(data, pointNames=None, featureNames=None, name=None):
-#			orig = UML.createData("Matrix", data=data, pointNames=pointNames,
-#					featureNames=featureNames, name=name)
-#			return orig.view()
-#		super(TestMatrixView, self).__init__('MatrixView', maker)
+class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
+	def __init__(self):
+		super(TestMatrixView, self).__init__('MatrixView', viewMakerMaker("Matrix"))
 
 #class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
 #	def __init__(self):

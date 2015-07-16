@@ -13,6 +13,7 @@ import math
 import tempfile
 import numpy
 import os
+import os.path
 from nose.tools import *
 
 from copy import deepcopy
@@ -24,6 +25,10 @@ from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
 from UML.exceptions import ArgumentException
 
+preserveName = "PreserveTestName"
+preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
+preserveRPath = os.path.relpath(preserveAPath)
+preservePair = (preserveAPath,preserveRPath)
 
 class QueryBackend(DataTestObject):
 	
@@ -474,7 +479,7 @@ class QueryBackend(DataTestObject):
 				fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc', 'fnd', 'fne']
 #				fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e']
 				pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8', 'pn9', 'pna', 'pnb', 'pnc', 'pnd', 'pne']
-				data = UML.createData(self.returnType, raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
+				data = self.constructor(raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
 				
 				for mw in [40, 60, 80, None]:
 					for mh in [5, 7, 10, None]:
@@ -603,7 +608,7 @@ class QueryBackend(DataTestObject):
 
 		raw = [[300, 310, 320, 330], [301, 311, 321, 331], [302, 312, 322, 332]]
 		initnames = ['zero', 'one', 'two', 'three']
-		obj = UML.createData(self.returnType, raw, featureNames=initnames)
+		obj = self.constructor(raw, featureNames=initnames)
 
 		fnames = obj._arrangeFeatureNames(9, 11, colSep, colHold, nameHold)
 		assert fnames == ['zero', '--']
@@ -615,7 +620,7 @@ class QueryBackend(DataTestObject):
 
 		raw = [[300, 310, 320, 330], [301, 311, 321, 331], [302, 312, 322, 332]]
 		initnames = ['zerooo', 'one', 'two', 'threee']
-		obj = UML.createData(self.returnType, raw, featureNames=initnames)
+		obj = self.constructor(raw, featureNames=initnames)
 
 		fnames = obj._arrangeFeatureNames(80, 3, colSep, colHold, nameHold)
 		assert fnames == ['...', 'one', 'two', '...']
@@ -626,11 +631,8 @@ class QueryBackend(DataTestObject):
 		nameHold = '...'
 
 		raw = [[300, 310, 320, 330], [301, 311, 321, 331], [302, 312, 322, 332]]
-		initnames = ['zero', 'one', 'two', 'three']
-		obj = UML.createData(self.returnType, raw, featureNames=initnames)
-
-		obj.setFeatureName(0,None)
-		obj.setFeatureName(2, None)
+		initnames = [None, 'one', None, 'three']
+		obj = self.constructor(raw, featureNames=initnames)
 
 		fnames = obj._arrangeFeatureNames(80, 11, colSep, colHold, nameHold)
 		assert fnames == ['', 'one', '', 'three']
@@ -643,7 +645,7 @@ class QueryBackend(DataTestObject):
 
 		raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312], [303, 313, 313], [303, 313, 313]]
 		initnames = ['zero', 'one', 'two', 'three', 'four']
-		obj = UML.createData(self.returnType, raw, pointNames=initnames)
+		obj = self.constructor(raw, pointNames=initnames)
 
 		pnames, bound = obj._arrangePointNames(2,11,rowHolder, nameHold)
 		assert pnames == ['zero', rowHolder]
@@ -668,7 +670,7 @@ class QueryBackend(DataTestObject):
 
 		raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312], [303, 313, 313]]
 		initnames = ['zerooo', 'one', 'two', 'threee']
-		obj = UML.createData(self.returnType, raw, pointNames=initnames)
+		obj = self.constructor(raw, pointNames=initnames)
 
 		pnames, bound = obj._arrangePointNames(4,3,rowHolder, nameHold)
 		assert pnames == ['...', 'one', 'two', '...']
@@ -680,11 +682,8 @@ class QueryBackend(DataTestObject):
 		nameHold = '...'
 
 		raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312], [303, 313, 313]]
-		initnames = ['zero', 'one', 'two', 'three']
-		obj = UML.createData(self.returnType, raw, pointNames=initnames)
-
-		obj.setPointName(0,None)
-		obj.setPointName(2, None)
+		initnames = [None, 'one', None, 'three']
+		obj = self.constructor(raw, pointNames=initnames)
 
 		pnames, bound = obj._arrangePointNames(4,11,rowHolder, nameHold)
 		assert pnames == ['', 'one', '', 'three']
@@ -806,16 +805,17 @@ class QueryBackend(DataTestObject):
 
 	def backend_Sim_SampleCovarianceResult(self, axis):
 		data = [[3,0,3],[0,0,3], [3,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointSimilarities("covariance ")
 		else:
-			orig.transpose()
-			ret = orig.featureSimilarities("sample\tcovariance")
+			ret = trans.featureSimilarities("sample\tcovariance")
 			ret.transpose()
-			orig.transpose()
 
 		# hand computed results
 		expRow0 = [3, 1.5, 1.5]
@@ -831,6 +831,7 @@ class QueryBackend(DataTestObject):
 
 		assert expObj.isApproximatelyEqual(ret)
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	def test_pointSimilaritesPopulationCovarianceResult(self):
 		""" Test pointSimilarities returns correct population covariance results """
@@ -842,16 +843,17 @@ class QueryBackend(DataTestObject):
 
 	def backend_Sim_populationCovarianceResult(self, axis):
 		data = [[3,0,3],[0,0,3], [3,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointSimilarities("population COvariance")
 		else:
-			orig.transpose()
-			ret = orig.featureSimilarities("populationcovariance")
+			ret = trans.featureSimilarities("populationcovariance")
 			ret.transpose()
-			orig.transpose()
 
 		# hand computed results
 		expRow0 = [2, 1, 1]
@@ -867,6 +869,7 @@ class QueryBackend(DataTestObject):
 
 		assert expObj.isApproximatelyEqual(ret)
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	def test_pointSimilaritesSTDandVarianceIdentity(self):
 		""" Test identity between population covariance and population std of points """
@@ -878,18 +881,17 @@ class QueryBackend(DataTestObject):
 
 	def backend_Sim_STDandVarianceIdentity(self, axis):
 		data = [[3,0,3],[0,0,3], [3,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
-		sameAsOrig = self.constructor(data)
+		trans = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointSimilarities(" populationcovariance")
 			stdVector = orig.pointStatistics("population std")
 		else:
-			orig.transpose()
-			ret = orig.featureSimilarities("populationcovariance")
-			stdVector = orig.featureStatistics("\npopulationstd")
+			ret = trans.featureSimilarities("populationcovariance")
+			stdVector = trans.featureStatistics("\npopulationstd")
 			ret.transpose()
-			orig.transpose()
 
 		numpy.testing.assert_approx_equal(ret[0,0], stdVector[0] * stdVector[0])
 		numpy.testing.assert_approx_equal(ret[1,1], stdVector[1] * stdVector[1])
@@ -907,16 +909,17 @@ class QueryBackend(DataTestObject):
 
 	def backend_Sim_CorrelationResult(self, axis):
 		data = [[3,0,3],[0,0,3], [3,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointSimilarities("correlation")
 		else:
-			orig.transpose()
-			ret = orig.featureSimilarities("corre lation")
+			ret = trans.featureSimilarities("corre lation")
 			ret.transpose()
-			orig.transpose()
 
 		expRow0 = [1,      (1./2),  (1./2)]
 		expRow1 = [(1./2), 1,       (-1./2)]
@@ -930,6 +933,7 @@ class QueryBackend(DataTestObject):
 		assert ret.isApproximatelyEqual(npExpObj)
 		assert expObj.isApproximatelyEqual(ret)
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	def test_pointSimilaritesCorrelationHelpersEquiv(self):
 		""" Compare pointSimilarities correlation using the various possible helpers """
@@ -941,7 +945,9 @@ class QueryBackend(DataTestObject):
 
 	def backend_Sim_CorrelationHelpersEquiv(self, axis):
 		data = [[3,0,3],[0,0,3], [3,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
 
 		def explicitCorr(X, X_T, sample=True):
@@ -1001,22 +1007,24 @@ class QueryBackend(DataTestObject):
 
 	def backend_Sim_DotProductResult(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointSimilarities("Dot Product")
 		else:
-			orig.transpose()
-			ret = orig.featureSimilarities("dotproduct\n")
+			ret = trans.featureSimilarities("dotproduct\n")
 			ret.transpose()
-			orig.transpose()
 
 		expData = [[3, 2, 1], [2, 2, 0], [1, 0, 1]]
 		expObj = self.constructor(expData)
 
 		assert expObj == ret
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	# test input function validation
 	@raises(ArgumentException)
@@ -1066,33 +1074,28 @@ class QueryBackend(DataTestObject):
 
 	def backend_Sim_NamePath_Preservation(self, axis):
 		data = [[3,0,3],[0,0,3], [3,0,0]]
-		orig = self.constructor(data)
-
+		dataT = numpy.array(data).T.tolist()
+		orig = self.constructor(data, name=preserveName, path=preservePair)
+		trans = self.constructor(dataT, name=preserveName, path=preservePair)
+		
 		possible = [
 			'correlation', 'covariance', 'dotproduct', 'samplecovariance',
 			'populationcovariance'
 		]
 
-		orig._name = "TestName"
-		orig._absPath = "TestAbsPath"
-		orig._relPath = "testRelPath"
-
 		for curr in possible:
 			if axis:
 				ret = orig.pointSimilarities(curr)
 			else:
-				orig.transpose()
-				ret = orig.featureSimilarities(curr)
-				ret.transpose()
-				orig.transpose()
+				ret = trans.featureSimilarities(curr)
 
-			assert orig.name == "TestName"
-			assert orig.absolutePath == "TestAbsPath"
-			assert orig.relativePath == 'testRelPath'
+			assert orig.name == preserveName
+			assert orig.absolutePath == preserveAPath
+			assert orig.relativePath == preserveRPath
 
 			assert ret.nameIsDefault()
-			assert ret.absolutePath == 'TestAbsPath'
-			assert ret.relativePath == 'testRelPath'
+			assert ret.absolutePath == preserveAPath
+			assert ret.relativePath == preserveRPath
 
 	def test_pointSimilaritesDot_NamePath_preservation(self):
 		self.backend_Sim_NamePath_Preservation(True)
@@ -1115,28 +1118,28 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_max(self, axis):
 		data = [[1,2,1],[-10,-1,-21], [-1,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointStatistics("MAx")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
-		else:
-			orig.transpose()
 			
-			ret = orig.featureStatistics("max ")
-			assert ret.pointCount == 1
-			assert ret.featureCount == 3
-
+		else:
+			ret = trans.featureStatistics("max ")
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		expRaw = [[2],[-1],[0]]
 		expObj = self.constructor(expRaw, featureNames=["max"])
 
 		assert expObj == ret
 		assert sameAsOrig == orig			
+		assert sameAsOrigT == trans
 
 	def test_pointStatistics_mean(self):
 		""" Test pointStatistics returns correct mean results """
@@ -1148,26 +1151,27 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_mean(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointStatistics("Mean")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
 		else:
-			orig.transpose()
-			ret = orig.featureStatistics(" MEAN")
-			assert ret.pointCount == 1
-			assert ret.featureCount == 3
+			ret = trans.featureStatistics(" MEAN")
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		expRaw = [[1],[2./3],[1./3]]
 		expObj = self.constructor(expRaw, featureNames=["mean"])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	def test_pointStatistics_median(self):
 		""" Test pointStatistics returns correct median results """
@@ -1179,26 +1183,27 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_median(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointStatistics("MeDian")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
 		else:
-			orig.transpose()
-			ret = orig.featureStatistics("median")
-			assert ret.pointCount == 1
-			assert ret.featureCount == 3
+			ret = trans.featureStatistics("median")
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		expRaw = [[1],[1],[0]]
 		expObj = self.constructor(expRaw, featureNames=["median"])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 
 	def test_pointStatistics_min(self):
@@ -1211,26 +1216,27 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_min(self, axis):
 		data = [[1,2,1],[-10,-1,-21], [-1,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointStatistics("mIN")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
 		else:
-			orig.transpose()
-			ret = orig.featureStatistics("min")
-			assert ret.pointCount == 1
-			assert ret.featureCount == 3
+			ret = trans.featureStatistics("min")
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		expRaw = [[1],[-21],[-1]]
 		expObj = self.constructor(expRaw, featureNames=['min'])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	def test_pointStatistics_uniqueCount(self):
 		""" Test pointStatistics returns correct uniqueCount results """
@@ -1242,26 +1248,27 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_uniqueCount(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,-1]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
-			ret = orig.pointStatistics("unique Count")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
+			ret = orig.pointStatistics("unique Count")		
 		else:
-			orig.transpose()
-			ret = orig.featureStatistics("UniqueCount")
-			assert ret.pointCount == 1
-			assert ret.featureCount == 3
+			ret = trans.featureStatistics("UniqueCount")
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		expRaw = [[1],[2],[3]]
 		expObj = self.constructor(expRaw, featureNames=['uniquecount'])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	def todotest_pointStatistics_proportionMissing(self):
 		""" Test pointStatistics returns correct proportionMissing results """
@@ -1273,26 +1280,27 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_proportionMissing(self, axis):
 		data = [[1,None,1],[0,1,float('nan')], [1,float('nan'),None]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointStatistics("Proportion Missing ")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
 		else:
-			orig.transpose()
-			ret = orig.featureStatistics("proportionmissing")
-			assert ret.pointCount == 1
-			assert ret.featureCount == 3
+			ret = trans.featureStatistics("proportionmissing")
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		expRaw = [[1./3],[1./3],[2./3]]
 		expObj = self.constructor(expRaw, featureNames=['proportionmissing'])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	def test_pointStatistics_proportionZero(self):
 		""" Test pointStatistics returns correct proportionZero results """
@@ -1304,26 +1312,29 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_proportionZero(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointStatistics("proportionZero")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
 		else:
-			orig.transpose()
-			ret = orig.featureStatistics("proportion Zero")
+			ret = trans.featureStatistics("proportion Zero")
 			assert ret.pointCount == 1
 			assert ret.featureCount == 3
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		expRaw = [[0],[1./3],[2./3]]
 		expObj = self.constructor(expRaw, featureNames=['proportionzero'])
 
 		assert expObj == ret
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	def test_pointStatistics_samplestd(self):
 		""" Test pointStatistics returns correct sample std results """
@@ -1335,20 +1346,20 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_sampleStandardDeviation(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointStatistics("samplestd  ")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
 		else:
-			orig.transpose()
-			ret = orig.featureStatistics("standard deviation")
-			assert ret.pointCount == 1
-			assert ret.featureCount == 3
+			ret = trans.featureStatistics("standard deviation")
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		npExpRaw = numpy.std(data, axis=1, ddof=1, keepdims=True)
 		npExpObj = self.constructor(npExpRaw)
@@ -1360,6 +1371,7 @@ class QueryBackend(DataTestObject):
 
 		assert expObj.isApproximatelyEqual(ret)
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 
 	def test_pointStatistics_populationstd(self):
@@ -1372,20 +1384,20 @@ class QueryBackend(DataTestObject):
 
 	def backend_Stat_populationStandardDeviation(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
+		dataT = numpy.array(data).T.tolist()
 		orig = self.constructor(data)
+		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
+		sameAsOrigT = self.constructor(dataT)
 
 		if axis:
 			ret = orig.pointStatistics("popu  lationstd")
-			assert ret.pointCount == 3
-			assert ret.featureCount == 1
 		else:
-			orig.transpose()
-			ret = orig.featureStatistics("population standarddeviation")
-			assert ret.pointCount == 1
-			assert ret.featureCount == 3
+			ret = trans.featureStatistics("population standarddeviation")
 			ret.transpose()
-			orig.transpose()
+
+		assert ret.pointCount == 3
+		assert ret.featureCount == 1
 
 		npExpRaw = numpy.std(data, axis=1, ddof=0, keepdims=True)
 		npExpObj = self.constructor(npExpRaw)
@@ -1397,6 +1409,7 @@ class QueryBackend(DataTestObject):
 
 		assert expObj.isApproximatelyEqual(ret)
 		assert sameAsOrig == orig
+		assert sameAsOrigT == trans
 
 	@raises(ArgumentException)
 	def test_pointStatistics_unexpectedString(self):
@@ -1416,14 +1429,11 @@ class QueryBackend(DataTestObject):
 		if axis:
 			ret = orig.pointStatistics("hello")
 		else:
-			orig.transpose()
 			ret = orig.featureStatistics("meanie")
-			ret.transpose()
-			orig.transpose()
 
 	def backend_Stat_NamePath_preservation(self, axis):
 		data = [[1,2,1],[-10,-1,-21], [-1,0,0]]
-		orig = self.constructor(data)
+		orig = self.constructor(data, name=preserveName, path=preservePair)
 
 		accepted = [
 			'max', 'mean', 'median', 'min', 'uniquecount', 'proportionmissing',
@@ -1432,26 +1442,19 @@ class QueryBackend(DataTestObject):
 			'samplestandarddeviation'
 			]
 
-		orig._name = "TestName"
-		orig._absPath = "TestAbsPath"
-		orig._relPath = "testRelPath"
-
 		for curr in accepted:
 			if axis:
 				ret = orig.pointStatistics(curr)
 			else:
-				orig.transpose()
 				ret = orig.featureStatistics(curr)
-				ret.transpose()
-				orig.transpose()
-
-			assert orig.name == "TestName"
-			assert orig.absolutePath == "TestAbsPath"
-			assert orig.relativePath == 'testRelPath'
+	
+			assert orig.name == preserveName
+			assert orig.absolutePath == preserveAPath
+			assert orig.relativePath == preserveRPath
 
 			assert ret.nameIsDefault()
-			assert ret.absolutePath == 'TestAbsPath'
-			assert ret.relativePath == 'testRelPath'
+			assert ret.absolutePath == preserveAPath
+			assert ret.relativePath == preserveRPath
 
 	def test_pointStatistics_NamePath_preservations(self):
 		self.backend_Stat_NamePath_preservation(True)
@@ -1470,7 +1473,9 @@ class QueryBackend(DataTestObject):
 			startSize = os.path.getsize(path)
 			assert startSize == 0
 
-			obj = UML.createRandomData(self.returnType, 10,10,0)
+			randGenerated = UML.createRandomData("List", 10, 10, 0)
+			raw = randGenerated.copyAs('pythonlist')
+			obj = self.constructor(raw)
 			#we call the leading underscore version, because it
 			# returns the process
 			p = obj._plot(outPath=path)
@@ -1489,7 +1494,9 @@ class QueryBackend(DataTestObject):
 			startSize = os.path.getsize(path)
 			assert startSize == 0
 
-			obj = UML.createRandomData(self.returnType, 10,10,0)
+			randGenerated = UML.createRandomData("List", 10, 10, 0)
+			raw = randGenerated.copyAs('pythonlist')
+			obj = self.constructor(raw)
 			#we call the leading underscore version, because it
 			# returns the process
 			p = obj._plotPointDistribution(point=0, outPath=path)
@@ -1508,7 +1515,9 @@ class QueryBackend(DataTestObject):
 			startSize = os.path.getsize(path)
 			assert startSize == 0
 
-			obj = UML.createRandomData(self.returnType, 10,10,0)
+			randGenerated = UML.createRandomData("List", 10, 10, 0)
+			raw = randGenerated.copyAs('pythonlist')
+			obj = self.constructor(raw)
 			#we call the leading underscore version, because it
 			# returns the process
 			p = obj._plotFeatureDistribution(feature=0, outPath=path)
@@ -1527,7 +1536,9 @@ class QueryBackend(DataTestObject):
 			startSize = os.path.getsize(path)
 			assert startSize == 0
 
-			obj = UML.createRandomData(self.returnType, 10,10,0)
+			randGenerated = UML.createRandomData("List", 10, 10, 0)
+			raw = randGenerated.copyAs('pythonlist')
+			obj = self.constructor(raw)
 			#we call the leading underscore version, because it
 			# returns the process
 			p = obj._plotPointAgainstPoint(x=0, y=1, outPath=path)
@@ -1546,7 +1557,9 @@ class QueryBackend(DataTestObject):
 			startSize = os.path.getsize(path)
 			assert startSize == 0
 
-			obj = UML.createRandomData(self.returnType, 10,10,0)
+			randGenerated = UML.createRandomData("List", 10, 10, 0)
+			raw = randGenerated.copyAs('pythonlist')
+			obj = self.constructor(raw)
 			#we call the leading underscore version, because it
 			# returns the process
 			p = obj._plotFeatureAgainstFeature(x=0, y=1, outPath=path)

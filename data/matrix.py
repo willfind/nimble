@@ -55,41 +55,6 @@ class Matrix(Base):
 		super(Matrix, self).__init__(**kwds)
 
 
-#	def _applyTo_implementation(self, function, included, inPlace, axis):
-#		if included is not None or inPlace == True:
-#			return super(Matrix, self)._applyTo_implementation(function, included, inPlace, axis)
-
-#		axisNum = 1 if axis == 'point' else 0
-#		axisLen = self.pointCount if axis == 'point' else self.featureCount
-#		keyIndex = self.featureCount if axis == 'point' else self.pointCount
-#		extFunc = self.extractFeatures if axis == 'point' else self.extractPoints
-#		appFunc = self.appendFeatures if axis == 'point' else self.appendPoints
-#		keysShape = (axisLen, 1) if axis == 'point' else (1, axisLen)
-#		keysNamesArg = {'pointNames':self.pointNames} if axis == 'point' else {'featureNames':self.featureNames}
-
-#		keysData = numpy.array(xrange(axisLen))
-#		keysData = keysData.reshape(keysShape)
-#		appFunc(Matrix(keysData, **keysNamesArg))
-
-		# outer, axis, index)
-#		def funcWrap(feature):
-#			return function(VectorView(self, axis, feature[keyIndex], True))
-
-#		retData = numpy.apply_along_axis(funcWrap, axisNum, self.data)
-#		if len(retData.shape) == 1:
-#			retData = retData.reshape(keysShape)
-
-#		ret = UML.createData('Matrix', retData)
-#		ret = Matrix(retData)
-#		if axis != 'point':
-#			ret.transpose()
-
-		# key vector cleanup
-#		extFunc(keyIndex)
-
-#		return ret
-		
-
 	def _transpose_implementation(self):
 		"""
 		Function to transpose the data, ie invert the feature and point indices of the data.
@@ -370,7 +335,7 @@ class Matrix(Base):
 		# construct featureName list
 		featureNameList = []
 		for index in toExtract:
-			featureNameList.append(self.featureNamesInverse[index])
+			featureNameList.append(self.getFeatureName(index))
 
 		return Matrix(ret, featureNames=featureNameList)
 
@@ -408,7 +373,7 @@ class Matrix(Base):
 		# construct featureName list
 		featureNameList = []
 		for index in xrange(start,end+1):
-			featureNameList.append(self.featureNamesInverse[index])
+			featureNameList.append(self.getFeatureName(index))
 
 		return Matrix(ret, featureNames=featureNameList)
 
@@ -522,19 +487,19 @@ class Matrix(Base):
 
 
 	def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
-		def makeNameString(count, namesInv):
+		def makeNameString(count, namesGetter):
 			nameString = "#"
 			for i in xrange(count):
-				nameString += namesInv[i]
+				nameString += namesGetter(i)
 				if not i == count - 1:
 					nameString += ','
 			return nameString
 
 		if includePointNames:
-			header = makeNameString(self.pointCount, self.pointNamesInverse)
+			header = makeNameString(self.pointCount, self.getPointName)
 			header += '\n'
 		if includeFeatureNames:
-			header += makeNameString(self.featureCount, self.featureNamesInverse)
+			header += makeNameString(self.featureCount, self.getFeatureName)
 			
 			mmwrite(target=outPath, a=self.data, comment=header)		
 		else:

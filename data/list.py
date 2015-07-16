@@ -656,7 +656,7 @@ class List(Base):
 		if format is None or format == 'List':
 			return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'Matrix':
-			return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.featureNames)
+			return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'pythonlist':
 			return copy.deepcopy(self.data)
 		if format == 'numpyarray':

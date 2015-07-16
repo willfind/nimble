@@ -38,6 +38,12 @@ from UML.data.tests.baseObject import DataTestObject
 
 from UML.randomness import numpyRandom
 
+
+preserveName = "PreserveTestName"
+preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
+preserveRPath = os.path.relpath(preserveAPath)
+preservePair = (preserveAPath,preserveRPath)
+
 ### Helpers used by tests in the test class ###
 
 def simpleMapper(point):
@@ -127,24 +133,21 @@ class HighLevelDataSafe(DataTestObject):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+		toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+				featureNames=featureNames, name=preserveName, path=preservePair)
 
 		def emitLower(point):
 			return point[toTest.getFeatureIndex('deci')]
 
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
 		ret = toTest.applyToPoints(emitLower, inPlace=False)
 
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
+		assert toTest.name == preserveName
+		assert toTest.absolutePath == preserveAPath
+		assert toTest.relativePath == preserveRPath
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == 'TestAbsPath'
-		assert ret.relativePath == 'testRelPath'
+		assert ret.absolutePath == preserveAPath
+		assert ret.relativePath == preserveRPath
 
 
 	def test_applyToPoints_HandmadeLimited(self):
@@ -256,7 +259,8 @@ class HighLevelDataSafe(DataTestObject):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		toTest = self.constructor(origData, pointNames=pointNames, featureNames=featureNames)
+		toTest = self.constructor(origData, pointNames=pointNames,
+			featureNames=featureNames, name=preserveName, path=preservePair)
 
 		def emitAllEqual(feature):
 			first = feature['zero']
@@ -265,19 +269,15 @@ class HighLevelDataSafe(DataTestObject):
 					return 0
 			return 1
 
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
 		ret = toTest.applyToFeatures(emitAllEqual, inPlace=False)
 
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
+		assert toTest.name == preserveName
+		assert toTest.absolutePath == preserveAPath
+		assert toTest.relativePath == preserveRPath
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == "TestAbsPath"
-		assert ret.relativePath == 'testRelPath'
+		assert ret.absolutePath == preserveAPath
+		assert ret.relativePath == preserveRPath
 
 
 	def test_applyToFeatures_HandmadeLimited(self):
@@ -392,21 +392,18 @@ class HighLevelDataSafe(DataTestObject):
 	def test_mapReducePoints_NamePath_preservation(self):
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data, featureNames=featureNames)
-		
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
+		toTest = self.constructor(data, featureNames=featureNames,
+				name=preserveName, path=preservePair)
 
 		ret = toTest.mapReducePoints(simpleMapper, simpleReducer)
 
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
+		assert toTest.name == preserveName
+		assert toTest.absolutePath == preserveAPath
+		assert toTest.relativePath == preserveRPath
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == "TestAbsPath"
-		assert ret.relativePath == 'testRelPath'
+		assert ret.absolutePath == preserveAPath
+		assert ret.relativePath == preserveRPath
 
 
 	def test_mapReducePoints_handmadeNoneReturningReducer(self):
@@ -604,21 +601,17 @@ class HighLevelDataSafe(DataTestObject):
 
 	def test_applyToElements_NamePath_preservation(self):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
+		toTest = self.constructor(data, name=preserveName, path=preservePair)
 
 		ret = toTest.applyToElements(passThrough, inPlace=False)
 
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
+		assert toTest.name == preserveName
+		assert toTest.absolutePath == preserveAPath
+		assert toTest.relativePath == preserveRPath
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == "TestAbsPath"
-		assert ret.relativePath == 'testRelPath'
+		assert ret.absolutePath == preserveAPath
+		assert ret.relativePath == preserveRPath
 
 
 	########################

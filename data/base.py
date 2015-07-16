@@ -484,8 +484,8 @@ class Base(object):
 		ret = self._applyTo_implementation(function, points, inPlace, 'point')
 
 		if ret is not None:
-			ret._absPath = self._absPath
-			ret._relPath = self._relPath
+			ret._absPath = self.absolutePath
+			ret._relPath = self.relativePath
 
 		return ret
 
@@ -523,8 +523,8 @@ class Base(object):
 
 		ret = self._applyTo_implementation(function, features, inPlace, 'feature')
 		if ret is not None:
-			ret._absPath = self._absPath
-			ret._relPath = self._relPath
+			ret._absPath = self.absolutePath
+			ret._relPath = self.relativePath
 		return ret
 
 
@@ -608,8 +608,8 @@ class Base(object):
 				ret.append([redKey,redValue])
 		ret = UML.createData(self.getTypeString(), ret)
 
-		ret._absPath = self._absPath
-		ret._relPath = self._relPath
+		ret._absPath = self.absolutePath
+		ret._relPath = self.relativePath
 
 		return ret
 
@@ -720,8 +720,8 @@ class Base(object):
 		if not inPlace:
 			ret = UML.createData(self.getTypeString(), valueList)
 
-			ret._absPath = self._absPath
-			ret._relPath = self._relPath
+			ret._absPath = self.absolutePath
+			ret._relPath = self.relativePath
 
 			return ret
 		else:
@@ -1210,7 +1210,7 @@ class Base(object):
 		numRows = min(self.pointCount, maxW)
 		# if exists non default point names, print all (truncated) point names
 		ret += dataHelpers.makeNamesLines(indent, maxW, numRows, self.pointCount,
-				self.pointNamesInverse, 'pointNames')
+				self.getPointNames(), 'pointNames')
 		# if exists non default feature names, print all (truncated) feature names
 		splited = byLine[0].split(' ')
 		numCols = 0
@@ -1223,7 +1223,7 @@ class Base(object):
 		if numCols <= self.featureCount:
 			numCols += 1
 		ret += dataHelpers.makeNamesLines(indent, maxW, numCols, self.featureCount,
-				self.featureNamesInverse, 'featureNames')
+				self.getFeatureNames(), 'featureNames')
 
 		# if name not None, print
 		if not self.name.startswith(DEFAULT_NAME_PREFIX):
@@ -1827,8 +1827,8 @@ class Base(object):
 		self._pointCount = other._pointCount
 		self._featureCount = other._featureCount
 
-		self._absPath = other._absPath
-		self._relPath = other._relPath
+		self._absPath = other.absolutePath
+		self._relPath = other.relativePath
 
 		self.validate()
 
@@ -1950,8 +1950,8 @@ class Base(object):
 		retObj.setPointNames(pointNameList)
 		retObj.setFeatureNames(self.getFeatureNames())
 
-		retObj._absPath = self._absPath
-		retObj._relPath = self._relPath
+		retObj._absPath = self.absolutePath
+		retObj._relPath = self.relativePath
 
 		return retObj
 	
@@ -2001,8 +2001,8 @@ class Base(object):
 		ret.setPointNames(self.getPointNames())
 		ret.setFeatureNames(featureNameList)
 
-		ret._absPath = self._absPath
-		ret._relPath = self._relPath
+		ret._absPath = self.absolutePath
+		ret._relPath = self.relativePath
 
 		return ret
 
@@ -2405,8 +2405,8 @@ class Base(object):
 		ret.setFeatureNames(self.getFeatureNames())
 		
 		ret._name = dataHelpers.nextDefaultObjectName()
-		ret._absPath = self._absPath
-		ret._relPath = self._relPath
+		ret._absPath = self.absolutePath
+		ret._relPath = self.relativePath
 		return ret
 
 	def _genericNumericBinary(self, opName, other):
@@ -2556,8 +2556,8 @@ class Base(object):
 
 		# TODO validation or result.
 
-		ret._absPath = self._absPath
-		ret._relPath = self._relPath
+		ret._absPath = self.absolutePath
+		ret._relPath = self.relativePath
 
 		return ret
 
@@ -2701,7 +2701,7 @@ class Base(object):
 			if currIndex < 0:
 				nameIndex = self.featureCount + currIndex
 
-			currName = self.featureNamesInverse[nameIndex]
+			currName = self.getFeatureName(nameIndex)
 
 			if currName.startswith(DEFAULT_PREFIX):
 				currName = ""
@@ -3343,6 +3343,9 @@ class Base(object):
 		temp = {}
 		for index in xrange(len(assignments)):
 			name = assignments[index]
+			# take this to mean fill it in with a default name
+			if name is None:
+				name = self._nextDefaultName(axis)
 			if name in temp:
 				raise ArgumentException("Cannot input duplicate names: " + str(name))
 			temp[name] = index
@@ -3373,7 +3376,7 @@ class Base(object):
 		# at this point, the input must be a dict
 		#check input before performing any action
 		for name in assignments.keys():
-			if not isinstance(name, basestring):
+			if not None and not isinstance(name, basestring):
 				raise ArgumentException("Names must be strings")
 			if not isinstance(assignments[name], int):
 				raise ArgumentException("Indices must be integers")

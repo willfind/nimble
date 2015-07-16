@@ -170,13 +170,17 @@ def initDataObject(returnType, rawData, pointNames, featureNames, name, path):
 
 	pathsToPass = (None,None)
 	if path is not None:
-		if os.path.isabs(path):
-			absPath = path
-			relPath = os.path.relpath(path)
+		# used in data type unit testing, need a way to specify path values
+		if isinstance(path, tuple):
+			pathsToPass = path
 		else:
-			absPath = os.path.abspath(path)
-			relPath = path
-		pathsToPass = (absPath, relPath)
+			if os.path.isabs(path):
+				absPath = path
+				relPath = os.path.relpath(path)
+			else:
+				absPath = os.path.abspath(path)
+				relPath = path
+			pathsToPass = (absPath, relPath)
 
 	initMethod = getattr(UML.data, returnType)
 	try:

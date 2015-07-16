@@ -18,6 +18,7 @@ extractPoints, extractFeatures, referenceDataFrom,
 import tempfile
 import numpy
 import scipy.sparse
+import os
 import os.path
 from nose.tools import *
 
@@ -33,6 +34,10 @@ from UML.exceptions import ArgumentException
 
 from UML.data.tests.baseObject import DataTestObject
 
+preserveName = "PreserveTestName"
+preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
+preserveRPath = os.path.relpath(preserveAPath)
+preservePair = (preserveAPath,preserveRPath)
 
 class StructureDataSafe(DataTestObject):
 	
@@ -234,15 +239,17 @@ class StructureDataSafe(DataTestObject):
 	def test_copy_rowsArePointsFalse(self):
 		""" Test copyAs() will return data in the right places when rowsArePoints is False"""
 		data = [[1,2,3],[1,0,3],[2,4,6],[0,0,0]]
+		dataT = numpy.array(data).T.tolist()
+
 		featureNames = ['one', 'two', 'three']
 		pointNames = ['1', 'one', '2', '0']
 		orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
 		out = orig.copyAs(orig.getTypeString(), rowsArePoints=False)
 
-		orig.transpose()
+		desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
 
-		assert out == orig
+		assert out == desired
 
 	def test_copy_outputAs1DWrongFormat(self):
 		""" Test copyAs will raise exception when given an unallowed format """
@@ -398,21 +405,18 @@ class StructureDataSafe(DataTestObject):
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
 		pnames = ['1', 'one', '2', '0']
-		orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-	
-		orig._name = "testName"
-		orig._absPath = "testAbsPath"
-		orig._relPath = "testRelPath"
+		orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames,
+				name=preserveName, path=preservePair)
 
 		ret = orig.copyPoints([1,2])
 
-		assert orig.name == "testName"
-		assert orig.absolutePath == "testAbsPath"
-		assert orig.relativePath == 'testRelPath'
+		assert orig.name == preserveName
+		assert orig.absolutePath == preserveAPath
+		assert orig.relativePath == preserveRPath
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == 'testAbsPath'
-		assert ret.relativePath == 'testRelPath'
+		assert ret.absolutePath == preserveAPath
+		assert ret.relativePath == preserveRPath
 
 
 	def test_copyPoints_handmadeListOrdering(self):
@@ -463,21 +467,17 @@ class StructureDataSafe(DataTestObject):
 
 	def test_copyPoints_range_NamePath(self):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		
-		toTest._name = "testName"
-		toTest._absPath = "testAbsPath"
-		toTest._relPath = "testRelPath"
+		toTest = self.constructor(data, name=preserveName, path=preservePair)
 
 		ret = toTest.copyPoints(start=1,end=2)
 
-		assert toTest.name == "testName"
-		assert toTest.absolutePath == "testAbsPath"
-		assert toTest.relativePath == 'testRelPath'
+		assert toTest.name == preserveName
+		assert toTest.absolutePath == preserveAPath
+		assert toTest.relativePath == preserveRPath
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == 'testAbsPath'
-		assert ret.relativePath == 'testRelPath'
+		assert ret.absolutePath == preserveAPath
+		assert ret.relativePath == preserveRPath
 		
 
 	def test_copyPoints_handmadeRangeWithFeatureNames(self):
@@ -576,21 +576,18 @@ class StructureDataSafe(DataTestObject):
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
 		pnames = ['1', 'one', '2', '0']
-		orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-
-		orig._name = "testName"
-		orig._absPath = "testAbsPath"
-		orig._relPath = "testRelPath"
+		orig = self.constructor(data1, pointNames=pnames,
+				featureNames=featureNames, name=preserveName, path=preservePair)
 
 		ret = orig.copyFeatures([0,'two'])
 
-		assert orig.name == "testName"
-		assert orig.absolutePath == "testAbsPath"
-		assert orig.relativePath == 'testRelPath'
+		assert orig.name == preserveName
+		assert orig.absolutePath == preserveAPath
+		assert orig.relativePath == preserveRPath
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == 'testAbsPath'
-		assert ret.relativePath == 'testRelPath'
+		assert ret.absolutePath == preserveAPath
+		assert ret.relativePath == preserveRPath
 
 
 	def test_copyFeatures_handmadeListOrdering(self):
@@ -665,21 +662,17 @@ class StructureDataSafe(DataTestObject):
 
 	def test_copyFeatures_range_NamePath(self):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		
-		toTest._name = "testName"
-		toTest._absPath = "testAbsPath"
-		toTest._relPath = "testRelPath"
+		toTest = self.constructor(data, name=preserveName, path=preservePair)
 
 		ret = toTest.copyFeatures(start=1, end=2)
 		
-		assert toTest.name == "testName"
-		assert toTest.absolutePath == "testAbsPath"
-		assert toTest.relativePath == 'testRelPath'
+		assert toTest.name == preserveName
+		assert toTest.absolutePath == preserveAPath
+		assert toTest.relativePath == preserveRPath
 
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == 'testAbsPath'
-		assert ret.relativePath == 'testRelPath'
+		assert ret.absolutePath == preserveAPath
+		assert ret.relativePath == preserveRPath
 
 
 	def test_copyFeatures_handmadeWithFeatureNames(self):

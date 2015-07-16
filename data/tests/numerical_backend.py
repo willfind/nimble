@@ -14,6 +14,8 @@ __idiv__, __itruediv__, __ifloordiv__,  __imod__, __ipow__,
 """
 import sys
 import numpy
+import os
+import os.path
 
 from nose.tools import *
 
@@ -26,6 +28,11 @@ from UML.data.tests.baseObject import DataTestObject
 
 from UML.randomness import numpyRandom
 from UML.randomness import pythonRandom
+
+preserveName = "PreserveTestName"
+preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
+preserveRPath = os.path.relpath(preserveAPath)
+preservePair = (preserveAPath,preserveRPath)
 
 def calleeConstructor(data, constructor):
 	if constructor is None:
@@ -47,35 +54,33 @@ def back_unary_pfname_preservations(callerCon, op):
 	assert ret.getPointNames() == pnames
 	assert ret.getFeatureNames() == fnames
 
-	caller.setPointName('p1', 'p0')
+	# changing the returned value, in case the caller is read-only.
+	# We confirm the separation of the name recording either way.
+	ret.setPointName('p1', 'p0')
 
-	assert 'p1' in ret.getPointNames()
-	assert 'p0' not in ret.getPointNames()
-	assert 'p0' in caller.getPointNames()
-	assert 'p1' not in caller.getPointNames()
+	assert 'p1' in caller.getPointNames()
+	assert 'p0' not in caller.getPointNames()
+	assert 'p0' in ret.getPointNames()
+	assert 'p1' not in ret.getPointNames()
 
 def back_unary_NamePath_preservations(callerCon, op):
 	""" Test that object names and pathes are preserved when calling a unary op """
 	data = [[1,1,1], [1,1,1], [1,1,1]]
 
-	caller = callerCon(data)
-
-	caller._name = "TestName"
-	caller._absPath = "TestAbsPath"
-	caller._relPath = "TestRelPath"
+	caller = callerCon(data, name=preserveName, path=preservePair)
 
 	toCall = getattr(caller, op)
 	ret = toCall()
 
-	assert ret.name != "TestName"
+	assert ret.name != preserveName
 	assert ret.nameIsDefault()
-	assert caller.name == "TestName"
-	assert ret.absolutePath == "TestAbsPath"
-	assert caller.absolutePath == "TestAbsPath"
-	assert ret.path == "TestAbsPath"
-	assert caller.path == "TestAbsPath"
-	assert ret.relativePath == "TestRelPath"
-	assert caller.relativePath == "TestRelPath"
+	assert caller.name == preserveName
+	assert ret.absolutePath == preserveAPath
+	assert caller.absolutePath == preserveAPath
+	assert ret.path == preserveAPath
+	assert caller.path == preserveAPath
+	assert ret.relativePath == preserveRPath
+	assert caller.relativePath == preserveRPath
 
 def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
 	""" Test that p/f names are preserved when calling a binary scalar op """
@@ -113,28 +118,24 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
 def back_binaryscalar_NamePath_preservations(callerCon, op):
 	data = [[1,1,1], [1,1,1], [1,1,1]]
 
-	caller = callerCon(data)
-
-	caller._name = "TestName"
-	caller._absPath = "TestAbsPath"
-	caller._relPath = "TestRelPath"
+	caller = callerCon(data, name=preserveName, path=preservePair)
 
 	toCall = getattr(caller, op)
 	ret = toCall(1)
 
 	if op.startswith('__i'):
-		assert ret.name == "TestName"
+		assert ret.name == preserveName
 	else:
-		assert ret.name != "TestName"
+		assert ret.name != preserveName
 		assert ret.nameIsDefault()
-	assert ret.absolutePath == "TestAbsPath"
-	assert ret.path == "TestAbsPath"
-	assert ret.relativePath == "TestRelPath"
+	assert ret.absolutePath == preserveAPath
+	assert ret.path == preserveAPath
+	assert ret.relativePath == preserveRPath
 
-	assert caller.name == "TestName"
-	assert caller.absolutePath == "TestAbsPath"
-	assert caller.path == "TestAbsPath"
-	assert caller.relativePath == "TestRelPath"
+	assert caller.name == preserveName
+	assert caller.absolutePath == preserveAPath
+	assert caller.path == preserveAPath
+	assert caller.relativePath == preserveRPath
 
 
 def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
@@ -182,32 +183,35 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
 		assert ret.getPointNames() == pnames
 		assert ret.getFeatureNames() == fnames
 
-		caller.setPointName('p1', 'p0')
 		if inplace:
+			caller.setPointName('p1', 'p0')
 			assert 'p0' in ret.getPointNames()
 			assert 'p1' not in ret.getPointNames()
+			assert 'p0' in caller.getPointNames()
+			assert 'p1' not in caller.getPointNames()
 		else:
-			assert 'p0' not in ret.getPointNames()
-			assert 'p1' in ret.getPointNames()
-		assert 'p0' in caller.getPointNames()
-		assert 'p1' not in caller.getPointNames()
+			ret.setPointName('p1', 'p0')
+			assert 'p0' not in caller.getPointNames()
+			assert 'p1' in caller.getPointNames()
+			assert 'p0' in ret.getPointNames()
+			assert 'p1' not in ret.getPointNames()
 
 
 def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 	data = [[1,1,1], [1,1,1], [1,1,1]]
 
-	caller = callerCon(data)
-	other = callerCon(data)
+	preserveNameOther = preserveName + "Other"
+	preserveAPathOther = preserveAPath + "Other"
+	preserveRPathOther = preserveRPath + "Other"
+	preservePairOther = (preserveAPathOther, preserveRPathOther)
 
 	### emptry caller, full other ###
+	caller = callerCon(data)
+	other = callerCon(data, name=preserveNameOther, path=preservePairOther)
 
 	assert caller.nameIsDefault()
 	assert caller.absolutePath is None
 	assert caller.relativePath is None
-
-	other._name = "TestNameOther"
-	other._absPath = "TestAbsPathOther"
-	other._relPath = "TestRelPathOther"
 
 	toCall = getattr(caller, op)
 	ret = toCall(other)
@@ -217,11 +221,11 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 
 	# name should be default, path should be pulled from other
 	if ret is not None and ret != NotImplemented:
-		assert ret.name != "TestNameOther"
+		assert ret.name != preserveNameOther
 		assert ret.nameIsDefault()
-		assert ret.absolutePath == "TestAbsPathOther"
-		assert ret.path == "TestAbsPathOther"
-		assert ret.relativePath == "TestRelPathOther"
+		assert ret.absolutePath == preserveAPathOther
+		assert ret.path == preserveAPathOther
+		assert ret.relativePath == preserveRPathOther
 
 	# if in place, ret == caller. if not, then values should be unchanged
 	if not inplace:
@@ -231,21 +235,14 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 		assert caller.relativePath is None
 
 	# confirm that other is unchanged
-	assert other.name == "TestNameOther"
-	assert other.absolutePath == "TestAbsPathOther"
-	assert other.path == "TestAbsPathOther"
-	assert other.relativePath == "TestRelPathOther"
+	assert other.name == preserveNameOther
+	assert other.absolutePath == preserveAPathOther
+	assert other.path == preserveAPathOther
+	assert other.relativePath == preserveRPathOther
 
 	### full caller, empty other ###
-
-	caller._name = "TestNameCaller"
-	caller._absPath = "TestAbsPathCaller"
-	caller._relPath = "TestRelPathCaller"
-
-	nextNum = UML.data.dataHelpers.defaultObjectNumber
-	other.name = UML.data.dataHelpers.DEFAULT_NAME_PREFIX + str(nextNum)
-	other._absPath = None
-	other._relPath = None
+	caller = callerCon(data, name=preserveName, path=preservePair)
+	other = callerCon(data)
 
 	toCall = getattr(caller, op)
 	ret = toCall(other)
@@ -257,21 +254,21 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 	if ret is not None and ret != NotImplemented:
 		# exception: if we are in place, then we do keep the name
 		if inplace:
-			assert ret.name == "TestNameCaller"
+			assert ret.name == preserveName
 		else:
-			assert ret.name != "TestNameCaller"
+			assert ret.name != preserveName
 			assert ret.nameIsDefault()
 	
-		assert ret.absolutePath == "TestAbsPathCaller"
-		assert ret.path == "TestAbsPathCaller"
-		assert ret.relativePath == "TestRelPathCaller"
+		assert ret.absolutePath == preserveAPath
+		assert ret.path == preserveAPath
+		assert ret.relativePath == preserveRPath
 
 	# if in place, ret == caller. if not, then values should be unchanged
 	if not inplace:
-		assert caller.name == "TestNameCaller"
-		assert caller.absolutePath == "TestAbsPathCaller"
-		assert caller.path == "TestAbsPathCaller"
-		assert caller.relativePath == "TestRelPathCaller"
+		assert caller.name == preserveName
+		assert caller.absolutePath == preserveAPath
+		assert caller.path == preserveAPath
+		assert caller.relativePath == preserveRPath
 
 	# confirm that othe remains unchanged
 	assert other.nameIsDefault()
@@ -280,14 +277,8 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 	assert other.relativePath is None
 
 	### full caller, full other ###
-
-	caller._name = "TestNameCaller"
-	caller._absPath = "TestAbsPathCaller"
-	caller._relPath = "TestRelPathCaller"
-
-	other._name = "TestNameOther"
-	other._absPath = "TestAbsPathOther"
-	other._relPath = "TestRelPathOther"
+	caller = callerCon(data, name=preserveName, path=preservePair)
+	other = callerCon(data, name=preserveNameOther, path=preservePairOther)
 
 	toCall = getattr(caller, op)
 	ret = toCall(other)
@@ -300,7 +291,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 		# exception: if we are in place, we keep the name from the caller
 		# but the paths still obliterate each other
 		if inplace:
-			assert ret.name == "TestNameCaller"
+			assert ret.name == preserveName
 #			assert ret.absolutePath == "TestAbsPathOther"
 #			assert ret.path == "TestAbsPathOther"
 #			assert ret.relativePath == "TestRelPathOther"
@@ -312,16 +303,16 @@ def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
 
 	# if in place, ret == caller. if not, then values should be unchanged
 	if not inplace:
-		assert caller.name == "TestNameCaller"
-		assert caller.absolutePath == "TestAbsPathCaller"
-		assert caller.path == "TestAbsPathCaller"
-		assert caller.relativePath == "TestRelPathCaller"
+		assert caller.name == preserveName
+		assert caller.absolutePath == preserveAPath
+		assert caller.path == preserveAPath
+		assert caller.relativePath == preserveRPath
 
 	# confirm that other remains unchanged
-	assert other.name == "TestNameOther"
-	assert other.absolutePath == "TestAbsPathOther"
-	assert other.path == "TestAbsPathOther"
-	assert other.relativePath == "TestRelPathOther"
+	assert other.name == preserveNameOther
+	assert other.absolutePath == preserveAPathOther
+	assert other.path == preserveAPathOther
+	assert other.relativePath == preserveRPathOther
 
 
 def back_matrixmul_pfname_preservations(callerCon, op, inplace):
@@ -330,7 +321,7 @@ def back_matrixmul_pfname_preservations(callerCon, op, inplace):
 	pnames = ['p1', 'p2', 'p3']
 	fnames = ['f1', 'f2', 'f3']
 	
-	# [p x f1] time [f2 xp] where f1 != f2
+	# [p x f1] times [f2 x p] where f1 != f2
 	caller = callerCon(data, pnames, fnames)
 	ofnames = {'f0':0, 'f1':1, 'f2':2}
 	other = callerCon(data, ofnames, pnames)
@@ -347,10 +338,9 @@ def back_matrixmul_pfname_preservations(callerCon, op, inplace):
 		raise einfo[1], None, einfo[2]
 
 	# names interwoven
+	interPnames = ['f1', 'f2', None]
 	caller = callerCon(data, pnames, fnames)
-	other = callerCon(data, None, fnames)
-	other.setPointName(0, 'f1')
-	other.setPointName(1, 'f2')
+	other = callerCon(data, interPnames, fnames)
 	toCall = getattr(caller, op)
 	ret = toCall(other)
 
@@ -368,15 +358,16 @@ def back_matrixmul_pfname_preservations(callerCon, op, inplace):
 		assert ret.getPointNames() == pnames
 		assert ret.getFeatureNames() == fnames
 
-		caller.setPointName('p1', 'p0')
+		# check name seperation between caller and returned object
+		ret.setPointName('p1', 'p0')
 		if inplace:
-			assert 'p0' in ret.getPointNames()
-			assert 'p1' not in ret.getPointNames()
+			assert 'p0' in caller.getPointNames()
+			assert 'p1' not in caller.getPointNames()
 		else:
-			assert 'p0' not in ret.getPointNames()
-			assert 'p1' in ret.getPointNames()
-		assert 'p0' in caller.getPointNames()
-		assert 'p1' not in caller.getPointNames()
+			assert 'p0' not in caller.getPointNames()
+			assert 'p1' in caller.getPointNames()
+		assert 'p0' in ret.getPointNames()
+		assert 'p1' not in ret.getPointNames()
 
 def back_otherObjectExceptions(callerCon, op):
 	""" Test operation raises exception when param is not a UML data object """
@@ -491,7 +482,7 @@ def back_autoVsNumpyObjCallee(constructor, npOp, UMLOp, UMLinplace, sparsity):
 	for t in range(trials):
 		n = pythonRandom.randint(1,15)
 
-		datas = makeAllData(constructor,constructor,n, sparsity)	
+		datas = makeAllData(constructor, constructor, n, sparsity)	
 		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
 
 		resultf = npOp(lhsf, rhsf)
@@ -518,7 +509,7 @@ def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
 
 		scalar = pythonRandom.randint(1,4)
 
-		datas = makeAllData(constructor,None,n, sparsity)	
+		datas = makeAllData(constructor, None, n, sparsity)	
 		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
 
 		if lside:
@@ -550,7 +541,7 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, spa
 		maker = makers[i]
 		n = pythonRandom.randint(1,10)
 
-		datas = makeAllData(constructor,maker,n, sparsity)	
+		datas = makeAllData(constructor, maker, n, sparsity)	
 		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
 
 		resultf = npOp(lhsf, rhsf)
@@ -569,9 +560,9 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, spa
 			assert expiObj.isIdentical(resiObj)
 
 			if type(resfObj) != type(lhsfObj):
-				assert type(resfObj) == maker.__class__
+				assert isinstance(resfObj, UML.data.Base)
 			if type(resiObj) != type(lhsiObj):
-				assert type(resfObj) == maker.__class__
+				assert isinstance(resiObj, UML.data.Base)
 
 def wrapAndCall(toWrap, expected, *args):
 	try:
@@ -1024,7 +1015,7 @@ class NumericalDataSafe(DataTestObject):
 			n = pythonRandom.randint(1,15)
 			scalar = pythonRandom.randint(0,5)
 
-			datas = makeAllData(self.constructor,None,n, .02)	
+			datas = makeAllData(self.constructor, None, n, .02)	
 			(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
 
 			resultf = lhsf ** scalar
@@ -1607,7 +1598,7 @@ class NumericalModifying(DataTestObject):
 			n = pythonRandom.randint(1,15)
 			scalar = pythonRandom.randint(0,5)
 
-			datas = makeAllData(self.constructor,None,n, .02)	
+			datas = makeAllData(self.constructor, None, n, .02)	
 			(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
 
 			resultf = lhsf ** scalar

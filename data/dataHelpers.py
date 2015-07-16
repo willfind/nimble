@@ -129,11 +129,11 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
 	"""
 	# merge helper
-	def mergeNames(baseNamesInv, otherNamesInv):
+	def mergeNames(baseNames, otherNames):
 		ret = {}
-		for i in baseNamesInv.keys():
-			baseName = baseNamesInv[i]
-			otherName = otherNamesInv[i]
+		for i in xrange(len(baseNames)):
+			baseName = baseNames[i]
+			otherName = otherNames[i]
 			baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
 			otherIsDefault = otherName.startswith(DEFAULT_PREFIX)
 
@@ -144,8 +144,8 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
 		return ret
 
-	retPNames = mergeNames(baseSource.pointNamesInverse, otherSource.pointNamesInverse)
-	retFNames = mergeNames(baseSource.featureNamesInverse, otherSource.featureNamesInverse)
+	retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
+	retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
 
 	return (retPNames, retFNames)
 
@@ -229,23 +229,23 @@ def hasNonDefault(obj, axis):
 	else:
 		possibleIndices = xrange(obj.featureCount)
 		
-	namesInv = obj.pointNamesInverse if axis == 'point' else obj.featureNamesInverse
+	getter = obj.getPointName if axis == 'point' else obj.getFeatureName
 
 	ret = False
 	for index in possibleIndices:
-		if not namesInv[index].startswith(DEFAULT_PREFIX):
+		if not getter(index).startswith(DEFAULT_PREFIX):
 			ret = True
 
 	return ret
 
-def makeNamesLines(indent, maxW, numDisplayNames, count, namesInv, nameType):
+def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
 		namesString = ""
 		(posL, posR) = indicesSplit(numDisplayNames, count)
 		possibleIndices = posL + posR
 
 		allDefault = True
 		for i in range(len(possibleIndices)):
-			if not namesInv[possibleIndices[i]].startswith(DEFAULT_PREFIX):
+			if not namesList[possibleIndices[i]].startswith(DEFAULT_PREFIX):
 				allDefault = False
 
 		if allDefault:
@@ -266,7 +266,7 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesInv, nameType):
 			prevIndex = currIndex
 
 			# get name and truncate if needed
-			fullName = namesInv[currIndex]
+			fullName = namesList[currIndex]
 			currName = fullName
 			if len(currName) > 11:
 				currName = currName[:8] + '...'
