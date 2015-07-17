@@ -950,7 +950,7 @@ class QueryBackend(DataTestObject):
 		trans = self.constructor(dataT)
 		sameAsOrig = self.constructor(data)
 
-		def explicitCorr(X, X_T, sample=True):
+		def explicitCorr(X, sample=True):
 			sampleStdVector = X.pointStatistics('samplestd')
 			popStdVector = X.pointStatistics('populationstd')
 			stdVector = sampleStdVector if sample else popStdVector
@@ -970,18 +970,16 @@ class QueryBackend(DataTestObject):
 
 		if axis:
 			ret = orig.pointSimilarities("correlation")
-			trans = orig.copy()
-			trans.transpose()
 			sampRet = explicitCorr(orig, True)
 			popRet = explicitCorr(orig, False)
 		else:
-			trans = orig.copy()
-			orig.transpose()
-			ret = orig.featureSimilarities("correlation")
-			sampRet = explicitCorr(trans, orig, True)
-			popRet = explicitCorr(trans, orig, False)
+			ret = trans.featureSimilarities("correlation")
+			# helper only calls pointStatistics, so have to make sure
+			# that in this case, we are calling with the transpose of
+			# the object used to test featureSimilarities
+			sampRet = explicitCorr(orig, True)
+			popRet = explicitCorr(orig, False)
 			ret.transpose()
-			orig.transpose()
 
 		npExpRawB0 = numpy.corrcoef(data, bias=0)
 		npExpRawB1 = numpy.corrcoef(data, bias=1)
