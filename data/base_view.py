@@ -44,9 +44,9 @@ class BaseView(Base):
 # TODO: retType
 
 
-	#######################################
-	# Low Level Operations, Reimplemented #
-	#######################################
+	############################
+	# Reimplemented Operations #
+	############################
 
 	def getPointNames(self):
 		"""Returns a list containing all point names, where their index
@@ -75,23 +75,26 @@ class BaseView(Base):
 		return self._source.pointNamesInverse[index]
 
 	def getPointIndex(self, name):
-		possible = self._source.pointNames[name]
+		possible = self._source.getPointIndex(name)
 		if possible >= self._pStart and possible < self._pEnd:
 			return possible
 		else:
-			raise KeyError() 
+			raise KeyError()
 
 	def getFeatureName(self, index):
 		corrected = index + self._fStart
 		return self._source.featureNamesInverse[index]
 
 	def getFeatureIndex(self, name):
-		possible = self._source.featureNames[name]
+		possible = self._source.getFeatureIndex(name)
 		if possible >= self._fStart and possible < self._fEnd:
 			return possible
 		else:
-			raise KeyError() 
+			raise KeyError()
 
+	def view(self, pointStart=None, pointEnd=None, featureStart=None,
+			featureEnd=None):
+		return self._source.view(pointStart, pointEnd, featureStart, featureEnd)
 
 	####################################
 	# Low Level Operations, Disallowed #

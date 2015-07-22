@@ -1,3 +1,15 @@
+"""
+Contains the discoverable test object for all classes in the data hierarchy.
+
+Makes use of multiple inheritance to reuse (non-discoverable) test objects
+higher in the the test object hierarchy associated with specific portions
+of functionality. For example, View objects only inherit from those test
+objects associated with non-destructive methods. Furthermore, each of
+those higher objects are collections of unit tests generic over a
+construction method, which is provided by the discoverable test objects
+defined in this file. 
+
+"""
 
 import UML
 
@@ -14,7 +26,12 @@ from UML.data.tests.low_level_backend import LowLevelBackend
 from UML.data.tests.structure_backend import StructureAll
 from UML.data.tests.structure_backend import StructureDataSafe
 
+from UML.data.tests.view_access_backend import ViewAccess
+
 def viewMakerMaker(concreteType):
+	"""
+	Method to help construct the constructors used in View test objects
+	"""
 	def maker(data, pointNames=None, featureNames=None, name=None, path=(None,None)):
 		if isinstance(data, basestring):
 			orig = UML.createData(concreteType, data=data, pointNames=pointNames,
@@ -35,7 +52,8 @@ def viewMakerMaker(concreteType):
 #			return orig.view()
 #		super(TestListView, self).__init__('ListView', maker)
 
-class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
+class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+		StructureDataSafe, ViewAccess):
 	def __init__(self):
 		super(TestMatrixView, self).__init__('MatrixView', viewMakerMaker("Matrix"))
 
