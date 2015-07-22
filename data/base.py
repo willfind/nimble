@@ -1107,6 +1107,10 @@ class Base(object):
 
 	def toString(self, includeNames=True, maxWidth=80, maxHeight=30,
 				sigDigits=3, nameLength=11):
+
+		if self.pointCount == 0 or self.featureCount == 0:
+			return ""
+
 		# setup a bundle of fixed constants
 		colSep = ' '
 		colHold = '--'

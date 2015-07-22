@@ -305,11 +305,11 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
 
 	"""
 	namesOmitIndex = int(math.floor(len(fnames) / 2.0))
-	dataOmitIndx = int(math.floor(len(dataWidths) / 2.0))
+	dataOmitIndex = int(math.floor(len(dataWidths) / 2.0))
 	namesOmitted = fnames[namesOmitIndex] == colHold
 	dataOmitted = False
 	if len(data) > 0:
-		dataOmitted = data[0][dataOmitIndx] == colHold
+		dataOmitted = data[0][dataOmitIndex] == colHold
 
 	if len(fnames) == len(dataWidths):
 		# inputs consistent, don't have to do anything

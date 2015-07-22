@@ -487,6 +487,20 @@ class QueryBackend(DataTestObject):
 							ret = data.toString(includeNames=inc, maxWidth=mw, maxHeight=mh)
 							checkToStringRet(ret, data, inc)
 
+	def test_toString_emptyObjects(self):
+		# no checks, but this at least confirms that it is runnable
+		names = ['n1','n2','n3']
+
+		rawPEmpty = numpy.zeros((0,3))
+		objPEmpty = self.constructor(rawPEmpty, featureNames=names)
+
+		assert objPEmpty.toString() == ""
+
+		rawFEmpty = numpy.zeros((3,0))
+		objFEmpty = self.constructor(rawFEmpty, pointNames=names)
+
+		assert objFEmpty.toString() == ""
+
 
 	# makeConsistentFNamesAndData(fnames, dataTable, dataWidths,colHold):
 	def test_makeConsistentFNamesAndData_completeData(self):
