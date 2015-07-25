@@ -73,7 +73,6 @@ def cleanForCommas(origFileName):
 	cleanedFileName = origFileName[:-len(".csv")] + " - clean.csv"
 	cleanedFile = open(cleanedFileName, 'w')
 
-	i = 0
 	for line in origFile:
 		splitQuote = line.split('"')
 		for i in xrange(len(splitQuote)):
@@ -90,8 +89,6 @@ def cleanForCommas(origFileName):
 			else:
 				cleanedFile.write(curr)
 		# The newline will still be on the end of the last value in splitQuote
-		print i
-		i += 1
 
 def sanityCheck(trainX, totalScores):
 	assert trainX.featureCount == 84
