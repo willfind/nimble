@@ -1231,7 +1231,9 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 	# setup container for outputs, a tuple entry for each arg set, containing
 	# a list for the results of those args on each fold
 	numArgSets = argumentCombinationIterator.numPermutations
-	performanceOfEachCombination = [[None, []]] * numArgSets
+	performanceOfEachCombination = []
+	for i in xrange(numArgSets):
+		performanceOfEachCombination.append([None, []])
 	
 	# Folding should be the same for each argset (and is expensive) so
 	# iterate over folds first
@@ -1249,6 +1251,9 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 			performanceOfEachCombination[argSetIndex][0] = curArgumentCombination
 			performanceOfEachCombination[argSetIndex][1].append(curPerformance)
 			argSetIndex += 1
+
+		# setup for next iteration
+		argumentCombinationIterator.reset()
 
 	# now, we run through the results and calculate the average for each set
 	# over all folds
