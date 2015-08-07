@@ -336,16 +336,12 @@ def test_crossValidateReturnAll():
 @configSafetyWrapper
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
 def test_crossValidateReturnBest():
-	"""test that the 'best' ie fittest argument combination is chosen.
-	test that best tuple is in the 'all' list of tuples.
+	"""Check that the best / fittest argument set is returned.
+
 	"""
 	# needs to be binary: FlipWrapper only works on binary classification
 	# data
 	((X, Y), (testX, testY)) = generateClassificationData(2, 15, 5)
-
-	# since we are dealing with fractionIncorrect, we want minimum
-	# returns
-	shouldMaximizeScores = False
 
 	# need to setup a situation where we guarantee certain returns
 	# from the performanceMetric fractionIncorrect. Thus, we generate
@@ -373,35 +369,45 @@ def test_crossValidateReturnBest():
 
 	# want to have a predictable random state in order to control folding
 	seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
-	UML.setRandomSeed(seed)
-	resultTuple = crossValidateReturnBest('custom.FlipWrapper', X, Y,
-			fractionIncorrect, flip=(0,.5,.9), wrapped="custom.KNNClassifier")
-	assert resultTuple
+	
+	def trial(metric, maximize, flagIn):
+		# get a baseline result
+		UML.setRandomSeed(seed)
+		resultTuple = crossValidateReturnBest('custom.FlipWrapper', X, Y,
+				metric, flip=(0,.5,.9), wrapped="custom.KNNClassifier",
+				maximumIsBest=flagIn)
+		assert resultTuple
 
-	UML.setRandomSeed(seed)
-	allResultsList = crossValidateReturnAll('custom.FlipWrapper', X, Y,
-			fractionIncorrect, flip=(0,.5,.9), wrapped="custom.KNNClassifier")
-	#since same args were used (except return all doesn't have a 'maximize' parameter,
-	# the best tuple should be in allResultsList
-	allArguments = [curResult[0] for curResult in allResultsList]
-	allScores = [curResult[1] for curResult in allResultsList]
-	assert resultTuple[0] in allArguments
-	assert resultTuple[1] in allScores
+		# Confirm that the best result is also returned in the 'returnAll' results
+		UML.setRandomSeed(seed)
+		allResultsList = crossValidateReturnAll('custom.FlipWrapper', X, Y,
+				metric, flip=(0,.5,.9), wrapped="custom.KNNClassifier")
+		#since same args were used, the best tuple should be in allResultsList
+		allArguments = [curResult[0] for curResult in allResultsList]
+		allScores = [curResult[1] for curResult in allResultsList]
+		assert resultTuple[0] in allArguments
+		assert resultTuple[1] in allScores
 
-	# confirm that we have actually tested something: ie, that there is a difference
-	# in the results and the ordering therefore matters
-	for i in xrange(len(allScores)):
-		for j in xrange(i+1, len(allScores)):
-			assert allScores[i] != allScores[j]
+		# confirm that we have actually tested something: ie, that there is a difference
+		# in the results and the ordering therefore matters
+		for i in xrange(len(allScores)):
+			for j in xrange(i+1, len(allScores)):
+				assert allScores[i] != allScores[j]
 
-	#crudely verify that resultTuple was in fact the best in allResultsList
-	for curError in allScores:
-		#assert that the error is not 'better' than our best error:
-		if shouldMaximizeScores:
-			assert curError <= resultTuple[1]
-		else:
-			assert curError >= resultTuple[1]
+		# verify that resultTuple was in fact the best in allResultsList
+		for curError in allScores:
+			#assert that the error is not 'better' than our best error:
+			if maximize:
+				assert curError <= resultTuple[1]
+			else:
+				assert curError >= resultTuple[1]
 
+
+	trial(fractionIncorrect, False, False)
+	trial(fractionIncorrect, False, 'Automatic')
+	trial(fractionCorrect, True, True)
+	trial(fractionCorrect, True, 'Automatic')
+		
 	UML.deregisterCustomLearner('custom', 'FlipWrapper')
 
 
