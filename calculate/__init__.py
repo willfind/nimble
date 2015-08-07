@@ -9,6 +9,7 @@ from matrix import elementwisePower
 from similarity import correlation
 from similarity import cosineSimilarity
 from similarity import covariance
+from similarity import fractionCorrect
 from statistic import maximum
 from statistic import mean
 from statistic import median

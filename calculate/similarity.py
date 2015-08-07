@@ -3,6 +3,7 @@ import UML
 import numpy
 
 from UML.exceptions import ArgumentException
+from UML.calculate import fractionIncorrect
 
 def _validatePredictedAsLabels(predictedValues):
 	if not isinstance(predictedValues, UML.data.Base):
@@ -58,3 +59,6 @@ def covariance(X, X_T=None, sample=True):
 
 	ret = (XminusEofX * X_TminusEofX_T) / divisor
 	return ret
+
+def fractionCorrect(knownValues, predictedValues):
+	return 1 - fractionIncorrect(knownValues, predictedValues)
