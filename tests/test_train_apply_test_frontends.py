@@ -1,9 +1,12 @@
 
 from nose.tools import raises
+import sys
 
 import UML
 
 from UML import createData
+from UML import train
+from UML import trainAndApply
 from UML import trainAndTest
 
 from UML.calculate import fractionIncorrect
@@ -258,3 +261,80 @@ def test_trainAndTestOnTrainingData_multiclassStrat_disallowed_multioutput():
 	metric = UML.calculate.meanFeaturewiseRootMeanSquareError
 
 	UML.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric, multiClassStrategy="OneVsOne", lamb=1)
+
+def test_frontend_CV_triggering():
+	#with small data set
+	variables = ["x1", "x2", "x3"]
+	data = [[1,0,0], [0,1,0], [0,0,1], [1,0,0], [0,1,0]]
+	labels = [[1], [2], [3], [1], [2]]
+	trainObj = createData('Matrix', data=data, featureNames=variables)
+	labelsObj = createData("Matrix", data=labels)
+
+	class CVWasCalledException(Exception):
+		pass
+
+	def cvBackgroundCheck():
+		raise CVWasCalledException()
+
+	temp = UML.helpers.crossValidateBackend
+	UML.helpers.crossValidateBackend = cvBackgroundCheck
+
+	# confirm that the calls are being made
+	try:
+		try:
+			train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+				performanceFunction=fractionIncorrect, k=(1,2))
+		except CVWasCalledException: pass
+
+		try:
+			trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+				performanceFunction=fractionIncorrect, testX=trainObj, k=(1,2))
+		except CVWasCalledException: pass
+
+		try:
+			trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+				testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
+				k=(1,2))
+		except CVWasCalledException: pass
+	except Exception:
+		einfo = sys.exc_info()
+		raise einfo[1], None, einfo[2]
+	finally:
+		UML.helpers.crossValidateBackend = temp
+
+	# demonstrate some succesful calls
+	tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+		performanceFunction=fractionIncorrect, k=(1,2))
+	assert hasattr(tl, 'apply')
+
+	result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+		testX=trainObj, performanceFunction=fractionIncorrect, k=(1,2))
+	assert isinstance(result, UML.data.Matrix)
+
+	error = trainAndTest('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+		testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
+		k=(1,2))
+	assert isinstance(error, float)
+
+def test_train_trainAndApply_perfFunc_reqForCV():
+	#with small data set
+	variables = ["x1", "x2", "x3"]
+	data = [[1,0,0], [0,1,0], [0,0,1], [1,0,0], [0,1,0]]
+	labels = [[1], [2], [3], [1], [2]]
+	trainObj = createData('Matrix', data=data, featureNames=variables)
+	labelsObj = createData("Matrix", data=labels)
+
+	# Default value of performanceFunction is None, which since we're doing
+	# CV should fail
+	try:
+		tl = train('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj, k=(1,2))
+		assert False
+	except ArgumentException:
+		pass
+
+	try:
+		result = trainAndApply('Custom.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+			testX=trainObj, k=(1,2))
+		assert False
+	except ArgumentException:
+		pass

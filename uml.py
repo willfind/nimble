@@ -670,7 +670,8 @@ def learnerType(learnerNames):
 	return resultsList
 
 
-def train(learnerName, trainX, trainY=None, arguments={},  multiClassStrategy='default', useLog=None, **kwarguments):
+def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments={},
+		scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
 	"""
 	Trains and returns the specified learner using the provided data. The return value is a
 	UniversalInterface.trainedLearner object.
@@ -685,9 +686,20 @@ def train(learnerName, trainX, trainY=None, arguments={},  multiClassStrategy='d
 	contains the labels themselves (as a Base object) or an index (numerical or string) 
 	that defines their locale in the trainX object
 
+	performanceFunction: If cross validation is triggered to select from the given
+	argument set, then this function will be used to generate a performance
+	score for the run. function is of the form: def func(knownValues, predictedValues).
+	Look in UML.calculate for pre-made options. Default is None, since if
+	there is no parameter selection to be done, it is not used.
+
 	arguments: dict containing the parameters to be passed to the learner, in the
 	form of a mapping between (string) parameter names, and values. Will be merged
 	with the contents of **kwarguments before being passed on.
+
+	scoreMode: In the case of a classifying learner, this specifies the type of output
+	wanted: 'label' if we class labels are desired, 'bestScore' if both the class
+	label and the score associated with that class are desired, or 'allScores' if
+	a matrix containing the scores for every class label are desired.
 
 	multiClassStrategy: may only be 'default' 'OneVsAll' or 'OneVsOne'
 	
@@ -702,7 +714,7 @@ def train(learnerName, trainX, trainY=None, arguments={},  multiClassStrategy='d
 	learner.
 
 	"""
-	(package, learnerName) = _unpackLearnerName(learnerName)
+	(package, trueLearnerName) = _unpackLearnerName(learnerName)
 	_validData(trainX, trainY, None, None, [False, False])
 	_validArguments(arguments)
 	_validArguments(kwarguments)
@@ -718,19 +730,48 @@ def train(learnerName, trainX, trainY=None, arguments={},  multiClassStrategy='d
 	else:
 		timer = None
 
+	# perform CV (if needed)
+	argCheck = ArgumentIterator(merged)
+	if argCheck.numPermutations != 1:
+		if performanceFunction is None:
+			msg = "Cross validation was triggered to select the best parameter "
+			msg += "set, yet no performanceFunction was specified. Either one "
+			msg += "must be specified (see UML.calculate for out-of-the-box "
+			msg += "options) or there must be no choices in the parameters."
+			raise ArgumentException(msg)
+
+		#if we are logging this run, we need to start the timer
+		if useLog:
+			timer = Stopwatch()
+			timer.start('crossValidateReturnBest')
+		else:
+			timer = None
+
+		#modify numFolds if needed
+		numFolds = trainX.pointCount if trainX.pointCount < 10 else 10
+		#sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
+		bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged, numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
+
+		if useLog:
+			timer.stop('crossValidateReturnBest')
+	else:
+		bestArgument = merged
+
 	interface = findBestInterface(package)
 
 	# TODO how do we do multiclassStrategy?
 
-	trainedLearner = interface.train(learnerName, trainX, trainY, merged, timer)
+	trainedLearner = interface.train(trueLearnerName, trainX, trainY, bestArgument, timer)
 
 	if useLog:
-		funcString = interface.getCanonicalName() + '.' + learnerName
-		UML.logger.active.logRun(trainX, trainY, None, None, funcString, None, None, None, timer, extraInfo=merged)
+		funcString = interface.getCanonicalName() + '.' + trueLearnerName
+		UML.logger.active.logRun(trainX, trainY, None, None, funcString, None, None, None, timer, extraInfo=bestArgument)
 
 	return trainedLearner
 
-def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, output=None, scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
+def trainAndApply(learnerName, trainX, trainY=None, testX=None,
+		performanceFunction=None, arguments={}, output=None, scoreMode='label',
+		multiClassStrategy='default', useLog=None, **kwarguments):
 	"""
 	Trains and returns the results of applying the learner to the test data (i.e.
 	performing prediction, transformation, etc. as appropriate to the learner).
@@ -748,6 +789,12 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 	testX: data set on which the trained learner will be applied (i.e. performing
 	prediction, transformation, etc. as appropriate to the learner). Must be
 	some form of UML data Base object. 
+
+	performanceFunction: If cross validation is triggered to select from the given
+	argument set, then this function will be used to generate a performance
+	score for the run. function is of the form: def func(knownValues, predictedValues).
+	Look in UML.calculate for pre-made options. Default is None, since if
+	there is no parameter selection to be done, it is not used.
 
 	arguments: dict containing the parameters to be passed to the learner, in the
 	form of a mapping between (string) parameter names, and values. Will be merged
@@ -798,29 +845,57 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments={}, ou
 	else:
 		timer = None
 
+	# perform CV (if needed)
+	argCheck = ArgumentIterator(merged)
+	if argCheck.numPermutations != 1:
+		if performanceFunction is None:
+			msg = "Cross validation was triggered to select the best parameter "
+			msg += "set, yet no performanceFunction was specified. Either one "
+			msg += "must be specified (see UML.calculate for out-of-the-box "
+			msg += "options) or there must be no choices in the parameters."
+			raise ArgumentException(msg)
+
+		#if we are logging this run, we need to start the timer
+		if useLog:
+			timer = Stopwatch()
+			timer.start('crossValidateReturnBest')
+		else:
+			timer = None
+
+		#modify numFolds if needed
+		numFolds = trainX.pointCount if trainX.pointCount < 10 else 10
+		#sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
+		bestArgument, bestScore = UML.crossValidateReturnBest(fullName, trainX, trainY, performanceFunction, merged, numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
+
+		if useLog:
+			timer.stop('crossValidateReturnBest')
+	else:
+		bestArgument = merged
+
 	interface = findBestInterface(package)
 
 	results = None
 	if multiClassStrategy != 'default':
-		trialResult = checkClassificationStrategy(interface, learnerName, merged)
+		trialResult = checkClassificationStrategy(interface, learnerName, bestArgument)
 		# We only use our own version of the strategy if the internal method is different than
 		# what we want.
 		if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
-			results = trainAndApplyOneVsAll(fullName, trainX, trainY, testX, arguments=merged, scoreMode=scoreMode, useLog=useLog, timer=timer)
+			results = trainAndApplyOneVsAll(fullName, trainX, trainY, testX, arguments=bestArgument, scoreMode=scoreMode, useLog=useLog, timer=timer)
 		if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
-			results = trainAndApplyOneVsOne(fullName, trainX, trainY, testX, arguments=merged, scoreMode=scoreMode, useLog=useLog, timer=timer)
+			results = trainAndApplyOneVsOne(fullName, trainX, trainY, testX, arguments=bestArgument, scoreMode=scoreMode, useLog=useLog, timer=timer)
 
 	if results is None:
-		results = interface.trainAndApply(learnerName, trainX, trainY, testX, merged, output, scoreMode, timer)
+		results = interface.trainAndApply(learnerName, trainX, trainY, testX, bestArgument, output, scoreMode, timer)
 
 	if useLog:
 		funcString = interface.getCanonicalName() + '.' + learnerName
-		UML.logger.active.logRun(trainX, trainY, testX, None, funcString, None, results, None, timer, extraInfo=merged)
+		UML.logger.active.logRun(trainX, trainY, testX, None, funcString, None, results, None, timer, extraInfo=bestArgument)
 
 	return results
 
 
-def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction, arguments={}, output=None, scoreMode='label', useLog=None, **kwarguments):
+def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
+		arguments={}, output=None, scoreMode='label', useLog=None, **kwarguments):
 	"""
 	For each permutation of the merge of 'arguments' and 'kwarguments' (more below),
 	trainAndTest uses cross validation to generate a performance score for the algorithm,
@@ -908,7 +983,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 		#modify numFolds if needed
 		numFolds = trainX.pointCount if trainX.pointCount < 10 else 10
 		#sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
-		bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged, numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
+		bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX,
+				trainY, performanceFunction, merged, numFolds=numFolds, 
+				scoreMode=scoreMode, useLog=useLog)
 	else:
 		bestArgument = merged
 
