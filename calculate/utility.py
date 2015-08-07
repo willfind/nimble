@@ -25,22 +25,11 @@ def detectBestResult(functionToCheck):
 
 	"""
 	(args, varargs, keywords, defaults) = inspect.getargspec(functionToCheck)
-	# indicates whether functionToCheck takes a 3rd param: negativeLabel
-	# wrapper function used to call functionToCheck by providing all of the
-	# parameters it might need for the 3 param case, even if functionToCheck
-	# is only takes knowns and predicted values.
-	wrapper = None
 
-	if len(args) == 2:
-		def twoParam(knowns, predicted, negLabel):
-			return functionToCheck(knowns, predicted)
-		wrapper = twoParam
-	elif len(args) == 3:
-		def threeParam(knowns, predicted, negLabel):
-			return functionToCheck(knowns, predicted, negLabel)
-		wrapper = threeParam
-	else:
-		raise ArgumentException("functionToCheck takes wrong number of parameters, unable to do detection")
+	if len(args) != 2:
+		msg = "functionToCheck takes wrong number of parameters, unable to do "
+		msg += "detection"
+		raise ArgumentException()
 
 	resultsByType = [None, None, None]
 	trialSize = 10
@@ -68,9 +57,8 @@ def detectBestResult(functionToCheck):
 				for i in xrange(confidenceTrials):
 					predicted = _generatePredicted(knowns, predictionType)
 					# range over possible negative label value
-					for negLabel in xrange(2):
-						best = _runTrialGivenParameters(wrapper, knowns.copy(), predicted.copy(), negLabel, predictionType)
-						bestResultList.append(best)
+					best = _runTrialGivenParameters(functionToCheck, knowns.copy(), predicted.copy(), predictionType)
+					bestResultList.append(best)
 
 			# check that all of values in bestResultList are equal.
 			firstNonNan = None
@@ -98,12 +86,12 @@ def detectBestResult(functionToCheck):
 	return best
 
 
-def _runTrialGivenParameters(functionWrapper, knowns, predicted, negativeLabel, predictionType):
+def _runTrialGivenParameters(toCheck, knowns, predicted, predictionType):
 	"""
 	
 
 	"""
-	allCorrectScore = functionWrapper(knowns, predicted, negativeLabel)
+	allCorrectScore = toCheck(knowns, predicted)
 	# this is going to hold the output of the function. Each value will
 	# correspond to a trial that contains incrementally less correct predicted values
 	scoreList = [allCorrectScore]
@@ -112,7 +100,7 @@ def _runTrialGivenParameters(functionWrapper, knowns, predicted, negativeLabel, 
 	# TODO randomize the ordering
 	for index in xrange(predicted.pointCount):
 		_makeIncorrect(predicted, predictionType, index)
-		scoreList.append(functionWrapper(knowns, predicted, negativeLabel))
+		scoreList.append(toCheck(knowns, predicted))
 
 	# defining our error message in case of unexpected scores
 	errorMsg = "functionToCheck produces return values that do not "
