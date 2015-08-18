@@ -13,6 +13,7 @@ import numpy
 import UML
 from UML.customLearners import CustomLearner
 from UML.helpers import generateClassificationData
+from UML.calculate import fractionIncorrect
 
 class LogisticRegressionWithSelection(CustomLearner):
 	learnerType = "classification"
@@ -110,8 +111,17 @@ def sanityCheck(trainX, totalScores):
 
 if __name__ == "__main__":
 
-	origFileName = sys.argv[1]
+	defaultFile = "/Users/spencer2/Dropbox/Spencer/Work/ClearerThinking.org/Gender continuum test/gender continuum train and test ready to predict.csv"
 	
+	if len(sys.argv) <= 1:
+		origFileName = defaultFile
+	
+	else:
+		rigFileName = sys.argv[1]
+	
+
+	desiredNonZeroCoefficients = 30
+		
 	# check to see if we've cleaned the data for extra commas
 	cleanedSuffix = " - clean.csv"
 	if origFileName[-len(cleanedSuffix):] != cleanedSuffix:
@@ -124,37 +134,94 @@ if __name__ == "__main__":
 	dataAll = UML.createData("List", openedFile, featureNames=0, fileType='csv',
 			ignoreNonNumericalFeatures=True)
 
-	# grab the features we want to be the training data
+	# grab the features we want to be in the training data
 	nameOfFirst = "I do not enjoy watching dance performances. (M)"
 	indexOfFirst = dataAll.getFeatureIndex(nameOfFirst)
-	trainX = dataAll.extractFeatures(start=indexOfFirst, end=None)
+
+	usedData = dataAll.extractFeatures(start=indexOfFirst, end=None)
+	usedData.appendFeatures(dataAll.copyFeatures("isMale"))
+	usedData = usedData.copyAs("Matrix")
+
+	#usedData.show("usedData")
+
+	print "Splitting data into training and testing..."
+	trainX, trainY, testX, testY = usedData.trainAndTestSets(testFraction=0.30, labels="isMale")
+
+	#trainX = dataAll.extractFeatures(start=indexOfFirst, end=None)
 	
 	# Check some of the expectations we had on the data to make sure
 	# we've extracted the right stuff
-	totalScores = dataAll.extractFeatures("totalScorePosOrNeg")
-	sanityCheck(trainX, totalScores)  # defined above __main__
+	#totalScores = dataAll.extractFeatures("totalScorePosOrNeg")
+	#sanityCheck(trainX, totalScores)  # defined above __main__
 
 	# convert for processing
-	trainX = trainX.copyAs("Matrix")
+	#trainX = trainX.copyAs("Matrix")
 
 	# grab the prediction variable
-	trainY = dataAll.extractFeatures("isMale")
+	#trainY = dataAll.extractFeatures("isMale")
 
 	UML.registerCustomLearner("custom", LogisticRegressionWithSelection)
-	name = "custom.LogisticRegressionWithSelection"
-	tl = UML.train(name, trainX, trainY, desiredNonZero=40)
+
+	print ""
+	print "Train points: " + str(trainX.pointCount) 
+	print "Test points: " + str(testX.pointCount) 
+	print""
+
+	#Cs = tuple([4**k for k in xrange(-8,8)])
+	#print "Learning..."
+	#print ""
+	#bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, C=0.3) #19.7% out of sample error
+	#bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=2, coef0=1, C=0.01) #19.2%
+	#bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1) 
+	#print "bestError out of sample: ", str(round(bestError*100,1)) + "%"
+
+	
+	predictionMode = ["set number of coefficients", "cross validation"][-1]
+	if predictionMode == "set number of coefficients":
+		name = "custom.LogisticRegressionWithSelection"
+		print "Finding exactly " + str(desiredNonZeroCoefficients) + " coefficients..."
+		trainedLearner = UML.train(name, trainX, trainY, desiredNonZero=desiredNonZeroCoefficients)
+	elif predictionMode == "cross validation":
+		#Cs = [4**k for k in xrange(-8,8)]
+		#print "Cross validating..."
+		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY, C=10, penalty="l1")
+		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY, C=5, penalty="l2")
+		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY)
+		trainedLearner = UML.train("scikitlearn.SVC", trainX, trainY, C=0.3)
+	else: raise Exception("Bad prediction mode!")
+	
 
 	# grab the feature names associated with the non-zero coefficients
-	coefs = tl.getAttributes()["coef_"]
+	
+	"""
+	coefs = trainedLearner.getAttributes()["coef_"]
 	coefs = coefs.flatten()
-	choosen = []
+	chosen = []
+	chosenCoefs = []
 	for i in xrange(len(coefs)):
 		value = coefs[i]
 		if value != 0:
-			choosen.append(trainX.getFeatureName(i))
+			chosen.append(trainX.getFeatureName(i))
+			chosenCoefs.append(coefs[i])
 
-	# display those 40 questions which were the most useful
-	for question in choosen:
-		print question
+	# display those questions which were the most useful
+	print "\n"
+	for question, coef in zip(chosen, chosenCoefs):
+		print str(round(coef,2)).ljust(8) + question.strip()
+
+	"""
+
+	#Now measure the accuracy of the model
+	print "\n\n"
+	errorOutSample = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
+	print "Out of sample error rate: " + str(round(errorOutSample*100,1)) + "%"
+	errorInSample = trainedLearner.test(trainX, trainY, performanceFunction=fractionIncorrect)
+	print "In sample error rate: " + str(round(errorInSample*100,1)) + "%"
+	print ""
+
 
 	exit(0)
+
+
+
+
