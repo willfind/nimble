@@ -268,10 +268,10 @@ def createMRLineElement(key, value, addComma=True):
 		value are not included if value is a number.  The trailing comma is added by
 		default but will be ommitted if addComma is False.
 	"""
-	if isinstance(value, (bool, int, long, float, list)):
-		processedValue = str(value)
-	else:
+	if isinstance(value, basestring):
 		processedValue = "\""+sanitizeStringForLog(value)+"\""
+	else:
+		processedValue = str(value)
 	result = key+":"+processedValue
 	if addComma:
 		result += ","

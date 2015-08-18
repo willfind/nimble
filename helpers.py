@@ -1020,9 +1020,9 @@ def _diffLessThan(allData, orderedFeature, startPoint, endPoint, delta):
 
 
 
-#def evaluate(metric, knownData, knownLabels, predictedLabels, negativeLabel=None)
+#def evaluate(metric, knownData, knownLabels, predictedLabels)
 
-def computeMetrics(dependentVar, knownData, predictedData, performanceFunction, negativeLabel=None):
+def computeMetrics(dependentVar, knownData, predictedData, performanceFunction):
 	"""
 		Using the provided metric, compare the known data or labels to the
 		predicted data or labels and calculate the performance of the learner
@@ -1048,10 +1048,6 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction, 
 		case, and the third arg must take the value of what is to be considered
 		the negative label in this binary classification problem. See UML.calculate
 		for a number of built in examples.
-
-		negativeLabel: Label of the 'negative' class in the testing set. This
-		parameter is only relevant for binary classification problems; and only
-		needed for some error metrics.
 
 		Returns: a single numeric value measuring the performance of the learner
 		that produced the given data.
@@ -1084,19 +1080,16 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction, 
 	if isinstance(performanceFunction, list):
 		raise ArgumentException("performanceFunction")
 
-	#some functions need negativeLabel as an argument.
 	if len(args) == 2:
 		#the metric function only takes two arguments: we assume they
 		#are the known class labels and the predicted class labels
 		result = performanceFunction(knownLabels, predictedData)
-	elif len(args) == 3:
-		#the metric function takes three arguments:  known class labels,
-		#features, and predicted class labels. add features to the parameter hash
-		#divide X into labels and features
-		#TODO correctly separate known labels and features in all cases
-		result = performanceFunction(knownLabels, predictedData, negativeLabel)
 	else:
-		raise Exception("One of the functions passed to computeMetrics has an invalid signature: "+func.__name__)
+		msg = "One of the functions (" + + func.__name__ + ") passed to "
+		msg += "computeMetrics has an invalid signature, two arguments "
+		msg += "are required, yet this had " + str(len(args))
+
+		raise ArgumentException(msg)
 	
 	return result
 
@@ -1187,7 +1180,7 @@ def generateAllPairs(items):
 
 	return pairs
 
-def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, folds=10, scoreMode='label', negativeLabel=None, useLog=None, **kwarguments):
+def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, folds=10, scoreMode='label', useLog=None, **kwarguments):
 	"""
 	Same signature as UML.crossValidate, except that the argument 'numFolds' is replaced with 'folds'
 	which is allowed to be either an int indicating the number of folds to use, or a foldIterator object
@@ -1230,7 +1223,9 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 	# setup container for outputs, a tuple entry for each arg set, containing
 	# a list for the results of those args on each fold
 	numArgSets = argumentCombinationIterator.numPermutations
-	performanceOfEachCombination = [[None, []]] * numArgSets
+	performanceOfEachCombination = []
+	for i in xrange(numArgSets):
+		performanceOfEachCombination.append([None, []])
 	
 	# Folding should be the same for each argset (and is expensive) so
 	# iterate over folds first
@@ -1243,11 +1238,14 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 			#run algorithm on the folds' training and testing sets
 			curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=curArgumentCombination, scoreMode=scoreMode, useLog=deepLog)
 			#calculate error of prediction, according to performanceFunction
-			curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction, negativeLabel)
+			curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction)
 
 			performanceOfEachCombination[argSetIndex][0] = curArgumentCombination
 			performanceOfEachCombination[argSetIndex][1].append(curPerformance)
 			argSetIndex += 1
+
+		# setup for next iteration
+		argumentCombinationIterator.reset()
 
 	# now, we run through the results and calculate the average for each set
 	# over all folds
@@ -1872,7 +1870,7 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
 			raise ArgumentException(msg)
 
 
-def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, useLog=None, **kwarguments):
+def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None, **kwarguments):
 	"""
 	Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
 	testing, and computing performance measures to be handled.  Takes in a learner's name
@@ -1901,10 +1899,6 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 		performanceFunction: single or iterable collection of functions that can take two collections
 		of corresponding labels - one of true labels, one of predicted labels - and return a
 		performance metric.
-
-		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
-		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
-		applies to data sets with 2 class labels.
 
 		useLog - local control for whether to send results/timing to the logger.
 		If None (default), use the value as specified in the "logger"
@@ -1938,7 +1932,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
 	predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
-	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
+	results = computeMetrics(testY, None, predictions, performanceFunction)
 
 	# Send this run to the log, if desired
 	if useLog:
@@ -2226,7 +2220,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
 
-def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, negativeLabel=None, useLog=None, **kwarguments):
+def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None, **kwarguments):
 	"""
 	Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
 	there are multiple (>2) class labels, and uses the one vs. all method of splitting the 
@@ -2253,10 +2247,6 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 		performanceFunction: single or iterable collection of functions that can take two collections
 		of corresponding labels - one of true labels, one of predicted labels - and return a
 		performance metric.
-
-		negativeLabel: Argument required if performanceFunction contains proportionPercentPositive90
-		or proportionPercentPositive50.  Identifies the 'negative' label in the data set.  Only
-		applies to data sets with 2 class labels.
 
 		useLog - local control for whether to send results/timing to the logger.
 		If None (default), use the value as specified in the "logger"
@@ -2286,7 +2276,7 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
 	predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog, timer=timer)
 
 	#now we need to compute performance metric(s) for the set of winning predictions
-	results = computeMetrics(testY, None, predictions, performanceFunction, negativeLabel)
+	results = computeMetrics(testY, None, predictions, performanceFunction)
 
 	# Send this run to the log, if desired
 	if useLog:

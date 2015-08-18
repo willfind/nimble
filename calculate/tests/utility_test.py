@@ -4,7 +4,6 @@ from nose.tools import *
 from UML.calculate import cosineSimilarity
 from UML.calculate import detectBestResult
 from UML.calculate import fractionIncorrect
-from UML.calculate import fractionIncorrectBottom10
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
 
@@ -30,7 +29,3 @@ def testDectection_fractionIncorrect():
 def testDetection_cosineSimilarity():
 	result = detectBestResult(cosineSimilarity)
 	assert result == 'max'
-
-def testDectection_fractionIncorrectBottom10():
-	result = detectBestResult(fractionIncorrectBottom10)
-	assert result == 'min'

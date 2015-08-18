@@ -109,12 +109,12 @@ class UniversalInterface(object):
 		return ret
 
 	@captureOutput
-	def trainAndTest(self, learnerName, trainX, trainY, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', negativeLabel=None, timer=None, **kwarguments):
+	def trainAndTest(self, learnerName, trainX, trainY, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', timer=None, **kwarguments):
 		learner = self.train(learnerName, trainX, trainY, arguments, timer)
 		if timer is not None:
 			timer.start('test')
 		# call TrainedLearner's test method (which is already wrapped to perform transformation)
-		ret = learner.test(testX, testY, performanceFunction, {}, output, scoreMode, negativeLabel)
+		ret = learner.test(testX, testY, performanceFunction, {}, output, scoreMode)
 		if timer is not None:
 			timer.stop('test')
 
@@ -603,7 +603,7 @@ class UniversalInterface(object):
 				setattr(self, methodName, wrapped)
 
 		@captureOutput
-		def test(self, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', negativeLabel=None, **kwarguments):
+		def test(self, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', **kwarguments):
 			"""
 			Returns the evaluation of predictions of testX using the argument
 			performanceFunction to do the evalutation. Equivalent to having called
@@ -615,7 +615,7 @@ class UniversalInterface(object):
 			UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
 			pred = self.apply(testX, arguments, output, scoreMode, **kwarguments)
-			performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction, negativeLabel)
+			performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction)
 
 			return performance
 

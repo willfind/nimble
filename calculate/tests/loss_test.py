@@ -8,25 +8,7 @@ from UML import createData
 from UML.exceptions import ArgumentException
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
-from UML.calculate import fractionIncorrectBottom10
 from UML.calculate import meanFeaturewiseRootMeanSquareError
-
-def testfractionIncorrectBottom10SanityCheck():
-	"""An all correct and all incorrec check on fractionIncorrectBottom10 """
-	knownsData = [[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]
-	correctData = [[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1]]
-	wrongData = [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]]
-
-	knowns = createData('List', data=knownsData)
-	correct = createData('List', data=correctData, featureNames=['0','1'])
-	wrong = createData('List', data=wrongData, featureNames=['0','1'])
-
-	correctScore = fractionIncorrectBottom10(knowns, correct, negativeLabel=0)
-	wrongScore = fractionIncorrectBottom10(knowns, wrong, negativeLabel=0)
-
-	assert correctScore == 0
-	assert wrongScore == 1
-
 
 #################
 # _computeError #

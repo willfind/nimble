@@ -475,25 +475,6 @@ def test_computeMetrics_1d_labelsInData():
 	assert result == 0.0
 
 
-# single val labels, three arg metric
-def test_computeMetrics_1d_3arg():
-	knownsData = [[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]
-	correctData = [[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1]]
-	wrongData = [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0]]
-
-	knowns = createData('List', data=knownsData)
-	correct = createData('List', data=correctData, featureNames=['0','1'])
-	wrong = createData('List', data=wrongData, featureNames=['0','1'])
-
-	metric = UML.calculate.fractionIncorrectBottom10
-
-	correctScore = computeMetrics(knowns, None, correct, metric, negativeLabel=0)
-	wrongScore = computeMetrics(knowns, None, wrong, metric, negativeLabel=0)
-
-	assert correctScore == 0
-	assert wrongScore == 1
-
-
 # multi val, two arg metric
 def test_computeMetrics_2d_2arg():
 	knownLabels = numpy.array([[1.0, 1.0], [2.0, 2.0],[3.0, 3.0]])

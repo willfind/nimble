@@ -4,6 +4,7 @@
 #crossValidateReturnAll
 #trainAndTest
 import sys
+import copy
 sys.path.append('../..')
 
 from UML.helpers import ArgumentIterator
@@ -76,3 +77,23 @@ def test_ArgumentIterator_stringsAndTuples():
 		assert curr['b'] in (1,2,5)
 
 		assert len(curr.keys()) == 2
+
+def test_ArgumentIterator_seperateResults():
+	arguments = {'a':'hello', 'b':(1,2,5)}
+
+	argIter = ArgumentIterator(arguments)
+
+	rets = []
+	for curr in argIter:
+		rets.append(curr)
+
+	retsCopy = copy.deepcopy(rets)
+
+	for i in xrange(len(rets)):
+		assert rets[i] == retsCopy[i]
+
+	for i in xrange(len(rets)):
+		rets[i]['a'] = i
+		for j in xrange(i+1, len(rets)):
+			assert rets[i]['a'] != rets[j]['a']
+			assert rets[j] == retsCopy[j]
