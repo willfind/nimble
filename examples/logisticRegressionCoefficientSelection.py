@@ -109,9 +109,10 @@ def sanityCheck(trainX, totalScores):
 	assert summed == totalScores
 
 
+
 if __name__ == "__main__":
 
-	defaultFile = "/Users/spencer2/Dropbox/Spencer/Work/ClearerThinking.org/Gender continuum test/gender continuum train and test ready to predict.csv"
+	defaultFile = "/Users/spencer2/Dropbox/Spencer/Work/ClearerThinking.org/Programs and modules/Gender continuum test/gender continuum train and test ready to predict.csv"
 	
 	if len(sys.argv) <= 1:
 		origFileName = defaultFile
@@ -120,7 +121,7 @@ if __name__ == "__main__":
 		rigFileName = sys.argv[1]
 	
 
-	desiredNonZeroCoefficients = 30
+	desiredNonZeroCoefficients = 84 #50
 		
 	# check to see if we've cleaned the data for extra commas
 	cleanedSuffix = " - clean.csv"
@@ -176,7 +177,7 @@ if __name__ == "__main__":
 	#print "bestError out of sample: ", str(round(bestError*100,1)) + "%"
 
 	
-	predictionMode = ["set number of coefficients", "cross validation"][-1]
+	predictionMode = ["set number of coefficients", "cross validation"][0]
 	if predictionMode == "set number of coefficients":
 		name = "custom.LogisticRegressionWithSelection"
 		print "Finding exactly " + str(desiredNonZeroCoefficients) + " coefficients..."
@@ -193,8 +194,9 @@ if __name__ == "__main__":
 
 	# grab the feature names associated with the non-zero coefficients
 	
-	"""
+	#print "trainedLearner.getAttributes()", trainedLearner.getAttributes()
 	coefs = trainedLearner.getAttributes()["coef_"]
+	intercept = trainedLearner.getAttributes()["intercept_"]
 	coefs = coefs.flatten()
 	chosen = []
 	chosenCoefs = []
@@ -206,10 +208,12 @@ if __name__ == "__main__":
 
 	# display those questions which were the most useful
 	print "\n"
+	i = 1
 	for question, coef in zip(chosen, chosenCoefs):
-		print str(round(coef,2)).ljust(8) + question.strip()
+		print str(i).ljust(3) + "    " + str(round(coef,2)).ljust(8) + question.strip()
+		i = i + 1
 
-	"""
+	
 
 	#Now measure the accuracy of the model
 	print "\n\n"
