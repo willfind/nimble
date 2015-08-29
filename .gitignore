@@ -2,5 +2,5 @@
 *.pyc
 .DS_Store
 *logs-UML
-
-*logs-UML
+configuration.ini
+interfaces/metadata
