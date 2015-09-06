@@ -7,6 +7,7 @@ the distraction of helpers
 
 """
 
+import csv
 import operator
 import inspect
 import numpy
@@ -18,6 +19,7 @@ import copy
 import importlib
 import StringIO
 import sys
+import itertools
 
 import UML
 
@@ -239,7 +241,8 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 	return ret
 
-def createDataFromFile(returnType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures):
+def createDataFromFile(returnType, data, pointNames, featureNames, fileType, name,
+			ignoreNonNumericalFeatures):
 	"""
 	Helper for createData which deals with the case of loading data
 	from a file. Returns a triple containing the raw data, pointNames,
@@ -326,81 +329,13 @@ def createDataFromFile(returnType, data, pointNames, featureNames, fileType, nam
 	return initDataObject(returnType, retData, pointNames, featureNames, name, path)
 
 def _loadcsvForList(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
-	(data, pointNames, featureNames) = _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
+	(data, pointNames, featureNames) = _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
 
-	ret = data.tolist()
-	del data
-
-	def numeric(val):
-		ret = val
-		try:
-			ret = int(val)
-		except ValueError:
-			ret = float(val)
-		# this will return an int or float if either of the above two are successful
-		finally:
-			return ret
-
-	def onEach(row):
-		return map(numeric, row)
-
-	ret = map(onEach, ret)
-
-	return ret, pointNames, featureNames
+	return data, pointNames, featureNames
 
 
 def _loadcsvForMatrix(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
-	(data, pointNames, featureNames) = _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
-	ret = numpy.matrix(data, dtype=float)
-	del data
-
-	return (ret, pointNames, featureNames)
-
-def _loadCSVusingNumpy(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
-	startPosition = openFile.tell()
-	(pointNames, featureNames) = _checkCSV_for_Names(openFile, pointNames, featureNames)
-
-	# those characters specifying "array protocol" type strings of numeric data
-	# in numpy
-	numericShorthand = ['i', 'u', 'f', 'c']
-	usecols = None
-	if ignoreNonNumericalFeatures:
-		# dtype=None so that if we have non-homogeneous data, it will be loaded
-		# as a structured array, so we can check the types of each column. 
-		data = numpy.genfromtxt(openFile, delimiter=',', dtype=None, comments=None)
-		openFile.seek(startPosition)
-
-		if len(data.shape) > 1:
-			pointLen = len(data[0])
-		elif data.dtype.kind == 'V':
-			pointLen = len(data.dtype.names)
-		else:
-			pointLen = len(data)
-
-		blacklist = []
-		if data.dtype.kind == 'V':
-			for i in xrange(len(data.dtype)):
-				if not data.dtype[i].kind in numericShorthand and i != pointNames:
-					blacklist.append(i)
-
-		# turn the blacklist into a whitelist
-		usecols = []
-		for i in xrange(pointLen):
-			if i not in blacklist:
-				usecols.append(i)
-
-		del data
-
-	# should now only contain numeric data and the names
-	if usecols is not None:
-		data = numpy.genfromtxt(openFile, delimiter=',', dtype=str, usecols=usecols, comments=None)
-	else:
-		data = numpy.genfromtxt(openFile, delimiter=',', dtype=str, comments=None)
-
-	# extract names if needed
-	(data, pointNames, featureNames) = extractNamesFromNumpy(data, pointNames, featureNames)
-
-	data = numpy.atleast_2d(data)
+	(data, pointNames, featureNames) = _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
 
 	return (data, pointNames, featureNames)
 
@@ -421,6 +356,7 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
 		retFNames = list(retFNames)
 
 	return (data, retPNames, retFNames)
+
 
 def _loadmtxForMatrix(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
 	return _loadmtxForAuto(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
@@ -594,6 +530,15 @@ def _defaultParser(line):
 	return ret
 
 def _checkCSV_for_Names(openFile, pointNames, featureNames):
+	"""
+	Will check for triggers to automatically determine the positions of
+	the point or feature names if they have not been specified by the
+	user. For feature names the trigger is two empty lines prior to
+	the first line of data. For point names the trigger is the first
+	line of data contains the feature names, and the first value of that
+	line is 'point_names'
+
+	"""
 	startPosition = openFile.tell()
 
 	# walk past all the comments
@@ -601,8 +546,8 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
 	while currLine.startswith('#'):
 		currLine = openFile.readline()
 
-	# check for two empty lines in a row to denote that first data line
-	# contains feature names
+	# check for two empty lines in a row to denote that first
+	# data line contains feature names
 	if currLine.strip() == '':
 		currLine = openFile.readline()
 		if currLine.strip() == '':
@@ -625,34 +570,209 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
 
 	return (pointNames, featureNames)
 
+def filterCSVRow(row):
+	if len(row) == 0:
+		return False
+	if row[0] == '#' or row[0] == '\n':
+		return False
+	return True
 
-#def _loadcsvForList(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
-def tempIgnore(openFile, pointNames, featureNames):
+
+def _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
+
 	(pointNames, featureNames) = _checkCSV_for_Names(openFile, pointNames, featureNames)
 
-	startPosition = openFile.tell()
+	# TODO Try to determine formating
 
-	#list of datapoints in the file, where each data point is a list
 	data = []
-	for currLine in openFile:
-		currLine = currLine.rstrip()
-		#ignore empty lines and comment lines
-		if len(currLine) == 0 or currLine[0] == '#':
-			continue
 
-		data.append(_defaultParser(currLine))
-
-	openFile.seek(startPosition)
-
-	retPNames = None
+	extractPNames = isinstance(pointNames, int)
+	extractFNames = isinstance(featureNames, int)
+	retPNames = [] if extractPNames else None
 	retFNames = None
-	if isinstance(pointNames, int):
+
+	# This is a record of the discovery of features to remove. It maps
+	# the index of a point in the data to the features discovered to be
+	# undesirable at that point. Thus, after all of the file has been read
+	# into memory, this record can be used to remove those features from
+	# the points prior to their discovery.
+	removeRecord = {}
+
+	# A set containing the indices of all features that are being removed
+	# from the data.
+	featsToRemoveSet = set([])
+
+	# remake the file iterator to ignore some lines according to the
+	# function named filterCSVRow
+	filtered = itertools.ifilter(filterCSVRow, openFile)
+	# send that line iterator to the csv reader
+	lineReader = csv.reader(filtered)
+
+	# incremented at beginning of loop, so starts negative.
+	# PointIndex is the index of the list that matches this row in the returned
+	# list of lists
+	pointIndex = -1
+	# rowIndex is the index of this row as counted relative to those returned
+	# by the lineReader
+	rowIndex = -1
+	# the csv reader gives a list of string values for each row
+	for row in lineReader:
+		pointIndex += 1
+		rowIndex += 1
+
+		# remove pointNames and featureNames if needed
+		toAdd = row
+		if extractPNames:
+			toAdd = row[:pointNames]
+			if pointNames != len(row) - 1:
+				indexAfter = -(len(row)-(pointNames + 1))
+				toAdd += row[indexAfter:]
+
+			# only add it if isn't in the name intersection
+			if extractFNames and featureNames != rowIndex:
+				retPNames.append(row[pointNames])
+
+		if extractFNames and featureNames == rowIndex:
+			retFNames = toAdd
+			# if we use this row as the feature names, then the next
+			# row we encounter should have an ID one less than the
+			# number of rows read from the file at that point.
+			pointIndex -= 1
+		# we only do this if this row is destined for the data, not the
+		# feature names
+		else:
+			# process the remaining data
+			toAdd = convertAndFilterRow(toAdd, pointIndex, removeRecord,
+				featsToRemoveSet, ignoreNonNumericalFeatures)
+			data.append(toAdd)
+
+	# the List form of featsToRemoveSet
+	featsToRemoveList = list(featsToRemoveSet)
+
+	# Since the convertAndFilterRow helper only removes unwanted features
+	# after they've been discovered, we need to remove the from the earlier
+	# part of the data after it has all been read into memory
+	filterRemovalCleanup(data, removeRecord, featsToRemoveList)
+
+	# this information might have been generated, but only if we didn't
+	# actually get the names, so pass it along
+	if not extractPNames:
 		retPNames = pointNames
-	if isinstance(featureNames, int):
+	if not extractFNames:
 		retFNames = featureNames
+	# adjust WRT removed columns
+	else:
+		copyIndex = 0
+		# ASSUMPTION: featsToRemoveList is a sorted list
+		removeListIndex = 0
+		for i in xrange(len(retFNames)):
+			# if it is a feature that has been removed from the data,
+			# we skip over and don't copy it.
+			if removeListIndex < len(featsToRemoveList) and i == featsToRemoveList[removeListIndex]:
+				removeListIndex += 1
+			else:
+				retFNames[copyIndex] = retFNames[i]
+				copyIndex += 1
+		retFNames = retFNames[:copyIndex]
 
 	return (data, retPNames, retFNames)
 
+def filterRemovalCleanup(data, record, fullRemoveList):
+	"""
+	Adjust the given data so that the features to remove as contained in the
+	dict record are appropriately removed. Since removal is done only after
+	first sighting of an unwanted value, then the rows prior to the first
+	sighting still have that feature. Therefore, this function iterates the
+	rows in the data, removing features until the point where they were
+	discovered.
+
+	"""
+	# remaining features to be removed, indexed relative to all possible
+	# features in the csv file
+	absRemoveList = fullRemoveList
+	absRemoveList.sort()
+	# remaining features to be removed, reindexed given the knowledge of
+	# which points have already been removed
+	relRemoveList = copy.copy(absRemoveList)
+
+	for rowIndex in xrange(len(data)):
+		# check if some feature was added at this row, and if so, delete
+		# those indices from the removalList, adjusting feature IDs to be
+		# relative the new length as you go
+		if rowIndex in record:
+			# ASSUMPTION: the lists of added indices in the record are
+			# sorted
+			addedIndex = 0  # index into the list held in record[rowIndex]
+			shift = 0  # the amount we have to shift each index downward
+			copyIndex = 0
+			for i in xrange(len(absRemoveList)):
+				if addedIndex < len(record[rowIndex]) and absRemoveList[i] == record[rowIndex][addedIndex]:
+					shift += 1
+					addedIndex += 1
+				else:
+					absRemoveList[copyIndex] = absRemoveList[i]
+					relRemoveList[copyIndex] = relRemoveList[i] - shift
+					copyIndex += 1
+			absRemoveList = absRemoveList[:copyIndex]
+			relRemoveList = relRemoveList[:copyIndex]
+			
+		# pop the desired indices, starting with the ones at the end of
+		# the list and working backwards
+		for i in xrange(len(relRemoveList)):
+			removalIndex = relRemoveList[-(i+1)]
+			data[rowIndex].pop(removalIndex)
+
+
+
+def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
+		ignoreNonNumericalFeatures):
+	"""
+	Process a row as read by a python csv reader such that the values
+	are converted to numeric types if possible, and the unwanted features
+	are filtered (with the appropriate book keeping operations performed)
+
+	row - a python list of string values
+
+	pointIndex - the index of this row, as counted by the number of rows
+	returned by the csv reader, excluding a row if it was used as the
+	pointNames. Equivalent to the index of the point matching this row
+	in the returned data
+
+	record - a dict mapping row indices to those features discovered to be
+	undesirable at that row index
+
+	toRemoveSet - a set containing all of the features to ignore, that
+	are known up to this row. Any features we discover we want to ignore
+	at this row are added to this set in this function.
+
+	ignoreNonNumericalFeatures - flag indicating whether features containing
+	non numerical values will be removed from the data
+
+	"""
+	# We use copying of values and then returning the appropriate range
+	# to simulate removal of unwanted features
+	copyIndex = 0
+	for i in xrange(len(row)):
+		value = row[i]
+		processed = _intFloatOrString(value)
+
+		# A known feature to ignore
+		if i in toRemoveSet:
+			pass
+		# A new feature to ignore, have to do book keeping
+		elif isinstance(processed, basestring) and ignoreNonNumericalFeatures:
+			if pointIndex in record:
+				record[pointIndex].append(i)
+			else:
+				record[pointIndex] = [i]
+
+			toRemoveSet.add(i)
+		else:
+			row[copyIndex] = processed
+			copyIndex += 1
+
+	row = row[:copyIndex]
+	return row
 
 def autoRegisterFromSettings():
 	"""Helper which looks at the learners listed in UML.settings under

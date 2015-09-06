@@ -588,9 +588,9 @@ def test_createData_MTXCoo_passedOpen():
 
 
 
-###########################
+###################################
 # ignoreNonNumericalFeatures flag #
-###########################
+###################################
 
 
 def test_createData_ignoreNonNumericalFeaturesCSV():
@@ -611,6 +611,48 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
 				fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
 				assert fromCSV.featureCount == 4
 
+def test_createData_ignoreNonNumerical_removalCleanup_hard():
+	for t in returnTypes:
+		fromList = UML.createData(returnType=t, data=[[1,3], [5,7],[11,12],[13,14]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,3.0,4.0,1\n")
+			tmpCSV.write("5,six,7,8,1\n")
+			tmpCSV.write("11,6,12,eight,1.0\n")
+			tmpCSV.write("13,one,14,9,who?\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+			if t == 'List':
+				fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+				assert fromCSV.featureCount == 5
+
+def test_createData_ignoreNonNumerical_removalCleanup_easy():
+	for t in returnTypes:
+		fromList = UML.createData(returnType=t, data=[[1,3], [5,7],[11,12],[13,14]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,two,3.0,four,one\n")
+			tmpCSV.write("5,6,7,8,1\n")
+			tmpCSV.write("11,6,12,8,1.0\n")
+			tmpCSV.write("13,1,14,9,2\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+			if t == 'List':
+				fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+				assert fromCSV.featureCount == 5
+
+
+
 def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
 	for t in returnTypes:
 		fromList = UML.createData(returnType=t, data=[[1,2,3,4], [5,6,7,8]])
@@ -628,6 +670,99 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
 			if t == 'List':
 				fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
 				assert fromCSV.featureCount == 4
+
+
+def test_ignoreNonNumericalFeatures_featureNamesDontTrigger():
+	for t in returnTypes:
+		fnames = ['1','2','3','four']
+		fromList = UML.createData(returnType=t, featureNames=fnames, data=[[5,6,7,8]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,3,four\n")
+			tmpCSV.write("5,6,7,8\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=0, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+
+def test_ignoreNonNumericalFeatures_featureNamesAdjusted():
+	for t in returnTypes:
+		fNames = ["1", "2", "3"]
+		data = [[1,2,3], [5,6,7]]
+		fromList = UML.createData(returnType=t, featureNames=fNames, data=data)
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,3,4\n")
+			tmpCSV.write("1,2,3,four\n")
+			tmpCSV.write("5,6,7,H8\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=0, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+
+
+####################################################
+# Difficult CSV Formatting: whitespace and quoting #
+####################################################
+
+def test_formatting_simpleQuotedValues():
+	for t in returnTypes:
+		fromList = UML.createData(returnType=t, data=[[1,2,3,4], [5,6,7,8]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,\"2\",\"3\",4\n")
+			tmpCSV.write("5,\"6\",\"7\",8\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+
+			assert fromList == fromCSV
+
+def test_formatting_specialCharsInQuotes():
+	for t in returnTypes:
+		fNames = ["1,ONE", "2;TWO", "3\t'EE'"]
+		data = [[1,2,3], [5,6,7]]
+		dataAll = [[1,2,3,4], [5,6,7,8]]
+		fromList = UML.createData(returnType=t, featureNames=fNames[:3], data=data)
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("\"1,ONE\",\"2;TWO\",\"3\t'EE'\",\"4f\"\n")
+			tmpCSV.write("1,2,3,four\n")
+			tmpCSV.write("5,6,7,H8\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=0, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+
+def test_formatting_emptyAndCommentLines():
+	for t in returnTypes:
+		data = [[1,2,3,4],[5,6,7,8]]
+		fromList = UML.createData(returnType=t, data=data)
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("#1,2,3,4\n")
+			tmpCSV.write("1,2,3,4\n")
+			tmpCSV.write("#second line\n")
+			tmpCSV.write("\n")
+			tmpCSV.write("5,6,7,8\n")
+			tmpCSV.write("\n")
+			tmpCSV.write("#END\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+
+			assert fromList == fromCSV
 
 
 # tests for combination of one name set being specified and one set being
