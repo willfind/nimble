@@ -23,7 +23,7 @@ def rSquared(knownValues, predictedValues):
 
 
 def getBestFeaturesAndAccuracies(data, finalFeaturesTokeep, fractionOfDataForTesting, featuresToPredict, predictionAlgorithms, functionsToExcludePoints):
-	
+	pass
 
 if __name__ == "__main__":
 	#fileName = "spencerTest.csv" 
