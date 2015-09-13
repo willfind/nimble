@@ -705,6 +705,22 @@ def test_ignoreNonNumericalFeatures_featureNamesAdjusted():
 
 			assert fromList == fromCSV
 
+def test_createData_ignoreNonNumericalFeatures_allRemoved():
+	for t in returnTypes:
+		pNames = ['single', 'dubs', 'trips']
+		fromList = UML.createData(returnType=t, pointNames=pNames, data=[[],[],[]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write(",ones,twos,threes\n")
+			tmpCSV.write("single,1A,2A,3A\n")
+			tmpCSV.write("dubs,11,22A,33\n")
+			tmpCSV.write("trips,111,222,333\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, pointNames=0, featureNames=0, ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
 
 
 ####################################################
