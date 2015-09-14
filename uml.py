@@ -350,7 +350,8 @@ def listUMLFunctions():
 
 
 def createData(returnType, data, pointNames=None, featureNames=None, fileType=None,
-				name=None, ignoreNonNumericalFeatures=False, useLog=None):
+			name=None, selectPoints='all', selectFeatures='all',
+			ignoreNonNumericalFeatures=False, useLog=None):
 	"""Function to instantiate one of the UML data container types.
 
 	returnType: string (or None) indicating which kind of UML data type you want
@@ -395,13 +396,40 @@ def createData(returnType, data, pointNames=None, featureNames=None, fileType=No
 	name: When not None, this value is set as the name attribute of the
 	returned object
 
+	selectPoints: Allows the user to specify a selection of points to be the
+	only ones included in the returned object. By default, the value 'all'
+	indicates that all possible points in the raw data will be included.
+	Alternatively, the user may provide a list containing either names or
+	indices (or a mix) of those points they want to be selected from the
+	raw data. In the case of reading data from a file, the selection will
+	be done at read time, thus limiting the amount of data read into memory.
+
+	selectFeatures: Allows the user to specify a selection of features to
+	be the only ones included in the returned object. By default, the value
+	'all' indicates that all possible features in the raw data will be
+	included. Alternatively, the user may provide a list containing either
+	names or indices (or a mix) of those features they want to be selected
+	from the raw data. In the case of reading data from a file, the selection
+	will be done at read time, thus limiting the amount of data read into
+	memory. Names and indices are defined with respect to the data regardless
+	of filtering by the ignoreNonNumericalFeatures flag; just because a feature
+	is removed, the indices of subsequent features will not be shifted.
+	The ignoreNonNumericalFeatures flag is only consdered after selection: if
+	a selected feature has non-numerical values and ignoreNonNumericalFeatures
+	is True valued, then that feature will NOT be included in the output.
+	Similarly, if a feature has only numerical values in points that were
+	selected, then even if there are non-numerical values in the points that
+	were not selected, then that feature will be included
+
 	ignoreNonNumericalFeatures: True or False (default False) value indicating
 	whether, when loading from a file, features containing non numercal data
 	shouldn't be loaded into the final object. For example, you may be loading
 	a file which has a column of strings; setting this flag to true will allow
 	you to load that file into a Matrix object (which may contain floats only).
 	Currently only has an effect on csv files, as the matrix market format
-	does not support non numerical values.
+	does not support non numerical values. Also, if there is point or feature
+	selection occurring, then only those values within selected points and
+	features are considered when determining whether to apply this operation.
 
 	useLog: True, False, or None (default) valued flag indicating whether this
 	call should be logged by the UML logger. If None, the configurable	global
@@ -422,10 +450,19 @@ def createData(returnType, data, pointNames=None, featureNames=None, fileType=No
 
 	# input is raw data
 	if isAllowedRaw(data):
-		return initDataObject(returnType, data, pointNames, featureNames, name, None)
+		ret = initDataObject(
+			returnType=returnType, rawData=data, pointNames=pointNames,
+			featureNames=featureNames, name=name, path=None,
+			selectPoints=selectPoints, selectFeatures=selectFeatures)
+		return ret
 	# input is an open file or a path to a file
 	elif isinstance(data, basestring) or looksFileLike(data):
-		return createDataFromFile(returnType, data, pointNames, featureNames, fileType, name, ignoreNonNumericalFeatures)
+		ret = createDataFromFile(
+			returnType=returnType, data=data, pointNames=pointNames,
+			featureNames=featureNames, fileType=fileType, name=name,
+			ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
+			selectPoints=selectPoints, selectFeatures=selectFeatures)
+		return ret
 	# no other allowed inputs
 	else:
 		raise ArgumentException("data must contain either raw data or the path to a file to be loaded")

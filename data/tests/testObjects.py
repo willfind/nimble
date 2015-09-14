@@ -37,9 +37,10 @@ def viewMakerMaker(concreteType):
 			orig = UML.createData(concreteType, data=data, pointNames=pointNames,
 					featureNames=featureNames, name=name)
 		else:
-			orig = UML.helpers.initDataObject(concreteType, rawData=data,
-						pointNames=pointNames, featureNames=featureNames,
-						name=name, path=path)
+			orig = UML.helpers.initDataObject(
+				concreteType, rawData=data, pointNames=pointNames,
+				featureNames=featureNames, name=name, path=path,
+				selectPoints='all', selectFeatures='all')
 		return orig.view()
 	return maker
 

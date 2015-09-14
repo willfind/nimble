@@ -115,7 +115,9 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
 
 	return (rawData, retPNames, retFNames)
 
-def initDataObject(returnType, rawData, pointNames, featureNames, name, path):
+def initDataObject(
+		returnType, rawData, pointNames, featureNames, name, path,
+		selectPoints, selectFeatures):
 	if scipy.sparse.issparse(rawData):
 		autoType = 'Sparse'
 	else:
@@ -202,6 +204,12 @@ def initDataObject(returnType, rawData, pointNames, featureNames, name, path):
 	# extract names out of the data object if still needed
 	ret = extractNamesFromDataObject(ret, pnamesID, fnamesID)
 
+	# select points and features if still needed
+	if selectPoints != 'all':
+		ret = ret.copyPoints(selectPoints)
+	if selectFeatures != 'all':
+		ret = ret.copyFeatures(selectFeatures)
+
 	return ret
 
 def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
@@ -241,8 +249,9 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 	return ret
 
-def createDataFromFile(returnType, data, pointNames, featureNames, fileType, name,
-			ignoreNonNumericalFeatures):
+def createDataFromFile(
+		returnType, data, pointNames, featureNames, fileType, name,
+		ignoreNonNumericalFeatures, selectPoints, selectFeatures):
 	"""
 	Helper for createData which deals with the case of loading data
 	from a file. Returns a triple containing the raw data, pointNames,
@@ -326,7 +335,9 @@ def createDataFromFile(returnType, data, pointNames, featureNames, fileType, nam
 		tokens = path.rsplit(os.path.sep)
 		name = tokens[len(tokens)-1]
 
-	return initDataObject(returnType, retData, pointNames, featureNames, name, path)
+	return initDataObject(
+		returnType, retData, pointNames, featureNames, name, path,
+		selectPoints, selectFeatures)
 
 def _loadcsvForList(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
 	(data, pointNames, featureNames) = _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)

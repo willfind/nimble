@@ -1,10 +1,13 @@
 
 from nose.tools import *
+from nose.plugins.attrib import attr
+
 import tempfile
 import scipy
 import numpy
 import os
 import copy
+import itertools
 
 import UML
 
@@ -779,6 +782,160 @@ def test_formatting_emptyAndCommentLines():
 			fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
 
 			assert fromList == fromCSV
+
+
+################################
+# selectPoints, selectFeatures #
+################################
+
+def test_createData_PFselection_integrationAllPossible():
+	filesForms = ['csv', 'mtx']
+	for t in returnTypes:
+		data = [[1,2,3],[11,22,33],[111,222,333]]
+		orig = UML.createData(returnType=t, data=data)
+
+		# try all file input types
+		for f in filesForms:
+			with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+				orig.writeFile(tmpF.name, format=f, includeNames=False)
+				tmpF.flush()
+
+				poss = [[0],[1],[2],[0,1],[0,2],[1,2],[0,1,2],'all']
+				for pSel in poss:
+					for fSel in poss:
+						ret = UML.createData(t, tmpF.name, selectPoints=pSel, selectFeatures=fSel)
+						fromOrig = UML.createData(t, orig.data, selectPoints=pSel, selectFeatures=fSel)
+
+						assert ret == fromOrig
+
+# since the createData helper for raw data is chained onto the
+# helper for file input, we need tests to show that we don't
+# just read all of the data into an object and then remove the
+# stuff we don't want in the raw data helper. If these pass,
+# unwanted data could still be stored in memory, but it limits
+# that mistake to the file input helpers only.
+
+#def test_createData_PFselection_csv_noUncessaryStorage():
+#	assert False
+
+#def test_createData_PFselection_mtxArr_noUncessaryStorage():
+#	assert False
+
+#def test_createData_PFselection_mtxCoo_noUncessaryStorage():
+#	assert False
+
+
+def test_createData_PFselection_csv_simple():
+	wanted = UML.createData("Matrix", data=[[22],[222]])
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,3\n")
+		tmpCSV.write("11,22,33\n")
+		tmpCSV.write("111,222,333\n")
+		tmpCSV.flush()
+
+		fromCSV = UML.createData("Matrix", data=tmpCSV.name, selectPoints=[1,2], selectFeatures=[1])
+		assert fromCSV == wanted
+
+
+def test_createData_PFselection_mtxArr_simple():
+	fromList = UML.createData(returnType='Matrix', data=[[2]])
+
+	# instantiate from mtx array file
+	with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+		tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+		tmpMTXArr.write("1 3\n")
+		tmpMTXArr.write("1\n")
+		tmpMTXArr.write("2\n")
+		tmpMTXArr.write("3\n")
+		tmpMTXArr.flush()
+		fromMTXArr = UML.createData(
+			returnType='Matrix', data=tmpMTXArr.name, selectPoints=[0],
+			selectFeatures=[1])
+
+		assert fromList == fromMTXArr
+
+
+def test_createData_PFselection_mtxCoo_simple():
+	fromList = UML.createData(returnType='Matrix', data=[[2]])
+
+	# instantiate from mtx coordinate file
+	with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+		tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+		tmpMTXCoo.write("1 3 3\n")
+		tmpMTXCoo.write("1 1 1\n")
+		tmpMTXCoo.write("1 2 2\n")
+		tmpMTXCoo.write("1 3 3\n")
+		tmpMTXCoo.flush()
+		fromMTXCoo = UML.createData(
+			returnType='Matrix', data=tmpMTXCoo.name, selectPoints=[0],
+			selectFeatures=[1])
+
+		assert fromList == fromMTXCoo
+
+
+def test_createData_PFselection_pythonList_simple():
+	wanted = UML.createData("Matrix", data=[[22],[222]])
+	raw = [[1,2,3],[11,22,33],[111,222,333]]
+
+	fromList = UML.createData("Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+	assert fromList == wanted
+
+def test_createData_PFselection_npArray_simple():
+	wanted = UML.createData("Matrix", data=[[22],[222]])
+	rawList = [[1,2,3],[11,22,33],[111,222,333]]
+	raw = numpy.array(rawList)
+
+	fromList = UML.createData("Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+	assert fromList == wanted
+
+def test_createData_PFselection_npMatrix_simple():
+	wanted = UML.createData("Matrix", data=[[22],[222]])
+	rawList = [[1,2,3],[11,22,33],[111,222,333]]
+	raw = numpy.matrix(rawList)
+
+	fromList = UML.createData("Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+	assert fromList == wanted
+
+
+def test_createData_PFselection_spCoo_simple():
+	wanted = UML.createData("Matrix", data=[[22],[222]])
+	rawList = [[1,2,3],[11,22,33],[111,222,333]]
+	rawMat = numpy.matrix(rawList)
+	raw = scipy.sparse.coo_matrix(rawMat)
+
+	fromList = UML.createData("Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+	assert fromList == wanted
+
+def test_createData_PFselection_spCsc_simple():
+	wanted = UML.createData("Matrix", data=[[22],[222]])
+	rawList = [[1,2,3],[11,22,33],[111,222,333]]
+	rawMat = numpy.matrix(rawList)
+	raw = scipy.sparse.csc_matrix(rawMat)
+
+	fromList = UML.createData("Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+	assert fromList == wanted
+
+
+def test_createData_CSV_PFselection_and_ignoreFlag():
+	for t in returnTypes:
+		fromList = UML.createData(returnType=t, data=[[33],[333]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("ones,twos,threes\n")
+			tmpCSV.write("single,1,2,3A\n")
+			tmpCSV.write("dubs,11,22A,33\n")
+			tmpCSV.write("trips,111,222,333\n")
+			tmpCSV.flush()
+
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, selectPoints=[2,'dubs', 1], selectFeatures=[1,'threes'], ignoreNonNumericalFeatures=True)
+
+			assert fromList == fromCSV
+
+
+
+
 
 
 # tests for combination of one name set being specified and one set being
