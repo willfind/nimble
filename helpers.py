@@ -206,9 +206,19 @@ def initDataObject(
 
 	# select points and features if still needed
 	if selectPoints != 'all':
-		ret = ret.copyPoints(selectPoints)
+		cleaned = []
+		for val in selectPoints:
+			converted = ret._getPointIndex(val)
+			if converted not in cleaned:
+				cleaned.append(converted)
+		ret = ret.copyPoints(sorted(cleaned))
 	if selectFeatures != 'all':
-		ret = ret.copyFeatures(selectFeatures)
+		cleaned = []
+		for val in selectFeatures:
+			converted = ret._getFeatureIndex(val)
+			if converted not in cleaned:
+				cleaned.append(converted)
+		ret = ret.copyFeatures(sorted(cleaned))
 
 	return ret
 
@@ -304,19 +314,27 @@ def createDataFromFile(
 	# result we are trying to load into.
 	directPath = "_load" + fileType + "For" + loadType
 	# try to get loading function
-	retData, retPNames, retFNames = None, None, None
+	retData, retPNames, retFNames, selectSuccess = None, None, None, False
 
 	toPass = data
 	if isinstance(toPass, basestring):
 		toPass = open(data, 'rU')
 	if directPath in globals():
 		loader = globals()[directPath]
-		(retData, retPNames, retFNames) = loader(toPass, pointNames, featureNames, ignoreNonNumericalFeatures)
+		loaded = loader(
+			toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+			selectPoints, selectFeatures)
 	else:
 		if fileType == 'csv':
-			(retData, retPNames, retFNames) = _loadcsvForMatrix(toPass, pointNames, featureNames, ignoreNonNumericalFeatures)
+			loaded = _loadcsvForMatrix(
+				toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+				selectPoints, selectFeatures)
 		if fileType == 'mtx':
-			(retData, retPNames, retFNames) = _loadmtxForAuto(toPass, pointNames, featureNames, ignoreNonNumericalFeatures)
+			loaded = _loadmtxForAuto(
+				toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+				selectPoints, selectFeatures)
+
+	(retData, retPNames, retFNames, selectSuccess) = loaded
 
 	if pointNames is None or isinstance(pointNames, int):
 		pointNames = retPNames
@@ -335,47 +353,17 @@ def createDataFromFile(
 		tokens = path.rsplit(os.path.sep)
 		name = tokens[len(tokens)-1]
 
+	if selectSuccess:
+		selectPoints = 'all'
+		selectFeatures = 'all'
+
 	return initDataObject(
 		returnType, retData, pointNames, featureNames, name, path,
 		selectPoints, selectFeatures)
 
-def _loadcsvForList(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
-	(data, pointNames, featureNames) = _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
-
-	return data, pointNames, featureNames
-
-
-def _loadcsvForMatrix(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
-	(data, pointNames, featureNames) = _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
-
-	return (data, pointNames, featureNames)
-
-def extractNamesFromNumpy(data, pnamesID, fnamesID):
-	retPNames = None
-	retFNames = None
-	if pnamesID is not None:
-		retPNames = numpy.array(data[:,pnamesID]).flatten()
-		data = numpy.delete(data, pnamesID, 1)
-		if isinstance(fnamesID, int):
-			retPNames = numpy.delete(retPNames, fnamesID)
-		retPNames = numpy.vectorize(str)(retPNames)
-		retPNames = list(retPNames)
-	if fnamesID is not None:
-		retFNames = numpy.array(data[fnamesID]).flatten()
-		data = numpy.delete(data, fnamesID, 0)
-		retFNames = numpy.vectorize(str)(retFNames)
-		retFNames = list(retFNames)
-
-	return (data, retPNames, retFNames)
-
-
-def _loadmtxForMatrix(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
-	return _loadmtxForAuto(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
-
-def _loadmtxForSparse(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
-	return _loadmtxForAuto(openFile, pointNames, featureNames, ignoreNonNumericalFeatures)
-
-def _loadmtxForAuto(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
+def _loadmtxForAuto(
+		openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
+		selectPoints, selectFeatures):
 	"""
 	Uses scipy helpers to read a matrix market file; returning whatever is most
 	appropriate for the file. If it is a matrix market array type, a numpy
@@ -418,8 +406,25 @@ def _loadmtxForAuto(openFile, pointNames, featureNames, ignoreNonNumericalFeatur
 	retPNames = extPNames if retPNames is None else retPNames
 	retFNames = extFNames if retFNames is None else retFNames
 
-	return (data, retPNames, retFNames)
+	return (data, retPNames, retFNames, False)
 
+def extractNamesFromNumpy(data, pnamesID, fnamesID):
+	retPNames = None
+	retFNames = None
+	if pnamesID is not None:
+		retPNames = numpy.array(data[:,pnamesID]).flatten()
+		data = numpy.delete(data, pnamesID, 1)
+		if isinstance(fnamesID, int):
+			retPNames = numpy.delete(retPNames, fnamesID)
+		retPNames = numpy.vectorize(str)(retPNames)
+		retPNames = list(retPNames)
+	if fnamesID is not None:
+		retFNames = numpy.array(data[fnamesID]).flatten()
+		data = numpy.delete(data, fnamesID, 0)
+		retFNames = numpy.vectorize(str)(retFNames)
+		retFNames = list(retFNames)
+
+	return (data, retPNames, retFNames)
 
 def extractNamesFromCoo(data, pnamesID, fnamesID):
 	# run through the entries in the returned coo_matrix to get
@@ -589,9 +594,54 @@ def filterCSVRow(row):
 	return True
 
 
-def _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFeatures):
+def _loadcsvUsingPython(
+		openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
+		selectPoints, selectFeatures):
+	"""
+	Loads a csv file using a reader from python's csv module
 
-	(pointNames, featureNames) = _checkCSV_for_Names(openFile, pointNames, featureNames)
+	openFile - An open file like object. The data will be read from where
+	the file currently points to.
+
+	pointNames - May be None, an index (over valid rows) indicating where
+	the pointNames are in the file, or a list containing pointNames that
+	was provided by the user. If the value is None, then the presence
+	of names may be automatically detected and extracted from the data.
+
+	featureNames - May be None, an index (over valid columns) indicating
+	where the featureNames are in the file, or a list containing
+	featureNames that was provided by the user. If the value is None, then
+	the presence of names may be automatically detected and extracted from
+	the data.
+
+	ignoreNonNumericalFeatures - True or False value indicating	whether,
+	when loading from a file, features containing non numercal data
+	shouldn't be loaded into the final object. For example, you may be
+	loading a file which has a column of strings; setting this flag to true
+	will allow you to load that file into a Matrix object (which may contain
+	floats only). If there is point or feature selection occurring, then only
+	those values within selected points and features are considered when
+	determining whether to apply this operation.
+
+	selectPoints - The value 'all' indicates that all possible points found
+	in the file will be included. Alternatively, may be a list containing
+	either names or indices (or a mix) of those points they want to be
+	selected from the raw data.
+
+	selectFeatures - The value 'all' indicates that all possible features
+	found in the file will be included. Alternatively, may be a list
+	containing either names or indices (or a mix) of those features they
+	want to be selected from the raw data.
+
+	Returns a tuple of values: the data read from the file, pointNames
+	(those extracted from the data, or the same value as passed in),
+	featureNames (same sematics as pointNames), and either True or
+	False indicating if the selectPoints and selectFeatures parameters
+	were applied in this function call.
+
+	"""
+	(pointNames, featureNames) = _checkCSV_for_Names(
+		openFile, pointNames, featureNames)
 
 	# TODO Try to determine formating
 
@@ -613,6 +663,62 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFe
 	# from the data.
 	featsToRemoveSet = set([])
 
+	# some validation on how selection interacts with point and feature
+	# name extraction
+	if selectPoints != 'all':
+		if not isinstance(pointNames, (list, int)):
+			# in this case we have no pointNames for reference,
+			# so no strings should be in the list
+			for val in selectPoints:
+				if not isinstance(val, int):
+					msg = "No point names were provided by the user, and "
+					msg += "they are not being extracted from the data, "
+					msg += 'therefore only interger valued indices are '
+					msg += 'allowed in the selectPoints parameter'
+					raise ArgumentException(msg)
+
+	if selectFeatures != 'all':
+		if not isinstance(featureNames, (list, int)):
+			# in this case we have no featureNames for reference,
+			# so no strings should be in the list
+			for val in selectFeatures:
+				if not isinstance(val, int):
+					msg = "No feature names were provided by the user, and "
+					msg += "they are not being extracted from the data, "
+					msg += 'therefore only interger valued indices are '
+					msg += 'allowed in the selectFeatures parameter'
+					raise ArgumentException(msg)
+		if isinstance(featureNames, int) and featureNames > 0:
+			msg = "We do not allow selection of features when featureNames "
+			msg += 'are being extracted from the data at a position other than '
+			msg += 'the first (0 indexed) row'
+			raise ArgumentException(msg)
+
+#	import pdb
+#	pdb.set_trace()
+
+	# if we have to do feature selection, then we need to explicitly
+	# add those features which we are not selecting to the remvoe set
+	# and record.
+	if selectFeatures != 'all' and featureNames is None:
+		startPosition = openFile.tell()
+
+		# initialize, but only if we know we'll be adding something
+		if len(selectFeatures) > 0:
+			removeRecord[0] = []
+
+		filtered = itertools.ifilter(filterCSVRow, openFile)
+		trialReader = csv.reader(filtered)
+		trialRow = trialReader.next()
+		numFeatures = len(trialRow)
+		# iterate over all possible indices of features
+		for i in xrange(numFeatures):
+			if i not in selectFeatures:
+				featsToRemoveSet.add(i)
+				removeRecord[0].append(i)
+
+		openFile.seek(startPosition)
+
 	# remake the file iterator to ignore some lines according to the
 	# function named filterCSVRow
 	filtered = itertools.ifilter(filterCSVRow, openFile)
@@ -631,7 +737,11 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFe
 		pointIndex += 1
 		rowIndex += 1
 
-		# remove pointNames and featureNames if needed
+		# our base expectation is that points are selected
+		isSelected = True
+
+		# remove pointNames and featureNames if needed, adjust whether
+		# this point is selected acordingly
 		toAdd = row
 		if extractPNames:
 			toAdd = row[:pointNames]
@@ -639,9 +749,19 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFe
 				indexAfter = -(len(row)-(pointNames + 1))
 				toAdd += row[indexAfter:]
 
-			# only add it if isn't in the name intersection
-			if extractFNames and featureNames != rowIndex:
-				retPNames.append(row[pointNames])
+			# only add if it is selected:
+			if selectPoints == 'all' or pointIndex in selectPoints or \
+					row[pointNames] in selectPoints:
+				# only add if it isn't in the name intersection
+				if extractFNames and featureNames != rowIndex:
+					retPNames.append(row[pointNames])
+			# adjust the selection status
+			else:
+				isSelected = False
+		# point selection easy case: there are only int valued indices
+		else:
+			if selectPoints != 'all' and pointIndex not in selectPoints:
+				isSelected = False
 
 		if extractFNames and featureNames == rowIndex:
 			retFNames = toAdd
@@ -649,13 +769,40 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFe
 			# row we encounter should have an ID one less than the
 			# number of rows read from the file at that point.
 			pointIndex -= 1
+
+			# now that we have featureNames, we have to do validation
+			# and setup the removal record
+			if selectFeatures != 'all':
+				cleaned = []
+				for val in selectFeatures:
+					selIndex = val
+					if isinstance(val, basestring):
+						try:
+							selIndex = retFNames.index(val)
+						except ValueError:
+							msg = ''
+							raise ArgumentException(msg)
+					cleaned.append(selIndex)
+				
+				# initialize, but only if we know we'll be adding something
+				if len(cleaned) > 0:
+					removeRecord[0] = []
+				for i in xrange(len(toAdd)):
+					if i not in cleaned:
+						featsToRemoveSet.add(i)
+						removeRecord[0].append(i)	
+
 		# we only do this if this row is destined for the data, not the
 		# feature names
-		else:
+		elif isSelected:
 			# process the remaining data
 			toAdd = convertAndFilterRow(toAdd, pointIndex, removeRecord,
 				featsToRemoveSet, ignoreNonNumericalFeatures)
 			data.append(toAdd)
+		else:
+			# not selected, so move on to the next row; and index
+			# as if it was never present
+			pointIndex -= 1
 
 	# the List form of featsToRemoveSet
 	featsToRemoveList = list(featsToRemoveSet)
@@ -686,7 +833,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames, ignoreNonNumericalFe
 				copyIndex += 1
 		retFNames = retFNames[:copyIndex]
 
-	return (data, retPNames, retFNames)
+	return (data, retPNames, retFNames, True)
+
 
 def filterRemovalCleanup(data, record, fullRemoveList):
 	"""
@@ -732,7 +880,6 @@ def filterRemovalCleanup(data, record, fullRemoveList):
 		for i in xrange(len(relRemoveList)):
 			removalIndex = relRemoveList[-(i+1)]
 			data[rowIndex].pop(removalIndex)
-
 
 
 def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
@@ -784,6 +931,17 @@ def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
 
 	row = row[:copyIndex]
 	return row
+
+
+# Register how you want all the various input output combinations
+# to be called; those combinations which are ommited will be loaded
+# and then converted using some best guesses.
+_loadcsvForList = _loadcsvUsingPython
+_loadcsvForMatrix = _loadcsvUsingPython
+_loadcsvForSparse = _loadcsvUsingPython
+_loadmtxForMatrix = _loadmtxForAuto
+_loadmtxForSparse = _loadmtxForAuto
+
 
 def autoRegisterFromSettings():
 	"""Helper which looks at the learners listed in UML.settings under
