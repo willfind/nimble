@@ -79,7 +79,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
 def testBuildTrainingAndTestingSetsForPredictions():
 	data = [["x1", "x2", "x3", "y1", "x4", "y2"],[1,5,2,3,7,1],[2,2,3.2,5,9.1,-7],[3,5,2,1,3,9],[4,9.2,3,5,5,1], [5,-4,2,1,1,0], [6,-2,-3,-1,-2,-3]]
-	data = createData("Matrix", data, featureNames=0)
+	data = createData("Matrix", data, featureNames=True)
 	fractionOfDataForTesting = 1.0/3.0
 	featuresToPredict = ["y1", "y2"]
 	functionsToExcludePoints = [lambda r: r["x2"]<3, lambda r: False]
@@ -313,7 +313,7 @@ def testgetBestFeaturesAndErrors():
 		else: row[-1] = 0
 
 	data.insert(0, featureNames) #put the column headers at the top of the data
-	data = createData("Matrix", data, featureNames=0)
+	data = createData("Matrix", data, featureNames=True)
 	fractionOfDataForTesting = 1.0/3.0
 	
 	print "data\n", data
@@ -478,7 +478,7 @@ if __name__ == "__main__":
 	
 	print "Loading data..."
 	startTime = time.time()
-	data = createData("Matrix", fileName, featureNames=0)
+	data = createData("Matrix", fileName, featureNames=True)
 	print "Loaded data in " + str(round(time.time()-startTime)) + " seconds."
 
 

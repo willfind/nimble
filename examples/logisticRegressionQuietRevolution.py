@@ -63,7 +63,7 @@ if __name__ == "__main__":
 	fileName = "data from second study - introversion - stimulation - deliberation.csv"
 	
 	yLabel = "to predict"
-	data = createData("List", fileName, featureNames=0)
+	data = createData("List", fileName, featureNames=True)
 	data.setFeatureName("Self-identification of introversion", yLabel)
 
 

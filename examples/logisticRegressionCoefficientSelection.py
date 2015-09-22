@@ -132,7 +132,7 @@ if __name__ == "__main__":
 		toOpen = origFileName
 
 	openedFile = open(toOpen, 'r')
-	dataAll = UML.createData("List", openedFile, featureNames=0, fileType='csv',
+	dataAll = UML.createData("List", openedFile, featureNames=True, fileType='csv',
 			ignoreNonNumericalFeatures=True)
 
 	# grab the features we want to be in the training data

@@ -205,15 +205,17 @@ def test_extractNames_CSV():
 	pNames = ['pn1'] 
 	fNames = ['one', 'two', 'three']
 	for t in returnTypes:
-		fromList = UML.createData(returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+		fromList = UML.createData(
+			returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
 
 		# instantiate from csv file
 		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
-		tmpCSV.write("1,2,pn1,3\n")
-		tmpCSV.write('one,two,ignore,three')
+		tmpCSV.write('ignore,one,two,three\n')
+		tmpCSV.write("pn1,1,2,3\n")
 		tmpCSV.flush()
 
-		fromCSV = UML.createData(returnType=t, data=tmpCSV.name, pointNames=2, featureNames=1)
+		fromCSV = UML.createData(
+			returnType=t, data=tmpCSV.name, pointNames=True, featureNames=True)
 		tmpCSV.close()
 		assert fromList == fromCSV
 
@@ -222,7 +224,8 @@ def test_names_AutoDetected_CSV():
 	pNames = ['pn1']
 	fNames = ['one', 'two', 'three']
 	for t in returnTypes:
-		fromList = UML.createData(returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+		fromList = UML.createData(
+			returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
 
 		# instantiate from csv file
 		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
@@ -258,7 +261,8 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
 	fNames = ['one', 'two', 'three']
 	pNames = ['pn1']
 	for t in returnTypes:
-		fromList = UML.createData(returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+		fromList = UML.createData(
+			returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
 
 		# instantiate from csv file
 		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
@@ -267,28 +271,27 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
 		tmpCSV.write("point_names,one,two,three\n")
 		tmpCSV.write("pn1,1,2,3\n")
 		tmpCSV.flush()
-		fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=0)
+		fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=True)
 		tmpCSV.close()
 		assert fromList == fromCSV
 
 
-def test_extractNames_overides_autoDetect_CSV():
-	pNames = ['pn1'] 
-	fNames = ['one', 'two', 'three']
+def test_specifiedIgnore_overides_autoDetect_CSV():
 	for t in returnTypes:
-		fromList = UML.createData(returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+		data = [[0,1,2,3],[10,11,12,13]]
+		fromList = UML.createData(returnType=t, data=data)
 
 		# instantiate from csv file
 		tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
 		tmpCSV.write("\n")
 		tmpCSV.write("\n")
-		tmpCSV.write("1,2,pn1,3\n")
-		tmpCSV.write('one,two,ignore,three')
+		tmpCSV.write('0,1,2,3\n')
+		tmpCSV.write("10,11,12,13\n")
 		tmpCSV.flush()
-		fromCSV = UML.createData(returnType=t, data=tmpCSV.name, pointNames=2, featureNames=1)
+		fromCSV = UML.createData(
+			returnType=t, data=tmpCSV.name, pointNames=False, featureNames=False)
 		tmpCSV.close()
 		assert fromList == fromCSV
-
 
 
 def test_namesInComment_MTXArr():
@@ -320,7 +323,8 @@ def test_namesInComment_MTXCoo():
 	pNames = ['pn1']
 	fNames = ['one', 'two', 'three']
 	for t in returnTypes:
-		fromList = UML.createData(returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+		fromList = UML.createData(
+			returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
 
 		# instantiate from mtx coordinate file
 		tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
@@ -343,24 +347,26 @@ def test_namesInComment_MTXCoo():
 def test_extractNames_MTXArr():
 	""" Test of createData() loading a mtx (arr format) file and extracting names """
 	pNames = ['11']
-	fNames = ['21', '22', '23']
+	fNames = ['1', '2', '3']
 	for t in returnTypes:
-		fromList = UML.createData(returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+		fromList = UML.createData(
+			returnType=t, data=[[21,22,23]], pointNames=pNames, featureNames=fNames)
 
 		# instantiate from mtx array file
 		tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx")
 		tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
 		tmpMTXArr.write("2 4\n")
+		tmpMTXArr.write("-4\n")
+		tmpMTXArr.write("11\n")
 		tmpMTXArr.write("1\n")
 		tmpMTXArr.write("21\n")
 		tmpMTXArr.write("2\n")
 		tmpMTXArr.write("22\n")
-		tmpMTXArr.write("11\n")
-		tmpMTXArr.write("-4\n")
 		tmpMTXArr.write("3\n")
 		tmpMTXArr.write("23\n")
 		tmpMTXArr.flush()
-		fromMTXArr = UML.createData(returnType=t, data=tmpMTXArr.name, pointNames=2, featureNames=1)
+		fromMTXArr = UML.createData(
+			returnType=t, data=tmpMTXArr.name, pointNames=True, featureNames=True)
 		tmpMTXArr.close()
 		if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
 			assert fromList.isApproximatelyEqual(fromMTXArr)
@@ -371,25 +377,27 @@ def test_extractNames_MTXArr():
 
 def test_extractNames_MTXCoo():
 	""" Test of createData() loading a mtx (coo format) file and extracting names """
-	pNames = ['11']
-	fNames = ['21', '22', '23']
+	pNames = ['21']
+	fNames = ['1', '2', '3']
 	for t in returnTypes:
-		fromList = UML.createData(returnType=t, data=[[1,2,3]], pointNames=pNames, featureNames=fNames)
+		fromList = UML.createData(
+			returnType=t, data=[[22,-5,23]], pointNames=pNames, featureNames=fNames)
 
 		# instantiate from mtx coordinate file
 		tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
 		tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
 		tmpMTXCoo.write("2 4 8\n")
-		tmpMTXCoo.write("1 1 1\n")
-		tmpMTXCoo.write("1 2 2\n")
-		tmpMTXCoo.write("1 3 11\n")
+		tmpMTXCoo.write("1 1 11\n")
+		tmpMTXCoo.write("1 2 1\n")
+		tmpMTXCoo.write("1 3 2\n")
 		tmpMTXCoo.write("1 4 3\n")
-		tmpMTXCoo.write("2 1 21.1\n")
+		tmpMTXCoo.write("2 1 21\n")
 		tmpMTXCoo.write("2 2 22\n")
 		tmpMTXCoo.write("2 3 -5\n")
 		tmpMTXCoo.write("2 4 23\n")
 		tmpMTXCoo.flush()
-		fromMTXCoo = UML.createData(returnType=t, data=tmpMTXCoo.name, pointNames=2, featureNames=1)
+		fromMTXCoo = UML.createData(
+			returnType=t, data=tmpMTXCoo.name, pointNames=True, featureNames=True)
 		tmpMTXCoo.close()
 		if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
 			assert fromList.isApproximatelyEqual(fromMTXCoo)
@@ -410,10 +418,13 @@ def test_extractNames_pythonList():
 	fNames = ['one', '2', 'three']
 
 	for t in returnTypes:
-		inDataRaw = [['one', 2, 'three', 'foo'], [1,-1, -3, 'pn1']]
+		inDataRaw = [['foo', 'one', 2, 'three'], ['pn1', 1,-1, -3]]
 		specRaw = [[1,-1,-3]]
-		inData = UML.createData(returnType=t, data=inDataRaw, pointNames=3, featureNames=0)
-		specified = UML.createData(returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+		
+		inData = UML.createData(
+			returnType=t, data=inDataRaw, pointNames=True, featureNames=True)		
+		specified = UML.createData(
+			returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)	
 		assert inData == specified
 
 def test_extractNames_NPArray():
@@ -422,10 +433,12 @@ def test_extractNames_NPArray():
 	fNames = ['21', '22', '23']
 
 	for t in returnTypes:
-		inDataRaw = numpy.array([[21,22,23,-111],[1,-1,-3,11]])
+		inDataRaw = numpy.array([[-111,21,22,23],[11,1,-1,-3]])
 		specRaw = numpy.array([[1,-1,-3]])
-		inData = UML.createData(returnType=t, data=inDataRaw, pointNames=3, featureNames=0)
-		specified = UML.createData(returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+		inData = UML.createData(
+			returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+		specified = UML.createData(
+			returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
 		assert inData == specified
 
 
@@ -435,10 +448,12 @@ def test_extractNames_NPMatrix():
 	fNames = ['21', '22', '23']
 
 	for t in returnTypes:
-		inDataRaw = numpy.matrix([[21,22,23,-111],[1,-1,-3,11]])
+		inDataRaw = numpy.array([[-111,21,22,23],[11,1,-1,-3]])
 		specRaw = numpy.matrix([[1,-1,-3]])
-		inData = UML.createData(returnType=t, data=inDataRaw, pointNames=3, featureNames=0)
-		specified = UML.createData(returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+		inData = UML.createData(
+			returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+		specified = UML.createData(
+			returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
 		assert inData == specified
 
 
@@ -448,14 +463,17 @@ def test_extractNames_CooSparse():
 	fNames = ['21', '22', '23']
 
 	for t in returnTypes:
-		inDataRaw = numpy.array([[21,22,23,-111],[1,-1,-3,11]])
+		inDataRaw = numpy.array([[-111,21,22,23],[11,1,-1,-3]])
 		inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
 		specRaw = numpy.array([[1,-1,-3]])
 		specRaw = scipy.sparse.coo_matrix(specRaw)
 
-		inData = UML.createData(returnType=t, data=inDataRaw, pointNames=3, featureNames=0)
-		specified = UML.createData(returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+		inData = UML.createData(
+			returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+		specified = UML.createData(
+			returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
 		assert inData == specified
+
 
 def test_extractNames_CscSparse():
 	""" Test of createData() given scipy Coo matrix, extracting names """
@@ -463,15 +481,16 @@ def test_extractNames_CscSparse():
 	fNames = ['21', '22', '23']
 
 	for t in returnTypes:
-		inDataRaw = numpy.array([[21,22,23,-111],[1,-1,-3,11]])
+		inDataRaw = numpy.array([[-111,21,22,23],[11,1,-1,-3]])
 		inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
 		specRaw = numpy.array([[1,-1,-3]])
 		specRaw = scipy.sparse.coo_matrix(specRaw)
 
-		inData = UML.createData(returnType=t, data=inDataRaw, pointNames=3, featureNames=0)
-		specified = UML.createData(returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
+		inData = UML.createData(
+			returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
+		specified = UML.createData(
+			returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
 		assert inData == specified
-
 
 
 
@@ -513,7 +532,8 @@ def test_createData_CSV_passedOpen():
 
 			openFile = open(openFile.name, 'rU')
 			namelessOpenFile = NamelessFile(openFile)
-			fromCSV = UML.createData(returnType=t, data=namelessOpenFile, fileType='csv')
+			fromCSV = UML.createData(
+				returnType=t, data=namelessOpenFile, fileType='csv')
 			assert fromCSV.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 			assert fromCSV.path is None
 			assert fromCSV.absolutePath is None
@@ -548,8 +568,10 @@ def test_createData_MTXArr_passedOpen():
 
 			openFile = open(tmpMTXArr.name, 'rU')
 			namelessOpenFile = NamelessFile(openFile)
-			fromMTXArr = UML.createData(returnType=t, data=namelessOpenFile, fileType='mtx')
-			assert fromMTXArr.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+			fromMTXArr = UML.createData(
+				returnType=t, data=namelessOpenFile, fileType='mtx')
+			assert fromMTXArr.name.startswith(
+				UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 			assert fromMTXArr.path is None
 			assert fromMTXArr.absolutePath is None
 			assert fromMTXArr.relativePath is None
@@ -583,19 +605,18 @@ def test_createData_MTXCoo_passedOpen():
 
 			openFile = open(tmpMTXCoo.name, 'rU')
 			namelessOpenFile = NamelessFile(openFile)
-			fromMTXCoo = UML.createData(returnType=t, data=namelessOpenFile, fileType='mtx')
-			assert fromMTXCoo.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
+			fromMTXCoo = UML.createData(
+				returnType=t, data=namelessOpenFile, fileType='mtx')
+			assert fromMTXCoo.name.startswith(
+				UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
 			assert fromMTXCoo.path is None
 			assert fromMTXCoo.absolutePath is None
 			assert fromMTXCoo.relativePath is None
 
 
-
-
 ###################################
 # ignoreNonNumericalFeatures flag #
 ###################################
-
 
 def test_createData_ignoreNonNumericalFeaturesCSV():
 	for t in returnTypes:
@@ -607,7 +628,8 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
 			tmpCSV.write("5,six,7,8\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
 
@@ -615,7 +637,7 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
 				fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
 				assert fromCSV.featureCount == 4
 
-def test_createData_ignoreNonNumerical_removalCleanup_hard():
+def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
 	for t in returnTypes:
 		fromList = UML.createData(returnType=t, data=[[1,3], [5,7],[11,12],[13,14]])
 
@@ -627,7 +649,8 @@ def test_createData_ignoreNonNumerical_removalCleanup_hard():
 			tmpCSV.write("13,one,14,9,who?\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
 
@@ -635,7 +658,7 @@ def test_createData_ignoreNonNumerical_removalCleanup_hard():
 				fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
 				assert fromCSV.featureCount == 5
 
-def test_createData_ignoreNonNumerical_removalCleanup_easy():
+def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
 	for t in returnTypes:
 		fromList = UML.createData(returnType=t, data=[[1,3], [5,7],[11,12],[13,14]])
 
@@ -647,7 +670,8 @@ def test_createData_ignoreNonNumerical_removalCleanup_easy():
 			tmpCSV.write("13,1,14,9,2\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
 
@@ -667,7 +691,8 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
 			tmpCSV.write("5,6,7,8\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
 
@@ -676,7 +701,7 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
 				assert fromCSV.featureCount == 4
 
 
-def test_ignoreNonNumericalFeatures_featureNamesDontTrigger():
+def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
 	for t in returnTypes:
 		fnames = ['1','2','3','four']
 		fromList = UML.createData(returnType=t, featureNames=fnames, data=[[5,6,7,8]])
@@ -687,12 +712,14 @@ def test_ignoreNonNumericalFeatures_featureNamesDontTrigger():
 			tmpCSV.write("5,6,7,8\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=0, ignoreNonNumericalFeatures=True)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, featureNames=True,
+				ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
 
 
-def test_ignoreNonNumericalFeatures_featureNamesAdjusted():
+def test_CSV_ignoreNonNumericalFeatures_featureNamesAdjusted():
 	for t in returnTypes:
 		fNames = ["1", "2", "3"]
 		data = [[1,2,3], [5,6,7]]
@@ -705,11 +732,13 @@ def test_ignoreNonNumericalFeatures_featureNamesAdjusted():
 			tmpCSV.write("5,6,7,H8\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=0, ignoreNonNumericalFeatures=True)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, featureNames=True,
+				ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
 
-def test_createData_ignoreNonNumericalFeatures_allRemoved():
+def test_CSV_createData_ignoreNonNumericalFeatures_allRemoved():
 	for t in returnTypes:
 		pNames = ['single', 'dubs', 'trips']
 		fromList = UML.createData(returnType=t, pointNames=pNames, data=[[],[],[]])
@@ -722,7 +751,9 @@ def test_createData_ignoreNonNumericalFeatures_allRemoved():
 			tmpCSV.write("trips,111,222,333\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, pointNames=0, featureNames=0, ignoreNonNumericalFeatures=True)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, pointNames=True,
+				featureNames=True, ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
 
@@ -731,7 +762,7 @@ def test_createData_ignoreNonNumericalFeatures_allRemoved():
 # Difficult CSV Formatting: whitespace and quoting #
 ####################################################
 
-def test_formatting_simpleQuotedValues():
+def test_CSVformatting_simpleQuotedValues():
 	for t in returnTypes:
 		fromList = UML.createData(returnType=t, data=[[1,2,3,4], [5,6,7,8]])
 
@@ -745,7 +776,7 @@ def test_formatting_simpleQuotedValues():
 
 			assert fromList == fromCSV
 
-def test_formatting_specialCharsInQuotes():
+def test_CSVformatting_specialCharsInQuotes():
 	for t in returnTypes:
 		fNames = ["1,ONE", "2;TWO", "3\t'EE'"]
 		data = [[1,2,3], [5,6,7]]
@@ -759,12 +790,14 @@ def test_formatting_specialCharsInQuotes():
 			tmpCSV.write("5,6,7,H8\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name, featureNames=0, ignoreNonNumericalFeatures=True)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, featureNames=True,
+				ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
 
 
-def test_formatting_emptyAndCommentLines():
+def test_CSVformatting_emptyAndCommentLines():
 	for t in returnTypes:
 		data = [[1,2,3,4],[5,6,7,8]]
 		fromList = UML.createData(returnType=t, data=data)
@@ -804,8 +837,10 @@ def test_createData_PFselection_integrationAllPossible():
 				poss = [[0],[1],[2],[0,1],[0,2],[1,2],[0,1,2],'all']
 				for pSel in poss:
 					for fSel in poss:
-						ret = UML.createData(t, tmpF.name, selectPoints=pSel, selectFeatures=fSel)
-						fromOrig = UML.createData(t, orig.data, selectPoints=pSel, selectFeatures=fSel)
+						ret = UML.createData(
+							t, tmpF.name, selectPoints=pSel, selectFeatures=fSel)
+						fromOrig = UML.createData(
+							t, orig.data, selectPoints=pSel, selectFeatures=fSel)
 
 						assert ret == fromOrig
 
@@ -837,7 +872,8 @@ def test_createData_PFselection_csv_noUncessaryStorage():
 			tmpCSV.write("111,222,333\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData("List", data=tmpCSV.name, selectPoints=[1,2], selectFeatures=[1])
+			fromCSV = UML.createData(
+				"List", data=tmpCSV.name, selectPoints=[1,2], selectFeatures=[1])
 			assert fromCSV == wanted
 	finally:
 		UML.helpers.initDataObject = backup
@@ -913,7 +949,8 @@ def test_createData_PFselection_csv_simple():
 		tmpCSV.write("111,222,333\n")
 		tmpCSV.flush()
 
-		fromCSV = UML.createData("Matrix", data=tmpCSV.name, selectPoints=[2,1], selectFeatures=[1])
+		fromCSV = UML.createData(
+			"Matrix", data=tmpCSV.name, selectPoints=[2,1], selectFeatures=[1])
 		assert fromCSV == wanted
 
 
@@ -957,7 +994,8 @@ def test_createData_PFselection_pythonList_simple():
 	wanted = UML.createData("Matrix", data=[[22],[222]])
 	raw = [[1,2,3],[11,22,33],[111,222,333]]
 
-	fromList = UML.createData("Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+	fromList = UML.createData(
+		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
 	assert fromList == wanted
 
 
@@ -966,7 +1004,8 @@ def test_createData_PFselection_npArray_simple():
 	rawList = [[1,2,3],[11,22,33],[111,222,333]]
 	raw = numpy.array(rawList)
 
-	fromList = UML.createData("Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
+	fromList = UML.createData(
+		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
 	assert fromList == wanted
 
 
@@ -975,7 +1014,8 @@ def test_createData_PFselection_npMatrix_simple():
 	rawList = [[1,2,3],[11,22,33],[111,222,333]]
 	raw = numpy.matrix(rawList)
 
-	fromList = UML.createData("Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+	fromList = UML.createData(
+		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
 	assert fromList == wanted
 
 
@@ -985,7 +1025,8 @@ def test_createData_PFselection_spCoo_simple():
 	rawMat = numpy.matrix(rawList)
 	raw = scipy.sparse.coo_matrix(rawMat)
 
-	fromList = UML.createData("Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
+	fromList = UML.createData(
+		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
 	assert fromList == wanted
 
 
@@ -995,7 +1036,8 @@ def test_createData_PFselection_spCsc_simple():
 	rawMat = numpy.matrix(rawList)
 	raw = scipy.sparse.csc_matrix(rawMat)
 
-	fromList = UML.createData("Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+	fromList = UML.createData(
+		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
 	assert fromList == wanted
 
 
@@ -1010,23 +1052,9 @@ def test_createData_PFselection_csv_ExceptionUnknownName():
 		tmpCSV.flush()
 
 		UML.createData(
-			returnType='List', data=tmpCSV.name, pointNames=0,
-			featureNames=0, selectPoints=[2,3], selectFeatures=["fours"])
+			returnType='List', data=tmpCSV.name, pointNames=True,
+			featureNames=True, selectPoints=[2,3], selectFeatures=["fours"])
 
-
-@raises(ArgumentException)
-def test_createData_PFselection_csv_ExceptionNonFirstFNames():
-	# instantiate from csv file
-	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
-		tmpCSV.write("single,1,2,3\n")
-		tmpCSV.write("pns,ones,twos,threes\n")
-		tmpCSV.write("dubs,11,22,33\n")
-		tmpCSV.write("trips,111,222,333\n")
-		tmpCSV.flush()
-
-		UML.createData(
-			returnType='List', data=tmpCSV.name, pointNames=0,
-			featureNames=1, selectPoints=[2,3],selectFeatures=["threes"])
 
 def test_createData_PFselection_csv_NamesNotSelected():
 	fromList = UML.createData(returnType='List', data=[[33],[333]])
@@ -1040,8 +1068,8 @@ def test_createData_PFselection_csv_NamesNotSelected():
 		tmpCSV.flush()
 
 		fromCSV = UML.createData(
-			returnType='List', data=tmpCSV.name, pointNames=0,
-			featureNames=0, selectPoints=[2,3],selectFeatures=["threes"])
+			returnType='List', data=tmpCSV.name, pointNames=True,
+			featureNames=True, selectPoints=[2,3],selectFeatures=["threes"])
 
 		fromList == fromCSV
 
@@ -1062,8 +1090,8 @@ def test_createData_csv_PFselection_and_ignoreFlag():
 			tmpCSV.flush()
 
 			fromCSV = UML.createData(
-				returnType=t, data=tmpCSV.name, pointNames=0,
-				featureNames=0, selectPoints=[2,'dubs', 1],
+				returnType=t, data=tmpCSV.name, pointNames=True,
+				featureNames=True, selectPoints=[2,'dubs', 1],
 				selectFeatures=[1,'threes'], ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV

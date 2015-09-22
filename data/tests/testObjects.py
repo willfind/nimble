@@ -32,10 +32,13 @@ def viewMakerMaker(concreteType):
 	"""
 	Method to help construct the constructors used in View test objects
 	"""
-	def maker(data, pointNames=None, featureNames=None, name=None, path=(None,None)):
+	def maker(
+			data, pointNames='automatic', featureNames='automatic', name=None,
+			path=(None,None)):
 		if isinstance(data, basestring):
-			orig = UML.createData(concreteType, data=data, pointNames=pointNames,
-					featureNames=featureNames, name=name)
+			orig = UML.createData(
+				concreteType, data=data, pointNames=pointNames,
+				featureNames=featureNames, name=name)
 		else:
 			orig = UML.helpers.initDataObject(
 				concreteType, rawData=data, pointNames=pointNames,
@@ -47,7 +50,8 @@ def viewMakerMaker(concreteType):
 
 #class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
 #	def __init__(self):
-#		def maker(data, pointNames=None, featureNames=None, name=None):
+#		def maker(
+#				data, pointNames='automatic', featureNames='automatic', name=None):
 #			orig = UML.createData("List", data=data, pointNames=pointNames,
 #					featureNames=featureNames, name=name)
 #			return orig.view()
@@ -60,7 +64,8 @@ class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
 
 #class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend, StructureDataSafe):
 #	def __init__(self):
-#		def maker(data, pointNames=None, featureNames=None, name=None):
+#		def maker(
+#				data, pointNames='automatic', featureNames='automatic', name=None):
 #			orig = UML.createData("Sparse", data=data, pointNames=pointNames,
 #					featureNames=featureNames, name=name)
 #			return orig.view()

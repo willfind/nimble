@@ -67,7 +67,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
 def testBuildTrainingAndTestingSetsForPredictions():
 	data = [["x1", "x2", "x3", "y1", "x4", "y2"],[1,5,2,3,7,1],[2,2,3.2,5,9.1,-7],[3,5,2,1,3,9],[4,9.2,3,5,5,1], [5,-4,2,1,1,0], [6,-2,-3,-1,-2,-3]]
-	data = createData("Matrix", data, featureNames=0)
+	data = createData("Matrix", data, featureNames=True)
 	fractionOfDataForTesting = 1.0/3.0
 	featuresToPredict = ["y1", "y2"]
 	functionsToExcludePoints = [lambda r: r["x2"]<3, lambda r: False]
@@ -225,7 +225,7 @@ def testGetBestFeaturesAndAccuracies():
 		if row[0] > 9: row[5] = 1
 		else: row[5] = 0
 
-	data = createData("Matrix", data, featureNames=0)
+	data = createData("Matrix", data, featureNames=True)
 	fractionOfDataForTesting = 1.0/3.0
 	featuresToPredict = ["p1", "p2"]
 
@@ -267,7 +267,7 @@ if __name__ == "__main__":
 
 	#load the data
 	pathIn = os.path.join(UML.UMLPath, "datasets/", fileName)
-	allFeatures = createData("Matrix", pathIn, featureNames=0)
+	allFeatures = createData("Matrix", pathIn, featureNames=True)
 	allFeatures.extractFeatures(featuresToRemoveCompletely)
 
 	bestFeatures, accuraciesHash, parametersHash = getBestFeaturesAndAccuracies(allFeatures, numFeaturesToKeep=numFeaturesToKeep, predictionAlgorithms=predictionAlgorithms, fractionOfDataForTesting=fractionOfDataForTesting, featuresToPredict=featuresToPredict, functionsToExcludePoints=functionsToExcludePoints)

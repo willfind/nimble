@@ -148,7 +148,7 @@ class FoldIteratorTester(object):
 
 class TestList(FoldIteratorTester):
 	def __init__(self):
-		def maker(data=None, featureNames=None):
+		def maker(data=None, featureNames=False):
 			return UML.createData("List", data=data, featureNames=featureNames)
 
 		super(TestList, self).__init__(maker)
@@ -156,7 +156,7 @@ class TestList(FoldIteratorTester):
 
 class TestMatrix(FoldIteratorTester):
 	def __init__(self):
-		def maker(data, featureNames=None):
+		def maker(data, featureNames=False):
 			return UML.createData("Matrix", data=data, featureNames=featureNames)
 
 		super(TestMatrix, self).__init__(maker)
@@ -164,14 +164,14 @@ class TestMatrix(FoldIteratorTester):
 
 class TestSparse(FoldIteratorTester):
 	def __init__(self):	
-		def maker(data, featureNames=None):
+		def maker(data, featureNames=False):
 			return UML.createData("Sparse", data=data, featureNames=featureNames)
 
 		super(TestSparse, self).__init__(maker)
 
 class TestRand(FoldIteratorTester):
 	def __init__(self):	
-		def maker(data, featureNames=None):
+		def maker(data, featureNames=False):
 			possible = ['List', 'Matrix', 'Sparse']
 			returnType = possible[pythonRandom.randint(0, 2)]
 			return UML.createData(returnType=returnType, data=data, featureNames=featureNames)

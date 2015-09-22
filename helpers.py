@@ -118,6 +118,7 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
 def initDataObject(
 		returnType, rawData, pointNames, featureNames, name, path,
 		selectPoints, selectFeatures):
+
 	if scipy.sparse.issparse(rawData):
 		autoType = 'Sparse'
 	else:
@@ -126,14 +127,21 @@ def initDataObject(
 	if returnType is None:
 		returnType = autoType
 
-	# check if we need to do name extraction; setup new variables.
+
+	# check if we need to do name extraction, setup new variables,
+	# or modify values for subsequent call to data init method.
 	pnamesID = None
-	if isinstance(pointNames, int):
-		pnamesID = pointNames
+	if pointNames is True:
+		pnamesID = 0
 		pointNames = None
+	elif pointNames == 'automatic' or pointNames is False:
+		pointNames = None
+
 	fnamesID = None
-	if isinstance(featureNames, int):
-		fnamesID = featureNames
+	if featureNames is True:
+		fnamesID = 0
+		featureNames = None
+	elif featureNames == 'automatic' or featureNames is False:
 		featureNames = None
 
 	# check a bundle of cases where we would need to extract out of the
@@ -265,19 +273,10 @@ def createDataFromFile(
 	"""
 	Helper for createData which deals with the case of loading data
 	from a file. Returns a triple containing the raw data, pointNames,
-	and featureNames (the later two being None if they were not specified
-	in the file)
+	and featureNames (the later two following the same semantics as
+	createData's parameters with the same names).
 
 	"""
-	if not isinstance(pointNames, int) and pointNames is not None:
-		msg = "pointNames may only be an int specifying the column containing "
-		msg += "the desired names, or None if they are not in the data"
-		raise ArgumentException(msg)
-	if not isinstance(featureNames, int) and featureNames is not None:
-		msg = "featureNames may only be an int specifying the row containing "
-		msg += "the desired names, or None if they are not in the data"
-		raise ArgumentException(msg)
-
 	# Use the path' extension if fileType isn't specified
 	if fileType is None:
 		path = data
@@ -336,11 +335,6 @@ def createDataFromFile(
 
 	(retData, retPNames, retFNames, selectSuccess) = loaded
 
-	if pointNames is None or isinstance(pointNames, int):
-		pointNames = retPNames
-	if featureNames is None or isinstance(featureNames, int):
-		featureNames = retFNames
-
 	# auto set name if unspecified, and is possible
 	if isinstance(data, basestring):
 		path = data
@@ -358,7 +352,7 @@ def createDataFromFile(
 		selectFeatures = 'all'
 
 	return initDataObject(
-		returnType, retData, pointNames, featureNames, name, path,
+		returnType, retData, retPNames, retFNames, name, path,
 		selectPoints, selectFeatures)
 
 def _loadmtxForAuto(
@@ -397,11 +391,21 @@ def _loadmtxForAuto(
 	data = scipy.io.mmread(openFile)
 
 	temp = (data, None, None)
-	if not scipy.sparse.issparse(data):
-		temp = extractNamesFromNumpy(data, pointNames, featureNames)
-	elif isinstance(pointNames, int) or isinstance(featureNames, int):
-		temp = extractNamesFromCoo(data, pointNames, featureNames)		
+	
+	if pointNames is True or featureNames is True:
+		# the helpers operate based on positional inputs with a None
+		# sentinal indicating no extration. So we need to convert from
+		# the createData input semantics
+		pNameID = 0 if pointNames is True else None
+		fNameID = 0 if featureNames is True else None
+		if scipy.sparse.issparse(data):
+			temp = extractNamesFromCoo(data, pNameID, fNameID)
+		else:
+			temp = extractNamesFromNumpy(data, pNameID, fNameID)
 
+	# choose between names extracted automatically from comments
+	# (retPNames) vs names extracted explicitly from the data
+	# (extPNames). extPNames has priority.
 	(data, extPNames, extFNames) = temp
 	retPNames = extPNames if retPNames is None else retPNames
 	retFNames = extFNames if retFNames is None else retFNames
@@ -567,19 +571,27 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
 	if currLine.strip() == '':
 		currLine = openFile.readline()
 		if currLine.strip() == '':
-			# specified location for names overides auto detection
-			if featureNames is None:
+			# only change set value if we allow detection
+			if featureNames is 'automatic':
 				# we set this so the names are extracted later
-				featureNames = 0
+				featureNames = True
+
+	# if we made it this far but haven't detected featureNames
+	# then we can specify them as not being present
+	if featureNames == 'automatic':
+		featureNames = False
 
 	# find the first data line and attempt to auto detect point names,
 	# but only if we think the feature names are in that first row
-	if featureNames == 0 and pointNames is None:
+	if featureNames is True and pointNames == 'automatic':
 		while currLine.startswith('#') or currLine.strip() == '':
 			currLine = openFile.readline()
 
 		if currLine.startswith('point_names,'):
-			pointNames = 0
+			pointNames = True
+
+	if pointNames == 'automatic':
+		pointNames = False
 
 	# reset everyting to make the loop easier
 	openFile.seek(startPosition)
@@ -603,16 +615,21 @@ def _loadcsvUsingPython(
 	openFile - An open file like object. The data will be read from where
 	the file currently points to.
 
-	pointNames - May be None, an index (over valid rows) indicating where
-	the pointNames are in the file, or a list containing pointNames that
-	was provided by the user. If the value is None, then the presence
-	of names may be automatically detected and extracted from the data.
+	pointNames - May be 'automatic', True, False, a list or a dict. The
+	first value indicates to detect whether pointNames should be extracted
+	or not. True indicates the first column of values is to be taken as
+	the pointNames. False indicates that the names are not embedded.
+	Finally, the names may have been provided by the user as a list or
+	dict, meaning nothing is extracted, and those objects are passed on
+	in the return value.
 
-	featureNames - May be None, an index (over valid columns) indicating
-	where the featureNames are in the file, or a list containing
-	featureNames that was provided by the user. If the value is None, then
-	the presence of names may be automatically detected and extracted from
-	the data.
+	featureNames - May be 'automatic', True, False, a list or a dict. The
+	first value indicates to detect whether featureNames should be extracted
+	or not. True indicates the first row of values is to be taken as
+	the featureNames. False indicates that the names are not embedded.
+	Finally, the names may have been provided by the user as a list or
+	dict, meaning nothing is extracted, and those objects are passed on
+	in the return value.
 
 	ignoreNonNumericalFeatures - True or False value indicating	whether,
 	when loading from a file, features containing non numercal data
@@ -643,12 +660,41 @@ def _loadcsvUsingPython(
 	(pointNames, featureNames) = _checkCSV_for_Names(
 		openFile, pointNames, featureNames)
 
+	# some validation on how selection interacts with point and feature
+	# name extraction
+	if selectPoints != 'all':
+		if pointNames is False:
+			# in this case we have no pointNames for reference,
+			# so no strings should be in the list
+			for val in selectPoints:
+				if not isinstance(val, int):
+					msg = "No point names were provided by the user, and "
+					msg += "they are not being extracted from the data, "
+					msg += 'therefore only interger valued indices are '
+					msg += 'allowed in the selectPoints parameter'
+					raise ArgumentException(msg)
+
+	if selectFeatures != 'all':
+		if featureNames is False:
+			# in this case we have no featureNames for reference,
+			# so no strings should be in the list
+			for val in selectFeatures:
+				if not isinstance(val, int):
+					msg = "No feature names were provided by the user, and "
+					msg += "they are not being extracted from the data, "
+					msg += 'therefore only interger valued indices are '
+					msg += 'allowed in the selectFeatures parameter'
+					raise ArgumentException(msg)
+
 	# TODO Try to determine formating
 
+	# where the data from the file will be placed
 	data = []
 
-	extractPNames = isinstance(pointNames, int)
-	extractFNames = isinstance(featureNames, int)
+	# after _checkCSV_for_Names then both pointNames or featureNames
+	# should either be True, False, a list or a dict
+	extractPNames = pointNames is True
+	extractFNames = featureNames is True
 	retPNames = [] if extractPNames else None
 	retFNames = None
 
@@ -663,140 +709,85 @@ def _loadcsvUsingPython(
 	# from the data.
 	featsToRemoveSet = set([])
 
-	# some validation on how selection interacts with point and feature
-	# name extraction
-	if selectPoints != 'all':
-		if not isinstance(pointNames, (list, int)):
-			# in this case we have no pointNames for reference,
-			# so no strings should be in the list
-			for val in selectPoints:
-				if not isinstance(val, int):
-					msg = "No point names were provided by the user, and "
-					msg += "they are not being extracted from the data, "
-					msg += 'therefore only interger valued indices are '
-					msg += 'allowed in the selectPoints parameter'
-					raise ArgumentException(msg)
-
-	if selectFeatures != 'all':
-		if not isinstance(featureNames, (list, int)):
-			# in this case we have no featureNames for reference,
-			# so no strings should be in the list
-			for val in selectFeatures:
-				if not isinstance(val, int):
-					msg = "No feature names were provided by the user, and "
-					msg += "they are not being extracted from the data, "
-					msg += 'therefore only interger valued indices are '
-					msg += 'allowed in the selectFeatures parameter'
-					raise ArgumentException(msg)
-		if isinstance(featureNames, int) and featureNames > 0:
-			msg = "We do not allow selection of features when featureNames "
-			msg += 'are being extracted from the data at a position other than '
-			msg += 'the first (0 indexed) row'
-			raise ArgumentException(msg)
-
-#	import pdb
-#	pdb.set_trace()
-
-	# if we have to do feature selection, then we need to explicitly
-	# add those features which we are not selecting to the remvoe set
-	# and record.
-	if selectFeatures != 'all' and featureNames is None:
-		startPosition = openFile.tell()
-
-		# initialize, but only if we know we'll be adding something
-		if len(selectFeatures) > 0:
-			removeRecord[0] = []
-
-		filtered = itertools.ifilter(filterCSVRow, openFile)
-		trialReader = csv.reader(filtered)
-		trialRow = trialReader.next()
-		numFeatures = len(trialRow)
-		# iterate over all possible indices of features
-		for i in xrange(numFeatures):
-			if i not in selectFeatures:
-				featsToRemoveSet.add(i)
-				removeRecord[0].append(i)
-
-		openFile.seek(startPosition)
-
 	# remake the file iterator to ignore some lines according to the
 	# function named filterCSVRow
 	filtered = itertools.ifilter(filterCSVRow, openFile)
 	# send that line iterator to the csv reader
 	lineReader = csv.reader(filtered)
 
+	# extract names from first row if needed, and record number of
+	# columns in a row
+	if extractFNames:
+		fnamesRow = lineReader.next()
+		numFeatures = len(fnamesRow)
+
+		if extractPNames:
+			fnamesRow = fnamesRow[1:]
+			numFeatures -= 1
+		retFNames = fnamesRow
+	else:
+		startPosition = openFile.tell()
+		filtered = itertools.ifilter(filterCSVRow, openFile)
+		trialReader = csv.reader(filtered)
+		trialRow = trialReader.next()
+		numFeatures = len(trialRow)
+		openFile.seek(startPosition)
+
+	# now that we have featureNames, we have to do validation
+	# and setup the removal record
+	if selectFeatures != 'all':
+		cleaned = []
+		for val in selectFeatures:
+			selIndex = val
+			# this case can only be true if names were extracted or provided
+			if isinstance(val, basestring):
+				try:
+					selIndex = retFNames.index(val)
+				except ValueError:
+					msg = 'selectFeatures included a name (' + val + ') '
+					msg += 'which was not found in the featureNames'
+					raise ArgumentException(msg)
+			cleaned.append(selIndex)
+		
+		# initialize, but only if we know we'll be adding something
+		if len(cleaned) > 0:
+			removeRecord[0] = []
+		for i in xrange(numFeatures):
+			if i not in cleaned:
+				featsToRemoveSet.add(i)
+				removeRecord[0].append(i)	
+
 	# incremented at beginning of loop, so starts negative.
-	# PointIndex is the index of the list that matches this row in the returned
+	# pointIndex is the index of the list that matches this row in the returned
 	# list of lists
 	pointIndex = -1
-	# rowIndex is the index of this row as counted relative to those returned
-	# by the lineReader
+	# rowIndex is the index of rows read off from lineReader. It is always
+	# incremented 
 	rowIndex = -1
 	# the csv reader gives a list of string values for each row
 	for row in lineReader:
 		pointIndex += 1
 		rowIndex += 1
 
-		# our base expectation is that points are selected
-		isSelected = True
-
+		isSelected = False
 		# remove pointNames and featureNames if needed, adjust whether
 		# this point is selected acordingly
-		toAdd = row
 		if extractPNames:
-			toAdd = row[:pointNames]
-			if pointNames != len(row) - 1:
-				indexAfter = -(len(row)-(pointNames + 1))
-				toAdd += row[indexAfter:]
-
 			# only add if it is selected:
-			if selectPoints == 'all' or pointIndex in selectPoints or \
-					row[pointNames] in selectPoints:
-				# only add if it isn't in the name intersection
-				if extractFNames and featureNames != rowIndex:
-					retPNames.append(row[pointNames])
-			# adjust the selection status
-			else:
-				isSelected = False
+			if selectPoints == 'all' or rowIndex in selectPoints or \
+					row[0] in selectPoints:
+				retPNames.append(row[0])
+				row = row[1:]
+				isSelected = True
 		# point selection easy case: there are only int valued indices
-		else:
-			if selectPoints != 'all' and pointIndex not in selectPoints:
-				isSelected = False
-
-		if extractFNames and featureNames == rowIndex:
-			retFNames = toAdd
-			# if we use this row as the feature names, then the next
-			# row we encounter should have an ID one less than the
-			# number of rows read from the file at that point.
-			pointIndex -= 1
-
-			# now that we have featureNames, we have to do validation
-			# and setup the removal record
-			if selectFeatures != 'all':
-				cleaned = []
-				for val in selectFeatures:
-					selIndex = val
-					if isinstance(val, basestring):
-						try:
-							selIndex = retFNames.index(val)
-						except ValueError:
-							msg = ''
-							raise ArgumentException(msg)
-					cleaned.append(selIndex)
-				
-				# initialize, but only if we know we'll be adding something
-				if len(cleaned) > 0:
-					removeRecord[0] = []
-				for i in xrange(len(toAdd)):
-					if i not in cleaned:
-						featsToRemoveSet.add(i)
-						removeRecord[0].append(i)	
+		elif selectPoints == 'all' or rowIndex in selectPoints:
+			isSelected = True
 
 		# we only do this if this row is destined for the data, not the
 		# feature names
-		elif isSelected:
+		if isSelected:
 			# process the remaining data
-			toAdd = convertAndFilterRow(toAdd, pointIndex, removeRecord,
+			toAdd = convertAndFilterRow(row, pointIndex, removeRecord,
 				featsToRemoveSet, ignoreNonNumericalFeatures)
 			data.append(toAdd)
 		else:
@@ -814,9 +805,9 @@ def _loadcsvUsingPython(
 
 	# this information might have been generated, but only if we didn't
 	# actually get the names, so pass it along
-	if not extractPNames:
+	if extractPNames is not True:
 		retPNames = pointNames
-	if not extractFNames:
+	if extractFNames is not True:
 		retFNames = featureNames
 	# adjust WRT removed columns
 	else:

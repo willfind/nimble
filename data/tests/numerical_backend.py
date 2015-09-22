@@ -164,8 +164,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
 		raise einfo[1], None, einfo[2]
 
 	# names interwoven
-	other = callerCon(otherRaw, pnames, None)
-	caller = callerCon(data, None, fnames)
+	other = callerCon(otherRaw, pnames, False)
+	caller = callerCon(data, False, fnames)
 	toCall = getattr(caller, op)
 	ret = toCall(other)
 
@@ -1334,8 +1334,8 @@ class NumericalModifying(DataTestObject):
 			raise einfo[1], None, einfo[2]
 
 		# names interwoven
-		other = self.constructor(otherRaw, pnames, None)
-		caller = self.constructor(data, None, fnames)
+		other = self.constructor(otherRaw, pnames, False)
+		caller = self.constructor(data, False, fnames)
 		toCall = getattr(caller, 'elementwiseMultiply')
 		ret = toCall(other)
 

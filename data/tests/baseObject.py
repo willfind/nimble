@@ -5,8 +5,8 @@ import UML
 class DataTestObject(object):
 	def __init__(self, returnType, constructor=None):
 		def maker(
-				data, pointNames=None, featureNames=None, name=None,
-				path=(None,None)):
+				data, pointNames='automatic', featureNames='automatic',
+				name=None, path=(None,None)):
 #			numP = len(pointNames) if pointNames is not None else 0
 #			numF = len(featureNames) if featureNames is not None else 0
 #			if data == None:

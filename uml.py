@@ -48,7 +48,9 @@ from UML.calculate import detectBestResult
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def createRandomData(returnType, numPoints, numFeatures, sparsity, numericType="float", featureNames=None, name=None):
+def createRandomData(
+		returnType, numPoints, numFeatures, sparsity, numericType="float",
+		featureNames='automatic', name=None):
 	"""
 	Generates a data object with random contents and numPoints points and numFeatures features. 
 
@@ -349,8 +351,8 @@ def listUMLFunctions():
 	return ret
 
 
-def createData(returnType, data, pointNames=None, featureNames=None, fileType=None,
-			name=None, selectPoints='all', selectFeatures='all',
+def createData(returnType, data, pointNames='automatic', featureNames='automatic',
+			fileType=None, name=None, selectPoints='all', selectFeatures='all',
 			ignoreNonNumericalFeatures=False, useLog=None):
 	"""Function to instantiate one of the UML data container types.
 
@@ -365,25 +367,28 @@ def createData(returnType, data, pointNames=None, featureNames=None, fileType=No
 	data. Alternatively, the data may be read from a file, specified either
 	as a string path, or a currently open file-like object.
 
-	pointNames: the source for point names in the returned object. They may
-	be specified explictly by some list-like or dict-like object, so long
-	as all points in the data are assigned a name and the names for each
-	point are unique.. If the point names are imbedded in the data, then a
-	valid point index may be passed to this argument, and that point will be
-	extracted and assigned (note: this works regardless of whether the data
-	is sourced from an in-python object or a file). Finally, if this argument
-	is None, and the data is being loaded from a file, then it is possible
-	the names will be automatically assigned.
+	pointNames: specifices the source for point names in the returned object.
+	By default, a value of 'automatic' indicates that this function should
+	attempt to detect the presence of pointNames in the data which will
+	only be attempted when loading from a file. In no names are found, or
+	data isn't being loaded from a file, then we use default names. A value
+	of True indicates that point names are embedded in the data within the
+	first column. A value of False indicates that names are not embedded
+	and that default names should be used. Finally, they may be specified
+	explictly by some list-like or dict-like object, so long as all points
+	in the data are assigned a name and the names for each point are unique.
 
-	featureNames: the source for feature names in the returned object. They may
-	be specified explictly by some list-like or dict-like object, so long
-	as all points in the data are assigned a name and the names for each
-	feature are unique. If the feature names are imbedded in the data, then a
-	valid feature index may be passed to this argument, and that feature will
-	be extracted and assigned as the names (note: this works regardless of
-	whether the data is sourced from an in-python object or	a file). Finally,
-	if this argument is None, and the data is being loaded from a file, then it
-	is possible the names will be automatically assigned.
+	featureNames: specifices the source for feature names in the returned
+	object. By default, a value of 'automatic' indicates that this function
+	should attempt to detect the presence of featureNames in the data which
+	will only be attempted when loading from a file. In no names are found,
+	or data isn't being loaded from a file, then we use default names. A
+	value of True indicates that feature names are embedded in the data
+	within the first column. A value of False indicates that names are not
+	embedded and that default names should be used. Finally, they may be
+	specified explictly by some list-like or dict-like object, so long as
+	all points in the data are assigned a name and the names for each point
+	are unique.
 
 	fileType: allows the user to explictly specify the format expected when
 	loading from a file. Normally, if a file is being loaded, the extension
@@ -436,6 +441,19 @@ def createData(returnType, data, pointNames=None, featureNames=None, fileType=No
 	default is used.
 
 	"""
+	# validation of pointNames and featureNames 
+	if pointNames != 'automatic' and pointNames is not True and \
+			pointNames is not False and not isinstance(pointNames, list) and \
+			not isinstance(pointNames, dict):
+		msg = "pointNames may only be the values True, False, 'automatic' or "
+		msg += "a list or dict specifying a mapping between names and indices."
+		raise ArgumentException(msg)
+	if featureNames != 'automatic' and featureNames is not True and \
+			featureNames is not False and not isinstance(featureNames, list) and \
+			not isinstance(featureNames, dict):
+		msg = "featureNames may only be the values True, False, 'automatic' or "
+		msg += "a list or dict specifying a mapping between names and indices."
+		raise ArgumentException(msg)
 
 	#retAllowed = ['List', 'Matrix', 'Sparse', None]
 	retAllowed = copy.copy(UML.data.available)

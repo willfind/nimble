@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
 	#load the data
 	pathIn = os.path.join(UML.UMLPath, "datasets/", fileName)
-	allFeatures = createData("Matrix", pathIn, featureNames=0)
+	allFeatures = createData("Matrix", pathIn, featureNames=True)
 	allFeatures.extractFeatures(featuresToRemoveCompletely)
 
 	bestFeatures, accuraciesHash, parametersHash = getBestFeaturesAndAccuracies(allFeatures, numFeaturesToKeep=numFeaturesToKeep, fractionOfDataForTesting=fractionOfDataForTesting, featuresToPredict=featuresToPredict, predictionAlgorithms=predictionAlgorithms, functionsToExcludePoints=functionsToExcludePoints)
