@@ -26,6 +26,7 @@ import UML
 from UML.logger import Stopwatch
 
 from UML.exceptions import ArgumentException, ImproperActionException
+from UML.exceptions import FileFormatException
 from UML.data import Sparse
 from UML.data import Matrix
 from UML.data import List
@@ -601,10 +602,37 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
 def filterCSVRow(row):
 	if len(row) == 0:
 		return False
-	if row[0] == '#' or row[0] == '\n':
+	if row[0] == '\n':
 		return False
 	return True
 
+def advancePastComments(openFile):
+	"""
+	Take an open file and advance until we find a line that isn't empty
+	and doesn't start with the comment character. Returns the number
+	of lines that were skipped
+	"""
+	numSkipped = 0
+	while True:
+		# If we read a row that isn't a comment line, we
+		# have to undo our read
+		startPosition = openFile.tell()
+
+		row = openFile.readline()
+		if len(row) == 0:
+			numSkipped += 1
+			continue
+		if row[0] == '#':
+			numSkipped += 1
+			continue
+		if row[0] == '\n':
+			numSkipped += 1
+			continue
+
+		openFile.seek(startPosition)
+		break
+
+	return numSkipped
 
 def _loadcsvUsingPython(
 		openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
@@ -709,8 +737,9 @@ def _loadcsvUsingPython(
 	# from the data.
 	featsToRemoveSet = set([])
 
-	# remake the file iterator to ignore some lines according to the
-	# function named filterCSVRow
+	# Advance the file past any beginning of file comments.
+	skippedLines = advancePastComments(openFile)
+	# remake the file iterator to ignore empty lines
 	filtered = itertools.ifilter(filterCSVRow, openFile)
 	# send that line iterator to the csv reader
 	lineReader = csv.reader(filtered)
@@ -719,19 +748,29 @@ def _loadcsvUsingPython(
 	# columns in a row
 	if extractFNames:
 		fnamesRow = lineReader.next()
+		# Number values in a row excluding point names
 		numFeatures = len(fnamesRow)
+		# Number of value in a row
+		numColumns = len(fnamesRow)
 
 		if extractPNames:
 			fnamesRow = fnamesRow[1:]
 			numFeatures -= 1
 		retFNames = fnamesRow
+		columnsDefIndex = (lineReader.line_num - 1) + skippedLines
+		columnsDefSrc = "feature names"
 	else:
 		startPosition = openFile.tell()
 		filtered = itertools.ifilter(filterCSVRow, openFile)
 		trialReader = csv.reader(filtered)
 		trialRow = trialReader.next()
+		# Number values in a row excluding point names
 		numFeatures = len(trialRow)
+		# Number of value in a row
+		numColumns = len(trialRow)
 		openFile.seek(startPosition)
+		columnsDefIndex = (trialReader.line_num - 1) + skippedLines
+		columnsDefSrc = "row"
 
 	# now that we have featureNames, we have to do validation
 	# and setup the removal record
@@ -764,10 +803,25 @@ def _loadcsvUsingPython(
 	# rowIndex is the index of rows read off from lineReader. It is always
 	# incremented 
 	rowIndex = -1
+	# lineIndex is the index of the newline sepearated row that
+	# the lineReader will return next. Inclueds the lines skipped
+	# at the beginning of the file
+	lineIndex = skippedLines
+
 	# the csv reader gives a list of string values for each row
 	for row in lineReader:
 		pointIndex += 1
 		rowIndex += 1
+		lineIndex = lineReader.line_num + skippedLines
+
+		# Validation: require equal length of all rows
+		if len(row) != numColumns:
+			msg = "The row on line " + str(lineIndex) + " has a length of "
+			msg += str(len(row)) + ". We expected a length of " 
+			msg += str(numColumns) + ". The expected row length was defined "
+			msg += "by looking at the " + columnsDefSrc + " on line "
+			msg += str(columnsDefIndex) + "."
+			raise FileFormatException(msg)
 
 		isSelected = False
 		# remove pointNames and featureNames if needed, adjust whether

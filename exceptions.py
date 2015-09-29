@@ -2,7 +2,7 @@
 Module defining custom exceptions to be used in this package.
 """
 
-class ArgumentException (Exception):
+class ArgumentException(Exception):
 	"""
 	Exception to be thrown when the value of an argument of some function
 	renders it impossible to complete the operation that function is meant
@@ -16,7 +16,7 @@ class ArgumentException (Exception):
 	def __repr__(self):
 		return "ArgumentException(" + repr(self.value) + ")"
 
-class MissingEntryException (Exception):
+class MissingEntryException(Exception):
 	"""
 	Exception to be thrown when a dictionary or other data structure is missing an entry
 	that is necessary for the proper completion of an operation.
@@ -32,7 +32,7 @@ class MissingEntryException (Exception):
 			errMessage += ", " + entryName
 		errMessage += '. \n' + repr(self.value)
 
-class ImproperActionException (Exception):
+class ImproperActionException(Exception):
 	"""
 		Exception to be thrown if calling a class function does not make sense in a
 		certain context (i.e. calling call.turnOn() when the car object is already running),
@@ -45,7 +45,7 @@ class ImproperActionException (Exception):
 	def __str__(self):
 		return repr(self.value)
 
-class EmptyFileException (Exception):
+class EmptyFileException(Exception):
 	"""
 		Exception to be thrown if a file to be read is empty
 	"""
@@ -55,6 +55,18 @@ class EmptyFileException (Exception):
 
 	def __str__(self):
 		return repr(self.value)
+
+class FileFormatException(Exception):
+	"""
+		Exception to be thrown if the formatting of a file is not
+		as expected
+	"""
+
+	def __init__(self, value):
+		self.value = value
+
+	def __str__(self):
+		return repr(self.value)	
 
 def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
 	ret = ""

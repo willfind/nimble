@@ -11,6 +11,7 @@ import itertools
 
 import UML
 from UML.exceptions import ArgumentException
+from UML.exceptions import FileFormatException
 
 #returnTypes = ['Matrix', 'Sparse', None]  # None for auto
 returnTypes = copy.copy(UML.data.available)
@@ -117,6 +118,61 @@ def test_createData_MTXCoo_data():
 				assert fromList.isApproximatelyEqual(fromMTXCoo)
 			else:
 				assert fromList == fromMTXCoo
+
+
+@raises(FileFormatException)
+def test_createData_CSV_unequalRowLength_short():
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,3,4\n")
+		tmpCSV.write("4,5,6\n")
+		tmpCSV.flush()
+
+		UML.createData(returnType="List", data=tmpCSV.name)
+
+@raises(FileFormatException)
+def test_createData_CSV_unequalRowLength_long():
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,3\n")
+		tmpCSV.write("11,22,33\n")
+		tmpCSV.write("4,5,6,7\n")
+		tmpCSV.flush()
+
+		UML.createData(returnType="List", data=tmpCSV.name)
+
+@raises(FileFormatException)
+def test_createData_CSV_unequalRowLength_definedByNames():
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("one,two,three\n")
+		tmpCSV.write("11,22,33,44\n")
+		tmpCSV.write("4,5,6,7\n")
+		tmpCSV.flush()
+
+		UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+
+def test_createData_CSV_unequalRowLength_position():
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("#ignore\n")
+		tmpCSV.write("1,2,3,4,0,0,0,0\n")
+		tmpCSV.write("\n")
+		tmpCSV.write("11,22,33,44,0,0,0,0\n")
+		tmpCSV.write("4,5,6,0,0,0\n")
+		tmpCSV.flush()
+
+		try:
+			UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+			assert False  # the previous call should have raised an exception
+		except FileFormatException as ffe:
+			# We expect a message of the format:
+			# 
+			assert '1' in ffe.value  # defining line
+			assert '4' in ffe.value  # offending line
+			# offending line number comes before defining line number
+			assert ffe.value.index('4') < ffe.value.index('1')
+
+			assert '8' in ffe.value  # expected length
+			assert '6' in ffe.value  # offending length
+			# offending length comes before expected length
+			assert ffe.value.index('6') < ffe.value.index('8')
 
 
 ############################
@@ -799,21 +855,30 @@ def test_CSVformatting_specialCharsInQuotes():
 
 def test_CSVformatting_emptyAndCommentLines():
 	for t in returnTypes:
-		data = [[1,2,3,4],[5,6,7,8]]
+		if t == 'List':
+			data = [[1,2,3,4],['#11',22,33,44],[5,6,7,8]]
+		else:
+			data = [[1,2,3,4],[5,6,7,8]]
+
 		fromList = UML.createData(returnType=t, data=data)
 
 		# instantiate from csv file
 		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("#stuff\n")
+			tmpCSV.write("\n")
+			tmpCSV.write("\n")
 			tmpCSV.write("#1,2,3,4\n")
+			tmpCSV.write("\n")
 			tmpCSV.write("1,2,3,4\n")
-			tmpCSV.write("#second line\n")
+			if t == 'List':
+				tmpCSV.write("#11,22,33, 44\n")
 			tmpCSV.write("\n")
 			tmpCSV.write("5,6,7,8\n")
 			tmpCSV.write("\n")
-			tmpCSV.write("#END\n")
 			tmpCSV.flush()
 
-			fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+			fromCSV = UML.createData(
+				returnType=t, data=tmpCSV.name, featureNames=False)
 
 			assert fromList == fromCSV
 
