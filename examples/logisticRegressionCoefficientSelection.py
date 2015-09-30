@@ -18,7 +18,12 @@ from UML.calculate import fractionIncorrect
 class LogisticRegressionWithSelection(CustomLearner):
 	learnerType = "classification"
 
-	def train(self, trainX, trainY, desiredNonZero, verboseStandardOut=False):
+	def train(
+			self, trainX, trainY, desiredNonZero, verboseStandardOut=False,
+			allowSubLogging=False):
+		if desiredNonZero > trainX.featureCount:
+			desiredNonZero = trainX.featureCount
+
 		def countNonZero(tl):
 			coefs = tl.getAttributes()['coef_']
 			return numpy.count_nonzero(coefs)
@@ -29,7 +34,7 @@ class LogisticRegressionWithSelection(CustomLearner):
 
 		inC = 1
 		sklLogReg = "scikitlearn.LogisticRegression"
-		trained = UML.train(sklLogReg, trainX, trainY, C=inC, **arguments)
+		trained = UML.train(sklLogReg, trainX, trainY, C=inC, useLog=allowSubLogging, **arguments)
 
 		# the first entry will be our downward multiplicative adjustment,
 		# the second entry will be our upward adjustment
@@ -47,7 +52,7 @@ class LogisticRegressionWithSelection(CustomLearner):
 				multiplier = adjustment[0]
 			inC = inC * multiplier
 			
-			trained = UML.train(sklLogReg, trainX, trainY, C=inC, **arguments)	
+			trained = UML.train(sklLogReg, trainX, trainY, C=inC,  useLog=allowSubLogging, **arguments)
 			numNZ = countNonZero(trained)
 			iteration += 1
 
@@ -67,30 +72,6 @@ class LogisticRegressionWithSelection(CustomLearner):
 		return self._trained.apply(testX)
 
 
-
-def cleanForCommas(origFileName):
-	origFile = open(origFileName, 'r')
-
-	cleanedFileName = origFileName[:-len(".csv")] + " - clean.csv"
-	cleanedFile = open(cleanedFileName, 'w')
-
-	for line in origFile:
-		splitQuote = line.split('"')
-		for i in xrange(len(splitQuote)):
-			curr = splitQuote[i]
-			# If we are at an odd index, we have a string that was previously
-			# contained in quotes. Assumes we are operating on something in
-			# which quotes come in pairs.
-			if i % 2 == 1:
-				splitComma = curr.split(',')
-				# write it out without the contained commas, while adding
-				# back in the quotes
-				toWrite = '"' + ''.join(splitComma) + '"'
-				cleanedFile.write(toWrite)
-			else:
-				cleanedFile.write(curr)
-		# The newline will still be on the end of the last value in splitQuote
-
 def sanityCheck(trainX, totalScores):
 	assert trainX.featureCount == 84
 
@@ -108,95 +89,50 @@ def sanityCheck(trainX, totalScores):
 	summed.setFeatureName(0, "totalScorePosOrNeg")
 	assert summed == totalScores
 
-
-
-if __name__ == "__main__":
-
-	defaultFile = "/Users/spencer2/Dropbox/Spencer/Work/ClearerThinking.org/Programs and modules/Gender continuum test/gender continuum train and test ready to predict.csv"
-	
-	if len(sys.argv) <= 1:
-		origFileName = defaultFile
-	
-	else:
-		rigFileName = sys.argv[1]
-	
-
-	desiredNonZeroCoefficients = 84 #50
-		
-	# check to see if we've cleaned the data for extra commas
-	cleanedSuffix = " - clean.csv"
-	if origFileName[-len(cleanedSuffix):] != cleanedSuffix:
-		cleanForCommas(origFileName)
-		toOpen = origFileName[:-len('.csv')] + cleanedSuffix
-	else:
-		toOpen = origFileName
-
-	openedFile = open(toOpen, 'r')
-	dataAll = UML.createData("List", openedFile, featureNames=True, fileType='csv',
-			ignoreNonNumericalFeatures=True)
-
-	# grab the features we want to be in the training data
+def seperateData(dataAll, omitCultureQuestions):
+	# grab the features we want to be in the training data; including raw
+	# data that we may later choose to omit
 	nameOfFirst = "I do not enjoy watching dance performances. (M)"
 	indexOfFirst = dataAll.getFeatureIndex(nameOfFirst)
 
 	usedData = dataAll.extractFeatures(start=indexOfFirst, end=None)
 	usedData.appendFeatures(dataAll.copyFeatures("isMale"))
-	usedData = usedData.copyAs("Matrix")
+	usedData.appendFeatures(dataAll.copyFeatures("InTestSet"))
 
-	#usedData.show("usedData")
+	if omitCultureQuestions:
+		toOmit = []
+		toOmit.append("I do not enjoy watching dance performances. (M)")
+		toOmit.append(" I would be good at rescuing someone from a burning building. (M)")
+		toOmit.append(" I am interested in science. (M)")
+		toOmit.append(" I find political discussions interesting. (M)")
+		toOmit.append(" I face danger confidently. (M)")
+		toOmit.append(" I do not like concerts. (M)")
+		toOmit.append(" I do not enjoy going to art museums. (M)")
+		toOmit.append(" I would fear walking in a high-crime part of a city. (F)")
+		toOmit.append(" I begin to panic when there is danger. (F)")
+		usedData.extractFeatures(toOmit)
 
 	print "Splitting data into training and testing..."
-	trainX, trainY, testX, testY = usedData.trainAndTestSets(testFraction=0.30, labels="isMale")
 
-	#trainX = dataAll.extractFeatures(start=indexOfFirst, end=None)
-	
-	# Check some of the expectations we had on the data to make sure
-	# we've extracted the right stuff
-	#totalScores = dataAll.extractFeatures("totalScorePosOrNeg")
-	#sanityCheck(trainX, totalScores)  # defined above __main__
+	def selectInTestSet(point):
+		if point["InTestSet"] > 0:
+			return True
+		return False
 
-	# convert for processing
-	#trainX = trainX.copyAs("Matrix")
+	testingSet = usedData.extractPoints(selectInTestSet)
+	testY = testingSet.extractFeatures("isMale")
+	testingSet.extractFeatures("InTestSet")
+	testX = testingSet
 
-	# grab the prediction variable
-	#trainY = dataAll.extractFeatures("isMale")
+	trainY = usedData.extractFeatures("isMale")
+	usedData.extractFeatures("InTestSet")
+	trainX = usedData
 
-	UML.registerCustomLearner("custom", LogisticRegressionWithSelection)
+	return trainX, trainY, testX, testY
 
-	print ""
-	print "Train points: " + str(trainX.pointCount) 
-	print "Test points: " + str(testX.pointCount) 
-	print""
-
-	#Cs = tuple([4**k for k in xrange(-8,8)])
-	#print "Learning..."
-	#print ""
-	#bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, C=0.3) #19.7% out of sample error
-	#bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=2, coef0=1, C=0.01) #19.2%
-	#bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1) 
-	#print "bestError out of sample: ", str(round(bestError*100,1)) + "%"
-
-	
-	predictionMode = ["set number of coefficients", "cross validation"][0]
-	if predictionMode == "set number of coefficients":
-		name = "custom.LogisticRegressionWithSelection"
-		print "Finding exactly " + str(desiredNonZeroCoefficients) + " coefficients..."
-		trainedLearner = UML.train(name, trainX, trainY, desiredNonZero=desiredNonZeroCoefficients)
-	elif predictionMode == "cross validation":
-		#Cs = [4**k for k in xrange(-8,8)]
-		#print "Cross validating..."
-		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY, C=10, penalty="l1")
-		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY, C=5, penalty="l2")
-		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY)
-		trainedLearner = UML.train("scikitlearn.SVC", trainX, trainY, C=0.3)
-	else: raise Exception("Bad prediction mode!")
-	
-
-	# grab the feature names associated with the non-zero coefficients
-	
-	#print "trainedLearner.getAttributes()", trainedLearner.getAttributes()
+def printCoefficients(trainedLearner):
 	coefs = trainedLearner.getAttributes()["coef_"]
-	intercept = trainedLearner.getAttributes()["intercept_"]
+#	intercept = trainedLearner.getAttributes()["intercept_"]
 	coefs = coefs.flatten()
 	chosen = []
 	chosenCoefs = []
@@ -213,7 +149,71 @@ if __name__ == "__main__":
 		print str(i).ljust(3) + "    " + str(round(coef,2)).ljust(8) + question.strip()
 		i = i + 1
 
+if __name__ == "__main__":
+
+	# Some variables to control the flow of the program
+	defaultFile = "/Users/spencer2/Dropbox/Spencer/Work/ClearerThinking.org/Programs and modules/Gender continuum test/gender continuum train and test ready to predict.csv"
+	omitCultureQuestions = True
+	desiredNonZeroCoefficients = 75  # 50
+	performSanityCheck = False
+
+	UML.registerCustomLearner("custom", LogisticRegressionWithSelection)
+
+	if len(sys.argv) <= 1:
+		origFileName = defaultFile
+	else:
+		origFileName = sys.argv[1]
 	
+	dataAll = UML.createData("Matrix", origFileName, featureNames=True, fileType='csv',
+		ignoreNonNumericalFeatures=True)
+
+	# call helper to remove extraneous features, omit undesired
+	# ones, and to seperate into training and testing sets according
+	# to the 'InTestSet' feature.
+	trainX, trainY, testX, testY = seperateData(dataAll, omitCultureQuestions)
+
+	# Check some of the expectations we had on the data to make sure
+	# we've extracted the right stuff
+	if performSanityCheck:
+		totalScores = dataAll.extractFeatures("totalScorePosOrNeg")
+		sanityCheck(trainX, totalScores)  # defined above __main__
+
+	print ""
+	print "Train points: " + str(trainX.pointCount) 
+	print "Test points: " + str(testX.pointCount) 
+	print ""
+
+
+	predictionPossibilities = []
+	predictionPossibilities.append("SVC full data out-sample only")
+	predictionPossibilities.append("set number of coefficients")
+	predictionPossibilities.append("cross validation")
+	predictionMode = predictionPossibilities[1]
+
+	if predictionMode == "SVC full data out-sample only":
+		Cs = tuple([4**k for k in xrange(-8,8)])
+		print "Learning..."
+		print ""
+#		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, C=0.3) #19.7% out of sample error
+#		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=2, coef0=1, C=0.01) #19.2%
+		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1) 
+		print "bestError out of sample: ", str(round(bestError*100,1)) + "%"
+		sys.exit(0)
+	elif predictionMode == "set number of coefficients":
+		name = "custom.LogisticRegressionWithSelection"
+		print "Finding exactly " + str(desiredNonZeroCoefficients) + " coefficients..."
+		trainedLearner = UML.train(name, trainX, trainY, desiredNonZero=desiredNonZeroCoefficients)
+	elif predictionMode == "cross validation":
+		#Cs = [4**k for k in xrange(-8,8)]
+		#print "Cross validating..."
+		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY, C=10, penalty="l1")
+		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY, C=5, penalty="l2")
+		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY)
+		trainedLearner = UML.train("scikitlearn.SVC", trainX, trainY, C=0.3)
+	else: raise Exception("Bad prediction mode!")
+	
+	# grab the feature names associated with the non-zero coefficients
+	printCoefficients(trainedLearner)
 
 	#Now measure the accuracy of the model
 	print "\n\n"
@@ -223,9 +223,4 @@ if __name__ == "__main__":
 	print "In sample error rate: " + str(round(errorInSample*100,1)) + "%"
 	print ""
 
-
 	exit(0)
-
-
-
-
