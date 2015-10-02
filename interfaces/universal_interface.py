@@ -21,6 +21,7 @@ from UML.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVs
 from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
+from UML.logger import Stopwatch
 
 from UML.helpers import _mergeArguments
 
@@ -102,7 +103,7 @@ class UniversalInterface(object):
 		if timer is not None:
 			timer.start('apply')
 		# call TrainedLearner's apply method (which is already wrapped to perform transformation)
-		ret = learner.apply(testX, {}, output, scoreMode)
+		ret = learner.apply(testX, {}, output, scoreMode, useLog=False)
 		if timer is not None:
 			timer.stop('apply')
 
@@ -114,7 +115,7 @@ class UniversalInterface(object):
 		if timer is not None:
 			timer.start('test')
 		# call TrainedLearner's test method (which is already wrapped to perform transformation)
-		ret = learner.test(testX, testY, performanceFunction, {}, output, scoreMode)
+		ret = learner.test(testX, testY, performanceFunction, {}, output, scoreMode, useLog=False)
 		if timer is not None:
 			timer.stop('test')
 
@@ -583,7 +584,7 @@ class UniversalInterface(object):
 			self.arguments = arguments
 			self.transformedTrainX = transformedInputs[0]
 			self.transformedTrainY = transformedInputs[1]
-			self.transforedTestX = transformedInputs[2]
+			self.transformedTestX = transformedInputs[2]
 			self.transformedArguments = transformedInputs[3]
 			self.customDict = customDict
 			self.backend = backend
@@ -603,7 +604,9 @@ class UniversalInterface(object):
 				setattr(self, methodName, wrapped)
 
 		@captureOutput
-		def test(self, testX, testY, performanceFunction, arguments={}, output='match', scoreMode='label', **kwarguments):
+		def test(
+				self, testX, testY, performanceFunction, arguments={},
+				output='match', scoreMode='label', useLog=None, **kwarguments):
 			"""
 			Returns the evaluation of predictions of testX using the argument
 			performanceFunction to do the evalutation. Equivalent to having called
@@ -611,11 +614,37 @@ class UniversalInterface(object):
 			setup for training was the same.
 
 			"""
+			if useLog is None:
+				useLog = UML.settings.get("logger", "enabledByDefault")
+				useLog = True if useLog.lower() == 'true' else False
+
+			timer = None
+			if useLog:
+				timer = Stopwatch()
+				timer.start("test")
+
 			#UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, multiClassStrategy)
 			UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
-			pred = self.apply(testX, arguments, output, scoreMode, **kwarguments)
+			# need to do this here so we
+			mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
+
+			pred = self.apply(testX, mergedArguments, output, scoreMode, useLog=False)
 			performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction)
+
+			if useLog:
+				timer.stop('test')
+				fullName = self.interface.getCanonicalName() + self.learnerName
+				# Signature:
+				# (self, trainData, trainLabels, testData, testLabels, function,
+				# metrics, predictions, performance, timer, extraInfo=None,
+				# numFolds=None)
+				UML.logger.active.logRun(
+					trainData=None, trainLabels=None, testData=testX,
+					testLabels=testY, function=fullName,
+					metrics=[performanceFunction], predictions=None,
+					performance=[performance], timer=timer,
+					extraInfo=mergedArguments, numFolds=None)
 
 			return performance
 
@@ -630,7 +659,9 @@ class UniversalInterface(object):
 			return ret
 
 		@captureOutput
-		def apply(self, testX, arguments={}, output='match', scoreMode='label', **kwarguments):
+		def apply(
+				self, testX, arguments={}, output='match', scoreMode='label',
+				useLog=None, **kwarguments):
 			"""
 			Returns the application of this learner to the given test data (i.e. performing
 			prediction, transformation, etc. as appropriate to the learner). Equivalent to
@@ -640,12 +671,21 @@ class UniversalInterface(object):
 			"""
 			UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
+			if useLog is None:
+				useLog = UML.settings.get("logger", "enabledByDefault")
+				useLog = True if useLog.lower() == 'true' else False
+
+			timer = None
+			if useLog:
+				timer = Stopwatch()
+				timer.start("apply")
+
 #			self.interface._validateOutputFlag(output)
 #			self.interface._validateScoreModeFlag(scoreMode)
-			usedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
+			mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
 
 			# input transformation
-			(trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, usedArguments, self.customDict)
+			(trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None, testX, mergedArguments, self.customDict)
 
 			# depending on the mode, we need different information.
 			labels = None
@@ -656,9 +696,9 @@ class UniversalInterface(object):
 				labels = self.interface._outputTransformation(self.learnerName, labels, usedArguments, output, "label", self.customDict)
 
 			if scoreMode == 'label':
-				return labels
+				ret = labels
 			elif scoreMode == 'allScores':
-				return scores
+				ret = scores
 			else:
 				scoreOrder = self.interface._getScoresOrder(self.backend)
 				scoreOrder = list(scoreOrder)
@@ -671,7 +711,22 @@ class UniversalInterface(object):
 				scoreVector = scores.applyToPoints(grabValue, inPlace=False)
 				labels.appendFeatures(scoreVector)
 
-				return labels
+				ret = labels
+
+			if useLog:
+				timer.stop('apply')
+				fullName = self.interface.getCanonicalName() + self.learnerName
+				# Signature:
+				# (self, trainData, trainLabels, testData, testLabels, function,
+				# metrics, predictions, performance, timer, extraInfo=None,
+				# numFolds=None)
+				UML.logger.active.logRun(
+					trainData=None, trainLabels=None, testData=testX,
+					testLabels=None, function=fullName, metrics=None,
+					predictions=ret, performance=None, timer=timer,
+					extraInfo=mergedArguments, numFolds=None)
+
+			return ret
 
 		@captureOutput
 		def retrain(self, trainX, trainY=None):

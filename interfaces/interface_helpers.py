@@ -191,7 +191,7 @@ def checkClassificationStrategy(interface, learnerName, algArgs):
 	testObj = UML.createData("Matrix", dataTest)
 
 	tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs)
-	applyResults = tlObj.apply(testObj, arguments=algArgs)
+	applyResults = tlObj.apply(testObj, arguments=algArgs, useLog=False)
 	(a, b, testTrans, c) = interface._inputTransformation(learnerName, None, None, testObj, algArgs, tlObj.customDict)
 	rawScores = interface._getScores(tlObj.backend, testTrans, algArgs, tlObj.customDict)
 

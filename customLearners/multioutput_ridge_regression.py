@@ -26,7 +26,7 @@ class MultiOutputRidgeRegression(CustomLearner):
 		results = None
 
 		for i in xrange(len(self._learners)):
-			curr = self._learners[i].apply(testX)
+			curr = self._learners[i].apply(testX, useLog=False)
 			if results is None:
 				results = curr
 			else:
