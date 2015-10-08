@@ -172,6 +172,11 @@ if __name__ == "__main__":
 	# to the 'InTestSet' feature.
 	trainX, trainY, testX, testY = seperateData(dataAll, omitCultureQuestions)
 
+	trainX.name = "Training Data"
+	trainY.name = "Training Labels"
+	testX.name = "Testing Data"
+	testY.name = "Testing Labels"
+
 	# Check some of the expectations we had on the data to make sure
 	# we've extracted the right stuff
 	if performSanityCheck:
@@ -185,24 +190,34 @@ if __name__ == "__main__":
 
 
 	predictionPossibilities = []
-	predictionPossibilities.append("SVC full data out-sample only")
-	predictionPossibilities.append("set number of coefficients")
-	predictionPossibilities.append("cross validation")
-	predictionMode = predictionPossibilities[1]
+	predictionPossibilities.append("SVC full data out-sample only")  # 0
+	predictionPossibilities.append("Reduced number of coefficients")  # 1
+	predictionPossibilities.append("cross validation")  # 2
+	predictionPossibilities.append("Prediction: LogReg with L1")  # 3
+	predictionPossibilities.append("Prediction: LogReg with L2")  # 4
+	predictionPossibilities.append("Prediction: SVM")  # 5
+	predictionPossibilities.append("Prediction: SVM with poly kernel deg 2")  # 6
+	predictionPossibilities.append("Prediction: SVM with poly kernel deg 3")  # 7
+	predictionMode = predictionPossibilities[5]
 
+	print "Learning..."
+	print predictionMode
+	print ""
+
+	# 0
 	if predictionMode == "SVC full data out-sample only":
 		Cs = tuple([4**k for k in xrange(-8,8)])
-		print "Learning..."
-		print ""
 #		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, C=0.3) #19.7% out of sample error
 #		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=2, coef0=1, C=0.01) #19.2%
 		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1) 
 		print "bestError out of sample: ", str(round(bestError*100,1)) + "%"
 		sys.exit(0)
-	elif predictionMode == "set number of coefficients":
+	# 1
+	elif predictionMode == "Reduced number of coefficients":
 		name = "custom.LogisticRegressionWithSelection"
 		print "Finding exactly " + str(desiredNonZeroCoefficients) + " coefficients..."
 		trainedLearner = UML.train(name, trainX, trainY, desiredNonZero=desiredNonZeroCoefficients)
+	# 2
 	elif predictionMode == "cross validation":
 		#Cs = [4**k for k in xrange(-8,8)]
 		#print "Cross validating..."
@@ -210,10 +225,50 @@ if __name__ == "__main__":
 		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY, C=5, penalty="l2")
 		#trainedLearner = UML.train("scikitlearn.LogisticRegression", trainX, trainY)
 		trainedLearner = UML.train("scikitlearn.SVC", trainX, trainY, C=0.3)
-	else: raise Exception("Bad prediction mode!")
+	# 3
+	elif predictionMode == "Prediction: LogReg with L1":
+		name = "scikitlearn.LogisticRegression"
+		cVals = tuple([100. / (10**n) for n in range(7)])
+		print "Cross validated over C with values of: " + str(cVals)
+		trainedLearner = UML.train(
+			name, trainX, trainY, C=cVals, penalty='l1',
+			performanceFunction=fractionIncorrect)
+	# 4
+	elif predictionMode == "Prediction: LogReg with L2":
+		name = "scikitlearn.LogisticRegression"
+		cVals = tuple([100. / (10**n) for n in range(7)])
+		print "Cross validated over C with values of: " + str(cVals)
+		trainedLearner = UML.train(
+			name, trainX, trainY, C=cVals, penalty='l2',
+			performanceFunction=fractionIncorrect)
+	# 5
+	elif predictionMode == "Prediction: SVM":
+		name = "scikitlearn.SVC"
+		cVals = tuple([100. / (10**n) for n in range(7)])
+		print "Cross validated over C with values of: " + str(cVals)
+		trainedLearner = UML.train(
+			name, trainX, trainY, C=cVals, kernel='linear', performanceFunction=fractionIncorrect)
+	# 6
+	elif predictionMode == "Prediction: SVM with poly kernel deg 2":
+		name = "scikitlearn.SVC"
+		cVals = tuple([100. / (10**n) for n in range(7)])
+		print "Cross validated over C with values of: " + str(cVals)
+		trainedLearner = UML.train(
+			name, trainX, trainY, C=cVals, kernel='poly', degree=2,
+			performanceFunction=fractionIncorrect)
+	# 7
+	elif predictionMode == "Prediction: SVM with poly kernel deg 3":
+		name = "scikitlearn.SVC"
+		cVals = tuple([100. / (10**n) for n in range(7)])
+		print "Cross validated over C with values of: " + str(cVals)
+		trainedLearner = UML.train(
+			name, trainX, trainY, C=cVals, kernel='poly', degree=3,
+			performanceFunction=fractionIncorrect)
+	else:
+		raise Exception("Bad prediction mode!")
 	
 	# grab the feature names associated with the non-zero coefficients
-	printCoefficients(trainedLearner)
+#	printCoefficients(trainedLearner)
 
 	#Now measure the accuracy of the model
 	print "\n\n"
