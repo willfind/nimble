@@ -213,6 +213,23 @@ def initDataObject(
 	# extract names out of the data object if still needed
 	ret = extractNamesFromDataObject(ret, pnamesID, fnamesID)
 
+	def makeCmp(selectList):
+		positions = {}
+		for i in xrange(len(selectList)):
+			positions[selectList[i]] = i
+
+		def retCmp(view1, view2):
+			i1 = view1.index()
+			i2 = view2.index()
+			if positions[i1] < positions[i2]:
+				return -1
+			elif positions[i1] > positions[i2]:
+				return 1
+			else:
+				return 0
+
+		return retCmp
+
 	# select points and features if still needed
 	if selectPoints != 'all':
 		cleaned = []
@@ -220,14 +237,22 @@ def initDataObject(
 			converted = ret._getPointIndex(val)
 			if converted not in cleaned:
 				cleaned.append(converted)
-		ret = ret.copyPoints(sorted(cleaned))
+		if len(cleaned) == ret.pointCount:
+			ret.sortPoints(sortHelper=makeCmp(selectPoints))
+		else:
+			ret = ret.copyPoints(cleaned)
 	if selectFeatures != 'all':
 		cleaned = []
 		for val in selectFeatures:
 			converted = ret._getFeatureIndex(val)
 			if converted not in cleaned:
 				cleaned.append(converted)
-		ret = ret.copyFeatures(sorted(cleaned))
+
+		if len(cleaned) == ret.featureCount:
+			fCmp = makeCmp(selectFeatures)
+			ret.sortFeatures(sortHelper=fCmp)
+		else:
+			ret = ret.copyFeatures(cleaned)
 
 	return ret
 
@@ -634,6 +659,30 @@ def advancePastComments(openFile):
 
 	return numSkipped
 
+def _selectionNameValidation(select, names, kind):
+	"""
+	Helper for _loadcsvUsingPython to check that when points or features
+	are specified, if we have no source of names that only integer
+	values are in the specification list. This is generic over whether
+	points or features are selected.
+
+	"""
+	kind = kind.lower()
+	paramName = 'select' + kind.capitalize()
+	if select != 'all':
+		if names is False:
+			# in this case we have no names for reference,
+			# so no strings should be in the list
+			for val in select:
+				if not isinstance(val, int):
+					msg = "No " + kind + " names were provided by the user, and "
+					msg += "they are not being extracted from the data, "
+					msg += 'therefore only interger valued indices are '
+					msg += 'allowed in the ' + paramName + 's parameter'
+					raise ArgumentException(msg)
+
+
+
 def _loadcsvUsingPython(
 		openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
 		selectPoints, selectFeatures):
@@ -688,37 +737,29 @@ def _loadcsvUsingPython(
 	(pointNames, featureNames) = _checkCSV_for_Names(
 		openFile, pointNames, featureNames)
 
-	# some validation on how selection interacts with point and feature
-	# name extraction
-	if selectPoints != 'all':
-		if pointNames is False:
-			# in this case we have no pointNames for reference,
-			# so no strings should be in the list
-			for val in selectPoints:
-				if not isinstance(val, int):
-					msg = "No point names were provided by the user, and "
-					msg += "they are not being extracted from the data, "
-					msg += 'therefore only interger valued indices are '
-					msg += 'allowed in the selectPoints parameter'
-					raise ArgumentException(msg)
-
-	if selectFeatures != 'all':
-		if featureNames is False:
-			# in this case we have no featureNames for reference,
-			# so no strings should be in the list
-			for val in selectFeatures:
-				if not isinstance(val, int):
-					msg = "No feature names were provided by the user, and "
-					msg += "they are not being extracted from the data, "
-					msg += 'therefore only interger valued indices are '
-					msg += 'allowed in the selectFeatures parameter'
-					raise ArgumentException(msg)
+	# check that if we have no source of names, and specific values are
+	# specified for selection, that they are specified only with integer
+	# indices, NOT names.
+	_selectionNameValidation(selectPoints, pointNames, 'point')
+	_selectionNameValidation(selectFeatures, featureNames, 'feature')
 
 	# TODO Try to determine formating
 
-	# where the data from the file will be placed
+	# where the data from the file will be placed, in the same order as
+	# in the file.
 	data = []
-
+	# where the data from the file will be placed, in the order specified
+	# by selectPoints if that order doesn't match the order in the file.
+	# shares references to the same lists as the variable data, so lists
+	# modified through data share changes with retData. Will be None
+	# and ignored if no reordering needs to take place.
+	retData = None
+	if selectPoints != 'all' and selectPoints != sorted(selectPoints):
+		retData = [None] * len(selectPoints)
+		reverseSelectPoints = {}
+		for i in xrange(len(selectPoints)):
+			reverseSelectPoints[selectPoints[i]] = i
+		
 	# after _checkCSV_for_Names then both pointNames or featureNames
 	# should either be True, False, a list or a dict
 	extractPNames = pointNames is True
@@ -744,8 +785,9 @@ def _loadcsvUsingPython(
 	# send that line iterator to the csv reader
 	lineReader = csv.reader(filtered)
 
-	# extract names from first row if needed, and record number of
-	# columns in a row
+	# extract names from first row if needed, record number of
+	# columns in a row, and record a few book-keeping details
+	# to be output in case of an exception
 	if extractFNames:
 		fnamesRow = lineReader.next()
 		# Number values in a row excluding point names
@@ -772,8 +814,10 @@ def _loadcsvUsingPython(
 		columnsDefIndex = (trialReader.line_num - 1) + skippedLines
 		columnsDefSrc = "row"
 
-	# now that we have featureNames, we have to do validation
-	# and setup the removal record
+	# now that we have featureNames, we can do full validation of both
+	# the feature names and the selectFeatures parameter. We also setup
+	# the removal record wrt columns that do not represent selected
+	# features.
 	if selectFeatures != 'all':
 		cleaned = []
 		for val in selectFeatures:
@@ -789,6 +833,7 @@ def _loadcsvUsingPython(
 			cleaned.append(selIndex)
 		
 		# initialize, but only if we know we'll be adding something
+		selectFeatures = cleaned
 		if len(cleaned) > 0:
 			removeRecord[0] = []
 		for i in xrange(numFeatures):
@@ -808,7 +853,8 @@ def _loadcsvUsingPython(
 	# at the beginning of the file
 	lineIndex = skippedLines
 
-	# the csv reader gives a list of string values for each row
+	# Read through the csv file, row by row.
+	# The csv reader gives a list of string values for each row
 	for row in lineReader:
 		pointIndex += 1
 		rowIndex += 1
@@ -844,6 +890,8 @@ def _loadcsvUsingPython(
 			toAdd = convertAndFilterRow(row, pointIndex, removeRecord,
 				featsToRemoveSet, ignoreNonNumericalFeatures)
 			data.append(toAdd)
+			if retData is not None:
+				retData[reverseSelectPoints[rowIndex]] = toAdd
 		else:
 			# not selected, so move on to the next row; and index
 			# as if it was never present
@@ -854,8 +902,12 @@ def _loadcsvUsingPython(
 
 	# Since the convertAndFilterRow helper only removes unwanted features
 	# after they've been discovered, we need to remove the from the earlier
-	# part of the data after it has all been read into memory
-	filterRemovalCleanup(data, removeRecord, featsToRemoveList)
+	# part of the data after it has all been read into memory. Also, we
+	# may need to adjust the order of features and points due to the
+	# selection paramters, and this is a convenient and efficient place to
+	# do so.
+	_removalCleanupAndSelectionOrdering(
+		data, removeRecord, featsToRemoveList, selectFeatures)
 
 	# this information might have been generated, but only if we didn't
 	# actually get the names, so pass it along
@@ -878,19 +930,53 @@ def _loadcsvUsingPython(
 				copyIndex += 1
 		retFNames = retFNames[:copyIndex]
 
-	return (data, retPNames, retFNames, True)
+	if retData is None:
+		retData = data
+
+	return (retData, retPNames, retFNames, True)
 
 
-def filterRemovalCleanup(data, record, fullRemoveList):
+def _removalCleanupAndSelectionOrdering(
+		data, record, fullRemoveList, selectFeatures):
 	"""
 	Adjust the given data so that the features to remove as contained in the
-	dict record are appropriately removed. Since removal is done only after
-	first sighting of an unwanted value, then the rows prior to the first
-	sighting still have that feature. Therefore, this function iterates the
-	rows in the data, removing features until the point where they were
-	discovered.
+	dict record are appropriately removed from each row. Since removal is
+	done only after first sighting of an unwanted value, then the rows prior
+	to the first sighting still have that feature. Therefore, this function
+	iterates the rows in the data, removing features until the point where 
+	they were discovered.
+
+	Also: if selectFeatures defines an ordering other than
+	the one present in the file, then we will adjust the order of the data
+	in this helper. The actual selection has already occured during the
+	csv reading loop.
+
+	Because data shares references with retData in _loadcsvUsingPython,
+	this does not change the contents of the parameter data, only the
+	lists referenced by it
 
 	"""
+	# feature order adjustment will take place at the same time as unwanted
+	# column removal. This just defines a triggering variable.
+	adjustFeatureOrder = False
+	if selectFeatures != 'all' and selectFeatures != sorted(selectFeatures):
+		adjustFeatureOrder = True
+		# maps the index of the column to the position that it should
+		# be copied into.
+		reverseSelectFeatures = {}
+		# since we are doing this lookup after we have selected
+		# some features, we have to reindex according to those
+		# that are currently present. Since they are stored in the
+		# file in lexigraphical order, we use the sorted selection
+		# list to define the reindexing
+		sortedSelectFeatures = sorted(selectFeatures)
+		for i in xrange(len(sortedSelectFeatures)):
+			reIndexed = sortedSelectFeatures[i]
+			reverseSelectFeatures[i] = selectFeatures.index(reIndexed)
+
+	# need to sort select points. the index into the row maps into the
+	# sorted list, which gives the key to reverseSelectFeatures
+
 	# remaining features to be removed, indexed relative to all possible
 	# features in the csv file
 	absRemoveList = fullRemoveList
@@ -898,6 +984,8 @@ def filterRemovalCleanup(data, record, fullRemoveList):
 	# remaining features to be removed, reindexed given the knowledge of
 	# which points have already been removed
 	relRemoveList = copy.copy(absRemoveList)
+
+	copySpace = [None] * len(data[len(data)-1])
 
 	for rowIndex in xrange(len(data)):
 		# check if some feature was added at this row, and if so, delete
@@ -919,12 +1007,38 @@ def filterRemovalCleanup(data, record, fullRemoveList):
 					copyIndex += 1
 			absRemoveList = absRemoveList[:copyIndex]
 			relRemoveList = relRemoveList[:copyIndex]
-			
-		# pop the desired indices, starting with the ones at the end of
-		# the list and working backwards
-		for i in xrange(len(relRemoveList)):
-			removalIndex = relRemoveList[-(i+1)]
-			data[rowIndex].pop(removalIndex)
+		
+		# The following loop will be copying inplace. Note though, that
+		# since numCopied will then be used as the index to copy into, and
+		# it will always be less than or equal to i, so we never corrupt
+		# the values we iterate over.
+		remIndex = 0
+		# If no feature reordering will take place, this serves as the index
+		# to copy into. If feature reordering will take place, this is used
+		# as the index of the feature, to do a lookup for the copy index.
+		numCopied = 0
+
+		for i in xrange(len(data[rowIndex])):
+			if remIndex < len(relRemoveList) and i == relRemoveList[remIndex]:
+				remIndex += 1
+			else:
+				# the index into data[rowIndex] where you will be copying
+				# this particular value
+				featureIndex = numCopied
+				if adjustFeatureOrder:
+					featureIndex = reverseSelectFeatures[numCopied]
+
+				copySpace[featureIndex] = data[rowIndex][i]
+				numCopied += 1
+
+		# copy the finalized point back into the list referenced by data
+		for i in xrange(len(copySpace)):
+			data[rowIndex][i] = copySpace[i]
+
+		# TODO: run time trials to compare pop vs copying into new list
+		needToPop = len(data[rowIndex]) - numCopied
+		for i in xrange(needToPop):
+			data[rowIndex].pop()
 
 
 def convertAndFilterRow(row, pointIndex, record, toRemoveSet,

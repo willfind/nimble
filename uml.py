@@ -406,25 +406,28 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 	indicates that all possible points in the raw data will be included.
 	Alternatively, the user may provide a list containing either names or
 	indices (or a mix) of those points they want to be selected from the
-	raw data. In the case of reading data from a file, the selection will
-	be done at read time, thus limiting the amount of data read into memory.
+	raw data. The order of this list will determine the order of points in
+	the resultant object. In the case of reading data from a file, the
+	selection will be done at read time, thus limiting the amount of data
+	read into memory.
 
 	selectFeatures: Allows the user to specify a selection of features to
 	be the only ones included in the returned object. By default, the value
 	'all' indicates that all possible features in the raw data will be
 	included. Alternatively, the user may provide a list containing either
 	names or indices (or a mix) of those features they want to be selected
-	from the raw data. In the case of reading data from a file, the selection
-	will be done at read time, thus limiting the amount of data read into
-	memory. Names and indices are defined with respect to the data regardless
-	of filtering by the ignoreNonNumericalFeatures flag; just because a feature
-	is removed, the indices of subsequent features will not be shifted.
-	The ignoreNonNumericalFeatures flag is only consdered after selection: if
-	a selected feature has non-numerical values and ignoreNonNumericalFeatures
-	is True valued, then that feature will NOT be included in the output.
-	Similarly, if a feature has only numerical values in points that were
-	selected, then even if there are non-numerical values in the points that
-	were not selected, then that feature will be included
+	from the raw data. The order of this list will determine the order of
+	points in the resultant object. In the case of reading data from a file,
+	the selection will be done at read time, thus limiting the amount of data
+	read into memory. Names and indices are defined with respect to the data
+	regardless of filtering by the ignoreNonNumericalFeatures flag; just
+	because a feature is removed, the indices of subsequent features will not
+	be shifted. The ignoreNonNumericalFeatures flag is only consdered after
+	selection: if a selected feature has non-numerical values and
+	ignoreNonNumericalFeatures is True valued, then that feature will NOT be
+	included in the output. Similarly, if a feature has only numerical values
+	in points that were selected, then even if there are non-numerical values
+	in the points that were not selected, then that feature will be included
 
 	ignoreNonNumericalFeatures: True or False (default False) value indicating
 	whether, when loading from a file, features containing non numercal data
