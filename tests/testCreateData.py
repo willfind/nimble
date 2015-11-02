@@ -459,7 +459,27 @@ def test_extractNames_MTXCoo():
 		else:
 			assert fromList == fromMTXCoo
 
+@raises(ArgumentException)
+def test_csv_extractNames_duplicatePointName():
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write('ignore,one,two,three\n')
+		tmpCSV.write("pn1,1,2,3\n")
+		tmpCSV.write("pn1,11,22,33\n")
+		tmpCSV.flush()
 
+		UML.createData(returnType="List", data=tmpCSV.name, pointNames=True)
+
+@raises(ArgumentException)
+def test_csv_extractNames_duplicateFeatureName():
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write('one,two,one\n')
+		tmpCSV.write("1,2,3\n")
+		tmpCSV.write("11,22,33\n")
+		tmpCSV.flush()
+
+		UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
 
 
 ##################################
@@ -882,47 +902,234 @@ def test_CSVformatting_emptyAndCommentLines():
 			assert fromList == fromCSV
 
 
+def test_CSVformatting_scientificNotationAndNameExtraction():
+	data = [[1.,2.,3.], [11.,22.,33.],[111.,222.,333.]]
+	fromList = UML.createData(
+		returnType="List", data=data, pointNames=True, featureNames=True)
+
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1.000000000e+00,2.000000000e+00,3.000000000e+00\n")
+		tmpCSV.write("1.100000000e+01,2.200000000e+01,3.300000000e+01\n")
+		tmpCSV.write("1.110000000e+02,2.220000000e+02,3.330000000e+02\n")
+		tmpCSV.flush()
+
+		fromCSV = UML.createData(
+			returnType="List", data=tmpCSV.name, pointNames=True, featureNames=True)
+
+		assert fromList == fromCSV
+
+
+
 ################################
 # selectPoints, selectFeatures #
 ################################
 
-def test_createData_PFselection_integrationAllPossible():
+def test_createData_PFselection_AllPossibleNatOrder():
 	filesForms = ['csv', 'mtx']
-	for t in returnTypes:
+	for (t, f) in itertools.product(returnTypes, filesForms):
 		data = [[1,2,3],[11,22,33],[111,222,333]]
 		orig = UML.createData(returnType=t, data=data)
+		with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+			orig.writeFile(tmpF.name, format=f, includeNames=False)
+			tmpF.flush()
 
-		# try all file input types
-		for f in filesForms:
-			with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-				orig.writeFile(tmpF.name, format=f, includeNames=False)
-				tmpF.flush()
+			poss = [[0],[1],[2],[0,1],[0,2],[1,2],[0,1,2],'all']
+			for (pSel, fSel) in itertools.product(poss, poss):
+				ret = UML.createData(
+					t, tmpF.name, selectPoints=pSel, selectFeatures=fSel)
+				fromOrig = UML.createData(
+					t, orig.data, selectPoints=pSel, selectFeatures=fSel)
 
-				poss = [[0],[1],[2],[0,1],[0,2],[1,2],[0,1,2],'all']
-				for pSel in poss:
-					for fSel in poss:
-						ret = UML.createData(
-							t, tmpF.name, selectPoints=pSel, selectFeatures=fSel)
-						fromOrig = UML.createData(
-							t, orig.data, selectPoints=pSel, selectFeatures=fSel)
+				assert ret == fromOrig
 
-						assert ret == fromOrig
 
-						if pSel != 'all' and fSel != 'all' and (len(pSel) != 1
-								and len(fSel) != 1):
-							pSelR = copy.copy(pSel)
-							pSelR.reverse()
-							fSelR = copy.copy(fSel)
-							fSelR.reverse()
+def test_createData_PFselection_AllPossibleReverseOrder():
+	filesForms = ['csv', 'mtx']
+	for (t, f) in itertools.product(returnTypes, filesForms):
+		data = [[1,2,3],[11,22,33],[111,222,333]]
+		orig = UML.createData(returnType=t, data=data)
+		with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+			orig.writeFile(tmpF.name, format=f, includeNames=False)
+			tmpF.flush()
 
-							retT = UML.createData(
-								t, tmpF.name, selectPoints=pSelR, selectFeatures=fSelR)
-							fromOrigT = UML.createData(
-								t, orig.data, selectPoints=pSelR, selectFeatures=fSelR)
+			poss = [[0,1],[0,2],[1,2],[0,1,2]]
+			for (pSel, fSel) in itertools.product(poss, poss):
+				ret = UML.createData(
+					t, tmpF.name, selectPoints=pSel, selectFeatures=fSel)
+				fromOrig = UML.createData(
+					t, orig.data, selectPoints=pSel, selectFeatures=fSel)
 
-							assert retT != ret
-							assert retT == fromOrigT
-							assert fromOrigT != fromOrig
+				assert ret == fromOrig
+
+				pSelR = copy.copy(pSel)
+				pSelR.reverse()
+				fSelR = copy.copy(fSel)
+				fSelR.reverse()
+
+				retT = UML.createData(
+					t, tmpF.name, selectPoints=pSelR, selectFeatures=fSelR)
+				fromOrigT = UML.createData(
+					t, orig.data, selectPoints=pSelR, selectFeatures=fSelR)
+
+				assert retT != ret
+				assert retT == fromOrigT
+				assert fromOrigT != fromOrig
+
+
+def test_createData_PFselection_AllPossibleWithNames_extracted():
+	data = [[1.,2.,3.],[11.,22.,33.],[111.,222.,333.]]
+	orig = UML.createData(returnType="List", data=data)
+	filesForms = ['csv', 'mtx']
+	for (t, f) in itertools.product(returnTypes, filesForms):
+		with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+			orig.writeFile(
+				tmpF.name, format=f, includeNames=False)
+			tmpF.flush()
+
+			poss = [[0],[1],[0,1],[1,0],'all']
+			for (pSel, fSel) in itertools.product(poss, poss):
+				toUse = orig.copyAs("pythonlist")
+				fromOrig = UML.createData(
+					t, toUse, selectPoints=pSel, selectFeatures=fSel,
+					pointNames=True, featureNames=True)
+
+				ret = UML.createData(
+					t, tmpF.name, selectPoints=pSel, selectFeatures=fSel,
+					pointNames=True, featureNames=True)
+
+				pSelUse = copy.copy(pSel)
+				fSelUse = copy.copy(fSel)
+				if pSel != 'all':
+					for i in xrange(len(pSel)):
+						pSelUse[i] = ret.getPointName(i)
+
+				if fSel != 'all':
+					for i in xrange(len(fSel)):
+						fSelUse[i] = ret.getFeatureName(i)
+
+				retN = UML.createData(
+					t, tmpF.name, selectPoints=pSelUse,
+					selectFeatures=fSelUse, pointNames=True,
+					featureNames=True)
+
+				assert ret == fromOrig
+				assert retN == fromOrig
+
+
+def test_createData_PFselection_AllPossibleWithNames_listProvided():
+	pnames = ["11.", "111."]
+	fnames = ["2.", "3."]
+	data = [[22.,33.],[222.,333.]]
+	orig = UML.createData(
+		returnType="List", data=data, pointNames=pnames, featureNames=fnames)
+
+	filesForms = ['csv', 'mtx']
+	for (t, f) in itertools.product(returnTypes, filesForms):
+		with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+			orig.writeFile(
+				tmpF.name, format=f, includeNames=False)
+			tmpF.flush()
+
+			poss = [[0],[1],[0,1],[1,0],'all']
+			for (pSel, fSel) in itertools.product(poss, poss):
+				toUseData = orig.copyAs("pythonlist")
+
+				fromOrig = UML.createData(
+					t, toUseData, selectPoints=pSel, selectFeatures=fSel,
+					pointNames=pnames, featureNames=fnames)
+
+				ret = UML.createData(
+					t, tmpF.name, selectPoints=pSel, selectFeatures=fSel,
+					pointNames=pnames, featureNames=fnames)
+
+				pSelUse = copy.copy(pSel)
+				fSelUse = copy.copy(fSel)
+				if pSel != 'all':
+					for i in xrange(len(pSel)):
+						pSelUse[i] = ret.getPointName(i)
+
+				if fSel != 'all':
+					for i in xrange(len(fSel)):
+						fSelUse[i] = ret.getFeatureName(i)
+
+				retN = UML.createData(
+					t, tmpF.name, selectPoints=pSelUse,
+					selectFeatures=fSelUse, pointNames=pnames,
+					featureNames=fnames)
+
+				assert ret == fromOrig
+				assert retN == fromOrig
+
+
+def test_createData_PFselection_AllPossibleWithNames_dictProvided():
+	pnames = {"11.":0, "111.":1}
+	fnames = {"2.":0, "3.":1}
+	data = [[22.,33.],[222.,333.]]
+	orig = UML.createData(
+		returnType="List", data=data, pointNames=pnames, featureNames=fnames)
+
+	filesForms = ['csv', 'mtx']
+	for (t, f) in itertools.product(returnTypes, filesForms):
+		with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
+			orig.writeFile(
+				tmpF.name, format=f, includeNames=False)
+			tmpF.flush()
+
+			poss = [[0],[1],[0,1],[1,0],'all']
+			for (pSel, fSel) in itertools.product(poss, poss):
+				toUseData = orig.copyAs("pythonlist")
+
+				fromOrig = UML.createData(
+					t, toUseData, selectPoints=pSel, selectFeatures=fSel,
+					pointNames=pnames, featureNames=fnames)
+
+				ret = UML.createData(
+					t, tmpF.name, selectPoints=pSel, selectFeatures=fSel,
+					pointNames=pnames, featureNames=fnames)
+
+				pSelUse = copy.copy(pSel)
+				fSelUse = copy.copy(fSel)
+				if pSel != 'all':
+					for i in xrange(len(pSel)):
+						pSelUse[i] = ret.getPointName(i)
+
+				if fSel != 'all':
+					for i in xrange(len(fSel)):
+						fSelUse[i] = ret.getFeatureName(i)
+
+				retN = UML.createData(
+					t, tmpF.name, selectPoints=pSelUse,
+					selectFeatures=fSelUse, pointNames=pnames,
+					featureNames=fnames)
+
+				assert ret == fromOrig
+				assert retN == fromOrig
+
+
+def test_createData_csv_pointSelectionIndexingGivenFeatureNames():
+	data = [[111,222,333]]
+	fnames = ['1','2','3']
+	wanted = UML.createData("Matrix", data=data, featureNames=fnames)
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,3\n")
+		tmpCSV.write("11,22,33\n")
+		tmpCSV.write("111,222,333\n")
+		tmpCSV.flush()
+
+		fromCSV = UML.createData(
+			"Matrix", data=tmpCSV.name, selectPoints=[1], featureNames=True)
+
+		raw = [[1,2,3],[11,22,33],[111,222,333]]
+		fromRaw = UML.createData(
+			"Matrix", data=raw, selectPoints=[1], featureNames=True)
+
+		assert fromRaw == wanted
+		assert fromCSV == wanted
+
+
+
 
 # since the createData helper for raw data is chained onto the
 # helper for file input, we need tests to show that we don't
@@ -1071,83 +1278,83 @@ def test_createData_PFselection_mtxCoo_simple():
 
 
 def test_createData_PFselection_pythonList_simple():
-	wanted = UML.createData("Matrix", data=[[22],[222]])
+	wanted = UML.createData("Matrix", data=[[22,33],[222,333]])
 	raw = [[1,2,3],[11,22,33],[111,222,333]]
 
 	fromList = UML.createData(
-		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1,2])
 	assert fromList == wanted
 
-	wanted = UML.createData("Matrix", data=[[222],[22]])
+	wanted = UML.createData("Matrix", data=[[333,222],[33,22]])
 	fromList = UML.createData(
-		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[2,1])
 	assert fromList == wanted
 
 
 def test_createData_PFselection_npArray_simple():
-	wanted = UML.createData("Matrix", data=[[22],[222]])
+	wanted = UML.createData("Matrix", data=[[22,33],[222,333]])
 	rawList = [[1,2,3],[11,22,33],[111,222,333]]
 	raw = numpy.array(rawList)
 
 	fromNPArr = UML.createData(
-		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1,2])
 	assert fromNPArr == wanted
 
-	wanted = UML.createData("Matrix", data=[[222],[22]])
+	wanted = UML.createData("Matrix", data=[[333,222],[33,22]])
 	fromNPArr = UML.createData(
-		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[2,1])
 	assert fromNPArr == wanted
 
 
 def test_createData_PFselection_npMatrix_simple():
-	wanted = UML.createData("Matrix", data=[[22],[222]])
+	wanted = UML.createData("Matrix", data=[[22,33],[222,333]])
 	rawList = [[1,2,3],[11,22,33],[111,222,333]]
 	raw = numpy.matrix(rawList)
 
 	fromList = UML.createData(
-		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1,2])
 	assert fromList == wanted
 
-	wanted = UML.createData("Matrix", data=[[222],[22]])
+	wanted = UML.createData("Matrix", data=[[333,222],[33,22]])
 	fromList = UML.createData(
-		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[2,1])
 	assert fromList == wanted
 
 
 def test_createData_PFselection_spCoo_simple():
-	wanted = UML.createData("Matrix", data=[[22],[222]])
+	wanted = UML.createData("Matrix", data=[[22,33],[222,333]])
 	rawList = [[1,2,3],[11,22,33],[111,222,333]]
 	rawMat = numpy.matrix(rawList)
 	raw = scipy.sparse.coo_matrix(rawMat)
 
 	fromCOO = UML.createData(
-		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1,2])
 	assert fromCOO == wanted
 
-	wanted = UML.createData("Matrix", data=[[222],[22]])
+	wanted = UML.createData("Matrix", data=[[333,222],[33,22]])
 	fromCOO = UML.createData(
-		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[2,1])
 	assert fromCOO == wanted
 
 
 def test_createData_PFselection_spCsc_simple():
-	wanted = UML.createData("Matrix", data=[[22],[222]])
+	wanted = UML.createData("Matrix", data=[[22,33],[222,333]])
 	rawList = [[1,2,3],[11,22,33],[111,222,333]]
 	rawMat = numpy.matrix(rawList)
 	raw = scipy.sparse.csc_matrix(rawMat)
 
 	fromCSC = UML.createData(
-		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[1,2], selectFeatures=[1,2])
 	assert fromCSC == wanted
 
-	wanted = UML.createData("Matrix", data=[[222],[22]])
+	wanted = UML.createData("Matrix", data=[[333,222],[33,22]])
 	fromCSC = UML.createData(
-		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[1])
+		"Matrix", data=raw, selectPoints=[2,1], selectFeatures=[2,1])
 	assert fromCSC == wanted
 
 
 @raises(ArgumentException)
-def test_createData_PFselection_csv_ExceptionUnknownName():
+def test_selection_csv_ExceptionUnknownFeatureName_Extracted():
 	# instantiate from csv file
 	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
 		tmpCSV.write("pns,ones,twos,threes\n")
@@ -1158,11 +1365,23 @@ def test_createData_PFselection_csv_ExceptionUnknownName():
 
 		UML.createData(
 			returnType='List', data=tmpCSV.name, pointNames=True,
-			featureNames=True, selectPoints=[2,3], selectFeatures=["fours"])
-
+			featureNames=True, selectFeatures=[0,"fours"])
 
 @raises(ArgumentException)
-def test_createData_csv_selectionPoints_noNamesButNameSpecified():
+def test_selection_csv_ExceptionUnknownFeatureName_Provided():
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,3\n")
+		tmpCSV.write("11,22,33\n")
+		tmpCSV.write("111,222,333\n")
+		tmpCSV.flush()
+
+		UML.createData(
+			returnType='List', data=tmpCSV.name,
+			featureNames=['ones','twos','threes'], selectFeatures=[0,"fours"])
+
+@raises(ArgumentException)
+def test_csv_selectFeatures_indexNotInFile():
 	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
 		tmpCSV.write("pns,ones,twos,threes\n")
 		tmpCSV.write("single,1,2,3\n")
@@ -1172,11 +1391,10 @@ def test_createData_csv_selectionPoints_noNamesButNameSpecified():
 
 		UML.createData(
 			returnType='List', data=tmpCSV.name, pointNames=False,
-			featureNames=False, selectPoints=['dubs',4], selectFeatures=[2])
-
+			featureNames=False, selectPoints=[1,2], selectFeatures=[1,42])
 
 @raises(ArgumentException)
-def test_createData_csv_selectionFeatures_noNamesButNameSpecified():
+def test_csv_selectPoints_indexNotInFile():
 	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
 		tmpCSV.write("pns,ones,twos,threes\n")
 		tmpCSV.write("single,1,2,3\n")
@@ -1186,7 +1404,157 @@ def test_createData_csv_selectionFeatures_noNamesButNameSpecified():
 
 		UML.createData(
 			returnType='List', data=tmpCSV.name, pointNames=False,
-			featureNames=False, selectPoints=[3,4], selectFeatures=["threes"])
+			featureNames=False, selectPoints=[12,2,3], selectFeatures=[1,2])
+
+
+@raises(ArgumentException)
+def test_selection_csv_ExceptionUnknownPointName_extracted():
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("pns,ones,twos,threes\n")
+		tmpCSV.write("single,1,2,3\n")
+		tmpCSV.write("dubs,11,22,33\n")
+		tmpCSV.write("trips,111,222,333\n")
+		tmpCSV.flush()
+
+		UML.createData(
+			returnType='List', data=tmpCSV.name, pointNames=True,
+			featureNames=True, selectPoints=[1,"quads"])
+
+
+@raises(ArgumentException)
+def test_selection_csv_ExceptionUnknownPointName_provided():
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,3\n")
+		tmpCSV.write("11,22,33\n")
+		tmpCSV.write("111,222,333\n")
+		tmpCSV.flush()
+
+		UML.createData(
+			returnType='List', data=tmpCSV.name,
+			pointNames=['single','dubs','trips'], selectPoints=[1,"quads"])
+
+
+@raises(ArgumentException)
+def test_csv_selectPoints_noNamesButNameSpecified():
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("pns,ones,twos,threes\n")
+		tmpCSV.write("single,1,2,3\n")
+		tmpCSV.write("dubs,11,22,33\n")
+		tmpCSV.write("trips,111,222,333\n")
+		tmpCSV.flush()
+
+		UML.createData(
+			returnType='List', data=tmpCSV.name, pointNames=False,
+			featureNames=False, selectPoints=['dubs',1], selectFeatures=[2])
+
+
+@raises(ArgumentException)
+def test_csv_selectFeatures_noNamesButNameSpecified():
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("pns,ones,twos,threes\n")
+		tmpCSV.write("single,1,2,3\n")
+		tmpCSV.write("dubs,11,22,33\n")
+		tmpCSV.write("trips,111,222,333\n")
+		tmpCSV.flush()
+
+		UML.createData(
+			returnType='List', data=tmpCSV.name, pointNames=False,
+			featureNames=False, selectFeatures=["threes"])
+
+
+def test_csv_selectFeatures_duplicatesInList():
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("pns,ones,twos,threes\n")
+		tmpCSV.write("single,1,2,3\n")
+		tmpCSV.write("dubs,11,22,33\n")
+		tmpCSV.write("trips,111,222,333\n")
+		tmpCSV.flush()
+
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name, pointNames=True,
+				featureNames=True, selectFeatures=[1,1])
+			assert False
+		except ArgumentException:
+			pass
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name, pointNames=True,
+				featureNames=True, selectFeatures=[1,'twos'])
+			assert False
+		except ArgumentException:
+			pass
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name, pointNames=True,
+				featureNames=True, selectFeatures=['threes','threes'])
+			assert False
+		except ArgumentException:
+			pass
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name, pointNames=True,
+				featureNames=['ones','twos','threes'], selectFeatures=[1,'twos'])
+			assert False
+		except ArgumentException:
+			pass
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name, pointNames=True,
+				featureNames=['ones','twos','threes'],
+				selectFeatures=['threes','threes'])
+			assert False
+		except ArgumentException:
+			pass
+
+
+def test_csv_selectPoints_duplicatesInList():
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("pns,ones,twos,threes\n")
+		tmpCSV.write("single,1,2,3\n")
+		tmpCSV.write("dubs,11,22,33\n")
+		tmpCSV.write("trips,111,222,333\n")
+		tmpCSV.flush()
+
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name, pointNames=True,
+				featureNames=True, selectPoints=[1,1])
+			assert False
+		except ArgumentException:
+			pass
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name, pointNames=True,
+				featureNames=True, selectPoints=[1,'dubs'])
+			assert False
+		except ArgumentException:
+			pass
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name, pointNames=True,
+				featureNames=True, selectPoints=['trips','trips'])
+			assert False
+		except ArgumentException:
+			pass
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name,
+				pointNames=['single','dubs','trips'], featureNames=True,
+				selectPoints=[1,'dubs'])
+			assert False
+		except ArgumentException:
+			pass
+		try:
+			UML.createData(
+				returnType='List', data=tmpCSV.name,
+				pointNames=['single','dubs','trips'], featureNames=True,
+				selectPoints=['trips','trips'])
+			assert False
+		except ArgumentException:
+			pass
 
 
 def test_createData_csv_PFselection_and_ignoreFlag():
@@ -1207,10 +1575,25 @@ def test_createData_csv_PFselection_and_ignoreFlag():
 
 			fromCSV = UML.createData(
 				returnType=t, data=tmpCSV.name, pointNames=True,
-				featureNames=True, selectPoints=[2,'dubs', 1],
+				featureNames=True, selectPoints=[2,'dubs'],
 				selectFeatures=[1,'threes'], ignoreNonNumericalFeatures=True)
 
 			assert fromList == fromCSV
+
+
+def test_createData_Pselection_csv_endAfterAllSelected():
+	wanted = UML.createData("Matrix", data=[[11,22,33],[1,2,3]])
+	# instantiate from csv file
+	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+		tmpCSV.write("1,2,3\n")
+		tmpCSV.write("11,22,33\n")
+		# This line has an extra value - if it was actually read by the
+		# csv input helper, it would cause an exception to be raised.
+		tmpCSV.write("111,222,333,444\n")
+		tmpCSV.flush()
+
+		fromCSV = UML.createData("Matrix", data=tmpCSV.name, selectPoints=[1,0])
+		assert fromCSV == wanted
 
 
 

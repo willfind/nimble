@@ -238,7 +238,7 @@ def initDataObject(
 			if converted not in cleaned:
 				cleaned.append(converted)
 		if len(cleaned) == ret.pointCount:
-			ret.sortPoints(sortHelper=makeCmp(selectPoints))
+			ret.sortPoints(sortHelper=makeCmp(cleaned))
 		else:
 			ret = ret.copyPoints(cleaned)
 	if selectFeatures != 'all':
@@ -249,7 +249,7 @@ def initDataObject(
 				cleaned.append(converted)
 
 		if len(cleaned) == ret.featureCount:
-			fCmp = makeCmp(selectFeatures)
+			fCmp = makeCmp(cleaned)
 			ret.sortFeatures(sortHelper=fCmp)
 		else:
 			ret = ret.copyFeatures(cleaned)
@@ -376,6 +376,12 @@ def createDataFromFile(
 	if selectSuccess:
 		selectPoints = 'all'
 		selectFeatures = 'all'
+	# no guarantee that names were dealt with in this case
+	else:
+		if retPNames is None and isinstance(pointNames, (list, dict)):
+			retPNames = pointNames
+		if retFNames is None and isinstance(featureNames, (list, dict)):
+			retFNames = featureNames
 
 	return initDataObject(
 		returnType, retData, retPNames, retFNames, name, path,
@@ -624,14 +630,14 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
 
 	return (pointNames, featureNames)
 
-def filterCSVRow(row):
+def _filterCSVRow(row):
 	if len(row) == 0:
 		return False
 	if row[0] == '\n':
 		return False
 	return True
 
-def advancePastComments(openFile):
+def _advancePastComments(openFile):
 	"""
 	Take an open file and advance until we find a line that isn't empty
 	and doesn't start with the comment character. Returns the number
@@ -659,7 +665,7 @@ def advancePastComments(openFile):
 
 	return numSkipped
 
-def _selectionNameValidation(select, names, kind):
+def _selectionNameValidation(select, hasNames, kind):
 	"""
 	Helper for _loadcsvUsingPython to check that when points or features
 	are specified, if we have no source of names that only integer
@@ -670,7 +676,7 @@ def _selectionNameValidation(select, names, kind):
 	kind = kind.lower()
 	paramName = 'select' + kind.capitalize()
 	if select != 'all':
-		if names is False:
+		if hasNames is False:
 			# in this case we have no names for reference,
 			# so no strings should be in the list
 			for val in select:
@@ -680,6 +686,233 @@ def _selectionNameValidation(select, names, kind):
 					msg += 'therefore only interger valued indices are '
 					msg += 'allowed in the ' + paramName + 's parameter'
 					raise ArgumentException(msg)
+
+
+def _csv_getFNamesAndAnalyzeRows(
+		pointNames, featureNames, openFile, lineReader, skippedLines):
+	"""
+	If needed, take the first row from the lineReader to define the
+	feature names. Regardless of whether feature names are desired,
+	we will analyze the row we read to determine the number of columns,
+	the number of features (columns without point names), the line number
+	in the file of the row we use to define number of features / columns,
+	and whether or not that row was interpreted as feature names or data.
+
+	"""
+	if featureNames is True:
+		fnamesRow = lineReader.next()
+		# Number values in a row excluding point names
+		numFeatures = len(fnamesRow)
+		# Number of value in a row
+		numColumns = len(fnamesRow)
+
+		if pointNames is True:
+			fnamesRow = fnamesRow[1:]
+			numFeatures -= 1
+		retFNames = fnamesRow
+		columnsDefIndex = (lineReader.line_num - 1) + skippedLines
+		columnsDefSrc = "feature names"
+	else:
+		startPosition = openFile.tell()
+		filtered = itertools.ifilter(_filterCSVRow, openFile)
+		trialReader = csv.reader(filtered)
+		trialRow = trialReader.next()
+		# Number values in a row excluding point names
+		numFeatures = len(trialRow)
+		# Number of value in a row
+		numColumns = len(trialRow)
+		openFile.seek(startPosition)
+		columnsDefIndex = (trialReader.line_num - 1) + skippedLines
+		columnsDefSrc = "row"
+		retFNames = copy.copy(featureNames)
+
+	return retFNames, numFeatures, numColumns, columnsDefIndex, columnsDefSrc
+
+def _validateRowLength(
+		row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex):
+	"""
+	Given a row read from a csv line reader, and the expected length of
+	that row, raise an appropriately worded exception if there is a
+	discrepency.
+	"""
+	if len(row) != numColumns:
+		msg = "The row on line " + str(lineIndex) + " has a length of "
+		msg += str(len(row)) + ". We expected a length of " 
+		msg += str(numColumns) + ". The expected row length was defined "
+		msg += "by looking at the " + columnsDefSrc + " on line "
+		msg += str(columnsDefIndex) + "."
+		raise FileFormatException(msg)
+
+
+def _setupAndValidationForFeatureSelection(
+		selectFeatures, retFNames, removeRecord, numFeatures, featsToRemoveSet):
+	"""
+	Once feature names have been determined, we can validate and clean
+	the select features paramter; transforming any name to an index, and
+	checking that all indices are valid. At the same time, we also setup
+	the data structures needed to record which features are being excluded
+	from every row we will eventually read in.
+
+	"""
+	if selectFeatures != 'all':
+		cleaned = []
+		for val in selectFeatures:
+			selIndex = val
+			# this case can only be true if names were extracted or provided
+			if isinstance(val, basestring):
+				try:
+					selIndex = retFNames.index(val)
+				except ValueError:
+					msg = 'selectFeatures included a name (' + val + ') '
+					msg += 'which was not found in the featureNames'
+					raise ArgumentException(msg)
+			cleaned.append(selIndex)
+			assert selIndex is not None
+
+		# check for duplicates, and that values are in range
+		found = {}
+		for i in xrange(len(cleaned)):
+			if cleaned[i] in found:
+				msg = "Duplicate values were present in the selectFeatures "
+				msg += "parameter, at indices ("
+				msg += str(found[cleaned[i]])
+				msg += ") and ("
+				msg += str(i)
+				msg += "). The values were ("
+				msg += str(selectFeatures[found[cleaned[i]]])
+				msg += ") and ("
+				msg += str(selectFeatures[i])
+				msg += ") respectably."
+				raise ArgumentException(msg)
+			else:
+				found[cleaned[i]] = i
+
+			if cleaned[i] < 0 or cleaned[i] >= numFeatures:
+				msg = "Invalid value in selectFeatures parameter at index ("
+				msg += str(i)
+				msg += "). The value ("
+				msg += str(cleaned[i])
+				msg += ") is not in the range of 0 to "
+				msg += str(numFeatures - 1)  # we want inclusive end points
+				raise ArgumentException(msg)
+
+		# initialize, but only if we know we'll be adding something
+		selectFeatures = cleaned
+		if len(cleaned) > 0:
+			removeRecord[0] = []
+		for i in xrange(numFeatures):
+			if i not in cleaned:
+				featsToRemoveSet.add(i)
+				removeRecord[0].append(i)
+
+	return selectFeatures
+
+def _raiseSelectionDuplicateException(kind, i1, i2, values):
+	msg = "Duplicate or equivalent values were present in the "
+	msg += kind
+	msg += " parameter, at indices ("
+	msg += str(i1)
+	msg += ") and ("
+	msg += str(i2)
+	msg += "). The values were ("
+	msg += str(values[i1])
+	msg += ") and ("
+	msg += str(values[i2])
+	msg += ") respectably."
+	raise ArgumentException(msg)
+
+def _validationForPointSelection(selectPoints, pointNames):
+	if selectPoints == 'all':
+		return 'all'
+
+	found = {}
+	cleaned = []
+	for i in xrange(len(selectPoints)):
+		if selectPoints[i] in found:
+			_raiseSelectionDuplicateException(
+				"selectPoints", found[selectPoints[i]], i, selectPoints)
+		else:
+			found[selectPoints[i]] = i
+
+		if selectPoints[i] < 0:
+			msg = "Invalid value in selectPoints parameter at index ("
+			msg += str(i)
+			msg += "). The value ("
+			msg += str(selectPoints[i])
+			msg += ") was less than 0, yet we only allow valid non-negative "
+			msg += "interger indices or point names as values."
+			msg += str(numFeatures - 1)  # we want inclusive end points
+			raise ArgumentException(msg)
+
+		if isinstance(pointNames, list):
+			if isinstance(selectPoints[i], basestring):
+				try:
+					cleaned.append(pointNames.index(selectPoints[i]))
+				except ValueError:
+					msg = 'selectPoints included a name (' + selectPoints[i] + ') '
+					msg += 'which was not found in the provided pointNames'
+					raise ArgumentException(msg)
+			else:
+				cleaned.append(selectPoints[i])
+
+	if cleaned != []:
+		found = {}
+		for i in xrange(len(cleaned)):
+			if cleaned[i] in found:
+				msg = "Duplicate values were present in the selectPoints "
+				msg += "parameter, at indices ("
+				msg += str(found[cleaned[i]])
+				msg += ") and ("
+				msg += str(i)
+				msg += "). The values were ("
+				msg += str(selectPoints[found[cleaned[i]]])
+				msg += ") and ("
+				msg += str(selectPoints[i])
+				msg += ") respectably."
+				raise ArgumentException(msg)
+			else:
+				found[cleaned[i]] = i
+
+			if cleaned[i] < 0 or cleaned[i] >= len(pointNames):
+				msg = "Invalid value in selectPoints parameter at index ("
+				msg += str(i)
+				msg += "). The value ("
+				msg += str(cleaned[i])
+				msg += ") is not in the range of 0 to "
+				msg += str(len(pointNames) - 1)  # we want inclusive end points
+				raise ArgumentException(msg)
+
+		# only do this if cleaned is non-empty / we have provided pointnames
+		return cleaned
+
+	# only get here if cleaned was empty / point names will be extracted
+	return selectPoints
+
+def _namesDictToList(names, kind, paramName):
+	if not isinstance(names, dict):
+		return names
+
+	ret = [None] * len(names)
+	for key in names:
+		position = names[key]
+		if ret[position] is not None:
+			msg = "The dict valued parameter " + paramName + " contained "
+			msg += "two keys with the same value. Interpreted as names, "
+			msg += "this means that two " + kind + "s had the same name, "
+			msg += "which is disallowed."
+			raise ArgumentException(msg)
+
+		if position < 0 or position >= len(ret):
+			msg = "The dict valued parameter " + paramName + " contained "
+			msg += "a key with a value (" + position + "), yet the only "
+			msg += "acceptable possible position values would be in the "
+			msg += "range 0 to " + str(len(ret))
+			raise ArgumentException(msg)
+
+		ret[position] = key
+
+	return ret
+
 
 
 
@@ -737,35 +970,52 @@ def _loadcsvUsingPython(
 	(pointNames, featureNames) = _checkCSV_for_Names(
 		openFile, pointNames, featureNames)
 
-	# check that if we have no source of names, and specific values are
-	# specified for selection, that they are specified only with integer
-	# indices, NOT names.
-	_selectionNameValidation(selectPoints, pointNames, 'point')
-	_selectionNameValidation(selectFeatures, featureNames, 'feature')
+	pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
+	featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')
 
 	# TODO Try to determine formating
 
-	# where the data from the file will be placed, in the same order as
-	# in the file.
-	data = []
-	# where the data from the file will be placed, in the order specified
-	# by selectPoints if that order doesn't match the order in the file.
-	# shares references to the same lists as the variable data, so lists
-	# modified through data share changes with retData. Will be None
-	# and ignored if no reordering needs to take place.
-	retData = None
-	if selectPoints != 'all' and selectPoints != sorted(selectPoints):
-		retData = [None] * len(selectPoints)
-		reverseSelectPoints = {}
+	# Advance the file past any beginning of file comments, record
+	# how many are skipped
+	skippedLines = _advancePastComments(openFile)
+	# remake the file iterator to ignore empty lines
+	filtered = itertools.ifilter(_filterCSVRow, openFile)
+	# send that line iterator to the csv reader
+	lineReader = csv.reader(filtered)
+
+	# after _checkCSV_for_Names then both pointNames and featureNames
+	# should either be True, False, a list or a dict. In the case of
+	# True, we setup an empty list to put extracted names into
+	if pointNames is True:
+		retPNames = []
+	else:
+		retPNames = pointNames
+
+	# Extract names from first row if needed, record number of
+	# columns in a row, and record a few book-keeping details
+	# to be output in case of an exception
+	namesAndMore = _csv_getFNamesAndAnalyzeRows(
+		pointNames, featureNames, openFile, lineReader, skippedLines)
+	retFNames = namesAndMore[0]
+	numFeatures = namesAndMore[1]
+	numColumns = namesAndMore[2]
+	columnsDefIndex = namesAndMore[3]
+	columnsDefSrc = namesAndMore[4]
+
+	# Validataion: check that if we have no source of names, and specific
+	# values are specified for selection, that they are specified only
+	# with integer indices, NOT names.
+	hasPointNames = not (pointNames is False)
+	hasFeatureNames = not (featureNames is False)
+	_selectionNameValidation(selectPoints, hasPointNames, 'point')
+	_selectionNameValidation(selectFeatures, hasFeatureNames, 'feature')
+
+	_validationForPointSelection(selectPoints, pointNames)
+	notYetFoundPoints = None
+	if selectPoints != 'all':
+		notYetFoundPoints = {}
 		for i in xrange(len(selectPoints)):
-			reverseSelectPoints[selectPoints[i]] = i
-		
-	# after _checkCSV_for_Names then both pointNames or featureNames
-	# should either be True, False, a list or a dict
-	extractPNames = pointNames is True
-	extractFNames = featureNames is True
-	retPNames = [] if extractPNames else None
-	retFNames = None
+			notYetFoundPoints[selectPoints[i]] = i
 
 	# This is a record of the discovery of features to remove. It maps
 	# the index of a point in the data to the features discovered to be
@@ -778,76 +1028,37 @@ def _loadcsvUsingPython(
 	# from the data.
 	featsToRemoveSet = set([])
 
-	# Advance the file past any beginning of file comments.
-	skippedLines = advancePastComments(openFile)
-	# remake the file iterator to ignore empty lines
-	filtered = itertools.ifilter(filterCSVRow, openFile)
-	# send that line iterator to the csv reader
-	lineReader = csv.reader(filtered)
-
-	# extract names from first row if needed, record number of
-	# columns in a row, and record a few book-keeping details
-	# to be output in case of an exception
-	if extractFNames:
-		fnamesRow = lineReader.next()
-		# Number values in a row excluding point names
-		numFeatures = len(fnamesRow)
-		# Number of value in a row
-		numColumns = len(fnamesRow)
-
-		if extractPNames:
-			fnamesRow = fnamesRow[1:]
-			numFeatures -= 1
-		retFNames = fnamesRow
-		columnsDefIndex = (lineReader.line_num - 1) + skippedLines
-		columnsDefSrc = "feature names"
-	else:
-		startPosition = openFile.tell()
-		filtered = itertools.ifilter(filterCSVRow, openFile)
-		trialReader = csv.reader(filtered)
-		trialRow = trialReader.next()
-		# Number values in a row excluding point names
-		numFeatures = len(trialRow)
-		# Number of value in a row
-		numColumns = len(trialRow)
-		openFile.seek(startPosition)
-		columnsDefIndex = (trialReader.line_num - 1) + skippedLines
-		columnsDefSrc = "row"
-
 	# now that we have featureNames, we can do full validation of both
 	# the feature names and the selectFeatures parameter. We also setup
 	# the removal record wrt columns that do not represent selected
 	# features.
-	if selectFeatures != 'all':
-		cleaned = []
-		for val in selectFeatures:
-			selIndex = val
-			# this case can only be true if names were extracted or provided
-			if isinstance(val, basestring):
-				try:
-					selIndex = retFNames.index(val)
-				except ValueError:
-					msg = 'selectFeatures included a name (' + val + ') '
-					msg += 'which was not found in the featureNames'
-					raise ArgumentException(msg)
-			cleaned.append(selIndex)
-		
-		# initialize, but only if we know we'll be adding something
-		selectFeatures = cleaned
-		if len(cleaned) > 0:
-			removeRecord[0] = []
-		for i in xrange(numFeatures):
-			if i not in cleaned:
-				featsToRemoveSet.add(i)
-				removeRecord[0].append(i)	
+	selectFeatures = _setupAndValidationForFeatureSelection(
+		selectFeatures, retFNames, removeRecord, numFeatures, featsToRemoveSet)
+
+	# Variables to be used in the main loop for reading the csv data.
+	# data is where the data from the file will be placed, in the same
+	# order as in the file.
+	data = []
+	# retData is where the data from the file will be placed, in the
+	# order specified by selectPoints if that order doesn't match the
+	# order in the file. shares references to the same lists as the
+	# variable data, so lists modified through data share changes with
+	# retData. Will be None and ignored if no reordering needs to take
+	# place.
+	retData = None
+	if selectPoints != 'all' and selectPoints != sorted(selectPoints):
+		retData = [None] * len(selectPoints)
+		selectPointsValToIndex = {}
+		for i in xrange(len(selectPoints)):
+			selectPointsValToIndex[selectPoints[i]] = i
 
 	# incremented at beginning of loop, so starts negative.
-	# pointIndex is the index of the list that matches this row in the returned
+	# addedIndex is the index of the list that matches this row in the returned
 	# list of lists
+	addedIndex = -1
+	# pointIndex is the index of potential points read off from lineReader.
+	# It is always incremented, even if that point is no selected
 	pointIndex = -1
-	# rowIndex is the index of rows read off from lineReader. It is always
-	# incremented 
-	rowIndex = -1
 	# lineIndex is the index of the newline sepearated row that
 	# the lineReader will return next. Inclueds the lines skipped
 	# at the beginning of the file
@@ -856,46 +1067,73 @@ def _loadcsvUsingPython(
 	# Read through the csv file, row by row.
 	# The csv reader gives a list of string values for each row
 	for row in lineReader:
+		addedIndex += 1
 		pointIndex += 1
-		rowIndex += 1
 		lineIndex = lineReader.line_num + skippedLines
 
 		# Validation: require equal length of all rows
-		if len(row) != numColumns:
-			msg = "The row on line " + str(lineIndex) + " has a length of "
-			msg += str(len(row)) + ". We expected a length of " 
-			msg += str(numColumns) + ". The expected row length was defined "
-			msg += "by looking at the " + columnsDefSrc + " on line "
-			msg += str(columnsDefIndex) + "."
-			raise FileFormatException(msg)
+		_validateRowLength(
+			row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex)
 
+		# grab the pointName if needed
+		currPName = None
+		if pointNames is True:
+			currPName = row[0]
+			row = row[1:]
+			# validate selectPoints, given new information
+			if selectPoints != 'all' and pointIndex in selectPoints and \
+					currPName in selectPoints:
+				_raiseSelectionDuplicateException(
+					"selectPoints", selectPoints.index(pointIndex),
+					selectPoints.index(currPName), selectPoints)
+		elif isinstance(pointNames, list):
+			currPName = pointNames[pointIndex]
+
+		# Run through selection criteria, adjusting variables as needed,
+		# and raising exceptions if needed.
 		isSelected = False
-		# remove pointNames and featureNames if needed, adjust whether
-		# this point is selected acordingly
-		if extractPNames:
-			# only add if it is selected:
-			if selectPoints == 'all' or rowIndex in selectPoints or \
-					row[0] in selectPoints:
-				retPNames.append(row[0])
-				row = row[1:]
-				isSelected = True
-		# point selection easy case: there are only int valued indices
-		elif selectPoints == 'all' or rowIndex in selectPoints:
+		if selectPoints == 'all':
+			isSelected = True
+		elif currPName in selectPoints:
+			del notYetFoundPoints[currPName]
+			if retData is not None:
+				selectPointsValToIndex[pointIndex] = selectPointsValToIndex[currPName]
+				del selectPointsValToIndex[currPName]
+			isSelected = True
+		elif pointIndex in selectPoints:
+			del notYetFoundPoints[pointIndex]
 			isSelected = True
 
 		# we only do this if this row is destined for the data, not the
 		# feature names
 		if isSelected:
+			# add point name if needed
+			if pointNames is True:
+				retPNames.append(currPName)
 			# process the remaining data
-			toAdd = convertAndFilterRow(row, pointIndex, removeRecord,
+			toAdd = convertAndFilterRow(row, addedIndex, removeRecord,
 				featsToRemoveSet, ignoreNonNumericalFeatures)
 			data.append(toAdd)
 			if retData is not None:
-				retData[reverseSelectPoints[rowIndex]] = toAdd
+				retData[selectPointsValToIndex[pointIndex]] = toAdd
 		else:
 			# not selected, so move on to the next row; and index
 			# as if it was never present
-			pointIndex -= 1
+			addedIndex -= 1
+
+		# In this case we have grabbed all of the desired points, so
+		# we can stop reading the file
+		if notYetFoundPoints is not None and len(notYetFoundPoints) == 0:
+			break
+
+	# check to see if all of the wanted points in selectPoints were
+	# found in the data
+	if notYetFoundPoints is not None and len(notYetFoundPoints) > 0:
+		msg = "The following entiries in selectPoints were not found "
+		msg += "in the data:"
+		for key in notYetFoundPoints:
+			msg += " (" + str(key) + ")"
+		raise ArgumentException(msg)
 
 	# the List form of featsToRemoveSet
 	featsToRemoveList = list(featsToRemoveSet)
@@ -909,14 +1147,8 @@ def _loadcsvUsingPython(
 	_removalCleanupAndSelectionOrdering(
 		data, removeRecord, featsToRemoveList, selectFeatures)
 
-	# this information might have been generated, but only if we didn't
-	# actually get the names, so pass it along
-	if extractPNames is not True:
-		retPNames = pointNames
-	if extractFNames is not True:
-		retFNames = featureNames
 	# adjust WRT removed columns
-	else:
+	if isinstance(retFNames, list):
 		copyIndex = 0
 		# ASSUMPTION: featsToRemoveList is a sorted list
 		removeListIndex = 0
@@ -930,10 +1162,46 @@ def _loadcsvUsingPython(
 				copyIndex += 1
 		retFNames = retFNames[:copyIndex]
 
+		needsRemoval = False  # This was done directly above
+		retFNames = _adjustNamesGivenSelectionList(
+			retFNames, selectFeatures, needsRemoval)
+
+	if isinstance(retPNames, list):
+		# we only need to do removal if names were provided. If
+		# they were extracted, they were only added if that row was
+		# selected
+		needsRemoval = isinstance(pointNames, list)
+		retPNames = _adjustNamesGivenSelectionList(
+			retPNames, selectPoints, needsRemoval)
+
 	if retData is None:
 		retData = data
 
 	return (retData, retPNames, retFNames, True)
+
+
+def _adjustNamesGivenSelectionList(retNames, selectionList, needsRemoval):
+	# In this case neither sorting or removal is necessary
+	if selectionList == 'all':
+		return retNames
+
+	# if we're already sorted and we don't need to do removal, we
+	# can return.
+	if sorted(selectionList) == selectionList and not needsRemoval:
+		return retNames
+
+	# if needed, resolve names to indices for easy indexing during
+	# the sort
+	for i, val in enumerate(selectionList):
+		if isinstance(val, basestring):
+			selectionList[i] = retNames.index(val)
+
+	newRetFNames = []
+	for val in selectionList:
+		newRetFNames.append(retNames[val])
+	retNames = newRetFNames
+
+	return retNames
 
 
 def _removalCleanupAndSelectionOrdering(
@@ -1275,7 +1543,6 @@ def extractConfidenceScores(predictionScores, featureNamesInverse):
 	return scoreMap
 
 
-#TODO this is a helper, move to utilities package?
 def copyLabels(dataSet, dependentVar):
 	"""
 		A helper function to simplify the process of obtaining a 1-dimensional matrix of class
