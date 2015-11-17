@@ -81,7 +81,9 @@ def detectBestResult(functionToCheck):
 			best = result
 
 	if best is None:
-		raise ArgumentException("Unable to determine formatting for 2nd parameter to funciton to check, none of the possible inputs produced accepted return values. We must conclude that it is not a performance function")
+#		raise ArgumentException("Unable to determine formatting for 2nd parameter to funciton to check, none of the possible inputs produced accepted return values. We must conclude that it is not a performance function")
+		# TODO actually run a trial to determine this
+		return "min" 
 
 	return best
 
