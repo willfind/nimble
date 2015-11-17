@@ -1597,6 +1597,34 @@ def test_createData_Pselection_csv_endAfterAllSelected():
 
 
 
+###################
+### Other tests ###
+###################
+
+def test_createData_csv_nonremoval_efficiency():
+	# setup the test fail trigger by replacing the function we don't want to
+	# called
+
+	def failFunction(arg1, arg2, arg3, arg4):
+		assert False  # the function we didn't want to be called was called
+
+	for t in returnTypes:
+		fromList = UML.createData(returnType=t, data=[[1,2,3]])
+
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1,2,3\n")
+			tmpCSV.flush()
+			objName = 'fromCSV'
+
+			try:
+				backup = UML.helpers._removalCleanupAndSelectionOrdering
+				UML.helpers._removalCleanupAndSelectionOrdering = failFunction
+				fromCSV = UML.createData(returnType=t, data=tmpCSV.name, name=objName)
+				assert fromList == fromCSV
+			finally:
+				UML.helpers._removalCleanupAndSelectionOrdering = backup
+
 
 
 # tests for combination of one name set being specified and one set being

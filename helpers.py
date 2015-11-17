@@ -1143,9 +1143,13 @@ def _loadcsvUsingPython(
 	# part of the data after it has all been read into memory. Also, we
 	# may need to adjust the order of features and points due to the
 	# selection paramters, and this is a convenient and efficient place to
-	# do so.
-	_removalCleanupAndSelectionOrdering(
-		data, removeRecord, featsToRemoveList, selectFeatures)
+	# do so. If we don't need to do either of those things, then we
+	# don't even enter the helper
+	removalNeeded = not removeRecord.keys() == [0] and not removeRecord.keys() == []
+	reorderNeeded = selectFeatures != 'all' and selectFeatures != sorted(selectFeatures)
+	if removalNeeded or reorderNeeded:
+		_removalCleanupAndSelectionOrdering(
+			data, removeRecord, featsToRemoveList, selectFeatures)
 
 	# adjust WRT removed columns
 	if isinstance(retFNames, list):
