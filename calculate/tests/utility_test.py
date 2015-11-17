@@ -6,6 +6,8 @@ from UML.calculate import detectBestResult
 from UML.calculate import fractionIncorrect
 from UML.calculate import meanAbsoluteError
 from UML.calculate import rootMeanSquareError
+from UML.calculate import rSquared
+from UML.calculate import varianceFractionRemaining
 
 
 
@@ -29,3 +31,11 @@ def testDectection_fractionIncorrect():
 def testDetection_cosineSimilarity():
 	result = detectBestResult(cosineSimilarity)
 	assert result == 'max'
+
+def testDectection_rSquared():
+	result = detectBestResult(rSquared)
+	assert result == 'max'
+
+def testDectection_varianceFractionRemaining():
+	result = detectBestResult(varianceFractionRemaining)
+	assert result == 'min'

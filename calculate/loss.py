@@ -1,4 +1,12 @@
+"""
+Definitions for functions that can be used as performance functions by
+UML. Specifically, this only contains those functions that measure
+loss; or in other words, those where smaller values indicate a higher
+level of correctness in the predicted values.
 
+"""
+
+import numpy
 
 import UML
 from UML.data import Base
@@ -12,6 +20,7 @@ def _validatePredictedAsLabels(predictedValues):
 		raise ArgumentException("predictedValues must be derived class of UML.data.Base")
 	if predictedValues.featureCount > 1:
 		raise ArgumentException("predictedValues must be labels only; this has more than one feature")
+
 
 def _computeError(knownValues, predictedValues, loopFunction, compressionFunction):
 	"""
@@ -65,6 +74,7 @@ def rootMeanSquareError(knownValues, predictedValues):
 	_validatePredictedAsLabels(predictedValues)
 	return _computeError(knownValues, predictedValues, lambda x,y,z: z + (y - x)**2, lambda x,y: sqrt(x/y))
 
+
 def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
 	"""For 2d prediction data, compute the RMSE of each feature, then average
 	the results.
@@ -91,6 +101,7 @@ def meanAbsoluteError(knownValues, predictedValues):
 	_validatePredictedAsLabels(predictedValues)
 	return _computeError(knownValues, predictedValues, lambda x,y,z: z + abs(y - x), lambda x,y: x/y)
 
+
 def fractionIncorrect(knownValues, predictedValues):
 	"""
 		Compute the proportion of incorrect predictions within a set of
@@ -98,3 +109,14 @@ def fractionIncorrect(knownValues, predictedValues):
 	"""
 	_validatePredictedAsLabels(predictedValues)
 	return _computeError(knownValues, predictedValues, lambda x,y,z: z if x == y else z + 1, lambda x,y: x/y)
+
+
+def varianceFractionRemaining(knownValues, predictedValues):
+	if knownValues.pointCount != predictedValues.pointCount: raise Exception("Objects had different numbers of points")
+	if knownValues.featureCount != predictedValues.featureCount: raise Exception("Objects had different numbers of features. Known values had " + str(knownValues.featureCount) + " and predicted values had " + str(predictedValues.featureCount))
+	diffObject = predictedValues - knownValues
+	rawDiff = diffObject.copyAs("numpy array")
+	rawKnowns = knownValues.copyAs("numpy array")
+	assert rawDiff.shape[1] == 1
+	avgSqDif = numpy.dot(rawDiff.T, rawDiff)[0,0] / float(len(rawDiff))
+	return avgSqDif/float(numpy.var(rawKnowns))
