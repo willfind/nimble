@@ -23,6 +23,7 @@ def cosineSimilarity(knownValues, predictedValues):
 
 	return numerator / denominator
 
+cosineSimilarity.optimal = 'max'
 
 def correlation(X, X_T=None):
 	if X_T is None:
@@ -64,5 +65,10 @@ def covariance(X, X_T=None, sample=True):
 def fractionCorrect(knownValues, predictedValues):
 	return 1 - fractionIncorrect(knownValues, predictedValues)
 
+fractionCorrect.optimal = 'max'
+
+
 def rSquared(knownValues, predictedValues):
 	return 1.0 - varianceFractionRemaining(knownValues, predictedValues)
+
+rSquared.optimal = 'max'

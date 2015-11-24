@@ -1,3 +1,8 @@
+"""
+Functions (and their helpers) used to analyze arbitrary performance
+functions.
+
+"""
 
 import inspect
 import numpy
@@ -6,7 +11,6 @@ import math
 import UML
 from UML.exceptions import ArgumentException
 from UML.randomness import numpyRandom
-
 
 
 def detectBestResult(functionToCheck):
@@ -23,91 +27,156 @@ def detectBestResult(functionToCheck):
 	must be the value of a label value present in the data. In either cause,
 	the functions must return a float value.
 
+	returns: Either 'min' or 'max'; the former if lower values returned from
+	functionToCheck are associated with correctness of predictions, the later
+	if larger values are associated with correctness. If we are unable to
+	determine which is correct, then an ArgumentException is thrown.
 	"""
 	(args, varargs, keywords, defaults) = inspect.getargspec(functionToCheck)
 
 	if len(args) != 2:
-		msg = "functionToCheck takes wrong number of parameters, unable to do "
-		msg += "detection"
-		raise ArgumentException()
+		msg = "functionToCheck takes (" + str(len(args)) + ") parameters, "
+		msg += "yet performance functions can only take exactly (2). Therefore "
+		msg += "it cannot be a performance function."
+		raise ArgumentException(msg)
+
+	if hasattr(functionToCheck, 'optimal'):
+		if functionToCheck.optimal == 'min':
+			return 'min'
+		if functionToCheck.optimal == 'max':
+			return 'max'
+
+	def validResult(toCheck):
+		if toCheck == 'nan':
+			return False
+		if isinstance(toCheck, Exception):
+			return False
+		return True
 
 	resultsByType = [None, None, None]
 	trialSize = 10
 	# we can't know which format is expected in the predicted values param,
 	# so we try all three and then interpret the results
-	# 0 if predicted labels, 1 if bestScores, 2 if allScores
-	for predictionType in range(3):
+	# (0) if predicted labels, (1) if bestScores, (2) if allScores
+	for predictionType in [0,1,2]:
+		# Run the main trial, which uses a mixture of ones and zeros
+		knowns = _generateMixedRandom(trialSize)
 		try:
-			bestResultList = []
-			# going to run trials with three types of known values: all ones, all
-			# zeros, and some mixture
-			for knownsType in xrange(4):
-				if knownsType == 0:
-					knowns = _generateAllZeros(trialSize)
-				elif knownsType == 1:
-					knowns = _generateAllOnes(trialSize)
-				else:
-					knowns = _generateAllCorrect(trialSize)
-				# range over fixed confidence values for a trial
-				confidenceTrials = 7
-				# in a trial with predicted labels, there are no confidences, so only 1
-				# trial is needed
-				if predictionType == 0:
-					confidenceTrials = 1
-				for i in xrange(confidenceTrials):
-					predicted = _generatePredicted(knowns, predictionType)
-					# range over possible negative label value
-					best = _runTrialGivenParameters(functionToCheck, knowns.copy(), predicted.copy(), predictionType)
-					bestResultList.append(best)
-
-			# check that all of values in bestResultList are equal.
-			firstNonNan = None
-			for result in bestResultList:
-				if result != 'nan':
-					if firstNonNan is None:
-						firstNonNan = result
-					elif result != firstNonNan:
-						assert False
-						raise ArgumentException("functionToCheck may not be a performance function. The best result was inverted due to factors other than correctness")
-			resultsByType[predictionType] = firstNonNan
+			result = _runTrialGivenParameters(functionToCheck, knowns, predictionType)
 		except Exception as e:
-			resultsByType[predictionType] = e
+			result = e
+
+		# If the trial ends successfully, then we do further trials for
+		# consistency
+		if validResult(result):
+			# for bestScores and allscores, there is a lot more random generation,
+			# so we run a bundle of trials for consistency. For labels we only
+			# run one extra trial.
+			confidenceTrials = 1 if predictionType == 0 else 10
+
+			# Since we are doing randomly generated data, if the performance
+			# funciton is only considering subsets of the data, then it is
+			# possible for us to generate numbers cause weirdness or outright
+			# failures. We allow for one such result
+			freebieAvailable = False if predictionType == 0 else True
+			for i in xrange(confidenceTrials):
+				knownsMixed = _generateMixedRandom(trialSize)
+				try:
+					resultMixed = _runTrialGivenParameters(functionToCheck, knownsMixed, predictionType)
+				except Exception as e:
+					resultMixed = e
+
+				if resultMixed != result:
+					if freebieAvailable:
+						freebieAvailable = False
+					else:
+						# inconsistent but valid results
+						if validResult(resultMixed):
+							msg = "In repeated trials with different known values, "
+							msg += "functionToCheck was inconsistent in attributing "
+							msg += "high versus low values to optimal predictions."
+							result = ArgumentException(msg)
+						# erroneous call on what should be acceptable data;
+						# report the error to the user
+						else:
+							result = resultMixed
+							break
+
+			# in the labels case we additionally check against some simpler data 
+			if predictionType == 0:
+				knownsZeros = _generateAllZeros(trialSize)
+				try:
+					resultZeros = _runTrialGivenParameters(functionToCheck, knownsZeros, predictionType)
+				except Exception as e:
+					resultZeros = e
+				knownsOnes = _generateAllOnes(trialSize)
+				try:
+					resultOnes = _runTrialGivenParameters(functionToCheck, knownsOnes, predictionType)
+				except Exception as e:
+					resultOnes = e
+
+				# check knownsZeros results same as knowns ones results
+				rzValid = resultZeros != 'nan' and not isinstance(resultZeros, Exception)
+				roValid = resultOnes != 'nan' and not isinstance(resultOnes, Exception)
+				if rzValid and roValid:
+					if resultZeros != resultOnes:
+						msg = "Over trials with different knowns, "
+						msg += "functionToCheck was inconsistent in attributing "
+						msg += "high versus low values to optimal predictions."
+						result = ArgumentException(msg)
+
+		# record the result, regardless of whether it was successful, nan,
+		# or an exception
+		resultsByType[predictionType] = result
+
 
 	best = None
 	for result in resultsByType:
-		if not isinstance(result, Exception):
+		if result != 'nan' and not isinstance(result, Exception):
+			# inconsistent results
 			if best is not None and result != best:
-				raise ArgumentException("Unable to determine formatting for 2nd parameter to funciton to check, different inputs gave inconsistent results. The best solution would be to verify the formatting of the input and throw an exception if it is not as expected")
+				reason = "Trials were run with all possible formats for predicted "
+				reason += "values, but gave inconsistent results. "
+				raiseException(reason, resultsByType)
 			best = result
 
+	# No valid results / all trials resulted in exceptions
 	if best is None:
-#		raise ArgumentException("Unable to determine formatting for 2nd parameter to funciton to check, none of the possible inputs produced accepted return values. We must conclude that it is not a performance function")
-		# TODO actually run a trial to determine this
-		return "min" 
+		reason = "Trials were run with all possible formats for predicted "
+		reason += "values, but none gave valid results. "
+		raiseException(reason, resultsByType)
 
 	return best
 
 
-def _runTrialGivenParameters(toCheck, knowns, predicted, predictionType):
-	"""
-	
+def raiseException(preface, outputs):
 
-	"""
-	allCorrectScore = toCheck(knowns, predicted)
+	msg = "Either functionToCheck has bugs, is not a performance function, "
+	msg += "or is incompatible with these trials. These trials can be avoided "
+	msg += "if the user manulally declares which kinds of values are associated "
+	msg += "with correct predictions (either 'min' or 'max') "
+	msg += "by adding an attribute named 'optimal' to functionToCheck. For "
+	msg += "debugging purposes, the trial results per format are given:"
+	msg += " (labels) " + str(outputs[0])
+	msg += " (best scores) " + str(outputs[1])
+	msg += " (all scores) " + str(outputs[2])
+
+	raise ArgumentException(preface + msg)
+
+
+def _runTrialGivenParameters(toCheck, knowns, predictionType):
+	predicted = _generatePredicted(knowns, predictionType)
+
+	allCorrectScore = toCheck(knowns.copy(), predicted)
 	# this is going to hold the output of the function. Each value will
 	# correspond to a trial that contains incrementally less correct predicted values
 	scoreList = [allCorrectScore]
 	# range over the indices of predicted values, making them incorrect one
 	# by one
-	# TODO randomize the ordering
 	for index in xrange(predicted.pointCount):
 		_makeIncorrect(predicted, predictionType, index)
-		scoreList.append(toCheck(knowns, predicted))
+		scoreList.append(toCheck(knowns.copy(), predicted))
 
-	# defining our error message in case of unexpected scores
-	errorMsg = "functionToCheck produces return values that do not "
-	errorMsg += "correspond with correctness. We must conclude that it "
-	errorMsg += "is not a performance function"	
 	allWrongScore = scoreList[len(scoreList)-1]
 
 	for score in scoreList:
@@ -118,54 +187,47 @@ def _runTrialGivenParameters(toCheck, knowns, predicted, predictionType):
 		prevScore = allCorrectScore + 1
 		for score in scoreList:
 			if score < allWrongScore or score > allCorrectScore or score > prevScore:
-				raise ArgumentException(errorMsg)
+				msg = "all-correct and all-incorrect trials indicated max optimality, "
+				msg += "but mixed correct/incorrect scores were not monotonicly "
+				msg += "increasing with correctness"
+				raise _NonMonotonicResultsException(msg)
 			prevScore = score
 		return "max"
 	elif allWrongScore > allCorrectScore:
 		prevScore = allCorrectScore - 1
 		for score in scoreList:
 			if score > allWrongScore or score < allCorrectScore or score < prevScore:
-				raise ArgumentException(errorMsg)
+				msg = "all-correct and all-incorrect trials indicated min optimality, "
+				msg += "but mixed correct/incorrect scores were not monotonicly "
+				msg += "decreasing with correctness"
+				raise _NonMonotonicResultsException(msg)
 			prevScore = score
 		return "min"
 	# allWrong and allCorrect must not be equal, otherwise it cannot be a measure
 	# of correct performance
 	else:
-		raise ArgumentException("functionToCheck produced the same values for trials including all correct and all incorrect predictions. We must conclude that it is not a performance function")
+		msg = "functionToCheck produced the same values for trials including "
+		msg += "all-correct and all-incorrect predictions."
+		raise _NoDifferenceResultsException(msg)
 
 
 def _generateAllZeros(length):
-	correct = []
-	for i in xrange(length):
-		correct.append(0)
-	correct = numpy.array(correct)
-#	correct = numpy.zeros(length, dtype=int)
-	correct = numpy.matrix(correct)
-	correct = correct.transpose()
-	correct = UML.createData(returnType="List", data=correct)
-	return correct
+	return UML.createData("List", numpy.zeros([length,1], dtype=int))
+
 
 def _generateAllOnes(length):
-	correct = []
-	for i in xrange(length):
-		correct.append(1)
-	correct = numpy.array(correct)
-#	correct = numpy.ones(length, dtype=int)
-	correct = numpy.matrix(correct)
-	correct = correct.transpose()
+	return UML.createData("List", numpy.ones([length,1], dtype=int))
+
+
+def _generateMixedRandom(length):
+	while True:
+		correct = numpyRandom.randint(2, size=[length,1])
+		# we don't want all zeros or all ones
+		if numpy.any(correct) and not numpy.all(correct):
+			break
 	correct = UML.createData(returnType="List", data=correct)
 	return correct
 
-def _generateAllCorrect(length):
-	while True:
-		correct = numpyRandom.randint(2, size=length)
-		if numpy.any(correct) and not numpy.all(correct):
-			break
-#	correct = numpyRandom.randint(2, size=length)
-	correct = numpy.matrix(correct)
-	correct = correct.transpose()
-	correct = UML.createData(returnType="List", data=correct)
-	return correct
 
 def _generatePredicted(knowns, predictionType):
 	"""
@@ -176,15 +238,16 @@ def _generatePredicted(knowns, predictionType):
 	"""
 	workingCopy = knowns.copy()
 	workingCopy.setFeatureName(0,'PredictedClassLabel')
+	# Labels
 	if predictionType == 0:	
 		return workingCopy
+	# Labels and the score for that label (aka 'bestScores')
 	elif predictionType == 1:
-		scores = numpyRandom.randint(2, size=workingCopy.pointCount)
-		scores = numpy.matrix(scores)
-		scores = scores.transpose()
+		scores = numpyRandom.randint(2, size=[workingCopy.pointCount,1])
 		scores = UML.createData(returnType="List", data=scores, featureNames=['LabelScore'])
 		workingCopy.appendFeatures(scores)
 		return workingCopy
+	# Labels, and scores for all possible labels (aka 'allScores')
 	else:
 		dataToFill = []
 		for i in xrange(workingCopy.pointCount):
@@ -212,3 +275,30 @@ def _makeIncorrect(predicted, predictionType, index):
 		predicted.data[index][1] = temp
 
 
+class _NonMonotonicResultsException(Exception):
+	"""
+		Exception to be thrown if the results returned by a performance
+		function do not trend monotoniclly up or down as predicted
+		data approach known values.
+	"""
+
+	def __init__(self, value):
+		self.value = value
+
+	def __str__(self):
+		return repr(self.value)
+
+
+class _NoDifferenceResultsException(Exception):
+	"""
+		Exception to be thrown if the result returned by a performance
+		function when given all-incorrect predicted data exactly match
+		the result when the performance function is given all-correct
+		prediction data.
+	"""
+
+	def __init__(self, value):
+		self.value = value
+
+	def __str__(self):
+		return repr(self.value)

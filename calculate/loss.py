@@ -74,6 +74,8 @@ def rootMeanSquareError(knownValues, predictedValues):
 	_validatePredictedAsLabels(predictedValues)
 	return _computeError(knownValues, predictedValues, lambda x,y,z: z + (y - x)**2, lambda x,y: sqrt(x/y))
 
+rootMeanSquareError.optimal = 'min'
+
 
 def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
 	"""For 2d prediction data, compute the RMSE of each feature, then average
@@ -92,6 +94,8 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
 
 	return float(sum(results)) / knownValues.featureCount
 
+meanFeaturewiseRootMeanSquareError.optimal = 'min'
+
 
 def meanAbsoluteError(knownValues, predictedValues):
 	"""
@@ -101,6 +105,8 @@ def meanAbsoluteError(knownValues, predictedValues):
 	_validatePredictedAsLabels(predictedValues)
 	return _computeError(knownValues, predictedValues, lambda x,y,z: z + abs(y - x), lambda x,y: x/y)
 
+meanAbsoluteError.optimal = 'min'
+
 
 def fractionIncorrect(knownValues, predictedValues):
 	"""
@@ -109,6 +115,8 @@ def fractionIncorrect(knownValues, predictedValues):
 	"""
 	_validatePredictedAsLabels(predictedValues)
 	return _computeError(knownValues, predictedValues, lambda x,y,z: z if x == y else z + 1, lambda x,y: x/y)
+
+fractionIncorrect.optimal = 'min'
 
 
 def varianceFractionRemaining(knownValues, predictedValues):
@@ -120,3 +128,5 @@ def varianceFractionRemaining(knownValues, predictedValues):
 	assert rawDiff.shape[1] == 1
 	avgSqDif = numpy.dot(rawDiff.T, rawDiff)[0,0] / float(len(rawDiff))
 	return avgSqDif/float(numpy.var(rawKnowns))
+
+varianceFractionRemaining.optimal = 'min'

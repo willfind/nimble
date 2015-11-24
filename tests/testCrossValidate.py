@@ -271,6 +271,7 @@ def test_crossValidate_foldingRandomness():
 	for _ in xrange(numTrials):
 		X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
 		seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
+		print seed
 		UML.setRandomSeed(seed)
 		resultOne = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
 		UML.setRandomSeed(seed)
@@ -370,12 +371,11 @@ def test_crossValidateReturnBest():
 	# want to have a predictable random state in order to control folding
 	seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
 	
-	def trial(metric, maximize, flagIn):
+	def trial(metric, maximize):
 		# get a baseline result
 		UML.setRandomSeed(seed)
 		resultTuple = crossValidateReturnBest('custom.FlipWrapper', X, Y,
-				metric, flip=(0,.5,.9), wrapped="custom.KNNClassifier",
-				maximumIsBest=flagIn)
+				metric, flip=(0,.5,.9), wrapped="custom.KNNClassifier")
 		assert resultTuple
 
 		# Confirm that the best result is also returned in the 'returnAll' results
@@ -403,10 +403,8 @@ def test_crossValidateReturnBest():
 				assert curError >= resultTuple[1]
 
 
-	trial(fractionIncorrect, False, False)
-	trial(fractionIncorrect, False, 'Automatic')
-	trial(fractionCorrect, True, True)
-	trial(fractionCorrect, True, 'Automatic')
+	trial(fractionIncorrect, False)
+	trial(fractionCorrect, True)
 		
 	UML.deregisterCustomLearner('custom', 'FlipWrapper')
 
