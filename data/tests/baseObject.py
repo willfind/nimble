@@ -19,7 +19,7 @@ class DataTestObject(object):
 				return UML.helpers.initDataObject(
 					returnType, rawData=data, pointNames=pointNames,
 					featureNames=featureNames, name=name, path=path,
-					selectPoints='all', selectFeatures='all')
+					keepPoints='all', keepFeatures='all')
 		if constructor is None:
 			self.constructor = maker
 		else:

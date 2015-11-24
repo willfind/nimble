@@ -352,7 +352,7 @@ def listUMLFunctions():
 
 
 def createData(returnType, data, pointNames='automatic', featureNames='automatic',
-			fileType=None, name=None, selectPoints='all', selectFeatures='all',
+			fileType=None, name=None, keepPoints='all', keepFeatures='all',
 			ignoreNonNumericalFeatures=False, useLog=None):
 	"""Function to instantiate one of the UML data container types.
 
@@ -401,25 +401,25 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 	name: When not None, this value is set as the name attribute of the
 	returned object
 
-	selectPoints: Allows the user to specify a selection of points to be the
-	only ones included in the returned object. By default, the value 'all'
-	indicates that all possible points in the raw data will be included.
-	Alternatively, the user may provide a list containing either names or
-	indices (or a mix) of those points they want to be selected from the
-	raw data. The order of this list will determine the order of points in
-	the resultant object. In the case of reading data from a file, the
-	selection will be done at read time, thus limiting the amount of data
-	read into memory.
+	keepPoints: Allows the user to select which points will be kept
+	in the returned object, those not selected will be discarded. By
+	default, the value 'all' indicates that all possible points in the raw
+	data will be kept. Alternatively, the user may provide a list containing
+	either names or indices (or a mix) of those points they want to be
+	kept from the raw data. The order of this list will determine the order
+	of points in the resultant object. In the case of reading data from a
+	file, the selection will be done at read time, thus limiting the amount
+	of data read into memory.
 
-	selectFeatures: Allows the user to specify a selection of features to
-	be the only ones included in the returned object. By default, the value
-	'all' indicates that all possible features in the raw data will be
-	included. Alternatively, the user may provide a list containing either
-	names or indices (or a mix) of those features they want to be selected
-	from the raw data. The order of this list will determine the order of
-	points in the resultant object. In the case of reading data from a file,
-	the selection will be done at read time, thus limiting the amount of data
-	read into memory. Names and indices are defined with respect to the data
+	keepFeatures: Allows the user to select which features will be kept
+	in the returned object, those not selected will be discarded. By
+	default, the value 'all' indicates that all possible features in the raw
+	data will be kept. Alternatively, the user may provide a list containing
+	either names or indices (or a mix) of those features they want to be
+	kept from the raw data. The order of this list will determine the order
+	of features in the resultant object. In the case of reading data from a
+	file, the selection will be done at read time, thus limiting the amount
+	of data read into memory. Names and indices are defined with respect to the data
 	regardless of filtering by the ignoreNonNumericalFeatures flag; just
 	because a feature is removed, the indices of subsequent features will not
 	be shifted. The ignoreNonNumericalFeatures flag is only consdered after
@@ -474,7 +474,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 		ret = initDataObject(
 			returnType=returnType, rawData=data, pointNames=pointNames,
 			featureNames=featureNames, name=name, path=None,
-			selectPoints=selectPoints, selectFeatures=selectFeatures)
+			keepPoints=keepPoints, keepFeatures=keepFeatures)
 		return ret
 	# input is an open file or a path to a file
 	elif isinstance(data, basestring) or looksFileLike(data):
@@ -482,7 +482,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 			returnType=returnType, data=data, pointNames=pointNames,
 			featureNames=featureNames, fileType=fileType, name=name,
 			ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
-			selectPoints=selectPoints, selectFeatures=selectFeatures)
+			keepPoints=keepPoints, keepFeatures=keepFeatures)
 		return ret
 	# no other allowed inputs
 	else:
