@@ -16,8 +16,14 @@ from UML.randomness import numpyRandom
 def detectBestResult(functionToCheck):
 	"""
 	Provides sample data to the function in question and evaluates the results
-	to determine whether the returned value associates correctness with
-	minimum values or maximum values.
+	to determine whether the function associates correctness of predictions with
+	minimum returned values or maximum returned values. If the user wants these
+	trials to be avoided, then they can add an attribute named 'optimal' to
+	functionToCheck. Two values are accepted: 'min' if lower values are
+	associated with correctness of predictions by functionToCheck, or 'max' if
+	higher values are associated with correctness. If the attribute 'optimal'
+	is set to any other value then the trials are run in the same way as if
+	functionToCheck had no attribute by that name.
 
 	functionToCheck may only take two or three arguments. In the two argument
 	case, the first must be a vector of desired values and the second must be
