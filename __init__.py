@@ -2,7 +2,10 @@
 Universal Machine Learning
 
 UML offers interfaces into other machine learning packages and
-tools for data representation and processing.
+tools for data representation and processing. Available at
+the top level in this package are the functions necessary to
+create data objects, call machine learning algorithms on that
+data, and do package level configuration and information querying.
 
 """
 
@@ -37,7 +40,9 @@ from uml import createRandomData
 from uml import normalizeData
 
 from uml import registerCustomLearner
+from uml import registerCustomLearnerAsDefault
 from uml import deregisterCustomLearner
+from uml import deregisterCustomLearnerAsDefault
 from uml import listDataFunctions
 from uml import listUMLFunctions
 from uml import listLearners
@@ -70,3 +75,13 @@ UML.configuration.syncWithInterfaces(UML.settings)
 
 # initialize the logging file
 UML.logger.log_manager.initLoggerAndLogConfig()
+
+__all__ = ['createData', 'createRandomData', 'crossValidate',
+			'crossValidateReturnAll', 'crossValidateReturnBest',
+			'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
+			'learnerDefaultValues', 'learnerParameters', 'learnerType',
+			'listDataFunctions', 'listLearners', 'listUMLFunctions',
+			'normalizeData', 'registerCustomLearner',
+			'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
+			'train', 'trainAndApply', 'trainAndTest',
+			'trainAndTestOnTrainingData', 'UMLPath']

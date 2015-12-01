@@ -1,5 +1,6 @@
 """
-Module defining custom exceptions to be used in this package.
+Module defining exceptions to be used in UML.
+
 """
 
 class ArgumentException(Exception):
@@ -18,8 +19,8 @@ class ArgumentException(Exception):
 
 class MissingEntryException(Exception):
 	"""
-	Exception to be thrown when a dictionary or other data structure is missing an entry
-	that is necessary for the proper completion of an operation.
+	Exception to be thrown when a dictionary or other data structure is missing
+	an entry that is necessary for the proper completion of an operation.
 	"""
 	
 	def __init__(self, entryNames, value):
@@ -34,9 +35,9 @@ class MissingEntryException(Exception):
 
 class ImproperActionException(Exception):
 	"""
-		Exception to be thrown if calling a class function does not make sense in a
-		certain context (i.e. calling call.turnOn() when the car object is already running),
-		or is otherwise not allowed.
+	Exception to be thrown if calling a function does not make sense in a
+	certain context (i.e. calling call.turnOn() when the car object is already
+	running) or is otherwise not allowed.
 	"""
 
 	def __init__(self, value):
@@ -69,6 +70,11 @@ class FileFormatException(Exception):
 		return repr(self.value)	
 
 def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
+	"""
+	Used in the creation of exception messages to display lists in a more
+	appealing way than default
+
+	"""
 	ret = ""
 	number = 0
 	for i in xrange(len(inList)):
@@ -84,6 +90,11 @@ def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
 
 def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str, delim='=',
 					valueStr=str):
+	"""
+	Used in the creation of exception messages to display dicts in a more
+	appealing way than default.
+	
+	"""
 	ret = ""
 	number = 0
 	keyList = inDict.keys()
