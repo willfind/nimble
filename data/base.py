@@ -1360,7 +1360,7 @@ class Base(object):
 		xMax: the largest value shown on the x axis of teh resultant plot
 		
 		"""
-		self._plotDistribution(point, outPath, xMin, xMax)
+		self._plotPointDistribution(point, outPath, xMin, xMax)
 
 	def _plotPointDistribution(self, point, outPath, xMin=None, xMax=None):
 		self._validateMatPlotLibImport(mplError, 'plotPointDistribution')
