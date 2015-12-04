@@ -1,4 +1,8 @@
+"""
+Script demonstrating the training, applying, and testing api on a
+simple, out-of-the-box, custom learner.
 
+"""
 
 from allowImports import boilerplate
 boilerplate()
@@ -52,10 +56,3 @@ if __name__ == "__main__":
 	# Using lamb = 1 in this case so that there actually are errors
 	error = UML.trainAndTest("custom.RidgeRegression", trainX, trainY, testX, testY, RMSE, lamb=1)
 	print "rootMeanSquareError of predictions with lamb=1: " + str(error)
-
-
-
-
-	
-
-
