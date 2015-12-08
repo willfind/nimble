@@ -22,6 +22,10 @@ class CustomLearner(object):
 
 	@classmethod
 	def validateSubclass(cls, check):
+		"""
+		Class method called during custom learner registration which ensures
+		the the given class conforms to the custom learner specification.
+		"""
 		# check learnerType 
 		accepted = ["unknown", 'regression', 'classification', 'featureselection', 'dimensionalityreduction']
 		if not hasattr(check, 'learnerType') or check.learnerType not in accepted:
@@ -81,19 +85,36 @@ class CustomLearner(object):
 
 	@classmethod
 	def getLearnerParameterNames(cls):
+		"""
+		Class method used by the a custom learner interface to supply
+		learner parameters to the user through the standard UML functions.
+		"""
 		return cls.getTrainParameters() + cls.getApplyParameters()
 
 	@classmethod
 	def getLearnerDefaultValues(cls):
+		"""
+		Class method used by the a custom learner interface to supply
+		learner parameter default values to the user through the
+		standard UML functions.
+		"""
 		return dict(cls.getTrainDefaults().items() + cls.getApplyDefaults().items())
 
 	@classmethod
 	def getTrainParameters(cls):
+		"""
+		Class method used to determine the parameters of only the train
+		method.
+		"""
 		info = inspect.getargspec(cls.train)
 		return info[0][2:]
 
 	@classmethod
 	def getTrainDefaults(cls):
+		"""
+		Class method used to determine the default values of only the train
+		method.
+		"""
 		info = inspect.getargspec(cls.train)
 		(objArgs,v,k,d) = info
 		ret = {}
@@ -104,11 +125,19 @@ class CustomLearner(object):
 
 	@classmethod
 	def getApplyParameters(cls):
+		"""
+		Class method used to determine the parameters of only the apply
+		method.
+		"""
 		info = inspect.getargspec(cls.apply)
 		return info[0][1:]
 
 	@classmethod
 	def getApplyDefaults(cls):
+		"""
+		Class method used to determine the default values of only the apply
+		method.
+		"""
 		info = inspect.getargspec(cls.apply)
 		(objArgs,v,k,d) = info
 		ret = {}
@@ -119,6 +148,10 @@ class CustomLearner(object):
 
 	@classmethod
 	def options(self):
+		"""
+		Class function which supplies the names of the configuration options
+		associated with this learner.
+		"""
 		return []
 
 	def getScores(self, testX):
@@ -132,6 +165,7 @@ class CustomLearner(object):
 		raise NotImplementedError
 
 	def trainForInterface(self, trainX, trainY, arguments):
+
 		self.trainArgs = arguments
 
 		# TODO store list of classes in trainY if classifying

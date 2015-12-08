@@ -19,6 +19,11 @@ def elementwiseMultiply(left, right):
 	return left
 
 def elementwisePower(left, right):
+	"""
+	Perform an element-wise power operation, with the values in the left object
+	as the bases and the values in the right object as exponents. A new object
+	will be created, and the input obects will be un-modified.
+	"""
 	# check left is UML
 	if not isinstance(left, UML.data.Base):
 		raise ArgumentException("'left' must be an instance of a UML data object")

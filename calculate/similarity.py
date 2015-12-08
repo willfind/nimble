@@ -26,6 +26,11 @@ def cosineSimilarity(knownValues, predictedValues):
 cosineSimilarity.optimal = 'max'
 
 def correlation(X, X_T=None):
+	"""
+	Calculate the correlation between points in X. If X_T is not
+	provided, a copy of X will be made in this function.
+
+	"""
 	if X_T is None:
 		X_T = X.copy()
 		X_T.transpose()
@@ -40,6 +45,11 @@ def correlation(X, X_T=None):
 	return ret
 
 def covariance(X, X_T=None, sample=True):
+	"""
+	Calculate the covariance between points in X. If X_T is not
+	provided, a copy of X will be made in this function.
+
+	"""
 	if X_T is None:
 		X_T = X.copy()
 		X_T.transpose()
@@ -63,12 +73,24 @@ def covariance(X, X_T=None, sample=True):
 	return ret
 
 def fractionCorrect(knownValues, predictedValues):
+	"""
+	Calculate how many values in predictedValues are equal to the
+	values in the corresponding positions in knownValues. The return
+	will be a float between 0 and 1 inclusive.
+
+	"""
 	return 1 - fractionIncorrect(knownValues, predictedValues)
 
 fractionCorrect.optimal = 'max'
 
 
 def rSquared(knownValues, predictedValues):
+	"""
+	Calculate the r-squared (or coefficient of determination) of the
+	predictedValues given the knownValues. This will be equal to 1 -
+	UML.calculate.varianceFractionRemaining() of the same inputs.
+	
+	"""
 	return 1.0 - varianceFractionRemaining(knownValues, predictedValues)
 
 rSquared.optimal = 'max'

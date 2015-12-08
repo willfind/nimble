@@ -30,6 +30,11 @@ import UML
 from UML.exceptions import ArgumentException
 
 class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
+	"""
+	An extension of the the standard python SafeConfigParser which will
+	preserve comments present in the configuration file.
+
+	"""
 
 	def _getComment(self, section, option):
 		"""
@@ -198,6 +203,10 @@ class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
 
 
 class ToDelete(object):
+	"""
+	Sentinal object standing in for options / sections that have not yet
+	been deleted, but will be.
+	"""
 	pass
 
 
@@ -224,6 +233,13 @@ class SessionConfiguration(object):
 		self.hooks = {}
 
 	def delete(self, section, option):
+		"""
+		Mark a particual option, or an entire section for deletion. The
+		in memory object will act as if deletion has already occured, but
+		the configuration file will not be affected until a saveChanges
+		call.
+
+		"""
 		success = False
 
 		if section is not None:
@@ -250,6 +266,9 @@ class SessionConfiguration(object):
 
 
 	def get(self, section, option):
+		"""
+		Query the contents of a section, or a specific option. 
+		"""
 		# Treat this as a request for an entire section
 		if section is not None and option is None:
 			found = False
@@ -323,17 +342,29 @@ class SessionConfiguration(object):
 		self.hooks[key] = toCall
 
 	def setDefault(self, section, option, value):
+		"""
+		Set a value which will immediately be reflected in the configuration
+		file.
+
+		"""
 		self.set(section, option, value)
 		self.saveChanges(section, option)
 
 	def deleteDefault(self, section, option):
+		"""
+		Delete a value which will immediately be reflected in the configuration
+		file.
+
+		"""
 		self.delete(section, option)
 		self.saveChanges(section, option)
 
 
 	def set(self, section, option, value):
 		"""
-		Set an option for this session.
+		Set an option for this session. saveChanges can be called to make
+		this change permanant by saving it to the configuration file.
+
 		"""
 		# if we are setting a value which matches the
 		# value in file, we should adjust the changes
@@ -467,6 +498,10 @@ class SessionConfiguration(object):
 
 
 def loadSettings():
+	"""
+	Function which reads the configuration file and loads the values into
+	a SessionConfiguration. The SessionConfiguration object is then returned.
+	"""
 	target = os.path.join(UML.UMLPath, 'configuration.ini')
 
 	if not os.path.exists(target):
@@ -477,6 +512,14 @@ def loadSettings():
 	return ret
 
 def syncWithInterfaces(settingsObj):
+	"""
+	Synchronizes the configuration file, settings object in memory, and
+	the the available interfaces, so that all three have the same option
+	names and default values. This is called during UML initialization
+	after available interfaces have been detected, but before a user
+	could have to rely on accessing options for that interface.
+
+	"""
 	origChanges = copy.copy(settingsObj.changes)
 	newChanges = {}
 	settingsObj.changes == {}

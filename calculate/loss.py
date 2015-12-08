@@ -120,6 +120,11 @@ fractionIncorrect.optimal = 'min'
 
 
 def varianceFractionRemaining(knownValues, predictedValues):
+	"""
+	Calculate the how much variance is has not been correctly predicted in the
+	predicted values. This will be equal to 1 - UML.calculate.rsquared() of
+	the same inputs.
+	"""
 	if knownValues.pointCount != predictedValues.pointCount: raise Exception("Objects had different numbers of points")
 	if knownValues.featureCount != predictedValues.featureCount: raise Exception("Objects had different numbers of features. Known values had " + str(knownValues.featureCount) + " and predicted values had " + str(predictedValues.featureCount))
 	diffObject = predictedValues - knownValues

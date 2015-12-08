@@ -271,8 +271,8 @@ def learnerDefaultValues(name):
 
 def listLearners(package=None):
 	"""
-	Takes the name of a package, and returns a list of learners that are callable through that
-	package's trainAndApply() interface.
+	Takes the name of a package, and returns a list of learners that are callable
+	through that package using UML's training, applying, and testing functions.
 
 	"""
 	results = []
@@ -292,6 +292,11 @@ def listLearners(package=None):
 
 
 def listDataFunctions():
+	"""
+	Returns a list of funciton signatures of every method available
+	from the UML data container objects.
+
+	"""
 	methodList = dir(UML.data.Base)
 	visibleMethodList = []
 	for methodName in methodList:
@@ -322,6 +327,11 @@ def listDataFunctions():
 
 
 def listUMLFunctions():
+	"""
+	Returns a list of funciton signatures of every function available
+	in the top level UML package.
+
+	"""
 	methodList = dir(UML)
 
 	visibleMethodList = []
