@@ -1,7 +1,6 @@
 """
-
-
-
+A UML interface building off of the modular python interface 
+for Shogun ML.
 
 """
 
@@ -9,6 +8,11 @@
 # * online learning
 # * different feature types (streaming, for other problem types)
 # *
+
+try:
+	import clang
+except ImportError:
+	pass
 
 import importlib
 import numpy
@@ -45,13 +49,6 @@ class Shogun(UniversalInterface):
 
 		"""
 		super(Shogun, self).__init__()
-
-		self.allowDiscovery = True
-		try:
-			self.clang.cindex = importlib.import_module("clang.cindex")
-		except ImportError as ie:
-			self.allowDiscovery = False
-			#raise ie
 
 		self.shogun = importlib.import_module('shogun')
 		self.versionString = None
@@ -526,8 +523,6 @@ class Shogun(UniversalInterface):
 		"""
 		if self.versionString is None:
 			shogunLib = importlib.import_module('shogun.Library')
-#			import pdb
-#			pdb.set_trace()
 			self.versionString = shogunLib.Version_get_version_release()
 
 		return self.versionString
@@ -544,43 +539,46 @@ class Shogun(UniversalInterface):
 		associated with the 'location' option.
 
 		"""
-		# issue: protecting users from a failed clang import
-		location = self.getOption('libclangLocation')
-
+		# Attempt setup for clang. If successful, we will consider
+		# allowing discovery of parameters
+		allowDiscovery = False
 		try:
+			location = self.getOption('libclangLocation')
 			clang.cindex.Config.set_library_file(location)
 			clang.cindex.Index.create()
+			allowDiscovery = True
 		except Exception as e:
-			#print str(e) # send it to warning log?
-			self.allowDiscovery = False
+			pass
 
 		# find most likely manifest file
 		metadataPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata')
 		best = self._findBestManifest(metadataPath)
-		exists = os.path.exists(best)
+		exists = os.path.exists(best) if best is not None else False
 
 		shogunSourcePath = self.getOption('sourceLocation')
 
 		ranDiscovery = False
-		# if file missing:
-		if not exists and self.allowDiscovery:
-			self._paramsManifest = discoverConstructors(shogunSourcePath)
-			ranDiscovery = True
-		# manifest file present
-		else:
+		if exists:
 			with open(best, 'r') as fp:
 				self._paramsManifest = json.load(fp, object_hook=_enforceNonUnicodeStrings)
 			accurate = None
 			empty = (self._paramsManifest == {})
 			# grab version data
 			if not empty:
-				accurate = True # TODO: actually do some checks
-				if os.path.basename(best).split('_', 1)[1] != self.version():
-					accurate = False
+				accurate = True  # TODO: actually do some checks
 			# if empty or different version:
-			if (empty or not accurate) and self.allowDiscovery:
+			if (empty or not accurate):
+				if allowDiscovery:
+					self._paramsManifest = discoverConstructors(shogunSourcePath)
+					ranDiscovery = True
+				else:
+					self._paramsManifest = {}
+		else:
+			if allowDiscovery:
 				self._paramsManifest = discoverConstructors(shogunSourcePath)
 				ranDiscovery = True
+			else:
+				self._paramsManifest = {}
 
 		modified = False
 		# check params for each learner in listLearner
@@ -598,7 +596,7 @@ class Shogun(UniversalInterface):
 	def _findBestManifest(self, metadataPath):
 		"""
 		Returns absolute path to the manifest file that is the closest match for
-		this version of shogun
+		this version of shogun or None if there is no such file.
 
 		"""
 		ourVersion = self.version()
@@ -607,7 +605,7 @@ class Shogun(UniversalInterface):
 		possible = os.listdir(metadataPath)
 		if len(possible) == 0:
 			return None
-	
+
 		ours = (ourVersion, None, None)
 		toSort = [ours]
 		for name in possible:
@@ -615,13 +613,18 @@ class Shogun(UniversalInterface):
 				pieces = name.split('_')
 				currVersion = distutils.version.LooseVersion(pieces[1])
 				toSort.append((currVersion, name, ))
+		if len(toSort) == 1:
+			return None
+
 		sortedPairs = sorted(toSort, key=(lambda p: p[0]))
 		ourIndex = sortedPairs.index(ours)
 
+		# If what we're looking for is present, it has to be next to
+		# our seeded version at ourIndex
 		left, right = None, None
 		if ourIndex != 0:
 			left = sortedPairs[ourIndex - 1]
-		if ourIndex != len(sortedPairs) -1:
+		if ourIndex != len(sortedPairs) - 1:
 			right = sortedPairs[ourIndex + 1]
 
 		best = None
@@ -639,10 +642,10 @@ class Shogun(UniversalInterface):
 				currR = right[0].version[index]
 
 				if currL == currOurs and currR != currOurs:
-					best = left[1]
+					best = left
 					break
-				if currL !=currOurs and currR == currOurs:
-					best = right[1]
+				if currL != currOurs and currR == currOurs:
+					best = right
 					break
 
 		return os.path.join(metadataPath, best[1])
@@ -915,8 +918,6 @@ def discoverConstructors(path, desiredFile=None, desiredExt=['.cpp']):
 
 def findConstructors(fileName, results, targetDirectory):
 	""" Find all constructors and list their params in the given file """
-#	pdb.set_trace()
-#	print fileName
 	index = clang.cindex.Index.create()
 	tu = index.parse(fileName)
 	findConstructorsBackend(tu.cursor, results, targetDirectory)
@@ -933,8 +934,6 @@ def findConstructorsBackend(node, results, targetDirectory):
 #		if child.kind == clang.cindex.CursorKind.CONSTRUCTOR:
 #			hasConstructor = True
 #	if hasConstructor:
-#		import pdb
-#		pdb.set_trace()
 #		for child in node.get_children():
 #			pass
 
