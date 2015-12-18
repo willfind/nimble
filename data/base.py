@@ -1593,18 +1593,21 @@ class Base(object):
 		
 		"""
 		self._validateValueIsNotNone("toAppend", toAppend)
-		self._validateValueIsUMLDataObject("toAppend", toAppend)
+		self._validateValueIsUMLDataObject("toAppend", toAppend, True)
 		self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
 		self._validateEqualNames('feature', 'feature', 'toAppend', toAppend)
 		self._validateEmptyNamesIntersection("point", "toAppend", toAppend)
 
+		# need this in case we are self appending
+		origPointCount = toAppend.pointCount
+
 		self._appendPoints_implementation(toAppend)
 		self._pointCount += toAppend.pointCount
 
-		for i in xrange(toAppend.pointCount):
+		for i in xrange(origPointCount):
 			currName = toAppend.getPointName(i)
 			if currName.startswith(DEFAULT_PREFIX):
-				currName += '_' + toAppend.name
+				currName = self._nextDefaultName('point')
 			self._addPointName(currName)
 
 		self.validate()
@@ -1619,18 +1622,21 @@ class Base(object):
 		
 		"""	
 		self._validateValueIsNotNone("toAppend", toAppend)
-		self._validateValueIsUMLDataObject("toAppend", toAppend)
+		self._validateValueIsUMLDataObject("toAppend", toAppend, True)
 		self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
 		self._validateEqualNames('point', 'point', 'toAppend', toAppend)
 		self._validateEmptyNamesIntersection('feature', "toAppend", toAppend)
 
+		# need this in case we are self appending
+		origFeaureCount = toAppend.featureCount
+
 		self._appendFeatures_implementation(toAppend)
 		self._featureCount += toAppend.featureCount
 
-		for i in xrange(toAppend.featureCount):
+		for i in xrange(origFeaureCount):
 			currName = toAppend.getFeatureName(i)
 			if currName.startswith(DEFAULT_PREFIX):
-				currName += '_' + toAppend.name
+				currName = self._nextDefaultName('feature')
 			self._addFeatureName(currName)
 
 		self.validate()
@@ -3430,13 +3436,20 @@ class Base(object):
 			msg = "The argument named " + name + " must not have a value of None"
 			raise ArgumentException(msg)
 
-	def _validateValueIsUMLDataObject(self, name, value):
+	def _validateValueIsUMLDataObject(self, name, value, same):
 		if not isinstance(value, UML.data.Base):
 			msg = "The argument named " + name + " must be an instance "
 			msg += "of the UML.data.Base class. The value we recieved was "
 			msg += str(value) + ", had the type " + str(type(value)) 
 			msg += ", and a method resolution order of "
 			msg += str(inspect.getmro(value.__class__))
+			raise ArgumentException(msg)
+		if same and self.getTypeString() != value.getTypeString():
+			msg = "The argument named " + name + " must be an instance "
+			msg += "of the UML.data.Base class, and it must be of the "
+			msg += "same type as the calling object. The value we recieved "
+			msg += "had a type string of " + value.getTypeString() + " but "
+			msg += "self has a type string of " + self.getTypeString()
 			raise ArgumentException(msg)
 
 	def _shapeCompareString(self, argName, argValue):

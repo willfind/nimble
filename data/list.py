@@ -94,25 +94,27 @@ class List(Base):
 				transposed[i].append(point[i])
 		
 		self.data = transposed
-		self._numFeatures= tempFeatures
+		self._numFeatures = tempFeatures
 
 	def _appendPoints_implementation(self,toAppend):
 		"""
 		Append the points from the toAppend object to the bottom of the features in this object
 		
 		"""
-		for point in toAppend.data:
-			self.data.append(point)
+		for pointIndex in xrange(toAppend.pointCount):
+			self.data.append(toAppend.data[pointIndex])
 	
 	def _appendFeatures_implementation(self,toAppend):
 		"""
 		Append the features from the toAppend object to right ends of the points in this object
 
-		"""	
+		"""
+		featureLimit = toAppend.featureCount
 		for i in xrange(self.pointCount):
-			for value in toAppend.data[i]:
+			for j in xrange(featureLimit):
+				value = toAppend.data[i][j]
 				self.data[i].append(value)
-		self._numFeatures= self._numFeatures+ toAppend.featureCount
+		self._numFeatures = self._numFeatures + toAppend.featureCount
 
 	def _sortPoints_implementation(self, sortBy, sortHelper):
 		""" 

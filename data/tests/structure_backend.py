@@ -30,6 +30,7 @@ from UML.data import List
 from UML.data import Matrix
 from UML.data import Sparse
 from UML.data.dataHelpers import View
+from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import ArgumentException
 
 from UML.data.tests.baseObject import DataTestObject
@@ -902,6 +903,22 @@ class StructureModifying(DataTestObject):
 		toAppend = self.constructor([[11, 12, 13,]], featureNames=["two", 'one', 'three'])
 		toTest.appendPoints(toAppend)
 
+	@raises(ArgumentException)
+	def test_appendPoints_exceptionNonUMLDataType(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		toTest.appendPoints([[1,1,1]])
+
+	@raises(ArgumentException)
+	def test_appendPoints_exceptionDifferentUMLDataType(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		if toTest.getTypeString() == 'List':
+			other = UML.createData("Matrix", data)
+		else:
+			other = UML.createData("List", data)
+		toTest.appendPoints(other)
+
 	def test_appendPoints_outOfPEmpty(self):
 		""" Test appendPoints() when the calling object is point empty """
 		data = [[],[]]
@@ -971,6 +988,30 @@ class StructureModifying(DataTestObject):
 		assert toTest.absolutePath == "TestAbsPath"
 		assert toTest.relativePath == 'testRelPath'
 
+	def test_appendPoints_selfAppend(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		fnames = ['1', '2', '3']
+
+		orig = self.constructor(data, featureNames=fnames)
+		dup = orig.copy()
+		dupPNames = dup.getPointNames()
+		assert orig.getPointNames() == dupPNames
+		
+		orig.appendPoints(orig)
+
+		dataExp = [[1,2,3],[4,5,6],[7,8,9],[1,2,3],[4,5,6],[7,8,9]]
+		expected = self.constructor(dataExp, featureNames=fnames)
+
+		assert orig == expected
+
+		assert orig.getPointNames()[0] == dupPNames[0]
+		assert orig.getPointNames()[1] == dupPNames[1]
+		assert orig.getPointNames()[2] == dupPNames[2]
+
+		lastDefIndex = int(dupPNames[2][-1])
+		assert orig.getPointNames()[3] == DEFAULT_PREFIX + str(lastDefIndex + 1)
+		assert orig.getPointNames()[4] == DEFAULT_PREFIX + str(lastDefIndex + 2)
+		assert orig.getPointNames()[5] == DEFAULT_PREFIX + str(lastDefIndex + 3)
 
 	####################
 	# appendFeatures() #
@@ -1003,6 +1044,22 @@ class StructureModifying(DataTestObject):
 		toTest1 = self.constructor([[2,1]], pointNames=["goodbye"])
 		toTest2 = self.constructor([[1,2]], pointNames=["hello"])
 		toTest2.appendFeatures(toTest1)
+
+	@raises(ArgumentException)
+	def test_appendFeatures_exceptionNonUMLDataType(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		toTest.appendFeatures([[1],[1],[1]])
+
+	@raises(ArgumentException)
+	def test_appendFeatures_exceptionDifferentUMLDataType(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		if toTest.getTypeString() == 'List':
+			other = UML.createData("Matrix", data)
+		else:
+			other = UML.createData("List", data)
+		toTest.appendFeatures(other)
 
 	def test_appendFeatures_outOfPEmpty(self):
 		""" Test appendFeatures() when the calling object is feature empty """
@@ -1077,6 +1134,31 @@ class StructureModifying(DataTestObject):
 		assert toTest.absolutePath == "TestAbsPath"
 		assert toTest.relativePath == 'testRelPath'
 
+
+	def test_appendFeatures_selfAppend(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		pnames = ['1', '4', '7']
+
+		orig = self.constructor(data, pointNames=pnames)
+		dup = orig.copy()
+		dupFNames = dup.getFeatureNames()
+		assert orig.getFeatureNames() == dupFNames
+		
+		orig.appendFeatures(orig)
+
+		dataExp = [[1,2,3,1,2,3],[4,5,6,4,5,6],[7,8,9,7,8,9]]
+		expected = self.constructor(dataExp, pointNames=pnames)
+
+		assert orig == expected
+
+		assert orig.getFeatureNames()[0] == dupFNames[0]
+		assert orig.getFeatureNames()[1] == dupFNames[1]
+		assert orig.getFeatureNames()[2] == dupFNames[2]
+
+		lastDefIndex = int(dupFNames[2][-1])
+		assert orig.getFeatureNames()[3] == DEFAULT_PREFIX + str(lastDefIndex + 1)
+		assert orig.getFeatureNames()[4] == DEFAULT_PREFIX + str(lastDefIndex + 2)
+		assert orig.getFeatureNames()[5] == DEFAULT_PREFIX + str(lastDefIndex + 3)
 
 
 	##############
