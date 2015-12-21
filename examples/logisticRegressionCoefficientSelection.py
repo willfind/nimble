@@ -96,7 +96,8 @@ class LogisticRegressionSelectByOmission(CustomLearner):
 		sklLogReg = "scikitlearn.LogisticRegression"
 		trained = UML.train(sklLogReg, trainX, trainY, **kwargs)
 
-		coefs = trained.getAttributes()['coef_'].flatten()
+		self.origCoefs = trained.getAttributes()['coef_'].flatten()
+		coefs = self.origCoefs
 
 #		print "\norig coefs\n" + str(coefs)
 
@@ -263,7 +264,8 @@ if __name__ == "__main__":
 	predictionPossibilities.append("Coefficient selection by regularization")  # 7
 	predictionPossibilities.append("Coefficient removal by least magnitude")  # 8
 	predictionPossibilities.append("Coefficient removal by least value")  # 9
-	predictionMode = predictionPossibilities[8]
+	predictionPossibilities.append("Analysis: removal comparison")  # 10
+	predictionMode = predictionPossibilities[10]
 
 	print "Learning..."
 	print predictionMode
@@ -370,8 +372,6 @@ if __name__ == "__main__":
 #		cVals = (100., 55., 10., 5.5, 1., 0.55, 0.1, 0.055, 0.01, 0.0055, 0.001, 0.00055, 0.0001)
 #		cVals = 1
 
-		print "Cross validated over C with values of: " + str(cVals)
-
 		results = []
 		omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
 		for num in omit:
@@ -387,6 +387,68 @@ if __name__ == "__main__":
 		raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
 		figurePath = './results-least_value.png'
 		raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+		exit(0)
+		# 10
+	elif predictionMode == "Analysis: removal comparison":
+		name = "custom.LogisticRegressionSelectByOmission"
+		cVals = tuple([100. / (10**n) for n in range(7)])
+#		cVals = 0.001
+
+		num = 35
+
+		allQsList = trainX.getFeatureNames()
+		allQs = set(allQsList)
+		LVQs = []
+		LMQs = []
+		tlLV = []
+		tlLM = []
+
+		omit = [10,15,20,25,30,35,40,45,50,55,60,65,70]
+#		omit = [35]
+		for i, num in enumerate(omit):
+			trainedLearnerLV = UML.train(
+					name, trainX, trainY, numberToOmit=num, method="least value",
+					C=cVals, performanceFunction=fractionIncorrect)
+
+			tlLV.append(trainedLearnerLV)
+
+			trainedLearnerLM = UML.train(
+					name, trainX, trainY, numberToOmit=num, method="least magnitude",
+					C=cVals, performanceFunction=fractionIncorrect)
+
+			tlLM.append(trainedLearnerLM)
+
+			print "\nnum " + str(num) + "\n"
+
+			LVWanted = trainedLearnerLV.getAttributes()['wantedIndices']
+			LMWanted = trainedLearnerLM.getAttributes()['wantedIndices']
+
+			LVQs.append(set(numpy.array(allQsList)[LVWanted]))
+			LMQs.append(set(numpy.array(allQsList)[LMWanted]))
+
+			# In Both
+#			print "In Both:" + str(LVQs[i] & LMQs[i])
+#			print ""
+
+			# difference
+#			print "Least Value unique:" + str(LVQs[i] - LMQs[i])
+#			print ""
+#			print "Least Magnitude unique" + str(LMQs[i] - LVQs[i])
+#			print ""
+
+			# Excluded from both
+#			print "removed from both: " + str(allQs[i] - (LMQs[i] | LVQs[i]))
+
+			# assertions
+			#if i > 0:
+				#print numpy.equal(tlLV[i].getAttributes()['origCoefs'], tlLV[i-1].getAttributes()['origCoefs'])
+				#assert tlLV[i].getAttributes()['origCoefs'] == tlLV[i-1].getAttributes()['origCoefs']
+				#print LVQs[i] - LVQs[i-1]
+				# inaccurate: without the same original coefs, the results won't
+				# be exact
+				# assert LVQs[i] < LVQs[i-1]
+				# assert LMQs[i] < LMQs[i-1]
+
 		exit(0)
 	else:
 		raise Exception("Bad prediction mode!")
