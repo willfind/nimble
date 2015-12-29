@@ -210,6 +210,48 @@ def printCoefficients(trainedLearner):
 		print str(i).ljust(3) + "    " + str(round(coef,2)).ljust(8) + question.strip()
 		i = i + 1
 
+def standardizeScores(obj):
+	allNames = obj.getFeatureNames()
+	negScored = []
+	for i, name in enumerate(allNames):
+		assert name[-1] == ")" and name[-3] == "("
+		assert name[-2] == 'F' or name[-2] == 'M'
+		if name[-2] == 'F':
+			negScored.append(i)
+
+	# confirm scoring range assumptions
+	for f in xrange(obj.featureCount):
+		for p in xrange(obj.pointCount):
+			fname = obj.getFeatureName(f)
+			if fname[-2] == 'M':
+				assert obj[p,f] >= 0 and obj[p,f] <= 4
+			else:
+				assert obj[p,f] <= 0 and obj[p,f] >= -4
+
+	def reverseScorePolarity(feature):
+		ret = []
+		for elem in feature:
+			if elem == 0:
+				ret.append(elem)
+			else:
+				ret.append(-elem)
+		return ret
+
+#	reduced = obj.copyPoints(end=20)
+#	reduced = reduced.copyFeatures([0,1,2,58,59,60])
+#	print reduced.getFeatureNames()
+#	reduced.show('Before')
+
+	obj.applyToFeatures(reverseScorePolarity, features=negScored)
+
+#	reduced = obj.copyPoints(end=20)
+#	reduced = reduced.copyFeatures([0,1,2,58,59,60])
+#	reduced.show('After')
+
+#	exit(0)
+	return
+
+
 if __name__ == "__main__":
 
 	# Some variables to control the flow of the program
@@ -233,6 +275,9 @@ if __name__ == "__main__":
 	# ones, and to seperate into training and testing sets according
 	# to the 'InTestSet' feature.
 	trainX, trainY, testX, testY = seperateData(dataAll, omitCultureQuestions)
+
+#	standardizeScores(trainX)
+#	standardizeScores(testX)
 
 	trainX.name = "Training Data"
 	trainY.name = "Training Labels"
@@ -265,7 +310,8 @@ if __name__ == "__main__":
 	predictionPossibilities.append("Coefficient removal by least magnitude")  # 8
 	predictionPossibilities.append("Coefficient removal by least value")  # 9
 	predictionPossibilities.append("Analysis: removal comparison")  # 10
-	predictionMode = predictionPossibilities[10]
+	predictionPossibilities.append("Analysis: randomness effects")  # 11
+	predictionMode = predictionPossibilities[11]
 
 	print "Learning..."
 	print predictionMode
@@ -388,7 +434,7 @@ if __name__ == "__main__":
 		figurePath = './results-least_value.png'
 		raw.plotPointAgainstPoint(0,1, outPath=figurePath)
 		exit(0)
-		# 10
+	# 10
 	elif predictionMode == "Analysis: removal comparison":
 		name = "custom.LogisticRegressionSelectByOmission"
 		cVals = tuple([100. / (10**n) for n in range(7)])
@@ -448,6 +494,97 @@ if __name__ == "__main__":
 				# be exact
 				# assert LVQs[i] < LVQs[i-1]
 				# assert LMQs[i] < LMQs[i-1]
+
+		exit(0)
+	# 11
+	elif predictionMode == "Analysis: randomness effects":
+		name = "custom.LogisticRegressionSelectByOmission"
+		cVals = tuple([100. / (10**n) for n in range(7)])
+
+		tlLV = []
+		resultsLV = []
+		resultsLM = []
+		tlLM = []
+
+		omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
+		for i, num in enumerate(omit):
+			trainedLearnerLV1 = UML.train(
+					name, trainX, trainY, numberToOmit=num, method="least value",
+					C=cVals, performanceFunction=fractionIncorrect)
+			tlLV.append(trainedLearnerLV1)
+			trainedLearnerLV2 = UML.train(
+					name, trainX, trainY, numberToOmit=num, method="least value",
+					C=cVals, performanceFunction=fractionIncorrect)
+			tlLV.append(trainedLearnerLV2)
+#			trainedLearnerLV3 = UML.train(
+#					name, trainX, trainY, numberToOmit=num, method="least value",
+#					C=cVals, performanceFunction=fractionIncorrect)
+#			tlLV.append(trainedLearnerLV3)
+
+			result1 = trainedLearnerLV1.test(testX, testY, performanceFunction=fractionIncorrect)
+			resultsLV.append(result1)
+			result2 = trainedLearnerLV2.test(testX, testY, performanceFunction=fractionIncorrect)
+			resultsLV.append(result2)
+#			result3 = trainedLearnerLV3.test(testX, testY, performanceFunction=fractionIncorrect)
+#			resultsLV.append(result3)
+		
+			trainedLearnerLM1 = UML.train(
+					name, trainX, trainY, numberToOmit=num, method="least magnitude",
+					C=cVals, performanceFunction=fractionIncorrect)
+			tlLM.append(trainedLearnerLM1)
+			trainedLearnerLM2 = UML.train(
+					name, trainX, trainY, numberToOmit=num, method="least magnitude",
+					C=cVals, performanceFunction=fractionIncorrect)
+			tlLM.append(trainedLearnerLM2)
+#			trainedLearnerLM3 = UML.train(
+#					name, trainX, trainY, numberToOmit=num, method="least magnitude",
+#					C=cVals, performanceFunction=fractionIncorrect)
+#			tlLM.append(trainedLearnerLM3)
+
+			result1 = trainedLearnerLM1.test(testX, testY, performanceFunction=fractionIncorrect)
+			resultsLM.append(result1)
+			result2 = trainedLearnerLM2.test(testX, testY, performanceFunction=fractionIncorrect)
+			resultsLM.append(result2)
+#			result3 = trainedLearnerLM3.test(testX, testY, performanceFunction=fractionIncorrect)
+#			resultsLM.append(result3)
+
+		# COMPARE!
+		# out of sample error
+#		pnames = ['number Omitted', 'out sample error: fractionIncorrect']
+#		objName = "Least Value randomness analysis"
+#		corrOmit = [val for pair in zip(omit, omit) for val in pair]
+#		corrOmit = [val for pair in zip(omit, omit, omit) for val in pair]
+#		raw = UML.createData("List", [corrOmit, resultsLV], pointNames=pnames, name=objName)
+#		figurePath = './results-least_value_triple_trials.png'
+#		raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+
+#		objName = "Least Magnitude randomness analysis"
+#		raw = UML.createData("List", [corrOmit, resultsLM], pointNames=pnames, name=objName)
+#		figurePath = './results-least_magnitude_triple_trials.png'
+#		raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+
+		# coefficients
+		allTL = tlLV + tlLM
+		currTL = allTL[0]
+		currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
+		coefsObj = UML.createData("Matrix", currCoefs)
+
+		for i in xrange(1,len(allTL)):
+			currTL = allTL[i]
+			currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
+			currCoefsObj = UML.createData("Matrix", currCoefs)
+			coefsObj.appendPoints(currCoefsObj)
+
+#		print coefsObj.pointCount
+#		print coefsObj.featureCount
+
+		coefCorr = coefsObj.featureSimilarities("correlation")
+		# BUT THIS IS WIERD since the questions are 'scored' on different
+		# scales depending on whether it ends with an (M) or (F)
+		coefCorr.setPointNames([str(val) for val in xrange(75)])
+		coefCorr.setFeatureNames([str(val) for val in xrange(75)])
+		coefCorr.show("coef correlation", maxWidth=None, maxHeight=80,
+			includeObjectName=False)
 
 		exit(0)
 	else:
