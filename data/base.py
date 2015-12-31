@@ -916,9 +916,9 @@ class Base(object):
 
 		# check that if it is a string, it is one of the accepted values
 		if isinstance(subtract, basestring):
-			self.validateStatisticalFunctionInputString(subtract)
+			self._validateStatisticalFunctionInputString(subtract)
 		if isinstance(divide, basestring):
-			self.validateStatisticalFunctionInputString(divide)
+			self._validateStatisticalFunctionInputString(divide)
 
 		# arg generic helper to check that objects are of the
 		# correct shape/size
@@ -2743,7 +2743,7 @@ class Base(object):
 		return self._axisStatisticsBackend(statisticsFunction, 'feature')
 
 	def _axisStatisticsBackend(self, statisticsFunction, axis):
-		cleanFuncName = self.validateStatisticalFunctionInputString(statisticsFunction)
+		cleanFuncName = self._validateStatisticalFunctionInputString(statisticsFunction)
 
 		if cleanFuncName == 'max':
 			toCall = UML.calculate.maximum
@@ -3675,7 +3675,7 @@ class Base(object):
 
 			raise ImportError(msg)
 
-	def validateStatisticalFunctionInputString(self, statisticsFunction):
+	def _validateStatisticalFunctionInputString(self, statisticsFunction):
 		acceptedPretty = [
 			'max', 'mean', 'median', 'min', 'unique count', 'proportion missing',
 			'proportion zero', 'standard deviation', 'std', 'population std',
