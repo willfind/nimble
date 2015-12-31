@@ -860,6 +860,169 @@ class Base(object):
 		return toSplit, trainY, testX, testY
 
 
+	def normalizePoints(self, subtract=None, divide=None):
+		"""
+		Modify all points according to the given transformations.
+		Transformations may be either fixed numerical values,
+		strings defining statistical functions (all of the
+		same ones callable though pointStatistics), or a
+		UML data object. If a vector shaped object is given,
+		then the value associated with each point is used for
+		subtraction or division. Otherwise, the values in the
+		object are used elementwise.
+
+		Returns None while having affected the content of the
+		calling object.
+
+		"""
+		self._normalizeGeneric("point", subtract, divide)
+
+	def normalizeFeatures(self, subtract=None, divide=None):
+		"""
+		Modify all features according to the given transformations.
+		Transformations may be either fixed numerical values,
+		strings defining statistical functions (all of the
+		same ones callable though featureStatistics), or a
+		UML data object. If a vector shaped object is given,
+		then the value associated with each feature is used for
+		subtraction or division. Otherwise, the values in the
+		object are used elementwise.
+
+		Returns None while having affected the content of the
+		calling object.
+
+		"""
+		self._normalizeGeneric("feature", subtract, divide)
+
+	def _normalizeGeneric(self, axis, subtract, divide):
+		# the operation is different when the input is a vector
+		# or produces a vector (ie when the input is a statistics
+		# string) so during the validation steps we check for
+		# those cases
+		subIsVec = False
+		divIsVec = False
+
+		# check it is within the desired types
+		if subtract is not None:
+			if not isinstance(subtract, (int, float, basestring, UML.data.Base)):
+				msg = "The argument named subtract must have a value that is "
+				msg += "an int, float, string, or is a UML data object"
+				raise ArgumentException(msg)
+		if divide is not None:
+			if not isinstance(divide, (int, float, basestring, UML.data.Base)):
+				msg = "The argument named divide must have a value that is "
+				msg += "an int, float, string, or is a UML data object"
+				raise ArgumentException(msg)
+
+		# check that if it is a string, it is one of the accepted values
+		if isinstance(subtract, basestring):
+			self.validateStatisticalFunctionInputString(subtract)
+		if isinstance(divide, basestring):
+			self.validateStatisticalFunctionInputString(divide)
+
+		# arg generic helper to check that objects are of the
+		# correct shape/size
+		def validateInObjectSize(argname, argval):
+			inPC = argval.pointCount
+			inFC = argval.featureCount
+			selfPC = self.pointCount
+			selfFC = self.featureCount
+
+			inMainLen = inPC if axis == "point" else inFC
+			inOffLen = inFC if axis == "point" else inPC
+			selfMainLen = selfPC if axis == "point" else selfFC
+			selfOffLen = selfFC if axis == 'point' else selfPC
+
+			if inMainLen != selfMainLen or inOffLen != selfOffLen:
+				vecErr = argname + " "
+				vecErr += "was a UML object in the shape of a "
+				vecErr += "vector (" + str(inPC) + " x "
+				vecErr += str(inFC) + "), "
+				vecErr += "but the length of long axis did not match "
+				vecErr += "the number of " + axis + "s in this object ("
+				vecErr += str(self.pointCount) + ")."
+				# treat it as a vector
+				if inMainLen == 1:
+					if inOffLen != selfMainLen:
+						raise ArgumentException(vecErr)
+					return True
+				# treat it as a vector
+				elif inOffLen == 1:
+					if inMainLen != selfMainLen:
+						raise ArgumentException(vecErr)
+					argval.transpose()
+					return True
+				# treat it as a mis-sized object
+				else:
+					msg = argname + " "
+					msg += "was a UML obejct with a shape of ("
+					msg += str(inPC) + " x " + str(inFC) + "), "
+					msg += "but it doesn't match the shape of the calling"
+					msg += "object (" + str(selfPC) + " x "
+					msg += str(selfFC) + ")"
+					raise ArgumentException(msg)
+			return False
+
+		# actually check that objects are the correct shape/size
+		if isinstance(subtract, UML.data.Base):
+			subIsVec = validateInObjectSize("subtract", subtract)
+		if isinstance(divide, UML.data.Base):
+			divIsVec = validateInObjectSize("divide", divide)
+
+		# if a statistics string was entered, generate the results
+		# of that statistic
+		if isinstance(subtract, basestring):
+			if axis == 'point':
+				subtract = self.pointStatistics(subtract)
+			else:
+				subtract = self.featureStatistics(subtract)
+			subIsVec = True
+		if isinstance(divide, basestring):
+			if axis == 'point':
+				divide = self.pointStatistics(divide)
+			else:
+				divide = self.featureStatistics(divide)
+			divIsVec = True
+
+		# helper for when subtract is a vector of values
+		def subber(currView):
+			ret = []
+			for val in currView:
+				ret.append(val - subtract[currView.index()])
+			return ret
+
+		# helper for when divide is a vector of values
+		def diver(currView):
+			ret = []
+			for val in currView:
+				ret.append(val / divide[currView.index()])
+			return ret
+
+		# first perform the subtraction operation
+		if subtract is not None and subtract != 0:
+			if subIsVec:
+				if axis == 'point':
+					self.applyToPoints(subber)
+				else:
+					self.applyToFeatures(subber)
+			else:
+				self -= subtract
+
+		# then perform the division operation
+		if divide is not None and divide != 1:
+			if divIsVec:		
+				if axis == 'point':
+					self.applyToPoints(diver)
+				else:
+					self.applyToFeatures(diver)
+			else:
+				self /= divide
+
+		# this operation is self modifying, so we return None
+		return None
+
+
+
 	########################################
 	########################################
 	###   Functions related to logging   ###
@@ -2477,7 +2640,7 @@ class Base(object):
 
 		# figure out return obj's point / feature names
 		# if unary:
-		if opName in ['__pos__', '__neg__', '__abs__'] or isinstance(other, int):
+		if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
 			retPNames = self.getPointNames()
 			retFNames = self.getFeatureNames()
 		# else (everything else that uses this helper is a binary scalar op)
@@ -2580,27 +2743,7 @@ class Base(object):
 		return self._axisStatisticsBackend(statisticsFunction, 'feature')
 
 	def _axisStatisticsBackend(self, statisticsFunction, axis):
-		acceptedPretty = [
-			'max', 'mean', 'median', 'min', 'unique count', 'proportion missing',
-			'proportion zero', 'standard deviation', 'std', 'population std',
-			'population standard deviation', 'sample std', 
-			'sample standard deviation'
-			]
-		accepted = map(dataHelpers.cleanKeywordInput, acceptedPretty)
-
-		msg = "The statisticsFunction must be equivaltent to one of the "
-		msg += "following: "
-		msg += str(acceptedPretty) + ", but '" + str(statisticsFunction)
-		msg += "' was given instead. Note: casing and whitespace is "
-		msg += "ignored when checking the input."
-
-		if not isinstance(statisticsFunction, basestring):
-			raise ArgumentException(msg)
-
-		cleanFuncName = dataHelpers.cleanKeywordInput(statisticsFunction)
-
-		if cleanFuncName not in accepted:
-			raise ArgumentException(msg)
+		cleanFuncName = self.validateStatisticalFunctionInputString(statisticsFunction)
 
 		if cleanFuncName == 'max':
 			toCall = UML.calculate.maximum
@@ -3531,3 +3674,28 @@ class Base(object):
 			msg += str(error) + "'"
 
 			raise ImportError(msg)
+
+	def validateStatisticalFunctionInputString(self, statisticsFunction):
+		acceptedPretty = [
+			'max', 'mean', 'median', 'min', 'unique count', 'proportion missing',
+			'proportion zero', 'standard deviation', 'std', 'population std',
+			'population standard deviation', 'sample std', 
+			'sample standard deviation'
+			]
+		accepted = map(dataHelpers.cleanKeywordInput, acceptedPretty)
+
+		msg = "The statisticsFunction must be equivaltent to one of the "
+		msg += "following: "
+		msg += str(acceptedPretty) + ", but '" + str(statisticsFunction)
+		msg += "' was given instead. Note: casing and whitespace is "
+		msg += "ignored when checking the statisticsFunction."
+
+		if not isinstance(statisticsFunction, basestring):
+			raise ArgumentException(msg)
+
+		cleanFuncName = dataHelpers.cleanKeywordInput(statisticsFunction)
+
+		if cleanFuncName not in accepted:
+			raise ArgumentException(msg)
+
+		return cleanFuncName
