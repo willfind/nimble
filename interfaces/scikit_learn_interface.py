@@ -310,6 +310,8 @@ class SciKitLearn(UniversalInterface):
 			customDict['match'] = trainX.getTypeString()
 			if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopy:
 				trainX = trainX.data
+			elif trainX.getTypeString() == 'Sparse':
+				trainX = trainX.copyAs('scipycsr')
 			else:
 				trainX = trainX.copyAs('numpy matrix')
 
@@ -322,6 +324,8 @@ class SciKitLearn(UniversalInterface):
 		if testX is not None:
 			if testX.getTypeString() == 'Matrix':
 				testX = testX.data
+			elif testX.getTypeString() == 'Sparse':
+				testX = testX.copyAs('scipycsr')
 			else:
 				testX = testX.copyAs('numpy matrix')
 
