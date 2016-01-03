@@ -828,12 +828,19 @@ class Sparse(Base):
 						nameString += ','
 				return nameString
 
+		header = ''
 		if includePointNames:
 			header = makeNameString(self.pointCount, self.pointNamesInverse)
 			header += '\n'
+		else:
+			header += '#\n'
 		if includeFeatureNames:
 			header += makeNameString(self.featureCount, self.featureNamesInverse)
-			
+			header += '\n'
+		else:
+			header += '#\n'
+
+		if header != '':
 			mmwrite(target=outPath, a=self.data, comment=header)		
 		else:
 			mmwrite(target=outPath, a=self._data.internal)

@@ -399,6 +399,7 @@ def _loadmtxForAuto(
 
 	"""
 	startPosition = openFile.tell()
+	seenPNames = False
 	retPNames = None
 	retFNames = None
 
@@ -413,10 +414,11 @@ def _loadmtxForAuto(
 			# strip newline from end of line
 			scrubbedLine = scrubbedLine.rstrip()
 			names = scrubbedLine.split(',')
-			if retPNames is None:
-				retPNames = names
+			if not seenPNames:
+				retPNames = names if names != [''] else None
+				seenPNames = True
 			else:
-				retFNames = names
+				retFNames = names if names != [''] else None
 
 	openFile.seek(startPosition)
 

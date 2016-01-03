@@ -495,12 +495,18 @@ class Matrix(Base):
 					nameString += ','
 			return nameString
 
+		header = ''
 		if includePointNames:
 			header = makeNameString(self.pointCount, self.getPointName)
 			header += '\n'
+		else:
+			header += '#\n'
 		if includeFeatureNames:
 			header += makeNameString(self.featureCount, self.getFeatureName)
-			
+		else:
+			header += '#\n'
+		
+		if header != '':
 			mmwrite(target=outPath, a=self.data, comment=header)		
 		else:
 			mmwrite(target=outPath, a=self.data)

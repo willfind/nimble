@@ -632,8 +632,12 @@ class List(Base):
 
 		if includePointNames:
 			writeNames(self.pointNames.items())
+		else:
+			outFile.write('%#\n')
 		if includeFeatureNames:
 			writeNames(self.featureNames.items())
+		else:
+			outFile.write('%#\n')
 
 		outFile.write(str(self.pointCount) + " " + str(self.featureCount) + "\n")
 
