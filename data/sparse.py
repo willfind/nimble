@@ -146,7 +146,45 @@ class Sparse(Base):
 
 
 	def _applyTo_implementation(self, function, included, inPlace, axis):
+		if inPlace:
+			return self._applyTo_implementation_inPlace(function, included, axis)
+		else:
+			return self._applyTo_implementation_outOfPlace(function, included, axis)
+
+	def _applyTo_implementation_outOfPlace(self, function, included, axis):
 		retData = []
+
+		if axis == 'point':
+			viewIterator = self.pointIterator()
+		else:
+			viewIterator = self.featureIterator()
+
+		for view in viewIterator:
+			viewID = view.index()
+			if included is not None and viewID not in included:
+				continue
+			currOut = function(view)
+			# first we branch on whether the output has multiple values or is singular.
+			if hasattr(currOut, '__iter__'):
+				# if there are multiple values, they must be random accessible
+				if not hasattr(currOut, '__getitem__'):
+					raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
+				toCopyInto = []
+				for value in currOut:
+					toCopyInto.append(value)
+				retData.append(toCopyInto)
+			# singular return
+			else:
+				retData.append([currOut])
+
+		ret = UML.createData(self.getTypeString(), retData)
+		if axis != 'point':
+			ret.transpose()
+
+		return ret
+
+
+	def _applyTo_implementation_inPlace(self, function, included, axis):
 		modData = []
 		modRow = []
 		modCol = []
@@ -163,51 +201,29 @@ class Sparse(Base):
 		for view in viewIterator:
 			viewID = view.index()
 			if included is not None and viewID not in included:
-				continue
-			currOut = function(view)
-			# first we branch on whether the output has multiple values or is singular.
-			if hasattr(currOut, '__iter__'):
-				# if there are multiple values, they must be random accessible
-				if not hasattr(currOut, '__getitem__'):
-					raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
-				if inPlace:
-					for i in xrange(len(currOut)):
-						if view[i] != 0:
-							view[i] = currOut[i]
-						else:
-							modData.append(currOut[i])
-							modTarget.append(viewID)
-							modOther.append(i)
-				else:
-					toCopyInto = []
-					for value in currOut:
-						toCopyInto.append(value)
-					retData.append(toCopyInto)
-			# singular return
+				currOut = list(view)
 			else:
-				if inPlace:
-					if view[0] != 0:
-						view[0] = currOut
-					else:
-							modData.append(currOut[i])
-							modTarget.append(viewID)
-							modOther.append(i)
-				else:
-					retData.append([currOut])
+				currOut = function(view)
+			
+			# easy way to reuse code if we have a singular return
+			if not hasattr(currOut, '__iter__'):
+				currOut = [currOut]
+			
+			# if there are multiple values, they must be random accessible
+			if not hasattr(currOut, '__getitem__'):
+				raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
+			
+			for i, retVal in enumerate(currOut):
+				if retVal != 0:
+					modData.append(retVal)
+					modTarget.append(viewID)
+					modOther.append(i)
 
-		if inPlace and len(modData) != 0:
-			newData = numpy.append(self._data.data, modData)
-			newRow = numpy.append(self._data.row, modRow)
-			newCol = numpy.append(self._data.col, modCol)
-			self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(self.pointCount,self.featureCount))
+		if len(modData) != 0:
+			self._data = CooWithEmpty((modData,(modRow,modCol)),shape=(self.pointCount,self.featureCount))
 			self._sorted = None
 
-		if inPlace:
-			ret = None
-		else:
-			ret = UML.createData(self.getTypeString(), retData)
-			if axis != 'point':
-				ret.transpose()
+		ret = None
 
 		return ret
 
