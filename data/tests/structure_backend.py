@@ -1412,6 +1412,46 @@ class StructureModifying(DataTestObject):
 		expEnd = self.constructor([[1,2,3], [7,8,9]], pointNames=['1','7'])
 		assert toTest.isIdentical(expEnd)
 
+	def test_extractPoints_List_trickyOrdering(self):
+		data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
+		toExtract = [6, 5, 3, 9]
+
+		toTest = self.constructor(data)
+
+		ret = toTest.extractPoints(toExtract)
+
+		expRaw = [[0],[0],[2],[0]]
+		expRet = self.constructor(expRaw)
+
+		expRaw = [[0],[2],[2],[0],[0],[2]]
+		expRem = self.constructor(expRaw)
+
+		assert ret == expRet
+		assert toTest == expRem
+
+	def test_extractPoints_function_selectionGap(self):
+		data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
+		extractIndices = [3,5,6,9]
+
+		def sel(point):
+			if point.index() in extractIndices:
+				return True
+			else:
+				return False
+
+		toTest = self.constructor(data)
+
+		ret = toTest.extractPoints(sel)
+
+		expRaw = [[2],[0],[0],[0]]
+		expRet = self.constructor(expRaw)
+
+		expRaw = [[0],[2],[2],[0],[0],[2]]
+		expRem = self.constructor(expRaw)
+
+		assert ret == expRet
+		assert toTest == expRem
+
 
 	def test_extractPoints_functionIntoPEmpty(self):
 		""" Test extractPoints() by removing all points using a function """
@@ -1718,6 +1758,49 @@ class StructureModifying(DataTestObject):
 		assert ext2.isIdentical(exp2)
 		expEnd = self.constructor([[2],[5],[8]], featureNames=["two"])
 		assert toTest.isIdentical(expEnd)
+
+
+	def test_extractFeatures_List_trickyOrdering(self):
+		data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
+		toExtract = [6, 5, 3, 9]
+#		toExtract = [3,5,6,9]
+
+		toTest = self.constructor(data)
+
+		ret = toTest.extractFeatures(toExtract)
+
+		expRaw = [0,0,1,0]
+		expRet = self.constructor(expRaw)
+
+		expRaw = [0,1,1,0,0,1]
+		expRem = self.constructor(expRaw)
+
+		assert ret == expRet
+		assert toTest == expRem
+
+	def test_extractFeatures_function_selectionGap(self):
+		data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
+
+		extractIndices = [3,5,6,9]
+
+		def sel(feature):
+			if feature.index() in extractIndices:
+				return True
+			else:
+				return False
+
+		toTest = self.constructor(data)
+
+		ret = toTest.extractFeatures(sel)
+
+		expRaw = [1,0,0,0]
+		expRet = self.constructor(expRaw)
+
+		expRaw = [0,1,1,0,0,1]
+		expRem = self.constructor(expRaw)
+
+		assert ret == expRet
+		assert toTest == expRem
 
 
 	def test_extractFeatures_functionIntoFEmpty(self):
