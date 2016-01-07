@@ -472,12 +472,18 @@ class Sparse(Base):
 		extractIndex = 0
 		for i in xrange(len(self._data.data)):
 			value = targetAxis[i]
-			if extractIndex < extractLength and value > toExtractSorted[extractIndex]:
+			# Move extractIndex forward until we get to an entry that might
+			# match the current (or a future) value
+			while extractIndex < extractLength and value > toExtractSorted[extractIndex]:
 				extractIndex = extractIndex + 1
+			
+			# Check if the current value matches one we want extracted
 			if extractIndex < extractLength and value == toExtractSorted[extractIndex]:
 				extractData.append(self._data.data[i])
 				extractOther.append(otherAxis[i])
 				extractTarget.append(positionMap[value])	
+			# Not extracted. Copy / pack to front of arrays, adjusting for
+			# those already extracted
 			else:
 				self._data.data[copyIndex] = self._data.data[i]				
 				otherAxis[copyIndex] = otherAxis[i]
@@ -1052,6 +1058,10 @@ class Sparse(Base):
 	def _sortInternal(self, axis):
 		if axis != 'point' and axis != 'feature':
 			raise ArgumentException("invalid axis type")
+
+		if self._sorted == axis:
+			return
+
 		# sort least significant axis first
 		if axis == "point":
 			sortKeys = numpy.argsort(self._data.col)
