@@ -3,7 +3,7 @@
 Methods tested in this file (none modify the data):
 
 pointCount, featuresCount, isIdentical, writeFile, __getitem__, pointView, 
-featureView, containsZero, __eq__, __ne__, toString, pointSimilarities,
+featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
 featureSimilarities, pointStatistics, featureStatistics,
 nonZeroIteratorPointGrouped, nonZeroIteratorFeatureGrouped
 
@@ -428,6 +428,133 @@ class QueryBackend(DataTestObject):
 		assert fView['1'] == -1
 		assert fView['4'] == -4
 		assert fView[2] == -7
+
+	########
+	# view #
+	########
+
+	# This only checks the api for view creation does the intended validation.
+	# That the returned View object then acts like everything else in the
+	# data hierarchy is tested using test objects, in the same style as the
+	# concrete data types.
+
+	def test_view_pointStart_pointEnd_validation(self):
+		pointNames = ['1', '4', '7']
+		featureNames = ["one","two","three"]
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		textCheck = False
+
+		try:
+			toTest.view(pointStart=[1])
+			assert False  # pointStart is non-ID didn't raise exception
+		except ArgumentException as ae:
+			if textCheck:
+				print ae
+
+		try:
+			toTest.view(pointEnd=5)
+			assert False  # pointEnd > pointCount didn't raise exception
+		except ArgumentException as ae:
+			if textCheck:
+				print ae
+
+		try:
+			toTest.view(pointEnd=[1])
+			assert False  # pointEnd is non-ID didn't raise exception
+		except ArgumentException as ae:
+			if textCheck:
+				print ae
+
+		try:
+			toTest.view(pointStart='7', pointEnd='4')
+			assert False  # pointStart > pointEnd didn't raise exception
+		except ArgumentException as ae:
+			if textCheck:
+				print ae
+
+	def test_view_featureStart_featureEnd_validation(self):
+		pointNames = ['1', '4', '7']
+		featureNames = ["one","two","three"]
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+		textCheck = False
+
+		try:
+			toTest.view(featureStart=[1])
+			assert False  # featureStart is non-ID didn't raise exception
+		except ArgumentException as ae:
+			if textCheck:
+				print ae
+
+		try:
+			toTest.view(featureEnd=4)
+			assert False  # featureEnd > featureCount didn't raise exception
+		except ArgumentException as ae:
+			if textCheck:
+				print ae
+
+		try:
+			toTest.view(featureEnd=[1])
+			assert False  # featureEnd is non-ID didn't raise exception
+		except ArgumentException as ae:
+			if textCheck:
+				print ae
+
+		try:
+			toTest.view(featureStart='three', featureEnd='two')
+			assert False  # featureStart > featureEnd didn't raise exception
+		except ArgumentException as ae:
+			if textCheck:
+				print ae
+
+
+	def test_ViewAccess_AllLimits(self):
+		data = [[11,12,13,14], [0,0,0,0], [21,22,23,24], [0,0,0,0], [31,32,33,34]]
+		pnames = ['p1', 'p2', 'p3', 'p4', 'p5']
+		fnames = ['f1', 'f2', 'f3', 'f4']
+
+		origPLen = len(data)
+		origFLen = len(data[0])
+
+		orig = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+		def checkAccess(v, pStart, pEnd, fStart, fEnd):
+			pSize = pEnd - pStart
+			fSize = fEnd - fStart
+			for i in xrange(pSize):
+				for j in xrange(fSize):
+					assert v[i,j] == orig[i+pStart, j+fStart]
+
+			# getPointNames
+			# +1 since pEnd inclusive when calling .view, array splices are exclusive
+			assert v.getPointNames() == pnames[pStart:pEnd+1]
+
+			# getPointIndex, getPointName
+			for i in xrange(pStart, pEnd):
+				origName = pnames[i]
+				assert v.getPointName(i) == origName
+				assert v.getPointIndex(origName) == i
+
+			# getFeatureNames
+			# +1 since fEnd inclusive when calling .view, array splices are exclusive
+			assert v.getFeatureNames() == fnames[fStart:fEnd+1]
+
+			# getFeatureIndex, getFeatureName
+			for i in xrange(fStart, fEnd):
+				origName = fnames[i]
+				assert v.getFeatureName(i) == origName
+				assert v.getFeatureIndex(origName) == i
+
+		for pStart in xrange(origPLen):
+			for pEnd in xrange(pStart, origPLen):
+				for fStart in xrange(origFLen):
+					for fEnd in xrange(fStart, origFLen):
+						testView = orig.view(pointStart=pStart, pointEnd=pEnd,
+							featureStart=fStart, featureEnd=fEnd)
+						checkAccess(testView, pStart, pEnd, fStart, fEnd)
 
 
 	################

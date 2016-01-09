@@ -17,6 +17,33 @@ class BaseView(Base):
 
 	def __init__(self, source, pointStart, pointEnd, featureStart, featureEnd,
 				**kwds):
+		"""
+		Initializes the object which overides all of the funcitonality in
+		UML.data.Base to either handle the provided access limits or throw
+		exceptions for inappopriate operations.
+
+		source: the UML object that this is a view into.
+
+		pointStart: the inclusive index of the first point this view will have
+		access to.
+
+		pointEnd: the EXCLUSIVE index defining the last point this view will
+		have access to. This internal representation cannot match the style
+		of the factory method (in which both start and end are inclusive)
+		because we must be able to define empty ranges by having start = end
+
+		featureStart: the inclusive index of the first feature this view will
+		have access to.
+
+		featureEnd: the EXCLUSIVE index defining the last feature this view
+		will have access to. This internal representation cannot match the
+		style of the factory method (in which both start and end are inclusive)
+		because we must be able to define empty ranges by having start = end
+
+		kwds: included due to best practices so args may automatically be
+		passed further up into the hierarchy if needed.
+
+		"""
 		self._source = source
 		self._pStart = pointStart
 		self._pEnd = pointEnd

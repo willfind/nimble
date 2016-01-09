@@ -1323,15 +1323,68 @@ class Base(object):
 	
 	def view(self, pointStart=None, pointEnd=None, featureStart=None,
 			featureEnd=None):
-		
+		"""
+		Factory function to create a read only view into the calling data
+		object. Views may only be constructed from contiguous, in-order
+		points and features whose overlap defines a window into the data.
+		The returned View object is part of UML's datatypes hiearchy, and
+		will have access to all of the same methods as anything that
+		inherits from UML.data.Base; though only those that do not modify
+		the data can be called without an exception being raised. The
+		returned view will also reflect any subsequent changes made to the
+		original object. This is the only accepted method for a user to
+		construct a View object (it should never be done directly), though
+		view objects may be provided to the user, for example via user
+		defined functions passed to extractPoints or applyToFeatures.
+
+		pointStart: the inclusive index of the first point to be accessible
+		in the returned view. Is None by default, meaning to include from
+		the beginning of the object.
+
+		pointEnd: the inclusive index of the last point to be accessible in
+		the returned view. Is None by default, meaning to include up to the
+		end of the object.
+
+		featureStart: the inclusive index of the first feature to be
+		accessible in the returned view. Is None by default, meaning to
+		include from the beginning of the object.
+
+		featureEnd: the inclusive index of the last feature to be accessible in
+		the returned view. Is None by default, meaning to include up to the
+		end of the object.
+
+		"""
+		# transform defaults to mean take as much data as possible,
+		# transform end values to be EXCLUSIVE
 		if pointStart is None:
 			pointStart = 0
+		else:
+			pointStart = self._getIndex(pointStart, 'point')
+
 		if pointEnd is None:
 			pointEnd = self.pointCount
+		else:
+			pointEnd = self._getIndex(pointEnd, 'point')
+			# this is the only case that could be problematic and needs
+			# checking
+			self._validateRangeOrder("pointStart", pointStart, "pointEnd", pointEnd)
+			# make exclusive now that it won't ruin the validation check
+			pointEnd += 1
+
 		if featureStart is None:
 			featureStart = 0
+		else:
+			featureStart = self._getIndex(featureStart, 'feature')
+
 		if featureEnd is None:
 			featureEnd = self.featureCount
+		else:
+			featureEnd = self._getIndex(featureEnd, 'feature')
+			# this is the only case that could be problematic and needs
+			# checking
+			self._validateRangeOrder("featureStart", featureStart, "featureEnd", featureEnd)
+			# make exclusive now that it won't ruin the validation check
+			featureEnd += 1
 
 		return self._view_implementation(pointStart, pointEnd, featureStart,
 				featureEnd)
@@ -3564,7 +3617,7 @@ class Base(object):
 			axisCount = self.pointCount if axis == 'point' else self.featureCount
 			msg = "The identifier must be either a string (a valid " + axis
 			msg += " name) or an integer (python or numpy) index between 0 and "
-			msg += str(axisCount-1) + " inclusive"
+			msg += str(axisCount-1) + " inclusive. Instead we got: " + str(identifier)
 			raise ArgumentException(msg)
 		if isinstance(identifier, (int, numpy.integer)):
 			if identifier < 0:
@@ -3975,3 +4028,17 @@ class Base(object):
 			raise ArgumentException(msg)
 
 		return cleanFuncName
+
+	def _validateRangeOrder(self, startName, startVal, endName, endVal):
+		"""
+		Validate a range where both values are inclusive.
+		"""
+		if startVal > endVal:
+			msg = "When specifying a range, the arguments were resolved to "
+			msg += "having the values " + startName
+			msg += "=" + str(startVal) + " and " + endName + "=" + str(endVal)
+			msg += ", yet the starting value is not allowed to be greater than "
+			msg += "the ending value (" + str(startVal) + ">" + str(endVal)
+			msg += ")"
+
+			raise ArgumentException(msg)
