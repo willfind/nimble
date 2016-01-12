@@ -877,7 +877,9 @@ class Sparse(Base):
 
 	def _copyAs_implementation(self, format):
 		if format is None or format == 'Sparse':
-			return Sparse(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+			ret = Sparse(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+			ret._sorted = self._sorted
+			return ret
 		if format == 'List':
 			return UML.data.List(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'Matrix':

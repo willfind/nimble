@@ -2032,6 +2032,9 @@ class _foldIteratorClass():
 		self.foldList = foldList
 		self.index = 0
 		self.dataList = dataList
+		for dat in self.dataList:
+			if dat.getTypeString() == 'Sparse':
+				dat._sortInternal('point')
 
 	def __iter__(self):
 		return self
