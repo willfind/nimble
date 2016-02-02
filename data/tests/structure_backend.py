@@ -1778,6 +1778,27 @@ class StructureModifying(DataTestObject):
 		assert ret == expRet
 		assert toTest == expRem
 
+	def test_extractFeatures_List_reorderingWithFeatureNames(self):
+		data = [[1,2,3,10], [4,5,6,11], [7,8,9,12]]
+		fnames = ['a','b','c','d']
+		test = self.constructor(data, featureNames=fnames)
+
+		expRetRaw = [[1,3,2], [4,6,5], [7,9,8]]
+		expRetNames = ['a', 'c', 'b']
+		expRet = self.constructor(expRetRaw, featureNames=expRetNames)
+
+		expTestRaw = [[10],[11],[12]]
+		expTestNames = ['d']
+		expTest = self.constructor(expTestRaw, featureNames=expTestNames)
+
+#		import pdb
+#		pdb.set_trace()
+		ret = test.extractFeatures(expRetNames)
+		assert ret == expRet
+		assert test == expTest
+
+#		assert False
+
 	def test_extractFeatures_function_selectionGap(self):
 		data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
 

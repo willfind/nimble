@@ -451,23 +451,26 @@ class List(Base):
 		targetPos = {}
 		for index in xrange(len(toExtract)):
 			targetPos[toExtract[index]] = index
-		toExtract.sort()
-		toExtract.reverse()
+
+		# we want to extract values from a list from the end
+		# for efficiency. So we sort and reverse the removal indices
+		toExtractSortRev = copy.copy(toExtract)
+		toExtractSortRev.sort()
+		toExtractSortRev.reverse()
 		extractedData = []
 		for point in self.data:
 			extractedPoint = [None] * len(toExtract)
-			for pid in toExtract:
-				extractedPoint[targetPos[pid]] = point.pop(pid)
+			for fID in toExtractSortRev:
+				extractedPoint[targetPos[fID]] = point.pop(fID)
 			extractedData.append(extractedPoint)
 
 		self._numFeatures = self._numFeatures - len(toExtract)
 
-		# construct featureName list
+		# construct featureName list from the original unsorted toExtract
 		featureNameList = []
 		for index in toExtract:
 			featureNameList.append(self.getFeatureName(index))
-		# toExtract was reversed (for efficiency) so we have to re-reverse this to get it right
-		featureNameList.reverse()
+
 		return List(extractedData, featureNames=featureNameList, reuseData=True)
 
 
