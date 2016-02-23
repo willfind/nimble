@@ -23,7 +23,7 @@ class Sparse(Base):
 	def __init__(self, data, pointNames=None, featureNames=None,
 				reuseData=False, **kwds):
 		self._sorted = None
-		if data == [] or  (hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0)):
+		if data == [] or (hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0)):
 			if isinstance(data, CooWithEmpty):
 				data = data.internal
 			else:
@@ -239,8 +239,8 @@ class Sparse(Base):
 
 		# correct the row entries
 		offset = self.pointCount
-		for index in xrange(len(self._data.data), len(newData)):
-			newRow[index] = newRow[index] + offset
+		toAdd = numpy.ones(len(newData) - len(self._data.data)) * offset
+		newRow[len(self._data.data):] += toAdd
 		
 		numNewRows = self.pointCount + toAppend.pointCount
 		self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(numNewRows,self.featureCount))
@@ -259,8 +259,8 @@ class Sparse(Base):
 
 		# correct the col entries
 		offset = self.featureCount
-		for index in xrange(len(self._data.data), len(newData)):
-			newCol[index] = newCol[index] + offset
+		toAdd = numpy.ones(len(newData) - len(self._data.data)) * offset
+		newCol[len(self._data.data):] += toAdd
 		
 		numNewCols = self.featureCount + toAppend.featureCount
 		self._data = CooWithEmpty((newData,(newRow,newCol)),shape=(self.pointCount,numNewCols))
@@ -1098,12 +1098,10 @@ class Sparse(Base):
 		newRow = newRow[sortKeys]
 		newCol = newCol[sortKeys]
 
-		for i in xrange(len(newData)):
-			self._data.data[i] = newData[i]
-		for i in xrange(len(newRow)):
-			self._data.row[i] = newRow[i]
-		for i in xrange(len(newCol)):
-			self._data.col[i] = newCol[i]
+		n = len(newData)
+		self._data.data[:n] = newData
+		self._data.row[:n] = newRow
+		self._data.col[:n] = newCol
 
 		# flag that we are internally sorted
 		self._sorted = axis
