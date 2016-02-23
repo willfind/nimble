@@ -13,6 +13,7 @@ from base_view import BaseView
 from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.randomness import pythonRandom
+from UML.randomness import numpyRandom
 
 from scipy.io import mmwrite
 from scipy.sparse import isspmatrix
@@ -179,15 +180,13 @@ class Matrix(Base):
 				number = len(toExtract)
 			# if randomize, use random sample
 			if randomize:
-				indices = []
-				for i in xrange(len(toExtract)):
-					indices.append(i)
-				randomIndices = pythonRandom.sample(indices, number)
+				randomIndices = pythonRandom.sample(xrange(len(toExtract)), number)
 				randomIndices.sort()
 				temp = []
 				for index in randomIndices:
 					temp.append(toExtract[index])
 				toExtract = temp
+#				toExtract = numpyRandom.choice(toExtract, number)
 			# else take the first number members of toExtract
 			else:
 				toExtract = toExtract[:number]
@@ -196,7 +195,7 @@ class Matrix(Base):
 		if hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractPointByFunction case
+				raise NotImplementedError  # TODO randomize in the extractPointByFunction case
 			else:
 				if number is None:
 					number = self.pointCount		
@@ -237,12 +236,12 @@ class Matrix(Base):
 		"""
 		results = viewBasedApplyAlongAxis(toExtract,'point',self)
 		results = results.astype(numpy.int)
-		ret = self.data[numpy.flatnonzero(results),:]
-		# need to convert our boolean array to to list of points to be removed	
-		toRemove = []
-		for i in xrange(len(results)):
-			if results[i]:
-				toRemove.append(i)
+		
+		# need to convert our 1/0 array to to list of points to be removed
+		# can do this by just getting the non-zero indices
+		toRemove = numpy.flatnonzero(results)
+
+		ret = self.data[toRemove,:]
 		self.data = numpy.delete(self.data,toRemove,0)
 
 		# construct featureName list
@@ -346,13 +345,11 @@ class Matrix(Base):
 
 		"""
 		results = viewBasedApplyAlongAxis(toExtract, 'feature', self)
-		results = results.astype(numpy.int64)
-#		ret = self.data[:,results]
-		# need to convert our boolean array to to list of features to be removed			
-		toRemove = []
-		for i in xrange(len(results)):
-			if results[i]:
-				toRemove.append(i)
+		results = results.astype(numpy.int)
+
+		# need to convert our 1/0 array to to list of points to be removed
+		# can do this by just getting the non-zero indices
+		toRemove = numpy.flatnonzero(results)
 
 		return self._extractFeaturesByList_implementation(toRemove)
 
