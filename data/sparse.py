@@ -309,18 +309,28 @@ class Sparse(Base):
 		if sortHelper is not None and scorer is None and comparator is None:
 			raise ArgumentException("sortHelper is neither a scorer or a comparator")
 
-		# make array of views
-		viewArray = []
-		viewIter = getViewIter()
-		for v in viewIter:
-			viewArray.append(v)
-
 		if comparator is not None:
+			# make array of views
+			viewArray = []
+			viewIter = getViewIter()
+			for v in viewIter:
+				viewArray.append(v)
+
 			viewArray.sort(cmp=comparator)
 			indexPosition = []
 			for i in xrange(len(viewArray)):
 				indexPosition.append(viewArray[i].index())
+			indexPosition = numpy.array(indexPosition)
+		elif hasattr(scorer, 'permuter'):
+			scoreArray = scorer.indices
+			indexPosition = numpy.argsort(scoreArray)
 		else:
+			# make array of views
+			viewArray = []
+			viewIter = getViewIter()
+			for v in viewIter:
+				viewArray.append(v)
+
 			scoreArray = viewArray
 			if scorer is not None:
 				# use scoring function to turn views into values
@@ -331,18 +341,21 @@ class Sparse(Base):
 					scoreArray[i] = viewArray[i][sortBy]
 
 			# use numpy.argsort to make desired index array
-			# this results in an array whole ith index contains the the
+			# this results in an array whose ith entry contains the the
 			# index into the data of the value that should be in the ith
-			# position
+			# position.
 			indexPosition = numpy.argsort(scoreArray)
 
-		# run through array making curr index to new index map
-		indexMap = {}
-		for i in xrange(len(indexPosition)):
-			indexMap[indexPosition[i]] = i
-		# run through target axis and change indices
-		for i in xrange(len(targetAxis)):
-			targetAxis[i] = indexMap[targetAxis[i]]
+		# since we want to access with with positions in the original
+		# data, we reverse the 'map'
+		reverseIndexPosition = numpy.empty(indexPosition.shape[0])
+		for i in xrange(indexPosition.shape[0]):
+			reverseIndexPosition[indexPosition[i]] = i
+
+		if axisType == 'point':
+			self._data.row[:] = reverseIndexPosition[self._data.row]
+		else:
+			self._data.col[:] = reverseIndexPosition[self._data.col]
 
 		# we need to return an array of the feature names in their new order.
 		# we convert the indices of the their previous location into their names

@@ -123,17 +123,26 @@ class Matrix(Base):
 		if sortHelper is not None and scorer is None and comparator is None:
 			raise ArgumentException("sortHelper is neither a scorer or a comparator")
 
-		# make array of views
-		viewArray = []
-		for v in viewIter:
-			viewArray.append(v)
-
 		if comparator is not None:
+			# make array of views
+			viewArray = []
+			for v in viewIter:
+				viewArray.append(v)
+
 			viewArray.sort(cmp=comparator)
 			indexPosition = []
 			for i in xrange(len(viewArray)):
 				indexPosition.append(viewArray[i].index())
+			indexPosition = numpy.array(indexPosition)
+		elif hasattr(scorer, 'permuter'):
+			scoreArray = scorer.indices
+			indexPosition = numpy.argsort(scoreArray)
 		else:
+			# make array of views
+			viewArray = []
+			for v in viewIter:
+				viewArray.append(v)
+
 			scoreArray = viewArray
 			if scorer is not None:
 				# use scoring function to turn views into values
@@ -144,9 +153,9 @@ class Matrix(Base):
 					scoreArray[i] = viewArray[i][sortBy]
 
 			# use numpy.argsort to make desired index array
-			# this results in an array whole ith index contains the the
+			# this results in an array whose ith entry contains the the
 			# index into the data of the value that should be in the ith
-			# position
+			# position.
 			indexPosition = numpy.argsort(scoreArray)
 
 		# use numpy indexing to change the ordering

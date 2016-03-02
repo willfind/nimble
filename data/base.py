@@ -773,6 +773,8 @@ class Base(object):
 
 		def permuter(pointView):
 			return indices[pointView.index()]
+		permuter.permuter = True
+		permuter.indices = indices
 		self.sortPoints(sortHelper=permuter)
 		
 

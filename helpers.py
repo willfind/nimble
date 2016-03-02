@@ -33,7 +33,7 @@ from UML.data import List
 from UML.data import Base
 
 from UML.randomness import pythonRandom
-
+from UML.randomness import numpyRandom
 
 def findBestInterface(package):
 	"""
@@ -2051,8 +2051,10 @@ class _foldIteratorClass():
 
 		# we want each training set to be permuted wrt its ordering in the original
 		# data. This is setting up a permutation to be applied to each object
-		indices = range(0, copiedList[0].pointCount - len(self.foldList[self.index]))
-		pythonRandom.shuffle(indices)
+#		indices = range(0, copiedList[0].pointCount - len(self.foldList[self.index]))
+#		pythonRandom.shuffle(indices)
+		indices = numpy.arange(0, copiedList[0].pointCount - len(self.foldList[self.index]))
+		numpyRandom.shuffle(indices)
 
 		resultsList = []
 		for copied in copiedList:
