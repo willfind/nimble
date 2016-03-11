@@ -309,6 +309,48 @@ class QueryBackend(DataTestObject):
 		assert toTest[4] == 10
 		assert toTest['e'] == 10
 
+	def test_getitem_vectorsPlayNiceWithPythonKeywords(self):
+		dataPV = [[-1,2,3,4,5]]
+		dataFV = [[-1],[2],[3],[4],[5]]
+
+		pv = self.constructor(dataPV)
+		fv = self.constructor(dataFV)
+
+		assert all(pv)
+		assert all(fv)
+
+		assert any(pv)
+		assert any(fv)
+
+		assert filter(lambda x: x > 0, pv) == [2,3,4,5]
+		assert filter(lambda x: x > 0, fv) == [2,3,4,5]
+
+		assert map(abs, pv) == [1,2,3,4,5]
+		assert map(abs, fv) == [1,2,3,4,5]
+
+		assert max(pv) == 5
+		assert max(fv) == 5
+
+		assert min(pv) == -1
+		assert min(fv) == -1
+
+		assert reduce(lambda x,y: x+y, pv) == 13
+		assert reduce(lambda x,y: x+y, fv) == 13
+
+		assert set(pv) == set([-1,2,3,4,5])
+		assert set(fv) == set([-1,2,3,4,5])
+
+		assert sorted(pv, reverse=True) == [5,4,3,2,-1]
+		assert sorted(fv, reverse=True) == [5,4,3,2,-1]
+
+		assert sum(pv) == 13
+		assert sum(fv) == 13
+
+		assert tuple(pv) == (-1,2,3,4,5)
+		assert tuple(fv) == (-1,2,3,4,5)
+
+		assert zip(pv,fv) == [(-1,-1), (2,2), (3,3), (4,4), (5,5)]
+
 
 	################
 	# pointView #

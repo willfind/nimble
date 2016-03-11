@@ -33,9 +33,11 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
 		compressionFunction is a function that should take two arguments: runningTotal, the final
 		output of loopFunction, and n, the number of values in knownValues/predictedValues.
 	"""
-	if knownValues is None or not isinstance(knownValues, Base) or knownValues.pointCount == 0:
+	knownIsEmpty = knownValues.pointCount == 0 or knownValues.featureCount == 0
+	predIsEmpty = predictedValues.pointCount == 0 or predictedValues.featureCount == 0
+	if knownValues is None or not isinstance(knownValues, Base) or knownIsEmpty:
 		raise ArgumentException("Empty 'knownValues' argument in error calculator")
-	elif predictedValues is None or not isinstance(predictedValues, Base) or predictedValues.pointCount == 0:
+	if predictedValues is None or not isinstance(predictedValues, Base) or predIsEmpty:
 		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
 	if not isinstance(knownValues, Matrix):

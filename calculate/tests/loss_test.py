@@ -147,8 +147,8 @@ def testMeanAbsoluteError():
 @raises(ArgumentException)
 def testRmseEmptyKnownValues():
 	"""
-		Check that the rootMeanSquareError calculator correctly throws an
-		exception if knownLabels vector is empty
+	rootMeanSquareError calculator throws exception if knownLabels is empty
+
 	"""
 	knownLabels = numpy.array([])
 	predictedLabels = numpy.array([1, 2, 3])
@@ -161,9 +161,9 @@ def testRmseEmptyKnownValues():
 @raises(ArgumentException)
 def testRmseEmptyPredictedValues():
 	"""
-		Check that the rootMeanSquareError calculator correctly throws an
-		exception if predictedLabels vector is empty
+	rootMeanSquareError calculator throws exception if predictedLabels is empty
 	"""
+
 	predictedLabels = numpy.array([])
 	knownLabels = numpy.array([1, 2, 3])
 

@@ -1150,8 +1150,8 @@ class Base(object):
 				x = key
 				y = 0
 			else:
-				msg = "Must include a point and feature index; or, "
-				msg += "since this is vector chaped, a single index "
+				msg = "Must include both a point and feature index; or, "
+				msg += "if this is vector shaped, a single index "
 				msg += "into the axis whose length > 1"
 				raise ArgumentException(msg)
 		else:
@@ -1182,13 +1182,15 @@ class Base(object):
 				msg += "into the axis whose length > 1"
 				raise ArgumentException(msg)
 
-		x = self._getPointIndex(x)
-		if not isinstance(x,int) or x < 0 or x >= self.pointCount:
-			raise ArgumentException(str(x) + " is not a valid point ID")
+		try:
+			x = self._getPointIndex(x)
+		except ArgumentException as ae:
+			raise IndexError(ae.value)
 
-		y = self._getFeatureIndex(y)
-		if not isinstance(y,int) or y < 0 or y >= self.featureCount:
-			raise ArgumentException(str(y) + " is not a valid feature ID")
+		try:
+			y = self._getFeatureIndex(y)
+		except ArgumentException as ae:
+			raise IndexError(ae.value)
 
 		return self._getitem_implementation(x,y)
 
