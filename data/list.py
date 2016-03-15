@@ -11,6 +11,7 @@ from scipy.sparse import isspmatrix
 
 import UML
 from base import Base
+from base_view import BaseView
 from dataHelpers import View
 from dataHelpers import reorderToMatchExtractionList
 from UML.exceptions import ArgumentException
@@ -25,8 +26,8 @@ class List(Base):
 	points of data, and each inner list is a list of values for each feature.
 
 	"""
-	def __init__(self, data,  featureNames=None, reuseData=False, **kwds):
-		self._numFeatures = None
+	def __init__(self, data,  featureNames=None, reuseData=False, shape=None, **kwds):
+		self._numFeatures = shape[1] if shape is not None else None
 		# Format / copy the data if necessary
 		# if input as a list, copy it
 		if isinstance(data, list):
@@ -779,6 +780,88 @@ class List(Base):
 		return FeatureView(self, ID, self.getFeatureName(ID))
 
 
+	def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
+		class ListView(BaseView, List):
+			def __init__(self, **kwds):
+				super(ListView, self).__init__(**kwds)
+
+			def _copyAs_implementation(self, format):
+				# we only want to change how List and pythonlist copying is done
+				if format is None:
+					format = 'List'
+				if format != 'List' and format != 'pythonlist':
+					return super(ListView, self)._copyAs_implementation(format)
+
+				listForm = []
+				for pID in xrange(self._pStart, self._pEnd):
+					curr = []
+					for fID in xrange(self._fStart, self._fEnd):
+						curr.append(self.data[pID][fID])
+					listForm.append(curr)
+
+				if format == 'List':
+					return UML.data.List(listForm, pointNames=self.getPointNames(),
+						featureNames=self.getFeatureNames())
+				else:
+					return listForm
+
+
+		class FeatureViewer(object):
+			def __init__(self, source, fStart, fEnd):
+				self.source = source
+				self.fStart = fStart
+				self.fRange = fEnd - fStart
+
+			def setLimit(self, pIndex):
+				self.limit = pIndex
+
+			def __getitem__(self, key):
+				if key < 0 or key >= self.fRange:
+					raise IndexError("")
+
+				return self.source[self.limit][key+self.fStart]
+
+			def __len__(self):
+				return self.fRange
+
+			def __eq__(self, other):
+				for i, val in enumerate(self):
+					if val != other[i]:
+						return False
+				return True
+
+			def __ne__(self, other):
+				return not self.__eq__(other)
+
+		class ListPassThrough(object):
+			def __init__(self, source, pStart, pEnd, fStart, fEnd):
+				self.source = source
+				self.pStart = pStart
+				self.pRange = pEnd - pStart
+				self.fviewer = FeatureViewer(self.source, fStart, fEnd)
+
+			def __getitem__(self, key):
+				if key < 0 or key >= self.pRange:
+					raise IndexError("")
+
+				self.fviewer.setLimit(key + self.pStart)
+				return self.fviewer
+
+			def __len__(self):
+				return self.pRange
+
+		kwds = {}
+		kwds['data'] = ListPassThrough(self.data, pointStart, pointEnd, featureStart, featureEnd)
+		kwds['source'] = self
+		kwds['pointStart'] = pointStart
+		kwds['pointEnd'] = pointEnd
+		kwds['featureStart'] = featureStart
+		kwds['featureEnd'] = featureEnd
+		kwds['reuseData'] = True
+		kwds['shape'] = (pointEnd - pointStart, featureEnd - featureStart)
+
+		return ListView(**kwds)
+
 	def _validate_implementation(self, level):
 		assert len(self.data) == self.pointCount
 		assert self._numFeatures == self.featureCount
@@ -787,7 +870,7 @@ class List(Base):
 			if len(self.data) > 0:
 				expectedLength = len(self.data[0])
 			for point in self.data:
-				assert isinstance(point, list)
+#				assert isinstance(point, list)
 				assert len(point) == expectedLength
 
 	def _containsZero_implementation(self):

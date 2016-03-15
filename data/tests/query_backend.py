@@ -2,7 +2,7 @@
 
 Methods tested in this file (none modify the data):
 
-pointCount, featuresCount, isIdentical, writeFile, __getitem__, pointView, 
+pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView, 
 featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
 featureSimilarities, pointStatistics, featureStatistics,
 nonZeroIteratorPointGrouped, nonZeroIteratorFeatureGrouped
@@ -67,7 +67,7 @@ class QueryBackend(DataTestObject):
 
 
 	#################
-	# featuresCount #
+	# featureCount #
 	#################
 
 
