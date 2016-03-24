@@ -862,41 +862,85 @@ class Base(object):
 		return toSplit, trainY, testX, testY
 
 
-	def normalizePoints(self, subtract=None, divide=None):
+	def normalizePoints(self, subtract=None, divide=None, applyResultTo=None):
 		"""
-		Modify all points according to the given transformations.
-		Transformations may be either fixed numerical values,
-		strings defining statistical functions (all of the
-		same ones callable though pointStatistics), or a
-		UML data object. If a vector shaped object is given,
-		then the value associated with each point is used for
-		subtraction or division. Otherwise, the values in the
-		object are used elementwise.
+		Modify all points in this object according to the given
+		operations.
 
-		Returns None while having affected the content of the
-		calling object.
+		applyResultTo: default None, if a UML object is given, then
+		perform the same operations to it as are applied to the calling
+		object. However, if a statistical method is specified as subtract
+		or divide, then	concrete values are first calculated only from
+		querying the calling object, and the operation is performed on
+		applyResultTo using the results; as if a UML object was given
+		for the subtract or divide arguments.
+
+		subtract: what should be subtracted from data. May be a fixed
+		numerical value, a string defining a statistical function (all of
+		the same ones callable though pointStatistics), or a UML data
+		object. If a vector shaped object is given, then the value
+		associated with each point will be subtracted from all values of
+		that point. Otherwise, the values in the object are used for
+		elementwise subtraction. Default None - equivalent to subtracting
+		0.
+
+		divide: defines the denominator for dividing the data. May be a
+		fixed numerical value, a string defining a statistical function
+		(all of the same ones callable though pointStatistics), or a UML
+		data object. If a vector shaped object is given, then the value
+		associated with each point will be used in division of all values
+		for that point. Otherwise, the values in the object are used for
+		elementwise division. Default None - equivalent to dividing by
+		1.
+
+		Returns None while having affected the data of the calling
+		object and applyResultTo (if non-None).
 
 		"""
-		self._normalizeGeneric("point", subtract, divide)
+		self._normalizeGeneric("point", subtract, divide, applyResultTo)
 
-	def normalizeFeatures(self, subtract=None, divide=None):
+	def normalizeFeatures(self, subtract=None, divide=None, applyResultTo=None):
 		"""
-		Modify all features according to the given transformations.
-		Transformations may be either fixed numerical values,
-		strings defining statistical functions (all of the
-		same ones callable though featureStatistics), or a
-		UML data object. If a vector shaped object is given,
-		then the value associated with each feature is used for
-		subtraction or division. Otherwise, the values in the
-		object are used elementwise.
+		Modify all features in this object according to the given
+		operations.
 
-		Returns None while having affected the content of the
-		calling object.
+		applyResultTo: default None, if a UML object is given, then
+		perform the same operations to it as are applied to the calling
+		object. However, if a statistical method is specified as subtract
+		or divide, then	concrete values are first calculated only from
+		querying the calling object, and the operation is performed on
+		applyResultTo using the results; as if a UML object was given
+		for the subtract or divide arguments.
+
+		subtract: what should be subtracted from data. May be a fixed
+		numerical value, a string defining a statistical function (all of
+		the same ones callable though featureStatistics), or a UML data
+		object. If a vector shaped object is given, then the value
+		associated with each feature will be subtracted from all values of
+		that feature. Otherwise, the values in the object are used for
+		elementwise subtraction. Default None - equivalent to subtracting
+		0.
+
+		divide: defines the denominator for dividing the data. May be a
+		fixed numerical value, a string defining a statistical function
+		(all of the same ones callable though featureStatistics), or a UML
+		data object. If a vector shaped object is given, then the value
+		associated with each feature will be used in division of all values
+		for that feature. Otherwise, the values in the object are used for
+		elementwise division. Default None - equivalent to dividing by
+		1.
+
+		Returns None while having affected the data of the calling
+		object and applyResultTo (if non-None).
 
 		"""
-		self._normalizeGeneric("feature", subtract, divide)
+		self._normalizeGeneric("feature", subtract, divide, applyResultTo)
 
-	def _normalizeGeneric(self, axis, subtract, divide):
+	def _normalizeGeneric(self, axis, subtract, divide, applyResultTo):
+
+		# used to trigger later conditionals
+		alsoIsObj = isinstance(applyResultTo, UML.data.Base)
+
 		# the operation is different when the input is a vector
 		# or produces a vector (ie when the input is a statistics
 		# string) so during the validation steps we check for
@@ -965,11 +1009,50 @@ class Base(object):
 					raise ArgumentException(msg)
 			return False
 
+		def checkAlsoShape(caller, also, objIn, axis):
+			"""
+			Raises an exception if the normalized axis shape doesn't match the
+			calling object, or if when subtract of divide takes an object, also
+			doesn't match the shape of the caller (this is to be called after)
+			the check that the caller's shape matches that of the subtract or
+			divide argument.
+			"""
+			offAxis = 'feature' if axis == 'point' else 'point'
+			callerP = caller.pointCount
+			callerF = caller.featureCount
+			alsoP = also.pointCount 
+			alsoF = also.featureCount
+			
+			callMainLen = callerP if axis == "point" else callerF
+			alsoMainLen = alsoP if axis == "point" else alsoF
+			callOffLen = callerF if axis == "point" else callerP
+			alsoOffLen = alsoF if axis == "point" else alsoP
+
+			if callMainLen != alsoMainLen:
+				msg = "applyResultTo must have the same number of " + axis
+				msg += "s (" + str(alsoMainLen) + ") as the calling object "
+				msg += "(" + str(callMainLen) + ")"
+				raise ArgumentException(msg)
+			if objIn and callOffLen != alsoOffLen:
+				msg = "When a non-vector UML object is given for the subtract "
+				msg += "or divide arguments, then applyResultTo "
+				msg += "must have the same number of " + offAxis
+				msg += "s (" + str(alsoOffLen) + ") as the calling object "
+				msg += "(" + str(callOffLen) + ")"
+				raise ArgumentException(msg)
+
 		# actually check that objects are the correct shape/size
+		objArg = False
 		if isinstance(subtract, UML.data.Base):
 			subIsVec = validateInObjectSize("subtract", subtract)
+			objArg = True		
 		if isinstance(divide, UML.data.Base):
 			divIsVec = validateInObjectSize("divide", divide)
+			objArg = True
+
+		# check the shape of applyResultTo
+		if alsoIsObj:
+			checkAlsoShape(self, applyResultTo, objArg, axis)
 
 		# if a statistics string was entered, generate the results
 		# of that statistic
@@ -1005,20 +1088,26 @@ class Base(object):
 			if subIsVec:
 				if axis == 'point':
 					self.applyToPoints(subber)
+					applyResultTo.applyToPoints(subber)
 				else:
 					self.applyToFeatures(subber)
+					applyResultTo.applyToFeatures(subber)
 			else:
 				self -= subtract
+				applyResultTo -= subtract
 
 		# then perform the division operation
 		if divide is not None and divide != 1:
 			if divIsVec:		
 				if axis == 'point':
 					self.applyToPoints(diver)
+					applyResultTo.applyToPoints(diver)
 				else:
 					self.applyToFeatures(diver)
+					applyResultTo.applyToFeatures(diver)
 			else:
 				self /= divide
+				applyResultTo /= divide
 
 		# this operation is self modifying, so we return None
 		return None
