@@ -1806,7 +1806,8 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction):
 		#are the known class labels and the predicted class labels
 		result = performanceFunction(knownLabels, predictedData)
 	else:
-		msg = "One of the functions (" + + func.__name__ + ") passed to "
+		msg = "One of the functions (" + performanceFunction.__name__ 
+		msg += ") passed to "
 		msg += "computeMetrics has an invalid signature, two arguments "
 		msg += "are required, yet this had " + str(len(args))
 

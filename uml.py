@@ -1196,6 +1196,12 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
 
 	if useLog:
 		funcString = interface.getCanonicalName() + '.' + learnerName
-		UML.logger.active.logRun(trainX, trainY, None, None, funcString, [performanceFunction], predictions, [performance], timer, merged)
+		# Signature:
+		# (self, trainData, trainLabels, testData, testLabels, function,
+		# metrics, predictions, performance, timer, extraInfo=None,
+		# numFolds=None)
+		UML.logger.active.logRun(
+			trainX, trainY, trainX, trainY, funcString, [performanceFunction],
+			predictions, [performance], timer, merged)
 
 	return performance

@@ -7,10 +7,10 @@ import time
 import StringIO
 
 import UML
+from UML.customLearners import CustomLearner
 from UML.logger.human_readable_log import HumanReadableLogger
-
 from UML.configuration import configSafetyWrapper
-
+from UML.calculate import fractionIncorrect
 
 
 @configSafetyWrapper
@@ -87,3 +87,114 @@ def TODO_HR_Basic():  # redo test
 
 	# clean up test file
 	os.remove(path)
+
+
+class UnitPred(CustomLearner):
+	learnerType = "classification"
+
+	def train(self, trainX, trainY):
+		return
+
+	def apply(self, testX):
+		return testX.copy()
+
+def testFractionIncorrectCITriggering():
+	back_CI_triggering("fractionIncorrect")
+
+def testRMSECITriggering():
+	back_CI_triggering("rootMeanSquareError")
+
+def testMeanAbsoluteErrorCITriggering():
+	back_CI_triggering("meanAbsoluteError")
+
+@configSafetyWrapper
+#def back_CI_triggering(perfFuncName, triggerType):
+def back_CI_triggering(perfFuncName):
+	perfFunc = getattr(UML.calculate, perfFuncName)
+	CIName = perfFuncName + "ConfidenceInterval"
+	CIGen = getattr(UML.calculate.confidence, CIName)
+
+	trainX = UML.createData("List", [1,1,1,1,1,0,0,0,0,0])
+	trainX.transpose()
+	trainY = trainX.copy()
+	testX = UML.createData("List", [1,1,1,1,0,1,0,0,0,0])
+	testX.transpose()
+	testY = trainY.copy()
+
+	UML.registerCustomLearner('custom', UnitPred)
+
+	def logTriggerTrainAndTest(trainX, trainY, testX, testY):
+		UML.trainAndTest(
+			"custom.UnitPred", trainX, trainY,testX, testY,
+			performanceFunction=perfFunc)
+
+	def logTriggerTLTest(trainX, trainY, testX, testY):
+		tl = UML.train("custom.UnitPred", trainX, trainY)
+		tl.test(testX, testY, performanceFunction=perfFunc)
+
+	def logTriggerTrainAndTestOnTrainingData(trainX, trainY, testX, testY):
+		UML.trainAndTestOnTrainingData(
+			"custom.UnitPred", trainX, trainY,performanceFunction=perfFunc)
+
+	def logTriggerTrainAndTestOneVsOne(trainX, trainY, testX, testY):
+		UML.helpers.trainAndTestOneVsOne(
+			"custom.UnitPred", trainX, trainY,testX, testY,
+			performanceFunction=perfFunc)
+
+	def logTriggerTrainAndTestOneVsAll(trainX, trainY, testX, testY):
+		UML.helpers.trainAndTestOneVsAll(
+			"custom.UnitPred", trainX, trainY,testX, testY,
+			performanceFunction=perfFunc)
+
+	possible = [logTriggerTrainAndTest, logTriggerTLTest,
+		logTriggerTrainAndTestOnTrainingData, logTriggerTrainAndTestOneVsOne,
+		logTriggerTrainAndTestOneVsAll]
+
+	for triggerFunc in possible:
+		(start, end) = runAndLogCheck(triggerFunc, trainX, trainY, testX, testY)
+		lengthWithCI = end - start
+
+		# cripple CI, run the second trial
+		try:
+			delattr(UML.calculate.confidence, CIName)
+			(start, end) = runAndLogCheck(triggerFunc, trainX, trainY, testX, testY)
+			lengthWithoutCI = end - start
+		finally:
+			setattr(UML.calculate.confidence, CIName, CIGen)
+
+		# strictly less than to indicate that something was printed for CI
+		assert lengthWithoutCI < lengthWithCI
+
+	UML.deregisterCustomLearner("custom", "UnitPred")
+
+
+
+def runAndLogCheck(toCall, trainX, trainY, testX, testY):
+	"""
+	Call the given function with the given arguments while keeping
+	track of the size of the log file before and after the call
+
+	"""
+	# log file path
+	loc = UML.settings.get('logger', 'location')
+	name = UML.settings.get('logger', 'name')
+	# could check human readable or machine readable. we choose HR only,
+	# thus the addition of .txt
+	path = os.path.join(loc, name + '.txt')
+
+	if os.path.exists(path):
+		startSize = os.path.getsize(path)
+	else:
+
+		startSize = 0
+
+	# run given function
+	toCall(trainX, trainY, testX, testY)
+
+	# make sure it has the expected effect on the size
+	if os.path.exists(path):
+		endSize = os.path.getsize(path)
+	else:
+		endSize = 0
+
+	return (startSize, endSize)

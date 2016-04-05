@@ -642,7 +642,7 @@ class UniversalInterface(object):
 				UML.logger.active.logRun(
 					trainData=None, trainLabels=None, testData=testX,
 					testLabels=testY, function=fullName,
-					metrics=[performanceFunction], predictions=None,
+					metrics=[performanceFunction], predictions=pred,
 					performance=[performance], timer=timer,
 					extraInfo=mergedArguments, numFolds=None)
 
