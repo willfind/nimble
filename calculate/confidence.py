@@ -46,7 +46,7 @@ def meanAbsoluteErrorConfidenceInterval(known, predicted, confidence=0.95):
 
 def fractionIncorrectConfidenceInterval(known, predicted, confidence=0.95):
 	rawErrors = known.copyAs('numpyarray') - predicted.copyAs('numpyarray')
-	rawErrors = numpy.array((-(known == predicted)), dtype=int)
+	rawErrors = numpy.absolute(rawErrors)
 	errors = UML.createData("Matrix", rawErrors)
 
 	return confidenceIntervalHelper(errors, None, confidence)
