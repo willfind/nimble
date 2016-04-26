@@ -1017,6 +1017,40 @@ class Sparse(Base):
 		"""
 		return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
 
+
+	def _nonZeroIteratorPointGrouped_implementation(self):
+		self._sortInternal('point')
+		return self._nonZeroIterator_general_implementation()
+
+	def _nonZeroIteratorFeatureGrouped_implementation(self):
+		self._sortInternal('feature')
+		return self._nonZeroIterator_general_implementation()
+
+	def _nonZeroIterator_general_implementation(self):
+		# Assumption: underlying data already correctly sorted by
+		# per axis helper; will not be modified during iteration
+		class nzIt(object):
+			def __init__(self, source):
+				self._source = source
+				self._index = 0
+
+			def __iter__(self):
+				return self
+
+			def next(self):
+				while (self._index < len(self._source.data.data)):
+					value = self._source.data.data[self._index]
+
+					self._index += 1
+					if value != 0:
+						return value
+
+				raise StopIteration
+
+		return nzIt(self)
+
+
+
 	def _matrixMultiply_implementation(self, other):
 		"""
 		Matrix multiply this UML data object against the provided other UML data

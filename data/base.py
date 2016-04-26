@@ -1815,6 +1815,27 @@ class Base(object):
 		p.start()
 		return p
 
+
+	def nonZeroIteratorPointGrouped(self):
+		"""
+		Returns an iterator for all non-zero elements contained in this
+		object, where the values in the same point will be contiguous,
+		with the earlier indexed points coming before the later indexed
+		points
+
+		"""
+		return self._nonZeroIteratorPointGrouped_implementation()
+
+	def nonZeroIteratorFeatureGrouped(self):
+		"""
+		Returns an iterator for all non-zero elements contained in this
+		object, where the values in the same feature will be contiguous,
+		with the earlier indexed features coming before the later indexed
+		features
+
+		"""
+		return self._nonZeroIteratorFeatureGrouped_implementation()
+
 	##################################################################
 	##################################################################
 	###   Subclass implemented structural manipulation functions   ###

@@ -4,7 +4,8 @@ Methods tested in this file (none modify the data):
 
 pointCount, featuresCount, isIdentical, writeFile, __getitem__, pointView, 
 featureView, containsZero, __eq__, __ne__, toString, pointSimilarities,
-featureSimilarities, pointStatistics, featureStatistics, 
+featureSimilarities, pointStatistics, featureStatistics,
+nonZeroIteratorPointGrouped, nonZeroIteratorFeatureGrouped
 
 """
 
@@ -1621,6 +1622,39 @@ class QueryBackend(DataTestObject):
 
 			endSize = os.path.getsize(path)
 			assert startSize < endSize
+
+
+	###############################
+	# nonZeroIteratorPointGrouped #
+	###############################
+
+	def test_nonZeroIteratorPointGrouped_handmade(self):
+		data = [[0,1,2],[0,4,0],[0,0,5],[0,0,0]]
+		obj = self.constructor(data)
+
+		ret = []
+		for val in obj.nonZeroIteratorPointGrouped():
+			ret.append(val)
+
+		assert ret == [1,2,4,5]
+
+
+	#################################
+	# nonZeroIteratorFeatureGrouped #
+	#################################
+
+	def test_nonZeroIteratorFeatureGrouped_handmade(self):
+		data = [[0,1,2],[0,4,0],[0,0,5],[0,0,0]]
+		obj = self.constructor(data)
+
+		ret = []
+#		import pdb
+#		pdb.set_trace()
+		for val in obj.nonZeroIteratorFeatureGrouped():
+			ret.append(val)
+
+		assert ret == [1,4,2,5]
+
 
 
 
