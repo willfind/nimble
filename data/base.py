@@ -183,6 +183,26 @@ class Base(object):
 	# Low Level Operations #
 	########################
 
+	def __len__(self):
+		# ordered such that the larger axis is always printed, even
+		# if they are both in the range [0,1]
+		if self.pointCount == 0:
+			return self.featureCount
+		if self.featureCount == 0:
+			return self.pointCount
+		if self.pointCount == 1:
+			return self.featureCount
+		if self.featureCount == 1:
+			return self.pointCount
+
+		msg = "len() is undefined when the number of points ("
+		msg += str(self.pointCount)
+		msg += ") and the number of features ("
+		msg += str(self.featureCount)
+		msg += ") are both greater than 1"
+		raise ImproperActionException(msg)
+
+
 	def setPointName(self, oldIdentifier, newName):
 		"""
 		Changes the pointName specified by previous to the supplied input name.

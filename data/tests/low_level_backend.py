@@ -13,7 +13,7 @@ _pointNameIntersection, _featureNameIntersection, _pointNameSymmetricDifference,
 _featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
 setPointName, setFeatureName, setPointNames, setFeatureNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
-_equalFeatureNames, getPointNames, getFeatureNames, 
+_equalFeatureNames, getPointNames, getFeatureNames, __len__
 
 
 """
@@ -1063,3 +1063,33 @@ class LowLevelBackend(object):
 		assert ret[1] == 'one'
 		assert toTest.getFeatureIndex('zero') == 0
 		assert toTest.getFeatureName(0) == 'zero'
+
+
+	###########
+	# __len__ #
+	###########
+
+	def test_len_handmade(self):
+		zeroZero = self.constructor(psize=0, fsize=0)
+		assert len(zeroZero) == 0
+		zeroOne = self.constructor(psize=0, fsize=1)
+		assert len(zeroOne) == 1
+		zeroN = self.constructor(psize=0, fsize=12)
+		assert len(zeroN) == 12
+
+		oneZero = self.constructor(psize=1, fsize=0)
+		assert len(oneZero) == 1
+		oneOne = self.constructor(psize=1, fsize=1)
+		assert len(oneOne) == 1
+		oneN = self.constructor(psize=1, fsize=13)
+		assert len(oneN) == 13
+
+		nZero = self.constructor(psize=15, fsize=0)
+		assert len(nZero) == 15
+		nOne = self.constructor(psize=11, fsize=1)
+		assert len(nOne) == 11
+
+	@raises(ImproperActionException)
+	def test_len_exception(self):
+		nn = self.constructor(psize=11, fsize=33)
+		len(nn)
