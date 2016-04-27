@@ -159,8 +159,7 @@ class Sparse(Base):
 		else:
 			viewIterator = self.featureIterator()
 
-		for view in viewIterator:
-			viewID = view.index()
+		for viewID, view in enumerate(viewIterator):
 			if included is not None and viewID not in included:
 				continue
 			currOut = function(view)
@@ -198,8 +197,7 @@ class Sparse(Base):
 			modTarget = modCol
 			modOther = modRow
 
-		for view in viewIterator:
-			viewID = view.index()
+		for viewID, view in enumerate(viewIterator):
 			if included is not None and viewID not in included:
 				currOut = list(view)
 			else:

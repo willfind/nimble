@@ -555,8 +555,7 @@ class Base(object):
 			viewIterator = self.featureIterator()
 
 		retData = []
-		for view in viewIterator:
-			viewID = view.index()
+		for viewID, view in enumerate(viewIterator):
 			if included is not None and viewID not in included:
 				continue
 			currOut = function(view)
@@ -709,8 +708,7 @@ class Base(object):
 		self.validate()
 
 		valueList = []
-		for currPoint in self.pointIterator():
-			currPointID = currPoint.index()
+		for currPointID, currPoint in enumerate(self.pointIterator()):
 			if points is not None and currPointID not in points:
 				continue
 			tempList = []
