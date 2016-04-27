@@ -1835,6 +1835,37 @@ class Base(object):
 		p.start()
 		return p
 
+	def nonZeroIterator(self):
+		"""
+		Returns an iterator for all non-zero elements contained in this
+		object so long as this object is empty or vector shaped. In these
+		cases the order returned by nonZeroIteratorPointGrouped and
+		nonZeroIteratorFeatureGrouped would be the same, making this method
+		a helpful shorthand. If the object is not empty or vector shaped,
+		an ImproperActionException is raised.
+
+		"""
+		class EmptyIt(object):
+			def __iter__(self):
+				return self
+
+			def next(self):
+				raise StopIteration
+
+		if self.pointCount == 0 or self.featureCount == 0:
+			return EmptyIt()
+
+		if self.pointCount == 1:
+			return self.nonZeroIteratorPointGrouped()
+		if self.featureCount == 1:
+			return self.nonZeroIteratorFeatureGrouped()
+
+		msg = "nonZeroIterator may only be called if there exists an "
+		msg += "empty axis or an axis with a length of 1. Instead, "
+		msg += "this object has (" + str(self.pointCount) + ") points "
+		msg += "and (" + str(self.featureCount) + ") features."
+		raise ImproperActionException(msg)
+
 
 	def nonZeroIteratorPointGrouped(self):
 		"""
