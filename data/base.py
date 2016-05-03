@@ -2745,13 +2745,12 @@ class Base(object):
 		ret._relPath = self.relativePath
 		return ret
 
-	def _genericNumericBinary(self, opName, other):
-		nameSource = 'self' if opName.startswith('__i') else None
-		pathSource = 'self'
-
+	def _genericNumericBinary_validation(self, opName, other):
 		isUML = isinstance(other, UML.data.Base)
+		
 		if not isUML and not dataHelpers._looksNumeric(other):
 			raise ArgumentException("'other' must be an instance of a UML data object or a scalar")
+		
 		# Test element type self
 		if self.pointCount > 0:
 			for val in self.pointView(0):
@@ -2774,7 +2773,6 @@ class Base(object):
 				raise ArgumentException(msg)
 			if self.featureCount != other.featureCount:
 				raise ArgumentException("The number of features in each object must be equal.")
-			pathSource = 'merge'
 
 		if self.pointCount == 0 or self.featureCount == 0:
 			raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
@@ -2801,6 +2799,14 @@ class Base(object):
 				msg += + "is zero"
 				raise ZeroDivisionError(msg)
 
+
+	def _genericNumericBinary(self, opName, other):
+		ret = self._genericNumericBinary_validation(opName, other)
+		if ret == NotImplemented:
+			return ret
+
+		isUML = isinstance(other, UML.data.Base)
+		
 		# figure out return obj's point / feature names
 		# if unary:
 		if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
@@ -2810,6 +2816,18 @@ class Base(object):
 		else:
 			(retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
 
+		ret = self._genericNumericBinary_implementation(opName, other)
+
+		ret.setPointNames(retPNames)
+		ret.setFeatureNames(retFNames)
+
+		nameSource = 'self' if opName.startswith('__i') else None
+		pathSource = 'merge' if isUML else 'self'
+		dataHelpers.binaryOpNamePathMerge(self, other, ret, nameSource, pathSource)
+
+		return ret
+
+	def _genericNumericBinary_implementation(self, opName, other):
 		startType = self.getTypeString()
 		implName = opName[1:] + 'implementation'
 		if startType == 'Matrix':
@@ -2825,11 +2843,6 @@ class Base(object):
 				ret = self
 			else:
 				ret = UML.createData(startType, ret.data)
-
-		ret.setPointNames(retPNames)
-		ret.setFeatureNames(retFNames)
-
-		dataHelpers.binaryOpNamePathMerge(self, other, ret, nameSource, pathSource)
 
 		return ret
 
