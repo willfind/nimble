@@ -225,6 +225,49 @@ class BaseView(Base):
 		"""
 		self._readOnlyException("extractPointsByCoinToss")
 
+	def applyToPoints(self, function, points=None, inPlace=True):
+		"""
+		Applies the given function to each point in this object, copying the
+		output into this object and returning None. Alternatively, if the inPlace
+		flag is False, output values are collected into a new object that is
+		returned upon completion.
+
+		function must not be none and accept a point as an argument
+
+		points may be None to indicate application to all points, a single point
+		ID or a list of point ID's to limit application only to those specified
+
+		"""
+		if inPlace is True:
+			msg = "The applyToPoints method is disallowed for View objects when "
+			msg += "the inPlace argument is True. View "
+			msg += "objects are read only, yet this modifies the object"
+			raise ImproperActionException(msg)
+		else:
+			return super(BaseView, self).applyToPoints(function, points, inPlace)
+
+
+	def applyToFeatures(self, function, features=None, inPlace=True):
+		"""
+		Applies the given function to each feature in this object, copying the
+		output into this object and returning None. Alternatively, if the inPlace
+		flag is False, output values are collected into a new object that is
+		returned upon completion.
+
+		function must not be none and accept a feature as an argument
+
+		features may be None to indicate application to all features, a single feature
+		ID or a list of features ID's to limit application only to those specified
+
+		"""
+		if inPlace is True:
+			msg = "The applyToFeatures method is disallowed for View objects when "
+			msg += "the inPlace argument is True. View "
+			msg += "objects are read only, yet this modifies the object"
+			raise ImproperActionException(msg)
+		else:
+			return super(BaseView, self).applyToFeatures(function, features, inPlace)
+
 	def shufflePoints(self, indices=None):
 		"""
 		Permute the indexing of the points so they are in a random order. Note: this relies on
@@ -462,6 +505,6 @@ class BaseView(Base):
 	####################
 
 	def _readOnlyException(self, name):
-		msg = "The " + name + " method is disallowed for view objects. View "
-		msg += "object are read only, yet this method modifies the object"
+		msg = "The " + name + " method is disallowed for View objects. View "
+		msg += "objects are read only, yet this method modifies the object"
 		raise ImproperActionException(msg)
