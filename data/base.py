@@ -186,10 +186,8 @@ class Base(object):
 	def __len__(self):
 		# ordered such that the larger axis is always printed, even
 		# if they are both in the range [0,1]
-		if self.pointCount == 0:
-			return self.featureCount
-		if self.featureCount == 0:
-			return self.pointCount
+		if self.pointCount == 0 or self.featureCount == 0:
+			return 0
 		if self.pointCount == 1:
 			return self.featureCount
 		if self.featureCount == 1:

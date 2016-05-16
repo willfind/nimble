@@ -1073,19 +1073,19 @@ class LowLevelBackend(object):
 		zeroZero = self.constructor(psize=0, fsize=0)
 		assert len(zeroZero) == 0
 		zeroOne = self.constructor(psize=0, fsize=1)
-		assert len(zeroOne) == 1
+		assert len(zeroOne) == 0
 		zeroN = self.constructor(psize=0, fsize=12)
-		assert len(zeroN) == 12
+		assert len(zeroN) == 0
 
 		oneZero = self.constructor(psize=1, fsize=0)
-		assert len(oneZero) == 1
+		assert len(oneZero) == 0
 		oneOne = self.constructor(psize=1, fsize=1)
 		assert len(oneOne) == 1
 		oneN = self.constructor(psize=1, fsize=13)
 		assert len(oneN) == 13
 
 		nZero = self.constructor(psize=15, fsize=0)
-		assert len(nZero) == 15
+		assert len(nZero) == 0
 		nOne = self.constructor(psize=11, fsize=1)
 		assert len(nOne) == 11
 
