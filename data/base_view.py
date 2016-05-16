@@ -49,13 +49,14 @@ class BaseView(Base):
 		self._pEnd = pointEnd
 		self._fStart = featureStart
 		self._fEnd = featureEnd
+		kwds['name'] = self._source.name
 		super(BaseView, self).__init__(**kwds)
 
 	# redifinition from Base, except without the setter, using source
 	# object's attributes
-	def _getObjName(self):
-		return self._source._name
-	name = property(_getObjName, doc="A name to be displayed when printing or logging this object")
+#	def _getObjName(self):
+#		return self._source._name
+#	name = property(_getObjName, doc="A name to be displayed when printing or logging this object")
 
 	# redifinition from Base, using source object's attributes
 	def _getAbsPath(self):
