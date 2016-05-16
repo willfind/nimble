@@ -58,10 +58,10 @@ class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
 	def __init__(self):
 		super(TestMatrixView, self).__init__('MatrixView', viewMakerMaker("Matrix"))
 
-#class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-#		StructureDataSafe, ViewAccess):
-#	def __init__(self):
-#		super(TestSparseView, self).__init__('SparseView', viewMakerMaker("Sparse"))
+class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+		StructureDataSafe, ViewAccess):
+	def __init__(self):
+		super(TestSparseView, self).__init__('SparseView', viewMakerMaker("Sparse"))
 
 
 class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll):

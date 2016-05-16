@@ -12,18 +12,21 @@ from scipy.io import mmwrite
 import copy
 
 import UML.data
+import dataHelpers
 from base import Base
+from base_view import BaseView
 from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 from UML.randomness import pythonRandom
+
 
 class Sparse(Base):
 
 	def __init__(self, data, pointNames=None, featureNames=None,
 				reuseData=False, **kwds):
 		self._sorted = None
-		if data == [] or (hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0)):
+		if hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0):
 			if isinstance(data, CooWithEmpty):
 				data = data.internal
 			else:
@@ -41,6 +44,23 @@ class Sparse(Base):
 			
 			data = numpy.matrix(data, dtype=numpy.float)
 			self._data = CooWithEmpty(data)
+		elif isinstance(data, list) and data == []:
+			rowShape = 0
+			colShape = 0
+
+			if featureNames is not None and colShape == 0:
+				colShape = len(featureNames)
+			if pointNames is not None and rowShape == 0:
+				rowShape = len(pointNames)
+
+			data = numpy.empty(shape=(rowShape,colShape))
+			data = numpy.matrix(data, dtype=numpy.float)
+			self._data = CooWithEmpty(data)
+		elif isinstance(data, CooWrapper):
+			if reuseData:
+				self._data = data
+			else:
+				self._data = CooWithEmpty(data)
 		else:
 			if scipy.sparse.isspmatrix(data):
 				if reuseData:
@@ -49,7 +69,7 @@ class Sparse(Base):
 					self._data = CooWithEmpty(data.copy())
 			else:
 				self._data = CooWithEmpty(data)
-		
+
 		kwds['shape'] = scipy.shape(self._data)
 		kwds['pointNames'] = pointNames
 		kwds['featureNames'] = featureNames
@@ -695,7 +715,10 @@ class Sparse(Base):
 		if self._data.shape != other._data.shape:
 			return False
 
-		return self._data == other._data
+		if isinstance(other, SparseView):
+			return other._isIdentical_implementation(self)
+		else:
+			return self._data == other._data
 
 	def _getTypeString_implementation(self):
 		return 'Sparse'
@@ -1014,10 +1037,76 @@ class Sparse(Base):
 		return VectorView(self,None,None,nzMap,self.pointCount,ID,'feature')
 
 
+	def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
+		"""
+		The Sparse object specific implementation necessarly to complete the Base
+		object's view method. pointStart and feature start are inclusive indices,
+		pointEnd and featureEnd are exclusive indices.
+
+		"""
+		kwds = {}
+		kwds['source'] = self
+		kwds['pointStart'] = pointStart
+		kwds['pointEnd'] = pointEnd
+		kwds['featureStart'] = featureStart
+		kwds['featureEnd'] = featureEnd
+		kwds['reuseData'] = True
+
+		allPoints = pointStart == 0 and pointEnd == self.pointCount
+		singlePoint = pointEnd - pointStart == 1
+		allFeats = featureStart == 0 and featureEnd == self.featureCount
+		singleFeat = featureEnd - featureStart == 1
+
+		if (allPoints and singleFeat) or (singlePoint and allFeats):
+			if singlePoint:
+				if self._sorted is None or self._sorted == 'feature':
+					self._sortInternal('point')
+				sortedIndices = self._data.row
+
+				start = numpy.searchsorted(sortedIndices, pointStart, 'left')
+				end = numpy.searchsorted(sortedIndices, pointEnd-1, 'right')
+
+				row = numpy.tile([0], end-start)
+				col = self._data.col[start:end]
+
+			else:  # case single feature
+				if self._sorted is None or self._sorted == 'point':
+					self._sortInternal('feature')
+				sortedIndices = self._data.col
+
+				start = numpy.searchsorted(sortedIndices, featureStart, 'left')
+				end = numpy.searchsorted(sortedIndices, featureEnd-1, 'right')
+
+				row = self._data.row[start:end]
+				col = numpy.tile([0], end-start)
+
+			data = self._data.data[start:end]
+			pshape = pointEnd - pointStart
+			fshape = featureEnd - featureStart
+
+			newInternal = scipy.sparse.coo_matrix((data,(row,col)), shape=(pshape,fshape))
+			kwds['data'] = newInternal
+
+			return SparseVectorView(**kwds)
+
+		else:  # window shaped View
+			class CooDummy(CooWrapper):
+				def __init__(self, shape, **kwargs):
+					self.shape = shape
+					self.internal = None
+					super(CooDummy, self).__init__(**kwargs)
+
+
+			newInternal = CooDummy((pointEnd-pointStart, featureEnd-featureStart))
+			kwds['data'] = newInternal
+
+			return SparseView(**kwds)
+
+
 	def _validate_implementation(self, level):
 		assert self._data.shape[0] == self.pointCount
 		assert self._data.shape[1] == self.featureCount
-		assert isinstance(self._data, CooWithEmpty)
+		assert isinstance(self._data, CooWrapper)
 
 		if level > 0:
 			for value in self._data.data:
@@ -1107,7 +1196,9 @@ class Sparse(Base):
 		# CHOICE OF OUTPUT WILL BE DETERMINED BY SCIPY!!!!!!!!!!!!
 		# for other.data as any dense or sparse matrix
 		toMul = None
-		if isinstance(other, Sparse) or isinstance(other, UML.data.Matrix):
+		directMul = isinstance(other, Sparse) or isinstance(other, UML.data.Matrix)
+		notView = not isinstance(other, BaseView)
+		if directMul and notView:
 			toMul = other.data
 		else:
 			toMul = other.copyAs('numpyarray')
@@ -1142,6 +1233,137 @@ class Sparse(Base):
 			ret = self.copy()
 			ret._scalarMultiply_implementation(other)
 			return ret
+
+#	def _div__implementation(self, other):
+#		if isinstance(other, UML.data.Base):
+#			ret = self.data.tocsr() / other.copyAs("scipycsr")
+#			ret = ret.tocoo()
+#		else:
+#			retData = self._data.data / other
+#			retRow = numpy.array(self.data.row)
+#			retCol = numpy.array(self.data.col)
+#			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+#		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+
+#	def _rdiv__implementation(self, other):
+#		retData = other / self.data
+#		retRow = numpy.array(self.data.row)
+#		retCol = numpy.array(self.data.col)
+#		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+#		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+#	def _idiv__implementation(self, other):
+#		if isinstance(other, UML.data.Base):
+#			ret = self.data.tocsr() / other.copyAs("scipycsr")
+#			ret = ret.tocoo()
+#		else:
+#			ret = self.data.data / other
+#		self.data = ret
+#		return self
+
+#	def _truediv__implementation(self, other):
+#		if isinstance(other, UML.data.Base):
+#			ret = self.data.tocsr().__truediv__(other.copyAs("scipycsr"))
+#			ret = ret.tocoo()
+#		else:
+#			retData = self.data.data.__truediv__(other)
+#			retRow = numpy.array(self.data.row)
+#			retCol = numpy.array(self.data.col)
+#			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+#		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+#	def _rtruediv__implementation(self, other):
+#		retData = self.data.data.__rtruediv__(other)
+#		retRow = numpy.array(self.data.row)
+#		retCol = numpy.array(self.data.col)
+#		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+
+#		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+#	def _itruediv__implementation(self, other):
+#		if isinstance(other, UML.data.Base):
+#			ret = self.data.tocsr().__itruediv__(other.copyAs("scipycsr"))
+#			ret = ret.tocoo()
+#		else:
+#			retData = self.data.data.__itruediv__(other)
+#			retRow = numpy.array(self.data.row)
+#			retCol = numpy.array(self.data.col)
+#			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+#		self.data = ret
+#		return self
+
+#	def _floordiv__implementation(self, other):
+#		if isinstance(other, UML.data.Base):
+#			ret = self.data.tocsr() // other.copyAs("scipycsr")
+#			ret = ret.tocoo()
+#		else:
+#			retData = self._data.data // other
+#			nzIDs = numpy.nonzero(retData)
+#			retData = retData[nzIDs]
+#			retRow = self.data.row[nzIDs]
+#			retCol = self.data.col[nzIDs]
+#			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+#		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+
+#	def _rfloordiv__implementation(self, other):
+#		retData = other // self._data.data
+#		nzIDs = numpy.nonzero(retData)
+#		retData = retData[nzIDs]
+#		retRow = self.data.row[nzIDs]
+#		retCol = self.data.col[nzIDs]
+#		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+#		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+#	def _ifloordiv__implementation(self, other):
+#		if isinstance(other, UML.data.Base):
+#			ret = self.data.tocsr() // other.copyAs("scipycsr")
+#			ret = ret.tocoo()
+#		else:
+#			ret = self.data // other
+#			nzIDs = numpy.nonzero(ret)
+#			ret = ret[nzIDs]
+
+#		self.data = ret
+#		return self
+
+	def _mod__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data % other.data.todense()
+			else:
+				ret = self.data % other.data
+		else:
+			retData = self.data.data % other
+			retRow = numpy.array(self.data.row)
+			retCol = numpy.array(self.data.col)
+			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+
+	def _rmod__implementation(self, other):
+		retData = other % self.data.data
+		retRow = numpy.array(self.data.row)
+		retCol = numpy.array(self.data.col)
+		ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
+
+		return Sparse(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+
+	def _imod__implementation(self, other):
+		if isinstance(other, UML.data.Base):
+			if scipy.sparse.isspmatrix(other.data):
+				ret = self.data % other.data.todense()
+			else:
+				ret = self.data % other.data
+		else:
+			ret = self._data.data % other
+		self._data.data = ret
+		return self
+
+
+
 
 	###########
 	# Helpers #
@@ -1351,9 +1573,13 @@ def _resync(obj):
 		obj.col = obj.internal.col
 		obj.shape = obj.internal.shape
 
-class CooWithEmpty(object):
+class CooWrapper(object):
+	def __init__(self, **kwargs):
+		super(CooWrapper, self).__init__(**kwargs)
 
-	def __init__(self, arg1, shape=None, dtype=None, copy=False, reuseData=False):
+class CooWithEmpty(CooWrapper):
+
+	def __init__(self, arg1, shape=None, dtype=None, copy=False, reuseData=False, **kwds):
 		self.ndim = 2
 		if isinstance(arg1, CooWithEmpty):
 			arg1 = arg1.internal
@@ -1387,6 +1613,8 @@ class CooWithEmpty(object):
 			self.col = internal.col
 			self.shape = internal.shape
 			self.internal = internal
+
+		super(CooWithEmpty, self).__init__(**kwds)
 
 
 	def transpose(self):
@@ -1424,3 +1652,265 @@ class CooWithEmpty(object):
 			else:
 				return True
 
+
+
+
+
+class SparseVectorView(BaseView, Sparse):
+	"""
+	A view of a Sparse data object limited to a full point or full feature
+
+	"""
+	def __init__(self, **kwds):
+		super(SparseVectorView, self).__init__(**kwds)
+
+
+
+class SparseView(BaseView, Sparse):
+	def __init__(self, **kwds):
+		super(SparseView, self).__init__(**kwds)
+
+	def _validate_implementation(self, level):
+		self._source.validate(level)
+
+	def _getitem_implementation(self, x, y):
+		adjX = x + self._pStart
+		adjY = y + self._fStart
+		return self._source[adjX, adjY]
+
+	def _pointView_implementation(self, ID):
+		return self.view(ID, ID, None, None)
+
+	def _featureView_implementation(self, ID):
+		return self.view(None, None, ID, ID)
+
+	def pointIterator(self):
+		if self.featureCount == 0:
+			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
+
+		return self._generic_iterator("point")
+
+	def featureIterator(self):
+		if self.pointCount == 0:
+			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
+
+		return self._generic_iterator("feature")
+
+	def _generic_iterator(self, axis):
+		source = self._source
+		if axis == 'point':
+			seenLimit = self.pointCount
+			positionLimit = self._source.pointCount
+			fixedStart = self._fStart
+			# self._fEnd is exclusive, but view takes inclusive indices
+			fixedEnd = self._fEnd - 1
+		else:
+			seenLimit = self.featureCount
+			positionLimit = self._source.featureCount
+			fixedStart = self._pStart
+			# self._pEnd is exclusive, but view takes inclusive indices
+			fixedEnd = self._pEnd - 1
+
+		class GenericIt(object):
+			def __init__(self):
+				self._position = 0
+				self._seen = 0
+
+			def __iter__(self):
+				return self
+
+			def next(self):
+				if self._position < positionLimit and self._seen < seenLimit:
+					if axis == 'point':
+						value = source.view(self._position, self._position, fixedStart, fixedEnd)
+					else:
+						value = source.view(fixedStart, fixedEnd, self._position, self._position)
+					self._position += 1
+					return value
+
+				raise StopIteration
+
+		return GenericIt()
+
+	def _copyAs_implementation(self, format):
+		if self.pointCount == 0 or self.featureCount == 0:
+			emptyStandin = numpy.empty((self.pointCount, self.featureCount))
+			intermediate = UML.data.Matrix(emptyStandin, pointNames=self.pointNames, featureNames=self.featureNames)
+			return intermediate.copyAs(format)
+
+		limited = self._source.copyPoints(start=self._pStart, end=self._pEnd-1)
+		limited.copyFeatures(start=self._fStart, end=self._fEnd-1)
+
+		if format is None or format == 'Sparse':
+			return limited
+		else:
+			return limited._copyAs_implementation(format)
+
+	def _isIdentical_implementation(self, other):
+		if not isinstance(other, Sparse):
+			return False
+		# for nonempty matrices, we use a shape mismatch to indicate non-equality
+		if self._data.shape != other._data.shape:
+			return False
+
+		# empty object means no values. Since shapes match they're equal
+		if self._data.shape[0] == 0 or self._data.shape[1] == 0:
+			return True
+
+
+		sIt = self.pointIterator()
+		oIt = other.pointIterator()
+		for sPoint in sIt:
+			oPoint = oIt.next()
+
+			for i, val in enumerate(sPoint):
+				if val != oPoint[i]:
+					return False
+
+		return True
+
+	def _containsZero_implementation(self):
+		for sPoint in self.pointIterator():
+			if sPoint.containsZero():
+				return True
+
+		return False
+
+	def __pos__(self):
+		""" Return this object. """
+		ret = self._source.view(self._pStart, self._pEnd-1, self._fStart, self._fEnd-1)
+		ret._name = dataHelpers.nextDefaultObjectName()
+
+		return ret
+
+	def __neg__(self):
+		""" Return this object where every element has been multiplied by -1 """
+		ret = self.copyAs("Sparse")
+		ret._data.data *= -1
+		ret._name = dataHelpers.nextDefaultObjectName()
+
+		return ret
+
+	def __abs__(self):
+		""" Perform element wise absolute value on this object """
+		ret = self.copyAs("Sparse")
+		ret._data.data = numpy.absolute(ret._data.data)
+		ret._name = dataHelpers.nextDefaultObjectName()
+
+		return ret
+
+	def _mul__implementation(self, other):
+		selfConv = self.copyAs("Sparse")
+		if isinstance(other, BaseView):
+			other = other.copyAs(other.getTypeString())
+		return selfConv._mul__implementation(other)
+
+	def _genericNumericBinary_implementation(self, opName, other):
+		if isinstance(other, BaseView):
+			other = other.copyAs(other.getTypeString())
+
+		implName = opName[1:] + 'implementation'
+		opType = opName[-5:-2]
+
+		if opType in ['add', 'sub', 'div', 'truediv', 'floordiv']:
+			selfConv = self.copyAs("Matrix")
+			toCall = getattr(selfConv, implName)
+			ret = toCall(other)
+			ret = UML.createData("Sparse", ret.data)
+			return ret
+
+		selfConv = self.copyAs("Sparse")
+
+		toCall = getattr(selfConv, implName)
+		ret = toCall(other)
+		ret = UML.createData(self.getTypeString(), ret.data)
+
+		return ret
+
+	def _copyPoints_implementation(self, points, start, end):
+		retData = []
+		retRow = []
+		retCol = []
+		piNN = points is not None
+
+		for pID, pView in enumerate(self.pointIterator()):
+			if (piNN and pID in points) or (pID >= start and pID <= end):
+				for i,val in enumerate(pView.data.data):
+					retData.append(val)
+					if piNN:
+						retRow.append(points.index(pID))
+					else:
+						retRow.append(pID - start)
+					retCol.append(pView.data.col[i])
+
+		if points is not None:
+			newShape = (len(points), numpy.shape(self._data)[1])
+		else:
+			newShape = (end - start + 1, numpy.shape(self._data)[1])
+
+		retData = CooWithEmpty((retData,(retRow,retCol)),shape=newShape)
+		return Sparse(retData, reuseData=True)
+
+
+	def _copyFeatures_implementation(self, features, start, end):
+		retData = []
+		retRow = []
+		retCol = []
+		fiNN = features is not None
+
+		for fID, fView in enumerate(self.featureIterator()):
+			if (fiNN and fID in features) or (fID >= start and fID <= end):
+				for i,val in enumerate(fView.data.data):
+					retData.append(val)
+					retRow.append(fView.data.row[i])
+					if fiNN:
+						retCol.append(features.index(fID))
+					else:
+						retCol.append(fID - start)
+
+		if features is not None:
+			newShape = (numpy.shape(self._data)[0], len(features))
+		else:
+			newShape = (numpy.shape(self._data)[0], end - start + 1)
+
+		retData = CooWithEmpty((retData,(retRow,retCol)),shape=newShape)
+		return Sparse(retData, reuseData=True)
+
+
+
+	def _nonZeroIteratorPointGrouped_implementation(self):
+		return self._nonZeroIterator_general_implementation(self.pointIterator())
+
+	def _nonZeroIteratorFeatureGrouped_implementation(self):
+		return self._nonZeroIterator_general_implementation(self.featureIterator())
+
+	def _nonZeroIterator_general_implementation(self, sourceIter):
+		# IDEA: check if sorted in the way you want.
+		# if yes, iterate through
+		# if no, use numpy argsort? this gives you indices that
+		# would sort it, iterate through those indices to do access?
+		#
+		# safety: somehow check that your sorting setup hasn't changed
+
+		class nzIt(object):
+			def __init__(self):
+				self._sourceIter = sourceIter
+				self._currGroup = None
+				self._index = 0
+
+			def __iter__(self):
+				return self
+
+			def next(self):
+				while True:
+					try:
+						value = self._currGroup[self._index]
+						self._index += 1
+
+						if value != 0:
+							return value
+					except:
+						self._currGroup = self._sourceIter.next()
+						self._index = 0
+
+		return nzIt()
