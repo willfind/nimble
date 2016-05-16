@@ -776,11 +776,19 @@ class HighLevelDataSafe(DataTestObject):
 					ret.append(val)
 			return ret
 
-		# change the origin data
-		toTest.transformEachPoint(changeFirst)
-		assert toTest[0,0] == -1
+		# change the returned data
+		trX.transformEachPoint(changeFirst)
+		trY.transformEachPoint(changeFirst)
+		assert trX[0,0] == -1
+		assert trY[0,0] == -1
 
-		# assert our returned sets are unaffected
+		# check all other data is unchanged
+		assert toTest[0,0] == 1
+		assert teX[0,0] == 3
+		assert teY[0,0] == 3
+
+		# check that our multiple references are still the same
+
 		assert trX == trY
 		assert teX == teY
 
