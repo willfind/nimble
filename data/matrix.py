@@ -103,11 +103,15 @@ class Matrix(Base):
 		if axis == 'point':
 			test = self.pointView(0)
 			viewIter = self.pointIterator()
+			indexGetter = self.getPointIndex
 			nameGetter = self.getPointName
+			nameGetterStr = 'getPointName'
 		else:
 			test = self.featureView(0)
 			viewIter = self.featureIterator()
+			indexGetter = self.getFeatureIndex
 			nameGetter = self.getFeatureName
+			nameGetterStr = 'getFeatureName'
 		scorer = None
 		comparator = None
 		try:
@@ -133,7 +137,8 @@ class Matrix(Base):
 			viewArray.sort(cmp=comparator)
 			indexPosition = []
 			for i in xrange(len(viewArray)):
-				indexPosition.append(viewArray[i].index())
+				index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
+				indexPosition.append(index)
 			indexPosition = numpy.array(indexPosition)
 		elif hasattr(scorer, 'permuter'):
 			scoreArray = scorer.indices
@@ -948,6 +953,16 @@ class VectorView(View):
 		return self._vecIndex
 	def name(self):
 		return self._name
+	def getPointName(self, index):
+		if self._axis == 'point':
+			return self._outer.getPointName(self._vecIndex)
+		else:
+			return self._outer.getPointName(index)
+	def getFeatureName(self, index):
+		if self._axis == 'feature':
+			return self._outer.getFeatureName(self._vecIndex)
+		else:
+			return self._outer.getFeatureName(index)
 
 class nzIt():
 	def __init__(self, indexable, enforcedLength):

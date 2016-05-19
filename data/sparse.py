@@ -223,12 +223,16 @@ class Sparse(Base):
 			viewMaker = self.pointView
 			getViewIter = self.pointIterator
 			targetAxis = self._data.row
+			indexGetter = self.getPointIndex
 			nameGetter = self.getPointName
+			nameGetterStr = 'getPointName'
 		else:
 			viewMaker = self.featureView
 			targetAxis = self._data.col
 			getViewIter = self.featureIterator
+			indexGetter = self.getFeatureIndex
 			nameGetter = self.getFeatureName
+			nameGetterStr = 'getFeatureName'
 
 		test = viewMaker(0)
 		try:
@@ -255,7 +259,8 @@ class Sparse(Base):
 			viewArray.sort(cmp=comparator)
 			indexPosition = []
 			for i in xrange(len(viewArray)):
-				indexPosition.append(viewArray[i].index())
+				index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
+				indexPosition.append(index)
 			indexPosition = numpy.array(indexPosition)
 		elif hasattr(scorer, 'permuter'):
 			scoreArray = scorer.indices
@@ -1498,6 +1503,16 @@ class VectorView(View):
 			else:
 				mapKey = self._outer._data.row[i]
 			self._nzMap[mapKey] = i
+	def getPointName(self, index):
+		if self._axis == 'point':
+			return self._outer.getPointName(self._index)
+		else:
+			return self._outer.getPointName(index)
+	def getFeatureName(self, index):
+		if self._axis == 'feature':
+			return self._outer.getFeatureName(self._index)
+		else:
+			return self._outer.getFeatureName(index)
 
 class nzItMap():
 	def __init__(self, outer, nzMap):

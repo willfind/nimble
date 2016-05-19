@@ -48,20 +48,20 @@ def viewMakerMaker(concreteType):
 	return maker
 
 
-class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-		StructureDataSafe, ViewAccess):
-	def __init__(self):
-		super(TestListView, self).__init__('ListView', viewMakerMaker("List"))
+#class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+#		StructureDataSafe, ViewAccess):
+#	def __init__(self):
+#		super(TestListView, self).__init__('ListView', viewMakerMaker("List"))
 
-class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-		StructureDataSafe, ViewAccess):
-	def __init__(self):
-		super(TestMatrixView, self).__init__('MatrixView', viewMakerMaker("Matrix"))
+#class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+#		StructureDataSafe, ViewAccess):
+#	def __init__(self):
+#		super(TestMatrixView, self).__init__('MatrixView', viewMakerMaker("Matrix"))
 
-class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-		StructureDataSafe, ViewAccess):
-	def __init__(self):
-		super(TestSparseView, self).__init__('SparseView', viewMakerMaker("Sparse"))
+#class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+#		StructureDataSafe, ViewAccess):
+#	def __init__(self):
+#		super(TestSparseView, self).__init__('SparseView', viewMakerMaker("Sparse"))
 
 
 class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll):

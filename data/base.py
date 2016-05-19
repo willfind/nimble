@@ -776,8 +776,8 @@ class Base(object):
 				if value < 0 or value > self.pointCount:
 					raise ArgumentException("A value in indices is out of bounds of the valid range of points")
 
-		def permuter(pointView):
-			return indices[pointView.index()]
+		def permuter(pView):
+			return indices[self.getPointIndex(pView.getPointName(0))]
 		permuter.permuter = True
 		permuter.indices = indices
 		self.sortPoints(sortHelper=permuter)
@@ -800,8 +800,8 @@ class Base(object):
 			for value in indices:
 				if value < 0 or value > self.featureCount:
 					raise ArgumentException("A value in indices is out of bounds of the valid range of features")
-		def permuter(featureView):
-			return indices[featureView.index()]
+		def permuter(fView):
+			return indices[self.getFeatureIndex(fView.getFeatureName(0))]
 		self.sortFeatures(sortHelper=permuter)
 		
 
@@ -1061,31 +1061,48 @@ class Base(object):
 
 		# if a statistics string was entered, generate the results
 		# of that statistic
-		if isinstance(subtract, basestring):
-			if axis == 'point':
+#		if isinstance(subtract, basestring):
+#			if axis == 'point':
+#				subtract = self.pointStatistics(subtract)
+#			else:
+#				subtract = self.featureStatistics(subtract)
+#			subIsVec = True
+#		if isinstance(divide, basestring):
+#			if axis == 'point':
+#				divide = self.pointStatistics(divide)
+#			else:
+#				divide = self.featureStatistics(divide)
+#			divIsVec = True
+
+		if axis == 'point':
+			indexGetter = lambda x: self.getPointIndex(x.getPointName(0))
+			if isinstance(subtract, basestring):
 				subtract = self.pointStatistics(subtract)
-			else:
-				subtract = self.featureStatistics(subtract)
-			subIsVec = True
-		if isinstance(divide, basestring):
-			if axis == 'point':
+				subIsVec = True
+			if isinstance(divide, basestring):
 				divide = self.pointStatistics(divide)
-			else:
+				divIsVec = True
+		else:
+			indexGetter = lambda x: self.getFeatureIndex(x.getFeatureName(0))
+			if isinstance(subtract, basestring):
+				subtract = self.featureStatistics(subtract)
+				subIsVec = True
+			if isinstance(divide, basestring):
 				divide = self.featureStatistics(divide)
-			divIsVec = True
+				divIsVec = True
 
 		# helper for when subtract is a vector of values
 		def subber(currView):
 			ret = []
 			for val in currView:
-				ret.append(val - subtract[currView.index()])
+				ret.append(val - subtract[indexGetter(currView)])
 			return ret
 
 		# helper for when divide is a vector of values
 		def diver(currView):
 			ret = []
 			for val in currView:
-				ret.append(val / divide[currView.index()])
+				ret.append(val / divide[indexGetter(currView)])
 			return ret
 
 		# first perform the subtraction operation

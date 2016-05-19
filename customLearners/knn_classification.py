@@ -79,7 +79,8 @@ class KNNClassifier(CustomLearner):
 
 		"""
 		def distanceFrom(point):
-			return [point.index(), scipy.spatial.distance.euclidean(test, point)]
+			index = self._trainX.getPointIndex(point.getPointName(0))
+			return [index, scipy.spatial.distance.euclidean(test, point)]
 
 		distances = self._trainX.calculateForEachPoint(distanceFrom)
 		distances.sortPoints(1)

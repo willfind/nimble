@@ -1449,22 +1449,25 @@ class StructureModifying(DataTestObject):
 	def test_extractPoints_function_selectionGap(self):
 		data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
 		extractIndices = [3,5,6,9]
+		pnames = ['0','1','2','3','4','5','6','7','8','9']
 
 		def sel(point):
-			if point.index() in extractIndices:
+			if int(point.getPointName(0)) in extractIndices:
 				return True
 			else:
 				return False
 
-		toTest = self.constructor(data)
+		toTest = self.constructor(data, pointNames=pnames)
 
 		ret = toTest.extractPoints(sel)
 
 		expRaw = [[2],[0],[0],[0]]
-		expRet = self.constructor(expRaw)
+		expNames = ['3','5','6','9']
+		expRet = self.constructor(expRaw, pointNames=expNames)
 
 		expRaw = [[0],[2],[2],[0],[0],[2]]
-		expRem = self.constructor(expRaw)
+		expNames = ['0','1','2','4','7','8']
+		expRem = self.constructor(expRaw, pointNames=expNames)
 
 		assert ret == expRet
 		assert toTest == expRem
@@ -1808,34 +1811,34 @@ class StructureModifying(DataTestObject):
 		expTestNames = ['d']
 		expTest = self.constructor(expTestRaw, featureNames=expTestNames)
 
-#		import pdb
-#		pdb.set_trace()
 		ret = test.extractFeatures(expRetNames)
 		assert ret == expRet
 		assert test == expTest
 
-#		assert False
 
 	def test_extractFeatures_function_selectionGap(self):
 		data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
+		fnames = ['0','1','2','3','4','5','6','7','8','9']
 
 		extractIndices = [3,5,6,9]
 
 		def sel(feature):
-			if feature.index() in extractIndices:
+			if int(feature.getFeatureName(0)) in extractIndices:
 				return True
 			else:
 				return False
 
-		toTest = self.constructor(data)
+		toTest = self.constructor(data, featureNames=fnames)
 
 		ret = toTest.extractFeatures(sel)
 
 		expRaw = [1,0,0,0]
-		expRet = self.constructor(expRaw)
+		expNames = ['3','5','6','9']
+		expRet = self.constructor(expRaw, featureNames=expNames)
 
 		expRaw = [0,1,1,0,0,1]
-		expRem = self.constructor(expRaw)
+		expNames = ['0','1','2','4','7','8']
+		expRem = self.constructor(expRaw, featureNames=expNames)
 
 		assert ret == expRet
 		assert toTest == expRem

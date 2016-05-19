@@ -124,9 +124,9 @@ class List(Base):
 		"""
 		scorer = None
 		comparator = None
-		needToRemove = False
 
-		indices = self.calculateForEachPoint(lambda x:x.index())
+		indices = UML.createData("List", list(xrange(self.pointCount)))
+		indices.transpose()
 		indices.setFeatureName(0,"#UML_SORTHELPER_INDEX")
 		indices.setPointNames(self.getPointNames())
 		self.appendFeatures(indices)
@@ -212,7 +212,8 @@ class List(Base):
 			viewArray.sort(cmp=comparator)
 			indexPosition = []
 			for i in xrange(len(viewArray)):
-				indexPosition.append(viewArray[i].index())
+				index = self.getFeatureIndex(viewArray[i].getFeatureName(0))
+				indexPosition.append(index)
 		else:
 			#scoreArray = viewArray
 			scoreArray = []
@@ -601,7 +602,7 @@ class List(Base):
 			outFile.write(fnamesLine)
 
 		for point in self.pointIterator():
-			currPname = self.getPointName(point.index())
+			currPname = point.getPointName(0)
 			first = True
 			if includePointNames:
 				outFile.write(currPname)
@@ -1035,6 +1036,10 @@ class FeatureView(View):
 		return self._colNum
 	def name(self):
 		return self._colName
+	def getPointName(self, index):
+		return self._outer.getPointName(index)
+	def getFeatureName(self, index):
+		return self._outer.getFeatureName(self._colNum)
 
 class PointView(View):
 	"""
@@ -1061,6 +1066,10 @@ class PointView(View):
 		return self._index
 	def name(self):
 		return self._outer.getPointName(self._index)
+	def getPointName(self, index):
+		return self._outer.getPointName(self._index)
+	def getFeatureName(self, index):
+		return self._outer.getFeatureName(index)
 
 class nzIt():
 	def __init__(self, indexable):

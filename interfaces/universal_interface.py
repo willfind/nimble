@@ -704,7 +704,7 @@ class UniversalInterface(object):
 				scoreOrder = list(scoreOrder)
 				# find scores matching predicted labels
 				def grabValue(row):
-					pointIndex = row.index()
+					pointIndex = scores.getPointIndex(row.getPointName(0))
 					rowIndex = scoreOrder.index(labels[pointIndex, 0])
 					return row[rowIndex]
 
@@ -801,7 +801,8 @@ class UniversalInterface(object):
 				label = naturalOrder[i]
 				desiredDict[label] = i
 			def sortScorer(feature):
-				label = internalOrder[feature.index()]
+				index = formatedRawOrder.getFeatureIndex(feature.getFeatureName(0))
+				label = internalOrder[index]
 				return desiredDict[label]
 
 			formatedRawOrder.sortFeatures(sortHelper=sortScorer)

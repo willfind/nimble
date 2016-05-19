@@ -65,6 +65,12 @@ class View():
 	@abstractmethod
 	def name(self):
 		pass
+	@abstractmethod
+	def getPointName(self, index):
+		pass		
+	@abstractmethod
+	def getFeatureName(self, index):
+		pass
 
 
 def nextDefaultObjectName():
@@ -169,8 +175,14 @@ def reorderToMatchExtractionList(dataObject, extractionList, axis):
 	for i in xrange(len(extractionList)):
 		mappedOrig[extractionList[i]] = i
 	
+	if axis == 'point':
+		indexGetter = lambda x: dataObject.getPointIndex(x.getPointName(0))
+	else:
+		indexGetter = lambda x: dataObject.getFeatureIndex(x.getFeatureName(0))
+
 	def scorer(viewObj):
-		return mappedOrig[sortedList[viewObj.index()]]
+		index = indexGetter(viewObj)
+		return mappedOrig[sortedList[index]]
 
 	sortFunc(sortHelper=scorer)
 

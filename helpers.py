@@ -213,14 +213,18 @@ def initDataObject(
 	# extract names out of the data object if still needed
 	ret = extractNamesFromDataObject(ret, pnamesID, fnamesID)
 
-	def makeCmp(keepList):
+	def makeCmp(keepList, outerObj, axis):
+		if axis == 'point':
+			indexGetter = lambda x: outerObj.getPointIndex(x.getPointName(0))
+		else:
+			indexGetter = lambda x: outerObj.getFeatureIndex(x.getFeatureName(0))
 		positions = {}
 		for i in xrange(len(keepList)):
 			positions[keepList[i]] = i
 
 		def retCmp(view1, view2):
-			i1 = view1.index()
-			i2 = view2.index()
+			i1 = indexGetter(view1)
+			i2 = indexGetter(view2)
 			if positions[i1] < positions[i2]:
 				return -1
 			elif positions[i1] > positions[i2]:
@@ -238,7 +242,8 @@ def initDataObject(
 			if converted not in cleaned:
 				cleaned.append(converted)
 		if len(cleaned) == ret.pointCount:
-			ret.sortPoints(sortHelper=makeCmp(cleaned))
+			pCmp = makeCmp(cleaned, ret, 'point')
+			ret.sortPoints(sortHelper=pCmp)
 		else:
 			ret = ret.copyPoints(cleaned)
 	if keepFeatures != 'all':
@@ -249,7 +254,7 @@ def initDataObject(
 				cleaned.append(converted)
 
 		if len(cleaned) == ret.featureCount:
-			fCmp = makeCmp(cleaned)
+			fCmp = makeCmp(cleaned, ret, 'feature')
 			ret.sortFeatures(sortHelper=fCmp)
 		else:
 			ret = ret.copyFeatures(cleaned)
