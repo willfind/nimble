@@ -376,7 +376,8 @@ class Base(object):
 		# Convert to List, so we can have easy access
 		values = values.copyAs(format="List")
 
-		# for each value run applyToEach to produce a category point for each value
+		# for each value run calculateForEachPoint to produce a category
+		# point for each value
 		def makeFunc(value):
 			def equalTo(point):
 				if point[0] == value:
@@ -388,7 +389,7 @@ class Base(object):
 
 		for point in values.data:
 			value = point[0]
-			ret = toConvert.applyToPoints(makeFunc(value), inPlace=False)
+			ret = toConvert.calculateForEachPoint(makeFunc(value))
 			ret.setFeatureName(0, varName + "=" + str(value).strip())
 			toConvert.appendFeatures(ret)
 
@@ -432,11 +433,10 @@ class Base(object):
 				mapping[point[0]] = index
 				index = index + 1
 
-		# use apply to each to make new feature with the int mappings
 		def lookup(point):
 			return mapping[point[0]]
 
-		converted = toConvert.applyToPoints(lookup, inPlace=False)
+		converted = toConvert.calculateForEachPoint(lookup)
 		converted.setPointNames(toConvert.getPointNames())
 		converted.setFeatureName(0, toConvert.getFeatureName(0))
 
@@ -468,17 +468,16 @@ class Base(object):
 		return ret
 
 
-	def applyToPoints(self, function, points=None, inPlace=True):
+	def calculateForEachPoint(self, function, points=None):
 		"""
-		Applies the given function to each point in this object, copying the
-		output into this object and returning None. Alternatively, if the inPlace
-		flag is False, output values are collected into a new object that is
-		returned upon completion.
+		Calculates the results of the given function on the specified points
+		in this object, with output values collected into a new object that
+		is returned upon completion.
 
-		function must not be none and accept a point as an argument
+		function must not be none and accept the view of a point as an argument
 
 		points may be None to indicate application to all points, a single point
-		ID or a list of point ID's to limit application only to those specified
+		ID or a list of point IDs to limit application only to those specified.
 
 		"""
 		if self.pointCount == 0:
@@ -499,26 +498,25 @@ class Base(object):
 
 		self.validate()
 
-		ret = self._applyTo_implementation(function, points, inPlace, 'point')
+		ret = self._calculateForEach_implementation(function, points, 'point')
 
-		if ret is not None:
-			ret._absPath = self.absolutePath
-			ret._relPath = self.relativePath
+		ret._absPath = self.absolutePath
+		ret._relPath = self.relativePath
 
 		return ret
 
 
-	def applyToFeatures(self, function, features=None, inPlace=True):
+	def calculateForEachFeature(self, function, features=None):
 		"""
-		Applies the given function to each feature in this object, copying the
-		output into this object and returning None. Alternatively, if the inPlace
-		flag is False, output values are collected into a new object that is
+		Calculates the results of the given function on the specified features
+		in this object, with output values collected into a new object that is
 		returned upon completion.
 
-		function must not be none and accept a feature as an argument
+		function must not be none and accept the view of a point as an argument
 
-		features may be None to indicate application to all features, a single feature
-		ID or a list of features ID's to limit application only to those specified
+		features may be None to indicate application to all features, a single
+		feature ID or a list of feature IDs to limit application only to those
+		specified.
 
 		"""
 		if self.pointCount == 0:
@@ -539,14 +537,13 @@ class Base(object):
 
 		self.validate()
 
-		ret = self._applyTo_implementation(function, features, inPlace, 'feature')
-		if ret is not None:
-			ret._absPath = self.absolutePath
-			ret._relPath = self.relativePath
+		ret = self._calculateForEach_implementation(function, features, 'feature')
+		ret._absPath = self.absolutePath
+		ret._relPath = self.relativePath
 		return ret
 
 
-	def _applyTo_implementation(self, function, included, inPlace, axis):
+	def _calculateForEach_implementation(self, function, included, axis):
 		if axis == 'point':
 			viewIterator = self.pointIterator()
 		else:
@@ -562,27 +559,18 @@ class Base(object):
 				# if there are multiple values, they must be random accessible
 				if not hasattr(currOut, '__getitem__'):
 					raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
-				if inPlace:
-					for i in xrange(len(currOut)):
-						view[i] = currOut[i]
-				else:
-					toCopyInto = []
-					for value in currOut:
-						toCopyInto.append(value)
-					retData.append(toCopyInto)
+				
+				toCopyInto = []
+				for value in currOut:
+					toCopyInto.append(value)
+				retData.append(toCopyInto)
 			# singular return
 			else:
-				if inPlace:
-					view[0] = currOut
-				else:
-					retData.append([currOut])
+				retData.append([currOut])
 		
-		if inPlace:
-			ret = None
-		else:
-			ret = UML.createData(self.getTypeString(), retData)
-			if axis != 'point':
-				ret.transpose()
+		ret = UML.createData(self.getTypeString(), retData)
+		if axis != 'point':
+			ret.transpose()
 
 		return ret
 
@@ -666,17 +654,26 @@ class Base(object):
 				raise StopIteration
 		return featureIt(self)
 
-	def applyToElements(self, function, points=None, features=None, inPlace=True, preserveZeros=False, skipNoneReturnValues=False):
+
+	def calculateForEachElement(self, function, points=None, features=None, preserveZeros=False, skipNoneReturnValues=False):
 		"""
-		Applies the function(elementValue) or function(elementValue, pointNum,
-		featureNum) to each element. If inPlace == False, returns an object (of
-		the same type as the calling object) containing the resulting values, or
-		None if inPlace == True. If preserveZeros=True it does not
-		apply function to elements in the dataMatrix that are 0 and a 0 is placed in
-		it's place in the output. If skipNoneReturnValues=True, any time function()
-		returns None, the value that was input to the function will be put in the output
-		in place of None. The result of both of the flags is to modify the output, yet
-		ensure it still has the same dimensions as the calling object.
+		Returns a new object containing the results of calling function(elementValue)
+		or function(elementValue, pointNum, featureNum) for each element.
+
+		points: Limit to only elements of the specified points; may be None for
+		all points, a single ID, or a list of IDs; this will affect the shape
+		of the returned object.
+
+		features: Limit to only elements of the specified features; may be None for
+		all features, a single ID, or a list of IDs; this will affect the shape
+		of the returned object.
+
+		preserveZeros: If True it does not apply the function to elements in
+		the data that are 0 and a 0 is placed in its place in the output.
+
+		skipNoneReturnValues: If True, any time function() returns None, the
+		value that was input to the function will be put in the output in place
+		of None.
 
 		"""
 		oneArg = False
@@ -715,40 +712,32 @@ class Base(object):
 					continue
 				value = currPoint[j]
 				if preserveZeros and value == 0:
-					if not inPlace:
-						tempList.append(0)
+					tempList.append(0)
 					continue
 				if oneArg:
 					currRet = function(value)
 				else:
 					currRet = function(value, currPointID, j)
 				if currRet is None and skipNoneReturnValues:
-					if not inPlace:
-						tempList.append(value)
+					tempList.append(value)
 				else:
-					if not inPlace:
-						tempList.append(currRet)
-					else:
-						currPoint[j] = currRet
-			if not inPlace:
-				valueList.append(tempList)
+					tempList.append(currRet)
+			valueList.append(tempList)
 
-		if not inPlace:
-			ret = UML.createData(self.getTypeString(), valueList)
+		ret = UML.createData(self.getTypeString(), valueList)
 
-			ret._absPath = self.absolutePath
-			ret._relPath = self.relativePath
+		ret._absPath = self.absolutePath
+		ret._relPath = self.relativePath
 
-			return ret
-		else:
-			return None
+		return ret
+	
 
 	def hashCode(self):
 		"""returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
 		that should almost always change when the values of the matrix are changed by a substantive amount"""
 		if self.pointCount == 0 or self.featureCount == 0:
 			return 0
-		valueObj = self.applyToElements(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, inPlace=False, preserveZeros=True)
+		valueObj = self.calculateForEachElement(lambda elementValue, pointNum, featureNum: ((math.sin(pointNum) + math.cos(featureNum))/2.0) * elementValue, preserveZeros=True)
 		valueList = valueObj.copyAs(format="python list")
 		avg = sum(itertools.chain.from_iterable(valueList))/float(self.pointCount*self.featureCount)
 		bigNum = 1000000000
@@ -1103,11 +1092,11 @@ class Base(object):
 		if subtract is not None and subtract != 0:
 			if subIsVec:
 				if axis == 'point':
-					self.applyToPoints(subber)
-					applyResultTo.applyToPoints(subber)
+					self.transformEachPoint(subber)
+					applyResultTo.transformEachPoint(subber)
 				else:
-					self.applyToFeatures(subber)
-					applyResultTo.applyToFeatures(subber)
+					self.transformEachFeature(subber)
+					applyResultTo.transformEachFeature(subber)
 			else:
 				self -= subtract
 				applyResultTo -= subtract
@@ -1116,11 +1105,11 @@ class Base(object):
 		if divide is not None and divide != 1:
 			if divIsVec:		
 				if axis == 'point':
-					self.applyToPoints(diver)
-					applyResultTo.applyToPoints(diver)
+					self.transformEachPoint(diver)
+					applyResultTo.transformEachPoint(diver)
 				else:
-					self.applyToFeatures(diver)
-					applyResultTo.applyToFeatures(diver)
+					self.transformEachFeature(diver)
+					applyResultTo.transformEachFeature(diver)
 			else:
 				self /= divide
 				applyResultTo /= divide
@@ -2341,6 +2330,112 @@ class Base(object):
 		return ret
 
 
+	def transformEachPoint(self, function, points=None):
+		"""
+		Modifies this object to contain the results of the given function
+		calculated on the specified points in this object.
+
+		function must not be none and accept the view of a point as an argument
+
+		points may be None to indicate application to all points, a single point
+		ID or a list of point IDs to limit application only to those specified.
+
+		"""
+		if self.pointCount == 0:
+			raise ImproperActionException("We disallow this function when there are 0 points")
+		if self.featureCount == 0:
+			raise ImproperActionException("We disallow this function when there are 0 features")
+		if function is None:
+			raise ArgumentException("function must not be None")
+
+		if points is not None and not isinstance(points, list):
+			if not isinstance(points, int):
+				raise ArgumentException("Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
+			points = [points]
+
+		if points is not None:
+			for i in xrange(len(points)):
+				points[i] = self._getPointIndex(points[i])
+
+		self.validate()
+
+		self._transformEachPoint_implementation(function, points)
+
+
+	def transformEachFeature(self, function, features=None):
+		"""
+		Modifies this object to contain the results of the given function
+		calculated on the specified features in this object.
+
+		function must not be none and accept the view of a feature as an argument
+
+		features may be None to indicate application to all features, a single
+		feature ID or a list of feature IDs to limit application only to those
+		specified.
+
+		"""
+		if self.pointCount == 0:
+			raise ImproperActionException("We disallow this function when there are 0 points")
+		if self.featureCount == 0:
+			raise ImproperActionException("We disallow this function when there are 0 features")
+		if function is None:
+			raise ArgumentException("function must not be None")
+
+		if features is not None and not isinstance(features, list):
+			if not (isinstance(features, int) or isinstance(features, basestring)):
+				raise ArgumentException("Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
+			features = [features]
+
+		if features is not None:
+			for i in xrange(len(features)):
+				features[i] = self._getFeatureIndex(features[i])
+
+		self.validate()
+
+		self._transformEachFeature_implementation(function, features)
+
+
+	def transformEachElement(self, function, points=None, features=None, preserveZeros=False, skipNoneReturnValues=False):
+		"""
+		Modifies this object to contain the results of calling function(elementValue)
+		or function(elementValue, pointNum, featureNum) for each element. 
+
+		points: Limit to only elements of the specified points; may be None for
+		all points, a single ID, or a list of IDs.
+
+		features: Limit to only elements of the specified features; may be None for
+		all features, a single ID, or a list of IDs.
+
+		preserveZeros: If True it does not apply the function to elements in
+		the data that are 0, and that 0 is not modified.
+
+		skipNoneReturnValues: If True, any time function() returns None, the
+		value originally in the data will remain unmodified.
+
+		"""
+		if points is not None and not isinstance(points, list):
+			if not isinstance(points, (int, basestring)):
+				raise ArgumentException("Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
+			points = [points]
+
+		if features is not None and not isinstance(features, list):
+			if not isinstance(features, (int, basestring)):
+				raise ArgumentException("Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
+			features = [features]
+
+		if points is not None:
+			for i in xrange(len(points)):
+				points[i] = self._getPointIndex(points[i])
+
+		if features is not None:
+			for i in xrange(len(features)):
+				features[i] = self._getFeatureIndex(features[i])
+
+		self.validate()
+
+		self._transformEachElement_implementation(function, points, features, preserveZeros, skipNoneReturnValues)
+	
+
 	###############################################################
 	###############################################################
 	###   Subclass implemented numerical operation functions    ###
@@ -2419,11 +2514,11 @@ class Base(object):
 		if isinstance(other, UML.data.Base):
 			def powFromRight(val, pnum, fnum):
 				return val ** other[pnum,fnum]
-			self.applyToElements(powFromRight)
+			self.transformEachElement(powFromRight)
 		else: 
 			def powFromRight(val, pnum, fnum):
 				return val ** other
-			self.applyToElements(powFromRight)
+			self.transformEachElement(powFromRight)
 
 		self.validate()
 
@@ -2734,7 +2829,7 @@ class Base(object):
 
 	def __abs__(self):
 		""" Perform element wise absolute value on this object """
-		ret = self.applyToElements(abs, inPlace=False)
+		ret = self.calculateForEachElement(abs)
 		ret.setPointNames(self.getPointNames())
 		ret.setFeatureNames(self.getFeatureNames())
 		
@@ -2945,10 +3040,10 @@ class Base(object):
 			toCall = UML.calculate.standardDeviation
 
 		if axis == 'point':
-			ret = self.applyToPoints(toCall, inPlace=False)
+			ret = self.calculateForEachPoint(toCall)
 			ret.setFeatureName(0, cleanFuncName)
 		else:
-			ret = self.applyToFeatures(toCall, inPlace=False)
+			ret = self.calculateForEachFeature(toCall)
 			ret.setPointName(0, cleanFuncName)
 		return ret
 

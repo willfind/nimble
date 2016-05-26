@@ -708,7 +708,7 @@ class UniversalInterface(object):
 					rowIndex = scoreOrder.index(labels[pointIndex, 0])
 					return row[rowIndex]
 
-				scoreVector = scores.applyToPoints(grabValue, inPlace=False)
+				scoreVector = scores.calculateForEachPoint(grabValue)
 				labels.appendFeatures(scoreVector)
 
 				ret = labels

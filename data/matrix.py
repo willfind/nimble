@@ -6,6 +6,7 @@ Class extending Base, using a numpy dense matrix to store data.
 import numpy
 import scipy.sparse
 import sys
+import itertools
 
 import UML
 from base import Base
@@ -558,6 +559,60 @@ class Matrix(Base):
 			ret = self.data[:,start:end+1]
 
 		return Matrix(ret)
+
+
+
+
+	def _transformEachPoint_implementation(self, function, points):
+		for i, p in enumerate(self.pointIterator()):
+			if points is not None and i not in points:
+				continue
+			currRet = function(p)
+			if len(currRet) != self.featureCount:
+				msg = "function must return an iterable with as many elements as features in this object"
+				raise ArgumentException(msg)
+
+			self.data[i,:] = numpy.array(currRet).reshape(1, self.featureCount)
+
+	def _transformEachFeature_implementation(self, function, features):
+		for j, f in enumerate(self.featureIterator()):
+			if features is not None and j not in features:
+				continue
+			currRet = function(f)
+			if len(currRet) != self.pointCount:
+				msg = "function must return an iterable with as many elements as points in this object"
+				raise ArgumentException(msg)
+
+			self.data[:,j] = numpy.array(currRet).reshape(self.pointCount, 1)
+
+	def _transformEachElement_implementation(self, function, points, features, preserveZeros, skipNoneReturnValues):
+		oneArg = False
+		try:
+			function(0,0,0)
+		except TypeError:
+			oneArg = True
+
+		IDs = itertools.product(xrange(self.pointCount), xrange(self.featureCount))
+		for (i,j) in IDs:
+			currVal = self.data[i,j]
+
+			if points is not None and i not in points:
+				continue
+			if features is not None and j not in features:
+				continue
+			if preserveZeros and currVal == 0:
+				continue
+
+			if oneArg:
+				currRet = function(currVal)
+			else:
+				currRet = function(currVal, i, j)
+
+			if skipNoneReturnValues and currRet is None:
+				continue
+
+			self.data[i,j] = currRet
+
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x,y]

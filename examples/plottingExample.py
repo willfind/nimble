@@ -71,7 +71,7 @@ if __name__ == "__main__":
 			return 0
 		else:
 			return 1
-	checkObj.applyToElements(makeCheckered)
+	checkObj.transformEachElement(makeCheckered)
 
 	def addGradient(vector):
 		n = len(vector)
@@ -81,8 +81,8 @@ if __name__ == "__main__":
 			ret.append(val + i/2.)
 		return ret
 
-	checkGradObj = checkObj.applyToPoints(addGradient, inPlace=False)
-	checkGradObj = checkGradObj.applyToFeatures(addGradient, inPlace=False)
+	checkGradObj = checkObj.calculateForEachPoint(addGradient)
+	checkGradObj = checkGradObj.calculateForEachFeature(addGradient)
 	checkGradObj.name = "Checkerboard with linear gradient"
 
 	# plot

@@ -2772,7 +2772,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 
 	#set up the return data based on which format has been requested
 	if scoreMode.lower() == 'label'.lower():
-		return rawPredictions.applyToPoints(extractWinningPredictionLabel, inPlace=False)
+		return rawPredictions.calculateForEachPoint(extractWinningPredictionLabel)
 	elif scoreMode.lower() == 'bestScore'.lower():
 		#construct a list of lists, with each row in the list containing the predicted
 		#label and score of that label for the corresponding row in rawPredictions
@@ -2887,7 +2887,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 			if point[0] != label:
 				return 0
 			else: return 1
-		trainLabels = trainY.applyToPoints(relabeler, inPlace=False)
+		trainLabels = trainY.calculateForEachPoint(relabeler)
 		oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged, useLog=deepLog)
 		#put all results into one Base container, of the same type as trainX
 		if rawPredictions is None:
@@ -2903,7 +2903,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		timer.stop('train')
 
 	if scoreMode.lower() == 'label'.lower():
-		winningPredictionIndices = rawPredictions.applyToPoints(extractWinningPredictionIndex, inPlace=False).copyAs(format="python list")
+		winningPredictionIndices = rawPredictions.calculateForEachPoint(extractWinningPredictionIndex).copyAs(format="python list")
 		indexToLabelMap = rawPredictions.featureNamesInverse
 		winningLabels = []
 		for [winningIndex] in winningPredictionIndices:

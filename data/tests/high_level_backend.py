@@ -8,15 +8,14 @@ objects provided.
 Methods tested in this file:
 
 In object HighLevelDataSafe:
-applyToPoints, applyToFeatures, mapReducePoints, pointIterator,
-featureIterator, applyToElements, isApproximatelyEqual,
+calculateForEachPoint, calculateForEachFeature, mapReducePoints, pointIterator,
+featureIterator, calculateForEachElement, isApproximatelyEqual,
 trainAndTestSets
 
 In object HighLevelModifying:
 dropFeaturesContainingType, replaceFeatureWithBinaryFeatures, 
 transformFeatureToIntegers, extractPointsByCoinToss,
-applyToPoints, applyToFeatures, applyToElements, shufflePoints,
-shuffleFeatures, normalizePoints, normalizeFeatures
+shufflePoints, shuffleFeatures, normalizePoints, normalizeFeatures
 
 
 """
@@ -84,13 +83,19 @@ def plusOneOnlyEven(value):
 class HighLevelDataSafe(DataTestObject):
 
 
-	####################
-	# applyToPoints() #
-	####################
+	###########################
+	# calculateForEachPoint() #
+	###########################
+
+	@raises(ArgumentException)
+	def test_calculateForEachPoint_exceptionInputNone(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj.calculateForEachPoint(None)
 
 	@raises(ImproperActionException)
-	def test_applyToPoints_exceptionPEmpty(self):
-		""" Test applyToPoints() for ImproperActionException when object is point empty """
+	def test_calculateForEachPoint_exceptionPEmpty(self):
 		data = [[],[]]
 		data = numpy.array(data).T
 		origObj = self.constructor(data)
@@ -98,11 +103,10 @@ class HighLevelDataSafe(DataTestObject):
 		def emitLower(point):
 			return point[origObj.getFeatureIndex('deci')]
 
-		origObj.applyToPoints(emitLower, inPlace=False)
+		origObj.calculateForEachPoint(emitLower)
 
 	@raises(ImproperActionException)
-	def test_applyToPoints_exceptionFEmpty(self):
-		""" Test applyToPoints() for ImproperActionException when object is feature empty """
+	def test_calculateForEachPoint_exceptionFEmpty(self):
 		data = [[],[]]
 		data = numpy.array(data)
 		origObj = self.constructor(data)
@@ -110,11 +114,10 @@ class HighLevelDataSafe(DataTestObject):
 		def emitLower(point):
 			return point[origObj.getFeatureIndex('deci')]
 
-		origObj.applyToPoints(emitLower, inPlace=False)
+		origObj.calculateForEachPoint(emitLower)
 
 
-	def test_applyToPoints_Handmade(self):
-		""" Test applyToPoints() with handmade output """
+	def test_calculateForEachPoint_Handmade(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
@@ -123,14 +126,14 @@ class HighLevelDataSafe(DataTestObject):
 		def emitLower(point):
 			return point[origObj.getFeatureIndex('deci')]
 
-		lowerCounts = origObj.applyToPoints(emitLower, inPlace=False)
+		lowerCounts = origObj.calculateForEachPoint(emitLower)
 
 		expectedOut = [[0.1], [0.1], [0.1], [0.2]]
 		exp = self.constructor(expectedOut)
 
 		assert lowerCounts.isIdentical(exp)
 
-	def test_applyToPoints_NamePathPreservation(self):
+	def test_calculateForEachPoint_NamePathPreservation(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
@@ -140,7 +143,7 @@ class HighLevelDataSafe(DataTestObject):
 		def emitLower(point):
 			return point[toTest.getFeatureIndex('deci')]
 
-		ret = toTest.applyToPoints(emitLower, inPlace=False)
+		ret = toTest.calculateForEachPoint(emitLower)
 
 		assert toTest.name == preserveName
 		assert toTest.absolutePath == preserveAPath
@@ -151,8 +154,7 @@ class HighLevelDataSafe(DataTestObject):
 		assert ret.relativePath == preserveRPath
 
 
-	def test_applyToPoints_HandmadeLimited(self):
-		""" Test applyToPoints() with handmade output on a limited portion of points """
+	def test_calculateForEachPoint_HandmadeLimited(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
@@ -161,7 +163,7 @@ class HighLevelDataSafe(DataTestObject):
 		def emitLower(point):
 			return point[origObj.getFeatureIndex('deci')]
 
-		lowerCounts = origObj.applyToPoints(emitLower, points=['three',2], inPlace=False)
+		lowerCounts = origObj.calculateForEachPoint(emitLower, points=['three',2])
 
 		expectedOut = [[0.1], [0.2]]
 		exp = self.constructor(expectedOut)
@@ -169,8 +171,7 @@ class HighLevelDataSafe(DataTestObject):
 		assert lowerCounts.isIdentical(exp)
 
 
-	def test_applyToPoints_nonZeroItAndLen(self):
-		""" Test applyToPoints() for the correct usage of the nonzero iterator """
+	def test_calculateForEachPoint_nonZeroItAndLen(self):
 		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
 		origObj = self.constructor(deepcopy(origData))
 
@@ -181,7 +182,7 @@ class HighLevelDataSafe(DataTestObject):
 				ret += 1
 			return ret
 
-		counts = origObj.applyToPoints(emitNumNZ, inPlace=False)
+		counts = origObj.calculateForEachPoint(emitNumNZ)
 
 		expectedOut = [[3], [2], [2], [1]]
 		exp = self.constructor(expectedOut)
@@ -190,16 +191,15 @@ class HighLevelDataSafe(DataTestObject):
 
 
 
-	#######################
-	# applyToFeatures() #
-	#######################
+	#############################
+	# calculateForEachFeature() #
+	#############################
 
 	@raises(ImproperActionException)
-	def test_applyToFeatures_exceptionPEmpty(self):
-		""" Test applyToFeatures() for ImproperActionException when object is point empty """
+	def test_calculateForEachFeature_exceptionPEmpty(self):
 		data = [[],[]]
 		data = numpy.array(data).T
-		origObj= self.constructor(data)
+		origObj = self.constructor(data)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -208,14 +208,13 @@ class HighLevelDataSafe(DataTestObject):
 					return 0
 			return 1
 
-		origObj.applyToFeatures(emitAllEqual, inPlace=False)
+		origObj.calculateForEachFeature(emitAllEqual)
 
 	@raises(ImproperActionException)
-	def test_applyToFeatures_exceptionFEmpty(self):
-		""" Test applyToFeatures() for ImproperActionException when object is feature empty """
+	def test_calculateForEachFeature_exceptionFEmpty(self):
 		data = [[],[]]
 		data = numpy.array(data)
-		origObj= self.constructor(data)
+		origObj = self.constructor(data)
 
 		def emitAllEqual(feature):
 			first = feature[0]
@@ -224,23 +223,21 @@ class HighLevelDataSafe(DataTestObject):
 					return 0
 			return 1
 
-		origObj.applyToFeatures(emitAllEqual, inPlace=False)
+		origObj.calculateForEachFeature(emitAllEqual)
 
 	@raises(ArgumentException)
-	def test_applyToFeatures_exceptionInputNone(self):
-		""" Test applyToFeatures() for ArgumentException when function is None """
+	def test_calculateForEachFeature_exceptionInputNone(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), featureNames=featureNames)
-		origObj.applyToFeatures(None, inPlace=False)
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj.calculateForEachFeature(None)
 
 
-	def test_applyToFeatures_Handmade(self):
-		""" Test applyToFeatures() with handmade output """
+	def test_calculateForEachFeature_Handmade(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
 
 		def emitAllEqual(feature):
 			first = feature['zero']
@@ -249,14 +246,13 @@ class HighLevelDataSafe(DataTestObject):
 					return 0
 			return 1
 
-		lowerCounts = origObj.applyToFeatures(emitAllEqual, inPlace=False)
+		lowerCounts = origObj.calculateForEachFeature(emitAllEqual)
 		expectedOut = [[1,0,0]]	
 		exp = self.constructor(expectedOut)
 		assert lowerCounts.isIdentical(exp)
 
 
-
-	def test_applyToFeatures_NamePath_preservation(self):
+	def test_calculateForEachFeature_NamePath_preservation(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
@@ -270,7 +266,7 @@ class HighLevelDataSafe(DataTestObject):
 					return 0
 			return 1
 
-		ret = toTest.applyToFeatures(emitAllEqual, inPlace=False)
+		ret = toTest.calculateForEachFeature(emitAllEqual)
 
 		assert toTest.name == preserveName
 		assert toTest.absolutePath == preserveAPath
@@ -281,8 +277,7 @@ class HighLevelDataSafe(DataTestObject):
 		assert ret.relativePath == preserveRPath
 
 
-	def test_applyToFeatures_HandmadeLimited(self):
-		""" Test applyToFeatures() with handmade output on a limited portion of features """
+	def test_calculateForEachFeature_HandmadeLimited(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
 		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
 		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
@@ -295,13 +290,12 @@ class HighLevelDataSafe(DataTestObject):
 					return 0
 			return 1
 
-		lowerCounts = origObj.applyToFeatures(emitAllEqual, features=[0,'centi'], inPlace=False)
+		lowerCounts = origObj.calculateForEachFeature(emitAllEqual, features=[0,'centi'])
 		expectedOut = [[1,0]]
 		exp = self.constructor(expectedOut)
 		assert lowerCounts.isIdentical(exp)
 
-	def test_applyToFeatures_nonZeroItAndLen(self):
-		""" Test applyToFeatures() for the correct usage of the nonzero iterator """
+	def test_calculateForEachFeature_nonZeroIterAndLen(self):
 		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
 		origObj = self.constructor(deepcopy(origData))
 
@@ -312,7 +306,7 @@ class HighLevelDataSafe(DataTestObject):
 				ret += 1
 			return ret
 
-		counts = origObj.applyToFeatures(emitNumNZ, inPlace=False)
+		counts = origObj.calculateForEachFeature(emitNumNZ)
 
 		expectedOut = [[3, 3, 2]]
 		exp = self.constructor(expectedOut)
@@ -596,15 +590,15 @@ class HighLevelDataSafe(DataTestObject):
 		assert toCheck[7][2] == 0
 
 
-	#####################################
-	# applyToElements() #
-	#####################################
+	#############################
+	# calculateForEachElement() #
+	#############################
 
-	def test_applyToElements_NamePath_preservation(self):
+	def test_calculateForEachElement_NamePath_preservation(self):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data, name=preserveName, path=preservePair)
 
-		ret = toTest.applyToElements(passThrough, inPlace=False)
+		ret = toTest.calculateForEachElement(passThrough)
 
 		assert toTest.name == preserveName
 		assert toTest.absolutePath == preserveAPath
@@ -613,6 +607,50 @@ class HighLevelDataSafe(DataTestObject):
 		assert ret.nameIsDefault()
 		assert ret.absolutePath == preserveAPath
 		assert ret.relativePath == preserveRPath
+
+	def test_calculateForEachElement_passthrough(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		ret = toTest.calculateForEachElement(passThrough)
+		retRaw = ret.copyAs(format="python list")
+
+		assert [1,2,3] in retRaw
+		assert [4,5,6] in retRaw
+		assert [7,8,9] in retRaw
+
+
+	def test_calculateForEachElement_plusOnePreserve(self):
+		data = [[1,0,3],[0,5,6],[7,0,9]]
+		toTest = self.constructor(data)
+		ret = toTest.calculateForEachElement(plusOne, preserveZeros=True)
+		retRaw = ret.copyAs(format="python list")
+
+		assert [2,0,4] in retRaw
+		assert [0,6,7] in retRaw
+		assert [8,0,10] in retRaw
+
+
+	def test_calculateForEachElement_plusOneExclude(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		ret = toTest.calculateForEachElement(plusOneOnlyEven, skipNoneReturnValues=True)
+		retRaw = ret.copyAs(format="python list")
+
+		assert [1,3,3] in retRaw
+		assert [5,5,7] in retRaw
+		assert [7,9,9] in retRaw
+
+
+	def test_calculateForEachElement_plusOneLimited(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		names = ['one','two','three']
+		pnames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+
+		ret = toTest.calculateForEachElement(plusOneOnlyEven, points='4', features=[1,'three'], skipNoneReturnValues=True)
+		retRaw = ret.copyAs(format="python list")
+
+		assert [5,7] in retRaw
 
 
 	########################
@@ -739,7 +777,7 @@ class HighLevelDataSafe(DataTestObject):
 			return ret
 
 		# change the origin data
-		toTest.applyToPoints(changeFirst)
+		toTest.transformEachPoint(changeFirst)
 		assert toTest[0,0] == -1
 
 		# assert our returned sets are unaffected
@@ -1138,292 +1176,6 @@ class HighLevelModifying(DataTestObject):
 		assert ret.nameIsDefault()
 		assert ret.absolutePath == 'testAbsPath'
 		assert ret.relativePath == 'testRelPath'
-
-
-
-	####################
-	# applyToPoints() #
-	####################
-
-
-	@raises(ArgumentException)
-	def test_applyToPoints_exceptionInputNone(self):
-		""" Test applyToPoints() for ArgumentException when function is None """
-		featureNames = {'number':0,'centi':2,'deci':1}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
-		origObj.applyToPoints(None)
-
-	def test_applyToPoints_HandmadeInPlace(self):
-		""" Test applyToPoints() with handmade output. InPlace """
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllDeci(point):
-			value = point[origObj.getFeatureIndex('deci')]
-			return [value, value, value]
-
-		lowerCounts = origObj.applyToPoints(emitAllDeci)  # RET CHECK
-
-		expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
-		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-
-		assert lowerCounts is None
-		assert origObj.isIdentical(exp)
-
-	def test_applyToPoints_Inplace_NamePath_preservation(self):
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllDeci(point):
-			value = point[toTest.getFeatureIndex('deci')]
-			return [value, value, value]
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.applyToPoints(emitAllDeci)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-	def test_applyToPoints_HandmadeLimitedInPlace(self):
-		""" Test applyToPoints() with handmade output on a limited portion of points. InPlace"""
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllDeci(point):
-			value = point[origObj.getFeatureIndex('deci')]
-			return [value, value, value]
-
-		origObj.applyToPoints(emitAllDeci, points=[3,'two'])
-
-		expectedOut = [[1,0.1,0.01], [1,0.1,0.02], [0.1,0.1,0.1], [0.2,0.2,0.2]]
-		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-
-		assert origObj.isIdentical(exp)
-
-
-	def test_applyToPoints_nonZeroItAndLenInPlace(self):
-		""" Test applyToPoints() for the correct usage of the nonzero iterator. InPlace """
-		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
-		origObj = self.constructor(deepcopy(origData))
-
-		def emitNumNZ(point):
-			ret = 0
-			assert len(point) == 3
-			for value in point.nonZeroIterator():
-				ret += 1
-			return [ret, ret, ret]
-
-		origObj.applyToPoints(emitNumNZ)
-
-		expectedOut = [[3,3,3], [2,2,2], [2,2,2], [1,1,1]]
-		exp = self.constructor(expectedOut)
-
-		assert origObj.isIdentical(exp)
-
-
-
-	#######################
-	# applyToFeatures() #
-	#######################
-
-
-	def test_applyToFeatures_HandmadeInPlace(self):
-		""" Test applyToFeatures() with handmade output. InPlace """
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllEqual(feature):
-			first = feature[0]
-			for value in feature:
-				if value != first:
-					return [0,0,0,0]
-			return [1,1,1,1]
-
-		lowerCounts = origObj.applyToFeatures(emitAllEqual) # RET CHECK
-		expectedOut = [[1,0,0], [1,0,0], [1,0,0], [1,0,0]]	
-		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-		
-		assert lowerCounts is None
-		assert origObj.isIdentical(exp)
-
-
-	def test_applyToFeatures_InPlace_NamePath_preservation(self):
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllEqual(feature):
-			first = feature[0]
-			for value in feature:
-				if value != first:
-					return [0,0,0,0]
-			return [1,1,1,1]
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.applyToFeatures(emitAllEqual)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-
-
-	def test_applyToFeatures_HandmadeLimitedInPlace(self):
-		""" Test applyToFeatures() with handmade output on a limited portion of features. InPlace """
-		featureNames = {'number':0,'centi':2,'deci':1}
-		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
-		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
-		origObj= self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
-
-		def emitAllEqual(feature):
-			first = feature[0]
-			for value in feature:
-				if value != first:
-					return [0,0,0,0]
-			return [1,1,1,1]
-
-		origObj.applyToFeatures(emitAllEqual, features=[0,'centi'])
-		expectedOut = [[1,0.1,0], [1,0.1,0], [1,0.1,0], [1,0.2,0]]
-		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
-
-		assert origObj.isIdentical(exp)
-
-
-	def test_applyToFeatures_nonZeroItAndLenInPlace(self):
-		""" Test applyToFeatures() for the correct usage of the nonzero iterator. InPlace """
-		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
-		origObj = self.constructor(deepcopy(origData))
-
-		def emitNumNZ(feature):
-			ret = 0
-			assert len(feature) == 4
-			for value in feature.nonZeroIterator():
-				ret += 1
-			return [ret, ret, ret, ret]
-
-		origObj.applyToFeatures(emitNumNZ)
-
-		expectedOut = [[3,3,2], [3,3,2], [3,3,2], [3,3,2]]
-		exp = self.constructor(expectedOut)
-
-		assert origObj.isIdentical(exp)
-
-
-	#####################################
-	# applyToElements() #
-	#####################################
-
-	def test_applyToElements_passthrough(self):
-		""" test applyToElements can construct a list by just passing values through  """
-
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		ret = toTest.applyToElements(passThrough, inPlace=False)
-		retRaw = ret.copyAs(format="python list")
-
-		assert [1,2,3] in retRaw
-		assert [4,5,6] in retRaw
-		assert [7,8,9] in retRaw
-
-		ret = toTest.applyToElements(passThrough) # RET CHECK
-		assert ret is None
-		retRaw = toTest.copyAs(format="python list")
-
-		assert [1,2,3] in retRaw
-		assert [4,5,6] in retRaw
-		assert [7,8,9] in retRaw
-
-
-	def test_applyToElements_Inplace_NamePath_preservation(self):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toTest.applyToElements(passThrough)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-
-	def test_applyToElements_plusOnePreserve(self):
-		""" test applyToElements can modify elements other than zero  """
-
-		data = [[1,0,3],[0,5,6],[7,0,9]]
-		toTest = self.constructor(data)
-		ret = toTest.applyToElements(plusOne, inPlace=False, preserveZeros=True)
-		retRaw = ret.copyAs(format="python list")
-
-		assert [2,0,4] in retRaw
-		assert [0,6,7] in retRaw
-		assert [8,0,10] in retRaw
-
-		toTest.applyToElements(plusOne, preserveZeros=True)
-		retRaw = toTest.copyAs(format="python list")
-
-		assert [2,0,4] in retRaw
-		assert [0,6,7] in retRaw
-		assert [8,0,10] in retRaw
-
-
-	def test_applyToElements_plusOneExclude(self):
-		""" test applyToElements() skipNoneReturnValues flag  """
-
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		ret = toTest.applyToElements(plusOneOnlyEven, inPlace=False, skipNoneReturnValues=True)
-		retRaw = ret.copyAs(format="python list")
-
-		assert [1,3,3] in retRaw
-		assert [5,5,7] in retRaw
-		assert [7,9,9] in retRaw
-
-		toTest.applyToElements(plusOneOnlyEven, skipNoneReturnValues=True)
-		retRaw = toTest.copyAs(format="python list")
-
-		assert [1,3,3] in retRaw
-		assert [5,5,7] in retRaw
-		assert [7,9,9] in retRaw
-
-
-	def test_applyToElements_plusOneLimited(self):
-		""" test applyToElements() on limited portions of the points and features """
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		names = ['one','two','three']
-		pnames = ['1', '4', '7']
-		toTest = self.constructor(data, pointNames=pnames, featureNames=names)
-
-		ret = toTest.applyToElements(plusOneOnlyEven, points='4', features=[1,'three'], inPlace=False, skipNoneReturnValues=True)
-		retRaw = ret.copyAs(format="python list")
-
-		assert [5,7] in retRaw
-
-		toTest.applyToElements(plusOneOnlyEven, points=1, features=[1,'three'], skipNoneReturnValues=True)
-		retRaw = toTest.copyAs(format="python list")
-
-		assert [1,2,3] in retRaw
-		assert [4,5,7] in retRaw
-		assert [7,8,9] in retRaw
 
 
 	###################

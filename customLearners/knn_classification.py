@@ -45,7 +45,7 @@ class KNNClassifier(CustomLearner):
 
 			return prediction
 
-		return testX.applyToPoints(foo, inPlace=False)
+		return testX.calculateForEachPoint(foo)
 
 
 	def getScores(self, testX):
@@ -81,7 +81,7 @@ class KNNClassifier(CustomLearner):
 		def distanceFrom(point):
 			return [point.index(), scipy.spatial.distance.euclidean(test, point)]
 
-		distances = self._trainX.applyToPoints(distanceFrom, inPlace=False)
+		distances = self._trainX.calculateForEachPoint(distanceFrom)
 		distances.sortPoints(1)
 		return distances
 

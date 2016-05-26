@@ -361,7 +361,7 @@ class Shogun(UniversalInterface):
 					def inverseMapper(value):
 						return inverseMappingParam[int(value)]
 					return inverseMapper
-				ret.applyToElements(makeInverseMapper(remap), features=0)
+				ret.transformEachElement(makeInverseMapper(remap), features=0)
 
 		return ret
 

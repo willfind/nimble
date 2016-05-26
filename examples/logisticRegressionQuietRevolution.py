@@ -33,7 +33,7 @@ class MajorityVote(CustomLearner):
 				counts[v] += 1
 			else:
 				counts[v] = 0
-		trainY.applyToElements(counter)
+		trainY.transformEachElement(counter)
 		mostCommonKey = None
 		highestCount = 0
 		for key, count in counts.iteritems():
@@ -89,7 +89,7 @@ if __name__ == "__main__":
 		#if v >= 12: return 1 #they said 4 or 5 (on a 1=strongly disagree, 3=neither agree nor disagree, 5=strongly agree) scale on all three self-identification ?'s
 		if v > 9: return 1 #they gave a value higher than the middle value (answering 3 on all three questions)
 		return 0
-	data.applyToElements(lambda x: toBinaryDefinitionOfIntrovert(x), features=yLabel)
+	data.transformEachElement(lambda x: toBinaryDefinitionOfIntrovert(x), features=yLabel)
 
 	#get the training and testing data
 	trainX, trainY, testX, testY = data.trainAndTestSets(testFraction=.2, labels=yLabel)

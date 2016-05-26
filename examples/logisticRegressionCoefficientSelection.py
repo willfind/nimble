@@ -146,7 +146,7 @@ def sanityCheck(trainX, totalScores):
 			total += value
 		return total
 
-	summed = trainX.applyToPoints(summer, inPlace=False)
+	summed = trainX.calculateForEachPoint(summer)
 	summed.setFeatureName(0, "totalScorePosOrNeg")
 	assert summed == totalScores
 
@@ -242,7 +242,7 @@ def standardizeScores(obj):
 #	print reduced.getFeatureNames()
 #	reduced.show('Before')
 
-	obj.applyToFeatures(reverseScorePolarity, features=negScored)
+	obj.transformEachFeature(reverseScorePolarity, features=negScored)
 
 #	reduced = obj.copyPoints(end=20)
 #	reduced = reduced.copyFeatures([0,1,2,58,59,60])

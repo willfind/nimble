@@ -29,10 +29,7 @@ numFeatures = 4
 unavailableNoPoints = [
 	'replaceFeatureWithBinaryFeatures',
 	'transformFeatureToIntegers',
-	'applyToPoints',
-	'applyToFeatures',
 	'featureIterator',
-	'applyToEachElement',
 	'shufflePoints',
 	'shuffleFeatures',
 	'writeFile',
@@ -47,11 +44,8 @@ unavailableNoFeatures = [
 	'setFeatureNames',
 	'replaceFeatureWithBinaryFeatures',
 	'transformFeatureToIntegers',
-	'applyToPoints',
-	'applyToFeatures',
 	'mapReducePoints',
 	'pointIterator',
-	'applyToEachElement',
 	'shufflePoints',
 	'shuffleFeatures',
 	'writeFile',
@@ -268,7 +262,7 @@ genObjMatchPoints = functools.partial(genObj, matchPoints=True)
 genObjMatchShape = functools.partial(genObj, matchPoints=True, matchFeatures=True)
 genObjMatchAll = functools.partial(genObj, matchPoints=True, matchFeatures=True)
 
-def genAppFunc(dataObj, seed, onElements=False):
+def genViewFunc(dataObj, seed, onElements=False):
 	random.seed(seed)
 	toAdd = random.randint(0,9)
 	if onElements:
@@ -283,7 +277,7 @@ def genAppFunc(dataObj, seed, onElements=False):
 			return ret
 		return addToView
 
-genApplyFuncElmts = functools.partial(genAppFunc, onElements=True)
+genViewFuncElmts = functools.partial(genViewFunc, onElements=True)
 
 def genID(dataObj, seed, axis):
 	random.seed(seed)
@@ -504,11 +498,11 @@ def pickGen(dataObj, seed, genList):
 ftp = functools.partial
 
 generators = {'appendFeatures':[genObjMatchPoints],
-		'appendPoints':[genObjMatchFeatures],
-		'applyToElements':[genApplyFuncElmts, ftp(pickGen, genList=(genPID, genPIDList)),
-				ftp(pickGen, genList=(genFID, genFIDList)), genBool, genBool, genBool],
-		'applyToFeatures':[genAppFunc, genFIDList, genBool], 
-		'applyToPoints':[genAppFunc, genPIDList, genBool], 
+		'appendPoints':[genObjMatchFeatures],	
+		'calculateForEachElement':[genViewFuncElmts, ftp(pickGen, genList=(genPID, genPIDList)),
+				ftp(pickGen, genList=(genFID, genFIDList)), genBool, genBool],
+		'calculateForEachFeature':[genViewFunc, genFIDList], 
+		'calculateForEachPoint':[genViewFunc, genPIDList],
 		'containsZero':[],
 		'copy':[],
 		# TODO !!!! last arg should be bool, but 1d outputs aren't implemented
@@ -538,6 +532,10 @@ generators = {'appendFeatures':[genObjMatchPoints],
 		'shufflePoints':[genPPermArr],
 		'sortFeatures':[genPID, ftp(pickGen, genList=(genScorer,genComparator))],
 		'sortPoints':[genFID, ftp(pickGen, genList=(genScorer,genComparator))],
+		'transformEachElement':[genViewFuncElmts, ftp(pickGen, genList=(genPID, genPIDList)),
+				ftp(pickGen, genList=(genFID, genFIDList)), genBool, genBool],
+		'transformEachFeature':[genViewFunc, genFIDList], 
+		'transformEachPoint':[genViewFunc, genPIDList], 
 		'transformFeatureToIntegers':[genFID],
 		'transpose':[],
 		'validate':[genOne],	

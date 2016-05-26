@@ -144,88 +144,6 @@ class Sparse(Base):
 		toPlot = self.copyAs("Matrix")
 		return toPlot._plot(outPath, includeColorbar)
 
-
-	def _applyTo_implementation(self, function, included, inPlace, axis):
-		if inPlace:
-			return self._applyTo_implementation_inPlace(function, included, axis)
-		else:
-			return self._applyTo_implementation_outOfPlace(function, included, axis)
-
-	def _applyTo_implementation_outOfPlace(self, function, included, axis):
-		retData = []
-
-		if axis == 'point':
-			viewIterator = self.pointIterator()
-		else:
-			viewIterator = self.featureIterator()
-
-		for viewID, view in enumerate(viewIterator):
-			if included is not None and viewID not in included:
-				continue
-			currOut = function(view)
-			# first we branch on whether the output has multiple values or is singular.
-			if hasattr(currOut, '__iter__'):
-				# if there are multiple values, they must be random accessible
-				if not hasattr(currOut, '__getitem__'):
-					raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
-				toCopyInto = []
-				for value in currOut:
-					toCopyInto.append(value)
-				retData.append(toCopyInto)
-			# singular return
-			else:
-				retData.append([currOut])
-
-		ret = UML.createData(self.getTypeString(), retData)
-		if axis != 'point':
-			ret.transpose()
-
-		return ret
-
-
-	def _applyTo_implementation_inPlace(self, function, included, axis):
-		modData = []
-		modRow = []
-		modCol = []
-
-		if axis == 'point':
-			viewIterator = self.pointIterator()
-			modTarget = modRow
-			modOther = modCol
-		else:
-			viewIterator = self.featureIterator()
-			modTarget = modCol
-			modOther = modRow
-
-		for viewID, view in enumerate(viewIterator):
-			if included is not None and viewID not in included:
-				currOut = list(view)
-			else:
-				currOut = function(view)
-			
-			# easy way to reuse code if we have a singular return
-			if not hasattr(currOut, '__iter__'):
-				currOut = [currOut]
-			
-			# if there are multiple values, they must be random accessible
-			if not hasattr(currOut, '__getitem__'):
-				raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
-			
-			for i, retVal in enumerate(currOut):
-				if retVal != 0:
-					modData.append(retVal)
-					modTarget.append(viewID)
-					modOther.append(i)
-
-		if len(modData) != 0:
-			self._data = CooWithEmpty((modData,(modRow,modCol)),shape=(self.pointCount,self.featureCount))
-			self._sorted = None
-
-		ret = None
-
-		return ret
-
-
 	def _appendPoints_implementation(self, toAppend):
 		"""
 		Append the points from the toAppend object to the bottom of the features in this object
@@ -954,7 +872,118 @@ class Sparse(Base):
 
 		retData = CooWithEmpty((retData,(retRow,retCol)),shape=newShape)
 		return Sparse(retData, reuseData=True)
-	
+
+
+	def _transformEachPoint_implementation(self, function, points):
+		self._transformEach_implementation(function, points, 'point')
+
+
+	def _transformEachFeature_implementation(self, function, features):
+		self._transformEach_implementation(function, features, 'feature')
+
+
+	def _transformEach_implementation(self, function, included, axis):
+		modData = []
+		modRow = []
+		modCol = []
+
+		if axis == 'point':
+			viewIterator = self.pointIterator()
+			modTarget = modRow
+			modOther = modCol
+		else:
+			viewIterator = self.featureIterator()
+			modTarget = modCol
+			modOther = modRow
+
+		for viewID, view in enumerate(viewIterator):
+			if included is not None and viewID not in included:
+				currOut = list(view)
+			else:
+				currOut = function(view)
+
+			# easy way to reuse code if we have a singular return
+			if not hasattr(currOut, '__iter__'):
+				currOut = [currOut]
+
+			# if there are multiple values, they must be random accessible
+			if not hasattr(currOut, '__getitem__'):
+				raise ArgumentException("function must return random accessible data (ie has a __getitem__ attribute)")
+
+			for i, retVal in enumerate(currOut):
+				if retVal != 0:
+					modData.append(retVal)
+					modTarget.append(viewID)
+					modOther.append(i)
+
+		if len(modData) != 0:
+			self._data = CooWithEmpty((modData,(modRow,modCol)),shape=(self.pointCount,self.featureCount))
+			self._sorted = None
+
+		ret = None
+		return ret
+
+
+	def _transformEachElement_implementation(self, function, points, features, preserveZeros, skipNoneReturnValues):
+		oneArg = False
+		try:
+			function(0,0,0)
+		except TypeError:
+			oneArg = True
+
+		if oneArg and function(0) == 0:
+			preserveZeros = True
+
+		if preserveZeros:
+			self._transformEachElement_zeroPreserve_implementation(function, points, features, skipNoneReturnValues, oneArg)
+		else:
+			self._transformEachElement_noPreserve_implementation(function, points, features, skipNoneReturnValues, oneArg)
+
+	def _transformEachElement_noPreserve_implementation(self, function, points, features, skipNoneReturnValues, oneArg):
+		# returns None if outside of the specified points and feature so that
+		# when calculateForEach is called we are given a full data object
+		# with only certain values modified.
+		def wrapper(value, pID, fID):
+			if points is not None and pID not in points:
+				return None
+			if features is not None and fID not in features:
+				return None
+
+			if oneArg:
+				return function(value)
+			else:
+				return function(value, pID, fID)
+
+		# perserveZeros is always False in this helper, skipNoneReturnValues
+		# is being hijacked by the wrapper: even if it was False, Sparse can't
+		# contain None values.
+		ret = self.calculateForEachElement(wrapper, None, None, preserveZeros=False, skipNoneReturnValues=True)
+
+		pnames = self.getPointNames()
+		fnames = self.getFeatureNames()
+		self.referenceDataFrom(ret)
+		self.setPointNames(pnames)
+		self.setFeatureNames(fnames)
+
+
+	def _transformEachElement_zeroPreserve_implementation(self, function, points, features, skipNoneReturnValues, oneArg):
+		for index, val in enumerate(self.data.data):
+			pID = self.data.row[index]
+			fID = self.data.col[index]
+			if points is not None and pID not in points:
+				continue
+			if features is not None and fID not in features:
+				continue
+
+			if oneArg:
+				currRet = function(val)
+			else:
+				currRet = function(val, pID, fID)
+
+			if skipNoneReturnValues and currRet is None:
+				continue
+
+			self.data.data[index] = currRet
 
 	def _getitem_implementation(self, x, y):
 		for i in xrange(len(self._data.row)):

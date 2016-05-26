@@ -47,7 +47,7 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
     transposeRow(resultsTable)
 
     for func in funcsToApply:
-        oneFuncResults = dataContainer.applyToFeatures(func, inPlace=False)
+        oneFuncResults = dataContainer.calculateForEachFeature(func)
         oneFuncResults.transpose()
         oneFuncResultsList = oneFuncResults.copyAs(format="python list")
         appendColumns(resultsTable, oneFuncResultsList)
@@ -126,9 +126,9 @@ def produceAggregateTable(dataContainer):
     funcs = aggregateFunctionGenerator()
     resultsDict = {}
     for func in funcs:
-        funcResults = dataContainer.applyToFeatures(func, inPlace=False)
+        funcResults = dataContainer.calculateForEachFeature(func)
         funcResults.transpose()
-        aggregateResults = funcResults.applyToFeatures(UML.calculate.mean, inPlace=False).copyAs(format="python list")[0][0]
+        aggregateResults = funcResults.calculateForEachFeature(UML.calculate.mean).copyAs(format="python list")[0][0]
         resultsDict[func.__name__] = aggregateResults
 
     resultsDict['Values'] = shape[0] * shape[1]
@@ -168,7 +168,7 @@ def produceAggregateReport(dataContainer, displayDigits):
 
 def featurewiseFunctionGenerator():
     """
-    Produce a list of functions suitable for being passed to Base's applyToFeatures
+    Produce a list of functions suitable for being passed to Base's calculateForEachFeature
     function.  Includes: min(), max(), mean(), median(), standardDeviation(), numUniqueValues()
     """
     functions = [UML.calculate.minimum, UML.calculate.maximum, UML.calculate.mean,
@@ -180,7 +180,7 @@ def featurewiseFunctionGenerator():
 def aggregateFunctionGenerator():
     """
     Produce a list of functions that can be used to produce aggregate statistics on an entire
-    data set.  The functions will be applied through Base's applyToFeatures
+    data set.  The functions will be applied through Base's calculateForEachFeature
     function, and their results averaged across all features.  Includes a function to calculate
     the proportion of entries that are equal to zero and the proportion of entries that are missing
     (i.e. are None or NaN).

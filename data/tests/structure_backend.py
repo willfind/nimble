@@ -8,7 +8,8 @@ copyAs, copyPoints, copyFeatures
 
 In object StructureModifying:
 __init__,  transpose, appendPoints, appendFeatures, sortPoints, sortFeatures,
-extractPoints, extractFeatures, referenceDataFrom, 
+extractPoints, extractFeatures, referenceDataFrom, transformEachPoint,
+transformEachFeature, transformEachElement
 
 
 
@@ -32,6 +33,7 @@ from UML.data import Sparse
 from UML.data.dataHelpers import View
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import ArgumentException
+from UML.exceptions import ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
 
@@ -40,8 +42,23 @@ preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
 preserveRPath = os.path.relpath(preserveAPath)
 preservePair = (preserveAPath,preserveRPath)
 
+
+### Helpers used by tests in the test class ###
+
+def passThrough(value):
+	return value
+
+def plusOne(value):
+	return (value + 1)
+
+def plusOneOnlyEven(value):
+	if value % 2 == 0:
+		return (value + 1)
+	else:
+		return None
+
+
 class StructureDataSafe(DataTestObject):
-	
 
 	#############
 	# copyAs #
@@ -2093,6 +2110,310 @@ class StructureModifying(DataTestObject):
 		assert other.name == "testNameother"
 		assert other.absolutePath == "testAbsPathother"
 		assert other.relativePath == 'testRelPathother'
+
+
+	########################
+	# transformEachPoint() #
+	########################
+
+	@raises(ArgumentException)
+	def test_transformEachPoint_exceptionInputNone(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj.transformEachPoint(None)
+
+	@raises(ImproperActionException)
+	def test_transformEachPoint_exceptionPEmpty(self):
+		data = [[],[]]
+		data = numpy.array(data).T
+		origObj = self.constructor(data)
+
+		def emitLower(point):
+			return point[origObj.getFeatureIndex('deci')]
+
+		origObj.transformEachPoint(emitLower)
+
+	@raises(ImproperActionException)
+	def test_transformEachPoint_exceptionFEmpty(self):
+		data = [[],[]]
+		data = numpy.array(data)
+		origObj = self.constructor(data)
+
+		def emitLower(point):
+			return point[origObj.getFeatureIndex('deci')]
+
+		origObj.transformEachPoint(emitLower)
+
+	def test_transformEachPoint_Handmade(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllDeci(point):
+			value = point[origObj.getFeatureIndex('deci')]
+			return [value, value, value]
+
+		lowerCounts = origObj.transformEachPoint(emitAllDeci)  # RET CHECK
+
+		expectedOut = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
+
+		assert lowerCounts is None
+		assert origObj.isIdentical(exp)
+
+	def test_transformEachPoint_NamePath_preservation(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllDeci(point):
+			value = point[toTest.getFeatureIndex('deci')]
+			return [value, value, value]
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.transformEachPoint(emitAllDeci)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+	def test_transformEachPoint_HandmadeLimited(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllDeci(point):
+			value = point[origObj.getFeatureIndex('deci')]
+			return [value, value, value]
+
+		origObj.transformEachPoint(emitAllDeci, points=[3,'two'])
+
+		expectedOut = [[1,0.1,0.01], [1,0.1,0.02], [0.1,0.1,0.1], [0.2,0.2,0.2]]
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
+
+		assert origObj.isIdentical(exp)
+
+
+	def test_transformEachPoint_nonZeroIterAndLen(self):
+		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+		origObj = self.constructor(deepcopy(origData))
+
+		def emitNumNZ(point):
+			ret = 0
+			assert len(point) == 3
+			for value in point.nonZeroIterator():
+				ret += 1
+			return [ret, ret, ret]
+
+		origObj.transformEachPoint(emitNumNZ)
+
+		expectedOut = [[3,3,3], [2,2,2], [2,2,2], [1,1,1]]
+		exp = self.constructor(expectedOut)
+
+		assert origObj.isIdentical(exp)
+
+
+	##########################
+	# transformEachFeature() #
+	##########################
+
+	@raises(ImproperActionException)
+	def test_transformEachFeature_exceptionPEmpty(self):
+		data = [[],[]]
+		data = numpy.array(data).T
+		origObj = self.constructor(data)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return 0
+			return 1
+
+		origObj.transformEachFeature(emitAllEqual)
+
+	@raises(ImproperActionException)
+	def test_transformEachFeature_exceptionFEmpty(self):
+		data = [[],[]]
+		data = numpy.array(data)
+		origObj = self.constructor(data)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return 0
+			return 1
+
+		origObj.transformEachFeature(emitAllEqual)
+
+	@raises(ArgumentException)
+	def test_transformEachFeature_exceptionInputNone(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
+		origObj.transformEachFeature(None)
+
+
+	def test_transformEachFeature_Handmade(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return [0,0,0,0]
+			return [1,1,1,1]
+
+		lowerCounts = origObj.transformEachFeature(emitAllEqual)  # RET CHECK
+		expectedOut = [[1,0,0], [1,0,0], [1,0,0], [1,0,0]]	
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
+		
+		assert lowerCounts is None
+		assert origObj.isIdentical(exp)
+
+
+	def test_transformEachFeature_NamePath_preservation(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		toTest = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return [0,0,0,0]
+			return [1,1,1,1]
+
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.transformEachFeature(emitAllEqual)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
+	def test_transformEachFeature_HandmadeLimited(self):
+		featureNames = {'number':0,'centi':2,'deci':1}
+		pointNames = {'zero':0, 'one':1, 'two':2, 'three':3}
+		origData = [[1,0.1,0.01], [1,0.1,0.02], [1,0.1,0.03], [1,0.2,0.02]]
+		origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+		def emitAllEqual(feature):
+			first = feature[0]
+			for value in feature:
+				if value != first:
+					return [0,0,0,0]
+			return [1,1,1,1]
+
+		origObj.transformEachFeature(emitAllEqual, features=[0,'centi'])
+		expectedOut = [[1,0.1,0], [1,0.1,0], [1,0.1,0], [1,0.2,0]]
+		exp = self.constructor(expectedOut, pointNames=pointNames, featureNames=featureNames)
+
+		assert origObj.isIdentical(exp)
+
+
+	def test_transformEachFeature_nonZeroIterAndLen(self):
+		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]
+		origObj = self.constructor(deepcopy(origData))
+
+		def emitNumNZ(feature):
+			ret = 0
+			assert len(feature) == 4
+			for value in feature.nonZeroIterator():
+				ret += 1
+			return [ret, ret, ret, ret]
+
+		origObj.transformEachFeature(emitNumNZ)
+
+		expectedOut = [[3,3,2], [3,3,2], [3,3,2], [3,3,2]]
+		exp = self.constructor(expectedOut)
+
+		assert origObj.isIdentical(exp)
+
+
+	##########################
+	# transformEachElement() #
+	##########################
+
+	def test_transformEachElement_passthrough(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+
+		ret = toTest.transformEachElement(passThrough)  # RET CHECK
+		assert ret is None
+		retRaw = toTest.copyAs(format="python list")
+
+		assert [1,2,3] in retRaw
+		assert [4,5,6] in retRaw
+		assert [7,8,9] in retRaw
+
+
+	def test_transformEachElement_NamePath_preservation(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		
+		toTest._name = "TestName"
+		toTest._absPath = "TestAbsPath"
+		toTest._relPath = "testRelPath"
+
+		toTest.transformEachElement(passThrough)
+
+		assert toTest.name == "TestName"
+		assert toTest.absolutePath == "TestAbsPath"
+		assert toTest.relativePath == 'testRelPath'
+
+
+	def test_transformEachElement_plusOnePreserve(self):
+		data = [[1,0,3],[0,5,6],[7,0,9]]
+		toTest = self.constructor(data)
+
+		toTest.transformEachElement(plusOne, preserveZeros=True)
+		retRaw = toTest.copyAs(format="python list")
+
+		assert [2,0,4] in retRaw
+		assert [0,6,7] in retRaw
+		assert [8,0,10] in retRaw
+
+
+	def test_transformEachElement_plusOneExclude(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+
+		toTest.transformEachElement(plusOneOnlyEven, skipNoneReturnValues=True)
+		retRaw = toTest.copyAs(format="python list")
+
+		assert [1,3,3] in retRaw
+		assert [5,5,7] in retRaw
+		assert [7,9,9] in retRaw
+
+
+	def test_transformEachElement_plusOneLimited(self):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		names = ['one','two','three']
+		pnames = ['1', '4', '7']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+
+		toTest.transformEachElement(plusOneOnlyEven, points=1, features=[1,'three'], skipNoneReturnValues=True)
+		retRaw = toTest.copyAs(format="python list")
+
+		assert [1,2,3] in retRaw
+		assert [4,5,7] in retRaw
+		assert [7,8,9] in retRaw
 
 
 class StructureAll(StructureDataSafe, StructureModifying):

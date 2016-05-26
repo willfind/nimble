@@ -15,7 +15,7 @@ from UML.calculate import quartiles
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
     testRowList = createData('List', data=dataArr, featureNames=['nums'])
-    stDevContainer = testRowList.applyToFeatures(standardDeviation, inPlace=False)
+    stDevContainer = testRowList.calculateForEachFeature(standardDeviation)
     stDev = stDevContainer.copyAs(format="python list")[0][0]
     assert_almost_equal(stDev, 3.6379, 3)
 
