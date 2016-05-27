@@ -3544,7 +3544,8 @@ class Base(object):
 	def _getIndex(self, identifier, axis):
 		names = self.getPointNames() if axis == 'point' else self.getFeatureNames()
 		nameGetter = self.getPointIndex if axis == 'point' else self.getFeatureIndex
-		
+		accepted = (basestring, int, numpy.integer)
+
 		toReturn = identifier
 		if len(names) == 0:
 			msg = "There are no valid " + axis + " identifiers; this object has 0 "
@@ -3553,13 +3554,13 @@ class Base(object):
 		if identifier is None:
 			msg = "An identifier cannot be None."
 			raise ArgumentException(msg)
-		if (not isinstance(identifier,basestring)) and (not isinstance(identifier,int)):
+		if not isinstance(identifier, accepted):
 			axisCount = self.pointCount if axis == 'point' else self.featureCount
 			msg = "The identifier must be either a string (a valid " + axis
-			msg += " name) or an integer index between 0 and " + str(axisCount-1) 
-			msg += " inclusive"
+			msg += " name) or an integer (python or numpy) index between 0 and "
+			msg += str(axisCount-1) + " inclusive"
 			raise ArgumentException(msg)
-		if isinstance(identifier,int):
+		if isinstance(identifier, (int, numpy.integer)):
 			if identifier < 0:
 				identifier = len(names) + identifier
 				toReturn = identifier
