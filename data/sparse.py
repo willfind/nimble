@@ -1151,26 +1151,22 @@ class Sparse(Base):
 		if axis != 'point' and axis != 'feature':
 			raise ArgumentException("invalid axis type")
 
-		if self._sorted == axis:
+		if self._sorted == axis or self.pointCount == 0 or self.featureCount == 0:
 			return
 
 		# sort least significant axis first
 		if axis == "point":
-			sortKeys = numpy.argsort(self._data.col)
+			sortPrime = self._data.row
+			sortOff = self._data.col
 		else:
-			sortKeys = numpy.argsort(self._data.row)
-		newData = self._data.data[sortKeys]
-		newRow = self._data.row[sortKeys]
-		newCol = self._data.col[sortKeys]
+			sortPrime = self._data.col
+			sortOff = self._data.row
 
-		# then sort by the significant axis
-		if axis == "point":
-			sortKeys = numpy.argsort(newRow)
-		else:
-			sortKeys = numpy.argsort(newCol)
-		newData = newData[sortKeys]
-		newRow = newRow[sortKeys]
-		newCol = newCol[sortKeys]
+		sortKeys = numpy.lexsort((sortOff, sortPrime))
+
+		newData = self.data.data[sortKeys]
+		newRow = self.data.row[sortKeys]
+		newCol = self.data.col[sortKeys]
 
 		n = len(newData)
 		self._data.data[:n] = newData
@@ -1179,6 +1175,7 @@ class Sparse(Base):
 
 		# flag that we are internally sorted
 		self._sorted = axis
+
 
 ###################
 # Generic Helpers #
