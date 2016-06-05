@@ -582,23 +582,21 @@ class List(Base):
 		outFile = open(outPath, 'w')
 		outFile.write("%%MatrixMarket matrix array real general\n")
 		
-		def writeNames(nameIndexPairs):
-			# sort according to the value, not the key. ie sort by feature number
-			pairs = sorted(nameIndexPairs,lambda (a,x),(b,y): x-y)
-			for (a,x) in pairs:
-				if pairs.index((a,x)) == 0:
+		def writeNames(nameList):
+			for i,n in enumerate(nameList):
+				if i == 0:
 					outFile.write('%#')
 				else:
 					outFile.write(',')
-				outFile.write(str(a))
+				outFile.write(n)
 			outFile.write('\n')
 
 		if includePointNames:
-			writeNames(self.pointNames.items())
+			writeNames(self.getPointNames())
 		else:
 			outFile.write('%#\n')
 		if includeFeatureNames:
-			writeNames(self.featureNames.items())
+			writeNames(self.getFeatureNames())
 		else:
 			outFile.write('%#\n')
 
