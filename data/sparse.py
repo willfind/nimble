@@ -1062,7 +1062,7 @@ class Sparse(Base):
 		allFeats = featureStart == 0 and featureEnd == self.featureCount
 		singleFeat = featureEnd - featureStart == 1
 
-		if (allPoints and singleFeat) or (singlePoint and allFeats):
+		if singleFeat or singlePoint:
 			if singlePoint:
 				if self._sorted is None or self._sorted == 'feature':
 					self._sortInternal('point')
@@ -1071,8 +1071,16 @@ class Sparse(Base):
 				start = numpy.searchsorted(sortedIndices, pointStart, 'left')
 				end = numpy.searchsorted(sortedIndices, pointEnd-1, 'right')
 
+				if not allFeats:
+					sortedIndices = self._data.col[start:end]
+					innerStart = numpy.searchsorted(sortedIndices, featureStart, 'left')
+					innerEnd = numpy.searchsorted(sortedIndices, featureEnd-1, 'right')
+					outerStart = start
+					start = start + innerStart
+					end = outerStart + innerEnd
+
 				row = numpy.tile([0], end-start)
-				col = self._data.col[start:end]
+				col = self._data.col[start:end] - featureStart
 
 			else:  # case single feature
 				if self._sorted is None or self._sorted == 'point':
@@ -1082,7 +1090,15 @@ class Sparse(Base):
 				start = numpy.searchsorted(sortedIndices, featureStart, 'left')
 				end = numpy.searchsorted(sortedIndices, featureEnd-1, 'right')
 
-				row = self._data.row[start:end]
+				if not allPoints:
+					sortedIndices = self._data.row[start:end]
+					innerStart = numpy.searchsorted(sortedIndices, pointStart, 'left')
+					innerEnd = numpy.searchsorted(sortedIndices, pointEnd-1, 'right')
+					outerStart = start
+					start = start + innerStart
+					end = outerStart + innerEnd
+
+				row = self._data.row[start:end] - pointStart
 				col = numpy.tile([0], end-start)
 
 			data = self._data.data[start:end]
@@ -1714,28 +1730,27 @@ class SparseView(BaseView, Sparse):
 	def _generic_iterator(self, axis):
 		source = self._source
 		if axis == 'point':
-			seenLimit = self.pointCount
-			positionLimit = self._source.pointCount
+			positionLimit = self._pStart + self.pointCount
+			sourceStart = self._pStart
 			fixedStart = self._fStart
 			# self._fEnd is exclusive, but view takes inclusive indices
 			fixedEnd = self._fEnd - 1
 		else:
-			seenLimit = self.featureCount
-			positionLimit = self._source.featureCount
+			positionLimit = self._fStart + self.featureCount
+			sourceStart = self._fStart
 			fixedStart = self._pStart
 			# self._pEnd is exclusive, but view takes inclusive indices
 			fixedEnd = self._pEnd - 1
 
 		class GenericIt(object):
 			def __init__(self):
-				self._position = 0
-				self._seen = 0
+				self._position = sourceStart
 
 			def __iter__(self):
 				return self
 
 			def next(self):
-				if self._position < positionLimit and self._seen < seenLimit:
+				if self._position < positionLimit:
 					if axis == 'point':
 						value = source.view(self._position, self._position, fixedStart, fixedEnd)
 					else:
@@ -1754,7 +1769,7 @@ class SparseView(BaseView, Sparse):
 			return intermediate.copyAs(format)
 
 		limited = self._source.copyPoints(start=self._pStart, end=self._pEnd-1)
-		limited.copyFeatures(start=self._fStart, end=self._fEnd-1)
+		limited = limited.copyFeatures(start=self._fStart, end=self._fEnd-1)
 
 		if format is None or format == 'Sparse':
 			return limited
