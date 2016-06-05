@@ -754,7 +754,7 @@ class List(Base):
 				for pID in xrange(self._pStart, self._pEnd):
 					curr = []
 					for fID in xrange(self._fStart, self._fEnd):
-						curr.append(self.data[pID][fID])
+						curr.append(self._source.data[pID][fID])
 					listForm.append(curr)
 
 				if format == 'List':
@@ -777,7 +777,7 @@ class List(Base):
 				if key < 0 or key >= self.fRange:
 					raise IndexError("")
 
-				return self.source[self.limit][key+self.fStart]
+				return self.source.data[self.limit][key+self.fStart]
 
 			def __len__(self):
 				return self.fRange
@@ -809,7 +809,7 @@ class List(Base):
 				return self.pRange
 
 		kwds = {}
-		kwds['data'] = ListPassThrough(self.data, pointStart, pointEnd, featureStart, featureEnd)
+		kwds['data'] = ListPassThrough(self, pointStart, pointEnd, featureStart, featureEnd)
 		kwds['source'] = self
 		kwds['pointStart'] = pointStart
 		kwds['pointEnd'] = pointEnd
