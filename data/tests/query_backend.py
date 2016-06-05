@@ -357,7 +357,6 @@ class QueryBackend(DataTestObject):
 	# pointView #
 	################
 
-
 	def test_pointView_FEmpty(self):
 		""" Test pointView() when accessing a feature empty object """
 		data = [[],[]]
@@ -447,7 +446,7 @@ class QueryBackend(DataTestObject):
 		textCheck = False
 
 		try:
-			toTest.view(pointStart=[1])
+			toTest.view(pointStart=1.5)
 			assert False  # pointStart is non-ID didn't raise exception
 		except ArgumentException as ae:
 			if textCheck:
@@ -461,7 +460,7 @@ class QueryBackend(DataTestObject):
 				print ae
 
 		try:
-			toTest.view(pointEnd=[1])
+			toTest.view(pointEnd=1.4)
 			assert False  # pointEnd is non-ID didn't raise exception
 		except ArgumentException as ae:
 			if textCheck:
@@ -483,7 +482,7 @@ class QueryBackend(DataTestObject):
 		textCheck = False
 
 		try:
-			toTest.view(featureStart=[1])
+			toTest.view(featureStart=1.5)
 			assert False  # featureStart is non-ID didn't raise exception
 		except ArgumentException as ae:
 			if textCheck:
@@ -497,7 +496,7 @@ class QueryBackend(DataTestObject):
 				print ae
 
 		try:
-			toTest.view(featureEnd=[1])
+			toTest.view(featureEnd=1.4)
 			assert False  # featureEnd is non-ID didn't raise exception
 		except ArgumentException as ae:
 			if textCheck:
@@ -535,8 +534,8 @@ class QueryBackend(DataTestObject):
 			# getPointIndex, getPointName
 			for i in xrange(pStart, pEnd):
 				origName = pnames[i]
-				assert v.getPointName(i) == origName
-				assert v.getPointIndex(origName) == i
+				assert v.getPointName(i - pStart) == origName
+				assert v.getPointIndex(origName) == i - pStart
 
 			# getFeatureNames
 			# +1 since fEnd inclusive when calling .view, array splices are exclusive
@@ -545,8 +544,8 @@ class QueryBackend(DataTestObject):
 			# getFeatureIndex, getFeatureName
 			for i in xrange(fStart, fEnd):
 				origName = fnames[i]
-				assert v.getFeatureName(i) == origName
-				assert v.getFeatureIndex(origName) == i
+				assert v.getFeatureName(i - fStart) == origName
+				assert v.getFeatureIndex(origName) == i - fStart
 
 		for pStart in xrange(origPLen):
 			for pEnd in xrange(pStart, origPLen):
@@ -1775,8 +1774,6 @@ class QueryBackend(DataTestObject):
 		obj = self.constructor(data)
 
 		ret = []
-#		import pdb
-#		pdb.set_trace()
 		for val in obj.nonZeroIteratorFeatureGrouped():
 			ret.append(val)
 

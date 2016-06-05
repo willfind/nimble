@@ -49,14 +49,14 @@ class BaseView(Base):
 		self._pEnd = pointEnd
 		self._fStart = featureStart
 		self._fEnd = featureEnd
-		kwds['name'] = self._source.name
+#		kwds['name'] = self._source.name
 		super(BaseView, self).__init__(**kwds)
 
 	# redifinition from Base, except without the setter, using source
 	# object's attributes
-#	def _getObjName(self):
-#		return self._source._name
-#	name = property(_getObjName, doc="A name to be displayed when printing or logging this object")
+	def _getObjName(self):
+		return self._name
+	name = property(_getObjName, doc="A name to be displayed when printing or logging this object")
 
 	# redifinition from Base, using source object's attributes
 	def _getAbsPath(self):
@@ -100,29 +100,56 @@ class BaseView(Base):
 
 	def getPointName(self, index):
 		corrected = index + self._pStart
-		return self._source.pointNamesInverse[index]
+		return self._source.pointNamesInverse[corrected]
 
 	def getPointIndex(self, name):
 		possible = self._source.getPointIndex(name)
 		if possible >= self._pStart and possible < self._pEnd:
-			return possible
+			return possible - self._pStart
 		else:
 			raise KeyError()
 
 	def getFeatureName(self, index):
 		corrected = index + self._fStart
-		return self._source.featureNamesInverse[index]
+		return self._source.featureNamesInverse[corrected]
 
 	def getFeatureIndex(self, name):
 		possible = self._source.getFeatureIndex(name)
 		if possible >= self._fStart and possible < self._fEnd:
-			return possible
+			return possible - self._fStart
 		else:
 			raise KeyError()
 
 	def view(self, pointStart=None, pointEnd=None, featureStart=None,
 			featureEnd=None):
-		return self._source.view(pointStart, pointEnd, featureStart, featureEnd)
+
+		# -1 because _pEnd and _fEnd are exclusive indices, but view takes inclusive
+
+		if pointStart is None:
+			psAdj = None if self._source.pointCount == 0 else self._pStart
+		else:
+			psIndex = self._source._getIndex(pointStart, 'point')
+			psAdj = psIndex + self._pStart
+
+		if pointEnd is None:
+			peAdj = None if self._source.pointCount == 0 else self._pEnd-1
+		else:
+			peIndex = self._source._getIndex(pointEnd, 'point')
+			peAdj = peIndex + self._pStart
+
+		if featureStart is None:
+			fsAdj = None if self._source.featureCount == 0 else self._fStart
+		else:
+			fsIndex = self._source._getIndex(featureStart, 'feature')
+			fsAdj = fsIndex + self._fStart
+
+		if featureEnd is None:
+			feAdj = None if self._source.featureCount == 0 else self._fEnd-1
+		else:
+			feIndex = self._source._getIndex(featureEnd, 'feature')
+			feAdj = feIndex + self._fStart
+
+		return self._source.view(psAdj, peAdj, fsAdj, feAdj)
 
 	####################################
 	# Low Level Operations, Disallowed #
