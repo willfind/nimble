@@ -20,7 +20,7 @@ from nose.tools import *
 from copy import deepcopy
 
 import UML
-from UML.data.dataHelpers import View
+from UML.data import BaseView
 from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
@@ -365,7 +365,7 @@ class QueryBackend(DataTestObject):
 
 		v = toTest.pointView(0)
 
-		assert len(v) == 0
+		assert v.featureCount == 0
 
 
 	def test_pointView_isinstance(self):
@@ -376,20 +376,14 @@ class QueryBackend(DataTestObject):
 
 		pView = toTest.pointView(0)
 
-		assert isinstance(pView, View)
-		assert pView.name() == '1'
-		assert pView.index() >= 0 and pView.index() < toTest.pointCount
+		assert isinstance(pView, BaseView)
+		assert pView.name != toTest.name
+		assert pView.pointCount == 1
+		assert pView.featureCount == 3
 		assert len(pView) == toTest.featureCount
 		assert pView[0] == 1
 		assert pView['two'] == 2
 		assert pView['three'] == 3
-		pView[0] = -1
-		pView['two'] = -2
-		pView['three'] = -3
-		assert pView[0] == -1
-		assert pView['two'] == -2
-		assert pView['three'] == -3
-
 
 	##################
 	# featureView #
@@ -403,10 +397,10 @@ class QueryBackend(DataTestObject):
 
 		v = toTest.featureView(0)
 
-		assert len(v) == 0
+		assert v.pointCount == 0
 
 	def test_featureView_isinstance(self):
-		""" Test featureView() returns an instance of the View in dataHelpers """
+		""" Test featureView() returns an instance of the BaseView """
 		pointNames = ['1', '4', '7']
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
@@ -414,19 +408,14 @@ class QueryBackend(DataTestObject):
 
 		fView = toTest.featureView('one')
 
-		assert isinstance(fView, View)
-		assert fView.name() == 'one'
-		assert fView.index() >= 0 and fView.index() < toTest.featureCount
+		assert isinstance(fView, BaseView)
+		assert fView.name != toTest.name
+		assert fView.pointCount == 3
+		assert fView.featureCount == 1
 		assert len(fView) == toTest.pointCount
 		assert fView[0] == 1
 		assert fView['4'] == 4
 		assert fView['7'] == 7
-		fView[0] = -1
-		fView['4'] = -4
-		fView[2] = -7
-		assert fView['1'] == -1
-		assert fView['4'] == -4
-		assert fView[2] == -7
 
 	########
 	# view #

@@ -1323,7 +1323,7 @@ class Base(object):
 			raise ImproperActionException("ID is invalid, This object contains no points")
 		
 		index = self._getPointIndex(ID)
-		return self._pointView_implementation(index)
+		return self.view(index, index, None, None)
 
 	def featureView(self, ID):
 		"""
@@ -1336,7 +1336,7 @@ class Base(object):
 			raise ImproperActionException("ID is invalid, This object contains no features")
 
 		index = self._getFeatureIndex(ID)
-		return self._featureView_implementation(index)
+		return self.view(None, None, index, index)
 	
 	def view(self, pointStart=None, pointEnd=None, featureStart=None,
 			featureEnd=None):
@@ -1736,7 +1736,6 @@ class Base(object):
 			getter = self.featureView
 			name = self.getFeatureName(index)
 
-#		getter = self.pointView if axis == 'point' else self.featureView
 		toPlot = getter(index)
 
 		quartiles = UML.calculate.quartiles(toPlot)

@@ -44,24 +44,66 @@ def viewMakerMaker(concreteType):
 				concreteType, rawData=data, pointNames=pointNames,
 				featureNames=featureNames, name=name, path=path,
 				keepPoints='all', keepFeatures='all')
-		return orig.view()
+
+		if orig.pointCount != 0:
+			firstPRaw = [[0] * orig.featureCount]
+			firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
+					pointNames=['firstPNonView'], featureNames=orig.getFeatureNames(),
+					name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+
+			lastPRaw = [[3] * orig.featureCount]
+			lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
+					pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
+					name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+
+			firstPoint.appendPoints(orig)
+			full = firstPoint
+			full.appendPoints(lastPoint)
+
+			pStart = 1
+			pEnd = full.pointCount-2
+		else:
+			full = orig
+			pStart = None
+			pEnd = None
+
+		if orig.featureCount != 0:
+			lastFRaw = [[1] * full.pointCount]
+			lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
+					featureNames=full.getPointNames(), pointNames=['lastFNonView'],
+					name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+			lastFeature.transpose()
+
+			full.appendFeatures(lastFeature)
+			fStart = None
+			fEnd = full.featureCount-2
+		else:
+			fStart = None
+			fEnd = None
+
+
+		ret = full.view(pStart, pEnd, fStart, fEnd)
+		ret._name = orig.name
+
+		return ret
 	return maker
 
 
-#class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-#		StructureDataSafe, ViewAccess):
-#	def __init__(self):
-#		super(TestListView, self).__init__('ListView', viewMakerMaker("List"))
+class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+		StructureDataSafe, ViewAccess):
+	def __init__(self):
+		super(TestListView, self).__init__('ListView', viewMakerMaker("List"))
 
-#class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-#		StructureDataSafe, ViewAccess):
-#	def __init__(self):
-#		super(TestMatrixView, self).__init__('MatrixView', viewMakerMaker("Matrix"))
+class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+		StructureDataSafe, ViewAccess):
+	def __init__(self):
+		super(TestMatrixView, self).__init__('MatrixView', viewMakerMaker("Matrix"))
 
-#class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-#		StructureDataSafe, ViewAccess):
-#	def __init__(self):
-#		super(TestSparseView, self).__init__('SparseView', viewMakerMaker("Sparse"))
+class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+		StructureDataSafe, ViewAccess):
+#class TestSparseView(StructureDataSafe):
+	def __init__(self):
+		super(TestSparseView, self).__init__('SparseView', viewMakerMaker("Sparse"))
 
 
 class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll):

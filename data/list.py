@@ -727,13 +727,6 @@ class List(Base):
 	def _getitem_implementation(self, x, y):
 		return self.data[x][y]
 
-	def _pointView_implementation(self, ID):
-		return PointView(self, self.data[ID], ID)
-
-	def _featureView_implementation(self, ID):
-		return FeatureView(self, ID, self.getFeatureName(ID))
-
-
 	def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
 		class ListView(BaseView, List):
 			def __init__(self, **kwds):
@@ -950,94 +943,3 @@ class List(Base):
 		for point in self.data:
 			for i in xrange(len(point)):
 				point[i] *= scalar
-
-
-
-
-
-
-###########
-# Helpers #
-###########
-
-class FeatureView(View):
-	"""
-	Class to simulate direct random access of a feature, along with other helpers.
-
-	"""
-	def __init__(self, outer, colNum, colName):
-		self._outer = outer
-		self._data = outer.data
-		self._colNum = colNum
-		self._colName = colName
-	def __getitem__(self, index):
-		if isinstance(index, basestring):
-			index = self._outer.getPointIndex(index)
-		point = self._data[index]
-		value = point[self._colNum]
-		return value	
-	def __setitem__(self, key, value):
-		if isinstance(key, basestring):
-			key = self._outer.getPointIndex(key)
-		point = self._data[key]
-		point[self._colNum] = value
-	def nonZeroIterator(self):
-		return nzIt(self)
-	def __len__(self):
-		return len(self._data)
-	def index(self):
-		return self._colNum
-	def name(self):
-		return self._colName
-	def getPointName(self, index):
-		return self._outer.getPointName(index)
-	def getFeatureName(self, index):
-		return self._outer.getFeatureName(self._colNum)
-
-class PointView(View):
-	"""
-	Class to wrap direct random access of a point, along with other helpers.
-
-	"""
-	def __init__(self, outer, point, index):
-		self._outer = outer
-		self._point = point
-		self._index = index
-	def __getitem__(self, key):
-		if isinstance(key, basestring):
-			key = self._outer.getFeatureIndex(key)
-		return self._point[key]	
-	def __setitem__(self, key, value):
-		if isinstance(key, basestring):
-			key = self._outer.getFeatureIndex(key)
-		self._point[key] = value
-	def nonZeroIterator(self):
-		return nzIt(self)
-	def __len__(self):
-		return len(self._point)
-	def index(self):
-		return self._index
-	def name(self):
-		return self._outer.getPointName(self._index)
-	def getPointName(self, index):
-		return self._outer.getPointName(self._index)
-	def getFeatureName(self, index):
-		return self._outer.getFeatureName(index)
-
-class nzIt():
-	def __init__(self, indexable):
-		self._indexable = indexable
-		self._position = 0
-	def __iter__(self):
-		return self
-	def next(self):
-		while (self._position < len(self._indexable)):
-			value = self._indexable[self._position]
-			self._position += 1
-			if value != 0:
-				return value
-		raise StopIteration
-
-
-
-

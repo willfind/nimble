@@ -30,7 +30,7 @@ from UML import createData
 from UML.data import List
 from UML.data import Matrix
 from UML.data import Sparse
-from UML.data.dataHelpers import View
+from UML.data import BaseView
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
@@ -1228,7 +1228,7 @@ class StructureModifying(DataTestObject):
 		toTest = self.constructor(data)
 
 		def numOdds(point):
-			assert isinstance(point, View)
+			assert isinstance(point, BaseView)
 			ret = 0
 			for val in point:
 				if val % 2 != 0:

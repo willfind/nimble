@@ -10,7 +10,7 @@ and the related functions in top level UML.
 """
 
 from base import Base
-from dataHelpers import View
+from base_view import BaseView
 from list import List
 from matrix import Matrix
 from sparse import Sparse
@@ -18,4 +18,4 @@ from sparse import Sparse
 
 # We want this for unit testing
 available = ['List', 'Matrix', 'Sparse']
-__all__ = ['Base', 'List', 'Matrix', 'Sparse', 'View']
+__all__ = ['Base', 'BaseView', 'List', 'Matrix', 'Sparse']

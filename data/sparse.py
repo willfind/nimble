@@ -1001,27 +1001,6 @@ class Sparse(Base):
 
 		return 0
 
-	def _pointView_implementation(self, ID):
-		nzMap = {}
-		#check each value in the matrix
-		for i in xrange(len(self._data.data)):
-			rowIndex = self._data.row[i]
-			if rowIndex == ID:
-				nzMap[self._data.col[i]] = i
-
-		return VectorView(self,None,None,nzMap,self.featureCount,ID,'point')
-
-	def _featureView_implementation(self, ID):
-		nzMap = {}
-		#check each value in the matrix
-		for i in xrange(len(self._data.data)):
-			colIndex = self._data.col[i]
-			if colIndex == ID:
-				nzMap[self._data.row[i]] = i
-
-		return VectorView(self,None,None,nzMap,self.pointCount,ID,'feature')
-
-
 	def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
 		"""
 		The Sparse object specific implementation necessarly to complete the Base
@@ -1403,147 +1382,6 @@ class Sparse(Base):
 # Generic Helpers #
 ###################
 
-class VectorView(View):
-	"""
-	Class to simulate direct random access of a either a single point or feature
-
-	"""
-	def __init__(self, CooObject, startInData, endInData, nzMap, maxVal, index, axis):
-		if startInData is None and endInData is None and nzMap is None:
-			raise ArgumentException("No vector data given as input")
-		if nzMap is None and (startInData is None or endInData is None):
-			raise ArgumentException("Must provide both start and end in the data")
-		self._outer = CooObject
-		self._start = startInData # inclusive
-		self._end = endInData # exclusive
-		self._nzMap = nzMap
-		self._max = maxVal
-		self._index = index
-		self._axis = axis
-		if axis == "feature":
-			self._name = CooObject.getFeatureName(index)
-		else:
-			self._name = CooObject.getPointName(index)
-	def __getitem__(self, key):
-		if self._nzMap is None:
-			self._makeMap()
-
-		if isinstance(key, slice):
-			start = key.start
-			stop = key.stop
-			if key.start is None:
-				start = 0
-			if key.stop is None:
-				stop = self._max
-			retMap = {}
-			for mapKey in self._nzMap:
-				if mapKey >= start and mapKey <= stop: 
-					if key.step is None or (mapKey - start)/key.step == 0:
-						retMap[mapKey - start] = self._nzMap[mapKey]
-			return VectorView(self._outer, None, None, retMap, self._max-start, self._index, self._axis)
-		elif isinstance(key, int):
-			if key in self._nzMap:
-				return self._outer._data.data[self._nzMap[key]]
-			elif key >= self._max:
-				raise IndexError('key is greater than the max possible value')
-			else:
-				return 0
-		elif isinstance(key, basestring):
-			if self._axis =='point':
-				index = self._outer.getFeatureIndex(key)
-				if index in self._nzMap:
-					return self._outer._data.data[self._nzMap[index]]
-				else:
-					return 0
-			else:
-				index = self._outer.getPointIndex(key)
-				if index in self._nzMap:
-					return self._outer._data.data[self._nzMap[index]]
-				else:
-					return 0
-		else:
-			raise TypeError('key is not a recognized type')
-	def __setitem__(self, key, value):
-		if self._nzMap is None:
-			self._makeMap()
-
-		if isinstance(key, basestring):
-			if self._axis =='point':
-				key = self._outer.getFeatureIndex(key)
-			else:
-				key = self._outer.getPointIndex(key)
-
-		if key in self._nzMap:
-			self._outer._data.data[self._nzMap[key]] = value
-		else:
-			raise ArgumentException("Sparse objects do not support element level modification of zero valued entries")
-	def nonZeroIterator(self):
-		if self._nzMap is not None:
-			return nzItMap(self._outer, self._nzMap)
-		else:
-			return nzItRange(self._outer, self._start, self._end)
-	def __len__(self):
-		return self._max
-	def index(self):
-		return self._index
-	def name(self):
-		return self._name
-	def _makeMap(self):
-		self._nzMap = {}
-		if self._start >= len(self._outer._data.data):
-			return
-		for i in xrange(self._start, self._end):
-			if self._axis == 'point':
-				mapKey = self._outer._data.col[i]
-			else:
-				mapKey = self._outer._data.row[i]
-			self._nzMap[mapKey] = i
-	def getPointName(self, index):
-		if self._axis == 'point':
-			return self._outer.getPointName(self._index)
-		else:
-			return self._outer.getPointName(index)
-	def getFeatureName(self, index):
-		if self._axis == 'feature':
-			return self._outer.getFeatureName(self._index)
-		else:
-			return self._outer.getFeatureName(index)
-
-class nzItMap():
-	def __init__(self, outer, nzMap):
-		self._outer = outer
-		self._nzMap = nzMap
-		self._indices = nzMap.keys()
-		self._indices.sort()
-		self._position = 0
-	def __iter__(self):
-		return self
-	def next(self):
-		while (self._position < len(self._indices)):
-			index = self._nzMap[self._indices[self._position]]
-			value = self._outer._data.data[index]
-			self._position += 1
-			if value != 0:
-				return value
-		raise StopIteration
-
-class nzItRange():
-	def __init__(self, outer, start, end):
-		self._outer = outer
-		self._end = end # exclusive
-		self._position = start
-	def __iter__(self):
-		return self
-	def next(self):
-		if self._position >= self._end:
-			raise StopIteration
-		ret = self._outer._data.data[self._position]
-		self._position = self._position + 1
-		if ret != 0:
-			return ret
-		else:
-			return self.next()
-
 def _numLessThan(value, toCheck): # TODO caching
 	ltCount = 0
 	for i in xrange(len(toCheck)):
@@ -1687,12 +1525,6 @@ class SparseView(BaseView, Sparse):
 		adjX = x + self._pStart
 		adjY = y + self._fStart
 		return self._source[adjX, adjY]
-
-	def _pointView_implementation(self, ID):
-		return self.view(ID, ID, None, None)
-
-	def _featureView_implementation(self, ID):
-		return self.view(None, None, ID, ID)
 
 	def pointIterator(self):
 		if self.featureCount == 0:

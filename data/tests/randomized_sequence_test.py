@@ -16,7 +16,7 @@ import random
 
 import UML
 from UML.data import Base
-from UML.data import View
+from UML.data import BaseView
 from UML.exceptions import ArgumentException
 
 from UML.randomness import pythonRandom
@@ -177,8 +177,8 @@ def equalityWrapper(left, right):
 		if left.getTypeString() == right.getTypeString():
 			assert left.isIdentical(right)
 		assert left.isApproximatelyEqual(right)
-	elif isinstance(left, View):
-		assert isinstance(right, View)
+	elif isinstance(left, BaseView):
+		assert isinstance(right, BaseView)
 		assert left.equals(right)
 	elif hasattr(left, '__iter__'):
 		leftIter = left.__iter__()

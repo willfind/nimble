@@ -622,13 +622,6 @@ class Matrix(Base):
 	def _getitem_implementation(self, x, y):
 		return self.data[x,y]
 
-	def _pointView_implementation(self, ID):
-		return VectorView(self, 'point', ID)
-
-	def _featureView_implementation(self, ID):
-		return VectorView(self, 'feature', ID)
-
-
 	def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
 		class MatrixView(BaseView, Matrix):
 			def __init__(self, **kwds):
@@ -904,82 +897,6 @@ class Matrix(Base):
 			ret = self.data % other
 		self.data = ret
 		return self
-
-class VectorView(View):
-	def __init__(self, outer, axis, index, ignoreLast=False):
-		self._outer = outer
-		self._axis = axis
-		self._vecIndex = index
-		if axis == 'point' or axis == 0:
-			self._name = outer.getPointName(index)
-			self._length = outer.featureCount
-		else:
-			self._name = outer.getFeatureName(index)
-			self._length = outer.pointCount
-		if ignoreLast:
-			self._length -= 1
-	def __getitem__(self, key):
-		if self._axis == 'point' or self._axis == 0:
-			if isinstance(key, basestring):
-				key = self._outer.getFeatureIndex(key)
-			if key >= self._length:
-				raise IndexError("Index out of bounds")
-			return self._outer.data[self._vecIndex, key] 
-		else:
-			if isinstance(key, basestring):
-				key = self._outer.getPointIndex(key)
-			if key >= self._length:
-				raise IndexError("Index out of bounds")
-			return self._outer.data[key, self._vecIndex]
-	def __setitem__(self, key, value):
-		if self._axis == 'point' or self._axis == 0:
-			if isinstance(key, basestring):
-				key = self._outer.getFeatureIndex(key)
-			if key >= self._length:
-				raise IndexError("Index out of bounds")
-			self._outer.data[self._vecIndex,key] = value
-		else:
-			if isinstance(key, basestring):
-				key = self._outer.getPointIndex(key)
-			if key >= self._length:
-				raise IndexError("Index out of bounds")
-			self._outer.data[key,self._vecIndex] = value
-	def nonZeroIterator(self):
-		return nzIt(self, self._length)
-	def __len__(self):
-		return self._length
-	def index(self):
-		return self._vecIndex
-	def name(self):
-		return self._name
-	def getPointName(self, index):
-		if self._axis == 'point':
-			return self._outer.getPointName(self._vecIndex)
-		else:
-			return self._outer.getPointName(index)
-	def getFeatureName(self, index):
-		if self._axis == 'feature':
-			return self._outer.getFeatureName(self._vecIndex)
-		else:
-			return self._outer.getFeatureName(index)
-
-class nzIt():
-	def __init__(self, indexable, enforcedLength):
-		self._indexable = indexable
-		self._position = 0
-		self._length = enforcedLength
-	def __iter__(self):
-		return self
-	def next(self):
-		while (self._position < self._length):
-			value = self._indexable[self._position]
-			self._position += 1
-			if value != 0:
-				return value
-		raise StopIteration
-
-
-
 
 
 def viewBasedApplyAlongAxis(function, axis, outerObject):

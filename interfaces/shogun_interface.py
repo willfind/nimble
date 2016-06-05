@@ -843,17 +843,18 @@ def _remapLabelsRange(toRemap):
 
 	mapping = {}
 	inverse = []
-	invIndex = 0
 
-	view = toRemap.featureView(0)
+	def remap(pView):
+		invIndex = 0
+		ret = []
+		for value in pView:
+			if value not in mapping:
+				mapping[value] = invIndex
+				inverse.append(value)
+				invIndex += 1
+			ret.append(mapping[value])
 
-	for x in xrange(toRemap.pointCount):
-		value = view[x]
-		if value not in mapping:
-			mapping[value] = invIndex
-			inverse.append(value)
-			invIndex += 1
-		view[x] = mapping[value]
+	toRemap.transformEachPoint(remap)
 
 	return inverse
 
@@ -874,23 +875,25 @@ def _remapLabelsSpecific(toRemap, space):
 	invIndex = 0
 	maxLength = len(space)
 
-	view = toRemap.featureView(0)
-
-	for x in xrange(toRemap.pointCount):
-		value = view[x]
+	for value in toRemap:
 		if value not in mapping:
 			mapping[value] = invIndex
 			inverse.append(value)
 			invIndex += 1
 			if invIndex > maxLength:
 				if space == [-1,1]:
-					raise ArgumentException("Multiclass training data cannot be used by a binary-only classifier")
+					msg = "Multiclass training data cannot be used by a binary-only classifier"
+					raise ArgumentException(msg)
 				else:
-					raise ArgumentException("toRemap contains more values than can be mapped into the provided space.")
+					msg = "toRemap contains more values than can be mapped into the provided space."
+					raise ArgumentException(msg)
 
-	for x in xrange(toRemap.pointCount):
-		value = view[x]
-		view[x] = space[mapping[value]]
+	def remap(pView):
+		ret = []
+		for value in pView:
+			ret.append(space[mapping[value]])
+
+	toRemap.transformEachPoint(remap)
 
 	return inverse
 
