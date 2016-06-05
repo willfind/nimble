@@ -118,76 +118,29 @@ class List(Base):
 				self.data[i].append(value)
 		self._numFeatures = self._numFeatures + toAppend.featureCount
 
+
 	def _sortPoints_implementation(self, sortBy, sortHelper):
-		""" 
-
-		"""
-		scorer = None
-		comparator = None
-
-		indices = UML.createData("List", list(xrange(self.pointCount)))
-		indices.transpose()
-		indices.setFeatureName(0,"#UML_SORTHELPER_INDEX")
-		indices.setPointNames(self.getPointNames())
-		self.appendFeatures(indices)
-		newFeatureIndex = self.featureCount - 1 
-
-		testPoint = PointView(self, self.data[0], 0)
-		try:
-			sortHelper(testPoint)
-			def wrapperMakerS(funcToWrap, outer):
-				def wrapped(row):
-					return funcToWrap(PointView(outer,row[0:newFeatureIndex], row[newFeatureIndex]))
-				return wrapped
-			scorer = wrapperMakerS(sortHelper, self)
-		except TypeError:
-			pass
-		try:
-			sortHelper(testPoint, testPoint)
-			def wrapperMakerC(funcToWrap, outer):
-				def wrapped(row1, row2):
-					wrap1 = PointView(outer,row1[0:newFeatureIndex], row1[newFeatureIndex])
-					wrap2 = PointView(outer,row2[0:newFeatureIndex], row2[newFeatureIndex])
-					return funcToWrap(wrap1, wrap2)
-				return wrapped
-			comparator = wrapperMakerC(sortHelper, self)
-		except TypeError:
-			pass
-
-		if sortHelper is not None and scorer is None and comparator is None:
-			raise ArgumentException("sortHelper is neither a scorer or a comparator")
-
-		keyFunc = scorer
-		if sortBy is not None:
-			#this is going to get its input from self.data.sort, so it will receive
-			# a python list object
-			def featureKey(row):
-				return row[sortBy]
-			keyFunc = featureKey
-
-		self.data.sort(key=keyFunc, cmp=comparator)
-
-		oldIndicesObj = self.extractFeatures([newFeatureIndex])
-		oldIndicesObj.transpose()
-		oldIndices = oldIndicesObj.copyAs('pythonlist')[0]
-
-		newNameOrder = []
-		for i in xrange(len(oldIndices)):
-			oldIndex = oldIndices[i]
-			newName = self.getPointName(oldIndex)
-			newNameOrder.append(newName)
-		return newNameOrder
+		return self._sort_generic_implementation(sortBy, sortHelper, 'point')
 
 	def _sortFeatures_implementation(self, sortBy, sortHelper):
-		""" 
-		Modify this object so that the features are sorted using the built in python
-		sort on feature views. The input arguments are passed to that function unalterted.
-		This funciton returns a list of featureNames indicating the new order of the data.
+		return self._sort_generic_implementation(sortBy, sortHelper, 'feature')
 
-		"""
+	def _sort_generic_implementation(self, sortBy, sortHelper, axis):
+		if axis == 'point':
+			test = self.pointView(0)
+			viewIter = self.pointIterator()
+			indexGetter = self.getPointIndex
+			nameGetter = self.getPointName
+			nameGetterStr = 'getPointName'
+		else:
+			test = self.featureView(0)
+			viewIter = self.featureIterator()
+			indexGetter = self.getFeatureIndex
+			nameGetter = self.getFeatureName
+			nameGetterStr = 'getFeatureName'
+
 		scorer = None
 		comparator = None
-		test = self.featureView(0)
 		try:
 			sortHelper(test)
 			scorer = sortHelper
@@ -204,7 +157,6 @@ class List(Base):
 
 		# make array of views
 		viewArray = []
-		viewIter = self.featureIterator()
 		for v in viewIter:
 			viewArray.append(v)
 
@@ -212,7 +164,7 @@ class List(Base):
 			viewArray.sort(cmp=comparator)
 			indexPosition = []
 			for i in xrange(len(viewArray)):
-				index = self.getFeatureIndex(viewArray[i].getFeatureName(0))
+				index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
 				indexPosition.append(index)
 		else:
 			#scoreArray = viewArray
@@ -232,19 +184,24 @@ class List(Base):
 			indexPosition = numpy.argsort(scoreArray)
 
 		# run through target axis and change indices
-		for i in xrange(len(self.data)):
-			currPoint = self.data[i]
-			temp = copy.copy(currPoint)
-			for j in xrange(len(indexPosition)):
-				currPoint[j] = temp[indexPosition[j]]
+		if axis == 'point':
+			source = copy.copy(self.data)
+			for i in xrange(len(self.data)):
+				self.data[i] = source[indexPosition[i]]
+		else:
+			for i in xrange(len(self.data)):
+				currPoint = self.data[i]
+				temp = copy.copy(currPoint)
+				for j in xrange(len(indexPosition)):
+					currPoint[j] = temp[indexPosition[j]]
 
 		# we convert the indices of the their previous location into their feature names
-		newFeatureNameOrder = []
+		newNameOrder = []
 		for i in xrange(len(indexPosition)):
 			oldIndex = indexPosition[i]
-			newName = self.getFeatureName(oldIndex)
-			newFeatureNameOrder.append(newName)
-		return newFeatureNameOrder
+			newName = nameGetter(oldIndex)
+			newNameOrder.append(newName)
+		return newNameOrder
 
 
 	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
