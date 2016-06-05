@@ -628,6 +628,7 @@ class Matrix(Base):
 	def _featureView_implementation(self, ID):
 		return VectorView(self, 'feature', ID)
 
+
 	def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
 		class MatrixView(BaseView, Matrix):
 			def __init__(self, **kwds):
@@ -904,8 +905,6 @@ class Matrix(Base):
 		self.data = ret
 		return self
 
-
-
 class VectorView(View):
 	def __init__(self, outer, axis, index, ignoreLast=False):
 		self._outer = outer
@@ -980,19 +979,24 @@ class nzIt():
 		raise StopIteration
 
 
+
+
+
 def viewBasedApplyAlongAxis(function, axis, outerObject):
 	""" applies the given function to each view along the given axis, returning the results
 	of the function in numpy array """
 	if axis == "point":
 		maxVal = outerObject.data.shape[0]
+		viewMaker = outerObject.pointView
 	else:
 		if axis != "feature":
 			raise ArgumentException("axis must be 'point' or 'feature'")
 		maxVal = outerObject.data.shape[1]
+		viewMaker = outerObject.featureView
 	ret = numpy.zeros(maxVal, dtype=numpy.float)
 
 	for i in xrange(0,maxVal):
-		funcOut = function(VectorView(outerObject,axis,i))
+		funcOut = function(viewMaker(i))
 		ret[i] = funcOut
 
 	return ret

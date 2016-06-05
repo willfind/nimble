@@ -115,7 +115,7 @@ class Sparse(Base):
 					#this ensures end is always in range, and always exclusive
 					while (end < len(self._outer._data.data) and self._outer._data.row[end] == self._nextID):
 						end += 1
-					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.featureCount, self._nextID, 'point')
+					value = self._outer.pointView(self._nextID)
 					self._sortedPosition = end
 				self._nextID += 1
 				return value
@@ -150,7 +150,7 @@ class Sparse(Base):
 					#this ensures end is always in range, and always exclusive
 					while (end < len(self._outer._data.data) and self._outer._data.col[end] == self._nextID):
 						end += 1
-					value = VectorView(self._outer, self._sortedPosition, end, None, self._outer.pointCount, self._nextID, 'feature')
+					value = self._outer.featureView(self._nextID)
 					self._sortedPosition = end
 				self._nextID += 1
 				return value
@@ -495,13 +495,13 @@ class Sparse(Base):
 			otherAxis = self._data.row
 			extractTarget = extractCols
 			extractOther = extractRows
-			maxVal = self.pointCount		
+			viewMaker = self.featureView
 		else:
 			targetAxis = self._data.row
 			otherAxis = self._data.col
 			extractTarget = extractRows
 			extractOther = extractCols
-			maxVal = self.featureCount
+			viewMaker = self.pointView
 
 		copyIndex = 0
 		vectorStartIndex = 0
@@ -509,7 +509,7 @@ class Sparse(Base):
 		# consume zeroed vectors, up to the first nonzero value
 		if self._data.nnz > 0 and self._data.data[0] != 0:
 			for i in xrange(0,targetAxis[0]):
-				if toExtract(VectorView(self, None, None, {}, maxVal, i, axisType)):
+				if toExtract(viewMaker(i)):
 					extractedIDs.append(i)
 		#walk through each coordinate entry
 		for i in xrange(len(self._data.data)):
@@ -519,7 +519,7 @@ class Sparse(Base):
 			if i == len(self._data.data)-1 or targetAxis[i+1] != targetValue:
 				#evaluate whether curr point is to be extracted or not
 				# and perform the appropriate copies
-				if toExtract(VectorView(self, vectorStartIndex, i, None, maxVal, targetValue, axisType)):
+				if toExtract(viewMaker(targetValue)):
 					for j in xrange(vectorStartIndex, i + 1):
 						extractData.append(self._data.data[j])
 						extractOther.append(otherAxis[j])
@@ -540,7 +540,7 @@ class Sparse(Base):
 					else:
 						nextValue = self.featureCount
 				for j in xrange(targetValue+1, nextValue):
-					if toExtract(VectorView(self, None, None, {}, maxVal, j, axisType)):
+					if toExtract(viewMaker(j)):
 						extractedIDs.append(j)
 
 				#reset the vector starting index
@@ -642,31 +642,11 @@ class Sparse(Base):
 		self._sortInternal("point")
 		mapperResults = {}
 		maxVal = self.featureCount
-#		for i in xrange(len(self._data.data)):
-#			rowValue = self._data.row[i]
-#			if rowValue != currIndex:
-#				currResults = mapper(VectorView(currPoint, self.featureCount))
-#				for (k,v) in currResults:
-#					if not k in mapperResults:
-#						mapperResults[k] = []
-#					mapperResults[k].append(v)
-#				currPoint = {}
-#				currIndex = rowValue
-#				nonZeroPoints = nonZeroPoints + 1
-#			currPoint[self._data.col[i]] = self._data.data[i]
-#
-		# run the mapper on the last collected point outside the loop
-#		currResults = mapper(VectorView(currPoint, self.featureCount))
-#		for (k,v) in currResults:
-#			if k not in mapperResults:
-#				mapperResults[k] = []
-#			mapperResults[k].append(v)
-#		nonZeroPoints = nonZeroPoints + 1
 
 		# consume zeroed vectors, up to the first nonzero value
 		if self._data.data[0] != 0:
 			for i in xrange(0, self._data.row[0]):
-				currResults = mapper(VectorView(self, None, None, {}, maxVal, i, 'point'))
+				currResults = mapper(self.pointView(i))
 				for (k,v) in currResults:
 					if not k in mapperResults:
 						mapperResults[k] = []
@@ -681,7 +661,7 @@ class Sparse(Base):
 			if i == len(self._data.data)-1 or self._data.row[i+1] != targetValue:
 				#evaluate whether curr point is to be extracted or not
 				# and perform the appropriate copies
-				currResults = mapper(VectorView(self, vectorStartIndex, i, None, maxVal, targetValue, 'point'))
+				currResults = mapper(self.pointView(targetValue))
 				for (k,v) in currResults:
 					if not k in mapperResults:
 						mapperResults[k] = []
@@ -693,7 +673,7 @@ class Sparse(Base):
 				else:
 					nextValue = self.pointCount
 				for j in xrange(targetValue+1, nextValue):
-					currResults = mapper(VectorView(self, None, None, {}, maxVal, j, 'point'))
+					currResults = mapper(self.pointView(j))
 					for (k,v) in currResults:
 						if not k in mapperResults:
 							mapperResults[k] = []
@@ -1116,7 +1096,6 @@ class Sparse(Base):
 					self.shape = shape
 					self.internal = None
 					super(CooDummy, self).__init__(**kwargs)
-
 
 			newInternal = CooDummy((pointEnd-pointStart, featureEnd-featureStart))
 			kwds['data'] = newInternal

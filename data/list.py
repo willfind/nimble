@@ -298,7 +298,7 @@ class List(Base):
 		# over
 		for index in xrange(len(self.data)):
 			point = self.data[index]
-			if number > 0 and toExtract(PointView(self, point, index)):			
+			if number > 0 and toExtract(self.pointView(index)):
 				satisfying.append(point)
 				number = number - 1
 				names.append(self.getPointName(index))
@@ -444,8 +444,7 @@ class List(Base):
 		# all we're doing is making a list and calling extractFeaturesBy list, no need
 		# deal with featureNames or the number of features.
 		toExtract = []
-		for i in xrange(self.featureCount):
-			ithView = FeatureView(self, i, self.getFeatureName(i))
+		for i, ithView in enumerate(self.featureIterator()):
 			if function(ithView):
 				toExtract.append(i)
 		return self._extractFeaturesByList_implementation(toExtract)
@@ -479,8 +478,7 @@ class List(Base):
 		mapResults = {}
 		# apply the mapper to each point in the data
 		for i in xrange(self.pointCount):
-			point = self.data[i]
-			currResults = mapper(PointView(self, point, i))
+			currResults = mapper(self.pointView(i))
 			# the mapper will return a list of key value pairs
 			for (k,v) in currResults:
 				# if key is new, we must add an empty list
