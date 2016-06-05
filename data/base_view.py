@@ -226,49 +226,6 @@ class BaseView(Base):
 		"""
 		self._readOnlyException("extractPointsByCoinToss")
 
-	def applyToPoints(self, function, points=None, inPlace=True):
-		"""
-		Applies the given function to each point in this object, copying the
-		output into this object and returning None. Alternatively, if the inPlace
-		flag is False, output values are collected into a new object that is
-		returned upon completion.
-
-		function must not be none and accept a point as an argument
-
-		points may be None to indicate application to all points, a single point
-		ID or a list of point ID's to limit application only to those specified
-
-		"""
-		if inPlace is True:
-			msg = "The applyToPoints method is disallowed for View objects when "
-			msg += "the inPlace argument is True. View "
-			msg += "objects are read only, yet this modifies the object"
-			raise ImproperActionException(msg)
-		else:
-			return super(BaseView, self).applyToPoints(function, points, inPlace)
-
-
-	def applyToFeatures(self, function, features=None, inPlace=True):
-		"""
-		Applies the given function to each feature in this object, copying the
-		output into this object and returning None. Alternatively, if the inPlace
-		flag is False, output values are collected into a new object that is
-		returned upon completion.
-
-		function must not be none and accept a feature as an argument
-
-		features may be None to indicate application to all features, a single feature
-		ID or a list of features ID's to limit application only to those specified
-
-		"""
-		if inPlace is True:
-			msg = "The applyToFeatures method is disallowed for View objects when "
-			msg += "the inPlace argument is True. View "
-			msg += "objects are read only, yet this modifies the object"
-			raise ImproperActionException(msg)
-		else:
-			return super(BaseView, self).applyToFeatures(function, features, inPlace)
-
 	def shufflePoints(self, indices=None):
 		"""
 		Permute the indexing of the points so they are in a random order. Note: this relies on
@@ -404,6 +361,54 @@ class BaseView(Base):
 
 		"""
 		self._readOnlyException("referenceDataFrom")
+
+	def transformEachPoint(self, function, points=None):
+		"""
+		Modifies this object to contain the results of the given function
+		calculated on the specified points in this object.
+
+		function must not be none and accept the view of a point as an argument
+
+		points may be None to indicate application to all points, a single point
+		ID or a list of point IDs to limit application only to those specified.
+
+		"""
+		self._readOnlyException("transformEachPoint")
+
+
+	def transformEachFeature(self, function, features=None):
+		"""
+		Modifies this object to contain the results of the given function
+		calculated on the specified features in this object.
+
+		function must not be none and accept the view of a feature as an argument
+
+		features may be None to indicate application to all features, a single
+		feature ID or a list of feature IDs to limit application only to those
+		specified.
+
+		"""
+		self._readOnlyException("transformEachFeature")
+
+	def transformEachElement(self, function, points=None, features=None, preserveZeros=False, skipNoneReturnValues=False):
+		"""
+		Modifies this object to contain the results of calling function(elementValue)
+		or function(elementValue, pointNum, featureNum) for each element. 
+
+		points: Limit to only elements of the specified points; may be None for
+		all points, a single ID, or a list of IDs.
+
+		features: Limit to only elements of the specified features; may be None for
+		all features, a single ID, or a list of IDs.
+
+		preserveZeros: If True it does not apply the function to elements in
+		the data that are 0, and that 0 is not modified.
+
+		skipNoneReturnValues: If True, any time function() returns None, the
+		value originally in the data will remain unmodified.
+
+		"""
+		self._readOnlyException("transformEachElement")
 
 
 	###############################################################

@@ -1352,7 +1352,7 @@ class Base(object):
 		original object. This is the only accepted method for a user to
 		construct a View object (it should never be done directly), though
 		view objects may be provided to the user, for example via user
-		defined functions passed to extractPoints or applyToFeatures.
+		defined functions passed to extractPoints or calculateForEachFeature.
 
 		pointStart: the inclusive index of the first point to be accessible
 		in the returned view. Is None by default, meaning to include from
