@@ -1156,12 +1156,15 @@ class Sparse(Base):
 		determined according to efficiency constraints. 
 
 		"""
-		# for other.data as any dense or sparse matrix
-		retData = self._data.internal * other.data
-#		if scipy.sparse.isspmatrix(retData):
+		if isinstance(other, BaseView):
+			retData = other.copyAs('scipycsr')
+			retData = self._data.internal * retData
+		else:
+			# for other.data as any dense or sparse matrix
+			retData = self._data.internal * other.data
+
 		return Sparse(retData)
-#		else:
-#			return UML.data.Matrix(retData)
+
 
 	def _elementwiseMultiply_implementation(self, other):
 		"""
@@ -1309,10 +1312,7 @@ class Sparse(Base):
 
 	def _mod__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
-				ret = self.data % other.data.todense()
-			else:
-				ret = self.data % other.data
+			return super(Sparse, self).__mod__(other)
 		else:
 			retData = self.data.data % other
 			retRow = numpy.array(self.data.row)
@@ -1332,10 +1332,7 @@ class Sparse(Base):
 
 	def _imod__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
-				ret = self.data % other.data.todense()
-			else:
-				ret = self.data % other.data
+			return super(Sparse, self).__imod__(other)
 		else:
 			ret = self._data.data % other
 		self._data.data = ret
@@ -1617,25 +1614,10 @@ class SparseView(BaseView, Sparse):
 
 		return False
 
-	def __pos__(self):
-		""" Return this object. """
-		ret = self._source.view(self._pStart, self._pEnd-1, self._fStart, self._fEnd-1)
-		ret._name = dataHelpers.nextDefaultObjectName()
-
-		return ret
-
-	def __neg__(self):
-		""" Return this object where every element has been multiplied by -1 """
-		ret = self.copyAs("Sparse")
-		ret._data.data *= -1
-		ret._name = dataHelpers.nextDefaultObjectName()
-
-		return ret
-
 	def __abs__(self):
 		""" Perform element wise absolute value on this object """
 		ret = self.copyAs("Sparse")
-		ret._data.data = numpy.absolute(ret._data.data)
+		numpy.absolute(ret._data.internal.data, out=ret._data.internal.data)
 		ret._name = dataHelpers.nextDefaultObjectName()
 
 		return ret
