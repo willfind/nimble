@@ -91,8 +91,6 @@ class Sparse(Base):
 
 
 	def pointIterator(self):
-		if self.featureCount == 0:
-			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
 		self._sortInternal('point')
 
 		class pointIt():
@@ -124,9 +122,6 @@ class Sparse(Base):
 
 
 	def featureIterator(self):
-		if self.pointCount == 0:
-			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
-
 		self._sortInternal('feature')
 
 		class featureIt():
@@ -1524,15 +1519,9 @@ class SparseView(BaseView, Sparse):
 		return self._source[adjX, adjY]
 
 	def pointIterator(self):
-		if self.featureCount == 0:
-			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
-
 		return self._generic_iterator("point")
 
 	def featureIterator(self):
-		if self.pointCount == 0:
-			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
-
 		return self._generic_iterator("feature")
 
 	def _generic_iterator(self, axis):
@@ -1540,15 +1529,17 @@ class SparseView(BaseView, Sparse):
 		if axis == 'point':
 			positionLimit = self._pStart + self.pointCount
 			sourceStart = self._pStart
-			fixedStart = self._fStart
+			# Needs to be None if we're dealing with a fully empty point
+			fixedStart = self._fStart if self._fStart != 0 else None
 			# self._fEnd is exclusive, but view takes inclusive indices
-			fixedEnd = self._fEnd - 1
+			fixedEnd = (self._fEnd - 1) if self._fEnd != 0 else None
 		else:
 			positionLimit = self._fStart + self.featureCount
 			sourceStart = self._fStart
-			fixedStart = self._pStart
+			# Needs to be None if we're dealing with a fully empty feature
+			fixedStart = self._pStart if self._pStart != 0 else None
 			# self._pEnd is exclusive, but view takes inclusive indices
-			fixedEnd = self._pEnd - 1
+			fixedEnd = (self._pEnd - 1) if self._pEnd != 0 else None
 
 		class GenericIt(object):
 			def __init__(self):

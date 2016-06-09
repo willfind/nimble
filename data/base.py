@@ -619,8 +619,8 @@ class Base(object):
 		return ret
 
 	def pointIterator(self):
-		if self.featureCount == 0:
-			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
+#		if self.featureCount == 0:
+#			raise ImproperActionException("We do not allow iteration over points if there are 0 features")
 
 		class pointIt():
 			def __init__(self, outer):
@@ -637,8 +637,8 @@ class Base(object):
 		return pointIt(self)
 
 	def featureIterator(self):
-		if self.pointCount == 0:
-			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
+#		if self.pointCount == 0:
+#			raise ImproperActionException("We do not allow iteration over features if there are 0 points")
 
 		class featureIt():
 			def __init__(self, outer):

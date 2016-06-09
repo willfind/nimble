@@ -419,13 +419,22 @@ class HighLevelDataSafe(DataTestObject):
 	# pointIterator() #
 	#######################
 
-	@raises(ImproperActionException)
-	def test_pointIterator_exceptionFempty(self):
-		""" Test pointIterator() for ImproperActionException when object is feature empty """
+	def test_pointIterator_FemptyCorrectness(self):
 		data = [[],[]]
 		data = numpy.array(data)
 		toTest = self.constructor(data)
-		toTest.pointIterator()
+		pIter = toTest.pointIterator()
+
+		pView = pIter.next()
+		assert len(pView) == 0
+		pView = pIter.next()
+		assert len(pView) == 0
+
+		try:
+			pIter.next()
+			assert False  # expected StopIteration from prev statement
+		except StopIteration:
+			pass
 
 	def test_pointIterator_noNextPempty(self):
 		""" test pointIterator() has no next value when object is point empty """
@@ -502,13 +511,22 @@ class HighLevelDataSafe(DataTestObject):
 	# featureIterator() #
 	#########################
 
-	@raises(ImproperActionException)
-	def test_featureIterator_exceptionPempty(self):
-		""" Test featureIterator() for ImproperActionException when object is point empty """
+	def test_featureIterator_PemptyCorrectness(self):
 		data = [[],[]]
 		data = numpy.array(data).T
 		toTest = self.constructor(data)
-		toTest.featureIterator()
+		fIter = toTest.featureIterator()
+
+		fView = fIter.next()
+		assert len(fView) == 0
+		fView = fIter.next()
+		assert len(fView) == 0
+
+		try:
+			fIter.next()
+			assert False  # expected StopIteration from prev statement
+		except StopIteration:
+			pass
 
 	def test_featureIterator_noNextFempty(self):
 		""" test featureIterator() has no next value when object is feature empty """
