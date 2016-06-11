@@ -1093,26 +1093,32 @@ class Base(object):
 			if subIsVec:
 				if axis == 'point':
 					self.transformEachPoint(subber)
-					applyResultTo.transformEachPoint(subber)
+					if alsoIsObj:
+						applyResultTo.transformEachPoint(subber)
 				else:
 					self.transformEachFeature(subber)
-					applyResultTo.transformEachFeature(subber)
+					if alsoIsObj:
+						applyResultTo.transformEachFeature(subber)
 			else:
 				self -= subtract
-				applyResultTo -= subtract
+				if alsoIsObj:
+					applyResultTo -= subtract
 
 		# then perform the division operation
 		if divide is not None and divide != 1:
 			if divIsVec:		
 				if axis == 'point':
 					self.transformEachPoint(diver)
-					applyResultTo.transformEachPoint(diver)
+					if alsoIsObj:
+						applyResultTo.transformEachPoint(diver)
 				else:
 					self.transformEachFeature(diver)
-					applyResultTo.transformEachFeature(diver)
+					if alsoIsObj:
+						applyResultTo.transformEachFeature(diver)
 			else:
 				self /= divide
-				applyResultTo /= divide
+				if alsoIsObj:
+					applyResultTo /= divide
 
 		# this operation is self modifying, so we return None
 		return None

@@ -1459,6 +1459,33 @@ class HighLevelModifying(DataTestObject):
 		except ArgumentException:
 			pass
 
+	# successful float valued inputs
+	def test_normalizePoints_success_float_int_inputs_NoAlso(self):
+		self.back_normalize_success_float_int_inputs_NoAlso("point")
+
+	def test_normalizeFeatures_success_float_int_inputs_NoAlso(self):
+		self.back_normalize_success_float_int_inputs_NoAlso("feature")
+
+	def back_normalize_success_float_int_inputs_NoAlso(self, axis):
+		obj = self.constructor([[1,1,1],[3,3,3],[7,7,7]])
+		expObj = self.constructor([[0,0,0], [4,4,4], [12,12,12]])
+
+		ret = self.normalizeHelper(obj, axis, subtract=1, divide=0.5)
+
+		assert ret is None
+		assert expObj == obj
+
+		# vector versions
+		obj = self.constructor([[1,1,1],[3,3,3],[7,7,7]])
+		expObj = self.constructor([[0,0,0], [4,4,4], [12,12,12]])
+
+		sub = UML.createData("Matrix", [1]*3)
+		div = UML.createData("Matrix", [0.5]*3)
+		ret = self.normalizeHelper(obj, axis, subtract=sub, divide=div)
+
+		assert ret is None
+		assert expObj == obj
+
 
 	# successful float valued inputs
 	def test_normalizePoints_success_float_int_inputs(self):
