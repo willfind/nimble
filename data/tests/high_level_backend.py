@@ -22,6 +22,7 @@ shufflePoints, shuffleFeatures, normalizePoints, normalizeFeatures
 
 from copy import deepcopy
 from nose.tools import *
+from nose.plugins.attrib import attr
 
 import os.path
 import numpy
@@ -675,6 +676,7 @@ class HighLevelDataSafe(DataTestObject):
 	# isApproximatelyEqual() #
 	########################
 
+	@attr('slow')
 	def test_isApproximatelyEqual_randomTest(self):
 		""" Test isApproximatelyEqual() using randomly generated data """
 

@@ -16,6 +16,7 @@ import numpy
 import os
 import os.path
 from nose.tools import *
+from nose.plugins.attrib import attr
 
 from copy import deepcopy
 
@@ -627,6 +628,7 @@ class QueryBackend(DataTestObject):
 	# toString #
 	############
 
+	@attr('slow')
 	def test_toString_nameAndValRecreation_randomized(self):
 		""" Regression test with random data and limits. Recreates expected results """
 		for pNum in [3,9]:
@@ -866,6 +868,7 @@ class QueryBackend(DataTestObject):
 		randGen = UML.createRandomData("List", 5, 5, 0, numericType='int')
 		randGen._arrangeDataWithLimits(maxHeight=1)
 
+	@attr('slow')
 	def test_arrangeDataWithLimits(self):
 		def makeUniformLength(rType, p, f, l):
 			raw = []
@@ -1637,6 +1640,7 @@ class QueryBackend(DataTestObject):
 	# plot #
 	########
 
+	@attr('slow')
 	def test_plot_fileOutput(self):
 		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
 			path = outFile.name
@@ -1658,6 +1662,7 @@ class QueryBackend(DataTestObject):
 	# plotPointDistribution #
 	#########################
 
+	@attr('slow')
 	def test_plotPointDistribution_fileOutput(self):
 		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
 			path = outFile.name
@@ -1679,6 +1684,7 @@ class QueryBackend(DataTestObject):
 	# plotFeatureDistribution #
 	###########################
 
+	@attr('slow')
 	def test_plotFeatureDistribution_fileOutput(self):
 		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
 			path = outFile.name
@@ -1700,6 +1706,7 @@ class QueryBackend(DataTestObject):
 	# plotPointAgainstPoint #
 	#########################
 
+	@attr('slow')
 	def test_plotPointAgainstPoint_fileOutput(self):
 		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
 			path = outFile.name
@@ -1721,6 +1728,7 @@ class QueryBackend(DataTestObject):
 	# plotFeatureAgainstFeature #
 	#############################
 
+	@attr('slow')
 	def test_plotFeatureAgainstFeature_fileOutput(self):
 		with tempfile.NamedTemporaryFile(suffix='png') as outFile:
 			path = outFile.name

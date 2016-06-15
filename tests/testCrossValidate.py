@@ -90,6 +90,7 @@ def _assertClassifierErrorOnRandomDataPlausible(actualError, numLabels, toleranc
 	assert error <= tolerance
 
 
+@attr('slow')
 def test_crossValidate_reasonable_results():
 	"""Assert that crossValidate returns reasonable errors for known algorithms
 	on cooked data sets:

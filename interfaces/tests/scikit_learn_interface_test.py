@@ -274,6 +274,7 @@ def testCustomRidgeRegressionCompareRandomized():
 	assert ret1.isApproximatelyEqual(ret2)
 
 
+@attr('slow')
 def testCustomKNNClassficationCompareRandomized():
 	""" Sanity check on custom KNNClassifier, compare to SKL's KNeighborsClassifier on random data"""
 	trainX, ignore, trainY = generateClusteredPoints(5, 50, 5, addFeatureNoise=True, addLabelNoise=False, addLabelColumn=False)

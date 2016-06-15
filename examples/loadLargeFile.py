@@ -8,6 +8,7 @@ import copy
 import math
 import pylab
 import bisect
+from nose.plugins.attrib import attr
 
 from allowImports import boilerplate
 boilerplate()
@@ -290,6 +291,8 @@ def testToListOfLists():
 	print "toListOfLists(numpy.matrix([[1,2],[4,2]]))", toListOfLists(numpy.matrix([[1,2],[4,2]]))
 	assert toListOfLists(numpy.matrix([[1,2],[4,2]])) == [[1,2],[4,2]]
 
+
+@attr('slow')
 def testgetBestFeaturesAndErrors():
 	#data = [["x0", "x1", "x2", "x3", "p1", "p2", "x6", "x7"],[1,5,2,3,7,1,3,9],[2,2,3.2,5,9.1,-7,2,7],[3,5,2,1,3,9,4,8],[4,9.2,3,5,5,1,8,1],[5,-4,2,1,1,0,6,3], [6,-2,-3,-1,-2,-3,-3,-2],[7,1,4,18,5,6,1,4],[8,2,3,4,5,6,3,2],[9,1,12,10,5,2,8,5],[10,8,3,2,1,5,4,1], [11,5,2,10,4,2,8,1], [12,6,2,14,4,5.3,2,-1], [13,2,2,12,4,5.4,3,-1], [14,6,2,15,4,5.3,3,-1], [15,2,1,13,2,0.3,-3,4], [16,6,3,4,4,-1,3,0], [17,1,4,20,3,-6,-2,1], [18,4,3,2,5,8,9,3]]
 	seed = 4
