@@ -98,24 +98,21 @@ class List(Base):
 		self.data = transposed
 		self._numFeatures = tempFeatures
 
-	def _appendPoints_implementation(self,toAppend):
+	def _appendPoints_implementation(self, toAppend):
 		"""
 		Append the points from the toAppend object to the bottom of the features in this object
 		
 		"""
 		for pointIndex in xrange(toAppend.pointCount):
-			self.data.append(toAppend.data[pointIndex])
+			self.data.append(copy.deepcopy(toAppend.data[pointIndex]))
 	
-	def _appendFeatures_implementation(self,toAppend):
+	def _appendFeatures_implementation(self, toAppend):
 		"""
 		Append the features from the toAppend object to right ends of the points in this object
 
 		"""
-		featureLimit = toAppend.featureCount
 		for i in xrange(self.pointCount):
-			for j in xrange(featureLimit):
-				value = toAppend.data[i][j]
-				self.data[i].append(value)
+			self.data[i] += copy.deepcopy(toAppend.data[i])
 		self._numFeatures = self._numFeatures + toAppend.featureCount
 
 

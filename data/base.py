@@ -2307,7 +2307,7 @@ class Base(object):
 		the calling object object.
 		
 		"""
-		if isinstance(points, int):
+		if isinstance(points, (int,basestring)):
 			points = [points]
 		if self.pointCount == 0:
 			raise ArgumentException("Object contains 0 points, there is no valid possible input")
