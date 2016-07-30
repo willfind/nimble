@@ -1778,16 +1778,14 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction):
 		Returns: a single numeric value measuring the performance of the learner
 		that produced the given data.
 	"""
-	if isinstance(dependentVar, Base):
+	if dependentVar is None or isinstance(dependentVar, Base):
 		#The known Indicator argument already contains all known
 		#labels, so we do not need to do any further processing
 		knownLabels = dependentVar
-	elif dependentVar is not None:
+	else:
 		#known Indicator is a feature ID or group of IDs; we extract the
 		# columns it indicates from knownValues
 		knownLabels = knownData.copyFeatures(dependentVar)
-	else:
-		raise ArgumentException("Missing indicator for known labels in computeMetrics")
 
 	try:
 		(args, vargs, kw, defaults) = inspect.getargspec(performanceFunction)
@@ -1817,7 +1815,7 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction):
 		msg += "are required, yet this had " + str(len(args))
 
 		raise ArgumentException(msg)
-	
+
 	return result
 
 def confusion_matrix_generator(knownY, predictedY):
@@ -1915,20 +1913,21 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 	"""
 	if not isinstance(X, Base):
 		raise ArgumentException("X must be a Base object")
-	if not isinstance(Y, (Base, int, basestring, list)):
-		raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
-	if isinstance(Y, (int, basestring, list)):
-		X = X.copy()
-		Y = X.extractFeatures(Y)
+	if Y is not None:
+		if not isinstance(Y, (Base, int, basestring, list)):
+			raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
+		if isinstance(Y, (int, basestring, list)):
+			X = X.copy()
+			Y = X.extractFeatures(Y)
 
-	if Y.featureCount > 1 and scoreMode != 'label':
-		msg = "When dealing with multi dimentional outputs / predictions, "
-		msg += "then the scoreMode flag is required to be set to 'label'"
-		raise ArgumentException(msg)
+		if Y.featureCount > 1 and scoreMode != 'label':
+			msg = "When dealing with multi dimentional outputs / predictions, "
+			msg += "then the scoreMode flag is required to be set to 'label'"
+			raise ArgumentException(msg)
 
-	if not X.pointCount == Y.pointCount:
-		#todo support indexing if Y is an index for X instead
-		raise ArgumentException("X and Y must contain the same number of points.")
+		if not X.pointCount == Y.pointCount:
+			#todo support indexing if Y is an index for X instead
+			raise ArgumentException("X and Y must contain the same number of points.")
 
 	if useLog is None:
 		useLog = UML.settings.get("logger", "enabledByDefault")
@@ -2007,10 +2006,11 @@ def makeFoldIterator(dataList, folds):
 
 	points = dataList[0].pointCount
 	for data in dataList:
-		if data.pointCount == 0:
-			raise ArgumentException("One of the objects has 0 points, it is impossible to specify a valid number of folds")
-		if data.pointCount != dataList[0].pointCount:
-			raise ArgumentException("All data objects in the list must have the same number of points and features")
+		if data is not None:
+			if data.pointCount == 0:
+				raise ArgumentException("One of the objects has 0 points, it is impossible to specify a valid number of folds")
+			if data.pointCount != dataList[0].pointCount:
+				raise ArgumentException("All data objects in the list must have the same number of points and features")
 
 	# note: we want truncation here
 	numInFold = int(points / folds)
@@ -2039,7 +2039,7 @@ class _foldIteratorClass():
 		self.index = 0
 		self.dataList = dataList
 		for dat in self.dataList:
-			if dat.getTypeString() == 'Sparse':
+			if dat is not None and dat.getTypeString() == 'Sparse':
 				dat._sortInternal('point')
 
 	def __iter__(self):
@@ -2053,7 +2053,10 @@ class _foldIteratorClass():
 		# across multiple folds
 		copiedList = []
 		for data in self.dataList:
-			copiedList.append(data.copy())
+			if data is None:
+				copiedList.append(None)
+			else:
+				copiedList.append(data.copy())
 
 		# we want each training set to be permuted wrt its ordering in the original
 		# data. This is setting up a permutation to be applied to each object
@@ -2064,10 +2067,13 @@ class _foldIteratorClass():
 
 		resultsList = []
 		for copied in copiedList:
-			currTest = copied.extractPoints(self.foldList[self.index])
-			currTrain = copied	
-			currTrain.shufflePoints(indices)
-			resultsList.append((currTrain, currTest))
+			if copied is None:
+				resultsList.append((None, None))
+			else:
+				currTest = copied.extractPoints(self.foldList[self.index])
+				currTrain = copied
+				currTrain.shufflePoints(indices)
+				resultsList.append((currTrain, currTest))
 		self.index = self.index + 1
 		return resultsList
 

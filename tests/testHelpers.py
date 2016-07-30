@@ -88,6 +88,32 @@ class FoldIteratorTester(object):
 		fold1Train.appendPoints(fold1Test)
 		fold2Train.appendPoints(fold2Test)
 
+	def test_makeFoldIterator_verifyPartitions_Unsupervised(self):
+		""" Test makeFoldIterator() yields the correct number folds and partitions the data, with a None data """
+		data = [[1],[2],[3],[4],[5]]
+		names = ['col']
+		toTest = self.constructor(data,names)
+		folds = makeFoldIterator([toTest, None],2)
+
+		[(fold1Train, fold1Test), (fold1NoneTrain, fold1NoneTest)] = folds.next()
+		[(fold2Train, fold2Test), (fold2NoneTrain, fold2NoneTest)] = folds.next()
+
+		try:
+			folds.next()
+			assert False
+		except StopIteration:
+			pass
+
+		assert fold1Train.pointCount + fold1Test.pointCount == 5
+		assert fold2Train.pointCount + fold2Test.pointCount == 5
+
+		fold1Train.appendPoints(fold1Test)
+		fold2Train.appendPoints(fold2Test)
+
+		assert fold1NoneTrain is None
+		assert fold1NoneTest is None
+		assert fold2NoneTrain is None
+		assert fold2NoneTest is None
 
 
 	def test_makeFoldIterator_verifyMatchups(self):
@@ -100,7 +126,6 @@ class FoldIteratorTester(object):
 		
 		data2 = [[-1],[-2],[-3],[-4],[-5],[-6],[-7]]
 		toTest2 = self.constructor(data2)
-
 
 		folds = makeFoldIterator([toTest0, toTest1, toTest2], 2)
 

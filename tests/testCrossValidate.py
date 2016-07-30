@@ -65,7 +65,7 @@ def test_crossValidate_callable():
 	numPoints = 10
 	# todo add other data types - currently crashes in sklearn interface for
 	# list and sparse
-	for dType in ['Sparse']:
+	for dType in ['List','Matrix','Sparse']:
 		X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=numLabels, dataType=dType)
 
 		classifierAlgos = ['Custom.KNNClassifier']
@@ -425,3 +425,4 @@ def test_crossValidateReturnEtc_withDefaultArgs():
 	assert allResultsList
 	assert 1 == len(allResultsList)
 	assert allResultsList[0][0] == {}
+
