@@ -170,7 +170,7 @@ class Sparse(Base):
 
 		# correct the row entries
 		offset = self.pointCount
-		toAdd = numpy.ones(len(newData) - len(self._data.data)) * offset
+		toAdd = numpy.ones(len(newData) - len(self._data.data), dtype=newRow.dtype) * offset
 		newRow[len(self._data.data):] += toAdd
 		
 		numNewRows = self.pointCount + toAppend.pointCount
@@ -190,7 +190,7 @@ class Sparse(Base):
 
 		# correct the col entries
 		offset = self.featureCount
-		toAdd = numpy.ones(len(newData) - len(self._data.data)) * offset
+		toAdd = numpy.ones(len(newData) - len(self._data.data), dtype=newCol.dtype) * offset
 		newCol[len(self._data.data):] += toAdd
 		
 		numNewCols = self.featureCount + toAppend.featureCount
