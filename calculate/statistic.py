@@ -40,24 +40,26 @@ def minimum(values):
     Given a 1D vector of values, find the minimum value.  If the values are
     not numerical, return None.
     """
-    if not _isNumericalFeatureGuesser(values):
-        return None
-
-    currMin = float("inf")
+    first = True
     nonZeroValues = values.nonZeroIterator()
     count = 0
 
     for value in nonZeroValues:
         count += 1
-        if (hasattr(value, '__cmp__') or hasattr(value, '__lt__')) and value < currMin:
-            currMin = value
+        if (hasattr(value, '__cmp__') or hasattr(value, '__lt__')):
+            if first:
+                currMin = value
+                first = False
+            else:
+                if value < currMin:
+                    currMin = value
 
-    if not math.isinf(currMin):
+    if first:
+        return None
+    else:
         if currMin > 0 and len(values) > count:
             return 0
         else: return currMin
-    else:
-        return None
 
 
 def maximum(values):
@@ -65,29 +67,31 @@ def maximum(values):
     Given a 1D vector of values, find the maximum value.  If the values are
     not numerical, return None.
     """
-    if not _isNumericalFeatureGuesser(values):
-        return None
-
-    currMax = float("-inf")
+    first = True
     nonZeroValues = values.nonZeroIterator()
     count = 0
 
     for value in nonZeroValues:
         count += 1
-        if (hasattr(value, '__cmp__') or hasattr(value, '__gt__')) and value > currMax:
-            currMax = value
+        if (hasattr(value, '__cmp__') or hasattr(value, '__gt__')):
+            if first:
+                currMax = value
+                first = False
+            else:
+                if value > currMax:
+                    currMax = value
 
-    if not math.isinf(currMax):
-        if currMax < 0 and count < len(values):
+    if first:
+        return None
+    else:
+        if currMax < 0 and len(values) > count:
             return 0
         else: return currMax
-    else:
-        return None
 
 
 def mean(values):
     """
-    Given a 1D vector of values, find the minimum value.  If the values are
+    Given a 1D vector of values, find the mean value.  If the values are
     not numerical, return None.
     """
     if not _isNumericalFeatureGuesser(values):
@@ -117,14 +121,11 @@ def mean(values):
 
 def median(values):
     """
-    Given a 1D vector of values, find the minimum value.  If the values are
-    not numerical, return None.
-    """
-    if not _isNumericalFeatureGuesser(values):
-        return None
+    Given a 1D vector of values, find the median value of the natural ordering.
 
+    """
     #Filter out None/NaN values from list of values
-    sortedValues = filter(lambda x: not (x is None or math.isnan(float(x))), values)
+    sortedValues = filter(lambda x: not _isMissing(x), values)
 
     sortedValues = sorted(sortedValues)
 
@@ -182,7 +183,7 @@ def uniqueCount(values):
     """
     Given a 1D vector of values, calculate the number of unique values.
     """
-    values = filter(lambda x: not (x is None or math.isnan(x)), values)
+    values = filter(lambda x: not _isMissing(x), values)
     valueSet = set(values)
     return len(valueSet)
 
@@ -276,7 +277,9 @@ def _isMissing(point):
     Determine if a point is missing or not.  If the point is None or NaN, return True.
     Else return False.
     """
-    if point is None or math.isnan(point):
+    if point is None:
+        return True
+    elif _isNumericalPoint(point) and math.isnan(float(point)):
         return True
     else: return False
 
