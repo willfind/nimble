@@ -49,7 +49,7 @@ def minimum(values):
 
     for value in nonZeroValues:
         count += 1
-        if _isNumericalPoint(value) and value < currMin:
+        if (hasattr(value, '__cmp__') or hasattr(value, '__lt__')) and value < currMin:
             currMin = value
 
     if not math.isinf(currMin):
@@ -74,7 +74,7 @@ def maximum(values):
 
     for value in nonZeroValues:
         count += 1
-        if _isNumericalPoint(value) and value > currMax:
+        if (hasattr(value, '__cmp__') or hasattr(value, '__gt__')) and value > currMax:
             currMax = value
 
     if not math.isinf(currMax):
@@ -124,7 +124,7 @@ def median(values):
         return None
 
     #Filter out None/NaN values from list of values
-    sortedValues = filter(lambda x: not (x is None or math.isnan(x)), values)
+    sortedValues = filter(lambda x: not (x is None or math.isnan(float(x))), values)
 
     sortedValues = sorted(sortedValues)
 
@@ -285,10 +285,13 @@ def _isNumericalFeatureGuesser(featureVector):
     Returns true if the vector contains primitive numerical non-complex values, 
     returns false otherwise.  Assumes that all items in vector are of the same type.
     """
+    if featureVector.getTypeString() in ['Matrix']:
+        return True
+
     for item in featureVector:
         if isinstance(item, (int, float, long)):
             return True
-        elif item is None or math.isnan(item):
+        elif item is None:
             pass
         else:
             return False
