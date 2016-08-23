@@ -63,8 +63,7 @@ def test_crossValidate_callable():
 	#just scrap data to make sure it doesn't crash
 	numLabels = 3
 	numPoints = 10
-	# todo add other data types - currently crashes in sklearn interface for
-	# list and sparse
+	
 	for dType in ['List','Matrix','Sparse']:
 		X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=numLabels, dataType=dType)
 
@@ -343,7 +342,7 @@ def test_crossValidateReturnBest():
 	"""
 	# needs to be binary: FlipWrapper only works on binary classification
 	# data
-	((X, Y), (testX, testY)) = generateClassificationData(2, 15, 5)
+	((X, Y), (testX, testY)) = generateClassificationData(2, 20, 5)
 
 	# need to setup a situation where we guarantee certain returns
 	# from the performanceMetric fractionIncorrect. Thus, we generate
@@ -426,3 +425,53 @@ def test_crossValidateReturnEtc_withDefaultArgs():
 	assert 1 == len(allResultsList)
 	assert allResultsList[0][0] == {}
 
+@attr('slow')
+def test_crossValidate_sameResults_avgfold_vs_allcollected():
+	# When whole dataset has the same label, crossValidated score 
+	#reflects 100% accruacy (with a classifier)
+	classifierAlgo = 'Custom.KNNClassifier'
+	X, Y = _randomLabeledDataSet(numLabels=1)
+
+	def copiedPerfFunc(knowns, predicted):
+		return fractionIncorrect(knowns, predicted)
+	copiedPerfFunc.optimal = fractionIncorrect.optimal
+
+	copiedPerfFunc.avgFolds = False
+	nonAvgResult = crossValidate(classifierAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
+
+	copiedPerfFunc.avgFolds = True
+	avgResult = crossValidate(classifierAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
+
+	# 0 incorrect ever
+	assert nonAvgResult < 0.000001
+	# For this metric, the result should be the same either way; helps confirm that
+	# both methods are correctly implemented if they agree
+	assert nonAvgResult == avgResult  
+
+	#For an easy dataset (no noise, overdetermined linear hyperplane!),
+	#crossValidated error is perfect 
+	regressionAlgo = 'Custom.RidgeRegression'
+
+	#make random data set where all points lie on a linear hyperplane
+	numFeats = 3
+	numPoints = 50
+	points = [[pythonRandom.gauss(0,1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
+	labels = [[sum(featVector)] for featVector in points]
+	X = createData('Matrix', points)
+	Y = createData('Matrix', labels)
+	
+	def copiedPerfFunc(knowns, predicted):
+		return meanAbsoluteError(knowns, predicted)
+	copiedPerfFunc.optimal = fractionIncorrect.optimal
+
+	copiedPerfFunc.avgFolds = False
+	nonAvgResult = crossValidate(regressionAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
+
+	copiedPerfFunc.avgFolds = True
+	avgResult = crossValidate(regressionAlgo, X, Y, copiedPerfFunc, {}, numFolds=5)
+
+	#assert error essentially zero since there's no noise
+	assert nonAvgResult < .0000001 
+	# For this metric, the result should be the same either way; helps confirm that
+	# both methods are correctly implemented if they agree
+	assert abs(nonAvgResult - avgResult) < .0000001

@@ -1929,6 +1929,9 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 			#todo support indexing if Y is an index for X instead
 			raise ArgumentException("X and Y must contain the same number of points.")
 
+	if folds == 0:
+		raise ArgumentException("Tried to cross validate over 0 folds")
+
 	if useLog is None:
 		useLog = UML.settings.get("logger", "enabledByDefault")
 		useLog = True if useLog.lower() == 'true' else False
@@ -1952,7 +1955,20 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 	performanceOfEachCombination = []
 	for i in xrange(numArgSets):
 		performanceOfEachCombination.append([None, []])
-	
+
+	# control variables determining if we save all results before calculating performance
+	# or if we can calculate for each fold and then avg the results.
+	perfNone = performanceFunction is None
+	if not perfNone:
+		canAvgFolds = hasattr(performanceFunction, 'avgFolds') and performanceFunction.avgFolds
+	else:
+		canAvgFolds = False
+
+	# folditerator randomized the point order, so if we are collecting all the
+	# results, we also have to collect the correct order of the known values
+	if not canAvgFolds:
+		collectedY = None
+
 	# Folding should be the same for each argset (and is expensive) so
 	# iterate over folds first
 	for fold in folds:
@@ -1963,30 +1979,42 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 		for curArgumentCombination in argumentCombinationIterator:
 			#run algorithm on the folds' training and testing sets
 			curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY, testX=curTestingX, arguments=curArgumentCombination, scoreMode=scoreMode, useLog=deepLog)
-			#calculate error of prediction, according to performanceFunction
-			curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction)
 
 			performanceOfEachCombination[argSetIndex][0] = curArgumentCombination
-			performanceOfEachCombination[argSetIndex][1].append(curPerformance)
+
+			if canAvgFolds:
+				#calculate error of prediction, according to performanceFunction
+				curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction)
+				performanceOfEachCombination[argSetIndex][1].append(curPerformance)
+			else:
+				performanceOfEachCombination[argSetIndex][1].append(curRunResult)
+				if collectedY is None:
+					collectedY = curTestingY
+				else:
+					collectedY.appendPoints(curTestingY)
+
 			argSetIndex += 1
 
 		# setup for next iteration
 		argumentCombinationIterator.reset()
 
-	# now, we run through the results and calculate the average for each set
-	# over all folds
-	for i in xrange(len(performanceOfEachCombination)):
-		curArgSet = performanceOfEachCombination[i][0]
-		performanceListOfFolds = performanceOfEachCombination[i][1]
-
-		if len(performanceListOfFolds) == 0:
-			raise(ZeroDivisionError("crossValidate tried to average performance of ZERO runs"))
-	
-		#else average score from each fold (works for one fold as well)
-		averagePerformance = sum(performanceListOfFolds)/float(len(performanceListOfFolds))
+	# We consume the saved results, either by averaging the individual results
+	# calculations for each fold, or combining the saved predictions and calculating
+	# performance of the entire set.
+	for i, (curArgSet, results) in enumerate(performanceOfEachCombination):
+		# average score from each fold (works for one fold as well)
+		if canAvgFolds:
+			finalPerformance = sum(results)/float(len(results))
+		# we combine the results objects into one, and then calc performance
+		else:
+			for resultIndex in xrange(1,len(results)):
+				results[0].appendPoints(results[resultIndex])
+				
+			# TODO raise RuntimeError("How do we guarantee Y and results are in same order?")
+			finalPerformance = computeMetrics(collectedY, None, results[0], performanceFunction)
 
 		# we use the current results container to be the return value
-		performanceOfEachCombination[i] = (curArgSet, averagePerformance)
+		performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
 	#return the list of tuples - tracking the performance of each argument
 	return performanceOfEachCombination
