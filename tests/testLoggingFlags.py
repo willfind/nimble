@@ -20,7 +20,7 @@ learnerName = 'custom.KNNClassifier'
 # helper function which checks log staus
 def runAndCheck(toCall, useLog):
 	# generate data
-	cData = generateClassificationData(2, 10, 5)
+	cData = generateClassificationData(2, 10, 2)
 	((trainX, trainY), (testX, testY)) = cData
 
 	# log file path
@@ -129,7 +129,7 @@ def test_trainAndTestOnTrainingData_CVError():
 #	backend(wrapped)
 
 def test_TrainedLearer_apply():
-	cData = generateClassificationData(2, 10, 5)
+	cData = generateClassificationData(2, 10, 2)
 	((trainX, trainY), (testX, testY)) = cData
 	# get a trained learner
 	tl = UML.train(learnerName, trainX, trainY, useLog=False)
@@ -140,7 +140,7 @@ def test_TrainedLearer_apply():
 	backend(wrapped)
 
 def test_TrainedLearer_test():
-	cData = generateClassificationData(2, 10, 5)
+	cData = generateClassificationData(2, 10, 2)
 	((trainX, trainY), (testX, testY)) = cData
 	# get a trained learner
 	tl = UML.train(learnerName, trainX, trainY, useLog=False)
@@ -252,9 +252,32 @@ def test_Deep_crossValidateReturnBest():
 
 	backendDeep(wrapped, setter)
 
+def test_Deep_train():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		k = (2,3)  # since we are not calling CV directly, we need to trigger it
+		return UML.train(learnerName, trainX, trainY, performanceFunction=fractionIncorrect, useLog=useLog, k=k)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+
+def test_Deep_trainAndApply():
+	def wrapped(trainX, trainY, testX, testY, useLog):
+		k = (2,3)  # since we are not calling CV directly, we need to trigger it
+		return UML.trainAndApply(learnerName, trainX, trainY, testX, performanceFunction=fractionIncorrect, useLog=useLog, k=k)
+
+	def setter(val):
+		UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
+
+	backendDeep(wrapped, setter)
+
+
 def test_Deep_trainAndTest():
 	def wrapped(trainX, trainY, testX, testY, useLog):
-		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
+		k = (2,3)  # since we are not calling CV directly, we need to trigger it
+		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog, k=k)
 
 	def setter(val):
 		UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
@@ -282,20 +305,20 @@ def test_Deep_trainAndApplyOVA():
 
 	backendDeep(wrapped, setter)
 
-def test_Deep_TrainAndTestOvO():
-	def wrapped(trainX, trainY, testX, testY, useLog):
-		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, multiClassStrategy='OneVsOne', useLog=useLog)
+#def test_Deep_TrainAndTestOvO():
+#	def wrapped(trainX, trainY, testX, testY, useLog):
+#		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, multiClassStrategy='OneVsOne', useLog=useLog)
 
-	def setter(val):
-		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
+#	def setter(val):
+#		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
 
-	backendDeep(wrapped, setter)
+#	backendDeep(wrapped, setter)
 
-def test_Deep_trainAndTestOVA():
-	def wrapped(trainX, trainY, testX, testY, useLog):
-		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, multiClassStrategy='OneVsAll', useLog=useLog)
+#def test_Deep_trainAndTestOVA():
+#	def wrapped(trainX, trainY, testX, testY, useLog):
+#		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, multiClassStrategy='OneVsAll', useLog=useLog)
 
-	def setter(val):
-		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
+#	def setter(val):
+#		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
 
-	backendDeep(wrapped, setter)
+#	backendDeep(wrapped, setter)

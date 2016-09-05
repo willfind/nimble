@@ -178,6 +178,12 @@ class MachineReadableLogger(UmlLogger):
 
 		self.logMessage(logLine)
 
+
+	def _logCrossValidation_implemention(self, trainData, trainLabels, learnerName,
+			metric, performance, timer, learnerArgs, folds=None):
+		pass
+
+
 def parseLog(pathToLogFile):
 	"""
 		Provided with a path to a log file containing some lines representing machine-readable

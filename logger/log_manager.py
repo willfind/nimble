@@ -50,6 +50,11 @@ class LogManager(object):
 		self.humanReadableLog.logRun(trainData, trainLabels, testData, testLabels, function, metrics, predictions, performance, timer, extraInfo, numFolds)
 		self.machineReadableLog.logRun(trainData, trainLabels, testData, testLabels, function, metrics, predictions, performance, timer, extraInfo, numFolds)
 
+	def logCrossValidation(self, trainData, trainLabels, learnerName, metric, performance,
+			timer, learnerArgs, folds=None):
+		self.humanReadableLog.logCrossValidation(trainData, trainLabels, learnerName, metric, performance, timer, learnerArgs, folds)
+		self.machineReadableLog.logCrossValidation(trainData, trainLabels, learnerName, metric, performance, timer, learnerArgs, folds)
+
 def initLoggerAndLogConfig():
 	"""Sets up or reads configuration options associated with logging,
 	and initializes the currently active logger object using those

@@ -1947,7 +1947,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 	argumentCombinationIterator = ArgumentIterator(merged)
 
 	# we want the folds for each argument combination to be the same
-	folds = makeFoldIterator([X,Y], folds)
+	foldIter = makeFoldIterator([X,Y], folds)
 
 	# setup container for outputs, a tuple entry for each arg set, containing
 	# a list for the results of those args on each fold
@@ -1971,7 +1971,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 
 	# Folding should be the same for each argset (and is expensive) so
 	# iterate over folds first
-	for fold in folds:
+	for fold in foldIter:
 		[(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
 		argSetIndex = 0
 
@@ -2015,6 +2015,16 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 
 		# we use the current results container to be the return value
 		performanceOfEachCombination[i] = (curArgSet, finalPerformance)
+
+	# log results of this cross validation
+	if useLog:
+		# TODO: should we have an actual timer here? if we do should we remove
+		# the CV timing from logRun?
+		timer = None
+
+		# (self, trainData, trainLabels, learnerName, metric, performance, timer, learnerArgs, folds)
+		UML.logger.active.logCrossValidation(X, Y, learnerName, performanceFunction,
+				performanceOfEachCombination, timer, merged, folds)
 
 	#return the list of tuples - tracking the performance of each argument
 	return performanceOfEachCombination

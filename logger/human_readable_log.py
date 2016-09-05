@@ -144,6 +144,67 @@ class HumanReadableLogger(UmlLogger):
 		self.logMessage(toOutput)
 
 
+	def _logCrossValidation_implemention(self, trainData, trainLabels, learnerName,
+			metric, performance, timer, learnerArgs, folds=None):
+		tableList = []
+
+		#Pack the name defining the learner
+		tableList.append([["Cross Validating for ", str(learnerName)]])
+
+		# information about the input data
+		(dataInfo0, dataInfo1) = _packDataInfo([trainData, trainLabels, None, None])
+		if dataInfo0 is not None:
+			tableList.append(dataInfo0)
+
+		# separate arguments between those with fixed values for each trial and
+		# those arguments that need to be selected
+		fixedArgs, varArgs = _separate_fixed_vs_variable_arguments(learnerArgs)
+
+		# pack the fixed value arguments into a table
+		if fixedArgs != {}:
+			fullArgs = [["Fixed Arguments:"]]
+			body = _packExtraInfo(fixedArgs)
+			fullArgs.append(body[0])
+			fullArgs.append(body[1])
+			tableList.append(fullArgs)
+
+		# pack the variable value arguments into a table
+		if varArgs != {}:
+			fullArgs = [["Variable Arguments:"]]
+			body = _packExtraInfo(varArgs)
+			fullArgs.append(body[0])
+			fullArgs.append(body[1])
+			tableList.append(fullArgs)
+
+		# pack the CV type information
+		cvType = [str(folds) + "-Folding  using"]
+		cvType.append(metric.__name__)
+		if hasattr(metric, 'optimal'):
+			cvType.append(" optimizing for " + str(metric.optimal) + " values")
+		tableList.append([cvType])
+
+		# all results
+		allResults = [["Result", "Choosen Arguments"]]
+		for argSet in performance:
+			allResults.append([argSet[1], argSet[0]])
+		tableList.append(allResults)
+
+		if timer is not None:
+			timerHeaders = []
+			timerList = []
+			for header in timer.cumulativeTimes.keys():
+				duration = timer.calcRunTime(header)
+				timerHeaders.append(header + " time")
+				timerList.append("{0:.2f}".format(duration))
+			tableList.append([timerHeaders, timerList])
+
+		self._log_EntryOfTables(tableList)
+
+
+#######################
+### Generic Helpers ###
+#######################
+
 def _packMetricInfo(testY, metrics, predictions, performance):
 	metricTable = []
 	
@@ -256,3 +317,16 @@ def _packDataInfo(dataObjects):
 			rawShapeTable.append(currRow)
 
 	return (rawPathTable, rawShapeTable)
+
+
+def _separate_fixed_vs_variable_arguments(arguments):
+	fixed = {}
+	variable = {}
+	if arguments != {}:
+		for key, val in arguments.items():
+			if isinstance(val, tuple):
+				variable[key] = val
+			else:
+				fixed[key] = val
+
+	return fixed, variable

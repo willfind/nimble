@@ -96,3 +96,11 @@ class UmlLogger(object):
 			raise ArgumentException("logLoad requires at least one non-None argument")
 		else:
 			self._logLoad_implementation(dataFileName, baseDataType, name)
+
+	def logCrossValidation(self, trainData, trainLabels, learnerName, metric, performance,
+			timer, learnerArgs, folds=None):
+		"""
+		Send information about selection of a set of parameters using cross validation
+		"""
+		self._logCrossValidation_implemention(trainData, trainLabels, learnerName, metric,
+			performance, timer, learnerArgs, folds)
