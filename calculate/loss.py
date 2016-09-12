@@ -40,6 +40,15 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
 	if predictedValues is None or not isinstance(predictedValues, Base) or predIsEmpty:
 		raise ArgumentException("Empty 'predictedValues' argument in error calculator")
 
+	if knownValues.pointCount != predictedValues.pointCount:
+		msg = "The knownValues and predictedValues must have the same number of points"
+		raise ArgumentException(msg)
+
+	if knownValues.featureCount != predictedValues.featureCount:
+		msg = "The knownValues and predictedValues must have the same number of features"
+		raise ArgumentException(msg)
+
+
 	if not isinstance(knownValues, Matrix):
 		knownValues = knownValues.copyAs(format="Matrix")
 

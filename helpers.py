@@ -1985,15 +1985,18 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
 			if canAvgFolds:
 				#calculate error of prediction, according to performanceFunction
 				curPerformance = computeMetrics(curTestingY, None, curRunResult, performanceFunction)
+
 				performanceOfEachCombination[argSetIndex][1].append(curPerformance)
 			else:
 				performanceOfEachCombination[argSetIndex][1].append(curRunResult)
-				if collectedY is None:
-					collectedY = curTestingY
-				else:
-					collectedY.appendPoints(curTestingY)
 
 			argSetIndex += 1
+
+		if not canAvgFolds:
+			if collectedY is None:
+				collectedY = curTestingY
+			else:
+				collectedY.appendPoints(curTestingY)
 
 		# setup for next iteration
 		argumentCombinationIterator.reset()

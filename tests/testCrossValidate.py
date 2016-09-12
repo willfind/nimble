@@ -475,3 +475,38 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
 	# For this metric, the result should be the same either way; helps confirm that
 	# both methods are correctly implemented if they agree
 	assert abs(nonAvgResult - avgResult) < .0000001
+
+@configSafetyWrapper
+def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
+	# To dispel concerns relating to correctly collecting the Y data with
+	# respect to the ordering of the X data in the non-average CV code.
+
+	class UnitPredictor(CustomLearner):
+		learnerType = "classification"
+
+		def train(self, trainX, trainY, bozoArg):
+			return
+
+		def apply(self, testX):
+			return testX.copy()
+
+	def copiedPerfFunc(knowns, predicted):
+		return fractionIncorrect(knowns, predicted)
+	copiedPerfFunc.optimal = fractionIncorrect.optimal
+
+	UML.registerCustomLearner('custom', UnitPredictor)
+
+	data = [1,3,5,6,8,4,10,-12,-2,22]
+	X = UML.createData("Matrix", data)
+	X.transpose()
+	Y = UML.createData("Matrix", data)
+	Y.transpose()
+
+	copiedPerfFunc.avgFolds = False
+	nonAvgResult = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg':(1,2)}, numFolds=5)
+
+	copiedPerfFunc.avgFolds = True
+	avgResult = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg':(1,2)}, numFolds=5)
+
+	# should have 100 percent accuracy, so these results should be the same
+	assert nonAvgResult == avgResult
