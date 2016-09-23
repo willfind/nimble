@@ -824,13 +824,19 @@ class Base(object):
 		labels: may be None, a single feature ID, or a list of feature
 		IDs depending on whether one is dealing with data for unsupervised
 		learning, single variable supervised learning, or multi-output
-		supervised learning. Consequently, if labels is None, then only two
-		data sets (training and testing) are returned, otherwise, four sets
-		are returned (data and labels each for both training and testing).
+		supervised learning. This parameter will affect the shape of the
+		returned tuple.
 
 		randomOrder: controls whether the order of the points in the returns
 		sets matches that of the original object, or if their order is
 		randomized.
+
+		Returns either a length 2 or a length 4 tuple. If labels=None, then
+		returns a length 2 tuple containing the training object, then the
+		testing object (trainX, testX). If labels is non-None, a length 4
+		tuple is returned, containing the training data object, then the
+		training labels object, then the testing data object, and finally
+		the testing labels (trainX, trainY, testX, testY).
 
 		"""
 		toSplit = self.copy()
