@@ -774,22 +774,22 @@ class Sparse(Base):
 			return self._writeFileMTX_implementation(outPath, includePointNames, includeFeatureNames)
 
 	def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
-		def makeNameString(count, namesInv):
+		def makeNameString(count, namesItoN):
 				nameString = "#"
 				for i in xrange(count):
-					nameString += namesInv[i]
+					nameString += namesItoN[i]
 					if not i == count - 1:
 						nameString += ','
 				return nameString
 
 		header = ''
 		if includePointNames:
-			header = makeNameString(self.pointCount, self.pointNamesInverse)
+			header = makeNameString(self.pointCount, self.getPointNames())
 			header += '\n'
 		else:
 			header += '#\n'
 		if includeFeatureNames:
-			header += makeNameString(self.featureCount, self.featureNamesInverse)
+			header += makeNameString(self.featureCount, self.getFeatureNames())
 			header += '\n'
 		else:
 			header += '#\n'
@@ -1564,7 +1564,7 @@ class SparseView(BaseView, Sparse):
 	def _copyAs_implementation(self, format):
 		if self.pointCount == 0 or self.featureCount == 0:
 			emptyStandin = numpy.empty((self.pointCount, self.featureCount))
-			intermediate = UML.data.Matrix(emptyStandin, pointNames=self.pointNames, featureNames=self.featureNames)
+			intermediate = UML.data.Matrix(emptyStandin, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 			return intermediate.copyAs(format)
 
 		limited = self._source.copyPoints(start=self._pStart, end=self._pEnd-1)

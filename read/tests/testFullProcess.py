@@ -22,17 +22,16 @@ def test_DokDataSetFrequencyFloor():
     classLabelMapMap = {'classLabel': classLabelMap}
     cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=3, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
 
-    featureNameMap = cooDataSet.featureNames
-    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+    featureNames = cooDataSet.getFeatureNames()
 
-    assert len(featureNameMap) == 9
-    assert 'body/cat' in featureNameMap
-    assert 'body/dog' in featureNameMap
-    assert 'body/account' in featureNameMap
-    assert 'body/abl' in featureNameMap
-    assert 'head/cat' in featureNameMap
-    assert 'domain/bing.com' in featureNameMap
-    assert 'domain/google.com' in featureNameMap
+    assert len(featureNames) == 9
+    assert 'body/cat' in featureNames
+    assert 'body/dog' in featureNames
+    assert 'body/account' in featureNames
+    assert 'body/abl' in featureNames
+    assert 'head/cat' in featureNames
+    assert 'domain/bing.com' in featureNames
+    assert 'domain/google.com' in featureNames
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 9
@@ -64,7 +63,7 @@ def test_DokDataSetFrequencyFloor():
             continue
         print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
-            feature = inverseFeatureNameMap[j]
+            feature = featureNames[j]
             if dokVersion[i, j] > 0:
                 print "processed feature: " + str(feature)
                 print "processed feature count: " + str(dokVersion[i, j])
@@ -87,17 +86,16 @@ def test_DokDataSetTypeWeighting():
     typeWeightScheme = {'domain':3}
     cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=3, featureTypeWeightScheme=typeWeightScheme, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
 
-    featureNameMap = cooDataSet.featureNames
-    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+    featureNames = cooDataSet.getFeatureNames()
 
-    assert len(featureNameMap) == 9
-    assert 'body/cat' in featureNameMap
-    assert 'body/dog' in featureNameMap
-    assert 'body/account' in featureNameMap
-    assert 'body/abl' in featureNameMap
-    assert 'head/cat' in featureNameMap
-    assert 'domain/bing.com' in featureNameMap
-    assert 'domain/google.com' in featureNameMap
+    assert len(featureNames) == 9
+    assert 'body/cat' in featureNames
+    assert 'body/dog' in featureNames
+    assert 'body/account' in featureNames
+    assert 'body/abl' in featureNames
+    assert 'head/cat' in featureNames
+    assert 'domain/bing.com' in featureNames
+    assert 'domain/google.com' in featureNames
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 9
@@ -119,11 +117,9 @@ def test_DokDataSetTypeWeighting():
 
     docMap = {1: doc1Map, 2: doc2Map, 3: doc3Map, 4: doc4Map, 5: doc5Map, 7: doc7Map, 8: doc8Map, 9: doc9Map}
 
-    featureNamesInverseKeys = inverseFeatureNameMap.keys()
-    featureNamesInverseKeys.sort()
     # nameBuffer = ''
-    # for featureNameIndex in featureNamesInverseKeys:
-    #     nameBuffer += str(inverseFeatureNameMap[featureNameIndex]) + " "*(20 - len(inverseFeatureNameMap[featureNameIndex]))
+    # for featureNameIndex in xrange(cooDataSet.featureCount):
+    #     nameBuffer += str(featureNames[featureNameIndex]) + " "*(20 - len(featureNames[featureNameIndex]))
     # print nameBuffer
 
     # for i in range(numRows):
@@ -142,7 +138,7 @@ def test_DokDataSetTypeWeighting():
             continue
         # print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
-            feature = inverseFeatureNameMap[j]
+            feature = featureNames[j]
             if dokVersion[i, j] > 0:
                 # print "processed feature: " + str(feature)
                 # print "processed feature count: " + str(dokVersion[i, j])
@@ -161,21 +157,20 @@ def test_convertToCooBaseDataFreqRepMultiTyped():
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
     cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap)
-    featureNameMap = cooDataSet.featureNames
-    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+    featureNames = cooDataSet.getFeatureNames()
 
-    # print "featureNameMap: " + str(featureNameMap)
-    assert len(featureNameMap) == 15
-    assert 'body/cat' in featureNameMap
-    assert 'body/dog' in featureNameMap
-    assert 'body/account' in featureNameMap
-    assert 'body/abl' in featureNameMap
-    assert 'body/hors' in featureNameMap
-    assert 'body/pant' in featureNameMap
-    assert 'head/sauc' in featureNameMap
-    assert 'head/cat' in featureNameMap
-    assert 'head/account' in featureNameMap
-    assert 'head/dog' in featureNameMap
+    # print "featureNames: " + str(featureNames)
+    assert len(featureNames) == 15
+    assert 'body/cat' in featureNames
+    assert 'body/dog' in featureNames
+    assert 'body/account' in featureNames
+    assert 'body/abl' in featureNames
+    assert 'body/hors' in featureNames
+    assert 'body/pant' in featureNames
+    assert 'head/sauc' in featureNames
+    assert 'head/cat' in featureNames
+    assert 'head/account' in featureNames
+    assert 'head/dog' in featureNames
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 15
@@ -207,7 +202,7 @@ def test_convertToCooBaseDataFreqRepMultiTyped():
             continue
         #print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
-            feature = inverseFeatureNameMap[j]
+            feature = featureNames[j]
             if dokVersion[i, j] > 0:
                 #print "processed feature: " + str(feature)
                 #print "processed feature count: " + str(dokVersion[i, j])
@@ -227,20 +222,19 @@ def test_convertToCooBaseDataBinaryMultiTyped():
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
     cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='binary')
-    featureNameMap = cooDataSet.featureNames
-    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+    featureNames = cooDataSet.getFeatureNames()
 
-    assert len(featureNameMap) == 15
-    assert 'body/cat' in featureNameMap
-    assert 'body/dog' in featureNameMap
-    assert 'body/account' in featureNameMap
-    assert 'body/abl' in featureNameMap
-    assert 'body/hors' in featureNameMap
-    assert 'body/pant' in featureNameMap
-    assert 'head/sauc' in featureNameMap
-    assert 'head/cat' in featureNameMap
-    assert 'head/account' in featureNameMap
-    assert 'head/dog' in featureNameMap
+    assert len(featureNames) == 15
+    assert 'body/cat' in featureNames
+    assert 'body/dog' in featureNames
+    assert 'body/account' in featureNames
+    assert 'body/abl' in featureNames
+    assert 'body/hors' in featureNames
+    assert 'body/pant' in featureNames
+    assert 'head/sauc' in featureNames
+    assert 'head/cat' in featureNames
+    assert 'head/account' in featureNames
+    assert 'head/dog' in featureNames
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 15
@@ -272,7 +266,7 @@ def test_convertToCooBaseDataBinaryMultiTyped():
             continue
         #print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
-            feature = inverseFeatureNameMap[j]
+            feature = featureNames[j]
             if dokVersion[i, j] > 0:
                 #print "processed feature: " + str(feature)
                 #print "processed feature count: " + str(dokVersion[i, j])
@@ -292,20 +286,19 @@ def test_convertToCooBaseDataTfIdfMultiTyped():
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
     cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, featureRepresentation='tfidf')
-    featureNameMap = cooDataSet.featureNames
-    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+    featureNames = cooDataSet.getFeatureNames()
 
-    assert len(featureNameMap) == 15
-    assert 'body/cat' in featureNameMap
-    assert 'body/dog' in featureNameMap
-    assert 'body/account' in featureNameMap
-    assert 'body/abl' in featureNameMap
-    assert 'body/hors' in featureNameMap
-    assert 'body/pant' in featureNameMap
-    assert 'head/sauc' in featureNameMap
-    assert 'head/cat' in featureNameMap
-    assert 'head/account' in featureNameMap
-    assert 'head/dog' in featureNameMap
+    assert len(featureNames) == 15
+    assert 'body/cat' in featureNames
+    assert 'body/dog' in featureNames
+    assert 'body/account' in featureNames
+    assert 'body/abl' in featureNames
+    assert 'body/hors' in featureNames
+    assert 'body/pant' in featureNames
+    assert 'head/sauc' in featureNames
+    assert 'head/cat' in featureNames
+    assert 'head/account' in featureNames
+    assert 'head/dog' in featureNames
 
     assert cooDataSet.data.shape[0] == 8
     assert cooDataSet.data.shape[1] == 15
@@ -337,7 +330,7 @@ def test_convertToCooBaseDataTfIdfMultiTyped():
             continue
         #print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
-            feature = inverseFeatureNameMap[j]
+            feature = featureNames[j]
             if dokVersion[i, j] > 0:
                 #print "processed feature: " + str(feature)
                 #print "processed feature count: " + str(dokVersion[i, j])
@@ -358,21 +351,20 @@ def test_convertToCooBaseDataRequiredClassLabel():
     requiredClassLabelTypes = set(['classLabel'])
     cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', minTermFrequency=1, attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, requiredClassLabelTypes=requiredClassLabelTypes)
     #print "featureReport:\n" + cooDataSet.featureReport()
-    featureNameMap = cooDataSet.featureNames
-    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+    featureNames = cooDataSet.getFeatureNames()
 
-    #print "featureNameMap: " + str(featureNameMap)
-    assert len(featureNameMap) == 15
-    assert 'body/cat' in featureNameMap
-    assert 'body/dog' in featureNameMap
-    assert 'body/account' in featureNameMap
-    assert 'body/abl' in featureNameMap
-    assert 'body/hors' in featureNameMap
-    assert 'body/pant' in featureNameMap
-    assert 'head/sauc' in featureNameMap
-    assert 'head/cat' in featureNameMap
-    assert 'head/account' in featureNameMap
-    assert 'head/dog' in featureNameMap
+    #print "featureNames: " + str(featureNames)
+    assert len(featureNames) == 15
+    assert 'body/cat' in featureNames
+    assert 'body/dog' in featureNames
+    assert 'body/account' in featureNames
+    assert 'body/abl' in featureNames
+    assert 'body/hors' in featureNames
+    assert 'body/pant' in featureNames
+    assert 'head/sauc' in featureNames
+    assert 'head/cat' in featureNames
+    assert 'head/account' in featureNames
+    assert 'head/dog' in featureNames
 
     assert cooDataSet.data.shape[0] == 7
     assert cooDataSet.data.shape[1] == 15
@@ -404,7 +396,7 @@ def test_convertToCooBaseDataRequiredClassLabel():
             continue
         #print "docIdNumber: " + str(docIdNumber)
         for j in range(2, numColumns):
-            feature = inverseFeatureNameMap[j]
+            feature = featureNames[j]
             if dokVersion[i, j] > 0:
                 #print "processed feature: " + str(feature)
                 #print "processed feature count: " + str(dokVersion[i, j])
@@ -422,10 +414,9 @@ if __name__ == "__main__":
     attributeMapMap = {'domain': attributeMap}
     classLabelMapMap = {'classLabel': classLabelMap}
     cooDataSet = convertToCooBaseData(testDirectory2, dirMappingMode='multiTyped', attributeMaps=attributeMapMap, docIdClassLabelMaps=classLabelMapMap, minTermFrequency=2, featureRepresentation='frequency')
-    featureNameMap = cooDataSet.featureNames
-    inverseFeatureNameMap = cooDataSet.featureNamesInverse
+    featureNames = cooDataSet.getFeatureNames()
 
-    print "featureNameMap: " + str(featureNameMap)
+    print "featureNames: " + str(featureNames)
 
     dokVersion = cooDataSet.data.todok()
 
@@ -435,7 +426,7 @@ if __name__ == "__main__":
 
     headerRow = "     "
     for k in range(1, numColumns):
-        feature = inverseFeatureNameMap[k]
+        feature = featureNames[k]
         headerLength = len(feature)
         leftoverLength = 20 - headerLength
         headerRow += ' ' * leftoverLength + feature

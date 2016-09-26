@@ -32,8 +32,8 @@ if __name__ == "__main__":
 
 	print 'Standard run results: '+str(results1)
 	print 'One vs One predictions: '+repr(results2.data)
-	print 'One vs One, best score, column headers: ' + repr(resultsBestScore.featureNames)
+	print 'One vs One, best score, column headers: ' + repr(resultsBestScore.getFeatureNames())
 	print 'One vs One best score: '+repr(resultsBestScore.data)
-	print 'One vs One, all scores, column headers: ' + repr(resultsAllScores.featureNames)
+	print 'One vs One, all scores, column headers: ' + repr(resultsAllScores.getFeatureNames())
 	print 'One vs One all scores: '+repr(resultsAllScores.data)
 #	print 'One vs One performance results: ' + str(results3)

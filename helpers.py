@@ -1513,14 +1513,14 @@ def extractWinningPredictionIndex(predictionScores):
 	else:
 		return maxScoreIndex
 
-def extractWinningPredictionIndexAndScore(predictionScores, featureNamesInverse):
+def extractWinningPredictionIndexAndScore(predictionScores, featureNamesItoN):
 	"""
 	Provided a list of confidence scores for one point/row in a test set,
 	return the index of the column (i.e. label) of the highest score.  If
 	no score in the list of predictionScores is a number greater than negative
 	infinity, returns None.  
 	"""
-	allScores = extractConfidenceScores(predictionScores, featureNamesInverse)
+	allScores = extractConfidenceScores(predictionScores, featureNamesItoN)
 
 	if allScores is None:
 		return None
@@ -1535,7 +1535,7 @@ def extractWinningPredictionIndexAndScore(predictionScores, featureNamesInverse)
 		return (bestLabel, bestScore)
 
 
-def extractConfidenceScores(predictionScores, featureNamesInverse):
+def extractConfidenceScores(predictionScores, featureNamesItoN):
 	"""
 	Provided a list of confidence scores for one point/row in a test set,
 	and a dict mapping indices to featureNames, return a dict mapping
@@ -1548,7 +1548,7 @@ def extractConfidenceScores(predictionScores, featureNamesInverse):
 	scoreMap = {}
 	for i in range(len(predictionScores)):
 		score = predictionScores[i]
-		label = featureNamesInverse[i]
+		label = featureNamesItoN[i]
 		scoreMap[label] = score
 
 	return scoreMap
@@ -2956,7 +2956,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 
 	if scoreMode.lower() == 'label'.lower():
 		winningPredictionIndices = rawPredictions.calculateForEachPoint(extractWinningPredictionIndex).copyAs(format="python list")
-		indexToLabelMap = rawPredictions.featureNamesInverse
 		winningLabels = []
 		for [winningIndex] in winningPredictionIndices:
 			winningLabels.append([labelSet[int(winningIndex)]])
@@ -2966,10 +2965,10 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		#construct a list of lists, with each row in the list containing the predicted
 		#label and score of that label for the corresponding row in rawPredictions
 		predictionMatrix = rawPredictions.copyAs(format="python list")
-		labelMapInverse = rawPredictions.featureNamesInverse
+		indexToLabel = rawPredictions.getFeatureNames()
 		tempResultsList = []
 		for row in predictionMatrix:
-			bestLabelAndScore = extractWinningPredictionIndexAndScore(row, labelMapInverse)
+			bestLabelAndScore = extractWinningPredictionIndexAndScore(row, indexToLabel)
 			tempResultsList.append([bestLabelAndScore[0], bestLabelAndScore[1]])
 		#wrap the results data in a List container
 		featureNames = ['PredictedClassLabel', 'LabelScore']
@@ -2981,12 +2980,12 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 		columnHeaders = sorted([str(i) for i in labelSet])
 		#create map between label and index in list, so we know where to put each value
 		labelIndexDict = {v:k for k, v in zip(range(len(columnHeaders)), columnHeaders)}
-		featureNamesInverse = rawPredictions.featureNamesInverse
+		featureNamesItoN = rawPredictions.getFeatureNames()
 		predictionMatrix = rawPredictions.copyAs(format="python list")
 		resultsContainer = []
 		for row in predictionMatrix:
 			finalRow = [0] * len(columnHeaders)
-			scores = extractConfidenceScores(row, featureNamesInverse)
+			scores = extractConfidenceScores(row, featureNamesItoN)
 			for label, score in scores.items():
 				#get numerical index of label in return object
 				finalIndex = labelIndexDict[label]

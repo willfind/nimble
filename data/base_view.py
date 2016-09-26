@@ -100,7 +100,7 @@ class BaseView(Base):
 
 	def getPointName(self, index):
 		corrected = index + self._pStart
-		return self._source.pointNamesInverse[corrected]
+		return self._source.getPointName(corrected)
 
 	def getPointIndex(self, name):
 		possible = self._source.getPointIndex(name)
@@ -111,7 +111,7 @@ class BaseView(Base):
 
 	def getFeatureName(self, index):
 		corrected = index + self._fStart
-		return self._source.featureNamesInverse[corrected]
+		return self._source.getFeatureName(corrected)
 
 	def getFeatureIndex(self, name):
 		possible = self._source.getFeatureIndex(name)
