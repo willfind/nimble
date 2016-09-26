@@ -286,11 +286,7 @@ class Base(object):
 		to.
 
 		"""
-		ret = []
-		for i in xrange(len(self.pointNamesInverse)):
-			ret.append(self.getPointName(i))
-
-		return ret
+		return copy.copy(self.pointNamesInverse)
 
 	def getFeatureNames(self):
 		"""Returns a list containing all feature names, where their index
@@ -298,11 +294,7 @@ class Base(object):
 		correspond to.
 
 		"""
-		ret = []
-		for i in xrange(len(self.featureNamesInverse)):
-			ret.append(self.getFeatureName(i))
-
-		return ret
+		return copy.copy(self.featureNamesInverse)
 
 	def getPointName(self, index):
 		return self.pointNamesInverse[index]
@@ -3672,19 +3664,19 @@ class Base(object):
 		self._validateAxis(axis)
 		if axis == 'point':
 			self.pointNames = {}
-			self.pointNamesInverse = {}
+			self.pointNamesInverse = []
 			names = self.pointNames
 			invNames = self.pointNamesInverse
 			count = self._pointCount
 		else:
 			self.featureNames = {}
-			self.featureNamesInverse = {}
+			self.featureNamesInverse = []
 			names = self.featureNames
 			invNames = self.featureNamesInverse
 			count = self._featureCount
 		for i in xrange(count):
 			defaultName = self._nextDefaultName(axis)
-			invNames[i] = defaultName
+			invNames.append(defaultName)
 			names[defaultName] = i
 
 	def _addPointName(self, pointName):
@@ -3714,7 +3706,7 @@ class Base(object):
 		self._incrementDefaultIfNeeded(name, axis)	
 
 		numInAxis = len(selfNamesInv)
-		selfNamesInv[numInAxis] = name
+		selfNamesInv.append(name)
 		selfNames[name] = numInAxis
 
 	def _removePointNameAndShift(self, toRemove):
@@ -3758,18 +3750,16 @@ class Base(object):
 		#this will throw the appropriate exceptions, if need be
 		index = self._getIndex(toRemove, axis)
 		name = selfNamesInv[index]
+		numInAxis = len(selfNamesInv)
 
 		del selfNames[name]
-
-		numInAxis = len(selfNamesInv)
 		# remapping each index starting with the one we removed
 		for i in xrange(index, numInAxis-1):
 			nextName = selfNamesInv[i+1]
-			if name is not None:
-				selfNames[nextName] = i
-			selfNamesInv[i] = nextName
-		#delete the last mapping, that name was shifted in the for loop
-		del selfNamesInv[numInAxis-1]
+			selfNames[nextName] = i
+
+		#delete from inverse, since list, del will deal with 'remapping'
+		del selfNamesInv[index]
 
 	def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
 		"""
@@ -3869,10 +3859,10 @@ class Base(object):
 				raise ArgumentException("assignments is too large; this axis is empty ")
 			if axis == 'point':
 				self.pointNames = {}
-				self.pointNamesInverse = {}
+				self.pointNamesInverse = []
 			else:
 				self.featureNames = {}
-				self.featureNamesInverse = {}
+				self.featureNamesInverse = []
 			return
 		if len(assignments) != count:
 			raise ArgumentException("assignments may only be a dict, with as many entries as this axis is long")
@@ -3888,18 +3878,18 @@ class Base(object):
 				countName = 'pointCount' if axis == 'point' else 'featureCount'
 				raise ArgumentException("Indices must be within 0 to self." + countName + " - 1")
 
-		reverseDict = {}
+		reverseMap = [None] * len(assignments)
 		for name in assignments.keys():
 			self._incrementDefaultIfNeeded(name, axis)
-			reverseDict[assignments[name]] = name
+			reverseMap[assignments[name]] = name
 
 		# have to copy the input, could be from another object
 		if axis == 'point':
 			self.pointNames = copy.deepcopy(assignments)
-			self.pointNamesInverse = reverseDict
+			self.pointNamesInverse = reverseMap
 		else:
 			self.featureNames = copy.deepcopy(assignments)
-			self.featureNamesInverse = reverseDict
+			self.featureNamesInverse = reverseMap
 
 
 	def _validateAxis(self, axis):
