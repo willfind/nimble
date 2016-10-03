@@ -36,9 +36,11 @@ def generateSubsidiarySeed():
 	are not used, the results are still dependent on our random state. 
 
 	"""
-	# must be zero because numpy random wants an unsigned long, and the
-	# attempted conversion will often fail
-	return pythonRandom.randint(0, sys.maxint)
+	# must range from zero to maxSeed because numpy random wants an
+	# unsigned 32 bit int. Negative numbers can cause conversion errors,
+	# and larger numbers can cause exceptions
+	maxSeed = (2**32) - 1
+	return pythonRandom.randint(0, maxSeed)
 
 def stillDefaultState():
 	""" 
