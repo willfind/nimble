@@ -886,256 +886,252 @@ class StructureModifying(DataTestObject):
 
 
 
-	#############
-	# appendPoints() #
-	#############
+
+	#####################################
+	# appendPoints() / appendFeatures() #
+	#####################################
+
+	def backend_append_exceptionNone(self, axis):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+		
+		if axis == 'point':
+			toTest.appendPoints(None)
+		else:
+			toTest.appendFeatures(None)
 
 	@raises(ArgumentException)
 	def test_appendPoints_exceptionNone(self):
 		""" Test appendPoints() for ArgumentException when toAppend is None"""
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		toTest.appendPoints(None)
-
-	@raises(ArgumentException)
-	def test_appendPoints_exceptionWrongSize(self):
-		""" Test appendPoints() for ArgumentException when toAppend has too many features """
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		toAppend = self.constructor([[2, 3, 4, 5, 6]])
-		toTest.appendPoints(toAppend)
-
-	@raises(ArgumentException)
-	def test_appendPoints_exceptionSamePointName(self):
-		""" Test appendPoints() for ArgumentException when toAppend and self have a pointName in common """
-		toTest1 = self.constructor([[1,2]], pointNames=["hello"])
-		toTest2 = self.constructor([[1,2],[5,6]], pointNames=["hello","goodbye"])
-		toTest2.appendPoints(toTest1)
-
-	@raises(ArgumentException)
-	def test_appendPoints_exceptionMismatchedFeatureNames(self):
-		""" Test appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data, featureNames=['one','two','three'])
-		toAppend = self.constructor([[11, 12, 13,]], featureNames=["two", 'one', 'three'])
-		toTest.appendPoints(toAppend)
-
-	@raises(ArgumentException)
-	def test_appendPoints_exceptionNonUMLDataType(self):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		toTest.appendPoints([[1,1,1]])
-
-	@raises(ArgumentException)
-	def test_appendPoints_exceptionDifferentUMLDataType(self):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		if toTest.getTypeString() == 'List':
-			other = UML.createData("Matrix", data)
-		else:
-			other = UML.createData("List", data)
-		toTest.appendPoints(other)
-
-	def test_appendPoints_outOfPEmpty(self):
-		""" Test appendPoints() when the calling object is point empty """
-		data = [[],[]]
-		data = numpy.array(data).T
-		toTest = self.constructor(data)
-
-		data = [[1,2]]
-		toAdd = self.constructor(data)
-		toExp = self.constructor(data)
-
-		toTest.appendPoints(toAdd)
-		assert toTest.isIdentical(toExp)
-
-	def test_appendPoints_handmadeSingle(self):
-		""" Test appendPoints() against handmade output for a single added point """
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		names = ['1', '4', '7']
-		dataExpected = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-		namesExp = ['1', '4', '7', '10']
-		toTest = self.constructor(data, pointNames=names)
-		toAppend = self.constructor([[10,11,12]], pointNames=['10'])
-		expected = self.constructor(dataExpected, pointNames=namesExp)
-		ret = toTest.appendPoints(toAppend) # RET CHECK
-		assert toTest.isIdentical(expected)
-		assert ret is None
-
-	def test_appendPoints_handmadeSequence(self):
-		""" Test appendPoints() against handmade output for a sequence of additions"""
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		names = ['1', '4', '7']
-		toAppend1 = [[0.1,0.2,0.3]]
-		n1 = ['d']
-		toAppend2 = [[0.01,0.02,0.03],[0,0,0]]
-		n2 = ['dd', '0']
-		toAppend3 = [[10,11,12]]
-		n3 = ['ten']
-
-		dataExpected = [[1,2,3],[4,5,6],[7,8,9],[0.1,0.2,0.3],[0.01,0.02,0.03],[0,0,0],[10,11,12]]
-		namesExp = ['1', '4', '7', 'd', 'dd', '0', 'ten']
-		toTest = self.constructor(data, pointNames=names)
-		toTest.appendPoints(self.constructor(toAppend1, pointNames=n1))
-		toTest.appendPoints(self.constructor(toAppend2, pointNames=n2))
-		toTest.appendPoints(self.constructor(toAppend3, pointNames=n3))
-
-		expected = self.constructor(dataExpected, pointNames=namesExp)
-
-		assert toTest.isIdentical(expected)
-	
-	def test_appendPoints_NamePath_preservation(self):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		names = ['1', '4', '7']
-
-		toTest = self.constructor(data, pointNames=names)
-		toAppend = self.constructor([[10,11,12]], pointNames=['10'])
-
-		toTest._name = "TestName"
-		toTest._absPath = "TestAbsPath"
-		toTest._relPath = "testRelPath"
-
-		toAppend._name = "TestNameOther"
-		toAppend._absPath = "TestAbsPathOther"
-		toAppend._relPath = "testRelPathOther"
-
-		toTest.appendPoints(toAppend)
-
-		assert toTest.name == "TestName"
-		assert toTest.absolutePath == "TestAbsPath"
-		assert toTest.relativePath == 'testRelPath'
-
-	def test_appendPoints_selfAppend(self):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		fnames = ['1', '2', '3']
-
-		orig = self.constructor(data, featureNames=fnames)
-		dup = orig.copy()
-		dupPNames = dup.getPointNames()
-		assert orig.getPointNames() == dupPNames
-		
-		orig.appendPoints(orig)
-
-		dataExp = [[1,2,3],[4,5,6],[7,8,9],[1,2,3],[4,5,6],[7,8,9]]
-		expected = self.constructor(dataExp, featureNames=fnames)
-
-		assert orig == expected
-
-		assert orig.getPointNames()[0] == dupPNames[0]
-		assert orig.getPointNames()[1] == dupPNames[1]
-		assert orig.getPointNames()[2] == dupPNames[2]
-
-		lastDefIndex = int(dupPNames[2][-1])
-		assert orig.getPointNames()[3] == DEFAULT_PREFIX + str(lastDefIndex + 1)
-		assert orig.getPointNames()[4] == DEFAULT_PREFIX + str(lastDefIndex + 2)
-		assert orig.getPointNames()[5] == DEFAULT_PREFIX + str(lastDefIndex + 3)
-
-	####################
-	# appendFeatures() #
-	####################
+		self.backend_append_exceptionNone('point')
 
 	@raises(ArgumentException)
 	def test_appendFeatures_exceptionNone(self):
 		""" Test appendFeatures() for ArgumentException when toAppend is None """
+		self.backend_append_exceptionNone('feature')
+
+
+
+	def backend_append_exceptionWrongSize(self, axis):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
-		toTest.appendFeatures(None)
+		toAppend = self.constructor([[2, 3, 4, 5, 6]])
+
+		if axis == 'point':
+			toTest.appendPoints(toAppend)
+		else:
+			toTest.appendFeatures(toAppend)
+
+	@raises(ArgumentException)
+	def test_appendPoints_exceptionWrongSize(self):
+		""" Test appendPoints() for ArgumentException when toAppend has too many features """
+		self.backend_append_exceptionWrongSize('point')
 
 	@raises(ArgumentException)
 	def test_appendFeatures_exceptionWrongSize(self):
 		""" Test appendFeatures() for ArgumentException when toAppend has too many points """
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		toTest.appendFeatures([["too"], [" "], ["many"], [" "], ["points"]])
+		self.backend_append_exceptionWrongSize('feature')
+
+
+
+	def backend_append_exception_extendAxis_SameName(self, axis):
+		toTest1 = self.constructor([[1,2]], pointNames=["hello"])
+		toTest2 = self.constructor([[1,2],[5,6]], pointNames=["hello","goodbye"])
+
+		if axis == 'point':
+			toTest2.appendPoints(toTest1)
+		else:
+			toTest1.transpose()
+			toTest2.transpose()
+			toTest2.appendFeatures(toTest1)
+
+	@raises(ArgumentException)
+	def test_appendPoints_exceptionSamePointName(self):
+		""" Test appendPoints() for ArgumentException when toAppend and self have a pointName in common """
+		self.backend_append_exception_extendAxis_SameName('point')
 
 	@raises(ArgumentException)
 	def test_appendFeatures_exceptionSameFeatureName(self):
 		""" Test appendFeatures() for ArgumentException when toAppend and self have a featureName in common """
-		toTest1 = self.constructor([[1]], featureNames=["hello"])
-		toTest2 = self.constructor([[1,2]], featureNames=["hello","goodbye"])
-		toTest2.appendFeatures(toTest1)
+		self.backend_append_exception_extendAxis_SameName('feature')
+
+
+
+	def backend_append_exception_mergeAxis_MismatchedNames(self, axis):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data, featureNames=['one','two','three'])
+		toAppend = self.constructor([[11, 12, 13,]], featureNames=["two", 'one', 'three'])
+		
+		if axis == 'point':
+			toTest.appendPoints(toAppend)
+		else:
+			toTest.transpose()
+			toAppend.transpose()
+			toTest.appendFeatures(toAppend)
+
+	@raises(ArgumentException)
+	def test_appendPoints_exceptionMismatchedFeatureNames(self):
+		""" Test appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
+		self.backend_append_exception_mergeAxis_MismatchedNames('point')
 
 	@raises(ArgumentException)
 	def test_appendFeatures_exceptionMismatchedPointNames(self):
 		""" Test appendFeatures() for ArgumentException when toAppend and self do not have equal pointNames """
-		toTest1 = self.constructor([[2,1]], pointNames=["goodbye"])
-		toTest2 = self.constructor([[1,2]], pointNames=["hello"])
-		toTest2.appendFeatures(toTest1)
+		self.backend_append_exception_mergeAxis_MismatchedNames('feature')
+
+
+
+	def backend_append_exceptionNonUMLDataType(self, axis):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		toTest = self.constructor(data)
+
+		if axis == 'point':
+			toTest.appendPoints([[1,1,1]])
+		else:
+			toTest.appendFeatures([[1],[1],[1]])
+
+	@raises(ArgumentException)
+	def test_appendPoints_exceptionNonUMLDataType(self):
+		self.backend_append_exceptionNonUMLDataType('point')
 
 	@raises(ArgumentException)
 	def test_appendFeatures_exceptionNonUMLDataType(self):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data)
-		toTest.appendFeatures([[1],[1],[1]])
+		self.backend_append_exceptionNonUMLDataType('feature')
 
-	@raises(ArgumentException)
-	def test_appendFeatures_exceptionDifferentUMLDataType(self):
+
+
+	def backend_append_exceptionDifferentUMLDataType(self, axis):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
 		if toTest.getTypeString() == 'List':
 			other = UML.createData("Matrix", data)
 		else:
 			other = UML.createData("List", data)
-		toTest.appendFeatures(other)
 
-	def test_appendFeatures_outOfPEmpty(self):
-		""" Test appendFeatures() when the calling object is feature empty """
-		data = [[],[]]
-		data = numpy.array(data)
-		toTest = self.constructor(data)
+		if axis == 'point':
+			toTest.appendPoints(other)
+		else:
+			toTest.appendFeatures(other)
 
-		data = [[1],[2]]
+	@raises(ArgumentException)
+	def test_appendPoints_exceptionDifferentUMLDataType(self):
+		self.backend_append_exceptionDifferentUMLDataType('point')
+
+	@raises(ArgumentException)
+	def test_appendFeatures_exceptionDifferentUMLDataType(self):
+		self.backend_append_exceptionDifferentUMLDataType('feature')
+
+
+	def backend_append_emptyObject(self, axis):
+		empty = [[],[]]
+
+		if axis == 'point':
+			empty = numpy.array(empty).T
+			data = [[1,2]]
+		else:
+			empty = numpy.array(empty)
+			data = [[1],[2]]
+
+		toTest = self.constructor(empty)
 		toAdd = self.constructor(data)
 		toExp = self.constructor(data)
 
-		toTest.appendFeatures(toAdd)
+		if axis == 'point':
+			toTest.appendPoints(toAdd)
+		else:
+			toTest.appendFeatures(toAdd)
+
 		assert toTest.isIdentical(toExp)
 
-	def test_appendFeatures_handmadeSingle(self):
-		""" Test appendFeatures() against handmade output for a single added feature"""
+	def test_appendPoints_fromEmpty(self):
+		""" Test appendPoints() when the calling object is point empty """
+		self.backend_append_emptyObject('point')
+
+	def test_appendFeatures_fromEmpty(self):
+		""" Test appendFeatures() when the calling object is feature empty """
+		self.backend_append_emptyObject('feature')		
+
+
+
+	def backend_append_handmadeSingle(self, axis):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		featureNames = ['1','2','3']
-		toTest = self.constructor(data, featureNames=featureNames)
+		offNames = ['o1', 'o2', 'o3']
+		names = ['one', 'two', 'three']
+		addName = ['new']
+		namesExp = ['one', 'two', 'three', 'new']
 
-		toAppend = self.constructor([[-1],[-2],[-3]], featureNames=['-1'])
-
-		dataExpected = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
-		featureNamesExpected = ['1','2','3','-1']
-		expected = self.constructor(dataExpected, featureNames=featureNamesExpected)
-
-		ret = toTest.appendFeatures(toAppend) # RET CHECK
+		if axis == 'point':
+			dataExpected = [[1,2,3],[4,5,6],[7,8,9],[-1,-2,-3]]
+			toTest = self.constructor(data, pointNames=names, featureNames=offNames)
+			toAppend = self.constructor([[-1,-2,-3]], pointNames=addName, featureNames=offNames)
+			expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
+			ret = toTest.appendPoints(toAppend)  # RET CHECK
+		else:
+			dataExpected = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
+			toTest = self.constructor(data, pointNames=offNames, featureNames=names)
+			toAppend = self.constructor([[-1],[-2],[-3]], pointNames=offNames, featureNames=addName)
+			expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
+			ret = toTest.appendFeatures(toAppend)  # RET CHECK
+		
 		assert toTest.isIdentical(expected)
 		assert ret is None
 
-	def test_appendFeatures_handmadeSequence(self):
-		""" Test appendFeatures() against handmade output for a sequence of additions"""
+	def test_appendPoints_handmadeSingle(self):
+		""" Test appendPoints() against handmade output for a single added point """
+		self.backend_append_handmadeSingle('point')
+
+	def test_appendFeatures_handmadeSingle(self):
+		""" Test appendFeatures() against handmade output for a single added feature"""
+		self.backend_append_handmadeSingle('feature')
+
+
+
+	def backend_append_handmadeSequence(self, axis):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		featureNames = ['1','2','3']
-		toTest = self.constructor(data, featureNames=featureNames)
+		offNames = ['o1', 'o2', 'o3']
+		names = ['one', 'two', 'three']
+		newNames = ['a1', 'b1', 'b2', 'c1']
+		namesExp = names + newNames
+		toAppend = [[0.1,0.2,0.3],[0.01,0.02,0.03],[0,0,0],[10,11,12]]
+		toAppend = self.constructor(toAppend, pointNames=newNames, featureNames=offNames)
 
-		toAppend1 = [[0.1],[0.2],[0.3]]
-		lab1 = ['a']
-		toAppend2 = [[0.01,0],[0.02,0],[0.03,0]]
-		lab2 = ['A','0']
-		toAppend3 = [[10],[11],[12]]
-		lab3 = ['10']
-
-		toTest.appendFeatures(self.constructor(toAppend1, featureNames=lab1))
-		toTest.appendFeatures(self.constructor(toAppend2, featureNames=lab2))
-		toTest.appendFeatures(self.constructor(toAppend3, featureNames=lab3))
-
-		featureNamesExpected = ['1','2','3','a','A','0','10']
-		dataExpected = [[1,2,3,0.1,0.01,0,10],[4,5,6,0.2,0.02,0,11],[7,8,9,0.3,0.03,0,12]]
-
-		expected = self.constructor(dataExpected, featureNames=featureNamesExpected)
+		if axis == 'point':
+			dataExpected = [[1,2,3],[4,5,6],[7,8,9],[0.1,0.2,0.3],[0.01,0.02,0.03],[0,0,0],[10,11,12]]
+			toTest = self.constructor(data, pointNames=names, featureNames=offNames)
+			for nextAdd in toAppend.pointIterator():
+				toTest.appendPoints(nextAdd)
+			expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
+		else:
+			dataExpected = [[1,2,3,0.1,0.01,0,10],[4,5,6,0.2,0.02,0,11],[7,8,9,0.3,0.03,0,12]]
+			toTest = self.constructor(data, pointNames=offNames, featureNames=names)
+			toAppend.transpose()
+			for nextAdd in toAppend.featureIterator():
+				toTest.appendFeatures(nextAdd)
+			expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
+		
 		assert toTest.isIdentical(expected)
 
-	def test_appendFeatures_NamePath_preservation(self):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		featureNames = ['1','2','3']
-		toTest = self.constructor(data, featureNames=featureNames)
+	def test_appendPoints_handmadeSequence(self):	
+		""" Test appendPoints() against handmade output for a sequence of additions"""
+		self.backend_append_handmadeSequence('point')
 
-		toAppend = self.constructor([[-1],[-2],[-3]], featureNames=['-1'])
+	def test_appendFeatures_handmadeSequence(self):
+		""" Test appendFeatures() against handmade output for a sequence of additions"""
+		self.backend_append_handmadeSequence('feature')
+
+
+
+	def backend_append_NamePath_preservation(self, axis):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+
+		names = ['one', 'two', 'three']
+
+		if axis == 'point':
+			toTest = self.constructor(data, pointNames=names)
+			toAppend = self.constructor([[-1,-2,-3]], pointNames=['new'])
+		else:
+			toTest = self.constructor(data, featureNames=names)
+			toAppend = self.constructor([[-1],[-2],[-3]], featureNames=['new'])
 
 		toTest._name = "TestName"
 		toTest._absPath = "TestAbsPath"
@@ -1145,37 +1141,68 @@ class StructureModifying(DataTestObject):
 		toAppend._absPath = "TestAbsPathOther"
 		toAppend._relPath = "testRelPathOther"
 
-		toTest.appendFeatures(toAppend)
+		if axis == 'point':
+			toTest.appendPoints(toAppend)
+		else:
+			toTest.appendFeatures(toAppend)
 
 		assert toTest.name == "TestName"
 		assert toTest.absolutePath == "TestAbsPath"
 		assert toTest.relativePath == 'testRelPath'
 
+	def test_appendPoints_NamePath_preservation(self):
+		self.backend_append_NamePath_preservation('point')
 
-	def test_appendFeatures_selfAppend(self):
+	def test_appendFeatures_NamePath_preservation(self):
+		self.backend_append_NamePath_preservation('feature')
+
+
+
+	def backend_append_selfAppend(self, axis):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
-		pnames = ['1', '4', '7']
+		names = ['one', 'two', 'three']
 
-		orig = self.constructor(data, pointNames=pnames)
+		if axis == 'point':
+			orig = self.constructor(data, featureNames=names)
+		else:
+			orig = self.constructor(data, pointNames=names)
+
 		dup = orig.copy()
-		dupFNames = dup.getFeatureNames()
-		assert orig.getFeatureNames() == dupFNames
-		
-		orig.appendFeatures(orig)
 
-		dataExp = [[1,2,3,1,2,3],[4,5,6,4,5,6],[7,8,9,7,8,9]]
-		expected = self.constructor(dataExp, pointNames=pnames)
+		if axis == 'point':
+			dupNames = dup.getPointNames()
+			assert orig.getPointNames() == dupNames
+			
+			orig.appendPoints(orig)
+			
+			dataExp = [[1,2,3],[4,5,6],[7,8,9],[1,2,3],[4,5,6],[7,8,9]]
+			expected = self.constructor(dataExp, featureNames=names)
+		else:
+			dupNames = dup.getFeatureNames()
+			assert orig.getFeatureNames() == dupNames
+			
+			orig.appendFeatures(orig)
+
+			dataExp = [[1,2,3,1,2,3],[4,5,6,4,5,6],[7,8,9,7,8,9]]
+			expected = self.constructor(dataExp, pointNames=names)
 
 		assert orig == expected
 
-		assert orig.getFeatureNames()[0] == dupFNames[0]
-		assert orig.getFeatureNames()[1] == dupFNames[1]
-		assert orig.getFeatureNames()[2] == dupFNames[2]
+		checkNames = orig.getPointNames() if axis == 'point' else orig.getFeatureNames()
+		assert checkNames[:3] == dupNames
 
-		lastDefIndex = int(dupFNames[2][-1])
-		assert orig.getFeatureNames()[3] == DEFAULT_PREFIX + str(lastDefIndex + 1)
-		assert orig.getFeatureNames()[4] == DEFAULT_PREFIX + str(lastDefIndex + 2)
-		assert orig.getFeatureNames()[5] == DEFAULT_PREFIX + str(lastDefIndex + 3)
+		lastDefIndex = int(dupNames[2][-1])
+
+		assert checkNames[3] == DEFAULT_PREFIX + str(lastDefIndex + 1)
+		assert checkNames[4] == DEFAULT_PREFIX + str(lastDefIndex + 2)
+		assert checkNames[5] == DEFAULT_PREFIX + str(lastDefIndex + 3)
+
+	def test_appendPoints_selfAppend(self):
+		self.backend_append_selfAppend('point')
+
+	def test_appendFeatures_selfAppend(self):
+		self.backend_append_selfAppend('feature')
+
 
 
 	##############
