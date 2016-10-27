@@ -1247,65 +1247,102 @@ class Base(object):
 		"""
 		return self._getTypeString_implementation()
 
-	def __getitem__(self, key):
-		if isinstance(key, float):
-			intVal = int(key)
-			if intVal != key:
-				msg = "A float valued key of value x is only accepted if x == "
-				msg += "int(x). The given value was " + str(key) + " yet int("
-				msg += str(key) + ") = " + str(intVal)
-				raise ArgumentException(msg)
-			key = intVal
 
-		if isinstance(key, (int, basestring)):
+	def __getitem__(self, key):
+		resolvedX = False
+		resolvedY = False
+
+		# Make it a tuple if it isn't one
+		if not isinstance(key, tuple):
 			if self.pointCount == 1:
 				x = 0
 				y = key
+				resolvedX = True
 			elif self.featureCount == 1:
 				x = key
 				y = 0
+				resolvedY = True
 			else:
 				msg = "Must include both a point and feature index; or, "
 				msg += "if this is vector shaped, a single index "
 				msg += "into the axis whose length > 1"
 				raise ArgumentException(msg)
 		else:
-			try:
-				(x,y) = key
-				if isinstance(x, float):
-					intValX = int(x)
-					if intValX != x:
-						msg = "A key with a float valued index of value x is only "
-						msg += "accepted if x == int(x). The point ID (left hand "
-						msg += "side of the tuple) was given as " + str(x) + " yet"
-						msg += " int(" + str(x) + ") = " + str(intValX)
-						raise ArgumentException(msg) 
-					x = intValX
-				if isinstance(y, float):
-					intValY = int(y)
-					if intValY != y:
-						msg = "A key with a float valued index of value y is only "
-						msg += "accepted if y == int(y). The feature ID (right hand "
-						msg += "side of the tuple) was given as " + str(y) + " yet"
-						msg += " int(" + str(y) + ") = " + str(intValY)
-						raise ArgumentException(msg) 
-					y = intValY
-			except TypeError:
-				msg = "Must include a point and feature index; or, "
-				msg += "if this has only a single point or feature, "
-				msg += "you may specify a single index "
-				msg += "into the axis whose length > 1"
+			(x,y) = key
+
+		if not resolvedX:
+			if isinstance(x, (int, numpy.integer)):
+				if x < 0:
+					x = self.pointCount + x
+				if x < 0 or x >= self.pointCount:
+					msg = "The given index " + str(x) + " is outside of the range "
+					msg += "of possible indices in the point axis (0 to " 
+					msg += str(self.pointCount-1) + ")."
+					raise IndexError(msg)
+			elif isinstance(x, basestring):
+				try:
+					x = self.getPointIndex(x)
+				except KeyError:
+					msg = "The point name '" + x + "' cannot be found."
+					raise KeyError(msg)
+			elif isinstance(x, float):
+				intVal = int(x)
+				if intVal != x:
+					msg = "A float valued key of value x is only accepted if x == "
+					msg += "int(x). The given value was " + str(x) + " yet int("
+					msg += str(x) + ") = " + str(intVal)
+					raise ArgumentException(msg)
+				x = intVal
+				if x < 0:
+					x = self.pointCount + x
+				if x < 0 or x >= self.pointCount:
+					msg = "The given index " + str(x) + " is outside of the range "
+					msg += "of possible indices in the point axis (0 to " 
+					msg += str(self.pointCount-1) + ")."
+					raise IndexError(msg)
+			else:
+				msg = "The identifier must be either a string (a valid point"
+				msg += " name) or an integer (python or numpy) index between 0 and "
+				msg += str(self.pointCount-1) + " inclusive. Instead we got: "
+				msg += str(x)
 				raise ArgumentException(msg)
 
-		try:
-			x = self._getPointIndex(x)
-		except ArgumentException as ae:
-			raise IndexError(ae.value)
-
-		try:
-			y = self._getFeatureIndex(y)
-		except ArgumentException as ae:
-			raise IndexError(ae.value)
+		if not resolvedY:
+			if isinstance(y, (int, numpy.integer)):
+				if y < 0:
+					y = self.featureCount + y
+				if y < 0 or y >= self.featureCount:
+					msg = "The given index " + str(y) + " is outside of the range "
+					msg += "of possible indices in the point axis (0 to " 
+					msg += str(self.featureCount-1) + ")."
+					raise IndexError(msg)
+			elif isinstance(y, basestring):
+				try:
+					y = self.getFeatureIndex(y)
+				except KeyError:
+					msg = "The feature name '" + y + "' cannot be found."
+					raise KeyError(msg)
+			elif isinstance(y, float):
+				intVal = int(y)
+				if intVal != y:
+					msg = "A float valued key of value y is only accepted if y == "
+					msg += "int(y). The given value was " + str(y) + " yet int("
+					msg += str(y) + ") = " + str(intVal)
+					raise ArgumentException(y)
+				y = intVal
+				if y < 0:
+					y = self.featureCount + y
+				if y < 0 or y >= self.featureCount:
+					msg = "The given index " + str(y) + " is outside of the range "
+					msg += "of possible indices in the point axis (0 to " 
+					msg += str(self.featureCount-1) + ")."
+					raise IndexError(msg)
+			else:
+				msg = "The identifier must be either a string (a valid feature"
+				msg += " name) or an integer (python or numpy) index between 0 and "
+				msg += str(self.featureCount-1) + " inclusive. Instead we got: "
+				msg += str(y)
+				raise ArgumentException(msg)
 
 		return self._getitem_implementation(x,y)
 
@@ -3615,12 +3652,12 @@ class Base(object):
 		return self._getIndex(identifier, 'feature')
 
 	def _getIndex(self, identifier, axis):
-		names = self.getPointNames() if axis == 'point' else self.getFeatureNames()
+		num = len(self.getPointNames()) if axis == 'point' else len(self.getFeatureNames())
 		nameGetter = self.getPointIndex if axis == 'point' else self.getFeatureIndex
 		accepted = (basestring, int, numpy.integer)
 
 		toReturn = identifier
-		if len(names) == 0:
+		if num == 0:
 			msg = "There are no valid " + axis + " identifiers; this object has 0 "
 			msg += axis + "s"
 			raise ArgumentException(msg)
@@ -3635,12 +3672,12 @@ class Base(object):
 			raise ArgumentException(msg)
 		if isinstance(identifier, (int, numpy.integer)):
 			if identifier < 0:
-				identifier = len(names) + identifier
+				identifier = num + identifier
 				toReturn = identifier
-			if identifier < 0 or identifier >= len(names):
+			if identifier < 0 or identifier >= num:
 				msg = "The given index " + str(identifier) + " is outside of the range "
 				msg += "of possible indices in the " + axis + " axis (0 to " 
-				msg += str(len(names)-1) + ")."
+				msg += str(num-1) + ")."
 				raise ArgumentException(msg)
 		if isinstance(identifier,basestring):
 			try:
@@ -3649,6 +3686,7 @@ class Base(object):
 				msg = "The " + axis + " name '" + identifier + "' cannot be found."
 				raise ArgumentException(msg)
 		return toReturn
+
 
 	def _nextDefaultName(self, axis):
 		self._validateAxis(axis)
