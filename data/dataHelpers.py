@@ -190,9 +190,12 @@ def reorderToMatchExtractionList(dataObject, extractionList, axis):
 
 
 def _looksNumeric(val):
-		if isinstance(val, basestring) or not hasattr(val, '__mul__'):
-			return False
-		return True
+	# div is a good check of your standard numeric objects, and excludes things
+	# list python lists. We must still explicitly exclude strings because of the
+	# numpy string implementation.
+	if not hasattr(val, '__div__') or isinstance(val, basestring):
+		return False
+	return True
 
 def formatIfNeeded(value, sigDigits):
 	"""
@@ -201,7 +204,7 @@ def formatIfNeeded(value, sigDigits):
 
 	"""
 	if _looksNumeric(value):
-		if int(value) != value and sigDigits is not None:
+		if not isinstance(value, int) and sigDigits is not None:
 			return format(value, '.' + str(int(sigDigits)) + 'f')
 	return str(value)
 
