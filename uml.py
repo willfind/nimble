@@ -37,6 +37,7 @@ from UML.helpers import crossValidateBackend
 from UML.helpers import isAllowedRaw
 from UML.helpers import initDataObject
 from UML.helpers import createDataFromFile
+from UML.helpers import createConstantHelper
 
 from UML.randomness import numpyRandom
 
@@ -114,6 +115,62 @@ def createRandomData(
 				randData = binarySparsityMatrix * filledFloatMatrix
 
 	return createData(returnType, data=randData, featureNames=featureNames, name=name)
+
+
+def ones(returnType, numPoints, numFeatures, pointNames='automatic',
+		featureNames='automatic', name=None):
+	"""
+	Return a data object of the given type and size containing only the value 1.
+
+	returnType - May only be one of the allowed types specified in UML.data.available
+
+	numPoints - the number of points in the returned object.
+
+	numFeatures - the number of features in the returned object.
+
+	pointNames - names to be associated with the points in the returned object; if
+	the 'automatic' flag is given, default names will be assigned.
+
+	featureNames - names to be associated with the features in the returned object;
+	if the 'automatic' flag is given, default names will be assigned.
+
+	name - When not None, this value is set as the name attribute of the
+	returned object.
+
+	Returns - a numPoints by numFeatures sized objects where every value is equal
+	to 1.
+
+	"""
+	return createConstantHelper(numpy.ones, returnType, numPoints, numFeatures, pointNames,
+		featureNames, name)
+
+
+def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
+		featureNames='automatic', name=None):
+	"""
+	Return a data object of the given type and size containing only the value 0.
+
+	returnType - May only be one of the allowed types specified in UML.data.available
+
+	numPoints - the number of points in the returned object.
+
+	numFeatures - the number of features in the returned object.
+
+	pointNames - names to be associated with the points in the returned object; if
+	None, default names will be assigned.
+
+	featureNames - names to be associated with the features in the returned object;
+	if None, default names will be assigned.
+
+	name - When not None, this value is set as the name attribute of the
+	returned object.
+
+	Returns - a numPoints by numFeatures sized objects where every value is equal
+	to 0.
+
+	"""
+	return createConstantHelper(numpy.zeros, returnType, numPoints, numFeatures, pointNames,
+		featureNames, name)
 
 
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **kwarguments):

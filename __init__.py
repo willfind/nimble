@@ -37,6 +37,8 @@ from uml import trainAndTest
 from uml import trainAndTestOnTrainingData
 from uml import createData
 from uml import createRandomData
+from uml import ones
+from uml import zeros
 from uml import normalizeData
 
 from uml import registerCustomLearner
@@ -81,7 +83,7 @@ __all__ = ['createData', 'createRandomData', 'crossValidate',
 			'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
 			'learnerDefaultValues', 'learnerParameters', 'learnerType',
 			'listDataFunctions', 'listLearners', 'listUMLFunctions',
-			'normalizeData', 'registerCustomLearner',
+			'normalizeData', 'ones', 'registerCustomLearner',
 			'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
 			'train', 'trainAndApply', 'trainAndTest',
-			'trainAndTestOnTrainingData', 'UMLPath']
+			'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
