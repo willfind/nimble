@@ -116,6 +116,43 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
 
 	return (rawData, retPNames, retFNames)
 
+
+def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNames,
+		featureNames, name):
+
+	retAllowed = copy.copy(UML.data.available)
+	if returnType not in retAllowed:
+		raise ArgumentException("returnType must be a value in " + str(retAllowed))
+
+	if numPoints < 0:
+		msg = "numPoints must be 0 or greater, yet " + str(numPoints)
+		msg += " was given."
+		raise ArgumentException(msg)
+
+	if numFeatures < 0:
+		msg = "numFeatures must be 0 or greater, yet " + str(numPoints)
+		msg += " was given."
+		raise ArgumentException(msg)
+	
+	if numPoints == 0 and numFeatures == 0:
+		msg = "Either one of numPoints (" + str(numPoints) + ") or "
+		msg += "numFeatures (" + str(numFeatures) + ") must be non-zero."
+		raise ArgumentException(msg)
+
+	if returnType == 'List':
+		toConv = createConstantHelper(numpyMaker, "Matrix", numPoints, numFeatures, pointNames, featureNames, name)
+		return toConv.copyAs("List")
+	elif returnType == 'Matrix':
+		raw = numpyMaker((numPoints,numFeatures))
+		return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
+	else:  # returnType == 'Sparse'
+		assert returnType == 'Sparse'
+		rawDense = numpyMaker((numPoints,numFeatures))
+		rawSparse = scipy.sparse.coo_matrix(rawDense)
+		return UML.createData(returnType, rawSparse, pointNames=pointNames, featureNames=featureNames, name=name)		
+
+
+
 def initDataObject(
 		returnType, rawData, pointNames, featureNames, name, path,
 		keepPoints, keepFeatures):
