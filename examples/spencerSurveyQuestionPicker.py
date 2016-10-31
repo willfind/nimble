@@ -8,6 +8,7 @@ import copy
 import math
 import pylab
 import bisect
+import copy
 
 from allowImports import boilerplate
 boilerplate()
@@ -31,6 +32,9 @@ def varianceFractionRemaining(knownValues, predictedValues):
 	rawDiff = diffObject.copyAs("numpy array")
 	rawKnowns = knownValues.copyAs("numpy array")
 	return numpy.var(rawDiff)/float(numpy.var(rawKnowns))
+	#def sq(data):
+	#	return numpy.power(data, 2)
+	#return numpy.sum(sq(diffObject)) / float(numpy.sum(sq(rawKnowns-numpy.mean(rawKnowns))))
 
 
 def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, featuresToPredict, functionsToExcludePoints):
@@ -119,34 +123,66 @@ def testBuildTrainingAndTestingSetsForPredictions():
 	assert jointYs1.isApproximatelyEqual(createData("Matrix", [[-7],[-3],[0],[1],[1],[9]]))
 
 
-def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, plot=False):
+def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode="remove features", plot=False, verbose=False):
 	"tries dropping one feature at a time from all datasets, and kill off the feature that is most useless until we have the right number"""
 	assert isinstance(trainXs, list)
 	assert isinstance(trainYs, list)
 	assert isinstance(testXs, list)
 	assert isinstance(testYs, list)
 	assert len(trainXs) == len(trainYs) and len(trainXs) == len(testXs) and len(trainXs) == len(testYs)
-
-	#prevent us from modifying the original objects
-	for i in xrange(len(trainXs)):
-		trainXs[i] = trainXs[i].copy()
-		trainYs[i] = trainYs[i].copy()
-		testXs[i] = testXs[i].copy()
-		testYs[i] = testYs[i].copy()
+	modes = ["add features", "remove features"]
+	if not mode in modes:
+		raise Exception("The mode must be in " + str(modes))
 
 	if numFeaturesToKeep > trainXs[0].featureCount: raise Exception("Cannot keep " + str(numFeaturesToKeep) + " features since the data has only " + str(trainXs[0].featureCount) + " features.")
 
+	for i in xrange(len(trainXs)):
+		trainYs[i] = trainYs[i].copy()
+		testYs[i] = testYs[i].copy()
+
+	if mode == "remove features":
+		#prevent us from modifying the original objects 
+		for i in xrange(len(trainXs)):
+			trainXs[i] = trainXs[i].copy()
+			testXs[i] = testXs[i].copy()
+	elif mode == "add features":
+		origTrainXs = copy.copy(trainXs)
+		origTestXs = copy.copy(testXs)
+		#start off with just a constant term
+		for i in xrange(len(trainXs)):
+			ones = numpy.ones((trainYs[i].pointCount, 1))
+			trainXs[i] = UML.createData("Matrix", ones)
+			ones = numpy.ones((testYs[i].pointCount, 1))
+			testXs[i] = UML.createData("Matrix", ones)
+	else: raise Exception("Unknown mode!")
+
+
 	droppedFeatureErrorsListOutSample = []
 	droppedFeatureErrorsListInSample = []
+	namesUsedForEachLabel = [set({}) for i in xrange(len(trainXs))]
 
-	while trainXs[0].featureCount > numFeaturesToKeep:
+	print "trainXs[0].featureCount",  trainXs[0].featureCount
+	print "numFeaturesToKeep", numFeaturesToKeep
+	while trainXs[0].featureCount != numFeaturesToKeep:
+
+		#if mode == "remove features":
+		#	if trainXs[0].featureCount <= numFeaturesToKeep: break
+		#elif mode == "add features":
+		#	if trainXs[0].featureCount >= numFeaturesToKeep: break
+
 		print str(trainXs[0].featureCount) + " features left"
 
 		errorForEachFeatureDropped = []
 
-		#try dropping each feature one by one 
-		for featureNumToDrop in xrange(trainXs[0].featureCount):
-			#sys.stdout.write(" " + str(trainXs[0].getFeatureNames()[featureNumToDrop]))
+		#try dropping each feature one by one if mode ="remove features" (or adding each feature one by one if mode = "add features")
+		if mode == "remove features":
+			featuresNumbersToIterate = trainXs[0].featureCount
+		elif mode == "add features":
+			featuresNumbersToIterate = origTrainXs[0].featureCount
+		else: raise Exception("Unknown mode!")
+
+		for featureNumToDrop in xrange(featuresNumbersToIterate):
+			#sys.stdout.write(" " + str(featureNameToDrop))
 			errorsForThisFeatureDrop = []
 			#for each label we're predicting
 			for labelNum, trainX, trainY in zip(range(len(trainXs)), trainXs, trainYs):
@@ -154,12 +190,28 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
 				#print "trainX", trainX
 				#build a feature set to train on that doesn't include the feature we're dropping
 				trainXWithoutFeature = trainX.copy()
-				trainXWithoutFeature.extractFeatures(featureNumToDrop)
+				if mode == "remove features":
+					trainXWithoutFeature.extractFeatures(featureNumToDrop)
+				elif mode == "add features":
+					featureNameToDrop = origTrainXs[labelNum].getFeatureName(featureNumToDrop)
+					#if we've already added this feature, skip it
+					if featureNameToDrop in namesUsedForEachLabel[labelNum]: continue 
+					#print "trainXWithoutFeature", trainXWithoutFeature
+					#print "origTrainXs[labelNum].copyFeatures(featureNumToDrop)", origTrainXs[labelNum].copyFeatures(featureNumToDrop)
+					trainXWithoutFeature.appendFeatures(origTrainXs[labelNum].copyFeatures(featureNumToDrop))
+				else: raise Exception("Unknown mode!")
 				
 				algorithmName = predictionAlgorithms[labelNum]
 				if "Logistic" in algorithmName: 
 					#C = tuple([10.0**k for k in xrange(-6, 6)])
 					C = 10**9 #large means no regularization #a large value for C results in less regularization
+					#trainXWithoutFeature.show("trainXWithoutFeature")
+					#trainXWithoutFeature.writeFile("trainXWithoutFeature_saved.csv")
+					#trainXWithoutFeature.show("trainY")
+					#trainY.writeFile("trainY_saved.csv") 
+					print "trainXWithoutFeature type", trainXWithoutFeature.getTypeString()
+					print "trainXWithoutFeature type", trainY.getTypeString()
+					trainXWithoutFeature.show("trainXWithoutFeature")
 					error = trainAndTest(algorithmName, trainXWithoutFeature, trainY, testX=trainXWithoutFeature, testY=trainY, performanceFunction=fractionIncorrect, C=C)
 				elif "Ridge" in algorithmName:
 					#alpha = tuple([10.0**k for k in xrange(-6, 6)])
@@ -174,16 +226,34 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
 			errorForEachFeatureDropped.append((combinedErrorForFeatureDrop, featureNumToDrop))
 
 		errorForEachFeatureDropped.sort(lambda x,y: cmp(y[0],x[0])) #sort descending by error so that the last element corresponds to the most useless feature (i.e. the feature where we have the lowest error without it)
+		#import pdb; pdb.set_trace()
 		mostUselessFeatureErrorInSample = errorForEachFeatureDropped[-1][0]
 		droppedFeatureErrorsListInSample.append(mostUselessFeatureErrorInSample)
+		print "errorForEachFeatureDropped", errorForEachFeatureDropped
+		print "training set error after dropped", mostUselessFeatureErrorInSample
 		mostUselessFeatureNum = errorForEachFeatureDropped[-1][1]
 		#print "\nRemoving feature " + str(trainX.getFeatureNames()[mostUselessFeatureNum]) + " with combined error " + str(round(errorForEachFeatureDropped[-1][0],3))
-		for trainX, testX in zip(trainXs, testXs):
-			trainX.extractFeatures(mostUselessFeatureNum)
-			testX.extractFeatures(mostUselessFeatureNum)
-		outSampleErrorsHash, outSampleParamshash = getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, featuresToPredict)
+		for labelNum, trainX, testX in zip(range(len(trainXs)), trainXs, testXs):
+			if mode == "remove features":
+				mostUselessFeatureName = trainX.getFeatureName(mostUselessFeatureNum)
+				trainX.extractFeatures(mostUselessFeatureNum)
+				testX.extractFeatures(mostUselessFeatureNum)
+			elif mode == "add features":
+				mostUselessFeatureName = origTrainXs[labelNum].getFeatureName(mostUselessFeatureNum)
+				trainX.appendFeatures(origTrainXs[labelNum].copyFeatures(mostUselessFeatureNum))
+				testX.appendFeatures(origTestXs[labelNum].copyFeatures(mostUselessFeatureNum))
+				namesUsedForEachLabel[labelNum].add(mostUselessFeatureName)
+			else: raise Exception("Unknown mode!")
+		outSampleErrorsHash, outSampleParamsHash = getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, featuresToPredict)
 		mostUselessFeatureErrorOutSample = outSampleErrorsHash["Combined Error"]
 		droppedFeatureErrorsListOutSample.append(mostUselessFeatureErrorOutSample)
+		###for printing to the screen
+		if verbose:
+			curFeatureNames = trainX.getFeatureNames()
+			print "dropped feature: " + str(mostUselessFeatureName)
+			print "features: " + str(curFeatureNames)
+			print "parameters: " + str(outSampleParamsHash)
+			print "errors: " + str(outSampleErrorsHash)
 		#print "viableFeaturesLeft", trainXs[0].featureCount
 
 	if plot:
@@ -234,7 +304,7 @@ def getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, 
 
 
 
-def getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, plot=False):
+def getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode, plot=False, verbose=False):
 	#prevent us from modifying the original objects
 	#for i in xrange(len(trainXs)):
 	#	trainXs[i] = trainXs[i].copy()
@@ -246,7 +316,7 @@ def getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
 	testXs = copy.copy(testXs)
 	testYs = copy.copy(testYs)
 
-	trainXs, trainYs, testXs, testYs = reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep=numFeaturesToKeep, predictionAlgorithms=predictionAlgorithms, featuresToPredict=featuresToPredict, plot=plot)
+	trainXs, trainYs, testXs, testYs = reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, mode=mode, numFeaturesToKeep=numFeaturesToKeep, predictionAlgorithms=predictionAlgorithms, featuresToPredict=featuresToPredict, plot=plot, verbose=verbose)
 	errorsHash, parametersHash = getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms=predictionAlgorithms, featuresToPredict=featuresToPredict)
 
 	bestFeatures = trainXs[0].getFeatureNames()
