@@ -157,20 +157,63 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
 	numFeatures - the number of features in the returned object.
 
 	pointNames - names to be associated with the points in the returned object; if
-	None, default names will be assigned.
+	'automatic', default names will be assigned.
 
 	featureNames - names to be associated with the features in the returned object;
-	if None, default names will be assigned.
+	if 'automatic', default names will be assigned.
 
 	name - When not None, this value is set as the name attribute of the
 	returned object.
 
-	Returns - a numPoints by numFeatures sized objects where every value is equal
+	Returns - a numPoints by numFeatures sized object where every value is equal
 	to 0.
 
 	"""
 	return createConstantHelper(numpy.zeros, returnType, numPoints, numFeatures, pointNames,
 		featureNames, name)
+
+
+def identity(returnType, size, pointNames='automatic', featureNames='automatic', name=None):
+	"""
+	Return a square data object of the given size representing an identity matrix.
+
+	returnType - May only be one of the allowed types specified in UML.data.available
+
+	size - the number of points and features in the returned object.
+
+	pointNames - names to be associated with the points in the returned object; if
+	'automatic', default names will be assigned.
+
+	featureNames - names to be associated with the features in the returned object;
+	if 'automatic', default names will be assigned.
+
+	name - When not None, this value is set as the name attribute of the
+	returned object.
+
+	Returns - a size by size shaped object where every value on the main diagonal is 1
+	and every other value is 0.
+
+	"""
+	retAllowed = copy.copy(UML.data.available)
+	if returnType not in retAllowed:
+		raise ArgumentException("returnType must be a value in " + str(retAllowed))
+
+	if size <= 0:
+		msg = "size must be 0 or greater, yet " + str(size)
+		msg += " was given."
+		raise ArgumentException(msg)
+
+	if returnType == 'List':
+		toConv = identity("Matrix", size, pointNames, featureNames, name)
+		return toConv.copyAs("List")
+	elif returnType == 'Matrix':
+		raw = numpy.identity(size)
+		return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
+	else:  # returnType == 'Sparse'
+		assert returnType == 'Sparse'
+		rawDiag = scipy.sparse.identity(size)
+		rawCoo = scipy.sparse.coo_matrix(rawDiag)
+		return UML.createData(returnType, rawCoo, pointNames=pointNames, featureNames=featureNames, name=name)
 
 
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **kwarguments):

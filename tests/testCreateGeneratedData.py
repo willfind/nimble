@@ -151,6 +151,7 @@ def back_constant_correctSizeAndContents(toTest, value):
 	for t in returnTypes:
 		for size in checkSizes:
 			ret = toTest(t, size[0], size[1])
+			assert t == ret.getTypeString()
 
 			assert ret.pointCount == size[0]
 			assert ret.featureCount == size[1]
@@ -242,12 +243,69 @@ def test_zeros_conversionEqualityBetweenTypes():
 ### identity ###
 ################
 
-# match end size
+#UML.identity(returnType, size, pointNames=None, featureNames=None, name=None)
 
-# check contents?
+# This function relies on createData to actually instantiate our data, and
+# never touches the pointNames, featureNames, or names arguments. The
+# validity checking of those arguments is therefore not tested, since 
+# it is done exclusively in createData. We only check for successful behaviour.
 
-# convert between return types
 
+def test_identity_sizeChecking():
+	try:
+		UML.identity("Matrix", -1)
+		assert False  # expected ArgmentException for negative size
+	except ArgumentException:
+		pass
+	except Exception:
+		assert False  # expected ArgmentException for negative size
+
+	try:
+		UML.identity("Matrix", 0)
+		assert False  # expected ArgmentException for 0 valued size
+	except ArgumentException:
+		pass
+	except Exception:
+		assert False  # expected ArgmentException for 0 valued size
+
+
+def test_identity_correctSizeAndContents():
+	for t in returnTypes:
+		for size in xrange(1,5):
+			toTest = UML.identity(t, size)
+			assert t == toTest.getTypeString()
+			for p in xrange(size):
+				for f in xrange(size):
+					if p == f:
+						assert toTest[p,f] == 1
+					else:
+						assert toTest[p,f] == 0
+
+
+def test_identity_correctNames():
+	objName = "checkObjName"
+	pnames = ["p1", "p2"]
+	fnames = ["f1", "f2"]
+
+	for t in returnTypes:
+		ret = UML.identity(t, 2, pointNames=pnames, featureNames=fnames, name=objName)
+
+		assert ret.getPointNames() == pnames
+		assert ret.getFeatureNames() == fnames
+		assert ret.name == objName
+
+
+def test_identity_conversionEqualityBetweenTypes():
+	size = 7
+
+	for makeT in returnTypes:
+		ret = UML.identity(makeT, size)
+
+		for matchT in returnTypes:
+			convertedRet = ret.copyAs(matchT)
+			toMatch = UML.identity(matchT, size)
+
+			assert convertedRet == toMatch
 
 
 

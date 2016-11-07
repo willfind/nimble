@@ -39,6 +39,7 @@ from uml import createData
 from uml import createRandomData
 from uml import ones
 from uml import zeros
+from uml import identity
 from uml import normalizeData
 
 from uml import registerCustomLearner
@@ -81,9 +82,9 @@ UML.logger.log_manager.initLoggerAndLogConfig()
 __all__ = ['createData', 'createRandomData', 'crossValidate',
 			'crossValidateReturnAll', 'crossValidateReturnBest',
 			'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-			'learnerDefaultValues', 'learnerParameters', 'learnerType',
-			'listDataFunctions', 'listLearners', 'listUMLFunctions',
-			'normalizeData', 'ones', 'registerCustomLearner',
-			'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
-			'train', 'trainAndApply', 'trainAndTest',
-			'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
+			'identity', 'learnerDefaultValues', 'learnerParameters',
+			'learnerType', 'listDataFunctions', 'listLearners',
+			'listUMLFunctions', 'normalizeData', 'ones',
+			'registerCustomLearner', 'registerCustomLearnerAsDefault',
+			'setRandomSeed', 'settings', 'train', 'trainAndApply',
+			'trainAndTest', 'trainAndTestOnTrainingData', 'UMLPath', 'zeros']

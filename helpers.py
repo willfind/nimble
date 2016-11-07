@@ -147,9 +147,12 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
 		return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
 	else:  # returnType == 'Sparse'
 		assert returnType == 'Sparse'
-		rawDense = numpyMaker((numPoints,numFeatures))
-		rawSparse = scipy.sparse.coo_matrix(rawDense)
-		return UML.createData(returnType, rawSparse, pointNames=pointNames, featureNames=featureNames, name=name)		
+		if numpyMaker == numpy.ones:
+			rawDense = numpyMaker((numPoints,numFeatures))
+			rawSparse = scipy.sparse.coo_matrix(rawDense)
+		else:  # case: numpyMaker == numpy.zeros
+			rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
+		return UML.createData(returnType, rawSparse, pointNames=pointNames, featureNames=featureNames, name=name)
 
 
 
