@@ -720,6 +720,15 @@ class List(Base):
 			self.data[i][j] = currRet
 
 
+	def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
+		if not isinstance(values, UML.data.Base):
+			values = [values] * (featureEnd - featureStart + 1)
+			for p in xrange(pointStart, pointEnd+1):
+				self.data[p][featureStart:featureEnd+1] = values
+		else:
+			for p in xrange(pointStart, pointEnd+1):
+				self.data[p][featureStart:featureEnd+1] = values.data[p-pointStart]
+
 
 	def _getitem_implementation(self, x, y):
 		return self.data[x][y]

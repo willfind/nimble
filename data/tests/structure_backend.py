@@ -2446,5 +2446,205 @@ class StructureModifying(DataTestObject):
 		assert [7,8,9] in retRaw
 
 
+
+	####################
+	#### fillWith() ####
+	####################
+
+	# fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd)
+
+	def test_fillWith_acceptableValues(self):
+		raw = [[1,2],[3,4]]
+		toTest = self.constructor(raw)
+
+		try:
+			toTest.fillWith(set([1,3]), 0, 0, 0, 1)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+		
+		try:
+			toTest.fillWith(lambda x: x*x, 0, 0, 0, 1)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+
+
+	def test_fillWith_sizeMismatch(self):
+		raw = [[1,2],[3,4]]
+		toTest = self.constructor(raw)
+
+		raw = [[-1,-2]]
+		val = self.constructor(raw)
+
+		try:
+			toTest.fillWith(val, 0, 0, 1, 1)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+
+		val.transpose()
+
+		try:
+			toTest.fillWith(val, 0, 0, 1, 1)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+
+
+	def test_fillWith_invalidID(self):
+		raw = [[1,2],[3,4]]
+		toTest = self.constructor(raw)
+
+		val = 1
+
+		try:
+			toTest.fillWith(val, "hello", 0, 1, 1)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+		try:
+			toTest.fillWith(val, 0, "Wrong", 1, 1)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+		try:
+			toTest.fillWith(val, 0, 0, 2, 1)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+		try:
+			toTest.fillWith(val, 0, 0, 1, -12)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+
+
+	def test_fillWith_start_lessThan_end(self):
+		raw = [[1,2],[3,4]]
+		toTest = self.constructor(raw)
+
+		val = 1
+
+		try:
+			toTest.fillWith(val, 1, 0, 0, 1)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+		try:
+			toTest.fillWith(val, 0, 1, 1, 0)
+			assert False  # expected ArgumentExcpetion
+		except ArgumentException as ae:
+			print ae
+		except Exception:
+			assert False  # expected ArgumentException
+
+
+	def test_fillWith_fullObjectFill(self):
+		raw = [[1,2],[3,4]]
+		toTest = self.constructor(raw)
+
+		arg = [[-1,-2],[-3,-4]]
+		arg = self.constructor(arg)
+		exp = arg.copy()
+
+		ret = toTest.fillWith(arg, 0, 0, toTest.pointCount-1, toTest.featureCount-1)
+		assert ret is None
+
+		arg *= 10
+
+		assert toTest == exp
+		assert toTest != arg
+
+
+	def test_fillWith_vectorFill(self):
+		raw = [[1,2],[3,4]]
+		toTestP = self.constructor(raw)
+		toTestF = self.constructor(raw)
+
+		rawP = [[-1,-2]]
+		valP = self.constructor(rawP)
+
+		rawF = [[-1],[-3]]
+		valF = self.constructor(rawF)
+
+		expP = [[-1,-2],[3,4]]
+		expP = self.constructor(expP)
+
+		expF = [[-1,2],[-3,4]]
+		expF = self.constructor(expF)
+
+		toTestP.fillWith(valP, 0, 0, 0, 1)
+		assert toTestP == expP
+
+		toTestF.fillWith(valF, 0, 0, 1, 0)
+		assert toTestF == expF
+
+
+	def test_fillWith_offsetSquare(self):
+		raw = [[11,12,13],[21,22,23], [31,32,33]]
+		base = self.constructor(raw)
+		trialRaw = [[0,0],[0,0]]
+		trial = self.constructor(trialRaw)
+
+		leftCorner = [(0,0),(0,1),(1,0),(1,1)]
+		for p,f in leftCorner:
+			toTest = base.copy()
+
+			toTest.fillWith(trial, p, f, p+1, f+1)
+			assert toTest[p,f] == 0
+			assert toTest[p+1,f] == 0
+			assert toTest[p,f+1] == 0
+			assert toTest[p+1,f+1] == 0
+
+
+	def test_fillWith_constants(self):
+#		toTest0 = self.constructor([[0,0,0],[0,0,0],[0,0,0]]) 
+#		exp0 = self.constructor([[0,1,1],[0,1,1],[0,0,0]])
+#		toTest0.fillWith(1, 0, 1, 1, 2)
+#		assert toTest0 == exp0
+
+#		toTest1 = self.constructor([[1,1,1],[1,1,1],[1,1,1]])
+#		exp1 = self.constructor([[1,0,1],[1,0,1],[1,0,1]])
+#		toTest1.fillWith(0, 0, 1, 2, 1)
+#		assert toTest1 == exp1
+
+		toTestI = self.constructor([[1,0,0],[0,1,0],[0,0,1]])
+		expi = self.constructor([[1,0,2],[0,1,0],[2,0,1]])
+		toTestI.fillWith(2, 0,2,0,2)
+		toTestI.fillWith(2, 2,0,2,0)
+		assert toTestI == expi
+
+
+	def test_fillWIth_differentType(self):
+		raw = [[11,12,13],[21,22,23],[31,32,33]]
+		fill = [[0,0],[0,0]]
+		exp = [[0,0,13],[0,0,23],[31,32,33]]
+		exp = self.constructor(exp)
+		for t in UML.data.available:
+			toTest = self.constructor(raw)
+			arg = UML.createData(t, fill)
+			toTest.fillWith(arg, 0,0,1,1)
+			assert toTest == exp
+
+
 class StructureAll(StructureDataSafe, StructureModifying):
 	pass

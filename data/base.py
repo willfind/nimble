@@ -2546,6 +2546,71 @@ class Base(object):
 		self._transformEachElement_implementation(function, points, features, preserveZeros, skipNoneReturnValues)
 	
 
+	def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
+		"""
+		Revise the contents of the calling object so that it contains the provided
+		values in the given location.
+
+		values - Either a constant value or a UML object whose size is consistent
+		with the given start and end indices.
+
+		pointStart - the inclusive ID of the first point in the calling object
+		whose contents will be modified.
+
+		featureStart - the inclusive ID of the first feature in the calling object
+		whose contents will be modified.
+
+		pointEnd - the inclusive ID of the last point in the calling object
+		whose contents will be modified.
+
+		featureEnd - the inclusive ID of the last feature in the calling object
+		whose contents will be modified.
+
+		"""
+		psIndex = self._getPointIndex(pointStart)
+		peIndex = self._getPointIndex(pointEnd)
+		fsIndex = self._getFeatureIndex(featureStart)
+		feIndex = self._getFeatureIndex(featureEnd)
+
+		if psIndex > peIndex:
+			msg = "pointStart (" + str(pointStart) + ") must be less than or "
+			msg += "equal to pointEnd (" + str(pointEnd) + ")."
+			raise ArgumentException(msg)
+		if fsIndex > feIndex:
+			msg = "featureStart (" + str(featureStart) + ") must be less than or "
+			msg += "equal to featureEnd (" + str(featureEnd) + ")."
+			raise ArgumentException(msg)
+
+		if isinstance(values, UML.data.Base):
+			prange = (peIndex - psIndex) + 1
+			frange = (feIndex - fsIndex) + 1
+			if values.pointCount != prange:
+				msg = "When the values argument is a UML data object, the size "
+				msg += "of values must match the range of modification. There are "
+				msg += str(values.pointCount) + " points in values, yet pointStart ("
+				msg += str(pointStart) + ") and pointEnd ("
+				msg += str(pointEnd) + ") define a range of length " + str(prange)
+				raise ArgumentException(msg)
+			if values.featureCount != frange:
+				msg = "When the values argument is a UML data object, the size "
+				msg += "of values must match the range of modification. There are "
+				msg += str(values.featureCount) + " features in values, yet featureStart ("
+				msg += str(featureStart) + ") and featureEnd ("
+				msg += str(featureEnd) + ") define a range of length " + str(frange)
+				raise ArgumentException(msg)
+			if values.getTypeString() != self.getTypeString():
+				values = values.copyAs(self.getTypeString())
+
+		elif dataHelpers._looksNumeric(values):
+			pass  # no modificaitons needed
+		else:
+			msg = "values may only be a UML data object, or a single numeric value, yet "
+			msg += "we received something of " + str(type(values))
+			raise ArgumentException(msg)
+
+		self._fillWith_implementation(values, psIndex, fsIndex, peIndex, feIndex)
+
+
 	###############################################################
 	###############################################################
 	###   Subclass implemented numerical operation functions    ###

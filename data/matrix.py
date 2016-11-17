@@ -619,6 +619,15 @@ class Matrix(Base):
 			self.data[i,j] = currRet
 
 
+	def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
+		if not isinstance(values, UML.data.Base):
+			values = values * numpy.ones((pointEnd-pointStart+1, featureEnd-featureStart+1))
+		else:
+			values = values.data
+
+		self.data[pointStart:pointEnd+1,featureStart:featureEnd+1] = values
+
+
 	def _getitem_implementation(self, x, y):
 		return self.data[x,y]
 

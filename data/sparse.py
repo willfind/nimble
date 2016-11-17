@@ -988,6 +988,185 @@ class Sparse(Base):
 
 			self.data.data[index] = currRet
 
+
+	def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
+		# sort values or call helper as needed
+		constant = not isinstance(values, UML.data.Base)
+		if constant:
+			if values == 0:
+				self._fillWith_zeros_implementation(pointStart, featureStart, pointEnd, featureEnd)
+				return
+		else:
+			values._sortInternal('point')
+
+		# this has to be after the possible call to _fillWith_zeros_implementation;
+		# it is uncessary for that helper
+		self._sortInternal('point')
+
+		self_i = 0	
+		vals_i = 0
+		copyIndex = 0
+		toAddData = []
+		toAddRow = []
+		toAddCol = []
+		selfEnd = numpy.searchsorted(self._data.row, pointEnd, 'right')
+		if constant:
+			valsEnd = (pointEnd - pointStart + 1) * (featureEnd - featureStart + 1)
+		else:
+			valsEnd = len(values._data.data)
+
+		# Adjust self_i so that it begins at the values that might need to be
+		# replaced, or, if no such values exist, set self_i such that the main loop
+		# will ignore the contents of self.		
+		if len(self._data.data) > 0:
+			self_i = numpy.searchsorted(self._data.row, pointStart, 'left')
+
+			pcheck = self._data.row[self_i]
+			fcheck = self._data.col[self_i]
+			# the condition in the while loop is a natural break, if it isn't
+			# satisfied then self_i will be exactly where we want it
+			while fcheck < featureStart or fcheck > featureEnd:
+				# this condition is an unatural break, when it is satisfied,
+				# that means no value of self_i will point into the desired
+				# values
+				if pcheck > pointEnd or self_i == len(self._data.data)-1:
+					self_i = selfEnd
+					break
+
+				self_i += 1
+				pcheck = self._data.row[self_i]
+				fcheck = self._data.col[self_i]
+
+			copyIndex = self_i
+
+		# Walk full contents of both, modifying, shifing, or setting aside values as needed.
+		# We will only ever increment one of self_i or vals_i at a time, meaning if there are
+		# matching entries, we will encounter them. Due to the sorted precondition, if
+		# the location in one object is less than the location in the other object, the
+		# lower one CANNOT have a match.	
+		while self_i < selfEnd or vals_i < valsEnd:
+			if self_i < selfEnd:
+				locationSP = self._data.row[self_i]
+				locationSF = self._data.col[self_i]		 
+			else:
+				# we want to use unreachable values as sentials, so we + 1 since we're
+				# using inclusive endpoints
+				locationSP = pointEnd + 1
+				locationSF = featureEnd + 1
+			
+			# we adjust the 'values' locations into the scale of the calling object
+			locationVP = pointStart
+			locationVF = featureStart
+			if constant:
+				vData = values
+				locationVP += vals_i / (pointEnd - pointStart + 1)  # uses truncation of int division
+				locationVF += vals_i % (pointEnd - pointStart + 1)
+			elif vals_i >= valsEnd:
+				locationVP += pointEnd + 1
+				locationVF += featureEnd + 1
+			else:
+				vData = values._data.data[vals_i]
+				locationVP += values._data.row[vals_i]
+				locationVF += values._data.col[vals_i]
+
+			pCmp = locationSP - locationVP
+			fCmp = locationSF - locationVF
+			trueCmp = pCmp if pCmp != 0 else fCmp
+
+			# Case: location at index into self is higher than location at index into values.
+			# No matching entry in self; copy if space, or record to be added at end.
+			if trueCmp > 0:			
+				# can only copy into self if there is open space
+				if copyIndex < self_i:
+					self._data.data[copyIndex] = vData
+					self._data.row[copyIndex] = locationVP
+					self._data.col[copyIndex] = locationVF
+					copyIndex += 1
+				else:
+					toAddData.append(vData)
+					toAddRow.append(locationVP)
+					toAddCol.append(locationVF)
+
+				#increment vals_i
+				vals_i += 1
+			# Case: location at index into other is higher than location at index into self.
+			# no matching entry in values - fill this entry in self with zero
+			# (by shifting past it)
+			elif trueCmp < 0:
+				# need to do cleanup if we're outside of the relevant bounds
+				if locationSF < featureStart or locationSF > featureEnd:
+					self._data.data[copyIndex] = self._data.data[self_i]
+					self._data.row[copyIndex] = self._data.row[self_i]
+					self._data.col[copyIndex] = self._data.col[self_i]
+					copyIndex += 1
+				self_i += 1
+			# Case: indices point to equal locations.
+			else:
+				self._data.data[copyIndex] = vData
+				self._data.row[copyIndex] = locationVP
+				self._data.col[copyIndex] = locationVF
+				copyIndex += 1
+
+				# increment both??? or just one?
+				self_i += 1
+				vals_i += 1
+
+		# Now we have to walk through the rest of self, finishing the copying shift
+		# if necessary
+		if copyIndex != self_i:
+			while self_i < len(self._data.data):
+				self._data.data[copyIndex] = self._data.data[self_i]
+				self._data.row[copyIndex] = self._data.row[self_i]
+				self._data.col[copyIndex] = self._data.col[self_i]
+				self_i += 1
+				copyIndex += 1
+		else:
+			copyIndex = len(self._data.data)
+
+		newData = numpy.empty(copyIndex + len(toAddData))
+		newData[:copyIndex] = self._data.data[:copyIndex]
+		newData[copyIndex:] = toAddData
+		newRow = numpy.empty(copyIndex + len(toAddRow))
+		newRow[:copyIndex] = self._data.row[:copyIndex]
+		newRow[copyIndex:] = toAddRow
+		newCol = numpy.empty(copyIndex + len(toAddCol))
+		newCol[:copyIndex] = self._data.col[:copyIndex]
+		newCol[copyIndex:] = toAddCol
+		self._data = CooWithEmpty((newData,(newRow,newCol)), (self.pointCount, self.featureCount))
+
+
+	def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
+		#instead of always copying, use reshape or resize to sometimes cut array down
+		# to size???
+		pass
+
+	def _fillWith_zeros_implementation(self, pointStart, featureStart, pointEnd, featureEnd):
+		prange = pointStart - featureStart + 1
+		frange = featureStart - featureEnd + 1
+
+		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
+		# underlying structure to save space
+		copyIndex = 0
+
+		for lookIndex in xrange(len(self._data.data)):
+			currP = self._data.row[lookIndex]
+			currF = self._data.col[lookIndex]
+			# if it is in range we want to obliterate the entry by just passing it by
+			# and copying over it later
+			if currP >= pointStart and currP <= pointEnd and currF >= featureStart and currF <= featureEnd:
+				pass
+			else:
+				self._data.data[copyIndex] = self._data.data[lookIndex]
+				self._data.row[copyIndex] = self._data.row[lookIndex]
+				self._data.col[copyIndex] = self._data.col[lookIndex]
+				copyIndex += 1
+
+		# reinstantiate self
+		# (cannot reshape coo matrices, so cannot do this in place)
+		newData = (self._data.data[0:copyIndex],(self._data.row[0:copyIndex],self._data.col[0:copyIndex]))
+		self._data = CooWithEmpty(newData, (self.pointCount, self.featureCount))
+
+
 	def _getitem_implementation(self, x, y):
 		for i in xrange(len(self._data.row)):
 			rowVal = self._data.row[i]
