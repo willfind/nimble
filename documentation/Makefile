@@ -77,6 +77,13 @@ clean:
 	rm -fr $(BUILDDIR)/linkcheck
 	rm -fr $(BUILDDIR)/doctest
 	rm -fr $(BUILDDIR)/coverage
+	rm -fr $(PUBLISHDIR)/.doctrees/
+	rm -fr $(PUBLISHDIR)/objects.inv
+	rm -fr $(PUBLISHDIR)/.buildinfo
+	rm -fr $(PUBLISHDIR)/*.html
+	rm -fr $(PUBLISHDIR)/*.js
+	rm -fr $(PUBLISHDIR)/_sources
+	rm -fr $(PUBLISHDIR)/_static
 
 publish:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(PUBLISHDIR)
