@@ -9,7 +9,7 @@ copyAs, copyPoints, copyFeatures
 In object StructureModifying:
 __init__,  transpose, appendPoints, appendFeatures, sortPoints, sortFeatures,
 extractPoints, extractFeatures, referenceDataFrom, transformEachPoint,
-transformEachFeature, transformEachElement
+transformEachFeature, transformEachElement, fillWith
 
 
 
@@ -2617,15 +2617,15 @@ class StructureModifying(DataTestObject):
 
 
 	def test_fillWith_constants(self):
-#		toTest0 = self.constructor([[0,0,0],[0,0,0],[0,0,0]]) 
-#		exp0 = self.constructor([[0,1,1],[0,1,1],[0,0,0]])
-#		toTest0.fillWith(1, 0, 1, 1, 2)
-#		assert toTest0 == exp0
+		toTest0 = self.constructor([[0,0,0],[0,0,0],[0,0,0]]) 
+		exp0 = self.constructor([[0,1,1],[0,1,1],[0,0,0]])
+		toTest0.fillWith(1, 0, 1, 1, 2)
+		assert toTest0 == exp0
 
-#		toTest1 = self.constructor([[1,1,1],[1,1,1],[1,1,1]])
-#		exp1 = self.constructor([[1,0,1],[1,0,1],[1,0,1]])
-#		toTest1.fillWith(0, 0, 1, 2, 1)
-#		assert toTest1 == exp1
+		toTest1 = self.constructor([[1,1,1],[1,1,1],[1,1,1]])
+		exp1 = self.constructor([[1,0,1],[1,0,1],[1,0,1]])
+		toTest1.fillWith(0, 0, 1, 2, 1)
+		assert toTest1 == exp1
 
 		toTestI = self.constructor([[1,0,0],[0,1,0],[0,0,1]])
 		expi = self.constructor([[1,0,2],[0,1,0],[2,0,1]])
