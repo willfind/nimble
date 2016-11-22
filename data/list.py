@@ -608,6 +608,7 @@ class List(Base):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
+		self._numFeatures = other._numFeatures
 
 	def _copyAs_implementation(self, format):
 		if format == 'Sparse':

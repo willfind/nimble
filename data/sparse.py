@@ -1134,6 +1134,9 @@ class Sparse(Base):
 		newCol[copyIndex:] = toAddCol
 		self._data = CooWithEmpty((newData,(newRow,newCol)), (self.pointCount, self.featureCount))
 
+		if len(toAddData) != 0:
+			self._sorted = None
+
 
 	def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
 		#instead of always copying, use reshape or resize to sometimes cut array down
@@ -1141,9 +1144,6 @@ class Sparse(Base):
 		pass
 
 	def _fillWith_zeros_implementation(self, pointStart, featureStart, pointEnd, featureEnd):
-		prange = pointStart - featureStart + 1
-		frange = featureStart - featureEnd + 1
-
 		#walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
 		# underlying structure to save space
 		copyIndex = 0

@@ -2099,12 +2099,12 @@ class StructureModifying(DataTestObject):
 		pNames = ['1', 'one', '2', '0']
 		orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
 
-		data2 = [[-1,-2,-3,]]
-		featureNames = ['1', '2', '3']
+		data2 = [[-1,-2,-3,-4]]
+		featureNames = ['1', '2', '3', '4']
 		pNames = ['-1']
 		other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
 
-		ret = orig.referenceDataFrom(other) # RET CHECK
+		ret = orig.referenceDataFrom(other)  # RET CHECK
 
 		assert orig.data is other.data
 		assert '-1' in orig.getPointNames()

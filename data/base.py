@@ -2609,6 +2609,7 @@ class Base(object):
 			raise ArgumentException(msg)
 
 		self._fillWith_implementation(values, psIndex, fsIndex, peIndex, feIndex)
+		self.validate()
 
 
 	###############################################################
