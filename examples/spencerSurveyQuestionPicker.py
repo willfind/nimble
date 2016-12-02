@@ -394,7 +394,8 @@ def testgetBestFeaturesAndErrors():
 	numFeaturesToKeep = 3
 
 	trainXs, trainYs, testXs, testYs = buildTrainingAndTestingSetsForPredictions(data.copy(), fractionOfDataForTesting=fractionOfDataForTesting, featuresToPredict=featuresToPredict, functionsToExcludePoints=functionsToExcludePoints)
-	bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict)
+	#getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode, plot=False, verbose=False):
+	bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode="remove features")
 	
 	print "errorsHash:", errorsHash
 	print "parametersHash", parametersHash
@@ -406,11 +407,11 @@ def testgetBestFeaturesAndErrors():
 	assert errorsHash["p2"] < 0.05
 
 	numFeaturesToKeep = 2
-	bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict)
+	bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode="remove features")
 	assert bestFeatures == ["x0", "x3"]
 
 	numFeaturesToKeep = 1
-	bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict)
+	bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode="remove features")
 	assert bestFeatures == ["x3"]
 
 def printParameters(name, parametersHash):
