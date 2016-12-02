@@ -3909,6 +3909,15 @@ class Base(object):
 		self._incrementDefaultIfNeeded(newName, axis)
 
 	def _setNamesFromList(self, assignments, count, axis):
+		if axis == 'point':
+			def checkAndSet(val):
+				if val >= self._nextDefaultValuePoint:
+					self._nextDefaultValuePoint = val + 1
+		else:
+			def checkAndSet(val):
+				if val >= self._nextDefaultValueFeature:
+					self._nextDefaultValueFeature = val + 1
+
 		self._validateAxis(axis)
 		if assignments is None:
 			self._setAllDefault(axis)
@@ -3936,6 +3945,12 @@ class Base(object):
 			msg += "implentations for both __len__ and __getitem__, where "
 			msg += "__getitem__ accepts non-negative integers"
 			raise ArgumentException(msg)
+
+		# adjust nextDefaultValue as needed given contents of assignments
+		for name in assignments:
+			if name is not None and name.startswith(DEFAULT_PREFIX):
+				num = int(name[len(DEFAULT_PREFIX):])
+				checkAndSet(num)
 
 		#convert to dict so we only write the checking code once
 		temp = {}

@@ -605,6 +605,24 @@ class LowLevelBackend(object):
 		confirmExpectedNames(toTest, 'point', toAssign)
 		assert ret is None 
 
+	def test_setPointNames_list_mixedSpecifiedUnspecified_defaults(self):
+		toTest = self.constructor(pointNames=([None]*4))
+
+		nextNum = toTest._nextDefaultValuePoint
+
+		toAssign = [None] * 4
+		toAssign[0] = DEFAULT_PREFIX + str(nextNum)
+		toAssign[2] = DEFAULT_PREFIX + str(nextNum-1)
+
+		ret = toTest.setPointNames(toAssign)
+
+		assert toTest.getPointName(0) == DEFAULT_PREFIX + str(nextNum)
+		assert toTest.getPointName(1) == DEFAULT_PREFIX + str(nextNum+1)
+		assert toTest.getPointName(2) == DEFAULT_PREFIX + str(nextNum-1)
+		assert toTest.getPointName(3).startswith(DEFAULT_PREFIX)
+		assert ret is None
+
+
 
 	#####################
 	# setFeatureNames() #
@@ -707,6 +725,23 @@ class LowLevelBackend(object):
 		toAssign = ["hey","gone","none","blank"]
 		ret = toTest.setFeatureNames(toAssign)  # RET CHECK
 		confirmExpectedNames(toTest, 'feature', toAssign)
+		assert ret is None
+
+	def test_setFeatureNames_list_mixedSpecifiedUnspecified_defaults(self):
+		toTest = self.constructor(featureNames=([None]*4))
+
+		nextNum = toTest._nextDefaultValueFeature
+
+		toAssign = [None] * 4
+		toAssign[0] = DEFAULT_PREFIX + str(nextNum)
+		toAssign[2] = DEFAULT_PREFIX + str(nextNum-1)
+
+		ret = toTest.setFeatureNames(toAssign)
+
+		assert toTest.getFeatureName(0) == DEFAULT_PREFIX + str(nextNum)
+		assert toTest.getFeatureName(1) == DEFAULT_PREFIX + str(nextNum+1)
+		assert toTest.getFeatureName(2) == DEFAULT_PREFIX + str(nextNum-1)
+		assert toTest.getFeatureName(3).startswith(DEFAULT_PREFIX)
 		assert ret is None
 
 
