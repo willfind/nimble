@@ -2009,60 +2009,134 @@ class Base(object):
 
 	def appendPoints(self, toAppend):
 		"""
-		Append the points from the toAppend object to the bottom of the features in this object.
+		Expand this object by appending the points from the toAppend object
+		after the points currently in this object, merging together their
+		features. The features in toAppend do not need to be in the same
+		order as in the calling object; the data will automatically be
+		placed using the calling object's feature order if there is an
+		unambiguous mapping. toAppend will be unaffected by calling this
+		method.
 
-		toAppend cannot be None, and must be a kind of data representation object with the same
-		number of features as the calling object. None is always returned.
+		toAppend - the UML data object whose contents we will be including
+		in this object. Must be the same type as the calling object. Must
+		have the same number of features as the calling object. Must not
+		share any point names with the calling object. Must have
+		the same feature names as the calling object, but not necessary
+		in the same order.
 		
 		"""
 		self._validateValueIsNotNone("toAppend", toAppend)
 		self._validateValueIsUMLDataObject("toAppend", toAppend, True)
 		self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
-		self._validateEqualNames('feature', 'feature', 'toAppend', toAppend)
 		self._validateEmptyNamesIntersection("point", "toAppend", toAppend)
 
 		# need this in case we are self appending
-		origPointCount = toAppend.pointCount
+		origPointCountS = self.pointCount
+		origPointCountTA = toAppend.pointCount
 
-		self._appendPoints_implementation(toAppend)
-		self._pointCount += toAppend.pointCount
+		isReordered = self._validateReorderedNames('feature', 'appendPoints', toAppend)
+		if isReordered:  # we make use of the generic reordering append code
+			self._appendReorder_implementation('point', toAppend)
 
-		for i in xrange(origPointCount):
-			currName = toAppend.getPointName(i)
-			if currName.startswith(DEFAULT_PREFIX):
-				currName = self._nextDefaultName('point')
-			self._addPointName(currName)
+			for i in xrange(origPointCountTA):
+				currName = toAppend.getPointName(i)
+				if currName.startswith(DEFAULT_PREFIX):
+					currName = self._nextDefaultName('point')
+				self.setPointName(origPointCountS + i, currName)
+
+		else:
+			self._appendPoints_implementation(toAppend)
+			self._pointCount += toAppend.pointCount
+
+			for i in xrange(origPointCountTA):
+				currName = toAppend.getPointName(i)
+				if currName.startswith(DEFAULT_PREFIX):
+					currName = self._nextDefaultName('point')
+				self._addPointName(currName)
 
 		self.validate()
 
 	def appendFeatures(self, toAppend):
 		"""
-		Append the features from the toAppend object to right ends of the points in this object
+		Expand this object by appending the features from the toAppend object
+		after the features currently in this object, merging together their
+		points. The points in toAppend do not need to be in the same
+		order as in the calling object; the data will automatically be
+		placed using the calling object's point order if there is an
+		unambiguous mapping. toAppend will be unaffected by calling this
+		method.
 
-		toAppend cannot be None, must be a kind of data representation object with the same
-		number of points as the calling object, and must not share any feature names with the calling
-		object. None is always returned.
+		toAppend - the UML data object whose contents we will be including
+		in this object. Must be the same type as the calling object. Must
+		have the same number of points as the calling object. Must not
+		share any feature names with the calling object. Must have
+		the same point names as the calling object, but not necessary
+		in the same order.
 		
-		"""	
+		"""
 		self._validateValueIsNotNone("toAppend", toAppend)
 		self._validateValueIsUMLDataObject("toAppend", toAppend, True)
 		self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
-		self._validateEqualNames('point', 'point', 'toAppend', toAppend)
 		self._validateEmptyNamesIntersection('feature', "toAppend", toAppend)
 
 		# need this in case we are self appending
-		origFeaureCount = toAppend.featureCount
+		origFeatureCountS = self.featureCount
+		origFeatureCountTA = toAppend.featureCount
 
-		self._appendFeatures_implementation(toAppend)
-		self._featureCount += toAppend.featureCount
+		isReordered = self._validateReorderedNames('point', 'appendFeatures', toAppend)
+		if isReordered:
+			self._appendReorder_implementation('feature', toAppend)
+			for i in xrange(origFeatureCountTA):
+				currName = toAppend.getFeatureName(i)
+				if currName.startswith(DEFAULT_PREFIX):
+					currName = self._nextDefaultName('feature')
+				self.setFeatureName(origFeatureCountS+i, currName)
+		else:
+			self._appendFeatures_implementation(toAppend)
+			self._featureCount += toAppend.featureCount
 
-		for i in xrange(origFeaureCount):
-			currName = toAppend.getFeatureName(i)
-			if currName.startswith(DEFAULT_PREFIX):
-				currName = self._nextDefaultName('feature')
-			self._addFeatureName(currName)
+			for i in xrange(origFeatureCountTA):
+				currName = toAppend.getFeatureName(i)
+				if currName.startswith(DEFAULT_PREFIX):
+					currName = self._nextDefaultName('feature')
+				self._addFeatureName(currName)
 
 		self.validate()
+
+
+	def _appendReorder_implementation(self, axis, toAppend):
+		if axis == 'point':
+			newPointNames = self.getPointNames() + ([None] * toAppend.pointCount)
+			newFeatureNames = toAppend.getFeatureNames()
+			newPointSize = self.pointCount + toAppend.pointCount
+			newFeatureSize = self.featureCount
+		else:
+			newPointNames = toAppend.getPointNames()
+			newFeatureNames = self.getFeatureNames() + ([None] * toAppend.featureCount)
+			newPointSize = self.pointCount
+			newFeatureSize = self.featureCount + toAppend.featureCount
+
+		newObj = UML.zeros(self.getTypeString(), newPointSize, newFeatureSize,
+			pointNames=newPointNames, featureNames=newFeatureNames, name=self.name)
+
+		if axis == 'point':
+			newObj.fillWith(toAppend, self.pointCount, 0, newObj.pointCount-1, newObj.featureCount-1)
+			resortOrder = [self.getFeatureIndex(toAppend.getFeatureName(i)) for i in xrange(self.featureCount)]
+			orderObj = UML.createData(self.getTypeString(), resortOrder)
+			newObj.fillWith(orderObj, self.pointCount-1, 0, self.pointCount-1, newObj.featureCount-1)
+			newObj.sortFeatures(sortBy=self.pointCount-1)
+			newObj.fillWith(self, 0, 0, self.pointCount-1, newObj.featureCount-1)
+			self.referenceDataFrom(newObj)
+		else:
+			newObj.fillWith(toAppend, 0, self.featureCount, newObj.pointCount-1, newObj.featureCount-1)
+			resortOrder = [self.getPointIndex(toAppend.getPointName(i)) for i in xrange(self.pointCount)]
+			orderObj = UML.createData(self.getTypeString(), resortOrder)
+			orderObj.transpose()
+			newObj.fillWith(orderObj, 0, self.featureCount-1, newObj.pointCount-1, self.featureCount-1)
+			newObj.sortPoints(sortBy=self.featureCount-1)
+			newObj.fillWith(self, 0, 0,  newObj.pointCount-1, self.featureCount-1)
+			self.referenceDataFrom(newObj)
+
 
 	def sortPoints(self, sortBy=None, sortHelper=None):
 		""" 
@@ -3712,6 +3786,63 @@ class Base(object):
 		checkFromLeftKeys(inconsistencies, otherNames, selfNames)
 
 		return inconsistencies
+
+
+	def _validateReorderedNames(self, axis, callSym, other):
+		"""
+		Validate axis names to check to see if they are equal ignoring order.
+		Returns True if the names are equal but reordered, False if they are
+		equal and the same order (ignoring defaults), and raises an exception
+		if they do not share exactly the same names, or requires reordering in
+		the presence of default names.
+		"""
+		if axis == 'point':
+			lnames = self.getPointNames()
+			rnames = other.getPointNames()
+			lGetter = self.getPointIndex
+			rGetter = other.getPointIndex
+		else:
+			lnames = self.getFeatureNames()
+			rnames = other.getFeatureNames()
+			lGetter = self.getFeatureIndex
+			rGetter = other.getFeatureIndex
+
+		inconsistencies = self._inconsistentNames(lnames, rnames)
+
+		if len(inconsistencies) != 0:
+			# check for the presence of default names; we don't allow reordering
+			# in that case.
+			msgBase = "When calling caller." + callSym + "(callee) we require that the "
+			msgBase += axis + " names all contain the same names, regardless of order."
+			msg = copy.copy(msgBase)
+			msg += "However, when default names are present, we don't allow reordering "
+			msg += "to occur: either all names must be specified, or the order must be "
+			msg += "the same."
+
+			if True in map(lambda x: x.startswith(DEFAULT_PREFIX), lnames):
+				raise ArgumentException(msg)
+			if True in map(lambda x: x.startswith(DEFAULT_PREFIX), rnames):
+				raise ArgumentException(msg)
+
+			ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
+			# names are not the same.
+			if len(ldiff) != 0:
+				rdiff = numpy.setdiff1d(rnames, lnames, assume_unique=True)
+				msgBase += "Yet, the following names were unmatched (caller names "
+				msgBase += "on the left, callee names on the right):\n"
+
+				table = [['ID', 'name', '', 'ID', 'name']]
+				for i,(lname,rname) in enumerate(zip(ldiff, rdiff)):
+					table.append([lGetter(lname), lname, "   ", rGetter(rname), rname])
+
+				msg += UML.logger.tableString.tableString(table)
+				print >>sys.stderr, msg
+
+				raise ArgumentException(msg)
+			else:  # names are not different, but are reordered
+				return True
+		else:  # names exactly equal
+			return False
 
 
 	def _getPointIndex(self, identifier):

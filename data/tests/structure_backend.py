@@ -957,27 +957,26 @@ class StructureModifying(DataTestObject):
 
 
 
-	def backend_append_exception_mergeAxis_MismatchedNames(self, axis):
-		data = [[1,2,3],[4,5,6],[7,8,9]]
-		toTest = self.constructor(data, featureNames=['one','two','three'])
-		toAppend = self.constructor([[11, 12, 13,]], featureNames=["two", 'one', 'three'])
-		
+	def backend_append_exception_sharedAxis_unsharedName(self, axis):
+		toTest1 = self.constructor([[1,2]], featureNames=['1', '2'])
+		toTest2 = self.constructor([[2,1],[6,5]], featureNames=['6','1'])
+
 		if axis == 'point':
-			toTest.appendPoints(toAppend)
+			toTest2.appendPoints(toTest1)
 		else:
-			toTest.transpose()
-			toAppend.transpose()
-			toTest.appendFeatures(toAppend)
+			toTest1.transpose()
+			toTest2.transpose()
+			toTest2.appendFeatures(toTest1)
 
 	@raises(ArgumentException)
-	def test_appendPoints_exceptionMismatchedFeatureNames(self):
-		""" Test appendPoints() for ArgumentException when toAppend and self's feature names do not match"""
-		self.backend_append_exception_mergeAxis_MismatchedNames('point')
+	def test_appendPoints_exception_unsharedFeatureName(self):
+		""" Test appendPoints() for ArgumentException when toAppend and self have a featureName not in common """
+		self.backend_append_exception_sharedAxis_unsharedName('point')
 
 	@raises(ArgumentException)
-	def test_appendFeatures_exceptionMismatchedPointNames(self):
-		""" Test appendFeatures() for ArgumentException when toAppend and self do not have equal pointNames """
-		self.backend_append_exception_mergeAxis_MismatchedNames('feature')
+	def test_appendFeatures_exception_unsharedPointName(self):
+		""" Test appendFeatures() for ArgumentException when toAppend and self have a pointName not in common """
+		self.backend_append_exception_sharedAxis_unsharedName('feature')
 
 
 
@@ -1020,6 +1019,34 @@ class StructureModifying(DataTestObject):
 	@raises(ArgumentException)
 	def test_appendFeatures_exceptionDifferentUMLDataType(self):
 		self.backend_append_exceptionDifferentUMLDataType('feature')
+
+
+
+	def backend_append_exception_outOfOrder_with_defaults(self, axis):
+		toTest1 = self.constructor([[1,2,3]])
+		toTest2 = self.constructor([[1,3,2]])
+
+		toTest1.setFeatureName(1,'2')
+		toTest1.setFeatureName(2,'3')
+		toTest2.setFeatureName(1,'3')
+		toTest2.setFeatureName(2,'2')
+
+		if axis == 'point':
+			toTest1.appendPoints(toTest2)
+		else:
+			toTest1.transpose()
+			toTest2.transpose()
+			toTest1.appendFeatures(toTest2)
+
+
+	@raises(ArgumentException)
+	def test_appendPoints_exception_outOfOrder_with_defaults(self):
+		self.backend_append_exception_outOfOrder_with_defaults('point')
+
+	@raises(ArgumentException)
+	def test_appendFeatures_exception_outOfOrder_with_defaults(self):
+		self.backend_append_exception_outOfOrder_with_defaults('feature')
+
 
 
 	def backend_append_emptyObject(self, axis):
@@ -1202,6 +1229,53 @@ class StructureModifying(DataTestObject):
 
 	def test_appendFeatures_selfAppend(self):
 		self.backend_append_selfAppend('feature')
+
+
+
+	def backend_append_automaticReorder(self, axis, defPrimaryNames):
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+		offNames = ['off1', 'off2', 'off3']
+		addOffName = ['off3', 'off2', 'off1']
+		if defPrimaryNames:
+			names = [None] * 3
+			addName = [None]
+			namesExp = [None] * 4
+		else:
+			names = ['one', 'two', 'three']
+			addName = ['new']
+			namesExp = ['one', 'two', 'three', 'new']
+
+		if axis == 'point':
+			toAddData = [[-3,-2,-1]]
+			dataExpected = [[1,2,3],[4,5,6],[7,8,9],[-1,-2,-3]]
+			toTest = self.constructor(data, pointNames=names, featureNames=offNames)
+			toAppend = self.constructor(toAddData, pointNames=addName, featureNames=addOffName)
+			expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
+			toTest.appendPoints(toAppend)
+		else:
+			toAddData = [[-3],[-2],[-1]]
+			dataExpected = [[1,2,3,-1],[4,5,6,-2],[7,8,9,-3]]
+			toTest = self.constructor(data, pointNames=offNames, featureNames=names)
+			toAppend = self.constructor(toAddData, pointNames=addOffName, featureNames=addName)
+			expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
+			toTest.appendFeatures(toAppend)
+
+		assert toTest.isIdentical(expected)
+
+
+
+	def test_appendPoints_automaticReorder_fullySpecifiedNames(self):
+		self.backend_append_automaticReorder('point', False)
+
+	def test_appendFeatures_automaticReorder_fullySpecifiedNames(self):
+		self.backend_append_automaticReorder('feature', False)
+
+	def test_appendPoints_automaticReorder_defaultPointNames(self):
+		self.backend_append_automaticReorder('point', True)
+
+	def test_appendFeatures_automaticReorder_defaultFeatureNames(self):
+		self.backend_append_automaticReorder('feature', True)
+
 
 
 
