@@ -2263,6 +2263,9 @@ class Base(object):
 		self._absPath = other.absolutePath
 		self._relPath = other.relativePath
 
+		self._nextDefaultValuePoint = other._nextDefaultValuePoint
+		self._nextDefaultValueFeature = other._nextDefaultValueFeature
+
 		self.validate()
 
 

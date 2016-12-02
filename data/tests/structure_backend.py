@@ -2091,9 +2091,7 @@ class StructureModifying(DataTestObject):
 		orig.referenceDataFrom(type2)
 
 
-	def test_referenceDataFrom_sameReference(self):
-		""" Test copyReference() successfully records the same reference """
-
+	def test_referenceDataFrom_data_axisNames(self):
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
 		pNames = ['1', 'one', '2', '0']
@@ -2111,8 +2109,7 @@ class StructureModifying(DataTestObject):
 		assert '1' in orig.getFeatureNames()
 		assert ret is None
 
-	def test_referenceDataFrom_NamePath(self):
-
+	def test_referenceDataFrom_ObjName_Paths(self):
 		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
 		featureNames = ['one', 'two', 'three']
 		pNames = ['1', 'one', '2', '0']
@@ -2140,6 +2137,25 @@ class StructureModifying(DataTestObject):
 		assert other.name == "testNameother"
 		assert other.absolutePath == "testAbsPathother"
 		assert other.relativePath == 'testRelPathother'
+
+
+	def test_referenceDataFrom_allMetadataAttributes(self):
+		data1 = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+		featureNames = ['one', 'two', 'three']
+		pNames = ['1', 'one', '2', '0']
+		orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+
+		data2 = [[-1,-2,-3,4,5,3,],[-1,-2,-3,4,5,3,]]
+		other = self.constructor(data2,)
+
+
+		orig.referenceDataFrom(other)
+
+		assert orig._pointCount == other.pointCount
+		assert orig._featureCount == other.featureCount
+
+		assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
+		assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
 
 
 	########################
