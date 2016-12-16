@@ -25,6 +25,7 @@ from UML.data import BaseView
 from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
+from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import ArgumentException
 
 preserveName = "PreserveTestName"
@@ -178,7 +179,62 @@ class QueryBackend(DataTestObject):
 		assert toWrite.isIdentical(readObj)
 
 
-# TODO tests for excluding all default point or feature name sets
+
+	def test_writeFile_CSV_excludeDefaultNames(self):
+		tmpFile = tempfile.NamedTemporaryFile(suffix=".csv")
+
+		def getDefNameIndex(name):
+			return int(name[len(DEFAULT_PREFIX):])
+
+		data = [[1,2,3],[1,2,3],[2,4,6],[0,0,0]]
+		pointNames = ['1', 'one', '2', '0']
+		featureNames = ['one', 'two', 'three']
+
+		def excludeAxis(axis):
+			if axis == 'point':
+				exclude = self.constructor(data, featureNames=featureNames)
+				getter = 'getPointName'
+				if isinstance(exclude, UML.data.BaseView):
+					setter = exclude._source.setPointNames
+				else:
+					setter = exclude.setPointNames
+				count = exclude.pointCount
+			else:
+				exclude = self.constructor(data, pointNames=pointNames)
+				getter = 'getFeatureName'
+				if isinstance(exclude, UML.data.BaseView):
+					setter = exclude._source.setFeatureNames
+				else:
+					setter = exclude.setFeatureNames
+				count = exclude.featureCount
+
+			# increase the index of the default point name so that it will be
+			# recognizable when we read in from the file.
+			while (getDefNameIndex(getattr(exclude, getter)(0)) <= 100):
+				setter(None)
+
+			# call writeFile
+			exclude.writeFile(tmpFile.name, format='csv', includeNames=True)
+
+			# read it back into a different object, then test equality
+			if axis == 'point':
+				readObj = self.constructor(data=tmpFile.name, featureNames=True)
+			else:
+				readObj = self.constructor(data=tmpFile.name, pointNames=True)
+
+			# isIdentical will ignore default names, but we still want to
+			# ensure everything else is a match
+			assert readObj.isIdentical(exclude)
+			assert exclude.isIdentical(readObj)
+
+			for i in xrange(count):
+				origName = getattr(exclude, getter)(i)
+				readName = getattr(readObj, getter)(i)
+				assert getDefNameIndex(origName) > 100
+				assert getDefNameIndex(readName) < 10
+
+		excludeAxis('point')
+		excludeAxis('feature')
 
 
 	def test_writeFile_MTXhandmade(self):

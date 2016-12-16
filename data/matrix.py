@@ -485,7 +485,7 @@ class Matrix(Base):
 
 			outFile.write(fnamesLine)
 
-		if includeFeatureNames:
+		if includePointNames:
 			pnames = numpy.matrix(self.getPointNames())
 			pnames = pnames.transpose()
 
