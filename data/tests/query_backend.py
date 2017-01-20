@@ -33,6 +33,19 @@ preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
 preserveRPath = os.path.relpath(preserveAPath)
 preservePair = (preserveAPath,preserveRPath)
 
+def _fnames(num):
+	ret = []
+	for i in xrange(num):
+		ret.append('f' + str(i))
+	return ret
+
+def _pnames(num):
+	ret = []
+	for i in xrange(num):
+		ret.append('p' + str(i))
+	return ret
+
+
 class QueryBackend(DataTestObject):
 	
 	##############
@@ -1348,10 +1361,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_max(self, axis):
 		data = [[1,2,1],[-10,-1,-21], [-1,0,0]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("MAx")
@@ -1364,7 +1379,7 @@ class QueryBackend(DataTestObject):
 		assert ret.featureCount == 1
 
 		expRaw = [[2],[-1],[0]]
-		expObj = self.constructor(expRaw, featureNames=["max"])
+		expObj = self.constructor(expRaw, featureNames=["max"], pointNames=pnames)
 
 		assert expObj == ret
 		assert sameAsOrig == orig			
@@ -1381,10 +1396,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_mean(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("Mean")
@@ -1396,7 +1413,7 @@ class QueryBackend(DataTestObject):
 		assert ret.featureCount == 1
 
 		expRaw = [[1],[2./3],[1./3]]
-		expObj = self.constructor(expRaw, featureNames=["mean"])
+		expObj = self.constructor(expRaw, featureNames=["mean"], pointNames=pnames)
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1413,10 +1430,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_median(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("MeDian")
@@ -1428,7 +1447,7 @@ class QueryBackend(DataTestObject):
 		assert ret.featureCount == 1
 
 		expRaw = [[1],[1],[0]]
-		expObj = self.constructor(expRaw, featureNames=["median"])
+		expObj = self.constructor(expRaw, featureNames=["median"], pointNames=pnames)
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1446,10 +1465,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_min(self, axis):
 		data = [[1,2,1],[-10,-1,-21], [-1,0,0]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("mIN")
@@ -1461,7 +1482,7 @@ class QueryBackend(DataTestObject):
 		assert ret.featureCount == 1
 
 		expRaw = [[1],[-21],[-1]]
-		expObj = self.constructor(expRaw, featureNames=['min'])
+		expObj = self.constructor(expRaw, featureNames=['min'], pointNames=pnames)
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1478,10 +1499,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_uniqueCount(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,-1]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("unique Count")		
@@ -1493,7 +1516,7 @@ class QueryBackend(DataTestObject):
 		assert ret.featureCount == 1
 
 		expRaw = [[1],[2],[3]]
-		expObj = self.constructor(expRaw, featureNames=['uniquecount'])
+		expObj = self.constructor(expRaw, featureNames=['uniquecount'], pointNames=pnames)
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1510,10 +1533,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_proportionMissing(self, axis):
 		data = [[1,None,1],[0,1,float('nan')], [1,float('nan'),None]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("Proportion Missing ")
@@ -1525,7 +1550,7 @@ class QueryBackend(DataTestObject):
 		assert ret.featureCount == 1
 
 		expRaw = [[1./3],[1./3],[2./3]]
-		expObj = self.constructor(expRaw, featureNames=['proportionmissing'])
+		expObj = self.constructor(expRaw, featureNames=['proportionmissing'], pointNames=pnames)
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1542,10 +1567,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_proportionZero(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("proportionZero")
@@ -1559,7 +1586,7 @@ class QueryBackend(DataTestObject):
 		assert ret.featureCount == 1
 
 		expRaw = [[0],[1./3],[2./3]]
-		expObj = self.constructor(expRaw, featureNames=['proportionzero'])
+		expObj = self.constructor(expRaw, featureNames=['proportionzero'], pointNames=pnames)
 
 		assert expObj == ret
 		assert sameAsOrig == orig
@@ -1576,10 +1603,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_sampleStandardDeviation(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("samplestd  ")
@@ -1596,9 +1625,13 @@ class QueryBackend(DataTestObject):
 		assert npExpObj.isApproximatelyEqual(ret)
 
 		expRaw = [[0],[math.sqrt(3./9)],[math.sqrt(3./9)]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, pointNames=pnames)
+		expPossibleFNames = ['samplestd', 'samplestandarddeviation', 'std', 'standarddeviation']
 
 		assert expObj.isApproximatelyEqual(ret)
+		assert expObj.getPointNames() == ret.getPointNames()
+		assert len(ret.getFeatureNames()) == 1
+		assert ret.getFeatureNames()[0] in expPossibleFNames
 		assert sameAsOrig == orig
 		assert sameAsOrigT == trans
 
@@ -1614,10 +1647,12 @@ class QueryBackend(DataTestObject):
 	def backend_Stat_populationStandardDeviation(self, axis):
 		data = [[1,1,1],[0,1,1], [1,0,0]]
 		dataT = numpy.array(data).T.tolist()
-		orig = self.constructor(data)
-		trans = self.constructor(dataT)
-		sameAsOrig = self.constructor(data)
-		sameAsOrigT = self.constructor(dataT)
+		fnames = _fnames(3)
+		pnames = _pnames(3)
+		orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		trans = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
+		sameAsOrig = self.constructor(data, featureNames=fnames, pointNames=pnames)
+		sameAsOrigT = self.constructor(dataT, featureNames=pnames, pointNames=fnames)
 
 		if axis:
 			ret = orig.pointStatistics("popu  lationstd")
@@ -1634,9 +1669,13 @@ class QueryBackend(DataTestObject):
 		assert npExpObj.isApproximatelyEqual(ret)
 
 		expRaw = [[0],[math.sqrt(2./9)],[math.sqrt(2./9)]]
-		expObj = self.constructor(expRaw)
+		expObj = self.constructor(expRaw, pointNames=pnames)
+		expPossiblePNames = ['populationstd', 'populationstandarddeviation']
 
 		assert expObj.isApproximatelyEqual(ret)
+		assert expObj.getPointNames() == ret.getPointNames()
+		assert len(ret.getFeatureNames()) == 1
+		assert ret.getFeatureNames()[0] in expPossiblePNames
 		assert sameAsOrig == orig
 		assert sameAsOrigT == trans
 

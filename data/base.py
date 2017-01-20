@@ -3294,10 +3294,12 @@ class Base(object):
 
 		if axis == 'point':
 			ret = self.calculateForEachPoint(toCall)
+			ret.setPointNames(self.getPointNames())
 			ret.setFeatureName(0, cleanFuncName)
 		else:
 			ret = self.calculateForEachFeature(toCall)
 			ret.setPointName(0, cleanFuncName)
+			ret.setFeatureNames(self.getFeatureNames())
 		return ret
 
 	############################
