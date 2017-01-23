@@ -130,7 +130,7 @@ class HighLevelDataSafe(DataTestObject):
 		lowerCounts = origObj.calculateForEachPoint(emitLower)
 
 		expectedOut = [[0.1], [0.1], [0.1], [0.2]]
-		exp = self.constructor(expectedOut)
+		exp = self.constructor(expectedOut, pointNames=pointNames)
 
 		assert lowerCounts.isIdentical(exp)
 
@@ -154,6 +154,8 @@ class HighLevelDataSafe(DataTestObject):
 		assert ret.absolutePath == preserveAPath
 		assert ret.relativePath == preserveRPath
 
+		assert ret.getPointNames() == toTest.getPointNames()
+
 
 	def test_calculateForEachPoint_HandmadeLimited(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
@@ -167,7 +169,8 @@ class HighLevelDataSafe(DataTestObject):
 		lowerCounts = origObj.calculateForEachPoint(emitLower, points=['three',2])
 
 		expectedOut = [[0.1], [0.2]]
-		exp = self.constructor(expectedOut)
+		expPnames = ['two', 'three']
+		exp = self.constructor(expectedOut, pointNames=expPnames)
 
 		assert lowerCounts.isIdentical(exp)
 
@@ -189,7 +192,6 @@ class HighLevelDataSafe(DataTestObject):
 		exp = self.constructor(expectedOut)
 
 		assert counts.isIdentical(exp)
-
 
 
 	#############################
@@ -249,7 +251,7 @@ class HighLevelDataSafe(DataTestObject):
 
 		lowerCounts = origObj.calculateForEachFeature(emitAllEqual)
 		expectedOut = [[1,0,0]]	
-		exp = self.constructor(expectedOut)
+		exp = self.constructor(expectedOut, featureNames=featureNames)
 		assert lowerCounts.isIdentical(exp)
 
 
@@ -277,6 +279,8 @@ class HighLevelDataSafe(DataTestObject):
 		assert ret.absolutePath == preserveAPath
 		assert ret.relativePath == preserveRPath
 
+		assert toTest.getFeatureNames() == ret.getFeatureNames()
+
 
 	def test_calculateForEachFeature_HandmadeLimited(self):
 		featureNames = {'number':0,'centi':2,'deci':1}
@@ -293,8 +297,10 @@ class HighLevelDataSafe(DataTestObject):
 
 		lowerCounts = origObj.calculateForEachFeature(emitAllEqual, features=[0,'centi'])
 		expectedOut = [[1,0]]
-		exp = self.constructor(expectedOut)
+		expFNames = ['number', 'centi']
+		exp = self.constructor(expectedOut, featureNames=expFNames)
 		assert lowerCounts.isIdentical(exp)
+
 
 	def test_calculateForEachFeature_nonZeroIterAndLen(self):
 		origData = [[1,1,1], [1,0,2], [1,1,0], [0,2,0]]

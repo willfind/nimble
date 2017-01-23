@@ -492,6 +492,12 @@ class Base(object):
 
 		ret = self._calculateForEach_implementation(function, points, 'point')
 
+		if points is not None:
+			setNames = map(lambda x: self.getPointName(x), sorted(points))
+			ret.setPointNames(setNames)
+		else:
+			ret.setPointNames(self.getPointNames())
+
 		ret._absPath = self.absolutePath
 		ret._relPath = self.relativePath
 
@@ -530,6 +536,13 @@ class Base(object):
 		self.validate()
 
 		ret = self._calculateForEach_implementation(function, features, 'feature')
+
+		if features is not None:
+			setNames = map(lambda x: self.getFeatureName(x), sorted(features))
+			ret.setFeatureNames(setNames)
+		else:
+			ret.setFeatureNames(self.getFeatureNames())
+
 		ret._absPath = self.absolutePath
 		ret._relPath = self.relativePath
 		return ret
