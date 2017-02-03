@@ -2215,41 +2215,8 @@ class Base(object):
 		space of possible removals.
 
 		"""
-#		if self.pointCount == 0:
-#			raise ImproperActionException("Cannot extract points from an object with 0 points")
-
-		if toExtract is not None:
-			if start is not None or end is not None:
-				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
-			if isinstance(toExtract, basestring) or isinstance(toExtract, int):
-				toExtract = [toExtract]
-			if isinstance(toExtract, list):
-				#verify everything in list is a valid index and convert names into indices
-				indices = []
-				for identifier in toExtract:
-					indices.append(self._getPointIndex(identifier))
-				toExtract = indices
-		else:
-			if start is None:
-				start = 0
-			if end is None:
-				end = self.pointCount - 1
-			if start < 0 or start > self.pointCount:
-				raise ArgumentException("start must be a valid index, in the range of possible points")
-			if end < 0 or end > self.pointCount:
-				raise ArgumentException("end must be a valid index, in the range of possible points")
-			if start > end:
-				raise ArgumentException("start cannot be an index greater than end")
-			if number is not None:
-				#then we can do the windowing calculation here
-				possibleEnd = start + number -1
-				if possibleEnd < end:
-					if not randomize:
-						end = possibleEnd
-				else:
-					number = (end - start) +1
-
-		ret = self._extractPoints_implementation(toExtract, start, end, number, randomize)
+		ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, toExtract, start, end, number, randomize)
+		
 		self._pointCount -= ret.pointCount
 		if ret.pointCount != 0:
 			ret.setFeatureNames(self.getFeatureNames())
@@ -2261,6 +2228,7 @@ class Base(object):
 
 		self.validate()
 		return ret
+
 
 	def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
 		"""
@@ -2280,41 +2248,8 @@ class Base(object):
 		space of possible removals.
 
 		"""
-#		if self.featureCount == 0:
-#			raise ImproperActionException("Cannot extract features from an object with 0 features")
+		ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, start, end, number, randomize)
 
-		if toExtract is not None:
-			if start is not None or end is not None:
-				raise ArgumentException("Range removal is exclusive, to use it, toExtract must be None")
-			if isinstance(toExtract, basestring) or isinstance(toExtract, int):
-				toExtract = [toExtract]
-			if isinstance(toExtract, list):
-				#verify everything in list is a valid index and convert names into indices
-				indices = []
-				for identifier in toExtract:
-					indices.append(self._getFeatureIndex(identifier))
-				toExtract = indices
-		elif start is not None or end is not None:
-			if start is None:
-				start = 0
-			if end is None:
-				end = self.featureCount - 1
-			if start < 0 or start > self.featureCount:
-				raise ArgumentException("start must be a valid index, in the range of possible features")
-			if end < 0 or end > self.featureCount:
-				raise ArgumentException("end must be a valid index, in the range of possible features")
-			if start > end:
-				raise ArgumentException("start cannot be an index greater than end")
-			if number is not None:
-				#then we can do the windowing calculation here
-				possibleEnd = start + number - 1
-				if possibleEnd < end:
-					if not randomize:
-						end = possibleEnd
-				else:
-					number = (end - start) + 1
-
-		ret = self._extractFeatures_implementation(toExtract, start, end, number, randomize)
 		self._featureCount -= ret.featureCount
 		if ret.featureCount != 0:
 			ret.setPointNames(self.getPointNames())
@@ -3320,6 +3255,87 @@ class Base(object):
 	###   Helper functions   ###
 	############################
 	############################
+
+
+	def _genericStructuralFrontend(self, axis, backEnd, target=None, start=None, end=None, number=None, randomize=False):
+		if axis == 'point':
+			getIndex = self._getPointIndex
+			axisLength = self.pointCount
+		else:
+			getIndex = self._getFeatureIndex
+			axisLength = self.featureCount
+
+		if target is not None:
+			if start is not None or end is not None:
+				raise ArgumentException("Range removal is exclusive, to use it, target must be None")
+			if isinstance(target, basestring) or isinstance(target, int):
+				target = [target]
+			if isinstance(target, list):
+				#verify everything in list is a valid index and convert names into indices
+				indices = []
+				for identifier in target:
+					indices.append(getIndex(identifier))
+				target = indices
+
+				if number is None or len(target) < number:
+					number = len(target)
+				# if randomize, use random sample
+				if randomize:
+					indices = []
+					for i in xrange(len(target)):
+						indices.append(i)
+					randomIndices = pythonRandom.sample(indices, number)
+					randomIndices.sort()
+					temp = []
+					for index in randomIndices:
+						temp.append(target[index])
+					target = temp
+					randomize = False
+				# else take the first number members of target
+				else:
+					target = target[:number]
+
+			# boolean function
+			elif hasattr(target, '__call__'):
+				if randomize:
+					#apply to each
+					raise NotImplementedError  # TODO randomize in the By Function case
+				else:
+					if number is None:
+						number = axisLength
+
+		elif start is not None or end is not None:
+			start = 0 if start is None else getIndex(start)
+			end = axisLength - 1 if end is None else getIndex(end)
+			number = (end - start) + 1 if number is None else number
+
+			if start < 0 or start > axisLength:
+				msg = "start must be a valid index, in the range of possible "
+				msg += axis + 's'
+				raise ArgumentException(msg)
+			if end < 0 or end > axisLength:
+				msg = "end must be a valid index, in the range of possible "
+				msg += axis + 's'
+				raise ArgumentException(msg)
+			if start > end:
+				raise ArgumentException("The start index cannot be greater than the end index")
+
+			if randomize:
+				target = pythonRandom.sample(xrange(start,end),number)
+				target.sort()
+				return backEnd(target, None, None, number, False)
+
+			possibleEnd = start + number - 1
+			if possibleEnd < end:
+				end = possibleEnd
+			else:
+				number = (end - start) + 1
+		else:
+			raise ArgumentException("")
+
+		ret = backEnd(target, start, end, number, randomize)
+		return ret
+
 
 	def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,
 			fnames, pnameSep):

@@ -453,7 +453,7 @@ class StructureDataSafe(DataTestObject):
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data, featureNames=featureNames)
-		toTest.copyPoints(start=-1,end=2)
+		toTest.copyPoints(start=4,end=2)
 
 	@raises(ArgumentException)
 	def test_copyPoints_exceptionEndInvalid(self):
@@ -1667,11 +1667,11 @@ class StructureModifying(DataTestObject):
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data, featureNames=featureNames)
-		toTest.extractPoints(start=-1,end=2)
+		toTest.extractPoints(start=1.1,end=2)
 
 	@raises(ArgumentException)
 	def test_extractPoints_exceptionEndInvalid(self):
-		""" Test extractPoints() for ArgumentException when start is not a valid feature index """
+		""" Test extractPoints() for ArgumentException when start is not a valid Point index """
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data, featureNames=featureNames)
@@ -2053,7 +2053,7 @@ class StructureModifying(DataTestObject):
 		featureNames = ["one","two","three"]
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data, featureNames=featureNames)
-		toTest.extractFeatures(start=-1, end=2)
+		toTest.extractFeatures(start=1.1, end=2)
 
 	@raises(ArgumentException)
 	def test_extractFeatures_exceptionStartInvalidFeatureName(self):

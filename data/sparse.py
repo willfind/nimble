@@ -303,8 +303,6 @@ class Sparse(Base):
 		return newNameOrder
 
 
-
-
 	def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
 		"""
 		Function to extract points according to the parameters, and return an object containing
@@ -317,42 +315,21 @@ class Sparse(Base):
 		"""
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None or len(toExtract) < number:
-				number = len(toExtract)
-			# if randomize, use random sample
-			if randomize:
-				indices = []
-				for i in xrange(len(toExtract)):
-					indices.append(i)
-				randomIndices = pythonRandom.sample(indices, number)
-				randomIndices.sort()
-				temp = []
-				for index in randomIndices:
-					temp.append(toExtract[index])
-				toExtract = temp
-			# else take the first number members of toExtract
-			else:
-				toExtract = toExtract[:number]
+			assert number == len(toExtract)
+			assert not randomize
 			return self._extractByList_implementation(toExtract, 'point')
 		# boolean function
-		if hasattr(toExtract, '__call__'):
+		elif hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractPointByFunction case
+				raise NotImplementedError  # TODO
 			else:
-				if number is None:
-					number = self.pointCount		
-				return self._extractByFunction_implementation(toExtract, number, "point")
+				return self._extractByFunction_implementation(toExtract, number, 'point')
 		# by range
-		if start is not None or end is not None:
-			if number is None:
-				number = end - start
-			if randomize:
-				toExtract = pythonRandom.sample(xrange(start,end),number)
-				toExtract.sort()
-				return self._extractByList_implementation(toExtract, 'point')
-			else:
-				return self._extractByRange_implementation(start, end, 'point')
+		elif start is not None or end is not None:
+			return self._extractByRange_implementation(start, end, 'point')
+		else:
+			raise ArgumentException("Malformed or missing inputs")
 
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
@@ -367,41 +344,21 @@ class Sparse(Base):
 		"""
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None or len(toExtract) < number:
-				number = len(toExtract)
-			# if randomize, use random sample
-			if randomize:
-				indices = []
-				for i in xrange(len(toExtract)):
-					indices.append(i)
-				randomIndices = pythonRandom.sample(indices, number)
-				randomIndices.sort()
-				temp = []
-				for index in randomIndices:
-					temp.append(toExtract[index])
-				toExtract = temp			# else take the first number members of toExtract
-			else:
-				toExtract = toExtract[:number]
-			return self._extractByList_implementation(toExtract, "feature")
+			assert number == len(toExtract)
+			assert not randomize
+			return self._extractByList_implementation(toExtract, 'feature')
 		# boolean function
-		if hasattr(toExtract, '__call__'):
+		elif hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractFeatureByFunction case
+				raise NotImplementedError  # TODO
 			else:
-				if number is None:
-					number = self.pointCount		
-				return self._extractByFunction_implementation(toExtract, number, "feature")
+				return self._extractByFunction_implementation(toExtract, number, 'feature')
 		# by range
-		if start is not None or end is not None:
-			if number is None:
-				number = end - start
-			if randomize:
-				toExtract = pythonRandom.sample(xrange(start,end),number)
-				toExtract.sort()
-				return self._extractByList_implementation(toExtract, 'feature')
-			else:
-				return self._extractByRange_implementation(start, end, 'feature')
+		elif start is not None or end is not None:
+			return self._extractByRange_implementation(start, end, 'feature')
+		else:
+			raise ArgumentException("Malformed or missing inputs")
 
 
 	def _extractByList_implementation(self, toExtract, axisType):

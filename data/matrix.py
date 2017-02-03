@@ -191,41 +191,22 @@ class Matrix(Base):
 		"""
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None or len(toExtract) < number:
-				number = len(toExtract)
-			# if randomize, use random sample
-			if randomize:
-				randomIndices = pythonRandom.sample(xrange(len(toExtract)), number)
-				randomIndices.sort()
-				temp = []
-				for index in randomIndices:
-					temp.append(toExtract[index])
-				toExtract = temp
-#				toExtract = numpyRandom.choice(toExtract, number)
-			# else take the first number members of toExtract
-			else:
-				toExtract = toExtract[:number]
+			assert number == len(toExtract)
+			assert not randomize
 			return self._extractPointsByList_implementation(toExtract)
 		# boolean function
-		if hasattr(toExtract, '__call__'):
+		elif hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
 				raise NotImplementedError  # TODO randomize in the extractPointByFunction case
 			else:
-				if number is None:
-					number = self.pointCount		
 				return self._extractPointsByFunction_implementation(toExtract, number)
 		# by range
-		if start is not None or end is not None:
-			if number is None or number:
-				number = end - start
-			if randomize:
-				toExtract = pythonRandom.sample(xrange(start,end),number)
-				toExtract.sort()
-				return self._extractPointsByList_implementation(toExtract)
-			else:
-				return self._extractPointsByRange_implementation(start, end)
-
+		elif start is not None or end is not None:
+			return self._extractPointsByRange_implementation(start, end)
+		else:
+			msg = "Malformed or missing inputs"
+			raise ArgumentException(msg)
 
 	def _extractPointsByList_implementation(self, toExtract):
 		"""
@@ -295,47 +276,22 @@ class Matrix(Base):
 		"""
 		# list of identifiers
 		if isinstance(toExtract, list):
-			if number is None or len(toExtract) < number:
-				number = len(toExtract)
-			# if randomize, use random sample
-			if randomize:
-				indices = []
-				for i in xrange(len(toExtract)):
-					indices.append(i)
-				randomIndices = pythonRandom.sample(indices, number)
-				randomIndices.sort()
-				temp = []
-				for index in randomIndices:
-					temp.append(toExtract[index])
-				toExtract = temp
-				#toExtract = pythonRandom.sample(toExtract, number)
-			# else take the first number members of toExtract
-			else:
-				toExtract = toExtract[:number]
+			assert number == len(toExtract)
+			assert not randomize
 			return self._extractFeaturesByList_implementation(toExtract)
 		# boolean function
-		if hasattr(toExtract, '__call__'):
+		elif hasattr(toExtract, '__call__'):
 			if randomize:
 				#apply to each
-				raise NotImplementedError # TODO randomize in the extractPointByFunction case
+				raise NotImplementedError  # TODO
 			else:
-				if number is None:
-					number = self.pointCount		
 				return self._extractFeaturesByFunction_implementation(toExtract, number)
 		# by range
-		if start is not None or end is not None:
-			if start is None:
-				start = 0
-			if end is None:
-				end = self.pointCount
-			if number is None:
-				number = end - start
-			if randomize:
-				toExtract = pythonRandom.sample(xrange(start,end),number)
-				toExtract.sort()
-				return self._extractFeaturesByList_implementation(toExtract)
-			else:
-				return self._extractFeaturesByRange_implementation(start, end)
+		elif start is not None or end is not None:
+			return self._extractFeaturesByRange_implementation(start, end)
+		else:
+			raise ArgumentException("Malformed or missing inputs")
+
 
 	def _extractFeaturesByList_implementation(self, toExtract):
 		"""
