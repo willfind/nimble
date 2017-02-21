@@ -1781,6 +1781,20 @@ class StructureModifying(DataTestObject):
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
 
+	def test_extractPoints_handmade_calling_pointNames(self):
+		featureNames = ["one","two","three"]
+		pointNames = ['1', '4', '7']
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+		ret = toTest.extractPoints(start='4',end='7')
+
+		expectedRet = self.constructor([[4,5,6],[7,8,9]], pointNames=pointNames[1:], featureNames=featureNames)
+		expectedTest = self.constructor([[1,2,3]], pointNames=pointNames[:1], featureNames=featureNames)
+
+		assert expectedRet.isIdentical(ret)
+		assert expectedTest.isIdentical(toTest)
+
 
 	#TODO an extraction test where all data is removed
 	#TODO extraction tests for all of the number and randomize combinations
@@ -2138,6 +2152,20 @@ class StructureModifying(DataTestObject):
 		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 		ret = toTest.extractFeatures(start=1,end=2)
 		
+		expectedRet = self.constructor([[2,3],[5,6],[8,9]], pointNames=pointNames, featureNames=["two","three"])
+		expectedTest = self.constructor([[1],[4],[7]], pointNames=pointNames, featureNames=["one"])
+
+		assert expectedRet.isIdentical(ret)
+		assert expectedTest.isIdentical(toTest)
+
+	def test_extractFeatures_handmade_calling_featureNames(self):
+		featureNames = ["one","two","three"]
+		pointNames = ['1', '4', '7']
+		data = [[1,2,3],[4,5,6],[7,8,9]]
+
+		toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+		ret = toTest.extractFeatures(start="two",end="three")
+
 		expectedRet = self.constructor([[2,3],[5,6],[8,9]], pointNames=pointNames, featureNames=["two","three"])
 		expectedTest = self.constructor([[1],[4],[7]], pointNames=pointNames, featureNames=["one"])
 
