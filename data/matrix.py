@@ -236,7 +236,11 @@ class Matrix(Base):
 		# need to convert our 1/0 array to to list of points to be removed
 		# can do this by just getting the non-zero indices
 		toRemove = numpy.flatnonzero(results)
-
+		###spencer added this on 3/7/2017 to make it take into account number:
+		if number is not None and len(toRemove) > number:
+			toRemove = toRemove[:number]
+			assert len(toRemove) == number
+		###end of spencer added code
 		ret = self.data[toRemove,:]
 		self.data = numpy.delete(self.data,toRemove,0)
 
