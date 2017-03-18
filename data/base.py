@@ -1490,8 +1490,8 @@ class Base(object):
 		return not self.__eq__(other)
 
 
-	def toString(self, includeNames=True, maxWidth=80, maxHeight=30,
-				sigDigits=3, nameLength=11):
+	def toString(self, includeNames=True, maxWidth=120, maxHeight=30,
+				sigDigits=3, maxColumnWidth=19):
 
 		if self.pointCount == 0 or self.featureCount == 0:
 			return ""
@@ -1529,7 +1529,7 @@ class Base(object):
 		pnamesWidth = None
 		maxDataWidth = maxWidth
 		if includePNames:
-			pnames, pnamesWidth = self._arrangePointNames(maxDataRows, nameLength,
+			pnames, pnamesWidth = self._arrangePointNames(maxDataRows, maxColumnWidth,
 					rowHold, nameHolder)
 			# The available space for the data is reduced by the width of the
 			# pnames, a column separator, the pnames seperator, and another
@@ -1538,12 +1538,12 @@ class Base(object):
 
 		# Set up data values to fit in the available space
 		dataTable, colWidths = self._arrangeDataWithLimits(maxDataWidth, maxDataRows,
-				sigDigits, colSep, colHold, rowHold)
+				sigDigits, maxColumnWidth, colSep, colHold, rowHold, nameHolder)
 
 		# set up feature names list, record widths
 		fnames = None
 		if includeFNames:
-			fnames = self._arrangeFeatureNames(maxWidth, nameLength,
+			fnames = self._arrangeFeatureNames(maxWidth, maxColumnWidth,
 					colSep, colHold, nameHolder)
 
 			# adjust data or fnames according to the more restrictive set
@@ -1576,7 +1576,7 @@ class Base(object):
 
 	def __repr__(self):
 		indent = '    '
-		maxW = 80
+		maxW = 120
 		maxH = 40
 
 		# setup type call
@@ -1643,8 +1643,8 @@ class Base(object):
 	def __str__(self):
 		return self.toString()
 
-	def show(self, description, includeObjectName=True, includeAxisNames=True, maxWidth=80,
-			maxHeight=30, sigDigits=3, nameLength=11):
+	def show(self, description, includeObjectName=True, includeAxisNames=True, maxWidth=120,
+			maxHeight=30, sigDigits=3, maxColumnWidth=19):
 		"""Method to simplify printing a representation of this data object,
 		with some context. The backend is the toString() method, and this
 		method includes control over all of the same functionality via
@@ -1685,7 +1685,7 @@ class Base(object):
 		context += str(self.pointCount) + "pt x "
 		context += str(self.featureCount) + "ft"
 		print context
-		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, nameLength)
+		print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, maxColumnWidth)
 
 
 	def plot(self, outPath=None, includeColorbar=False):
@@ -3483,8 +3483,8 @@ class Base(object):
 							
 		return names, pnamesWidth
 
-	def _arrangeDataWithLimits(self, maxWidth=80, maxHeight=30, sigDigits=3,
-				colSep=' ', colHold='--', rowHold='|'):
+	def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits=3,
+				maxStrLength=19, colSep=' ', colHold='--', rowHold='|', strHold='...'):
 		"""
 		Arrange the data in this object into a table structure, while
 		respecting the given boundaries. If there is more data than
@@ -3509,6 +3509,7 @@ class Base(object):
 
 		cHoldWidth = len(colHold)
 		cHoldTotal = len(colSep) + cHoldWidth
+		nameCutIndex = maxStrLength - len(strHold)
 
 		#setup a bundle of default values
 		if maxHeight is None:
@@ -3555,7 +3556,8 @@ class Base(object):
 				rID = combinedRowIDs[i]
 				val = self[rID, currIndex]
 				valFormed = formatIfNeeded(val, sigDigits)
-				valLen = len(valFormed)
+				valLimited = valFormed if len(valFormed) < maxStrLength else valFormed[:nameCutIndex] + strHold
+				valLen = len(valLimited)
 				if valLen > currWidth:
 					currWidth = valLen
 
@@ -3563,7 +3565,7 @@ class Base(object):
 				if i == rowHolderIndex:
 					currCol.append(rowHold)
 				
-				currCol.append(valFormed)
+				currCol.append(valLimited)
 
 			totalWidth += currWidth + len(colSep)
 			# test: total width is under max without column holder

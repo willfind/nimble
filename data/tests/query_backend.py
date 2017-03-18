@@ -935,7 +935,7 @@ class QueryBackend(DataTestObject):
 	@raises(ArgumentException)
 	def test_arrangeDataWithLimits_exception_maxH(self):
 		randGen = UML.createRandomData("List", 5, 5, 0, numericType='int')
-		randGen._arrangeDataWithLimits(maxHeight=1)
+		randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
 
 	@attr('slow')
 	def test_arrangeDataWithLimits(self):
