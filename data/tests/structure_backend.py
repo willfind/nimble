@@ -1795,9 +1795,63 @@ class StructureModifying(DataTestObject):
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
 
+	def test_extractPoints_numberOnly(self):
+		self.back_extract_numberOnly('point')
+
+	def test_extractPoints_numberAndRandomize(self):
+		self.back_extract_numberAndRandomize('point')
 
 	#TODO an extraction test where all data is removed
 	#TODO extraction tests for all of the number and randomize combinations
+
+	##########################
+	# extract common backend #
+	##########################
+
+	def back_extract_numberOnly(self, axis):
+		if axis == 'point':
+			toCall = "extractPoints"
+		else:
+			toCall = "extractFeatures"
+
+		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,14]]
+		pnames = ['1', '4', '7', '10']
+		fnames = ['a', 'b', 'd', 'gg']
+		toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+		ret = getattr(toTest,toCall)(number=3)
+
+		if axis == 'point':
+			exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
+			rem = self.constructor(data[3:], pointNames=pnames[3:], featureNames=fnames)
+		else:
+			exp = self.constructor([p[:3] for p in data], pointNames=pnames, featureNames=fnames[:3])
+			rem = self.constructor([p[3:] for p in data], pointNames=pnames, featureNames=fnames[3:])
+
+		assert exp.isIdentical(ret)
+		assert rem.isIdentical(toTest)
+
+	def back_extract_numberAndRandomize(self, axis):
+		if axis == 'point':
+			toCall = "extractPoints"
+		else:
+			toCall = "extractFeatures"
+
+		data = [[1,2,3,33],[4,5,6,66],[7,8,9,99],[10,11,12,14]]
+		pnames = ['1', '4', '7', '10']
+		fnames = ['a', 'b', 'd', 'gg']
+		toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+		toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+		UML.randomness.startAlternateControl()
+		ret = getattr(toTest1,toCall)(number=3, randomize=True)
+		UML.randomness.endAlternateControl()
+
+		UML.randomness.startAlternateControl()
+		retRange = getattr(toTest2,toCall)(start=0, end=3, number=3, randomize=True)
+		UML.randomness.endAlternateControl()
+
+		assert ret.isIdentical(retRange)
+		assert toTest1.isIdentical(toTest2)
 
 
 	####################
@@ -2171,6 +2225,12 @@ class StructureModifying(DataTestObject):
 
 		assert expectedRet.isIdentical(ret)
 		assert expectedTest.isIdentical(toTest)
+
+	def test_extractFeatures_numberOnly(self):
+		self.back_extract_numberOnly('feature')
+
+	def test_extractFeatures_numberAndRandomize(self):
+		self.back_extract_numberAndRandomize('feature')
 
 
 	#####################

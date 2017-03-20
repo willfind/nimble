@@ -2215,7 +2215,7 @@ class Base(object):
 		space of possible removals.
 
 		"""
-		ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, toExtract, start, end, number, randomize)
+		ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, toExtract, start, end, number, randomize, 'toExtract')
 		
 		self._pointCount -= ret.pointCount
 		if ret.pointCount != 0:
@@ -2248,7 +2248,7 @@ class Base(object):
 		space of possible removals.
 
 		"""
-		ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, start, end, number, randomize)
+		ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, start, end, number, randomize, 'toExtract')
 
 		self._featureCount -= ret.featureCount
 		if ret.featureCount != 0:
@@ -3257,13 +3257,18 @@ class Base(object):
 	############################
 
 
-	def _genericStructuralFrontend(self, axis, backEnd, target=None, start=None, end=None, number=None, randomize=False):
+	def _genericStructuralFrontend(self, axis, backEnd, target=None, start=None,
+				end=None, number=None, randomize=False, targetName=None):
 		if axis == 'point':
 			getIndex = self._getPointIndex
 			axisLength = self.pointCount
 		else:
 			getIndex = self._getFeatureIndex
 			axisLength = self.featureCount
+
+		if number is not None and number < 1:
+			msg = "number must be greater than zero"
+			raise ArgumentException(msg)
 
 		if target is not None:
 			if start is not None or end is not None:
@@ -3330,7 +3335,12 @@ class Base(object):
 				end = possibleEnd
 			else:
 				number = (end - start) + 1
+		elif number is not None:
+			return self._genericStructuralFrontend(axis, backEnd,
+				end=number-1, number=None)
 		else:
+			msg = "You must provide a value for " + targetName + ", or start/end, or "
+			msg += "number. "
 			raise ArgumentException("")
 
 		ret = backEnd(target, start, end, number, randomize)
