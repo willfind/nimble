@@ -254,14 +254,18 @@ def hasNonDefault(obj, axis):
 	return ret
 
 def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
+		if not namesList: return ''
 		namesString = ""
 		(posL, posR) = indicesSplit(numDisplayNames, count)
 		possibleIndices = posL + posR
 
-		allDefault = True
-		for i in range(len(possibleIndices)):
-			if not namesList[possibleIndices[i]].startswith(DEFAULT_PREFIX):
-				allDefault = False
+		#the following block is very suspicious, allDefault depends on the last item only
+		# allDefault = True
+		# for i in range(len(possibleIndices)):
+		# 	if not namesList[possibleIndices[i]].startswith(DEFAULT_PREFIX):
+		# 		allDefault = False
+		#replace the above block with the following line
+		allDefault = all([namesList[i].startswith(DEFAULT_PREFIX) for i in possibleIndices])
 
 		if allDefault:
 			return ""
