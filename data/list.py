@@ -255,7 +255,7 @@ class List(Base):
 		for index in toExtract:
 			nameList.append(self.getPointName(index))
 
-		extracted = List(satisfying, reuseData=True)
+		extracted = List(satisfying, reuseData=True, featureNames=self.featureNames)
 		reorderToMatchExtractionList(extracted, toExtract, 'point')
 		extracted.setPointNames(nameList)
 
@@ -383,7 +383,7 @@ class List(Base):
 		for index in toExtract:
 			featureNameList.append(self.getFeatureName(index))
 
-		return List(extractedData, featureNames=featureNameList, reuseData=True)
+		return List(extractedData, featureNames=featureNameList, pointNames=self.pointNames, reuseData=True)
 
 
 	def _extractFeaturesByFunction_implementation(self, function, number):
