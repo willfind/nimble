@@ -20,6 +20,7 @@ import scipy
 import sys
 import os.path
 import inspect
+import operator
 from multiprocessing import Process
 
 import UML
@@ -1587,25 +1588,28 @@ class Base(object):
 		byLine = dataStr.split('\n')
 		# toString ends with a \n, so we get rid of the empty line produced by
 		# the split
-		byLine = byLine[:(len(byLine)-1)]
-		for i in range(len(byLine)):
-			line = byLine[i]
-			newLine = indent + '[' if i == 0 else indent + ' '
-			newLine += '[' + line + ']'
-			if i == (len(byLine)-1):
-				newLine += ']'
-			ret += newLine + '\n'
+		byLine = byLine[:-1]
+		# convert self.data into a string with nice format
+		newLines = (']\n'+indent+' [').join(byLine)
+		ret += (indent + '[[%s]]\n') % newLines
 
 		numRows = min(self.pointCount, maxW)
 		# if exists non default point names, print all (truncated) point names
 		ret += dataHelpers.makeNamesLines(indent, maxW, numRows, self.pointCount,
 				self.getPointNames(), 'pointNames')
 		# if exists non default feature names, print all (truncated) feature names
-		splited = byLine[0].split(' ')
 		numCols = 0
-		for val in splited:
-			if val != '' and val != '...':
-				numCols += 1
+		if byLine:
+			splited = byLine[0].split(' ')
+			for val in splited:
+				if val != '' and val != '...':
+					numCols += 1
+		elif self.featureCount > 0:
+			# if the container is empty, then roughly compute length of
+			# the string of feature names, and then calculate numCols
+			strLength = len("___".join(self.getFeatureNames())) + \
+						len(''.join([str(i) for i in range(self.featureCount)]))
+			numCols = int(min(1, maxW / float(strLength)) * self.featureCount)
 		# because of how dataHelers.indicesSplit works, we need this to be plus one
 		# in some cases this means one extra feature name is displayed. But that's
 		# acceptable
@@ -2216,10 +2220,9 @@ class Base(object):
 
 		"""
 		ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, toExtract, start, end, number, randomize, 'toExtract')
-		
+
 		self._pointCount -= ret.pointCount
-		if ret.pointCount != 0:
-			ret.setFeatureNames(self.getFeatureNames())
+		ret.setFeatureNames(self.getFeatureNames())
 		for key in ret.getPointNames():
 			self._removePointNameAndShift(key)
 
@@ -3257,23 +3260,73 @@ class Base(object):
 	############################
 
 
+
 	def _genericStructuralFrontend(self, axis, backEnd, target=None, start=None,
 				end=None, number=None, randomize=False, targetName=None):
 		if axis == 'point':
 			getIndex = self._getPointIndex
 			axisLength = self.pointCount
+			namesForCheck1, namesForCheck2 = self.pointNames, self.featureNames
 		else:
 			getIndex = self._getFeatureIndex
 			axisLength = self.featureCount
+			namesForCheck1, namesForCheck2 = self.featureNames, self.pointNames
 
 		if number is not None and number < 1:
 			msg = "number must be greater than zero"
 			raise ArgumentException(msg)
-
 		if target is not None:
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, target must be None")
-			if isinstance(target, basestring) or isinstance(target, int):
+			if isinstance(target, basestring):
+				if target in namesForCheck1:
+					target = [target]
+				#if axis=point and target is not a point name, or
+				# if axis=feature and target is not a feature name,
+				# then check if it's a valid query string
+				else:
+					optrDict = {'<=': operator.le, '>=': operator.ge, '!=': operator.ne, '==': operator.eq,\
+								'=': operator.eq, '<': operator.lt, '>': operator.gt}
+					for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
+						if optr in target:
+							targetList = target.split(optr)
+							optr = '==' if optr == '=' else optr
+							#after splitting at the optr, 2 items must be in the list
+							if len(targetList) != 2:
+								msg = "the target(%s) is a query string but there is an error" % target
+								raise ArgumentException(msg)
+							nameOfFeatureOrPoint, valueOfFeatureOrPoint = targetList
+
+							#when axis=point, check if the feature exists or not
+							#when axis=feature, check if the point exists or not
+							if nameOfFeatureOrPoint not in namesForCheck2:
+								msg = "the %s %s doesn't exist" % ('feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
+								raise ArgumentException(msg)
+
+							optrOperator = optrDict[optr]
+							#convert valueOfFeatureOrPoint from a string
+							#to the same datatype of items in the nameOfFeatureOrPoint in data
+							datatype = type(self[(0, nameOfFeatureOrPoint)]) if axis == 'point' \
+										else type(self[(nameOfFeatureOrPoint, 0)])
+
+							if (datatype is int) or (datatype is long) or issubclass(datatype, numpy.number):
+								datatype = float
+
+							valueOfFeatureOrPoint = datatype(valueOfFeatureOrPoint)
+							#convert query string to a function
+							def target_f(x):
+								return optrOperator(x[nameOfFeatureOrPoint], valueOfFeatureOrPoint)
+							target_f.vectorized = True
+							target_f.nameOfFeatureOrPoint = nameOfFeatureOrPoint
+							target_f.valueOfFeatureOrPoint = valueOfFeatureOrPoint
+							target_f.optr = optrOperator
+							target = target_f
+							break
+					#if the target can't be converted to a function
+					if isinstance(target, basestring):
+						msg = 'the target is not a valid point name nor a valid query string'
+						raise ArgumentException(msg)
+			if isinstance(target, int):
 				target = [target]
 			if isinstance(target, list):
 				#verify everything in list is a valid index and convert names into indices
