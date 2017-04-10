@@ -238,7 +238,7 @@ class Matrix(Base):
 			function = viewBasedApplyAlongAxis
 		results = function(toExtract, 'point', self)
 		results = results.astype(numpy.int)
-		
+
 		# need to convert our 1/0 array to to list of points to be removed
 		# can do this by just getting the non-zero indices
 		toRemove = numpy.flatnonzero(results)
@@ -317,7 +317,7 @@ class Matrix(Base):
 		for index in toExtract:
 			featureNameList.append(self.getFeatureName(index))
 
-		return Matrix(ret, featureNames=featureNameList, pointNames=self.pointNames)
+		return Matrix(ret, featureNames=featureNameList, pointNames=self.getPointNames())
 
 	def _extractFeaturesByFunction_implementation(self, toExtract, number):
 		"""
@@ -910,14 +910,14 @@ def matrixBasedApplyAlongAxis(function, axis, outerObject):
 		raise ArgumentException(msg)
 	if axis == "point":
 		#convert name of feature to index of feature
-		indexOfFeature = outerObject.featureNames[function.nameOfFeatureOrPoint]
+		indexOfFeature = outerObject.getFeatureIndex(function.nameOfFeatureOrPoint)
 		#extract the feature from the underlying matrix
 		queryData = outerObject.data[:, indexOfFeature]
 	else:
 		if axis != "feature":
 			raise ArgumentException("axis must be 'point' or 'feature'")
 		#convert name of point to index of point
-		indexOfPoint = outerObject.pointNames[function.nameOfFeatureOrPoint]
+		indexOfPoint = outerObject.getPointIndex(function.nameOfFeatureOrPoint)
 		#extract the point from the underlying matrix
 		queryData = outerObject.data[indexOfPoint, :]
 	ret = function.optr(queryData, function.valueOfFeatureOrPoint)

@@ -3266,11 +3266,11 @@ class Base(object):
 		if axis == 'point':
 			getIndex = self._getPointIndex
 			axisLength = self.pointCount
-			namesForCheck1, namesForCheck2 = self.pointNames, self.featureNames
+			namesForCheck1, namesForCheck2 = self.getPointNames(), self.getFeatureNames()
 		else:
 			getIndex = self._getFeatureIndex
 			axisLength = self.featureCount
-			namesForCheck1, namesForCheck2 = self.featureNames, self.pointNames
+			namesForCheck1, namesForCheck2 = self.getFeatureNames(), self.getPointNames()
 
 		if number is not None and number < 1:
 			msg = "number must be greater than zero"
