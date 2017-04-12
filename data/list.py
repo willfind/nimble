@@ -571,6 +571,7 @@ class List(Base):
 				emptyData = numpy.empty(shape=(self.pointCount, self.featureCount))
 				return UML.data.Sparse(emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 			return UML.data.Sparse(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+
 		if format is None or format == 'List':
 			return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'Matrix':
@@ -701,12 +702,8 @@ class List(Base):
 				if format != 'List' and format != 'pythonlist':
 					return super(ListView, self)._copyAs_implementation(format)
 
-				listForm = []
-				for pID in xrange(self._pStart, self._pEnd):
-					curr = []
-					for fID in xrange(self._fStart, self._fEnd):
-						curr.append(self._source.data[pID][fID])
-					listForm.append(curr)
+				listForm = [[self._source.data[pID][fID] for fID in xrange(self._fStart, self._fEnd)]\
+								for pID in xrange(self._pStart, self._pEnd)]
 
 				if format == 'List':
 					return UML.data.List(listForm, pointNames=self.getPointNames(),
@@ -746,7 +743,10 @@ class List(Base):
 			def __init__(self, source, pStart, pEnd, fStart, fEnd):
 				self.source = source
 				self.pStart = pStart
+				self.pEnd = pEnd
 				self.pRange = pEnd - pStart
+				self.fStart = fStart
+				self.fEnd = fEnd
 				self.fviewer = FeatureViewer(self.source, fStart, fEnd)
 
 			def __getitem__(self, key):
@@ -758,6 +758,10 @@ class List(Base):
 
 			def __len__(self):
 				return self.pRange
+
+			def __array__(self, dtype=None):
+				tmpArray = numpy.array(self.source.data, dtype=dtype)
+				return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]
 
 		kwds = {}
 		kwds['data'] = ListPassThrough(self, pointStart, pointEnd, featureStart, featureEnd)
