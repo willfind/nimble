@@ -28,82 +28,21 @@ from UML.data.tests.structure_backend import StructureDataSafe
 
 from UML.data.tests.view_access_backend import ViewAccess
 
-def viewMakerMaker(concreteType):
-	"""
-	Method to help construct the constructors used in View test objects
-	"""
-	def maker(
-			data, pointNames='automatic', featureNames='automatic', name=None,
-			path=(None,None)):
-		if isinstance(data, basestring):
-			orig = UML.createData(
-				concreteType, data=data, pointNames=pointNames,
-				featureNames=featureNames, name=name)
-		else:
-			orig = UML.helpers.initDataObject(
-				concreteType, rawData=data, pointNames=pointNames,
-				featureNames=featureNames, name=name, path=path,
-				keepPoints='all', keepFeatures='all')
-
-		if orig.pointCount != 0:
-			firstPRaw = [[0] * orig.featureCount]
-			firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
-					pointNames=['firstPNonView'], featureNames=orig.getFeatureNames(),
-					name=name, path=orig.path, keepPoints='all', keepFeatures='all')
-
-			lastPRaw = [[3] * orig.featureCount]
-			lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
-					pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
-					name=name, path=orig.path, keepPoints='all', keepFeatures='all')
-
-			firstPoint.appendPoints(orig)
-			full = firstPoint
-			full.appendPoints(lastPoint)
-
-			pStart = 1
-			pEnd = full.pointCount-2
-		else:
-			full = orig
-			pStart = None
-			pEnd = None
-
-		if orig.featureCount != 0:
-			lastFRaw = [[1] * full.pointCount]
-			lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
-					featureNames=full.getPointNames(), pointNames=['lastFNonView'],
-					name=name, path=orig.path, keepPoints='all', keepFeatures='all')
-			lastFeature.transpose()
-
-			full.appendFeatures(lastFeature)
-			fStart = None
-			fEnd = full.featureCount-2
-		else:
-			fStart = None
-			fEnd = None
-
-
-		ret = full.view(pStart, pEnd, fStart, fEnd)
-		ret._name = orig.name
-
-		return ret
-	return maker
-
 
 class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
 		StructureDataSafe, ViewAccess):
 	def __init__(self):
-		super(TestListView, self).__init__('ListView', viewMakerMaker("List"))
+		super(TestListView, self).__init__('ListView')
 
 class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
 		StructureDataSafe, ViewAccess):
 	def __init__(self):
-		super(TestMatrixView, self).__init__('MatrixView', viewMakerMaker("Matrix"))
+		super(TestMatrixView, self).__init__('MatrixView')
 
 class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
 		StructureDataSafe, ViewAccess):
-#class TestSparseView(StructureDataSafe):
 	def __init__(self):
-		super(TestSparseView, self).__init__('SparseView', viewMakerMaker("Sparse"))
+		super(TestSparseView, self).__init__('SparseView')
 
 
 class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
