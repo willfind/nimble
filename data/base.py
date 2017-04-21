@@ -2014,13 +2014,11 @@ class Base(object):
 		"""
 		self._transpose_implementation()
 
-		temp = self._pointCount
-		self._pointCount = self._featureCount
-		self._featureCount = temp
+		self._pointCount, self._featureCount = self._featureCount, self._pointCount
 
-		temp = self.featureNames
-		self.setFeatureNames(self.pointNames)
-		self.setPointNames(temp)
+		self.pointNames, self.featureNames = self.featureNames, self.pointNames
+		self.setFeatureNames(self.featureNames)
+		self.setPointNames(self.pointNames)
 
 		self.validate()
 
@@ -2306,7 +2304,7 @@ class Base(object):
 		"""
 		#make lower case, strip out all white space and periods, except if format
 		# is one of the accepted UML data types
-		if format not in ['List', 'Matrix', 'Sparse']:
+		if format not in ['List', 'Matrix', 'Sparse', 'Dataframe']:
 			format = format.lower()
 			format = format.strip()
 			tokens = format.split(' ')

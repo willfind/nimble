@@ -440,34 +440,33 @@ class Matrix(Base):
 		path.
 
 		"""
-		outFile = open(outPath,'w')
+		with open(outPath, 'w') as outFile:
 
-		if includeFeatureNames:
-			# to signal that the first line contains feature Names
-			outFile.write('\n\n')
+			if includeFeatureNames:
+				# to signal that the first line contains feature Names
+				outFile.write('\n\n')
 
-			def combine(a, b):
-				return a + ',' + b
+				def combine(a, b):
+					return a + ',' + b
 
-			fnames = self.getFeatureNames()
-			fnamesLine = reduce(combine, fnames)
-			fnamesLine += '\n'
+				fnames = self.getFeatureNames()
+				fnamesLine = reduce(combine, fnames)
+				fnamesLine += '\n'
+				if includePointNames:
+					outFile.write('point_names,')
+
+				outFile.write(fnamesLine)
+
 			if includePointNames:
-				outFile.write('point_names,')
+				pnames = numpy.matrix(self.getPointNames())
+				pnames = pnames.transpose()
 
-			outFile.write(fnamesLine)
+				viewData = self.data.view()
+				toWrite = numpy.concatenate((pnames, viewData),1)
 
-		if includePointNames:
-			pnames = numpy.matrix(self.getPointNames())
-			pnames = pnames.transpose()
-
-			viewData = self.data.view()
-			toWrite = numpy.concatenate((pnames, viewData),1)
-
-			numpy.savetxt(outFile, toWrite, delimiter=',', fmt='%s')
-		else:
-			numpy.savetxt(outFile, self.data, delimiter=',')
-		outFile.close()
+				numpy.savetxt(outFile, toWrite, delimiter=',', fmt='%s')
+			else:
+				numpy.savetxt(outFile, self.data, delimiter=',')
 
 
 	def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
