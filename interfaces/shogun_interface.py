@@ -834,41 +834,57 @@ def _enforceNonUnicodeStrings(manifest):
 
 def _remapLabelsRange(toRemap):
 	"""
-	Takes the object toRemap, which must be a data representation with a single point,
-	and maps the values in that point into the range between 0 and n-1, where n is
-	the number of distinct values in that feature. The object is modified, and the
-	inverse mapping is returned a length n list
+	Transform toRemap so its n unique values are mapped into the value range 0 to n-1
+
+	toRemap: must be a UML data object with a single feature. The contained values
+	will be transformed, on a first come first serve basis, into the values 0 to n-1
+	where n is the number of unique values. This object is modified by this function.
+
+	Returns: list encoding the inverse mapping, where the value at index i was the
+	value originally in toRemap that was replaced with the value i.
 
 	"""
+	assert toRemap.featureCount == 1
+	assert toRemap.featureCount > 0
 
 	mapping = {}
 	inverse = []
 
-	def remap(pView):
+	def remap(fView):
 		invIndex = 0
 		ret = []
-		for value in pView:
+		for value in fView:
 			if value not in mapping:
 				mapping[value] = invIndex
 				inverse.append(value)
 				invIndex += 1
 			ret.append(mapping[value])
+		return ret
 
-	toRemap.transformEachPoint(remap)
+	toRemap.transformEachFeature(remap)
 
 	return inverse
 
 def _remapLabelsSpecific(toRemap, space):
 	"""
-	Takes the object toRemap, which must be a data representation with a single point
-	containing as many unique values as the length of parameter space, and maps those
-	values into the values specified in space, on a first come first served basis. The
-	object is modified, and the inverse mapping is returned as a list with the same
-	length as space.
+	Transform toRemap so its values are mapped into the provided space
 
-	If there are more than unique values than values in space, an ArgumentException is raised
+	toRemap: must be a data representation with a single feature containing as many
+	unique values as the length of the list-typed parameter named 'space'.
+	The contained values will be transformed, on a first come first serve basis, into
+	the values contained in space. This object is modified by this function.
+
+	space: list containing the values you want to be contained by toRemap.
+
+	Returns: dict encoding the inverse mapping where the value at i was the
+	value originally in toRemap that was replaced with the value i. The only valid
+	keys in the return will be those also present in the paramater space
+
+	Raises: ArgumentException if there are more than unique values than values in space
 
 	"""
+	assert toRemap.pointCount > 0
+	assert toRemap.featureCount == 1
 
 	mapping = {}
 	inverse = []
@@ -888,12 +904,13 @@ def _remapLabelsSpecific(toRemap, space):
 					msg = "toRemap contains more values than can be mapped into the provided space."
 					raise ArgumentException(msg)
 
-	def remap(pView):
+	def remap(fView):
 		ret = []
-		for value in pView:
+		for value in fView:
 			ret.append(space[mapping[value]])
+		return ret
 
-	toRemap.transformEachPoint(remap)
+	toRemap.transformEachFeature(remap)
 
 	return inverse
 

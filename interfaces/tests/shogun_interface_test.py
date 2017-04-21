@@ -106,7 +106,6 @@ def testShogunKMeans():
 	ret = UML.trainAndApply("shogun.KNN", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
-	print ret.data
 
 	assert ret.data[0,0] == 0
 	assert ret.data[1,0] == 1
