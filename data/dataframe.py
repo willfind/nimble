@@ -37,13 +37,12 @@ class Dataframe(Base):
 			msg = "the input data can only be pandas DataFrame, list, list of list, scipy sparse, numpy array or numpy matrix"
 			raise ArgumentException(msg)
 
-		if 'featureNames' in kwds and kwds['featureNames']:
-			self.data.columns = kwds['featureNames']
-		if 'pointNames' in kwds and kwds['pointNames']:
-			self.data.index = kwds['pointNames']
-
 		kwds['shape'] = self.data.shape
 		super(Dataframe, self).__init__(**kwds)
+		#it is very import to set up self.data's index and columns, other wise int index or column name will be set
+		#if so, pandas Dataframe ix sliding is label based, its behaviour is not what we want
+		self.data.index = self.getPointNames()
+		self.data.columns = self.getFeatureNames()
 
 	def _transpose_implementation(self):
 		"""
@@ -200,7 +199,7 @@ class Dataframe(Base):
 
 		"""
 		indexList = self.data.index[toExtract]
-		return extractPointsOrFeatures(self.data, indexList, 'point', True)
+		return self._extractPointsOrFeatures(indexList, 'point', True)
 
 	def _extractPointsByFunction_implementation(self, toExtract, number):
 		"""
@@ -208,8 +207,11 @@ class Dataframe(Base):
 		returning an object containing those points that do.
 
 		"""
-		indexList = self.data.index[toExtract(self.data)]
-		return extractPointsOrFeatures(self.data, indexList, 'point', True)
+		if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
+			indexList = self.data.index[toExtract(self.data)]
+		else:
+			indexList = self.data.index[self.data.apply(toExtract, axis=1)]
+		return self._extractPointsOrFeatures(indexList, 'point', True)
 
 	def _extractPointsByRange_implementation(self, start, end):
 		"""
@@ -219,7 +221,7 @@ class Dataframe(Base):
 		"""
 		# +1 on end in ranges, because our ranges are inclusive
 		indexList = self.data.index[start:end+1]
-		return extractPointsOrFeatures(self.data, indexList, 'point', True)
+		return self._extractPointsOrFeatures(indexList, 'point', True)
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
 		"""
@@ -256,7 +258,7 @@ class Dataframe(Base):
 
 		"""
 		featureList = self.data.columns[toExtract]
-		return extractPointsOrFeatures(self.data, featureList, 'feature', True)
+		return self._extractPointsOrFeatures( featureList, 'feature', True)
 
 	def _extractFeaturesByFunction_implementation(self, toExtract, number):
 		"""
@@ -264,8 +266,11 @@ class Dataframe(Base):
 		function, returning an object containing those features whose views do.
 
 		"""
-		featureList = self.data.columns[toExtract(self.data.loc)]
-		return extractPointsOrFeatures(self.data, featureList, 'feature', True)
+		if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
+			featureList = self.data.index[toExtract(self.data.loc)]
+		else:
+			featureList = self.data.index[self.data.apply(toExtract, axis=0)]
+		return self._extractPointsOrFeatures(featureList, 'feature', True)
 
 	def _extractFeaturesByRange_implementation(self, start, end):
 		"""
@@ -278,7 +283,7 @@ class Dataframe(Base):
 		"""
 		# +1 on end in ranges, because our ranges are inclusive
 		featureList = self.data.columns[start:end+1]
-		return extractPointsOrFeatures(self.data, featureList, 'feature', True)
+		return self._extractPointsOrFeatures(featureList, 'feature', True)
 
 	def _mapReducePoints_implementation(self, mapper, reducer):
 			# apply_along_axis() expects a scalar or array of scalars as output,
@@ -328,7 +333,11 @@ class Dataframe(Base):
 		if self.featureCount != other.featureCount:
 			return False
 
-		return self.data.equals(other.data)
+		try:
+			np.testing.assert_equal(self.data.values, other.data.values)
+		except AssertionError:
+			return False
+		return True
 
 	def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
 		"""
@@ -357,8 +366,11 @@ class Dataframe(Base):
 
 		"""
 		with open(outPath, 'w') as outFile:
-			if includePointNames: outFile.write('\n\npoint_names')
-		self.data.to_csv(outPath, mode='a', index=includeFeatureNames, header=includeFeatureNames)
+			if includeFeatureNames:
+				outFile.write('\n\n')
+				if includePointNames:
+					outFile.write('point_names')
+		self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
 
 	def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
 		"""
@@ -371,7 +383,7 @@ class Dataframe(Base):
 			comment += ','.join(self.data.index)
 		if includeFeatureNames:
 			comment += '\n#'+','.join(self.data.columns)
-		mmwrite(outPath, self.data, field='real', comment=comment)
+		mmwrite(outPath, self.data, comment=comment)
 
 	def _referenceDataFrom_implementation(self, other):
 		if not isinstance(other, Dataframe):
@@ -431,7 +443,7 @@ class Dataframe(Base):
 		for i, p in enumerate(self.pointIterator()):
 			if points is not None and i not in points:
 				continue
-			currRet = function(p.data.values.flatten())
+			currRet = function(p)
 			if len(currRet) != self.featureCount:
 				msg = "function must return an iterable with as many elements as features in this object"
 				raise ArgumentException(msg)
@@ -442,7 +454,7 @@ class Dataframe(Base):
 		for j, f in enumerate(self.featureIterator()):
 			if features is not None and j not in features:
 				continue
-			currRet = function(f.data.values.flatten())
+			currRet = function(f)
 			if len(currRet) != self.pointCount:
 				msg = "function must return an iterable with as many elements as points in this object"
 				raise ArgumentException(msg)
@@ -772,27 +784,52 @@ class Dataframe(Base):
 		self.data = ret
 		return self
 
+	def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
+		super(Dataframe, self)._setName_implementation(oldIdentifier, newName, axis, allowDefaults)
+		#update the index or columns in self.data
+		self._updateName(axis)
 
+	def _setNamesFromList(self, assignments, count, axis):
+		super(Dataframe, self)._setNamesFromList(assignments, count, axis)
+		self._updateName(axis)
+
+	def _setNamesFromDict(self, assignments, count, axis):
+		super(Dataframe, self)._setNamesFromDict(assignments, count, axis)
+		self._updateName(axis)
+
+	def _updateName(self, axis):
+		"""
+		update self.data.index or self.data.columns
+		"""
+		if axis == 'point':
+			self.data.index = self.getPointNames()
+		else:
+			self.data.columns = self.getFeatureNames()
 #-----------------------------------------------------------------------
 
 
-def extractPointsOrFeatures(df, nameList, axis, inplace=True):
-	"""
+	def _extractPointsOrFeatures(self, nameList, axis, inplace=True):
+		"""
 
-	"""
-	nameList = list(nameList)
-	if axis == 0 or axis == 'point':
-		ret = df.ix[nameList, :]
-		name = 'pointNames'
-		axis = 0
-	elif axis == 1 or axis == 'feature':
-		ret = df.ix[:, nameList]
-		name = 'featureNames'
-		axis = 1
-	else:
-		msg = 'axis can only be 0,1 or point, feature'
-		raise ArgumentException(msg)
+		"""
+		df = self.data
+		nameList = list(nameList)
+		if axis == 0 or axis == 'point':
+			ret = df.ix[nameList, :]
+			name = 'pointNames'
+			axis = 0
+			otherName = 'featureNames'
+			otherNameList = self.getFeatureNames()
+		elif axis == 1 or axis == 'feature':
+			ret = df.ix[:, nameList]
+			name = 'featureNames'
+			axis = 1
+			otherName = 'pointNames'
+			otherNameList = self.getPointNames()
+		else:
+			msg = 'axis can only be 0,1 or point, feature'
+			raise ArgumentException(msg)
 
-	df.drop(nameList, axis=axis, inplace=inplace)
+		df.drop(nameList, axis=axis, inplace=inplace)
 
-	return Dataframe(ret, **{name:nameList})
+		return Dataframe(ret, **{name:nameList, otherName:otherNameList})

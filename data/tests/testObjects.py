@@ -57,6 +57,10 @@ class TestSparse(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
 	def __init__(self):
 		super(TestSparse, self).__init__('Sparse')
 
+class TestDataframe(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
+	def __init__(self):
+		super(TestDataframe, self).__init__('Dataframe')
+
 
 class TestBaseOnly(LowLevelBackend):
 	def __init__(self):
