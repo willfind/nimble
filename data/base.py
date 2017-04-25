@@ -2353,7 +2353,7 @@ class Base(object):
 			ret._absPath = self.absolutePath
 
 		if not rowsArePoints:
-			if format in ['List', 'Matrix', 'Sparse']:
+			if format in ['List', 'Matrix', 'Sparse', 'Dataframe']:
 				ret.transpose()
 			elif format != 'pythonlist':
 				ret = ret.transpose()

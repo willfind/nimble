@@ -773,6 +773,8 @@ class Sparse(Base):
 			return UML.data.List(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'Matrix':
 			return UML.data.Matrix(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+		if format == 'Dataframe':
+			return UML.data.Dataframe(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'pythonlist':
 			return self._data.todense().tolist()
 		if format == 'numpyarray':

@@ -30,7 +30,12 @@ class Dataframe(Base):
 			else:
 				self.data = data.copy()
 		elif isinstance(data, list) or isinstance(data, np.ndarray) or isinstance(data, np.matrix):
-			self.data = pd.DataFrame(data)
+			if np.array(data).ndim > 2:
+				msg = "the input data can be list such as [1,2,3], list of list such as [[1,2,3],[3,2,1]], or 2D data in \
+					  numpy array or matrix. the current input has ndim > 2."
+				raise ArgumentException(msg)
+			#np.matrix can convert 1D data to 2D, such as [1,2,3] to matrix([[1,2,3]])
+			self.data = pd.DataFrame(np.matrix(data))
 		elif isspmatrix(data):
 			self.data = pd.DataFrame(data.todense())
 		else:
@@ -199,7 +204,7 @@ class Dataframe(Base):
 
 		"""
 		indexList = self.data.index[toExtract]
-		return self._extractPointsOrFeatures(indexList, 'point', True)
+		return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
 
 	def _extractPointsByFunction_implementation(self, toExtract, number):
 		"""
@@ -209,9 +214,17 @@ class Dataframe(Base):
 		"""
 		if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
 			indexList = self.data.index[toExtract(self.data)]
+			return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
 		else:
-			indexList = self.data.index[self.data.apply(toExtract, axis=1)]
-		return self._extractPointsOrFeatures(indexList, 'point', True)
+			results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'point', self)
+			results = results.astype(np.int)
+
+			# need to convert our 1/0 array to to list of points to be removed
+			# can do this by just getting the non-zero indices
+			toRemove = np.flatnonzero(results)
+
+			return self._extractPointsByList_implementation(toRemove)
+
 
 	def _extractPointsByRange_implementation(self, start, end):
 		"""
@@ -221,7 +234,7 @@ class Dataframe(Base):
 		"""
 		# +1 on end in ranges, because our ranges are inclusive
 		indexList = self.data.index[start:end+1]
-		return self._extractPointsOrFeatures(indexList, 'point', True)
+		return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
 
 	def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
 		"""
@@ -258,7 +271,7 @@ class Dataframe(Base):
 
 		"""
 		featureList = self.data.columns[toExtract]
-		return self._extractPointsOrFeatures( featureList, 'feature', True)
+		return self.extractPointsOrFeaturesVectorized( featureList, 'feature', True)
 
 	def _extractFeaturesByFunction_implementation(self, toExtract, number):
 		"""
@@ -267,10 +280,19 @@ class Dataframe(Base):
 
 		"""
 		if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-			featureList = self.data.index[toExtract(self.data.loc)]
+			featureList = self.data.columns[toExtract(self.data.loc)]
+			return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
 		else:
-			featureList = self.data.index[self.data.apply(toExtract, axis=0)]
-		return self._extractPointsOrFeatures(featureList, 'feature', True)
+			#have to use view based method.
+			results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'feature', self)
+			results = results.astype(np.int)
+
+			# need to convert our 1/0 array to to list of points to be removed
+			# can do this by just getting the non-zero indices
+			toRemove = np.flatnonzero(results)
+
+			return self._extractFeaturesByList_implementation(toRemove)
+
 
 	def _extractFeaturesByRange_implementation(self, start, end):
 		"""
@@ -283,7 +305,7 @@ class Dataframe(Base):
 		"""
 		# +1 on end in ranges, because our ranges are inclusive
 		featureList = self.data.columns[start:end+1]
-		return self._extractPointsOrFeatures(featureList, 'feature', True)
+		return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
 
 	def _mapReducePoints_implementation(self, mapper, reducer):
 			# apply_along_axis() expects a scalar or array of scalars as output,
@@ -398,7 +420,7 @@ class Dataframe(Base):
 			format: string. Sparse, List, Matrix, pythonlist, numpyarray, numpymatrix, scipycsc, scipycsr or None
 					if format is None, a new Dataframe will be created.
 		"""
-		dataArray = self.data.values
+		dataArray = self.data.values.copy()
 		if format == 'Sparse':
 			return UML.data.Sparse(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'List':
@@ -495,7 +517,8 @@ class Dataframe(Base):
 		if not isinstance(values, UML.data.Base):
 			values = values * np.ones((pointEnd-pointStart+1, featureEnd-featureStart+1))
 		else:
-			values = values.data
+			#convert values to be array or matrix, instead of pandas DataFrame
+			values = values.data.values
 
 		self.data.ix[pointStart:pointEnd+1, featureStart:featureEnd+1] = values
 
@@ -533,7 +556,7 @@ class Dataframe(Base):
 		in this object. False otherwise
 
 		"""
-		return 0 in self.data
+		return 0 in self.data.values
 
 	def _nonZeroIteratorPointGrouped_implementation(self):
 		class nzIt(object):
@@ -808,7 +831,7 @@ class Dataframe(Base):
 #-----------------------------------------------------------------------
 
 
-	def _extractPointsOrFeatures(self, nameList, axis, inplace=True):
+	def extractPointsOrFeaturesVectorized(self, nameList, axis, inplace=True):
 		"""
 
 		"""

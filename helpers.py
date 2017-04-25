@@ -142,7 +142,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
 	if returnType == 'List':
 		toConv = createConstantHelper(numpyMaker, "Matrix", numPoints, numFeatures, pointNames, featureNames, name)
 		return toConv.copyAs("List")
-	elif returnType == 'Matrix':
+	elif returnType == 'Matrix' or returnType == 'Dataframe':
 		raw = numpyMaker((numPoints,numFeatures))
 		return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
 	else:  # returnType == 'Sparse'
