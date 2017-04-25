@@ -57,12 +57,20 @@ class Dataframe(Base):
 		"""
 		self.data = self.data.T
 
+	def appendPoints(self, toAppend):
+		super(Dataframe, self).appendPoints(toAppend)
+		self._updateName(axis='point')
+
 	def _appendPoints_implementation(self, toAppend):
 		"""
 		Append the points from the toAppend object to the bottom of the features in this object
 
 		"""
 		self.data = pd.concat((self.data, toAppend.data), axis=0)
+
+	def appendFeatures(self, toAppend):
+		super(Dataframe, self).appendFeatures(toAppend)
+		self._updateName(axis='feature')
 
 	def _appendFeatures_implementation(self, toAppend):
 		"""
@@ -856,3 +864,4 @@ class Dataframe(Base):
 		df.drop(nameList, axis=axis, inplace=inplace)
 
 		return Dataframe(ret, **{name:nameList, otherName:otherNameList})
+	

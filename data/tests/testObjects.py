@@ -44,6 +44,10 @@ class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
 	def __init__(self):
 		super(TestSparseView, self).__init__('SparseView')
 
+class TestDataframeView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+		StructureDataSafe, ViewAccess):
+	def __init__(self):
+		super(TestDataframeView, self).__init__('DataframeView')
 
 class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll):
 	def __init__(self):
