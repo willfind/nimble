@@ -3,6 +3,12 @@ Unit tests for shogun_interface.py
 
 """
 
+try:
+	import clang
+	clangAvailable = True
+except ImportError:
+	clangAvailable = False
+
 import numpy
 import scipy.sparse
 from UML.randomness import numpyRandom
@@ -52,7 +58,7 @@ def testShogun_multiClassDataToBinaryAlg():
 	testObj = UML.createData('Matrix', data2)
 
 	args = {'kernel':'GaussianKernel', 'width':2, 'size':10}
-
+	# TODO -  is this failing because of kernel issues, or the thing we want to test?
 	ret = UML.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 
@@ -75,6 +81,9 @@ def testShogunHandmadeBinaryClassification():
 
 def testShogunHandmadeBinaryClassificationWithKernel():
 	""" Test shogun by calling a binary linear classifier with a kernel """
+	if not clangAvailable:
+		return
+
 	variables = ["Y","x1","x2"]
 	data = [[5,-11,-5], [1,0,1], [1,3,2]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -83,8 +92,6 @@ def testShogunHandmadeBinaryClassificationWithKernel():
 	testObj = UML.createData('Matrix', data2)
 
 	args = {'st':1, 'kernel':'GaussianKernel', 'w':2, 'size':10}
-
-#	args = {}
 	ret = UML.trainAndApply("shogun.LibSVM", trainingObj, trainY="Y", testX=testObj, output=None, arguments=args)
 
 	assert ret is not None
@@ -114,6 +121,9 @@ def testShogunKMeans():
 
 def testShogunMulticlassSVM():
 	""" Test shogun by calling a multilass classifier with a kernel """
+	if not clangAvailable:
+		return
+
 	variables = ["Y","x1","x2"]
 	data = [[0,0,0], [0,0,1], [1,-118,1], [1,-117,1], [2,1,191], [2,1,118], [3,-1000,-500]]
 	trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -155,7 +165,9 @@ def testShogunSparseRegression():
 
 def testShogunRossData():
 	""" Test shogun by calling classifers using the problematic data from Ross """
-	
+	if not clangAvailable:
+		return
+
 	p0 = [1,  0,    0,    0,    0.21,  0.12]
 	p1 = [2,  0,    0.56, 0.77, 0,     0]
 	p2 = [1,  0.24, 0,    0,    0.12,  0]
