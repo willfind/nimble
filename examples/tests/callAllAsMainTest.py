@@ -14,7 +14,7 @@ import UML
 import UML.examples.allowImports
 
 
-def test_callAllAsMain():
+def TODO_callAllAsMain():
 	"""
 	Calls each script in examples, confirms complete with an exception.
 

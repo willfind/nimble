@@ -35,7 +35,7 @@ def test_mirrorTostandardOut():
 		sys.stdout = sys.__stdout__
 
 @configSafetyWrapper
-def test_HR_logger_output_fromFile_trainAndApply():
+def TODO_HR_logger_output_fromFile_trainAndApply():
 	UML.settings.set('logger', 'mirrorToStandardOut', 'True')
 	
 	trainData = [[1,2,3], [4,5,6], [7,8,9]]

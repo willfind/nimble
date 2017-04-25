@@ -902,22 +902,21 @@ def test_CSVformatting_emptyAndCommentLines():
 			assert fromList == fromCSV
 
 
-def test_CSVformatting_scientificNotationAndNameExtraction():
-	data = [[1.,2.,3.], [11.,22.,33.],[111.,222.,333.]]
-	fromList = UML.createData(
-		returnType="List", data=data, pointNames=True, featureNames=True)
+def test_CSVformatting_scientificNotation():
+	for t in returnTypes:
+		data = [[1.,2.,3.], [11.,22.,33.],[111.,222.,333.]]
+		fromRaw = UML.createData(returnType=t, data=data)
 
-	# instantiate from csv file
-	with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
-		tmpCSV.write("1.000000000e+00,2.000000000e+00,3.000000000e+00\n")
-		tmpCSV.write("1.100000000e+01,2.200000000e+01,3.300000000e+01\n")
-		tmpCSV.write("1.110000000e+02,2.220000000e+02,3.330000000e+02\n")
-		tmpCSV.flush()
+		# instantiate from csv file
+		with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+			tmpCSV.write("1.000000000e+00,2.000000000e+00,3.000000000e+00\n")
+			tmpCSV.write("1.100000000e+01,2.200000000e+01,3.300000000e+01\n")
+			tmpCSV.write("1.110000000e+02,2.220000000e+02,3.330000000e+02\n")
+			tmpCSV.flush()
 
-		fromCSV = UML.createData(
-			returnType="List", data=tmpCSV.name, pointNames=True, featureNames=True)
+			fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
 
-		assert fromList == fromCSV
+			assert fromRaw == fromCSV
 
 
 

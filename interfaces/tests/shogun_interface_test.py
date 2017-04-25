@@ -285,8 +285,7 @@ def testShogunScoreModeBinary():
 	assert ret.pointCount == 2
 	assert ret.featureCount == 2
 
-def onlineLearneres():
-#def testOnlineLearners():
+def TODO_onlineLearneres():
 	""" Test shogun can call online learners """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [0,3,2], [1,-300,-25]]
@@ -299,8 +298,7 @@ def onlineLearneres():
 	ret = UML.trainAndApply("shogun.OnlineSVMSGD", trainingObj, trainY="Y", testX=testObj, arguments={})
 		
 
-# TODO def testShogunMultiClassStrategyMultiDataBinaryAlg():
-def notRunnable():
+def TODO_ShogunMultiClassStrategyMultiDataBinaryAlg():
 	""" Test shogun will correctly apply the provided strategies when given multiclass data and a binary learner """
 	variables = ["Y","x1","x2"]
 	data = [[0,1,1], [0,0,1], [1,3,2], [2,-300,2]]
@@ -312,18 +310,22 @@ def notRunnable():
 	ret = UML.trainAndApply("shogun.SVMOcas", trainingObj, trainY="Y", testX=testObj, arguments={}, multiClassStrategy="OneVsOne")
 	
 
-
-
 @attr('slow')
 def testShogunListLearners():
 	""" Test shogun's listShogunLearners() by checking the output for those learners we unit test """
 
 	ret = UML.listLearners('shogun')
 
-	assert 'LibSVM' in ret
 	assert 'LibLinear' in ret
-	assert 'MulticlassLibSVM' in ret
+	assert 'KNN' in ret
+	assert 'GMNPSVM' in ret
+	assert 'LaRank' in ret
 	assert 'MulticlassOCAS' in ret
+	assert "SVMOcas" in ret
+	if clangAvailable:
+		assert 'LibSVM' in ret
+		assert 'MulticlassLibSVM' in ret
+
 
 	for name in ret:
 		params = UML.learnerParameters('shogun.' + name)
@@ -333,4 +335,3 @@ def testShogunListLearners():
 			for dSet in defaults:
 				for key in dSet.keys():
 					assert key in pSet
-

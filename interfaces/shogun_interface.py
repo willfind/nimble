@@ -11,8 +11,9 @@ for Shogun ML.
 
 try:
 	import clang
+	clangAvailable = True
 except ImportError:
-	pass
+	clangAvailable = False
 
 import importlib
 import numpy
@@ -60,7 +61,7 @@ class Shogun(UniversalInterface):
 			if not (hasTrain and hasApply):
 				return False
 
-			if obj.__name__ in excludedLearners2:
+			if obj.__name__ in excludedLearners:
 				return False
 
 			# needs more to be able to distinguish between things that are runnable
@@ -741,7 +742,7 @@ class Shogun(UniversalInterface):
 ### GENERIC HELPERS ###
 #######################
 
-excludedLearners2 = [# parent classes, not actually runnable
+excludedLearners = [  # parent classes, not actually runnable
 			'BaseMulticlassMachine', 
 			'CDistanceMachine',
 			'CSVM', 
@@ -756,20 +757,20 @@ excludedLearners2 = [# parent classes, not actually runnable
 			'MultitaskLinearMachineBase',
 			'NativeMulticlassMachine',
 			'OnlineLinearMachine', 
-			'ScatterSVM', # unstable method
+			'ScatterSVM',  # unstable method
 			'TreeMachineWithConditionalProbabilityTreeNodeData',
 			'TreeMachineWithRelaxedTreeNodeData', 
 
 			# Should be implemented, but don't work
 			#'BalancedConditionalProbabilityTree', # streaming dense features input
 			#'ConditionalProbabilityTree', 	 # requires streaming features
-			'DomainAdaptationSVMLinear', #segfault
-			'DomainAdaptationMulticlassLibLinear', # segFault
+			'DomainAdaptationSVMLinear',  # segfault
+			'DomainAdaptationMulticlassLibLinear',  # segFault
 			'DomainAdaptationSVM',
 			#'DualLibQPBMSOSVM',  # problem type 3
 			'FeatureBlockLogisticRegression',  # remapping
-			'KernelRidgeRegression', #segfault
-			#'KernelStructuredOutputMachine', # problem type 3
+			'KernelRidgeRegression',  # segfault
+			#'KernelStructuredOutputMachine',  # problem type 3
 			#'LatentSVM', # problem type 4
 			'LibLinearRegression',
 			#'LibSVMOneClass',
@@ -782,11 +783,11 @@ excludedLearners2 = [# parent classes, not actually runnable
 			'MultitaskClusteredLogisticRegression',   # assertion error
 			'MultitaskCompositeMachine',  # takes machine as input?
 			#'MultitaskL12LogisticRegression',  # assertion error
-			'MultitaskLeastSquaresRegression',  #core dump
-			'MultitaskLogisticRegression',  #core dump
+			'MultitaskLeastSquaresRegression',  # core dump
+			'MultitaskLogisticRegression',  # core dump
 			#'MultitaskTraceLogisticRegression',  # assertion error
-			'OnlineLibLinear', # needs streaming dot features
-			'OnlineSVMSGD', # needs streaming dot features
+			'OnlineLibLinear',  # needs streaming dot features
+			'OnlineSVMSGD',  # needs streaming dot features
 			#'PluginEstimate', # takes string inputs?
 			#'RandomConditionalProbabilityTree',  # takes streaming dense features
 			#'RelaxedTree', # [ERROR] Call set_machine_for_confusion_matrix before training
@@ -798,7 +799,7 @@ excludedLearners2 = [# parent classes, not actually runnable
 
 			# functioning learners
 			#'AveragedPerceptron'
-			'GaussianNaiveBayes', # something wonky with getting scores
+			'GaussianNaiveBayes',  # something wonky with getting scores
 			#'GMNPSVM', 
 			#'GNPPSVM', 
 			#'GPBTSVM',
@@ -822,6 +823,13 @@ excludedLearners2 = [# parent classes, not actually runnable
 			#'SVMSGD',
 			#'SVRLight',
 			]
+
+# TODO - other learners should be added to the kernel only list.
+# Can we actually check interitence between things? check for any child of
+# CKernelMachine?
+kernelOnly = ['MulticlassLibSVM', 'LibSVM']
+if not clangAvailable:
+	excludedLearners += kernelOnly
 
 def _enforceNonUnicodeStrings(manifest):
 	for name in manifest:
