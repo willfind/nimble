@@ -230,9 +230,15 @@ class Matrix(Base):
 		returning an object containing those points that do.
 
 		"""
-		results = viewBasedApplyAlongAxis(toExtract,'point',self)
+		#if the toExtract is a vectorized function, then call matrix based function
+		#otherwise, call view based function
+		if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
+			function = matrixBasedApplyAlongAxis
+		else:
+			function = viewBasedApplyAlongAxis
+		results = function(toExtract, 'point', self)
 		results = results.astype(numpy.int)
-		
+
 		# need to convert our 1/0 array to to list of points to be removed
 		# can do this by just getting the non-zero indices
 		toRemove = numpy.flatnonzero(results)
@@ -311,7 +317,7 @@ class Matrix(Base):
 		for index in toExtract:
 			featureNameList.append(self.getFeatureName(index))
 
-		return Matrix(ret, featureNames=featureNameList)
+		return Matrix(ret, featureNames=featureNameList, pointNames=self.getPointNames())
 
 	def _extractFeaturesByFunction_implementation(self, toExtract, number):
 		"""
@@ -319,7 +325,13 @@ class Matrix(Base):
 		function, returning an object containing those features whose views do.
 
 		"""
-		results = viewBasedApplyAlongAxis(toExtract, 'feature', self)
+		#if the toExtract is a vectorized function, then call matrix based function
+		#otherwise, call view based function
+		if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
+			function = matrixBasedApplyAlongAxis
+		else:
+			function = viewBasedApplyAlongAxis
+		results = function(toExtract, 'feature', self)
 		results = results.astype(numpy.int)
 
 		# need to convert our 1/0 array to to list of points to be removed
@@ -880,9 +892,36 @@ def viewBasedApplyAlongAxis(function, axis, outerObject):
 		maxVal = outerObject.data.shape[1]
 		viewMaker = outerObject.featureView
 	ret = numpy.zeros(maxVal, dtype=numpy.float)
-
 	for i in xrange(0,maxVal):
 		funcOut = function(viewMaker(i))
 		ret[i] = funcOut
+
+	return ret
+
+def matrixBasedApplyAlongAxis(function, axis, outerObject):
+	"""
+	applies the given function to the underlying numpy matrix along the given axis,
+	returning the results of the function in numpy array
+	"""
+	#make sure the 3 attributes are in the function object
+	if not (hasattr(function, 'nameOfFeatureOrPoint') \
+		and hasattr(function, 'valueOfFeatureOrPoint') and hasattr(function, 'optr')):
+		msg = "some important attribute is missing in the input function"
+		raise ArgumentException(msg)
+	if axis == "point":
+		#convert name of feature to index of feature
+		indexOfFeature = outerObject.getFeatureIndex(function.nameOfFeatureOrPoint)
+		#extract the feature from the underlying matrix
+		queryData = outerObject.data[:, indexOfFeature]
+	else:
+		if axis != "feature":
+			raise ArgumentException("axis must be 'point' or 'feature'")
+		#convert name of point to index of point
+		indexOfPoint = outerObject.getPointIndex(function.nameOfFeatureOrPoint)
+		#extract the point from the underlying matrix
+		queryData = outerObject.data[indexOfPoint, :]
+	ret = function.optr(queryData, function.valueOfFeatureOrPoint)
+	#convert the result from matrix to numpy array
+	ret = ret.astype(numpy.float).A1
 
 	return ret
