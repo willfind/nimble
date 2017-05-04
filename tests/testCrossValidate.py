@@ -64,7 +64,7 @@ def test_crossValidate_callable():
 	numLabels = 3
 	numPoints = 10
 	
-	for dType in ['List','Matrix','Sparse']:
+	for dType in UML.data.available:
 		X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=numLabels, dataType=dType)
 
 		classifierAlgos = ['Custom.KNNClassifier']

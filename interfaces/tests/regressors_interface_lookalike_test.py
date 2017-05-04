@@ -6,7 +6,6 @@ import UML
 
 from UML.interfaces.regressors_interface_old import setRegressorLocation
 from UML.interfaces.regressors_interface_old import getRegressorLocation
-from UML.data import Matrix
 import tempfile
 
 
