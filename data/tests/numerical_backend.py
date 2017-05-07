@@ -394,7 +394,7 @@ def back_otherNotNumericException(callerCon, calleeCon, op):
 	data1 = [[1,2,3], [4,5,6], [7,8,9]]
 	data2 = [['one','2','3'], ['4','5','6'], ['7','8','9']]
 	caller = callerCon(data1)
-	callee = calleeConstructor(data2, UML.data.List)
+	callee = calleeConstructor(data2, UML.data.List)  # need to use UML.data.List for string valued element
 
 	toCall = getattr(caller, op)
 	toCall(callee)
@@ -535,8 +535,8 @@ def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
 
 def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, sparsity):
 	""" Test operation on handmade data with different types of data objects"""
-	makers = [UML.data.List, UML.data.Matrix, UML.data.Sparse]
-	
+	makers = [getattr(UML.data, retType) for retType in UML.data.available]
+
 	for i in range(len(makers)):
 		maker = makers[i]
 		n = pythonRandom.randint(1,10)
@@ -1163,7 +1163,8 @@ class NumericalModifying(DataTestObject):
 		calleepnames = ['I', 'dont', 'match']
 		calleefnames = ['one', 'two']
 
-		makers = [UML.data.List, UML.data.Matrix, UML.data.Sparse]
+		makers = [getattr(UML.data, retType) for retType in UML.data.available]
+
 		for maker in makers:
 			caller = self.constructor(data, pointNames=callerpnames)
 			exponentsObj = maker(exponents, pointNames=calleepnames, featureNames=calleefnames)
@@ -1180,7 +1181,8 @@ class NumericalModifying(DataTestObject):
 		exp1 = [[1,4], [16,25], [49,16]]
 		callerpnames = ['1', '2', '3']
 
-		makers = [UML.data.List, UML.data.Matrix, UML.data.Sparse]
+		makers = [getattr(UML.data, retType) for retType in UML.data.available]
+
 		for maker in makers:
 			caller = self.constructor(data, pointNames=callerpnames)
 			caller.elementwisePower(exponent)
@@ -1260,7 +1262,7 @@ class NumericalModifying(DataTestObject):
 		exp1 = [[2,4], [8,10], [14,16]]
 		halves = [[0.5,0.5], [0.5,0.5], [0.5,0.5]]
 
-		makers = [UML.data.List, UML.data.Matrix, UML.data.Sparse]
+		makers = [getattr(UML.data, retType) for retType in UML.data.available]
 
 		for maker in makers:
 			caller = self.constructor(data)
@@ -1280,8 +1282,8 @@ class NumericalModifying(DataTestObject):
 
 	def test_elementwiseMultipy_auto(self):
 		""" Test elementwiseMultiply on generated data against the numpy op """
-		makers = [UML.data.List, UML.data.Matrix, UML.data.Sparse]
-	
+		makers = [getattr(UML.data, retType) for retType in UML.data.available]
+
 		for i in range(len(makers)):
 			maker = makers[i]
 			n = pythonRandom.randint(1,10)

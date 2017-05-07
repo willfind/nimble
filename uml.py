@@ -203,17 +203,15 @@ def identity(returnType, size, pointNames='automatic', featureNames='automatic',
 		msg += " was given."
 		raise ArgumentException(msg)
 
-	if returnType == 'List':
-		toConv = identity("Matrix", size, pointNames, featureNames, name)
-		return toConv.copyAs("List")
-	elif returnType == 'Matrix':
-		raw = numpy.identity(size)
-		return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
-	else:  # returnType == 'Sparse'
+	if returnType == 'Sparse':
 		assert returnType == 'Sparse'
 		rawDiag = scipy.sparse.identity(size)
 		rawCoo = scipy.sparse.coo_matrix(rawDiag)
 		return UML.createData(returnType, rawCoo, pointNames=pointNames, featureNames=featureNames, name=name)
+	else:
+		raw = numpy.identity(size)
+		return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
+
 
 
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **kwarguments):
@@ -568,7 +566,6 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 		msg += "a list or dict specifying a mapping between names and indices."
 		raise ArgumentException(msg)
 
-	#retAllowed = ['List', 'Matrix', 'Sparse', None]
 	retAllowed = copy.copy(UML.data.available)
 	retAllowed.append(None)
 	if returnType not in retAllowed:

@@ -11,10 +11,7 @@ __init__,  transpose, appendPoints, appendFeatures, sortPoints, sortFeatures,
 extractPoints, extractFeatures, referenceDataFrom, transformEachPoint,
 transformEachFeature, transformEachElement, fillWith
 
-
-
 """
-
 
 import tempfile
 import numpy
@@ -1002,10 +999,12 @@ class StructureModifying(DataTestObject):
 	def backend_append_exceptionDifferentUMLDataType(self, axis):
 		data = [[1,2,3],[4,5,6],[7,8,9]]
 		toTest = self.constructor(data)
-		if toTest.getTypeString() == 'List':
-			other = UML.createData("Matrix", data)
+		retType0 = UML.data.available[0]
+		retType1 = UML.data.available[1]
+		if toTest.getTypeString() == retType0:
+			other = UML.createData(retType1, data)
 		else:
-			other = UML.createData("List", data)
+			other = UML.createData(retType0, data)
 
 		if axis == 'point':
 			toTest.appendPoints(other)
@@ -2425,12 +2424,15 @@ class StructureModifying(DataTestObject):
 		pNames = ['1', 'one', '2', '0']
 		orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
 
-		type1 = List(data1, pointNames=pNames, featureNames=featureNames)
-		type2 = Matrix(data1, pointNames=pNames, featureNames=featureNames)
+		retType0 = UML.data.available[0]
+		retType1 = UML.data.available[1]
+
+		objType0 = UML.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
+		objType1 = UML.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
 
 		# at least one of these two will be the wrong type
-		orig.referenceDataFrom(type1)
-		orig.referenceDataFrom(type2)
+		orig.referenceDataFrom(objType0)
+		orig.referenceDataFrom(objType1)
 
 
 	def test_referenceDataFrom_data_axisNames(self):

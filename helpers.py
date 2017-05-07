@@ -27,9 +27,8 @@ from UML.logger import Stopwatch
 
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.exceptions import FileFormatException
-from UML.data import Sparse
-from UML.data import Matrix
-from UML.data import List
+from UML.data import Sparse  # needed for 1s or 0s obj creation
+from UML.data import Matrix  # needed for 1s or 0s obj creation
 from UML.data import Base
 
 from UML.randomness import pythonRandom
@@ -139,20 +138,17 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
 		msg += "numFeatures (" + str(numFeatures) + ") must be non-zero."
 		raise ArgumentException(msg)
 
-	if returnType == 'List':
-		toConv = createConstantHelper(numpyMaker, "Matrix", numPoints, numFeatures, pointNames, featureNames, name)
-		return toConv.copyAs("List")
-	elif returnType == 'Matrix' or returnType == 'Dataframe':
-		raw = numpyMaker((numPoints,numFeatures))
-		return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
-	else:  # returnType == 'Sparse'
-		assert returnType == 'Sparse'
+	if returnType == 'Sparse':
 		if numpyMaker == numpy.ones:
 			rawDense = numpyMaker((numPoints,numFeatures))
 			rawSparse = scipy.sparse.coo_matrix(rawDense)
 		else:  # case: numpyMaker == numpy.zeros
+			assert numpyMaker == numpy.zeros
 			rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
 		return UML.createData(returnType, rawSparse, pointNames=pointNames, featureNames=featureNames, name=name)
+	else:
+		raw = numpyMaker((numPoints,numFeatures))
+		return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
 
 
 

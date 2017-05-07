@@ -65,8 +65,7 @@ mutuallyExclusiveParams['copyFeatures'] = ('features', ('start', 'end'))
 mutuallyExclusiveParams['copyPoints'] = ('points', ('start', 'end'))
 
 
-def nope():
-#def testRandomSequenceOfMethods():
+def TODO_RandomSequenceOfMethods():
 	# always use this number of points and features
 	points = numPoints
 	features = numFeatures
@@ -604,7 +603,7 @@ def makeParams(funcName, dataObj, seed):
 	return argList
 
 
-def testGeneratorListSandC():
+def TODO_GeneratorListSandC():
 	data = [[1,2,3], [4,5,6]]
 	dobj = UML.createData('List', data)
 
@@ -626,7 +625,7 @@ def testGeneratorListSandC():
 
 		assert funcName in testable
 
-def testMakeParamsExclusivity():
+def TODO_MakeParamsExclusivity():
 	data = [[1,2,3], [4,5,6], [7,8,9]]
 	dobj = UML.createData('List', data)
 

@@ -30,9 +30,6 @@ import tempfile
 import inspect
 
 import UML
-from UML.data import List
-from UML.data import Matrix
-from UML.data import Sparse
 from UML.exceptions import ArgumentException, ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
@@ -697,18 +694,10 @@ class HighLevelDataSafe(DataTestObject):
 
 			toTest = self.constructor(data)
 
-			listObj = List(data)
-			matrix = Matrix(data)
-			sparse = Sparse(data)
-
-			assert toTest.isApproximatelyEqual(listObj)
-			assert toTest.hashCode() == listObj.hashCode()
-
-			assert toTest.isApproximatelyEqual(matrix)
-			assert toTest.hashCode() == matrix.hashCode()
-
-			assert toTest.isApproximatelyEqual(sparse)
-			assert toTest.hashCode() == sparse.hashCode()
+			for retType in UML.data.available:
+				currObj = UML.createData(retType, data)
+				assert toTest.isApproximatelyEqual(currObj)
+				assert toTest.hashCode() == currObj.hashCode()
 
 
 	######################
@@ -1513,12 +1502,14 @@ class HighLevelModifying(DataTestObject):
 		obj = self.constructor([[1,1,1],[3,3,3],[7,7,7]])
 		expObj = self.constructor([[0,0,0], [4,4,4], [12,12,12]])
 
-		sub = UML.createData("Matrix", [1]*3)
-		div = UML.createData("Matrix", [0.5]*3)
-		ret = self.normalizeHelper(obj, axis, subtract=sub, divide=div)
+		for retType in UML.data.available:
+			currObj = obj.copy()
+			sub = UML.createData(retType, [1]*3)
+			div = UML.createData(retType, [0.5]*3)
+			ret = self.normalizeHelper(currObj, axis, subtract=sub, divide=div)
 
-		assert ret is None
-		assert expObj == obj
+			assert ret is None
+			assert expObj == currObj
 
 
 	# successful float valued inputs
