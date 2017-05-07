@@ -303,11 +303,25 @@ class Base(object):
 	def getPointIndex(self, name):
 		return self.pointNames[name]
 
+	def hasPointName(self, name):
+		try:
+			self.getPointIndex(name)
+			return True
+		except KeyError:
+			return False
+
 	def getFeatureName(self, index):
 		return self.featureNamesInverse[index]
 
 	def getFeatureIndex(self, name):
 		return self.featureNames[name]
+
+	def hasFeatureName(self, name):
+		try:
+			self.getFeatureIndex(name)
+			return True
+		except KeyError:
+			return False
 
 	###########################
 	# Higher Order Operations #
@@ -3264,11 +3278,11 @@ class Base(object):
 		if axis == 'point':
 			getIndex = self._getPointIndex
 			axisLength = self.pointCount
-			namesForCheck1, namesForCheck2 = self.getPointNames(), self.getFeatureNames()
+			hasNameChecker1, hasNameChecker2 = self.hasPointName, self.hasFeatureName
 		else:
 			getIndex = self._getFeatureIndex
 			axisLength = self.featureCount
-			namesForCheck1, namesForCheck2 = self.getFeatureNames(), self.getPointNames()
+			hasNameChecker1, hasNameChecker2 = self.hasFeatureName, self.hasPointName
 
 		if number is not None and number < 1:
 			msg = "number must be greater than zero"
@@ -3277,7 +3291,7 @@ class Base(object):
 			if start is not None or end is not None:
 				raise ArgumentException("Range removal is exclusive, to use it, target must be None")
 			if isinstance(target, basestring):
-				if target in namesForCheck1:
+				if hasNameChecker1(target):
 					target = [target]
 				#if axis=point and target is not a point name, or
 				# if axis=feature and target is not a feature name,
@@ -3297,7 +3311,7 @@ class Base(object):
 
 							#when axis=point, check if the feature exists or not
 							#when axis=feature, check if the point exists or not
-							if nameOfFeatureOrPoint not in namesForCheck2:
+							if not hasNameChecker2(nameOfFeatureOrPoint):
 								msg = "the %s %s doesn't exist" % ('feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
 								raise ArgumentException(msg)
 
