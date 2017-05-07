@@ -11,7 +11,7 @@ from scipy.sparse import isspmatrix
 import itertools
 from base_view import BaseView
 
-class Dataframe(Base):
+class DataFrame(Base):
 	"""
 	Class providing implementations of data manipulation operations on data stored
 	in a pandas DataFrame.
@@ -43,9 +43,9 @@ class Dataframe(Base):
 			raise ArgumentException(msg)
 
 		kwds['shape'] = self.data.shape
-		super(Dataframe, self).__init__(**kwds)
+		super(DataFrame, self).__init__(**kwds)
 		#it is very import to set up self.data's index and columns, other wise int index or column name will be set
-		#if so, pandas Dataframe ix sliding is label based, its behaviour is not what we want
+		#if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
 		self.data.index = self.getPointNames()
 		self.data.columns = self.getFeatureNames()
 
@@ -58,7 +58,7 @@ class Dataframe(Base):
 		self.data = self.data.T
 
 	def appendPoints(self, toAppend):
-		super(Dataframe, self).appendPoints(toAppend)
+		super(DataFrame, self).appendPoints(toAppend)
 		self._updateName(axis='point')
 
 	def _appendPoints_implementation(self, toAppend):
@@ -69,7 +69,7 @@ class Dataframe(Base):
 		self.data = pd.concat((self.data, toAppend.data), axis=0)
 
 	def appendFeatures(self, toAppend):
-		super(Dataframe, self).appendFeatures(toAppend)
+		super(DataFrame, self).appendFeatures(toAppend)
 		self._updateName(axis='feature')
 
 	def _appendFeatures_implementation(self, toAppend):
@@ -349,14 +349,14 @@ class Dataframe(Base):
 				if redRet is not None:
 					(redKey, redValue) = redRet
 					ret.append([redKey, redValue])
-			return Dataframe(ret)
+			return DataFrame(ret)
 
 	def _getTypeString_implementation(self):
-		return 'Dataframe'
+		return 'DataFrame'
 
 
 	def _isIdentical_implementation(self, other):
-		if not isinstance(other, Dataframe):
+		if not isinstance(other, DataFrame):
 			return False
 		if self.pointCount != other.pointCount:
 			return False
@@ -416,17 +416,17 @@ class Dataframe(Base):
 		mmwrite(outPath, self.data, comment=comment)
 
 	def _referenceDataFrom_implementation(self, other):
-		if not isinstance(other, Dataframe):
+		if not isinstance(other, DataFrame):
 			raise ArgumentException("Other must be the same type as this object")
 
 		self.data = other.data
 
 	def _copyAs_implementation(self, format):
 		"""
-		Copy the current Dataframe object to another one in the format.
+		Copy the current DataFrame object to another one in the format.
 		Input:
 			format: string. Sparse, List, Matrix, pythonlist, numpyarray, numpymatrix, scipycsc, scipycsr or None
-					if format is None, a new Dataframe will be created.
+					if format is None, a new DataFrame will be created.
 		"""
 		dataArray = self.data.values.copy()
 		if format == 'Sparse':
@@ -446,7 +446,7 @@ class Dataframe(Base):
 		if format == 'scipycsr':
 			return scipy.sparse.csr_matrix(dataArray)
 
-		return Dataframe(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+		return DataFrame(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
 	def _copyPoints_implementation(self, points, start, end):
 		if points is not None:
@@ -456,7 +456,7 @@ class Dataframe(Base):
 		else:
 			ret = self.data.ix[start:end+1, :]
 
-		return Dataframe(ret)
+		return DataFrame(ret)
 
 	def _copyFeatures_implementation(self, indices, start, end):
 		if indices is not None:
@@ -464,7 +464,7 @@ class Dataframe(Base):
 		else:
 			ret = self.data.ix[:, start:end+1]
 
-		return Dataframe(ret)
+		return DataFrame(ret)
 
 	def _transformEachPoint_implementation(self, function, points):
 		"""
@@ -537,9 +537,9 @@ class Dataframe(Base):
 		"""
 
 		"""
-		class DataframeView(BaseView, Dataframe):
+		class DataFrameView(BaseView, DataFrame):
 			def __init__(self, **kwds):
-				super(DataframeView, self).__init__(**kwds)
+				super(DataFrameView, self).__init__(**kwds)
 
 		kwds = {}
 		kwds['data'] = self.data.ix[pointStart:pointEnd, featureStart:featureEnd]
@@ -550,7 +550,7 @@ class Dataframe(Base):
 		kwds['featureEnd'] = featureEnd
 		kwds['reuseData'] = True
 
-		return DataframeView(**kwds)
+		return DataFrameView(**kwds)
 
 	def _validate_implementation(self, level):
 		shape = self.data.shape
@@ -635,7 +635,7 @@ class Dataframe(Base):
 
 		leftData = np.matrix(self.data)
 		rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
-		return Dataframe(leftData * rightData)
+		return DataFrame(leftData * rightData)
 
 	def _elementwiseMultiply_implementation(self, other):
 		"""
@@ -678,11 +678,11 @@ class Dataframe(Base):
 		rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
 		ret = leftData + rightData
 
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _radd__implementation(self, other):
 		ret = other + self.data.values
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _iadd__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -697,11 +697,11 @@ class Dataframe(Base):
 		rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
 		ret = leftData - rightData
 
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _rsub__implementation(self, other):
 		ret = other - self.data.values
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _isub__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -719,12 +719,12 @@ class Dataframe(Base):
 				ret = self.data.values / other.data
 		else:
 			ret = self.data.values / other
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
 	def _rdiv__implementation(self, other):
 		ret = other / self.data.values
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _idiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -745,11 +745,11 @@ class Dataframe(Base):
 				ret = self.data.values.__truediv__(other.data)
 		else:
 			ret = self.data.values.__itruediv__(other)
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _rtruediv__implementation(self, other):
 		ret = self.data.values.__rtruediv__(other)
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _itruediv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -770,12 +770,12 @@ class Dataframe(Base):
 				ret = self.data.values // other.data
 		else:
 			ret = self.data.values // other
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
 	def _rfloordiv__implementation(self, other):
 		ret = other // self.data.values
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 	def _ifloordiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
@@ -796,12 +796,12 @@ class Dataframe(Base):
 				ret = self.data.values % other.data
 		else:
 			ret = self.data.values % other
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
 	def _rmod__implementation(self, other):
 		ret = other % self.data.values
-		return Dataframe(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+		return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
 	def _imod__implementation(self, other):
@@ -816,16 +816,16 @@ class Dataframe(Base):
 		return self
 
 	def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
-		super(Dataframe, self)._setName_implementation(oldIdentifier, newName, axis, allowDefaults)
+		super(DataFrame, self)._setName_implementation(oldIdentifier, newName, axis, allowDefaults)
 		#update the index or columns in self.data
 		self._updateName(axis)
 
 	def _setNamesFromList(self, assignments, count, axis):
-		super(Dataframe, self)._setNamesFromList(assignments, count, axis)
+		super(DataFrame, self)._setNamesFromList(assignments, count, axis)
 		self._updateName(axis)
 
 	def _setNamesFromDict(self, assignments, count, axis):
-		super(Dataframe, self)._setNamesFromDict(assignments, count, axis)
+		super(DataFrame, self)._setNamesFromDict(assignments, count, axis)
 		self._updateName(axis)
 
 	def _updateName(self, axis):
@@ -863,5 +863,5 @@ class Dataframe(Base):
 
 		df.drop(nameList, axis=axis, inplace=inplace)
 
-		return Dataframe(ret, **{name:nameList, otherName:otherNameList})
+		return DataFrame(ret, **{name:nameList, otherName:otherNameList})
 	

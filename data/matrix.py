@@ -517,8 +517,8 @@ class Matrix(Base):
 			return scipy.sparse.csc_matrix(self.data)
 		if format == 'scipycsr':
 			return scipy.sparse.csr_matrix(self.data)
-		if format == 'Dataframe':
-			return UML.data.Dataframe(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+		if format == 'DataFrame':
+			return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
 		return Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 

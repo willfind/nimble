@@ -14,9 +14,9 @@ from base_view import BaseView
 from list import List
 from matrix import Matrix
 from sparse import Sparse
-from dataframe import Dataframe
+from dataframe import DataFrame
 
 
 # We want this for unit testing
-available = ['List', 'Matrix', 'Sparse', 'Dataframe']
-__all__ = ['Base', 'BaseView', 'List', 'Matrix', 'Sparse', 'Dataframe']
+available = ['List', 'Matrix', 'Sparse', 'DataFrame']
+__all__ = ['Base', 'BaseView', 'List', 'Matrix', 'Sparse', 'DataFrame']
