@@ -19,6 +19,7 @@ from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 from UML.randomness import pythonRandom
+from pandas import SparseDataFrame
 
 
 class Sparse(Base):

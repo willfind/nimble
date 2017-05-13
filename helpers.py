@@ -20,6 +20,7 @@ import importlib
 import StringIO
 import sys
 import itertools
+import pandas as pd
 
 import UML
 
@@ -75,7 +76,7 @@ def _learnerQuery(name, queryType):
 def isAllowedRaw(data):
 	if scipy.sparse.issparse(data):
 		return True
-	if type(data) in [tuple, list, numpy.ndarray, numpy.matrixlib.defmatrix.matrix]:
+	if type(data) in [tuple, list, numpy.ndarray, numpy.matrixlib.defmatrix.matrix, pd.DataFrame, pd.Series]:
 		return True
 
 	return False

@@ -6,6 +6,7 @@ Class extending Base, using a list of lists to store data.
 import copy
 import numpy
 import scipy
+import pandas as pd
 import itertools
 from scipy.sparse import isspmatrix
 
@@ -43,6 +44,9 @@ class List(Base):
 		# if sparse, make dense
 		if isspmatrix(data):
 			data = data.todense()
+		# if DataFrame, convert it to ndarray
+		if isinstance(data, pd.DataFrame):
+			data = data.values
 		# if its a numpy construct, convert it to a python list
 		try:
 			temp = data

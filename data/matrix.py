@@ -36,11 +36,11 @@ class Matrix(Base):
 				if reuseData and isinstance(data, type(numpy.matrix([]))):
 					self.data = data
 				else:
-					if data == []:
+					if isinstance(data, list) and data == []:
 						cols = 0
 						if featureNames is not None:
 							cols = len(featureNames)
-						data = numpy.empty(shape=(0,cols))
+						data = numpy.empty(shape=(0, cols))
 					self.data = numpy.matrix(data, dtype=numpy.float)
 		except ValueError:
 			einfo = sys.exc_info()
