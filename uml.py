@@ -12,7 +12,6 @@ import datetime
 import os
 import copy
 import ConfigParser
-import pandas as pd
 
 import UML
 from UML.exceptions import ArgumentException
@@ -579,9 +578,6 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 
 	# input is raw data
 	if isAllowedRaw(data):
-		# if isinstance(data, pd.Series):
-		# 	data = data.values
-
 		ret = initDataObject(
 			returnType=returnType, rawData=data, pointNames=pointNames,
 			featureNames=featureNames, name=name, path=None,

@@ -30,7 +30,7 @@ class List(Base):
 	def __init__(self, data,  featureNames=None, reuseData=False, shape=None, **kwds):
 
 		#convert non-empty 1D data to 2D
-		if False and (type(data) in [list, tuple, numpy.ndarray]) and len(data)>0:
+		if (type(data) in [list, tuple, numpy.ndarray]) and len(data)>0:
 				#if data is like [1,2,3], then convert it to [[1,2,3]], i.e. convert 1D to 2D
 				#if data is [<UML.data.list.FeatureViewer object] then skip
 				if type(data[0]) not in [list, tuple, numpy.ndarray] and not hasattr(data[0], 'setLimit'):
@@ -52,9 +52,9 @@ class List(Base):
 		# if sparse, make dense
 		if isspmatrix(data):
 			data = data.todense()
-		# if DataFrame, convert it to ndarray
-		if isinstance(data, pd.DataFrame):# or isinstance(data, pd.Series):
-			data = data.values
+		# if DataFrame or Series, convert it to numpy matrix
+		if isinstance(data, pd.DataFrame) or isinstance(data, pd.Series):
+			data = numpy.matrix(data)
 		# if its a numpy construct, convert it to a python list
 		try:
 			temp = data
