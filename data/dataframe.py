@@ -30,6 +30,7 @@ class DataFrame(Base):
 			else:
 				self.data = data.copy()
 		elif isinstance(data, list) or isinstance(data, np.ndarray) or isinstance(data, np.matrix):
+		#elif type(data) in [list, np.ndarray, np.matrix, tuple, pd.Series]:
 			if np.array(data).ndim > 2:
 				msg = "the input data can be list such as [1,2,3], list of list such as [[1,2,3],[3,2,1]], or 2D data in \
 					  numpy array or matrix. the current input has ndim > 2."

@@ -76,7 +76,7 @@ def _learnerQuery(name, queryType):
 def isAllowedRaw(data):
 	if scipy.sparse.issparse(data):
 		return True
-	if type(data) in [tuple, list, numpy.ndarray, numpy.matrixlib.defmatrix.matrix, pd.DataFrame, pd.Series]:
+	if type(data) in [tuple, list, numpy.ndarray, numpy.matrix, pd.DataFrame, pd.Series, pd.SparseDataFrame]:
 		return True
 
 	return False

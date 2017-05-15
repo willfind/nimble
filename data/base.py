@@ -80,12 +80,14 @@ class Base(object):
 		self._pointCount = shape[0]
 		self._featureCount = shape[1]
 
-		if pointNames is not None and len(pointNames) != shape[0]:
+		#if pointNames is not None and len(pointNames) != shape[0]:
+		if pointNames and len(pointNames) != shape[0]:
 			msg = "The length of the pointNames (" + str(len(pointNames))
 			msg += ") must match the points given in shape (" + str(shape[0])
 			msg += ")"
 			raise ArgumentException(msg)
-		if featureNames is not None and len(featureNames) != shape[1]:
+		#if featureNames is not None and len(featureNames) != shape[1]:
+		if featureNames and len(featureNames) != shape[1]:
 			msg = "The length of the featureNames (" + str(len(featureNames))
 			msg += ") must match the features given in shape ("
 			msg += str(shape[1]) + ")"
