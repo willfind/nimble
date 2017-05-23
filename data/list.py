@@ -6,6 +6,7 @@ Class extending Base, using a list of lists to store data.
 import copy
 import numpy
 import scipy
+import pandas as pd
 import itertools
 from scipy.sparse import isspmatrix
 
@@ -27,10 +28,18 @@ class List(Base):
 
 	"""
 	def __init__(self, data,  featureNames=None, reuseData=False, shape=None, **kwds):
+
+		#convert non-empty 1D data to 2D
+		if (type(data) in [list, tuple, numpy.ndarray]) and len(data)>0:
+				#if data is like [1,2,3], then convert it to [[1,2,3]], i.e. convert 1D to 2D
+				#if data is [<UML.data.list.FeatureViewer object] then skip
+				if type(data[0]) not in [list, tuple, numpy.ndarray] and not hasattr(data[0], 'setLimit'):
+					data = [data]
 		self._numFeatures = shape[1] if shape is not None else None
 		# Format / copy the data if necessary
 		# if input as a list, copy it
 		if isinstance(data, list):
+
 			if len(data) > 0 and hasattr(data[0], "__len__") and len(data[0]) > 0:
 				if isinstance(data[0][0], list):
 					msg = "python lists are not allowed as elements for our "
@@ -43,6 +52,9 @@ class List(Base):
 		# if sparse, make dense
 		if isspmatrix(data):
 			data = data.todense()
+		# if DataFrame or Series, convert it to numpy matrix
+		if isinstance(data, pd.DataFrame) or isinstance(data, pd.Series):
+			data = numpy.matrix(data)
 		# if its a numpy construct, convert it to a python list
 		try:
 			temp = data
@@ -61,10 +73,6 @@ class List(Base):
 					self._numFeatures = 0
 			self.data = []
 			shape = (0,self._numFeatures)
-			
-			kwds['featureNames'] = featureNames
-			kwds['shape'] = shape
-			super(List, self).__init__(**kwds)
 		else:
 			self._numFeatures = len(data[0])
 			for point in data:
@@ -75,9 +83,9 @@ class List(Base):
 			self.data = data
 			shape = (len(self.data), self._numFeatures)
 
-			kwds['featureNames'] = featureNames
-			kwds['shape'] = shape
-			super(List, self).__init__(**kwds)
+		kwds['featureNames'] = featureNames
+		kwds['shape'] = shape
+		super(List, self).__init__(**kwds)
 
 
 	def _transpose_implementation(self):
@@ -576,6 +584,8 @@ class List(Base):
 			return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'Matrix':
 			return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+		if format == 'DataFrame':
+			return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'pythonlist':
 			return copy.deepcopy(self.data)
 		if format == 'numpyarray':

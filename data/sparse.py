@@ -19,6 +19,7 @@ from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 from UML.randomness import pythonRandom
+from pandas import SparseDataFrame
 
 
 class Sparse(Base):
@@ -773,6 +774,8 @@ class Sparse(Base):
 			return UML.data.List(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'Matrix':
 			return UML.data.Matrix(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+		if format == 'DataFrame':
+			return UML.data.DataFrame(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 		if format == 'pythonlist':
 			return self._data.todense().tolist()
 		if format == 'numpyarray':

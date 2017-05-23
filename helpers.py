@@ -20,6 +20,7 @@ import importlib
 import StringIO
 import sys
 import itertools
+import pandas as pd
 
 import UML
 
@@ -75,7 +76,7 @@ def _learnerQuery(name, queryType):
 def isAllowedRaw(data):
 	if scipy.sparse.issparse(data):
 		return True
-	if type(data) in [tuple, list, numpy.ndarray, numpy.matrixlib.defmatrix.matrix]:
+	if type(data) in [tuple, list, dict, numpy.ndarray, numpy.matrix, pd.DataFrame, pd.Series, pd.SparseDataFrame]:
 		return True
 
 	return False
@@ -164,6 +165,12 @@ def initDataObject(
 	if returnType is None:
 		returnType = autoType
 
+	#convert dict to pandas DataFrame
+	#{'a':[1,2], 'b':[3,4]}, [{'a':1, 'b':3}, {'a':2, 'b':4}]
+	if isinstance(rawData, dict) or (isinstance(rawData, list) and len(rawData)>0 and isinstance(rawData[0], dict)):
+		rawData = pd.DataFrame(rawData)
+		if featureNames == 'automatic' or featureNames is False:
+			featureNames = rawData.columns.tolist()
 
 	# check if we need to do name extraction, setup new variables,
 	# or modify values for subsequent call to data init method.
