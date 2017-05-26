@@ -6,7 +6,10 @@ Class extending Base, using a list of lists to store data.
 import copy
 import numpy
 import scipy
-import pandas as pd
+try:
+	import pandas as pd
+except ImportError:
+	pass
 import itertools
 from scipy.sparse import isspmatrix
 
@@ -53,8 +56,11 @@ class List(Base):
 		if isspmatrix(data):
 			data = data.todense()
 		# if DataFrame or Series, convert it to numpy matrix
-		if isinstance(data, pd.DataFrame) or isinstance(data, pd.Series):
-			data = numpy.matrix(data)
+		try:
+			if isinstance(data, pd.DataFrame) or isinstance(data, pd.Series):
+				data = numpy.matrix(data)
+		except NameError:
+			pass
 		# if its a numpy construct, convert it to a python list
 		try:
 			temp = data
