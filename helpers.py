@@ -22,8 +22,9 @@ import sys
 import itertools
 try:
 	import pandas as pd
+	pdImported = True
 except ImportError:
-	pass
+	pdImported = False
 
 import UML
 
@@ -82,11 +83,9 @@ def isAllowedRaw(data):
 	if type(data) in [tuple, list, dict, numpy.ndarray, numpy.matrix]:
 		return True
 
-	try:
+	if pdImported:
 		if type(data) in [pd.DataFrame, pd.Series, pd.SparseDataFrame]:
 			return True
-	except NameError:
-		pass
 
 	return False
 
@@ -174,27 +173,36 @@ def initDataObject(
 	if returnType is None:
 		returnType = autoType
 
-	#convert dict to np.ndarray
-	#{'a':[1,2], 'b':[3,4]}
-	if isinstance(rawData, dict):
-		keys = rawData.keys()
-		rawData = numpy.transpose(rawData.values())
-		if featureNames == 'automatic' or featureNames is False:
-			featureNames = keys
+	if pdImported:
+		#convert dict or list of dict to pandas DataFrame
+		#{'a':[1,2], 'b':[3,4]}, [{'a':1, 'b':3}, {'a':2, 'b':4}]
+		if isinstance(rawData, dict) or (isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict)):
+			rawData = pd.DataFrame(rawData)
+			if featureNames == 'automatic' or featureNames is False:
+				featureNames = rawData.columns.tolist()
 
-	#convert list of dict to np.ndarray
-	#[{'a':1, 'b':3}, {'a':2, 'b':4}]
-	if isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
-		values = [rawData[0].values()]
-		keys = rawData[0].keys()
-		for row in rawData[1:]:
-			if row.keys() != keys:
-				msg = "keys don't match."
-				raise ArgumentException(msg)
-			values.append(row.values())
-		rawData = values
-		if featureNames == 'automatic' or featureNames is False:
-			featureNames = keys
+	else:
+		#convert dict to np.ndarray
+		#{'a':[1,2], 'b':[3,4]}
+		if isinstance(rawData, dict):
+			keys = rawData.keys()
+			rawData = numpy.transpose(rawData.values())
+			if featureNames == 'automatic' or featureNames is False:
+				featureNames = keys
+
+		#convert list of dict to np.ndarray
+		#[{'a':1, 'b':3}, {'a':2, 'b':4}]
+		if isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
+			values = [rawData[0].values()]
+			keys = rawData[0].keys()
+			for row in rawData[1:]:
+				if row.keys() != keys:
+					msg = "keys don't match."
+					raise ArgumentException(msg)
+				values.append(row.values())
+			rawData = values
+			if featureNames == 'automatic' or featureNames is False:
+				featureNames = keys
 
 
 	# check if we need to do name extraction, setup new variables,

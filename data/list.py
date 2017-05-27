@@ -8,8 +8,9 @@ import numpy
 import scipy
 try:
 	import pandas as pd
+	pdImported = True
 except ImportError:
-	pass
+	pdImported = False
 import itertools
 from scipy.sparse import isspmatrix
 
@@ -56,11 +57,10 @@ class List(Base):
 		if isspmatrix(data):
 			data = data.todense()
 		# if DataFrame or Series, convert it to numpy matrix
-		try:
+		if pdImported:
 			if isinstance(data, pd.DataFrame) or isinstance(data, pd.Series):
 				data = numpy.matrix(data)
-		except NameError:
-			pass
+
 		# if its a numpy construct, convert it to a python list
 		try:
 			temp = data
