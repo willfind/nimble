@@ -5,21 +5,25 @@ Class extending Base, using a list of lists to store data.
 
 import copy
 import numpy
-import scipy
+try:
+	import scipy
+	from scipy.sparse import isspmatrix
+	scipyImported = True
+except ImportError:
+	scipyImported = False
 try:
 	import pandas as pd
 	pdImported = True
 except ImportError:
 	pdImported = False
 import itertools
-from scipy.sparse import isspmatrix
 
 import UML
 from base import Base
 from base_view import BaseView
 from dataHelpers import View
 from dataHelpers import reorderToMatchExtractionList
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 
 
@@ -54,7 +58,7 @@ class List(Base):
 			else:
 				data = copy.deepcopy(data)
 		# if sparse, make dense
-		if isspmatrix(data):
+		if scipyImported and isspmatrix(data):
 			data = data.todense()
 		# if DataFrame or Series, convert it to numpy matrix
 		if pdImported:
@@ -603,8 +607,14 @@ class List(Base):
 				return numpy.matrix(numpy.empty(shape=(self.pointCount, self.featureCount)))
 			return numpy.matrix(self.data)
 		if format == 'scipycsc':
+			if not scipyImported:
+				msg = "scipy is not available"
+				raise PackageException(msg)
 			return scipy.sparse.csc_matrix(numpy.array(self.data))
 		if format == 'scipycsr':
+			if not scipyImported:
+				msg = "scipy is not available"
+				raise PackageException(msg)
 			return scipy.sparse.csr_matrix(numpy.array(self.data))
 
 	def _copyPoints_implementation(self, points, start, end):

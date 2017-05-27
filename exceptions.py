@@ -3,6 +3,18 @@ Module defining exceptions to be used in UML.
 
 """
 
+class PackageException(Exception):
+	"""
+	Exception to be thrown when a package is not installed, but needed
+	"""
+
+	def __init__(self, value):
+		self.value = value
+	def __str__(self):
+		return repr(self.value)
+	def __repr__(self):
+		return "PackageException(%s)"%repr(self.value)
+
 class ArgumentException(Exception):
 	"""
 	Exception to be thrown when the value of an argument of some function

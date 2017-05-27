@@ -2,6 +2,7 @@ import math
 import numpy
 import UML
 
+numericalTypes = (int, float, long)
 
 def proportionMissing(values):
     """
@@ -45,6 +46,9 @@ def minimum(values):
     count = 0
 
     for value in nonZeroValues:
+        #If the values are not None and not numerical, return None
+        if value and (not isinstance(value, numericalTypes)):
+            return None
         count += 1
         if (hasattr(value, '__cmp__') or hasattr(value, '__lt__')):
             if first:
@@ -72,6 +76,9 @@ def maximum(values):
     count = 0
 
     for value in nonZeroValues:
+        #If the values are not None and not numerical, return None
+        if value and (not isinstance(value, numericalTypes)):
+            return None
         count += 1
         if (hasattr(value, '__cmp__') or hasattr(value, '__gt__')):
             if first:
@@ -124,6 +131,9 @@ def median(values):
     Given a 1D vector of values, find the median value of the natural ordering.
 
     """
+    if not _isNumericalFeatureGuesser(values):
+        return None
+
     #Filter out None/NaN values from list of values
     sortedValues = filter(lambda x: not _isMissing(x), values)
 
@@ -193,29 +203,30 @@ def featureType(values):
         Return the type of data: string, int, float
         TODO: add numpy type checking
     """
-    for value in values:
-        if isinstance(value, str):
-            return "string"
-        elif isinstance(value, (int, long)):
-            return "int"
-        elif isinstance(value, float):
-            return "float"
-        elif isinstance(value, complex):
-            return "complex"
-        else:
-            pass
 
-    return "Unknown"
+    types = numpy.unique([type(value) for value in values if value])
+    if len(types) == 0:
+        return 'Unknown'
+    elif len(types) > 1:
+        return 'Mixed'
+    else:
+        return str(types[0])[7:-2]
 
-def quartiles(values):
+def quartiles(values, ignoreNoneOrNan=True):
     """
     From the vector of values, return a 3-tuple containing the
     lower quartile, the median, and the upper quartile.
 
     """
-    if isinstance(values, UML.data.Base):
-        values = values.copyAs("numpyarray")
+    if not _isNumericalFeatureGuesser(values):
+        return (None, None, None)
 
+    if isinstance(values, UML.data.Base):
+        #conver to a horizontal array
+        values = numpy.hstack(values.copyAs("numpyarray"))
+
+    if ignoreNoneOrNan:
+        values = [v for v in values if not _isMissing(v)]
     ret = numpy.percentile(values, (25,50,75))
 
     return tuple(ret)
@@ -277,29 +288,19 @@ def _isMissing(point):
     Determine if a point is missing or not.  If the point is None or NaN, return True.
     Else return False.
     """
-    if point is None:
-        return True
-    elif _isNumericalPoint(point) and math.isnan(float(point)):
-        return True
-    else: return False
+    #this might be the fastest way
+    return (point is None) or (point != point)
 
 def _isNumericalFeatureGuesser(featureVector):
     """
     Returns true if the vector contains primitive numerical non-complex values, 
-    returns false otherwise.  Assumes that all items in vector are of the same type.
+    returns false otherwise.
     """
     if featureVector.getTypeString() in ['Matrix']:
         return True
 
-    for item in featureVector:
-        if isinstance(item, (int, float, long)):
-            return True
-        elif item is None:
-            pass
-        else:
-            return False
-
-    return True
+    #if all items in featureVector are numerical or None, return True; otherwise, False.
+    return all([isinstance(item, numericalTypes) for item in featureVector if item])
 
 
 def _isNumericalPoint(point):
@@ -308,7 +309,7 @@ def _isNumericalPoint(point):
     If point is of type float, long, or int, and not None or NaN, return True.  Otherwise
     return False.
     """
-    if isinstance(point, (int, float, long)) and not math.isnan(point):
+    if isinstance(point, numericalTypes) and not math.isnan(point):
         return True
     else:
         return False

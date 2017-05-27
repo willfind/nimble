@@ -11,7 +11,11 @@ import csv
 import operator
 import inspect
 import numpy
-import scipy.io
+try:
+	import scipy.io
+	scipyImported = True
+except ImportError:
+	scipyImported = False
 import os.path
 import re 
 import datetime
@@ -31,6 +35,7 @@ import UML
 from UML.logger import Stopwatch
 
 from UML.exceptions import ArgumentException, ImproperActionException
+from UML.exceptions import PackageException
 from UML.exceptions import FileFormatException
 from UML.data import Sparse  # needed for 1s or 0s obj creation
 from UML.data import Matrix  # needed for 1s or 0s obj creation
@@ -78,8 +83,9 @@ def _learnerQuery(name, queryType):
 	return getattr(interface, toCallName)(learnerName)
 
 def isAllowedRaw(data):
-	if scipy.sparse.issparse(data):
-		return True
+	if scipyImported:
+		if scipy.sparse.issparse(data):
+			return True
 	if type(data) in [tuple, list, dict, numpy.ndarray, numpy.matrix]:
 		return True
 
@@ -148,6 +154,9 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
 		raise ArgumentException(msg)
 
 	if returnType == 'Sparse':
+		if not scipyImported:
+			msg = "scipy is not available"
+			raise PackageException(msg)
 		if numpyMaker == numpy.ones:
 			rawDense = numpyMaker((numPoints,numFeatures))
 			rawSparse = scipy.sparse.coo_matrix(rawDense)
@@ -165,7 +174,7 @@ def initDataObject(
 		returnType, rawData, pointNames, featureNames, name, path,
 		keepPoints, keepFeatures):
 
-	if scipy.sparse.issparse(rawData):
+	if scipyImported and scipy.sparse.issparse(rawData):
 		autoType = 'Sparse'
 	else:
 		autoType = 'Matrix'
@@ -236,7 +245,7 @@ def initDataObject(
 			# can skip list check, overlaps with previous if clause.
 			if isinstance(rawData, numpy.ndarray) or isinstance(rawData, numpy.matrix):
 				temp = extractNamesFromNumpy(rawData, pnamesID, fnamesID)
-			elif scipy.sparse.issparse(rawData):
+			elif scipyImported and scipy.sparse.issparse(rawData):
 				if not isinstance(rawData, scipy.sparse.coo_matrix):
 					rawData = scipy.sparse.coo_matrix(rawData)
 				temp = extractNamesFromCoo(rawData, pnamesID, fnamesID)
@@ -479,6 +488,9 @@ def _loadmtxForAuto(
 	they are also read.
 
 	"""
+	if not scipyImported:
+		msg = "scipy is not available"
+		raise PackageException(msg)
 	startPosition = openFile.tell()
 	seenPNames = False
 	retPNames = None
@@ -555,6 +567,9 @@ def extractNamesFromCoo(data, pnamesID, fnamesID):
 	# of the present data. 
 	
 	# these will be ID -> name mappings
+	if not scipyImported:
+		msg = "scipy is not available"
+		raise PackageException(msg)
 	tempPointNames = {}
 	tempFeatureNames = {}
 	newLen = len(data.data) - data.shape[0] - data.shape[1] + 1

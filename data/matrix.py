@@ -4,7 +4,6 @@ Class extending Base, using a numpy dense matrix to store data.
 """
 
 import numpy
-import scipy.sparse
 import sys
 import itertools
 
@@ -12,12 +11,17 @@ import UML
 from base import Base
 from base_view import BaseView
 from dataHelpers import View
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 
-from scipy.io import mmwrite
-from scipy.sparse import isspmatrix
+try:
+	import scipy.sparse
+	from scipy.io import mmwrite
+	from scipy.sparse import isspmatrix
+	scipyImported = True
+except ImportError:
+	scipyImported = False
 
 
 
@@ -30,7 +34,7 @@ class Matrix(Base):
 
 	def __init__(self, data, featureNames=None, reuseData=False, **kwds):
 		try:
-			if isspmatrix(data):
+			if scipyImported and isspmatrix(data):
 				self.data = numpy.matrix(data.todense(), dtype=numpy.float)
 			else:
 				if reuseData and isinstance(data, type(numpy.matrix([]))):
@@ -470,6 +474,10 @@ class Matrix(Base):
 
 
 	def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
+		if not scipyImported:
+			msg = "scipy is not available"
+			raise PackageException(msg)
+
 		def makeNameString(count, namesGetter):
 			nameString = "#"
 			for i in xrange(count):
@@ -514,8 +522,14 @@ class Matrix(Base):
 		if format == 'numpymatrix':
 			return numpy.matrix(self.data)
 		if format == 'scipycsc':
+			if not scipyImported:
+				msg = "scipy is not available"
+				raise PackageException(msg)
 			return scipy.sparse.csc_matrix(self.data)
 		if format == 'scipycsr':
+			if not scipyImported:
+				msg = "scipy is not available"
+				raise PackageException(msg)
 			return scipy.sparse.csr_matrix(self.data)
 		if format == 'DataFrame':
 			return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
@@ -778,7 +792,7 @@ class Matrix(Base):
 
 	def _div__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data / other.data.todense()
 			else:
 				ret = self.data / other.data
@@ -793,7 +807,7 @@ class Matrix(Base):
 
 	def _idiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data / other.data.todense()
 			else:
 				ret = self.data / other.data
@@ -804,7 +818,7 @@ class Matrix(Base):
 
 	def _truediv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data.__truediv__(other.data.todense())
 			else:
 				ret = self.data.__truediv__(other.data)
@@ -818,7 +832,7 @@ class Matrix(Base):
 
 	def _itruediv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data.__itruediv__(other.data.todense())
 			else:
 				ret = self.data.__itruediv__(other.data)
@@ -829,7 +843,7 @@ class Matrix(Base):
 
 	def _floordiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data // other.data.todense()
 			else:
 				ret = self.data // other.data
@@ -844,7 +858,7 @@ class Matrix(Base):
 
 	def _ifloordiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data // other.data.todense()
 			else:
 				ret = self.data // other.data
@@ -855,7 +869,7 @@ class Matrix(Base):
 
 	def _mod__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data % other.data.todense()
 			else:
 				ret = self.data % other.data
@@ -871,7 +885,7 @@ class Matrix(Base):
 
 	def _imod__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data % other.data.todense()
 			else:
 				ret = self.data % other.data

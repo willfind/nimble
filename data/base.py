@@ -16,7 +16,6 @@ import math
 import itertools
 import copy
 import numpy
-import scipy
 import sys
 import os.path
 import inspect
@@ -24,7 +23,7 @@ import operator
 from multiprocessing import Process
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
