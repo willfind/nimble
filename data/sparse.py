@@ -30,9 +30,9 @@ class Sparse(Base):
 
 	def __init__(self, data, pointNames=None, featureNames=None,
 				reuseData=False, **kwds):
-		#convert tuple, pandas Series and numpy ndarray to list
+		#convert tuple, pandas Series and numpy ndarray to numpy matrix
 		if isinstance(data, tuple) or (pdImported and isinstance(data, pd.Series)) or isinstance(data, numpy.ndarray):
-			data = list(data)
+			data = numpy.matrix(data)
 
 		self._sorted = None
 		if hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0):
