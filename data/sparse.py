@@ -31,7 +31,7 @@ class Sparse(Base):
 	def __init__(self, data, pointNames=None, featureNames=None,
 				reuseData=False, **kwds):
 		#convert tuple, pandas Series and numpy ndarray to numpy matrix
-		if isinstance(data, tuple) or (pdImported and isinstance(data, pd.Series)) or isinstance(data, numpy.ndarray):
+		if isinstance(data, (tuple, numpy.ndarray)) or (pdImported and isinstance(data, pd.Series)):
 			data = numpy.matrix(data)
 
 		self._sorted = None

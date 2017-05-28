@@ -62,7 +62,7 @@ class List(Base):
 			data = data.todense()
 		# if DataFrame or Series, convert it to numpy matrix
 		if pdImported:
-			if isinstance(data, pd.DataFrame) or isinstance(data, pd.Series):
+			if isinstance(data, (pd.DataFrame, pd.Series)):
 				data = numpy.matrix(data)
 
 		# if its a numpy construct, convert it to a python list

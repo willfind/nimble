@@ -46,8 +46,8 @@ def minimum(values):
     count = 0
 
     for value in nonZeroValues:
-        #If the values are not None and not numerical, return None
-        if value and (not isinstance(value, numericalTypes)):
+        #If the values are not None/NaN and not numerical, return None
+        if not (_isMissing(value) or isinstance(value, numericalTypes)):
             return None
         count += 1
         if (hasattr(value, '__cmp__') or hasattr(value, '__lt__')):
@@ -76,8 +76,8 @@ def maximum(values):
     count = 0
 
     for value in nonZeroValues:
-        #If the values are not None and not numerical, return None
-        if value and (not isinstance(value, numericalTypes)):
+        #If the values are not None/NaN and not numerical, return None
+        if not (_isMissing(value) or isinstance(value, numericalTypes)):
             return None
         count += 1
         if (hasattr(value, '__cmp__') or hasattr(value, '__gt__')):
@@ -201,12 +201,13 @@ def uniqueCount(values):
 def featureType(values):
     """
         Return the type of data: string, int, float
-        TODO: add numpy type checking
     """
 
-    types = numpy.unique([type(value) for value in values if value])
+    types = numpy.unique([type(value) for value in values if not _isMissing(value)])
+    #if all data in values are missing
     if len(types) == 0:
         return 'Unknown'
+    #if multiple types are in values
     elif len(types) > 1:
         return 'Mixed'
     else:
@@ -309,7 +310,7 @@ def _isNumericalPoint(point):
     If point is of type float, long, or int, and not None or NaN, return True.  Otherwise
     return False.
     """
-    if isinstance(point, numericalTypes) and not math.isnan(point):
+    if isinstance(point, numericalTypes) and (point == point):
         return True
     else:
         return False
