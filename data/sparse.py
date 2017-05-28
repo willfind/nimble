@@ -19,12 +19,21 @@ from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 from UML.randomness import pythonRandom
+try:
+	import pandas as pd
+	pdImported = True
+except ImportError:
+	pdImported = False
 
 
 class Sparse(Base):
 
 	def __init__(self, data, pointNames=None, featureNames=None,
 				reuseData=False, **kwds):
+		#convert tuple, pandas Series and numpy ndarray to list
+		if isinstance(data, tuple) or (pdImported and isinstance(data, pd.Series)) or isinstance(data, numpy.ndarray):
+			data = list(data)
+
 		self._sorted = None
 		if hasattr(data,'shape') and (data.shape[0] == 0 or data.shape[1] == 0):
 			if isinstance(data, CooWithEmpty):

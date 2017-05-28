@@ -223,7 +223,7 @@ def quartiles(values, ignoreNoneOrNan=True):
 
     if isinstance(values, UML.data.Base):
         #conver to a horizontal array
-        values = numpy.hstack(values.copyAs("numpyarray"))
+        values = values.copyAs("numpyarray").flatten()
 
     if ignoreNoneOrNan:
         values = [v for v in values if not _isMissing(v)]
