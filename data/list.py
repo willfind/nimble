@@ -61,9 +61,8 @@ class List(Base):
 		if scipyImported and isspmatrix(data):
 			data = data.todense()
 		# if DataFrame or Series, convert it to numpy matrix
-		if pdImported:
-			if isinstance(data, (pd.DataFrame, pd.Series)):
-				data = numpy.matrix(data)
+		if pdImported and isinstance(data, (pd.DataFrame, pd.Series)):
+			data = numpy.matrix(data)
 
 		# if its a numpy construct, convert it to a python list
 		try:
