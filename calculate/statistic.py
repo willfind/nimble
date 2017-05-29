@@ -36,64 +36,56 @@ def proportionZero(values):
     else: return 0.0
 
 
-def minimum(values):
+def minimum(values, ignoreNoneNan=True, noCompMixType=True):
     """
-    Given a 1D vector of values, find the minimum value.  If the values are
-    not numerical, return None.
+    Given a 1D vector of values, find the minimum value.
     """
+    return _minmax(values, 'min', ignoreNoneNan, noCompMixType)
+
+def maximum(values, ignoreNoneNan=True, noCompMixType=True):
+    """
+    Given a 1D vector of values, find the maximum value.
+    """
+    return _minmax(values, 'max', ignoreNoneNan, noCompMixType)
+
+def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
+    """
+    Given a 1D vector of values, find the minimum or maximum value.
+    """
+    if minmax == 'min':
+        compStr = '__lt__'
+        func1 = lambda x, y: x > y
+        func2 = lambda x, y: x < y
+    else:
+        compStr = '__gt__'
+        func1 = lambda x, y: x < y
+        func2 = lambda x, y: x > y
+
     first = True
     nonZeroValues = values.nonZeroIterator()
     count = 0
 
+    #if data types are mixed and some data are not numerical, such as [1,'a']
+    if noCompMixType and featureType(values) == 'Mixed' and not (_isNumericalFeatureGuesser(values)):
+        return None
     for value in nonZeroValues:
-        #If the values are not None/NaN and not numerical, return None
-        if not (_isMissing(value) or isinstance(value, numericalTypes)):
-            return None
         count += 1
-        if (hasattr(value, '__cmp__') or hasattr(value, '__lt__')):
+        if ignoreNoneNan and _isMissing(value):
+            continue
+        if (hasattr(value, '__cmp__') or hasattr(value, compStr)):
             if first:
                 currMin = value
                 first = False
             else:
-                if value < currMin:
+                if func2(value, currMin):
                     currMin = value
 
     if first:
         return None
     else:
-        if currMin > 0 and len(values) > count:
+        if func1(currMin, 0) and len(values) > count:
             return 0
         else: return currMin
-
-
-def maximum(values):
-    """
-    Given a 1D vector of values, find the maximum value.  If the values are
-    not numerical, return None.
-    """
-    first = True
-    nonZeroValues = values.nonZeroIterator()
-    count = 0
-
-    for value in nonZeroValues:
-        #If the values are not None/NaN and not numerical, return None
-        if not (_isMissing(value) or isinstance(value, numericalTypes)):
-            return None
-        count += 1
-        if (hasattr(value, '__cmp__') or hasattr(value, '__gt__')):
-            if first:
-                currMax = value
-                first = False
-            else:
-                if value > currMax:
-                    currMax = value
-
-    if first:
-        return None
-    else:
-        if currMax < 0 and len(values) > count:
-            return 0
-        else: return currMax
 
 
 def mean(values):
@@ -294,13 +286,16 @@ def _isMissing(point):
 
 def _isNumericalFeatureGuesser(featureVector):
     """
-    Returns true if the vector contains primitive numerical non-complex values, 
+    Returns true if the vector only contains primitive numerical non-complex values,
     returns false otherwise.
     """
-    if featureVector.getTypeString() in ['Matrix']:
-        return True
+    try:
+        if featureVector.getTypeString() in ['Matrix']:
+            return True
+    except AttributeError:
+        pass
 
-    #if all items in featureVector are numerical or None, return True; otherwise, False.
+    #if all items in featureVector are numerical or None/NaN, return True; otherwise, False.
     return all([isinstance(item, numericalTypes) for item in featureVector if item])
 
 
@@ -310,6 +305,7 @@ def _isNumericalPoint(point):
     If point is of type float, long, or int, and not None or NaN, return True.  Otherwise
     return False.
     """
+    #np.nan is in numericalTypes, but None isn't; None==None, but np.nan!=np.nan
     if isinstance(point, numericalTypes) and (point == point):
         return True
     else:

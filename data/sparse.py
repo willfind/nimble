@@ -32,6 +32,7 @@ class Sparse(Base):
 				reuseData=False, **kwds):
 		#convert tuple, pandas Series and numpy ndarray to numpy matrix
 		if isinstance(data, (tuple, numpy.ndarray)) or (pdImported and isinstance(data, pd.Series)):
+		#if not isinstance(data, CooWrapper):
 			data = numpy.matrix(data)
 
 		self._sorted = None
