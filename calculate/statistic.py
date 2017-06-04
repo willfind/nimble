@@ -2,6 +2,7 @@ import math
 import numpy
 import UML
 
+numericalTypes = (int, float, long)
 
 def proportionMissing(values):
     """
@@ -35,58 +36,56 @@ def proportionZero(values):
     else: return 0.0
 
 
-def minimum(values):
+def minimum(values, ignoreNoneNan=True, noCompMixType=True):
     """
-    Given a 1D vector of values, find the minimum value.  If the values are
-    not numerical, return None.
+    Given a 1D vector of values, find the minimum value.
     """
+    return _minmax(values, 'min', ignoreNoneNan, noCompMixType)
+
+def maximum(values, ignoreNoneNan=True, noCompMixType=True):
+    """
+    Given a 1D vector of values, find the maximum value.
+    """
+    return _minmax(values, 'max', ignoreNoneNan, noCompMixType)
+
+def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
+    """
+    Given a 1D vector of values, find the minimum or maximum value.
+    """
+    if minmax == 'min':
+        compStr = '__lt__'
+        func1 = lambda x, y: x > y
+        func2 = lambda x, y: x < y
+    else:
+        compStr = '__gt__'
+        func1 = lambda x, y: x < y
+        func2 = lambda x, y: x > y
+
     first = True
     nonZeroValues = values.nonZeroIterator()
     count = 0
 
+    #if data types are mixed and some data are not numerical, such as [1,'a']
+    if noCompMixType and featureType(values) == 'Mixed' and not (_isNumericalFeatureGuesser(values)):
+        return None
     for value in nonZeroValues:
         count += 1
-        if (hasattr(value, '__cmp__') or hasattr(value, '__lt__')):
+        if ignoreNoneNan and _isMissing(value):
+            continue
+        if (hasattr(value, '__cmp__') or hasattr(value, compStr)):
             if first:
                 currMin = value
                 first = False
             else:
-                if value < currMin:
+                if func2(value, currMin):
                     currMin = value
 
     if first:
         return None
     else:
-        if currMin > 0 and len(values) > count:
+        if func1(currMin, 0) and len(values) > count:
             return 0
         else: return currMin
-
-
-def maximum(values):
-    """
-    Given a 1D vector of values, find the maximum value.  If the values are
-    not numerical, return None.
-    """
-    first = True
-    nonZeroValues = values.nonZeroIterator()
-    count = 0
-
-    for value in nonZeroValues:
-        count += 1
-        if (hasattr(value, '__cmp__') or hasattr(value, '__gt__')):
-            if first:
-                currMax = value
-                first = False
-            else:
-                if value > currMax:
-                    currMax = value
-
-    if first:
-        return None
-    else:
-        if currMax < 0 and len(values) > count:
-            return 0
-        else: return currMax
 
 
 def mean(values):
@@ -124,6 +123,9 @@ def median(values):
     Given a 1D vector of values, find the median value of the natural ordering.
 
     """
+    if not _isNumericalFeatureGuesser(values):
+        return None
+
     #Filter out None/NaN values from list of values
     sortedValues = filter(lambda x: not _isMissing(x), values)
 
@@ -191,31 +193,33 @@ def uniqueCount(values):
 def featureType(values):
     """
         Return the type of data: string, int, float
-        TODO: add numpy type checking
     """
-    for value in values:
-        if isinstance(value, str):
-            return "string"
-        elif isinstance(value, (int, long)):
-            return "int"
-        elif isinstance(value, float):
-            return "float"
-        elif isinstance(value, complex):
-            return "complex"
-        else:
-            pass
 
-    return "Unknown"
+    types = numpy.unique([type(value) for value in values if not _isMissing(value)])
+    #if all data in values are missing
+    if len(types) == 0:
+        return 'Unknown'
+    #if multiple types are in values
+    elif len(types) > 1:
+        return 'Mixed'
+    else:
+        return str(types[0])[7:-2]
 
-def quartiles(values):
+def quartiles(values, ignoreNoneOrNan=True):
     """
     From the vector of values, return a 3-tuple containing the
     lower quartile, the median, and the upper quartile.
 
     """
-    if isinstance(values, UML.data.Base):
-        values = values.copyAs("numpyarray")
+    if not _isNumericalFeatureGuesser(values):
+        return (None, None, None)
 
+    if isinstance(values, UML.data.Base):
+        #conver to a horizontal array
+        values = values.copyAs("numpyarray").flatten()
+
+    if ignoreNoneOrNan:
+        values = [v for v in values if not _isMissing(v)]
     ret = numpy.percentile(values, (25,50,75))
 
     return tuple(ret)
@@ -277,29 +281,22 @@ def _isMissing(point):
     Determine if a point is missing or not.  If the point is None or NaN, return True.
     Else return False.
     """
-    if point is None:
-        return True
-    elif _isNumericalPoint(point) and math.isnan(float(point)):
-        return True
-    else: return False
+    #this might be the fastest way
+    return (point is None) or (point != point)
 
 def _isNumericalFeatureGuesser(featureVector):
     """
-    Returns true if the vector contains primitive numerical non-complex values, 
-    returns false otherwise.  Assumes that all items in vector are of the same type.
+    Returns true if the vector only contains primitive numerical non-complex values,
+    returns false otherwise.
     """
-    if featureVector.getTypeString() in ['Matrix']:
-        return True
-
-    for item in featureVector:
-        if isinstance(item, (int, float, long)):
+    try:
+        if featureVector.getTypeString() in ['Matrix']:
             return True
-        elif item is None:
-            pass
-        else:
-            return False
+    except AttributeError:
+        pass
 
-    return True
+    #if all items in featureVector are numerical or None/NaN, return True; otherwise, False.
+    return all([isinstance(item, numericalTypes) for item in featureVector if item])
 
 
 def _isNumericalPoint(point):
@@ -308,7 +305,8 @@ def _isNumericalPoint(point):
     If point is of type float, long, or int, and not None or NaN, return True.  Otherwise
     return False.
     """
-    if isinstance(point, (int, float, long)) and not math.isnan(point):
+    #np.nan is in numericalTypes, but None isn't; None==None, but np.nan!=np.nan
+    if isinstance(point, numericalTypes) and (point == point):
         return True
     else:
         return False

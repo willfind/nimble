@@ -2,12 +2,16 @@
 Class extending Base, using a pandas DataFrame to store data.
 """
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, PackageException
 from base import Base
 import pandas as pd
 import numpy as np
-import scipy.sparse
-from scipy.sparse import isspmatrix
+try:
+	import scipy.sparse
+	from scipy.sparse import isspmatrix
+	scipyImported = True
+except ImportError:
+	scipyImported = False
 import itertools
 from base_view import BaseView
 
@@ -407,6 +411,10 @@ class DataFrame(Base):
 		Function to write the data in this object to a matrix market file at the designated
 		path.
 		"""
+		if not scipyImported:
+			msg = "scipy is not available"
+			raise PackageException(msg)
+
 		from scipy.io import mmwrite
 		comment = '#'
 		if includePointNames:
@@ -442,8 +450,14 @@ class DataFrame(Base):
 		if format == 'numpymatrix':
 			return np.matrix(dataArray)
 		if format == 'scipycsc':
+			if not scipyImported:
+				msg = "scipy is not available"
+				raise PackageException(msg)
 			return scipy.sparse.csc_matrix(dataArray)
 		if format == 'scipycsr':
+			if not scipyImported:
+				msg = "scipy is not available"
+				raise PackageException(msg)
 			return scipy.sparse.csr_matrix(dataArray)
 
 		return DataFrame(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
@@ -713,7 +727,7 @@ class DataFrame(Base):
 
 	def _div__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data.values / other.data.todense()
 			else:
 				ret = self.data.values / other.data
@@ -728,7 +742,7 @@ class DataFrame(Base):
 
 	def _idiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data / other.data.todense()
 			else:
 				ret = self.data / np.matrix(other.data)
@@ -739,7 +753,7 @@ class DataFrame(Base):
 
 	def _truediv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data.values.__truediv__(other.data.todense())
 			else:
 				ret = self.data.values.__truediv__(other.data)
@@ -753,7 +767,7 @@ class DataFrame(Base):
 
 	def _itruediv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data.__itruediv__(other.data.todense())
 			else:
 				ret = self.data.__itruediv__(np.matrix(other.data))
@@ -764,7 +778,7 @@ class DataFrame(Base):
 
 	def _floordiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data.values // other.data.todense()
 			else:
 				ret = self.data.values // other.data
@@ -779,7 +793,7 @@ class DataFrame(Base):
 
 	def _ifloordiv__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data // other.data.todense()
 			else:
 				ret = self.data // np.matrix(other.data)
@@ -790,7 +804,7 @@ class DataFrame(Base):
 
 	def _mod__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data.values % other.data.todense()
 			else:
 				ret = self.data.values % other.data
@@ -806,7 +820,7 @@ class DataFrame(Base):
 
 	def _imod__implementation(self, other):
 		if isinstance(other, UML.data.Base):
-			if scipy.sparse.isspmatrix(other.data):
+			if scipyImported and scipy.sparse.isspmatrix(other.data):
 				ret = self.data % other.data.todense()
 			else:
 				ret = self.data % np.matrix(other.data)

@@ -11,10 +11,15 @@ If there is a tie, use k=1
 
 """
 
-import scipy.spatial
+try:
+	import scipy.spatial
+	scipyImported = True
+except ImportError:
+	scipyImported = False
 
 import UML
 from UML.customLearners import CustomLearner
+from UML.exceptions import PackageException
 
 class KNNClassifier(CustomLearner):
 
@@ -78,6 +83,9 @@ class KNNClassifier(CustomLearner):
 		the point test
 
 		"""
+		if not scipyImported:
+			msg = "scipy is not available"
+			raise PackageException(msg)
 		def distanceFrom(point):
 			index = self._trainX.getPointIndex(point.getPointName(0))
 			return [index, scipy.spatial.distance.euclidean(test, point)]

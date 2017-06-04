@@ -4,7 +4,11 @@ Module containing most of the user facing functions for the top level uml import
 """
 
 import numpy
-import scipy.sparse
+try:
+	import scipy.sparse
+	scipyImported = True
+except ImportError:
+	scipyImported = False
 import inspect
 import operator
 import re 
@@ -14,7 +18,7 @@ import copy
 import ConfigParser
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, PackageException
 
 from UML.logger import UmlLogger
 from UML.logger import Stopwatch
@@ -77,6 +81,9 @@ def createRandomData(
 
 	#note: sparse is not stochastic sparsity, it uses rigid density measures
 	if returnType.lower() == 'sparse':
+		if not scipyImported:
+			msg = "scipy is not available"
+			raise PackageException(msg)
 
 		density = 1.0 - float(sparsity)
 		numNonZeroValues = int(numPoints * numFeatures * density)
@@ -204,6 +211,10 @@ def identity(returnType, size, pointNames='automatic', featureNames='automatic',
 		raise ArgumentException(msg)
 
 	if returnType == 'Sparse':
+		if not scipyImported:
+			msg = "scipy is not available"
+			raise PackageException(msg)
+
 		assert returnType == 'Sparse'
 		rawDiag = scipy.sparse.identity(size)
 		rawCoo = scipy.sparse.coo_matrix(rawDiag)
