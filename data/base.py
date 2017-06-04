@@ -4137,7 +4137,7 @@ class Base(object):
 		if newName in names:
 			if invNames[index] == newName:
 				return
-			raise ArgumentException("This name is already in use")
+			raise ArgumentException("This name '" + newName + "' is already in use")
 		
 		if newName is None:
 			newName = self._nextDefaultName(axis)
