@@ -2,6 +2,6 @@ UML.data
 ========
 
 .. automodule:: UML.data
-    :members:
-    :undoc-members:
-    :show-inheritance:
+:members:
+        :undoc-members:
+        :show-inheritance:

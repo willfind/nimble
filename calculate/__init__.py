@@ -32,10 +32,10 @@ from statistic import standardDeviation
 from utility import detectBestResult
 
 __all__ = ['confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
-			'covariance', 'detectBestResult', 'elementwiseMultiply',
-			'elementwisePower', 'fractionCorrect', 'fractionIncorrect',
-			'maximum', 'mean', 'meanAbsoluteError',
-			'meanFeaturewiseRootMeanSquareError', 'median', 'minimum',
-			'proportionMissing', 'proportionZero', 'quartiles', 'rSquared',
-			'rootMeanSquareError', 'standardDeviation', 'uniqueCount',
-			'varianceFractionRemaining']
+           'covariance', 'detectBestResult', 'elementwiseMultiply',
+           'elementwisePower', 'fractionCorrect', 'fractionIncorrect',
+           'maximum', 'mean', 'meanAbsoluteError',
+           'meanFeaturewiseRootMeanSquareError', 'median', 'minimum',
+           'proportionMissing', 'proportionZero', 'quartiles', 'rSquared',
+           'rootMeanSquareError', 'standardDeviation', 'uniqueCount',
+           'varianceFractionRemaining']

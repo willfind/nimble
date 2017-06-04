@@ -11,9 +11,7 @@ from UML.data.tests.baseObject import DataTestObject
 
 
 class ViewAccess(DataTestObject):
-	pass
-
-						
+    pass
 
 
 # get retType TODO -- still not sure what is correct functionality.

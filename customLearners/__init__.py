@@ -25,4 +25,4 @@ from multioutput_ridge_regression import MultiOutputRidgeRegression
 from ridge_regression import RidgeRegression
 
 __all__ = ['CustomLearner', 'KNNClassifier', 'MeanConstant',
-			'MultiOutputRidgeRegression', 'RidgeRegression']
+           'MultiOutputRidgeRegression', 'RidgeRegression']

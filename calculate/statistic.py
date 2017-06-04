@@ -4,6 +4,7 @@ import UML
 
 numericalTypes = (int, float, long)
 
+
 def proportionMissing(values):
     """
     Calculate proportion of entries in 'values' iterator that are missing (defined
@@ -14,11 +15,13 @@ def proportionMissing(values):
     for value in values:
         if _isMissing(value):
             numMissing += 1
-        else: pass
+        else:
+            pass
 
     if numTotal > 0:
         return float(numMissing) / float(numTotal)
-    else: return 0.0
+    else:
+        return 0.0
 
 
 def proportionZero(values):
@@ -33,7 +36,8 @@ def proportionZero(values):
 
     if totalNum > 0:
         return float(totalNum - nonZeroCount) / float(totalNum)
-    else: return 0.0
+    else:
+        return 0.0
 
 
 def minimum(values, ignoreNoneNan=True, noCompMixType=True):
@@ -42,11 +46,13 @@ def minimum(values, ignoreNoneNan=True, noCompMixType=True):
     """
     return _minmax(values, 'min', ignoreNoneNan, noCompMixType)
 
+
 def maximum(values, ignoreNoneNan=True, noCompMixType=True):
     """
     Given a 1D vector of values, find the maximum value.
     """
     return _minmax(values, 'max', ignoreNoneNan, noCompMixType)
+
 
 def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
     """
@@ -85,7 +91,8 @@ def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
     else:
         if func1(currMin, 0) and len(values) > count:
             return 0
-        else: return currMin
+        else:
+            return currMin
 
 
 def mean(values):
@@ -134,9 +141,9 @@ def median(values):
     numValues = len(sortedValues)
 
     if numValues % 2 == 0:
-        median = (float(sortedValues[(numValues/2) - 1]) + float(sortedValues[numValues/2])) / float(2)
+        median = (float(sortedValues[(numValues / 2) - 1]) + float(sortedValues[numValues / 2])) / float(2)
     else:
-        median = float(sortedValues[int(math.floor(numValues/2))])
+        median = float(sortedValues[int(math.floor(numValues / 2))])
 
     return median
 
@@ -160,11 +167,11 @@ def standardDeviation(values, sample=False):
         nonZeroCount += 1
         if _isNumericalPoint(value):
             numericalCount += 1
-            squaredDifferenceTotal += (meanRet - value)**2
+            squaredDifferenceTotal += (meanRet - value) ** 2
 
     if nonZeroCount < len(values):
         numZeros = len(values) - nonZeroCount
-        squaredDifferenceTotal += numZeros * meanRet**2
+        squaredDifferenceTotal += numZeros * meanRet ** 2
         numericalCount += numZeros
 
     # doing sample covariance calculation
@@ -205,6 +212,7 @@ def featureType(values):
     else:
         return str(types[0])[7:-2]
 
+
 def quartiles(values, ignoreNoneOrNan=True):
     """
     From the vector of values, return a 3-tuple containing the
@@ -220,7 +228,7 @@ def quartiles(values, ignoreNoneOrNan=True):
 
     if ignoreNoneOrNan:
         values = [v for v in values if not _isMissing(v)]
-    ret = numpy.percentile(values, (25,50,75))
+    ret = numpy.percentile(values, (25, 50, 75))
 
     return tuple(ret)
 
@@ -232,6 +240,7 @@ def _isMissing(point):
     """
     #this might be the fastest way
     return (point is None) or (point != point)
+
 
 def _isNumericalFeatureGuesser(featureVector):
     """

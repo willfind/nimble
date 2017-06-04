@@ -5,8 +5,8 @@ from ClassLabelMap import ClassLabelMap
 from UML.exceptions import ArgumentException
 
 
-def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'], 
-                         dirMappingMode='all', 
+def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'],
+                         dirMappingMode='all',
                          attributeMaps=None,
                          attributeTransformFunctionsMap=None,
                          docIdClassLabelMaps=None,
@@ -159,7 +159,9 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'],
     #create new DokDataSet object; DokDataSet class does most of the work
     if dirPath is not None:
         textDataSet = DokDataSet()
-        textDataSet.loadDirectory(dirPath, fileExtensions, dirMappingMode, cleanHtml, ignoreCase, tokenizer, removeBlankTokens, skipSymbolSet, removeTokensContaining, keepNumbers, stopWordSet, tokenTransformFunction, stemmer)
+        textDataSet.loadDirectory(dirPath, fileExtensions, dirMappingMode, cleanHtml, ignoreCase, tokenizer,
+                                  removeBlankTokens, skipSymbolSet, removeTokensContaining, keepNumbers, stopWordSet,
+                                  tokenTransformFunction, stemmer)
 
     #load all attribute sets as separate DokDataSet objects
     attrDataSets = []
@@ -185,7 +187,7 @@ def convertToCooBaseData(dirPath=None, fileExtensions=['.txt', '.html'],
         if len(attrDataSets) > 1:
             firstAttrDataSet = attrDataSets[0]
             i = 1
-            while(i < len(attrDataSets)):
+            while (i < len(attrDataSets)):
                 attrDataSet = attrDataSets[i]
                 firstAttrDataSet.merge(attrDataSet)
                 i += 1

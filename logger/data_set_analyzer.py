@@ -106,7 +106,8 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
         displayDigits = "." + str(displayDigits) + "f"
 
     if isSubset:
-        printableTable = tableString(infoTable, True, headers=infoTable[0], roundDigits=displayDigits, snipIndex=leftIndicesToSelect[-1])
+        printableTable = tableString(infoTable, True, headers=infoTable[0], roundDigits=displayDigits,
+                                     snipIndex=leftIndicesToSelect[-1])
     else:
         printableTable = tableString(infoTable, True, headers=infoTable[0], roundDigits=displayDigits)
 
@@ -172,8 +173,8 @@ def featurewiseFunctionGenerator():
     function.  Includes: min(), max(), mean(), median(), standardDeviation(), numUniqueValues()
     """
     functions = [UML.calculate.minimum, UML.calculate.maximum, UML.calculate.mean,
-                UML.calculate.median, UML.calculate.standardDeviation,
-                UML.calculate.uniqueCount]
+                 UML.calculate.median, UML.calculate.standardDeviation,
+                 UML.calculate.uniqueCount]
     return functions
 
 
@@ -213,8 +214,8 @@ def appendColumns(appendTo, appendFrom):
         raised.
     """
     if len(appendTo) != len(appendFrom):
-        raise ArgumentException("Can't merge two matrices with different numbers of rows: " + 
-            str(len(appendTo)) + " != " + str(len(appendFrom)))
+        raise ArgumentException("Can't merge two matrices with different numbers of rows: " +
+                                str(len(appendTo)) + " != " + str(len(appendFrom)))
 
     for i in xrange(len(appendTo)):
         appendFromRow = appendFrom[i]
@@ -222,6 +223,7 @@ def appendColumns(appendTo, appendFrom):
             appendTo[i].append(appendFromRow[j])
 
     return
+
 
 def computeShape(dataContainer):
     """

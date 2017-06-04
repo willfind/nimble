@@ -156,6 +156,7 @@ def testList():
             assert_equal(rawTable[3][i], 3.0)
             assert_equal(rawTable[4][i], 2.0)
 
+
 def testAppendColumns():
     """
         Unit test for appendColumns function in data_set_analyzer
@@ -201,6 +202,7 @@ def testAppendColumns():
     assert table5[2][1] == 3
     assert table5[3][0] == 'four'
     assert table5[3][1] == 4
+
 
 def testProduceAggregateTable():
     """

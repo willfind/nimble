@@ -11,13 +11,16 @@ data, and do package level configuration and information querying.
 
 import os
 import inspect
+
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 import tempfile
+
 capturedErr = tempfile.NamedTemporaryFile()
 
 # load settings from configuration file
 import UML.configuration
+
 settings = UML.configuration.loadSettings()
 
 # Import those submodules that need setup or we want to be
@@ -66,7 +69,8 @@ from uml import learnerType
 UML.settings.set("RegisteredLearners", "Custom.RidgeRegression", 'UML.customLearners.RidgeRegression')
 UML.settings.set("RegisteredLearners", "Custom.KNNClassifier", 'UML.customLearners.KNNClassifier')
 UML.settings.set("RegisteredLearners", "Custom.MeanConstant", 'UML.customLearners.MeanConstant')
-UML.settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression", 'UML.customLearners.MultiOutputRidgeRegression')
+UML.settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression",
+                 'UML.customLearners.MultiOutputRidgeRegression')
 UML.settings.saveChanges("RegisteredLearners")
 
 # register those custom learners listed in UML.settings
@@ -80,11 +84,11 @@ UML.configuration.syncWithInterfaces(UML.settings)
 UML.logger.log_manager.initLoggerAndLogConfig()
 
 __all__ = ['createData', 'createRandomData', 'crossValidate',
-			'crossValidateReturnAll', 'crossValidateReturnBest',
-			'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-			'identity', 'learnerDefaultValues', 'learnerParameters',
-			'learnerType', 'listDataFunctions', 'listLearners',
-			'listUMLFunctions', 'normalizeData', 'ones',
-			'registerCustomLearner', 'registerCustomLearnerAsDefault',
-			'setRandomSeed', 'settings', 'train', 'trainAndApply',
-			'trainAndTest', 'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
+           'crossValidateReturnAll', 'crossValidateReturnBest',
+           'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
+           'identity', 'learnerDefaultValues', 'learnerParameters',
+           'learnerType', 'listDataFunctions', 'listLearners',
+           'listUMLFunctions', 'normalizeData', 'ones',
+           'registerCustomLearner', 'registerCustomLearnerAsDefault',
+           'setRandomSeed', 'settings', 'train', 'trainAndApply',
+           'trainAndTest', 'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
