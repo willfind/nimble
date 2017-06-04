@@ -11,18 +11,23 @@ import csv
 import operator
 import inspect
 import numpy
+import importlib
 
-try:
-    import scipy.io
+def importExternalLibraries(name):
+    """
+    call
+    """
+    try:
+        return __import__(name)
+    except ImportError:
+        return
 
-    scipyImported = True
-except ImportError:
-    scipyImported = False
+scipy = importExternalLibraries('scipy.io')
+
 import os.path
 import re
 import datetime
 import copy
-import importlib
 import StringIO
 import sys
 import itertools
@@ -89,8 +94,7 @@ def _learnerQuery(name, queryType):
 
 
 def isAllowedRaw(data):
-    if scipyImported:
-        if scipy.sparse.issparse(data):
+    if scipy and scipy.sparse.issparse(data):
             return True
     if type(data) in [tuple, list, dict, numpy.ndarray, numpy.matrix]:
         return True
@@ -160,7 +164,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
         raise ArgumentException(msg)
 
     if returnType == 'Sparse':
-        if not scipyImported:
+        if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
         if numpyMaker == numpy.ones:
@@ -178,7 +182,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path,
         keepPoints, keepFeatures):
-    if scipyImported and scipy.sparse.issparse(rawData):
+    if scipy and scipy.sparse.issparse(rawData):
         autoType = 'Sparse'
     else:
         autoType = 'Matrix'
@@ -250,7 +254,7 @@ def initDataObject(
             # can skip list check, overlaps with previous if clause.
             if isinstance(rawData, numpy.ndarray) or isinstance(rawData, numpy.matrix):
                 temp = extractNamesFromNumpy(rawData, pnamesID, fnamesID)
-            elif scipyImported and scipy.sparse.issparse(rawData):
+            elif scipy and scipy.sparse.issparse(rawData):
                 if not isinstance(rawData, scipy.sparse.coo_matrix):
                     rawData = scipy.sparse.coo_matrix(rawData)
                 temp = extractNamesFromCoo(rawData, pnamesID, fnamesID)
@@ -495,7 +499,7 @@ def _loadmtxForAuto(
     they are also read.
 
     """
-    if not scipyImported:
+    if not scipy:
         msg = "scipy is not available"
         raise PackageException(msg)
     startPosition = openFile.tell()
@@ -576,7 +580,7 @@ def extractNamesFromCoo(data, pnamesID, fnamesID):
     # of the present data.
 
     # these will be ID -> name mappings
-    if not scipyImported:
+    if not scipy:
         msg = "scipy is not available"
         raise PackageException(msg)
     tempPointNames = {}
