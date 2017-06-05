@@ -19,7 +19,7 @@ def testSanitization():
         and after, but should be functionally the same
     """
     testString1 = """Hello, we've got: fifteen dogs.
-	How many dogs have you got?\r"""
+    How many dogs have you got?\r"""
 
     sanitizedString1 = sanitizeStringForLog(testString1)
     unsanitizedString1 = unSanitizeStringFromLog(sanitizedString1)
@@ -61,7 +61,7 @@ def testParseLog():
     trainData1 = UML.createData('Sparse', trainDataBase)
     testData1 = UML.createData('Sparse', testDataBase)
     functionStr = """def f():
-	return 0"""
+    return 0"""
     metrics = ["rootMeanSquareError", "meanAbsoluteError"]
     results = [0.50, 0.45]
 
@@ -81,7 +81,7 @@ def testParseLog():
     assert logDicts[0]["numTrainDataFeatures"] == '3'
     assert logDicts[0]["numTestDataFeatures"] == '3'
     #	assert logDicts[0]["runTime"] == '0.00'
-    assert logDicts[0]["function"] == 'def f():\n\treturn 0'
+    assert logDicts[0]["function"] == 'def f():\n    return 0'
     assert logDicts[0]["rootMeanSquareError"] == '0.5'
     assert logDicts[0]["meanAbsoluteError"] == '0.45'
 
@@ -90,7 +90,7 @@ def testParseLog():
     assert logDicts[1]["numTrainDataFeatures"] == '3'
     assert logDicts[1]["numTestDataFeatures"] == '3'
     #	assert logDicts[1]["runTime"] == '0.00'
-    assert logDicts[1]["function"] == "['\\tfunctionObj = lambda x: x+1\n']"
+    assert logDicts[1]["function"] == "['    functionObj = lambda x: x + 1\n']"
     assert logDicts[1]["rootMeanSquareError"] == '0.5'
     assert logDicts[1]["meanAbsoluteError"] == '0.45'
 
@@ -105,7 +105,7 @@ def TODO_MR_basic():  # redo unit test
     trainData1 = UML.createData('Sparse', trainDataBase)
     testData1 = UML.createData('Sparse', testDataBase)
     functionStr = """def f():
-	return 0"""
+    return 0"""
     metrics = ["rootMeanSquareError", "meanAbsoluteError"]
     results = [0.50, 0.45]
 
