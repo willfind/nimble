@@ -1,11 +1,10 @@
-
-
 """
 Select the best questions to keep in a survey from a larger set of questions
 """
 import numpy
 
 from allowImports import boilerplate
+
 boilerplate()
 
 import os.path
@@ -19,179 +18,182 @@ from UML.calculate import fractionIncorrect
 from UML import calculate
 import tableString
 
-
 from UML.customLearners import CustomLearner
 
 
 class MajorityVote(CustomLearner):
-	learnerType = 'classification'
+    learnerType = 'classification'
 
-	def train(self, trainX, trainY):
-		counts = {}
-		def counter(v):
-			if v in counts:
-				counts[v] += 1
-			else:
-				counts[v] = 0
-		trainY.transformEachElement(counter)
-		mostCommonKey = None
-		highestCount = 0
-		for key, count in counts.iteritems():
-			if count > highestCount:
-				count = highestCount
-				mostCommonKey = key
-		self.mode = mostCommonKey
+    def train(self, trainX, trainY):
+        counts = {}
 
-	def apply(self, testX):
-		raw = numpy.zeros(testX.pointCount)
-		numpy.ndarray.fill(raw, self.mode)
+        def counter(v):
+            if v in counts:
+                counts[v] += 1
+            else:
+                counts[v] = 0
 
-		ret = UML.createData("Matrix", raw)
-		ret.transpose()
-		return ret
+        trainY.transformEachElement(counter)
+        mostCommonKey = None
+        highestCount = 0
+        for key, count in counts.iteritems():
+            if count > highestCount:
+                count = highestCount
+                mostCommonKey = key
+        self.mode = mostCommonKey
 
+    def apply(self, testX):
+        raw = numpy.zeros(testX.pointCount)
+        numpy.ndarray.fill(raw, self.mode)
+
+        ret = UML.createData("Matrix", raw)
+        ret.transpose()
+        return ret
 
 
 def per(x):
-	return str(int(round(x*100,0))) + "%"
+    return str(int(round(x * 100, 0))) + "%"
+
 
 def functionName(function):
-	return str(function).split("at")[0].split("function")[1].strip()
+    return str(function).split("at")[0].split("function")[1].strip()
+
 
 if __name__ == "__main__":
-	#columns are: Deliberation,Stimulation,Self-identification of introversion
-	fileName = "data from second study - introversion - stimulation - deliberation.csv"
-	
-	yLabel = "to predict"
-	data = createData("List", fileName, featureNames=True)
-	data.setFeatureName("Self-identification of introversion", yLabel)
+    #columns are: Deliberation,Stimulation,Self-identification of introversion
+    fileName = "data from second study - introversion - stimulation - deliberation.csv"
+
+    yLabel = "to predict"
+    data = createData("List", fileName, featureNames=True)
+    data.setFeatureName("Self-identification of introversion", yLabel)
 
 
-	#I can't get this to work. Not only does calling train for this algorithm after not seem to work,
-	#but calling this seems to add the following line Custom.MajorityVote = __main__.MajorityVote
-	#to configuration.ini which means that I can no longer run this program without getting a crash during import
-	#UML.registerCustomLearner("Custom", MajorityVote)
+    #I can't get this to work. Not only does calling train for this algorithm after not seem to work,
+    #but calling this seems to add the following line Custom.MajorityVote = __main__.MajorityVote
+    #to configuration.ini which means that I can no longer run this program without getting a crash during import
+    #UML.registerCustomLearner("Custom", MajorityVote)
 
-	#settings = UML.configuration.loadSettings()
-	#settings.set(section="RegisteredLearners", option="MajorityVote", value=MajorityVote)
-	#sectionSettings = settings.get(section="RegisteredLearners", option="MajorityVote")
-	#print "sectionSettings:", sectionSettings
+    #settings = UML.configuration.loadSettings()
+    #settings.set(section="RegisteredLearners", option="MajorityVote", value=MajorityVote)
+    #sectionSettings = settings.get(section="RegisteredLearners", option="MajorityVote")
+    #print "sectionSettings:", sectionSettings
 
-	#get rid of blank rows
-	data.extractPoints(lambda x: len(str(x["Deliberation"]).strip()) == 0)
-	
-	#make the data numerical
-	data = data.copyAs("Matrix")
+    #get rid of blank rows
+    data.extractPoints(lambda x: len(str(x["Deliberation"]).strip()) == 0)
 
-	#make the "Self-indentification of introversion" into a binary feature
-	def toBinaryDefinitionOfIntrovert(v):
-		#scale is 3 to 15
-		#if v >= 12: return 1 #they said 4 or 5 (on a 1=strongly disagree, 3=neither agree nor disagree, 5=strongly agree) scale on all three self-identification ?'s
-		if v > 9: return 1 #they gave a value higher than the middle value (answering 3 on all three questions)
-		return 0
-	data.transformEachElement(lambda x: toBinaryDefinitionOfIntrovert(x), features=yLabel)
+    #make the data numerical
+    data = data.copyAs("Matrix")
 
-	#get the training and testing data
-	trainX, trainY, testX, testY = data.trainAndTestSets(testFraction=.2, labels=yLabel)
+    #make the "Self-indentification of introversion" into a binary feature
+    def toBinaryDefinitionOfIntrovert(v):
+        #scale is 3 to 15
+        #if v >= 12: return 1 #they said 4 or 5 (on a 1=strongly disagree, 3=neither agree nor disagree, 5=strongly agree) scale on all three self-identification ?'s
+        if v > 9: return 1 #they gave a value higher than the middle value (answering 3 on all three questions)
+        return 0
 
-	CValue = 10**8 #we need this really large to turn off regulization
+    data.transformEachElement(lambda x: toBinaryDefinitionOfIntrovert(x), features=yLabel)
 
-	def introvertsOnly(x):
-		return x[yLabel] == 1 #this filters out extraverts
-	def extravertsOnly(x):
-		return x[yLabel] == 0 #this filters out intraverts
+    #get the training and testing data
+    trainX, trainY, testX, testY = data.trainAndTestSets(testFraction=.2, labels=yLabel)
 
-	featuresToKeep = ["none", "Stimulation", "Deliberation", "all"]
-	filterFunctionsForTestPoints = [None, introvertsOnly, extravertsOnly]
+    CValue = 10 ** 8 #we need this really large to turn off regulization
 
-	headers = ["", "Misclassified %", "In sample misclassified %", "Intercept", "Coefs"]
-	output = []
-	output.append(headers)
+    def introvertsOnly(x):
+        return x[yLabel] == 1 #this filters out extraverts
 
-	trainYCopy = trainY.copy()
+    def extravertsOnly(x):
+        return x[yLabel] == 0 #this filters out intraverts
 
-	for filterFunctionForTestPoints in filterFunctionsForTestPoints:
-		subjectsStr = ""
-		if filterFunctionForTestPoints == None: 
-			subjectsStr += "allSubjects"
-		else:
-			subjectsStr += functionName(filterFunctionForTestPoints)
+    featuresToKeep = ["none", "Stimulation", "Deliberation", "all"]
+    filterFunctionsForTestPoints = [None, introvertsOnly, extravertsOnly]
 
-		output.append(["",""])
-		output.append(["--"+subjectsStr+"--",""])
+    headers = ["", "Misclassified %", "In sample misclassified %", "Intercept", "Coefs"]
+    output = []
+    output.append(headers)
 
-		for featureToKeep in featuresToKeep:
+    trainYCopy = trainY.copy()
 
-			trainXTemp = trainX.copy()
-			testXTemp = testX.copy()
+    for filterFunctionForTestPoints in filterFunctionsForTestPoints:
+        subjectsStr = ""
+        if filterFunctionForTestPoints == None:
+            subjectsStr += "allSubjects"
+        else:
+            subjectsStr += functionName(filterFunctionForTestPoints)
 
-			#remove some of the features
-			if featureToKeep != "all" and featureToKeep != "none":
-				trainXTemp = trainXTemp.extractFeatures(featureToKeep)	
-				testXTemp = testXTemp.extractFeatures(featureToKeep)
+        output.append(["", ""])
+        output.append(["--" + subjectsStr + "--", ""])
 
-			#get rid of some of the points in the test set X and Y based on a filter
-			Z = testXTemp.copy()
-			Z.appendFeatures(testY)
-			ZInSample = trainXTemp.copy()
-			ZInSample.appendFeatures(trainYCopy.copy())
+        for featureToKeep in featuresToKeep:
 
-			if filterFunctionForTestPoints != None:
-				Z = Z.extractPoints(filterFunctionForTestPoints)
-				#print "ZInSample 3\n", ZInSample
-				ZInSample = ZInSample.extractPoints(filterFunctionForTestPoints)
+            trainXTemp = trainX.copy()
+            testXTemp = testX.copy()
 
-			testYTemp = Z.extractFeatures(yLabel)
-			testXTemp = Z.copy()
-			inSampleY = ZInSample.extractFeatures(yLabel)
-			inSampleX = ZInSample
+            #remove some of the features
+            if featureToKeep != "all" and featureToKeep != "none":
+                trainXTemp = trainXTemp.extractFeatures(featureToKeep)
+                testXTemp = testXTemp.extractFeatures(featureToKeep)
 
-			name = ""
-			if featureToKeep == "all": 
-				name += "All Features"
-			elif featureToKeep == "none":
-				name += "Majority Vote"
-			else:
-				name += "Only " + str(featureToKeep)
+            #get rid of some of the points in the test set X and Y based on a filter
+            Z = testXTemp.copy()
+            Z.appendFeatures(testY)
+            ZInSample = trainXTemp.copy()
+            ZInSample.appendFeatures(trainYCopy.copy())
 
-			#misclassified = trainAndTest("SciKitLearn.LogisticRegression", trainX=trainXTemp, trainY=trainY, testX=testXTemp, testY=testYTemp, performanceFunction=fractionIncorrect, C=CValue)
-			#print "trainX", trainX
-			if featureToKeep != "none":
-				classifier = train("SciKitLearn.LogisticRegression", trainX=trainXTemp, trainY=trainY, C=CValue)
-			
-				attributes = classifier.getAttributes()
-				intercept = classifier.backend.intercept_
-				coefs = classifier.backend.coef_
+            if filterFunctionForTestPoints != None:
+                Z = Z.extractPoints(filterFunctionForTestPoints)
+                #print "ZInSample 3\n", ZInSample
+                ZInSample = ZInSample.extractPoints(filterFunctionForTestPoints)
 
-				misclassifiedInSample = classifier.test(testX=inSampleX, testY=inSampleY, performanceFunction=fractionIncorrect)
-				#predictions = classifier.apply(testX=testXTemp, testY=testYTemp, performanceFunction=fractionIncorrect)
-				misclassified = classifier.test(testX=testXTemp, testY=testYTemp, performanceFunction=fractionIncorrect)
+            testYTemp = Z.extractFeatures(yLabel)
+            testXTemp = Z.copy()
+            inSampleY = ZInSample.extractFeatures(yLabel)
+            inSampleX = ZInSample
 
-			else:
-				#classifier = train("Custom.MajorityVote", trainX=trainXTemp, trainY=trainY)
-				#UML.deregisterCustomLearner("Custom", "MajorityVote")
-				coefs = None
-				intercept = None
-				#predictions = None
-				misclassifiedInSample = inSampleY.featureStatistics("mean")[0,0]
-				misclassified = testYTemp.featureStatistics("mean")[0,0]
+            name = ""
+            if featureToKeep == "all":
+                name += "All Features"
+            elif featureToKeep == "none":
+                name += "Majority Vote"
+            else:
+                name += "Only " + str(featureToKeep)
 
+            #misclassified = trainAndTest("SciKitLearn.LogisticRegression", trainX=trainXTemp, trainY=trainY, testX=testXTemp, testY=testYTemp, performanceFunction=fractionIncorrect, C=CValue)
+            #print "trainX", trainX
+            if featureToKeep != "none":
+                classifier = train("SciKitLearn.LogisticRegression", trainX=trainXTemp, trainY=trainY, C=CValue)
 
-			#print "\nROUND"
-			#print subjectsStr
-			#print name
-			#print "misclassified %:", misclassified
-			#if predictions != None:
-			#	print "predictions:\n", predictions
-			#	print predictions.featureStatistics("mean")
+                attributes = classifier.getAttributes()
+                intercept = classifier.backend.intercept_
+                coefs = classifier.backend.coef_
 
-			output.append([name, per(misclassified), per(misclassifiedInSample), intercept, coefs])
+                misclassifiedInSample = classifier.test(testX=inSampleX, testY=inSampleY,
+                                                        performanceFunction=fractionIncorrect)
+                #predictions = classifier.apply(testX=testXTemp, testY=testYTemp, performanceFunction=fractionIncorrect)
+                misclassified = classifier.test(testX=testXTemp, testY=testYTemp, performanceFunction=fractionIncorrect)
+
+            else:
+                #classifier = train("Custom.MajorityVote", trainX=trainXTemp, trainY=trainY)
+                #UML.deregisterCustomLearner("Custom", "MajorityVote")
+                coefs = None
+                intercept = None
+                #predictions = None
+                misclassifiedInSample = inSampleY.featureStatistics("mean")[0, 0]
+                misclassified = testYTemp.featureStatistics("mean")[0, 0]
 
 
+            #print "\nROUND"
+            #print subjectsStr
+            #print name
+            #print "misclassified %:", misclassified
+            #if predictions != None:
+            #	print "predictions:\n", predictions
+            #	print predictions.featureStatistics("mean")
 
-	print "\nResult:\n"
-	print tableString.tableString(output)
-	print "\n\n"
+            output.append([name, per(misclassified), per(misclassifiedInSample), intercept, coefs])
+
+    print "\nResult:\n"
+    print tableString.tableString(output)
+    print "\n\n"
 
 
 

@@ -38,6 +38,8 @@ def testQuartilesAPI():
 
 #the following tests will test both None/NaN ignoring and calculation correctness
 testDataTypes = ['List', 'DataFrame']#'Matrix','Sparse'
+
+
 def testProportionMissing():
     raw = [[1, 2, np.nan], [None, 5, 6], [7, 0, 9]]
     func = UML.calculate.statistic.proportionMissing
@@ -45,14 +47,15 @@ def testProportionMissing():
         objl = createData(dataType, raw)
 
         retlf = objl.calculateForEachFeature(func)
-        retlfCorrect = createData(dataType, [1./3, 0, 1./3])
+        retlfCorrect = createData(dataType, [1. / 3, 0, 1. / 3])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
         retlp = objl.calculateForEachPoint(func)
-        retlpCorrect = createData(dataType, [[1./3], [1./3], [0]])
+        retlpCorrect = createData(dataType, [[1. / 3], [1. / 3], [0]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
+
 
 def testProportionZero():
     raw = [[1, 2, np.nan], [None, 5, 6], [7, 0, 9]]
@@ -61,14 +64,15 @@ def testProportionZero():
         objl = createData(dataType, raw)
 
         retlf = objl.calculateForEachFeature(func)
-        retlfCorrect = createData(dataType, [0, 1./3, 0])
+        retlfCorrect = createData(dataType, [0, 1. / 3, 0])
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
         retlp = objl.calculateForEachPoint(func)
-        retlpCorrect = createData(dataType, [[0], [0], [1./3]])
+        retlpCorrect = createData(dataType, [[0], [0], [1. / 3]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
+
 
 def testMinimum():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
@@ -86,6 +90,7 @@ def testMinimum():
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
 
+
 def testMaximum():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = UML.calculate.statistic.maximum
@@ -102,6 +107,7 @@ def testMaximum():
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
 
+
 def testMean():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = UML.calculate.statistic.mean
@@ -114,9 +120,10 @@ def testMean():
         assert retlfCorrect.isIdentical(retlf)
 
         retlp = objl.calculateForEachPoint(func)
-        retlpCorrect = createData(dataType, [[None], [5.5], [16./3]])
+        retlpCorrect = createData(dataType, [[None], [5.5], [16. / 3]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
+
 
 def testMedian():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
@@ -134,6 +141,7 @@ def testMedian():
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
 
+
 def testStandardDeviation():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = UML.calculate.statistic.standardDeviation
@@ -149,6 +157,7 @@ def testStandardDeviation():
         retlpCorrect = createData(dataType, [[None], [0.5], [3.8586123009300755]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
+
 
 def testUniqueCount():
     raw = [[1, 'a', np.nan], [5, None, 6], [7.0, 0, 9]]
@@ -166,6 +175,7 @@ def testUniqueCount():
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
 
+
 def testFeatureType():
     raw = [[1, 'a', np.nan], [5, None, 6], [7.0, 0, 9]]
     func = UML.calculate.statistic.featureType
@@ -182,6 +192,7 @@ def testFeatureType():
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
 
+
 def testQuartiles():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9], [2, 2, 3], [10, 10, 10]]
     func = UML.calculate.statistic.quartiles
@@ -194,9 +205,11 @@ def testQuartiles():
         assert retlfCorrect.isIdentical(retlf)
 
         retlp = objl.calculateForEachPoint(func)
-        retlpCorrect = createData(dataType, [[None, None, None], [5.250, 5.500, 5.750], [3.500, 7.000, 8.000 ], [2.000, 2.000, 2.500], [10.000, 10.000, 10.000]])
+        retlpCorrect = createData(dataType, [[None, None, None], [5.250, 5.500, 5.750], [3.500, 7.000, 8.000],
+                                             [2.000, 2.000, 2.500], [10.000, 10.000, 10.000]])
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
+
 
 def testIsMissing():
     raw = [1, 2.0, 3L, np.nan, None, 'a']
@@ -207,7 +220,6 @@ def testIsMissing():
 
 
 def testIsNumericalFeatureGuesser():
-
     func = UML.calculate.statistic._isNumericalFeatureGuesser
     raw = [1, 2.0, 3L, np.nan, None]
     assert func(raw)
@@ -215,6 +227,7 @@ def testIsNumericalFeatureGuesser():
     assert ~func(raw)
     raw = [1, 2.0, 3L, np.nan, None, np.complex(1, 1)]
     assert ~func(raw)
+
 
 def testIsNumericalPoint():
     func = UML.calculate.statistic._isNumericalPoint

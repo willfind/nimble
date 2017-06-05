@@ -1,4 +1,3 @@
-
 import numpy
 from nose.tools import *
 
@@ -11,20 +10,20 @@ from UML.calculate import confidenceIntervalHelper
 ######################
 
 def testSimpleConfidenceInverval():
-	"""Test of confidenceInterval using example from wikipedia """
-	predRaw = [252.7, 247.7] * 12
-	predRaw.append(250.2)
-	pred = UML.createData("Matrix", predRaw)
-	pred.transpose()
+    """Test of confidenceInterval using example from wikipedia """
+    predRaw = [252.7, 247.7] * 12
+    predRaw.append(250.2)
+    pred = UML.createData("Matrix", predRaw)
+    pred.transpose()
 
-	assert pred.pointCount == 25
-	assert pred.featureCount == 1
-	mean = pred.featureStatistics('mean')[0,0]
-	numpy.testing.assert_approx_equal(mean, 250.2)
-	std = pred.featureStatistics('samplestandarddeviation')[0,0]
-	numpy.testing.assert_approx_equal(std, 2.5) 
+    assert pred.pointCount == 25
+    assert pred.featureCount == 1
+    mean = pred.featureStatistics('mean')[0, 0]
+    numpy.testing.assert_approx_equal(mean, 250.2)
+    std = pred.featureStatistics('samplestandarddeviation')[0, 0]
+    numpy.testing.assert_approx_equal(std, 2.5)
 
-	(low, high) = confidenceIntervalHelper(pred, None, 0.95)
+    (low, high) = confidenceIntervalHelper(pred, None, 0.95)
 
-	numpy.testing.assert_approx_equal(low, 249.22)
-	numpy.testing.assert_approx_equal(high, 251.18)
+    numpy.testing.assert_approx_equal(low, 249.22)
+    numpy.testing.assert_approx_equal(high, 251.18)

@@ -2,7 +2,7 @@ UML.randomness
 ==============
 
 .. automodule:: UML.randomness
-    :members:
-    :undoc-members:
-    :show-inheritance:
+:members:
+        :undoc-members:
+        :show-inheritance:
 

@@ -12,102 +12,107 @@ If there is a tie, use k=1
 """
 
 try:
-	import scipy.spatial
-	scipyImported = True
+    import scipy.spatial
+
+    scipyImported = True
 except ImportError:
-	scipyImported = False
+    scipyImported = False
 
 import UML
 from UML.customLearners import CustomLearner
 from UML.exceptions import PackageException
 
+
 class KNNClassifier(CustomLearner):
+    learnerType = 'classification'
 
-	learnerType = 'classification'
+    def train(self, trainX, trainY, k=5):
+        self.k = k
+        self._trainX = trainX
+        self._trainY = trainY
 
-	def train(self, trainX, trainY, k=5):
-		self.k = k
-		self._trainX = trainX
-		self._trainY = trainY
+    def apply(self, testX):
+        def foo(p):
+            nearestPoints = self._generatePointsSortedByDistance(p)
+            results = self._voteNearest(nearestPoints)
+            # sort according to number of votes received
+            def scoreHelperDecending(point):
+                return 0 - point[1]
 
-	def apply(self, testX):
-		def foo(p):
-			nearestPoints = self._generatePointsSortedByDistance(p)
-			results = self._voteNearest(nearestPoints)
-			# sort according to number of votes received
-			def scoreHelperDecending(point):
-				return 0 - point[1]
-			results.sortPoints(sortHelper=scoreHelperDecending)
-			# only one label received votes
-			if results.pointCount == 1:
-				prediction =results[0,0]
-			# there is a tie between labels, fall back to k=1
-			elif results[0,1] == results[1,1]:
-				prediction = self._trainY[int(nearestPoints[0,0]),0]
-			# average case, top of the results has most number of votes
-			else:
-				prediction = results[0,0]
+            results.sortPoints(sortHelper=scoreHelperDecending)
+            # only one label received votes
+            if results.pointCount == 1:
+                prediction = results[0, 0]
+            # there is a tie between labels, fall back to k=1
+            elif results[0, 1] == results[1, 1]:
+                prediction = self._trainY[int(nearestPoints[0, 0]), 0]
+            # average case, top of the results has most number of votes
+            else:
+                prediction = results[0, 0]
 
-			return prediction
+            return prediction
 
-		return testX.calculateForEachPoint(foo)
-
-
-	def getScores(self, testX):
-		"""
-		If this learner is a classifier, then return the scores for each
-		class on each data point, otherwise raise an exception. The scores
-		must be returned in the natural ordering of the classes.
-		
-		"""
-		ret = None
-		for p in testX.pointIterator():
-			nearestPoints = self._generatePointsSortedByDistance(p)
-			results = self._voteNearest(nearestPoints)
-			# sort ascending according to label ID
-			results.sortPoints(0)
-
-			scores = results.extractFeatures(1)
-			scores.transpose()
-
-			if ret is None:
-				ret = scores
-			else:
-				ret.appendPoints(scores)
-
-		return ret
-
-	def _generatePointsSortedByDistance(self, test):
-		"""
-		Return a matrix where each row contains a point ID, and the distance to
-		the point test
-
-		"""
-		if not scipyImported:
-			msg = "scipy is not available"
-			raise PackageException(msg)
-		def distanceFrom(point):
-			index = self._trainX.getPointIndex(point.getPointName(0))
-			return [index, scipy.spatial.distance.euclidean(test, point)]
-
-		distances = self._trainX.calculateForEachPoint(distanceFrom)
-		distances.sortPoints(1)
-		return distances
+        return testX.calculateForEachPoint(foo)
 
 
-	def _voteNearest(self, votes):
-		"""
-		Takes a data object where each row contains a point ID, and the distance
-		to the point we want to classify. Uses the point ID's to find labels in
-		self.trainY, letting those be the votes. In case of a tie, we revert to
-		k=1.
-		"""
-		topK = votes.copyPoints(end=self.k-1)
-		def mapper(point):
-			labelIndex = self._trainY[int(point[0]),0]
-			return [(labelIndex,1)]
-		def reducer(key, valList):
-			return (key, len(valList))
+    def getScores(self, testX):
+        """
+        If this learner is a classifier, then return the scores for each
+        class on each data point, otherwise raise an exception. The scores
+        must be returned in the natural ordering of the classes.
 
-		results = topK.mapReducePoints(mapper, reducer)
-		return results
+        """
+        ret = None
+        for p in testX.pointIterator():
+            nearestPoints = self._generatePointsSortedByDistance(p)
+            results = self._voteNearest(nearestPoints)
+            # sort ascending according to label ID
+            results.sortPoints(0)
+
+            scores = results.extractFeatures(1)
+            scores.transpose()
+
+            if ret is None:
+                ret = scores
+            else:
+                ret.appendPoints(scores)
+
+        return ret
+
+    def _generatePointsSortedByDistance(self, test):
+        """
+        Return a matrix where each row contains a point ID, and the distance to
+        the point test
+
+        """
+        if not scipyImported:
+            msg = "scipy is not available"
+            raise PackageException(msg)
+
+        def distanceFrom(point):
+            index = self._trainX.getPointIndex(point.getPointName(0))
+            return [index, scipy.spatial.distance.euclidean(test, point)]
+
+        distances = self._trainX.calculateForEachPoint(distanceFrom)
+        distances.sortPoints(1)
+        return distances
+
+
+    def _voteNearest(self, votes):
+        """
+        Takes a data object where each row contains a point ID, and the distance
+        to the point we want to classify. Uses the point ID's to find labels in
+        self.trainY, letting those be the votes. In case of a tie, we revert to
+        k=1.
+        """
+        topK = votes.copyPoints(end=self.k - 1)
+
+        def mapper(point):
+            labelIndex = self._trainY[int(point[0]), 0]
+            return [(labelIndex, 1)]
+
+        def reducer(key, valList):
+            return (key, len(valList))
+
+        results = topK.mapReducePoints(mapper, reducer)
+        return results

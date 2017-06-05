@@ -24,16 +24,15 @@ from StringIO import StringIO
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.append(os.path.dirname(UMLPath))
 import UML
+
 available = UML.interfaces.available
 
 
-
 class ExtensionPlugin(Plugin):
-
     name = "ExtensionPlugin"
-    
+
     def options(self, parser, env):
-        Plugin.options(self,parser,env)
+        Plugin.options(self, parser, env)
 
     def configure(self, options, config):
         Plugin.configure(self, options, config)
@@ -49,7 +48,7 @@ class ExtensionPlugin(Plugin):
         dname = os.path.dirname(file)
         if dname == os.path.join(UMLPath, 'interfaces', 'tests'):
             fname = os.path.basename(file)
-            
+
             #need to confirm that fname is associated with an interface
             associated = False
             for intName in os.listdir(dname):
@@ -59,12 +58,12 @@ class ExtensionPlugin(Plugin):
                 if intName in fname:
                     associated = True
                     break
-            # if it is associated with an interface, we only want to run it
+                # if it is associated with an interface, we only want to run it
             # if it is associated with an available interface.
             if associated:
                 associated = False
                 for interface in UML.interfaces.available:
-                    if interface.__module__.rsplit('.',1)[1] in fname:
+                    if interface.__module__.rsplit('.', 1)[1] in fname:
                         associated = True
                         break
                 if not associated:
@@ -104,7 +103,7 @@ class CaptureError(Plugin):
             "--nocaptureerror", action="store_false",
             default=not env.get(self.env_opt), dest="captureerror",
             help="Don't capture stderr (any stderr output "
-            "will be printed immediately) [NOSE_NOCAPTURE]")
+                 "will be printed immediately) [NOSE_NOCAPTURE]")
 
     def configure(self, options, conf):
         """Configure plugin. Plugin is enabled by default."""
@@ -164,14 +163,14 @@ class CaptureError(Plugin):
             return self._buf.getvalue()
 
     buffer = property(_get_buffer, None, None,
-                      """Captured stderr output.""")        
+                      """Captured stderr output.""")
 
 
 class LoggerControl(object):
     def __enter__(self):
         self._backupLoc = UML.settings.get('logger', 'location')
         self._backupName = UML.settings.get('logger', 'name')
-        
+
         # delete previous testing logs:
         location = os.path.join(UMLPath, 'logs-UML')
         hrPath = os.path.join(location, 'log-UML-unitTests.txt')
@@ -192,7 +191,6 @@ class LoggerControl(object):
         UML.settings.saveChanges("logger", 'location')
         UML.settings.set("logger", 'name', self._backupName)
         UML.settings.saveChanges("logger", 'name')
-
 
 
 if __name__ == '__main__':

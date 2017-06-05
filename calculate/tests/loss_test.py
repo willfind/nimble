@@ -1,4 +1,3 @@
-
 import numpy
 
 from nose.tools import *
@@ -16,55 +15,57 @@ from UML.calculate import meanFeaturewiseRootMeanSquareError
 
 @raises(ArgumentException)
 def testGenericErrorCalculatorEmptyKnownInput():
-	"""
-		Test that _computeError raises an exception if knownLabels is empty
-	"""
-	knownLabels = numpy.array([])
-	predictedLabels = numpy.array([1,2,3])
+    """
+        Test that _computeError raises an exception if knownLabels is empty
+    """
+    knownLabels = numpy.array([])
+    predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
+    UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
+
 
 @raises(ArgumentException)
 def testGenericErrorCalculatorEmptyPredictedInput():
-	"""
-		Test that _computeError raises an exception if predictedLabels is empty
-	"""
-	knownLabels = numpy.array([1,2,3])
-	predictedLabels = numpy.array([])
+    """
+        Test that _computeError raises an exception if predictedLabels is empty
+    """
+    knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = numpy.array([])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
+    UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
+
 
 @raises(ZeroDivisionError)
 def testGenericErrorCalculatorDivideByZero():
-	"""
-		Test that _computeError raises a divide by zero exception if the outerFunction argument
-		would lead to division by zero.
-	"""
-	knownLabels = numpy.array([1,2,3])
-	predictedLabels = numpy.array([1,2,3])
+    """
+        Test that _computeError raises a divide by zero exception if the outerFunction argument
+        would lead to division by zero.
+    """
+    knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: y/x)
+    UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: y / x)
+
 
 def testGenericErrorCalculator():
-	knownLabels = numpy.array([1.0, 2.0, 3.0])
-	predictedLabels = numpy.array([1.0, 2.0, 3.0])
+    knownLabels = numpy.array([1.0, 2.0, 3.0])
+    predictedLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	sameRate = UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x,y,z: z, lambda x,y: x)
-	assert sameRate == 0.0
-
-
+    sameRate = UML.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z,
+                                                lambda x, y: x)
+    assert sameRate == 0.0
 
 
 #######################
@@ -73,71 +74,73 @@ def testGenericErrorCalculator():
 
 @raises(ArgumentException)
 def testMeanAbsoluteErrorEmptyKnownValues():
-	"""
-		Check that the mean absolute error calculator correctly throws an
-		exception if knownLabels vector is empty
-	"""
-	knownLabels = numpy.array([])
-	predictedLabels = numpy.array([1, 2, 3])
+    """
+        Check that the mean absolute error calculator correctly throws an
+        exception if knownLabels vector is empty
+    """
+    knownLabels = numpy.array([])
+    predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
+    maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
+
 
 @raises(ArgumentException)
 def testMeanAbsoluteErrorEmptyPredictedValues():
-	"""
-		Check that the mean absolute error calculator correctly throws an
-		exception if predictedLabels vector is empty
-	"""
-	predictedLabels = numpy.array([])
-	knownLabels = numpy.array([1, 2, 3])
+    """
+        Check that the mean absolute error calculator correctly throws an
+        exception if predictedLabels vector is empty
+    """
+    predictedLabels = numpy.array([])
+    knownLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
+    maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
+
 
 def testMeanAbsoluteError():
-	"""
-		Check that the mean absolute error calculator works correctly when
-		all inputs are zero, or predictions are exactly the same as all known
-		values, and are non-zero
-	"""
-	predictedLabels = numpy.array([0,0,0])
-	knownLabels = numpy.array([0,0,0])
+    """
+        Check that the mean absolute error calculator works correctly when
+        all inputs are zero, or predictions are exactly the same as all known
+        values, and are non-zero
+    """
+    predictedLabels = numpy.array([0, 0, 0])
+    knownLabels = numpy.array([0, 0, 0])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
-	knownLabelsMatrix.transpose()
-	predictedLabelsMatrix.transpose()
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix.transpose()
+    predictedLabelsMatrix.transpose()
 
-	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
-	assert maeRate == 0.0
+    maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
+    assert maeRate == 0.0
 
-	predictedLabels = numpy.array([1.0, 2.0, 3.0])
-	knownLabels = numpy.array([1.0, 2.0, 3.0])
+    predictedLabels = numpy.array([1.0, 2.0, 3.0])
+    knownLabels = numpy.array([1.0, 2.0, 3.0])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	knownLabelsMatrix.transpose()
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
-	predictedLabelsMatrix.transpose()
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    knownLabelsMatrix.transpose()
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    predictedLabelsMatrix.transpose()
 
-	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
-	assert maeRate == 0.0
+    maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
+    assert maeRate == 0.0
 
-	predictedLabels = numpy.array([1.0, 2.0, 3.0])
-	knownLabels = numpy.array([1.5, 2.5, 3.5])
+    predictedLabels = numpy.array([1.0, 2.0, 3.0])
+    knownLabels = numpy.array([1.5, 2.5, 3.5])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	knownLabelsMatrix.transpose()
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
-	predictedLabelsMatrix.transpose()
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    knownLabelsMatrix.transpose()
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    predictedLabelsMatrix.transpose()
 
-	maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
-	assert maeRate > 0.49
-	assert maeRate < 0.51
+    maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
+    assert maeRate > 0.49
+    assert maeRate < 0.51
 
 
 ###########################
@@ -146,66 +149,67 @@ def testMeanAbsoluteError():
 
 @raises(ArgumentException)
 def testRmseEmptyKnownValues():
-	"""
-	rootMeanSquareError calculator throws exception if knownLabels is empty
+    """
+    rootMeanSquareError calculator throws exception if knownLabels is empty
 
-	"""
-	knownLabels = numpy.array([])
-	predictedLabels = numpy.array([1, 2, 3])
+    """
+    knownLabels = numpy.array([])
+    predictedLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	rootMeanSquareErrorRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
+    rootMeanSquareErrorRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
+
 
 @raises(ArgumentException)
 def testRmseEmptyPredictedValues():
-	"""
-	rootMeanSquareError calculator throws exception if predictedLabels is empty
-	"""
+    """
+    rootMeanSquareError calculator throws exception if predictedLabels is empty
+    """
 
-	predictedLabels = numpy.array([])
-	knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = numpy.array([])
+    knownLabels = numpy.array([1, 2, 3])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
+    rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
 
 
 def testRmse():
-	"""
-		Check that the rootMeanSquareError calculator works correctly when
-		all inputs are zero, and when all known values are
-		the same as predicted values.
-	"""
-	predictedLabels = numpy.array([[0],[0],[0]])
-	knownLabels = numpy.array([[0],[0],[0]])
+    """
+        Check that the rootMeanSquareError calculator works correctly when
+        all inputs are zero, and when all known values are
+        the same as predicted values.
+    """
+    predictedLabels = numpy.array([[0], [0], [0]])
+    knownLabels = numpy.array([[0], [0], [0]])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
-	assert rmseRate == 0.0
+    rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
+    assert rmseRate == 0.0
 
-	predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
-	knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
-	assert rmseRate == 0.0
+    rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
+    assert rmseRate == 0.0
 
-	predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
-	knownLabels = numpy.array([[1.5], [2.5], [3.5]])
+    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    knownLabels = numpy.array([[1.5], [2.5], [3.5]])
 
-	knownLabelsMatrix = createData('Matrix', data=knownLabels)
-	predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = createData('Matrix', data=knownLabels)
+    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
 
-	rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
-	assert rmseRate > 0.49
-	assert rmseRate < 0.51
+    rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
+    assert rmseRate > 0.49
+    assert rmseRate < 0.51
 
 
 ######################################
@@ -214,30 +218,32 @@ def testRmse():
 
 @raises(ArgumentException)
 def testMFRMSE_badshapePoints():
-	predictedLabels = numpy.array([[0,2], [0,2], [0,2], [0,2]])
-	knownLabels = numpy.array([[0,0], [0,0], [0,0]])
+    predictedLabels = numpy.array([[0, 2], [0, 2], [0, 2], [0, 2]])
+    knownLabels = numpy.array([[0, 0], [0, 0], [0, 0]])
 
-	knowns = createData('Matrix', data=knownLabels)
-	predicted = createData('Matrix', data=predictedLabels)
+    knowns = createData('Matrix', data=knownLabels)
+    predicted = createData('Matrix', data=predictedLabels)
 
-	meanFeaturewiseRootMeanSquareError(knowns, predicted)
+    meanFeaturewiseRootMeanSquareError(knowns, predicted)
+
 
 @raises(ArgumentException)
 def testMFRMSE_badshapeFeatures():
-	predictedLabels = numpy.array([[0], [0], [0], [0]])
-	knownLabels = numpy.array([[0,0], [0,0], [0,0], [0,0]])
+    predictedLabels = numpy.array([[0], [0], [0], [0]])
+    knownLabels = numpy.array([[0, 0], [0, 0], [0, 0], [0, 0]])
 
-	knowns = createData('Matrix', data=knownLabels)
-	predicted = createData('Matrix', data=predictedLabels)
+    knowns = createData('Matrix', data=knownLabels)
+    predicted = createData('Matrix', data=predictedLabels)
 
-	meanFeaturewiseRootMeanSquareError(knowns, predicted)
+    meanFeaturewiseRootMeanSquareError(knowns, predicted)
+
 
 def testMFRMSE_simpleSuccess():
-	predictedLabels = numpy.array([[0,2], [0,2], [0,2], [0,2]])
-	knownLabels = numpy.array([[0,0], [0,0], [0,0], [0,0]])
+    predictedLabels = numpy.array([[0, 2], [0, 2], [0, 2], [0, 2]])
+    knownLabels = numpy.array([[0, 0], [0, 0], [0, 0], [0, 0]])
 
-	knowns = createData('Matrix', data=knownLabels)
-	predicted = createData('Matrix', data=predictedLabels)
+    knowns = createData('Matrix', data=knownLabels)
+    predicted = createData('Matrix', data=predictedLabels)
 
-	mfrmseRate = meanFeaturewiseRootMeanSquareError(knowns, predicted)
-	assert mfrmseRate == 1.0
+    mfrmseRate = meanFeaturewiseRootMeanSquareError(knowns, predicted)
+    assert mfrmseRate == 1.0

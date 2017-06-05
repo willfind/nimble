@@ -41,82 +41,82 @@ currDirPath = os.path.dirname(currFilePath)
 
 
 def printAndCall(cmd):
-	if not SUPPRESSOUTPUT:
-		print cmd
-		stdout = None
-	else:
-		stdout = open(os.devnull, 'w')
-	return subprocess.check_call(cmd, shell=True, stdout=stdout, stderr=subprocess.STDOUT)
+    if not SUPPRESSOUTPUT:
+        print cmd
+        stdout = None
+    else:
+        stdout = open(os.devnull, 'w')
+    return subprocess.check_call(cmd, shell=True, stdout=stdout, stderr=subprocess.STDOUT)
 
 
 def checkMasterUpToDate():
-	printAndCall("git fetch origin")
+    printAndCall("git fetch origin")
 
-	# get SHA of current master
-	cmd = "git rev-parse --verify refs/heads/master"
-	if not SUPPRESSOUTPUT:
-		print cmd
-	currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-	localSHA = currP.stdout.readline().strip()
-	if not SUPPRESSOUTPUT:
-		print localSHA
+    # get SHA of current master
+    cmd = "git rev-parse --verify refs/heads/master"
+    if not SUPPRESSOUTPUT:
+        print cmd
+    currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    localSHA = currP.stdout.readline().strip()
+    if not SUPPRESSOUTPUT:
+        print localSHA
 
-	# get SHA of origin master
-	cmd = "git rev-parse --verify refs/remotes/origin/master"
-	if not SUPPRESSOUTPUT:
-		print cmd
-	currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-	remoteSHA = currP.stdout.readline().strip()
-	if not SUPPRESSOUTPUT:
-		print remoteSHA
+    # get SHA of origin master
+    cmd = "git rev-parse --verify refs/remotes/origin/master"
+    if not SUPPRESSOUTPUT:
+        print cmd
+    currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    remoteSHA = currP.stdout.readline().strip()
+    if not SUPPRESSOUTPUT:
+        print remoteSHA
 
-	return localSHA == remoteSHA
+    return localSHA == remoteSHA
 
 
 if __name__ == '__main__':
-	if len(sys.argv) > 1:
-		check = sys.argv[1].lower()
-		valid = ["--suppress", "-q", '--quiet', '-s']
-		if check in valid:
-			SUPPRESSOUTPUT = True
+    if len(sys.argv) > 1:
+        check = sys.argv[1].lower()
+        valid = ["--suppress", "-q", '--quiet', '-s']
+        if check in valid:
+            SUPPRESSOUTPUT = True
 
-	# Some commands are reliant on the current working directory being
-	# the same as the location of this script.
-	if not SUPPRESSOUTPUT:
-		print "Changing to: " + currDirPath
-	os.chdir(currDirPath)
+    # Some commands are reliant on the current working directory being
+    # the same as the location of this script.
+    if not SUPPRESSOUTPUT:
+        print "Changing to: " + currDirPath
+    os.chdir(currDirPath)
 
-	if not checkMasterUpToDate():
-		print "We require the master branch to be up to date before publishing docs to gh-pages"
-		sys.exit(1)
+    if not checkMasterUpToDate():
+        print "We require the master branch to be up to date before publishing docs to gh-pages"
+        sys.exit(1)
 
-	try:
-		printAndCall("git checkout --orphan gh-pages")
-		printAndCall("git rm -rf --cached ../.")
+    try:
+        printAndCall("git checkout --orphan gh-pages")
+        printAndCall("git rm -rf --cached ../.")
 
-		printAndCall("make publish")
+        printAndCall("make publish")
 
-		printAndCall("git add ../.gitignore")
-		printAndCall("git add ../.nojekyll")
-		printAndCall("git add ../*.html")
-		printAndCall("git add ../*.js")
-		printAndCall("git add ../_static/")
-		printAndCall("git add ../_sources")
-		printAndCall("git commit -m 'Publish html documentation for UML to gh-pages'")
+        printAndCall("git add ../.gitignore")
+        printAndCall("git add ../.nojekyll")
+        printAndCall("git add ../*.html")
+        printAndCall("git add ../*.js")
+        printAndCall("git add ../_static/")
+        printAndCall("git add ../_sources")
+        printAndCall("git commit -m 'Publish html documentation for UML to gh-pages'")
 
-		printAndCall("git push origin HEAD --force")
+        printAndCall("git push origin HEAD --force")
 
-	finally:
-		printAndCall("make clean")	
-		printAndCall("git checkout master --force")
-		# add conditional to check if gh-pages exists? (if aborted before commit it won't)
-		printAndCall("git branch -D gh-pages")
+    finally:
+        printAndCall("make clean")
+        printAndCall("git checkout master --force")
+        # add conditional to check if gh-pages exists? (if aborted before commit it won't)
+        printAndCall("git branch -D gh-pages")
 
-	if not checkMasterUpToDate():
-		msg = "During the publishing process, remote master was updated. The published docs "
-		msg += "are therefore no longer current."
-		sys.exit(2)
+    if not checkMasterUpToDate():
+        msg = "During the publishing process, remote master was updated. The published docs "
+        msg += "are therefore no longer current."
+        sys.exit(2)
 
-	print "Successfully published"
+    print "Successfully published"
 
 # EOF marker

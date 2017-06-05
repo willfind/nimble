@@ -5,6 +5,7 @@ current UML session (ie ones whose underlying packages are missing).
 
 """
 
+
 def test_runTestsSelectionLogic():
-	""" runTests incorrectly selecting tests for uncallable interfaces """
-	assert False
+    """ runTests incorrectly selecting tests for uncallable interfaces """
+    assert False

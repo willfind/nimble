@@ -32,1597 +32,1609 @@ from UML.randomness import pythonRandom
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
 preserveRPath = os.path.relpath(preserveAPath)
-preservePair = (preserveAPath,preserveRPath)
+preservePair = (preserveAPath, preserveRPath)
+
 
 def calleeConstructor(data, constructor):
-	if constructor is None:
-		return pythonRandom.random()
-	else:
-		return constructor(data)
+    if constructor is None:
+        return pythonRandom.random()
+    else:
+        return constructor(data)
 
 
 def back_unary_pfname_preservations(callerCon, op):
-	""" Test that point / feature names are preserved when calling a unary op """
-	data = [[1,1,1], [1,1,1], [1,1,1]]
-	pnames = ['p1', 'p2', 'p3']
-	fnames = ['f1', 'f2', 'f3']
+    """ Test that point / feature names are preserved when calling a unary op """
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+    pnames = ['p1', 'p2', 'p3']
+    fnames = ['f1', 'f2', 'f3']
 
-	caller = callerCon(data, pnames, fnames)
-	toCall = getattr(caller, op)
-	ret = toCall()
+    caller = callerCon(data, pnames, fnames)
+    toCall = getattr(caller, op)
+    ret = toCall()
 
-	assert ret.getPointNames() == pnames
-	assert ret.getFeatureNames() == fnames
+    assert ret.getPointNames() == pnames
+    assert ret.getFeatureNames() == fnames
 
-	# changing the returned value, in case the caller is read-only.
-	# We confirm the separation of the name recording either way.
-	ret.setPointName('p1', 'p0')
+    # changing the returned value, in case the caller is read-only.
+    # We confirm the separation of the name recording either way.
+    ret.setPointName('p1', 'p0')
 
-	assert 'p1' in caller.getPointNames()
-	assert 'p0' not in caller.getPointNames()
-	assert 'p0' in ret.getPointNames()
-	assert 'p1' not in ret.getPointNames()
+    assert 'p1' in caller.getPointNames()
+    assert 'p0' not in caller.getPointNames()
+    assert 'p0' in ret.getPointNames()
+    assert 'p1' not in ret.getPointNames()
+
 
 def back_unary_NamePath_preservations(callerCon, op):
-	""" Test that object names and pathes are preserved when calling a unary op """
-	data = [[1,1,1], [1,1,1], [1,1,1]]
+    """ Test that object names and pathes are preserved when calling a unary op """
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
-	caller = callerCon(data, name=preserveName, path=preservePair)
+    caller = callerCon(data, name=preserveName, path=preservePair)
 
-	toCall = getattr(caller, op)
-	ret = toCall()
+    toCall = getattr(caller, op)
+    ret = toCall()
 
-	assert ret.name != preserveName
-	assert ret.nameIsDefault()
-	assert caller.name == preserveName
-	assert ret.absolutePath == preserveAPath
-	assert caller.absolutePath == preserveAPath
-	assert ret.path == preserveAPath
-	assert caller.path == preserveAPath
-	assert ret.relativePath == preserveRPath
-	assert caller.relativePath == preserveRPath
+    assert ret.name != preserveName
+    assert ret.nameIsDefault()
+    assert caller.name == preserveName
+    assert ret.absolutePath == preserveAPath
+    assert caller.absolutePath == preserveAPath
+    assert ret.path == preserveAPath
+    assert caller.path == preserveAPath
+    assert ret.relativePath == preserveRPath
+    assert caller.relativePath == preserveRPath
+
 
 def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
-	""" Test that p/f names are preserved when calling a binary scalar op """
-	data = [[1,1,1], [1,1,1], [1,1,1]]
-	pnames = ['p1', 'p2', 'p3']
-	fnames = ['f1', 'f2', 'f3']
+    """ Test that p/f names are preserved when calling a binary scalar op """
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+    pnames = ['p1', 'p2', 'p3']
+    fnames = ['f1', 'f2', 'f3']
 
-	for num in [-2, 0, 1, 4]:
-		try:
-			caller = callerCon(data, pnames, fnames)
-			toCall = getattr(caller, op)
-			ret = toCall(num)
+    for num in [-2, 0, 1, 4]:
+        try:
+            caller = callerCon(data, pnames, fnames)
+            toCall = getattr(caller, op)
+            ret = toCall(num)
 
-			assert ret.getPointNames() == pnames
-			assert ret.getFeatureNames() == fnames
+            assert ret.getPointNames() == pnames
+            assert ret.getFeatureNames() == fnames
 
-			caller.setPointName('p1', 'p0')
-			if inplace:
-				assert 'p0' in ret.getPointNames()
-				assert 'p1' not in ret.getPointNames()
-			else:
-				assert 'p0' not in ret.getPointNames()
-				assert 'p1' in ret.getPointNames()
-			assert 'p0' in caller.getPointNames()
-			assert 'p1' not in caller.getPointNames()
-		except AssertionError:
-			einfo = sys.exc_info()
-			raise einfo[1], None, einfo[2]
-#		except ArgumentException:
-#			einfo = sys.exc_info()
-#			raise einfo[1], None, einfo[2]
-		except:
-			pass
+            caller.setPointName('p1', 'p0')
+            if inplace:
+                assert 'p0' in ret.getPointNames()
+                assert 'p1' not in ret.getPointNames()
+            else:
+                assert 'p0' not in ret.getPointNames()
+                assert 'p1' in ret.getPointNames()
+            assert 'p0' in caller.getPointNames()
+            assert 'p1' not in caller.getPointNames()
+        except AssertionError:
+            einfo = sys.exc_info()
+            raise einfo[1], None, einfo[2]
+        #		except ArgumentException:
+        #			einfo = sys.exc_info()
+        #			raise einfo[1], None, einfo[2]
+        except:
+            pass
+
 
 def back_binaryscalar_NamePath_preservations(callerCon, op):
-	data = [[1,1,1], [1,1,1], [1,1,1]]
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
-	caller = callerCon(data, name=preserveName, path=preservePair)
+    caller = callerCon(data, name=preserveName, path=preservePair)
 
-	toCall = getattr(caller, op)
-	ret = toCall(1)
+    toCall = getattr(caller, op)
+    ret = toCall(1)
 
-	if op.startswith('__i'):
-		assert ret.name == preserveName
-	else:
-		assert ret.name != preserveName
-		assert ret.nameIsDefault()
-	assert ret.absolutePath == preserveAPath
-	assert ret.path == preserveAPath
-	assert ret.relativePath == preserveRPath
+    if op.startswith('__i'):
+        assert ret.name == preserveName
+    else:
+        assert ret.name != preserveName
+        assert ret.nameIsDefault()
+    assert ret.absolutePath == preserveAPath
+    assert ret.path == preserveAPath
+    assert ret.relativePath == preserveRPath
 
-	assert caller.name == preserveName
-	assert caller.absolutePath == preserveAPath
-	assert caller.path == preserveAPath
-	assert caller.relativePath == preserveRPath
+    assert caller.name == preserveName
+    assert caller.absolutePath == preserveAPath
+    assert caller.path == preserveAPath
+    assert caller.relativePath == preserveRPath
 
 
 def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
-	""" Test that p/f names are preserved when calling a binary element wise op """
-	data = [[1,1,1], [1,1,1], [1,1,1]]
-	pnames = ['p1', 'p2', 'p3']
-	fnames = ['f1', 'f2', 'f3']
-	
-	otherRaw = [[1,1,1], [1,1,1], [1,1,1]]
+    """ Test that p/f names are preserved when calling a binary element wise op """
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+    pnames = ['p1', 'p2', 'p3']
+    fnames = ['f1', 'f2', 'f3']
 
-	# names not the same
-	caller = callerCon(data, pnames, fnames)
-	opnames = pnames
-	ofnames = {'f0':0, 'f1':1, 'f2':2}
-	other = callerCon(otherRaw, opnames, ofnames)
-	try:
-		toCall = getattr(caller, op)
-		ret = toCall(other)
-		if ret != NotImplemented:
-			assert False
-	except ArgumentException:
-		pass
-	# if it isn't the exception we expect, pass it on
-	except:
-		einfo = sys.exc_info()
-		raise einfo[1], None, einfo[2]
+    otherRaw = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
-	# names interwoven
-	other = callerCon(otherRaw, pnames, False)
-	caller = callerCon(data, False, fnames)
-	toCall = getattr(caller, op)
-	ret = toCall(other)
+    # names not the same
+    caller = callerCon(data, pnames, fnames)
+    opnames = pnames
+    ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    try:
+        toCall = getattr(caller, op)
+        ret = toCall(other)
+        if ret != NotImplemented:
+            assert False
+    except ArgumentException:
+        pass
+    # if it isn't the exception we expect, pass it on
+    except:
+        einfo = sys.exc_info()
+        raise einfo[1], None, einfo[2]
 
-	if ret != NotImplemented:
-		assert ret.getPointNames() == pnames
-		assert ret.getFeatureNames() == fnames
+    # names interwoven
+    other = callerCon(otherRaw, pnames, False)
+    caller = callerCon(data, False, fnames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
 
-	# both names same
-	caller = callerCon(data, pnames, fnames)
-	other = callerCon(otherRaw, pnames, fnames)
-	toCall = getattr(caller, op)
-	ret = toCall(other)
+    if ret != NotImplemented:
+        assert ret.getPointNames() == pnames
+        assert ret.getFeatureNames() == fnames
 
-	if ret != NotImplemented:
-		assert ret.getPointNames() == pnames
-		assert ret.getFeatureNames() == fnames
+    # both names same
+    caller = callerCon(data, pnames, fnames)
+    other = callerCon(otherRaw, pnames, fnames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
 
-		if inplace:
-			caller.setPointName('p1', 'p0')
-			assert 'p0' in ret.getPointNames()
-			assert 'p1' not in ret.getPointNames()
-			assert 'p0' in caller.getPointNames()
-			assert 'p1' not in caller.getPointNames()
-		else:
-			ret.setPointName('p1', 'p0')
-			assert 'p0' not in caller.getPointNames()
-			assert 'p1' in caller.getPointNames()
-			assert 'p0' in ret.getPointNames()
-			assert 'p1' not in ret.getPointNames()
+    if ret != NotImplemented:
+        assert ret.getPointNames() == pnames
+        assert ret.getFeatureNames() == fnames
+
+        if inplace:
+            caller.setPointName('p1', 'p0')
+            assert 'p0' in ret.getPointNames()
+            assert 'p1' not in ret.getPointNames()
+            assert 'p0' in caller.getPointNames()
+            assert 'p1' not in caller.getPointNames()
+        else:
+            ret.setPointName('p1', 'p0')
+            assert 'p0' not in caller.getPointNames()
+            assert 'p1' in caller.getPointNames()
+            assert 'p0' in ret.getPointNames()
+            assert 'p1' not in ret.getPointNames()
 
 
 def back_binaryelementwise_NamePath_preservations(callerCon, op, inplace):
-	data = [[1,1,1], [1,1,1], [1,1,1]]
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
-	preserveNameOther = preserveName + "Other"
-	preserveAPathOther = preserveAPath + "Other"
-	preserveRPathOther = preserveRPath + "Other"
-	preservePairOther = (preserveAPathOther, preserveRPathOther)
+    preserveNameOther = preserveName + "Other"
+    preserveAPathOther = preserveAPath + "Other"
+    preserveRPathOther = preserveRPath + "Other"
+    preservePairOther = (preserveAPathOther, preserveRPathOther)
 
-	### emptry caller, full other ###
-	caller = callerCon(data)
-	other = callerCon(data, name=preserveNameOther, path=preservePairOther)
+    ### emptry caller, full other ###
+    caller = callerCon(data)
+    other = callerCon(data, name=preserveNameOther, path=preservePairOther)
 
-	assert caller.nameIsDefault()
-	assert caller.absolutePath is None
-	assert caller.relativePath is None
+    assert caller.nameIsDefault()
+    assert caller.absolutePath is None
+    assert caller.relativePath is None
 
-	toCall = getattr(caller, op)
-	ret = toCall(other)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
 
-	if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
-		raise ValueError("Unexpected None return")
+    if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
+        raise ValueError("Unexpected None return")
 
-	# name should be default, path should be pulled from other
-	if ret is not None and ret != NotImplemented:
-		assert ret.name != preserveNameOther
-		assert ret.nameIsDefault()
-		assert ret.absolutePath == preserveAPathOther
-		assert ret.path == preserveAPathOther
-		assert ret.relativePath == preserveRPathOther
+    # name should be default, path should be pulled from other
+    if ret is not None and ret != NotImplemented:
+        assert ret.name != preserveNameOther
+        assert ret.nameIsDefault()
+        assert ret.absolutePath == preserveAPathOther
+        assert ret.path == preserveAPathOther
+        assert ret.relativePath == preserveRPathOther
 
-	# if in place, ret == caller. if not, then values should be unchanged
-	if not inplace:
-		assert caller.nameIsDefault()
-		assert caller.absolutePath is None
-		assert caller.path is None
-		assert caller.relativePath is None
+    # if in place, ret == caller. if not, then values should be unchanged
+    if not inplace:
+        assert caller.nameIsDefault()
+        assert caller.absolutePath is None
+        assert caller.path is None
+        assert caller.relativePath is None
 
-	# confirm that other is unchanged
-	assert other.name == preserveNameOther
-	assert other.absolutePath == preserveAPathOther
-	assert other.path == preserveAPathOther
-	assert other.relativePath == preserveRPathOther
+    # confirm that other is unchanged
+    assert other.name == preserveNameOther
+    assert other.absolutePath == preserveAPathOther
+    assert other.path == preserveAPathOther
+    assert other.relativePath == preserveRPathOther
 
-	### full caller, empty other ###
-	caller = callerCon(data, name=preserveName, path=preservePair)
-	other = callerCon(data)
+    ### full caller, empty other ###
+    caller = callerCon(data, name=preserveName, path=preservePair)
+    other = callerCon(data)
 
-	toCall = getattr(caller, op)
-	ret = toCall(other)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
 
-	if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
-		raise ValueError("Unexpected None return")
+    if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
+        raise ValueError("Unexpected None return")
 
-	# name should be default, path should be pulled from caller
-	if ret is not None and ret != NotImplemented:
-		# exception: if we are in place, then we do keep the name
-		if inplace:
-			assert ret.name == preserveName
-		else:
-			assert ret.name != preserveName
-			assert ret.nameIsDefault()
-	
-		assert ret.absolutePath == preserveAPath
-		assert ret.path == preserveAPath
-		assert ret.relativePath == preserveRPath
+    # name should be default, path should be pulled from caller
+    if ret is not None and ret != NotImplemented:
+        # exception: if we are in place, then we do keep the name
+        if inplace:
+            assert ret.name == preserveName
+        else:
+            assert ret.name != preserveName
+            assert ret.nameIsDefault()
 
-	# if in place, ret == caller. if not, then values should be unchanged
-	if not inplace:
-		assert caller.name == preserveName
-		assert caller.absolutePath == preserveAPath
-		assert caller.path == preserveAPath
-		assert caller.relativePath == preserveRPath
+        assert ret.absolutePath == preserveAPath
+        assert ret.path == preserveAPath
+        assert ret.relativePath == preserveRPath
 
-	# confirm that othe remains unchanged
-	assert other.nameIsDefault()
-	assert other.absolutePath is None
-	assert other.path is None
-	assert other.relativePath is None
+    # if in place, ret == caller. if not, then values should be unchanged
+    if not inplace:
+        assert caller.name == preserveName
+        assert caller.absolutePath == preserveAPath
+        assert caller.path == preserveAPath
+        assert caller.relativePath == preserveRPath
 
-	### full caller, full other ###
-	caller = callerCon(data, name=preserveName, path=preservePair)
-	other = callerCon(data, name=preserveNameOther, path=preservePairOther)
+    # confirm that othe remains unchanged
+    assert other.nameIsDefault()
+    assert other.absolutePath is None
+    assert other.path is None
+    assert other.relativePath is None
 
-	toCall = getattr(caller, op)
-	ret = toCall(other)
+    ### full caller, full other ###
+    caller = callerCon(data, name=preserveName, path=preservePair)
+    other = callerCon(data, name=preserveNameOther, path=preservePairOther)
 
-	if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
-		raise ValueError("Unexpected None return")
+    toCall = getattr(caller, op)
+    ret = toCall(other)
 
-	# name should be default, path should be pulled from caller
-	if ret is not None and ret != NotImplemented:
-		# exception: if we are in place, we keep the name from the caller
-		# but the paths still obliterate each other
-		if inplace:
-			assert ret.name == preserveName
-#			assert ret.absolutePath == "TestAbsPathOther"
-#			assert ret.path == "TestAbsPathOther"
-#			assert ret.relativePath == "TestRelPathOther"
-		else:
-			assert ret.nameIsDefault()
-		assert ret.absolutePath is None
-		assert ret.path is None
-		assert ret.relativePath is None
+    if ret is None and op not in ['elementwiseMultiply', 'elementwisePower']:
+        raise ValueError("Unexpected None return")
 
-	# if in place, ret == caller. if not, then values should be unchanged
-	if not inplace:
-		assert caller.name == preserveName
-		assert caller.absolutePath == preserveAPath
-		assert caller.path == preserveAPath
-		assert caller.relativePath == preserveRPath
+    # name should be default, path should be pulled from caller
+    if ret is not None and ret != NotImplemented:
+        # exception: if we are in place, we keep the name from the caller
+        # but the paths still obliterate each other
+        if inplace:
+            assert ret.name == preserveName
+        #			assert ret.absolutePath == "TestAbsPathOther"
+        #			assert ret.path == "TestAbsPathOther"
+        #			assert ret.relativePath == "TestRelPathOther"
+        else:
+            assert ret.nameIsDefault()
+        assert ret.absolutePath is None
+        assert ret.path is None
+        assert ret.relativePath is None
 
-	# confirm that other remains unchanged
-	assert other.name == preserveNameOther
-	assert other.absolutePath == preserveAPathOther
-	assert other.path == preserveAPathOther
-	assert other.relativePath == preserveRPathOther
+    # if in place, ret == caller. if not, then values should be unchanged
+    if not inplace:
+        assert caller.name == preserveName
+        assert caller.absolutePath == preserveAPath
+        assert caller.path == preserveAPath
+        assert caller.relativePath == preserveRPath
+
+    # confirm that other remains unchanged
+    assert other.name == preserveNameOther
+    assert other.absolutePath == preserveAPathOther
+    assert other.path == preserveAPathOther
+    assert other.relativePath == preserveRPathOther
 
 
 def back_matrixmul_pfname_preservations(callerCon, op, inplace):
-	""" Test that p/f names are preserved when calling a binary element wise op """
-	data = [[1,1,1], [1,1,1], [1,1,1]]
-	pnames = ['p1', 'p2', 'p3']
-	fnames = ['f1', 'f2', 'f3']
-	
-	# [p x f1] times [f2 x p] where f1 != f2
-	caller = callerCon(data, pnames, fnames)
-	ofnames = {'f0':0, 'f1':1, 'f2':2}
-	other = callerCon(data, ofnames, pnames)
-	try:
-		toCall = getattr(caller, op)
-		ret = toCall(other)
-		if ret != NotImplemented:
-			assert False
-	except ArgumentException:
-		pass
-	# if it isn't the exception we expect, pass it on
-	except:
-		einfo = sys.exc_info()
-		raise einfo[1], None, einfo[2]
+    """ Test that p/f names are preserved when calling a binary element wise op """
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+    pnames = ['p1', 'p2', 'p3']
+    fnames = ['f1', 'f2', 'f3']
 
-	# names interwoven
-	interPnames = ['f1', 'f2', None]
-	caller = callerCon(data, pnames, fnames)
-	other = callerCon(data, interPnames, fnames)
-	toCall = getattr(caller, op)
-	ret = toCall(other)
+    # [p x f1] times [f2 x p] where f1 != f2
+    caller = callerCon(data, pnames, fnames)
+    ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
+    other = callerCon(data, ofnames, pnames)
+    try:
+        toCall = getattr(caller, op)
+        ret = toCall(other)
+        if ret != NotImplemented:
+            assert False
+    except ArgumentException:
+        pass
+    # if it isn't the exception we expect, pass it on
+    except:
+        einfo = sys.exc_info()
+        raise einfo[1], None, einfo[2]
 
-	if ret != NotImplemented:
-		assert ret.getPointNames() == pnames
-		assert ret.getFeatureNames() == fnames
+    # names interwoven
+    interPnames = ['f1', 'f2', None]
+    caller = callerCon(data, pnames, fnames)
+    other = callerCon(data, interPnames, fnames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
 
-	# both names same
-	caller = callerCon(data, pnames, pnames)
-	other = callerCon(data, pnames, fnames)
-	toCall = getattr(caller, op)
-	ret = toCall(other)
+    if ret != NotImplemented:
+        assert ret.getPointNames() == pnames
+        assert ret.getFeatureNames() == fnames
 
-	if ret != NotImplemented:
-		assert ret.getPointNames() == pnames
-		assert ret.getFeatureNames() == fnames
+    # both names same
+    caller = callerCon(data, pnames, pnames)
+    other = callerCon(data, pnames, fnames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
 
-		# check name seperation between caller and returned object
-		ret.setPointName('p1', 'p0')
-		if inplace:
-			assert 'p0' in caller.getPointNames()
-			assert 'p1' not in caller.getPointNames()
-		else:
-			assert 'p0' not in caller.getPointNames()
-			assert 'p1' in caller.getPointNames()
-		assert 'p0' in ret.getPointNames()
-		assert 'p1' not in ret.getPointNames()
+    if ret != NotImplemented:
+        assert ret.getPointNames() == pnames
+        assert ret.getFeatureNames() == fnames
+
+        # check name seperation between caller and returned object
+        ret.setPointName('p1', 'p0')
+        if inplace:
+            assert 'p0' in caller.getPointNames()
+            assert 'p1' not in caller.getPointNames()
+        else:
+            assert 'p0' not in caller.getPointNames()
+            assert 'p1' in caller.getPointNames()
+        assert 'p0' in ret.getPointNames()
+        assert 'p1' not in ret.getPointNames()
+
 
 def back_otherObjectExceptions(callerCon, op):
-	""" Test operation raises exception when param is not a UML data object """
-	data = [[1,2,3], [4,5,6], [7,8,9]]
-	caller = callerCon(data)
-	toCall = getattr(caller, op)
-	toCall({1:1, 2:2, 3:'three'})
+    """ Test operation raises exception when param is not a UML data object """
+    data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    caller = callerCon(data)
+    toCall = getattr(caller, op)
+    toCall({1: 1, 2: 2, 3: 'three'})
 
 
 def back_selfNotNumericException(callerCon, calleeCon, op):
-	""" Test operation raises exception if self has non numeric data """
-	data1 = [['why','2','3'], ['4','5','6'], ['7','8','9']]
-	data2 = [[1,2,3], [4,5,6], [7,8,9]]
-	try:
-		caller = callerCon(data1)
-		callee = calleeConstructor(data2, calleeCon)
-	except:
-		raise ArgumentException("Data type doesn't support non numeric data")
-	toCall = getattr(caller, op)
-	toCall(callee)
+    """ Test operation raises exception if self has non numeric data """
+    data1 = [['why', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
+    data2 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    try:
+        caller = callerCon(data1)
+        callee = calleeConstructor(data2, calleeCon)
+    except:
+        raise ArgumentException("Data type doesn't support non numeric data")
+    toCall = getattr(caller, op)
+    toCall(callee)
+
 
 def back_otherNotNumericException(callerCon, calleeCon, op):
-	""" Test elementwiseMultiply raises exception if param object has non numeric data """
-	data1 = [[1,2,3], [4,5,6], [7,8,9]]
-	data2 = [['one','2','3'], ['4','5','6'], ['7','8','9']]
-	caller = callerCon(data1)
-	callee = calleeConstructor(data2, UML.data.List)  # need to use UML.data.List for string valued element
+    """ Test elementwiseMultiply raises exception if param object has non numeric data """
+    data1 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    data2 = [['one', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
+    caller = callerCon(data1)
+    callee = calleeConstructor(data2, UML.data.List)  # need to use UML.data.List for string valued element
 
-	toCall = getattr(caller, op)
-	toCall(callee)
+    toCall = getattr(caller, op)
+    toCall(callee)
+
 
 def back_pShapeException(callerCon, calleeCon, op):
-	""" Test operation raises exception the shapes of the object don't fit correctly """
-	data1 = [[1,2,6], [4,5,3], [7,8,6]]
-	data2 = [[1,2,3], [4,5,6], ]
-	caller = callerCon(data1)
-	callee = calleeConstructor(data2, calleeCon)
+    """ Test operation raises exception the shapes of the object don't fit correctly """
+    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
+    data2 = [[1, 2, 3], [4, 5, 6], ]
+    caller = callerCon(data1)
+    callee = calleeConstructor(data2, calleeCon)
 
-	toCall = getattr(caller, op)
-	toCall(callee)
+    toCall = getattr(caller, op)
+    toCall(callee)
+
 
 def back_fShapeException(callerCon, calleeCon, op):
-	""" Test operation raises exception the shapes of the object don't fit correctly """
-	data1 = [[1,2], [4,5], [7,8]]
-	data2 = [[1,2,3], [4,5,6], [7,8,9]]
-	caller = callerCon(data1)
-	callee = calleeConstructor(data2, calleeCon)
+    """ Test operation raises exception the shapes of the object don't fit correctly """
+    data1 = [[1, 2], [4, 5], [7, 8]]
+    data2 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    caller = callerCon(data1)
+    callee = calleeConstructor(data2, calleeCon)
 
-	toCall = getattr(caller, op)
-	toCall(callee)
+    toCall = getattr(caller, op)
+    toCall(callee)
+
 
 def back_pEmptyException(callerCon, calleeCon, op):
-	""" Test operation raises exception for point empty data """
-	data = numpy.zeros((0,2))
-	caller = callerCon(data)
-	callee = calleeConstructor(data, calleeCon)
+    """ Test operation raises exception for point empty data """
+    data = numpy.zeros((0, 2))
+    caller = callerCon(data)
+    callee = calleeConstructor(data, calleeCon)
 
-	toCall = getattr(caller, op)
-	toCall(callee)
+    toCall = getattr(caller, op)
+    toCall(callee)
+
 
 def back_fEmptyException(callerCon, calleeCon, op):
-	""" Test operation raises exception for feature empty data """
-	data = [[],[]]
-	caller = callerCon(data)
-	callee = calleeConstructor(data, calleeCon)
+    """ Test operation raises exception for feature empty data """
+    data = [[], []]
+    caller = callerCon(data)
+    callee = calleeConstructor(data, calleeCon)
 
-	toCall = getattr(caller, op)
-	toCall(callee)
+    toCall = getattr(caller, op)
+    toCall(callee)
+
 
 def back_byZeroException(callerCon, calleeCon, op):
-	""" Test operation when other data contains zero """
-	data1 = [[1,2,6], [4,5,3], [7,8,6]]
-	data2 = [[1,2,3],[0,0,0],[6,7,8]]
-	caller = callerCon(data1)
-	callee = calleeConstructor(data2, calleeCon)
+    """ Test operation when other data contains zero """
+    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
+    data2 = [[1, 2, 3], [0, 0, 0], [6, 7, 8]]
+    caller = callerCon(data1)
+    callee = calleeConstructor(data2, calleeCon)
 
-	toCall = getattr(caller, op)
-	toCall(callee)
+    toCall = getattr(caller, op)
+    toCall(callee)
+
 
 def back_byInfException(callerCon, calleeCon, op):
-	""" Test operation when other data contains an infinity """
-	data1 = [[1,2,6], [4,5,3], [7,8,6]]
-	data2 = [[1,2,3],[5,numpy.Inf,10],[6,7,8]]
-	caller = callerCon(data1)
-	callee = calleeConstructor(data2, calleeCon)
+    """ Test operation when other data contains an infinity """
+    data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
+    data2 = [[1, 2, 3], [5, numpy.Inf, 10], [6, 7, 8]]
+    caller = callerCon(data1)
+    callee = calleeConstructor(data2, calleeCon)
 
-	toCall = getattr(caller, op)
-	toCall(callee)
+    toCall = getattr(caller, op)
+    toCall(callee)
+
 
 def makeAllData(constructor, rhsCons, n, sparsity):
-	randomlf = UML.createRandomData('Matrix', n, n, sparsity)
-	randomrf = UML.createRandomData('Matrix', n, n, sparsity)
-	lhsf = randomlf.copyAs("numpymatrix")
-	rhsf = randomrf.copyAs("numpymatrix")
-	lhsi = numpy.matrix(numpyRandom.random_integers(1,10,(n,n)), dtype=float)
-	rhsi = numpy.matrix(numpyRandom.random_integers(1,10,(n,n)), dtype=float)
-		
-	lhsfObj = constructor(lhsf)
-	lhsiObj = constructor(lhsi)
-	rhsfObj = None
-	rhsiObj = None
-	if rhsCons is not None:
-		rhsfObj = rhsCons(rhsf)
-		rhsiObj = rhsCons(rhsi)
+    randomlf = UML.createRandomData('Matrix', n, n, sparsity)
+    randomrf = UML.createRandomData('Matrix', n, n, sparsity)
+    lhsf = randomlf.copyAs("numpymatrix")
+    rhsf = randomrf.copyAs("numpymatrix")
+    lhsi = numpy.matrix(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
+    rhsi = numpy.matrix(numpyRandom.random_integers(1, 10, (n, n)), dtype=float)
 
-	return (lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj)
+    lhsfObj = constructor(lhsf)
+    lhsiObj = constructor(lhsi)
+    rhsfObj = None
+    rhsiObj = None
+    if rhsCons is not None:
+        rhsfObj = rhsCons(rhsf)
+        rhsiObj = rhsCons(rhsi)
+
+    return (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj)
 
 
 def back_autoVsNumpyObjCallee(constructor, npOp, UMLOp, UMLinplace, sparsity):
-	""" Test operation of automated data against numpy operations """
-	trials = 1
-	for t in range(trials):
-		n = pythonRandom.randint(1,15)
+    """ Test operation of automated data against numpy operations """
+    trials = 1
+    for t in range(trials):
+        n = pythonRandom.randint(1, 15)
 
-		datas = makeAllData(constructor, constructor, n, sparsity)	
-		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
+        datas = makeAllData(constructor, constructor, n, sparsity)
+        (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
 
-		resultf = npOp(lhsf, rhsf)
-		resulti = npOp(lhsi, rhsi)
-		resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
-		resiObj = getattr(lhsiObj, UMLOp)(rhsiObj)
+        resultf = npOp(lhsf, rhsf)
+        resulti = npOp(lhsi, rhsi)
+        resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
+        resiObj = getattr(lhsiObj, UMLOp)(rhsiObj)
 
-		expfObj = constructor(resultf)
-		expiObj = constructor(resulti)
+        expfObj = constructor(resultf)
+        expiObj = constructor(resulti)
 
-		if UMLinplace:
-			assert expfObj.isApproximatelyEqual(lhsfObj)
-			assert expiObj.isIdentical(lhsiObj)
-		else:
-			assert expfObj.isApproximatelyEqual(resfObj)
-			assert expiObj.isIdentical(resiObj)
+        if UMLinplace:
+            assert expfObj.isApproximatelyEqual(lhsfObj)
+            assert expiObj.isIdentical(lhsiObj)
+        else:
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
+
 
 def back_autoVsNumpyScalar(constructor, npOp, UMLOp, UMLinplace, sparsity):
-	""" Test operation of automated data with a scalar argument, against numpy operations """
-	lside = UMLOp.startswith('__r')
-	trials = 5
-	for t in range(trials):
-		n = pythonRandom.randint(1,10)
+    """ Test operation of automated data with a scalar argument, against numpy operations """
+    lside = UMLOp.startswith('__r')
+    trials = 5
+    for t in range(trials):
+        n = pythonRandom.randint(1, 10)
 
-		scalar = pythonRandom.randint(1,4)
+        scalar = pythonRandom.randint(1, 4)
 
-		datas = makeAllData(constructor, None, n, sparsity)	
-		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
+        datas = makeAllData(constructor, None, n, sparsity)
+        (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
 
-		if lside:
-			resultf = npOp(scalar, lhsf)
-			resulti = npOp(scalar, lhsi)
-			resfObj = getattr(lhsfObj, UMLOp)(scalar)
-			resiObj = getattr(lhsiObj, UMLOp)(scalar)
-		else:
-			resultf = npOp(lhsf, scalar)
-			resulti = npOp(lhsi, scalar)
-			resfObj = getattr(lhsfObj, UMLOp)(scalar)
-			resiObj = getattr(lhsiObj, UMLOp)(scalar)
+        if lside:
+            resultf = npOp(scalar, lhsf)
+            resulti = npOp(scalar, lhsi)
+            resfObj = getattr(lhsfObj, UMLOp)(scalar)
+            resiObj = getattr(lhsiObj, UMLOp)(scalar)
+        else:
+            resultf = npOp(lhsf, scalar)
+            resulti = npOp(lhsi, scalar)
+            resfObj = getattr(lhsfObj, UMLOp)(scalar)
+            resiObj = getattr(lhsiObj, UMLOp)(scalar)
 
-		expfObj = constructor(resultf)
-		expiObj = constructor(resulti)
+        expfObj = constructor(resultf)
+        expiObj = constructor(resulti)
 
-		if UMLinplace:
-			assert expfObj.isApproximatelyEqual(lhsfObj)
-			assert expiObj.isIdentical(lhsiObj)
-		else:
-			assert expfObj.isApproximatelyEqual(resfObj)
-			assert expiObj.isIdentical(resiObj)
+        if UMLinplace:
+            assert expfObj.isApproximatelyEqual(lhsfObj)
+            assert expiObj.isIdentical(lhsiObj)
+        else:
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
+
 
 def back_autoVsNumpyObjCalleeDiffTypes(constructor, npOp, UMLOp, UMLinplace, sparsity):
-	""" Test operation on handmade data with different types of data objects"""
-	makers = [getattr(UML.data, retType) for retType in UML.data.available]
+    """ Test operation on handmade data with different types of data objects"""
+    makers = [getattr(UML.data, retType) for retType in UML.data.available]
 
-	for i in range(len(makers)):
-		maker = makers[i]
-		n = pythonRandom.randint(1,10)
+    for i in range(len(makers)):
+        maker = makers[i]
+        n = pythonRandom.randint(1, 10)
 
-		datas = makeAllData(constructor, maker, n, sparsity)	
-		(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
+        datas = makeAllData(constructor, maker, n, sparsity)
+        (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
 
-		resultf = npOp(lhsf, rhsf)
-		resulti = npOp(lhsi, rhsi)
-		resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
-		resiObj = getattr(lhsiObj, UMLOp)(rhsiObj)
+        resultf = npOp(lhsf, rhsf)
+        resulti = npOp(lhsi, rhsi)
+        resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
+        resiObj = getattr(lhsiObj, UMLOp)(rhsiObj)
 
-		expfObj = constructor(resultf)
-		expiObj = constructor(resulti)
+        expfObj = constructor(resultf)
+        expiObj = constructor(resulti)
 
-		if UMLinplace:
-			assert expfObj.isApproximatelyEqual(lhsfObj)
-			assert expiObj.isIdentical(lhsiObj)
-		else:
-			assert expfObj.isApproximatelyEqual(resfObj)
-			assert expiObj.isIdentical(resiObj)
+        if UMLinplace:
+            assert expfObj.isApproximatelyEqual(lhsfObj)
+            assert expiObj.isIdentical(lhsiObj)
+        else:
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
 
-			if type(resfObj) != type(lhsfObj):
-				assert isinstance(resfObj, UML.data.Base)
-			if type(resiObj) != type(lhsiObj):
-				assert isinstance(resiObj, UML.data.Base)
+            if type(resfObj) != type(lhsfObj):
+                assert isinstance(resfObj, UML.data.Base)
+            if type(resiObj) != type(lhsiObj):
+                assert isinstance(resiObj, UML.data.Base)
+
 
 def wrapAndCall(toWrap, expected, *args):
-	try:
-		toWrap(*args)
-	except expected:
-		pass
-	except:
-		raise
+    try:
+        toWrap(*args)
+    except expected:
+        pass
+    except:
+        raise
+
 
 def run_full_backendDivMod(constructor, npEquiv, UMLOp, inplace, sparsity):
-	wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, UMLOp))
-	wrapAndCall(back_byInfException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_byInfException, ArgumentException, *(constructor, constructor, UMLOp))
 
-	run_full_backend(constructor, npEquiv, UMLOp, inplace, sparsity)
+    run_full_backend(constructor, npEquiv, UMLOp, inplace, sparsity)
+
 
 def run_full_backend(constructor, npEquiv, UMLOp, inplace, sparsity):
-	wrapAndCall(back_otherObjectExceptions, ArgumentException, *(constructor, UMLOp))
+    wrapAndCall(back_otherObjectExceptions, ArgumentException, *(constructor, UMLOp))
 
-	wrapAndCall(back_selfNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_selfNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
 
-	wrapAndCall(back_otherNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_otherNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
 
-	wrapAndCall(back_pShapeException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_pShapeException, ArgumentException, *(constructor, constructor, UMLOp))
 
-	wrapAndCall(back_fShapeException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_fShapeException, ArgumentException, *(constructor, constructor, UMLOp))
 
-	wrapAndCall(back_pEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_pEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
 
-	wrapAndCall(back_fEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_fEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
 
-	back_autoVsNumpyObjCallee(constructor, npEquiv, UMLOp, inplace, sparsity)
+    back_autoVsNumpyObjCallee(constructor, npEquiv, UMLOp, inplace, sparsity)
 
-	back_autoVsNumpyScalar(constructor, npEquiv, UMLOp, inplace, sparsity)
+    back_autoVsNumpyScalar(constructor, npEquiv, UMLOp, inplace, sparsity)
 
-	back_autoVsNumpyObjCalleeDiffTypes(constructor, npEquiv, UMLOp, inplace, sparsity)
+    back_autoVsNumpyObjCalleeDiffTypes(constructor, npEquiv, UMLOp, inplace, sparsity)
+
 
 def run_full_backendDivMod_rop(constructor, npEquiv, UMLOp, inplace, sparsity):
-	run_full_backend_rOp(constructor, npEquiv, UMLOp, inplace, sparsity)
+    run_full_backend_rOp(constructor, npEquiv, UMLOp, inplace, sparsity)
+
 
 def run_full_backend_rOp(constructor, npEquiv, UMLOp, inplace, sparsity):
-	wrapAndCall(back_otherObjectExceptions, ArgumentException, *(constructor, UMLOp))
+    wrapAndCall(back_otherObjectExceptions, ArgumentException, *(constructor, UMLOp))
 
-	wrapAndCall(back_selfNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_selfNotNumericException, ArgumentException, *(constructor, constructor, UMLOp))
 
-	wrapAndCall(back_pEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_pEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
 
-	wrapAndCall(back_fEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
+    wrapAndCall(back_fEmptyException, ImproperActionException, *(constructor, constructor, UMLOp))
 
-	back_autoVsNumpyScalar(constructor, npEquiv, UMLOp, inplace, sparsity)
+    back_autoVsNumpyScalar(constructor, npEquiv, UMLOp, inplace, sparsity)
 
 
 class NumericalDataSafe(DataTestObject):
+    ###########
+    # __mul__ #
+    ###########
+
+    @raises(ArgumentException)
+    def test_mul_selfNotNumericException(self):
+        """ Test __mul__ raises exception if self has non numeric data """
+        back_selfNotNumericException(self.constructor, self.constructor, '__mul__')
 
-	###########
-	# __mul__ #
-	###########
+    @raises(ArgumentException)
+    def test_mul_otherNotNumericException(self):
+        """ Test __mul__ raises exception if param object has non numeric data """
+        back_otherNotNumericException(self.constructor, self.constructor, '__mul__')
+
+    @raises(ArgumentException)
+    def test_mul_shapeException(self):
+        """ Test __mul__ raises exception the shapes of the object don't fit correctly """
+        data1 = [[1, 2], [4, 5], [7, 8]]
+        data2 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        caller = self.constructor(data1)
+        callee = self.constructor(data2)
+
+        caller * callee
 
-	@raises(ArgumentException)
-	def test_mul_selfNotNumericException(self):
-		""" Test __mul__ raises exception if self has non numeric data """
-		back_selfNotNumericException(self.constructor, self.constructor, '__mul__')
+    @raises(ImproperActionException)
+    def test_mul_pEmptyException(self):
+        """ Test __mul__ raises exception for point empty data """
+        data = []
+        fnames = ['one', 'two']
+        caller = self.constructor(data, featureNames=fnames)
+        callee = caller.copy()
+        callee.transpose()
 
-	@raises(ArgumentException)
-	def test_mul_otherNotNumericException(self):
-		""" Test __mul__ raises exception if param object has non numeric data """
-		back_otherNotNumericException(self.constructor, self.constructor, '__mul__')
+        caller * callee
 
-	@raises(ArgumentException)
-	def test_mul_shapeException(self):
-		""" Test __mul__ raises exception the shapes of the object don't fit correctly """
-		data1 = [[1,2], [4,5], [7,8]]
-		data2 = [[1,2,3], [4,5,6], [7,8,9]]
-		caller = self.constructor(data1)
-		callee = self.constructor(data2)
+    @raises(ImproperActionException)
+    def test_mul_fEmptyException(self):
+        """ Test __mul__ raises exception for feature empty data """
+        data = [[], []]
+        pnames = ['one', 'two']
+        caller = self.constructor(data, pointNames=pnames)
+        callee = caller.copy()
+        callee.transpose()
 
-		caller * callee
+        caller * callee
 
-	@raises(ImproperActionException)
-	def test_mul_pEmptyException(self):
-		""" Test __mul__ raises exception for point empty data """
-		data = []
-		fnames = ['one', 'two']
-		caller = self.constructor(data, featureNames=fnames)
-		callee = caller.copy()
-		callee.transpose()
+    def test_mul_autoObjs(self):
+        """ Test __mul__ against automated data """
+        back_autoVsNumpyObjCallee(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
-		caller * callee
+    def test_mul_autoScalar(self):
+        """ Test __mul__ of a scalar against automated data """
+        back_autoVsNumpyScalar(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
-	@raises(ImproperActionException)
-	def test_mul_fEmptyException(self):
-		""" Test __mul__ raises exception for feature empty data """
-		data = [[],[]]
-		pnames = ['one', 'two']
-		caller = self.constructor(data, pointNames=pnames)
-		callee = caller.copy()
-		callee.transpose()
+    def test_autoVsNumpyObjCalleeDiffTypes(self):
+        """ Test __mul__ against generated data with different UML types of objects """
+        back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
-		caller * callee
+    def test_mul_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __mul__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__mul__', False)
 
-	def test_mul_autoObjs(self):
-		""" Test __mul__ against automated data """
-		back_autoVsNumpyObjCallee(self.constructor, numpy.dot, '__mul__', False, 0.2)
+    def test_mul_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__mul__')
 
-	def test_mul_autoScalar(self):
-		""" Test __mul__ of a scalar against automated data """
-		back_autoVsNumpyScalar(self.constructor, numpy.dot, '__mul__', False, 0.2)
+    def test_mul_matrixmul_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __mul__ with obj arg"""
+        back_matrixmul_pfname_preservations(self.constructor, '__mul__', False)
 
-	def test_autoVsNumpyObjCalleeDiffTypes(self):
-		""" Test __mul__ against generated data with different UML types of objects """
-		back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
+    def test_mul_matrixmul_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__mul__', False)
 
-	def test_mul_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __mul__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__mul__', False)
 
-	def test_mul_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__mul__')
+    ############
+    # __rmul__ #
+    ############
 
-	def test_mul_matrixmul_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __mul__ with obj arg"""
-		back_matrixmul_pfname_preservations(self.constructor, '__mul__', False)
+    def test_rmul_autoScalar(self):
+        """ Test __rmul__ of a scalar against automated data """
+        back_autoVsNumpyScalar(self.constructor, numpy.multiply, '__rmul__', False, 0.2)
 
-	def test_mul_matrixmul_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__mul__', False)
+    def test_rmul_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rmul__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__rmul__', False)
 
+    def test_rmul_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__rmul__')
 
-	############
-	# __rmul__ #
-	############
+    def test_rmul_matrixmul_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rmul__ with obj arg"""
+        back_matrixmul_pfname_preservations(self.constructor, '__rmul__', False)
 
-	def test_rmul_autoScalar(self):
-		""" Test __rmul__ of a scalar against automated data """
-		back_autoVsNumpyScalar(self.constructor, numpy.multiply, '__rmul__', False, 0.2)
+    def test_rmul_matrixmul_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__rmul__', False)
 
-	def test_rmul_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __rmul__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__rmul__', False)
 
-	def test_rmul_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__rmul__')
+    ############
+    # __add__ #
+    ############
 
-	def test_rmul_matrixmul_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __rmul__ with obj arg"""
-		back_matrixmul_pfname_preservations(self.constructor, '__rmul__', False)
+    def test_add_fullSuite(self):
+        """ __add__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, numpy.add, '__add__', False, 0.2)
 
-	def test_rmul_matrixmul_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__rmul__', False)
+    def test_add_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __add__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__add__', False)
 
+    def test_add_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__add__')
 
-	############
-	# __add__ #
-	############
+    def test_add_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __add__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__add__', False)
 
-	def test_add_fullSuite(self):
-		""" __add__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backend(self.constructor, numpy.add, '__add__', False, 0.2)
+    def test_add_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__add__', False)
 
-	def test_add_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __add__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__add__', False)
+    ############
+    # __radd__ #
+    ############
 
-	def test_add_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__add__')
+    def test_radd_fullSuite(self):
+        """ __radd__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend_rOp(self.constructor, numpy.add, '__radd__', False, 0.2)
 
-	def test_add_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __add__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__add__', False)
+    def test_radd_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __radd__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__radd__', False)
 
-	def test_add_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__add__', False)
+    def test_radd_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__radd__')
 
-	############
-	# __radd__ #
-	############
+    def test_radd_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __radd__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__radd__', False)
 
-	def test_radd_fullSuite(self):
-		""" __radd__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backend_rOp(self.constructor, numpy.add, '__radd__', False, 0.2)
+    def test_radd_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__radd__', False)
 
-	def test_radd_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __radd__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__radd__', False)
 
-	def test_radd_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__radd__')
+    ############
+    # __sub__ #
+    ############
 
-	def test_radd_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __radd__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__radd__', False)
+    def test_sub_fullSuite(self):
+        """ __sub__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, numpy.subtract, '__sub__', False, 0.2)
 
-	def test_radd_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__radd__', False)
+    def test_sub_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __sub__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__sub__', False)
 
+    def test_sub_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__sub__')
 
-	############
-	# __sub__ #
-	############
+    def test_sub_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __sub__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__sub__', False)
 
-	def test_sub_fullSuite(self):
-		""" __sub__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backend(self.constructor, numpy.subtract, '__sub__', False, 0.2)
+    def test_sub_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__sub__', False)
 
-	def test_sub_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __sub__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__sub__', False)
 
-	def test_sub_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__sub__')
+    ############
+    # __rsub__ #
+    ############
 
-	def test_sub_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __sub__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__sub__', False)
+    def test_rsub_fullSuite(self):
+        """ __rsub__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend_rOp(self.constructor, numpy.subtract, '__rsub__', False, 0.2)
 
-	def test_sub_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__sub__', False)
+    def test_rsub_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rsub__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__rsub__', False)
 
+    def test_rsub_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__rsub__')
 
-	############
-	# __rsub__ #
-	############
+    def test_rsub_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __rsub__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__rsub__', False)
 
-	def test_rsub_fullSuite(self):
-		""" __rsub__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backend_rOp(self.constructor, numpy.subtract, '__rsub__', False, 0.2)
+    def test_rsub_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__rsub__', False)
 
-	def test_rsub_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __rsub__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__rsub__', False)
 
-	def test_rsub_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__rsub__')
+    ############
+    # __div__ #
+    ############
 
-	def test_rsub_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __rsub__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__rsub__', False)
+    def test_div_fullSuite(self):
+        """ __div__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, numpy.divide, '__div__', False, 0)
 
-	def test_rsub_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__rsub__', False)
+    def test_div_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __div__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__div__', False)
 
+    def test_div_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__div__')
 
+    def test_div_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __div__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__div__', False)
 
-	############
-	# __div__ #
-	############
+    def test_div_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__div__', False)
 
-	def test_div_fullSuite(self):
-		""" __div__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod(self.constructor, numpy.divide, '__div__', False, 0)
 
-	def test_div_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __div__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__div__', False)
+    ############
+    # __rdiv__ #
+    ############
 
-	def test_div_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__div__')
+    def test_rdiv_fullSuite(self):
+        """ __rdiv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod_rop(self.constructor, numpy.divide, '__rdiv__', False, 0)
 
-	def test_div_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __div__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__div__', False)
+    def test_rdiv_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rdiv__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__rdiv__', False)
 
-	def test_div_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__div__', False)
+    def test_rdiv_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__rdiv__')
 
+    def test_rdiv_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __rdiv__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__rdiv__', False)
 
-	############
-	# __rdiv__ #
-	############
+    def test_rdiv_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__rdiv__', False)
 
-	def test_rdiv_fullSuite(self):
-		""" __rdiv__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod_rop(self.constructor, numpy.divide, '__rdiv__', False, 0)
 
-	def test_rdiv_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __rdiv__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__rdiv__', False)
+    ###############
+    # __truediv__ #
+    ###############
 
-	def test_rdiv_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__rdiv__')
+    def test_truediv_fullSuite(self):
+        """ __truediv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, numpy.true_divide, '__truediv__', False, 0)
 
-	def test_rdiv_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __rdiv__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__rdiv__', False)
+    def test_truediv_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __truediv__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__truediv__', False)
 
-	def test_rdiv_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__rdiv__', False)
+    def test_truediv_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__truediv__')
 
+    def test_truediv_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __truediv__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__truediv__', False)
 
-	###############
-	# __truediv__ #
-	###############
+    def test_truediv_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__truediv__', False)
 
-	def test_truediv_fullSuite(self):
-		""" __truediv__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod(self.constructor, numpy.true_divide, '__truediv__', False, 0)
 
-	def test_truediv_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __truediv__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__truediv__', False)
+    ################
+    # __rtruediv__ #
+    ################
 
-	def test_truediv_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__truediv__')
+    def test_rtruediv_fullSuite(self):
+        """ __rtruediv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod_rop(self.constructor, numpy.true_divide, '__rtruediv__', False, 0)
 
-	def test_truediv_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __truediv__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__truediv__', False)
+    def test_rtruediv_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rtruediv__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__rtruediv__', False)
 
-	def test_truediv_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__truediv__', False)
+    def test_rtruediv_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__rtruediv__')
 
+    def test_rtruediv_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __rtruediv__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__rtruediv__', False)
 
-	################
-	# __rtruediv__ #
-	################
+    def test_rtruediv_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__rtruediv__', False)
 
-	def test_rtruediv_fullSuite(self):
-		""" __rtruediv__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod_rop(self.constructor, numpy.true_divide, '__rtruediv__', False, 0)
 
-	def test_rtruediv_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __rtruediv__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__rtruediv__', False)
+    ###############
+    # __floordiv__ #
+    ###############
 
-	def test_rtruediv_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__rtruediv__')
+    def test_floordiv_fullSuite(self):
+        """ __floordiv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, numpy.floor_divide, '__floordiv__', False, 0)
 
-	def test_rtruediv_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __rtruediv__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__rtruediv__', False)
+    def test_floordiv_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __floordiv__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__floordiv__', False)
 
-	def test_rtruediv_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__rtruediv__', False)
+    def test_floordiv_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__floordiv__')
 
+    def test_floordiv_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __floordiv__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__floordiv__', False)
 
-	###############
-	# __floordiv__ #
-	###############
+    def test_floordiv_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__floordiv__', False)
 
-	def test_floordiv_fullSuite(self):
-		""" __floordiv__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod(self.constructor, numpy.floor_divide, '__floordiv__', False, 0)
 
-	def test_floordiv_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __floordiv__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__floordiv__', False)
+    ################
+    # __rfloordiv__ #
+    ################
 
-	def test_floordiv_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__floordiv__')
+    def test_rfloordiv_fullSuite(self):
+        """ __rfloordiv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod_rop(self.constructor, numpy.floor_divide, '__rfloordiv__', False, 0)
 
-	def test_floordiv_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __floordiv__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__floordiv__', False)
+    def test_rfloordiv_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rfloordiv__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__rfloordiv__', False)
 
-	def test_floordiv_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__floordiv__', False)
+    def test_rfloordiv_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__rfloordiv__')
 
+    def test_rfloordiv_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __rfloordiv__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__rfloordiv__', False)
 
-	################
-	# __rfloordiv__ #
-	################
+    def test_rfloordiv_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__rfloordiv__', False)
 
-	def test_rfloordiv_fullSuite(self):
-		""" __rfloordiv__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod_rop(self.constructor, numpy.floor_divide, '__rfloordiv__', False, 0)
 
-	def test_rfloordiv_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __rfloordiv__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__rfloordiv__', False)
+    ###############
+    # __mod__ #
+    ###############
 
-	def test_rfloordiv_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__rfloordiv__')
+    def test_mod_fullSuite(self):
+        """ __mod__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, numpy.mod, '__mod__', False, 0)
 
-	def test_rfloordiv_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __rfloordiv__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__rfloordiv__', False)
+    def test_mod_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __mod__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__mod__', False)
 
-	def test_rfloordiv_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__rfloordiv__', False)
+    def test_mod_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__mod__')
 
+    def test_mod_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __mod__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__mod__', False)
 
-	###############
-	# __mod__ #
-	###############
+    def test_mod_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__mod__', False)
 
-	def test_mod_fullSuite(self):
-		""" __mod__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod(self.constructor, numpy.mod, '__mod__', False, 0)
 
-	def test_mod_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __mod__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__mod__', False)
+    ################
+    # __rmod__ #
+    ################
 
-	def test_mod_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__mod__')
+    def test_rmod_fullSuite(self):
+        """ __rmod__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod_rop(self.constructor, numpy.mod, '__rmod__', False, 0)
 
-	def test_mod_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __mod__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__mod__', False)
+    def test_rmod_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __rmod__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__rmod__', False)
 
-	def test_mod_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__mod__', False)
+    def test_rmod_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__rmod__')
 
+    def test_rmod_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __rmod__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__rmod__', False)
 
-	################
-	# __rmod__ #
-	################
+    def test_rmod_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__rmod__', False)
 
-	def test_rmod_fullSuite(self):
-		""" __rmod__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod_rop(self.constructor, numpy.mod, '__rmod__', False, 0)
 
-	def test_rmod_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __rmod__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__rmod__', False)
+    ###########
+    # __pow__ #
+    ###########
 
-	def test_rmod_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__rmod__')
+    def test_pow_exceptions(self):
+        """ __pow__ Run the full standardized suite of tests for a binary numeric op """
+        constructor = self.constructor
+        UMLOp = '__pow__'
+        inputs = (constructor, UMLOp)
+        wrapAndCall(back_otherObjectExceptions, ArgumentException, *inputs)
 
-	def test_rmod_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __rmod__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__rmod__', False)
+        inputs = (constructor, int, UMLOp)
+        wrapAndCall(back_selfNotNumericException, ArgumentException, *inputs)
 
-	def test_rmod_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__rmod__', False)
+        inputs = (constructor, constructor, UMLOp)
+        wrapAndCall(back_pEmptyException, ImproperActionException, *inputs)
 
+        inputs = (constructor, constructor, UMLOp)
+        wrapAndCall(back_fEmptyException, ImproperActionException, *inputs)
 
-	###########
-	# __pow__ #
-	###########
+    def test_pow_autoVsNumpyScalar(self):
+        """ Test __pow__ with automated data and a scalar argument, against numpy operations """
+        trials = 5
+        for t in range(trials):
+            n = pythonRandom.randint(1, 15)
+            scalar = pythonRandom.randint(0, 5)
 
-	def test_pow_exceptions(self):
-		""" __pow__ Run the full standardized suite of tests for a binary numeric op """
-		constructor = self.constructor
-		UMLOp = '__pow__'
-		inputs = (constructor, UMLOp)
-		wrapAndCall(back_otherObjectExceptions, ArgumentException, *inputs)
+            datas = makeAllData(self.constructor, None, n, .02)
+            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
 
-		inputs = (constructor, int, UMLOp)
-		wrapAndCall(back_selfNotNumericException, ArgumentException, *inputs)
+            resultf = lhsf ** scalar
+            resulti = lhsi ** scalar
+            resfObj = lhsfObj ** scalar
+            resiObj = lhsiObj ** scalar
 
-		inputs = (constructor, constructor, UMLOp)
-		wrapAndCall(back_pEmptyException, ImproperActionException, *inputs)
+            expfObj = self.constructor(resultf)
+            expiObj = self.constructor(resulti)
 
-		inputs = (constructor, constructor, UMLOp)
-		wrapAndCall(back_fEmptyException, ImproperActionException, *inputs)
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
 
-	def test_pow_autoVsNumpyScalar(self):
-		""" Test __pow__ with automated data and a scalar argument, against numpy operations """
-		trials = 5
-		for t in range(trials):
-			n = pythonRandom.randint(1,15)
-			scalar = pythonRandom.randint(0,5)
+    def test_pow_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __pow__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__pow__', False)
 
-			datas = makeAllData(self.constructor, None, n, .02)	
-			(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
+    def test_pow_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__pow__')
 
-			resultf = lhsf ** scalar
-			resulti = lhsi ** scalar
-			resfObj = lhsfObj ** scalar
-			resiObj = lhsiObj ** scalar
 
-			expfObj = self.constructor(resultf)
-			expiObj = self.constructor(resulti)
+    ###########
+    # __pos__ #
+    ###########
 
-			assert expfObj.isApproximatelyEqual(resfObj)
-			assert expiObj.isIdentical(resiObj)
+    def test_pos_DoesntCrash(self):
+        """ Test that __pos__ does nothing and doesn't crash """
+        data1 = [[1, 2], [4, 5], [7, 8]]
+        caller = self.constructor(data1)
 
-	def test_pow_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __pow__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__pow__', False)
+        ret1 = +caller
+        ret2 = caller.__pos__()
 
-	def test_pow_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__pow__')
+        assert caller.isIdentical(ret1)
+        assert caller.isIdentical(ret2)
 
+    def test_pos_unary_pfname_preservations(self):
+        """ Test that point / feature names are preserved when calling __pos__ """
+        back_unary_pfname_preservations(self.constructor, '__pos__')
 
-	###########
-	# __pos__ #
-	###########
 
-	def test_pos_DoesntCrash(self):
-		""" Test that __pos__ does nothing and doesn't crash """
-		data1 = [[1,2], [4,5], [7,8]]
-		caller = self.constructor(data1)
+    def test_pos_unary_NamePath_preservatinos(self):
+        back_unary_NamePath_preservations(self.constructor, '__pos__')
 
-		ret1 = +caller
-		ret2 = caller.__pos__()
+    ###########
+    # __neg__ #
+    ###########
 
-		assert caller.isIdentical(ret1)
-		assert caller.isIdentical(ret2)
+    def test_neg_simple(self):
+        """ Test that __neg__ works as expected on some simple data """
+        data1 = [[1, 2], [-4, -5], [7, -8], [0, 0]]
+        data2 = [[-1, -2], [4, 5], [-7, 8], [0, 0]]
+        caller = self.constructor(data1)
+        exp = self.constructor(data2)
 
-	def test_pos_unary_pfname_preservations(self):
-		""" Test that point / feature names are preserved when calling __pos__ """
-		back_unary_pfname_preservations(self.constructor, '__pos__')
+        ret1 = -caller
+        ret2 = caller.__neg__()
 
+        assert exp.isIdentical(ret1)
+        assert exp.isIdentical(ret2)
 
-	def test_pos_unary_NamePath_preservatinos(self):
-		back_unary_NamePath_preservations(self.constructor, '__pos__')
+    def test_neg_unary_name_preservations(self):
+        """ Test that point / feature names are preserved when calling __neg__ """
+        back_unary_pfname_preservations(self.constructor, '__neg__')
 
-	###########
-	# __neg__ #
-	###########
+    def test_neg_unary_NamePath_preservatinos(self):
+        back_unary_NamePath_preservations(self.constructor, '__neg__')
 
-	def test_neg_simple(self):
-		""" Test that __neg__ works as expected on some simple data """
-		data1 = [[1,2], [-4,-5], [7,-8], [0,0]]
-		data2 = [[-1,-2], [4,5], [-7,8], [0,0]]
-		caller = self.constructor(data1)
-		exp = self.constructor(data2)
 
-		ret1 = -caller
-		ret2 = caller.__neg__()
+    ###########
+    # __abs__ #
+    ###########
 
-		assert exp.isIdentical(ret1)
-		assert exp.isIdentical(ret2)
+    def test_abs_simple(self):
+        """ Test that __abs__ works as expected on some simple data """
+        data1 = [[1, 2], [-4, -5], [7, -8], [0, 0]]
+        data2 = [[1, 2], [4, 5], [7, 8], [0, 0]]
+        caller = self.constructor(data1)
+        exp = self.constructor(data2)
 
-	def test_neg_unary_name_preservations(self):
-		""" Test that point / feature names are preserved when calling __neg__ """
-		back_unary_pfname_preservations(self.constructor, '__neg__')
+        ret1 = abs(caller)
+        ret2 = caller.__abs__()
 
-	def test_neg_unary_NamePath_preservatinos(self):
-		back_unary_NamePath_preservations(self.constructor, '__neg__')
+        assert exp.isIdentical(ret1)
+        assert exp.isIdentical(ret2)
 
+    def test_abs_unary_name_preservations(self):
+        """ Test that point / feature names are preserved when calling __abs__ """
+        back_unary_pfname_preservations(self.constructor, '__abs__')
 
-	###########
-	# __abs__ #
-	###########
-
-	def test_abs_simple(self):
-		""" Test that __abs__ works as expected on some simple data """
-		data1 = [[1,2], [-4,-5], [7,-8], [0,0]]
-		data2 = [[1,2], [4,5], [7,8], [0,0]]
-		caller = self.constructor(data1)
-		exp = self.constructor(data2)
-
-		ret1 = abs(caller)
-		ret2 = caller.__abs__()
-
-		assert exp.isIdentical(ret1)
-		assert exp.isIdentical(ret2)
-
-	def test_abs_unary_name_preservations(self):
-		""" Test that point / feature names are preserved when calling __abs__ """
-		back_unary_pfname_preservations(self.constructor, '__abs__')
-
-	def test_abs_unary_NamePath_preservatinos(self):
-		back_unary_NamePath_preservations(self.constructor, '__abs__')
-
+    def test_abs_unary_NamePath_preservatinos(self):
+        back_unary_NamePath_preservations(self.constructor, '__abs__')
 
 
 class NumericalModifying(DataTestObject):
+    ####################
+    # elementwisePower #
+    ####################
+
+    @raises(ArgumentException)
+    def test_elementwisePower_otherObjectExceptions(self):
+        """ Test elementwisePower raises exception when param is not a UML data object """
+        back_otherObjectExceptions(self.constructor, 'elementwisePower')
+
+    @raises(ArgumentException)
+    def test_elementwisePower_selfNotNumericException(self):
+        """ Test elementwisePower raises exception if self has non numeric data """
+        back_selfNotNumericException(self.constructor, self.constructor, 'elementwisePower')
+
+    @raises(ArgumentException)
+    def test_elementwisePower_otherNotNumericException(self):
+        """ Test elementwisePower raises exception if param object has non numeric data """
+        back_otherNotNumericException(self.constructor, self.constructor, 'elementwisePower')
+
+    @raises(ArgumentException)
+    def test_elementwisePower_pShapeException(self):
+        """ Test elementwisePower raises exception the shapes of the object don't fit correctly """
+        back_pShapeException(self.constructor, self.constructor, 'elementwisePower')
+
+    @raises(ArgumentException)
+    def test_elementwisePower_fShapeException(self):
+        """ Test elementwisePower raises exception the shapes of the object don't fit correctly """
+        back_fShapeException(self.constructor, self.constructor, 'elementwisePower')
+
+    @raises(ImproperActionException)
+    def test_elementwisePower_pEmptyException(self):
+        """ Test elementwisePower raises exception for point empty data """
+        back_pEmptyException(self.constructor, self.constructor, 'elementwisePower')
+
+    @raises(ImproperActionException)
+    def test_elementwisePower_fEmptyException(self):
+        """ Test elementwisePower raises exception for feature empty data """
+        back_fEmptyException(self.constructor, self.constructor, 'elementwisePower')
+
+    def test_elementwisePower_handmade(self):
+        """ Test elementwisePower on handmade data """
+        data = [[1.0, 2], [4, 5], [7, 4]]
+        exponents = [[0, -1], [-.5, 2], [2, .5]]
+        exp1 = [[1, .5], [.5, 25], [49, 2]]
+        callerpnames = ['1', '2', '3']
+
+        calleepnames = ['I', 'dont', 'match']
+        calleefnames = ['one', 'two']
+
+        makers = [getattr(UML.data, retType) for retType in UML.data.available]
+
+        for maker in makers:
+            caller = self.constructor(data, pointNames=callerpnames)
+            exponentsObj = maker(exponents, pointNames=calleepnames, featureNames=calleefnames)
+            caller.elementwisePower(exponentsObj)
+
+            exp1Obj = self.constructor(exp1, pointNames=callerpnames)
+
+            assert exp1Obj.isIdentical(caller)
 
+    def test_elementwisePower_handmadeScalar(self):
+        """ Test elementwisePower on handmade data with scalar parameter"""
+        data = [[1.0, 2], [4, 5], [7, 4]]
+        exponent = 2
+        exp1 = [[1, 4], [16, 25], [49, 16]]
+        callerpnames = ['1', '2', '3']
 
-	####################
-	# elementwisePower #
-	####################
-
-	@raises(ArgumentException)
-	def test_elementwisePower_otherObjectExceptions(self):
-		""" Test elementwisePower raises exception when param is not a UML data object """
-		back_otherObjectExceptions(self.constructor, 'elementwisePower')
-
-	@raises(ArgumentException)
-	def test_elementwisePower_selfNotNumericException(self):
-		""" Test elementwisePower raises exception if self has non numeric data """
-		back_selfNotNumericException(self.constructor, self.constructor, 'elementwisePower')
-
-	@raises(ArgumentException)
-	def test_elementwisePower_otherNotNumericException(self):
-		""" Test elementwisePower raises exception if param object has non numeric data """
-		back_otherNotNumericException(self.constructor, self.constructor, 'elementwisePower')
-
-	@raises(ArgumentException)
-	def test_elementwisePower_pShapeException(self):
-		""" Test elementwisePower raises exception the shapes of the object don't fit correctly """
-		back_pShapeException(self.constructor, self.constructor, 'elementwisePower')
-
-	@raises(ArgumentException)
-	def test_elementwisePower_fShapeException(self):
-		""" Test elementwisePower raises exception the shapes of the object don't fit correctly """
-		back_fShapeException(self.constructor, self.constructor, 'elementwisePower')
-
-	@raises(ImproperActionException)
-	def test_elementwisePower_pEmptyException(self):
-		""" Test elementwisePower raises exception for point empty data """
-		back_pEmptyException(self.constructor, self.constructor, 'elementwisePower')
-
-	@raises(ImproperActionException)
-	def test_elementwisePower_fEmptyException(self):
-		""" Test elementwisePower raises exception for feature empty data """
-		back_fEmptyException(self.constructor, self.constructor, 'elementwisePower')
+        makers = [getattr(UML.data, retType) for retType in UML.data.available]
 
-	def test_elementwisePower_handmade(self):
-		""" Test elementwisePower on handmade data """
-		data = [[1.0,2], [4,5], [7,4]]
-		exponents = [[0,-1], [-.5,2], [2,.5]]
-		exp1 = [[1,.5], [.5,25], [49,2]]
-		callerpnames = ['1', '2', '3']
+        for maker in makers:
+            caller = self.constructor(data, pointNames=callerpnames)
+            caller.elementwisePower(exponent)
 
-		calleepnames = ['I', 'dont', 'match']
-		calleefnames = ['one', 'two']
+            exp1Obj = self.constructor(exp1, pointNames=callerpnames)
 
-		makers = [getattr(UML.data, retType) for retType in UML.data.available]
+            assert exp1Obj.isIdentical(caller)
 
-		for maker in makers:
-			caller = self.constructor(data, pointNames=callerpnames)
-			exponentsObj = maker(exponents, pointNames=calleepnames, featureNames=calleefnames)
-			caller.elementwisePower(exponentsObj)
+    def test_elementwisePower_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, 'elementwisePower', False)
 
-			exp1Obj = self.constructor(exp1, pointNames=callerpnames)
+    #############################
+    # elementwiseMultiply #
+    #############################
 
-			assert exp1Obj.isIdentical(caller)
+    @raises(ArgumentException)
+    def test_elementwiseMultiply_otherObjectExceptions(self):
+        """ Test elementwiseMultiply raises exception when param is not a UML data object """
+        back_otherObjectExceptions(self.constructor, 'elementwiseMultiply')
 
-	def test_elementwisePower_handmadeScalar(self):
-		""" Test elementwisePower on handmade data with scalar parameter"""
-		data = [[1.0,2], [4,5], [7,4]]
-		exponent = 2
-		exp1 = [[1,4], [16,25], [49,16]]
-		callerpnames = ['1', '2', '3']
+    @raises(ArgumentException)
+    def test_elementwiseMultiply_selfNotNumericException(self):
+        """ Test elementwiseMultiply raises exception if self has non numeric data """
+        back_selfNotNumericException(self.constructor, self.constructor, 'elementwiseMultiply')
+
+    @raises(ArgumentException)
+    def test_elementwiseMultiply_otherNotNumericException(self):
+        """ Test elementwiseMultiply raises exception if param object has non numeric data """
+        back_otherNotNumericException(self.constructor, self.constructor, 'elementwiseMultiply')
 
-		makers = [getattr(UML.data, retType) for retType in UML.data.available]
+    @raises(ArgumentException)
+    def test_elementwiseMultiply_pShapeException(self):
+        """ Test elementwiseMultiply raises exception the shapes of the object don't fit correctly """
+        back_pShapeException(self.constructor, self.constructor, 'elementwiseMultiply')
 
-		for maker in makers:
-			caller = self.constructor(data, pointNames=callerpnames)
-			caller.elementwisePower(exponent)
+    @raises(ArgumentException)
+    def test_elementwiseMultiply_fShapeException(self):
+        """ Test elementwiseMultiply raises exception the shapes of the object don't fit correctly """
+        back_fShapeException(self.constructor, self.constructor, 'elementwiseMultiply')
 
-			exp1Obj = self.constructor(exp1, pointNames=callerpnames)
+    @raises(ImproperActionException)
+    def test_elementwiseMultiply_pEmptyException(self):
+        """ Test elementwiseMultiply raises exception for point empty data """
+        back_pEmptyException(self.constructor, self.constructor, 'elementwiseMultiply')
+
+    @raises(ImproperActionException)
+    def test_elementwiseMultiply_fEmptyException(self):
+        """ Test elementwiseMultiply raises exception for feature empty data """
+        back_fEmptyException(self.constructor, self.constructor, 'elementwiseMultiply')
+
+    def test_elementwiseMultiply_handmade(self):
+        """ Test elementwiseMultiply on handmade data """
+        data = [[1, 2], [4, 5], [7, 8]]
+        twos = [[2, 2], [2, 2], [2, 2]]
+        exp1 = [[2, 4], [8, 10], [14, 16]]
+        halves = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
+
+        caller = self.constructor(data)
+        twosObj = self.constructor(twos)
+        caller.elementwiseMultiply(twosObj)
+
+        exp1Obj = self.constructor(exp1)
+
+        assert exp1Obj.isIdentical(caller)
+
+        halvesObj = self.constructor(halves)
+        caller.elementwiseMultiply(halvesObj)
+
+        exp2Obj = self.constructor(data)
+
+        assert caller.isIdentical(exp2Obj)
+
+    def test_elementwiseMultiply_handmadeDifInputs(self):
+        """ Test elementwiseMultiply on handmade data with different input object types"""
+        data = [[1, 2], [4, 5], [7, 8]]
+        twos = [[2, 2], [2, 2], [2, 2]]
+        exp1 = [[2, 4], [8, 10], [14, 16]]
+        halves = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
+
+        makers = [getattr(UML.data, retType) for retType in UML.data.available]
+
+        for maker in makers:
+            caller = self.constructor(data)
+            twosObj = maker(twos)
+            caller.elementwiseMultiply(twosObj)
+
+            exp1Obj = self.constructor(exp1)
+
+            assert exp1Obj.isIdentical(caller)
+
+            halvesObj = maker(halves)
+            caller.elementwiseMultiply(halvesObj)
+
+            exp2Obj = self.constructor(data)
+
+            assert caller.isIdentical(exp2Obj)
+
+    def test_elementwiseMultipy_auto(self):
+        """ Test elementwiseMultiply on generated data against the numpy op """
+        makers = [getattr(UML.data, retType) for retType in UML.data.available]
+
+        for i in range(len(makers)):
+            maker = makers[i]
+            n = pythonRandom.randint(1, 10)
+
+            randomlf = UML.createRandomData('Matrix', n, n, .2)
+            randomrf = UML.createRandomData('Matrix', n, n, .2)
+            lhsf = randomlf.copyAs("numpymatrix")
+            rhsf = randomrf.copyAs("numpymatrix")
+            lhsi = numpy.matrix(numpy.ones((n, n)))
+            rhsi = numpy.matrix(numpy.ones((n, n)))
+
+            lhsfObj = self.constructor(lhsf)
+            rhsfObj = maker(rhsf)
+            lhsiObj = self.constructor(lhsi)
+            rhsiObj = maker(rhsi)
+
+            resultf = numpy.multiply(lhsf, rhsf)
+            resulti = numpy.multiply(lhsi, rhsi)
+            lhsfObj.elementwiseMultiply(rhsfObj)
+            lhsiObj.elementwiseMultiply(rhsiObj)
+
+            expfObj = self.constructor(resultf)
+            expiObj = self.constructor(resulti)
+
+            assert expfObj.isApproximatelyEqual(lhsfObj)
+            assert expiObj.isIdentical(lhsiObj)
+
+    def test_elementwiseMultipy_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwiseMultipy"""
+        data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+        pnames = ['p1', 'p2', 'p3']
+        fnames = ['f1', 'f2', 'f3']
+
+        otherRaw = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+
+        # names not the same
+        caller = self.constructor(data, pnames, fnames)
+        opnames = pnames
+        ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
+        other = self.constructor(otherRaw, opnames, ofnames)
+        try:
+            toCall = getattr(caller, 'elementwiseMultiply')
+            ret = toCall(other)
+            assert False
+        except ArgumentException:
+            pass
+        # if it isn't the exception we expect, pass it on
+        except:
+            einfo = sys.exc_info()
+            raise einfo[1], None, einfo[2]
+
+        # names interwoven
+        other = self.constructor(otherRaw, pnames, False)
+        caller = self.constructor(data, False, fnames)
+        toCall = getattr(caller, 'elementwiseMultiply')
+        ret = toCall(other)
+
+        assert ret is None
+        assert caller.getPointNames() == pnames
+        assert caller.getFeatureNames() == fnames
+
+        # both names same
+        caller = self.constructor(data, pnames, fnames)
+        other = self.constructor(otherRaw, pnames, fnames)
+        toCall = getattr(caller, 'elementwiseMultiply')
+        ret = toCall(other)
+
+        assert caller.getPointNames() == pnames
+        assert caller.getFeatureNames() == fnames
+
+    def test_elementwiseMultipy_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, 'elementwiseMultiply', False)
+
+
+    ############
+    # __imul__ #
+    ############
+
+    @raises(ArgumentException)
+    def test_imul_selfNotNumericException(self):
+        """ Test __imul__ raises exception if self has non numeric data """
+        back_selfNotNumericException(self.constructor, self.constructor, '__imul__')
+
+    @raises(ArgumentException)
+    def test_imul_otherNotNumericException(self):
+        """ Test __imul__ raises exception if param object has non numeric data """
+        back_otherNotNumericException(self.constructor, self.constructor, '__imul__')
+
+    @raises(ArgumentException)
+    def test_imul_shapeException(self):
+        """ Test __imul__ raises exception the shapes of the object don't fit correctly """
+        data1 = [[1, 2], [4, 5], [7, 8]]
+        data2 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        caller = self.constructor(data1)
+        callee = self.constructor(data2)
+
+        caller.__imul__(callee)
 
-			assert exp1Obj.isIdentical(caller)
+    @raises(ImproperActionException)
+    def test_imul_pEmptyException(self):
+        """ Test __imul__ raises exception for point empty data """
+        data = []
+        fnames = ['one', 'two']
+        caller = self.constructor(data, featureNames=fnames)
+        callee = caller.copy()
+        callee.transpose()
 
-	def test_elementwisePower_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, 'elementwisePower', False)
+        caller *= callee
 
-	#############################
-	# elementwiseMultiply #
-	#############################
+    @raises(ImproperActionException)
+    def test_imul_fEmptyException(self):
+        """ Test __imul__ raises exception for feature empty data """
+        data = [[], []]
+        pnames = ['one', 'two']
+        caller = self.constructor(data, pointNames=pnames)
+        callee = caller.copy()
+        callee.transpose()
 
-	@raises(ArgumentException)
-	def test_elementwiseMultiply_otherObjectExceptions(self):
-		""" Test elementwiseMultiply raises exception when param is not a UML data object """
-		back_otherObjectExceptions(self.constructor, 'elementwiseMultiply')
+        caller *= callee
 
-	@raises(ArgumentException)
-	def test_elementwiseMultiply_selfNotNumericException(self):
-		""" Test elementwiseMultiply raises exception if self has non numeric data """
-		back_selfNotNumericException(self.constructor, self.constructor, 'elementwiseMultiply')
+    def test_imul_autoObjs(self):
+        """ Test __imul__ against automated data """
+        back_autoVsNumpyObjCallee(self.constructor, numpy.dot, '__imul__', True, 0.2)
 
-	@raises(ArgumentException)
-	def test_elementwiseMultiply_otherNotNumericException(self):
-		""" Test elementwiseMultiply raises exception if param object has non numeric data """
-		back_otherNotNumericException(self.constructor, self.constructor, 'elementwiseMultiply')
+    def test_imul_autoScalar(self):
+        """ Test __imul__ of a scalar against automated data """
+        back_autoVsNumpyScalar(self.constructor, numpy.dot, '__imul__', True, 0.2)
 
-	@raises(ArgumentException)
-	def test_elementwiseMultiply_pShapeException(self):
-		""" Test elementwiseMultiply raises exception the shapes of the object don't fit correctly """
-		back_pShapeException(self.constructor, self.constructor, 'elementwiseMultiply')
-
-	@raises(ArgumentException)
-	def test_elementwiseMultiply_fShapeException(self):
-		""" Test elementwiseMultiply raises exception the shapes of the object don't fit correctly """
-		back_fShapeException(self.constructor, self.constructor, 'elementwiseMultiply')
-
-	@raises(ImproperActionException)
-	def test_elementwiseMultiply_pEmptyException(self):
-		""" Test elementwiseMultiply raises exception for point empty data """
-		back_pEmptyException(self.constructor, self.constructor, 'elementwiseMultiply')
-
-	@raises(ImproperActionException)
-	def test_elementwiseMultiply_fEmptyException(self):
-		""" Test elementwiseMultiply raises exception for feature empty data """
-		back_fEmptyException(self.constructor, self.constructor, 'elementwiseMultiply')
-
-	def test_elementwiseMultiply_handmade(self):
-		""" Test elementwiseMultiply on handmade data """
-		data = [[1,2], [4,5], [7,8]]
-		twos = [[2,2], [2,2], [2,2]]
-		exp1 = [[2,4], [8,10], [14,16]]
-		halves = [[0.5,0.5], [0.5,0.5], [0.5,0.5]]
-
-		caller = self.constructor(data)
-		twosObj = self.constructor(twos)
-		caller.elementwiseMultiply(twosObj)
-
-		exp1Obj = self.constructor(exp1)
-
-		assert exp1Obj.isIdentical(caller)
-
-		halvesObj = self.constructor(halves)
-		caller.elementwiseMultiply(halvesObj)
-
-		exp2Obj = self.constructor(data)
-
-		assert caller.isIdentical(exp2Obj)
-
-	def test_elementwiseMultiply_handmadeDifInputs(self):
-		""" Test elementwiseMultiply on handmade data with different input object types"""
-		data = [[1,2], [4,5], [7,8]]
-		twos = [[2,2], [2,2], [2,2]]
-		exp1 = [[2,4], [8,10], [14,16]]
-		halves = [[0.5,0.5], [0.5,0.5], [0.5,0.5]]
-
-		makers = [getattr(UML.data, retType) for retType in UML.data.available]
-
-		for maker in makers:
-			caller = self.constructor(data)
-			twosObj = maker(twos)
-			caller.elementwiseMultiply(twosObj)
-
-			exp1Obj = self.constructor(exp1)
-
-			assert exp1Obj.isIdentical(caller)
-
-			halvesObj = maker(halves)
-			caller.elementwiseMultiply(halvesObj)
-
-			exp2Obj = self.constructor(data)
-
-			assert caller.isIdentical(exp2Obj)
-
-	def test_elementwiseMultipy_auto(self):
-		""" Test elementwiseMultiply on generated data against the numpy op """
-		makers = [getattr(UML.data, retType) for retType in UML.data.available]
-
-		for i in range(len(makers)):
-			maker = makers[i]
-			n = pythonRandom.randint(1,10)
-
-			randomlf = UML.createRandomData('Matrix', n, n, .2)
-			randomrf = UML.createRandomData('Matrix', n, n, .2)
-			lhsf = randomlf.copyAs("numpymatrix")
-			rhsf = randomrf.copyAs("numpymatrix")
-			lhsi = numpy.matrix(numpy.ones((n,n)))
-			rhsi = numpy.matrix(numpy.ones((n,n)))
-			
-			lhsfObj = self.constructor(lhsf)
-			rhsfObj = maker(rhsf)
-			lhsiObj = self.constructor(lhsi)
-			rhsiObj = maker(rhsi)
-
-			resultf = numpy.multiply(lhsf, rhsf)
-			resulti = numpy.multiply(lhsi, rhsi)
-			lhsfObj.elementwiseMultiply(rhsfObj)
-			lhsiObj.elementwiseMultiply(rhsiObj)
-
-			expfObj = self.constructor(resultf)
-			expiObj = self.constructor(resulti)
-
-			assert expfObj.isApproximatelyEqual(lhsfObj)
-			assert expiObj.isIdentical(lhsiObj)
-	
-	def test_elementwiseMultipy_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwiseMultipy"""
-		data = [[1,1,1], [1,1,1], [1,1,1]]
-		pnames = ['p1', 'p2', 'p3']
-		fnames = ['f1', 'f2', 'f3']
-		
-		otherRaw = [[1,1,1], [1,1,1], [1,1,1]]
-
-		# names not the same
-		caller = self.constructor(data, pnames, fnames)
-		opnames = pnames
-		ofnames = {'f0':0, 'f1':1, 'f2':2}
-		other = self.constructor(otherRaw, opnames, ofnames)
-		try:
-			toCall = getattr(caller, 'elementwiseMultiply')
-			ret = toCall(other)
-			assert False
-		except ArgumentException:
-			pass
-		# if it isn't the exception we expect, pass it on
-		except:
-			einfo = sys.exc_info()
-			raise einfo[1], None, einfo[2]
-
-		# names interwoven
-		other = self.constructor(otherRaw, pnames, False)
-		caller = self.constructor(data, False, fnames)
-		toCall = getattr(caller, 'elementwiseMultiply')
-		ret = toCall(other)
-
-		assert ret is None
-		assert caller.getPointNames() == pnames
-		assert caller.getFeatureNames() == fnames
-
-		# both names same
-		caller = self.constructor(data, pnames, fnames)
-		other = self.constructor(otherRaw, pnames, fnames)
-		toCall = getattr(caller, 'elementwiseMultiply')
-		ret = toCall(other)
-
-		assert caller.getPointNames() == pnames
-		assert caller.getFeatureNames() == fnames
-
-	def test_elementwiseMultipy_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, 'elementwiseMultiply', False)
-
-
-
-	############
-	# __imul__ #
-	############
-
-	@raises(ArgumentException)
-	def test_imul_selfNotNumericException(self):
-		""" Test __imul__ raises exception if self has non numeric data """
-		back_selfNotNumericException(self.constructor, self.constructor, '__imul__')
-
-	@raises(ArgumentException)
-	def test_imul_otherNotNumericException(self):
-		""" Test __imul__ raises exception if param object has non numeric data """
-		back_otherNotNumericException(self.constructor, self.constructor, '__imul__')
-
-	@raises(ArgumentException)
-	def test_imul_shapeException(self):
-		""" Test __imul__ raises exception the shapes of the object don't fit correctly """
-		data1 = [[1,2], [4,5], [7,8]]
-		data2 = [[1,2,3], [4,5,6], [7,8,9]]
-		caller = self.constructor(data1)
-		callee = self.constructor(data2)
-
-		caller.__imul__(callee)
-
-	@raises(ImproperActionException)
-	def test_imul_pEmptyException(self):
-		""" Test __imul__ raises exception for point empty data """
-		data = []
-		fnames = ['one', 'two']
-		caller = self.constructor(data, featureNames=fnames)
-		callee = caller.copy()
-		callee.transpose()
-
-		caller *= callee
-
-	@raises(ImproperActionException)
-	def test_imul_fEmptyException(self):
-		""" Test __imul__ raises exception for feature empty data """
-		data = [[],[]]
-		pnames = ['one', 'two']
-		caller = self.constructor(data, pointNames=pnames)
-		callee = caller.copy()
-		callee.transpose()
-
-		caller *= callee
-
-	def test_imul_autoObjs(self):
-		""" Test __imul__ against automated data """
-		back_autoVsNumpyObjCallee(self.constructor, numpy.dot,'__imul__', True, 0.2)
-
-	def test_imul_autoScalar(self):
-		""" Test __imul__ of a scalar against automated data """
-		back_autoVsNumpyScalar(self.constructor, numpy.dot, '__imul__', True, 0.2)
-
-	def test_imul__autoVsNumpyObjCalleeDiffTypes(self):
-		""" Test __mul__ against generated data with different UML types of objects """
-		back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
+    def test_imul__autoVsNumpyObjCalleeDiffTypes(self):
+        """ Test __mul__ against generated data with different UML types of objects """
+        back_autoVsNumpyObjCalleeDiffTypes(self.constructor, numpy.dot, '__mul__', False, 0.2)
 
-	def test_imul_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __imul__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__imul__', True)
+    def test_imul_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __imul__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__imul__', True)
 
-	def test_imul_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__imul__')
+    def test_imul_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__imul__')
 
-	def test_imul_matrixmul_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __imul__ with obj arg"""
-		back_matrixmul_pfname_preservations(self.constructor, '__imul__', True)
+    def test_imul_matrixmul_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __imul__ with obj arg"""
+        back_matrixmul_pfname_preservations(self.constructor, '__imul__', True)
 
-	def test_imul_matrixmul_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__imul__', True)
+    def test_imul_matrixmul_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__imul__', True)
 
 
-	############
-	# __iadd__ #
-	############
+    ############
+    # __iadd__ #
+    ############
 
-	def test_iadd_fullSuite(self):
-		""" __iadd__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backend(self.constructor, numpy.add, '__iadd__', True, 0.2)
+    def test_iadd_fullSuite(self):
+        """ __iadd__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, numpy.add, '__iadd__', True, 0.2)
 
-	def test_iadd_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __iadd__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__iadd__', True)
+    def test_iadd_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __iadd__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__iadd__', True)
 
-	def test_iadd_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__iadd__')
+    def test_iadd_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__iadd__')
 
-	def test_iadd_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __iadd__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__iadd__', True)
+    def test_iadd_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __iadd__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__iadd__', True)
 
-	def test_iadd_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__iadd__', True)
+    def test_iadd_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__iadd__', True)
 
 
-	############
-	# __isub__ #
-	############
+    ############
+    # __isub__ #
+    ############
 
-	def test_isub_fullSuite(self):
-		""" __isub__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backend(self.constructor, numpy.subtract, '__isub__', True, 0.2)
+    def test_isub_fullSuite(self):
+        """ __isub__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, numpy.subtract, '__isub__', True, 0.2)
 
-	def test_isub_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __isub__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__isub__', True)
+    def test_isub_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __isub__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__isub__', True)
 
-	def test_isub_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__isub__')
+    def test_isub_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__isub__')
 
-	def test_isub_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __isub__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__isub__', True)
+    def test_isub_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __isub__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__isub__', True)
 
-	def test_isub_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__isub__', True)
+    def test_isub_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__isub__', True)
 
 
-	############
-	# __idiv__ #
-	############
+    ############
+    # __idiv__ #
+    ############
 
-	def test_idiv_fullSuite(self):
-		""" __idiv__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod(self.constructor, numpy.divide, '__idiv__', True, 0)
+    def test_idiv_fullSuite(self):
+        """ __idiv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, numpy.divide, '__idiv__', True, 0)
 
-	def test_idiv_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __idiv__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__idiv__', True)
+    def test_idiv_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __idiv__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__idiv__', True)
 
-	def test_idiv_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__idiv__')
+    def test_idiv_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__idiv__')
 
-	def test_idiv_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __idiv__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__idiv__', True)
+    def test_idiv_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __idiv__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__idiv__', True)
 
-	def test_idiv_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__idiv__', True)
+    def test_idiv_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__idiv__', True)
 
 
-	################
-	# __itruediv__ #
-	################
+    ################
+    # __itruediv__ #
+    ################
 
-	def test_itruediv_fullSuite(self):
-		""" __itruediv__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod(self.constructor, numpy.true_divide, '__itruediv__', True, 0)
+    def test_itruediv_fullSuite(self):
+        """ __itruediv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, numpy.true_divide, '__itruediv__', True, 0)
 
-	def test_itruediv_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __itruediv__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__itruediv__', True)
+    def test_itruediv_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __itruediv__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__itruediv__', True)
 
-	def test_itruediv_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__itruediv__')
+    def test_itruediv_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__itruediv__')
 
-	def test_itruediv_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __itruediv__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__itruediv__', True)
+    def test_itruediv_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __itruediv__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__itruediv__', True)
 
-	def test_itruediv_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__itruediv__', True)
+    def test_itruediv_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__itruediv__', True)
 
 
+    ################
+    # __ifloordiv__ #
+    ################
 
-	################
-	# __ifloordiv__ #
-	################
+    def test_ifloordiv_fullSuite(self):
+        """ __ifloordiv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, numpy.floor_divide, '__ifloordiv__', True, 0)
 
-	def test_ifloordiv_fullSuite(self):
-		""" __ifloordiv__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod(self.constructor, numpy.floor_divide, '__ifloordiv__', True, 0)
+    def test_ifloordiv_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __ifloordiv__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__ifloordiv__', True)
 
-	def test_ifloordiv_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __ifloordiv__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__ifloordiv__', True)
+    def test_ifloordiv_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__ifloordiv__')
 
-	def test_ifloordiv_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__ifloordiv__')
+    def test_ifloordiv_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __ifloordiv__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__ifloordiv__', True)
 
-	def test_ifloordiv_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __ifloordiv__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__ifloordiv__', True)
+    def test_ifloordiv_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__ifloordiv__', True)
 
-	def test_ifloordiv_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__ifloordiv__', True)
 
+    ################
+    # __imod__ #
+    ################
 
+    def test_imod_fullSuite(self):
+        """ __imod__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, numpy.mod, '__imod__', True, 0)
 
-	################
-	# __imod__ #
-	################
 
-	def test_imod_fullSuite(self):
-		""" __imod__ Run the full standardized suite of tests for a binary numeric op """
-		run_full_backendDivMod(self.constructor, numpy.mod, '__imod__', True, 0)
+    def test_imod_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __imod__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__imod__', True)
 
+    def test_imod_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__imod__')
 
-	def test_imod_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __imod__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__imod__', True)
+    def test_imod_binaryelementwise_pfname_preservations(self):
+        """ Test p/f names are preserved when calling elementwise __imod__"""
+        back_binaryelementwise_pfname_preservations(self.constructor, '__imod__', True)
 
-	def test_imod_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__imod__')
+    def test_imod_binaryelementwise_NamePath_preservations(self):
+        back_binaryelementwise_NamePath_preservations(self.constructor, '__imod__', True)
 
-	def test_imod_binaryelementwise_pfname_preservations(self):
-		""" Test p/f names are preserved when calling elementwise __imod__"""
-		back_binaryelementwise_pfname_preservations(self.constructor, '__imod__', True)
 
-	def test_imod_binaryelementwise_NamePath_preservations(self):
-		back_binaryelementwise_NamePath_preservations(self.constructor, '__imod__', True)
+    ###########
+    # __ipow__ #
+    ###########
 
+    def test_ipow_exceptions(self):
+        """ __ipow__ Run the full standardized suite of tests for a binary numeric op """
+        constructor = self.constructor
+        UMLOp = '__ipow__'
+        inputs = (constructor, UMLOp)
+        wrapAndCall(back_otherObjectExceptions, ArgumentException, *inputs)
 
-	###########
-	# __ipow__ #
-	###########
+        inputs = (constructor, int, UMLOp)
+        wrapAndCall(back_selfNotNumericException, ArgumentException, *inputs)
 
-	def test_ipow_exceptions(self):
-		""" __ipow__ Run the full standardized suite of tests for a binary numeric op """
-		constructor = self.constructor
-		UMLOp = '__ipow__'
-		inputs = (constructor, UMLOp)
-		wrapAndCall(back_otherObjectExceptions, ArgumentException, *inputs)
+        inputs = (constructor, constructor, UMLOp)
+        wrapAndCall(back_pEmptyException, ImproperActionException, *inputs)
 
-		inputs = (constructor, int, UMLOp)
-		wrapAndCall(back_selfNotNumericException, ArgumentException, *inputs)
+        inputs = (constructor, constructor, UMLOp)
+        wrapAndCall(back_fEmptyException, ImproperActionException, *inputs)
 
-		inputs = (constructor, constructor, UMLOp)
-		wrapAndCall(back_pEmptyException, ImproperActionException, *inputs)
+    def test_ipow_autoVsNumpyScalar(self):
+        """ Test __ipow__ with automated data and a scalar argument, against numpy operations """
+        trials = 5
+        for t in range(trials):
+            n = pythonRandom.randint(1, 15)
+            scalar = pythonRandom.randint(0, 5)
 
-		inputs = (constructor, constructor, UMLOp)
-		wrapAndCall(back_fEmptyException, ImproperActionException, *inputs)
+            datas = makeAllData(self.constructor, None, n, .02)
+            (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
 
-	def test_ipow_autoVsNumpyScalar(self):
-		""" Test __ipow__ with automated data and a scalar argument, against numpy operations """
-		trials = 5
-		for t in range(trials):
-			n = pythonRandom.randint(1,15)
-			scalar = pythonRandom.randint(0,5)
+            resultf = lhsf ** scalar
+            resulti = lhsi ** scalar
+            resfObj = lhsfObj.__ipow__(scalar)
+            resiObj = lhsiObj.__ipow__(scalar)
 
-			datas = makeAllData(self.constructor, None, n, .02)	
-			(lhsf,rhsf,lhsi,rhsi,lhsfObj,rhsfObj,lhsiObj,rhsiObj) = datas
+            expfObj = self.constructor(resultf)
+            expiObj = self.constructor(resulti)
 
-			resultf = lhsf ** scalar
-			resulti = lhsi ** scalar
-			resfObj = lhsfObj.__ipow__(scalar)
-			resiObj = lhsiObj.__ipow__(scalar)
+            assert expfObj.isApproximatelyEqual(resfObj)
+            assert expiObj.isIdentical(resiObj)
+            assert resfObj.isIdentical(lhsfObj)
+            assert resiObj.isIdentical(lhsiObj)
 
-			expfObj = self.constructor(resultf)
-			expiObj = self.constructor(resulti)
+    def test_ipow_binaryscalar_pfname_preservations(self):
+        """ Test p/f names are preserved when calling __ipow__ with scalar arg"""
+        back_binaryscalar_pfname_preservations(self.constructor, '__ipow__', True)
 
-			assert expfObj.isApproximatelyEqual(resfObj)
-			assert expiObj.isIdentical(resiObj)
-			assert resfObj.isIdentical(lhsfObj)
-			assert resiObj.isIdentical(lhsiObj)
-
-	def test_ipow_binaryscalar_pfname_preservations(self):
-		""" Test p/f names are preserved when calling __ipow__ with scalar arg"""
-		back_binaryscalar_pfname_preservations(self.constructor, '__ipow__', True)
-
-	def test_ipow_binaryscalar_NamePath_preservations(self):
-		back_binaryscalar_NamePath_preservations(self.constructor, '__ipow__')
+    def test_ipow_binaryscalar_NamePath_preservations(self):
+        back_binaryscalar_NamePath_preservations(self.constructor, '__ipow__')
 
 
 class AllNumerical(NumericalDataSafe, NumericalModifying):
-	pass
+    pass
