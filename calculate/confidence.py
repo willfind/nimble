@@ -1,9 +1,9 @@
 import math
-import scipy.stats
 import numpy
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, PackageException
+scipy = UML.importModule('scipy.stats')
 
 
 def confidenceIntervalHelper(errors, transform, confidence=0.95):
@@ -11,6 +11,10 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
     and a monotonic transform to be applied after the calculation.
 
     """
+    if not scipy:
+        msg = 'To call this function, scipy must be installed.'
+        raise PackageException(msg)
+
     if errors.featureCount != 1:
         raise ArgumentException("The errors vector may only have one feature")
 

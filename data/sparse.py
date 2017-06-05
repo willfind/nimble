@@ -4,8 +4,12 @@ Class extending Base, defining an object to hold and manipulate a scipy coo_matr
 """
 
 import numpy
-import scipy
-
+import UML
+from UML.exceptions import ArgumentException, PackageException
+scipy = UML.importModule('scipy')
+if not scipy:
+    msg = 'To use class Sparse, scipy must be installed.'
+    raise PackageException(msg)
 from scipy.sparse import coo_matrix
 from scipy.io import mmwrite
 import copy
@@ -15,7 +19,7 @@ import dataHelpers
 from base import Base
 from base_view import BaseView
 from dataHelpers import View
-from UML.exceptions import ArgumentException
+
 from UML.exceptions import ImproperActionException
 from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')

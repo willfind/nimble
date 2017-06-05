@@ -15,7 +15,6 @@ transformEachFeature, transformEachElement, fillWith
 
 import tempfile
 import numpy
-import scipy.sparse
 import os
 import os.path
 from nose.tools import *
@@ -33,6 +32,7 @@ from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
+scipy = UML.importModule('scipy.sparse')
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -242,15 +242,16 @@ class StructureDataSafe(DataTestObject):
         numpyMatrix[0, 0] = 5
         assert orig[0, 0] == 1
 
-        spcsc = orig.copyAs(format='scipy csc')
-        assert type(spcsc) == type(scipy.sparse.csc_matrix(numpy.matrix([])))
-        spcsc[0, 0] = 5
-        assert orig[0, 0] == 1
+        if scipy:
+            spcsc = orig.copyAs(format='scipy csc')
+            assert type(spcsc) == type(scipy.sparse.csc_matrix(numpy.matrix([])))
+            spcsc[0, 0] = 5
+            assert orig[0, 0] == 1
 
-        spcsr = orig.copyAs(format='scipy csr')
-        assert type(spcsr) == type(scipy.sparse.csr_matrix(numpy.matrix([])))
-        spcsr[0, 0] = 5
-        assert orig[0, 0] == 1
+            spcsr = orig.copyAs(format='scipy csr')
+            assert type(spcsr) == type(scipy.sparse.csr_matrix(numpy.matrix([])))
+            spcsr[0, 0] = 5
+            assert orig[0, 0] == 1
 
     def test_copy_rowsArePointsFalse(self):
         """ Test copyAs() will return data in the right places when rowsArePoints is False"""
@@ -294,16 +295,17 @@ class StructureDataSafe(DataTestObject):
             assert False
         except ArgumentException as ae:
             print ae
-        try:
-            orig.copyAs("scipy csr", outputAs1D=True)
-            assert False
-        except ArgumentException as ae:
-            print ae
-        try:
-            orig.copyAs("scipy csc", outputAs1D=True)
-            assert False
-        except ArgumentException as ae:
-            print ae
+        if scipy:
+            try:
+                orig.copyAs("scipy csr", outputAs1D=True)
+                assert False
+            except ArgumentException as ae:
+                print ae
+            try:
+                orig.copyAs("scipy csc", outputAs1D=True)
+                assert False
+            except ArgumentException as ae:
+                print ae
 
     @raises(ArgumentException)
     def test_copy_outputAs1DWrongShape(self):

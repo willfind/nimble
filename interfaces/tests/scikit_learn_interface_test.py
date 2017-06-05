@@ -4,7 +4,6 @@ Unit tests for scikit_learn_interface.py
 """
 
 import numpy.testing
-import scipy.sparse
 from nose.plugins.attrib import attr
 
 import UML
@@ -17,6 +16,8 @@ from UML.randomness import numpyRandom
 from UML.exceptions import ArgumentException
 from UML.helpers import generateClassificationData
 from UML.helpers import generateRegressionData
+
+scipy = UML.importModule('scipy.sparse')
 
 packageName = 'sciKitLearn'
 
@@ -64,6 +65,8 @@ def testSciKitLearnHandmadeRegression():
 
 def testSciKitLearnSparseRegression():
     """ Test sciKitLearn() by calling on a sparse regression learner with an extremely large, but highly sparse, matrix """
+    if not scipy:
+        return
 
     x = 1000
     c = 10
@@ -104,6 +107,8 @@ def testSciKitLearnHandmadeClustering():
 
 def testSciKitLearnHandmadeSparseClustering():
     """ Test sciKitLearn() by calling on a sparse clustering learner with known output """
+    if not scipy:
+        return
     trainData = scipy.sparse.lil_matrix((3, 3))
     trainData[0, :] = [2, 3, 1]
     trainData[1, :] = [2, 2, 1]

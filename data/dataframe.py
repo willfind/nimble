@@ -3,8 +3,13 @@ Class extending Base, using a pandas DataFrame to store data.
 """
 import UML
 from UML.exceptions import ArgumentException, PackageException
+
+pd = UML.importModule('pandas')
+if not pd:
+    msg = 'To use class DataFrame, pandas must be installed.'
+    raise PackageException(msg)
+
 from base import Base
-import pandas as pd
 import numpy as np
 scipy = UML.importModule('scipy.sparse')
 
