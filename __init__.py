@@ -25,6 +25,7 @@ settings = UML.configuration.loadSettings()
 
 # Import those submodules that need setup or we want to be
 # accessible to the user
+from UML.importExternalLibraries import importModule
 import UML.interfaces
 import UML.calculate
 import UML.randomness

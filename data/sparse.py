@@ -18,20 +18,13 @@ from dataHelpers import View
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
 from UML.randomness import pythonRandom
-
-try:
-    import pandas as pd
-
-    pdImported = True
-except ImportError:
-    pdImported = False
-
+pd = UML.importModule('pandas')
 
 class Sparse(Base):
     def __init__(self, data, pointNames=None, featureNames=None,
                  reuseData=False, **kwds):
         #convert tuple, pandas Series and numpy ndarray to numpy matrix
-        if isinstance(data, (tuple, numpy.ndarray)) or (pdImported and isinstance(data, pd.Series)):
+        if isinstance(data, (tuple, numpy.ndarray)) or (pd and isinstance(data, pd.Series)):
         #if not isinstance(data, CooWrapper):
             data = numpy.matrix(data)
 

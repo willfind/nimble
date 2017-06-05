@@ -13,17 +13,6 @@ import inspect
 import numpy
 import importlib
 
-def importExternalLibraries(name):
-    """
-    call
-    """
-    try:
-        return __import__(name)
-    except ImportError:
-        return
-
-scipy = importExternalLibraries('scipy.io')
-
 import os.path
 import re
 import datetime
@@ -31,13 +20,6 @@ import copy
 import StringIO
 import sys
 import itertools
-
-try:
-    import pandas as pd
-
-    pdImported = True
-except ImportError:
-    pdImported = False
 
 import UML
 
@@ -53,6 +35,8 @@ from UML.data import Base
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 
+scipy = UML.importModule('scipy.io')
+pd = UML.importModule('pandas')
 
 def findBestInterface(package):
     """
@@ -99,7 +83,7 @@ def isAllowedRaw(data):
     if type(data) in [tuple, list, dict, numpy.ndarray, numpy.matrix]:
         return True
 
-    if pdImported:
+    if pd:
         if type(data) in [pd.DataFrame, pd.Series, pd.SparseDataFrame]:
             return True
 
@@ -190,7 +174,7 @@ def initDataObject(
     if returnType is None:
         returnType = autoType
 
-    if pdImported:
+    if pd:
         #convert dict or list of dict to pandas DataFrame
         #{'a':[1,2], 'b':[3,4]}, [{'a':1, 'b':3}, {'a':2, 'b':4}]
         if isinstance(rawData, dict) or (

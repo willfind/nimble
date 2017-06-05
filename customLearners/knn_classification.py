@@ -11,16 +11,10 @@ If there is a tie, use k=1
 
 """
 
-try:
-    import scipy.spatial
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
-
 import UML
 from UML.customLearners import CustomLearner
 from UML.exceptions import PackageException
+scipy = UML.importModule('scipy.spatial')
 
 
 class KNNClassifier(CustomLearner):
@@ -85,7 +79,7 @@ class KNNClassifier(CustomLearner):
         the point test
 
         """
-        if not scipyImported:
+        if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 

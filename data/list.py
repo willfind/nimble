@@ -5,20 +5,6 @@ Class extending Base, using a list of lists to store data.
 
 import copy
 import numpy
-
-try:
-    import scipy
-    from scipy.sparse import isspmatrix
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
-try:
-    import pandas as pd
-
-    pdImported = True
-except ImportError:
-    pdImported = False
 import itertools
 
 import UML
@@ -29,6 +15,8 @@ from dataHelpers import reorderToMatchExtractionList
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 
+scipy = UML.importModule('scipy.io')
+pd = UML.importModule('pandas')
 
 class List(Base):
     """
@@ -61,10 +49,10 @@ class List(Base):
             else:
                 data = copy.deepcopy(data)
         # if sparse, make dense
-        if scipyImported and isspmatrix(data):
+        if scipy and scipy.sparse.isspmatrix(data):
             data = data.todense()
         # if DataFrame or Series, convert it to numpy matrix
-        if pdImported and isinstance(data, (pd.DataFrame, pd.Series)):
+        if pd and isinstance(data, (pd.DataFrame, pd.Series)):
             data = numpy.matrix(data)
 
         # if its a numpy construct, convert it to a python list
@@ -609,12 +597,12 @@ class List(Base):
                 return numpy.matrix(numpy.empty(shape=(self.pointCount, self.featureCount)))
             return numpy.matrix(self.data)
         if format == 'scipycsc':
-            if not scipyImported:
+            if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csc_matrix(numpy.array(self.data))
         if format == 'scipycsr':
-            if not scipyImported:
+            if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(numpy.array(self.data))

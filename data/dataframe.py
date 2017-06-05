@@ -6,14 +6,8 @@ from UML.exceptions import ArgumentException, PackageException
 from base import Base
 import pandas as pd
 import numpy as np
+scipy = UML.importModule('scipy.sparse')
 
-try:
-    import scipy.sparse
-    from scipy.sparse import isspmatrix
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
 import itertools
 from base_view import BaseView
 
@@ -43,7 +37,7 @@ class DataFrame(Base):
                 raise ArgumentException(msg)
             #np.matrix can convert 1D data to 2D, such as [1,2,3] to matrix([[1,2,3]])
             self.data = pd.DataFrame(np.matrix(data))
-        elif isspmatrix(data):
+        elif scipy.sparse.isspmatrix(data):
             self.data = pd.DataFrame(data.todense())
         else:
             msg = "the input data can only be pandas DataFrame, list, list of list, scipy sparse, numpy array or numpy matrix"
@@ -414,7 +408,7 @@ class DataFrame(Base):
         Function to write the data in this object to a matrix market file at the designated
         path.
         """
-        if not scipyImported:
+        if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -454,12 +448,12 @@ class DataFrame(Base):
         if format == 'numpymatrix':
             return np.matrix(dataArray)
         if format == 'scipycsc':
-            if not scipyImported:
+            if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csc_matrix(dataArray)
         if format == 'scipycsr':
-            if not scipyImported:
+            if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(dataArray)
@@ -732,7 +726,7 @@ class DataFrame(Base):
 
     def _div__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values / other.data.todense()
             else:
                 ret = self.data.values / other.data
@@ -747,7 +741,7 @@ class DataFrame(Base):
 
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
                 ret = self.data / other.data.todense()
             else:
                 ret = self.data / np.matrix(other.data)
@@ -758,7 +752,7 @@ class DataFrame(Base):
 
     def _truediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values.__truediv__(other.data.todense())
             else:
                 ret = self.data.values.__truediv__(other.data)
@@ -772,7 +766,7 @@ class DataFrame(Base):
 
     def _itruediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
                 ret = self.data.__itruediv__(other.data.todense())
             else:
                 ret = self.data.__itruediv__(np.matrix(other.data))
@@ -783,7 +777,7 @@ class DataFrame(Base):
 
     def _floordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values // other.data.todense()
             else:
                 ret = self.data.values // other.data
@@ -798,7 +792,7 @@ class DataFrame(Base):
 
     def _ifloordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
                 ret = self.data // other.data.todense()
             else:
                 ret = self.data // np.matrix(other.data)
@@ -809,7 +803,7 @@ class DataFrame(Base):
 
     def _mod__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values % other.data.todense()
             else:
                 ret = self.data.values % other.data
@@ -825,7 +819,7 @@ class DataFrame(Base):
 
     def _imod__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
                 ret = self.data % other.data.todense()
             else:
                 ret = self.data % np.matrix(other.data)

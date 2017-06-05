@@ -4,13 +4,6 @@ Module containing most of the user facing functions for the top level uml import
 """
 
 import numpy
-
-try:
-    import scipy.sparse
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
 import inspect
 import operator
 import re
@@ -50,7 +43,7 @@ from UML.randomness import numpyRandom
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 
 from UML.calculate import detectBestResult
-
+scipy = UML.importModule('scipy.sparse')
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
@@ -83,7 +76,7 @@ def createRandomData(
 
     #note: sparse is not stochastic sparsity, it uses rigid density measures
     if returnType.lower() == 'sparse':
-        if not scipyImported:
+        if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -213,7 +206,7 @@ def identity(returnType, size, pointNames='automatic', featureNames='automatic',
         raise ArgumentException(msg)
 
     if returnType == 'Sparse':
-        if not scipyImported:
+        if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
