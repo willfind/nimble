@@ -26,9 +26,12 @@ class Matrix(Base):
     def __init__(self, data, featureNames=None, reuseData=False, **kwds):
         try:
             if scipy and scipy.sparse.isspmatrix(data):
-                self.data = numpy.matrix(data.todense(), dtype=numpy.float)
+                try:
+                    self.data = numpy.matrix(data.todense(), dtype=numpy.float)
+                except ValueError:
+                    self.data = numpy.matrix(data.todense(), dtype=object)
             else:
-                if reuseData and isinstance(data, type(numpy.matrix([]))):
+                if reuseData and isinstance(data, numpy.matrix):
                     self.data = data
                 else:
                     if isinstance(data, list) and data == []:
@@ -36,7 +39,10 @@ class Matrix(Base):
                         if featureNames is not None:
                             cols = len(featureNames)
                         data = numpy.empty(shape=(0, cols))
-                    self.data = numpy.matrix(data, dtype=numpy.float)
+                    try:
+                        self.data = numpy.matrix(data, dtype=numpy.float)
+                    except ValueError:
+                        self.data = numpy.matrix(data, dtype=object)
         except ValueError:
             einfo = sys.exc_info()
             #if not ignore:
