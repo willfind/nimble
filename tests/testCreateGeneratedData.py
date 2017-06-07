@@ -81,15 +81,14 @@ def testSparsityReturnedPlausible():
             for curSparsity in sparsities:
                 returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, numericType=curType)
 
-                if curReturnType.lower() == 'matrix' or curReturnType.lower() == 'list':
-                    nonZerosCount = numpy.count_nonzero(returned.copyAs('numpyarray'))
+                if curReturnType.lower() == 'sparse':
+                    nonZerosCount = returned.data.nnz
                     actualSparsity = 1.0 - nonZerosCount / float(nPoints * nFeatures)
                     difference = abs(actualSparsity - curSparsity)
 
                     assert (difference < .01)
-
-                else: #is sparse matrix
-                    nonZerosCount = returned.data.nnz
+                else:
+                    nonZerosCount = numpy.count_nonzero(returned.copyAs('numpyarray'))
                     actualSparsity = 1.0 - nonZerosCount / float(nPoints * nFeatures)
                     difference = abs(actualSparsity - curSparsity)
 
