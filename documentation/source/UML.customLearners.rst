@@ -2,6 +2,6 @@ UML.customLearners
 ==================
 
 .. automodule:: UML.customLearners
-:members:
-        :undoc-members:
-        :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:
