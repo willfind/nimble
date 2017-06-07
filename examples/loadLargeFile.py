@@ -370,8 +370,8 @@ def testgetBestFeaturesAndErrors():
     if not ("x3" in bestFeatures): raise Exception("x3 was the best feature by far by was removed!")
     assert bestFeatures == ["x0", "x1", "x3"]
 
-    assert errorsHash["p1"] < 0.02
-    assert errorsHash["p2"] < 0.02
+    assert errorsHash["p1"] < 0.05
+    assert errorsHash["p2"] < 0.05
 
     numFeaturesToKeep = 2
     bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs,
