@@ -24,13 +24,13 @@ class Matrix(Base):
 
     """
 
-    def __initnew__(self, data, featureNames=None, reuseData=False, **kwds):
+    def __init__(self, data, featureNames=None, reuseData=False, **kwds):
         """
         data can only be a numpy matrix
         """
 
-        if (not isinstance(data, numpy.matrix)) and 'PassThrough' not in str(type(data)):
-            msg = "the input data can only be a numpy matrix or BaseView."
+        if (not isinstance(data, numpy.matrix)):# and 'PassThrough' not in str(type(data)):
+            msg = "the input data can only be a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
 
         if isinstance(data, numpy.matrix):
@@ -43,7 +43,7 @@ class Matrix(Base):
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
 
-    def __init__(self, data, featureNames=None, reuseData=False, **kwds):
+    def __initold__(self, data, featureNames=None, reuseData=False, **kwds):
         try:
             if scipy and scipy.sparse.isspmatrix(data):
                 try:

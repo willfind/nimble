@@ -23,12 +23,12 @@ class DataFrame(Base):
     in a pandas DataFrame.
     """
 
-    def __initnew__(self, data, reuseData=False, **kwds):
+    def __init__(self, data, reuseData=False, **kwds):
         """
 
         """
-        if (not isinstance(data, (pd.DataFrame, np.matrix))) and 'PassThrough' not in str(type(data)):
-            msg = "the input data can only be a pandas DataFrame or a numpy matrix or BaseView."
+        if (not isinstance(data, (pd.DataFrame, np.matrix))):# and 'PassThrough' not in str(type(data)):
+            msg = "the input data can only be a pandas DataFrame or a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
 
         if isinstance(data, pd.DataFrame):
@@ -46,7 +46,7 @@ class DataFrame(Base):
         self.data.index = self.getPointNames()
         self.data.columns = self.getFeatureNames()
 
-    def __init__(self, data, reuseData=False, **kwds):
+    def __initold__(self, data, reuseData=False, **kwds):
         """
         The initializer.
         Inputs:
@@ -464,12 +464,14 @@ class DataFrame(Base):
         """
         dataArray = self.data.values.copy()
         if format == 'Sparse':
-            return UML.data.Sparse(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            # return UML.data.Sparse(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Sparse', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'List':
             #return UML.data.List(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('List', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
-            return UML.data.Matrix(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            #return UML.data.Matrix(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
             return dataArray.tolist()
         if format == 'numpyarray':
@@ -487,7 +489,8 @@ class DataFrame(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(dataArray)
 
-        return DataFrame(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+        # return DataFrame(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+        return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
     def _copyPoints_implementation(self, points, start, end):
         if points is not None:

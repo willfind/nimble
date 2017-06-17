@@ -641,16 +641,22 @@ class List(Base):
         if format == 'Sparse':
             if self.pointCount == 0 or self.featureCount == 0:
                 emptyData = numpy.empty(shape=(self.pointCount, self.featureCount))
-                return UML.data.Sparse(emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            return UML.data.Sparse(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+                # return UML.data.Sparse(emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+                return UML.createData('Sparse', emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            # return UML.data.Sparse(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
         if format is None or format == 'List':
             #return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
-            return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            try:
+                return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            except Exception:
+                return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':
-            return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            # return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':

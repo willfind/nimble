@@ -203,95 +203,115 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     3. if pointNames is True, then extract point names from the 1st column in rawData
     if featureNames is True, then extract feature names from the 1st row in rawData
     """
-    #1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
-    #featureNames must be those keys
-    #pointNames must be False or automatic
-    if isinstance(rawData, dict):
-        featureNames = rawData.keys()
-        rawData = numpy.matrix(numpy.transpose(rawData.values()), dtype=elementType)
-        pointNames = None
-
-    #2. convert list of dict like [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
-    #featureNames must be those keys
-    #pointNames must be False or automatic
-    elif isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
-        values = [rawData[0].values()]
-        keys = rawData[0].keys()
-        for row in rawData[1:]:
-            if row.keys() != keys:
-                msg = "keys don't match."
-                raise ArgumentException(msg)
-            values.append(row.values())
-        rawData = numpy.matrix(values, dtype=elementType)
-        featureNames = keys
-        pointNames = None
-
-    else:
-        # 3. for rawData of other data types
-        # check if we need to do name extraction, setup new variables,
-        # or modify values for subsequent call to data init method.
-        pnamesID = None
-        if pointNames is True:
-            pnamesID = 0
-            pointNames = None
-        elif pointNames == 'automatic' or pointNames is False:
+    try:
+        #1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
+        #featureNames must be those keys
+        #pointNames must be False or automatic
+        if isinstance(rawData, dict):
+            featureNames = rawData.keys()
+            rawData = numpy.matrix(numpy.transpose(rawData.values()), dtype=elementType)
             pointNames = None
 
-        fnamesID = None
-        if featureNames is True:
-            fnamesID = 0
-            featureNames = None
-        elif featureNames == 'automatic' or featureNames is False:
-            featureNames = None
+        #2. convert list of dict like [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
+        #featureNames must be those keys
+        #pointNames must be False or automatic
+        elif isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
+            values = [rawData[0].values()]
+            keys = rawData[0].keys()
+            for row in rawData[1:]:
+                if row.keys() != keys:
+                    msg = "keys don't match."
+                    raise ArgumentException(msg)
+                values.append(row.values())
+            rawData = numpy.matrix(values, dtype=elementType)
+            featureNames = keys
+            pointNames = None
 
-        if pnamesID is not None or fnamesID is not None:
+        else:
+            # 3. for rawData of other data types
+            # check if we need to do name extraction, setup new variables,
+            # or modify values for subsequent call to data init method.
+            pnamesID = None
+            if pointNames is True:
+                pnamesID = 0
+                pointNames = None
+            elif pointNames == 'automatic' or pointNames is False:
+                pointNames = None
 
-            if isinstance(rawData, list):
-                func = extractNamesFromRawList
-            elif isinstance(rawData, tuple):
-                rawData = numpy.matrix(rawData, dtype=object)
-                func = extractNamesFromNumpy
-            elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
-                func = extractNamesFromNumpy
-            elif scipy and scipy.sparse.issparse(rawData):
-                if not isinstance(rawData, scipy.sparse.coo_matrix):
-                    rawData = scipy.sparse.coo_matrix(rawData)
-                func = extractNamesFromCoo
-            elif pd and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame)):
-                func = extractNamesFromPdDataFrame
-            elif pd and isinstance(rawData, pd.Series):
-                func = extractNamesFromPdSeries
-            rawData, tmpPointNames, tmpFeatureNames = func(rawData, pnamesID, fnamesID)
-            if tmpPointNames: pointNames = tmpPointNames
-            if tmpFeatureNames: featureNames = tmpFeatureNames
+            fnamesID = None
+            if featureNames is True:
+                fnamesID = 0
+                featureNames = None
+            elif featureNames == 'automatic' or featureNames is False:
+                featureNames = None
 
-    #4. if type(data) dosen't match returnType, then convert data to numpy matrix or coo_matrix.
-    #if elementType is not None, then convert each element in data to elementType.
-    if (elementType is None) and ((isinstance(rawData, list) and returnType == 'List') or \
-        isinstance(rawData, numpy.matrix) or \
-        (pd and isinstance(rawData, pd.DataFrame) and returnType == 'DataFrame') or \
-        (scipy and scipy.sparse.isspmatrix(rawData) and returnType == 'Sparse')):
-        pass
+            if pnamesID is not None or fnamesID is not None:
 
-    elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
-        rawData = scipy.sparse.coo_matrix(rawData)
+                if isinstance(rawData, list):
+                    func = extractNamesFromRawList
+                elif isinstance(rawData, tuple):
+                    rawData = numpy.matrix(rawData, dtype=object)
+                    func = extractNamesFromNumpy
+                elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
+                    func = extractNamesFromNumpy
+                elif scipy and scipy.sparse.issparse(rawData):
+                    if not isinstance(rawData, scipy.sparse.coo_matrix):
+                        rawData = scipy.sparse.coo_matrix(rawData)
+                    func = extractNamesFromCoo
+                elif pd and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame)):
+                    func = extractNamesFromPdDataFrame
+                elif pd and isinstance(rawData, pd.Series):
+                    func = extractNamesFromPdSeries
+                rawData, tmpPointNames, tmpFeatureNames = func(rawData, pnamesID, fnamesID)
+                if tmpPointNames: pointNames = tmpPointNames
+                if tmpFeatureNames: featureNames = tmpFeatureNames
 
-    elif isinstance(rawData, (list, tuple)):
-        if len(rawData) == 0:
-            #when rawData = [], we need to use pointNames and featureNames to determine its shape
-            rawData = numpy.empty([len(pointNames) if pointNames else 0, \
-                                   len(featureNames) if featureNames else 0])
+        #4. if type(data) dosen't match returnType, then convert data to numpy matrix or coo_matrix.
+        #if elementType is not None, then convert each element in data to elementType.
+        if (elementType is None) and ((isinstance(rawData, list) and returnType == 'List') or \
+            isinstance(rawData, numpy.matrix) or \
+            (pd and isinstance(rawData, pd.DataFrame) and returnType == 'DataFrame') or \
+            (scipy and scipy.sparse.isspmatrix(rawData) and returnType == 'Sparse')):
+            pass
 
-    elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
-        rawData = numpy.matrix(rawData, dtype = elementType)
+        elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
+            rawData = scipy.sparse.coo_matrix(rawData)
 
-    elif pd and isinstance(rawData, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
-        rawData = numpy.matrix(rawData, dtype = elementType)
+        elif isinstance(rawData, (list, tuple)):
+            if len(rawData) == 0:
+                #when rawData = [], we need to use pointNames and featureNames to determine its shape
+                rawData = numpy.matrix(numpy.empty([len(pointNames) if pointNames else 0, \
+                                       len(featureNames) if featureNames else 0]))
+            else:
+                rawData = elementTypeConvert(rawData, elementType)
 
-    elif scipy and scipy.sparse.isspmatrix(rawData):
-        rawData = rawData.todense()
+        elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
+            rawData = elementTypeConvert(rawData, elementType)
 
+        elif pd and isinstance(rawData, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
+            rawData = elementTypeConvert(rawData, elementType)
+
+        elif scipy and scipy.sparse.isspmatrix(rawData):
+            rawData = rawData.todense()
+
+    except ValueError:
+        msg = 'extractNamesAndConvertData: check rawData, pointNames, featureNames, elementType'
+        raise ArgumentException(msg)
     return rawData, pointNames, featureNames
+
+def elementTypeConvert(rawData, elementType):
+    """
+
+    """
+    if elementType:
+        return numpy.matrix(rawData, dtype = elementType)
+    else:
+        try:
+            data = numpy.matrix(rawData, dtype=numpy.float)
+        except ValueError:
+            data = numpy.matrix(rawData, dtype=object)
+        return data
+
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path,
@@ -309,7 +329,7 @@ def initDataObject(
 
     if returnType is None:
         returnType = autoType
-
+    #import pdb; pdb.set_trace()
     rawData, pointNames, featureNames = extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType)
     #if we really did extract names
     # only want to replace if names are not explicitly specified

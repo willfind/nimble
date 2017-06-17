@@ -26,7 +26,14 @@ pd = UML.importModule('pandas')
 
 class Sparse(Base):
 
-    def __initnew__(self, data, pointNames=None, featureNames=None, reuseData=False, **kwds):
+    def __init__(self, data, pointNames=None, featureNames=None, reuseData=False, **kwds):
+        """
+
+        """
+        if (not isinstance(data, numpy.matrix)) and (not scipy.sparse.isspmatrix(data)) \
+            and 'Coo' not in str(type(data)):
+            msg = "the input data can only be a scipy sparse matrix or a numpy matrix or CooWithEmpty or CooDummy."
+            raise ArgumentException(msg)
 
         self._sorted = None
         if hasattr(data, 'shape') and (data.shape[0] == 0 or data.shape[1] == 0):
@@ -67,7 +74,7 @@ class Sparse(Base):
         kwds['featureNames'] = featureNames
         super(Sparse, self).__init__(**kwds)
 
-    def __init__(self, data, pointNames=None, featureNames=None,
+    def __initold__(self, data, pointNames=None, featureNames=None,
                  reuseData=False, **kwds):
         #convert tuple, pandas Series and numpy ndarray to numpy matrix
         if isinstance(data, (tuple, numpy.ndarray)) or (pd and isinstance(data, pd.Series)):
@@ -824,7 +831,8 @@ class Sparse(Base):
 
     def _copyAs_implementation(self, format):
         if format is None or format == 'Sparse':
-            ret = Sparse(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            # ret = Sparse(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            ret = UML.createData('Sparse', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             ret._sorted = self._sorted
             return ret
         if format == 'List':
@@ -833,11 +841,11 @@ class Sparse(Base):
             return UML.createData('List', self._data.internal, pointNames=self.getPointNames(),
                                   featureNames=self.getFeatureNames())
         if format == 'Matrix':
-            return UML.data.Matrix(self._data.internal, pointNames=self.getPointNames(),
-                                   featureNames=self.getFeatureNames())
+            #return UML.data.Matrix(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':
-            return UML.data.DataFrame(self._data.internal, pointNames=self.getPointNames(),
-                                      featureNames=self.getFeatureNames())
+            # return UML.data.DataFrame(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
             return self._data.todense().tolist()
         if format == 'numpyarray':
@@ -1361,7 +1369,8 @@ class Sparse(Base):
             # for other.data as any dense or sparse matrix
             retData = self._data.internal * other.data
 
-        return Sparse(retData)
+        # return Sparse(retData)
+        return UML.createData('Sparse', retData)
 
 
     def _elementwiseMultiply_implementation(self, other):
@@ -1765,7 +1774,7 @@ class SparseView(BaseView, Sparse):
     def _copyAs_implementation(self, format):
         if self.pointCount == 0 or self.featureCount == 0:
             emptyStandin = numpy.empty((self.pointCount, self.featureCount))
-            intermediate = UML.data.Matrix(emptyStandin, pointNames=self.getPointNames(),
+            intermediate = UML.createData('Matrix', emptyStandin, pointNames=self.getPointNames(),
                                            featureNames=self.getFeatureNames())
             return intermediate.copyAs(format)
 
