@@ -466,8 +466,8 @@ class DataFrame(Base):
         if format == 'Sparse':
             return UML.data.Sparse(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'List':
-            return UML.data.List(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            # return UML.createData('List', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            #return UML.data.List(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('List', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
             return UML.data.Matrix(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':

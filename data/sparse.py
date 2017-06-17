@@ -828,10 +828,10 @@ class Sparse(Base):
             ret._sorted = self._sorted
             return ret
         if format == 'List':
-            return UML.data.List(self._data.internal, pointNames=self.getPointNames(),
-                                 featureNames=self.getFeatureNames())
-            # return UML.createData('List', self._data.internal, pointNames=self.getPointNames(),
-            #                       featureNames=self.getFeatureNames())
+            #return UML.data.List(self._data.internal, pointNames=self.getPointNames(),
+            #                     featureNames=self.getFeatureNames())
+            return UML.createData('List', self._data.internal, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames())
         if format == 'Matrix':
             return UML.data.Matrix(self._data.internal, pointNames=self.getPointNames(),
                                    featureNames=self.getFeatureNames())

@@ -26,7 +26,7 @@ class List(Base):
     points of data, and each inner list is a list of values for each feature.
     """
 
-    def __initnew__(self, data, featureNames=None, reuseData=False, shape=None, checkAll=True, **kwds):
+    def __init__(self, data, featureNames=None, reuseData=False, shape=None, checkAll=True, **kwds):
         """
         data can be a list, a np matrix or a ListPassThrough
         reuseData only works when input data is a list
@@ -90,7 +90,7 @@ class List(Base):
         kwds['shape'] = shape
         super(List, self).__init__(**kwds)
 
-    def __init__(self, data, featureNames=None, reuseData=False, shape=None, **kwds):
+    def __initold__(self, data, featureNames=None, reuseData=False, shape=None, **kwds):
 
         #convert non-empty 1D data to 2D
         if (type(data) in [list, tuple, numpy.ndarray]) and len(data) > 0:
@@ -645,8 +645,8 @@ class List(Base):
             return UML.data.Sparse(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
         if format is None or format == 'List':
-            return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            #return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            #return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
             return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':
