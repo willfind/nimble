@@ -25,6 +25,48 @@ from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')
 
 class Sparse(Base):
+
+    def __initnew__(self, data, pointNames=None, featureNames=None, reuseData=False, **kwds):
+
+        self._sorted = None
+        if hasattr(data, 'shape') and (data.shape[0] == 0 or data.shape[1] == 0):
+            if isinstance(data, CooWithEmpty):
+                data = data.internal
+            else:
+                rowShape = 0
+                colShape = 0
+                if hasattr(data, 'shape'):
+                    rowShape = data.shape[0]
+                    colShape = data.shape[1]
+                if featureNames is not None and colShape == 0:
+                    colShape = len(featureNames)
+                if pointNames is not None and rowShape == 0:
+                    rowShape = len(pointNames)
+
+                data = numpy.empty(shape=(rowShape, colShape))
+
+            data = numpy.matrix(data, dtype=numpy.float)
+            self._data = CooWithEmpty(data)
+
+        elif isinstance(data, CooWrapper):
+            if reuseData:
+                self._data = data
+            else:
+                self._data = CooWithEmpty(data)
+        else:
+            if scipy.sparse.isspmatrix(data):
+                if reuseData:
+                    self._data = CooWithEmpty(data, reuseData=True)
+                else:
+                    self._data = CooWithEmpty(data.copy())
+            else:
+                self._data = CooWithEmpty(data)
+
+        kwds['shape'] = scipy.shape(self._data)
+        kwds['pointNames'] = pointNames
+        kwds['featureNames'] = featureNames
+        super(Sparse, self).__init__(**kwds)
+
     def __init__(self, data, pointNames=None, featureNames=None,
                  reuseData=False, **kwds):
         #convert tuple, pandas Series and numpy ndarray to numpy matrix
@@ -788,6 +830,8 @@ class Sparse(Base):
         if format == 'List':
             return UML.data.List(self._data.internal, pointNames=self.getPointNames(),
                                  featureNames=self.getFeatureNames())
+            # return UML.createData('List', self._data.internal, pointNames=self.getPointNames(),
+            #                       featureNames=self.getFeatureNames())
         if format == 'Matrix':
             return UML.data.Matrix(self._data.internal, pointNames=self.getPointNames(),
                                    featureNames=self.getFeatureNames())

@@ -23,6 +23,29 @@ class DataFrame(Base):
     in a pandas DataFrame.
     """
 
+    def __initnew__(self, data, reuseData=False, **kwds):
+        """
+
+        """
+        if (not isinstance(data, (pd.DataFrame, np.matrix))) and 'PassThrough' not in str(type(data)):
+            msg = "the input data can only be a pandas DataFrame or a numpy matrix or BaseView."
+            raise ArgumentException(msg)
+
+        if isinstance(data, pd.DataFrame):
+            if reuseData:
+                self.data = data
+            else:
+                self.data = data.copy()
+        else:
+            self.data = pd.DataFrame(data)
+
+        kwds['shape'] = self.data.shape
+        super(DataFrame, self).__init__(**kwds)
+        #it is very import to set up self.data's index and columns, other wise int index or column name will be set
+        #if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
+        self.data.index = self.getPointNames()
+        self.data.columns = self.getFeatureNames()
+
     def __init__(self, data, reuseData=False, **kwds):
         """
         The initializer.
@@ -444,6 +467,7 @@ class DataFrame(Base):
             return UML.data.Sparse(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'List':
             return UML.data.List(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            # return UML.createData('List', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
             return UML.data.Matrix(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':

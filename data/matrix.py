@@ -6,6 +6,7 @@ Class extending Base, using a numpy dense matrix to store data.
 import numpy
 import sys
 import itertools
+import copy
 
 import UML
 from base import Base
@@ -22,6 +23,25 @@ class Matrix(Base):
     in a numpy dense matrix.
 
     """
+
+    def __initnew__(self, data, featureNames=None, reuseData=False, **kwds):
+        """
+        data can only be a numpy matrix
+        """
+
+        if (not isinstance(data, numpy.matrix)) and 'PassThrough' not in str(type(data)):
+            msg = "the input data can only be a numpy matrix or BaseView."
+            raise ArgumentException(msg)
+
+        if isinstance(data, numpy.matrix):
+            if reuseData:
+                self.data = data
+            else:
+                self.data = copy.deepcopy(data)
+
+        kwds['featureNames'] = featureNames
+        kwds['shape'] = self.data.shape
+        super(Matrix, self).__init__(**kwds)
 
     def __init__(self, data, featureNames=None, reuseData=False, **kwds):
         try:

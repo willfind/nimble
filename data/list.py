@@ -5,6 +5,7 @@ Class extending Base, using a list of lists to store data.
 
 import copy
 import numpy
+import numbers
 import itertools
 
 import UML
@@ -23,8 +24,71 @@ class List(Base):
     Class providing implementations of data manipulation operations on data stored
     in a list of lists implementation, where the outer list is a list of
     points of data, and each inner list is a list of values for each feature.
-
     """
+
+    def __initnew__(self, data, featureNames=None, reuseData=False, shape=None, checkAll=True, **kwds):
+        """
+        data can be a list, a np matrix or a ListPassThrough
+        reuseData only works when input data is a list
+        if checkAll is True, then it will do validity check for all elements
+        """
+        if (not isinstance(data, (list, numpy.matrix))) and 'PassThrough' not in str(type(data)):
+            msg = "the input data can only be a list or a numpy matrix or ListPassThrough."
+            raise ArgumentException(msg)
+
+        allowedItemType = (numbers.Number, basestring)
+
+        if isinstance(data, list):
+            #case1: data=[]. self.data will be [], shape will be (0, shape[1]) or (0, len(featureNames)) or (0, 0)
+            if len(data) == 0:
+                if shape:
+                    shape = (0, shape[1])
+                else:
+                    shape = (0, len(featureNames) if featureNames else 0)
+            elif isinstance(data[0], allowedItemType):
+            #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be [[1,2,3]], shape will be (1, 3)
+                if checkAll:#check all items
+                    for i in data:
+                        if not isinstance(i, allowedItemType):
+                            msg = 'invalid input data format.'
+                            raise ArgumentException(msg)
+                shape = (1, len(data))
+                data = [data]
+            elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
+            #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []]. self.data will be = data, shape will be (len(data), len(data[0]))
+            #case4: data=[<UML.data.list.FeatureViewer object at 0x43fd410>]
+                numFeatures = len(data[0])
+                if checkAll:#check all items
+                    for i in data:
+                        if len(i) != numFeatures:
+                            msg = 'invalid input data format.'
+                            raise ArgumentException(msg)
+                        for j in i:
+                            if not isinstance(j, allowedItemType):
+                                msg = 'invalid input data format.'
+                                raise ArgumentException(msg)
+                shape = (len(data), numFeatures)
+
+            if reuseData:
+                data = data
+            else:
+                data = copy.deepcopy(data)
+
+        if isinstance(data, numpy.matrix):
+            #case5: data is a numpy matrix. shape is already in np matrix
+            shape = data.shape
+            data = data.tolist()
+
+        if len(data) == 0:
+            #case6: data is a ListPassThrough associated with empty list
+            data = []
+
+        self._numFeatures = shape[1]
+        self.data = data
+
+        kwds['featureNames'] = featureNames
+        kwds['shape'] = shape
+        super(List, self).__init__(**kwds)
 
     def __init__(self, data, featureNames=None, reuseData=False, shape=None, **kwds):
 
@@ -582,6 +646,7 @@ class List(Base):
 
         if format is None or format == 'List':
             return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            #return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
             return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':

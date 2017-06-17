@@ -468,7 +468,7 @@ def listUMLFunctions():
     return ret
 
 
-def createData(returnType, data, pointNames='automatic', featureNames='automatic',
+def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
                fileType=None, name=None, keepPoints='all', keepFeatures='all',
                ignoreNonNumericalFeatures=False, useLog=None):
     """Function to instantiate one of the UML data container types.
@@ -562,15 +562,12 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 
     """
     # validation of pointNames and featureNames
-    if pointNames != 'automatic' and pointNames is not True and \
-                    pointNames is not False and not isinstance(pointNames, list) and \
-            not isinstance(pointNames, dict):
+    if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
         msg = "pointNames may only be the values True, False, 'automatic' or "
         msg += "a list or dict specifying a mapping between names and indices."
         raise ArgumentException(msg)
-    if featureNames != 'automatic' and featureNames is not True and \
-                    featureNames is not False and not isinstance(featureNames, list) and \
-            not isinstance(featureNames, dict):
+
+    if featureNames != 'automatic' and not isinstance(featureNames, (bool, list, dict)):
         msg = "featureNames may only be the values True, False, 'automatic' or "
         msg += "a list or dict specifying a mapping between names and indices."
         raise ArgumentException(msg)
@@ -589,7 +586,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     if isAllowedRaw(data):
         ret = initDataObject(
             returnType=returnType, rawData=data, pointNames=pointNames,
-            featureNames=featureNames, name=name, path=None,
+            featureNames=featureNames, elementType=elementType, name=name, path=None,
             keepPoints=keepPoints, keepFeatures=keepFeatures)
         return ret
     # input is an open file or a path to a file
