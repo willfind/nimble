@@ -276,7 +276,13 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
         rawData = scipy.sparse.coo_matrix(rawData)
 
-    elif isinstance(rawData, (list, tuple, numpy.ndarray, numpy.matrix)):
+    elif isinstance(rawData, (list, tuple)):
+        if len(rawData) == 0:
+            #when rawData = [], we need to use pointNames and featureNames to determine its shape
+            rawData = numpy.empty([len(pointNames) if pointNames else 0, \
+                                   len(featureNames) if featureNames else 0])
+
+    elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
         rawData = numpy.matrix(rawData, dtype = elementType)
 
     elif pd and isinstance(rawData, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
