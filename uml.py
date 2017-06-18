@@ -1331,3 +1331,21 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
             predictions, [performance], timer, merged)
 
     return performance
+
+def coo_matrixTodense(origTodense):
+    """
+    decorator for coo_matrix.todense
+    """
+    def f(self):
+        try:
+            return origTodense(self)
+        except Exception:
+            ret = numpy.matrix(numpy.zeros(self.shape), dtype=self.dtype)
+            for (i, j), v in zip(zip(*self.nonzero()), self.data):
+                ret[i, j] = v
+            return ret
+    return f
+
+if scipy:
+    #monkey patch for coo_matrix.todense
+    scipy.sparse.coo_matrix.todense = coo_matrixTodense(scipy.sparse.coo_matrix.todense)
