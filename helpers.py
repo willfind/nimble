@@ -317,7 +317,7 @@ def elementTypeConvert(rawData, elementType):
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path,
-        keepPoints, keepFeatures, elementType=None):
+        keepPoints, keepFeatures, elementType=None, reuseData=False):
     """
     1. set up autoType
     2.
@@ -354,13 +354,13 @@ def initDataObject(
 
     initMethod = getattr(UML.data, returnType)
     try:
-        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType)
+        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData)
     except Exception as e:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
         try:
             autoMethod = getattr(UML.data, autoType)
-            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass)
+            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData)
             ret = ret.copyAs(returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted

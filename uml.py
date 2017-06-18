@@ -470,7 +470,7 @@ def listUMLFunctions():
 
 def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
                fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=None):
+               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
     """Function to instantiate one of the UML data container types.
 
     returnType: string (or None) indicating which kind of UML data type you want
@@ -587,7 +587,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
         ret = initDataObject(
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
-            keepPoints=keepPoints, keepFeatures=keepFeatures)
+            keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, basestring) or looksFileLike(data):

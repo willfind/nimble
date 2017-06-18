@@ -19,6 +19,12 @@ from UML.randomness import pythonRandom
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
 
+allowedItemType = (numbers.Number, basestring)
+def isAllowed(x):
+    if x is None or x != x:#None or np.NaN
+        return True
+    return  isinstance(x, allowedItemType)
+
 class List(Base):
     """
     Class providing implementations of data manipulation operations on data stored
@@ -36,8 +42,6 @@ class List(Base):
             msg = "the input data can only be a list or a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
 
-        allowedItemType = (numbers.Number, basestring)
-
         if isinstance(data, list):
             #case1: data=[]. self.data will be [], shape will be (0, shape[1]) or (0, len(featureNames)) or (0, 0)
             if len(data) == 0:
@@ -45,11 +49,11 @@ class List(Base):
                     shape = (0, shape[1])
                 else:
                     shape = (0, len(featureNames) if featureNames else 0)
-            elif isinstance(data[0], allowedItemType):
+            elif isAllowed(data[0]):
             #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be [[1,2,3]], shape will be (1, 3)
                 if checkAll:#check all items
                     for i in data:
-                        if not isinstance(i, allowedItemType):
+                        if not isAllowed(i):
                             msg = 'invalid input data format.'
                             raise ArgumentException(msg)
                 shape = (1, len(data))
@@ -64,7 +68,7 @@ class List(Base):
                             msg = 'invalid input data format.'
                             raise ArgumentException(msg)
                         for j in i:
-                            if not isinstance(j, allowedItemType):
+                            if not isAllowed(j):
                                 msg = 'invalid input data format.'
                                 raise ArgumentException(msg)
                 shape = (len(data), numFeatures)
