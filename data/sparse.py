@@ -26,10 +26,11 @@ pd = UML.importModule('pandas')
 
 class Sparse(Base):
 
-    def __init__(self, data, pointNames=None, featureNames=None, reuseData=False, **kwds):
+    def __init__(self, data, pointNames=None, featureNames=None, reuseData=False, elementType=None, **kwds):
         """
 
         """
+
         if (not isinstance(data, numpy.matrix)) and (not scipy.sparse.isspmatrix(data)) \
             and 'Coo' not in str(type(data)):
             msg = "the input data can only be a scipy sparse matrix or a numpy matrix or CooWithEmpty or CooDummy."
@@ -1545,7 +1546,18 @@ class Sparse(Base):
         self._data.data = ret
         return self
 
+    def outputMatrixData(self, keepSparse=False):
+        """
+        convert slef.data to a numpy matrix
+        """
 
+        if keepSparse:
+            return self._data
+        else:
+            try:
+                return numpy.matrix(self.data.todense())
+            except Exception:
+                return numpy.matrix(self.data.data.reshape(self.pointCount, self.featureCount))
     ###########
     # Helpers #
     ###########

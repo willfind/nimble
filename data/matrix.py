@@ -24,12 +24,12 @@ class Matrix(Base):
 
     """
 
-    def __init__(self, data, featureNames=None, reuseData=False, **kwds):
+    def __init__(self, data, featureNames=None, reuseData=False, elementType=None, **kwds):
         """
         data can only be a numpy matrix
         """
 
-        if (not isinstance(data, numpy.matrix)):# and 'PassThrough' not in str(type(data)):
+        if (not isinstance(data, numpy.matrix)) and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
 
@@ -38,6 +38,16 @@ class Matrix(Base):
                 self.data = data
             else:
                 self.data = copy.deepcopy(data)
+        else:#ListPassThrough
+            #when data is a np matrix, its dtype has been adjusted in extractNamesAndConvertData
+            #but when data is a ListPassThrough, we need to do dtype adjustment here
+            if elementType:
+                self.data = numpy.matrix(data, dtype=elementType)
+            else:
+                try:
+                    self.data = numpy.matrix(data, dtype=numpy.float)
+                except ValueError:
+                    self.data = numpy.matrix(data, dtype=object)
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = self.data.shape
@@ -909,6 +919,12 @@ class Matrix(Base):
         self.data = ret
         return self
 
+    def outputMatrixData(self):
+        """
+        convert slef.data to a numpy matrix
+        """
+
+        return self.data
 
 def viewBasedApplyAlongAxis(function, axis, outerObject):
     """ applies the given function to each view along the given axis, returning the results

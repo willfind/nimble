@@ -77,7 +77,9 @@ def _learnerQuery(name, queryType):
     return getattr(interface, toCallName)(learnerName)
 
 
-def isAllowedRaw(data):
+def isAllowedRaw(data, allowLPT=False):
+    if allowLPT and 'PassThrough' in str(type(data)):
+        return True
     if scipy and scipy.sparse.issparse(data):
             return True
     if type(data) in [tuple, list, dict, numpy.ndarray, numpy.matrix]:
@@ -275,13 +277,13 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             pass
 
         elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
-            rawData = scipy.sparse.coo_matrix(rawData)
+            rawData = scipy.sparse.coo_matrix(rawData, dtype=elementType)
 
         elif isinstance(rawData, (list, tuple)):
             if len(rawData) == 0:
                 #when rawData = [], we need to use pointNames and featureNames to determine its shape
                 rawData = numpy.matrix(numpy.empty([len(pointNames) if pointNames else 0, \
-                                       len(featureNames) if featureNames else 0]))
+                                       len(featureNames) if featureNames else 0]), dtype=elementType)
             else:
                 rawData = elementTypeConvert(rawData, elementType)
 
@@ -292,7 +294,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             rawData = elementTypeConvert(rawData, elementType)
 
         elif scipy and scipy.sparse.isspmatrix(rawData):
-            rawData = rawData.todense()
+            rawData = elementTypeConvert(rawData.todense(), elementType)
 
     except ValueError:
         msg = 'extractNamesAndConvertData: check rawData, pointNames, featureNames, elementType'
@@ -301,7 +303,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
 
 def elementTypeConvert(rawData, elementType):
     """
-
+    convert rawData to numpy matrix with dtype = elementType, or try dtype=float then try dtype=object
     """
     if elementType:
         return numpy.matrix(rawData, dtype = elementType)
@@ -329,7 +331,7 @@ def initDataObject(
 
     if returnType is None:
         returnType = autoType
-    #import pdb; pdb.set_trace()
+
     rawData, pointNames, featureNames = extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType)
     #if we really did extract names
     # only want to replace if names are not explicitly specified
@@ -352,7 +354,7 @@ def initDataObject(
 
     initMethod = getattr(UML.data, returnType)
     try:
-        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass)
+        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType)
     except Exception as e:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert

@@ -583,7 +583,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
         return (hasRead and hasWrite)
 
     # input is raw data
-    if isAllowedRaw(data):
+    if isAllowedRaw(data, allowLPT=True):
         ret = initDataObject(
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
@@ -601,6 +601,12 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     else:
         raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
 
+
+def convertType(data, retType):
+    """
+
+    """
+    data.copyAsMatrix
 
 def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None,
                   **kwarguments):

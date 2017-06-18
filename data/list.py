@@ -26,7 +26,7 @@ class List(Base):
     points of data, and each inner list is a list of values for each feature.
     """
 
-    def __init__(self, data, featureNames=None, reuseData=False, shape=None, checkAll=True, **kwds):
+    def __init__(self, data, featureNames=None, reuseData=False, shape=None, checkAll=True, elementType=None, **kwds):
         """
         data can be a list, a np matrix or a ListPassThrough
         reuseData only works when input data is a list
@@ -650,10 +650,7 @@ class List(Base):
             #return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
-            try:
-                return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            except Exception:
-                return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':
             # return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
@@ -996,3 +993,12 @@ class List(Base):
         for point in self.data:
             for i in xrange(len(point)):
                 point[i] *= scalar
+
+    def outputMatrixData(self):
+        """
+        convert slef.data to a numpy matrix
+        """
+        if len(self.data) == 0:# in case, self.data is []
+            return numpy.matrix(numpy.empty([len(self.getPointNames()), len(self.getFeatureNames())]))
+
+        return numpy.matrix(self.data)

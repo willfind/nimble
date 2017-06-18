@@ -23,7 +23,7 @@ class DataFrame(Base):
     in a pandas DataFrame.
     """
 
-    def __init__(self, data, reuseData=False, **kwds):
+    def __init__(self, data, reuseData=False, elementType=None, **kwds):
         """
 
         """
@@ -463,6 +463,8 @@ class DataFrame(Base):
                     if format is None, a new DataFrame will be created.
         """
         dataArray = self.data.values.copy()
+        if format is None or format == 'DataFrame':
+            return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Sparse':
             # return UML.data.Sparse(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('Sparse', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
@@ -909,4 +911,10 @@ class DataFrame(Base):
         df.drop(nameList, axis=axis, inplace=inplace)
 
         return DataFrame(ret, **{name: nameList, otherName: otherNameList})
-	
+
+    def outputMatrixData(self):
+        """
+        convert slef.data to a numpy matrix
+        """
+
+        return np.matrix(self.data)
