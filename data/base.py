@@ -2342,29 +2342,6 @@ class Base(object):
         self.validate()
 
 
-    def copyAsMatrix(self, retType):
-        """
-
-        """
-        return UML.createData(retType, self.outputMatrix(), featureNames=self.getFeatureNames, pointNames=self.getPointNames())
-
-
-
-    def copyFromMatrix(self, matrixData):
-        """
-
-        """
-        if isinstance(self, UML.data.List):
-            retType = 'List'
-        elif isinstance(self, UML.data.Matrix):
-            retType = 'Matrix'
-        elif isinstance(self, UML.data.DataFrame):
-            retType = 'DataFrame'
-        elif isinstance(self, UML.data.Sparse):
-            retType = 'Sparse'
-        self = UML.createData(retType, matrixData.outputMatrix(), featureNames=matrixData.getFeatureNames, pointNames=matrixData.getPointNames())
-
-
     def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
         """
 		Return a new object which has the same data (and featureNames, depending on

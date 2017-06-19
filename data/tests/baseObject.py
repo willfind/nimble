@@ -19,10 +19,6 @@ def objConstructorMaker(returnType):
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
         else:
-            # return UML.helpers.initDataObject(
-            #     returnType, rawData=data, pointNames=pointNames,
-            #     featureNames=featureNames, name=name, path=path,
-            #     keepPoints='all', keepFeatures='all')
             return UML.createData(returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, path=path,
                 keepPoints='all', keepFeatures='all')

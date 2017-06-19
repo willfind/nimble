@@ -94,67 +94,6 @@ class List(Base):
         kwds['shape'] = shape
         super(List, self).__init__(**kwds)
 
-    def __initold__(self, data, featureNames=None, reuseData=False, shape=None, **kwds):
-
-        #convert non-empty 1D data to 2D
-        if (type(data) in [list, tuple, numpy.ndarray]) and len(data) > 0:
-            #if data is like [1,2,3], then convert it to [[1,2,3]], i.e. convert 1D to 2D
-            #if data is [<UML.data.list.FeatureViewer object] then skip
-            if type(data[0]) not in [list, tuple, numpy.ndarray] and not hasattr(data[0], 'setLimit'):
-                data = [data]
-        self._numFeatures = shape[1] if shape is not None else None
-        # Format / copy the data if necessary
-        # if input as a list, copy it
-        if isinstance(data, list):
-
-            if len(data) > 0 and hasattr(data[0], "__len__") and len(data[0]) > 0:
-                if isinstance(data[0][0], list):
-                    msg = "python lists are not allowed as elements for our "
-                    msg += "List datatype"
-                    raise ArgumentException(msg)
-            if reuseData:
-                data = data
-            else:
-                data = copy.deepcopy(data)
-        # if sparse, make dense
-        if scipy and scipy.sparse.isspmatrix(data):
-            data = data.todense()
-        # if DataFrame or Series, convert it to numpy matrix
-        if pd and isinstance(data, (pd.DataFrame, pd.Series)):
-            data = numpy.matrix(data)
-
-        # if its a numpy construct, convert it to a python list
-        try:
-            temp = data
-            data = data.tolist()
-            # if the above was successful, then we might have to exctact emptiness info
-            self._numFeatures = temp.shape[1]
-        except AttributeError:
-            pass
-
-        # assign attributes
-        if data is None or len(data) == 0:
-            if self._numFeatures is None:
-                if featureNames is not None:
-                    self._numFeatures = len(featureNames)
-                else:
-                    self._numFeatures = 0
-            self.data = []
-            shape = (0, self._numFeatures)
-        else:
-            self._numFeatures = len(data[0])
-            for point in data:
-                if len(point) != self._numFeatures:
-                    raise ArgumentException("Points must be of equal size")
-                #				if not isinstance(point, list):
-                #					raise ArgumentException("If a python list is given as input, each entry must also be a list")
-            self.data = data
-            shape = (len(self.data), self._numFeatures)
-
-        kwds['featureNames'] = featureNames
-        kwds['shape'] = shape
-        super(List, self).__init__(**kwds)
-
 
     def _transpose_implementation(self):
         """
@@ -645,18 +584,14 @@ class List(Base):
         if format == 'Sparse':
             if self.pointCount == 0 or self.featureCount == 0:
                 emptyData = numpy.empty(shape=(self.pointCount, self.featureCount))
-                # return UML.data.Sparse(emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
                 return UML.createData('Sparse', emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            # return UML.data.Sparse(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
         if format is None or format == 'List':
-            #return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
             return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':
-            # return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
             return copy.deepcopy(self.data)

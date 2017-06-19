@@ -25,7 +25,10 @@ class DataFrame(Base):
 
     def __init__(self, data, reuseData=False, elementType=None, **kwds):
         """
-
+        The initializer.
+        Inputs:
+            data: pandas DataFrame, or numpy matrix.
+            reuseData: boolean. only used when data is a pandas DataFrame.
         """
         if (not isinstance(data, (pd.DataFrame, np.matrix))):# and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a pandas DataFrame or a numpy matrix or ListPassThrough."
@@ -46,37 +49,6 @@ class DataFrame(Base):
         self.data.index = self.getPointNames()
         self.data.columns = self.getFeatureNames()
 
-    def __initold__(self, data, reuseData=False, **kwds):
-        """
-        The initializer.
-        Inputs:
-            data: pandas DataFrame, list, list of list, scipy sparse, numpy array or numpy matrix.
-            reuseData: boolean. only used when data is a pandas DataFrame.
-        """
-        if isinstance(data, pd.DataFrame):
-            if reuseData:
-                self.data = data
-            else:
-                self.data = data.copy()
-        elif type(data) in [list, np.ndarray, np.matrix, tuple, pd.Series]:
-            if np.array(data).ndim > 2:
-                msg = "the input data can be list such as [1,2,3], list of list such as [[1,2,3],[3,2,1]], or 2D data in \
-					  numpy array or matrix. the current input has ndim > 2."
-                raise ArgumentException(msg)
-            #np.matrix can convert 1D data to 2D, such as [1,2,3] to matrix([[1,2,3]])
-            self.data = pd.DataFrame(np.matrix(data))
-        elif scipy.sparse.isspmatrix(data):
-            self.data = pd.DataFrame(data.todense())
-        else:
-            msg = "the input data can only be pandas DataFrame, list, list of list, scipy sparse, numpy array or numpy matrix"
-            raise ArgumentException(msg)
-
-        kwds['shape'] = self.data.shape
-        super(DataFrame, self).__init__(**kwds)
-        #it is very import to set up self.data's index and columns, other wise int index or column name will be set
-        #if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
-        self.data.index = self.getPointNames()
-        self.data.columns = self.getFeatureNames()
 
     def _transpose_implementation(self):
         """
@@ -466,13 +438,10 @@ class DataFrame(Base):
         if format is None or format == 'DataFrame':
             return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Sparse':
-            # return UML.data.Sparse(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('Sparse', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'List':
-            #return UML.data.List(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('List', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
-            #return UML.data.Matrix(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('Matrix', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
             return dataArray.tolist()
@@ -491,7 +460,6 @@ class DataFrame(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(dataArray)
 
-        # return DataFrame(dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
     def _copyPoints_implementation(self, points, start, end):
@@ -911,10 +879,3 @@ class DataFrame(Base):
         df.drop(nameList, axis=axis, inplace=inplace)
 
         return DataFrame(ret, **{name: nameList, otherName: otherNameList})
-
-    def outputMatrixData(self):
-        """
-        convert slef.data to a numpy matrix
-        """
-
-        return np.matrix(self.data)

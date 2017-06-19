@@ -204,6 +204,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     2. if rawData is like [{'a':1, 'b':3}, {'a':2, 'b':4}]
     3. if pointNames is True, then extract point names from the 1st column in rawData
     if featureNames is True, then extract feature names from the 1st row in rawData
+    4. convert data to np matrix
     """
     try:
         #1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
@@ -332,11 +333,8 @@ def initDataObject(
     if returnType is None:
         returnType = autoType
 
+    #may need to extract names and may need to convert data to matrix
     rawData, pointNames, featureNames = extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType)
-    #if we really did extract names
-    # only want to replace if names are not explicitly specified
-    #pointNames = extPNames if pointNames is None else pointNames
-    #featureNames = extFNames if featureNames is None else featureNames
 
     pathsToPass = (None, None)
     if path is not None:
@@ -367,8 +365,6 @@ def initDataObject(
         except:
             raise einfo[1], None, einfo[2]
 
-    # extract names out of the data object if still needed
-    #ret = extractNamesFromDataObject(ret, pnamesID, fnamesID)
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':

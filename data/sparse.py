@@ -75,63 +75,6 @@ class Sparse(Base):
         kwds['featureNames'] = featureNames
         super(Sparse, self).__init__(**kwds)
 
-    def __initold__(self, data, pointNames=None, featureNames=None,
-                 reuseData=False, **kwds):
-        #convert tuple, pandas Series and numpy ndarray to numpy matrix
-        if isinstance(data, (tuple, numpy.ndarray)) or (pd and isinstance(data, pd.Series)):
-        #if not isinstance(data, CooWrapper):
-            data = numpy.matrix(data)
-
-        self._sorted = None
-        if hasattr(data, 'shape') and (data.shape[0] == 0 or data.shape[1] == 0):
-            if isinstance(data, CooWithEmpty):
-                data = data.internal
-            else:
-                rowShape = 0
-                colShape = 0
-                if hasattr(data, 'shape'):
-                    rowShape = data.shape[0]
-                    colShape = data.shape[1]
-                if featureNames is not None and colShape == 0:
-                    colShape = len(featureNames)
-                if pointNames is not None and rowShape == 0:
-                    rowShape = len(pointNames)
-
-                data = numpy.empty(shape=(rowShape, colShape))
-
-            data = numpy.matrix(data, dtype=numpy.float)
-            self._data = CooWithEmpty(data)
-        elif isinstance(data, list) and data == []:
-            rowShape = 0
-            colShape = 0
-
-            if featureNames is not None and colShape == 0:
-                colShape = len(featureNames)
-            if pointNames is not None and rowShape == 0:
-                rowShape = len(pointNames)
-
-            data = numpy.empty(shape=(rowShape, colShape))
-            data = numpy.matrix(data, dtype=numpy.float)
-            self._data = CooWithEmpty(data)
-        elif isinstance(data, CooWrapper):
-            if reuseData:
-                self._data = data
-            else:
-                self._data = CooWithEmpty(data)
-        else:
-            if scipy.sparse.isspmatrix(data):
-                if reuseData:
-                    self._data = CooWithEmpty(data, reuseData=True)
-                else:
-                    self._data = CooWithEmpty(data.copy())
-            else:
-                self._data = CooWithEmpty(data)
-
-        kwds['shape'] = scipy.shape(self._data)
-        kwds['pointNames'] = pointNames
-        kwds['featureNames'] = featureNames
-        super(Sparse, self).__init__(**kwds)
-
 
     def getdata(self):
         return self._data.internal
@@ -832,20 +775,15 @@ class Sparse(Base):
 
     def _copyAs_implementation(self, format):
         if format is None or format == 'Sparse':
-            # ret = Sparse(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             ret = UML.createData('Sparse', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             ret._sorted = self._sorted
             return ret
         if format == 'List':
-            #return UML.data.List(self._data.internal, pointNames=self.getPointNames(),
-            #                     featureNames=self.getFeatureNames())
             return UML.createData('List', self._data.internal, pointNames=self.getPointNames(),
                                   featureNames=self.getFeatureNames())
         if format == 'Matrix':
-            #return UML.data.Matrix(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('Matrix', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':
-            # return UML.data.DataFrame(self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             return UML.createData('DataFrame', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
             return self._data.todense().tolist()
@@ -1370,7 +1308,6 @@ class Sparse(Base):
             # for other.data as any dense or sparse matrix
             retData = self._data.internal * other.data
 
-        # return Sparse(retData)
         return UML.createData('Sparse', retData)
 
 
@@ -1546,18 +1483,6 @@ class Sparse(Base):
         self._data.data = ret
         return self
 
-    def outputMatrixData(self, keepSparse=False):
-        """
-        convert slef.data to a numpy matrix
-        """
-
-        if keepSparse:
-            return self._data
-        else:
-            try:
-                return numpy.matrix(self.data.todense())
-            except Exception:
-                return numpy.matrix(self.data.data.reshape(self.pointCount, self.featureCount))
     ###########
     # Helpers #
     ###########

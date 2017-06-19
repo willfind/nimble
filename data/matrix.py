@@ -53,40 +53,6 @@ class Matrix(Base):
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
 
-    def __initold__(self, data, featureNames=None, reuseData=False, **kwds):
-        try:
-            if scipy and scipy.sparse.isspmatrix(data):
-                try:
-                    self.data = numpy.matrix(data.todense(), dtype=numpy.float)
-                except ValueError:
-                    self.data = numpy.matrix(data.todense(), dtype=object)
-            else:
-                if reuseData and isinstance(data, numpy.matrix):
-                    self.data = data
-                else:
-                    if isinstance(data, list) and data == []:
-                        cols = 0
-                        if featureNames is not None:
-                            cols = len(featureNames)
-                        data = numpy.empty(shape=(0, cols))
-                    try:
-                        self.data = numpy.matrix(data, dtype=numpy.float)
-                    except ValueError:
-                        self.data = numpy.matrix(data, dtype=object)
-        except ValueError:
-            einfo = sys.exc_info()
-            #if not ignore:
-            #	raise einfo[1], None, einfo[2]
-            msg = "ValueError during instantiation. Matrix does not accept strings "
-            msg += "in the input (with the exception of those that are directly convertible, "
-            msg += "like '3' or '-11'), having included strings is the likely cause for "
-            msg += "the error"
-            raise ArgumentException(msg)
-
-        kwds['featureNames'] = featureNames
-        kwds['shape'] = self.data.shape
-        super(Matrix, self).__init__(**kwds)
-
 
     def _transpose_implementation(self):
         """
@@ -919,12 +885,6 @@ class Matrix(Base):
         self.data = ret
         return self
 
-    def outputMatrixData(self):
-        """
-        convert slef.data to a numpy matrix
-        """
-
-        return self.data
 
 def viewBasedApplyAlongAxis(function, axis, outerObject):
     """ applies the given function to each view along the given axis, returning the results
