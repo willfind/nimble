@@ -270,7 +270,7 @@ def test_crossValidate_foldingRandomness():
     numTrials = 5
     for _ in xrange(numTrials):
         X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
-        seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
+        seed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
         print seed
         UML.setRandomSeed(seed)
         resultOne = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
@@ -310,7 +310,7 @@ def test_crossValidateReturnAll():
     # since the same seed is used, and these calls are effectively building the
     # same arguments, the scores in results list should be the same, though
     # ordered differently
-    seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
+    seed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
     UML.setRandomSeed(seed)
     result1 = crossValidateReturnAll('Custom.KNNClassifier', X, Y, fractionIncorrect, k=(1, 2, 3, 4, 5))
     UML.setRandomSeed(seed)
@@ -369,7 +369,7 @@ def test_crossValidateReturnBest():
     UML.registerCustomLearner('custom', FlipWrapper)
 
     # want to have a predictable random state in order to control folding
-    seed = UML.randomness.pythonRandom.randint(0, sys.maxint)
+    seed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
 
     def trial(metric, maximize):
         # get a baseline result
@@ -515,5 +515,3 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
 
     # should have 100 percent accuracy, so these results should be the same
     assert nonAvgResult == avgResult
-
-        

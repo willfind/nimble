@@ -132,7 +132,7 @@ def runSequence(objectList):
 
         # set up parameters
         paramsPerObj = []
-        randomseed = UML.randomness.pythonRandom.randint(0, sys.maxint)
+        randomseed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
         for i in xrange(len(objectList)):
             paramsPerObj.append(makeParams(currFunc, objectList[i], randomseed))
 
@@ -255,7 +255,7 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
         ret = ret.copyAs(dataType)
     else:
         UML.randomness.startAlternateControl()
-        UML.setRandomSeed(random.randint(0, sys.maxint))
+        UML.setRandomSeed(random.randint(0, 2**32 - 1))
         ret = UML.createRandomData("Matrix", points, features, .5, 'int')
         ret = ret.copyAs(dataType)
         UML.randomness.endAlternateControl()
