@@ -1632,8 +1632,19 @@ class CooWithEmpty(CooWrapper):
             if rightSparse:
                 # == for scipy sparse types is inconsistent. This is testing how many are
                 # nonzero after subtracting one from the other.
-                ret = abs(self.internal - other.internal).nnz == 0
-                return ret
+                try:
+                    ret = abs(self.internal - other.internal).nnz == 0
+                    return ret
+                except NotImplementedError:
+                    #this part is for Sparse object with non-numerical dtype
+                    if not all(self.internal.data == other.internal.data):
+                        return False
+                    elif not self.internal.dtype == other.internal.dtype:
+                        return False
+                    elif not (numpy.array(self.internal.nonzero()) == numpy.array(other.internal.nonzero())).all():
+                        return False
+                    else:
+                        return True
             else:
                 return False
         else:
