@@ -1,6 +1,9 @@
 import math
 import numpy
+import scipy
+
 import UML
+from UML.exceptions import ArgumentException
 
 numericalTypes = (int, float, long)
 
@@ -268,3 +271,60 @@ def _isNumericalPoint(point):
         return True
     else:
         return False
+
+
+
+def residuals(toPredict, controlVars):
+    """
+    Calculate the residuals of toPredict, by a linear regression model using the controlVars.
+
+    toPredict: UML data object, where each feature will be used as the independant
+    variable in a separate linear regression model with the controlVars as the
+    dependant variables.
+
+    controlVars: UML data object, with the same number of points as toPredict. Each
+    point will be used as the dependant variables to do predictions for the
+    corresponding point in toPredict.
+
+    Returns: UML data object of the same size as toPredict, containing the calculated
+    residuals.
+
+    Raises: ArgumentException if toPredict and controlVars are not UML data objects
+    of if they have a different number of points.
+
+    """
+    if not isinstance(toPredict, UML.data.Base):
+        msg = "toPredict must be a UML data object"
+        raise ArgumentException(msg)
+    if not isinstance(controlVars, UML.data.Base):
+        msg = "controlVars must be a UML data object"
+        raise ArgumentException(msg)
+
+    tpP = toPredict.pointCount
+    tpF = toPredict.featureCount
+    cvP = controlVars.pointCount
+    cvF = controlVars.featureCount
+
+    if tpP != cvP:
+        msg = "toPredict and controlVars must have the same number of points: ("
+        msg += str(tpP) + ") vs (" + str(cvP) + ")"
+        raise ArgumentException(msg)
+    if tpP == 0 or tpF == 0:
+        msg = "toPredict must have nonzero points (" + str(tpP) + ") and "
+        msg += "nonzero features (" + str(tpF) + ")"
+        raise ArgumentException(msg)
+    if cvP == 0 or cvF == 0:
+        msg = "controlVars must have nonzero points (" + str(cvP) + ") and "
+        msg += "nonzero features (" + str(cvF) + ")"
+        raise ArgumentException(msg)
+
+    workingType = controlVars.getTypeString()
+    workingCV = controlVars.copy()
+    workingCV.appendFeatures(UML.ones(workingType, cvP, 1))
+    workingCV = workingCV.copyAs("numpy matrix")
+    workingTP = toPredict.copyAs("numpy matrix")
+
+    x,res,r,s = scipy.linalg.lstsq(workingCV, workingTP)
+    pred = workingCV * x
+    ret = toPredict - pred
+    return ret
