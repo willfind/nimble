@@ -20,10 +20,20 @@ scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
 
 allowedItemType = (numbers.Number, basestring)
-def isAllowed(x):
-    if x is None or x != x:#None or np.NaN
+def isAllowedSingleElement(x):
+    """
+    This function is to determine if an element is an allowed single element
+    """
+    if isinstance(x, allowedItemType):
         return True
-    return  isinstance(x, allowedItemType)
+
+    if hasattr(x, '__len__'):#not a single element
+        return False
+
+    if x is None or x != x:#None and np.NaN are allowed
+        return True
+
+    return
 
 class List(Base):
     """
@@ -49,11 +59,11 @@ class List(Base):
                     shape = (0, shape[1])
                 else:
                     shape = (0, len(featureNames) if featureNames else 0)
-            elif isAllowed(data[0]):
+            elif isAllowedSingleElement(data[0]):
             #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be [[1,2,3]], shape will be (1, 3)
                 if checkAll:#check all items
                     for i in data:
-                        if not isAllowed(i):
+                        if not isAllowedSingleElement(i):
                             msg = 'invalid input data format.'
                             raise ArgumentException(msg)
                 shape = (1, len(data))
@@ -68,8 +78,8 @@ class List(Base):
                             msg = 'invalid input data format.'
                             raise ArgumentException(msg)
                         for j in i:
-                            if not isAllowed(j):
-                                msg = 'invalid input data format.'
+                            if not isAllowedSingleElement(j):
+                                msg = '%s is invalid input data format.'%j
                                 raise ArgumentException(msg)
                 shape = (len(data), numFeatures)
 
