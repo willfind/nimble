@@ -556,6 +556,12 @@ class SciKitLearn(UniversalInterface):
         if namedModule is None:
             return None
 
+        class InheritedEmptyInit(object):
+            pass
+
+        if type(namedModule) == type(getattr(InheritedEmptyInit, '__init__')):
+            return ([], None, None, None)
+
         try:
             (args, v, k, d) = inspect.getargspec(namedModule)
             (args, d) = self._removeFromTailMatchedLists(args, d, ignore)

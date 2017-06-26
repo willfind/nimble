@@ -190,7 +190,7 @@ def testSciKitLearnUnsupervisedProblemLearners():
     data2 = [[1, 0], [1, 1], [5, 1], [34, 4]]
     testObj = UML.createData('Matrix', data2)
 
-    UML.trainAndApply(toCall("GMM"), trainingObj, testX=testObj, arguments={'n_components': 3})
+    UML.trainAndApply(toCall("GMM"), trainingObj, testX=testObj)
     UML.trainAndApply(toCall("DPGMM"), trainingObj, testX=testObj)
     UML.trainAndApply(toCall("VBGMM"), trainingObj, testX=testObj)
 
