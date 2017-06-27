@@ -33,6 +33,7 @@ from UML.exceptions import ImproperActionException
 
 from UML.data.tests.baseObject import DataTestObject
 scipy = UML.importModule('scipy.sparse')
+pd = UML.importModule('pandas')
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -58,6 +59,7 @@ def plusOneOnlyEven(value):
 
 
 class StructureDataSafe(DataTestObject):
+
     #############
     # copyAs #
     #############
@@ -707,6 +709,140 @@ class StructureDataSafe(DataTestObject):
 
 
 class StructureModifying(DataTestObject):
+
+    ##############
+    # create data
+    ##############
+
+    def test_createEmptyData1(self):
+        """
+        create data object using tuple, list,
+        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        pd.Series, pd.SparseDataFrame, scipy sparse matrix
+        as input type.
+        """
+        orig1 = self.constructor([])
+        orig2 = self.constructor(())
+        orig3 = self.constructor({})
+        orig4 = self.constructor(numpy.empty([0, 0]))
+        orig5 = self.constructor(numpy.matrix(numpy.empty([0, 0])))
+        if pd:
+            orig6 = self.constructor(pd.DataFrame())
+            orig7 = self.constructor(pd.Series())
+            orig8 = self.constructor(pd.SparseDataFrame())
+
+        assert orig1.isIdentical(orig2)
+        assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig4)
+        assert orig1.isIdentical(orig5)
+        assert orig1.isIdentical(orig6)
+        assert orig1.isIdentical(orig7)
+        assert orig1.isIdentical(orig8)
+
+
+    def test_createEmptyData2(self):
+        """
+        create data object using tuple, list,
+        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        pd.Series, pd.SparseDataFrame, scipy sparse matrix
+        as input type.
+        """
+        orig1 = self.constructor([[]])
+        orig3 = self.constructor([{}])
+        orig4 = self.constructor(numpy.empty([1, 0]))
+        orig5 = self.constructor(numpy.matrix(numpy.empty([1, 0])))
+        if pd:
+            orig6 = self.constructor(pd.DataFrame([[]]))
+            orig8 = self.constructor(pd.SparseDataFrame([[]]))
+        if scipy:
+            orig9 = self.constructor(scipy.sparse.coo_matrix([[]]))
+
+        assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig4)
+        assert orig1.isIdentical(orig5)
+        assert orig1.isIdentical(orig6)
+        assert orig1.isIdentical(orig8)
+        assert orig1.isIdentical(orig9)
+
+    def test_createEmptyData3(self):
+        """
+        create data object using tuple, list,
+        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        pd.Series, pd.SparseDataFrame, scipy sparse matrix
+        as input type.
+        """
+        orig1 = self.constructor([[], []])
+        orig3 = self.constructor([{}, {}])
+        orig4 = self.constructor(numpy.empty([2, 0]))
+        orig5 = self.constructor(numpy.matrix(numpy.empty([2, 0])))
+        if pd:
+            orig6 = self.constructor(pd.DataFrame([[], []]))
+            orig8 = self.constructor(pd.SparseDataFrame([[], []]))
+        if scipy:
+            orig9 = self.constructor(scipy.sparse.coo_matrix([[], []]))
+
+        assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig4)
+        assert orig1.isIdentical(orig5)
+        assert orig1.isIdentical(orig6)
+        assert orig1.isIdentical(orig8)
+        assert orig1.isIdentical(orig9)
+
+    def test_create1DData(self):
+        """
+        create data object using tuple, list,
+        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        pd.Series, pd.SparseDataFrame, scipy sparse matrix
+        as input type.
+        """
+        orig1 = self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
+        orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
+        orig3 = self.constructor({'a':1, 'b':2, 'c':3})
+        orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+        if pd:
+            orig6 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+            orig7 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
+            orig8 = self.constructor(pd.SparseDataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+        if scipy:
+            orig9 = self.constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+
+        assert orig1.isIdentical(orig2)
+        assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig4)
+        assert orig1.isIdentical(orig5)
+        assert orig1.isIdentical(orig6)
+        assert orig1.isIdentical(orig7)
+        assert orig1.isIdentical(orig8)
+        assert orig1.isIdentical(orig9)
+
+    def test_create2DData(self):
+        """
+        create data object using tuple, list,
+        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        pd.Series, pd.SparseDataFrame, scipy sparse matrix
+        as input type.
+        """
+        orig1 = self.constructor([[1,2,'a'], [3,4,'b']], featureNames=['a', 'b', 'c'])
+        orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
+        orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']}, elementType=object)
+        orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
+        orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
+        if pd:
+            orig6 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
+        if scipy:
+            orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object)), featureNames=['a', 'b', 'c'])
+
+        assert orig1.isIdentical(orig2)
+        assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig4)
+        assert orig1.isIdentical(orig5)
+        assert orig1.isIdentical(orig6)
+        assert orig1.isIdentical(orig9)
+
+
     ##############
     # __init__() #
     ##############

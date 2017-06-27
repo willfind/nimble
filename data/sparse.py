@@ -1637,14 +1637,19 @@ class CooWithEmpty(CooWrapper):
                     return ret
                 except NotImplementedError:
                     #this part is for Sparse object with non-numerical dtype
-                    if not all(self.internal.data == other.internal.data):
+                    if not self.internal.dtype == other.internal.dtype:
                         return False
-                    elif not self.internal.dtype == other.internal.dtype:
-                        return False
-                    elif not (numpy.array(self.internal.nonzero()) == numpy.array(other.internal.nonzero())).all():
-                        return False
-                    else:
-                        return True
+                    selfList = list(self.internal.nonzero())
+                    selfList.append(self.internal.data)
+                    selfList = zip(*selfList)
+                    selfList.sort()
+
+                    otherList = list(other.internal.nonzero())
+                    otherList.append(other.internal.data)
+                    otherList = zip(*otherList)
+                    otherList.sort()
+
+                    return (numpy.array(selfList) == numpy.array(otherList)).all()
             else:
                 return False
         else:

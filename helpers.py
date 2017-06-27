@@ -197,6 +197,14 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures, pointNa
         return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
 
 
+def transposeMatrix(matrixObj):
+    """
+    this function is similar to np.transpose.
+    copy.deepcopy(np.transpose(matrixObj)) may generate a messed data, so I created
+    this function.
+    """
+    return numpy.matrix(zip(*matrixObj.tolist()), dtype=matrixObj.dtype)
+
 def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType):
     """
     1. if rawData is like {'a':[1,2], 'b':[3,4]}, then convert it to np.matrix and extract
@@ -211,9 +219,23 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         #featureNames must be those keys
         #pointNames must be False or automatic
         if isinstance(rawData, dict):
-            featureNames = rawData.keys()
-            rawData = numpy.matrix(numpy.transpose(rawData.values()), dtype=elementType)
-            pointNames = None
+            if rawData:
+                featureNames = rawData.keys()
+                rawData = numpy.matrix(rawData.values(), dtype=elementType)
+                if len(featureNames) == len(rawData):
+                    #{'a':[1,3], 'b':[2,4], 'c':['a', 'b']} --> keys = ['a', 'c', 'b']
+                    #np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
+                    #thus transpose is needed
+                    #{'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
+                    #np.matrix(values()) = [[1,3,2]]
+                    #transpose is not needed
+                    rawData = transposeMatrix(rawData)
+                pointNames = None
+
+            else:#rawData={}
+                featureNames = None
+                rawData = numpy.matrix(numpy.empty([0, 0]), dtype=elementType)
+                pointNames = None
 
         #2. convert list of dict like [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
         #featureNames must be those keys
@@ -311,6 +333,14 @@ def elementTypeConvert(rawData, elementType):
     """
     convert rawData to numpy matrix with dtype = elementType, or try dtype=float then try dtype=object
     """
+    if pd and isinstance(rawData, pd.Series) and len(rawData) == 0:
+        #make sure pd.Series() converted to matrix([], shape=(0, 0)) in next step
+        rawData = numpy.empty([0, 0])
+    elif pd and isinstance(rawData, pd.DataFrame):
+        #for pd.DataFrame, convert it to np.ndarray first then to matrix
+        #o.w. copy.deepcopy may generate messed data
+        rawData = rawData.values
+
     if elementType:
         return numpy.matrix(rawData, dtype = elementType)
     else:

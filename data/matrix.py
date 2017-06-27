@@ -29,7 +29,7 @@ class Matrix(Base):
         data can only be a numpy matrix
         """
 
-        if (not isinstance(data, numpy.matrix)) and 'PassThrough' not in str(type(data)):
+        if (not isinstance(data, (numpy.matrix, numpy.ndarray))) and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
 

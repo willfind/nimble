@@ -8,7 +8,7 @@ def objConstructorMaker(returnType):
     """
 
     def constructor(
-            data, pointNames='automatic', featureNames='automatic',
+            data, pointNames='automatic', featureNames='automatic', elementType=None,
             name=None, path=(None, None)):
         # Case: data is a path to a file
         if isinstance(data, basestring):
@@ -20,7 +20,7 @@ def objConstructorMaker(returnType):
         # particular path attribute.
         else:
             return UML.createData(returnType, data=data, pointNames=pointNames,
-                featureNames=featureNames, name=name, path=path,
+                featureNames=featureNames, elementType=elementType, name=name, path=path,
                 keepPoints='all', keepFeatures='all')
 
     return constructor
