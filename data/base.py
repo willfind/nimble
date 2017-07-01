@@ -1971,6 +1971,7 @@ class Base(object):
         yToPlot = yGetter(yIndex)
 
         if sampleSizeForAverage:
+            #do rolling average
             xToPlot, yToPlot = zip(*sorted(zip(xToPlot, yToPlot), key=lambda x: x[0]))
             convShape = numpy.ones(sampleSizeForAverage)/float(sampleSizeForAverage)
             startIdx = sampleSizeForAverage-1
@@ -1982,17 +1983,25 @@ class Base(object):
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
-            if not self.name.startswith(DEFAULT_PREFIX):
-                plt.title("Comparison of data in object " + self.name)
-
             xlabel = xAxis + ' #' + str(xIndex) if xName.startswith(DEFAULT_PREFIX) else xName
             ylabel = yAxis + ' #' + str(yIndex) if yName.startswith(DEFAULT_PREFIX) else yName
 
+            xName2 = xName
+            yName2 = yName
             if sampleSizeForAverage:
-                tmpStr = ' %s sample average' % sampleSizeForAverage
+                tmpStr = ' (%s sample average)' % sampleSizeForAverage
                 xlabel += tmpStr
                 ylabel += tmpStr
+                xName2 += ' average'
+                yName2 += ' average'
 
+            if self.name.startswith(DEFAULT_NAME_PREFIX):
+                titleStr = ('%s vs. %s') % (xName2, yName2)
+            else:
+                titleStr = ('%s: %s vs. %s') % (self.name, xName2, yName2)
+
+
+            plt.title(titleStr)
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
 

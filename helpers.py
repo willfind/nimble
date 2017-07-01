@@ -298,13 +298,15 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
                 #this list can only be [], [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
                 #otherwise, we need to covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
                  (len(rawData) == 0 or UML.data.list.isAllowedSingleElement(rawData[0]) or isinstance(rawData[0], list) or hasattr(rawData[0], 'setLimit'))) or \
-            isinstance(rawData, numpy.matrix) or \
             (pd and isinstance(rawData, pd.DataFrame) and returnType == 'DataFrame') or \
             (scipy and scipy.sparse.isspmatrix(rawData) and returnType == 'Sparse')\
             ):
             pass
-
+        elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
+            #if the input data is a np matrix, then convert it anyway to make sure try dtype=float 1st.
+            rawData = elementTypeConvert(rawData, elementType)
         elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
+            #from sparse to sparse, instead of via np matrix
             rawData = scipy.sparse.coo_matrix(rawData, dtype=elementType)
 
         elif isinstance(rawData, (list, tuple)):
@@ -315,14 +317,16 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             else:
                 rawData = elementTypeConvert(rawData, elementType)
 
-        elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
-            rawData = elementTypeConvert(rawData, elementType)
-
         elif pd and isinstance(rawData, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
             rawData = elementTypeConvert(rawData, elementType)
 
         elif scipy and scipy.sparse.isspmatrix(rawData):
             rawData = elementTypeConvert(rawData.todense(), elementType)
+
+        if returnType == 'Sparse' and isinstance(rawData, numpy.matrix) and rawData.shape[0]*rawData.shape[1] > 0:
+        #replace None to np.NaN, o.w. coo_matrix will convert None to 0
+            numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData), numpy.NaN)
+
 
     except ValueError:
         msg = 'extractNamesAndConvertData: check rawData, pointNames, featureNames, elementType'

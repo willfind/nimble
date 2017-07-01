@@ -799,6 +799,8 @@ class StructureModifying(DataTestObject):
         orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':1, 'b':2, 'c':3})
         orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig10 = self.constructor([{'a':1, 'b':2, 'c':3}])
+        orig10.sortFeatures(sortBy=orig10.getPointName(0))
         orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
         if pd:
@@ -810,6 +812,7 @@ class StructureModifying(DataTestObject):
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig10)
         assert orig1.isIdentical(orig4)
         assert orig1.isIdentical(orig5)
         assert orig1.isIdentical(orig6)
@@ -828,6 +831,8 @@ class StructureModifying(DataTestObject):
         orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']}, elementType=object)
         orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig7 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
+        orig7.sortFeatures(sortBy=orig7.getPointName(0))
         orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         if pd:
@@ -837,6 +842,7 @@ class StructureModifying(DataTestObject):
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig7)
         assert orig1.isIdentical(orig4)
         assert orig1.isIdentical(orig5)
         assert orig1.isIdentical(orig6)
