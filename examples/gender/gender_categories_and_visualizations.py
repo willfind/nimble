@@ -92,7 +92,7 @@ def loadCategoryData(path):
 
 	categories.transformEachPoint(cleanAndFormatNamesInPoint)
 
-#	categories.show("after", maxWidth=None, maxHeight=None)
+#	categories.show("after", maxWidth=None, maxHeight=None, maxColumnWidth=33)
 
 	categoriesByQName = categories.copyAs("List")
 	qs = categoriesByQName.extractFeatures("question")
@@ -473,6 +473,8 @@ def outputFile_SelectedQsPerCategory(outPath, categoriesByQName, picked):
 	toOutput.writeFile(outPath)
 
 def outputFile_SelectedQsMetadata(outPath, categoriesByQName, picked):
+	allCats = categoriesByQName.featureView(0).copyAs("numpyarray")
+	allCats = numpy.unique(allCats).tolist()
 	raw = []
 	for point in categoriesByQName.pointIterator():
 		question = point.getPointName(0)
@@ -482,8 +484,18 @@ def outputFile_SelectedQsMetadata(outPath, categoriesByQName, picked):
 			continue
 		
 		newPoint = [question, category, point[1]]
+		
+		# do that inclusion/scale scoring of each possible category
+		for possibleCat in allCats:
+			if category == possibleCat:
+				val = -1 if point[1] == 'male' else 1
+			else:
+				val = 0
+#			newPoint.append(val)
+
 		raw.append(newPoint)
 
+#	fnames = ["Question", "Category", "Agreement Gender"] + allCats
 	fnames = ["Question", "Category", "Agreement Gender"]
 	toOutput = UML.createData("List", raw, featureNames=fnames)
 #	print sum(ret.featureView(1))
@@ -578,10 +590,11 @@ def outputSelectedCategoryCorrelationToGender(responses, gender, selected, categ
 		collected.writeFile(out)
 
 
-def printSelectedCategoryCorrelationMatrix(responses, selected, categoriesByQName, outFile=None):
+def printSelectedCategoryCorrelationMatrix(responses, selected, categoriesByQName, outFile=None, scaleType=None):
 	collected = None
 	for category, (q0, q1) in selected.items():
-		sub = generateSubScale(responses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1])
+		scale = scaleType[category] if scaleType is not None else 'female'
+		sub = generateSubScale(responses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scale)
 		sub.setFeatureName(0, category)
 		if collected is None:
 			collected = sub
@@ -589,6 +602,8 @@ def printSelectedCategoryCorrelationMatrix(responses, selected, categoriesByQNam
 			collected.appendFeatures(sub)
 	
 	corrs = collected.featureSimilarities('correlation')
+	corrs.sortPoints(sortHelper=lambda x: x.getPointName(0))
+	corrs.sortFeatures(sortHelper=lambda x: x.getFeatureName(0))
 #	corrs.show("Selected Category Correlation Matrix", maxHeight=None, maxWidth=None, nameLength=25)
 	if outFile is not None:
 		corrs.writeFile(outFile)
@@ -655,6 +670,58 @@ def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, catego
 	if outPath is not None:
 		collected.writeFile(outPath)
 
+
+def outputFile_selected_data(responses, categoriesByQName, selected, outPath):
+	toUse = responses.copy()
+	gender = toUse.extractFeatures("male0female1")
+	selectedQs = toUse
+	selectedNames = []
+
+	for fname in selectedQs.getFeatureNames():
+		currCat = categoriesByQName[fname,0]
+		if fname in selected[currCat]:
+			selectedNames.append(fname)
+
+	selectedQs = selectedQs.extractFeatures(selectedNames)
+	selectedQs.appendFeatures(gender)
+	selectedData = selectedQs
+
+	if outPath is not None:
+		selectedData.writeFile(outPath)
+
+
+def outputFile_selected_and_transformed_data(responses, categoriesByQName, scaleType, selected, outPath):
+	toUse = responses.copy()
+	gender = toUse.extractFeatures("male0female1")
+	responsesOnly = toUse
+	rescale = []
+	selectedNames = []
+
+	for fname in responsesOnly.getFeatureNames():
+		currCat = categoriesByQName[fname,0]
+		if fname in selected[currCat]:
+			selectedNames.append(fname)
+
+			if scaleType[currCat] == 'female':
+				scaleMod = 1 if categoriesByQName[fname,1] == 'female' else -1
+			else:
+				scaleMod = -1 if categoriesByQName[fname,1] == 'female' else 1
+			rescale.append(scaleMod)
+
+	responsesOnly = responsesOnly.extractFeatures(selectedNames)
+
+#	responsesOnly.pointView(0).show("beforeNorm", maxWidth=None)
+
+	rescaleObj = UML.createData("Matrix", rescale)
+	responsesOnly.normalizeFeatures(divide=rescaleObj)
+
+#	responsesOnly.pointView(0).show("AfterNorm", maxWidth=None)
+
+	responsesOnly.appendFeatures(gender)
+	transformedData = responsesOnly
+
+	if outPath is not None:
+		transformedData.writeFile(outPath)
 
 
 def scoreToGenderCorrelation(scores, genders):
@@ -793,7 +860,9 @@ def generatePlots(picked, categoriesByQName, responses, genderValue, outDir, bw,
 
 if __name__ == '__main__':
 	#sys.exit(0)
+	# Constants controlling how the data is split in train and test sets
 	TRAIN_NUMBER = 300
+	SPLITSEED = 42
 
 	# Flags enabling analysis of the full, orignal category data
 	PRINT_CORR_FULLCAT_TO_GENDER = False
@@ -809,6 +878,7 @@ if __name__ == '__main__':
 	# Flags enabling results reporting of category selection
 	PRINT_SELQS = False
 	OUTPUT_SEL_QS_PER_CAT = True
+	OUTPUT_CORR_SELCAT_TO_SELCAT_OUTOFSAMPLE = True
 
 	# Flags enabling confirmation of our data and processes
 	VERIFY_FROMFILE_CATEGORYSCORES = False
@@ -820,10 +890,13 @@ if __name__ == '__main__':
 	RENAME_CATEGORIES_INCLUDE_MALE_SCALES_BEFORE_ANALYSIS = False
 	RENAME_CATEGORIES_INCLUDE_MALE_SCALES_AFTER_ANALYSIS = True
 #	SOME_MALE_SCALES = RENAME_CATEGORIES_INCLUDE_MALE_SCALES_BEFORE_ANALYSIS or RENAME_CATEGORIES_INCLUDE_MALE_SCALES_AFTER_ANALYSIS
-	ADD_NOISE_TO_DATA = True
+	ADD_NOISE_TO_DATA = False
 	RUN_BANDWIDTH_TRIALS = False
 	SAVE_BANDWIDTH_TRIAL_RESULTS = True
 	OUTPUT_PLOTS = False
+
+	# Flag for outputing transformed data ala what we would expect from the next trial
+	OUTPUT_DATA_SELECTED_AND_TRANSFORMED_SCALE = True
 
 #	UML.setRandomSeed(54324)
 
@@ -837,11 +910,16 @@ if __name__ == '__main__':
 	path_categories = os.path.join(sourceDir, "inData", "question_categories.csv")
 	path_responses = os.path.join(sourceDir, "inData", "question_data.csv")
 
+	# Output location for transformed data
+	outpath_responses_selected_and_transformed = os.path.join(sourceDir, "inData", "questions_selected_and_formated.csv")
+	outpath_responses_selected_only = os.path.join(sourceDir, "inData", "questions_selected.csv")
+
 	# Output files for full category score analysis
 	outPath_fullcat_corr_pval = os.path.join(sourceDir, "analysis", "category_to_gender_correlation_and_pvals.csv")
 	
 	# Output files for category selection analysis and results
 	outpath_selected_CatCorr = os.path.join(sourceDir, "analysis", "selected_CategoryCorr.csv")
+	outpath_selected_CatCorr_outOfSample = os.path.join(sourceDir, "analysis", "selected_CategoryCorr_test.csv")
 	outpath_selected_QCorr = os.path.join(sourceDir, "analysis", "selected_QuestionCorr.csv")
 	outpath_selected_QsToCatCorr = os.path.join(sourceDir, "analysis", "selected_QuestionToCategoryCorr.csv")
 	outpath_selected_QsInCatCorr = os.path.join(sourceDir, "analysis", "selected_QToQInCategoryCorr.csv")
@@ -856,6 +934,7 @@ if __name__ == '__main__':
 
 	# Output files for visualizations
 	outDir_plots = os.path.join(sourceDir, "plots")
+
 
 	# Load data from the provided paths
 	categoriesByQName, namesByCategory = loadCategoryData(path_categories)
@@ -909,7 +988,8 @@ if __name__ == '__main__':
 
 	# Split gender / response data for subscore selection training and visualziation
 	testFraction = float(responses.pointCount - TRAIN_NUMBER) / responses.pointCount
-	responseTrain, genderTrain, responseTest, genderTest = responses.trainAndTestSets(testFraction, "male0female1")
+	UML.setRandomSeed(SPLITSEED)
+	responseTrain, genderTrain, responseTest, genderTest = responses.trainAndTestSets(testFraction, "male0female1", randomOrder=True)
 	selected = determineBestSubScores(namesByCategory, categoriesByQName, responseTrain, genderTrain, forcedSelections)
 
 	# Verify our split and selection process correctness
@@ -920,7 +1000,7 @@ if __name__ == '__main__':
 
 	# Analysis of category selection using the training data
 	if OUTPUT_CORR_SELCAT_TO_SELCAT:
-		printSelectedCategoryCorrelationMatrix(responseTest, selected, categoriesByQName, outpath_selected_CatCorr)
+		printSelectedCategoryCorrelationMatrix(responseTrain, selected, categoriesByQName, outpath_selected_CatCorr)
 	if OUTPUT_CORR_SELQ_TO_SELQ:
 		printSelectedQuestionCorrelationMatrix(responseTrain, selected, outpath_selected_QCorr)
 	if OUTPUT_CORR_SELQ_TO_SELCAT:
@@ -951,6 +1031,15 @@ if __name__ == '__main__':
 		for cat,(q1,q2) in selected.items():
 			print cat + '\t' + q1
 			print '\t' + q2
+
+	if OUTPUT_CORR_SELCAT_TO_SELCAT_OUTOFSAMPLE:
+		printSelectedCategoryCorrelationMatrix(responseTest, selected, categoriesByQName, outpath_selected_CatCorr_outOfSample, scaleType)
+
+	if OUTPUT_DATA_SELECTED_AND_TRANSFORMED_SCALE:
+		outputFile_selected_data(responses, categoriesByQName, selected, outpath_responses_selected_only)
+		outputFile_selected_and_transformed_data(responses, categoriesByQName, scaleType, selected, outpath_responses_selected_and_transformed)
+
+	sys.exit()
 
 	# responses were only to one digit, which makes them clump for bandwidth trials.
 	# add some noise to loosen things up without going outside the range of what would
