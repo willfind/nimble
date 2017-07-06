@@ -3,6 +3,7 @@ import sys
 import numpy
 import scipy
 import os.path
+import functools
 from functools import partial
 
 KDE_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/kdePlotting"
@@ -172,6 +173,90 @@ def checkFromFileCatScores(categoryScores, namesByCategory, categoriesByQName, r
 		assert numpy.all(diff <= 0.100000000000001)
 
 
+def removeProblemCategories(categoriesByQName, namesByCategory, responses):
+	"""
+	Remove the categories we have determined do not significantly distinguish between
+	genders according to p-value or are too closely related to another, more expressive
+	category. Specifically we remove: "annoyable", "non resilient to illness",
+	"non resiliant to stress", "non image conscious", "optimistic", and "talkative"
+
+	"""
+	# remove from categoriesByQName, a UML object where the category is the 0th value
+	# of each point
+	beforePointCount = categoriesByQName.pointCount
+	catToRemove = ["Annoyable", "Non-Resilient To Illness", "Non-Resilient To Stress", "Non-Image Conscious", "Optimistic", "Talkative"]
+
+	def removeFunc(point):
+		return point[0] in catToRemove
+
+	categoriesByQName.extractPoints(removeFunc)
+	afterPointCount = categoriesByQName.pointCount
+	assert beforePointCount - afterPointCount == 24
+
+	# Remove from responses, where each feature is scores for a particular question
+	# (we need the contents of namesByCategory in order to find which quesiton is
+	# in which category, so this removal happens first)
+	qsToRemove = []
+	for cat,qs in namesByCategory.items():
+		if cat in catToRemove:
+			qsToRemove += qs
+
+	responsesPCBefore = responses.featureCount
+	responses.extractFeatures(qsToRemove)
+	responsesPCAfter = responses.featureCount
+	assert responsesPCBefore - responsesPCAfter == 24
+
+	# Remove from namesByCategory, a dict mapping category names to lists of questions
+	nbcBefore = len(namesByCategory)
+	for toRem in catToRemove:
+		del namesByCategory[toRem]
+	nbcAfter = len(namesByCategory)
+	assert nbcBefore - nbcAfter == 6
+
+
+def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
+	"""
+	Remove those questions we have since deem to be poorly worded, or overlapping
+	too strongly with questions in other categories. Specifically:
+	"I get overwhelmed by difficult challenges.", "I freeze up under pressure.",
+	"I need to plan out what I'm going to say in high pressure situations.",
+	"I believe that I am better than others.", and
+	"I would enjoy having multiple sexual partners if I were single."
+
+	"""
+	qsToRemove = ["I get overwhelmed by difficult challenges.",
+					"I freeze up under pressure.",
+					"I need to plan out what I'm going to say in high pressure situations.",
+					"I believe that I am better than others.",
+					"I would enjoy having multiple sexual partners if I were single."]
+
+	# remove from categoriesByQName, a UML object where questions are point names
+	beforePointCount = categoriesByQName.pointCount
+	categoriesByQName.extractPoints(qsToRemove)
+	afterPointCount = categoriesByQName.pointCount
+	assert beforePointCount - afterPointCount == 5
+
+
+	# Remove from namesByCategory, a dict mapping category names to lists of questions
+	removed = 0
+	for cat, qs in namesByCategory.items():
+		keep = []
+		for q in qs:
+			if q not in qsToRemove:
+				keep.append(q)
+		removed += len(qs) - len(keep)
+		namesByCategory[cat] = keep
+
+	assert removed == 5
+
+
+	# Remove from responses, where each feature is scores for a particular question
+	responsesPCBefore = responses.featureCount
+	responses.extractFeatures(qsToRemove)
+	responsesPCAfter = responses.featureCount
+	assert responsesPCBefore - responsesPCAfter == 5
+
+
 def determineBestSubScores(namesByCategory, categoriesByQName, responses, genderValue):
 	"""
 	Out of the four questions for each category, pick those two that have the subscore
@@ -181,43 +266,24 @@ def determineBestSubScores(namesByCategory, categoriesByQName, responses, gender
 	"""
 	picked = {}
 
-	for category, (q0, q1, q2, q3) in namesByCategory.items():
-		q0Gender = categoriesByQName[q0,1]
-		q1Gender = categoriesByQName[q1,1]
-		q2Gender = categoriesByQName[q2,1]
-		q3Gender = categoriesByQName[q3,1]
+	for category, qs in namesByCategory.items():
+		gender = [categoriesByQName[q,1] for q in qs]
 
-		q0q1 = generateSubScale(responses, q0, q0Gender, q1, q1Gender)
-		q0q2 = generateSubScale(responses, q0, q0Gender, q2, q2Gender)
-		q0q3 = generateSubScale(responses, q0, q0Gender, q3, q3Gender)
-		q1q2 = generateSubScale(responses, q1, q1Gender, q2, q2Gender)
-		q1q3 = generateSubScale(responses, q1, q1Gender, q3, q3Gender)
-		q2q3 = generateSubScale(responses, q2, q2Gender, q3, q3Gender)
+		pairwiseScale = []
+		mapping = []
+		for i,q in enumerate(qs):
+			for j,u in enumerate(qs[i+1:]):
+				curr = generateSubScale(responses, q, gender[i], u, gender[j+i+1])
+				pairwiseScale.append(curr)
+				mapping.append((q,u))
 
-		q0q1Corr = scoreToGenderCorrelation(q0q1, genderValue)
-		q0q2Corr = scoreToGenderCorrelation(q0q2, genderValue)
-		q0q3Corr = scoreToGenderCorrelation(q0q3, genderValue)
-		q1q2Corr = scoreToGenderCorrelation(q1q2, genderValue)
-		q1q3Corr = scoreToGenderCorrelation(q1q3, genderValue)
-		q2q3Corr = scoreToGenderCorrelation(q2q3, genderValue)
-
-		allCorr = [q0q1Corr, q0q2Corr, q0q3Corr, q1q2Corr, q1q3Corr, q2q3Corr]
-#		if category == "non resilient to illness":
-#			print allCorr
-
+		scoreCorrGenPartial = functools.partial(scoreToGenderCorrelation, genders=genderValue)
+		allCorr = map(scoreCorrGenPartial, pairwiseScale)
 		best = max(allCorr)
-		if best == q0q1Corr:
-			pickedQs = (q0, q1)
-		elif best == q0q2Corr:
-			pickedQs = (q0, q2)
-		elif best == q0q3Corr:
-			pickedQs = (q0, q3)
-		elif best == q1q2Corr:
-			pickedQs = (q1, q2)
-		elif best == q1q3Corr:
-			pickedQs = (q1, q3)
-		else:
-			pickedQs = (q2, q3)
+
+		for i,val in enumerate(allCorr):
+			if val == best:
+				pickedQs = mapping[i]
 
 		picked[category] = pickedQs
 
@@ -323,6 +389,24 @@ def printCategoryCorrelationToGender(namesByCategory, categoriesByQName, respons
 		print category + ": " + str(scoreToGenderCorrelation(fullCatScore, fullGender))
 		print category + ": " + str(scoreToGenderCorrelation(roundedCatScore, fullGender))
 		print ""
+
+def outputSelectedCategoryCorrelationToGender(responses, gender, selected, categoriesByQName, out=None):
+	collected = []
+	cats = []
+	for category, (q0, q1) in selected.items():
+		cats.append(category)
+		score = generateSubScale(responses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1])
+
+		collected.append(scoreToGenderCorrelation(score, gender))
+
+	collected = UML.createData("Matrix", collected, featureNames=cats)
+
+	if out is None:
+		collected.show("Selected Category Score Correlation to Gender", maxHeight=None, maxWidth=None, nameLength=50)
+	else:
+		collected.writeFile(out)
+
+
 
 
 def printSelectedCategoryCorrelationMatrix(responseTest, selected, categoriesByQName, outFile=None):
@@ -531,6 +615,8 @@ if __name__ == '__main__':
 	PRINT_CORR_FULLCAT_TO_GENDER = False
 	OUTPUT_FULLCAT_CORR_AND_PVALS = False
 
+	REMOVE_PROBLEMS = True
+
 	PRINT_CORR_SELCAT_TO_SELCAT = False
 	PRINT_CORR_SELQ_TO_SELQ = False
 	PRINT_CORR_SELQ_TO_SELCAT = False
@@ -554,10 +640,13 @@ if __name__ == '__main__':
 	sourceDir = sys.argv[1]
 	path_categories = os.path.join(sourceDir, "inData", "question_categories.csv")
 	path_responses = os.path.join(sourceDir, "inData", "question_data.csv")
+	#
 	outpath_selectedCatCorr = os.path.join(sourceDir, "analysis", "selectedCategoryCorr.csv")
 	outpath_selectedQCorr = os.path.join(sourceDir, "analysis", "selectedQuestionCorr.csv")
 	outpath_selectedQsToCatCorr = os.path.join(sourceDir, "analysis", "selectedQuestionToCategoryCorr.csv")
 	outpath_selectedQsInCatCorr = os.path.join(sourceDir, "analysis", "selectedQToQInCategoryCorr.csv")
+	outpath_selectedCorrToGender = os.path.join(sourceDir, "analysis", "selectedCorrToGender.csv")
+	#
 	outPath_selected = os.path.join(sourceDir, 'inData', "question_selected.csv")
 	outpath_selectedInCatQsCorr = os.path.join(sourceDir, "analysis", "inCat_QtoQ_corr.csv")
 	outPath_subscore_corr = os.path.join(sourceDir, "analysis", "subscore_category_correlation.csv")
@@ -582,24 +671,31 @@ if __name__ == '__main__':
 		checkFromFileCatScores(categoryScores, namesByCategory, categoriesByQName, responses)
 
 	# remove the categories we have determined do not significantly distinguish between
-	# genders according to p-value
-#	if OMIT_NON_SIGNIFICANT_CATEGORIES:
-#		pass
+	# genders according to p-value, or are too closely related to another, more expressive
+	# category.
+	# Also remove those questions we have since deem to be poorly worded, or overlapping
+	# too strongly with questions in other categories.
+	if REMOVE_PROBLEMS:
+		removeProblemCategories(categoriesByQName, namesByCategory, responses)
+		removeProblemQuestions(categoriesByQName, namesByCategory, responses)
 
 	# Split gender / response data for subscore selection training and visualziation
 	testFraction = float(responses.pointCount - TRAIN_NUMBER) / responses.pointCount
 	responseTrain, genderTrain, responseTest, genderTest = responses.trainAndTestSets(testFraction, "male0female1")
 	selected = determineBestSubScores(namesByCategory, categoriesByQName, responseTrain, genderTrain)
 
-
 	printSelectedCategoryCorrelationMatrix(responseTrain, selected, categoriesByQName, outpath_selectedCatCorr)
 	printSelectedQuestionCorrelationMatrix(responseTrain, selected, outpath_selectedQCorr)
 	printSelectedQuestionToSelectedCategoryCorrelation(responseTrain, selected, categoriesByQName, outpath_selectedQsToCatCorr)
 	printQuestionToQuestionInSameCategoryCorrelation(responseTrain, selected, categoriesByQName, outpath_selectedQsInCatCorr)
 
+	outputSelectedCategoryCorrelationToGender(responseTrain, genderTrain, selected, categoriesByQName, outpath_selectedCorrToGender)
 
 #	responseTest.show('sel')  # maxHeight=None, maxWidth=None)
 #	print selected
+	for cat,(q1,q2) in selected.items():
+		print cat + '\t' + q1
+		print '\t' + q2
 
 #	printSelectedQuestionCorrelationInCategory(responseTest, selected, outpath_selectedInCatQsCorr)
 	sys.exit(0)
