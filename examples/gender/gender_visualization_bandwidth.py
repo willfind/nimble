@@ -9,6 +9,11 @@ survery data.
 import numpy
 import scipy
 import sys
+import os
+import colorsys
+from scipy import stats
+
+import matplotlib
 import matplotlib.pyplot as plt
 
 
@@ -19,10 +24,13 @@ sys.path.append(KDE_HELPER_PATH)
 #from fancyHistogram import kdeAndHistogramPlot
 from multiplot import plotDualWithBlendFill
 
+from allowImports import boilerplate
+boilerplate()
+
 import UML
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
-from UML.examples.gender.gender_visualization_bandwidth import *
+#from UML.examples.gender.gender_categories_and_visualizations import generateSubScale
 
 
 
@@ -59,7 +67,7 @@ def LogLikelihoodSum(knownValues, predictedValues):
 
 	"""
 #	print predictedValues.data.shape
-	negLog = -numpy.log2(predictedValues.copyAs("numpyarray"))
+	negLog = -numpy.log(predictedValues.copyAs("numpyarray"))
 	return numpy.sum(negLog)
 LogLikelihoodSum.optimal = 'min'
 
@@ -158,6 +166,7 @@ def fixedBandwidth_drop5percent():
 			'talkative':				0.1,	'ordinary':					0.1,
 			'empathetic':				0.04}
 
+
 	return mbw,fbw
 
 
@@ -248,7 +257,7 @@ def fixedBandwidth_same(namesByCategory, mVal, fVal):
 	for catName in namesByCategory.keys():
 		adjusted = ' '.join(catName.lower().split('-'))
 		names[adjusted] = None
-	
+
 	mbw = {}
 	for k in names:
 		mbw[k] = mVal
@@ -293,6 +302,7 @@ def collateBW():
 
 
 
+
 def cvUnpackBest(resultsAll, maximumIsBest):
 	bestArgumentAndScoreTuple = None
 	for curResultTuple in resultsAll:
@@ -311,8 +321,9 @@ def cvUnpackBest(resultsAll, maximumIsBest):
 
 
 
-def bandwidthTrials(picked, categoriesByQName, responses, genderValue, LOOfolding=False):
-	
+def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType, LOOfolding=False, plotResultsDir=None):
+	from UML.examples.gender.gender_categories_and_visualizations import generateSubScale
+
 	def extractFemale(point):
 		pID = responses.getPointIndex(point.getPointName(0))
 		return genderValue[pID] == 1
@@ -325,35 +336,37 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, LOOfoldin
 	mResults = {}
 	fResults = {}
 	for cat, (q1, q2) in picked.items():
+		catScaleGender = scaleType[cat]
 		q1Gender = categoriesByQName[q1,1]
 		q2Gender = categoriesByQName[q2,1]
 
-		mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender)
-		fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender)
+		mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender, catScaleGender)
+		fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender, catScaleGender)
 #		print mSubscale.pointCount
 #		print mSubscale.featureCount
 #		mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender).extractPoints(end=10)
 #		fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender).extractPoints(end=10)
 
 #		bw = tuple([.02 + i*.02 for i in xrange(25)])
-		bw = tuple([.5 - i*.02 for i in xrange(25)])
+		bw = tuple([.5 - i*.02 for i in xrange(24)])
 #		bw = (.1,.2,.3)
 
-		print cat
+		print "\n" + cat
 		if LOOfolding:
 			mfolds = mSubscale.pointCount
 		else:
-			mfolds = 2
+			mfolds = 10
 #		print mfolds
 
 #		perfFunc = LogLikelihoodSum
-#		perfFunc = LogLikelihoodSumDrop5Percent
-		perfFunc = makePowerOfAdjustedLogLikelihoodSum(1)
+		perfFunc = LogLikelihoodSumDrop5Percent
+#		perfFunc = makePowerOfAdjustedLogLikelihoodSum(1)
 
 		boundary = "********************************************************************************"
 		UML.logger.active.humanReadableLog.logMessage(boundary + "\n" + cat)
 
 		mAll = UML.crossValidateReturnAll("custom.KDEProbability", mSubscale, None, bandwidth=bw, numFolds=mfolds, performanceFunction=perfFunc)
+		print mAll
 		mBest = cvUnpackBest(mAll, False)
 		mResults[cat] = mBest[0]['bandwidth']
 #		print "MSCALE"
@@ -363,19 +376,121 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, LOOfoldin
 		if LOOfolding:
 			ffolds = fSubscale.pointCount
 		else:
-			ffolds = 2
+			ffolds = 10
 #		print ffolds
 		fAll = UML.crossValidateReturnAll("custom.KDEProbability", fSubscale, None, bandwidth=bw, numFolds=ffolds, performanceFunction=perfFunc)
+		print fAll
 		fBest = cvUnpackBest(fAll, False)
 		fResults[cat] = fBest[0]['bandwidth']
 #		print "FSCALE"
 #		print fBest
 #		print fAll
 
+		if plotResultsDir is not None:
+			fileNameM = os.path.join(plotResultsDir, cat + "_M_N_ND")
+			fileNameF = os.path.join(plotResultsDir, cat + "_F_N_ND")
+
+			x = bw
+
+			def absDiffs(vals):
+				ret = []
+				for i in xrange(len(vals)-1):
+					ret.append(abs(vals[i] - vals[i+1]))
+				return ret
+
+			mY = [y for (args,y) in mAll]
+			plt.title(str(numpy.median(absDiffs(mY))))
+			plt.xlim(.04, .5)
+			plt.ylim(ymin=min(mY)*.9, ymax=max(mY)*1.1)
+			plt.fill_between(x, mY, interpolate=True)
+			plt.savefig(fileNameM)
+			plt.close()
+
+			fY = [y for (args,y) in fAll]
+			plt.title(str(numpy.median(absDiffs(fY))))
+			plt.xlim(.04, .5)
+			plt.ylim(ymin=min(fY)*.9, ymax=max(fY)*1.1)
+			plt.fill_between(x, fY, interpolate=True)
+			plt.savefig(fileNameF)
+			plt.close()
+
+
 	print ""
 	print mResults
 	print fResults
 	return mResults, fResults
+
+
+"""
+MALE
+NEW RGB				NEW HSV
+# 41 5E E0			229 71 87.8
+
+# 99 cc ff			210 40 100
+OLD RGB				OLD HSV
+
+
+FEMALE
+
+NEW RGB				NEW HSV
+# EB 65 EB			300 57 92
+
+# FF 66 77			353 60 100
+OLD RGB				OLD HSV
+"""
+
+
+def colorTrials(responses, genderValue):
+	def toRGB(color):
+		return colorsys.hsv_to_rgb(color[0]/365., color[1]/100., color[2]/100.)
+
+	def makeOver(L,R):
+		return ((L[0]+R[0])/2.0, (L[1]+R[1])/2.0,(L[2]+R[2])/2.0)
+
+	origM = toRGB((210, 40, 100))
+	origF = toRGB((353, 60, 100))
+	origO = makeOver(origM, origF)
+
+	bestIn_M = (235, 60, 100)
+	bestIn_F = (320, 60, 100)
+	bestIn_M_highS = (230, 80, 100) 
+	bestIn_F_highS = (330, 80, 100)
+	bestIn_M_lowS = (230, 40, 100) 
+	bestIn_F_lowS = (330, 40, 100)
+
+	bestOut_M = (205, 60, 100)
+	bestOut_F = (345, 60, 100)
+	bestOut_M_highS = (230, 80, 100) 
+	bestOut_F_highS = (330, 80, 100)
+	bestOut_M_lowS = (230, 40, 100) 
+	bestOut_F_lowS = (330, 40, 100)
+
+	currL = toRGB(bestOut_M)
+	currR = toRGB(bestOut_F)
+	print currL
+	print currR
+
+#	for mH in xrange(210,231,5):
+
+	def makeSwatches(M,F):
+		O = makeOver(M,F)
+		plt.figure(facecolor='white', frameon=False, tight_layout=True)
+		plt.fill_between([0,1], 0, [1,1], color=M, interpolate=True)
+		plt.fill_between([1,2], 0, [1,1], color=O, interpolate=True)
+		plt.fill_between([2,3], 0, [1,1], color=F, interpolate=True)
+		plt.xticks([])
+		plt.yticks([])
+		plt.show()
+
+#	makeSwatches(currL, currR)
+
+	Ldata = -((15 * stats.uniform.rvs(size=500)) - 5)
+	Rdata = (15 * stats.uniform.rvs(size=500)) - 5
+	
+	plotDualWithBlendFill(Ldata, Rdata, color1=currL, color2=currR, fileName=None, show=True, showPoints=False, title="", plotMean=False)
+
+
+#colorTrials(None, None)
 
 
 def verifyBandwidthSelectionWorks(responses, genderValue):

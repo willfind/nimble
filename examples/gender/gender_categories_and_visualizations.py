@@ -17,7 +17,17 @@ from allowImports import boilerplate
 boilerplate()
 
 import UML
-from UML.examples.gender.gender_visualization_bandwidth import *
+from UML.examples.gender.gender_visualization_bandwidth import verifyBandwidthSelectionWorks
+from UML.examples.gender.gender_visualization_bandwidth import KDEProbability
+from UML.examples.gender.gender_visualization_bandwidth import bandwidthTrials
+from UML.examples.gender.gender_visualization_bandwidth import fixedBandwidth_same
+from UML.examples.gender.gender_visualization_bandwidth import fixedBandwidth_handAdjusted
+from UML.examples.gender.gender_visualization_bandwidth import fixedBandwidth_all
+from UML.examples.gender.gender_visualization_bandwidth import fixedBandwidth_drop5percent
+from UML.examples.gender.gender_visualization_bandwidth import fixedBandwidth_noisy_all
+from UML.examples.gender.gender_visualization_bandwidth import collateBW
+
+#from UML.examples.gender.gender_visualization_bandwidth import *
 
 
 
@@ -178,20 +188,27 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
 	Remove the categories we have determined do not significantly distinguish between
 	genders according to p-value or are too closely related to another, more expressive
 	category. Specifically we remove: "annoyable", "non resilient to illness",
-	"non resiliant to stress", "non image conscious", "optimistic", and "talkative"
+	"non resiliant to stress", "non image conscious", "optimistic", "talkative",
+	and "power avoidant"
 
 	"""
 	# remove from categoriesByQName, a UML object where the category is the 0th value
 	# of each point
 	beforePointCount = categoriesByQName.pointCount
-	catToRemove = ["Annoyable", "Non-Resilient To Illness", "Non-Resilient To Stress", "Non-Image Conscious", "Optimistic", "Talkative"]
+	catToRemove = ["Annoyable", "Non-Resilient To Illness", "Non-Resilient To Stress", "Non-Image Conscious", "Optimistic", "Talkative", "Power Avoidant"]
+
+	for cat in catToRemove:
+		assert cat in categoriesByQName.featureView(0)
 
 	def removeFunc(point):
 		return point[0] in catToRemove
 
 	categoriesByQName.extractPoints(removeFunc)
 	afterPointCount = categoriesByQName.pointCount
-	assert beforePointCount - afterPointCount == 24
+	assert beforePointCount - afterPointCount == 28
+	for cat in catToRemove:
+		assert cat not in categoriesByQName.featureView(0)
+
 
 	# Remove from responses, where each feature is scores for a particular question
 	# (we need the contents of namesByCategory in order to find which quesiton is
@@ -204,14 +221,14 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
 	responsesPCBefore = responses.featureCount
 	responses.extractFeatures(qsToRemove)
 	responsesPCAfter = responses.featureCount
-	assert responsesPCBefore - responsesPCAfter == 24
+	assert responsesPCBefore - responsesPCAfter == 28
 
 	# Remove from namesByCategory, a dict mapping category names to lists of questions
 	nbcBefore = len(namesByCategory)
 	for toRem in catToRemove:
 		del namesByCategory[toRem]
 	nbcAfter = len(namesByCategory)
-	assert nbcBefore - nbcAfter == 6
+	assert nbcBefore - nbcAfter == 7
 
 
 def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
@@ -220,21 +237,23 @@ def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
 	too strongly with questions in other categories. Specifically:
 	"I get overwhelmed by difficult challenges.", "I freeze up under pressure.",
 	"I need to plan out what I'm going to say in high pressure situations.",
-	"I believe that I am better than others.", and
-	"I would enjoy having multiple sexual partners if I were single."
+	"I believe that I am better than others.",
+	"I would enjoy having multiple sexual partners if I were single.", and
+	"I often experience intense emotions."
 
 	"""
 	qsToRemove = ["I get overwhelmed by difficult challenges.",
 					"I freeze up under pressure.",
 					"I need to plan out what I'm going to say in high pressure situations.",
 					"I believe that I am better than others.",
-					"I would enjoy having multiple sexual partners if I were single."]
+					"I would enjoy having multiple sexual partners if I were single.",
+					"I often experience intense emotions."]
 
 	# remove from categoriesByQName, a UML object where questions are point names
 	beforePointCount = categoriesByQName.pointCount
 	categoriesByQName.extractPoints(qsToRemove)
 	afterPointCount = categoriesByQName.pointCount
-	assert beforePointCount - afterPointCount == 5
+	assert beforePointCount - afterPointCount == 6
 
 
 	# Remove from namesByCategory, a dict mapping category names to lists of questions
@@ -247,39 +266,154 @@ def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
 		removed += len(qs) - len(keep)
 		namesByCategory[cat] = keep
 
-	assert removed == 5
+	assert removed == 6
 
 
 	# Remove from responses, where each feature is scores for a particular question
 	responsesPCBefore = responses.featureCount
 	responses.extractFeatures(qsToRemove)
 	responsesPCAfter = responses.featureCount
-	assert responsesPCBefore - responsesPCAfter == 5
+	assert responsesPCBefore - responsesPCAfter == 6
 
 
-def determineBestSubScores(namesByCategory, categoriesByQName, responses, genderValue):
+def mergeProblemCategories(categoriesByQName, namesByCategory, responses):
+	"""
+	Merge certain problematically overlapping categories together, so that
+	the best of the union of their questions will be choosen. Specifically
+	merge: "non-manipulative" with "altruistic". For that pair, we will
+	retain the name "altruistic"
+
+	"""
+	# adjust categoriesByQName, a UML object where the category is the 0th value
+	# of each point
+	beforePointCount = categoriesByQName.pointCount
+	catToMerge = [("Non-Manipulative", 'Altruistic')]
+
+	def changeFunc(val):
+		for pair in catToMerge:
+			if val == pair[0]:
+				return pair[1]
+			else:
+				return None
+
+	categoriesByQName.transformEachElement(changeFunc, features=0, skipNoneReturnValues=True)
+	afterPointCount = categoriesByQName.pointCount
+	assert beforePointCount - afterPointCount == 0
+	for pair in catToMerge:
+		assert pair[0] not in categoriesByQName.featureView(0)
+
+
+	# Adjust namesByCategory, a dict mapping category names to lists of questions
+	nbcBefore = len(namesByCategory)
+	for pair in catToMerge:
+		namesByCategory[pair[1]] += namesByCategory[pair[0]]
+		del namesByCategory[pair[0]]
+	nbcAfter = len(namesByCategory)
+	assert nbcBefore - nbcAfter == 1
+
+
+def renameResultantCategories(categoriesByQName, namesByCategory, responses, selected):
+	"""
+	Rename the categories, using prior knowledge for how the question selection
+	will turn out, so that the chosen questions and category names correctly
+	match
+
+	"""
+	# adjust categoriesByQName, a UML object where the category is the 0th value
+	# of each point
+	beforePointCount = categoriesByQName.pointCount
+	# Old:New
+	rename = {'Non-Eloquent':'Improvisational',
+				'Risk Avoidant':'Risk Averse',
+				'Altruistic':'Unselfish',
+				'Worried':'Unworried',
+				'Complexity Avoidant':'Complexity Seeking',
+				'Agreeable':'Amicable',
+				'Ordinary':'Unusual',
+				'Non-Sexual':'Sex Focused',
+				'Thin Skinned':"Thick Skinned"}
+
+	def changeFunc(val):
+		if val in rename:
+			return rename[val]
+		else:
+			return None
+
+	categoriesByQName.transformEachElement(changeFunc, features=0, skipNoneReturnValues=True)
+	afterPointCount = categoriesByQName.pointCount
+	assert beforePointCount - afterPointCount == 0
+	for oldName in rename.keys():
+		assert oldName not in categoriesByQName.featureView(0)
+
+	# Adjust namesByCategory, a dict mapping category names to lists of questions
+	nbcBefore = len(namesByCategory)
+	for oldName in rename.keys():
+		namesByCategory[rename[oldName]] = namesByCategory[oldName]
+		del namesByCategory[oldName]
+	nbcAfter = len(namesByCategory)
+	assert nbcBefore - nbcAfter == 0
+	for oldName in rename.keys():
+		assert oldName not in namesByCategory
+
+	# Adjust selected, a dict mapping category names to tuples of selected questions
+	if selected is not None:
+		selBefore = len(selected)
+		for oldName in rename.keys():
+			selected[rename[oldName]] = selected[oldName]
+			del selected[oldName]
+		selAfter = len(selected)
+		assert selBefore - selAfter == 0
+		for oldName in rename.keys():
+			assert oldName not in selected
+
+
+def determineBestSubScores(namesByCategory, categoriesByQName, responses, genderValue,
+			forcedSelections):
 	"""
 	Out of the four questions for each category, pick those two that have the subscore
 	most correlated with gender. These two questions are recorded in a dictionary,
 	mapping category name to a tuple of question names.
 
 	"""
+	PRINT_CLOSE_CSV = False
 	picked = {}
 
 	for category, qs in namesByCategory.items():
+		if category in forcedSelections:
+			picked[category] = forcedSelections[category]
+			continue
+
 		gender = [categoriesByQName[q,1] for q in qs]
 
 		pairwiseScale = []
 		mapping = []
+		qToQ = []
 		for i,q in enumerate(qs):
 			for j,u in enumerate(qs[i+1:]):
 				curr = generateSubScale(responses, q, gender[i], u, gender[j+i+1])
 				pairwiseScale.append(curr)
 				mapping.append((q,u))
 
+				qDat = responses.copyFeatures(q)
+				uDat = responses.copyFeatures(u)
+				qDat.appendFeatures(uDat)
+				corr = qDat.featureSimilarities("correlation")
+				qToQ.append(abs(corr[0,1]))
+
 		scoreCorrGenPartial = functools.partial(scoreToGenderCorrelation, genders=genderValue)
 		allCorr = map(scoreCorrGenPartial, pairwiseScale)
 		best = max(allCorr)
+		close = best*.1
+
+		if PRINT_CLOSE_CSV:
+			curr = []
+			for i in xrange(len(allCorr)):
+				if best - allCorr[i] < close:
+					line = ','.join([category, mapping[i][0], mapping[i][1], str(qToQ[i]), str(allCorr[i])])
+					curr.append(line)
+			if len(curr) > 1:
+				for val in curr:
+					print val
 
 		for i,val in enumerate(allCorr):
 			if val == best:
@@ -338,23 +472,59 @@ def outputFile_SelectedQsPerCategory(outPath, categoriesByQName, picked):
 
 	toOutput.writeFile(outPath)
 
-
-def outputFile_subCategoryCorrelationWithGender(outPath, picked, categoriesByQName, responses,
-		genderValue):
+def outputFile_SelectedQsMetadata(outPath, categoriesByQName, picked):
 	raw = []
-	names = []
-	for category, (q1, q2) in picked.items():
-		q1Gender = categoriesByQName[q1,1]
-		q2Gender = categoriesByQName[q2,1]
-		subscale = generateSubScale(responses, q1, q1Gender, q2, q2Gender)
-		corr = scoreToGenderCorrelation(subscale, genderValue)
-		raw.append([corr])
-		names.append(category)
+	for point in categoriesByQName.pointIterator():
+		question = point.getPointName(0)
+		category = point[0]
 
-	toOut = UML.createData("List", raw, pointNames=names)
-	toOut.writeFile(outPath)
+		if question not in picked[category]:
+			continue
+		
+		newPoint = [question, category, point[1]]
+		raw.append(newPoint)
 
-def outputFile_CategoryCorrelationWithGender(outPath, namesByCategory,
+	fnames = ["Question", "Category", "Agreement Gender"]
+	toOutput = UML.createData("List", raw, featureNames=fnames)
+#	print sum(ret.featureView(1))
+#	toOutput.show("", maxWidth=120)
+
+	toOutput.writeFile(outPath)
+
+
+def outputFile_SelectedCatsMetadata(outPath, categoriesByQName, picked, responses, genders, scaleType):
+	def extractFemale(point):
+		pID = responses.getPointIndex(point.getPointName(0))
+		return genders[pID] == 1
+
+	toSplit = responses.copy()
+	fResponses = toSplit.extractPoints(extractFemale)
+	mResponses = toSplit
+
+	raw = []
+	for category, (q0, q1) in selected.items():
+		allScore = generateSubScale(responses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scaleType[category])
+		
+		mScore = generateSubScale(mResponses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scaleType[category])
+		mAvg = mScore.featureStatistics("mean")[0,0]
+		
+		fScore = generateSubScale(fResponses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scaleType[category])
+		fAvg = fScore.featureStatistics("mean")[0,0]
+
+		corr = scoreToGenderCorrelation(allScore, genders)
+		rawPoint = [category, scaleType[category], mAvg, fAvg, corr]
+		raw.append(rawPoint)
+
+	fnames = ["Category", "Agreement Gender", "Avg Male", "Avg Female", "Correlation to Gender"]
+	toOutput = UML.createData("List", raw, featureNames=fnames)
+#	print sum(ret.featureView(1))
+#	toOutput.show("", maxWidth=120)
+
+	toOutput.writeFile(outPath)
+
+
+
+def outputFile_FullCategoryCorrelationWithGender(outPath, namesByCategory,
 		categoriesByQName, responses):
 
 	genderValue = responses.copyFeatures("male0female1")
@@ -375,7 +545,7 @@ def outputFile_CategoryCorrelationWithGender(outPath, namesByCategory,
 	toOut.writeFile(outPath)
 
 
-def printCategoryCorrelationToGender(namesByCategory, categoriesByQName, responses):
+def printFullCategoryCorrelationToGender(namesByCategory, categoriesByQName, responses):
 	for category, (q0, q1, q2, q3) in namesByCategory.items():
 		sub1 = generateSubScale(responses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1])
 		sub2 = generateSubScale(responses, q2, categoriesByQName[q2,1], q3, categoriesByQName[q3,1])
@@ -389,6 +559,7 @@ def printCategoryCorrelationToGender(namesByCategory, categoriesByQName, respons
 		print category + ": " + str(scoreToGenderCorrelation(fullCatScore, fullGender))
 		print category + ": " + str(scoreToGenderCorrelation(roundedCatScore, fullGender))
 		print ""
+
 
 def outputSelectedCategoryCorrelationToGender(responses, gender, selected, categoriesByQName, out=None):
 	collected = []
@@ -407,9 +578,7 @@ def outputSelectedCategoryCorrelationToGender(responses, gender, selected, categ
 		collected.writeFile(out)
 
 
-
-
-def printSelectedCategoryCorrelationMatrix(responseTest, selected, categoriesByQName, outFile=None):
+def printSelectedCategoryCorrelationMatrix(responses, selected, categoriesByQName, outFile=None):
 	collected = None
 	for category, (q0, q1) in selected.items():
 		sub = generateSubScale(responses, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1])
@@ -423,6 +592,7 @@ def printSelectedCategoryCorrelationMatrix(responseTest, selected, categoriesByQ
 #	corrs.show("Selected Category Correlation Matrix", maxHeight=None, maxWidth=None, nameLength=25)
 	if outFile is not None:
 		corrs.writeFile(outFile)
+
 
 def printSelectedQuestionCorrelationMatrix(responses, selected, outFile=None):
 	collected = None
@@ -439,29 +609,6 @@ def printSelectedQuestionCorrelationMatrix(responses, selected, outFile=None):
 #	corrs.show("Selected Question Correlation Matrix", maxHeight=None, maxWidth=None, nameLength=25)
 	if outFile is not None:
 		corrs.writeFile(outFile)
-
-
-def printSelectedQuestionCorrelationInCategory(responses, selected, outFile=None):
-	collected = None
-	for category, (q1,q2) in selected.items():
-		sub1 = responses.copyFeatures(q1)
-		sub2 = responses.copyFeatures(q2)
-		sub1.appendFeatures(sub2)
-
-		corr = sub1.featureSimilarities('correlation')
-		corr = corr.extractPoints(0).extractFeatures(1)
-		corr.setFeatureName(0,category)
-		corr.setPointName(0, 'InCat_QtoQ_corr')
-		if collected is None:
-			collected = corr
-		else:
-			collected.appendFeatures(corr)
-	
-	collected.show("Selected Question Correlation Matrix", maxHeight=None, maxWidth=None, nameLength=25)
-	if outFile is not None:
-		collected.writeFile(outFile)
-
-
 
 def printSelectedQuestionToSelectedCategoryCorrelation(responses, selected, categoriesByQName, outPath):
 	collected = None
@@ -484,7 +631,6 @@ def printSelectedQuestionToSelectedCategoryCorrelation(responses, selected, cate
 	if outPath is not None:
 		collected.writeFile(outPath)
 
-
 def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, categoriesByQName, outPath):
 	collected = None
 	for category, (qName1,qName2) in selected.items():
@@ -505,7 +651,7 @@ def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, catego
 		collected.appendPoints(corr)
 
 #	collected = abs(collected)
-	collected.show("Selected Question To Category Correlation", maxHeight=None, maxWidth=None, nameLength=50)
+#	collected.show("Selected Question To Category Correlation", maxHeight=None, maxWidth=None, nameLength=50)
 	if outPath is not None:
 		collected.writeFile(outPath)
 
@@ -524,16 +670,50 @@ def scoreToGenderPValues(scores, genders):
 	return pvals
 
 
-def generateSubScale(data, qA_ID, qA_Gender, qB_ID, qB_Gender):
+def generateSubScale(data, qA_ID, qA_Gender, qB_ID, qB_Gender, scale_Gender='female'):
 	qA = data.copyFeatures(qA_ID)
 	qB = data.copyFeatures(qB_ID)
 	qA.setFeatureNames(None)
 	qB.setFeatureNames(None)
 
-	qA = -qA if qA_Gender == 'male' else qA
-	qB = -qB if qB_Gender == 'male' else qB
+	if scale_Gender == 'female':
+		qA = -qA if qA_Gender == 'male' else qA
+		qB = -qB if qB_Gender == 'male' else qB
+	else:
+		qA = -qA if qA_Gender == 'female' else qA
+		qB = -qB if qB_Gender == 'female' else qB
 
 	return (qA + qB) / 2.0
+
+def setupCategoryScaleTypes(categoriesByQName, selected, includeMale):
+	if includeMale:
+		ret = {'Unworried':'male', 'Risk Averse':'female',
+				'Unselfish':'female', 'Emotionally Aware':'female',
+				'Unusual':'male', 'Warm':'female', 'Amicable':'female',
+				'Improvisational':'male', 'Thick Skinned':'male',
+				'Forgiving':'female', 'Sex Focused':'male',
+				'Complexity Seeking':'male', 'Empathetic':'female'}
+
+		if selected is not None:
+			for cat in ret:
+				assert cat in selected
+	else:
+		ret = {}
+		for cat in selected.keys():
+			ret[cat] = 'female'
+
+	def unpack(point):
+		return ret[point[0]]
+
+	catScaleFeature = categoriesByQName.calculateForEachPoint(unpack)
+	catScaleFeature.setFeatureName(0, 'genderHigherAvgOfCat')
+
+	if categoriesByQName.featureCount == 3:
+		categoriesByQName.extractFeatures('genderHigherAvgOfCat')
+	categoriesByQName.appendFeatures(catScaleFeature)
+
+	return ret
+
 
 def addNoiseToResponses(responses):
 #	print responses[0,0]
@@ -558,13 +738,7 @@ def addNoiseToResponses(responses):
 	return noiseObj
 
 
-#def generatePlotsRange(picked, categoriesByQName, responses, genderValue, outDir, bw):
-#	for i in xrange(-2, 3):
-#		for k,v in bw[0].items():
-#			pass
-
-
-def generatePlots(picked, categoriesByQName, responses, genderValue, outDir, bw):
+def generatePlots(picked, categoriesByQName, responses, genderValue, outDir, bw, scaleType):
 	def extractFemale(point):
 		pID = responses.getPointIndex(point.getPointName(0))
 		return genderValue[pID] == 1
@@ -575,14 +749,22 @@ def generatePlots(picked, categoriesByQName, responses, genderValue, outDir, bw)
 
 	num = 0
 	for catU, (q1, q2) in picked.items():
+		catScaleGender = scaleType[catU]
+		# need this to interface with legacy saved bandwidth selections
 		cat = catU.lower()
 		if cat[3] == '-':
 			cat = 'non ' + cat[4:]
+
+		if catU in bw[0]:
+			bw[0][cat] = bw[0][catU]
+		if catU in bw[1]:
+			bw[1][cat] = bw[1][catU]
+
 		q1Gender = categoriesByQName[q1,1]
 		q2Gender = categoriesByQName[q2,1]
 
-		fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender)  # .extractPoints(end=20)
-		mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender)  # .extractPoints(end=20)
+		fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender, catScaleGender)  # .extractPoints(end=20)
+		mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender, catScaleGender)  # .extractPoints(end=20)
 
 #		fSubscale.show("F", maxWidth=None, maxHeight=None)
 
@@ -591,13 +773,17 @@ def generatePlots(picked, categoriesByQName, responses, genderValue, outDir, bw)
 		fileName = os.path.join(outDir, cat)
 		opts = {}
 		opts['fileName'] = fileName
+#		opts['fileName'] = None
 		opts['show'] = False
 #		opts['title'] = str(bw[0][cat]) + " | " + catU + " | " + str(bw[1][cat])
 		opts['title'] = catU
-		opts['xlabel'] = ""
+#		opts['xlabel'] = "Score"
+		opts['ylabel'] = "Frequency of Score"
 		opts['showPoints'] = False
 		opts['xLimits'] = (-10, 10)
-		opts['yLimits'] = (0, .17)
+		opts['yLimits'] = (0, .175)
+		opts['legendContents'] = ("Males", "Females")
+		opts['normalizeAUC'] = True
 		plotDualWithBlendFill(mSubscale, fSubscale, bw[0][cat], bw[1][cat], **opts)
 #		plotDualWithBlendFill(mSubscale, fSubscale, None, None, **opts)
 #		if num > 0:
@@ -609,113 +795,162 @@ if __name__ == '__main__':
 	#sys.exit(0)
 	TRAIN_NUMBER = 300
 
-	PRINT_CORR_FULLCAT_TO_FULLCAT = False
-	PRINT_CORR_Q_TO_Q = False
-	PRINT_CORR_Q_TO_FULLCAT = False
+	# Flags enabling analysis of the full, orignal category data
 	PRINT_CORR_FULLCAT_TO_GENDER = False
-	OUTPUT_FULLCAT_CORR_AND_PVALS = False
+	OUTPUT_FULLCAT_CORR_AND_PVALS = True
 
-	REMOVE_PROBLEMS = True
+	# Flags enabling analysis of the training set category selection
+	OUTPUT_CORR_SELCAT_TO_SELCAT = True
+	OUTPUT_CORR_SELQ_TO_SELQ = True
+	OUTPUT_CORR_SELQ_TO_SELCAT = False
+	OUTPUT_CORR_SELCAT_TO_GENDER = True
+	OUTPUT_INCAT_Q_TO_Q = True
 
-	PRINT_CORR_SELCAT_TO_SELCAT = False
-	PRINT_CORR_SELQ_TO_SELQ = False
-	PRINT_CORR_SELQ_TO_SELCAT = False
+	# Flags enabling results reporting of category selection
+	PRINT_SELQS = False
+	OUTPUT_SEL_QS_PER_CAT = True
 
+	# Flags enabling confirmation of our data and processes
 	VERIFY_FROMFILE_CATEGORYSCORES = False
 	VERIFY_MEANS_ORDERING_OF_SUBSCORES = True
 	VERIFY_BANDWIDTH_SELECTION_FEASIBLE = False
 
-	OUTPUT_SEL_QS_PER_CAT = False
-	OUTPUT_SUBSCORE_CAT_CORR = False
-
+	# Flags enabling modifications to the processing pipeline
+	CATEGORY_CLEANUP = True
+	RENAME_CATEGORIES_INCLUDE_MALE_SCALES_BEFORE_ANALYSIS = False
+	RENAME_CATEGORIES_INCLUDE_MALE_SCALES_AFTER_ANALYSIS = True
+#	SOME_MALE_SCALES = RENAME_CATEGORIES_INCLUDE_MALE_SCALES_BEFORE_ANALYSIS or RENAME_CATEGORIES_INCLUDE_MALE_SCALES_AFTER_ANALYSIS
 	ADD_NOISE_TO_DATA = True
 	RUN_BANDWIDTH_TRIALS = False
-	OUTPUT_PLOTS = True
+	SAVE_BANDWIDTH_TRIAL_RESULTS = True
+	OUTPUT_PLOTS = False
+
+#	UML.setRandomSeed(54324)
 
 	UML.registerCustomLearner('Custom', KDEProbability)
 
 	import time
 	print time.asctime(time.localtime())
 
+	# Source Data
 	sourceDir = sys.argv[1]
 	path_categories = os.path.join(sourceDir, "inData", "question_categories.csv")
 	path_responses = os.path.join(sourceDir, "inData", "question_data.csv")
-	#
-	outpath_selectedCatCorr = os.path.join(sourceDir, "analysis", "selectedCategoryCorr.csv")
-	outpath_selectedQCorr = os.path.join(sourceDir, "analysis", "selectedQuestionCorr.csv")
-	outpath_selectedQsToCatCorr = os.path.join(sourceDir, "analysis", "selectedQuestionToCategoryCorr.csv")
-	outpath_selectedQsInCatCorr = os.path.join(sourceDir, "analysis", "selectedQToQInCategoryCorr.csv")
-	outpath_selectedCorrToGender = os.path.join(sourceDir, "analysis", "selectedCorrToGender.csv")
-	#
-	outPath_selected = os.path.join(sourceDir, 'inData', "question_selected.csv")
-	outpath_selectedInCatQsCorr = os.path.join(sourceDir, "analysis", "inCat_QtoQ_corr.csv")
-	outPath_subscore_corr = os.path.join(sourceDir, "analysis", "subscore_category_correlation.csv")
+
+	# Output files for full category score analysis
 	outPath_fullcat_corr_pval = os.path.join(sourceDir, "analysis", "category_to_gender_correlation_and_pvals.csv")
+	
+	# Output files for category selection analysis and results
+	outpath_selected_CatCorr = os.path.join(sourceDir, "analysis", "selected_CategoryCorr.csv")
+	outpath_selected_QCorr = os.path.join(sourceDir, "analysis", "selected_QuestionCorr.csv")
+	outpath_selected_QsToCatCorr = os.path.join(sourceDir, "analysis", "selected_QuestionToCategoryCorr.csv")
+	outpath_selected_QsInCatCorr = os.path.join(sourceDir, "analysis", "selected_QToQInCategoryCorr.csv")
+	outpath_selected_CorrToGender = os.path.join(sourceDir, "analysis", "selected_CatToGenderCorr.csv")
+	outPath_selected_results = os.path.join(sourceDir, 'inData', "questions_selected.csv")
+	outPath_selectedQ_metadata = os.path.join(sourceDir, 'inData', "questions_selectedMetadata.csv")
+	outPath_selectedCat_metadata = os.path.join(sourceDir, 'inData', "categories_selectedCatMetadata.csv")
+	
+	# Output directory for bandwidth trial resutlts
+	outDir_BW_results = os.path.join(sourceDir, "analysis", "BW")
+	outDir_BW_results = outDir_BW_results if SAVE_BANDWIDTH_TRIAL_RESULTS else None
+
+	# Output files for visualizations
 	outDir_plots = os.path.join(sourceDir, "plots")
 
 	# Load data from the provided paths
 	categoriesByQName, namesByCategory = loadCategoryData(path_categories)
 	responses, categoryScores = loadResponseData(path_responses)
 
-	if PRINT_CORR_FULLCAT_TO_FULLCAT:
-		pass
-	if PRINT_CORR_Q_TO_Q:
-		pass
-	if PRINT_CORR_Q_TO_FULLCAT:
-		pass
-	if PRINT_CORR_FULLCAT_TO_GENDER:
-		printCategoryCorrelationToGender(namesByCategory, categoriesByQName, responses)
-	if OUTPUT_FULLCAT_CORR_AND_PVALS:
-		outputFile_CategoryCorrelationWithGender(outPath_fullcat_corr_pval, namesByCategory, categoriesByQName, responses)
+	# Confirm that our calculated full category scores match those previously calculated
+	# and already present in the responses data.
 	if VERIFY_FROMFILE_CATEGORYSCORES:
 		checkFromFileCatScores(categoryScores, namesByCategory, categoriesByQName, responses)
 
-	# remove the categories we have determined do not significantly distinguish between
-	# genders according to p-value, or are too closely related to another, more expressive
+	# Optional analysis of the full, original categories
+	if PRINT_CORR_FULLCAT_TO_GENDER:
+		printFullCategoryCorrelationToGender(namesByCategory, categoriesByQName, responses)
+	if OUTPUT_FULLCAT_CORR_AND_PVALS:
+		outputFile_FullCategoryCorrelationWithGender(outPath_fullcat_corr_pval, namesByCategory, categoriesByQName, responses)
+
+	# Adjust the categories, questions, and names given the results of our data
+	# and selection analysis.
+	# Removes the categories we have determined do not significantly distinguish between
+	# genders according to p-value, or are a special case of a more expressive
 	# category.
-	# Also remove those questions we have since deem to be poorly worded, or overlapping
+	# Removes those questions we have since deemed to be poorly worded, or overlapping
 	# too strongly with questions in other categories.
-	if REMOVE_PROBLEMS:
+	# Force certain questions to be selected by removing all other options
+	# Combines categories we have determined are really asking about the same thing
+	# Rename the resultant categories given how we know the selection process
+	# will turn out.
+	if CATEGORY_CLEANUP:
 		removeProblemCategories(categoriesByQName, namesByCategory, responses)
 		removeProblemQuestions(categoriesByQName, namesByCategory, responses)
+		mergeProblemCategories(categoriesByQName, namesByCategory, responses)
+		forcedSelections = {'Altruistic':
+								('I am out for my own personal gain.',
+								'I look out for myself first before I look out for others.'),
+							'Unselfish':
+								('I am out for my own personal gain.',
+								'I look out for myself first before I look out for others.')}
+	else:
+		forcedSelections = {}
+
+	# Finalize the category names, which has the effect of changing the correct
+	# scale for questions from always average female agreement, to male / female
+	# average agree per different questions - which may make the selection analysis
+	# results look strange, since they are all keyed to female scales only.
+	if RENAME_CATEGORIES_INCLUDE_MALE_SCALES_BEFORE_ANALYSIS:
+		renameResultantCategories(categoriesByQName, namesByCategory, responses, None)
+#		scaleType = setupCategoryScaleTypes(categoriesByQName, None, True)
+#		scaleType = setupCategoryScaleTypes(categoriesByQName, None, False)
+#	else:
+#		scaleType = setupCategoryScaleTypes(categoriesByQName, None, False)
 
 	# Split gender / response data for subscore selection training and visualziation
 	testFraction = float(responses.pointCount - TRAIN_NUMBER) / responses.pointCount
 	responseTrain, genderTrain, responseTest, genderTest = responses.trainAndTestSets(testFraction, "male0female1")
-	selected = determineBestSubScores(namesByCategory, categoriesByQName, responseTrain, genderTrain)
+	selected = determineBestSubScores(namesByCategory, categoriesByQName, responseTrain, genderTrain, forcedSelections)
 
-	printSelectedCategoryCorrelationMatrix(responseTrain, selected, categoriesByQName, outpath_selectedCatCorr)
-	printSelectedQuestionCorrelationMatrix(responseTrain, selected, outpath_selectedQCorr)
-	printSelectedQuestionToSelectedCategoryCorrelation(responseTrain, selected, categoriesByQName, outpath_selectedQsToCatCorr)
-	printQuestionToQuestionInSameCategoryCorrelation(responseTrain, selected, categoriesByQName, outpath_selectedQsInCatCorr)
-
-	outputSelectedCategoryCorrelationToGender(responseTrain, genderTrain, selected, categoriesByQName, outpath_selectedCorrToGender)
-
-#	responseTest.show('sel')  # maxHeight=None, maxWidth=None)
-#	print selected
-	for cat,(q1,q2) in selected.items():
-		print cat + '\t' + q1
-		print '\t' + q2
-
-#	printSelectedQuestionCorrelationInCategory(responseTest, selected, outpath_selectedInCatQsCorr)
-	sys.exit(0)
-	if PRINT_CORR_SELCAT_TO_SELCAT:
-		printSelectedCategoryCorrelationMatrix(responseTest, selected, categoriesByQName, outpath_selectedCatCorr)
-	if PRINT_CORR_SELQ_TO_SELQ:
-		printSelectedQuestionCorrelationMatrix(responseTest, selected, outpath_selectedQCorr)
-	if PRINT_CORR_SELQ_TO_SELCAT:
-		printSelectedQuestionToSelectedCategoryCorrelation(responseTest, selected, categoriesByQName, outpath_selectedQsToCatCorr)
-
-#	sys.exit(0)
-
+	# Verify our split and selection process correctness
 	if VERIFY_MEANS_ORDERING_OF_SUBSCORES:
 		verifyGenderAvgerageOrdering(selected, responseTest, genderTest)
 	if VERIFY_BANDWIDTH_SELECTION_FEASIBLE:
 		verifyBandwidthSelectionWorks(responseTest, genderTest)
+
+	# Analysis of category selection using the training data
+	if OUTPUT_CORR_SELCAT_TO_SELCAT:
+		printSelectedCategoryCorrelationMatrix(responseTest, selected, categoriesByQName, outpath_selected_CatCorr)
+	if OUTPUT_CORR_SELQ_TO_SELQ:
+		printSelectedQuestionCorrelationMatrix(responseTrain, selected, outpath_selected_QCorr)
+	if OUTPUT_CORR_SELQ_TO_SELCAT:
+		printSelectedQuestionToSelectedCategoryCorrelation(responseTrain, selected, categoriesByQName, outpath_selected_QsToCatCorr)
+	if OUTPUT_INCAT_Q_TO_Q:
+		printQuestionToQuestionInSameCategoryCorrelation(responseTrain, selected, categoriesByQName, outpath_selected_QsInCatCorr)
+	if OUTPUT_CORR_SELCAT_TO_GENDER:
+		outputSelectedCategoryCorrelationToGender(responseTrain, genderTrain, selected, categoriesByQName, outpath_selected_CorrToGender)
+
+	# Finalize the category names, which has the effect of changing the correct
+	# scale for questions from always average female agreement, to male / female
+	# average agree per different questions
+	if RENAME_CATEGORIES_INCLUDE_MALE_SCALES_AFTER_ANALYSIS:
+		renameResultantCategories(categoriesByQName, namesByCategory, responses, selected)
+		# If we have renamed categories, then some categories now have names which
+		# imply a higher male average score. We record these to be used later in 
+		# subscale generateion.
+		scaleType = setupCategoryScaleTypes(categoriesByQName, selected, True)
+	else:
+		scaleType = setupCategoryScaleTypes(categoriesByQName, selected, False)
+
+	# Report results of category selection
 	if OUTPUT_SEL_QS_PER_CAT:
-		outputFile_SelectedQsPerCategory(outPath_selected, categoriesByQName, selected)
-	if OUTPUT_SUBSCORE_CAT_CORR:
-		outputFile_subCategoryCorrelationWithGender(outPath_subscore_corr, selected, categoriesByQName, responseTest, genderTest)
+		outputFile_SelectedQsPerCategory(outPath_selected_results, categoriesByQName, selected)
+		outputFile_SelectedQsMetadata(outPath_selectedQ_metadata, categoriesByQName, selected)
+		outputFile_SelectedCatsMetadata(outPath_selectedCat_metadata, categoriesByQName, selected, responseTest, genderTest, scaleType)
+	if PRINT_SELQS:
+		for cat,(q1,q2) in selected.items():
+			print cat + '\t' + q1
+			print '\t' + q2
 
 	# responses were only to one digit, which makes them clump for bandwidth trials.
 	# add some noise to loosen things up without going outside the range of what would
@@ -726,16 +961,23 @@ if __name__ == '__main__':
 		responseTest_noisy = responseTest
 	
 	if RUN_BANDWIDTH_TRIALS:
-		mBw, fBw = bandwidthTrials(selected, categoriesByQName, responseTest_noisy, genderTest, False)
+		mBw, fBw = bandwidthTrials(selected, categoriesByQName, responseTest_noisy, genderTest, scaleType, True, outDir_BW_results)
 	else:
-		mBw, fBw = fixedBandwidth_same(namesByCategory, .22, .22)
+		mBw, fBw = fixedBandwidth_same(namesByCategory, .25, .25)
 #		mBw, fBw = fixedBandwidth_handAdjusted()
 #		mBw, fBw = fixedBandwidth_all()
 #		mBw, fBw = fixedBandwidth_drop5percent()
 #		mBw, fBw = fixedBandwidth_noisy_all()		
 
+#	avg = 0
+#	for k in mBw.keys():
+#		avg += mBw[k] + fBw[k]
+#	print avg / float(len(mBw)*2)
+
+#	collateBW()
+
 	if OUTPUT_PLOTS:
-		generatePlots(selected, categoriesByQName, responseTest_noisy, genderTest, outDir_plots, (mBw, fBw))
+		generatePlots(selected, categoriesByQName, responseTest_noisy, genderTest, outDir_plots, (mBw, fBw), scaleType)
 
 	print time.asctime(time.localtime())
 
