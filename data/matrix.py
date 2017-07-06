@@ -6,6 +6,7 @@ Class extending Base, using a numpy dense matrix to store data.
 import numpy
 import sys
 import itertools
+import copy
 
 import UML
 from base import Base
@@ -14,16 +15,7 @@ from dataHelpers import View
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
-
-try:
-    import scipy.sparse
-    from scipy.io import mmwrite
-    from scipy.sparse import isspmatrix
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
-
+scipy = UML.importModule('scipy.io')
 
 class Matrix(Base):
     """
@@ -32,29 +24,30 @@ class Matrix(Base):
 
     """
 
-    def __init__(self, data, featureNames=None, reuseData=False, **kwds):
-        try:
-            if scipyImported and isspmatrix(data):
-                self.data = numpy.matrix(data.todense(), dtype=numpy.float)
-            else:
-                if reuseData and isinstance(data, type(numpy.matrix([]))):
-                    self.data = data
-                else:
-                    if isinstance(data, list) and data == []:
-                        cols = 0
-                        if featureNames is not None:
-                            cols = len(featureNames)
-                        data = numpy.empty(shape=(0, cols))
-                    self.data = numpy.matrix(data, dtype=numpy.float)
-        except ValueError:
-            einfo = sys.exc_info()
-            #if not ignore:
-            #	raise einfo[1], None, einfo[2]
-            msg = "ValueError during instantiation. Matrix does not accept strings "
-            msg += "in the input (with the exception of those that are directly convertible, "
-            msg += "like '3' or '-11'), having included strings is the likely cause for "
-            msg += "the error"
+    def __init__(self, data, featureNames=None, reuseData=False, elementType=None, **kwds):
+        """
+        data can only be a numpy matrix
+        """
+
+        if (not isinstance(data, (numpy.matrix, numpy.ndarray))) and 'PassThrough' not in str(type(data)):
+            msg = "the input data can only be a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
+
+        if isinstance(data, numpy.matrix):
+            if reuseData:
+                self.data = data
+            else:
+                self.data = copy.deepcopy(data)
+        else:#ListPassThrough
+            #when data is a np matrix, its dtype has been adjusted in extractNamesAndConvertData
+            #but when data is a ListPassThrough, we need to do dtype adjustment here
+            if elementType:
+                self.data = numpy.matrix(data, dtype=elementType)
+            else:
+                try:
+                    self.data = numpy.matrix(data, dtype=numpy.float)
+                except ValueError:
+                    self.data = numpy.matrix(data, dtype=object)
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = self.data.shape
@@ -474,7 +467,7 @@ class Matrix(Base):
 
 
     def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
-        if not scipyImported:
+        if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -498,9 +491,9 @@ class Matrix(Base):
             header += '#\n'
 
         if header != '':
-            mmwrite(target=outPath, a=self.data, comment=header)
+            scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
         else:
-            mmwrite(target=outPath, a=self.data)
+            scipy.io.mmwrite(target=outPath, a=self.data)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Matrix):
@@ -522,12 +515,12 @@ class Matrix(Base):
         if format == 'numpymatrix':
             return numpy.matrix(self.data)
         if format == 'scipycsc':
-            if not scipyImported:
+            if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csc_matrix(self.data)
         if format == 'scipycsr':
-            if not scipyImported:
+            if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(self.data)
@@ -790,7 +783,7 @@ class Matrix(Base):
 
     def _div__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data / other.data.todense()
             else:
                 ret = self.data / other.data
@@ -805,7 +798,7 @@ class Matrix(Base):
 
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data / other.data.todense()
             else:
                 ret = self.data / other.data
@@ -816,7 +809,7 @@ class Matrix(Base):
 
     def _truediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.__truediv__(other.data.todense())
             else:
                 ret = self.data.__truediv__(other.data)
@@ -830,7 +823,7 @@ class Matrix(Base):
 
     def _itruediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.__itruediv__(other.data.todense())
             else:
                 ret = self.data.__itruediv__(other.data)
@@ -841,7 +834,7 @@ class Matrix(Base):
 
     def _floordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data // other.data.todense()
             else:
                 ret = self.data // other.data
@@ -856,7 +849,7 @@ class Matrix(Base):
 
     def _ifloordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data // other.data.todense()
             else:
                 ret = self.data // other.data
@@ -867,7 +860,7 @@ class Matrix(Base):
 
     def _mod__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data % other.data.todense()
             else:
                 ret = self.data % other.data
@@ -883,7 +876,7 @@ class Matrix(Base):
 
     def _imod__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipyImported and scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data % other.data.todense()
             else:
                 ret = self.data % other.data

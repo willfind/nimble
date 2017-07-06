@@ -2,7 +2,6 @@ from nose.tools import *
 from nose.plugins.attrib import attr
 
 import tempfile
-import scipy
 import numpy
 import os
 import copy
@@ -11,6 +10,7 @@ import itertools
 import UML
 from UML.exceptions import ArgumentException
 from UML.exceptions import FileFormatException
+scipy = UML.importModule('scipy.sparse')
 
 #returnTypes = ['Matrix', 'Sparse', None]  # None for auto
 returnTypes = copy.copy(UML.data.available)
@@ -543,6 +543,9 @@ def test_extractNames_NPMatrix():
 
 def test_extractNames_CooSparse():
     """ Test of createData() given scipy Coo matrix, extracting names """
+    if not scipy:
+        return
+
     pNames = ['11']
     fNames = ['21', '22', '23']
 
@@ -561,6 +564,9 @@ def test_extractNames_CooSparse():
 
 def test_extractNames_CscSparse():
     """ Test of createData() given scipy Coo matrix, extracting names """
+    if not scipy:
+        return
+
     pNames = ['11']
     fNames = ['21', '22', '23']
 
@@ -1330,6 +1336,8 @@ def test_createData_keepPF_npMatrix_simple():
 
 
 def test_createData_keepPF_spCoo_simple():
+    if not scipy:
+        return
     wanted = UML.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     rawMat = numpy.matrix(rawList)
@@ -1346,6 +1354,8 @@ def test_createData_keepPF_spCoo_simple():
 
 
 def test_createData_keepPF_spCsc_simple():
+    if not scipy:
+        return
     wanted = UML.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     rawMat = numpy.matrix(rawList)

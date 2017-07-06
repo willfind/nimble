@@ -4,13 +4,6 @@ Module containing most of the user facing functions for the top level uml import
 """
 
 import numpy
-
-try:
-    import scipy.sparse
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
 import inspect
 import operator
 import re
@@ -50,7 +43,7 @@ from UML.randomness import numpyRandom
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 
 from UML.calculate import detectBestResult
-
+scipy = UML.importModule('scipy.sparse')
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
@@ -83,7 +76,7 @@ def createRandomData(
 
     #note: sparse is not stochastic sparsity, it uses rigid density measures
     if returnType.lower() == 'sparse':
-        if not scipyImported:
+        if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -213,7 +206,7 @@ def identity(returnType, size, pointNames='automatic', featureNames='automatic',
         raise ArgumentException(msg)
 
     if returnType == 'Sparse':
-        if not scipyImported:
+        if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -475,9 +468,9 @@ def listUMLFunctions():
     return ret
 
 
-def createData(returnType, data, pointNames='automatic', featureNames='automatic',
-               fileType=None, name=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=None):
+def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
+               fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
+               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
     """Function to instantiate one of the UML data container types.
 
     returnType: string (or None) indicating which kind of UML data type you want
@@ -569,15 +562,12 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 
     """
     # validation of pointNames and featureNames
-    if pointNames != 'automatic' and pointNames is not True and \
-                    pointNames is not False and not isinstance(pointNames, list) and \
-            not isinstance(pointNames, dict):
+    if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
         msg = "pointNames may only be the values True, False, 'automatic' or "
         msg += "a list or dict specifying a mapping between names and indices."
         raise ArgumentException(msg)
-    if featureNames != 'automatic' and featureNames is not True and \
-                    featureNames is not False and not isinstance(featureNames, list) and \
-            not isinstance(featureNames, dict):
+
+    if featureNames != 'automatic' and not isinstance(featureNames, (bool, list, dict)):
         msg = "featureNames may only be the values True, False, 'automatic' or "
         msg += "a list or dict specifying a mapping between names and indices."
         raise ArgumentException(msg)
@@ -593,11 +583,11 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
         return (hasRead and hasWrite)
 
     # input is raw data
-    if isAllowedRaw(data):
+    if isAllowedRaw(data, allowLPT=True):
         ret = initDataObject(
             returnType=returnType, rawData=data, pointNames=pointNames,
-            featureNames=featureNames, name=name, path=None,
-            keepPoints=keepPoints, keepFeatures=keepFeatures)
+            featureNames=featureNames, elementType=elementType, name=name, path=path,
+            keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, basestring) or looksFileLike(data):
@@ -1335,3 +1325,21 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
             predictions, [performance], timer, merged)
 
     return performance
+
+def coo_matrixTodense(origTodense):
+    """
+    decorator for coo_matrix.todense
+    """
+    def f(self):
+        try:
+            return origTodense(self)
+        except Exception:
+            ret = numpy.matrix(numpy.zeros(self.shape), dtype=self.dtype)
+            for (i, j), v in zip(zip(*self.nonzero()), self.data):
+                ret[i, j] = v
+            return ret
+    return f
+
+if scipy:
+    #monkey patch for coo_matrix.todense
+    scipy.sparse.coo_matrix.todense = coo_matrixTodense(scipy.sparse.coo_matrix.todense)

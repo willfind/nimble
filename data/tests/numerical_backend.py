@@ -1178,11 +1178,9 @@ class NumericalModifying(DataTestObject):
         calleepnames = ['I', 'dont', 'match']
         calleefnames = ['one', 'two']
 
-        makers = [getattr(UML.data, retType) for retType in UML.data.available]
-
-        for maker in makers:
+        for retType in UML.data.available:
             caller = self.constructor(data, pointNames=callerpnames)
-            exponentsObj = maker(exponents, pointNames=calleepnames, featureNames=calleefnames)
+            exponentsObj = UML.createData(retType, exponents, pointNames=calleepnames, featureNames=calleefnames)
             caller.elementwisePower(exponentsObj)
 
             exp1Obj = self.constructor(exp1, pointNames=callerpnames)
@@ -1277,18 +1275,16 @@ class NumericalModifying(DataTestObject):
         exp1 = [[2, 4], [8, 10], [14, 16]]
         halves = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
 
-        makers = [getattr(UML.data, retType) for retType in UML.data.available]
-
-        for maker in makers:
+        for retType in UML.data.available:
             caller = self.constructor(data)
-            twosObj = maker(twos)
+            twosObj = UML.createData(retType, twos)
             caller.elementwiseMultiply(twosObj)
 
             exp1Obj = self.constructor(exp1)
 
             assert exp1Obj.isIdentical(caller)
 
-            halvesObj = maker(halves)
+            halvesObj = UML.createData(retType, halves)
             caller.elementwiseMultiply(halvesObj)
 
             exp2Obj = self.constructor(data)

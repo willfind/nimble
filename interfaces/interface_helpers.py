@@ -202,9 +202,9 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True)
     definitive votes for different strategies.
     """
     if not isinstance(scoresPerPoint, UML.data.Base):
-        scoresPerPoint = UML.data.Matrix(scoresPerPoint, reuseData=True)
+        scoresPerPoint = UML.createData('Matrix', scoresPerPoint, reuseData=True)
     if not isinstance(predictedLabels, UML.data.Base):
-        predictedLabels = UML.data.Matrix(predictedLabels, reuseData=True)
+        predictedLabels = UML.createData('Matrix', predictedLabels, reuseData=True)
     length = scoresPerPoint.pointCount
     scoreLength = scoresPerPoint.featureCount
 

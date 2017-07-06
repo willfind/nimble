@@ -1903,6 +1903,11 @@ class Base(object):
         self._validateMatPlotLibImport(mplError, 'plotPointComparison')
         return self._plotCross(x, 'point', y, 'point', outPath, xMin, xMax, yMin, yMax)
 
+    def plotFeatureAgainstFeatureRollingAverage(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
+                                  yMax=None, sampleSizeForAverage=20):
+
+        self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax, sampleSizeForAverage)
+
     def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
                                   yMax=None):
         """Plot a scatter plot of the two input features using the pairwise
@@ -1929,11 +1934,11 @@ class Base(object):
         self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax)
 
     def _plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
-                                   yMax=None):
+                                   yMax=None, sampleSizeForAverage=None):
         self._validateMatPlotLibImport(mplError, 'plotFeatureComparison')
-        return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax, yMin, yMax)
+        return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax, yMin, yMax, sampleSizeForAverage)
 
-    def _plotCross(self, x, xAxis, y, yAxis, outPath, xMin, xMax, yMin, yMax):
+    def _plotCross(self, x, xAxis, y, yAxis, outPath, xMin, xMax, yMin, yMax, sampleSizeForAverage=None):
         outFormat = self._setupOutFormatForPlotting(outPath)
         xIndex = self._getIndex(x, xAxis)
         yIndex = self._getIndex(y, yAxis)
@@ -1965,22 +1970,40 @@ class Base(object):
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
 
-        def plotter(inX, inY, xLim, yLim):
+        if sampleSizeForAverage:
+            #do rolling average
+            xToPlot, yToPlot = zip(*sorted(zip(xToPlot, yToPlot), key=lambda x: x[0]))
+            convShape = numpy.ones(sampleSizeForAverage)/float(sampleSizeForAverage)
+            startIdx = sampleSizeForAverage-1
+            xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
+            yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
+
+        def plotter(inX, inY, xLim, yLim, sampleSizeForAverage):
             import matplotlib.pyplot as plt
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
-            if not self.name.startswith(DEFAULT_PREFIX):
-                plt.title("Comparison of data in object " + self.name)
+            xlabel = xAxis + ' #' + str(xIndex) if xName.startswith(DEFAULT_PREFIX) else xName
+            ylabel = yAxis + ' #' + str(yIndex) if yName.startswith(DEFAULT_PREFIX) else yName
 
-            if xName.startswith(DEFAULT_PREFIX):
-                plt.xlabel(xAxis + ' #' + str(xIndex))
+            xName2 = xName
+            yName2 = yName
+            if sampleSizeForAverage:
+                tmpStr = ' (%s sample average)' % sampleSizeForAverage
+                xlabel += tmpStr
+                ylabel += tmpStr
+                xName2 += ' average'
+                yName2 += ' average'
+
+            if self.name.startswith(DEFAULT_NAME_PREFIX):
+                titleStr = ('%s vs. %s') % (xName2, yName2)
             else:
-                plt.xlabel(xName)
-            if yName.startswith(DEFAULT_PREFIX):
-                plt.ylabel(yAxis + ' #' + str(yIndex))
-            else:
-                plt.ylabel(yName)
+                titleStr = ('%s: %s vs. %s') % (self.name, xName2, yName2)
+
+
+            plt.title(titleStr)
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
 
             plt.xlim(xLim)
             plt.ylim(yLim)
@@ -1990,7 +2013,7 @@ class Base(object):
             else:
                 plt.savefig(outPath, format=outFormat)
 
-        p = Process(target=plotter, kwargs={'inX': xToPlot, 'inY': yToPlot, 'xLim': (xMin, xMax), 'yLim': (yMin, yMax)})
+        p = Process(target=plotter, kwargs={'inX': xToPlot, 'inY': yToPlot, 'xLim': (xMin, xMax), 'yLim': (yMin, yMax), 'sampleSizeForAverage':sampleSizeForAverage})
         p.start()
         return p
 

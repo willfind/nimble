@@ -5,20 +5,7 @@ Class extending Base, using a list of lists to store data.
 
 import copy
 import numpy
-
-try:
-    import scipy
-    from scipy.sparse import isspmatrix
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
-try:
-    import pandas as pd
-
-    pdImported = True
-except ImportError:
-    pdImported = False
+import numbers
 import itertools
 
 import UML
@@ -29,71 +16,89 @@ from dataHelpers import reorderToMatchExtractionList
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 
+scipy = UML.importModule('scipy.io')
+pd = UML.importModule('pandas')
+
+allowedItemType = (numbers.Number, basestring)
+def isAllowedSingleElement(x):
+    """
+    This function is to determine if an element is an allowed single element
+    """
+    if isinstance(x, allowedItemType):
+        return True
+
+    if hasattr(x, '__len__'):#not a single element
+        return False
+
+    if x is None or x != x:#None and np.NaN are allowed
+        return True
+
+    return
 
 class List(Base):
     """
     Class providing implementations of data manipulation operations on data stored
     in a list of lists implementation, where the outer list is a list of
     points of data, and each inner list is a list of values for each feature.
-
     """
 
-    def __init__(self, data, featureNames=None, reuseData=False, shape=None, **kwds):
+    def __init__(self, data, featureNames=None, reuseData=False, shape=None, checkAll=True, elementType=None, **kwds):
+        """
+        data can be a list, a np matrix or a ListPassThrough
+        reuseData only works when input data is a list
+        if checkAll is True, then it will do validity check for all elements
+        """
+        if (not isinstance(data, (list, numpy.matrix))) and 'PassThrough' not in str(type(data)):
+            msg = "the input data can only be a list or a numpy matrix or ListPassThrough."
+            raise ArgumentException(msg)
 
-        #convert non-empty 1D data to 2D
-        if (type(data) in [list, tuple, numpy.ndarray]) and len(data) > 0:
-            #if data is like [1,2,3], then convert it to [[1,2,3]], i.e. convert 1D to 2D
-            #if data is [<UML.data.list.FeatureViewer object] then skip
-            if type(data[0]) not in [list, tuple, numpy.ndarray] and not hasattr(data[0], 'setLimit'):
-                data = [data]
-        self._numFeatures = shape[1] if shape is not None else None
-        # Format / copy the data if necessary
-        # if input as a list, copy it
         if isinstance(data, list):
+            #case1: data=[]. self.data will be [], shape will be (0, shape[1]) or (0, len(featureNames)) or (0, 0)
+            if len(data) == 0:
+                if shape:
+                    shape = (0, shape[1])
+                else:
+                    shape = (0, len(featureNames) if featureNames else 0)
+            elif isAllowedSingleElement(data[0]):
+            #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be [[1,2,3]], shape will be (1, 3)
+                if checkAll:#check all items
+                    for i in data:
+                        if not isAllowedSingleElement(i):
+                            msg = 'invalid input data format.'
+                            raise ArgumentException(msg)
+                shape = (1, len(data))
+                data = [data]
+            elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
+            #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []]. self.data will be = data, shape will be (len(data), len(data[0]))
+            #case4: data=[<UML.data.list.FeatureViewer object at 0x43fd410>]
+                numFeatures = len(data[0])
+                if checkAll:#check all items
+                    for i in data:
+                        if len(i) != numFeatures:
+                            msg = 'invalid input data format.'
+                            raise ArgumentException(msg)
+                        for j in i:
+                            if not isAllowedSingleElement(j):
+                                msg = '%s is invalid input data format.'%j
+                                raise ArgumentException(msg)
+                shape = (len(data), numFeatures)
 
-            if len(data) > 0 and hasattr(data[0], "__len__") and len(data[0]) > 0:
-                if isinstance(data[0][0], list):
-                    msg = "python lists are not allowed as elements for our "
-                    msg += "List datatype"
-                    raise ArgumentException(msg)
             if reuseData:
                 data = data
             else:
                 data = copy.deepcopy(data)
-        # if sparse, make dense
-        if scipyImported and isspmatrix(data):
-            data = data.todense()
-        # if DataFrame or Series, convert it to numpy matrix
-        if pdImported and isinstance(data, (pd.DataFrame, pd.Series)):
-            data = numpy.matrix(data)
 
-        # if its a numpy construct, convert it to a python list
-        try:
-            temp = data
+        if isinstance(data, numpy.matrix):
+            #case5: data is a numpy matrix. shape is already in np matrix
+            shape = data.shape
             data = data.tolist()
-            # if the above was successful, then we might have to exctact emptiness info
-            self._numFeatures = temp.shape[1]
-        except AttributeError:
-            pass
 
-        # assign attributes
-        if data is None or len(data) == 0:
-            if self._numFeatures is None:
-                if featureNames is not None:
-                    self._numFeatures = len(featureNames)
-                else:
-                    self._numFeatures = 0
-            self.data = []
-            shape = (0, self._numFeatures)
-        else:
-            self._numFeatures = len(data[0])
-            for point in data:
-                if len(point) != self._numFeatures:
-                    raise ArgumentException("Points must be of equal size")
-                #				if not isinstance(point, list):
-                #					raise ArgumentException("If a python list is given as input, each entry must also be a list")
-            self.data = data
-            shape = (len(self.data), self._numFeatures)
+        if len(data) == 0:
+            #case6: data is a ListPassThrough associated with empty list
+            data = []
+
+        self._numFeatures = shape[1]
+        self.data = data
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
@@ -589,15 +594,15 @@ class List(Base):
         if format == 'Sparse':
             if self.pointCount == 0 or self.featureCount == 0:
                 emptyData = numpy.empty(shape=(self.pointCount, self.featureCount))
-                return UML.data.Sparse(emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            return UML.data.Sparse(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+                return UML.createData('Sparse', emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
         if format is None or format == 'List':
-            return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Matrix':
-            return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':
-            return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
@@ -609,12 +614,12 @@ class List(Base):
                 return numpy.matrix(numpy.empty(shape=(self.pointCount, self.featureCount)))
             return numpy.matrix(self.data)
         if format == 'scipycsc':
-            if not scipyImported:
+            if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csc_matrix(numpy.array(self.data))
         if format == 'scipycsr':
-            if not scipyImported:
+            if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(numpy.array(self.data))
@@ -937,3 +942,12 @@ class List(Base):
         for point in self.data:
             for i in xrange(len(point)):
                 point[i] *= scalar
+
+    def outputMatrixData(self):
+        """
+        convert slef.data to a numpy matrix
+        """
+        if len(self.data) == 0:# in case, self.data is []
+            return numpy.matrix(numpy.empty([len(self.getPointNames()), len(self.getFeatureNames())]))
+
+        return numpy.matrix(self.data)

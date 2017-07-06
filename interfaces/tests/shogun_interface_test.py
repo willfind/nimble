@@ -11,13 +11,12 @@ except ImportError:
     clangAvailable = False
 
 import numpy
-import scipy.sparse
 from UML.randomness import numpyRandom
 from nose.tools import *
 from nose.plugins.attrib import attr
 
 import UML
-
+scipy = UML.importModule('scipy.sparse')
 from UML.exceptions import ArgumentException
 
 
@@ -150,7 +149,8 @@ def testShogunMulticlassSVM():
 
 def testShogunSparseRegression():
     """ Test shogun sparse data instantiation by calling on a sparse regression learner with a large, but highly sparse, matrix """
-
+    if not scipy:
+        return
     x = 100
     c = 10
     points = numpyRandom.randint(0, x, c)
