@@ -9,12 +9,14 @@ boilerplate()
 
 import sys
 import numpy
+import itertools
 
 import UML
 from UML.customLearners import CustomLearner
 from UML.helpers import generateClassificationData
 from UML.calculate import fractionIncorrect
 from UML.exceptions import ArgumentException
+
 
 class LogisticRegressionSelectByRegularization(CustomLearner):
 	learnerType = "classification"
@@ -69,8 +71,11 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
 		for key in toExpose:
 			setattr(self, key, toExpose[key])
 
+		coefs = trained.getAttributes()['coef_']
+		self.wantedIndices = list(numpy.nonzero(coefs)[1])
+
 	def apply(self, testX):
-		return self._trained.apply(testX)
+		return self._trained.apply(testX, useLog=False)
 
 
 
@@ -82,6 +87,7 @@ class LogisticRegressionSelectByOmission(CustomLearner):
 				"highest value"]
 
 		kwargs['C'] = C
+		kwargs['penalty'] = "l2"
 
 		side = method.split(" ")[0]
 		ordering = method.split(" ")[1]
@@ -99,37 +105,52 @@ class LogisticRegressionSelectByOmission(CustomLearner):
 		self.origCoefs = trained.getAttributes()['coef_'].flatten()
 		coefs = self.origCoefs
 
-#		print "\norig coefs\n" + str(coefs)
-
 		if ordering == 'magnitude':
 			coefs = map(abs, coefs)
-#			print "\nafter abs\n" + str(coefs)
 
 		withIndices = zip(coefs, range(len(coefs)))
 		withIndices.sort(key=lambda x:x[0])
 
-#		print "\nsorted\n" + str(withIndices)
-
 		# retrain without those features????
 		removalIndices = [withIndices[n][1] for n in range(numberToOmit)]
-
-#		print "\nremovalIndices\n" + str(removalIndices)
-
 		self.wantedIndices = list(set(xrange(trainX.featureCount)) - set(removalIndices))
-
-#		print self.wantedIndices
-#		print len(self.wantedIndices)
 
 		inTrainX = trainX.copyFeatures(self.wantedIndices)
 		self._trained = UML.train(sklLogReg, inTrainX, trainY, **kwargs)
 
-#		print "\nnew coefs\n" + str(self._trained.getAttributes()['coef_'].flatten())
 
 	def apply(self, testX):
 		inTestX = testX.copyFeatures(self.wantedIndices)
 		return self._trained.apply(inTestX, useLog=False)
 
 
+
+class ReducedRidge(CustomLearner):
+	learnerType = 'classification'
+
+	def train(self, trainX, trainY, alpha, wantedIndices):
+		name = 'scikitlearn.RidgeClassifier'
+		self.wantedIndices = wantedIndices
+		redTrainX = trainX.copyFeatures(wantedIndices)
+		self.tl = UML.train(name, redTrainX, trainY, alpha, useLog=False)
+
+	def apply(self, testX):
+		redTestX = testX.copyFeatures(self.wantedIndices)
+		return self.tl.apply(redTestX, useLog=False)
+
+
+class ReducedLogisticRegression(CustomLearner):
+	learnerType = 'classification'
+
+	def train(self, trainX, trainY, C, wantedIndices):
+		name = 'scikitlearn.LogisticRegression'
+		self.wantedIndices = wantedIndices
+		redTrainX = trainX.copyFeatures(wantedIndices)
+		self.tl = UML.train(name, redTrainX, trainY, C, useLog=False)
+
+	def apply(self, testX):
+		redTestX = testX.copyFeatures(self.wantedIndices)
+		return self.tl.apply(redTestX, useLog=False)
 
 
 
@@ -210,7 +231,7 @@ def printCoefficients(trainedLearner):
 		print str(i).ljust(3) + "    " + str(round(coef,2)).ljust(8) + question.strip()
 		i = i + 1
 
-def standardizeScores(obj):
+def standardizeScoreScale(obj):
 	allNames = obj.getFeatureNames()
 	negScored = []
 	for i, name in enumerate(allNames):
@@ -252,12 +273,479 @@ def standardizeScores(obj):
 	return
 
 
+def printAccuracy(trainedLearner, testX, testY):
+#	print "\n\n"
+	errorOutSample = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
+	print "Out of sample error rate: " + str(round(errorOutSample*100,1)) + "%"
+	errorInSample = trainedLearner.test(trainX, trainY, performanceFunction=fractionIncorrect, useLog=False)
+	print "In sample error rate: " + str(round(errorInSample*100,1)) + "%"
+	print "\n"
+
+
+
+##############################
+### FULL TRIAL CHOICE CODE ###
+##############################
+
+
+
+def SVC_full_data_outSample_only(trainX, trainY, testX, testY):
+#	Cs = tuple([4**k for k in xrange(-8,8)])
+#	bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, C=0.3) #19.7% out of sample error
+#	bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=2, coef0=1, C=0.01) #19.2%
+	bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1) 
+	print "bestError out of sample: ", str(round(bestError*100,1)) + "%"
+	sys.exit(0)
+
+
+
+def trial_Coefficient_removal_by_least_magnitude(trainX, trainY, testX, testY):
+	name = "custom.LogisticRegressionSelectByOmission"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+#		cVals = (100., 55., 10., 5.5, 1., 0.55, 0.1, 0.055, 0.01, 0.0055, 0.001, 0.00055, 0.0001)
+#		cVals = 1
+
+	print "Cross validated over C with values of: " + str(cVals)
+
+	results = []
+	omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
+	for num in omit:
+		trainedLearner = UML.train(
+				name, trainX, trainY, numberToOmit=num, method="least magnitude",
+				C=cVals, performanceFunction=fractionIncorrect)
+		result = trainedLearner.test(testX, testY,
+			performanceFunction=fractionIncorrect)
+		results.append(result)
+
+	pnames = ['number Omitted', 'out sample error: fractionIncorrect']
+	objName = predictionMode
+	raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
+	figurePath = './results-least_magnitude.png'
+	raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+	exit(0)
+
+
+def trial_Coefficient_removal_by_least_value(trainX, trainY, testX, testY):
+	name = "custom.LogisticRegressionSelectByOmission"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+#		cVals = (100., 55., 10., 5.5, 1., 0.55, 0.1, 0.055, 0.01, 0.0055, 0.001, 0.00055, 0.0001)
+#		cVals = 1
+
+	results = []
+	omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
+	for num in omit:
+		trainedLearner = UML.train(
+				name, trainX, trainY, numberToOmit=num, method="least value",
+				C=cVals, performanceFunction=fractionIncorrect)
+		result = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
+		print result
+		results.append(result)
+
+	pnames = ['number Omitted', 'out sample error: fractionIncorrect']
+	objName = predictionMode
+	raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
+	figurePath = './results-least_value.png'
+	raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+	exit(0)
+
+
+def analysis_removal_comparison(trainX, trainY, testX, testY):
+	name = "custom.LogisticRegressionSelectByOmission"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+#	cVals = 0.001
+
+	num = 35
+
+	allQsList = trainX.getFeatureNames()
+#	allQs = set(allQsList)
+	LVQs = []
+	LMQs = []
+	tlLV = []
+	tlLM = []
+
+	omit = [10,15,20,25,30,35,40,45,50,55,60,65,70]
+#	omit = [35]
+	for i, num in enumerate(omit):
+		trainedLearnerLV = UML.train(
+				name, trainX, trainY, numberToOmit=num, method="least value",
+				C=cVals, performanceFunction=fractionIncorrect)
+
+		tlLV.append(trainedLearnerLV)
+
+		trainedLearnerLM = UML.train(
+				name, trainX, trainY, numberToOmit=num, method="least magnitude",
+				C=cVals, performanceFunction=fractionIncorrect)
+
+		tlLM.append(trainedLearnerLM)
+
+		print "\nnum " + str(num) + "\n"
+
+		LVWanted = trainedLearnerLV.getAttributes()['wantedIndices']
+		LMWanted = trainedLearnerLM.getAttributes()['wantedIndices']
+
+		LVQs.append(set(numpy.array(allQsList)[LVWanted]))
+		LMQs.append(set(numpy.array(allQsList)[LMWanted]))
+
+		# In Both
+#		print "In Both:" + str(LVQs[i] & LMQs[i])
+#		print ""
+
+		# difference
+#		print "Least Value unique:" + str(LVQs[i] - LMQs[i])
+#		print ""
+#		print "Least Magnitude unique" + str(LMQs[i] - LVQs[i])
+#		print ""
+
+		# Excluded from both
+#		print "removed from both: " + str(allQs[i] - (LMQs[i] | LVQs[i]))
+
+		# assertions
+		#if i > 0:
+			#print numpy.equal(tlLV[i].getAttributes()['origCoefs'], tlLV[i-1].getAttributes()['origCoefs'])
+			#assert tlLV[i].getAttributes()['origCoefs'] == tlLV[i-1].getAttributes()['origCoefs']
+			#print LVQs[i] - LVQs[i-1]
+			# inaccurate: without the same original coefs, the results won't
+			# be exact
+			# assert LVQs[i] < LVQs[i-1]
+			# assert LMQs[i] < LMQs[i-1]
+
+	exit(0)
+
+
+def analysis_randomness_effects(trainX, trainY, testX, testY):
+	name = "custom.LogisticRegressionSelectByOmission"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+
+	tlLV = []
+	resultsLV = []
+	resultsLM = []
+	tlLM = []
+
+	omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
+	for i, num in enumerate(omit):
+		trainedLearnerLV1 = UML.train(
+				name, trainX, trainY, numberToOmit=num, method="least value",
+				C=cVals, performanceFunction=fractionIncorrect)
+		tlLV.append(trainedLearnerLV1)
+		trainedLearnerLV2 = UML.train(
+				name, trainX, trainY, numberToOmit=num, method="least value",
+				C=cVals, performanceFunction=fractionIncorrect)
+		tlLV.append(trainedLearnerLV2)
+#		trainedLearnerLV3 = UML.train(
+#				name, trainX, trainY, numberToOmit=num, method="least value",
+#				C=cVals, performanceFunction=fractionIncorrect)
+#		tlLV.append(trainedLearnerLV3)
+
+		result1 = trainedLearnerLV1.test(testX, testY, performanceFunction=fractionIncorrect)
+		resultsLV.append(result1)
+		result2 = trainedLearnerLV2.test(testX, testY, performanceFunction=fractionIncorrect)
+		resultsLV.append(result2)
+#		result3 = trainedLearnerLV3.test(testX, testY, performanceFunction=fractionIncorrect)
+#		resultsLV.append(result3)
+	
+		trainedLearnerLM1 = UML.train(
+				name, trainX, trainY, numberToOmit=num, method="least magnitude",
+				C=cVals, performanceFunction=fractionIncorrect)
+		tlLM.append(trainedLearnerLM1)
+		trainedLearnerLM2 = UML.train(
+				name, trainX, trainY, numberToOmit=num, method="least magnitude",
+				C=cVals, performanceFunction=fractionIncorrect)
+		tlLM.append(trainedLearnerLM2)
+#		trainedLearnerLM3 = UML.train(
+#				name, trainX, trainY, numberToOmit=num, method="least magnitude",
+#				C=cVals, performanceFunction=fractionIncorrect)
+#		tlLM.append(trainedLearnerLM3)
+
+		result1 = trainedLearnerLM1.test(testX, testY, performanceFunction=fractionIncorrect)
+		resultsLM.append(result1)
+		result2 = trainedLearnerLM2.test(testX, testY, performanceFunction=fractionIncorrect)
+		resultsLM.append(result2)
+#		result3 = trainedLearnerLM3.test(testX, testY, performanceFunction=fractionIncorrect)
+#		resultsLM.append(result3)
+
+	# COMPARE!
+	# out of sample error
+#	pnames = ['number Omitted', 'out sample error: fractionIncorrect']
+#	objName = "Least Value randomness analysis"
+#	corrOmit = [val for pair in zip(omit, omit) for val in pair]
+#	corrOmit = [val for pair in zip(omit, omit, omit) for val in pair]
+#	raw = UML.createData("List", [corrOmit, resultsLV], pointNames=pnames, name=objName)
+#	figurePath = './results-least_value_triple_trials.png'
+#	raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+
+#	objName = "Least Magnitude randomness analysis"
+#	raw = UML.createData("List", [corrOmit, resultsLM], pointNames=pnames, name=objName)
+#	figurePath = './results-least_magnitude_triple_trials.png'
+#	raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+
+	# coefficients
+	allTL = tlLV + tlLM
+	currTL = allTL[0]
+	currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
+	coefsObj = UML.createData("Matrix", currCoefs)
+
+	for i in xrange(1,len(allTL)):
+		currTL = allTL[i]
+		currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
+		currCoefsObj = UML.createData("Matrix", currCoefs)
+		coefsObj.appendPoints(currCoefsObj)
+
+#	print coefsObj.pointCount
+#	print coefsObj.featureCount
+
+	coefCorr = coefsObj.featureSimilarities("correlation")
+	# BUT THIS IS WIERD since the questions are 'scored' on different
+	# scales depending on whether it ends with an (M) or (F)
+	coefCorr.setPointNames([str(val) for val in xrange(75)])
+	coefCorr.setFeatureNames([str(val) for val in xrange(75)])
+	coefCorr.show("coef correlation", maxWidth=None, maxHeight=80,
+		includeObjectName=False)
+
+	exit(0)
+
+
+
+
+#################################
+### NORMALIZATION CHOICE CODE ###
+#################################
+
+def noNormalization(trainX, testX):
+	trainX.name = "trainX noNorm"
+	testX.name = "testX noNorm"
+
+	return
+
+def normalize_Feature_subtract_mean(trainX, testX):
+	vals = []
+
+	def fn(feat):
+		workspace = numpy.array(feat)
+		mn = numpy.mean(workspace)
+		vals.append(mn)
+
+		return workspace - mn
+
+	trainX.applyToFeatures(fn)
+
+	def fnLookup(feat):
+		workspace = numpy.array(feat)
+		mn = vals[feat.index()]
+
+		return workspace - mn
+
+	testX.applyToFeatures(fnLookup)
+
+	trainX.name = "trainX norm:sub_mean"
+	testX.name = "testX norm:sub_mean"
+
+def normalize_Feature_subtract_mean_div_std(trainX, testX):
+	vals = []
+
+	def fn(feat):
+		workspace = numpy.array(feat)
+		mn = numpy.mean(workspace)
+		std = numpy.std(workspace)
+		vals.append((mn,std))
+
+		return (workspace - mn) / std
+
+	trainX.applyToFeatures(fn)
+
+	def fnLookup(feat):
+		workspace = numpy.array(feat)
+		(mn,std) = vals[feat.index()]
+
+		return (workspace - mn) / std
+
+	testX.applyToFeatures(fnLookup)
+
+	trainX.name = "trainX norm:stdScore"
+	testX.name = "testX norm:stdScore"
+
+
+#####################################
+### FEATURE SELECTION CHOICE CODE ###
+#####################################
+
+def wantedIndiceGrabber(tl, data):
+	wi = tl.getAttributes()['wantedIndices']
+	return data.copyFeatures(wi)
+
+def featSelect_All(trainX, trainY, testX, numWanted):
+	return (trainX, testX)
+
+def featSelect_LogRegRegularization(trainX, trainY, testX, numWanted):
+	name = "Custom.LogisticRegressionSelectByRegularization"
+	tl = UML.train(name, trainX, trainY, desiredNonZero=numWanted, useLog=False)
+
+	redTrain = wantedIndiceGrabber(tl, trainX)
+	redTest = wantedIndiceGrabber(tl, testX)
+
+	redTrain.name = trainX.name + " sel:Reg"
+	redTest.name = testX.name + " sel:Reg"
+
+	return (redTrain, redTest)
+
+def featSelect_LogRegOmit_LeastValue(trainX, trainY, testX, numWanted):
+	name = "Custom.LogisticRegressionSelectByOmission"
+	nto = trainX.featureCount - numWanted
+	cVals = tuple([100. / (10**n) for n in range(7)])
+	tl = UML.train(
+		name, trainX, trainY, method="least value", numberToOmit=nto,
+		C=cVals, performanceFunction=fractionIncorrect, useLog=False)
+
+	redTrain = wantedIndiceGrabber(tl, trainX)
+	redTest = wantedIndiceGrabber(tl, testX)
+
+	redTrain.name = trainX.name + " sel:omitLV"
+	redTest.name = testX.name + " sel:omitLV"
+
+	return (redTrain, redTest)
+
+def featSelect_LogRegOmit_LeastMagnitude(trainX, trainY, testX, numWanted):
+	name = "Custom.LogisticRegressionSelectByOmission"
+	nto = trainX.featureCount - numWanted
+	cVals = tuple([100. / (10**n) for n in range(7)])
+	tl = UML.train(
+		name, trainX, trainY, method="least magnitude", numberToOmit=nto,
+		C=cVals, performanceFunction=fractionIncorrect, useLog=False)
+
+	redTrain = wantedIndiceGrabber(tl, trainX)
+	redTest = wantedIndiceGrabber(tl, testX)
+
+	redTrain.name = trainX.name + " sel:omitLM"
+	redTest.name = testX.name + " sel:omitLM"
+
+	return (redTrain, redTest)
+
+
+
+############################
+### TRAINING CHOICE CODE ###
+############################
+
+
+def train_LogReg_with_L1(trainX, trainY, testX, testY):
+	name = "scikitlearn.LogisticRegression"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+	print "Cross validated over C with values of: " + str(cVals)
+	trainedLearner = UML.train(
+		name, trainX, trainY, C=cVals, penalty='l1',
+		performanceFunction=fractionIncorrect)
+
+	return trainedLearner
+
+
+def train_LogReg_with_L2(trainX, trainY, testX, testY):
+	name = "scikitlearn.LogisticRegression"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+	print "Cross validated over C with values of: " + str(cVals)
+	trainedLearner = UML.train(
+		name, trainX, trainY, C=cVals, penalty='l2',
+		performanceFunction=fractionIncorrect)
+
+	return trainedLearner
+
+def train_ridgeClassifier(trainX, trainY, testX, testY):
+	aVals = tuple([1. / (10**n) for n in range(9)])
+	print "Cross validated over alpha with values of: " + str(aVals)
+	trainedLearner = UML.train('skl.RidgeClassifier', trainX, trainY,
+		alpha=aVals, performanceFunction=fractionIncorrect)
+
+	return trainedLearner
+
+def train_SVM_Linear_kernel(trainX, trainY, testX, testY):
+	name = "scikitlearn.SVC"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+
+	print "Cross validated over C with values of: " + str(cVals)
+	trainedLearner = UML.train(
+		name, trainX, trainY, C=cVals, kernel='linear',
+		performanceFunction=fractionIncorrect, max_iter=2000)
+
+	return trainedLearner
+
+
+def train_SVM_rbf_kernel(trainX, trainY, testX, testY):
+	name = "scikitlearn.SVC"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+	gamVals = tuple([100. / (10**n) for n in range(7)])
+
+	print "Cross validated over C with values of: " + str(cVals)
+	print "Cross validated over gamma with values of: " + str(gamVals)
+	trainedLearner = UML.train(
+		name, trainX, trainY, C=cVals, gamma=gamVals, kernel='rbf',
+		performanceFunction=fractionIncorrect, max_iter=2000)
+
+	return trainedLearner
+
+
+def train_SVM_with_poly_kernel_deg_2(trainX, trainY, testX, testY):
+	return train_SVM_with_poly_kernel(trainX, trainY, testX, testY, 2)
+
+def train_SVM_with_poly_kernel_deg_3(trainX, trainY, testX, testY):
+	return train_SVM_with_poly_kernel(trainX, trainY, testX, testY, 3)
+
+def train_SVM_with_poly_kernel_deg_4(trainX, trainY, testX, testY):
+	return train_SVM_with_poly_kernel(trainX, trainY, testX, testY, 4)
+
+def train_SVM_with_poly_kernel(trainX, trainY, testX, testY, degree):
+	name = "scikitlearn.SVC"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+	coef0Vals = (0,10,100)
+
+	print "Cross validated over C with values of: " + str(cVals)
+	print "Cross validated over coef0 with values of: " + str(coef0Vals)
+	trainedLearner = UML.train(
+		name, trainX, trainY, C=cVals, coef0=coef0Vals, kernel='poly',
+		degree=degree, performanceFunction=fractionIncorrect, max_iter=2000)
+
+	return trainedLearner
+
+
+
+####################################
+### SELECT AND TRAIN CHOICE CODE ###
+####################################
+
+
+def selAndTrain_by_regularization_pick35(trainX, trainY, testX, testY):
+	name = "custom.LogisticRegressionSelectByRegularization"
+	print "Finding exactly " + str(35) + " coefficients..."
+	trainedLearner = UML.train(name, trainX, trainY, desiredNonZero=35)
+
+	return trainedLearner
+
+
+def selAndTrain_by_least_magnitude_pick35(trainX, trainY, testX, testY):
+	name = "custom.LogisticRegressionSelectByOmission"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+	print "Cross validated over C with values of: " + str(cVals)
+	print "Finding exactly " + str(35) + " coefficients..."
+	trainedLearner = UML.train(name, trainX, trainY, numberToOmit=40,
+		method='least magnitude', C=cVals, performanceFunction=fractionIncorrect)
+
+	return trainedLearner
+
+
+def selAndTrain_by_least_value_pick35(trainX, trainY, testX, testY):
+	name = "custom.LogisticRegressionSelectByOmission"
+	cVals = tuple([100. / (10**n) for n in range(7)])
+	print "Cross validated over C with values of: " + str(cVals)
+	print "Finding exactly " + str(35) + " coefficients..."
+	trainedLearner = UML.train(name, trainX, trainY, numberToOmit=40,
+		method='least value', C=cVals, performanceFunction=fractionIncorrect)
+
+	return trainedLearner
+
+
 if __name__ == "__main__":
 
 	# Some variables to control the flow of the program
 	defaultFile = "/Users/spencer2/Dropbox/Spencer/Work/ClearerThinking.org/Programs and modules/Gender continuum test/gender continuum train and test ready to predict.csv"
 	omitCultureQuestions = True
-	desiredNonZeroCoefficients = 75  # 50
+	desiredNonZeroCoefficients = 35
 	performSanityCheck = False
 
 	UML.registerCustomLearner("custom", LogisticRegressionSelectByRegularization)
@@ -276,8 +764,9 @@ if __name__ == "__main__":
 	# to the 'InTestSet' feature.
 	trainX, trainY, testX, testY = seperateData(dataAll, omitCultureQuestions)
 
-#	standardizeScores(trainX)
-#	standardizeScores(testX)
+	# bring all questions on the 0-5 scale
+#	standardizeScoreScale(trainX)
+#	standardizeScoreScale(testX)
 
 	trainX.name = "Training Data"
 	trainY.name = "Training Labels"
@@ -297,308 +786,90 @@ if __name__ == "__main__":
 	print ""
 
 
-	predictionPossibilities = []
-	predictionPossibilities.append("SVC full data out-sample only")  # 0
-	predictionPossibilities.append("Prediction: LogReg with L1")  # 1
-	predictionPossibilities.append("Prediction: LogReg with L2")  # 2
-	predictionPossibilities.append("Prediction: SVM Linear kernel")  # 3
-	predictionPossibilities.append("Prediction: SVM rbf kernel")  # 4
-	predictionPossibilities.append("Prediction: SVM with poly kernel deg 2")  # 5
-	predictionPossibilities.append("Prediction: SVM with poly kernel deg 3")  # 6
+	fullTrialChoices = []
+	fullTrialChoices.append(SVC_full_data_outSample_only)  # 0
+	fullTrialChoices.append(trial_Coefficient_removal_by_least_magnitude)  # 1
+	fullTrialChoices.append(trial_Coefficient_removal_by_least_value)  # 2
+	fullTrialChoices.append(analysis_removal_comparison)  # 3
+	fullTrialChoices.append(analysis_randomness_effects)  # 4
+	fullTrialMode = fullTrialChoices[0]
+#	print fullTrialMode.__name__
+#	fullTrialMode(trainX, trainY, testX, testY)	
 
-	predictionPossibilities.append("Coefficient selection by regularization")  # 7
-	predictionPossibilities.append("Coefficient removal by least magnitude")  # 8
-	predictionPossibilities.append("Coefficient removal by least value")  # 9
-	predictionPossibilities.append("Analysis: removal comparison")  # 10
-	predictionPossibilities.append("Analysis: randomness effects")  # 11
-	predictionMode = predictionPossibilities[11]
 
-	print "Learning..."
-	print predictionMode
-	print ""
+	normFeatureChoices = []
+	normFeatureChoices.append(noNormalization)  # 0
+	normFeatureChoices.append(normalize_Feature_subtract_mean)  # 1
+	normFeatureChoices.append(normalize_Feature_subtract_mean_div_std)  # 2
+#	normMode = normFeatureChoices[0]
 
-	# 0
-	if predictionMode == "SVC full data out-sample only":
-		Cs = tuple([4**k for k in xrange(-8,8)])
-#		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, C=0.3) #19.7% out of sample error
-#		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=2, coef0=1, C=0.01) #19.2%
-		bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1) 
-		print "bestError out of sample: ", str(round(bestError*100,1)) + "%"
-		sys.exit(0)
-	# 1
-	elif predictionMode == "Prediction: LogReg with L1":
-		name = "scikitlearn.LogisticRegression"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-		print "Cross validated over C with values of: " + str(cVals)
-		trainedLearner = UML.train(
-			name, trainX, trainY, C=cVals, penalty='l1',
-			performanceFunction=fractionIncorrect)
-	# 2
-	elif predictionMode == "Prediction: LogReg with L2":
-		name = "scikitlearn.LogisticRegression"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-		print "Cross validated over C with values of: " + str(cVals)
-		trainedLearner = UML.train(
-			name, trainX, trainY, C=cVals, penalty='l2',
-			performanceFunction=fractionIncorrect)
-	# 3
-	elif predictionMode == "Prediction: SVM Linear kernel":
-		name = "scikitlearn.SVC"
-		cVals = tuple([100. / (10**n) for n in range(7)])
+	featSelectChoices = []
+	featSelectChoices.append(featSelect_All)  # 0
+	featSelectChoices.append(featSelect_LogRegRegularization)  # 1
+	featSelectChoices.append(featSelect_LogRegOmit_LeastValue)  # 2
+	featSelectChoices.append(featSelect_LogRegOmit_LeastMagnitude)  # 3
+#	selectMode = featSelectChoices[0]
 
-		print "Cross validated over C with values of: " + str(cVals)
-		trainedLearner = UML.train(
-			name, trainX, trainY, C=cVals, kernel='linear', performanceFunction=fractionIncorrect)
-	# 4
-	elif predictionMode == "Prediction: SVM rbf kernel":
-		name = "scikitlearn.SVC"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-		gamVals = tuple([100. / (10**n) for n in range(7)])
+	trainChoices = []
+	trainChoices.append(train_LogReg_with_L1)  # 0
+	trainChoices.append(train_LogReg_with_L2)  # 1
+	trainChoices.append(train_ridgeClassifier)  # 2
+	trainChoices.append(train_SVM_Linear_kernel)  # 3
+	trainChoices.append(train_SVM_rbf_kernel)  # 4
+	trainChoices.append(train_SVM_with_poly_kernel_deg_2)  # 5
+	trainChoices.append(train_SVM_with_poly_kernel_deg_3)  # 6
+	trainChoices.append(train_SVM_with_poly_kernel_deg_4)  # 7
+#	trainMode = trainChoices[2]
 
-		print "Cross validated over C with values of: " + str(cVals)
-		print "Cross validated over gamma with values of: " + str(gamVals)
-		trainedLearner = UML.train(
-			name, trainX, trainY, C=cVals, gamma=gamVals, kernel='rbf', performanceFunction=fractionIncorrect)
-	# 5
-	elif predictionMode == "Prediction: SVM with poly kernel deg 2":
-		name = "scikitlearn.SVC"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-		coef0Vals = tuple([100. / (10**n) for n in range(7)])
-
-		print "Cross validated over C with values of: " + str(cVals)
-		print "Cross validated over coef0 with values of: " + str(coef0Vals)
-		trainedLearner = UML.train(
-			name, trainX, trainY, C=cVals, coef0=coef0Vals, kernel='poly', degree=2,
-			performanceFunction=fractionIncorrect)
-	# 6
-	elif predictionMode == "Prediction: SVM with poly kernel deg 3":
-		name = "scikitlearn.SVC"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-		coef0Vals = tuple([100. / (10**n) for n in range(7)])
-
-		print "Cross validated over C with values of: " + str(cVals)
-		print "Cross validated over coef0 with values of: " + str(coef0Vals)
-		trainedLearner = UML.train(
-			name, trainX, trainY, C=cVals, coef0=coef0Vals, kernel='poly', degree=3,
-			performanceFunction=fractionIncorrect)
-	# 7
-	elif predictionMode == "Coefficient selection by regularization":
-		name = "custom.LogisticRegressionSelectByRegularization"
-#		print "Finding exactly " + str(desiredNonZeroCoefficients) + " coefficients..."
-		trainedLearner = UML.train(name, trainX, trainY, desiredNonZero=desiredNonZeroCoefficients)
-	# 8
-	elif predictionMode == "Coefficient removal by least magnitude":
-		name = "custom.LogisticRegressionSelectByOmission"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-#		cVals = (100., 55., 10., 5.5, 1., 0.55, 0.1, 0.055, 0.01, 0.0055, 0.001, 0.00055, 0.0001)
-#		cVals = 1
-
-		print "Cross validated over C with values of: " + str(cVals)
-
-		results = []
-		omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
-		for num in omit:
-			trainedLearner = UML.train(
-					name, trainX, trainY, numberToOmit=num, method="least magnitude",
-					C=cVals, performanceFunction=fractionIncorrect)
-			result = trainedLearner.test(testX, testY,
-				performanceFunction=fractionIncorrect)
-			results.append(result)
+	selAndTrainChoices = []
+	selAndTrainChoices.append(selAndTrain_by_regularization_pick35)  # 0
+	selAndTrainChoices.append(selAndTrain_by_least_value_pick35)  # 1
+	selAndTrainChoices.append(selAndTrain_by_least_magnitude_pick35)  # 2
 	
-		pnames = ['number Omitted', 'out sample error: fractionIncorrect']
-		objName = predictionMode
-		raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
-		figurePath = './results-least_magnitude.png'
-		raw.plotPointAgainstPoint(0,1, outPath=figurePath)
-		exit(0)
-	# 9
-	elif predictionMode == "Coefficient removal by least value":
-		name = "custom.LogisticRegressionSelectByOmission"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-#		cVals = (100., 55., 10., 5.5, 1., 0.55, 0.1, 0.055, 0.01, 0.0055, 0.001, 0.00055, 0.0001)
-#		cVals = 1
 
-		results = []
-		omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
-		for num in omit:
-			trainedLearner = UML.train(
-					name, trainX, trainY, numberToOmit=num, method="least value",
-					C=cVals, performanceFunction=fractionIncorrect)
-			result = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
-			print result
-			results.append(result)
-	
-		pnames = ['number Omitted', 'out sample error: fractionIncorrect']
-		objName = predictionMode
-		raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
-		figurePath = './results-least_value.png'
-		raw.plotPointAgainstPoint(0,1, outPath=figurePath)
-		exit(0)
-	# 10
-	elif predictionMode == "Analysis: removal comparison":
-		name = "custom.LogisticRegressionSelectByOmission"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-#		cVals = 0.001
 
-		num = 35
+	# for safetys
+	origTrainX = trainX.copy()
+	origTestX = testX.copy()
 
-		allQsList = trainX.getFeatureNames()
-		allQs = set(allQsList)
-		LVQs = []
-		LMQs = []
-		tlLV = []
-		tlLM = []
+#	choices = itertools.product(normFeatureChoices, featSelectChoices[2:], trainChoices[:2])
 
-		omit = [10,15,20,25,30,35,40,45,50,55,60,65,70]
-#		omit = [35]
-		for i, num in enumerate(omit):
-			trainedLearnerLV = UML.train(
-					name, trainX, trainY, numberToOmit=num, method="least value",
-					C=cVals, performanceFunction=fractionIncorrect)
+#	for (normalizer, selector, trainer) in choices:
+#		trainX = origTrainX.copy()
+#		testX = origTestX.copy()
+#		print normalizer.__name__
+#		print selector.__name__
+#		print trainer.__name__
+#		normalizer(trainX, testX)
 
-			tlLV.append(trainedLearnerLV)
+#		(trainX, testX) = selector(trainX, trainY, testX, desiredNonZeroCoefficients)
 
-			trainedLearnerLM = UML.train(
-					name, trainX, trainY, numberToOmit=num, method="least magnitude",
-					C=cVals, performanceFunction=fractionIncorrect)
+#		trainedLearner = trainer(trainX, trainY, testX, testY)
 
-			tlLM.append(trainedLearnerLM)
+#		printAccuracy(trainedLearner, testX, testY)
 
-			print "\nnum " + str(num) + "\n"
+#	exit(0)
 
-			LVWanted = trainedLearnerLV.getAttributes()['wantedIndices']
-			LMWanted = trainedLearnerLM.getAttributes()['wantedIndices']
+	for normMode in normFeatureChoices:
+		trainX = origTrainX.copy()
+		testX = origTestX.copy()
+		print normMode.__name__ + '\n'
+		normMode(trainX, testX)
 
-			LVQs.append(set(numpy.array(allQsList)[LVWanted]))
-			LMQs.append(set(numpy.array(allQsList)[LMWanted]))
+		for trainMode in selAndTrainChoices[1:]:
+	#		print "Learning..."
+	#		print normMode.__name__
+			print trainMode.__name__
+	#		print ""
 
-			# In Both
-#			print "In Both:" + str(LVQs[i] & LMQs[i])
-#			print ""
+			trainedLearner = trainMode(trainX, trainY, testX, testY)
 
-			# difference
-#			print "Least Value unique:" + str(LVQs[i] - LMQs[i])
-#			print ""
-#			print "Least Magnitude unique" + str(LMQs[i] - LVQs[i])
-#			print ""
+	#		print trainedLearner.getAttributes()
 
-			# Excluded from both
-#			print "removed from both: " + str(allQs[i] - (LMQs[i] | LVQs[i]))
+			# grab the feature names associated with the non-zero coefficients
+		#	printCoefficients(trainedLearner)
 
-			# assertions
-			#if i > 0:
-				#print numpy.equal(tlLV[i].getAttributes()['origCoefs'], tlLV[i-1].getAttributes()['origCoefs'])
-				#assert tlLV[i].getAttributes()['origCoefs'] == tlLV[i-1].getAttributes()['origCoefs']
-				#print LVQs[i] - LVQs[i-1]
-				# inaccurate: without the same original coefs, the results won't
-				# be exact
-				# assert LVQs[i] < LVQs[i-1]
-				# assert LMQs[i] < LMQs[i-1]
-
-		exit(0)
-	# 11
-	elif predictionMode == "Analysis: randomness effects":
-		name = "custom.LogisticRegressionSelectByOmission"
-		cVals = tuple([100. / (10**n) for n in range(7)])
-
-		tlLV = []
-		resultsLV = []
-		resultsLM = []
-		tlLM = []
-
-		omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
-		for i, num in enumerate(omit):
-			trainedLearnerLV1 = UML.train(
-					name, trainX, trainY, numberToOmit=num, method="least value",
-					C=cVals, performanceFunction=fractionIncorrect)
-			tlLV.append(trainedLearnerLV1)
-			trainedLearnerLV2 = UML.train(
-					name, trainX, trainY, numberToOmit=num, method="least value",
-					C=cVals, performanceFunction=fractionIncorrect)
-			tlLV.append(trainedLearnerLV2)
-#			trainedLearnerLV3 = UML.train(
-#					name, trainX, trainY, numberToOmit=num, method="least value",
-#					C=cVals, performanceFunction=fractionIncorrect)
-#			tlLV.append(trainedLearnerLV3)
-
-			result1 = trainedLearnerLV1.test(testX, testY, performanceFunction=fractionIncorrect)
-			resultsLV.append(result1)
-			result2 = trainedLearnerLV2.test(testX, testY, performanceFunction=fractionIncorrect)
-			resultsLV.append(result2)
-#			result3 = trainedLearnerLV3.test(testX, testY, performanceFunction=fractionIncorrect)
-#			resultsLV.append(result3)
-		
-			trainedLearnerLM1 = UML.train(
-					name, trainX, trainY, numberToOmit=num, method="least magnitude",
-					C=cVals, performanceFunction=fractionIncorrect)
-			tlLM.append(trainedLearnerLM1)
-			trainedLearnerLM2 = UML.train(
-					name, trainX, trainY, numberToOmit=num, method="least magnitude",
-					C=cVals, performanceFunction=fractionIncorrect)
-			tlLM.append(trainedLearnerLM2)
-#			trainedLearnerLM3 = UML.train(
-#					name, trainX, trainY, numberToOmit=num, method="least magnitude",
-#					C=cVals, performanceFunction=fractionIncorrect)
-#			tlLM.append(trainedLearnerLM3)
-
-			result1 = trainedLearnerLM1.test(testX, testY, performanceFunction=fractionIncorrect)
-			resultsLM.append(result1)
-			result2 = trainedLearnerLM2.test(testX, testY, performanceFunction=fractionIncorrect)
-			resultsLM.append(result2)
-#			result3 = trainedLearnerLM3.test(testX, testY, performanceFunction=fractionIncorrect)
-#			resultsLM.append(result3)
-
-		# COMPARE!
-		# out of sample error
-#		pnames = ['number Omitted', 'out sample error: fractionIncorrect']
-#		objName = "Least Value randomness analysis"
-#		corrOmit = [val for pair in zip(omit, omit) for val in pair]
-#		corrOmit = [val for pair in zip(omit, omit, omit) for val in pair]
-#		raw = UML.createData("List", [corrOmit, resultsLV], pointNames=pnames, name=objName)
-#		figurePath = './results-least_value_triple_trials.png'
-#		raw.plotPointAgainstPoint(0,1, outPath=figurePath)
-
-#		objName = "Least Magnitude randomness analysis"
-#		raw = UML.createData("List", [corrOmit, resultsLM], pointNames=pnames, name=objName)
-#		figurePath = './results-least_magnitude_triple_trials.png'
-#		raw.plotPointAgainstPoint(0,1, outPath=figurePath)
-
-		# coefficients
-		allTL = tlLV + tlLM
-		currTL = allTL[0]
-		currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
-		coefsObj = UML.createData("Matrix", currCoefs)
-
-		for i in xrange(1,len(allTL)):
-			currTL = allTL[i]
-			currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
-			currCoefsObj = UML.createData("Matrix", currCoefs)
-			coefsObj.appendPoints(currCoefsObj)
-
-#		print coefsObj.pointCount
-#		print coefsObj.featureCount
-
-		coefCorr = coefsObj.featureSimilarities("correlation")
-		# BUT THIS IS WIERD since the questions are 'scored' on different
-		# scales depending on whether it ends with an (M) or (F)
-		coefCorr.setPointNames([str(val) for val in xrange(75)])
-		coefCorr.setFeatureNames([str(val) for val in xrange(75)])
-		coefCorr.show("coef correlation", maxWidth=None, maxHeight=80,
-			includeObjectName=False)
-
-		exit(0)
-	else:
-		raise Exception("Bad prediction mode!")
-	
-	# grab the feature names associated with the non-zero coefficients
-#	printCoefficients(trainedLearner)
-
-	#Now measure the accuracy of the model
-	print "\n\n"
-	errorOutSample = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
-	print "Out of sample error rate: " + str(round(errorOutSample*100,1)) + "%"
-	errorInSample = trainedLearner.test(trainX, trainY, performanceFunction=fractionIncorrect)
-	print "In sample error rate: " + str(round(errorInSample*100,1)) + "%"
-	print ""
+			#Now measure the accuracy of the model
+			printAccuracy(trainedLearner, testX, testY)
 
 	exit(0)
