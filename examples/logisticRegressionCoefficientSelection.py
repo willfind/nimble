@@ -10,6 +10,7 @@ boilerplate()
 import sys
 import numpy
 import itertools
+import random
 
 import UML
 from UML.customLearners import CustomLearner
@@ -87,7 +88,7 @@ class LogisticRegressionSelectByOmission(CustomLearner):
 				"highest value"]
 
 		kwargs['C'] = C
-		kwargs['penalty'] = "l2"
+		kwargs['penalty'] = "l1"
 
 		side = method.split(" ")[0]
 		ordering = method.split(" ")[1]
@@ -171,7 +172,7 @@ def sanityCheck(trainX, totalScores):
 	summed.setFeatureName(0, "totalScorePosOrNeg")
 	assert summed == totalScores
 
-def seperateData(dataAll, omitCultureQuestions):
+def seperateData(dataAll, omitList):
 	# grab the features we want to be in the training data; including raw
 	# data that we may later choose to omit
 	nameOfFirst = "I do not enjoy watching dance performances. (M)"
@@ -181,20 +182,7 @@ def seperateData(dataAll, omitCultureQuestions):
 	usedData.appendFeatures(dataAll.copyFeatures("isMale"))
 	usedData.appendFeatures(dataAll.copyFeatures("InTestSet"))
 
-	if omitCultureQuestions:
-		toOmit = []
-		toOmit.append("I do not enjoy watching dance performances. (M)")
-		toOmit.append(" I would be good at rescuing someone from a burning building. (M)")
-		toOmit.append(" I am interested in science. (M)")
-		toOmit.append(" I find political discussions interesting. (M)")
-		toOmit.append(" I face danger confidently. (M)")
-		toOmit.append(" I do not like concerts. (M)")
-		toOmit.append(" I do not enjoy going to art museums. (M)")
-		toOmit.append(" I would fear walking in a high-crime part of a city. (F)")
-		toOmit.append(" I begin to panic when there is danger. (F)")
-		usedData.extractFeatures(toOmit)
-
-	print "Splitting data into training and testing..."
+	usedData.extractFeatures(omitList)
 
 	def selectInTestSet(point):
 		if point["InTestSet"] > 0:
@@ -212,9 +200,8 @@ def seperateData(dataAll, omitCultureQuestions):
 
 	return trainX, trainY, testX, testY
 
-def printCoefficients(trainedLearner):
+def printCoefficientsHR(trainedLearner):
 	coefs = trainedLearner.getAttributes()["coef_"]
-#	intercept = trainedLearner.getAttributes()["intercept_"]
 	coefs = coefs.flatten()
 	chosen = []
 	chosenCoefs = []
@@ -228,8 +215,43 @@ def printCoefficients(trainedLearner):
 	print "\n"
 	i = 1
 	for question, coef in zip(chosen, chosenCoefs):
-		print str(i).ljust(3) + "    " + str(round(coef,2)).ljust(8) + question.strip()
+#		print str(i).ljust(3) + "\t" + str(round(coef,3)).ljust(8) + question.strip()
+		print str(i).ljust(3) + "\t" + str(coef).ljust(20) + "\t" + question.strip()
 		i = i + 1
+
+def printCoefficientsPythonLists(trainedLearner, trainX, randomize=False):
+	coefsFromLearner = trainedLearner.getAttributes()["coef_"]
+	coefsFromLearner = coefsFromLearner.flatten()
+	chosen = []
+	coefs = []
+	paired = []
+	for i in xrange(len(coefsFromLearner)):
+		name = trainX.getFeatureName(i).strip()
+		paired.append((name, coefsFromLearner[i]))
+
+	if randomize:
+		random.shuffle(paired)
+
+	for (n, c) in paired:
+		chosen.append(n)
+		coefs.append(c)
+
+	# display those questions which were the most useful
+	print ""
+	print chosen
+	print len(chosen)
+	print ""
+	print coefs
+	print len(coefs)
+
+def saveCoefficients(trainedLearner, names, outPath):
+	coefs = trainedLearner.getAttributes()["coef_"]
+	coefsObj = UML.createData("List", coefs, featureNames=names, pointNames=['coefs'])
+	coefsObj.transpose()
+
+	coefsObj.writeFile(outPath, 'csv', includeNames=True)
+
+
 
 def standardizeScoreScale(obj):
 	allNames = obj.getFeatureNames()
@@ -273,7 +295,7 @@ def standardizeScoreScale(obj):
 	return
 
 
-def printAccuracy(trainedLearner, testX, testY):
+def printAccuracy(trainedLearner, trainX, trainY, testX, testY):
 #	print "\n\n"
 	errorOutSample = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
 	print "Out of sample error rate: " + str(round(errorOutSample*100,1)) + "%"
@@ -504,6 +526,78 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
 	exit(0)
 
 
+def analysis_finalModel_decisionScore_proba(trainX, trainY, testX, testY):
+	normalizer = noNormalization
+	selector = featSelect_handmade_orig
+	trainer = train_LogReg_with_L2
+
+	normalizer(trainX, testX)
+	(trainX, testX) = selector(trainX, trainY, testX, desiredNonZeroCoefficients)
+	trainedLearner = trainer(trainX, trainY, testX, testY)
+
+	printAccuracy(trainedLearner, trainX, trainY, testX, testY)
+
+	toCheckMe = [1,0,2,2,3,0,0,2,3,1,1,1,1,1,1,4,3,3,1,3,0,3,2]
+	toCheckRando = [2,3,0,0,4,1,0,1,2,2,3,0,3,4,1,1,2,0,4,4,3,1,1]
+	toCheckAllF = [0,0,4,4,4,0,0,0,0,0,0,4,4,0,0,0,0,4,0,0,4,4,4]
+	toCheckAllM = [4,4,0,0,0,4,4,4,4,4,4,0,0,4,4,4,4,0,4,4,0,0,0]
+	toCheck = [toCheckMe, toCheckRando, toCheckAllF, toCheckAllM]
+	#print dir(trainedLearner.backend)
+#		print trainedLearner.backend.coef_
+	print trainedLearner.backend.predict(toCheck)
+	print trainedLearner.backend.decision_function(toCheck)
+	print trainedLearner.backend.predict_proba(toCheck)
+
+
+
+def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
+	normalizer = noNormalization
+	selector = featSelect_handmade_random
+	trainer = train_LogReg_with_L2
+
+	normalizer(trainX, testX)
+	(trainX, testX) = selector(trainX, trainY, testX, desiredNonZeroCoefficients)
+	trainedLearner = trainer(trainX, trainY, testX, testY)
+	coefs = trainedLearner.backend.coef_.flatten()
+	print coefs.shape
+
+	trainX.appendPoints(testX)
+	trainY.appendPoints(testY)
+
+	nzIDs = trainY.copyAs("numpyarray",outputAs1D=True).nonzero()[0]
+
+	malePoints = trainX.extractPoints(list(nzIDs))
+	femalePoints = trainX
+
+	print malePoints.pointCount
+	print femalePoints.pointCount
+
+	mMeans = malePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
+	fMeans = femalePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
+
+	print mMeans
+	print ""
+	print fMeans
+
+	names = trainX.getFeatureNames()
+	zipped = zip(mMeans, fMeans, coefs, names)
+
+	def r((m,f,c,n)):
+		return (round(m,3),round(f,3),round(c,3),n)
+
+	zipped = map(r, zipped)
+
+#	for i, (mMean, fMean) in enumerate()
+	for (mMean, fMean, coef, Q) in zipped:
+		msg = str(mMean).ljust(6) + " "
+		msg += str(fMean).ljust(6) + " "
+		if coef < 0:
+			msg += "-"
+		else:
+			msg += " "
+		msg += str(abs(coef)).ljust(6) + " "
+		msg += Q
+		print msg
 
 
 #################################
@@ -619,7 +713,65 @@ def featSelect_LogRegOmit_LeastMagnitude(trainX, trainY, testX, numWanted):
 
 	return (redTrain, redTest)
 
+def featSelect_handmade_orig(trainX, trainY, testX, numWanted):
+	wanted = []
+	wanted.append(" I contradict others. (M)")
+	wanted.append(" I would like to have more power than other people. (M)")
+	wanted.append(" I give money to charity. (F)")
+	wanted.append(" I am deeply moved by others' misfortunes. (F)")
+	wanted.append(" I would feel very sorry for an animal caught in a trap. (F)")
+	wanted.append(" I am good at making impromptu speeches. (M)")
+	wanted.append(" I rarely worry. (M)")
+	wanted.append(" I am relaxed most of the time. (M)")
+	wanted.append(" I am not easily annoyed. (M)")
+	wanted.append(" I rarely notice my emotional reactions. (M)")
+	wanted.append(" I recover quickly from stress and illness. (M)")
+	wanted.append(" I am afraid of many things. (F)")
+	wanted.append(" I find that my feelings are easily hurt. (F)")
+	wanted.append(" I put on a show to impress people. (M)")
+	wanted.append(" I tell people what they want to hear so they do what I want. (M)")
+	wanted.append(" I have a dark outlook on the future. (M)")
+	wanted.append(" I like to solve complex problems. (M)")
+	wanted.append(" I would never make a high-risk investment. (F)")
+	wanted.append(" I am out for my own personal gain. (M)")
+	wanted.append(" I behave in unusual and strange ways. (M)")
+	wanted.append(" I talk a lot. (F)")
+	wanted.append(" I laugh aloud. (F)")
+	wanted.append(" I show my feelings when I'm happy. (F)")
 
+	redTrain = trainX.copyFeatures(wanted)
+	redTest = testX.copyFeatures(wanted)
+	return (redTrain, redTest)
+
+def featSelect_handmade_random(trainX, trainY, testX, numWanted):
+	wanted = []
+	wanted.append(" I contradict others. (M)")
+	wanted.append(" I tell people what they want to hear so they do what I want. (M)")
+	wanted.append(" I am good at making impromptu speeches. (M)")
+	wanted.append(" I behave in unusual and strange ways. (M)")
+	wanted.append(" I am not easily annoyed. (M)")
+	wanted.append(" I would feel very sorry for an animal caught in a trap. (F)")
+	wanted.append(" I recover quickly from stress and illness. (M)")
+	wanted.append(" I rarely worry. (M)")
+	wanted.append(" I am out for my own personal gain. (M)")
+	wanted.append(" I give money to charity. (F)")
+	wanted.append(" I like to solve complex problems. (M)")
+	wanted.append(" I am deeply moved by others' misfortunes. (F)")
+	wanted.append(" I put on a show to impress people. (M)")
+	wanted.append(" I am relaxed most of the time. (M)")
+	wanted.append(" I talk a lot. (F)")
+	wanted.append(" I show my feelings when I'm happy. (F)")
+	wanted.append(" I find that my feelings are easily hurt. (F)")
+	wanted.append(" I rarely notice my emotional reactions. (M)")
+	wanted.append(" I am afraid of many things. (F)")
+	wanted.append(" I laugh aloud. (F)")
+	wanted.append(" I would like to have more power than other people. (M)")
+	wanted.append(" I would never make a high-risk investment. (F)")
+	wanted.append(" I have a dark outlook on the future. (M)")
+
+	redTrain = trainX.copyFeatures(wanted)
+	redTest = testX.copyFeatures(wanted)
+	return (redTrain, redTest)
 
 ############################
 ### TRAINING CHOICE CODE ###
@@ -740,11 +892,43 @@ def selAndTrain_by_least_value_pick35(trainX, trainY, testX, testY):
 	return trainedLearner
 
 
+def omittedCultureQuestions():
+	toOmit = []
+	toOmit.append("I do not enjoy watching dance performances. (M)")
+	toOmit.append(" I would be good at rescuing someone from a burning building. (M)")
+	toOmit.append(" I am interested in science. (M)")
+	toOmit.append(" I find political discussions interesting. (M)")
+	toOmit.append(" I face danger confidently. (M)")
+	toOmit.append(" I do not like concerts. (M)")
+	toOmit.append(" I do not enjoy going to art museums. (M)")
+	toOmit.append(" I would fear walking in a high-crime part of a city. (F)")
+	toOmit.append(" I begin to panic when there is danger. (F)")
+
+	return toOmit
+
+def ommittedHandchosenQuestions():
+	toOmit = []
+	toOmit.append(" I would feel very badly for a long time if stole. (F)")
+	toOmit.append(" I feel sympathy for those who are worse off than myself. (F)")
+	toOmit.append(" I believe that I am better than others. (M)")
+	toOmit.append(" I am not easily disturbed by events. (M)")
+	toOmit.append(" I worry about things. (F)")
+	toOmit.append(" I am a worrier. (F)")
+	toOmit.append(" I panic easily. (F)")
+	toOmit.append(" I get overwhelmed by emotions. (F)")
+	toOmit.append(" I take risks that could cause trouble for me. (M)")
+	toOmit.append(" I don't talk a lot. (M)")
+	toOmit.append(" I get even with others. (M)")
+	toOmit.append(" I smile a lot. (F)")
+
+	return toOmit
+
 if __name__ == "__main__":
 
 	# Some variables to control the flow of the program
-	defaultFile = "/Users/spencer2/Dropbox/Spencer/Work/ClearerThinking.org/Programs and modules/Gender continuum test/gender continuum train and test ready to predict.csv"
-	omitCultureQuestions = True
+	defaultInFile = "/Users/spencer2/Dropbox/Spencer/Work/ClearerThinking.org/Programs and modules/Gender continuum test/gender continuum train and test ready to predict.csv"
+	defaultCoefOutFile = ""
+	omitCulture = True
 	desiredNonZeroCoefficients = 35
 	performSanityCheck = False
 
@@ -752,9 +936,14 @@ if __name__ == "__main__":
 	UML.registerCustomLearner("custom", LogisticRegressionSelectByOmission)
 
 	if len(sys.argv) <= 1:
-		origFileName = defaultFile
+		origFileName = defaultInFile
+		coefOutFile = defaultCoefOutFile
+	elif len(sys.argv) <= 2:
+		origFileName = sys.argv[1]
+		coefOutFile = defaultCoefOutFile
 	else:
 		origFileName = sys.argv[1]
+		coefOutFile = sys.argv[2]
 	
 	dataAll = UML.createData("Matrix", origFileName, featureNames=True, fileType='csv',
 		ignoreNonNumericalFeatures=True)
@@ -762,11 +951,14 @@ if __name__ == "__main__":
 	# call helper to remove extraneous features, omit undesired
 	# ones, and to seperate into training and testing sets according
 	# to the 'InTestSet' feature.
-	trainX, trainY, testX, testY = seperateData(dataAll, omitCultureQuestions)
+	toOmit = []
+	if omitCulture:
+		toOmit += omittedCultureQuestions()
+	trainX, trainY, testX, testY = seperateData(dataAll, toOmit)
 
 	# bring all questions on the 0-5 scale
-#	standardizeScoreScale(trainX)
-#	standardizeScoreScale(testX)
+	standardizeScoreScale(trainX)
+	standardizeScoreScale(testX)
 
 	trainX.name = "Training Data"
 	trainY.name = "Training Labels"
@@ -792,23 +984,27 @@ if __name__ == "__main__":
 	fullTrialChoices.append(trial_Coefficient_removal_by_least_value)  # 2
 	fullTrialChoices.append(analysis_removal_comparison)  # 3
 	fullTrialChoices.append(analysis_randomness_effects)  # 4
-	fullTrialMode = fullTrialChoices[0]
-#	print fullTrialMode.__name__
-#	fullTrialMode(trainX, trainY, testX, testY)	
-
+	fullTrialChoices.append(analysis_finalModel_decisionScore_proba)  # 5
+	fullTrialChoices.append(analysis_finalModel_perGenderAvgScores)  # 6
+	fullTrialMode = fullTrialChoices[6]
+	print fullTrialMode.__name__
+	fullTrialMode(trainX, trainY, testX, testY)	
+	exit(0)
 
 	normFeatureChoices = []
 	normFeatureChoices.append(noNormalization)  # 0
 	normFeatureChoices.append(normalize_Feature_subtract_mean)  # 1
 	normFeatureChoices.append(normalize_Feature_subtract_mean_div_std)  # 2
-#	normMode = normFeatureChoices[0]
+	normMode = normFeatureChoices[0]
 
 	featSelectChoices = []
 	featSelectChoices.append(featSelect_All)  # 0
 	featSelectChoices.append(featSelect_LogRegRegularization)  # 1
 	featSelectChoices.append(featSelect_LogRegOmit_LeastValue)  # 2
 	featSelectChoices.append(featSelect_LogRegOmit_LeastMagnitude)  # 3
-#	selectMode = featSelectChoices[0]
+	featSelectChoices.append(featSelect_handmade_orig)  # 4
+	featSelectChoices.append(featSelect_handmade_random)  # 5
+	selectMode = featSelectChoices[4]
 
 	trainChoices = []
 	trainChoices.append(train_LogReg_with_L1)  # 0
@@ -819,57 +1015,57 @@ if __name__ == "__main__":
 	trainChoices.append(train_SVM_with_poly_kernel_deg_2)  # 5
 	trainChoices.append(train_SVM_with_poly_kernel_deg_3)  # 6
 	trainChoices.append(train_SVM_with_poly_kernel_deg_4)  # 7
-#	trainMode = trainChoices[2]
+	trainMode = trainChoices[1]
 
 	selAndTrainChoices = []
 	selAndTrainChoices.append(selAndTrain_by_regularization_pick35)  # 0
 	selAndTrainChoices.append(selAndTrain_by_least_value_pick35)  # 1
 	selAndTrainChoices.append(selAndTrain_by_least_magnitude_pick35)  # 2
 	
-
-
-	# for safetys
+	# for safety
 	origTrainX = trainX.copy()
 	origTestX = testX.copy()
 
 #	choices = itertools.product(normFeatureChoices, featSelectChoices[2:], trainChoices[:2])
+	choices = [(normMode, selectMode, trainMode)]
 
-#	for (normalizer, selector, trainer) in choices:
-#		trainX = origTrainX.copy()
-#		testX = origTestX.copy()
-#		print normalizer.__name__
-#		print selector.__name__
-#		print trainer.__name__
-#		normalizer(trainX, testX)
-
-#		(trainX, testX) = selector(trainX, trainY, testX, desiredNonZeroCoefficients)
-
-#		trainedLearner = trainer(trainX, trainY, testX, testY)
-
-#		printAccuracy(trainedLearner, testX, testY)
-
-#	exit(0)
-
-	for normMode in normFeatureChoices:
+	for (normalizer, selector, trainer) in choices:
 		trainX = origTrainX.copy()
 		testX = origTestX.copy()
-		print normMode.__name__ + '\n'
-		normMode(trainX, testX)
+		print normalizer.__name__
+		print selector.__name__
+		print trainer.__name__
 
-		for trainMode in selAndTrainChoices[1:]:
-	#		print "Learning..."
-	#		print normMode.__name__
-			print trainMode.__name__
-	#		print ""
+		normalizer(trainX, testX)
+		(trainX, testX) = selector(trainX, trainY, testX, desiredNonZeroCoefficients)
+		trainedLearner = trainer(trainX, trainY, testX, testY)
 
-			trainedLearner = trainMode(trainX, trainY, testX, testY)
+		printAccuracy(trainedLearner, trainX, trainY, testX, testY)
 
-	#		print trainedLearner.getAttributes()
+		# grab the feature names associated with the non-zero coefficients
+#		printCoefficientsPythonLists(trainedLearner, trainX, randomize=True)
+#		saveCoefficients(trainedLearner, trainX.getFeatureNames(), coefOutFile)
 
-			# grab the feature names associated with the non-zero coefficients
-		#	printCoefficients(trainedLearner)
 
-			#Now measure the accuracy of the model
-			printAccuracy(trainedLearner, testX, testY)
+	exit(0)
+
+	choices = itertools.product(normFeatureChoices, selAndTrainChoices)
+
+	for (normalizer, trainer) in choices:
+		trainX = origTrainX.copy()
+		testX = origTestX.copy()
+		print normalizer.__name__
+		print trainer.__name__
+
+		normalizer(trainX, testX)
+		trainedLearner = trainer(trainX, trainY, testX, testY)
+
+#		print trainedLearner.getAttributes()
+
+		# grab the feature names associated with the non-zero coefficients
+	#	printCoefficientsHR(trainedLearner)
+
+		#Now measure the accuracy of the model
+		printAccuracy(trainedLearner, trainX, trainY, testX, testY)
 
 	exit(0)
