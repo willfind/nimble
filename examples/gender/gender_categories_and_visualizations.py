@@ -17,6 +17,7 @@ from allowImports import boilerplate
 boilerplate()
 
 import UML
+from UML.calculate import residuals
 from UML.examples.gender.gender_visualization_bandwidth import verifyBandwidthSelectionWorks
 from UML.examples.gender.gender_visualization_bandwidth import KDEProbability
 from UML.examples.gender.gender_visualization_bandwidth import bandwidthTrials
@@ -590,7 +591,7 @@ def outputSelectedCategoryCorrelationToGender(responses, gender, selected, categ
 		collected.writeFile(out)
 
 
-def printSelectedCategoryCorrelationMatrix(responses, selected, categoriesByQName, outFile=None, scaleType=None):
+def printSelectedCategoryCorrelationMatrix(responses, gender, selected, categoriesByQName, partialCorr, outFile=None, scaleType=None):
 	collected = None
 	for category, (q0, q1) in selected.items():
 		scale = scaleType[category] if scaleType is not None else 'female'
@@ -601,12 +602,87 @@ def printSelectedCategoryCorrelationMatrix(responses, selected, categoriesByQNam
 		else:
 			collected.appendFeatures(sub)
 	
-	corrs = collected.featureSimilarities('correlation')
+	if partialCorr:
+		residuals_collected = residuals(collected, gender)
+		corrs = residuals_collected.featureSimilarities('correlation')
+	else:
+		corrs = collected.featureSimilarities('correlation')
+	corrs.setPointName("Empathetic", "Compassionate")
+	corrs.setFeatureName("Empathetic", "Compassionate")
+
 	corrs.sortPoints(sortHelper=lambda x: x.getPointName(0))
 	corrs.sortFeatures(sortHelper=lambda x: x.getFeatureName(0))
-#	corrs.show("Selected Category Correlation Matrix", maxHeight=None, maxWidth=None, nameLength=25)
+#	corrs.show("Selected Category Correlation Matrix", maxHeight=None, maxWidth=None, maxColumnWidth=25)
 	if outFile is not None:
 		corrs.writeFile(outFile)
+
+
+def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selected, categoriesByQName, outFileDiff, outFileBase, outFileSign, scaleType):
+	collectedM = None
+	collectedF = None
+
+	resposnsesSafe = responses.copy()
+	resposnsesSafe.appendFeatures(gender)
+	males = resposnsesSafe.extractPoints(lambda x: x['male0female1'] == 0)
+	females = resposnsesSafe
+
+	males.extractFeatures('male0female1')
+	females.extractFeatures('male0female1')
+
+	for category, (q0, q1) in selected.items():
+		scale = scaleType[category] if scaleType is not None else 'female'
+		subM = generateSubScale(males, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scale)
+		subF = generateSubScale(females, q0, categoriesByQName[q0,1], q1, categoriesByQName[q1,1], scale)
+		subM.setFeatureName(0, category)
+		subF.setFeatureName(0, category)
+		if collectedM is None:
+			collectedM = subM
+		else:
+			collectedM.appendFeatures(subM)
+
+		if collectedF is None:
+			collectedF = subF
+		else:
+			collectedF.appendFeatures(subF)
+
+	corrsM = collectedM.featureSimilarities('correlation')
+	corrsF = collectedF.featureSimilarities('correlation')
+
+	corrsM.setPointName("Empathetic", "Compassionate")
+	corrsM.setFeatureName("Empathetic", "Compassionate")
+	corrsF.setPointName("Empathetic", "Compassionate")
+	corrsF.setFeatureName("Empathetic", "Compassionate")
+
+	corrsM.sortPoints(sortHelper=lambda x: x.getPointName(0))
+	corrsM.sortFeatures(sortHelper=lambda x: x.getFeatureName(0))
+	corrsF.sortPoints(sortHelper=lambda x: x.getPointName(0))
+	corrsF.sortFeatures(sortHelper=lambda x: x.getFeatureName(0))
+
+	avgCorr = (corrsM + corrsF) / 2.0
+	basePartialCorr = UML.createData("Matrix", outFileBase)
+
+	signMatrix = numpy.empty((avgCorr.pointCount, avgCorr.featureCount), dtype=int)
+	for i in range(signMatrix.shape[0]):
+		for j in range(signMatrix.shape[1]):
+			if abs(avgCorr[i,j]) <= 0.02 and abs(basePartialCorr[i,j]) <= 0.02:
+				signMatrix[i,j] = 0
+			elif avgCorr[i,j] > 0 and basePartialCorr[i,j] > 0:
+				signMatrix[i,j] = 1
+			elif avgCorr[i,j] < 0 and basePartialCorr[i,j] < 0:
+				signMatrix[i,j] = 1
+			elif avgCorr[i,j] < 0 and basePartialCorr[i,j] > 0:
+				signMatrix[i,j] = -1
+			elif avgCorr[i,j] > 0 and basePartialCorr[i,j] < 0:
+				signMatrix[i,j] = -1
+			else:
+				raise RuntimeError("ALARM")
+
+	signObj = UML.createData("List", signMatrix, pointNames=avgCorr.getPointNames(), featureNames=avgCorr.getFeatureNames())
+	signObj.writeFile(outFileSign)
+
+	diff = avgCorr - basePartialCorr
+
+	diff.writeFile(outFileDiff)
 
 
 def printSelectedQuestionCorrelationMatrix(responses, selected, outFile=None):
@@ -878,7 +954,9 @@ if __name__ == '__main__':
 	# Flags enabling results reporting of category selection
 	PRINT_SELQS = False
 	OUTPUT_SEL_QS_PER_CAT = True
-	OUTPUT_CORR_SELCAT_TO_SELCAT_OUTOFSAMPLE = True
+	OUTPUT_CORR_SELCAT_TO_SELCAT_OUTOFSAMPLE = False
+	OUTPUT_PARTIALCORR_SELCAT_TO_SELCAT_OUTOFSAMPLE = True
+
 
 	# Flags enabling confirmation of our data and processes
 	VERIFY_FROMFILE_CATEGORYSCORES = False
@@ -920,6 +998,9 @@ if __name__ == '__main__':
 	# Output files for category selection analysis and results
 	outpath_selected_CatCorr = os.path.join(sourceDir, "analysis", "selected_CategoryCorr.csv")
 	outpath_selected_CatCorr_outOfSample = os.path.join(sourceDir, "analysis", "selected_CategoryCorr_test.csv")
+	outPath_selected_Cat_PartialCorr_outSample = os.path.join(sourceDir, "analysis", "selected_CategoryPartialCorr_test.csv")
+	outPath_selected_Cat_PartialCorrDiff_outSample = os.path.join(sourceDir, "analysis", "selected_CategoryPartialCorrDiff_test.csv")
+	outPath_selected_Cat_PartialCorrSign_outSample = os.path.join(sourceDir, "analysis", "selected_CategoryPartialCorrSign_test.csv")
 	outpath_selected_QCorr = os.path.join(sourceDir, "analysis", "selected_QuestionCorr.csv")
 	outpath_selected_QsToCatCorr = os.path.join(sourceDir, "analysis", "selected_QuestionToCategoryCorr.csv")
 	outpath_selected_QsInCatCorr = os.path.join(sourceDir, "analysis", "selected_QToQInCategoryCorr.csv")
@@ -927,7 +1008,7 @@ if __name__ == '__main__':
 	outPath_selected_results = os.path.join(sourceDir, 'inData', "questions_selected.csv")
 	outPath_selectedQ_metadata = os.path.join(sourceDir, 'inData', "questions_selectedMetadata.csv")
 	outPath_selectedCat_metadata = os.path.join(sourceDir, 'inData', "categories_selectedCatMetadata.csv")
-	
+
 	# Output directory for bandwidth trial resutlts
 	outDir_BW_results = os.path.join(sourceDir, "analysis", "BW")
 	outDir_BW_results = outDir_BW_results if SAVE_BANDWIDTH_TRIAL_RESULTS else None
@@ -1000,7 +1081,7 @@ if __name__ == '__main__':
 
 	# Analysis of category selection using the training data
 	if OUTPUT_CORR_SELCAT_TO_SELCAT:
-		printSelectedCategoryCorrelationMatrix(responseTrain, selected, categoriesByQName, outpath_selected_CatCorr)
+		printSelectedCategoryCorrelationMatrix(responseTrain, genderTrain, selected, categoriesByQName, False, outpath_selected_CatCorr)
 	if OUTPUT_CORR_SELQ_TO_SELQ:
 		printSelectedQuestionCorrelationMatrix(responseTrain, selected, outpath_selected_QCorr)
 	if OUTPUT_CORR_SELQ_TO_SELCAT:
@@ -1033,7 +1114,10 @@ if __name__ == '__main__':
 			print '\t' + q2
 
 	if OUTPUT_CORR_SELCAT_TO_SELCAT_OUTOFSAMPLE:
-		printSelectedCategoryCorrelationMatrix(responseTest, selected, categoriesByQName, outpath_selected_CatCorr_outOfSample, scaleType)
+		printSelectedCategoryCorrelationMatrix(responseTest, genderTest, selected, categoriesByQName, False, outpath_selected_CatCorr_outOfSample, scaleType)
+	if OUTPUT_PARTIALCORR_SELCAT_TO_SELCAT_OUTOFSAMPLE:
+		printSelectedCategoryCorrelationMatrix(responseTrain, genderTrain, selected, categoriesByQName, True, outPath_selected_Cat_PartialCorr_outSample, scaleType)
+		printSelectedCategoryPartialCorrelationGenderDiff(responseTrain, genderTrain, selected, categoriesByQName, outPath_selected_Cat_PartialCorrDiff_outSample, outPath_selected_Cat_PartialCorr_outSample, outPath_selected_Cat_PartialCorrSign_outSample, scaleType)
 
 	if OUTPUT_DATA_SELECTED_AND_TRANSFORMED_SCALE:
 		outputFile_selected_data(responses, categoriesByQName, selected, outpath_responses_selected_only)
