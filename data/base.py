@@ -2716,6 +2716,25 @@ class Base(object):
         self.validate()
 
 
+    def handleMissingValues(self, method, features, args, missing_values=[numpy.NaN, None]):
+        """
+
+        """
+        #convert features to a list of index
+        if features is None:
+            featuresList = []
+        elif isinstance(features, basestring):
+            pass
+        elif isinstance(features, int):
+            pass
+        elif isinstance(features, list):
+            pass
+        else:
+            msg = 'features can only be a str, an int, or a list of str or a list of int'
+            raise ArgumentException(msg)
+        self._getFeatureIndex
+        #self._handleMissingValues_implementation(method, featuresList, args, missing_values)
+
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###
