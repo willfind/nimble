@@ -503,11 +503,11 @@ class Matrix(Base):
 
     def _copyAs_implementation(self, format):
         if format == 'Sparse':
-            return UML.data.Sparse(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'List':
-            return UML.data.List(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format is None or format == 'Matrix':
-            return UML.data.Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
             return self.data.tolist()
         if format == 'numpyarray':
@@ -525,9 +525,9 @@ class Matrix(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(self.data)
         if format == 'DataFrame':
-            return UML.data.DataFrame(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
-        return Matrix(self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+        return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
     def _copyPoints_implementation(self, points, start, end):
         if points is not None:
