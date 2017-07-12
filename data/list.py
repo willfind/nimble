@@ -730,16 +730,20 @@ class List(Base):
 
             def _copyAs_implementation(self, format):
                 # we only want to change how List and pythonlist copying is done
+                # we also temporarily convert self.data to a python list for copyAs
+                listForm = [[self._source.data[pID][fID] for fID in xrange(self._fStart, self._fEnd)] \
+                            for pID in xrange(self._pStart, self._pEnd)]
                 if format is None:
                     format = 'List'
                 if format != 'List' and format != 'pythonlist':
-                    return super(ListView, self)._copyAs_implementation(format)
-
-                listForm = [[self._source.data[pID][fID] for fID in xrange(self._fStart, self._fEnd)] \
-                            for pID in xrange(self._pStart, self._pEnd)]
+                    origData = self.data
+                    self.data = listForm
+                    res = super(ListView, self)._copyAs_implementation(format)
+                    self.data = origData
+                    return res
 
                 if format == 'List':
-                    return UML.data.List(listForm, pointNames=self.getPointNames(),
+                    return UML.createData('List', listForm, pointNames=self.getPointNames(),
                                          featureNames=self.getFeatureNames())
                 else:
                     return listForm

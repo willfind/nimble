@@ -30,7 +30,7 @@ class DataFrame(Base):
             data: pandas DataFrame, or numpy matrix.
             reuseData: boolean. only used when data is a pandas DataFrame.
         """
-        if (not isinstance(data, (pd.DataFrame, np.matrix))):# and 'PassThrough' not in str(type(data)):
+        if (not isinstance(data, (pd.DataFrame, np.matrix))):
             msg = "the input data can only be a pandas DataFrame or a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
 
@@ -543,6 +543,66 @@ class DataFrame(Base):
             values = values.data.values
 
         self.data.ix[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
+
+    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, missingValues=[np.NaN, None]):
+        """
+        1. from missingValues, generate a dict for elements which are not None or NaN
+        2. from featuresList, generate a dict for each element
+        3. replace missing values in features in the featuresList with NaN
+        4. based on method and arguments, process self.data
+        5. update points and features information.
+        """
+        missingValuesDict = {i: None for i in missingValues if (i is not None) and i == i}
+        #import pdb; pdb.set_trace()
+        if missingValuesDict:
+            myd = {i: missingValuesDict for i in featuresList}
+            self.data.replace(myd, inplace=True)
+
+        #from now, based on method and arguments, process self.data
+        if method == 'remove points':
+            msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
+            try:
+                if arguments is None or arguments.lower() == 'all':
+                    self.data.dropna(subset=featuresList, how='all', inplace=True)
+                elif arguments.lower() == 'any':
+                    self.data.dropna(subset=featuresList, how='any', inplace=True)
+                else:
+                    raise ArgumentException(msg)
+            except Exception:
+                raise ArgumentException(msg)
+        elif method == 'remove features':
+            msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
+            try:
+                if len(featuresList) == self.featureCount:
+                    #if we consider all features
+                    if arguments is None or arguments.lower() == 'all':
+                        self.data.dropna(axis=1, how='all', inplace=True)
+                    elif arguments.lower() == 'any':
+                        self.data.dropna(axis=1, how='any', inplace=True)
+                    else:
+                        raise ArgumentException(msg)
+                else:
+                    #if only some features are considered
+                    if arguments is None or arguments.lower() == 'all':
+                        cols = self.data[featuresList].dropna(axis=1, how='all', inplace=False).columns
+                    elif arguments.lower() == 'any':
+                        cols = self.data[featuresList].dropna(axis=1, how='any', inplace=False).columns
+                    else:
+                        raise ArgumentException(msg)
+                    dropCols = list(set(featuresList) - set(cols))
+                    self.data.drop(labels=dropCols, axis=1, inplace=True)
+            except Exception:
+                raise ArgumentException(msg)
+        else:
+            pass
+
+        pCount, fCount = self.data.shape
+        self._featureCount = fCount
+        self.setFeatureNames(self.data.columns.tolist())
+        self._pointCount = pCount
+        self.setPointNames(self.data.index.tolist())
+
+
 
     def _getitem_implementation(self, x, y):
         return self.data.ix[x, y]

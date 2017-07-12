@@ -29,7 +29,7 @@ class Matrix(Base):
         data can only be a numpy matrix
         """
 
-        if (not isinstance(data, (numpy.matrix, numpy.ndarray))) and 'PassThrough' not in str(type(data)):
+        if (not isinstance(data, (numpy.matrix, numpy.ndarray))):# and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
 
@@ -38,7 +38,7 @@ class Matrix(Base):
                 self.data = data
             else:
                 self.data = copy.deepcopy(data)
-        else:#ListPassThrough
+        else:
             #when data is a np matrix, its dtype has been adjusted in extractNamesAndConvertData
             #but when data is a ListPassThrough, we need to do dtype adjustment here
             if elementType:
