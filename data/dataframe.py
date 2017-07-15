@@ -546,6 +546,12 @@ class DataFrame(Base):
 
     def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, missingValues=[np.NaN, None]):
         """
+        This function is to
+        1. drop points or features with missing values
+        2. fill missing values with mean, median or mode
+        3. fill missing values by forward or backward filling
+
+        Detailed steps are:
         1. from missingValues, generate a dict for elements which are not None or NaN
         2. from featuresList, generate a dict for each element
         3. replace missing values in features in the featuresList with NaN
@@ -562,10 +568,10 @@ class DataFrame(Base):
         if method == 'remove points':
             msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
             try:
-                if arguments is None or arguments.lower() == 'all':
-                    self.data.dropna(subset=featuresList, how='all', inplace=True)
-                elif arguments.lower() == 'any':
+                if arguments is None or arguments.lower() == 'any':
                     self.data.dropna(subset=featuresList, how='any', inplace=True)
+                elif arguments.lower() == 'all':
+                    self.data.dropna(subset=featuresList, how='all', inplace=True)
                 else:
                     raise ArgumentException(msg)
             except Exception:
@@ -575,26 +581,56 @@ class DataFrame(Base):
             try:
                 if len(featuresList) == self.featureCount:
                     #if we consider all features
-                    if arguments is None or arguments.lower() == 'all':
-                        self.data.dropna(axis=1, how='all', inplace=True)
-                    elif arguments.lower() == 'any':
+                    if arguments is None or arguments.lower() == 'any':
                         self.data.dropna(axis=1, how='any', inplace=True)
+                    elif arguments.lower() == 'all':
+                        self.data.dropna(axis=1, how='all', inplace=True)
                     else:
                         raise ArgumentException(msg)
                 else:
                     #if only some features are considered
-                    if arguments is None or arguments.lower() == 'all':
-                        cols = self.data[featuresList].dropna(axis=1, how='all', inplace=False).columns
-                    elif arguments.lower() == 'any':
+                    if arguments is None or arguments.lower() == 'any':
                         cols = self.data[featuresList].dropna(axis=1, how='any', inplace=False).columns
+                    elif arguments.lower() == 'all':
+                        cols = self.data[featuresList].dropna(axis=1, how='all', inplace=False).columns
                     else:
                         raise ArgumentException(msg)
                     dropCols = list(set(featuresList) - set(cols))
                     self.data.drop(labels=dropCols, axis=1, inplace=True)
             except Exception:
                 raise ArgumentException(msg)
-        else:
+        elif method == 'feature mean':
+            self.data.fillna(self.data.mean()[featuresList], inplace=True)
+        elif method == 'feature median':
+            self.data.fillna(self.data.median()[featuresList], inplace=True)
+        elif method == 'feature mode':
+            self.data.fillna(self.data.mode()[featuresList].iloc[0], inplace=True)
+        elif method == 'zero':
+            myd = {i: 0 for i in featuresList}
+            self.data.fillna(myd, inplace=True)
+        elif method == 'constant':
+            msg = 'for method = "constant", the arguments must be the constant.'
+            try:
+                if arguments is not None:
+                    myd = {i: arguments for i in featuresList}
+                    self.data.fillna(myd, inplace=True)
+                else:
+                    raise ArgumentException(msg)
+            except Exception:
+                raise ArgumentException(msg)
+        elif method == 'forward fill':
+            self.data[featuresList] = self.data[featuresList].fillna(method='ffill')
+        elif method == 'backward fill':
+            self.data[featuresList] = self.data[featuresList].fillna(method='bfill')
+        elif method == 'extra dummy':
+            #add extra columns to indicate if the original value was missing or not
+            self.data = self.data.join(self.data[featuresList].isnull(), rsuffix='_missing')
+        elif method == 'KNN':
             pass
+        else:
+            msg = 'method can be "remove points", "remove features", "feature mean", "feature median", \
+            "feature mode", "zero", "constant", "forward fill", "backward fill", "extra dummy"'
+            raise ArgumentException(msg)
 
         pCount, fCount = self.data.shape
         self._featureCount = fCount
