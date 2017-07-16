@@ -626,7 +626,11 @@ class DataFrame(Base):
             #add extra columns to indicate if the original value was missing or not
             self.data = self.data.join(self.data[featuresList].isnull(), rsuffix='_missing')
         elif method == 'KNN':
-            pass
+            try:
+                pass
+            except Exception:
+                msg = 'To successfully use method == "KNN", you need to read docs in sklearn.neighbors.'
+                raise ArgumentException(msg)
         else:
             msg = 'method can be "remove points", "remove features", "feature mean", "feature median", \
             "feature mode", "zero", "constant", "forward fill", "backward fill", "extra dummy"'
