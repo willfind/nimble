@@ -1,4 +1,3 @@
-import pdb
 import sys
 import numpy
 import scipy
@@ -210,7 +209,6 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
     for cat in catToRemove:
         assert cat not in categoriesByQName.featureView(0)
 
-
     # Remove from responses, where each feature is scores for a particular question
     # (we need the contents of namesByCategory in order to find which quesiton is
     # in which category, so this removal happens first)
@@ -269,7 +267,6 @@ def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
 
     assert removed == 6
 
-
     # Remove from responses, where each feature is scores for a particular question
     responsesPCBefore = responses.featureCount
     responses.extractFeatures(qsToRemove)
@@ -302,7 +299,6 @@ def mergeProblemCategories(categoriesByQName, namesByCategory, responses):
     assert beforePointCount - afterPointCount == 0
     for pair in catToMerge:
         assert pair[0] not in categoriesByQName.featureView(0)
-
 
     # Adjust namesByCategory, a dict mapping category names to lists of questions
     nbcBefore = len(namesByCategory)
@@ -369,7 +365,7 @@ def renameResultantCategories(categoriesByQName, namesByCategory, responses, sel
 
 
 def determineBestSubScores(namesByCategory, categoriesByQName, responses, genderValue,
-            forcedSelections):
+                           forcedSelections):
     """
     Out of the four questions for each category, pick those two that have the subscore
     most correlated with gender. These two questions are recorded in a dictionary,
@@ -425,7 +421,7 @@ def determineBestSubScores(namesByCategory, categoriesByQName, responses, gender
     return picked
 
 
-def verifyGenderAvgerageOrdering(picked, responses, genderValue):
+def verifyGenderAvgerageOrdering(picked, responses, genderValue, categoriesByQName):
     """
     Verify that when we generate subscores, the average value for females is
     always higher than the average value for males. This is to ensure consistency
@@ -505,7 +501,8 @@ def outputFile_SelectedQsMetadata(outPath, categoriesByQName, picked):
     toOutput.writeFile(outPath)
 
 
-def outputFile_SelectedCatsMetadata(outPath, categoriesByQName, picked, responses, genders, scaleType):
+def outputFile_SelectedCatsMetadata(outPath, categoriesByQName, picked, responses,
+                                    genders, scaleType):
     def extractFemale(point):
         pID = responses.getPointIndex(point.getPointName(0))
         return genders[pID] == 1
@@ -538,7 +535,7 @@ def outputFile_SelectedCatsMetadata(outPath, categoriesByQName, picked, response
 
 
 def outputFile_FullCategoryCorrelationWithGender(outPath, namesByCategory,
-        categoriesByQName, responses):
+                                                 categoriesByQName, responses):
 
     genderValue = responses.copyFeatures("male0female1")
 
@@ -574,7 +571,8 @@ def printFullCategoryCorrelationToGender(namesByCategory, categoriesByQName, res
         print ""
 
 
-def outputSelectedCategoryCorrelationToGender(responses, gender, selected, categoriesByQName, out=None):
+def outputSelectedCategoryCorrelationToGender(responses, gender, selected,
+                                              categoriesByQName, out=None):
     collected = []
     cats = []
     for category, (q0, q1) in selected.items():
@@ -591,7 +589,8 @@ def outputSelectedCategoryCorrelationToGender(responses, gender, selected, categ
         collected.writeFile(out)
 
 
-def printSelectedCategoryCorrelationMatrix(responses, gender, selected, categoriesByQName, partialCorr, outFile=None, scaleType=None):
+def printSelectedCategoryCorrelationMatrix(responses, gender, selected, categoriesByQName,
+                                           partialCorr, outFile=None, scaleType=None):
     collected = None
     for category, (q0, q1) in selected.items():
         scale = scaleType[category] if scaleType is not None else 'female'
@@ -617,7 +616,9 @@ def printSelectedCategoryCorrelationMatrix(responses, gender, selected, categori
         corrs.writeFile(outFile)
 
 
-def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selected, categoriesByQName, outFileDiff, outFileBase, outFileSign, scaleType):
+def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selected,
+                                                      categoriesByQName, outFileDiff,
+                                                      outFileBase, outFileSign, scaleType):
     collectedM = None
     collectedF = None
 
@@ -701,7 +702,8 @@ def printSelectedQuestionCorrelationMatrix(responses, selected, outFile=None):
     if outFile is not None:
         corrs.writeFile(outFile)
 
-def printSelectedQuestionToSelectedCategoryCorrelation(responses, selected, categoriesByQName, outPath):
+def printSelectedQuestionToSelectedCategoryCorrelation(responses, selected, categoriesByQName,
+                                                       outPath):
     collected = None
     for category, qs in selected.items():
         sub = generateSubScale(responses, qs[0], categoriesByQName[qs[0],1], qs[1], categoriesByQName[qs[1],1])
@@ -722,7 +724,8 @@ def printSelectedQuestionToSelectedCategoryCorrelation(responses, selected, cate
     if outPath is not None:
         collected.writeFile(outPath)
 
-def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, categoriesByQName, outPath):
+def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, categoriesByQName,
+                                                     outPath):
     collected = None
     for category, (qName1,qName2) in selected.items():
         q1 = responses.copyFeatures(qName1)
@@ -935,7 +938,7 @@ def generatePlots(picked, categoriesByQName, responses, genderValue, outDir, bw,
 
 
 if __name__ == '__main__':
-    #sys.exit(0)
+#    sys.exit(0)
     # Constants controlling how the data is split in train and test sets
     TRAIN_NUMBER = 300
     SPLITSEED = 42
@@ -1075,7 +1078,7 @@ if __name__ == '__main__':
 
     # Verify our split and selection process correctness
     if VERIFY_MEANS_ORDERING_OF_SUBSCORES:
-        verifyGenderAvgerageOrdering(selected, responseTest, genderTest)
+        verifyGenderAvgerageOrdering(selected, responseTest, genderTest, categoriesByQName)
     if VERIFY_BANDWIDTH_SELECTION_FEASIBLE:
         verifyBandwidthSelectionWorks(responseTest, genderTest)
 
@@ -1163,6 +1166,5 @@ if __name__ == '__main__':
     # final prepeartion - noise, outlier removal
     # bandwidth
     # plot generation
-
     
     pass  # EOF marker
