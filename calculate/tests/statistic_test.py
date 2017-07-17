@@ -1,16 +1,26 @@
-# Most of the functions in UML.calculate.statitic are tested not directly
+"""
+Tests for UML.calculate.statistics
+
+"""
+
+# Many of the functions in UML.calculate.statitic are tested not directly
 # in this module, but through the functions that call them: featureReport
 # in UML.logger.tests.data_set_analyzier_tests and in the data
 # hierarchy in UML.data.tests.query_backend
 
-import numpy as np
 
+import numpy as np
+from numpy.testing import assert_array_almost_equal
+
+from nose.tools import raises
 from nose.tools import assert_almost_equal
 
+import UML
 from UML import createData
 from UML.calculate import standardDeviation
 from UML.calculate import quartiles
-import UML
+from UML.exceptions import ArgumentException
+from UML.helpers import generateRegressionData
 
 
 def testStDev():
@@ -235,3 +245,87 @@ def testIsNumericalPoint():
     assert ~func(np.nan)
     assert ~func(None)
     assert ~func('a')
+    assert ret == (2,4,6)
+
+
+#############
+# residuals #
+#############
+
+
+# L not uml object
+@raises(ArgumentException)
+def test_residuals_exception_toPredictNotUML():
+    pred = [[1],[2],[3]]
+    control = UML.createData("Matrix", [[2],[3],[4]])
+    UML.calculate.residuals(pred, control)
+
+# R not uml object
+@raises(ArgumentException)
+def test_residuals_exception_controlVarsNotUML():
+    pred = UML.createData("Matrix", [[2],[3],[4]])
+    control = [[1],[2],[3]]
+    UML.calculate.residuals(pred, control)
+
+# diff number of points
+@raises(ArgumentException)
+def test_residauls_exception_differentNumberOfPoints():
+    pred = UML.createData("Matrix", [[2],[3],[4]])
+    control = UML.createData("Matrix", [[2],[3],[4],[5]])
+    UML.calculate.residuals(pred, control)
+
+# zero points or zero features
+def test_residuals_exception_zeroAxisOnParam():
+    predOrig = UML.createData("Matrix", [[2],[3],[4]])
+    controlOrig = UML.createData("Matrix", [[2,2],[3,3],[4,4]])
+
+    try:
+        pred = predOrig.copy().extractPoints(lambda x: False)
+        control = controlOrig.copy().extractPoints(lambda x: False)
+        UML.calculate.residuals(pred, control)
+        assert False  # expected ArgumentException
+    except ArgumentException as ae:
+#        print ae
+        pass
+
+    try:
+        pred = predOrig.copy().extractFeatures(lambda x: False)
+        UML.calculate.residuals(pred, controlOrig)
+        assert False  # expected ArgumentException
+    except ArgumentException as ae:
+#        print ae
+        pass
+
+    try:
+        control = controlOrig.copy().extractFeatures(lambda x: False)
+        UML.calculate.residuals(predOrig, control)
+        assert False  # expected ArgumentException
+    except ArgumentException as ae:
+#        print ae
+        pass
+
+#compare to same func in scikitlearn
+def test_residuals_matches_SKL():
+    try:
+        UML.helpers.findBestInterface("scikitlearn")
+    except ArgumentException:
+        return
+
+    # with handmade data
+    pred = UML.createData("Matrix", [[0],[2],[4]])
+    control = UML.createData("Matrix", [[1],[2],[3]])
+    umlRet = UML.calculate.residuals(pred, control)
+    tl = UML.train("scikitlearn.LinearRegression", control, pred)
+    sklRet = pred - tl.apply(control)
+
+    assert sklRet.isApproximatelyEqual(umlRet)
+    assert_array_almost_equal(umlRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 15)
+
+    # with generated data
+    (control, pred), (ignore1,ignore2) = generateRegressionData(2, 10, 3)
+    umlRet = UML.calculate.residuals(pred, control)
+    tl = UML.train("scikitlearn.LinearRegression", control, pred)
+    sklRet = pred - tl.apply(control)
+
+    assert sklRet.isApproximatelyEqual(umlRet)
+    assert_array_almost_equal(umlRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 15)
