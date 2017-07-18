@@ -625,15 +625,55 @@ class DataFrame(Base):
         elif method == 'extra dummy':
             #add extra columns to indicate if the original value was missing or not
             self.data = self.data.join(self.data[featuresList].isnull(), rsuffix='_missing')
-        elif method == 'KNN':
+        elif method == 'interpolate':
             try:
-                pass
+                if arguments is None:
+                    arguments = {}
+                elif isinstance(arguments, dict):
+                    pass
+                else:
+                    msg = 'for method = "interpolate", the arguments must be None or a dict.'
+                    raise ArgumentException(msg)
+                if len(featuresList) == self.featureCount:
+                        self.data.interpolate(inplace=True, **arguments)
+                else:
+                    self.data[featuresList] = self.data[featuresList].interpolate(**arguments)
             except Exception:
-                msg = 'To successfully use method == "KNN", you need to read docs in sklearn.neighbors.'
+                msg = 'To successfully use method == "interpolate", you need to read docs in pandas.DataFrame.interpolate.'
+                raise ArgumentException(msg)
+        elif hasattr(method, '__name__') and 'KNeighbors' in method.__name__:
+            if arguments is None:
+                arguments = {}
+            neigh = method(**arguments)
+            try:
+                tmpList = []#store idx, col and values for missing values
+                for col in featuresList:
+                    colBln = (self.data.columns == col)
+                    for idx in self.data.index:
+                        #do KNN point by point
+                        if pd.isnull(self.data.ix[idx, colBln].values[0]):
+                            #import pdb; pdb.set_trace()
+                            #prepare training data
+                            notNullCols = ~self.data.ix[idx, :].isnull()
+                            predictData = self.data.ix[idx, notNullCols]
+                            notNullCols[col] = True
+                            trainingData = self.data.ix[:, notNullCols].dropna(how='any')
+                            #train
+                            neigh.fit(trainingData.ix[:, ~colBln], trainingData.ix[:, colBln])
+                            #predict
+                            tmpList.append([idx, col, neigh.predict(predictData.reshape(1, -1))[0][0] ])
+                for idx, col, v in tmpList:
+                    self.data.ix[idx, col] = v
+
+            except Exception:
+                msg = 'To successfully use method == sklearn.neighbors.KNeighborsRegressor or \
+                sklearn.neighbors.KNeighborsClassifier,\
+                 you need to read docs in sklearn.neighbors.'
                 raise ArgumentException(msg)
         else:
             msg = 'method can be "remove points", "remove features", "feature mean", "feature median", \
-            "feature mode", "zero", "constant", "forward fill", "backward fill", "extra dummy"'
+            "feature mode", "zero", "constant", "forward fill", "backward fill", "extra dummy", "interpolate", \
+                  sklearn.neighbors.KNeighborsRegressor, sklearn.neighbors.KNeighborsClassifier'
             raise ArgumentException(msg)
 
         pCount, fCount = self.data.shape
