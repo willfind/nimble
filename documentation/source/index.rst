@@ -21,11 +21,11 @@ Contents:
     UML.randomness
 
 
-    Welcome to the UML project's online documentation for users. This
-    does not include documentation for the entire code base, but
-    instead only those portions which are meant to be seen or
-    called by a user. Anything not visible here may be considered
-    unnecessary for normal operations.
+Welcome to the UML project's online documentation for users. This
+does not include documentation for the entire code base, but
+instead only those portions which are meant to be seen or
+called by a user. Anything not visible here may be considered
+unnecessary for normal operations.
 
 
 Indices and tables
