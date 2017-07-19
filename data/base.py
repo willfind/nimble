@@ -2759,9 +2759,13 @@ class Base(object):
     def _flattenNames(self, discardAxis):
         self._validateAxis(discardAxis)
         if discardAxis == 'point':
-            pass
+            keepNames = self.featureNamesInverse
+            dropNames = self.pointNamesInverse
         else:
-            pass
+            keepNames = self.pointNamesInverse
+            dropNames = self.featureNamesInverse
+
+        return [k + ' | ' + d for k in keepNames for d in dropNames]
 
     def flattenToOnePoint(self):
         if self.pointCount == 0:
@@ -2773,7 +2777,10 @@ class Base(object):
                   "This object has 0 features."
             raise ImproperActionException(msg)
 
-        raise NotImplementedError
+        self._flatenToOnePoint_implementation()
+        self.setFeatureNames(self._flattenNames('point'))
+        self.setPointNames(['Flattened'])
+
 
     def flattenToOneFeature(self):
         if self.pointCount == 0:
@@ -2785,7 +2792,31 @@ class Base(object):
                   "This object has 0 features."
             raise ImproperActionException(msg)
 
-        raise NotImplementedError
+        self._flatenToOneFeature_implementation()
+        self.setPointNames(self._flattenNames('feature'))
+        self.setFeatureNames(['Flattened'])
+
+
+    def _unflattenNames(self, addedAxis, addedAxisLength):
+        self._validateAxis(addedAxis)
+        if addedAxis == 'point':
+            both = self.featureNamesInverse
+            keptAxisLength = self.featureCount / addedAxisLength
+        else:
+            both = self.pointNamesInverse
+            keptAxisLength = self.pointCount / addedAxisLength
+
+        # we consider the split of the elements into keptAxisLength chunks (of
+        # which there will be addedAxisLength number of chunks), and want the
+        # index of the first of each chunk. We allow that first name to be
+        # representative for that chunk: all will have the same stuff past
+        # the vertical bar.
+        locations = xrange(0, -keptAxisLength, keptAxisLength)
+        addedAxisName = [both[n].split(" | ")[1] for n in locations]
+        keptAxisName = [name.split(" | ")[0] for name in both[:keptAxisLength]]
+
+        return addedAxisName, keptAxisName
+
 
     def unflattenFromOnePoint(self, numPoints):
         if self.featureCount == 0:
@@ -2803,7 +2834,11 @@ class Base(object):
                   "number of points."
             raise ArgumentException(msg)
 
-        raise NotImplementedError
+        self._unflattenFromOnePoint_implementation(numPoints)
+        ret = self._unflattenNames('point', numPoints)
+        self.setPointNames(ret[0])
+        self.setFeatureNames(ret[1])
+
 
     def unflattenFromOneFeature(self, numFeatures):
         if self.pointCount == 0:
@@ -2822,7 +2857,11 @@ class Base(object):
                   "number of features."
             raise ArgumentException(msg)
 
-        raise NotImplementedError
+        self._unflattenFromOneFeature_implementation(numFeatures)
+        ret = self._unflattenNames('feature', numFeatures)
+        self.setPointNames(ret[1])
+        self.setFeatureNames(ret[0])
+
 
     ###############################################################
     ###############################################################
