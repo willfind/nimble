@@ -2759,11 +2759,11 @@ class Base(object):
     def _flattenNames(self, discardAxis):
         self._validateAxis(discardAxis)
         if discardAxis == 'point':
-            keepNames = self.featureNamesInverse
-            dropNames = self.pointNamesInverse
+            keepNames = self.getFeatureNames()
+            dropNames = self.getPointNames()
         else:
-            keepNames = self.pointNamesInverse
-            dropNames = self.featureNamesInverse
+            keepNames = self.getPointNames()
+            dropNames = self.getFeatureNames()
 
         return [k + ' | ' + d for k in keepNames for d in dropNames]
 
@@ -2800,10 +2800,10 @@ class Base(object):
     def _unflattenNames(self, addedAxis, addedAxisLength):
         self._validateAxis(addedAxis)
         if addedAxis == 'point':
-            both = self.featureNamesInverse
+            both = self.getFeatureNames()
             keptAxisLength = self.featureCount / addedAxisLength
         else:
-            both = self.pointNamesInverse
+            both = self.getPointNames()
             keptAxisLength = self.pointCount / addedAxisLength
 
         # we consider the split of the elements into keptAxisLength chunks (of

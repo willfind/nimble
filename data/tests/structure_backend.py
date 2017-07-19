@@ -3171,7 +3171,69 @@ class StructureModifying(DataTestObject):
 
 
     # flatten single p/f - see name changes
+    def test_flattenToOnePoint_vector(self):
+        self.back_flatten_vector('point')
+
+    def test_flattenToOneFeature_vector(self):
+        self.back_flatten_vector('feature')
+
+    def back_flatten_vector(self, axis):
+        target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
+        raw = [1, -1, 2, -2, 3, -3, 4, -4]
+        vecNames = ['vector']
+        longNames = ['one+', 'one-', 'two+', 'two-', 'three+', 'three-', 'four+', 'four-',]
+
+        testObj = self.constructor(raw, pointNames=vecNames, featureNames=longNames)
+
+        expLongNames = ['one+ | vector', 'one- | vector',
+                        'two+ | vector', 'two- | vector',
+                        'three+ | vector', 'three- | vector',
+                        'four+ | vector', 'four- | vector']
+#        expLongNames = [n + ' | ' + vecNames[0] for n in longNames]
+        expObj = self.constructor(raw, pointNames=['Flattened'], featureNames=expLongNames)
+
+        if axis != 'point':
+            testObj.transpose()
+            expObj.transpose()
+
+        ret = getattr(testObj, target)()
+
+        assert testObj == expObj
+        assert ret is None  # in place op, nothing returned
+
+
     # flatten rectangular object
+    def test_flattenToOnePoint_rectangle(self):
+        self.back_flatten_rectangle('point')
+
+    def test_flattenToOneFeature_rectangle(self):
+        self.back_flatten_rectangle('feature')
+
+    def back_flatten_rectangle(self, axis):
+        target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
+        order = 'C' if axis == 'point' else 'F'  # controls row or column major flattening
+        shape = (3,5) if axis == 'point' else (5,3)
+        origRaw = numpyRandom.rand(*shape)
+        expRaw = origRaw.flatten(order)
+
+        testObj = self.constructor(origRaw)
+        copyObj = testObj.copy()  # used to fix the default axis names in place
+        expObj = self.constructor(expRaw, pointNames=['Flattened'])
+
+        getattr(testObj, target)()
+        assert testObj == expObj
+
+        # default names are ignored by ==, so we explicitly check them in this test
+        major = copyObj.getFeatureNames() if axis == 'point' else copyObj.getPointNames()
+        minor = copyObj.getPointNames() if axis == 'point' else copyObj.getFeatureNames()
+        check = testObj.getFeatureNames() if axis == 'point' else testObj.getPointNames()
+
+        for i,name in enumerate(check):
+            splitName = name.split(' | ')
+            assert len(splitName) == 2
+            assert splitName[0] == major[i % 5]  # why 5? see shape
+            assert splitName[1] == minor[i % 3]  # why 3? see shape
+
 
     ###################################################
     # unflattenFromOnePoint | unflattenFromOneFeature #
