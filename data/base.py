@@ -2752,6 +2752,78 @@ class Base(object):
 
         self._handleMissingValues_implementation(method, featuresList, arguments, alsoTreatAsMissing, markMissing)
 
+
+# | separating newly generated names one one side. flattendPoint / flattendFeature
+# colapsed axis name is always second
+
+    def _flattenNames(self, discardAxis):
+        self._validateAxis(discardAxis)
+        if discardAxis == 'point':
+            pass
+        else:
+            pass
+
+    def flattenToOnePoint(self):
+        if self.pointCount == 0:
+            msg = "Can only flattenToOnePoint when there is one or more points. " \
+                  "This object has 0 points."
+            raise ImproperActionException(msg)
+        if self.featureCount == 0:
+            msg = "Can only flattenToOnePoint when there is one or more features. " \
+                  "This object has 0 features."
+            raise ImproperActionException(msg)
+
+        raise NotImplementedError
+
+    def flattenToOneFeature(self):
+        if self.pointCount == 0:
+            msg = "Can only flattenToOneFeature when there is one or more points. " \
+                  "This object has 0 points."
+            raise ImproperActionException(msg)
+        if self.featureCount == 0:
+            msg = "Can only flattenToOneFeature when there is one or more features. " \
+                  "This object has 0 features."
+            raise ImproperActionException(msg)
+
+        raise NotImplementedError
+
+    def unflattenFromOnePoint(self, numPoints):
+        if self.featureCount == 0:
+            msg = "Can only unflattenFromOnePoint when there is one or more features. " \
+                  "This object has 0 features."
+            raise ImproperActionException(msg)
+        if self.pointCount != 1:
+            msg = "Can only unflattenFromOnePoint when there is only one point. " \
+                  "This object has " + str(self.pointCount) + " points."
+            raise ImproperActionException(msg)
+        if self.featureCount % numPoints != 0:
+            msg = "The argument numPoints (" + str(numPoints) + ") must be a divisor of " \
+                  "this object's featureCount (" + str(self.featureCount) + ") otherwise " \
+                  "it will not be possible to equally divide the elements into the desired " \
+                  "number of points."
+            raise ArgumentException(msg)
+
+        raise NotImplementedError
+
+    def unflattenFromOneFeature(self, numFeatures):
+        if self.pointCount == 0:
+            msg = "Can only unflattenFromOneFeature when there is one or more points. " \
+                  "This object has 0 points."
+            raise ImproperActionException(msg)
+        if self.featureCount != 1:
+            msg = "Can only unflattenFromOneFeature when there is only one feature. " \
+                  "This object has " + str(self.featureCount) + " features."
+            raise ImproperActionException(msg)
+
+        if self.pointCount % numFeatures != 0:
+            msg = "The argument numFeatures (" + str(numFeatures) + ") must be a divisor of " \
+                  "this object's pointCount (" + str(self.pointCount) + ") otherwise " \
+                  "it will not be possible to equally divide the elements into the desired " \
+                  "number of features."
+            raise ArgumentException(msg)
+
+        raise NotImplementedError
+
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###

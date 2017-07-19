@@ -9,7 +9,8 @@ copyAs, copyPoints, copyFeatures
 In object StructureModifying:
 __init__,  transpose, appendPoints, appendFeatures, sortPoints, sortFeatures,
 extractPoints, extractFeatures, referenceDataFrom, transformEachPoint,
-transformEachFeature, transformEachElement, fillWith
+transformEachFeature, transformEachElement, fillWith, flattenToOnePoint
+flattenToOneFeature, unflattenFromOnePoint, unflattenFromOneFeature
 
 """
 
@@ -30,6 +31,7 @@ from UML.data import BaseView
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
+from UML.randomness import numpyRandom
 
 from UML.data.tests.baseObject import DataTestObject
 scipy = UML.importModule('scipy.sparse')
@@ -3141,6 +3143,110 @@ class StructureModifying(DataTestObject):
             arg = UML.createData(t, fill)
             toTest.fillWith(arg, 0, 0, 1, 1)
             assert toTest == exp
+
+
+    ###########################################
+    # flattenToOnePoint | flattenToOneFeature #
+    ###########################################
+
+    # exception: either axis empty
+    def test_flattenToOnePoint_empty(self):
+        self.back_flatten_empty('point')
+
+    def test_flattenToOneFeature_empty(self):
+        self.back_flatten_empty('feature')
+
+    def back_flatten_empty(self, axis):
+        checkMsg = True
+        target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
+
+        pempty = self.constructor(numpy.empty((0,2)))
+        exceptionHelper(pempty, target, [], ImproperActionException, checkMsg)
+
+        fempty = self.constructor(numpy.empty((4,0)))
+        exceptionHelper(fempty, target, [], ImproperActionException, checkMsg)
+
+        trueEmpty = self.constructor(numpy.empty((0,0)))
+        exceptionHelper(trueEmpty, target, [], ImproperActionException, checkMsg)
+
+
+    # flatten single p/f - see name changes
+    # flatten rectangular object
+
+    ###################################################
+    # unflattenFromOnePoint | unflattenFromOneFeature #
+    ###################################################
+
+    # excpetion: either axis empty
+    def test_unflattenFromOnePoint_empty(self):
+        self.back_unflatten_empty('point')
+
+    def test_unflattenFromOneFeature_empty(self):
+        self.back_unflatten_empty('feature')
+
+    def back_unflatten_empty(self, axis):
+        checkMsg = True
+        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
+        single = (0,2) if axis == 'point' else (2,0)
+
+        singleEmpty = self.constructor(numpy.empty(single))
+        exceptionHelper(singleEmpty, target, [2], ImproperActionException, checkMsg)
+
+        trueEmpty = self.constructor(numpy.empty((0,0)))
+        exceptionHelper(trueEmpty, target, [2], ImproperActionException, checkMsg)
+
+
+    # exceptions: opposite vector, 2d data
+    def test_unflattenFromOnePoint_wrongShape(self):
+        self.back_unflatten_wrongShape('point')
+
+    def test_unflattenFromOneFeature_wrongShape(self):
+        self.back_unflatten_wrongShape('feature')
+
+    def back_unflatten_wrongShape(self, axis):
+        checkMsg = True
+        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
+        vecShape = (4,1) if axis == 'point' else (1,4)
+
+        wrongVector = self.constructor(numpyRandom.rand(*vecShape))
+        exceptionHelper(wrongVector, target, [2], ImproperActionException, checkMsg)
+
+        rectangle = self.constructor(numpyRandom.rand(4,4))
+        exceptionHelper(rectangle, target, [2], ImproperActionException, checkMsg)
+
+
+    # excpetion: numPoints / numFeatures does not divide length of mega P/F
+    def test_unflattenFromOnePoint_doesNotDivide(self):
+        self.back_unflatten_doesNotDivide('point')
+
+    def test_unflattenFromOneFeature_doesNotDivide(self):
+        self.back_unflatten_doesNotDivide('feature')
+
+    def back_unflatten_doesNotDivide(self, axis):
+        checkMsg = True
+        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
+        primeLength = (1,7) if axis == 'point' else (7,1)
+        divisableLength = (1,8) if axis == 'point' else (8,1)
+
+        undivisable = self.constructor(numpyRandom.rand(*primeLength))
+        exceptionHelper(undivisable, target, [2], ArgumentException, checkMsg)
+
+        divisable = self.constructor(numpyRandom.rand(*divisableLength))
+        exceptionHelper(divisable, target, [5], ArgumentException, checkMsg)
+
+
+
+    # unflatten something that was flattend - include name transformation
+    # unflatten something that is just a vector - no previus name transformation
+
+
+def exceptionHelper(testObj, target, args, wanted, checkMsg):
+    try:
+        getattr(testObj, target)(*args)
+        assert False  # expected an exception
+    except wanted as check:
+        if checkMsg:
+            print check
 
 
 class StructureAll(StructureDataSafe, StructureModifying):
