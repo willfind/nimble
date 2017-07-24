@@ -544,7 +544,7 @@ class DataFrame(Base):
 
         self.data.ix[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
 
-    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, missingValues=[np.NaN, None]):
+    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, missingValues=[np.NaN, None], markMissing=False):
         """
         This function is to
         1. drop points or features with missing values
@@ -552,7 +552,7 @@ class DataFrame(Base):
         3. fill missing values by forward or backward filling
 
         Detailed steps are:
-        1. from missingValues, generate a dict for elements which are not None or NaN
+        1. from missingValues, generate a dict for elements which are not None or NaN but should be treated as missing
         2. from featuresList, generate a dict for each element
         3. replace missing values in features in the featuresList with NaN
         4. based on method and arguments, process self.data
@@ -563,6 +563,10 @@ class DataFrame(Base):
         if missingValuesDict:
             myd = {i: missingValuesDict for i in featuresList}
             self.data.replace(myd, inplace=True)
+
+        if markMissing:
+            #add extra columns to indicate if the original value was missing or not
+            self.data = self.data.join(self.data[featuresList].isnull(), rsuffix='_missing')
 
         #from now, based on method and arguments, process self.data
         if method == 'remove points':
@@ -622,9 +626,6 @@ class DataFrame(Base):
             self.data[featuresList] = self.data[featuresList].fillna(method='ffill')
         elif method == 'backward fill':
             self.data[featuresList] = self.data[featuresList].fillna(method='bfill')
-        elif method == 'extra dummy':
-            #add extra columns to indicate if the original value was missing or not
-            self.data = self.data.join(self.data[featuresList].isnull(), rsuffix='_missing')
         elif method == 'interpolate':
             try:
                 if arguments is None:

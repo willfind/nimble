@@ -23,6 +23,7 @@ from similarity import rSquared
 from statistic import maximum
 from statistic import mean
 from statistic import median
+from statistic import mode
 from statistic import minimum
 from statistic import uniqueCount
 from statistic import proportionMissing
@@ -35,7 +36,7 @@ __all__ = ['confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
            'covariance', 'detectBestResult', 'elementwiseMultiply',
            'elementwisePower', 'fractionCorrect', 'fractionIncorrect',
            'maximum', 'mean', 'meanAbsoluteError',
-           'meanFeaturewiseRootMeanSquareError', 'median', 'minimum',
+           'meanFeaturewiseRootMeanSquareError', 'median', 'mode', 'minimum',
            'proportionMissing', 'proportionZero', 'quartiles', 'rSquared',
            'rootMeanSquareError', 'standardDeviation', 'uniqueCount',
            'varianceFractionRemaining']
