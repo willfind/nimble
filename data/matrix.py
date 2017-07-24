@@ -647,7 +647,7 @@ class Matrix(Base):
         if method == 'remove points':
             msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
             if arguments is None or arguments.lower() == 'any':
-                missingIdx = missingIdxDictPoint.keys()
+                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) > 0]
             elif arguments.lower() == 'all':
                 missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.featureCount]
             else:
@@ -659,7 +659,7 @@ class Matrix(Base):
         elif method == 'remove features':
             msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
             if arguments is None or arguments.lower() == 'any':
-                missingIdx = missingIdxDictFeature.keys()
+                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) > 0]
             elif arguments.lower() == 'all':
                 missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.featureCount]
             else:
@@ -675,8 +675,6 @@ class Matrix(Base):
                 j = tmpItem[0]
                 for i in tmpItem[1]:
                     self.data[i, j] = tmpDict[j]
-            featureNames = self.getFeatureNames()
-            pointNames = self.getPointNames()
         elif method == 'feature median':
             #np.nanmedian is not working well
             featureMedian = self.calculateForEachFeature(UML.calculate.median).data.tolist()[0]
