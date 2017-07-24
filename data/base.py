@@ -4234,7 +4234,7 @@ class Base(object):
         if newName in names:
             if invNames[index] == newName:
                 return
-            raise ArgumentException("This name is already in use")
+            raise ArgumentException("This name '" + newName + "' is already in use")
 
         if newName is None:
             newName = self._nextDefaultName(axis)
@@ -4503,8 +4503,8 @@ class Base(object):
 
     def _validateRangeOrder(self, startName, startVal, endName, endVal):
         """
-		Validate a range where both values are inclusive.
-		"""
+        Validate a range where both values are inclusive.
+        """
         if startVal > endVal:
             msg = "When specifying a range, the arguments were resolved to "
             msg += "having the values " + startName

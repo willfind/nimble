@@ -30,21 +30,21 @@ def rSquared(knownValues, predictedValues):
 
 def varianceFractionRemaining(knownValues, predictedValues):
     if knownValues.pointCount != predictedValues.pointCount: raise Exception("Objects had different numbers of points")
-    if knownValues.featureCount != predictedValues.featureCount: raise Exception(
-        "Objects had different numbers of features. Known values had " + str(
-            knownValues.featureCount) + " and predicted values had " + str(predictedValues.featureCount))
+    if knownValues.featureCount != predictedValues.featureCount: raise Exception("Objects had different numbers of features. Known values had " + str(knownValues.featureCount) + " and predicted values had " + str(predictedValues.featureCount))
     diffObject = predictedValues - knownValues
     rawDiff = diffObject.copyAs("numpy array")
     rawKnowns = knownValues.copyAs("numpy array")
-    return numpy.var(rawDiff) / float(numpy.var(rawKnowns))
+    variance = numpy.var(rawKnowns)
+    if variance == 0: raise Exception("cannot divide by zero variance")
+    value = numpy.var(rawDiff)/float(variance)
+    if numpy.isnan(value): raise Exception("nan value found")
+    return value
+    #def sq(data):
+    #   return numpy.power(data, 2)
+    #return numpy.sum(sq(diffObject)) / float(numpy.sum(sq(rawKnowns-numpy.mean(rawKnowns))))
 
-#def sq(data):
-#	return numpy.power(data, 2)
-#return numpy.sum(sq(diffObject)) / float(numpy.sum(sq(rawKnowns-numpy.mean(rawKnowns))))
 
-
-def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, featuresToPredict,
-                                              functionsToExcludePoints):
+def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, featuresToPredict, functionsToExcludePoints):
     """creates  the training and testing sets for each label we're going to predict"""
     trainXs = []
     trainYs = []
@@ -56,26 +56,24 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
     for labelNumber in xrange(len(featuresToPredict)):
         #create the features for the current labelNum, and exclude irrelevant poins
         currentFeatures = data.copy()
-        currentFeatures.extractPoints(
-            functionsToExcludePoints[labelNumber]) #get rid of points that aren't relevant to this label
-
+        currentFeatures.extractPoints(functionsToExcludePoints[labelNumber]) #get rid of points that aren't relevant to this label
+        
         #remove all the different labels from the features
         labelsMatrix = currentFeatures.extractFeatures(featuresToPredict)
 
-        #get the labels we'll be predicting
+        #get the labels we'll be predicting 
         featureToPredict = featuresToPredict[labelNumber]
         currentLabels = labelsMatrix.copyFeatures(featureToPredict)
 
         #add just those labels we'll be predicting to the features to form a combined set
         featuresWithLabels = currentFeatures.copy()
         featuresWithLabels.appendFeatures(currentLabels)
-        labelFeatureNum = featuresWithLabels.featureCount - 1
+        labelFeatureNum = featuresWithLabels.featureCount-1
 
         #get the training and testing data for this label
-        trainX, trainY, testX, testY = featuresWithLabels.trainAndTestSets(testFraction=fractionOfDataForTesting,
-                                                                           labels=labelFeatureNum)
+        trainX, trainY, testX, testY = featuresWithLabels.trainAndTestSets(testFraction=fractionOfDataForTesting, labels=labelFeatureNum)
 
-        assert not (featureToPredict in trainX.getFeatureNames())
+        assert not(featureToPredict in trainX.getFeatureNames())
         trainXs.append(trainX)
         trainYs.append(trainY)
         testXs.append(testX)
@@ -91,20 +89,17 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
 
 def testBuildTrainingAndTestingSetsForPredictions():
-    data = [["x1", "x2", "x3", "y1", "x4", "y2"], [1, 5, 2, 3, 7, 1], [2, 2, 3.2, 5, 9.1, -7], [3, 5, 2, 1, 3, 9],
-            [4, 9.2, 3, 5, 5, 1], [5, -4, 2, 1, 1, 0], [6, -2, -3, -1, -2, -3]]
+    data = [["x1", "x2", "x3", "y1", "x4", "y2"],[1,5,2,3,7,1],[2,2,3.2,5,9.1,-7],[3,5,2,1,3,9],[4,9.2,3,5,5,1], [5,-4,2,1,1,0], [6,-2,-3,-1,-2,-3]]
     data = createData("Matrix", data, featureNames=True)
-    fractionOfDataForTesting = 1.0 / 3.0
+    fractionOfDataForTesting = 1.0/3.0
     featuresToPredict = ["y1", "y2"]
     functionsToExcludePoints = [lambda r: r["x2"] < 3, lambda r: False]
-    trainXs, trainYs, testXs, testYs = buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting,
-                                                                                 featuresToPredict,
-                                                                                 functionsToExcludePoints)
-    assert (len(trainXs)) == 2
+    trainXs, trainYs, testXs, testYs = buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, featuresToPredict, functionsToExcludePoints)
+    assert(len(trainXs)) == 2
     assert trainXs[0].featureCount == 4
     assert trainXs[1].featureCount == 4
-    assert trainXs[0].getFeatureNames() == ["x1", "x2", "x3", "x4"]
-    assert trainXs[1].getFeatureNames() == ["x1", "x2", "x3", "x4"]
+    assert trainXs[0].getFeatureNames() == ["x1","x2","x3","x4"]
+    assert trainXs[1].getFeatureNames() == ["x1","x2","x3","x4"]
     assert trainXs[0].pointCount == 2
     assert testXs[0].pointCount == 1
     assert trainXs[1].pointCount == 4
@@ -113,32 +108,29 @@ def testBuildTrainingAndTestingSetsForPredictions():
     jointXs0.appendPoints(testXs[0])
     jointXs0.sortPoints("x1")
     print "jointXs0\n", jointXs0
-    assert jointXs0.isApproximatelyEqual(createData("Matrix", [[1, 5, 2, 7], [3, 5, 2, 3], [4, 9.2, 3, 5]]))
+    assert jointXs0.isApproximatelyEqual(createData("Matrix", [[1,5,2,7],[3,5,2,3],[4,9.2,3,5]]))
 
     jointYs0 = trainYs[0].copy()
     jointYs0.appendPoints(testYs[0])
     jointYs0.sortPoints(0)
 
     print "jointYs0\n", jointYs0
-    assert jointYs0.isApproximatelyEqual(createData("Matrix", [[1], [3], [5]]))
+    assert jointYs0.isApproximatelyEqual(createData("Matrix", [[1],[3],[5]]))
 
     jointXs1 = trainXs[1].copy()
     jointXs1.appendPoints(testXs[1])
     jointXs1.sortPoints("x1")
-    assert jointXs1.isApproximatelyEqual(createData("Matrix",
-                                                    [[1, 5, 2, 7], [2, 2, 3.2, 9.1], [3, 5, 2, 3], [4, 9.2, 3, 5],
-                                                     [5, -4, 2, 1], [6, -2, -3, -2]]))
+    assert jointXs1.isApproximatelyEqual(createData("Matrix", [[1,5,2,7],[2,2,3.2,9.1],[3,5,2,3],[4,9.2,3,5], [5,-4,2,1], [6,-2,-3,-2]]))
 
     jointYs1 = trainYs[1].copy()
     jointYs1.appendPoints(testYs[1])
     jointYs1.sortPoints(0)
 
     print "jointYs1\n", jointYs1
-    assert jointYs1.isApproximatelyEqual(createData("Matrix", [[-7], [-3], [0], [1], [1], [9]]))
+    assert jointYs1.isApproximatelyEqual(createData("Matrix", [[-7],[-3],[0],[1],[1],[9]]))
 
 
-def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms,
-                             featuresToPredict, mode="remove features", plot=False, verbose=False):
+def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode="remove features", plot=False, verbose=False):
     "tries dropping one feature at a time from all datasets, and kill off the feature that is most useless until we have the right number"""
     assert isinstance(trainXs, list)
     assert isinstance(trainYs, list)
@@ -146,19 +138,17 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
     assert isinstance(testYs, list)
     assert len(trainXs) == len(trainYs) and len(trainXs) == len(testXs) and len(trainXs) == len(testYs)
     modes = ["add features", "remove features"]
-    if not mode in modes:
+    if mode not in modes:
         raise Exception("The mode must be in " + str(modes))
 
-    if numFeaturesToKeep > trainXs[0].featureCount: raise Exception(
-        "Cannot keep " + str(numFeaturesToKeep) + " features since the data has only " + str(
-            trainXs[0].featureCount) + " features.")
+    if numFeaturesToKeep > trainXs[0].featureCount: raise Exception("Cannot keep " + str(numFeaturesToKeep) + " features since the data has only " + str(trainXs[0].featureCount) + " features.")
 
     for i in xrange(len(trainXs)):
         trainYs[i] = trainYs[i].copy()
         testYs[i] = testYs[i].copy()
 
     if mode == "remove features":
-        #prevent us from modifying the original objects
+        #prevent us from modifying the original objects 
         for i in xrange(len(trainXs)):
             trainXs[i] = trainXs[i].copy()
             testXs[i] = testXs[i].copy()
@@ -171,8 +161,8 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
             trainXs[i] = UML.createData("Matrix", ones)
             ones = numpy.ones((testYs[i].pointCount, 1))
             testXs[i] = UML.createData("Matrix", ones)
-    else:
-        raise Exception("Unknown mode!")
+    else: raise Exception("Unknown mode!")
+
 
     droppedFeatureErrorsListOutSample = []
     droppedFeatureErrorsListInSample = []
@@ -183,9 +173,9 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
     while trainXs[0].featureCount != numFeaturesToKeep:
 
         #if mode == "remove features":
-        #	if trainXs[0].featureCount <= numFeaturesToKeep: break
+        #   if trainXs[0].featureCount <= numFeaturesToKeep: break
         #elif mode == "add features":
-        #	if trainXs[0].featureCount >= numFeaturesToKeep: break
+        #   if trainXs[0].featureCount >= numFeaturesToKeep: break
 
         print str(trainXs[0].featureCount) + " features left"
 
@@ -196,58 +186,64 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
             featuresNumbersToIterate = trainXs[0].featureCount
         elif mode == "add features":
             featuresNumbersToIterate = origTrainXs[0].featureCount
-        else:
-            raise Exception("Unknown mode!")
+        else: raise Exception("Unknown mode!")
 
+        #print "running feature drop loop over " + str(xrange(featuresNumbersToIterate))
         for featureNumToDrop in xrange(featuresNumbersToIterate):
             #sys.stdout.write(" " + str(featureNameToDrop))
             errorsForThisFeatureDrop = []
             #for each label we're predicting
+            #print "ready to loop over " + str(len(trainXs)) + " labels..."
             for labelNum, trainX, trainY in zip(range(len(trainXs)), trainXs, trainYs):
+                #print "got here!!!"
                 #print "got here: " + str(featureNumToDrop) + ", " + str(labelNum)
                 #print "trainX", trainX
                 #build a feature set to train on that doesn't include the feature we're dropping
                 trainXWithoutFeature = trainX.copy()
+                #trainXWithoutFeature.show("trainXWithoutFeature")
                 if mode == "remove features":
                     trainXWithoutFeature.extractFeatures(featureNumToDrop)
                 elif mode == "add features":
                     featureNameToDrop = origTrainXs[labelNum].getFeatureName(featureNumToDrop)
                     #if we've already added this feature, skip it
-                    if featureNameToDrop in namesUsedForEachLabel[labelNum]: continue
+                    if featureNameToDrop in namesUsedForEachLabel[labelNum]: continue 
                     #print "trainXWithoutFeature", trainXWithoutFeature
                     #print "origTrainXs[labelNum].copyFeatures(featureNumToDrop)", origTrainXs[labelNum].copyFeatures(featureNumToDrop)
                     trainXWithoutFeature.appendFeatures(origTrainXs[labelNum].copyFeatures(featureNumToDrop))
-                else:
-                    raise Exception("Unknown mode!")
-
+                else: raise Exception("Unknown mode!")
+                
                 algorithmName = predictionAlgorithms[labelNum]
-                if "Logistic" in algorithmName:
-                #C = tuple([10.0**k for k in xrange(-6, 6)])
-                    C = 10 ** 9 #large means no regularization #a large value for C results in less regularization
+                if "Logistic" in algorithmName: 
+                    #C = tuple([10.0**k for k in xrange(-6, 6)])
+                    C = 10**9 #large means no regularization #a large value for C results in less regularization
                     #trainXWithoutFeature.show("trainXWithoutFeature")
                     #trainXWithoutFeature.writeFile("trainXWithoutFeature_saved.csv")
                     #trainXWithoutFeature.show("trainY")
-                    #trainY.writeFile("trainY_saved.csv")
-                    print "trainXWithoutFeature type", trainXWithoutFeature.getTypeString()
-                    print "trainXWithoutFeature type", trainY.getTypeString()
+                    #trainY.writeFile("trainY_saved.csv") 
+                    #print "trainXWithoutFeature type", trainXWithoutFeature.getTypeString()
+                    #print "trainXWithoutFeature type", trainY.getTypeString()
                     trainXWithoutFeature.show("trainXWithoutFeature")
-                    error = trainAndTest(algorithmName, trainXWithoutFeature, trainY, testX=trainXWithoutFeature,
-                                         testY=trainY, performanceFunction=fractionIncorrect, C=C)
-                elif "Ridge" in algorithmName:
+                    error = trainAndTest(algorithmName, trainXWithoutFeature, trainY, testX=trainXWithoutFeature, testY=trainY, performanceFunction=fractionIncorrect, C=C)
+                elif "Ridge" in algorithmName or "Lasso" in algorithmName:
                     #alpha = tuple([10.0**k for k in xrange(-6, 6)])
                     alpha = 0 #0 means no regularization, large means heavy regularization
-                    error = trainAndTest(algorithmName, trainXWithoutFeature, trainY, testX=trainXWithoutFeature,
-                                         testY=trainY, performanceFunction=varianceFractionRemaining, alpha=alpha)
+                    #print "ran ridge or lasso"
+                    error = trainAndTest(algorithmName, trainXWithoutFeature, trainY, testX=trainXWithoutFeature, testY=trainY, performanceFunction=varianceFractionRemaining, alpha=alpha)
                 else:
                     raise Exception("Don't know how to set parameters for algorithm: " + str(algorithmName))
 
+                if numpy.isnan(error): raise Exception("Found nan error for " + str(algorithmName) + " when dropping feature " + featureNumberToDrop + " called " + origTrainXs[0].getFeatureName(featureNumberToDrop))
                 errorsForThisFeatureDrop.append(error)
 
-            combinedErrorForFeatureDrop = numpy.mean(errorsForThisFeatureDrop)
-            errorForEachFeatureDropped.append((combinedErrorForFeatureDrop, featureNumToDrop))
+            #if this is not a feature we're already done with
+            if len(errorsForThisFeatureDrop) > 0: 
+                #raise Exception("There were no errors recorded!" + " when dropping feature " + str(featureNumToDrop) + " called " + origTrainXs[0].getFeatureName(featureNumToDrop))
+                combinedErrorForFeatureDrop = numpy.mean(errorsForThisFeatureDrop)
+                if numpy.isnan(combinedErrorForFeatureDrop): raise Exception("nan error value from: " + str(errorsForThisFeatureDrop) + " when dropping feature " + str(featureNumToDrop) + " called " + origTrainXs[0].getFeatureName(featureNumToDrop))
+                errorForEachFeatureDropped.append((combinedErrorForFeatureDrop, featureNumToDrop))
 
-        errorForEachFeatureDropped.sort(lambda x, y: cmp(y[0], x[
-            0])) #sort descending by error so that the last element corresponds to the most useless feature (i.e. the feature where we have the lowest error without it)
+
+        errorForEachFeatureDropped.sort(lambda x,y: cmp(y[0],x[0])) #sort descending by error so that the last element corresponds to the most useless feature (i.e. the feature where we have the lowest error without it)
         #import pdb; pdb.set_trace()
         mostUselessFeatureErrorInSample = errorForEachFeatureDropped[-1][0]
         droppedFeatureErrorsListInSample.append(mostUselessFeatureErrorInSample)
@@ -265,10 +261,8 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                 trainX.appendFeatures(origTrainXs[labelNum].copyFeatures(mostUselessFeatureNum))
                 testX.appendFeatures(origTestXs[labelNum].copyFeatures(mostUselessFeatureNum))
                 namesUsedForEachLabel[labelNum].add(mostUselessFeatureName)
-            else:
-                raise Exception("Unknown mode!")
-        outSampleErrorsHash, outSampleParamsHash = getPredictionErrors(trainXs, trainYs, testXs, testYs,
-                                                                       predictionAlgorithms, featuresToPredict)
+            else: raise Exception("Unknown mode!")
+        outSampleErrorsHash, outSampleParamsHash = getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, featuresToPredict)
         mostUselessFeatureErrorOutSample = outSampleErrorsHash["Combined Error"]
         droppedFeatureErrorsListOutSample.append(mostUselessFeatureErrorOutSample)
         ###for printing to the screen
@@ -287,7 +281,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         pylab.title("Combined Error With Different Numbers of Features Removed")
         pylab.xlabel("Features removed")
         pylab.ylabel("Combined Error")
-    #pylab.show()
+        #pylab.show()
 
     return trainXs, trainYs, testXs, testYs
 
@@ -300,14 +294,14 @@ def getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, 
     for labelNum, trainX, trainY, testX, testY in zip(range(len(trainXs)), trainXs, trainYs, testXs, testYs):
         algorithmName = predictionAlgorithms[labelNum]
         featureToPredict = featuresToPredict[labelNum]
-        if "Logistic" in algorithmName:
-        #C = tuple([10.0**k for k in xrange(-6, 6)])
-            C = 10 ** 9
+        if "Logistic" in algorithmName: 
+            #C = tuple([10.0**k for k in xrange(-6, 6)])
+            C = 10**9
             #error = trainAndTest(algorithmName, trainX, trainY, testX=testX, testY=testY, performanceFunction=fractionIncorrect, C=C)
             learner = UML.train(algorithmName, trainX, trainY, C=C)
             error = learner.test(testX=testX, testY=testY, performanceFunction=fractionIncorrect)
             backend = learner.backend
-            parametersHash[featureToPredict] = {"intercept": backend.intercept_, "coefs": backend.coef_}
+            parametersHash[featureToPredict] = {"intercept":backend.intercept_, "coefs":backend.coef_}
         elif "Ridge" in algorithmName:
             #alpha = tuple([10.0**k for k in xrange(-6, 6)])
             alpha = 0
@@ -315,7 +309,7 @@ def getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, 
             learner = UML.train(algorithmName, trainX, trainY, alpha=alpha)
             error = learner.test(testX=testX, testY=testY, performanceFunction=varianceFractionRemaining)
             backend = learner.backend
-            parametersHash[featureToPredict] = {"intercept": backend.intercept_, "coefs": backend.coef_}
+            parametersHash[featureToPredict] = {"intercept":backend.intercept_, "coefs":backend.coef_}
         else:
             raise Exception("Don't know how to set parameters for algorithm: " + str(algorithmName))
         errorsHash[featureToPredict] = error #record the accuracy
@@ -323,37 +317,31 @@ def getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, 
     combinedError = numpy.mean(errorsHash.values())
     errorsHash["Combined Error"] = combinedError
 
+
     return errorsHash, parametersHash
 
 
-def getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms,
-                             featuresToPredict, mode, plot=False, verbose=False):
+
+def getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode, plot=False, verbose=False):
     #prevent us from modifying the original objects
     #for i in xrange(len(trainXs)):
-    #	trainXs[i] = trainXs[i].copy()
-    #	trainYs[i] = trainYs[i].copy()
-    #	testXs[i] = testXs[i].copy()
-    #	testYs[i] = testYs[i].copy()
+    #   trainXs[i] = trainXs[i].copy()
+    #   trainYs[i] = trainYs[i].copy()
+    #   testXs[i] = testXs[i].copy()
+    #   testYs[i] = testYs[i].copy()
     trainXs = copy.copy(trainXs)
     trainYs = copy.copy(trainYs)
     testXs = copy.copy(testXs)
     testYs = copy.copy(testYs)
 
-    trainXs, trainYs, testXs, testYs = reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, mode=mode,
-                                                                numFeaturesToKeep=numFeaturesToKeep,
-                                                                predictionAlgorithms=predictionAlgorithms,
-                                                                featuresToPredict=featuresToPredict, plot=plot,
-                                                                verbose=verbose)
-    errorsHash, parametersHash = getPredictionErrors(trainXs, trainYs, testXs, testYs,
-                                                     predictionAlgorithms=predictionAlgorithms,
-                                                     featuresToPredict=featuresToPredict)
+    trainXs, trainYs, testXs, testYs = reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, mode=mode, numFeaturesToKeep=numFeaturesToKeep, predictionAlgorithms=predictionAlgorithms, featuresToPredict=featuresToPredict, plot=plot, verbose=verbose)
+    errorsHash, parametersHash = getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms=predictionAlgorithms, featuresToPredict=featuresToPredict)
 
     bestFeatures = trainXs[0].getFeatureNames()
     return bestFeatures, errorsHash, parametersHash
 
 
-def getBestFeaturesAndErrorsPurelyRandomlyManyTimes(trials, trainXs, trainYs, testXs, testYs, numFeaturesToKeep,
-                                                    predictionAlgorithms, featuresToPredict):
+def getBestFeaturesAndErrorsPurelyRandomlyManyTimes(trials, trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict):
     random.seed(5)
     combinedErrors = {}
     for trialNum in xrange(trials):
@@ -368,15 +356,14 @@ def getBestFeaturesAndErrorsPurelyRandomlyManyTimes(trials, trainXs, trainYs, te
             trainXsTemp[datasetNum] = trainXsTemp[datasetNum].copyFeatures(featuresToKeep)
             testXsTemp[datasetNum] = testXsTemp[datasetNum].copyFeatures(featuresToKeep)
 
-        errorsHash, parametersHash = getPredictionErrors(trainXs=trainXsTemp, trainYs=trainYsTemp, testXs=testXsTemp,
-                                                         testYs=testYsTemp, predictionAlgorithms=predictionAlgorithms,
-                                                         featuresToPredict=featuresToPredict)
+        errorsHash, parametersHash = getPredictionErrors(trainXs=trainXsTemp, trainYs=trainYsTemp, testXs=testXsTemp, testYs=testYsTemp, predictionAlgorithms=predictionAlgorithms, featuresToPredict=featuresToPredict)
         for key, error in errorsHash.iteritems():
-            if not key in combinedErrors:
+            if key not in combinedErrors:
                 combinedErrors[key] = []
             combinedErrors[key].append(error)
 
     return combinedErrors
+
 
 
 def toListOfLists(matrix):
@@ -389,9 +376,48 @@ def toListOfLists(matrix):
     return output
 
 
-def testToListOfLists():
-    print "toListOfLists(numpy.matrix([[1,2],[4,2]]))", toListOfLists(numpy.matrix([[1, 2], [4, 2]]))
-    assert toListOfLists(numpy.matrix([[1, 2], [4, 2]])) == [[1, 2], [4, 2]]
+def testgetBestFeaturesAndErrors():
+    #data = [["x0", "x1", "x2", "x3", "p1", "p2", "x6", "x7"],[1,5,2,3,7,1,3,9],[2,2,3.2,5,9.1,-7,2,7],[3,5,2,1,3,9,4,8],[4,9.2,3,5,5,1,8,1],[5,-4,2,1,1,0,6,3], [6,-2,-3,-1,-2,-3,-3,-2],[7,1,4,18,5,6,1,4],[8,2,3,4,5,6,3,2],[9,1,12,10,5,2,8,5],[10,8,3,2,1,5,4,1], [11,5,2,10,4,2,8,1], [12,6,2,14,4,5.3,2,-1], [13,2,2,12,4,5.4,3,-1], [14,6,2,15,4,5.3,3,-1], [15,2,1,13,2,0.3,-3,4], [16,6,3,4,4,-1,3,0], [17,1,4,20,3,-6,-2,1], [18,4,3,2,5,8,9,3]]
+    seed = 4
+    numpy.random.seed(seed)
+    random.seed(seed)
+    points = 200
+    featuresToPredict = ["p1", "p2"]
+    featureNames = ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"]
+    featureNames.extend(featuresToPredict)
+    features = len(featureNames)
+    data = toListOfLists(numpy.random.normal(0,1,(points, features)))
+    #setup values for the label
+    noiseLevel = 0.01
+    feature0Mean = numpy.mean(numpy.matrix(data)[:, 0])
+    for row in data:
+        #set p1
+        row[-2] = 10*row[0] + row[1] + 100*row[3] + noiseLevel*numpy.random.normal(0,1) 
+        #set p2
+        #if row[0] > row[3] + noiseLevel*numpy.random.uniform(0,1): row[5] = 1
+        if row[3] + noiseLevel*numpy.random.normal(0,1) > feature0Mean: row[-1] = 1
+        else: row[-1] = 0
+
+    data.insert(0, featureNames) #put the column headers at the top of the data
+    data = createData("Matrix", data, featureNames=True)
+    fractionOfDataForTesting = 1.0/3.0
+    
+    print "data\n", data
+
+    functionsToExcludePoints = [lambda r: False, lambda r: False]
+    predictionAlgorithms = ["SciKitLearn.Ridge", "SciKitLearn.LogisticRegression"]
+    
+    numFeaturesToKeep = 3
+
+    trainXs, trainYs, testXs, testYs = buildTrainingAndTestingSetsForPredictions(data.copy(), fractionOfDataForTesting=fractionOfDataForTesting, featuresToPredict=featuresToPredict, functionsToExcludePoints=functionsToExcludePoints)
+    #getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode, plot=False, verbose=False):
+    bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs, numFeaturesToKeep, predictionAlgorithms, featuresToPredict, mode="remove features")
+    
+    print "errorsHash:", errorsHash
+    print "parametersHash", parametersHash
+    print "bestFeatures", bestFeatures
+    if not ("x3" in bestFeatures): raise Exception("x3 was the best feature by far by was removed!")
+    assert bestFeatures == ["x0", "x1", "x3"]
 
 
 def testgetBestFeaturesAndErrors():
@@ -506,14 +532,14 @@ def testPercentileOf():
 
 """
 def plotFeatureDistributionForDifferentFilters(X, featureName, filterFunc):
-	pointsFiltered = X.extractPoints(filterFunc)
-	pointsUnfiltered = X
-	featureFiltered = pointsFiltered.copyFeatures(featureName)
-	featureUnfiltered = pointsUnfiltered.copyFeatures(featureName)
-	featureFiltered.show() WAS WORKING HERE
-	pylab.hist(featureFiltered.data, color="blue")
-	pylab.hist(featureUnfiltered.data, color="green")
-	pylab.legend(["Filtered", "Unfiltered"], loc="best")
+    pointsFiltered = X.extractPoints(filterFunc)
+    pointsUnfiltered = X
+    featureFiltered = pointsFiltered.copyFeatures(featureName)
+    featureUnfiltered = pointsUnfiltered.copyFeatures(featureName)
+    featureFiltered.show() WAS WORKING HERE
+    pylab.hist(featureFiltered.data, color="blue")
+    pylab.hist(featureUnfiltered.data, color="green")
+    pylab.legend(["Filtered", "Unfiltered"], loc="best")
 """
 
 
@@ -576,9 +602,9 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
 #stats.plotFeatureCross(0,1)
 
 #def pointsToZScores(data):
-#	means = data.pointStatistics("mean")
-#	stddevs = data.pointStatistics("standarddeviation")
-#	return (data - means) / stddevs #this doesn't work because of size mismatch
+#   means = data.pointStatistics("mean")
+#   stddevs = data.pointStatistics("standarddeviation")
+#   return (data - means) / stddevs #this doesn't work because of size mismatch
 
 def pointsToZScores(data):
     means = data.pointStatistics("mean")
@@ -677,6 +703,6 @@ if __name__ == "__main__":
     if doPlot:
         pylab.show()
 
-	
-				
+    
+                
 

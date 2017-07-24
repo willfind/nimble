@@ -2,10 +2,11 @@
 Contains the hierarchy of objects which can be used to store data
 in UML.
 
-The base class and the concrete classes are made available here
-for purposes of documentation and in-code instance checking.
-Actual object creation is meant to be done via UML.createData
-and the related functions in top level UML.
+Object creation is meant to be done via UML top level functions such
+as UML.createData, even though the objects themselves are contained
+within this module. They are avilable only for the purposes of instance
+checking, and are excluded from __all__ and the automatically generated
+documentation.
 
 """
 
@@ -19,4 +20,10 @@ from dataframe import DataFrame
 
 # We want this for unit testing
 available = ['List', 'Matrix', 'Sparse', 'DataFrame']
-__all__ = ['Base', 'BaseView', 'List', 'Matrix', 'Sparse', 'DataFrame']
+"""
+List of type strings for the concrete objects which subclass UML.data.Base
+These may be used in calls to UML.createData or other similiar object creation
+methods.
+"""
+
+__all__ = ['available', 'Base', 'BaseView',]
