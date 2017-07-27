@@ -4298,7 +4298,13 @@ class Base(object):
         # adjust nextDefaultValue as needed given contents of assignments
         for name in assignments:
             if name is not None and name.startswith(DEFAULT_PREFIX):
-                num = int(name[len(DEFAULT_PREFIX):])
+                try:
+                    num = int(name[len(DEFAULT_PREFIX):])
+                # Case: default prefix with non-integer suffix. This cannot
+                # cause a future integer suffix naming collision, so we
+                # can ignore it.
+                except ValueError:
+                    continue
                 checkAndSet(num)
 
         #convert to dict so we only write the checking code once
@@ -4368,13 +4374,13 @@ class Base(object):
         self._validateAxis(axis)
         if name.startswith(DEFAULT_PREFIX):
             intString = name[len(DEFAULT_PREFIX):]
-            if '_' in intString:
-                firstUnderscore = intString.index('_')
-                intString = intString[:firstUnderscore]
-            if '=' in intString:
-                firstEquals = intString.index('=')
-                intString = intString[:firstEquals]
-            nameNum = int(intString)
+            try:
+                nameNum = int(intString)
+            # Case: default prefix with non-integer suffix. This cannot
+            # cause a future integer suffix naming collision, so we
+            # return without making any chagnes.
+            except ValueError:
+                return
             if axis == 'point':
                 if nameNum >= self._nextDefaultValuePoint:
                     self._nextDefaultValuePoint = nameNum + 1
