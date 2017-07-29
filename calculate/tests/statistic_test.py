@@ -245,7 +245,6 @@ def testIsNumericalPoint():
     assert ~func(np.nan)
     assert ~func(None)
     assert ~func('a')
-    assert ret == (2,4,6)
 
 
 #############
