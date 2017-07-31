@@ -719,6 +719,159 @@ class List(Base):
             for p in xrange(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values.data[p - pointStart]
 
+    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, missingValues=[numpy.NaN, None], markMissing=False):
+        """
+        This function is to
+        1. drop points or features with missing values
+        2. fill missing values with mean, median or mode
+        3. fill missing values by forward or backward filling
+
+        Detailed steps are:
+        1. from missingValues, generate a Set for elements which are not None or NaN but are still considered to be missing
+        2. from featuresList, generate a dict for each element
+        3. replace missing values in features in the featuresList with NaN
+        4. based on method and arguments, process self.data
+        5. update points and features information.
+        """
+        missingValuesSet = set(missingValues)
+        missingIdxDictFeature = {i: [] for i in xrange(self.featureCount)}
+        missingIdxDictPoint = {i: [] for i in xrange(self.pointCount)}
+        for i in xrange(self.pointCount):
+            for j in featuresList:
+                tmpV = self.data[i][j]
+                if tmpV in missingValuesSet or (tmpV!=tmpV) or tmpV is None:
+                    self.data[i][j] = None if tmpV is None else numpy.NaN
+                    missingIdxDictPoint[i].append(j)
+                    missingIdxDictFeature[j].append(i)
+        featureNames = self.getFeatureNames()
+        pointNames = self.getPointNames()
+        if markMissing:
+            #add extra columns to indicate if the original value was missing or not
+            extraFeatureNames = []
+            extraDummy = []
+            for tmpItem in missingIdxDictFeature.items():
+                extraFeatureNames.append(self.getFeatureName(tmpItem[0]) + '_missing')
+            for tmpItem in missingIdxDictPoint.items():
+                extraDummy.append([True if i in tmpItem[1] else False for i in xrange(self.featureCount)])
+
+            #extraDummy = numpy.matrix(extraDummy).transpose()
+        # import pdb; pdb.set_trace()
+        #from now, based on method and arguments, process self.data
+        if method == 'remove points':
+            msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
+            if arguments is None or arguments.lower() == 'any':
+                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) > 0]
+            elif arguments.lower() == 'all':
+                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.featureCount]
+            else:
+                raise ArgumentException(msg)
+            nonmissingIdx = [i for i in xrange(self.pointCount) if i not in missingIdx]
+            if len(nonmissingIdx) == 0:
+                msg = 'All data are removed. Please use another method or other arguments.'
+                raise ArgumentException(msg)
+            pointNames = [self.getPointName(i) for i in nonmissingIdx]
+            if len(missingIdx) > 0:
+                self.data = [self.data[i] for i in nonmissingIdx]
+                if markMissing:
+                    extraDummy = [extraDummy[i] for i in nonmissingIdx]
+        elif method == 'remove features':
+            msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
+            if arguments is None or arguments.lower() == 'any':
+                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) > 0]
+            elif arguments.lower() == 'all':
+                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.pointCount]
+            else:
+                raise ArgumentException(msg)
+            nonmissingIdx = [i for i in xrange(self.featureCount) if i not in missingIdx]
+            if len(nonmissingIdx) == 0:
+                msg = 'All data are removed. Please use another method or other arguments.'
+                raise ArgumentException(msg)
+            featureNames = [self.getFeatureName(i) for i in nonmissingIdx]
+            if len(missingIdx) > 0:
+                self.data = [[i[j] for j in nonmissingIdx] for i in self.data]
+                if markMissing:
+                    extraDummy = [[i[j] for j in nonmissingIdx] for i in extraDummy]
+                    extraFeatureNames = [extraFeatureNames[i] for i in nonmissingIdx]
+        elif method == 'feature mean':
+            featureMean = self.calculateForEachFeature(UML.calculate.mean).data[0]
+            tmpDict = {i: j for i, j in enumerate(featureMean)}
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                for i in tmpItem[1]:
+                    self.data[i][j] = tmpDict[j]
+        elif method == 'feature median':
+            featureMedian = self.calculateForEachFeature(UML.calculate.median).data[0]
+            tmpDict = {i: j for i, j in enumerate(featureMedian)}
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                for i in tmpItem[1]:
+                    self.data[i][j] = tmpDict[j]
+        elif method == 'feature mode':
+            featureMode = self.calculateForEachFeature(UML.calculate.mode).data[0]
+            tmpDict = {i: j for i, j in enumerate(featureMode)}
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                for i in tmpItem[1]:
+                    self.data[i][j] = tmpDict[j]
+        elif method == 'zero':
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                for i in tmpItem[1]:
+                    self.data[i][j] = 0
+        elif method == 'constant':
+            msg = 'for method = "constant", the arguments must be the constant.'
+            if arguments is not None:
+                for tmpItem in missingIdxDictFeature.items():
+                    j = tmpItem[0]
+                    for i in tmpItem[1]:
+                        self.data[i][j] = arguments
+            else:
+                raise ArgumentException(msg)
+        elif method == 'forward fill':
+            for tmpItem in missingIdxDictFeature.items():
+                    j = tmpItem[0]
+                    for i in tmpItem[1]:
+                        if i > 0:
+                            self.data[i][j] = self.data[i-1][j]
+        elif method == 'backward fill':
+            for tmpItem in missingIdxDictFeature.items():
+                    j = tmpItem[0]
+                    for i in sorted(tmpItem[1], reverse=True):
+                        if i < self.pointCount - 1:
+                            self.data[i][j] = self.data[i+1][j]
+        elif method == 'interpolate':
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                interpX = tmpItem[1]
+                if len(interpX) == 0:
+                    continue
+                if arguments is None:
+                    xp = [i for i in xrange(self.pointCount) if i not in interpX]
+                    fp = [self.data[i][j] for i in xp]
+                    tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
+                elif isinstance(arguments, dict):
+                    tmpArguments = arguments.copy()
+                    tmpArguments['x'] = interpX
+                else:
+                    msg = 'for method = "interpolate", the arguments must be None or a dict.'
+                    raise ArgumentException(msg)
+                try:
+                    tmpV = numpy.interp(**tmpArguments)
+                    for k, i in enumerate(interpX):
+                        self.data[i][j] = tmpV[k]
+                except Exception:
+                    msg = 'To successfully use method == "interpolate", you need to read docs in numpy.interp.'
+                    raise ArgumentException(msg)
+
+        if markMissing:
+            for i in xrange(len(self.data)):
+                self.data[i].extend(extraDummy[i])
+            featureNames += extraFeatureNames
+        pCount, fCount = len(self.data), len(self.data[0])
+        self._featureCount = fCount
+        self.setFeatureNames(featureNames)
+        self._pointCount = pCount
+        self.setPointNames(pointNames)
 
     def _getitem_implementation(self, x, y):
         return self.data[x][y]

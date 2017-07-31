@@ -365,7 +365,9 @@ class DataFrame(Base):
             return False
 
         try:
-            np.testing.assert_equal(self.data.values, other.data.values)
+            tmp1 = self.data.values
+            tmp2 = other.data.values
+            np.testing.assert_equal(tmp1, tmp2)
         except AssertionError:
             return False
         return True
@@ -566,7 +568,7 @@ class DataFrame(Base):
 
         if markMissing:
             #add extra columns to indicate if the original value was missing or not
-            self.data = self.data.join(self.data[featuresList].isnull(), rsuffix='_missing')
+            extraDf = self.data[featuresList].isnull()
 
         #from now, based on method and arguments, process self.data
         if method == 'remove points':
@@ -579,6 +581,9 @@ class DataFrame(Base):
                 else:
                     raise ArgumentException(msg)
             except Exception:
+                raise ArgumentException(msg)
+            if 0 in self.data.shape:
+                msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
         elif method == 'remove features':
             msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
@@ -603,12 +608,17 @@ class DataFrame(Base):
                     self.data.drop(labels=dropCols, axis=1, inplace=True)
             except Exception:
                 raise ArgumentException(msg)
+            if 0 in self.data.shape:
+                msg = 'All data are removed. Please use another method or other arguments.'
+                raise ArgumentException(msg)
         elif method == 'feature mean':
-            self.data.fillna(self.data.mean()[featuresList], inplace=True)
+            self.data.fillna(self.data[featuresList].mean(), inplace=True)
         elif method == 'feature median':
-            self.data.fillna(self.data.median()[featuresList], inplace=True)
+            self.data.fillna(self.data[featuresList].median(), inplace=True)
         elif method == 'feature mode':
-            self.data.fillna(self.data.mode()[featuresList].iloc[0], inplace=True)
+            #pd.DataFrame.mode is faster, but to make sure behavior consistent, let's use our own UML.calculate.mode
+            featureMode = self.calculateForEachFeature(UML.calculate.mode).data[featuresList].iloc[0]
+            self.data.fillna(featureMode, inplace=True)
         elif method == 'zero':
             myd = {i: 0 for i in featuresList}
             self.data.fillna(myd, inplace=True)
@@ -653,7 +663,6 @@ class DataFrame(Base):
                     for idx in self.data.index:
                         #do KNN point by point
                         if pd.isnull(self.data.ix[idx, colBln].values[0]):
-                            #import pdb; pdb.set_trace()
                             #prepare training data
                             notNullCols = ~self.data.ix[idx, :].isnull()
                             predictData = self.data.ix[idx, notNullCols]
@@ -677,6 +686,8 @@ class DataFrame(Base):
                   sklearn.neighbors.KNeighborsRegressor, sklearn.neighbors.KNeighborsClassifier'
             raise ArgumentException(msg)
 
+        if markMissing:
+            self.data = self.data.join(extraDf[self.data.columns], rsuffix='_missing', how='left')
         pCount, fCount = self.data.shape
         self._featureCount = fCount
         self.setFeatureNames(self.data.columns.tolist())

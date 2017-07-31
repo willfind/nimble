@@ -625,7 +625,8 @@ class Matrix(Base):
         for i in xrange(self.pointCount):
             for j in featuresList:
                 tmpV = self.data[i, j]
-                if tmpV in missingValuesSet or numpy.isnan(tmpV) or tmpV is None:
+                if tmpV in missingValuesSet or (tmpV!=tmpV) or tmpV is None:
+                    self.data[i, j] = numpy.NaN
                     missingIdxDictPoint[i].append(j)
                     missingIdxDictFeature[j].append(i)
         #import pdb; pdb.set_trace()
@@ -640,8 +641,6 @@ class Matrix(Base):
                 extraDummy.append([True if i in tmpItem[1] else False for i in xrange(self.pointCount)])
 
             extraDummy = numpy.matrix(extraDummy).transpose()
-            self.data = numpy.append(self.data, extraDummy, axis=1)
-            featureNames += extraFeatureNames
 
         #from now, based on method and arguments, process self.data
         if method == 'remove points':
@@ -653,21 +652,32 @@ class Matrix(Base):
             else:
                 raise ArgumentException(msg)
             nonmissingIdx = [i for i in xrange(self.pointCount) if i not in missingIdx]
+            if len(nonmissingIdx) == 0:
+                msg = 'All data are removed. Please use another method or other arguments.'
+                raise ArgumentException(msg)
             pointNames = [self.getPointName(i) for i in nonmissingIdx]
             if len(missingIdx) > 0:
-                    self.data = numpy.delete(self.data, missingIdx, axis=0)
+                self.data = numpy.delete(self.data, missingIdx, axis=0)
+                if markMissing:
+                    extraDummy = numpy.delete(extraDummy, missingIdx, axis=0)
         elif method == 'remove features':
             msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
             if arguments is None or arguments.lower() == 'any':
                 missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) > 0]
             elif arguments.lower() == 'all':
-                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.featureCount]
+                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.pointCount]
             else:
                 raise ArgumentException(msg)
             nonmissingIdx = [i for i in xrange(self.featureCount) if i not in missingIdx]
+            if len(nonmissingIdx) == 0:
+                msg = 'All data are removed. Please use another method or other arguments.'
+                raise ArgumentException(msg)
             featureNames = [self.getFeatureName(i) for i in nonmissingIdx]
             if len(missingIdx) > 0:
-                    self.data = numpy.delete(self.data, missingIdx, axis=1)
+                self.data = numpy.delete(self.data, missingIdx, axis=1)
+                if markMissing:
+                    extraDummy = numpy.delete(extraDummy, missingIdx, axis=1)
+                    extraFeatureNames = [extraFeatureNames[i] for i in nonmissingIdx]
         elif method == 'feature mean':
             #np.nanmean is faster than UML.calculate.mean
             tmpDict = {i: j for i, j in enumerate(numpy.nanmean(self.data, axis=0).tolist()[0])}
@@ -725,21 +735,24 @@ class Matrix(Base):
                 if arguments is None:
                     xp = [i for i in xrange(self.pointCount) if i not in interpX]
                     fp = self.data[xp, j].reshape(1, -1).tolist()[0]
-                    arguments = {'x': interpX, 'xp': xp, 'fp': fp}
+                    tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
                 elif isinstance(arguments, dict):
-                    arguments['x'] = interpX
+                    tmpArguments = arguments.copy()
+                    tmpArguments['x'] = interpX
                 else:
                     msg = 'for method = "interpolate", the arguments must be None or a dict.'
                     raise ArgumentException(msg)
                 try:
-                    tmpV = numpy.interp(**arguments)
+                    tmpV = numpy.interp(**tmpArguments)
                     for k, i in enumerate(interpX):
                         self.data[i, j] = tmpV[k]
                 except Exception:
                     msg = 'To successfully use method == "interpolate", you need to read docs in numpy.interp.'
                     raise ArgumentException(msg)
 
-
+        if markMissing:
+            self.data = numpy.append(self.data, extraDummy, axis=1)
+            featureNames += extraFeatureNames
         pCount, fCount = self.data.shape
         self._featureCount = fCount
         self.setFeatureNames(featureNames)
