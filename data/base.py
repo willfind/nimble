@@ -2716,7 +2716,7 @@ class Base(object):
         self.validate()
 
 
-    def handleMissingValues(self, method='remove points', features=None, arguments=None, missingValues=[numpy.NaN, None], markMissing=False):
+    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[numpy.NaN, None], markMissing=False):
         """
 
         """
@@ -2738,11 +2738,15 @@ class Base(object):
         else:
             raise ArgumentException(msg)
 
+        #convert single value alsoTreatAsMissing to a list
+        if not hasattr(alsoTreatAsMissing, '__len__'):
+            alsoTreatAsMissing = [alsoTreatAsMissing]
+
         if isinstance(self, UML.data.DataFrame):
             #for DataFrame, pass column names instead of indices
             featuresList = [self.getFeatureName(i) for i in featuresList]
 
-        self._handleMissingValues_implementation(method, featuresList, arguments, missingValues, markMissing)
+        self._handleMissingValues_implementation(method, featuresList, arguments, alsoTreatAsMissing, markMissing)
 
     ###############################################################
     ###############################################################

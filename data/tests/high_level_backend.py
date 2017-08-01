@@ -1641,14 +1641,14 @@ class HighLevelModifying(DataTestObject):
         assert obj1 == ret1
 
         obj2 = obj0.copy()
-        obj2.handleMissingValues(method='remove points', arguments='all', missingValues=[11])
+        obj2.handleMissingValues(method='remove points', arguments='all', alsoTreatAsMissing=[11])
         ret2 = self.constructor([[1, 2, 3], [7, numpy.NaN, None], [7, 8, 9]])
         ret2.setPointNames(['_DEFAULT_#0', '_DEFAULT_#2', '_DEFAULT_#3'])
         ret2.setFeatureNames(['a', 'b', 'c'])
         assert obj2 == ret2
 
         obj3 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj3.handleMissingValues(method='remove points', arguments='all', missingValues=[1, 2, 3], markMissing=True)
+        obj3.handleMissingValues(method='remove points', arguments='all', alsoTreatAsMissing=[1, 2, 3], markMissing=True)
         ret3 = self.constructor([[None, 11, None, True, False, True], [7, 11, None, False, False, True], [7, 8, 9, False, False, False]])
         ret3.setPointNames(['_DEFAULT_#1', '_DEFAULT_#2', '_DEFAULT_#3'])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
@@ -1668,13 +1668,13 @@ class HighLevelModifying(DataTestObject):
         assert obj1 == ret1
 
         obj2 = obj0.copy()
-        obj2.handleMissingValues(method='remove features', arguments='all', missingValues=[3, 9])
+        obj2.handleMissingValues(method='remove features', arguments='all', alsoTreatAsMissing=[3, 9])
         ret2 = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
         ret2.setFeatureNames(['a', 'b'])
         assert obj2 == ret2
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='remove features', arguments='all', missingValues=[1, 7], markMissing=True)
+        obj3.handleMissingValues(method='remove features', arguments='all', alsoTreatAsMissing=[1, 7], markMissing=True)
         ret3 = self.constructor([[2, 3, False, False], [11, None, False, True], [11, None, False, True], [8, 9, False, False]])
         ret3.setFeatureNames(['b', 'c', 'b_missing', 'c_missing'])
         try:
@@ -1688,14 +1688,14 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj1 = obj0.copy()
-        obj1.handleMissingValues(method='remove points', missingValues=[2, 9])
+        obj1.handleMissingValues(method='remove points', alsoTreatAsMissing=[2, 9])
 
     @raises(ArgumentException)
     def test_handleMissingValues_remove_features2(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj1 = obj0.copy()
-        obj1.handleMissingValues(method='remove features', missingValues=[2])
+        obj1.handleMissingValues(method='remove features', alsoTreatAsMissing=2)
 
     def test_handleMissingValues_feature_mean(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
@@ -1706,13 +1706,13 @@ class HighLevelModifying(DataTestObject):
         assert obj1 == ret1
 
         obj2 = obj0.copy()
-        obj2.handleMissingValues(method='feature mean', missingValues=[3, 7])
+        obj2.handleMissingValues(method='feature mean', alsoTreatAsMissing=[3, 7])
         ret2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
         ret2.setFeatureNames(['a', 'b', 'c'])
         assert obj2 == ret2
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='feature mean', missingValues=[3, 7], markMissing=True)
+        obj3.handleMissingValues(method='feature mean', alsoTreatAsMissing=[3, 7], markMissing=True)
         ret3 = self.constructor([[1, 2, 9, False, False, True], [1, 11, 9, True, False, True], [1, 11, 9, True, False, True], [1, 8, 9, True, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
@@ -1721,7 +1721,7 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='feature median', missingValues=[11], markMissing=True)
+        obj3.handleMissingValues(method='feature median', alsoTreatAsMissing=11, markMissing=True)
         ret3 = self.constructor([[1, 2, 3, False, False, False], [7, 5, 6, True, True, True], [7, 5, 6, False, True, True], [7, 8, 9, False, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
@@ -1730,13 +1730,13 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='feature mode', missingValues=[9], markMissing=True)
+        obj3.handleMissingValues(method='feature mode', alsoTreatAsMissing=9, markMissing=True)
         ret3 = self.constructor([[1, 2, 3, False, False, False], [7, 11, 3, True, False, True], [7, 11, 3, False, False, True], [7, 8, 3, False, False, True]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
 
         obj2 = self.constructor([['a','b','c'], [None, 'd', None], ['e','d',None], ['e','f','g']], featureNames=['a', 'b', 'c'])
-        obj2.handleMissingValues(method='feature mode', markMissing=True, missingValues=['c'])
+        obj2.handleMissingValues(method='feature mode', markMissing=True, alsoTreatAsMissing=['c'])
         ret2 = self.constructor([['a','b','g', False, False, True], ['e','d', 'g', True, False, True], ['e','d', 'g', False, False, True], ['e','f', 'g', False, False, False]])
         ret2.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj2 == ret2
@@ -1745,7 +1745,7 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='zero', missingValues=[11], markMissing=True)
+        obj3.handleMissingValues(method='zero', alsoTreatAsMissing=11, markMissing=True)
         ret3 = self.constructor([[1, 2, 3, False, False, False], [0, 0, 0, True, True, True], [7, 0, 0, False, True, True], [7, 8, 9, False, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
@@ -1754,7 +1754,7 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='constant', missingValues=[11], markMissing=True, arguments=100)
+        obj3.handleMissingValues(method='constant', alsoTreatAsMissing=[11], markMissing=True, arguments=100)
         ret3 = self.constructor([[1, 2, 3, False, False, False], [100, 100, 100, True, True, True], [7, 100, 100, False, True, True], [7, 8, 9, False, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
@@ -1763,7 +1763,7 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='forward fill', missingValues=[11], markMissing=True)
+        obj3.handleMissingValues(method='forward fill', alsoTreatAsMissing=[11], markMissing=True)
         ret3 = self.constructor([[1, 2, 3, False, False, False], [1, 2, 3, True, True, True], [7, 2, 3, False, True, True], [7, 8, 9, False, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
@@ -1772,7 +1772,7 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='backward fill', missingValues=[11], markMissing=True)
+        obj3.handleMissingValues(method='backward fill', alsoTreatAsMissing=[11], markMissing=True)
         ret3 = self.constructor([[1, 2, 3, False, False, False], [7, 8, 9, True, True, True], [7, 8, 9, False, True, True], [7, 8, 9, False, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
