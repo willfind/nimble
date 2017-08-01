@@ -733,6 +733,14 @@ class List(Base):
         4. based on method and arguments, process self.data
         5. update points and features information.
         """
+        def featureMeanMedianMode(func):
+            featureMean = self.calculateForEachFeature(func, features=featuresList).data[0]
+            tmpDict = dict(zip(featuresList, featureMean))
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                for i in tmpItem[1]:
+                    self.data[i][j] = tmpDict[j]
+
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
         missingIdxDictFeature = {i: [] for i in xrange(self.featureCount)}
         missingIdxDictPoint = {i: [] for i in xrange(self.pointCount)}
@@ -793,26 +801,11 @@ class List(Base):
                     extraDummy = [[i[j] for j in nonmissingIdx] for i in extraDummy]
                     extraFeatureNames = [extraFeatureNames[i] for i in nonmissingIdx]
         elif method == 'feature mean':
-            featureMean = self.calculateForEachFeature(UML.calculate.mean).data[0]
-            tmpDict = {i: j for i, j in enumerate(featureMean)}
-            for tmpItem in missingIdxDictFeature.items():
-                j = tmpItem[0]
-                for i in tmpItem[1]:
-                    self.data[i][j] = tmpDict[j]
+            featureMeanMedianMode(UML.calculate.mean)
         elif method == 'feature median':
-            featureMedian = self.calculateForEachFeature(UML.calculate.median).data[0]
-            tmpDict = {i: j for i, j in enumerate(featureMedian)}
-            for tmpItem in missingIdxDictFeature.items():
-                j = tmpItem[0]
-                for i in tmpItem[1]:
-                    self.data[i][j] = tmpDict[j]
+            featureMeanMedianMode(UML.calculate.median)
         elif method == 'feature mode':
-            featureMode = self.calculateForEachFeature(UML.calculate.mode).data[0]
-            tmpDict = {i: j for i, j in enumerate(featureMode)}
-            for tmpItem in missingIdxDictFeature.items():
-                j = tmpItem[0]
-                for i in tmpItem[1]:
-                    self.data[i][j] = tmpDict[j]
+            featureMeanMedianMode(UML.calculate.mode)
         elif method == 'zero':
             for tmpItem in missingIdxDictFeature.items():
                 j = tmpItem[0]

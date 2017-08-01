@@ -617,7 +617,7 @@ class DataFrame(Base):
             self.data.fillna(self.data[featuresList].median(), inplace=True)
         elif method == 'feature mode':
             #pd.DataFrame.mode is faster, but to make sure behavior consistent, let's use our own UML.calculate.mode
-            featureMode = self.calculateForEachFeature(UML.calculate.mode).data[featuresList].iloc[0]
+            featureMode = self.calculateForEachFeature(UML.calculate.mode, features=featuresList).data.iloc[0]
             self.data.fillna(featureMode, inplace=True)
         elif method == 'zero':
             myd = {i: 0 for i in featuresList}
