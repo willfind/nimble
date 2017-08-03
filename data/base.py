@@ -2753,9 +2753,6 @@ class Base(object):
         self._handleMissingValues_implementation(method, featuresList, arguments, alsoTreatAsMissing, markMissing)
 
 
-# | separating newly generated names one one side. flattendPoint / flattendFeature
-# colapsed axis name is always second
-
     def _flattenNames(self, discardAxis):
         self._validateAxis(discardAxis)
         if discardAxis == 'point':
@@ -2765,7 +2762,12 @@ class Base(object):
             keepNames = self.getPointNames()
             dropNames = self.getFeatureNames()
 
-        return [k + ' | ' + d for k in keepNames for d in dropNames]
+        ret = []
+        for d in dropNames:
+            for k in keepNames:
+                ret.append(k + ' | ' + d)
+
+        return ret
 
     def flattenToOnePoint(self):
         if self.pointCount == 0:
@@ -2777,7 +2779,10 @@ class Base(object):
                   "This object has 0 features."
             raise ImproperActionException(msg)
 
-        self._flatenToOnePoint_implementation()
+        self._flattenToOnePoint_implementation()
+
+        self._featureCount = self.pointCount * self.featureCount
+        self._pointCount = 1
         self.setFeatureNames(self._flattenNames('point'))
         self.setPointNames(['Flattened'])
 
@@ -2792,7 +2797,10 @@ class Base(object):
                   "This object has 0 features."
             raise ImproperActionException(msg)
 
-        self._flatenToOneFeature_implementation()
+        self._flattenToOneFeature_implementation()
+
+        self._pointCount = self.pointCount * self.featureCount
+        self._featureCount = 1
         self.setPointNames(self._flattenNames('feature'))
         self.setFeatureNames(['Flattened'])
 
@@ -2802,20 +2810,89 @@ class Base(object):
         if addedAxis == 'point':
             both = self.getFeatureNames()
             keptAxisLength = self.featureCount / addedAxisLength
+            allDefault = self._namesAreFlattenFormatConsistent('point', addedAxisLength, keptAxisLength)
         else:
             both = self.getPointNames()
             keptAxisLength = self.pointCount / addedAxisLength
+            allDefault = self._namesAreFlattenFormatConsistent('feature', addedAxisLength, keptAxisLength)
 
-        # we consider the split of the elements into keptAxisLength chunks (of
-        # which there will be addedAxisLength number of chunks), and want the
-        # index of the first of each chunk. We allow that first name to be
-        # representative for that chunk: all will have the same stuff past
-        # the vertical bar.
-        locations = xrange(0, -keptAxisLength, keptAxisLength)
-        addedAxisName = [both[n].split(" | ")[1] for n in locations]
-        keptAxisName = [name.split(" | ")[0] for name in both[:keptAxisLength]]
+        if allDefault:
+            addedAxisName = None
+            keptAxisName = None
+        else:
+            # we consider the split of the elements into keptAxisLength chunks (of
+            # which there will be addedAxisLength number of chunks), and want the
+            # index of the first of each chunk. We allow that first name to be
+            # representative for that chunk: all will have the same stuff past
+            # the vertical bar.
+            locations = xrange(0, len(both), keptAxisLength)
+            addedAxisName = [both[n].split(" | ")[1] for n in locations]
+            keptAxisName = [name.split(" | ")[0] for name in both[:keptAxisLength]]
 
         return addedAxisName, keptAxisName
+
+    def _namesAreFlattenFormatConsistent(self, flatAxis, newFLen, newUFLen):
+        flat = self.getPointNames() if flatAxis == 'point' else self.getFeatureNames()
+        formatted = self.getFeatureNames() if flatAxis == 'point' else self.getPointNames()
+
+        def checkIsDefault(axisName):
+            ret = False
+            try:
+                if axisName.startswith(DEFAULT_PREFIX):
+                    int(axisName[len(DEFAULT_PREFIX):])
+                    ret = True
+            except ValueError:
+                ret = False
+            return ret
+
+        # check the contents of the names along the flattened axis
+        isDefault = checkIsDefault(flat[0])
+        isExact = flat == ['Flattened']
+        if not (isDefault or isExact):
+            msg = "In order to unflatten this object, the names must be " \
+                  "consistent with the results from a flatten call. Therefore, " \
+                  "the " + flatAxis + " name for this object ('" + flat[0] + "') must " \
+                  "either be a default name or exactly the string 'Flattened'"
+            raise ImproperActionException(msg)
+
+        # check the contents of the names along the unflattend axis
+        msg = "In order to unflatten this object, the names must be " \
+              "consistent with the results from a flatten call. Therefore, " \
+              "the " + flatAxis + " names for this object must either be all " \
+              "default, or they must be ' | ' split names with name values " \
+              "consistent with the positioning from a flatten call."
+        # each name - default or correctly formatted
+        allDefaultStatus = None
+        for name in formatted:
+            isDefault = checkIsDefault(name)
+            formatCorrect = len(name.split(" | ")) == 2
+            if allDefaultStatus is None:
+                allDefaultStatus = isDefault
+            else:
+                if isDefault != allDefaultStatus:
+                    raise ImproperActionException(msg)
+
+            if not (isDefault or formatCorrect):
+                raise ImproperActionException(msg)
+
+        # consistency only relevant if we have non-default names
+        if not allDefaultStatus:
+            # seen values - consistent wrt original flattend axis names
+            for i in xrange(newFLen):
+                same = formatted[newUFLen*i].split(' | ')[1]
+                for name in formatted[newUFLen*i:newUFLen*(i+1)]:
+                    if same != name.split(' | ')[1]:
+                        raise ImproperActionException(msg)
+
+            # seen values - consistent wrt original unflattend axis names
+            for i in xrange(newUFLen):
+                same = formatted[i].split(' | ')[0]
+                for j in xrange(newFLen):
+                    name = formatted[i + (j * newUFLen)]
+                    if same != name.split(' | ')[0]:
+                        raise ImproperActionException(msg)
+
+        return allDefaultStatus
 
 
     def unflattenFromOnePoint(self, numPoints):
@@ -2836,6 +2913,8 @@ class Base(object):
 
         self._unflattenFromOnePoint_implementation(numPoints)
         ret = self._unflattenNames('point', numPoints)
+        self._featureCount = self.featureCount / numPoints
+        self._pointCount = numPoints
         self.setPointNames(ret[0])
         self.setFeatureNames(ret[1])
 
@@ -2859,6 +2938,8 @@ class Base(object):
 
         self._unflattenFromOneFeature_implementation(numFeatures)
         ret = self._unflattenNames('feature', numFeatures)
+        self._pointCount = self.pointCount / numFeatures
+        self._featureCount = numFeatures
         self.setPointNames(ret[1])
         self.setFeatureNames(ret[0])
 

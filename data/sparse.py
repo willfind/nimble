@@ -1117,6 +1117,61 @@ class Sparse(Base):
             self._sorted = None
 
 
+    def _flattenToOnePoint_implementation(self):
+        self._sortInternal('point')
+        pLen = self.featureCount
+        numElem = self.pointCount * self.featureCount
+        for i in xrange(len(self.data.data)):
+            if self.data.row[i] > 0:
+                self._data.col[i] += (self.data.row[i] * pLen)
+                self._data.row[i] = 0
+
+        self._data = CooWithEmpty((self._data.data, (self._data.row, self._data.col)), (1, numElem))
+
+    def _flattenToOneFeature_implementation(self):
+        self._sortInternal('feature')
+        fLen = self.pointCount
+        numElem = self.pointCount * self.featureCount
+        for i in xrange(len(self.data.data)):
+            if self.data.col[i] > 0:
+                self._data.internal.row[i] += (self._data.col[i] * fLen)
+                self._data.internal.col[i] = 0
+
+        self._data = CooWithEmpty((self._data.data, (self._data.row, self._data.col)), (numElem, 1))
+
+
+    def _unflattenFromOnePoint_implementation(self, numPoints):
+        # only one feature, so both sorts are the same order
+        if self._sorted is None:
+            self._sortInternal('point')
+
+        numFeatures = self.featureCount / numPoints
+        newShape = (numPoints, numFeatures)
+
+        for i in xrange(len(self.data.data)):
+            # must change the row entry before modifying the col entry
+            self._data.internal.row[i] = self._data.internal.col[i] / numFeatures
+            self._data.internal.col[i] = self._data.internal.col[i] % numFeatures
+
+        self._data = CooWithEmpty((self._data.data, (self._data.row, self._data.col)), newShape)
+        self._sorted = 'point'
+
+    def _unflattenFromOneFeature_implementation(self, numFeatures):
+        # only one feature, so both sorts are the same order
+        if self._sorted is None:
+            self._sortInternal('feature')
+
+        numPoints = self.pointCount / numFeatures
+        newShape = (numPoints, numFeatures)
+
+        for i in xrange(len(self.data.data)):
+            # must change the col entry before modifying the row entry
+            self._data.internal.col[i] = self._data.internal.row[i] / numPoints
+            self._data.internal.row[i] = self._data.internal.row[i] % numPoints
+
+        self._data = CooWithEmpty((self._data.data, (self._data.row, self._data.col)), newShape)
+        self._sorted = 'feature'
+
     def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
         #instead of always copying, use reshape or resize to sometimes cut array down
         # to size???

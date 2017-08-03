@@ -865,6 +865,48 @@ class List(Base):
         self._pointCount = pCount
         self.setPointNames(pointNames)
 
+    def _flattenToOnePoint_implementation(self):
+        onto = self.data[0]
+        for i in xrange(1,self.pointCount):
+            onto += self.data[1]
+            del self.data[1]
+
+        self._numFeatures = len(onto)
+
+    def _flattenToOneFeature_implementation(self):
+        result = []
+        for i in xrange(self.featureCount):
+            for p in self.data:
+                result.append([p[i]])
+
+        self.data = result
+        self._numFeatures = 1
+
+    def _unflattenFromOnePoint_implementation(self, numPoints):
+        result = []
+        numFeatures = self.featureCount / numPoints
+        for i in xrange(numPoints):
+            temp = self.data[0][(i*numFeatures):((i+1)*numFeatures)]
+            result.append(temp)
+
+        self.data = result
+        self._numFeatures = numFeatures
+
+    def _unflattenFromOneFeature_implementation(self, numFeatures):
+        result = []
+        numPoints = self.pointCount / numFeatures
+        # reconstruct the shape we want, point by point. We access the singleton
+        # values from the current data in an out of order iteration
+        for i in xrange(numPoints):
+            temp = []
+            for j in xrange(i, self.pointCount, numPoints):
+                temp += self.data[j]
+            result.append(temp)
+
+        self.data = result
+        self._numFeatures = numFeatures
+
+
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
 
