@@ -2754,6 +2754,10 @@ class Base(object):
 
 
     def _flattenNames(self, discardAxis):
+        """
+        Helper calculating the axis names for the unflattend axis after a flatten operation.
+
+        """
         self._validateAxis(discardAxis)
         if discardAxis == 'point':
             keepNames = self.getFeatureNames()
@@ -2770,6 +2774,21 @@ class Base(object):
         return ret
 
     def flattenToOnePoint(self):
+        """
+        Adjust this object in place so that the same values are all in a single point.
+
+        Each feature in the result maps to exactly one value from the original object.
+        The order of values respects the point order from the original object,
+        if there were n features in the original, the first n values in the result
+        will exactly match the first point, the nth to (2n-1)th values will exactly
+        match the original second point, etc. The feature names will be transformed
+        such that the value at the intersection of the "pn_i" named point and "fn_j"
+        named feature from the original object will have a feature name of "fn_j | pn_i".
+        The single point will have a name of "Flattened".
+
+        Raises: ImproperActionException if an axis has length 0
+
+        """
         if self.pointCount == 0:
             msg = "Can only flattenToOnePoint when there is one or more points. " \
                   "This object has 0 points."
@@ -2788,6 +2807,21 @@ class Base(object):
 
 
     def flattenToOneFeature(self):
+        """
+        Adjust this object in place so that the same values are all in a single feature.
+
+        Each point in the result maps to exactly one value from the original object.
+        The order of values respects the feature order from the original object,
+        if there were n points in the original, the first n values in the result
+        will exactly match the first feature, the nth to (2n-1)th values will exactly
+        match the original second feature, etc. The point names will be transformed
+        such that the value at the intersection of the "pn_i" named point and "fn_j"
+        named feature from the original object will have a point name of "pn_i | fn_j".
+        The single feature will have a name of "Flattened".
+
+        Raises: ImproperActionException if an axis has length 0
+
+        """
         if self.pointCount == 0:
             msg = "Can only flattenToOneFeature when there is one or more points. " \
                   "This object has 0 points."
@@ -2806,6 +2840,10 @@ class Base(object):
 
 
     def _unflattenNames(self, addedAxis, addedAxisLength):
+        """
+        Helper calculating the new axis names after an unflattening operation.
+
+        """
         self._validateAxis(addedAxis)
         if addedAxis == 'point':
             both = self.getFeatureNames()
@@ -2832,6 +2870,14 @@ class Base(object):
         return addedAxisName, keptAxisName
 
     def _namesAreFlattenFormatConsistent(self, flatAxis, newFLen, newUFLen):
+        """
+        Helper which validates the formatting of axis names prior to unflattening.
+
+        Will raise ImproperActionException if an inconsistency with the formatting
+        done by the flatten operations is discovered. Returns True if all the names
+        along the unflattend axis are default, False otherwise.
+
+        """
         flat = self.getPointNames() if flatAxis == 'point' else self.getFeatureNames()
         formatted = self.getFeatureNames() if flatAxis == 'point' else self.getPointNames()
 
@@ -2896,6 +2942,23 @@ class Base(object):
 
 
     def unflattenFromOnePoint(self, numPoints):
+        """
+        Adjust this point vector in place to an object that it could have been flattend from.
+
+        This is an inverse of the method flattenToOnePoint: if an object foo with n
+        points calls the flatten method, then this method with n as the argument, the
+        result should be identical to the original foo. It is not limited to objects
+        that have previously had flattenToOnePoint called on them; any object whose
+        structure and names are consistent with a previous call to flattenToOnePoint
+        may call this method. This includes objects with all default names.
+
+        Raises: ArgumentException if numPoints does not divide the length of the point
+        vector.
+
+        Raises: ImproperActionException if an axis has length 0, there is more than one
+        point, or the names are inconsistent with a previous call to flattenToOnePoint.
+
+        """
         if self.featureCount == 0:
             msg = "Can only unflattenFromOnePoint when there is one or more features. " \
                   "This object has 0 features."
@@ -2920,6 +2983,23 @@ class Base(object):
 
 
     def unflattenFromOneFeature(self, numFeatures):
+        """
+        Adjust this feature vector in place to an object that it could have been flattend from.
+
+        This is an inverse of the method flattenToOneFeature: if an object foo with n
+        features calls the flatten method, then this method with n as the argument, the
+        result should be identical to the original foo. It is not limited to objects
+        that have previously had flattenToOneFeature called on them; any object whose
+        structure and names are consistent with a previous call to flattenToOneFeature
+        may call this method. This includes objects with all default names.
+
+        Raises: ArgumentException if numPoints does not divide the length of the point
+        vector.
+
+        Raises: ImproperActionException if an axis has length 0, there is more than one
+        point, or the names are inconsistent with a previous call to flattenToOnePoint.
+
+        """
         if self.pointCount == 0:
             msg = "Can only unflattenFromOneFeature when there is one or more points. " \
                   "This object has 0 points."
