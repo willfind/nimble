@@ -1167,7 +1167,7 @@ class Sparse(Base):
                     self.fillWith(UML.createData('List', [featureMean[0, j]]), i, j, i, j)
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
-        missingIdxDictFeature = {i: [] for i in xrange(self.featureCount)}
+        missingIdxDictFeature = {i: [] for i in featuresList}
         missingIdxDictPoint = {i: [] for i in xrange(self.pointCount)}
         for i in xrange(self.pointCount):
             for j in featuresList:
@@ -1186,7 +1186,7 @@ class Sparse(Base):
             for tmpItem in missingIdxDictFeature.items():
                 extraFeatureNames.append(self.getFeatureName(tmpItem[0]) + '_missing')
             for tmpItem in missingIdxDictPoint.items():
-                extraDummy.append([True if i in tmpItem[1] else False for i in xrange(self.featureCount)])
+                extraDummy.append([True if i in tmpItem[1] else False for i in featuresList])
 
         #from now, based on method and arguments, process self.data
         if method == 'remove points':

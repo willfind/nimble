@@ -741,7 +741,7 @@ class List(Base):
                     self.data[i][j] = featureMean[0, j]
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
-        missingIdxDictFeature = {i: [] for i in xrange(self.featureCount)}
+        missingIdxDictFeature = {i: [] for i in featuresList}
         missingIdxDictPoint = {i: [] for i in xrange(self.pointCount)}
         for i in xrange(self.pointCount):
             for j in featuresList:
@@ -759,7 +759,7 @@ class List(Base):
             for tmpItem in missingIdxDictFeature.items():
                 extraFeatureNames.append(self.getFeatureName(tmpItem[0]) + '_missing')
             for tmpItem in missingIdxDictPoint.items():
-                extraDummy.append([True if i in tmpItem[1] else False for i in xrange(self.featureCount)])
+                extraDummy.append([True if i in tmpItem[1] else False for i in featuresList])
 
             #extraDummy = numpy.matrix(extraDummy).transpose()
         # import pdb; pdb.set_trace()

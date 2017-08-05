@@ -627,7 +627,7 @@ class Matrix(Base):
                     self.data[i, j] = featureMean[0, j]
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
-        missingIdxDictFeature = {i: [] for i in xrange(self.featureCount)}
+        missingIdxDictFeature = {i: [] for i in featuresList}#{i: [] for i in xrange(self.featureCount)}
         missingIdxDictPoint = {i: [] for i in xrange(self.pointCount)}
         for i in xrange(self.pointCount):
             for j in featuresList:

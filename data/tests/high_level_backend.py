@@ -1755,10 +1755,10 @@ class HighLevelModifying(DataTestObject):
         assert obj3 == ret3
 
     def test_handleMissingValues_constant(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj0 = self.constructor([[1, 2, 3], [None, 0, None], [7, 0, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='constant', alsoTreatAsMissing=[11], markMissing=True, arguments=100)
+        obj3.handleMissingValues(method='constant', alsoTreatAsMissing=[0], markMissing=True, arguments=100)
         ret3 = self.constructor([[1, 2, 3, False, False, False], [100, 100, 100, True, True, True], [7, 100, 100, False, True, True], [7, 8, 9, False, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
