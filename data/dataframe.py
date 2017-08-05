@@ -687,7 +687,7 @@ class DataFrame(Base):
             raise ArgumentException(msg)
 
         if markMissing:
-            self.data = self.data.join(extraDf[self.data.columns], rsuffix='_missing', how='left')
+            self.data = self.data.join(extraDf[[i for i in featuresList if i in self.data.columns]], rsuffix='_missing', how='left')
         pCount, fCount = self.data.shape
         self._featureCount = fCount
         self.setFeatureNames(self.data.columns.tolist())

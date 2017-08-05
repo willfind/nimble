@@ -501,6 +501,8 @@ class Base(object):
 		ID or a list of point IDs to limit application only to those specified.
 
 		"""
+        if points is not None:
+            points = copy.copy(points)
         if self.pointCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
         if self.featureCount == 0:
@@ -547,6 +549,8 @@ class Base(object):
 		specified.
 
 		"""
+        if features is not None:
+            features = copy.copy(features)
         if self.pointCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
         if self.featureCount == 0:

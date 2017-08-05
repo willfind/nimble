@@ -620,12 +620,11 @@ class Matrix(Base):
         5. update points and features information.
         """
         def featureMeanMedianMode(func):
-            featureMean = self.calculateForEachFeature(func, features=featuresList).data.tolist()[0]
-            tmpDict = dict(zip(featuresList, featureMean))
+            featureMean = self.calculateForEachFeature(func, features=featuresList)
             for tmpItem in missingIdxDictFeature.items():
                 j = tmpItem[0]
                 for i in tmpItem[1]:
-                    self.data[i, j] = tmpDict[j]
+                    self.data[i, j] = featureMean[0, j]
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
         missingIdxDictFeature = {i: [] for i in xrange(self.featureCount)}
