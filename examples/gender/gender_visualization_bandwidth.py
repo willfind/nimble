@@ -6,6 +6,7 @@ survery data.
 
 """
 
+import math
 import numpy
 import sys
 import os
@@ -111,7 +112,7 @@ def testFilterLowest():
     assert filterLowest(test, .2).copyAs("pythonlist") == [[4,8,16,32]]
 
 def test_LogPobSum():
-    raw = [8,16,32]
+    raw = [math.e**3,math.e**4,math.e**5]
     test = UML.createData("Matrix", raw)
     ret = LogLikelihoodSum(None, test)
     assert ret == -12
