@@ -1,16 +1,8 @@
 import sys
 import numpy
-import scipy
 import os.path
 import functools
 from functools import partial
-
-KDE_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/kdePlotting"
-ORIG_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/"
-sys.path.append(KDE_HELPER_PATH)
-sys.path.append(ORIG_HELPER_PATH)
-from fancyHistogram import kdeAndHistogramPlot
-from multiplot import plotDualWithBlendFill
 
 from allowImports import boilerplate
 boilerplate()
@@ -26,9 +18,17 @@ from UML.examples.gender.gender_visualization_bandwidth import fixedBandwidth_al
 from UML.examples.gender.gender_visualization_bandwidth import fixedBandwidth_drop5percent
 from UML.examples.gender.gender_visualization_bandwidth import fixedBandwidth_noisy_all
 from UML.examples.gender.gender_visualization_bandwidth import collateBW
-
 #from UML.examples.gender.gender_visualization_bandwidth import *
 
+scipy = UML.importModule("scipy")
+
+KDE_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/kdePlotting"
+ORIG_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/"
+sys.path.append(KDE_HELPER_PATH)
+sys.path.append(ORIG_HELPER_PATH)
+
+kdeAndHistogramPlot = UML.importModule("fancyHistogram.kdeAndHistogramPlot")
+multiplot = UML.importModule("multiplot.plotDualWithBlendFill")
 
 
 def cleanName(name):

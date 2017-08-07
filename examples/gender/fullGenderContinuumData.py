@@ -11,8 +11,6 @@ import os
 import sys
 import time
 import numpy
-import scipy
-import sklearn.decomposition
 
 import UML
 from UML.calculate import fractionIncorrect
@@ -20,10 +18,12 @@ from UML.customLearners import CustomLearner
 from UML.examples.logisticRegressionCoefficientSelection import LogisticRegressionSelectByRegularization
 from UML.examples.logisticRegressionCoefficientSelection import LogisticRegressionSelectByOmission
 
+scipy = UML.importModule('scipy')
+decomposition = UML.importModule('sklearn.decomposition')
 
 missingPath = "/home/tpburns/gimbel_tech/python_workspace/missingValues"
 sys.path.append(missingPath)
-import missing
+missing = UML.importModule("missing")
 
 
 class MissingAwareSVD(CustomLearner):
@@ -80,7 +80,7 @@ def test_MASVD_vs_skl_noMissing():
     transUML = tl.apply(data)
     transUML = transUML.copyAs("numpyarray")
 
-    sklEst = sklearn.decomposition.PCA(n_components=2)
+    sklEst = decomposition.PCA(n_components=2)
     transSKL = sklEst.fit_transform(raw)
 #   print sklEst.components_
 
@@ -544,7 +544,6 @@ def trial_SVMClassifier_poly(trainX, trainY, testX, testY, degree):
 
 
 if __name__ == "__main__":
-
     # Some variables to control the flow of the program
     retType = "Matrix"
     defaultFile = "/home/tpburns/gimbel_tech/data/gender/sapaTempData696items08dec2013thru26jul2014"

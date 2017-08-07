@@ -1,12 +1,19 @@
-import matplotlib
-import matplotlib.lines as mlines
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
-import os.path
-import sys
-import PIL
-from PIL import Image
 
+from allowImports import boilerplate
+boilerplate()
+
+import UML
+import os.path
+
+matplotlib = UML.importModule("matplotlib")
+if matplotlib:
+    mlines = UML.importModule("matplotlib.mlines")
+    mpatches = UML.importModule("matplotlib.mpatches")
+    plt = UML.importModule("matplotlib.pyplot")
+
+PIL = UML.importModule("PIL")
+if PIL:
+    Image = UML.importModule("PIL.Image")
 
 NO_Y_LABEL = False
 
