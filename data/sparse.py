@@ -31,63 +31,39 @@ class Sparse(Base):
 
         """
 
-        if (not isinstance(data, numpy.matrix)) and (not scipy.sparse.isspmatrix(data)) \
-            and 'Coo' not in str(type(data)):
+        if (not isinstance(data, numpy.matrix)) and (not scipy.sparse.isspmatrix(data)):
             msg = "the input data can only be a scipy sparse matrix or a numpy matrix or CooWithEmpty or CooDummy."
             raise ArgumentException(msg)
+        #import pdb; pdb.set_trace()
+        if scipy.sparse.isspmatrix_coo(data):
+            if reuseData:
+                self.data = data
+            else:
+                self.data = data.copy()
+        elif scipy.sparse.isspmatrix(data):
+            #data is a spmatrix in other format instead of coo
+            self.data = data.tocoo()
+        else:#data is numpy.matrix
+            self.data = scipy.sparse.coo_matrix(data)
 
         self._sorted = None
-        if hasattr(data, 'shape') and (data.shape[0] == 0 or data.shape[1] == 0):
-            if isinstance(data, CooWithEmpty):
-                data = data.internal
-            else:
-                rowShape = 0
-                colShape = 0
-                if hasattr(data, 'shape'):
-                    rowShape = data.shape[0]
-                    colShape = data.shape[1]
-                if featureNames is not None and colShape == 0:
-                    colShape = len(featureNames)
-                if pointNames is not None and rowShape == 0:
-                    rowShape = len(pointNames)
-
-                data = numpy.empty(shape=(rowShape, colShape))
-
-            data = numpy.matrix(data, dtype=numpy.float)
-            self._data = CooWithEmpty(data)
-
-        elif isinstance(data, CooWrapper):
-            if reuseData:
-                self._data = data
-            else:
-                self._data = CooWithEmpty(data)
-        else:
-            if scipy.sparse.isspmatrix(data):
-                if reuseData:
-                    self._data = CooWithEmpty(data, reuseData=True)
-                else:
-                    self._data = CooWithEmpty(data.copy())
-            else:
-                self._data = CooWithEmpty(data)
-
-        kwds['shape'] = scipy.shape(self._data)
+        self.alsoUseDOK = False
+        kwds['shape'] = self.data.shape
         kwds['pointNames'] = pointNames
         kwds['featureNames'] = featureNames
         super(Sparse, self).__init__(**kwds)
 
 
     def getdata(self):
-        return self._data.internal
-
-    data = property(getdata)
+        return self.data
 
 
     def _features_implementation(self):
-        (points, cols) = scipy.shape(self._data)
+        (points, cols) = scipy.shape(self.data)
         return cols
 
     def _points_implementation(self):
-        (points, cols) = scipy.shape(self._data)
+        (points, cols) = scipy.shape(self.data)
         return points
 
 
@@ -114,7 +90,7 @@ class Sparse(Base):
                 else:
                     end = self._sortedPosition
                     #this ensures end is always in range, and always exclusive
-                    while (end < len(self._outer._data.data) and self._outer._data.row[end] == self._nextID):
+                    while (end < len(self._outer.data.data) and self._outer.data.row[end] == self._nextID):
                         end += 1
                     value = self._outer.pointView(self._nextID)
                     self._sortedPosition = end
@@ -149,7 +125,7 @@ class Sparse(Base):
                 else:
                     end = self._sortedPosition
                     #this ensures end is always in range, and always exclusive
-                    while (end < len(self._outer._data.data) and self._outer._data.col[end] == self._nextID):
+                    while (end < len(self._outer.data.data) and self._outer.data.col[end] == self._nextID):
                         end += 1
                     value = self._outer.featureView(self._nextID)
                     self._sortedPosition = end
@@ -171,17 +147,17 @@ class Sparse(Base):
         Append the points from the toAppend object to the bottom of the features in this object
 
         """
-        newData = numpy.append(self._data.data, toAppend._data.data)
-        newRow = numpy.append(self._data.row, toAppend._data.row)
-        newCol = numpy.append(self._data.col, toAppend._data.col)
+        newData = numpy.append(self.data.data, toAppend.data.data)
+        newRow = numpy.append(self.data.row, toAppend.data.row)
+        newCol = numpy.append(self.data.col, toAppend.data.col)
 
         # correct the row entries
         offset = self.pointCount
-        toAdd = numpy.ones(len(newData) - len(self._data.data), dtype=newRow.dtype) * offset
-        newRow[len(self._data.data):] += toAdd
+        toAdd = numpy.ones(len(newData) - len(self.data.data), dtype=newRow.dtype) * offset
+        newRow[len(self.data.data):] += toAdd
 
         numNewRows = self.pointCount + toAppend.pointCount
-        self._data = CooWithEmpty((newData, (newRow, newCol)), shape=(numNewRows, self.featureCount))
+        self.data = coo_matrix((newData, (newRow, newCol)), shape=(numNewRows, self.featureCount))
         if self._sorted == 'feature':
             self._sorted = None
 
@@ -191,17 +167,17 @@ class Sparse(Base):
         Append the features from the toAppend object to right ends of the points in this object
 
         """
-        newData = numpy.append(self._data.data, toAppend._data.data)
-        newRow = numpy.append(self._data.row, toAppend._data.row)
-        newCol = numpy.append(self._data.col, toAppend._data.col)
+        newData = numpy.append(self.data.data, toAppend.data.data)
+        newRow = numpy.append(self.data.row, toAppend.data.row)
+        newCol = numpy.append(self.data.col, toAppend.data.col)
 
         # correct the col entries
         offset = self.featureCount
-        toAdd = numpy.ones(len(newData) - len(self._data.data), dtype=newCol.dtype) * offset
-        newCol[len(self._data.data):] += toAdd
+        toAdd = numpy.ones(len(newData) - len(self.data.data), dtype=newCol.dtype) * offset
+        newCol[len(self.data.data):] += toAdd
 
         numNewCols = self.featureCount + toAppend.featureCount
-        self._data = CooWithEmpty((newData, (newRow, newCol)), shape=(self.pointCount, numNewCols))
+        self.data = coo_matrix((newData, (newRow, newCol)), shape=(self.pointCount, numNewCols))
         if self._sorted == 'point':
             self._sorted = None
 
@@ -224,13 +200,13 @@ class Sparse(Base):
         if axisType == 'point':
             viewMaker = self.pointView
             getViewIter = self.pointIterator
-            targetAxis = self._data.row
+            targetAxis = self.data.row
             indexGetter = self.getPointIndex
             nameGetter = self.getPointName
             nameGetterStr = 'getPointName'
         else:
             viewMaker = self.featureView
-            targetAxis = self._data.col
+            targetAxis = self.data.col
             getViewIter = self.featureIterator
             indexGetter = self.getFeatureIndex
             nameGetter = self.getFeatureName
@@ -296,9 +272,9 @@ class Sparse(Base):
             reverseIndexPosition[indexPosition[i]] = i
 
         if axisType == 'point':
-            self._data.row[:] = reverseIndexPosition[self._data.row]
+            self.data.row[:] = reverseIndexPosition[self.data.row]
         else:
-            self._data.col[:] = reverseIndexPosition[self._data.col]
+            self.data.col[:] = reverseIndexPosition[self.data.col]
 
         # we need to return an array of the feature names in their new order.
         # we convert the indices of the their previous location into their names
@@ -376,13 +352,13 @@ class Sparse(Base):
 
         self._sortInternal(axisType)
         if axisType == "feature":
-            targetAxis = self._data.col
-            otherAxis = self._data.row
+            targetAxis = self.data.col
+            otherAxis = self.data.row
             extractTarget = extractCols
             extractOther = extractRows
         else:
-            targetAxis = self._data.row
-            otherAxis = self._data.col
+            targetAxis = self.data.row
+            otherAxis = self.data.col
             extractTarget = extractRows
             extractOther = extractCols
 
@@ -399,7 +375,7 @@ class Sparse(Base):
         # underlying structure to save space
         copyIndex = 0
         extractIndex = 0
-        for i in xrange(len(self._data.data)):
+        for i in xrange(len(self.data.data)):
             value = targetAxis[i]
             # Move extractIndex forward until we get to an entry that might
             # match the current (or a future) value
@@ -408,25 +384,25 @@ class Sparse(Base):
 
             # Check if the current value matches one we want extracted
             if extractIndex < extractLength and value == toExtractSorted[extractIndex]:
-                extractData.append(self._data.data[i])
+                extractData.append(self.data.data[i])
                 extractOther.append(otherAxis[i])
                 extractTarget.append(positionMap[value])
             # Not extracted. Copy / pack to front of arrays, adjusting for
             # those already extracted
             else:
-                self._data.data[copyIndex] = self._data.data[i]
+                self.data.data[copyIndex] = self.data.data[i]
                 otherAxis[copyIndex] = otherAxis[i]
                 targetAxis[copyIndex] = targetAxis[i] - extractIndex
                 copyIndex = copyIndex + 1
 
         # reinstantiate self
         # (cannot reshape coo matrices, so cannot do this in place)
-        (selfShape, extShape) = _calcShapes(self._data.shape, extractLength, axisType)
-        self._data = CooWithEmpty(
-            (self._data.data[0:copyIndex], (self._data.row[0:copyIndex], self._data.col[0:copyIndex])), selfShape)
+        (selfShape, extShape) = _calcShapes(self.data.shape, extractLength, axisType)
+        self.data = coo_matrix(
+            (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex])), selfShape)
 
         # instantiate return data
-        ret = CooWithEmpty((extractData, (extractRows, extractCols)), shape=extShape)
+        ret = coo_matrix((extractData, (extractRows, extractCols)), shape=extShape)
 
         # get names for return obj
         pnames = []
@@ -450,14 +426,14 @@ class Sparse(Base):
 
         self._sortInternal(axisType)
         if axisType == "feature":
-            targetAxis = self._data.col
-            otherAxis = self._data.row
+            targetAxis = self.data.col
+            otherAxis = self.data.row
             extractTarget = extractCols
             extractOther = extractRows
             viewMaker = self.featureView
         else:
-            targetAxis = self._data.row
-            otherAxis = self._data.col
+            targetAxis = self.data.row
+            otherAxis = self.data.col
             extractTarget = extractRows
             extractOther = extractCols
             viewMaker = self.pointView
@@ -466,32 +442,32 @@ class Sparse(Base):
         vectorStartIndex = 0
         extractedIDs = []
         # consume zeroed vectors, up to the first nonzero value
-        if self._data.nnz > 0 and self._data.data[0] != 0:
+        if self.data.nnz > 0 and self.data.data[0] != 0:
             for i in xrange(0, targetAxis[0]):
                 if toExtract(viewMaker(i)):
                     extractedIDs.append(i)
         #walk through each coordinate entry
-        for i in xrange(len(self._data.data)):
+        for i in xrange(len(self.data.data)):
             #collect values into points
             targetValue = targetAxis[i]
             #if this is the end of a point
-            if i == len(self._data.data) - 1 or targetAxis[i + 1] != targetValue:
+            if i == len(self.data.data) - 1 or targetAxis[i + 1] != targetValue:
                 #evaluate whether curr point is to be extracted or not
                 # and perform the appropriate copies
                 if toExtract(viewMaker(targetValue)):
                     for j in xrange(vectorStartIndex, i + 1):
-                        extractData.append(self._data.data[j])
+                        extractData.append(self.data.data[j])
                         extractOther.append(otherAxis[j])
                         extractTarget.append(len(extractedIDs))
                     extractedIDs.append(targetValue)
                 else:
                     for j in xrange(vectorStartIndex, i + 1):
-                        self._data.data[copyIndex] = self._data.data[j]
+                        self.data.data[copyIndex] = self.data.data[j]
                         otherAxis[copyIndex] = otherAxis[j]
                         targetAxis[copyIndex] = targetAxis[j] - len(extractedIDs)
                         copyIndex = copyIndex + 1
                 # process zeroed vectors up to the ID of the new vector
-                if i < len(self._data.data) - 1:
+                if i < len(self.data.data) - 1:
                     nextValue = targetAxis[i + 1]
                 else:
                     if axisType == 'point':
@@ -507,12 +483,12 @@ class Sparse(Base):
 
         # reinstantiate self
         # (cannot reshape coo matrices, so cannot do this in place)
-        (selfShape, extShape) = _calcShapes(self._data.shape, len(extractedIDs), axisType)
-        self._data = CooWithEmpty(
-            (self._data.data[0:copyIndex], (self._data.row[0:copyIndex], self._data.col[0:copyIndex])), selfShape)
+        (selfShape, extShape) = _calcShapes(self.data.shape, len(extractedIDs), axisType)
+        self.data = coo_matrix(
+            (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex])), selfShape)
 
         # instantiate return data
-        ret = CooWithEmpty((extractData, (extractRows, extractCols)), shape=extShape)
+        ret = coo_matrix((extractData, (extractRows, extractCols)), shape=extShape)
 
         # get names for return obj
         pnames = []
@@ -536,13 +512,13 @@ class Sparse(Base):
         extractCols = []
 
         if axisType == "feature":
-            targetAxis = self._data.col
-            otherAxis = self._data.row
+            targetAxis = self.data.col
+            otherAxis = self.data.row
             extractTarget = extractCols
             extractOther = extractRows
         else:
-            targetAxis = self._data.row
-            otherAxis = self._data.col
+            targetAxis = self.data.row
+            otherAxis = self.data.col
             extractTarget = extractRows
             extractOther = extractCols
 
@@ -550,14 +526,14 @@ class Sparse(Base):
         # underlying structure to save space
         copyIndex = 0
 
-        for i in xrange(len(self._data.data)):
+        for i in xrange(len(self.data.data)):
             value = targetAxis[i]
             if value >= start and value <= end:
-                extractData.append(self._data.data[i])
+                extractData.append(self.data.data[i])
                 extractOther.append(otherAxis[i])
                 extractTarget.append(value - start)
             else:
-                self._data.data[copyIndex] = self._data.data[i]
+                self.data.data[copyIndex] = self.data.data[i]
                 otherAxis[copyIndex] = otherAxis[i]
                 if targetAxis[i] < start:
                     targetAxis[copyIndex] = targetAxis[i]
@@ -568,12 +544,12 @@ class Sparse(Base):
 
         # reinstantiate self
         # (cannot reshape coo matrices, so cannot do this in place)
-        (selfShape, extShape) = _calcShapes(self._data.shape, rangeLength, axisType)
-        self._data = CooWithEmpty(
-            (self._data.data[0:copyIndex], (self._data.row[0:copyIndex], self._data.col[0:copyIndex])), selfShape)
+        (selfShape, extShape) = _calcShapes(self.data.shape, rangeLength, axisType)
+        self.data = coo_matrix(
+            (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex])), selfShape)
 
         # instantiate return data
-        ret = CooWithEmpty((extractData, (extractRows, extractCols)), shape=extShape)
+        ret = coo_matrix((extractData, (extractRows, extractCols)), shape=extShape)
 
         # get names for return obj
         pnames = []
@@ -590,9 +566,9 @@ class Sparse(Base):
         return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
     def _transpose_implementation(self):
-        self._data = self._data.transpose()
+        self.data = self.data.transpose()
         self._sorted = None
-        _resync(self._data)
+        #_resync(self.data)
 
     #		if self._sorted == 'point':
     #			self._sorted = 'feature'
@@ -606,8 +582,8 @@ class Sparse(Base):
         maxVal = self.featureCount
 
         # consume zeroed vectors, up to the first nonzero value
-        if self._data.data[0] != 0:
-            for i in xrange(0, self._data.row[0]):
+        if self.data.data[0] != 0:
+            for i in xrange(0, self.data.row[0]):
                 currResults = mapper(self.pointView(i))
                 for (k, v) in currResults:
                     if not k in mapperResults:
@@ -616,11 +592,11 @@ class Sparse(Base):
 
         vectorStartIndex = 0
         #walk through each coordinate entry
-        for i in xrange(len(self._data.data)):
+        for i in xrange(len(self.data.data)):
             #collect values into points
-            targetValue = self._data.row[i]
+            targetValue = self.data.row[i]
             #if this is the end of a point
-            if i == len(self._data.data) - 1 or self._data.row[i + 1] != targetValue:
+            if i == len(self.data.data) - 1 or self.data.row[i + 1] != targetValue:
                 #evaluate whether curr point is to be extracted or not
                 # and perform the appropriate copies
                 currResults = mapper(self.pointView(targetValue))
@@ -630,8 +606,8 @@ class Sparse(Base):
                     mapperResults[k].append(v)
 
                 # process zeroed vectors up to the ID of the new vector
-                if i < len(self._data.data) - 1:
-                    nextValue = self._data.row[i + 1]
+                if i < len(self.data.data) - 1:
+                    nextValue = self.data.row[i + 1]
                 else:
                     nextValue = self.pointCount
                 for j in xrange(targetValue + 1, nextValue):
@@ -656,10 +632,11 @@ class Sparse(Base):
         return Sparse(numpy.matrix(ret))
 
     def _isIdentical_implementation(self, other):
+        #import pdb; pdb.set_trace()
         if not isinstance(other, Sparse):
             return False
         # for nonempty matrices, we use a shape mismatch to indicate non-equality
-        if self._data.shape != other._data.shape:
+        if self.data.shape != other.data.shape:
             return False
 
         if isinstance(other, SparseView):
@@ -670,8 +647,13 @@ class Sparse(Base):
             tmpRight = other.copy()
             tmpLeft._sortInternal('feature')
             tmpRight._sortInternal('feature')
-            return tmpLeft._data == tmpRight._data
-            # return self._data == other._data
+            try:
+                numpy.testing.assert_equal(tmpLeft.data.data, tmpRight.data.data)
+                numpy.testing.assert_equal(tmpLeft.data.row, tmpRight.data.row)
+                numpy.testing.assert_equal(tmpLeft.data.col, tmpRight.data.col)
+                return True
+            except Exception:
+                return False
 
     def _getTypeString_implementation(self):
         return 'Sparse'
@@ -700,21 +682,21 @@ class Sparse(Base):
             outFile.write(fnamesLine)
 
         # sort by rows first, then columns
-        placement = numpy.lexsort((self._data.col, self._data.row))
-        self._data.data[placement]
-        self._data.row[placement]
-        self._data.col[placement]
+        placement = numpy.lexsort((self.data.col, self.data.row))
+        self.data.data[placement]
+        self.data.row[placement]
+        self.data.col[placement]
 
         pointer = 0
-        pmax = len(self._data.data)
+        pmax = len(self.data.data)
         for i in xrange(self.pointCount):
             currPname = self.getPointName(i)
             if includePointNames:
                 outFile.write(currPname)
                 outFile.write(',')
             for j in xrange(self.featureCount):
-                if pointer < pmax and i == self._data.row[pointer] and j == self._data.col[pointer]:
-                    value = self._data.data[pointer]
+                if pointer < pmax and i == self.data.row[pointer] and j == self.data.col[pointer]:
+                    value = self.data.data[pointer]
                     pointer = pointer + 1
                 else:
                     value = 0
@@ -770,61 +752,61 @@ class Sparse(Base):
         if header != '':
             mmwrite(target=outPath, a=self.data, comment=header)
         else:
-            mmwrite(target=outPath, a=self._data.internal)
+            mmwrite(target=outPath, a=self.data)
 
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Sparse):
             raise ArgumentException("Other must be the same type as this object")
 
-        self._data = other._data
+        self.data = other.data
         self._sorted = other._sorted
 
     def _copyAs_implementation(self, format):
         if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            ret = UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
             ret._sorted = self._sorted
             return ret
         if format == 'List':
-            return UML.createData('List', self._data.internal, pointNames=self.getPointNames(),
+            return UML.createData('List', self.data, pointNames=self.getPointNames(),
                                   featureNames=self.getFeatureNames())
         if format == 'Matrix':
-            return UML.createData('Matrix', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self._data.internal, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
-            return self._data.todense().tolist()
+            return self.data.todense().tolist()
         if format == 'numpyarray':
-            return numpy.array(self._data.todense())
+            return numpy.array(self.data.todense())
         if format == 'numpymatrix':
-            return self._data.todense()
+            return self.data.todense()
         if format == 'scipycsc':
-            return self._data.internal.tocsc()
+            return self.data.tocsc()
         if format == 'scipycsr':
-            return self._data.internal.tocsr()
+            return self.data.tocsr()
 
     def _copyPoints_implementation(self, points, start, end):
         retData = []
         retRow = []
         retCol = []
         if points is not None:
-            for i in xrange(len(self._data.data)):
-                if self._data.row[i] in points:
-                    retData.append(self._data.data[i])
-                    retRow.append(points.index(self._data.row[i]))
-                    retCol.append(self._data.col[i])
+            for i in xrange(len(self.data.data)):
+                if self.data.row[i] in points:
+                    retData.append(self.data.data[i])
+                    retRow.append(points.index(self.data.row[i]))
+                    retCol.append(self.data.col[i])
 
-            newShape = (len(points), numpy.shape(self._data)[1])
+            newShape = (len(points), numpy.shape(self.data)[1])
         else:
-            for i in xrange(len(self._data.data)):
-                if self._data.row[i] >= start and self._data.row[i] <= end:
-                    retData.append(self._data.data[i])
-                    retRow.append(self._data.row[i] - start)
-                    retCol.append(self._data.col[i])
+            for i in xrange(len(self.data.data)):
+                if self.data.row[i] >= start and self.data.row[i] <= end:
+                    retData.append(self.data.data[i])
+                    retRow.append(self.data.row[i] - start)
+                    retCol.append(self.data.col[i])
 
-            newShape = (end - start + 1, numpy.shape(self._data)[1])
+            newShape = (end - start + 1, numpy.shape(self.data)[1])
 
-        retData = CooWithEmpty((retData, (retRow, retCol)), shape=newShape)
+        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
 
@@ -833,23 +815,23 @@ class Sparse(Base):
         retRow = []
         retCol = []
         if features is not None:
-            for i in xrange(len(self._data.data)):
-                if self._data.col[i] in features:
-                    retData.append(self._data.data[i])
-                    retRow.append(self._data.row[i])
-                    retCol.append(features.index(self._data.col[i]))
+            for i in xrange(len(self.data.data)):
+                if self.data.col[i] in features:
+                    retData.append(self.data.data[i])
+                    retRow.append(self.data.row[i])
+                    retCol.append(features.index(self.data.col[i]))
 
-            newShape = (numpy.shape(self._data)[0], len(features))
+            newShape = (numpy.shape(self.data)[0], len(features))
         else:
-            for i in xrange(len(self._data.data)):
-                if self._data.col[i] >= start and self._data.col[i] <= end:
-                    retData.append(self._data.data[i])
-                    retRow.append(self._data.row[i])
-                    retCol.append(self._data.col[i] - start)
+            for i in xrange(len(self.data.data)):
+                if self.data.col[i] >= start and self.data.col[i] <= end:
+                    retData.append(self.data.data[i])
+                    retRow.append(self.data.row[i])
+                    retCol.append(self.data.col[i] - start)
 
-            newShape = (numpy.shape(self._data)[0], end - start + 1)
+            newShape = (numpy.shape(self.data)[0], end - start + 1)
 
-        retData = CooWithEmpty((retData, (retRow, retCol)), shape=newShape)
+        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
 
@@ -896,7 +878,7 @@ class Sparse(Base):
                     modOther.append(i)
 
         if len(modData) != 0:
-            self._data = CooWithEmpty((modData, (modRow, modCol)), shape=(self.pointCount, self.featureCount))
+            self.data = coo_matrix((modData, (modRow, modCol)), shape=(self.pointCount, self.featureCount))
             self._sorted = None
 
         ret = None
@@ -988,33 +970,33 @@ class Sparse(Base):
         toAddData = []
         toAddRow = []
         toAddCol = []
-        selfEnd = numpy.searchsorted(self._data.row, pointEnd, 'right')
+        selfEnd = numpy.searchsorted(self.data.row, pointEnd, 'right')
         if constant:
             valsEnd = (pointEnd - pointStart + 1) * (featureEnd - featureStart + 1)
         else:
-            valsEnd = len(values._data.data)
+            valsEnd = len(values.data.data)
 
         # Adjust self_i so that it begins at the values that might need to be
         # replaced, or, if no such values exist, set self_i such that the main loop
         # will ignore the contents of self.
-        if len(self._data.data) > 0:
-            self_i = numpy.searchsorted(self._data.row, pointStart, 'left')
+        if len(self.data.data) > 0:
+            self_i = numpy.searchsorted(self.data.row, pointStart, 'left')
 
-            pcheck = self._data.row[self_i]
-            fcheck = self._data.col[self_i]
+            pcheck = self.data.row[self_i]
+            fcheck = self.data.col[self_i]
             # the condition in the while loop is a natural break, if it isn't
             # satisfied then self_i will be exactly where we want it
             while fcheck < featureStart or fcheck > featureEnd:
                 # this condition is an unatural break, when it is satisfied,
                 # that means no value of self_i will point into the desired
                 # values
-                if pcheck > pointEnd or self_i == len(self._data.data) - 1:
+                if pcheck > pointEnd or self_i == len(self.data.data) - 1:
                     self_i = selfEnd
                     break
 
                 self_i += 1
-                pcheck = self._data.row[self_i]
-                fcheck = self._data.col[self_i]
+                pcheck = self.data.row[self_i]
+                fcheck = self.data.col[self_i]
 
             copyIndex = self_i
 
@@ -1025,8 +1007,8 @@ class Sparse(Base):
         # lower one CANNOT have a match.
         while self_i < selfEnd or vals_i < valsEnd:
             if self_i < selfEnd:
-                locationSP = self._data.row[self_i]
-                locationSF = self._data.col[self_i]
+                locationSP = self.data.row[self_i]
+                locationSF = self.data.col[self_i]
             else:
                 # we want to use unreachable values as sentials, so we + 1 since we're
                 # using inclusive endpoints
@@ -1039,14 +1021,14 @@ class Sparse(Base):
             if constant:
                 vData = values
                 locationVP += vals_i / (pointEnd - pointStart + 1)  # uses truncation of int division
-                locationVF += vals_i % (pointEnd - pointStart + 1)
+                locationVF += vals_i % (featureEnd - featureStart + 1)
             elif vals_i >= valsEnd:
                 locationVP += pointEnd + 1
                 locationVF += featureEnd + 1
             else:
-                vData = values._data.data[vals_i]
-                locationVP += values._data.row[vals_i]
-                locationVF += values._data.col[vals_i]
+                vData = values.data.data[vals_i]
+                locationVP += values.data.row[vals_i]
+                locationVF += values.data.col[vals_i]
 
             pCmp = locationSP - locationVP
             fCmp = locationSF - locationVF
@@ -1057,9 +1039,9 @@ class Sparse(Base):
             if trueCmp > 0:
                 # can only copy into self if there is open space
                 if copyIndex < self_i:
-                    self._data.data[copyIndex] = vData
-                    self._data.row[copyIndex] = locationVP
-                    self._data.col[copyIndex] = locationVF
+                    self.data.data[copyIndex] = vData
+                    self.data.row[copyIndex] = locationVP
+                    self.data.col[copyIndex] = locationVF
                     copyIndex += 1
                 else:
                     toAddData.append(vData)
@@ -1068,22 +1050,23 @@ class Sparse(Base):
 
                 #increment vals_i
                 vals_i += 1
+                print vals_i
             # Case: location at index into other is higher than location at index into self.
             # no matching entry in values - fill this entry in self with zero
             # (by shifting past it)
             elif trueCmp < 0:
                 # need to do cleanup if we're outside of the relevant bounds
                 if locationSF < featureStart or locationSF > featureEnd:
-                    self._data.data[copyIndex] = self._data.data[self_i]
-                    self._data.row[copyIndex] = self._data.row[self_i]
-                    self._data.col[copyIndex] = self._data.col[self_i]
+                    self.data.data[copyIndex] = self.data.data[self_i]
+                    self.data.row[copyIndex] = self.data.row[self_i]
+                    self.data.col[copyIndex] = self.data.col[self_i]
                     copyIndex += 1
                 self_i += 1
             # Case: indices point to equal locations.
             else:
-                self._data.data[copyIndex] = vData
-                self._data.row[copyIndex] = locationVP
-                self._data.col[copyIndex] = locationVF
+                self.data.data[copyIndex] = vData
+                self.data.row[copyIndex] = locationVP
+                self.data.col[copyIndex] = locationVF
                 copyIndex += 1
 
                 # increment both??? or just one?
@@ -1093,25 +1076,25 @@ class Sparse(Base):
         # Now we have to walk through the rest of self, finishing the copying shift
         # if necessary
         if copyIndex != self_i:
-            while self_i < len(self._data.data):
-                self._data.data[copyIndex] = self._data.data[self_i]
-                self._data.row[copyIndex] = self._data.row[self_i]
-                self._data.col[copyIndex] = self._data.col[self_i]
+            while self_i < len(self.data.data):
+                self.data.data[copyIndex] = self.data.data[self_i]
+                self.data.row[copyIndex] = self.data.row[self_i]
+                self.data.col[copyIndex] = self.data.col[self_i]
                 self_i += 1
                 copyIndex += 1
         else:
-            copyIndex = len(self._data.data)
+            copyIndex = len(self.data.data)
 
-        newData = numpy.empty(copyIndex + len(toAddData), dtype=self._data.data.dtype)
-        newData[:copyIndex] = self._data.data[:copyIndex]
+        newData = numpy.empty(copyIndex + len(toAddData), dtype=self.data.data.dtype)
+        newData[:copyIndex] = self.data.data[:copyIndex]
         newData[copyIndex:] = toAddData
         newRow = numpy.empty(copyIndex + len(toAddRow))
-        newRow[:copyIndex] = self._data.row[:copyIndex]
+        newRow[:copyIndex] = self.data.row[:copyIndex]
         newRow[copyIndex:] = toAddRow
         newCol = numpy.empty(copyIndex + len(toAddCol))
-        newCol[:copyIndex] = self._data.col[:copyIndex]
+        newCol[:copyIndex] = self.data.col[:copyIndex]
         newCol[copyIndex:] = toAddCol
-        self._data = CooWithEmpty((newData, (newRow, newCol)), (self.pointCount, self.featureCount))
+        self.data = scipy.sparse.coo_matrix((newData, (newRow, newCol)), (self.pointCount, self.featureCount))
 
         if len(toAddData) != 0:
             self._sorted = None
@@ -1127,23 +1110,23 @@ class Sparse(Base):
         # underlying structure to save space
         copyIndex = 0
 
-        for lookIndex in xrange(len(self._data.data)):
-            currP = self._data.row[lookIndex]
-            currF = self._data.col[lookIndex]
+        for lookIndex in xrange(len(self.data.data)):
+            currP = self.data.row[lookIndex]
+            currF = self.data.col[lookIndex]
             # if it is in range we want to obliterate the entry by just passing it by
             # and copying over it later
             if currP >= pointStart and currP <= pointEnd and currF >= featureStart and currF <= featureEnd:
                 pass
             else:
-                self._data.data[copyIndex] = self._data.data[lookIndex]
-                self._data.row[copyIndex] = self._data.row[lookIndex]
-                self._data.col[copyIndex] = self._data.col[lookIndex]
+                self.data.data[copyIndex] = self.data.data[lookIndex]
+                self.data.row[copyIndex] = self.data.row[lookIndex]
+                self.data.col[copyIndex] = self.data.col[lookIndex]
                 copyIndex += 1
 
         # reinstantiate self
         # (cannot reshape coo matrices, so cannot do this in place)
-        newData = (self._data.data[0:copyIndex], (self._data.row[0:copyIndex], self._data.col[0:copyIndex]))
-        self._data = CooWithEmpty(newData, (self.pointCount, self.featureCount))
+        newData = (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex]))
+        self.data = scipy.sparse.coo_matrix(newData, (self.pointCount, self.featureCount))
 
     def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[numpy.NaN, None], markMissing=False):
         """
@@ -1177,8 +1160,6 @@ class Sparse(Base):
                     missingIdxDictPoint[i].append(j)
                     missingIdxDictFeature[j].append(i)
         #import pdb; pdb.set_trace()
-        # featureNames = self.getFeatureNames()
-        # pointNames = self.getPointNames()
         if markMissing:
             #add extra columns to indicate if the original value was missing or not
             extraFeatureNames = []
@@ -1201,7 +1182,7 @@ class Sparse(Base):
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
-            # pointNames = [self.getPointName(i) for i in nonmissingIdx]
+
             if len(missingIdx) > 0:
                 self.extractPoints(toExtract=missingIdx)
                 if markMissing:
@@ -1218,7 +1199,7 @@ class Sparse(Base):
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
-            # featureNames = [self.getFeatureName(i) for i in nonmissingIdx]
+
             if len(missingIdx) > 0:
                 self.extractFeatures(toExtract=missingIdx)
                 if markMissing:
@@ -1284,18 +1265,24 @@ class Sparse(Base):
             toAppend = UML.createData('Sparse', extraDummy, featureNames=extraFeatureNames, pointNames=self.getPointNames())
             self._sorted = None#need to reset this, o.w. may fail in validate
             self.appendFeatures(toAppend=toAppend)
-        # pCount, fCount = self.data.shape
-        # self._featureCount = fCount
-        # self.setFeatureNames(featureNames)
-        # self._pointCount = pCount
-        # self.setPointNames(pointNames)
 
 
     def _getitem_implementation(self, x, y):
-        for i in xrange(len(self._data.row)):
-            rowVal = self._data.row[i]
-            if rowVal == x and self._data.col[i] == y:
-                return self._data.data[i]
+        """
+        currently, we try the best not to use extra space
+        if faster way is needed, then convert coo_matrix to dok_matrix first.
+        """
+        if self.alsoUseDOK:
+            #in case where we care about time performance, we need to use dok instead of coo.
+            if hasattr(self, 'dokData'):
+                return self.dokData[x, y]
+            else:
+                self.dokData = self.data.todok()
+        else:
+            for i in xrange(len(self.data.row)):
+                rowVal = self.data.row[i]
+                if rowVal == x and self.data.col[i] == y:
+                    return self.data.data[i]
 
         return 0
 
@@ -1318,18 +1305,18 @@ class Sparse(Base):
         singlePoint = pointEnd - pointStart == 1
         allFeats = featureStart == 0 and featureEnd == self.featureCount
         singleFeat = featureEnd - featureStart == 1
-
+        # singleFeat = singlePoint = False
         if singleFeat or singlePoint:
             if singlePoint:
                 if self._sorted is None or self._sorted == 'feature':
                     self._sortInternal('point')
-                sortedIndices = self._data.row
+                sortedIndices = self.data.row
 
                 start = numpy.searchsorted(sortedIndices, pointStart, 'left')
                 end = numpy.searchsorted(sortedIndices, pointEnd - 1, 'right')
 
                 if not allFeats:
-                    sortedIndices = self._data.col[start:end]
+                    sortedIndices = self.data.col[start:end]
                     innerStart = numpy.searchsorted(sortedIndices, featureStart, 'left')
                     innerEnd = numpy.searchsorted(sortedIndices, featureEnd - 1, 'right')
                     outerStart = start
@@ -1337,28 +1324,28 @@ class Sparse(Base):
                     end = outerStart + innerEnd
 
                 row = numpy.tile([0], end - start)
-                col = self._data.col[start:end] - featureStart
+                col = self.data.col[start:end] - featureStart
 
             else:  # case single feature
                 if self._sorted is None or self._sorted == 'point':
                     self._sortInternal('feature')
-                sortedIndices = self._data.col
+                sortedIndices = self.data.col
 
                 start = numpy.searchsorted(sortedIndices, featureStart, 'left')
                 end = numpy.searchsorted(sortedIndices, featureEnd - 1, 'right')
 
                 if not allPoints:
-                    sortedIndices = self._data.row[start:end]
+                    sortedIndices = self.data.row[start:end]
                     innerStart = numpy.searchsorted(sortedIndices, pointStart, 'left')
                     innerEnd = numpy.searchsorted(sortedIndices, pointEnd - 1, 'right')
                     outerStart = start
                     start = start + innerStart
                     end = outerStart + innerEnd
 
-                row = self._data.row[start:end] - pointStart
+                row = self.data.row[start:end] - pointStart
                 col = numpy.tile([0], end - start)
 
-            data = self._data.data[start:end]
+            data = self.data.data[start:end]
             pshape = pointEnd - pointStart
             fshape = featureEnd - featureStart
 
@@ -1368,40 +1355,28 @@ class Sparse(Base):
             return SparseVectorView(**kwds)
 
         else:  # window shaped View
-            class CooDummy(CooWrapper):
-                def __init__(self, shape, **kwargs):
-                    self.shape = shape
-                    self.internal = None
-                    super(CooDummy, self).__init__(**kwargs)
-
-            newInternal = CooDummy((pointEnd - pointStart, featureEnd - featureStart))
+            #the data should be dummy data, but data.shape must be = (pointEnd - pointStart, featureEnd - featureStart)
+            newInternal = scipy.sparse.coo_matrix([])
+            newInternal._shape = (pointEnd - pointStart, featureEnd - featureStart)
+            newInternal.data = None
             kwds['data'] = newInternal
 
             return SparseView(**kwds)
 
 
     def _validate_implementation(self, level):
-        assert self._data.shape[0] == self.pointCount
-        assert self._data.shape[1] == self.featureCount
-        assert isinstance(self._data, CooWrapper)
+        assert self.data.shape[0] == self.pointCount
+        assert self.data.shape[1] == self.featureCount
+        assert scipy.sparse.isspmatrix_coo(self.data)
 
         if level > 0:
-            for value in self._data.data:
-                assert value != 0
-            if scipy.sparse.isspmatrix(self._data.internal):
-                #assert numpy.array_equal(self._data.data, self._data.internal.data)
-                numpy.testing.assert_equal(self._data.data, self._data.internal.data)
-                assert numpy.array_equal(self._data.row, self._data.internal.row)
-                assert numpy.array_equal(self._data.col, self._data.internal.col)
+            assert all(self.data.data != 0)
 
             if self._sorted == 'point':
-                for i in xrange(len(self._data.row)):
-                    if i != len(self._data.row) - 1:
-                        assert self._data.row[i] <= self._data.row[i + 1]
+                assert all(self.data.row[:-1] <= self.data.row[1:])
+
             if self._sorted == 'feature':
-                for i in xrange(len(self._data.col)):
-                    if i != len(self._data.col) - 1:
-                        assert self._data.col[i] <= self._data.col[i + 1]
+                assert all(self.data.col[:-1] <= self.data.col[1:])
 
     def _containsZero_implementation(self):
         """
@@ -1456,10 +1431,10 @@ class Sparse(Base):
         """
         if isinstance(other, BaseView):
             retData = other.copyAs('scipycsr')
-            retData = self._data.internal * retData
+            retData = self.data * retData
         else:
             # for other.data as any dense or sparse matrix
-            retData = self._data.internal * other.data
+            retData = self.data * other.data
 
         return UML.createData('Sparse', retData)
 
@@ -1483,12 +1458,11 @@ class Sparse(Base):
         else:
             toMul = other.copyAs('numpyarray')
 
-        raw = self._data.internal.multiply(toMul)
-        reuse = False
+        raw = self.data.multiply(toMul)
         if scipy.sparse.isspmatrix(raw):
-            raw = raw.tocoo()
-            reuse = True
-        self._data = CooWithEmpty(raw, shape=self._data.shape, reuseData=reuse)
+            self.data = raw.tocoo()
+        else:
+            self.data = coo_matrix(raw, shape=self.data.shape)
 
 
     def _scalarMultiply_implementation(self, scalar):
@@ -1500,11 +1474,11 @@ class Sparse(Base):
 
         """
         if scalar != 0:
-            scaled = self._data.data * scalar
-            self._data.data = scaled
-            self._data.internal.data = scaled
+            scaled = self.data.data * scalar
+            self.data.data = scaled
+            self.data.data = scaled
         else:
-            self._data = CooWithEmpty(([], ([], [])), shape=(self.pointCount, self.featureCount))
+            self.data = coo_matrix(([], ([], [])), shape=(self.pointCount, self.featureCount))
 
     def _mul__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -1519,7 +1493,7 @@ class Sparse(Base):
         #			ret = self.data.tocsr() / other.copyAs("scipycsr")
         #			ret = ret.tocoo()
         #		else:
-        #			retData = self._data.data / other
+        #			retData = self.data.data / other
         #			retRow = numpy.array(self.data.row)
         #			retCol = numpy.array(self.data.col)
         #			ret = scipy.sparse.coo_matrix((retData,(retRow, retCol)))
@@ -1578,7 +1552,7 @@ class Sparse(Base):
         #			ret = self.data.tocsr() // other.copyAs("scipycsr")
         #			ret = ret.tocoo()
         #		else:
-        #			retData = self._data.data // other
+        #			retData = self.data.data // other
         #			nzIDs = numpy.nonzero(retData)
         #			retData = retData[nzIDs]
         #			retRow = self.data.row[nzIDs]
@@ -1588,7 +1562,7 @@ class Sparse(Base):
 
 
         #	def _rfloordiv__implementation(self, other):
-        #		retData = other // self._data.data
+        #		retData = other // self.data.data
         #		nzIDs = numpy.nonzero(retData)
         #		retData = retData[nzIDs]
         #		retRow = self.data.row[nzIDs]
@@ -1632,8 +1606,8 @@ class Sparse(Base):
         if isinstance(other, UML.data.Base):
             return super(Sparse, self).__imod__(other)
         else:
-            ret = self._data.data % other
-        self._data.data = ret
+            ret = self.data.data % other
+        self.data.data = ret
         return self
 
     ###########
@@ -1649,11 +1623,11 @@ class Sparse(Base):
 
         # sort least significant axis first
         if axis == "point":
-            sortPrime = self._data.row
-            sortOff = self._data.col
+            sortPrime = self.data.row
+            sortOff = self.data.col
         else:
-            sortPrime = self._data.col
-            sortOff = self._data.row
+            sortPrime = self.data.col
+            sortOff = self.data.row
 
         sortKeys = numpy.lexsort((sortOff, sortPrime))
 
@@ -1662,9 +1636,9 @@ class Sparse(Base):
         newCol = self.data.col[sortKeys]
 
         n = len(newData)
-        self._data.data[:n] = newData
-        self._data.row[:n] = newRow
-        self._data.col[:n] = newCol
+        self.data.data[:n] = newData
+        self.data.row[:n] = newRow
+        self.data.col[:n] = newCol
 
         # flag that we are internally sorted
         self._sorted = axis
@@ -1702,123 +1676,18 @@ def _calcShapes(currShape, numExtracted, axisType):
 
 
 def _resync(obj):
-    if 0 in obj.internal.shape:
+    if 0 in obj.shape:
         obj.nnz = 0
         obj.data = numpy.array([])
         obj.row = numpy.array([])
         obj.col = numpy.array([])
-        obj.shape = obj.internal.shape
+        obj.shape = obj.shape
     else:
-        obj.nnz = obj.internal.nnz
-        obj.data = obj.internal.data
-        obj.row = obj.internal.row
-        obj.col = obj.internal.col
-        obj.shape = obj.internal.shape
-
-
-class CooWrapper(object):
-    def __init__(self, **kwargs):
-        super(CooWrapper, self).__init__(**kwargs)
-
-
-class CooWithEmpty(CooWrapper):
-    def __init__(self, arg1, shape=None, dtype=None, copy=False, reuseData=False, **kwds):
-        self.ndim = 2
-        if isinstance(arg1, CooWithEmpty):
-            arg1 = arg1.internal
-
-        if isinstance(arg1, numpy.matrix):
-            shape = arg1.shape
-
-        if shape is not None and (shape[0] == 0 or shape[1] == 0):
-            if isinstance(arg1, tuple):
-                if shape is None:
-                    self.shape = (0, 0)
-                else:
-                    self.shape = shape
-            else:
-                converted = numpy.array(arg1)
-                self.shape = converted.shape
-            self.nnz = 0
-            self.data = numpy.array([])
-            self.row = numpy.array([])
-            self.col = numpy.array([])
-            self.internal = numpy.empty(self.shape)
-        else:
-            if reuseData:
-                internal = arg1
-            else:
-                internal = coo_matrix(arg1, shape, dtype, copy)
-            self.nnz = internal.nnz
-
-            self.data = internal.data
-            self.row = internal.row
-            self.col = internal.col
-            self.shape = internal.shape
-            self.internal = internal
-
-        super(CooWithEmpty, self).__init__(**kwds)
-
-
-    def transpose(self):
-        self.internal = self.internal.transpose()
-        self.shape = self.internal.shape
-        return self
-
-    def todense(self):
-        if scipy.sparse.isspmatrix(self.internal):
-            return self.internal.todense()
-        else:
-            return numpy.empty(self.shape)
-
-    def __eq__(self, other):
-        wrappedRight = isinstance(other, CooWithEmpty)
-        if not wrappedRight:
-            return False
-
-        if self.shape != other.shape:
-            return False
-
-        leftSparse = scipy.sparse.isspmatrix(self.internal)
-        rightSparse = scipy.sparse.isspmatrix(other.internal)
-        if leftSparse:
-            if rightSparse:
-                # == for scipy sparse types is inconsistent. This is testing how many are
-                # nonzero after subtracting one from the other.
-                try:
-                    numpy.testing.assert_equal(self.data, other.data)
-                    numpy.testing.assert_equal(self.row, other.row)
-                    numpy.testing.assert_equal(self.col, other.col)
-                    return True
-                # except NotImplementedError:
-                #     #this part is for Sparse object with non-numerical dtype
-                #     if not self.internal.dtype == other.internal.dtype:
-                #         return False
-                #     selfList = list(self.internal.nonzero())
-                #     selfList.append(self.internal.data)
-                #     selfList = zip(*selfList)
-                #     selfList.sort()
-                #
-                #     otherList = list(other.internal.nonzero())
-                #     otherList.append(other.internal.data)
-                #     otherList = zip(*otherList)
-                #     otherList.sort()
-                #
-                #     try:
-                #         numpy.testing.assert_equal(selfList, otherList)
-                #         return True
-                #     except Exception:
-                #         return False
-                except Exception:
-                    return False
-            else:
-                return False
-        else:
-            if rightSparse:
-                return False
-            else:
-                return True
-
+        obj.nnz = obj.nnz
+        obj.data = obj.data
+        obj.row = obj.row
+        obj.col = obj.col
+        obj.shape = obj.shape
 
 class SparseVectorView(BaseView, Sparse):
     """
@@ -1904,11 +1773,11 @@ class SparseView(BaseView, Sparse):
         if not isinstance(other, Sparse):
             return False
         # for nonempty matrices, we use a shape mismatch to indicate non-equality
-        if self._data.shape != other._data.shape:
+        if self.data.shape != other.data.shape:
             return False
 
         # empty object means no values. Since shapes match they're equal
-        if self._data.shape[0] == 0 or self._data.shape[1] == 0:
+        if self.data.shape[0] == 0 or self.data.shape[1] == 0:
             return True
 
         sIt = self.pointIterator()
@@ -1932,7 +1801,7 @@ class SparseView(BaseView, Sparse):
     def __abs__(self):
         """ Perform element wise absolute value on this object """
         ret = self.copyAs("Sparse")
-        numpy.absolute(ret._data.internal.data, out=ret._data.internal.data)
+        numpy.absolute(ret.data.data, out=ret.data.data)
         ret._name = dataHelpers.nextDefaultObjectName()
 
         return ret
@@ -1982,11 +1851,11 @@ class SparseView(BaseView, Sparse):
                     retCol.append(pView.data.col[i])
 
         if points is not None:
-            newShape = (len(points), numpy.shape(self._data)[1])
+            newShape = (len(points), numpy.shape(self.data)[1])
         else:
-            newShape = (end - start + 1, numpy.shape(self._data)[1])
+            newShape = (end - start + 1, numpy.shape(self.data)[1])
 
-        retData = CooWithEmpty((retData, (retRow, retCol)), shape=newShape)
+        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
 
@@ -2007,11 +1876,11 @@ class SparseView(BaseView, Sparse):
                         retCol.append(fID - start)
 
         if features is not None:
-            newShape = (numpy.shape(self._data)[0], len(features))
+            newShape = (numpy.shape(self.data)[0], len(features))
         else:
-            newShape = (numpy.shape(self._data)[0], end - start + 1)
+            newShape = (numpy.shape(self.data)[0], end - start + 1)
 
-        retData = CooWithEmpty((retData, (retRow, retCol)), shape=newShape)
+        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
 
