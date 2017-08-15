@@ -501,6 +501,8 @@ class Base(object):
 		ID or a list of point IDs to limit application only to those specified.
 
 		"""
+        if points is not None:
+            points = copy.copy(points)
         if self.pointCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
         if self.featureCount == 0:
@@ -547,6 +549,8 @@ class Base(object):
 		specified.
 
 		"""
+        if features is not None:
+            features = copy.copy(features)
         if self.pointCount == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
         if self.featureCount == 0:
@@ -2716,24 +2720,37 @@ class Base(object):
         self.validate()
 
 
-    def handleMissingValues(self, method, features, args, missing_values=[numpy.NaN, None]):
+    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[numpy.NaN, None], markMissing=False):
         """
 
         """
         #convert features to a list of index
+        msg = 'features can only be a str, an int, or a list of str or a list of int'
         if features is None:
-            featuresList = []
+            featuresList = range(self._getfeatureCount())
         elif isinstance(features, basestring):
-            pass
+            featuresList = [self.getFeatureIndex(features)]
         elif isinstance(features, int):
-            pass
+            featuresList = [features]
         elif isinstance(features, list):
-            pass
+            if isinstance(features[0], basestring):
+                featuresList = [self.getFeatureIndex(i) for i in features]
+            elif isinstance(features[0], int):
+                featuresList = features
+            else:
+                raise ArgumentException(msg)
         else:
-            msg = 'features can only be a str, an int, or a list of str or a list of int'
             raise ArgumentException(msg)
-        self._getFeatureIndex
-        #self._handleMissingValues_implementation(method, featuresList, args, missing_values)
+
+        #convert single value alsoTreatAsMissing to a list
+        if not hasattr(alsoTreatAsMissing, '__len__'):
+            alsoTreatAsMissing = [alsoTreatAsMissing]
+
+        if isinstance(self, UML.data.DataFrame):
+            #for DataFrame, pass column names instead of indices
+            featuresList = [self.getFeatureName(i) for i in featuresList]
+
+        self._handleMissingValues_implementation(method, featuresList, arguments, alsoTreatAsMissing, markMissing)
 
     ###############################################################
     ###############################################################

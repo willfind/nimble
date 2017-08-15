@@ -150,6 +150,15 @@ def median(values):
 
     return median
 
+def mode(values):
+    """
+    Given a 1D vector of values, find the most frequent value.
+    """
+    collections = UML.importModule('collections')
+    nonMissingValues = filter(lambda x: not _isMissing(x), values)
+    counter = collections.Counter(nonMissingValues)
+    return counter.most_common()[0][0]
+
 
 def standardDeviation(values, sample=False):
     """
