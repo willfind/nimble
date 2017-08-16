@@ -777,10 +777,12 @@ class Base(object):
             features = [features]
 
         if points is not None:
+            points = copy.copy(points)
             for i in xrange(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
         if features is not None:
+            features = copy.copy(features)
             for i in xrange(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
@@ -2598,6 +2600,7 @@ class Base(object):
             points = [points]
 
         if points is not None:
+            points = copy.copy(points)
             for i in xrange(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
@@ -2632,6 +2635,7 @@ class Base(object):
             features = [features]
 
         if features is not None:
+            features = copy.copy(features)
             for i in xrange(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
@@ -2672,10 +2676,12 @@ class Base(object):
             features = [features]
 
         if points is not None:
+            points = copy.copy(points)
             for i in xrange(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
         if features is not None:
+            features = copy.copy(features)
             for i in xrange(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
