@@ -47,7 +47,6 @@ class Sparse(Base):
             self.data = scipy.sparse.coo_matrix(data)
 
         self._sorted = None
-        self.alsoUseDOK = False
         kwds['shape'] = self.data.shape
         kwds['pointNames'] = pointNames
         kwds['featureNames'] = featureNames
@@ -1106,10 +1105,10 @@ class Sparse(Base):
         numElem = self.pointCount * self.featureCount
         for i in xrange(len(self.data.data)):
             if self.data.row[i] > 0:
-                self._data.col[i] += (self.data.row[i] * pLen)
-                self._data.row[i] = 0
+                self.data.col[i] += (self.data.row[i] * pLen)
+                self.data.row[i] = 0
 
-        self._data = CooWithEmpty((self._data.data, (self._data.row, self._data.col)), (1, numElem))
+        self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), (1, numElem))
 
     def _flattenToOneFeature_implementation(self):
         self._sortInternal('feature')
@@ -1117,10 +1116,10 @@ class Sparse(Base):
         numElem = self.pointCount * self.featureCount
         for i in xrange(len(self.data.data)):
             if self.data.col[i] > 0:
-                self._data.internal.row[i] += (self._data.col[i] * fLen)
-                self._data.internal.col[i] = 0
+                self.data.row[i] += (self.data.col[i] * fLen)
+                self.data.col[i] = 0
 
-        self._data = CooWithEmpty((self._data.data, (self._data.row, self._data.col)), (numElem, 1))
+        self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), (numElem, 1))
 
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
@@ -1133,10 +1132,10 @@ class Sparse(Base):
 
         for i in xrange(len(self.data.data)):
             # must change the row entry before modifying the col entry
-            self._data.internal.row[i] = self._data.internal.col[i] / numFeatures
-            self._data.internal.col[i] = self._data.internal.col[i] % numFeatures
+            self.data.row[i] = self.data.col[i] / numFeatures
+            self.data.col[i] = self.data.col[i] % numFeatures
 
-        self._data = CooWithEmpty((self._data.data, (self._data.row, self._data.col)), newShape)
+        self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), newShape)
         self._sorted = 'point'
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
@@ -1149,10 +1148,10 @@ class Sparse(Base):
 
         for i in xrange(len(self.data.data)):
             # must change the col entry before modifying the row entry
-            self._data.internal.col[i] = self._data.internal.row[i] / numPoints
-            self._data.internal.row[i] = self._data.internal.row[i] % numPoints
+            self.data.col[i] = self.data.row[i] / numPoints
+            self.data.row[i] = self.data.row[i] % numPoints
 
-        self._data = CooWithEmpty((self._data.data, (self._data.row, self._data.col)), newShape)
+        self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), newShape)
         self._sorted = 'feature'
 
     def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
@@ -1318,25 +1317,41 @@ class Sparse(Base):
             self._sorted = None#need to reset this, o.w. may fail in validate
             self.appendFeatures(toAppend=toAppend)
 
+    def _binarySearch(self, x, y):
+            if self._sorted == 'point':
+                dataSortedAlong, dataOther = self.data.row, self.data.col
+                i, j = x, y
+            elif self._sorted == 'feature':
+                dataSortedAlong, dataOther = self.data.col, self.data.row
+                i, j = y, x
+            else:
+                raise ImproperActionException('self._sorted is not either point nor feature.')
+            start, end = numpy.searchsorted(dataSortedAlong, [i, i+1])#binary search
+            for k in xrange(start, end):
+                if dataOther[k] == j:
+                    return self.data.data[k]
+            return 0
 
     def _getitem_implementation(self, x, y):
         """
-        currently, we try the best not to use extra space
-        if faster way is needed, then convert coo_matrix to dok_matrix first.
+        currently, we sort the data first and then do binary search
         """
-        if self.alsoUseDOK:
-            #in case where we care about time performance, we need to use dok instead of coo.
-            if hasattr(self, 'dokData'):
-                return self.dokData[x, y]
-            else:
-                self.dokData = self.data.todok()
-        else:
-            for i in xrange(len(self.data.row)):
-                rowVal = self.data.row[i]
-                if rowVal == x and self.data.col[i] == y:
-                    return self.data.data[i]
 
-        return 0
+        if self._sorted is None:# or True:
+            self._sortInternal('point')
+            self._sorted = 'point'
+        #import pdb; pdb.set_trace()
+        # print self._sorted
+        # print self.data.row
+        # print self.data.col
+        # print self.data.data
+        # print '-----------------------'
+        return self._binarySearch(x, y)
+
+        # for i in xrange(len(self.data.row)):
+        #     rowVal = self.data.row[i]
+        #     if rowVal == x and self.data.col[i] == y:
+        #         return self.data.data[i]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
         """
