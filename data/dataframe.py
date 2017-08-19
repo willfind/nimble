@@ -694,7 +694,22 @@ class DataFrame(Base):
         self._pointCount = pCount
         self.setPointNames(self.data.index.tolist())
 
+    def _flattenToOnePoint_implementation(self):
+        numElements = self.pointCount * self.featureCount
+        self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
 
+    def _flattenToOneFeature_implementation(self):
+        numElements = self.pointCount * self.featureCount
+        self.data = pd.DataFrame(self.data.values.reshape((numElements,1), order='F'))
+
+
+    def _unflattenFromOnePoint_implementation(self, numPoints):
+        numFeatures = self.featureCount / numPoints
+        self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='C'))
+
+    def _unflattenFromOneFeature_implementation(self, numFeatures):
+        numPoints = self.pointCount / numFeatures
+        self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
     def _getitem_implementation(self, x, y):
         return self.data.ix[x, y]

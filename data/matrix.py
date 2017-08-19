@@ -756,6 +756,22 @@ class Matrix(Base):
         self._pointCount = pCount
         self.setPointNames(pointNames)
 
+    def _flattenToOnePoint_implementation(self):
+        numElements = self.pointCount * self.featureCount
+        self.data = self.data.reshape((1, numElements), order='C')
+
+    def _flattenToOneFeature_implementation(self):
+        numElements = self.pointCount * self.featureCount
+        self.data = self.data.reshape((numElements,1), order='F')
+
+    def _unflattenFromOnePoint_implementation(self, numPoints):
+        numFeatures = self.featureCount / numPoints
+        self.data = self.data.reshape((numPoints, numFeatures), order='C')
+
+    def _unflattenFromOneFeature_implementation(self, numFeatures):
+        numPoints = self.pointCount / numFeatures
+        self.data = self.data.reshape((numPoints, numFeatures), order='F')
+
     def _getitem_implementation(self, x, y):
         return self.data[x, y]
 

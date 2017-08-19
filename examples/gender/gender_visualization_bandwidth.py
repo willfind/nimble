@@ -6,23 +6,11 @@ survery data.
 
 """
 
+import math
 import numpy
-import scipy
 import sys
 import os
 import colorsys
-from scipy import stats
-
-import matplotlib
-import matplotlib.pyplot as plt
-
-
-KDE_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/kdePlotting"
-#ORIG_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/"
-sys.path.append(KDE_HELPER_PATH)
-#sys.path.append(ORIG_HELPER_PATH)
-#from fancyHistogram import kdeAndHistogramPlot
-from multiplot import plotDualWithBlendFill
 
 from allowImports import boilerplate
 boilerplate()
@@ -31,6 +19,17 @@ import UML
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 #from UML.examples.gender.gender_categories_and_visualizations import generateSubScale
+
+scipy = UML.importModule("scipy")
+plt = UML.importModule("matplotlib.pyplot")
+
+KDE_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/kdePlotting"
+ORIG_HELPER_PATH = "/home/tpburns/Dropbox/ML_intern_tpb/python_workspace/"
+#sys.path.append(KDE_HELPER_PATH)
+sys.path.append(ORIG_HELPER_PATH)
+
+#kdeAndHistogramPlot = UML.importModule("fancyHistogram.kdeAndHistogramPlot")
+plotDualWithBlendFill = UML.importModule("multiplot.plotDualWithBlendFill")
 
 
 
@@ -113,7 +112,7 @@ def testFilterLowest():
     assert filterLowest(test, .2).copyAs("pythonlist") == [[4,8,16,32]]
 
 def test_LogPobSum():
-    raw = [8,16,32]
+    raw = [math.e**3,math.e**4,math.e**5]
     test = UML.createData("Matrix", raw)
     ret = LogLikelihoodSum(None, test)
     assert ret == -12
@@ -484,8 +483,8 @@ def colorTrials(responses, genderValue):
 
 #   makeSwatches(currL, currR)
 
-    Ldata = -((15 * stats.uniform.rvs(size=500)) - 5)
-    Rdata = (15 * stats.uniform.rvs(size=500)) - 5
+    Ldata = -((15 * scipy.stats.uniform.rvs(size=500)) - 5)
+    Rdata = (15 * scipy.stats.uniform.rvs(size=500)) - 5
     
     plotDualWithBlendFill(Ldata, Rdata, color1=currL, color2=currR, fileName=None, show=True, showPoints=False, title="", plotMean=False)
 

@@ -2752,6 +2752,278 @@ class Base(object):
 
         self._handleMissingValues_implementation(method, featuresList, arguments, alsoTreatAsMissing, markMissing)
 
+
+    def _flattenNames(self, discardAxis):
+        """
+        Helper calculating the axis names for the unflattend axis after a flatten operation.
+
+        """
+        self._validateAxis(discardAxis)
+        if discardAxis == 'point':
+            keepNames = self.getFeatureNames()
+            dropNames = self.getPointNames()
+        else:
+            keepNames = self.getPointNames()
+            dropNames = self.getFeatureNames()
+
+        ret = []
+        for d in dropNames:
+            for k in keepNames:
+                ret.append(k + ' | ' + d)
+
+        return ret
+
+    def flattenToOnePoint(self):
+        """
+        Adjust this object in place so that the same values are all in a single point.
+
+        Each feature in the result maps to exactly one value from the original object.
+        The order of values respects the point order from the original object,
+        if there were n features in the original, the first n values in the result
+        will exactly match the first point, the nth to (2n-1)th values will exactly
+        match the original second point, etc. The feature names will be transformed
+        such that the value at the intersection of the "pn_i" named point and "fn_j"
+        named feature from the original object will have a feature name of "fn_j | pn_i".
+        The single point will have a name of "Flattened".
+
+        Raises: ImproperActionException if an axis has length 0
+
+        """
+        if self.pointCount == 0:
+            msg = "Can only flattenToOnePoint when there is one or more points. " \
+                  "This object has 0 points."
+            raise ImproperActionException(msg)
+        if self.featureCount == 0:
+            msg = "Can only flattenToOnePoint when there is one or more features. " \
+                  "This object has 0 features."
+            raise ImproperActionException(msg)
+
+        self._flattenToOnePoint_implementation()
+
+        self._featureCount = self.pointCount * self.featureCount
+        self._pointCount = 1
+        self.setFeatureNames(self._flattenNames('point'))
+        self.setPointNames(['Flattened'])
+
+
+    def flattenToOneFeature(self):
+        """
+        Adjust this object in place so that the same values are all in a single feature.
+
+        Each point in the result maps to exactly one value from the original object.
+        The order of values respects the feature order from the original object,
+        if there were n points in the original, the first n values in the result
+        will exactly match the first feature, the nth to (2n-1)th values will exactly
+        match the original second feature, etc. The point names will be transformed
+        such that the value at the intersection of the "pn_i" named point and "fn_j"
+        named feature from the original object will have a point name of "pn_i | fn_j".
+        The single feature will have a name of "Flattened".
+
+        Raises: ImproperActionException if an axis has length 0
+
+        """
+        if self.pointCount == 0:
+            msg = "Can only flattenToOneFeature when there is one or more points. " \
+                  "This object has 0 points."
+            raise ImproperActionException(msg)
+        if self.featureCount == 0:
+            msg = "Can only flattenToOneFeature when there is one or more features. " \
+                  "This object has 0 features."
+            raise ImproperActionException(msg)
+
+        self._flattenToOneFeature_implementation()
+
+        self._pointCount = self.pointCount * self.featureCount
+        self._featureCount = 1
+        self.setPointNames(self._flattenNames('feature'))
+        self.setFeatureNames(['Flattened'])
+
+
+    def _unflattenNames(self, addedAxis, addedAxisLength):
+        """
+        Helper calculating the new axis names after an unflattening operation.
+
+        """
+        self._validateAxis(addedAxis)
+        if addedAxis == 'point':
+            both = self.getFeatureNames()
+            keptAxisLength = self.featureCount / addedAxisLength
+            allDefault = self._namesAreFlattenFormatConsistent('point', addedAxisLength, keptAxisLength)
+        else:
+            both = self.getPointNames()
+            keptAxisLength = self.pointCount / addedAxisLength
+            allDefault = self._namesAreFlattenFormatConsistent('feature', addedAxisLength, keptAxisLength)
+
+        if allDefault:
+            addedAxisName = None
+            keptAxisName = None
+        else:
+            # we consider the split of the elements into keptAxisLength chunks (of
+            # which there will be addedAxisLength number of chunks), and want the
+            # index of the first of each chunk. We allow that first name to be
+            # representative for that chunk: all will have the same stuff past
+            # the vertical bar.
+            locations = xrange(0, len(both), keptAxisLength)
+            addedAxisName = [both[n].split(" | ")[1] for n in locations]
+            keptAxisName = [name.split(" | ")[0] for name in both[:keptAxisLength]]
+
+        return addedAxisName, keptAxisName
+
+    def _namesAreFlattenFormatConsistent(self, flatAxis, newFLen, newUFLen):
+        """
+        Helper which validates the formatting of axis names prior to unflattening.
+
+        Will raise ImproperActionException if an inconsistency with the formatting
+        done by the flatten operations is discovered. Returns True if all the names
+        along the unflattend axis are default, False otherwise.
+
+        """
+        flat = self.getPointNames() if flatAxis == 'point' else self.getFeatureNames()
+        formatted = self.getFeatureNames() if flatAxis == 'point' else self.getPointNames()
+
+        def checkIsDefault(axisName):
+            ret = False
+            try:
+                if axisName.startswith(DEFAULT_PREFIX):
+                    int(axisName[len(DEFAULT_PREFIX):])
+                    ret = True
+            except ValueError:
+                ret = False
+            return ret
+
+        # check the contents of the names along the flattened axis
+        isDefault = checkIsDefault(flat[0])
+        isExact = flat == ['Flattened']
+        if not (isDefault or isExact):
+            msg = "In order to unflatten this object, the names must be " \
+                  "consistent with the results from a flatten call. Therefore, " \
+                  "the " + flatAxis + " name for this object ('" + flat[0] + "') must " \
+                  "either be a default name or exactly the string 'Flattened'"
+            raise ImproperActionException(msg)
+
+        # check the contents of the names along the unflattend axis
+        msg = "In order to unflatten this object, the names must be " \
+              "consistent with the results from a flatten call. Therefore, " \
+              "the " + flatAxis + " names for this object must either be all " \
+              "default, or they must be ' | ' split names with name values " \
+              "consistent with the positioning from a flatten call."
+        # each name - default or correctly formatted
+        allDefaultStatus = None
+        for name in formatted:
+            isDefault = checkIsDefault(name)
+            formatCorrect = len(name.split(" | ")) == 2
+            if allDefaultStatus is None:
+                allDefaultStatus = isDefault
+            else:
+                if isDefault != allDefaultStatus:
+                    raise ImproperActionException(msg)
+
+            if not (isDefault or formatCorrect):
+                raise ImproperActionException(msg)
+
+        # consistency only relevant if we have non-default names
+        if not allDefaultStatus:
+            # seen values - consistent wrt original flattend axis names
+            for i in xrange(newFLen):
+                same = formatted[newUFLen*i].split(' | ')[1]
+                for name in formatted[newUFLen*i:newUFLen*(i+1)]:
+                    if same != name.split(' | ')[1]:
+                        raise ImproperActionException(msg)
+
+            # seen values - consistent wrt original unflattend axis names
+            for i in xrange(newUFLen):
+                same = formatted[i].split(' | ')[0]
+                for j in xrange(newFLen):
+                    name = formatted[i + (j * newUFLen)]
+                    if same != name.split(' | ')[0]:
+                        raise ImproperActionException(msg)
+
+        return allDefaultStatus
+
+
+    def unflattenFromOnePoint(self, numPoints):
+        """
+        Adjust this point vector in place to an object that it could have been flattend from.
+
+        This is an inverse of the method flattenToOnePoint: if an object foo with n
+        points calls the flatten method, then this method with n as the argument, the
+        result should be identical to the original foo. It is not limited to objects
+        that have previously had flattenToOnePoint called on them; any object whose
+        structure and names are consistent with a previous call to flattenToOnePoint
+        may call this method. This includes objects with all default names.
+
+        Raises: ArgumentException if numPoints does not divide the length of the point
+        vector.
+
+        Raises: ImproperActionException if an axis has length 0, there is more than one
+        point, or the names are inconsistent with a previous call to flattenToOnePoint.
+
+        """
+        if self.featureCount == 0:
+            msg = "Can only unflattenFromOnePoint when there is one or more features. " \
+                  "This object has 0 features."
+            raise ImproperActionException(msg)
+        if self.pointCount != 1:
+            msg = "Can only unflattenFromOnePoint when there is only one point. " \
+                  "This object has " + str(self.pointCount) + " points."
+            raise ImproperActionException(msg)
+        if self.featureCount % numPoints != 0:
+            msg = "The argument numPoints (" + str(numPoints) + ") must be a divisor of " \
+                  "this object's featureCount (" + str(self.featureCount) + ") otherwise " \
+                  "it will not be possible to equally divide the elements into the desired " \
+                  "number of points."
+            raise ArgumentException(msg)
+
+        self._unflattenFromOnePoint_implementation(numPoints)
+        ret = self._unflattenNames('point', numPoints)
+        self._featureCount = self.featureCount / numPoints
+        self._pointCount = numPoints
+        self.setPointNames(ret[0])
+        self.setFeatureNames(ret[1])
+
+
+    def unflattenFromOneFeature(self, numFeatures):
+        """
+        Adjust this feature vector in place to an object that it could have been flattend from.
+
+        This is an inverse of the method flattenToOneFeature: if an object foo with n
+        features calls the flatten method, then this method with n as the argument, the
+        result should be identical to the original foo. It is not limited to objects
+        that have previously had flattenToOneFeature called on them; any object whose
+        structure and names are consistent with a previous call to flattenToOneFeature
+        may call this method. This includes objects with all default names.
+
+        Raises: ArgumentException if numPoints does not divide the length of the point
+        vector.
+
+        Raises: ImproperActionException if an axis has length 0, there is more than one
+        point, or the names are inconsistent with a previous call to flattenToOnePoint.
+
+        """
+        if self.pointCount == 0:
+            msg = "Can only unflattenFromOneFeature when there is one or more points. " \
+                  "This object has 0 points."
+            raise ImproperActionException(msg)
+        if self.featureCount != 1:
+            msg = "Can only unflattenFromOneFeature when there is only one feature. " \
+                  "This object has " + str(self.featureCount) + " features."
+            raise ImproperActionException(msg)
+
+        if self.pointCount % numFeatures != 0:
+            msg = "The argument numFeatures (" + str(numFeatures) + ") must be a divisor of " \
+                  "this object's pointCount (" + str(self.pointCount) + ") otherwise " \
+                  "it will not be possible to equally divide the elements into the desired " \
+                  "number of features."
+            raise ArgumentException(msg)
+
+        self._unflattenFromOneFeature_implementation(numFeatures)
+        ret = self._unflattenNames('feature', numFeatures)
+        self._pointCount = self.pointCount / numFeatures
+        self._featureCount = numFeatures
+        self.setPointNames(ret[1])
+        self.setFeatureNames(ret[0])
+
+
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###
@@ -4298,7 +4570,13 @@ class Base(object):
         # adjust nextDefaultValue as needed given contents of assignments
         for name in assignments:
             if name is not None and name.startswith(DEFAULT_PREFIX):
-                num = int(name[len(DEFAULT_PREFIX):])
+                try:
+                    num = int(name[len(DEFAULT_PREFIX):])
+                # Case: default prefix with non-integer suffix. This cannot
+                # cause a future integer suffix naming collision, so we
+                # can ignore it.
+                except ValueError:
+                    continue
                 checkAndSet(num)
 
         #convert to dict so we only write the checking code once
@@ -4368,13 +4646,13 @@ class Base(object):
         self._validateAxis(axis)
         if name.startswith(DEFAULT_PREFIX):
             intString = name[len(DEFAULT_PREFIX):]
-            if '_' in intString:
-                firstUnderscore = intString.index('_')
-                intString = intString[:firstUnderscore]
-            if '=' in intString:
-                firstEquals = intString.index('=')
-                intString = intString[:firstEquals]
-            nameNum = int(intString)
+            try:
+                nameNum = int(intString)
+            # Case: default prefix with non-integer suffix. This cannot
+            # cause a future integer suffix naming collision, so we
+            # return without making any chagnes.
+            except ValueError:
+                return
             if axis == 'point':
                 if nameNum >= self._nextDefaultValuePoint:
                     self._nextDefaultValuePoint = nameNum + 1
