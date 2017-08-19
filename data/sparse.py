@@ -1308,13 +1308,10 @@ class Sparse(Base):
                 else:
                     msg = 'for method = "interpolate", the arguments must be None or a dict.'
                     raise ArgumentException(msg)
-                try:
-                    tmpV = numpy.interp(**tmpArguments)
-                    for k, i in enumerate(interpX):
-                        self.fillWith(UML.createData('List', [tmpV[k]]), i, j, i, j)
-                except Exception:
-                    msg = 'To successfully use method == "interpolate", you need to read docs in numpy.interp.'
-                    raise ArgumentException(msg)
+
+                tmpV = numpy.interp(**tmpArguments)
+                for k, i in enumerate(interpX):
+                    self.fillWith(UML.createData('List', [tmpV[k]]), i, j, i, j)
 
         if markMissing:
             toAppend = UML.createData('Sparse', extraDummy, featureNames=extraFeatureNames, pointNames=self.getPointNames())

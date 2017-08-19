@@ -739,13 +739,10 @@ class Matrix(Base):
                 else:
                     msg = 'for method = "interpolate", the arguments must be None or a dict.'
                     raise ArgumentException(msg)
-                try:
-                    tmpV = numpy.interp(**tmpArguments)
-                    for k, i in enumerate(interpX):
-                        self.data[i, j] = tmpV[k]
-                except Exception:
-                    msg = 'To successfully use method == "interpolate", you need to read docs in numpy.interp.'
-                    raise ArgumentException(msg)
+
+                tmpV = numpy.interp(**tmpArguments)
+                for k, i in enumerate(interpX):
+                    self.data[i, j] = tmpV[k]
 
         if markMissing:
             self.data = numpy.append(self.data, extraDummy, axis=1)
