@@ -1337,21 +1337,11 @@ class Sparse(Base):
         currently, we sort the data first and then do binary search
         """
 
-        if self._sorted is None:# or True:
+        if self._sorted is None:
             self._sortInternal('point')
             self._sorted = 'point'
-        #import pdb; pdb.set_trace()
-        # print self._sorted
-        # print self.data.row
-        # print self.data.col
-        # print self.data.data
-        # print '-----------------------'
-        return self._binarySearch(x, y)
 
-        # for i in xrange(len(self.data.row)):
-        #     rowVal = self.data.row[i]
-        #     if rowVal == x and self.data.col[i] == y:
-        #         return self.data.data[i]
+        return self._binarySearch(x, y)
 
     def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
         """
