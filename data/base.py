@@ -2709,7 +2709,7 @@ class Base(object):
             if values.getTypeString() != self.getTypeString():
                 values = values.copyAs(self.getTypeString())
 
-        elif dataHelpers._looksNumeric(values):
+        elif dataHelpers._looksNumeric(values) or isinstance(values, basestring):
             pass  # no modificaitons needed
         else:
             msg = "values may only be a UML data object, or a single numeric value, yet "

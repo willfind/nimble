@@ -1019,7 +1019,7 @@ class Sparse(Base):
             locationVF = featureStart
             if constant:
                 vData = values
-                locationVP += vals_i / (pointEnd - pointStart + 1)  # uses truncation of int division
+                locationVP += vals_i / (featureEnd - featureStart + 1)# uses truncation of int division
                 locationVF += vals_i % (featureEnd - featureStart + 1)
             elif vals_i >= valsEnd:
                 locationVP += pointEnd + 1
@@ -1049,7 +1049,6 @@ class Sparse(Base):
 
                 #increment vals_i
                 vals_i += 1
-                print vals_i
             # Case: location at index into other is higher than location at index into self.
             # no matching entry in values - fill this entry in self with zero
             # (by shifting past it)
@@ -1201,7 +1200,7 @@ class Sparse(Base):
             for tmpItem in missingIdxDictFeature.items():
                 j = tmpItem[0]
                 for i in tmpItem[1]:
-                    self.fillWith(UML.createData('List', [featureMean[0, j]]), i, j, i, j)
+                    self.fillWith(featureMean[0, j], i, j, i, j)
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
         missingIdxDictFeature = {i: [] for i in featuresList}
@@ -1276,7 +1275,7 @@ class Sparse(Base):
                 for tmpItem in missingIdxDictFeature.items():
                     j = tmpItem[0]
                     for i in tmpItem[1]:
-                        self.fillWith(UML.createData('List', [arguments]), i, j, i, j)
+                        self.fillWith(arguments, i, j, i, j)
             else:
                 raise ArgumentException(msg)
         elif method == 'forward fill':
@@ -1284,13 +1283,13 @@ class Sparse(Base):
                     j = tmpItem[0]
                     for i in tmpItem[1]:
                         if i > 0:
-                            self.fillWith(UML.createData('List', [self[i-1, j]]), i, j, i, j)
+                            self.fillWith(self[i-1, j], i, j, i, j)
         elif method == 'backward fill':
             for tmpItem in missingIdxDictFeature.items():
                     j = tmpItem[0]
                     for i in sorted(tmpItem[1], reverse=True):
                         if i < self.pointCount - 1:
-                            self.fillWith(UML.createData('List', [self[i+1, j]]), i, j, i, j)
+                            self.fillWith(self[i+1, j], i, j, i, j)
         elif method == 'interpolate':
             for tmpItem in missingIdxDictFeature.items():
                 j = tmpItem[0]
@@ -1310,7 +1309,7 @@ class Sparse(Base):
 
                 tmpV = numpy.interp(**tmpArguments)
                 for k, i in enumerate(interpX):
-                    self.fillWith(UML.createData('List', [tmpV[k]]), i, j, i, j)
+                    self.fillWith(tmpV[k], i, j, i, j)
 
         if markMissing:
             toAppend = UML.createData('Sparse', extraDummy, featureNames=extraFeatureNames, pointNames=self.getPointNames())
