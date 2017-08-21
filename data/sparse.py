@@ -1181,16 +1181,17 @@ class Sparse(Base):
         newData = (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex]))
         self.data = scipy.sparse.coo_matrix(newData, (self.pointCount, self.featureCount))
 
-    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[numpy.NaN, None], markMissing=False):
+    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
         """
         This function is to
         1. drop points or features with missing values
-        2. fill missing values with mean, median or mode
+        2. fill missing values with mean, median, mode, or zero or a constant value
         3. fill missing values by forward or backward filling
+        4. imput missing values via linear interpolation
 
         Detailed steps are:
-        1. from alsoTreatAsMissing, generate a Set for elements which are not None or NaN but are still considered to be missing
-        2. from featuresList, generate a dict for each element
+        1. from alsoTreatAsMissing, generate a Set for elements which are not None nor NaN but should be considered as missing
+        2. from featuresList, generate 2 dicts missingIdxDictFeature and missingIdxDictPoint to store locations of missing values
         3. replace missing values in features in the featuresList with NaN
         4. based on method and arguments, process self.data
         5. update points and features information.
