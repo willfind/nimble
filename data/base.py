@@ -2709,7 +2709,7 @@ class Base(object):
             if values.getTypeString() != self.getTypeString():
                 values = values.copyAs(self.getTypeString())
 
-        elif dataHelpers._looksNumeric(values):
+        elif dataHelpers._looksNumeric(values) or isinstance(values, basestring):
             pass  # no modificaitons needed
         else:
             msg = "values may only be a UML data object, or a single numeric value, yet "
@@ -2720,9 +2720,27 @@ class Base(object):
         self.validate()
 
 
-    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[numpy.NaN, None], markMissing=False):
+    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
         """
+        This function is to remove, replace or impute missing values in an UML container data object.
 
+        method - a str. It can be 'remove points', 'remove features', 'feature mean', 'feature median', 'feature mode', 'zero', 'constant', 'forward fill'
+        'backward fill', 'interpolate'
+
+        features - can be None to indicate all features, or a str to indicate the name of a single feature, or an int to indicate
+        the index of a feature, or a list of feature names, or a list of features' indices. In this function, only those features in the input 'features'
+        will be processed.
+
+        arguments - for some kind of methods, we need to setup arguments.
+        for method = 'remove points', 'remove features', arguments can be 'all' or 'any' etc.
+        for method = 'constant', arguments must be a value
+        for method = 'interpolate', arguments can be a dict which stores inputs for numpy.interp
+
+        alsoTreatAsMissing -  a list. In this function, numpy.NaN and None are always treated as missing. You can add extra values which
+        should be treated as missing values too, in alsoTreatAsMissing.
+
+        markMissing: True or False. If it is True, then extra columns for those features will be added, in which 0 (False) or 1 (True) will be filled to
+        indicate if the value in a cell is originally missing or not.
         """
         #convert features to a list of index
         msg = 'features can only be a str, an int, or a list of str or a list of int'
@@ -2743,7 +2761,7 @@ class Base(object):
             raise ArgumentException(msg)
 
         #convert single value alsoTreatAsMissing to a list
-        if not hasattr(alsoTreatAsMissing, '__len__'):
+        if not hasattr(alsoTreatAsMissing, '__len__') or isinstance(alsoTreatAsMissing, basestring):
             alsoTreatAsMissing = [alsoTreatAsMissing]
 
         if isinstance(self, UML.data.DataFrame):

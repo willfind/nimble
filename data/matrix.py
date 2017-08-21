@@ -605,16 +605,17 @@ class Matrix(Base):
 
         self.data[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
 
-    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[numpy.NaN, None], markMissing=False):
+    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
         """
         This function is to
         1. drop points or features with missing values
-        2. fill missing values with mean, median or mode
+        2. fill missing values with mean, median, mode, or zero or a constant value
         3. fill missing values by forward or backward filling
+        4. imput missing values via linear interpolation
 
         Detailed steps are:
-        1. from alsoTreatAsMissing, generate a Set for elements which are not None or NaN but are still considered to be missing
-        2. from featuresList, generate a dict for each element
+        1. from alsoTreatAsMissing, generate a Set for elements which are not None nor NaN but should be considered as missing
+        2. from featuresList, generate 2 dicts missingIdxDictFeature and missingIdxDictPoint to store locations of missing values
         3. replace missing values in features in the featuresList with NaN
         4. based on method and arguments, process self.data
         5. update points and features information.
@@ -633,10 +634,11 @@ class Matrix(Base):
             for j in featuresList:
                 tmpV = self.data[i, j]
                 if tmpV in alsoTreatAsMissingSet or (tmpV!=tmpV) or tmpV is None:
+                    #numpy.NaN and None are always treated as missing
                     self.data[i, j] = numpy.NaN
                     missingIdxDictPoint[i].append(j)
                     missingIdxDictFeature[j].append(i)
-        #import pdb; pdb.set_trace()
+
         featureNames = self.getFeatureNames()
         pointNames = self.getPointNames()
         if markMissing:
@@ -739,13 +741,10 @@ class Matrix(Base):
                 else:
                     msg = 'for method = "interpolate", the arguments must be None or a dict.'
                     raise ArgumentException(msg)
-                try:
-                    tmpV = numpy.interp(**tmpArguments)
-                    for k, i in enumerate(interpX):
-                        self.data[i, j] = tmpV[k]
-                except Exception:
-                    msg = 'To successfully use method == "interpolate", you need to read docs in numpy.interp.'
-                    raise ArgumentException(msg)
+
+                tmpV = numpy.interp(**tmpArguments)
+                for k, i in enumerate(interpX):
+                    self.data[i, j] = tmpV[k]
 
         if markMissing:
             self.data = numpy.append(self.data, extraDummy, axis=1)

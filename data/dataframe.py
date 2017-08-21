@@ -546,12 +546,13 @@ class DataFrame(Base):
 
         self.data.ix[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
 
-    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[np.NaN, None], markMissing=False):
+    def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
         """
         This function is to
         1. drop points or features with missing values
-        2. fill missing values with mean, median or mode
+        2. fill missing values with mean, median, mode, or zero or a constant value
         3. fill missing values by forward or backward filling
+        4. imput missing values via linear interpolation
 
         Detailed steps are:
         1. from alsoTreatAsMissing, generate a dict for elements which are not None or NaN but should be treated as missing
@@ -561,7 +562,6 @@ class DataFrame(Base):
         5. update points and features information.
         """
         alsoTreatAsMissingDict = {i: None for i in alsoTreatAsMissing if (i is not None) and i == i}
-        #import pdb; pdb.set_trace()
         if alsoTreatAsMissingDict:
             myd = {i: alsoTreatAsMissingDict for i in featuresList}
             self.data.replace(myd, inplace=True)
@@ -573,41 +573,37 @@ class DataFrame(Base):
         #from now, based on method and arguments, process self.data
         if method == 'remove points':
             msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
-            try:
-                if arguments is None or arguments.lower() == 'any':
-                    self.data.dropna(subset=featuresList, how='any', inplace=True)
-                elif arguments.lower() == 'all':
-                    self.data.dropna(subset=featuresList, how='all', inplace=True)
-                else:
-                    raise ArgumentException(msg)
-            except Exception:
+            if arguments is None or arguments.lower() == 'any':
+                self.data.dropna(subset=featuresList, how='any', inplace=True)
+            elif arguments.lower() == 'all':
+                self.data.dropna(subset=featuresList, how='all', inplace=True)
+            else:
                 raise ArgumentException(msg)
+
             if 0 in self.data.shape:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
         elif method == 'remove features':
             msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
-            try:
-                if len(featuresList) == self.featureCount:
-                    #if we consider all features
-                    if arguments is None or arguments.lower() == 'any':
-                        self.data.dropna(axis=1, how='any', inplace=True)
-                    elif arguments.lower() == 'all':
-                        self.data.dropna(axis=1, how='all', inplace=True)
-                    else:
-                        raise ArgumentException(msg)
+            if len(featuresList) == self.featureCount:
+                #if we consider all features
+                if arguments is None or arguments.lower() == 'any':
+                    self.data.dropna(axis=1, how='any', inplace=True)
+                elif arguments.lower() == 'all':
+                    self.data.dropna(axis=1, how='all', inplace=True)
                 else:
-                    #if only some features are considered
-                    if arguments is None or arguments.lower() == 'any':
-                        cols = self.data[featuresList].dropna(axis=1, how='any', inplace=False).columns
-                    elif arguments.lower() == 'all':
-                        cols = self.data[featuresList].dropna(axis=1, how='all', inplace=False).columns
-                    else:
-                        raise ArgumentException(msg)
-                    dropCols = list(set(featuresList) - set(cols))
-                    self.data.drop(labels=dropCols, axis=1, inplace=True)
-            except Exception:
-                raise ArgumentException(msg)
+                    raise ArgumentException(msg)
+            else:
+                #if only some features are considered
+                if arguments is None or arguments.lower() == 'any':
+                    cols = self.data[featuresList].dropna(axis=1, how='any', inplace=False).columns
+                elif arguments.lower() == 'all':
+                    cols = self.data[featuresList].dropna(axis=1, how='all', inplace=False).columns
+                else:
+                    raise ArgumentException(msg)
+                dropCols = list(set(featuresList) - set(cols))
+                self.data.drop(labels=dropCols, axis=1, inplace=True)
+
             if 0 in self.data.shape:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -624,62 +620,48 @@ class DataFrame(Base):
             self.data.fillna(myd, inplace=True)
         elif method == 'constant':
             msg = 'for method = "constant", the arguments must be the constant.'
-            try:
-                if arguments is not None:
-                    myd = {i: arguments for i in featuresList}
-                    self.data.fillna(myd, inplace=True)
-                else:
-                    raise ArgumentException(msg)
-            except Exception:
+            if arguments is not None:
+                myd = {i: arguments for i in featuresList}
+                self.data.fillna(myd, inplace=True)
+            else:
                 raise ArgumentException(msg)
         elif method == 'forward fill':
             self.data[featuresList] = self.data[featuresList].fillna(method='ffill')
         elif method == 'backward fill':
             self.data[featuresList] = self.data[featuresList].fillna(method='bfill')
         elif method == 'interpolate':
-            try:
-                if arguments is None:
-                    arguments = {}
-                elif isinstance(arguments, dict):
-                    pass
-                else:
-                    msg = 'for method = "interpolate", the arguments must be None or a dict.'
-                    raise ArgumentException(msg)
-                if len(featuresList) == self.featureCount:
-                        self.data.interpolate(inplace=True, **arguments)
-                else:
-                    self.data[featuresList] = self.data[featuresList].interpolate(**arguments)
-            except Exception:
-                msg = 'To successfully use method == "interpolate", you need to read docs in pandas.DataFrame.interpolate.'
+            if arguments is None:
+                arguments = {}
+            elif isinstance(arguments, dict):
+                pass
+            else:
+                msg = 'for method = "interpolate", the arguments must be None or a dict.'
                 raise ArgumentException(msg)
+            if len(featuresList) == self.featureCount:
+                    self.data.interpolate(inplace=True, **arguments)
+            else:
+                self.data[featuresList] = self.data[featuresList].interpolate(**arguments)
         elif hasattr(method, '__name__') and 'KNeighbors' in method.__name__:
             if arguments is None:
                 arguments = {}
             neigh = method(**arguments)
-            try:
-                tmpList = []#store idx, col and values for missing values
-                for col in featuresList:
-                    colBln = (self.data.columns == col)
-                    for idx in self.data.index:
-                        #do KNN point by point
-                        if pd.isnull(self.data.ix[idx, colBln].values[0]):
-                            #prepare training data
-                            notNullCols = ~self.data.ix[idx, :].isnull()
-                            predictData = self.data.ix[idx, notNullCols]
-                            notNullCols[col] = True
-                            trainingData = self.data.ix[:, notNullCols].dropna(how='any')
-                            #train
-                            neigh.fit(trainingData.ix[:, ~colBln], trainingData.ix[:, colBln])
-                            #predict
-                            tmpList.append([idx, col, neigh.predict(predictData.reshape(1, -1))[0][0] ])
-                for idx, col, v in tmpList:
-                    self.data.ix[idx, col] = v
-
-            except Exception:
-                msg = 'To successfully use method == sklearn.neighbors.KNeighborsRegressor or \
-                sklearn.neighbors.KNeighborsClassifier,\
-                 you need to read docs in sklearn.neighbors.'
-                raise ArgumentException(msg)
+            tmpList = []#store idx, col and values for missing values
+            for col in featuresList:
+                colBln = (self.data.columns == col)
+                for idx in self.data.index:
+                    #do KNN point by point
+                    if pd.isnull(self.data.ix[idx, colBln].values[0]):
+                        #prepare training data
+                        notNullCols = ~self.data.ix[idx, :].isnull()
+                        predictData = self.data.ix[idx, notNullCols]
+                        notNullCols[col] = True
+                        trainingData = self.data.ix[:, notNullCols].dropna(how='any')
+                        #train
+                        neigh.fit(trainingData.ix[:, ~colBln], trainingData.ix[:, colBln])
+                        #predict
+                        tmpList.append([idx, col, neigh.predict(predictData.reshape(1, -1))[0][0] ])
+            for idx, col, v in tmpList:
+                self.data.ix[idx, col] = v
         else:
             msg = 'method can be "remove points", "remove features", "feature mean", "feature median", \
             "feature mode", "zero", "constant", "forward fill", "backward fill", "extra dummy", "interpolate", \

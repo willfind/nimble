@@ -1636,14 +1636,12 @@ class HighLevelModifying(DataTestObject):
         obj1 = obj0.copy()
         obj1.handleMissingValues(method='remove points')
         ret1 = self.constructor([[1, 2, 3], [7, 8, 9]])
-        ret1.setPointNames(['_DEFAULT_#0', '_DEFAULT_#3'])
         ret1.setFeatureNames(['a', 'b', 'c'])
         assert obj1 == ret1
 
         obj2 = obj0.copy()
         obj2.handleMissingValues(method='remove points', arguments='all', alsoTreatAsMissing=[11])
         ret2 = self.constructor([[1, 2, 3], [7, numpy.NaN, None], [7, 8, 9]])
-        ret2.setPointNames(['_DEFAULT_#0', '_DEFAULT_#2', '_DEFAULT_#3'])
         ret2.setFeatureNames(['a', 'b', 'c'])
         assert obj2 == ret2
 
