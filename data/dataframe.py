@@ -561,7 +561,7 @@ class DataFrame(Base):
         4. based on method and arguments, process self.data
         5. update points and features information.
         """
-        alsoTreatAsMissingDict = {i: None for i in alsoTreatAsMissing if (i is not None) and i == i}
+        alsoTreatAsMissingDict = {i: np.NaN for i in alsoTreatAsMissing if (i is not None) and i == i}
         if alsoTreatAsMissingDict:
             myd = {i: alsoTreatAsMissingDict for i in featuresList}
             self.data.replace(myd, inplace=True)
