@@ -280,7 +280,7 @@ def test_extractNames_CSV():
         assert fromList == fromCSV
 
 
-def test_names_AutoDetected_CSV():
+def test_names_AutoDetectedBlankLines_CSV():
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
@@ -300,7 +300,7 @@ def test_names_AutoDetected_CSV():
         assert fromList == fromCSV
 
 
-def test_featNamesOnly_AutoDetected_CSV():
+def test_featNamesOnly_AutoDetectedBlankLines_CSV():
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]], featureNames=fNames)
@@ -316,7 +316,6 @@ def test_featNamesOnly_AutoDetected_CSV():
         fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
         tmpCSV.close()
         assert fromList == fromCSV
-
 
 def test_pointNames_AutoDetected_from_specified_featNames_CSV():
     fNames = ['one', 'two', 'three']
@@ -337,7 +336,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
         assert fromList == fromCSV
 
 
-def test_specifiedIgnore_overides_autoDetect_CSV():
+def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
     for t in returnTypes:
         data = [[0, 1, 2, 3], [10, 11, 12, 13]]
         fromList = UML.createData(returnType=t, data=data)
@@ -723,9 +722,9 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
 
             assert fromList == fromCSV
 
-            if t == 'List':
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-                assert fromCSV.features == 4
+            # sanity check
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            assert fromCSV.featureCount == 4
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
@@ -745,9 +744,9 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
 
             assert fromList == fromCSV
 
-            if t == 'List':
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-                assert fromCSV.features == 5
+            # sanity check
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            assert fromCSV.featureCount == 5
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
@@ -767,9 +766,9 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
 
             assert fromList == fromCSV
 
-            if t == 'List':
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-                assert fromCSV.features == 5
+            # sanity check
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            assert fromCSV.featureCount == 5
 
 
 def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
@@ -787,9 +786,8 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
 
             assert fromList == fromCSV
 
-            if t == 'List':
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-                assert fromCSV.features == 4
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            assert fromCSV.featureCount == 4
 
 
 def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
@@ -892,10 +890,7 @@ def test_CSVformatting_specialCharsInQuotes():
 
 def test_CSVformatting_emptyAndCommentLines():
     for t in returnTypes:
-        if t == 'List':
-            data = [[1, 2, 3, 4], ['#11', 22, 33, 44], [5, 6, 7, 8]]
-        else:
-            data = [[1, 2, 3, 4], [5, 6, 7, 8]]
+        data = [[1, 2, 3, 4], ['#11', 22, 33, 44], [5, 6, 7, 8]]
 
         fromList = UML.createData(returnType=t, data=data)
 
@@ -907,8 +902,7 @@ def test_CSVformatting_emptyAndCommentLines():
             tmpCSV.write("#1,2,3,4\n")
             tmpCSV.write("\n")
             tmpCSV.write("1,2,3,4\n")
-            if t == 'List':
-                tmpCSV.write("#11,22,33, 44\n")
+            tmpCSV.write("#11,22,33, 44\n")
             tmpCSV.write("\n")
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.write("\n")
@@ -1179,7 +1173,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
     finally:
         UML.helpers.initDataObject = backup
 
-#def test_createData_keepPF_mtxArr_noUncessaryStorage():
+#def TODOtest_createData_keepPF_mtxArr_noUncessaryStorage():
 #	fromList = UML.createData(returnType='Matrix', data=[[2]])
 #	backup = UML.helpers.initDataObject
 #
@@ -1210,7 +1204,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #		UML.helpers.initDataObject = backup
 
 
-#def test_createData_keepPF_mtxCoo_noUncessaryStorage():
+#def TODOtest_createData_keepPF_mtxCoo_noUncessaryStorage():
 #	fromList = UML.createData(returnType='Matrix', data=[[2]])
 #	backup = UML.helpers.initDataObject
 #
@@ -1660,4 +1654,6 @@ def test_createData_csv_nonremoval_efficiency():
 
 
 # unit tests demonstrating our file loaders can handle arbitrarly placed blank lines
+
+
 # comment lines
