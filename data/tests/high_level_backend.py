@@ -1743,7 +1743,7 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
-        obj3.handleMissingValues(method='zero', alsoTreatAsMissing=11, markMissing=True, features=['b', 'c'])
+        obj3.handleMissingValues(method='zero', alsoTreatAsMissing=11, markMissing=True, features=['b', 2])
         ret3 = self.constructor([[1, 2, 3, False, False], [None, 0, 0, True, True], [7, 0, 0, True, True], [7, 8, 9, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'b_missing', 'c_missing'])
         try:

@@ -2728,7 +2728,7 @@ class Base(object):
         'backward fill', 'interpolate'
 
         features - can be None to indicate all features, or a str to indicate the name of a single feature, or an int to indicate
-        the index of a feature, or a list of feature names, or a list of features' indices. In this function, only those features in the input 'features'
+        the index of a feature, or a list of feature names, or a list of features' indices, or a list of mix of feature names and feature indices. In this function, only those features in the input 'features'
         will be processed.
 
         arguments - for some kind of methods, we need to setup arguments.
@@ -2751,12 +2751,14 @@ class Base(object):
         elif isinstance(features, int):
             featuresList = [features]
         elif isinstance(features, list):
-            if isinstance(features[0], basestring):
-                featuresList = [self.getFeatureIndex(i) for i in features]
-            elif isinstance(features[0], int):
-                featuresList = features
-            else:
-                raise ArgumentException(msg)
+            featuresList = []
+            for i in features:
+                if isinstance(i, basestring):
+                    featuresList.append(self.getFeatureIndex(i))
+                elif isinstance(i, int):
+                    featuresList.append(i)
+                else:
+                    raise ArgumentException(msg)
         else:
             raise ArgumentException(msg)
 
