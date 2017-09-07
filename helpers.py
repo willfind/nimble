@@ -819,6 +819,37 @@ def _defaultParser(line):
         ret.append(_intFloatOrString(entry))
     return ret
 
+def autoDetectNamesFromRaw(pointNames, featureNames, firstValues, secondValues):
+    failPN = True if pointNames is True else False
+    failFN = True if featureNames is True else False
+    if firstValues is None or firstValues == []:
+        return (failPN, failFN)
+    if secondValues is None or secondValues == []:
+        return (failPN, failFN)
+    if featureNames is False:
+        return (failPN, failFN)
+
+    if (pointNames is True or pointNames == 'automatic') and firstValues[0] == 'point_names':
+        allText = all(map(lambda x: isinstance(x,basestring), firstValues[1:]))
+        allDiff = all(map(lambda (x,y): type(x) != type(y), zip(firstValues[1:],secondValues[1:])))
+    else:
+        allText = all(map(lambda x: isinstance(x,basestring), firstValues))
+        allDiff = all(map(lambda (x,y): type(x) != type(y), zip(firstValues,secondValues)))
+
+    if featureNames == 'automatic' and allText and allDiff:
+        featureNames = True
+    # If we've reached this point, there is no chance to resolve 'automatic' to True
+    if featureNames is 'automatic':
+        featureNames = False
+
+    if featureNames is True and pointNames == 'automatic':
+        if firstValues[0] == 'point_names':
+            pointNames = True
+    # If we've reached this point, there is no chance to resolve 'automatic' to True
+    if pointNames is 'automatic':
+        pointNames = False
+
+    return (pointNames, featureNames)
 
 def _checkCSV_for_Names(openFile, pointNames, featureNames):
     """
@@ -847,22 +878,56 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
                 # we set this so the names are extracted later
                 featureNames = True
 
+    # Use the robust csv reader to read the first two lines (if available)
+    # these are saved to used in further autodection
+    openFile.seek(startPosition)
+    rowReader = csv.reader(openFile)
+    try:
+        firstDataRow = rowReader.next()
+        while firstDataRow == []:
+            firstDataRow = rowReader.next()
+        secondDataRow = rowReader.next()
+        while secondDataRow == []:
+            secondDataRow = rowReader.next()
+    except StopIteration:
+        firstDataRow = None
+        secondDataRow = None
+
+    if firstDataRow is not None:
+        firstDataRow = map(_intFloatOrString, firstDataRow)
+    if secondDataRow is not None:
+        secondDataRow = map(_intFloatOrString, secondDataRow)
+    (pointNames, featureNames) = autoDetectNamesFromRaw(pointNames, featureNames,
+                                                        firstDataRow, secondDataRow)
+
+#    # Do autodetection of feature names by type
+#    if featureNames == 'automatic':
+#        if secondDataRow is not None:
+#            firstValues = map(_intFloatOrString, firstDataRow)
+#            secondValues = map(_intFloatOrString, secondDataRow)
+
+#            if (pointNames is True or pointNames == 'automatic') and firstValues[0] == 'point_names':
+#                firstValues = firstValues[1:]
+#                secondValues = secondValues[2:]
+
+#            allText = all(map(lambda x: isinstance(x,basestring), firstValues))
+#            allDiff = all(map(lambda (x,y): type(x) != type(y), zip(firstValues,secondValues)))
+#            if allText and allDiff:
+#                featureNames = True
+
     # if we made it this far but haven't detected featureNames
     # then we can specify them as not being present
-    if featureNames == 'automatic':
-        featureNames = False
+#    if featureNames == 'automatic':
+#        featureNames = False
 
     # find the first data line and attempt to auto detect point names,
     # but only if we think the feature names are in that first row
-    if featureNames is True and pointNames == 'automatic':
-        while currLine.startswith('#') or currLine.strip() == '':
-            currLine = openFile.readline()
+#    if featureNames is True and pointNames == 'automatic':
+#        if firstDataRow[0] == 'point_names':
+#            pointNames = True
 
-        if currLine.startswith('point_names,'):
-            pointNames = True
-
-    if pointNames == 'automatic':
-        pointNames = False
+#    if pointNames == 'automatic':
+#        pointNames = False
 
     # reset everyting to make the loop easier
     openFile.seek(startPosition)

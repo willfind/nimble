@@ -10,6 +10,7 @@ import itertools
 import UML
 from UML.exceptions import ArgumentException
 from UML.exceptions import FileFormatException
+from UML.data.dataHelpers import DEFAULT_PREFIX
 scipy = UML.importModule('scipy.sparse')
 
 #returnTypes = ['Matrix', 'Sparse', None]  # None for auto
@@ -352,6 +353,110 @@ def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
             returnType=t, data=tmpCSV.name, pointNames=False, featureNames=False)
         tmpCSV.close()
         assert fromList == fromCSV
+
+
+def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
+    """
+    Writes a CSV and reads it in using UML.createData, fixing in place the given arguments,
+    returning the resultant object
+
+    """
+    if rawType == 'csv':
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV.write(rawStr)
+        tmpCSV.flush()
+        ret = UML.createData(returnType=returnType, data=tmpCSV.name,
+                             pointNames=pointNames, featureNames=featureNames)
+        tmpCSV.close()
+    else:
+        lolFromRaw = [rawStr.split('\n')[0].split(','), rawStr.split('\n')[1].split(',')]
+        baseObj = UML.createData("Matrix", lolFromRaw)
+        if rawType == 'scipycoo':
+            finalRaw = scipy.sparse.coo_matrix(lolFromRaw)
+        else:
+            finalRaw = baseObj.copyAs(rawType)
+
+        ret = UML.createData(returnType=returnType, data=finalRaw,
+                             pointNames=pointNames, featureNames=featureNames)
+
+    return ret
+
+def test_automaticByType_fnames_rawAndCSV():
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+        # example which triggers automatic removal
+        correctRaw = "fname0,fname1,fname2\n1,2,3\n"
+        correct = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert correct.getFeatureNames() == ['fname0','fname1','fname2']
+
+        # example where first line contains a non-string interpretable value
+        nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
+        fail1 = helper_auto(nonStringFail1Raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail1.getFeatureNames()))
+
+        # example where the first line contains all strings, but second line also contains strings
+        sameTypeFail2Raw = "fname0,fname1,fname2\n1,data2,3"
+        fail2 = helper_auto(sameTypeFail2Raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail2.getFeatureNames()))
+
+
+def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+        # example where user provided False overides automatic detection
+        correctRaw = "fname0,fname1,fname2\n1,2,3\n"
+        overide1 = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1.getFeatureNames()))
+
+        # example where user provided True extracts non-detectable first line
+        nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
+        overide2 = helper_auto(nonStringFail1Raw, rawT, retT, pointNames='automatic', featureNames=True)
+        assert overide2.getFeatureNames() == ['fname0', '1.0', 'fname2']
+
+        # example where user provided True extracts non-detectable first line
+        sameTypeFail2Raw = "fname0,fname1,fname2\ndata1,data2,data3"
+        overide3 = helper_auto(sameTypeFail2Raw, rawT, retT, pointNames='automatic', featureNames=True)
+        assert overide3.getFeatureNames() == ['fname0', 'fname1', 'fname2']
+
+
+def test_automaticByType_pname_interaction_with_fname():
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+        # pnames auto triggered with auto fnames
+        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert testObj.getFeatureNames() == ['fname0','fname1','fname2']
+        assert testObj.getPointNames() == ['pname0']
+
+        # pnames auto triggereed with explicit fnames
+        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=True)
+        assert testObj.getFeatureNames() == ['fname0','fname1','fname2']
+        assert testObj.getPointNames() == ['pname0']
+
+        #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE1
+        raw = "point_names,fname0,1.0,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+
+        #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE2
+        raw = "point_names,fname0,fname1,fname2\npname0,data1,data2,data3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+
+        #pnames not triggered given 'point_names' at [0,0] when fnames explicit False
+        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=False)
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+
+        #pnames explicit False given 'point_names' at [0,0] and fname auto extraction
+        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames=False, featureNames=True)
+        assert testObj.getFeatureNames() == ['point_names', 'fname0', 'fname1', 'fname2']
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
 
 
 def test_namesInComment_MTXArr():
