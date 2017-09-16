@@ -1,10 +1,7 @@
 """
-Relies on being scikit-learn 0.9 or above
+Relies on being keras 2.0.8
 
 """
-
-# TODO: multinomialHMM requires special input processing for obs param
-
 
 import importlib
 import inspect
@@ -16,13 +13,19 @@ import functools
 
 import UML
 
+keras = UML.importModule('keras')
+modelFunc = keras.models.Model.__init__
+def tmpFunc(self, inputs=None, outputs=None, layers=None, **kwarguments):
+    modelFunc(self, inputs=inputs, outputs=outputs)
+keras.models.Model.__init__ = tmpFunc
+
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
-sciKitLearnDir = None
+kerasDir = None
 
 # a dictionary mapping names to learners, or modules
 # containing learners. To be used by findInPackage
@@ -31,44 +34,38 @@ locationCache = {}
 from UML.interfaces.universal_interface import UniversalInterface
 
 
-class SciKitLearn(UniversalInterface):
+class Keras(UniversalInterface):
     """
 
     """
-
     def __init__(self):
         """
 
         """
-        if sciKitLearnDir is not None:
-            sys.path.insert(0, sciKitLearnDir)
+        if kerasDir is not None:
+            sys.path.insert(0, kerasDir)
+        self.keras = keras
 
-        self.skl = importlib.import_module('sklearn')
-
-        #		oldList = self._listLearnersBackend()
-
-        # __all__ has been known to not have some subpackages that we want
-        # so we check the root directory of sklearn for names that we can
-        # attempt to import
-        names = os.listdir(self.skl.__path__[0])
+        # keras 2.0.8 has no __all__
+        names = os.listdir(self.keras.__path__[0])
         possibilities = []
+        if not hasattr(self.keras, '__all__'):
+            self.keras.__all__ = []
         for name in names:
             splitList = name.split('.')
             if len(splitList) == 1 or splitList[1] in ['py', 'pyc']:
-                if splitList[0] not in self.skl.__all__ and not splitList[0].startswith('_'):
+                if splitList[0] not in self.keras.__all__ and not splitList[0].startswith('_'):
                     possibilities.append(splitList[0])
 
         possibilities = numpy.unique(possibilities).tolist()
         if 'utils' in possibilities:
             possibilities.remove('utils')
-        self.skl.__all__.extend(possibilities)
-
-        #		self.newLearners = []
-        #		for name in self._listLearnersBackend():
-        #			if name not in oldList:
-        #				self.newLearners.append(name)
+        self.keras.__all__.extend(possibilities)
 
         def isLearner(obj):
+            """
+            in Keras, there are 2 learners: Sequential and Model.
+            """
             hasFit = hasattr(obj, 'fit')
             hasPred = hasattr(obj, 'predict')
             hasTrans = hasattr(obj, 'transform')
@@ -78,39 +75,32 @@ class SciKitLearn(UniversalInterface):
             if not ((hasFit and (hasPred or hasTrans)) or hasFitPred or hasFitTrans):
                 return False
 
-            try:
-                instantiated = obj()
-            except TypeError:
-                # We're using a failed init call as a cue that object in question
-                # is a kind of intermediate class (which we want to ignore). All
-                # the working estimators seem to have full defaults for all params
-                # to __init__
-                return False
+
+            # try:
+            #     obj()
+            # except TypeError:
+            #     # We're using a failed init call as a cue that object in question
+            #     # is a kind of intermediate class (which we want to ignore). All
+            #     # the working estimators seem to have full defaults for all params
+            #     # to __init__
+            #     return False
 
             return True
 
-        self._searcher = PythonSearcher(self.skl, self.skl.__all__, {}, isLearner, 2)
+        self._searcher = PythonSearcher(self.keras, self.keras.__all__, {}, isLearner, 2)
 
-        super(SciKitLearn, self).__init__()
-
-    #######################################
-    ### ABSTRACT METHOD IMPLEMENTATIONS ###
-    #######################################
+        super(Keras, self).__init__()
 
     def accessible(self):
         try:
-            import sklearn
+            import keras
         except ImportError:
             return False
         return True
 
     def _listLearnersBackend(self):
         possibilities = self._searcher.allLearners()
-
-        exclude = ['BaseDiscreteNB', 'libsvm', 'GMMHMM', 'GaussianHMM', 'MultinomialHMM',
-                   'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression', 'LogOddsEstimator',
-                   'PriorProbabilityEstimator', 'MeanEstimator', 'TransformerMixin', 'ClusterMixin',
-                   'BaggingClassifier', ]
+        exclude = []
         ret = []
         for name in possibilities:
             if not name in exclude:
@@ -121,20 +111,11 @@ class SciKitLearn(UniversalInterface):
     def learnerType(self, name):
         """
         Returns a string referring to the action the learner takes out of the possibilities:
-        classification, regression, featureSelection, dimensionalityReduction
-        TODO
+        optimization
 
         """
-        obj = self.findCallable(name)
-        if hasattr(obj, 'classes_') or hasattr(obj, 'label_') or hasattr(obj, 'labels_'):
-            return 'classification'
-        if "Classifier" in obj.__name__:
-            return 'classification'
 
-        if "Regressor" in obj.__name__:
-            return 'regression'
-
-        return 'UNKNOWN'
+        return 'OPTIMIZER'
 
     def _findCallableBackend(self, name):
         """
@@ -150,7 +131,7 @@ class SciKitLearn(UniversalInterface):
         TAKES string name,
         RETURNS list of list of param names to make the chosen call
         """
-        ret = self._paramQuery(name, None)
+        ret = self._paramQuery(name, None, ignore=['self'])
         if ret is None:
             return ret
         (objArgs, v, k, d) = ret
@@ -162,27 +143,19 @@ class SciKitLearn(UniversalInterface):
         TAKES string name of a learner,
         RETURNS list of list of param names
         """
-        #		if learnerName == 'KernelCenterer':
-        #			import pdb
-        #			pdb.set_trace()
         ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
-        transform = self._paramQuery('transform', learnerName, ignore)
-        fitPredict = self._paramQuery('fit_predict', learnerName, ignore)
-        fitTransform = self._paramQuery('fit_transform', learnerName, ignore)
+        compile = self._paramQuery('compile', learnerName, ignore)
 
-        if predict is not None:
-            ret = init[0] + fit[0] + predict[0]
-        elif transform is not None:
-            ret = init[0] + fit[0] + transform[0]
-        elif fitPredict is not None:
-            ret = init[0] + fitPredict[0]
-        elif fitTransform is not None:
-            ret = init[0] + fitTransform[0]
-        else:
-            raise ArgumentException("Cannot get parameter names for leaner " + learnerName)
+        ret = init[0] + fit[0] + compile[0] + predict[0]
+        # if predict is not None:
+        #     ret = init[0] + fit[0] + predict[0]
+        # elif compile is not None:
+        #     ret = init[0] + fit[0] + compile[0]
+        # else:
+        #     raise ArgumentException("Cannot get parameter names for leaner " + learnerName)
 
         return [ret]
 
@@ -213,18 +186,9 @@ class SciKitLearn(UniversalInterface):
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
-        transform = self._paramQuery('transform', learnerName, ignore)
-        fitPredict = self._paramQuery('fit_predict', learnerName, ignore)
-        fitTransform = self._paramQuery('fit_transform', learnerName, ignore)
+        compile = self._paramQuery('compile', learnerName, ignore)
 
-        if predict is not None:
-            toProcess = [init, fit, predict]
-        elif transform is not None:
-            toProcess = [init, fit, transform]
-        elif fitPredict is not None:
-            toProcess = [init, fitPredict]
-        else:
-            toProcess = [init, fitTransform]
+        toProcess = [init, fit, compile, predict]
 
         ret = {}
         for stage in toProcess:
@@ -282,7 +246,7 @@ class SciKitLearn(UniversalInterface):
         Returns the string name that will uniquely identify this interface
 
         """
-        return 'sciKitLearn'
+        return 'keras'
 
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
@@ -304,13 +268,28 @@ class SciKitLearn(UniversalInterface):
         by the package implementor, for example to be used in _outputTransformation()
 
         """
-        mustCopy = ['PLSRegression']
+        if 'layers' in arguments:
+            if learnerName == 'Sequential':
+                layersObj = []
+                for layer in arguments['layers']:
+                    layerType = layer.pop('type')
+                    layersObj.append(self.findCallable(layerType)(**layer))
+            else:
+                layersObj = {}
+                for layer in arguments['layers']:
+                    layerType = layer.pop('type')
+                    layerName = layer.pop('layerName')
+                    if 'inputs' in layer:
+                        inputName = layer.pop('inputs')
+                        layersObj[layerName] = self.findCallable(layerType)(**layer)(layersObj[inputName])
+                    else:
+                        layersObj[layerName] = self.findCallable(layerType)(**layer)
+                arguments['inputs'] = layersObj[arguments['inputs']]
+                arguments['outputs'] = layersObj[arguments['outputs']]
+            arguments['layers'] = layersObj
 
         if trainX is not None:
-            customDict['match'] = trainX.getTypeString()
-            if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopy:
-                trainX = trainX.data
-            elif trainX.getTypeString() == 'Sparse':
+            if trainX.getTypeString() == 'Sparse':
                 trainX = trainX.copyAs('scipycsr')
             else:
                 trainX = trainX.copyAs('numpy matrix')
@@ -320,25 +299,25 @@ class SciKitLearn(UniversalInterface):
                 trainY = (trainY.copyAs('numpy array'))
             else:
                 trainY = trainY.copyAs('numpy array', outputAs1D=True)
+        #
+        # if testX is not None:
+        #     if testX.getTypeString() == 'Matrix':
+        #         testX = testX.data
+        #     elif testX.getTypeString() == 'Sparse':
+        #         testX = testX.copyAs('scipycsr')
+        #     else:
+        #         testX = testX.copyAs('numpy matrix')
+        #
+        # # this particular learner requires integer inputs
+        # if learnerName == 'MultinomialHMM':
+        #     if trainX is not None:
+        #         trainX = numpy.array(trainX, numpy.int32)
+        #     if trainY is not None:
+        #         trainY = numpy.array(trainY, numpy.int32)
+        #     if testX is not None:
+        #         testX = numpy.array(testX, numpy.int32)
 
-        if testX is not None:
-            if testX.getTypeString() == 'Matrix':
-                testX = testX.data
-            elif testX.getTypeString() == 'Sparse':
-                testX = testX.copyAs('scipycsr')
-            else:
-                testX = testX.copyAs('numpy matrix')
-
-        # this particular learner requires integer inputs
-        if learnerName == 'MultinomialHMM':
-            if trainX is not None:
-                trainX = numpy.array(trainX, numpy.int32)
-            if trainY is not None:
-                trainY = numpy.array(trainY, numpy.int32)
-            if testX is not None:
-                testX = numpy.array(testX, numpy.int32)
-
-        return (trainX, trainY, testX, copy.deepcopy(arguments))
+        return (trainX, trainY, testX, copy.copy(arguments))
 
 
     def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
@@ -365,13 +344,24 @@ class SciKitLearn(UniversalInterface):
         RETURNS an in package object to be wrapped by a TrainedLearner object
         """
         # get parameter names
+        # if learnerName == 'Model':
+        #     initNames = ['inputs', 'outputs']
+        # else:
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
+        compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
         fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
 
         # pack parameter sets
         initParams = {}
         for name in initNames:
             initParams[name] = arguments[name]
+        learner = self.findCallable(learnerName)(**initParams)
+
+        compileParams = {}
+        for name in compileNames:
+            compileParams[name] = arguments[name]
+        learner.compile(**compileParams)
+
         fitParams = {}
         for name in fitNames:
             if name.lower() == 'x' or name.lower() == 'obs':
@@ -381,9 +371,8 @@ class SciKitLearn(UniversalInterface):
             else:
                 value = arguments[name]
             fitParams[name] = value
-
-        learner = self.findCallable(learnerName)(**initParams)
         learner.fit(**fitParams)
+
         if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba'):
             if trainY is not None:
                 labelOrder = numpy.unique(trainY)
