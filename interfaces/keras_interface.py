@@ -269,24 +269,25 @@ class Keras(UniversalInterface):
 
         """
         if 'layers' in arguments:
-            if learnerName == 'Sequential':
-                layersObj = []
-                for layer in arguments['layers']:
-                    layerType = layer.pop('type')
-                    layersObj.append(self.findCallable(layerType)(**layer))
-            else:
-                layersObj = {}
-                for layer in arguments['layers']:
-                    layerType = layer.pop('type')
-                    layerName = layer.pop('layerName')
-                    if 'inputs' in layer:
-                        inputName = layer.pop('inputs')
-                        layersObj[layerName] = self.findCallable(layerType)(**layer)(layersObj[inputName])
-                    else:
-                        layersObj[layerName] = self.findCallable(layerType)(**layer)
-                arguments['inputs'] = layersObj[arguments['inputs']]
-                arguments['outputs'] = layersObj[arguments['outputs']]
-            arguments['layers'] = layersObj
+            if isinstance(arguments['layers'][0], dict):#this is to check if layers has been processed or not
+                if learnerName == 'Sequential':
+                    layersObj = []
+                    for layer in arguments['layers']:
+                        layerType = layer.pop('type')
+                        layersObj.append(self.findCallable(layerType)(**layer))
+                else:
+                    layersObj = {}
+                    for layer in arguments['layers']:
+                        layerType = layer.pop('type')
+                        layerName = layer.pop('layerName')
+                        if 'inputs' in layer:
+                            inputName = layer.pop('inputs')
+                            layersObj[layerName] = self.findCallable(layerType)(**layer)(layersObj[inputName])
+                        else:
+                            layersObj[layerName] = self.findCallable(layerType)(**layer)
+                    arguments['inputs'] = layersObj[arguments['inputs']]
+                    arguments['outputs'] = layersObj[arguments['outputs']]
+                arguments['layers'] = layersObj
 
         if trainX is not None:
             if trainX.getTypeString() == 'Sparse':
@@ -299,14 +300,14 @@ class Keras(UniversalInterface):
                 trainY = (trainY.copyAs('numpy array'))
             else:
                 trainY = trainY.copyAs('numpy array', outputAs1D=True)
-        #
-        # if testX is not None:
-        #     if testX.getTypeString() == 'Matrix':
-        #         testX = testX.data
-        #     elif testX.getTypeString() == 'Sparse':
-        #         testX = testX.copyAs('scipycsr')
-        #     else:
-        #         testX = testX.copyAs('numpy matrix')
+
+        if testX is not None:
+            if testX.getTypeString() == 'Matrix':
+                testX = testX.data
+            elif testX.getTypeString() == 'Sparse':
+                testX = testX.copyAs('scipycsr')
+            else:
+                testX = testX.copyAs('numpy matrix')
         #
         # # this particular learner requires integer inputs
         # if learnerName == 'MultinomialHMM':
@@ -406,10 +407,8 @@ class Keras(UniversalInterface):
         """
         if hasattr(learner, 'predict'):
             return self._predict(learner, testX, arguments, customDict)
-        elif hasattr(learner, 'transform'):
-            return self._transform(learner, testX, arguments, customDict)
         else:
-            raise TypeError("Cannot apply this learner to data, no predict or transform function")
+            raise TypeError("Cannot apply this learner to data, no predict function")
 
 
     def _getAttributes(self, learnerBackend):
