@@ -13,18 +13,12 @@ import functools
 
 import UML
 
-keras = UML.importModule('keras')
-modelFunc = keras.models.Model.__init__
-def tmpFunc(self, inputs=None, outputs=None, layers=None, **kwarguments):
-    modelFunc(self, inputs=inputs, outputs=outputs)
-keras.models.Model.__init__ = tmpFunc
-
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
 
-# Contains path to sciKitLearn root directory
-#sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
+# Contains path to keras root directory
+#kerasDir = '/usr/local/lib/python2.7/dist-packages'
 kerasDir = None
 
 # a dictionary mapping names to learners, or modules
@@ -36,7 +30,7 @@ from UML.interfaces.universal_interface import UniversalInterface
 
 class Keras(UniversalInterface):
     """
-
+    This class is an interface to keras.
     """
     def __init__(self):
         """
@@ -44,7 +38,13 @@ class Keras(UniversalInterface):
         """
         if kerasDir is not None:
             sys.path.insert(0, kerasDir)
-        self.keras = keras
+
+        self.keras = UML.importModule('keras')
+        #to make Model handel inputs and outputs explicitly, monkey patching is needed
+        modelFunc = self.keras.models.Model.__init__
+        def tmpFunc(self, inputs=None, outputs=None, layers=None, **kwarguments):
+            modelFunc(self, inputs=inputs, outputs=outputs)
+        self.keras.models.Model.__init__ = tmpFunc
 
         # keras 2.0.8 has no __all__
         names = os.listdir(self.keras.__path__[0])
@@ -68,22 +68,9 @@ class Keras(UniversalInterface):
             """
             hasFit = hasattr(obj, 'fit')
             hasPred = hasattr(obj, 'predict')
-            hasTrans = hasattr(obj, 'transform')
-            hasFitPred = hasattr(obj, 'fit_predict')
-            hasFitTrans = hasattr(obj, 'fit_transform')
 
-            if not ((hasFit and (hasPred or hasTrans)) or hasFitPred or hasFitTrans):
+            if not (hasFit and hasPred):
                 return False
-
-
-            # try:
-            #     obj()
-            # except TypeError:
-            #     # We're using a failed init call as a cue that object in question
-            #     # is a kind of intermediate class (which we want to ignore). All
-            #     # the working estimators seem to have full defaults for all params
-            #     # to __init__
-            #     return False
 
             return True
 
@@ -111,11 +98,11 @@ class Keras(UniversalInterface):
     def learnerType(self, name):
         """
         Returns a string referring to the action the learner takes out of the possibilities:
-        optimization
+        classification, regression.
 
         """
 
-        return 'OPTIMIZER'
+        return 'UNKNOWN'
 
     def _findCallableBackend(self, name):
         """
@@ -150,12 +137,6 @@ class Keras(UniversalInterface):
         compile = self._paramQuery('compile', learnerName, ignore)
 
         ret = init[0] + fit[0] + compile[0] + predict[0]
-        # if predict is not None:
-        #     ret = init[0] + fit[0] + predict[0]
-        # elif compile is not None:
-        #     ret = init[0] + fit[0] + compile[0]
-        # else:
-        #     raise ArgumentException("Cannot get parameter names for leaner " + learnerName)
 
         return [ret]
 
@@ -236,7 +217,7 @@ class Keras(UniversalInterface):
         Returns true if the name is an accepted alias for this interface
 
         """
-        if name.lower() == 'skl':
+        if name.lower() == 'keras':
             return True
         return name.lower() == self.getCanonicalName().lower()
 
@@ -461,9 +442,7 @@ class Keras(UniversalInterface):
         __name__ attribute will be its name in TrainedLearner.
 
         """
-        return [self._predict, self._transform]
-
-    # fit_transform
+        return [self._predict]
 
 
     def _predict(self, learner, testX, arguments, customDict):
@@ -471,12 +450,6 @@ class Keras(UniversalInterface):
         Wrapper for the underlying predict function of a scikit-learn learner object
         """
         return learner.predict(testX)
-
-    def _transform(self, learner, testX, arguments, customDict):
-        """
-        Wrapper for the underlying transform function of a scikit-learn learner object
-        """
-        return learner.transform(testX)
 
 
     ###############
@@ -576,6 +549,7 @@ class Keras(UniversalInterface):
         automatically
 
         """
+        #if needed, this function should be rewritten for keras.
         if parent is not None and parent.lower() == 'KernelCenterer'.lower():
             if name == '__init__':
                 ret = ([], None, None, [])
