@@ -271,7 +271,7 @@ class Keras(UniversalInterface):
                 arguments['layers'] = layersObj
 
         if trainX is not None:
-            if trainX.getTypeString() == 'Sparse':
+            if trainX.getTypeString() == 'Sparse':#DW: need to work on sparse case, since keras doesn't support sparse matrix directly.
                 trainX = trainX.copyAs('scipycsr')
             else:
                 trainX = trainX.copyAs('numpy matrix')

@@ -1514,8 +1514,7 @@ class Sparse(Base):
             toMul = other.data
         else:
             toMul = other.copyAs('numpyarray')
-
-        raw = self.data.multiply(toMul)
+        raw = self.data.multiply(coo_matrix(toMul))
         if scipy.sparse.isspmatrix(raw):
             self.data = raw.tocoo()
         else:
