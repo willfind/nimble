@@ -1,6 +1,7 @@
 """
-Script loading a portion of the UCI ML repository census income data set (aka Adult),
-and processing the string valued data into something easier to learn on.
+Demonstrates loading and processing some string valued data into a dataset that
+is purely numerical. Uses a portion of the UCI ML repository census income data
+set (aka Adult).
 
 """
 
