@@ -15,8 +15,8 @@ import numpy
 import UML
 from UML.calculate import fractionIncorrect
 from UML.customLearners import CustomLearner
-from UML.examples.logisticRegressionCoefficientSelection import LogisticRegressionSelectByRegularization
-from UML.examples.logisticRegressionCoefficientSelection import LogisticRegressionSelectByOmission
+from UML.examples.working.logisticRegressionCoefficientSelection import LogisticRegressionSelectByRegularization
+from UML.examples.working.logisticRegressionCoefficientSelection import LogisticRegressionSelectByOmission
 
 scipy = UML.importModule('scipy')
 decomposition = UML.importModule('sklearn.decomposition')

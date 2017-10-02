@@ -15,5 +15,6 @@ def boilerplate():
     sys.path.append(UMLParentDir)
     import UML
     import UML.examples
-    import UML.examples.gender
-    __package__ = "UML.examples.gender"
+    import UML.examples.working
+    import UML.examples.working.gender
+    __package__ = "UML.examples.working.gender"
