@@ -329,6 +329,7 @@ class Keras(UniversalInterface):
         # if learnerName == 'Model':
         #     initNames = ['inputs', 'outputs']
         # else:
+        self.learnerName = learnerName
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
         fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
@@ -376,8 +377,20 @@ class Keras(UniversalInterface):
         TAKES trained learner, transformed arguments,
         RETURNS the learner after this batch of training
         """
-        # see partial_fit(X, y[, classes, sample_weight])
-        pass
+        trainOnBatchNames = self._paramQuery('train_on_batch', self.learnerName, ['self'])[0]
+        trainOnBatchParams = {}
+        for name in trainOnBatchNames:
+            value = None
+            if name.lower() == 'x':
+                value = trainX
+            elif name.lower() == 'y':
+                value = trainY
+            elif name in arguments:
+                value = arguments[name]
+            if value is not None:
+                trainOnBatchParams[name] = value
+        learner.train_on_batch(**trainOnBatchParams)
+        return learner
 
 
     def _applier(self, learner, testX, arguments, customDict):
