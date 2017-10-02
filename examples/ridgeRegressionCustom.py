@@ -1,6 +1,6 @@
 """
-Script demonstrating the training, applying, and testing api on a
-simple, out-of-the-box, custom learner.
+Script demonstrating the training, applying, and testing api using an
+out-of-the-box, custom learner.
 
 """
 
@@ -10,13 +10,8 @@ boilerplate()
 
 if __name__ == "__main__":
     import UML
-    from UML.customLearners.ridge_regression import RidgeRegression
     from UML.calculate import rootMeanSquareError as RMSE
-
     from UML.randomness import numpyRandom
-
-    # register your custom learner, in a custom package named 'custom'
-    UML.registerCustomLearner("custom", RidgeRegression)
 
     # produce some simple linear data
     trainPoints = 10
@@ -46,8 +41,10 @@ if __name__ == "__main__":
     assert pred1.isIdentical(pred2)
 
     # Using cross validation to explicitly determine a winning argument set
-    bestArgument, bestScore = UML.crossValidateReturnBest("custom.RidgeRegression", trainX, trainY, RMSE,
-                                                          lamb=(0, .5, 1))
+    results = UML.crossValidateReturnBest("custom.RidgeRegression", trainX, trainY, RMSE,
+                                          lamb=(0, .5, 1))
+    bestArgument, bestScore = results
+
     print "Best argument set: " + str(bestArgument)
     print "Best score: " + str(bestScore)
 
