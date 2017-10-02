@@ -1,6 +1,6 @@
 """
-Short module demonstrating the flatter imports and user facing functions provided
-in the root of the UML package
+Short module demonstrating a call to normalizeData and the effect on the passed
+datasets.
 
 """
 
@@ -25,21 +25,29 @@ if __name__ == "__main__":
     testObj = createData('Matrix', data=data2, featureNames=variables2)
 
     # baseline check
-    assert trainObj.data[0].size == 3
-    assert testObj.data[0].size == 3
+    assert trainObj.featureCount == 3
+    assert testObj.featureCount == 3
+
+    # reserve the original data for comparison
+    trainObjOrig = trainObj.copy()
+    testObjOrig = testObj.copy()
 
     # use normalize to modify our data; we call a dimentionality reduction algorithm to
     # simply our mostly redundant points. k is the desired number of dimensions in the output
     normalizeData('mlpy.PCA', trainObj, testX=testObj, arguments={'k': 1})
 
     # assert that we actually do have fewer dimensions
-    assert trainObj.data[0].size == 1
-    assert testObj.data[0].size == 1
+    assert trainObj.featureCount == 1
+    assert testObj.featureCount == 1
 
+    # assert we can predict the correct classes
     ret = trainAndApply('mlpy.KNN', trainObj, trainObjY, testObj, arguments={'k': 1})
+    assert ret[0, 0] == 1
+    assert ret[1, 0] == 1
+    assert ret[2, 0] == 0
+    assert ret[3, 0] == 0
 
-    # assert we get the correct classes
-    assert ret.data[0, 0] == 1
-    assert ret.data[1, 0] == 1
-    assert ret.data[2, 0] == 0
-    assert ret.data[3, 0] == 0
+    # demonstrate that the results have not changed, when compared to the original data;
+    # uses python's **kwargs based argument passing.
+    retOrig = trainAndApply('mlpy.KNN', trainObjOrig, trainObjY, testObjOrig, k=1)
+    assert ret == retOrig

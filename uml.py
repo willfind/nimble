@@ -246,7 +246,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **
     """
     (packName, trueLearnerName) = _unpackLearnerName(learnerName)
 
-    tl = UML.train(learnerName, trainX, trainY, arguments, **kwarguments)
+    tl = UML.train(learnerName, trainX, trainY, arguments=arguments, **kwarguments)
     normalizedTrain = tl.apply(trainX, arguments=arguments, **kwarguments)
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
