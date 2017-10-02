@@ -1,5 +1,7 @@
 """
-Short module demonstrating the full pipeline of train - test - log results.
+Module demonstrating the UML-forced One vs One and One vs All multi-class classification
+strategies. Also demonstrates the possible output formats allowed when calling learners.
+
 """
 
 from allowImports import boilerplate
@@ -13,34 +15,56 @@ if __name__ == "__main__":
     from UML.calculate import fractionIncorrect
 
     variables = ["x1", "x2", "x3", "label"]
-    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
-             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
-             [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
+    data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
+             [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
+             [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3],
+             [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
     trainObj = createData('Matrix', data=data1, featureNames=variables)
 
-    data2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    # formated vertically for easier comparison with printed results
+    data2 = [[1, 0, 0, 1],
+             [0, 1, 0, 2],
+             [0, 0, 1, 3]]
     testObj = createData('Matrix', data=data2, featureNames=variables)
+    tesObjNoY = testObj.copyFeatures([0,1,2])
 
-    trainObj2 = trainObj.copy()
-    testObj2 = testObj.copy()
+    results = trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+                            testX=testObj, testY=3, performanceFunction=fractionIncorrect)
+    print 'Standard trainAndTest call, fractionIncorrect: ' + str(results)
+    print ""
 
-    trainObj3 = trainObj.copy()
-    testObj3 = testObj.copy()
+    resultsLabelsOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+                             testX=tesObjNoY, scoreMode='label',
+                             multiClassStrategy="OneVsOne")
+    print 'One vs One predictions (aka labels format):'
+    print resultsLabelsOvO
 
-    results1 = trainAndTest('sciKitLearn.LogisticRegression', trainObj, trainY=3, testX=testObj, testY=3, arguments={},
-                            performanceFunction=fractionIncorrect, useLog=False)
-    results2 = trainAndApply('sciKitLearn.SVC', trainObj, trainY=3, testX=testObj, arguments={}, scoreMode='label',
-                             multiClassStrategy="OneVsOne", useLog=False)
-    #	results3 = trainAndTest('sciKitLearn.SVC',trainObj, trainY=3, testX=testObj, testY=3, arguments={}, performanceFunction=fractionIncorrect, useLog=False)
-    resultsBestScore = trainAndApply('sciKitLearn.SVC', trainObj2, trainY=3, testX=testObj2, arguments={},
-                                     scoreMode='bestScore', multiClassStrategy="OneVsOne", useLog=False)
-    resultsAllScores = trainAndApply('sciKitLearn.SVC', trainObj3, trainY=3, testX=testObj2, arguments={},
-                                     scoreMode='allScores', multiClassStrategy="OneVsOne", useLog=False)
+    resultsBestScoreOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+                                     testX=tesObjNoY, scoreMode='bestScore',
+                                     multiClassStrategy="OneVsOne")
+    print 'One vs One, best score format:' 
+    print resultsBestScoreOvO
 
-    print 'Standard run results: ' + str(results1)
-    print 'One vs One predictions: ' + repr(results2.data)
-    print 'One vs One, best score, column headers: ' + repr(resultsBestScore.getFeatureNames())
-    print 'One vs One best score: ' + repr(resultsBestScore.data)
-    print 'One vs One, all scores, column headers: ' + repr(resultsAllScores.getFeatureNames())
-    print 'One vs One all scores: ' + repr(resultsAllScores.data)
-#	print 'One vs One performance results: ' + str(results3)
+    resultsAllScoresOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+                                     testX=tesObjNoY, scoreMode='allScores',
+                                     multiClassStrategy="OneVsOne")
+    print 'One vs One, all scores format:'
+    print resultsAllScoresOvO
+
+    resultsLabelsOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+                             testX=tesObjNoY, scoreMode='label',
+                             multiClassStrategy="OneVsAll")
+    print 'One vs All predictions (aka labels format):'
+    print resultsLabelsOvA
+
+    resultsBestScoreOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+                                     testX=tesObjNoY, scoreMode='bestScore',
+                                     multiClassStrategy="OneVsAll")
+    print 'One vs All, best score format:' 
+    print resultsBestScoreOvA
+
+    resultsAllScoresOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+                                     testX=tesObjNoY, scoreMode='allScores',
+                                     multiClassStrategy="OneVsAll")
+    print 'One vs All, all scores format:'
+    print resultsAllScoresOvA 
