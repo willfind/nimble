@@ -271,9 +271,8 @@ class Keras(UniversalInterface):
                 arguments['layers'] = layersObj
 
         if trainX is not None:
-            if trainX.getTypeString() == 'Sparse':#DW: need to work on sparse case, since keras doesn't support sparse matrix directly.
-                trainX = trainX.copyAs('scipycsr')
-            else:
+            if trainX.getTypeString() != 'Sparse':
+            #for sparse cases, keep it untouched here.
                 trainX = trainX.copyAs('numpy matrix')
 
         if trainY is not None:
@@ -285,9 +284,8 @@ class Keras(UniversalInterface):
         if testX is not None:
             if testX.getTypeString() == 'Matrix':
                 testX = testX.data
-            elif testX.getTypeString() == 'Sparse':
-                testX = testX.copyAs('scipycsr')
-            else:
+            elif testX.getTypeString() != 'Sparse':
+            #for sparse cases, keep it untouched here.
                 testX = testX.copyAs('numpy matrix')
         #
         # # this particular learner requires integer inputs
@@ -332,7 +330,10 @@ class Keras(UniversalInterface):
         self.learnerName = learnerName
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
-        fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
+        if isinstance(trainX, UML.data.Sparse):
+            fitNames = ['epochs']
+        else:
+            fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
 
         # pack parameter sets
         initParams = {}
@@ -354,7 +355,20 @@ class Keras(UniversalInterface):
             else:
                 value = arguments[name]
             fitParams[name] = value
-        learner.fit(**fitParams)
+
+        if isinstance(trainX, UML.data.Sparse):
+            def sparseGenerator():
+                while True:
+                    for i in xrange(trainX.pointCount):
+                        tmpData = (trainX.pointView(i).copyAs('numpy matrix'), numpy.matrix(trainY[i]))
+                        yield tmpData
+            fitParams['generator'] = sparseGenerator()
+            fitParams['steps_per_epoch'] = trainX.pointCount
+            fitParams['use_multiprocessing'] = True
+            fitParams['max_queue_size'] = 50
+            learner.fit_generator(**fitParams)
+        else:
+            learner.fit(**fitParams)
 
         if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba'):
             if trainY is not None:
@@ -462,7 +476,17 @@ class Keras(UniversalInterface):
         """
         Wrapper for the underlying predict function of a scikit-learn learner object
         """
-        return learner.predict(testX)
+        if isinstance(testX, UML.data.Sparse):
+            fitParams = {}
+            def sparseGenerator():
+                while True:
+                    for i in xrange(testX.pointCount):
+                        yield testX.pointView(i).copyAs('numpy matrix')
+            fitParams['generator'] = sparseGenerator()
+            fitParams['steps'] = testX.pointCount
+            return learner.predict_generator(**fitParams)
+        else:
+            return learner.predict(testX)
 
 
     ###############
