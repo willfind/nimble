@@ -133,10 +133,11 @@ class Keras(UniversalInterface):
         ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
+        fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
         compile = self._paramQuery('compile', learnerName, ignore)
 
-        ret = init[0] + fit[0] + compile[0] + predict[0]
+        ret = init[0] + fit[0] + fitGenerator[0] + compile[0] + predict[0]
 
         return [ret]
 
@@ -166,10 +167,11 @@ class Keras(UniversalInterface):
         ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
+        fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
         compile = self._paramQuery('compile', learnerName, ignore)
 
-        toProcess = [init, fit, compile, predict]
+        toProcess = [init, fit, fitGenerator, compile, predict]
 
         ret = {}
         for stage in toProcess:
@@ -331,7 +333,7 @@ class Keras(UniversalInterface):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
         if isinstance(trainX, UML.data.Sparse):
-            fitNames = ['epochs']
+            fitNames = self._paramQuery('fit_generator', learnerName, ['self'])[0]
         else:
             fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
 
@@ -363,9 +365,6 @@ class Keras(UniversalInterface):
                         tmpData = (trainX.pointView(i).copyAs('numpy matrix'), numpy.matrix(trainY[i]))
                         yield tmpData
             fitParams['generator'] = sparseGenerator()
-            fitParams['steps_per_epoch'] = trainX.pointCount
-            fitParams['use_multiprocessing'] = True
-            fitParams['max_queue_size'] = 50
             learner.fit_generator(**fitParams)
         else:
             learner.fit(**fitParams)
@@ -474,16 +473,18 @@ class Keras(UniversalInterface):
 
     def _predict(self, learner, testX, arguments, customDict):
         """
-        Wrapper for the underlying predict function of a scikit-learn learner object
+        Wrapper for the underlying predict function of a keras learner object
         """
         if isinstance(testX, UML.data.Sparse):
             fitParams = {}
             def sparseGenerator():
                 while True:
                     for i in xrange(testX.pointCount):
-                        yield testX.pointView(i).copyAs('numpy matrix')
+                        tmpData = testX.pointView(i).copyAs('numpy matrix')
+                        yield tmpData
             fitParams['generator'] = sparseGenerator()
-            fitParams['steps'] = testX.pointCount
+            fitParams['steps'] = arguments['steps']
+            fitParams['max_queue_size'] = arguments['max_queue_size']
             return learner.predict_generator(**fitParams)
         else:
             return learner.predict(testX)
@@ -542,11 +543,18 @@ class Keras(UniversalInterface):
 
     def _paramQuery(self, name, parent, ignore=[]):
         """
-        Takes the name of some scikit learn object or function, returns a list
+        Takes the name of some keras learn object or function, returns a list
         of parameters used to instantiate that object or run that function, or
         None if the desired thing cannot be found
 
         """
+        if name == 'fit_generator':
+            return (['steps_per_epoch', 'epochs', 'verbose', 'callbacks', 'validation_data', \
+                     'validation_steps', \
+                     'class_weight', 'max_queue_size', 'workers', 'use_multiprocessing', \
+                     'initial_epoch'], 'args', 'kwargs', \
+                    [1,1,None, None, None, None, 10, 1, False, 0])
+
         namedModule = self._searcher.findInPackage(parent, name)
 
         if namedModule is None:
