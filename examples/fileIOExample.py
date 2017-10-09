@@ -38,6 +38,7 @@ if __name__ == "__main__":
     testInPlace = full.extractPoints(start=0, end=total-1, number=num, randomize=True)
     trainInPlace = full
 
+    # the two methods yield comparable results
     assert testInPlace.pointCount == num
     assert trainInPlace.pointCount == total - num
     assert testInPlace.pointCount == testOutPlace.pointCount
