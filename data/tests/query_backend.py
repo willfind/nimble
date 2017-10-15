@@ -1392,6 +1392,17 @@ class QueryBackend(DataTestObject):
         """ Test featureStatistics returns correct mean results """
         self.backend_Stat_mean(False)
 
+    def test_featureStatistics_groupbyfeature(self):
+        orig = self.constructor([[1,2,3,'f'], [4,5,6,'m'], [7,8,9,'f'], [10,11,12,'m']], featureNames=['a','b', 'c', 'gender'])
+        if isinstance(orig, UML.data.BaseView):
+            return
+        #don't test view.
+        res = orig.featureStatistics('mean', groupByFeature='gender')
+        expObjf = self.constructor([4,5,6], featureNames=['a','b', 'c'], pointNames=['mean'])
+        expObjm = self.constructor([7,8,9], featureNames=['a','b', 'c'], pointNames=['mean'])
+        assert expObjf == res['f']
+        assert expObjm == res['m']
+
     def backend_Stat_mean(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = numpy.array(data).T.tolist()
