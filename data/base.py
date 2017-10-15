@@ -14,6 +14,7 @@ except ImportError as mplError:
     pass
 
 import math
+import numbers
 import itertools
 import copy
 import numpy
@@ -658,6 +659,39 @@ class Base(object):
         ret._relPath = self.relativePath
 
         return ret
+
+    def groupByFeature(self, by):
+        """
+        Group data object by one or more features.
+        Input:
+        by: can be an int, string or a list of int or a list of string
+        """
+        def findKey1(point, by):#if by is a string or int
+            return point[by]
+
+        def findKey2(point, by):#if by is a list of string or a list of int
+            return tuple([point[i] for i in by])
+
+        if isinstance(by, (basestring, numbers.Number)):#if by is a list, then use findKey2; o.w. use findKey1
+            findKey = findKey1
+        else:
+            findKey = findKey2
+
+        res = {}
+        for point in self.pointIterator():
+            k = findKey(point, by)
+            if k not in res:
+                res[k] = point.getPointNames()
+            else:
+                res[k].extend(point.getPointNames())
+
+        for k in res:
+            tmp = self.copyPoints(points=res[k])
+            tmp.extractFeatures(by)
+            res[k] = tmp
+
+        return res
+
 
     def pointIterator(self):
     #		if self.featureCount == 0:
@@ -3618,9 +3652,15 @@ class Base(object):
         """ """
         return self._axisStatisticsBackend(statisticsFunction, 'point')
 
-    def featureStatistics(self, statisticsFunction):
+    def featureStatistics(self, statisticsFunction, groupByFeature=None):
         """ """
-        return self._axisStatisticsBackend(statisticsFunction, 'feature')
+        if groupByFeature is None:
+            return self._axisStatisticsBackend(statisticsFunction, 'feature')
+        else:
+            res = self.groupByFeature(groupByFeature)
+            for k in res:
+                res[k] = res[k]._axisStatisticsBackend(statisticsFunction, 'feature')
+            return res
 
     def _axisStatisticsBackend(self, statisticsFunction, axis):
         cleanFuncName = self._validateStatisticalFunctionInputString(statisticsFunction)
