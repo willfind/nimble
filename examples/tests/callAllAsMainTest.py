@@ -57,6 +57,14 @@ def test_callAllAsMain():
         sys.argv = copy.copy(sys.argv)
         sys.argv[1] = tempOutDir
 
+        # Since they sometimes have file IO side effects to files in the
+        # repo, and we don't want those effects to be reflected in changes
+        # to the repo, we fix a random seed for all future calls.
+        # Since The example scripts are demonstartions of api usage NOT
+        # randomized unit tests, this has no effect on the usefulness of
+        # this test.
+        UML.randomness.startAlternateControl(1)
+
         for script in cleaned:
             try:
                 execfile(os.path.join(examplesDir, script))
@@ -68,6 +76,7 @@ def test_callAllAsMain():
         sys.stderr = backupSTERR
         sys.argv = backuputARGV
         shutil.rmtree(tempOutDir)
+        UML.randomness.endAlternateControl()
 
     print ""
     print "*** Results ***"
