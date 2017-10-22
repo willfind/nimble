@@ -37,7 +37,7 @@ class Matrix(Base):
             if reuseData:
                 self.data = data
             else:
-                self.data = copy.deepcopy(data)
+                self.data = copy.copy(data)#copy.deepcopy may give messed data
         else:
             #when data is a np matrix, its dtype has been adjusted in extractNamesAndConvertData
             #but when data is a ListPassThrough, we need to do dtype adjustment here
