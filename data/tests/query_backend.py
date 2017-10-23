@@ -306,6 +306,9 @@ class QueryBackend(DataTestObject):
         tmp1 = self.constructor(data[1], featureNames=featureNames, pointNames=[pnames[1]])
         assert toTest[1, :] == tmp1
         assert toTest['4', :] == tmp1
+        assert toTest[0, 'gender'] == 'f'
+        assert toTest[0, 4] == 'f'
+        assert toTest['1', 'gender'] == 'f'
 
         tmp2 = self.constructor(data[1:], featureNames=featureNames, pointNames=pnames[1:])
         assert toTest[1:, :] == tmp2
