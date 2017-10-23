@@ -886,7 +886,10 @@ class Matrix(Base):
 
         """
         if isinstance(other, UML.data.Sparse):
-            self.data = numpy.matrix(other.data.multiply(self.data).todense())
+            result = other.data.multiply(self.data)
+            if hasattr(result, 'todense'):
+                result = result.todense()
+            self.data = numpy.matrix(result)
         else:
             self.data = numpy.multiply(self.data, other.data)
 
