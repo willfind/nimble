@@ -165,7 +165,6 @@ class UniversalInterface(object):
         groupedArgsWithDefaults = self._validateArgumentDistribution(learnerName, arguments)
 
         ### INPUT TRANSFORMATION ###
-
         #recursively work through arguments, doing in-package object instantiation
         instantiatedInputs = self._instantiateArguments(learnerName, groupedArgsWithDefaults)
 
@@ -241,8 +240,12 @@ class UniversalInterface(object):
     def _isInstantiable(self, val, hasDefault, defVal):
         if hasDefault and isinstance(defVal, basestring):
             return False
-        if isinstance(val, basestring) and self.findCallable(val) is not None:
-            return True
+
+        if isinstance(val, basestring):
+            tmpCallable = self.findCallable(val)
+            if (tmpCallable is not None) and isinstance(tmpCallable, type):
+            #if the tmpCallable is a function, then it is not instantiable
+                return True
 
         return False
 
@@ -493,9 +496,9 @@ class UniversalInterface(object):
 
             ret[paramName] = paramValue
 
-        for key in ignoreKeys:
-            if key in ret:
-                del ret[key]
+        # for key in ignoreKeys:
+        #     if key in ret:
+        #         del ret[key]
 
         return ret
 

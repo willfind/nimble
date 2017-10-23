@@ -34,7 +34,7 @@ class Sparse(Base):
         if (not isinstance(data, numpy.matrix)) and (not scipy.sparse.isspmatrix(data)):
             msg = "the input data can only be a scipy sparse matrix or a numpy matrix or CooWithEmpty or CooDummy."
             raise ArgumentException(msg)
-        #import pdb; pdb.set_trace()
+
         if scipy.sparse.isspmatrix_coo(data):
             if reuseData:
                 self.data = data
@@ -805,6 +805,7 @@ class Sparse(Base):
 
             newShape = (end - start + 1, numpy.shape(self.data)[1])
 
+        retData = numpy.array(retData, dtype=self.data.dtype)
         retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
@@ -830,6 +831,7 @@ class Sparse(Base):
 
             newShape = (numpy.shape(self.data)[0], end - start + 1)
 
+        retData = numpy.array(retData, dtype=self.data.dtype)
         retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
@@ -1427,7 +1429,13 @@ class Sparse(Base):
         assert scipy.sparse.isspmatrix_coo(self.data)
 
         if level > 0:
-            assert all(self.data.data != 0)
+            try:
+                tmpBool = all(self.data.data != 0)
+                #numpy may say: elementwise comparison failed; returning scalar instead,
+                # but in the future will perform elementwise comparison
+            except Exception:
+                tmpBool = all([i != 0 for i in self.data.data])
+            assert tmpBool
 
             if self._sorted == 'point':
                 assert all(self.data.row[:-1] <= self.data.row[1:])
@@ -1514,8 +1522,7 @@ class Sparse(Base):
             toMul = other.data
         else:
             toMul = other.copyAs('numpyarray')
-
-        raw = self.data.multiply(toMul)
+        raw = self.data.multiply(coo_matrix(toMul))
         if scipy.sparse.isspmatrix(raw):
             self.data = raw.tocoo()
         else:
@@ -1912,6 +1919,7 @@ class SparseView(BaseView, Sparse):
         else:
             newShape = (end - start + 1, numpy.shape(self.data)[1])
 
+        retData = numpy.array(retData, dtype=self._source.data.dtype)
         retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
@@ -1937,6 +1945,7 @@ class SparseView(BaseView, Sparse):
         else:
             newShape = (numpy.shape(self.data)[0], end - start + 1)
 
+        retData = numpy.array(retData, dtype=self._source.data.dtype)
         retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 

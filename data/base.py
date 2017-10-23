@@ -14,6 +14,7 @@ except ImportError as mplError:
     pass
 
 import math
+import numbers
 import itertools
 import copy
 import numpy
@@ -658,6 +659,39 @@ class Base(object):
         ret._relPath = self.relativePath
 
         return ret
+
+    def groupByFeature(self, by):
+        """
+        Group data object by one or more features.
+        Input:
+        by: can be an int, string or a list of int or a list of string
+        """
+        def findKey1(point, by):#if by is a string or int
+            return point[by]
+
+        def findKey2(point, by):#if by is a list of string or a list of int
+            return tuple([point[i] for i in by])
+
+        if isinstance(by, (basestring, numbers.Number)):#if by is a list, then use findKey2; o.w. use findKey1
+            findKey = findKey1
+        else:
+            findKey = findKey2
+
+        res = {}
+        for point in self.pointIterator():
+            k = findKey(point, by)
+            if k not in res:
+                res[k] = point.getPointNames()
+            else:
+                res[k].extend(point.getPointNames())
+
+        for k in res:
+            tmp = self.copyPoints(points=res[k])
+            tmp.extractFeatures(by)
+            res[k] = tmp
+
+        return res
+
 
     def pointIterator(self):
     #		if self.featureCount == 0:
@@ -1310,20 +1344,86 @@ class Base(object):
         return self._getTypeString_implementation()
 
 
-    def __getitem__(self, key):
-        resolvedX = False
-        resolvedY = False
+    def _convertIndices(self, x, axis='point'):
+        """
+        x must be a list or a slice, if not, it will be converted to a list; convert each item in x to an index
+        """
 
+        length = self.pointCount if axis.lower() == 'point' else self.featureCount
+
+        if isinstance(x, (int, numpy.integer, float, basestring)):
+            x = [x]
+        elif isinstance(x, slice):
+            start = x.start if x.start is not None else 0
+            stop = x.stop if x.stop is not None else length
+            step = x.step if x.step is not None else 1
+            x = range(start, stop, step)
+
+        res = [self._convertIndex(i, length, axis) for i in x]
+        return res
+
+    def _convertIndex(self, x, length, axis):
+        """
+        convert x to an index; convert negative index to a positive index.
+        """
+        if isinstance(x, (int, numpy.integer)):
+            pass
+        elif isinstance(x, float):
+            intVal = int(x)
+            if intVal != x:
+                msg = "A float valued key of value x is only accepted if x == "
+                msg += "int(x). The given value was " + str(x) + " yet int("
+                msg += str(x) + ") = " + str(intVal)
+                raise ArgumentException(msg)
+            x = intVal
+        elif isinstance(x, basestring):
+            try:
+                x = self.getPointIndex(x) if axis.lower() == 'point' else self.getFeatureIndex(x)
+            except KeyError:
+                msg = "The point name '" + x + "' cannot be found."
+                raise KeyError(msg)
+        else:
+            raise KeyError('x can only be int, numpy.integer, float or basestring')
+
+        if x < 0:
+            x = length + x
+        if x < 0 or x >= length:
+            msg = "The given index " + str(x) + " is outside of the range "
+            msg += "of possible indices in the point axis (0 to "
+            msg += str(length - 1) + ")."
+            raise IndexError(msg)
+
+        return x
+
+    def __getitem__(self, key):
+        """
+        The followings are allowed:
+        X[1, :]            ->    (2d) that just has that one point
+        X["age", :]    -> same as above
+        X[1:5, :]         -> 4 points (1, 2, 3, 4)
+        X[[3,8], :]       -> 2 points (3, 8) IN THE ORDER GIVEN
+        X[["age","gender"], :]       -> same as above
+
+        --get based on features only : ALWAYS returns a new copy UML object (2d)
+        X[:,2]         -> just has that 1 feature
+        X[:,"bob"] -> same as above
+        X[:,1:5]    -> 4 features (1,2,3,4)
+        X[:,[3,8]]  -> 2 features (3,8) IN THE ORDER GIVEN
+
+        --both features and points : can give a scalar value OR UML object 2d depending on case
+        X[1,2]           -> single scalar number value
+        X["age","bob"]    -> single scalar number value
+        X[1:5,4:7]           -> UML object (2d) that has just that rectangle
+        X[[1,2],[3,8]]      -> UML object (2d) that has just 2 points (points 1,2) but only 2 features for each of them (features 3,8)
+        """
         # Make it a tuple if it isn't one
         if not isinstance(key, tuple):
             if self.pointCount == 1:
-                x = 0
-                y = key
-                resolvedX = True
+                x = [0]
+                y = [key]
             elif self.featureCount == 1:
-                x = key
-                y = 0
-                resolvedY = True
+                x = [key]
+                y = [0]
             else:
                 msg = "Must include both a point and feature index; or, "
                 msg += "if this is vector shaped, a single index "
@@ -1331,83 +1431,13 @@ class Base(object):
                 raise ArgumentException(msg)
         else:
             (x, y) = key
+        x = self._convertIndices(x, 'point')
+        y = self._convertIndices(y, 'feature')
 
-        if not resolvedX:
-            if isinstance(x, (int, numpy.integer)):
-                if x < 0:
-                    x = self.pointCount + x
-                if x < 0 or x >= self.pointCount:
-                    msg = "The given index " + str(x) + " is outside of the range "
-                    msg += "of possible indices in the point axis (0 to "
-                    msg += str(self.pointCount - 1) + ")."
-                    raise IndexError(msg)
-            elif isinstance(x, basestring):
-                try:
-                    x = self.getPointIndex(x)
-                except KeyError:
-                    msg = "The point name '" + x + "' cannot be found."
-                    raise KeyError(msg)
-            elif isinstance(x, float):
-                intVal = int(x)
-                if intVal != x:
-                    msg = "A float valued key of value x is only accepted if x == "
-                    msg += "int(x). The given value was " + str(x) + " yet int("
-                    msg += str(x) + ") = " + str(intVal)
-                    raise ArgumentException(msg)
-                x = intVal
-                if x < 0:
-                    x = self.pointCount + x
-                if x < 0 or x >= self.pointCount:
-                    msg = "The given index " + str(x) + " is outside of the range "
-                    msg += "of possible indices in the point axis (0 to "
-                    msg += str(self.pointCount - 1) + ")."
-                    raise IndexError(msg)
-            else:
-                msg = "The identifier must be either a string (a valid point"
-                msg += " name) or an integer (python or numpy) index between 0 and "
-                msg += str(self.pointCount - 1) + " inclusive. Instead we got: "
-                msg += str(x)
-                raise ArgumentException(msg)
+        if len(x) == 1 and len(y) == 1:
+            return self._getitem_implementation(x[0], y[0])
 
-        if not resolvedY:
-            if isinstance(y, (int, numpy.integer)):
-                if y < 0:
-                    y = self.featureCount + y
-                if y < 0 or y >= self.featureCount:
-                    msg = "The given index " + str(y) + " is outside of the range "
-                    msg += "of possible indices in the point axis (0 to "
-                    msg += str(self.featureCount - 1) + ")."
-                    raise IndexError(msg)
-            elif isinstance(y, basestring):
-                try:
-                    y = self.getFeatureIndex(y)
-                except KeyError:
-                    msg = "The feature name '" + y + "' cannot be found."
-                    raise KeyError(msg)
-            elif isinstance(y, float):
-                intVal = int(y)
-                if intVal != y:
-                    msg = "A float valued key of value y is only accepted if y == "
-                    msg += "int(y). The given value was " + str(y) + " yet int("
-                    msg += str(y) + ") = " + str(intVal)
-                    raise ArgumentException(y)
-                y = intVal
-                if y < 0:
-                    y = self.featureCount + y
-                if y < 0 or y >= self.featureCount:
-                    msg = "The given index " + str(y) + " is outside of the range "
-                    msg += "of possible indices in the point axis (0 to "
-                    msg += str(self.featureCount - 1) + ")."
-                    raise IndexError(msg)
-            else:
-                msg = "The identifier must be either a string (a valid feature"
-                msg += " name) or an integer (python or numpy) index between 0 and "
-                msg += str(self.featureCount - 1) + " inclusive. Instead we got: "
-                msg += str(y)
-                raise ArgumentException(msg)
-
-        return self._getitem_implementation(x, y)
-
+        return self.copyPoints(points=x).copyFeatures(features=y)
 
     def pointView(self, ID):
         """
@@ -3618,9 +3648,15 @@ class Base(object):
         """ """
         return self._axisStatisticsBackend(statisticsFunction, 'point')
 
-    def featureStatistics(self, statisticsFunction):
+    def featureStatistics(self, statisticsFunction, groupByFeature=None):
         """ """
-        return self._axisStatisticsBackend(statisticsFunction, 'feature')
+        if groupByFeature is None:
+            return self._axisStatisticsBackend(statisticsFunction, 'feature')
+        else:
+            res = self.groupByFeature(groupByFeature)
+            for k in res:
+                res[k] = res[k]._axisStatisticsBackend(statisticsFunction, 'feature')
+            return res
 
     def _axisStatisticsBackend(self, statisticsFunction, axis):
         cleanFuncName = self._validateStatisticalFunctionInputString(statisticsFunction)

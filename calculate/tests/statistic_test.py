@@ -318,7 +318,7 @@ def test_residuals_matches_SKL():
     sklRet = pred - tl.apply(control)
 
     assert sklRet.isApproximatelyEqual(umlRet)
-    assert_array_almost_equal(umlRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 15)
+    assert_array_almost_equal(umlRet.copyAs("numpy array"), sklRet.copyAs("numpy array"), 14)
 
     # with generated data
     (control, pred), (ignore1,ignore2) = generateRegressionData(2, 10, 3)
