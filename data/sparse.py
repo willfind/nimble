@@ -831,6 +831,7 @@ class Sparse(Base):
 
             newShape = (numpy.shape(self.data)[0], end - start + 1)
 
+        retData = numpy.array(retData, dtype=self.data.dtype)
         retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
@@ -1918,6 +1919,7 @@ class SparseView(BaseView, Sparse):
         else:
             newShape = (end - start + 1, numpy.shape(self.data)[1])
 
+        retData = numpy.array(retData, dtype=self._source.data.dtype)
         retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 
@@ -1943,6 +1945,7 @@ class SparseView(BaseView, Sparse):
         else:
             newShape = (numpy.shape(self.data)[0], end - start + 1)
 
+        retData = numpy.array(retData, dtype=self._source.data.dtype)
         retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
         return Sparse(retData, reuseData=True)
 

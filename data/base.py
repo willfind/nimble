@@ -1345,6 +1345,9 @@ class Base(object):
 
 
     def _convertIndices(self, x, axis='point'):
+        """
+        x must be a list or a slice, if not, it will be converted to a list; convert each item in x to an index
+        """
 
         length = self.pointCount if axis.lower() == 'point' else self.featureCount
 
@@ -1360,7 +1363,9 @@ class Base(object):
         return res
 
     def _convertIndex(self, x, length, axis):
-
+        """
+        convert x to an index; convert negative index to a positive index.
+        """
         if isinstance(x, (int, numpy.integer)):
             pass
         elif isinstance(x, float):
@@ -1377,6 +1382,8 @@ class Base(object):
             except KeyError:
                 msg = "The point name '" + x + "' cannot be found."
                 raise KeyError(msg)
+        else:
+            raise KeyError('x can only be int, numpy.integer, float or basestring')
 
         if x < 0:
             x = length + x
@@ -1390,7 +1397,24 @@ class Base(object):
 
     def __getitem__(self, key):
         """
+        The followings are allowed:
+        X[1, :]            ->    (2d) that just has that one point
+        X["age", :]    -> same as above
+        X[1:5, :]         -> 4 points (1, 2, 3, 4)
+        X[[3,8], :]       -> 2 points (3, 8) IN THE ORDER GIVEN
+        X[["age","gender"], :]       -> same as above
 
+        --get based on features only : ALWAYS returns a new copy UML object (2d)
+        X[:,2]         -> just has that 1 feature
+        X[:,"bob"] -> same as above
+        X[:,1:5]    -> 4 features (1,2,3,4)
+        X[:,[3,8]]  -> 2 features (3,8) IN THE ORDER GIVEN
+
+        --both features and points : can give a scalar value OR UML object 2d depending on case
+        X[1,2]           -> single scalar number value
+        X["age","bob"]    -> single scalar number value
+        X[1:5,4:7]           -> UML object (2d) that has just that rectangle
+        X[[1,2],[3,8]]      -> UML object (2d) that has just 2 points (points 1,2) but only 2 features for each of them (features 3,8)
         """
         # Make it a tuple if it isn't one
         if not isinstance(key, tuple):

@@ -293,6 +293,40 @@ class QueryBackend(DataTestObject):
     # __getitem__#
     ##############
 
+    def test_getitem_allExamples(self):
+        """
+
+        """
+        featureNames = ["one", "two", "three", "zero", "gender"]
+        pnames = ['1', '4', '7', '0']
+        data = [[1, 2, 3, 0, 'f'], [4, 5, 0, 0, 'm'], [7, 0, 9, 0, 'f'], [0, 0, 0, 0, 'm']]
+
+        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+
+        tmp1 = self.constructor(data[1], featureNames=featureNames, pointNames=[pnames[1]])
+        assert toTest[1, :] == tmp1
+        assert toTest['4', :] == tmp1
+
+        tmp2 = self.constructor(data[1:], featureNames=featureNames, pointNames=pnames[1:])
+        assert toTest[1:, :] == tmp2
+        assert toTest[1:4, :] == tmp2
+        assert toTest[[1,2,3], :] == tmp2
+        assert toTest[['4', '7', '0'], :] == tmp2
+
+        tmp3 = self.constructor([['f'], ['m'], ['f'], ['m']], featureNames=['gender'], pointNames=pnames)
+        assert toTest[:, 4] == tmp3
+        assert toTest[:, 'gender'] == tmp3
+
+        tmp4 = self.constructor([['f', 0], ['m', 0], ['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames)
+        assert toTest[:, 4:2:-1] == tmp4
+        assert toTest[:, [4,3]] == tmp4
+        assert toTest[:, ['gender', 'zero']] == tmp4
+
+        tmp5 = self.constructor([['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames[:2])
+        assert toTest[:2, 4:2:-1] == tmp5
+        assert toTest[['1', '4'], [4,3]] == tmp5
+        assert toTest[[0,1], ['gender', 'zero']] == tmp5
+
 
     def test_getitem_simpleExampeWithZeroes(self):
         """ Test __getitem__ returns the correct output for a number of simple queries """
