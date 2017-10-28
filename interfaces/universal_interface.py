@@ -243,7 +243,7 @@ class UniversalInterface(object):
 
         if isinstance(val, basestring):
             tmpCallable = self.findCallable(val)
-            if (tmpCallable is not None) and isinstance(tmpCallable, type):
+            if (tmpCallable is not None) and hasattr(tmpCallable, "__init__"):
             #if the tmpCallable is a function, then it is not instantiable
                 return True
 

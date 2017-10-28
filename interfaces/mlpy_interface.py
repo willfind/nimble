@@ -300,7 +300,7 @@ class Mlpy(UniversalInterface):
         value into a format appropriate for a UML user.
 
         """
-        if outputFormat == "label":
+        if outputFormat == "label" and len(outputValue.shape) == 1:
             # we are sometimes given a matrix, this will take care of that
             outputValue = numpy.array(outputValue).flatten()
             #In the case of prediction we are given a row vector, yet we want a column vector
@@ -325,6 +325,9 @@ class Mlpy(UniversalInterface):
         predNames = self._paramQuery('pred', learnerName, ['self'])
         if predNames is not None:
             customDict['predNames'] = predNames[0]
+        transNames = self._paramQuery('transform', learnerName, ['self'])
+        if transNames is not None:
+            customDict['transNames'] = transNames[0]
 
         # pack parameter sets
         initParams = {}
@@ -427,7 +430,14 @@ class Mlpy(UniversalInterface):
         """
         Wrapper for the underlying transform function of a scikit-learn learner object
         """
-        return learner.transform(testX)
+        toPass = {}
+        if customDict['transNames'] is not None:
+            for argName in arguments:
+                if argName in customDict['transNames']:
+                    if argName not in self._XDataAliases:
+                        toPass[argName] = arguments[argName]
+
+        return learner.transform(testX, **toPass)
 
 
     ###############

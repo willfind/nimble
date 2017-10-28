@@ -10,41 +10,46 @@ from allowImports import boilerplate
 
 boilerplate()
 
+import numpy
+import os
+import sys
+
+
 if __name__ == "__main__":
     import UML
-    import numpy
-    import sys
-    import os
 
-    outDir = None
+    # if a directory is given, plots will be output to file in that location.
+    givenOutDir = None
     if len(sys.argv) > 1:
-        outDir = sys.argv[1]
+        givenOutDir = sys.argv[1]
+        print givenOutDir
 
     rawNorm = numpy.random.normal(loc=0, scale=1, size=(1000, 1))
     objNorm = UML.createData("Matrix", rawNorm, featureNames=["N(0,1)"])
 
     # 1000 samples of N(0,1)
-    def plotDistributionNormal():
+    def plotDistributionNormal(plotObj, outDir):
         outPath = None
         if outDir is not None:
             print "hello"
             outPath = os.path.join(outDir, "NormalDistribution")
 
-        objNorm.plotFeatureDistribution(0, outPath=outPath)
+        plotObj.plotFeatureDistribution(0, outPath=outPath)
 
     # 1000 samples of N(0,1), squared
-    def plotDistributionNormalSquared():
-        objNorm.elementwisePower(2)
-        objNorm.setFeatureName(0, "N(0,1) squared")
+    def plotDistributionNormalSquared(plotObj, outDir):
+        plotObj.elementwisePower(2)
+        plotObj.setFeatureName(0, "N(0,1) squared")
 
         outPath = None
         if outDir is not None:
             outPath = os.path.join(outDir, "NormalSquared")
-        objNorm.plotFeatureDistribution(0, outPath=outPath)
+        plotObj.plotFeatureDistribution(0, outPath=outPath)
 
 
     #compare two columns: col1= rand noise, col2 =3* col1 + noise
-    def plotComparisonNoiseVsScaled():
+    def plotComparisonNoiseVsScaled(outDir):
+        import numpy
         raw1 = numpy.random.rand(50, 1)
         raw2 = numpy.random.rand(50, 1)
         scaled = (raw1 * 3) + raw2
@@ -88,22 +93,22 @@ if __name__ == "__main__":
 
     # plot
     #heatMap: checkboard pattern, even columns 0s, odds = 1's, offset every other point
-    def plotCheckerboad():
+    def plotCheckerboad(plotObj, outDir):
         outPath = None
         if outDir is not None:
             outPath = os.path.join(outDir, "checkerboard")
-        checkObj.plot(outPath=outPath)
+        plotObj.plot(outPath=outPath)
 
     # heatmap: another one to show a gradient from a given formula (linear?)
-    def plotCheckeredGradient():
+    def plotCheckeredGradient(plotObj, outDir):
         outPath = None
         if outDir is not None:
             outPath = os.path.join(outDir, "checkerboardWithBar")
-        checkGradObj.plot(includeColorbar=True, outPath=outPath)
+        plotObj.plot(includeColorbar=True, outPath=outPath)
 
     # one function for each plot being drawn.
-    plotDistributionNormal()
-    plotDistributionNormalSquared()
-    plotComparisonNoiseVsScaled()
-    plotCheckerboad()
-    plotCheckeredGradient()
+    plotDistributionNormal(objNorm, givenOutDir)
+    plotDistributionNormalSquared(objNorm, givenOutDir)
+    plotComparisonNoiseVsScaled(givenOutDir)
+    plotCheckerboad(checkObj, givenOutDir)
+    plotCheckeredGradient(checkGradObj,givenOutDir)

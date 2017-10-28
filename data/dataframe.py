@@ -811,7 +811,10 @@ class DataFrame(Base):
 
         """
         if isinstance(other, UML.data.Sparse):
-            self.data = pd.DataFrame(other.data.multiply(self.data.values).todense())
+            result = other.data.multiply(self.data.values)
+            if hasattr(result, 'todense'):
+                result = result.todense()
+            self.data = pd.DataFrame(result)
         else:
             self.data = pd.DataFrame(np.multiply(self.data.values, other.data))
 

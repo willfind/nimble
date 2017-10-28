@@ -3079,7 +3079,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
 
     #set up the return data based on which format has been requested
     if scoreMode.lower() == 'label'.lower():
-        return rawPredictions.calculateForEachPoint(extractWinningPredictionLabel)
+        ret = rawPredictions.calculateForEachPoint(extractWinningPredictionLabel)
+        ret.setFeatureName(0, "winningLabel")
+        return ret
     elif scoreMode.lower() == 'bestScore'.lower():
         #construct a list of lists, with each row in the list containing the predicted
         #label and score of that label for the corresponding row in rawPredictions

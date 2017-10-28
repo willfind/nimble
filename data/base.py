@@ -660,7 +660,7 @@ class Base(object):
 
         return ret
 
-    def groupByFeature(self, by):
+    def groupByFeature(self, by, countUniqueValueOnly=False):
         """
         Group data object by one or more features.
         Input:
@@ -678,20 +678,35 @@ class Base(object):
             findKey = findKey2
 
         res = {}
-        for point in self.pointIterator():
-            k = findKey(point, by)
-            if k not in res:
-                res[k] = point.getPointNames()
-            else:
-                res[k].extend(point.getPointNames())
+        if countUniqueValueOnly:
+            for point in self.pointIterator():
+                k = findKey(point, by)
+                if k not in res:
+                    res[k] = 1
+                else:
+                    res[k] += 1
+        else:
+            for point in self.pointIterator():
+                k = findKey(point, by)
+                if k not in res:
+                    res[k] = point.getPointNames()
+                else:
+                    res[k].extend(point.getPointNames())
 
-        for k in res:
-            tmp = self.copyPoints(points=res[k])
-            tmp.extractFeatures(by)
-            res[k] = tmp
+            for k in res:
+                tmp = self.copyPoints(points=res[k])
+                tmp.extractFeatures(by)
+                res[k] = tmp
 
         return res
 
+    def countUniqueFeatureValues(self, feature):
+        """
+        Count unique values for one feature or multiple features combination.
+        Input:
+        feature: can be an int, string or a list of int or a list of string
+        """
+        return self.groupByFeature(feature, countUniqueValueOnly=True)
 
     def pointIterator(self):
     #		if self.features == 0:
@@ -777,10 +792,12 @@ class Base(object):
             features = [features]
 
         if points is not None:
+            points = copy.copy(points)
             for i in xrange(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
         if features is not None:
+            features = copy.copy(features)
             for i in xrange(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
@@ -2598,6 +2615,7 @@ class Base(object):
             points = [points]
 
         if points is not None:
+            points = copy.copy(points)
             for i in xrange(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
@@ -2632,6 +2650,7 @@ class Base(object):
             features = [features]
 
         if features is not None:
+            features = copy.copy(features)
             for i in xrange(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
@@ -2672,10 +2691,12 @@ class Base(object):
             features = [features]
 
         if points is not None:
+            points = copy.copy(points)
             for i in xrange(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
         if features is not None:
+            features = copy.copy(features)
             for i in xrange(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
