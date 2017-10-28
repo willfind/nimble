@@ -359,9 +359,9 @@ class DataFrame(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, DataFrame):
             return False
-        if self.pointCount != other.pointCount:
+        if self.points != other.points:
             return False
-        if self.featureCount != other.featureCount:
+        if self.features != other.features:
             return False
 
         try:
@@ -490,7 +490,7 @@ class DataFrame(Base):
             if points is not None and i not in points:
                 continue
             currRet = function(p)
-            if len(currRet) != self.featureCount:
+            if len(currRet) != self.features:
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
 
@@ -501,7 +501,7 @@ class DataFrame(Base):
             if features is not None and j not in features:
                 continue
             currRet = function(f)
-            if len(currRet) != self.pointCount:
+            if len(currRet) != self.points:
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
 
@@ -514,7 +514,7 @@ class DataFrame(Base):
         except TypeError:
             oneArg = True
 
-        IDs = itertools.product(xrange(self.pointCount), xrange(self.featureCount))
+        IDs = itertools.product(xrange(self.points), xrange(self.features))
         for (i, j) in IDs:
             currVal = self.data.ix[i, j]
 
@@ -585,7 +585,7 @@ class DataFrame(Base):
                 raise ArgumentException(msg)
         elif method == 'remove features':
             msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
-            if len(featuresList) == self.featureCount:
+            if len(featuresList) == self.features:
                 #if we consider all features
                 if arguments is None or arguments.lower() == 'any':
                     self.data.dropna(axis=1, how='any', inplace=True)
@@ -637,7 +637,7 @@ class DataFrame(Base):
             else:
                 msg = 'for method = "interpolate", the arguments must be None or a dict.'
                 raise ArgumentException(msg)
-            if len(featuresList) == self.featureCount:
+            if len(featuresList) == self.features:
                     self.data.interpolate(inplace=True, **arguments)
             else:
                 self.data[featuresList] = self.data[featuresList].interpolate(**arguments)
@@ -677,20 +677,20 @@ class DataFrame(Base):
         self.setPointNames(self.data.index.tolist())
 
     def _flattenToOnePoint_implementation(self):
-        numElements = self.pointCount * self.featureCount
+        numElements = self.points * self.features
         self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
 
     def _flattenToOneFeature_implementation(self):
-        numElements = self.pointCount * self.featureCount
+        numElements = self.points * self.features
         self.data = pd.DataFrame(self.data.values.reshape((numElements,1), order='F'))
 
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = self.featureCount / numPoints
+        numFeatures = self.features / numPoints
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='C'))
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = self.pointCount / numFeatures
+        numPoints = self.points / numFeatures
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
     def _getitem_implementation(self, x, y):
@@ -718,8 +718,8 @@ class DataFrame(Base):
 
     def _validate_implementation(self, level):
         shape = self.data.shape
-        assert shape[0] == self.pointCount
-        assert shape[1] == self.featureCount
+        assert shape[0] == self.points
+        assert shape[1] == self.features
 
 
     def _containsZero_implementation(self):
@@ -735,9 +735,9 @@ class DataFrame(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.pointCount
+                self._pStop = source.points
                 self._fIndex = 0
-                self._fStop = source.featureCount
+                self._fStop = source.features
 
             def __iter__(self):
                 return self
@@ -763,9 +763,9 @@ class DataFrame(Base):
             def __init__(self, source):
                 self._source = source
                 self._pIndex = 0
-                self._pStop = source.pointCount
+                self._pStop = source.points
                 self._fIndex = 0
-                self._fStop = source.featureCount
+                self._fStop = source.features
 
             def __iter__(self):
                 return self

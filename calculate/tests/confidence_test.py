@@ -16,8 +16,8 @@ def testSimpleConfidenceInverval():
     pred = UML.createData("Matrix", predRaw)
     pred.transpose()
 
-    assert pred.pointCount == 25
-    assert pred.featureCount == 1
+    assert pred.points == 25
+    assert pred.features == 1
     mean = pred.featureStatistics('mean')[0, 0]
     numpy.testing.assert_approx_equal(mean, 250.2)
     std = pred.featureStatistics('samplestandarddeviation')[0, 0]

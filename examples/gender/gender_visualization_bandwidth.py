@@ -84,9 +84,9 @@ LogLikelihoodSumDrop5Percent.optimal = 'min'
 
 def filterLowest(obj, toDrop=.05):
     obj = obj.copy()
-    if obj.pointCount != 1 and obj.featureCount != 1:
+    if obj.points != 1 and obj.features != 1:
         raise UML.exceptions.ArgumentException("Obj must be vector shaped")
-    if obj.pointCount != 1:
+    if obj.points != 1:
         obj.transpose()
 
     obj.sortFeatures(0)
@@ -94,7 +94,7 @@ def filterLowest(obj, toDrop=.05):
     if isinstance(toDrop, float):
         # we rely on this to convert via truncation to ensure we're including
         # as much as possible in the result
-        start = int(obj.featureCount * toDrop)
+        start = int(obj.features * toDrop)
     else:
         start = toDrop
     return obj.extractFeatures(start=start)
@@ -341,8 +341,8 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
 
         mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender, catScaleGender)
         fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender, catScaleGender)
-#       print mSubscale.pointCount
-#       print mSubscale.featureCount
+#       print mSubscale.points
+#       print mSubscale.features
 #       mSubscale = generateSubScale(malePoints, q1, q1Gender, q2, q2Gender).extractPoints(end=10)
 #       fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender).extractPoints(end=10)
 
@@ -352,7 +352,7 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
 
         print "\n" + cat
         if LOOfolding:
-            mfolds = mSubscale.pointCount
+            mfolds = mSubscale.points
         else:
             mfolds = 10
 #       print mfolds
@@ -373,7 +373,7 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
 #       print mAll
 
         if LOOfolding:
-            ffolds = fSubscale.pointCount
+            ffolds = fSubscale.points
         else:
             ffolds = 10
 #       print ffolds
@@ -505,8 +505,8 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
     toSplit = responses.copy()
     femalePoints = toSplit.extractPoints(extractFemale)
     malePoints = toSplit
-    numMale = malePoints.pointCount
-    numFemale = femalePoints.pointCount
+    numMale = malePoints.points
+    numFemale = femalePoints.points
 
     # TRIAL: normal distributions
     muM, sigmaM = -5, 3
@@ -515,13 +515,13 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
     genDataF = UML.createData("Matrix", numpyRandom.normal(muF, sigmaF, numFemale).reshape(numFemale,1))
 
 #   bw = tuple([.02 + i*.02 for i in xrange(25)])
-    bwBaseM = silver_factor(genDataM.pointCount, genDataM.featureCount)
+    bwBaseM = silver_factor(genDataM.points, genDataM.features)
     bw = tuple([bwBaseM * (1.1 ** i) for i in xrange(-15,15)])
     mfolds = 10
     mAll = UML.crossValidateReturnAll("custom.KDEProbability", genDataM, None, bandwidth=bw, numFolds=mfolds, performanceFunction=LogLikelihoodSum)
     mBW = cvUnpackBest(mAll, False)[0]['bandwidth']
 
-    bwBaseF = silver_factor(genDataM.pointCount, genDataM.featureCount)
+    bwBaseF = silver_factor(genDataM.points, genDataM.features)
     bw = tuple([bwBaseF * (1.1 ** i) for i in xrange(-15,15)])
     ffolds = 10
     fAll = UML.crossValidateReturnAll("custom.KDEProbability", genDataF, None, bandwidth=bw, numFolds=ffolds, performanceFunction=LogLikelihoodSum)
@@ -563,13 +563,13 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
     genDataF = UML.createData("Matrix", fSelected)
     genDataF.transpose()
 
-    bwBaseM = silver_factor(genDataM.pointCount, genDataM.featureCount)
+    bwBaseM = silver_factor(genDataM.points, genDataM.features)
     bw = tuple([bwBaseM * (1.1 ** i) for i in xrange(-15,15)])
     mfolds = 10
     mAll = UML.crossValidateReturnAll("custom.KDEProbability", genDataM, None, bandwidth=bw, numFolds=mfolds, performanceFunction=LogLikelihoodSum)
     mBW = cvUnpackBest(mAll, False)[0]['bandwidth']
 
-    bwBaseF = silver_factor(genDataM.pointCount, genDataM.featureCount)
+    bwBaseF = silver_factor(genDataM.points, genDataM.features)
     bw = tuple([bwBaseF * (1.1 ** i) for i in xrange(-15,15)])
     ffolds = 10
     fAll = UML.crossValidateReturnAll("custom.KDEProbability", genDataF, None, bandwidth=bw, numFolds=ffolds, performanceFunction=LogLikelihoodSum)

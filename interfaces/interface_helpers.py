@@ -205,8 +205,8 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True)
         scoresPerPoint = UML.createData('Matrix', scoresPerPoint, reuseData=True)
     if not isinstance(predictedLabels, UML.data.Base):
         predictedLabels = UML.createData('Matrix', predictedLabels, reuseData=True)
-    length = scoresPerPoint.pointCount
-    scoreLength = scoresPerPoint.featureCount
+    length = scoresPerPoint.points
+    scoreLength = scoresPerPoint.features
 
     # let n = number of classes
     # ova : number scores = n
@@ -369,7 +369,7 @@ def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
 
     """
     newScoresPerPoint = []
-    for i in xrange(scoresPerPoint.pointCount):
+    for i in xrange(scoresPerPoint.points):
         pointScoreList = []
         currScore = scoresPerPoint[i, 0]
         pointScoreList.append((-1) * currScore)

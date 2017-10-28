@@ -25,7 +25,7 @@ class MultiOutputLinearRegression(CustomLearner):
         self._models = []
         rawTrainX = trainX.copyAs('numpymatrix')
 
-        for i in xrange(trainY.featureCount):
+        for i in xrange(trainY.features):
             currY = trainY.copyFeatures(i)
             rawCurrY = currY.copyAs('numpyarray', outputAs1D=True)
 

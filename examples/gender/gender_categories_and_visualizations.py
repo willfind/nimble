@@ -194,7 +194,7 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
     """
     # remove from categoriesByQName, a UML object where the category is the 0th value
     # of each point
-    beforePointCount = categoriesByQName.pointCount
+    beforePointCount = categoriesByQName.points
     catToRemove = ["Annoyable", "Non-Resilient To Illness", "Non-Resilient To Stress", "Non-Image Conscious", "Optimistic", "Talkative", "Power Avoidant"]
 
     for cat in catToRemove:
@@ -204,7 +204,7 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
         return point[0] in catToRemove
 
     categoriesByQName.extractPoints(removeFunc)
-    afterPointCount = categoriesByQName.pointCount
+    afterPointCount = categoriesByQName.points
     assert beforePointCount - afterPointCount == 28
     for cat in catToRemove:
         assert cat not in categoriesByQName.featureView(0)
@@ -217,9 +217,9 @@ def removeProblemCategories(categoriesByQName, namesByCategory, responses):
         if cat in catToRemove:
             qsToRemove += qs
 
-    responsesPCBefore = responses.featureCount
+    responsesPCBefore = responses.features
     responses.extractFeatures(qsToRemove)
-    responsesPCAfter = responses.featureCount
+    responsesPCAfter = responses.features
     assert responsesPCBefore - responsesPCAfter == 28
 
     # Remove from namesByCategory, a dict mapping category names to lists of questions
@@ -249,9 +249,9 @@ def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
                     "I often experience intense emotions."]
 
     # remove from categoriesByQName, a UML object where questions are point names
-    beforePointCount = categoriesByQName.pointCount
+    beforePointCount = categoriesByQName.points
     categoriesByQName.extractPoints(qsToRemove)
-    afterPointCount = categoriesByQName.pointCount
+    afterPointCount = categoriesByQName.points
     assert beforePointCount - afterPointCount == 6
 
 
@@ -268,9 +268,9 @@ def removeProblemQuestions(categoriesByQName, namesByCategory, responses):
     assert removed == 6
 
     # Remove from responses, where each feature is scores for a particular question
-    responsesPCBefore = responses.featureCount
+    responsesPCBefore = responses.features
     responses.extractFeatures(qsToRemove)
-    responsesPCAfter = responses.featureCount
+    responsesPCAfter = responses.features
     assert responsesPCBefore - responsesPCAfter == 6
 
 
@@ -284,7 +284,7 @@ def mergeProblemCategories(categoriesByQName, namesByCategory, responses):
     """
     # adjust categoriesByQName, a UML object where the category is the 0th value
     # of each point
-    beforePointCount = categoriesByQName.pointCount
+    beforePointCount = categoriesByQName.points
     catToMerge = [("Non-Manipulative", 'Altruistic')]
 
     def changeFunc(val):
@@ -295,7 +295,7 @@ def mergeProblemCategories(categoriesByQName, namesByCategory, responses):
                 return None
 
     categoriesByQName.transformEachElement(changeFunc, features=0, skipNoneReturnValues=True)
-    afterPointCount = categoriesByQName.pointCount
+    afterPointCount = categoriesByQName.points
     assert beforePointCount - afterPointCount == 0
     for pair in catToMerge:
         assert pair[0] not in categoriesByQName.featureView(0)
@@ -318,7 +318,7 @@ def renameResultantCategories(categoriesByQName, namesByCategory, responses, sel
     """
     # adjust categoriesByQName, a UML object where the category is the 0th value
     # of each point
-    beforePointCount = categoriesByQName.pointCount
+    beforePointCount = categoriesByQName.points
     # Old:New
     rename = {'Non-Eloquent':'Improvisational',
                 'Risk Avoidant':'Risk Averse',
@@ -337,7 +337,7 @@ def renameResultantCategories(categoriesByQName, namesByCategory, responses, sel
             return None
 
     categoriesByQName.transformEachElement(changeFunc, features=0, skipNoneReturnValues=True)
-    afterPointCount = categoriesByQName.pointCount
+    afterPointCount = categoriesByQName.points
     assert beforePointCount - afterPointCount == 0
     for oldName in rename.keys():
         assert oldName not in categoriesByQName.featureView(0)
@@ -662,7 +662,7 @@ def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selecte
     avgCorr = (corrsM + corrsF) / 2.0
     basePartialCorr = UML.createData("Matrix", outFileBase)
 
-    signMatrix = numpy.empty((avgCorr.pointCount, avgCorr.featureCount), dtype=int)
+    signMatrix = numpy.empty((avgCorr.points, avgCorr.features), dtype=int)
     for i in range(signMatrix.shape[0]):
         for j in range(signMatrix.shape[1]):
             if abs(avgCorr[i,j]) <= 0.02 and abs(basePartialCorr[i,j]) <= 0.02:
@@ -854,7 +854,7 @@ def setupCategoryScaleTypes(categoriesByQName, selected, includeMale):
     catScaleFeature = categoriesByQName.calculateForEachPoint(unpack)
     catScaleFeature.setFeatureName(0, 'genderHigherAvgOfCat')
 
-    if categoriesByQName.featureCount == 3:
+    if categoriesByQName.features == 3:
         categoriesByQName.extractFeatures('genderHigherAvgOfCat')
     categoriesByQName.appendFeatures(catScaleFeature)
 
@@ -865,7 +865,7 @@ def addNoiseToResponses(responses):
 #   print responses[0,0]
 #   print responses[1,1]
 
-    size = (responses.pointCount, responses.featureCount)
+    size = (responses.points, responses.features)
 
     npr = UML.randomness.numpyRandom
 
@@ -1071,7 +1071,7 @@ if __name__ == '__main__':
 #       scaleType = setupCategoryScaleTypes(categoriesByQName, None, False)
 
     # Split gender / response data for subscore selection training and visualziation
-    testFraction = float(responses.pointCount - TRAIN_NUMBER) / responses.pointCount
+    testFraction = float(responses.points - TRAIN_NUMBER) / responses.points
     UML.setRandomSeed(SPLITSEED)
     responseTrain, genderTrain, responseTest, genderTest = responses.trainAndTestSets(testFraction, "male0female1", randomOrder=True)
     selected = determineBestSubScores(namesByCategory, categoriesByQName, responseTrain, genderTrain, forcedSelections)

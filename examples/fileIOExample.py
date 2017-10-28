@@ -30,7 +30,7 @@ if __name__ == "__main__":
     train.dropFeaturesContainingType(basestring)
 
     # split off a random test set
-    total = train.pointCount
+    total = train.points
     num = int(round(.15 * total))
     test = train.extractPoints(start=0, end=total, number=num, randomize=True)
 
