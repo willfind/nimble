@@ -752,7 +752,7 @@ class Base(object):
 
 
     def calculateForEachElement(self, function, points=None, features=None, preserveZeros=False,
-                                skipNoneReturnValues=False):
+                                skipNoneReturnValues=False, outputType=None):
         """
 		Returns a new object containing the results of calling function(elementValue)
 		or function(elementValue, pointNum, featureNum) for each element.
@@ -825,13 +825,32 @@ class Base(object):
                     tempList.append(currRet)
             valueList.append(tempList)
 
-        ret = UML.createData(self.getTypeString(), valueList)
+        if outputType is not None:
+            optType = outputType
+        else:
+            optType = self.getTypeString()
+
+        ret = UML.createData(optType, valueList)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
         return ret
 
+    def countElements(self, function):
+        """
+        Apply the function onto each element, the result should be True or False, or 1 or 0. Then return back the sum of
+        True (1).
+        function: can be a function object or a string like '>0'.
+        """
+        if callable(function):
+            ret = self.calculateForEachElement(function=function, outputType='Matrix')
+        elif isinstance(function, basestring):
+            func = lambda x: eval('x'+function)
+            ret = self.calculateForEachElement(function=func, outputType='Matrix')
+        else:
+            raise ArgumentException('function can only be a function or str, not else')
+        return int(numpy.sum(ret.data))
 
     def hashCode(self):
         """returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
@@ -2387,6 +2406,31 @@ class Base(object):
         self.validate()
         return ret
 
+    def countPoints(self, condition):
+        """
+        Similar to function extractPoints. Here we return back the number of points which satisfy the condition.
+        condition: can be a string or a function object.
+        """
+        return self._genericStructuralFrontend('point', self._countPoints_implementation, condition)
+
+    def _countPoints_implementation(self, target, *arguments):
+        """
+
+        """
+        return numpy.sum([target(i) for i in self.pointIterator()])
+
+    def countFeatures(self, condition):
+        """
+        Similar to function extractFeatures. Here we return back the number of features which satisfy the condition.
+        condition: can be a string or a function object.
+        """
+        return self._genericStructuralFrontend('feature', self._countFeatures_implementation, condition)
+
+    def _countFeatures_implementation(self, target, *arguments):
+        """
+
+        """
+        return numpy.sum([target(i) for i in self.featureIterator()])
 
     def referenceDataFrom(self, other):
         """
