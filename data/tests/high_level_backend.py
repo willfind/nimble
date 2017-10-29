@@ -677,6 +677,45 @@ class HighLevelDataSafe(DataTestObject):
 
         assert [5, 7] in retRaw
 
+    #############################
+    # countElements() #
+    #############################
+
+    def test_countElements(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret = toTest.countElements('>=5')
+        assert ret == 5
+
+        ret = toTest.countElements(lambda x: x % 2 == 1)
+        assert ret == 5
+
+    #############################
+    # countPoints() #
+    #############################
+
+    def test_countPoints(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
+        ret = toTest.countPoints('b>=5')
+        assert ret == 2
+
+        ret = toTest.countPoints(lambda x: x['b'] >= 5)
+        assert ret == 2
+
+
+    #############################
+    # countFeatures() #
+    #############################
+
+    def test_countFeatures(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
+        ret = toTest.countFeatures('two>=5')
+        assert ret == 2
+
+        ret = toTest.countFeatures(lambda x: x['two'] >= 5)
+        assert ret == 2
 
     ########################
     # isApproximatelyEqual() #
