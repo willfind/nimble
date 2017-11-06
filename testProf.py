@@ -1,6 +1,7 @@
 import os
 import pstats
 import time
+import cProfile
 
 gFileName = None
 
@@ -52,3 +53,26 @@ def dataTests(fileName=None, test=''):
     s = 'nosetests --with-cprofile --cprofile-stats-file=%s data/tests/testObjects.py%s' % (fileName, test)
     gFileName = fileName
     os.system(s)
+
+#other ways:
+# import cProfile
+# x = range(1000)
+# pr = cProfile.Profile()
+# pr.enable()
+#
+# for i in x:
+# 	call_function()
+#
+# pr.disable()
+# pr.print_stats(sort='time')
+
+def funcTests(f):
+    x = range(1000)
+    pr = cProfile.Profile()
+    pr.enable()
+
+    for i in x:
+        f()
+
+    pr.disable()
+    pr.print_stats(sort='time')

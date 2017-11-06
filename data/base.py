@@ -1385,7 +1385,7 @@ class Base(object):
         x must be a list or a slice, if not, it will be converted to a list; convert each item in x to an index
         """
 
-        length = self.points if axis.lower() == 'point' else self.features
+        length = self.points if axis == 'point' else self.features
 
         if isinstance(x, (int, numpy.integer, float, basestring)):
             x = [x]
