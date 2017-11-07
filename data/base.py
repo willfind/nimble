@@ -1379,57 +1379,83 @@ class Base(object):
 		"""
         return self._getTypeString_implementation()
 
-
-    def _convertIndices(self, x, axis='point'):
-        """
-        x must be a list or a slice, if not, it will be converted to a list; convert each item in x to an index
+    def _processSingleX(self, x):
         """
 
-        length = self.points if axis == 'point' else self.features
-
-        if isinstance(x, (int, numpy.integer, float, basestring)):
-            x = [x]
-        elif isinstance(x, slice):
-            start = x.start if x.start is not None else 0
-            stop = x.stop if x.stop is not None else length
-            step = x.step if x.step is not None else 1
-            x = range(start, stop, step)
-
-        res = [self._convertIndex(i, length, axis) for i in x]
-        return res
-
-    def _convertIndex(self, x, length, axis):
         """
-        convert x to an index; convert negative index to a positive index.
-        """
-        if isinstance(x, (int, numpy.integer)):
-            pass
-        elif isinstance(x, float):
-            intVal = int(x)
-            if intVal != x:
+        length = self._pointCount
+        if x.__class__ is int:
+            if x < -length or x >= length:
+                msg = "The given index " + str(x) + " is outside of the range "
+                msg += "of possible indices in the point axis (0 to "
+                msg += str(length - 1) + ")."
+                raise IndexError(msg)
+            if x >= 0:
+                return x, True
+            else:
+                return x + length, True
+
+        if x.__class__ is str or x.__class__ is unicode:
+            return self.getPointIndex(x), True
+
+        if x.__class__ is float:
+            if x % 1: # x!=int(x)
                 msg = "A float valued key of value x is only accepted if x == "
                 msg += "int(x). The given value was " + str(x) + " yet int("
-                msg += str(x) + ") = " + str(intVal)
+                msg += str(x) + ") = " + str(int(x))
                 raise ArgumentException(msg)
-            x = intVal
-        elif isinstance(x, basestring):
-            try:
-                x = self.getPointIndex(x) if axis.lower() == 'point' else self.getFeatureIndex(x)
-            except KeyError:
-                msg = "The point name '" + x + "' cannot be found."
-                raise KeyError(msg)
-        else:
-            raise KeyError('x can only be int, numpy.integer, float or basestring')
+            else:
+                x = int(x)
+                if x < -length or x >= length:
+                    msg = "The given index " + str(x) + " is outside of the range "
+                    msg += "of possible indices in the point axis (0 to "
+                    msg += str(length - 1) + ")."
+                    raise IndexError(msg)
+                if x >= 0:
+                    return x, True
+                else:
+                    return x + length, True
 
-        if x < 0:
-            x = length + x
-        if x < 0 or x >= length:
-            msg = "The given index " + str(x) + " is outside of the range "
-            msg += "of possible indices in the point axis (0 to "
-            msg += str(length - 1) + ")."
-            raise IndexError(msg)
+        return x, False
 
-        return x
+    def _processSingleY(self, y):
+        """
+
+        """
+        length = self._featureCount
+        if y.__class__ is int:
+            if y < -length or y >= length:
+                msg = "The given index " + str(y) + " is outside of the range "
+                msg += "of possible indices in the point axis (0 to "
+                msg += str(length - 1) + ")."
+                raise IndexError(msg)
+            if y >= 0:
+                return y, True
+            else:
+                return y + length, True
+
+        if y.__class__ is str or y.__class__ is unicode:
+            return self.getFeatureIndex(y), True
+
+        if y.__class__ is float:
+            if y % 1: # y!=int(y)
+                msg = "A float valued key of value y is only accepted if y == "
+                msg += "int(y). The given value was " + str(y) + " yet int("
+                msg += str(y) + ") = " + str(int(y))
+                raise ArgumentException(msg)
+            else:
+                y = int(y)
+                if y < -length or y >= length:
+                    msg = "The given index " + str(y) + " is outside of the range "
+                    msg += "of possible indices in the point axis (0 to "
+                    msg += str(length - 1) + ")."
+                    raise IndexError(msg)
+                if y >= 0:
+                    return y, True
+                else:
+                    return y + length, True
+
+        return y, False
 
     def __getitem__(self, key):
         """
@@ -1453,25 +1479,54 @@ class Base(object):
         X[[1,2],[3,8]]      -> UML object (2d) that has just 2 points (points 1,2) but only 2 features for each of them (features 3,8)
         """
         # Make it a tuple if it isn't one
-        if not isinstance(key, tuple):
-            if self.points == 1:
-                x = [0]
-                y = [key]
-            elif self.features == 1:
-                x = [key]
-                y = [0]
+        if key.__class__ is tuple:
+            x, y = key
+        else:
+            if self._pointCount == 1:
+                x = 0
+                y = key
+            elif self._featureCount == 1:
+                x = key
+                y = 0
             else:
                 msg = "Must include both a point and feature index; or, "
                 msg += "if this is vector shaped, a single index "
                 msg += "into the axis whose length > 1"
                 raise ArgumentException(msg)
-        else:
-            (x, y) = key
-        x = self._convertIndices(x, 'point')
-        y = self._convertIndices(y, 'feature')
 
-        if len(x) == 1 and len(y) == 1:
-            return self._getitem_implementation(x[0], y[0])
+        #process x
+        x, singleX = self._processSingleX(x)
+        #process y
+        y, singleY = self._processSingleY(y)
+        #if it is the simplest data retrieval such as X[1,2], we'd like to return it back in the fastest way.
+        if singleX and singleY:
+            return self._getitem_implementation(x, y)
+
+        if not singleX:
+            if x.__class__ is slice:
+                start = x.start if x.start is not None else 0
+                if start < 0:
+                    start += self.points
+                stop = x.stop if x.stop is not None else self.points
+                if stop < 0:
+                    stop += self.points
+                step = x.step if x.step is not None else 1
+                x = [self._processSingleX(xi)[0] for xi in range(start, stop, step)]
+            else:
+                x = [self._processSingleX(xi)[0] for xi in x]
+
+        if not singleY:
+            if y.__class__ is slice:
+                start = y.start if y.start is not None else 0
+                if start < 0:
+                    start += self.features
+                stop = y.stop if y.stop is not None else self.features
+                if stop < 0:
+                    stop += self.features
+                step = y.step if y.step is not None else 1
+                y = [self._processSingleY(yi)[0] for yi in range(start, stop, step)]
+            else:
+                y = [self._processSingleY(yi)[0] for yi in y]
 
         return self.copyPoints(points=x).copyFeatures(features=y)
 

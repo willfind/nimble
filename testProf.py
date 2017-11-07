@@ -66,8 +66,8 @@ def dataTests(fileName=None, test=''):
 # pr.disable()
 # pr.print_stats(sort='time')
 
-def funcTests(f):
-    x = range(1000)
+def funcTests(f, n=1000):
+    x = range(n)
     pr = cProfile.Profile()
     pr.enable()
 
