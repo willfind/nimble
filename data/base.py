@@ -1384,7 +1384,7 @@ class Base(object):
 
         """
         length = self._pointCount
-        if x.__class__ is int:
+        if x.__class__ is int or x.__class__ is numpy.integer:
             if x < -length or x >= length:
                 msg = "The given index " + str(x) + " is outside of the range "
                 msg += "of possible indices in the point axis (0 to "
@@ -1423,7 +1423,7 @@ class Base(object):
 
         """
         length = self._featureCount
-        if y.__class__ is int:
+        if y.__class__ is int or y.__class__ is numpy.integer:
             if y < -length or y >= length:
                 msg = "The given index " + str(y) + " is outside of the range "
                 msg += "of possible indices in the point axis (0 to "
