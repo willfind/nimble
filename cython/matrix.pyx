@@ -1,84 +1,82 @@
 """
-Class extending Base, using a pandas DataFrame to store data.
+Class extending Base, using a numpy dense matrix to store data.
+
 """
-import UML
-from UML.exceptions import ArgumentException, PackageException
 
-pd = UML.importModule('pandas')
-if not pd:
-    msg = 'To use class DataFrame, pandas must be installed.'
-    raise PackageException(msg)
-
-from base import Base
-import numpy as np
-scipy = UML.importModule('scipy.sparse')
-
+import numpy
+import sys
 import itertools
+import copy
+
+import UML
+from base import Base
 from base_view import BaseView
+from dataHelpers import View
+from UML.exceptions import ArgumentException, PackageException
+from UML.randomness import pythonRandom
+from UML.randomness import numpyRandom
+scipy = UML.importModule('scipy.io')
 
-
-class DataFrame(Base):
+class Matrix(Base):
     """
     Class providing implementations of data manipulation operations on data stored
-    in a pandas DataFrame.
+    in a numpy dense matrix.
+
     """
 
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, featureNames=None, reuseData=False, elementType=None, **kwds):
         """
-        The initializer.
-        Inputs:
-            data: pandas DataFrame, or numpy matrix.
-            reuseData: boolean. only used when data is a pandas DataFrame.
+        data can only be a numpy matrix
         """
-        if (not isinstance(data, (pd.DataFrame, np.matrix))):
-            msg = "the input data can only be a pandas DataFrame or a numpy matrix or ListPassThrough."
+
+        if (not isinstance(data, (numpy.matrix, numpy.ndarray))):# and 'PassThrough' not in str(type(data)):
+            msg = "the input data can only be a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
 
-        if isinstance(data, pd.DataFrame):
+        if isinstance(data, numpy.matrix):
             if reuseData:
                 self.data = data
             else:
-                self.data = data.copy()
+                self.data = copy.copy(data)#copy.deepcopy may give messed data
         else:
-            self.data = pd.DataFrame(data)
+            #when data is a np matrix, its dtype has been adjusted in extractNamesAndConvertData
+            #but when data is a ListPassThrough, we need to do dtype adjustment here
+            if elementType:
+                self.data = numpy.matrix(data, dtype=elementType)
+            else:
+                try:
+                    self.data = numpy.matrix(data, dtype=numpy.float)
+                except ValueError:
+                    self.data = numpy.matrix(data, dtype=object)
 
+        kwds['featureNames'] = featureNames
         kwds['shape'] = self.data.shape
-        super(DataFrame, self).__init__(**kwds)
-        #it is very import to set up self.data's index and columns, other wise int index or column name will be set
-        #if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
-        self.data.index = self.getPointNames()
-        self.data.columns = self.getFeatureNames()
+        super(Matrix, self).__init__(**kwds)
 
 
     def _transpose_implementation(self):
         """
         Function to transpose the data, ie invert the feature and point indices of the data.
 
-        This is not an in place operation, a new pandas DataFrame is constructed.
+        This is not an in place operation, a new list of lists is constructed.
         """
-        self.data = self.data.T
+        self.data = self.data.getT()
 
-    def appendPoints(self, toAppend):
-        super(DataFrame, self).appendPoints(toAppend)
-        self._updateName(axis='point')
 
     def _appendPoints_implementation(self, toAppend):
         """
         Append the points from the toAppend object to the bottom of the features in this object
 
         """
-        self.data = pd.concat((self.data, toAppend.data), axis=0)
+        self.data = numpy.concatenate((self.data, toAppend.data), 0)
 
-    def appendFeatures(self, toAppend):
-        super(DataFrame, self).appendFeatures(toAppend)
-        self._updateName(axis='feature')
 
     def _appendFeatures_implementation(self, toAppend):
         """
         Append the features from the toAppend object to right ends of the points in this object
 
         """
-        self.data = pd.concat((self.data, toAppend.data), axis=1)
+        self.data = numpy.concatenate((self.data, toAppend.data), 1)
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
         """
@@ -138,10 +136,10 @@ class DataFrame(Base):
             for i in xrange(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
                 indexPosition.append(index)
-            indexPosition = np.array(indexPosition)
+            indexPosition = numpy.array(indexPosition)
         elif hasattr(scorer, 'permuter'):
             scoreArray = scorer.indices
-            indexPosition = np.argsort(scoreArray)
+            indexPosition = numpy.argsort(scoreArray)
         else:
             # make array of views
             viewArray = []
@@ -161,13 +159,13 @@ class DataFrame(Base):
             # this results in an array whose ith entry contains the the
             # index into the data of the value that should be in the ith
             # position.
-            indexPosition = np.argsort(scoreArray)
+            indexPosition = numpy.argsort(scoreArray)
 
         # use numpy indexing to change the ordering
         if axis == 'point':
-            self.data = self.data.ix[indexPosition, :]
+            self.data = self.data[indexPosition, :]
         else:
-            self.data = self.data.ix[:, indexPosition]
+            self.data = self.data[:, indexPosition]
 
         # we convert the indices of the their previous location into their feature names
         newNameOrder = []
@@ -176,6 +174,7 @@ class DataFrame(Base):
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
         return newNameOrder
+
 
     def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
         """
@@ -212,8 +211,15 @@ class DataFrame(Base):
         returning an object containing those points that are.
 
         """
-        indexList = self.data.index[toExtract]
-        return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+        ret = self.data[toExtract]
+        self.data = numpy.delete(self.data, toExtract, 0)
+
+        # construct featureName list
+        nameList = []
+        for index in toExtract:
+            nameList.append(self.getPointName(index))
+
+        return Matrix(ret, pointNames=nameList)
 
     def _extractPointsByFunction_implementation(self, toExtract, number):
         """
@@ -221,19 +227,32 @@ class DataFrame(Base):
         returning an object containing those points that do.
 
         """
+        #if the toExtract is a vectorized function, then call matrix based function
+        #otherwise, call view based function
         if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-            indexList = self.data.index[toExtract(self.data)]
-            return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+            function = matrixBasedApplyAlongAxis
         else:
-            results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'point', self)
-            results = results.astype(np.int)
+            function = viewBasedApplyAlongAxis
+        results = function(toExtract, 'point', self)
+        results = results.astype(numpy.int)
 
-            # need to convert our 1/0 array to to list of points to be removed
-            # can do this by just getting the non-zero indices
-            toRemove = np.flatnonzero(results)
+        # need to convert our 1/0 array to to list of points to be removed
+        # can do this by just getting the non-zero indices
+        toRemove = numpy.flatnonzero(results)
+        ###spencer added this on 3/7/2017 to make it take into account number:
+        if number is not None and len(toRemove) > number:
+            toRemove = toRemove[:number]
+            assert len(toRemove) == number
+        ###end of spencer added code
+        ret = self.data[toRemove, :]
+        self.data = numpy.delete(self.data, toRemove, 0)
 
-            return self._extractPointsByList_implementation(toRemove)
+        # construct featureName list
+        nameList = []
+        for index in toRemove:
+            nameList.append(self.getPointName(index))
 
+        return Matrix(ret, pointNames=nameList)
 
     def _extractPointsByRange_implementation(self, start, end):
         """
@@ -242,8 +261,15 @@ class DataFrame(Base):
 
         """
         # +1 on end in ranges, because our ranges are inclusive
-        indexList = self.data.index[start:end + 1]
-        return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+        ret = self.data[start:end + 1, :]
+        self.data = numpy.delete(self.data, numpy.s_[start:end + 1], 0)
+
+        # construct featureName list
+        nameList = []
+        for index in xrange(start, end + 1):
+            nameList.append(self.getPointName(index))
+
+        return Matrix(ret, pointNames=nameList)
 
     def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
         """
@@ -273,14 +299,22 @@ class DataFrame(Base):
         else:
             raise ArgumentException("Malformed or missing inputs")
 
+
     def _extractFeaturesByList_implementation(self, toExtract):
         """
         Modify this object to have only the features that are not given in the input,
         returning an object containing those features that are.
 
         """
-        featureList = self.data.columns[toExtract]
-        return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
+        ret = self.data[:, toExtract]
+        self.data = numpy.delete(self.data, toExtract, 1)
+
+        # construct featureName list
+        featureNameList = []
+        for index in toExtract:
+            featureNameList.append(self.getFeatureName(index))
+
+        return Matrix(ret, featureNames=featureNameList, pointNames=self.getPointNames())
 
     def _extractFeaturesByFunction_implementation(self, toExtract, number):
         """
@@ -288,19 +322,20 @@ class DataFrame(Base):
         function, returning an object containing those features whose views do.
 
         """
+        #if the toExtract is a vectorized function, then call matrix based function
+        #otherwise, call view based function
         if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-            featureList = self.data.columns[toExtract(self.data.loc)]
-            return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
+            function = matrixBasedApplyAlongAxis
         else:
-            #have to use view based method.
-            results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'feature', self)
-            results = results.astype(np.int)
+            function = viewBasedApplyAlongAxis
+        results = function(toExtract, 'feature', self)
+        results = results.astype(numpy.int)
 
-            # need to convert our 1/0 array to to list of points to be removed
-            # can do this by just getting the non-zero indices
-            toRemove = np.flatnonzero(results)
+        # need to convert our 1/0 array to to list of points to be removed
+        # can do this by just getting the non-zero indices
+        toRemove = numpy.flatnonzero(results)
 
-            return self._extractFeaturesByList_implementation(toRemove)
+        return self._extractFeaturesByList_implementation(toRemove)
 
 
     def _extractFeaturesByRange_implementation(self, start, end):
@@ -313,8 +348,15 @@ class DataFrame(Base):
 
         """
         # +1 on end in ranges, because our ranges are inclusive
-        featureList = self.data.columns[start:end + 1]
-        return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
+        ret = self.data[:, start:end + 1]
+        self.data = numpy.delete(self.data, numpy.s_[start:end + 1], 1)
+
+        # construct featureName list
+        featureNameList = []
+        for index in xrange(start, end + 1):
+            featureNameList.append(self.getFeatureName(index))
+
+        return Matrix(ret, featureNames=featureNameList)
 
     def _mapReducePoints_implementation(self, mapper, reducer):
         # apply_along_axis() expects a scalar or array of scalars as output,
@@ -326,9 +368,9 @@ class DataFrame(Base):
             for (k, v) in pairs:
                 ret.append(k)
                 ret.append(v)
-            return np.array(ret)
+            return numpy.array(ret)
 
-        mapResultsMatrix = np.apply_along_axis(mapperWrapper, 1, self.data.values)
+        mapResultsMatrix = numpy.apply_along_axis(mapperWrapper, 1, self.data)
         mapResults = {}
         for pairsArray in mapResultsMatrix:
             for i in xrange(len(pairsArray) / 2):
@@ -350,14 +392,13 @@ class DataFrame(Base):
             if redRet is not None:
                 (redKey, redValue) = redRet
                 ret.append([redKey, redValue])
-        return DataFrame(ret)
+        return Matrix(ret)
 
     def _getTypeString_implementation(self):
-        return 'DataFrame'
-
+        return 'Matrix'
 
     def _isIdentical_implementation(self, other):
-        if not isinstance(other, DataFrame):
+        if not isinstance(other, Matrix):
             return False
         if self.points != other.points:
             return False
@@ -365,9 +406,7 @@ class DataFrame(Base):
             return False
 
         try:
-            tmp1 = self.data.values
-            tmp2 = other.data.values
-            np.testing.assert_equal(tmp1, tmp2)
+            numpy.testing.assert_equal(self.data, other.data)
         except AssertionError:
             return False
         return True
@@ -399,93 +438,115 @@ class DataFrame(Base):
 
         """
         with open(outPath, 'w') as outFile:
+
             if includeFeatureNames:
+                # to signal that the first line contains feature Names
                 outFile.write('\n\n')
+
+                def combine(a, b):
+                    return a + ',' + b
+
+                fnames = self.getFeatureNames()
+                fnamesLine = reduce(combine, fnames)
+                fnamesLine += '\n'
                 if includePointNames:
-                    outFile.write('point_names')
-        self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
+                    outFile.write('point_names,')
+
+                outFile.write(fnamesLine)
+
+            if includePointNames:
+                pnames = numpy.matrix(self.getPointNames())
+                pnames = pnames.transpose()
+
+                viewData = self.data.view()
+                toWrite = numpy.concatenate((pnames, viewData), 1)
+
+                numpy.savetxt(outFile, toWrite, delimiter=',', fmt='%s')
+            else:
+                numpy.savetxt(outFile, self.data, delimiter=',')
+
 
     def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
-        """
-        Function to write the data in this object to a matrix market file at the designated
-        path.
-        """
         if not scipy:
             msg = "scipy is not available"
             raise PackageException(msg)
 
-        from scipy.io import mmwrite
+        def makeNameString(count, namesGetter):
+            nameString = "#"
+            for i in xrange(count):
+                nameString += namesGetter(i)
+                if not i == count - 1:
+                    nameString += ','
+            return nameString
 
-        comment = '#'
+        header = ''
         if includePointNames:
-            comment += ','.join(self.data.index)
+            header = makeNameString(self.points, self.getPointName)
+            header += '\n'
+        else:
+            header += '#\n'
         if includeFeatureNames:
-            comment += '\n#' + ','.join(self.data.columns)
-        mmwrite(outPath, self.data, comment=comment)
+            header += makeNameString(self.features, self.getFeatureName)
+        else:
+            header += '#\n'
+
+        if header != '':
+            scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
+        else:
+            scipy.io.mmwrite(target=outPath, a=self.data)
 
     def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, DataFrame):
+        if not isinstance(other, Matrix):
             raise ArgumentException("Other must be the same type as this object")
 
         self.data = other.data
 
     def _copyAs_implementation(self, format):
-        """
-        Copy the current DataFrame object to another one in the format.
-        Input:
-            format: string. Sparse, List, Matrix, pythonlist, numpyarray, numpymatrix, scipycsc, scipycsr or None
-                    if format is None, a new DataFrame will be created.
-        """
-        dataArray = self.data.values.copy()
-        if format is None or format == 'DataFrame':
-            return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'Sparse':
-            return UML.createData('Sparse', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'List':
-            return UML.createData('List', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-        if format == 'Matrix':
-            return UML.createData('Matrix', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+        if format is None or format == 'Matrix':
+            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
         if format == 'pythonlist':
-            return dataArray.tolist()
+            return self.data.tolist()
         if format == 'numpyarray':
-            return dataArray
+            return numpy.array(self.data)
         if format == 'numpymatrix':
-            return np.matrix(dataArray)
+            return numpy.matrix(self.data)
         if format == 'scipycsc':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csc_matrix(dataArray)
+            return scipy.sparse.csc_matrix(self.data)
         if format == 'scipycsr':
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            return scipy.sparse.csr_matrix(dataArray)
+            return scipy.sparse.csr_matrix(self.data)
+        if format == 'DataFrame':
+            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
-        return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+        return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
     def _copyPoints_implementation(self, points, start, end):
         if points is not None:
-            #indexList = self.data.index[points]
-            #ret = self.data.ix[indexList, :]
-            ret = self.data.ix[points, :]
+            ret = self.data[points]
         else:
-            ret = self.data.ix[start:end + 1, :]
+            ret = self.data[start:end + 1, :]
 
-        return DataFrame(ret)
+        return Matrix(ret)
 
     def _copyFeatures_implementation(self, indices, start, end):
         if indices is not None:
-            ret = self.data.ix[:, indices]
+            ret = self.data[:, indices]
         else:
-            ret = self.data.ix[:, start:end + 1]
+            ret = self.data[:, start:end + 1]
 
-        return DataFrame(ret)
+        return Matrix(ret)
+
 
     def _transformEachPoint_implementation(self, function, points):
-        """
-
-        """
         for i, p in enumerate(self.pointIterator()):
             if points is not None and i not in points:
                 continue
@@ -494,7 +555,7 @@ class DataFrame(Base):
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
 
-            self.data.ix[i, :] = currRet
+            self.data[i, :] = numpy.array(currRet).reshape(1, self.features)
 
     def _transformEachFeature_implementation(self, function, features):
         for j, f in enumerate(self.featureIterator()):
@@ -505,7 +566,7 @@ class DataFrame(Base):
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
 
-            self.data.ix[:, j] = currRet
+            self.data[:, j] = numpy.array(currRet).reshape(self.points, 1)
 
     def _transformEachElement_implementation(self, function, points, features, preserveZeros, skipNoneReturnValues):
         oneArg = False
@@ -516,7 +577,7 @@ class DataFrame(Base):
 
         IDs = itertools.product(xrange(self.points), xrange(self.features))
         for (i, j) in IDs:
-            currVal = self.data.ix[i, j]
+            currVal = self.data[i, j]
 
             if points is not None and i not in points:
                 continue
@@ -533,18 +594,16 @@ class DataFrame(Base):
             if skipNoneReturnValues and currRet is None:
                 continue
 
-            self.data.ix[i, j] = currRet
+            self.data[i, j] = currRet
+
 
     def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
-        """
-        """
         if not isinstance(values, UML.data.Base):
-            values = values * np.ones((pointEnd - pointStart + 1, featureEnd - featureStart + 1))
+            values = values * numpy.ones((pointEnd - pointStart + 1, featureEnd - featureStart + 1))
         else:
-            #convert values to be array or matrix, instead of pandas DataFrame
-            values = values.data.values
+            values = values.data
 
-        self.data.ix[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
+        self.data[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
 
     def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
         """
@@ -555,160 +614,175 @@ class DataFrame(Base):
         4. imput missing values via linear interpolation
 
         Detailed steps are:
-        1. from alsoTreatAsMissing, generate a dict for elements which are not None or NaN but should be treated as missing
-        2. from featuresList, generate a dict for each element
+        1. from alsoTreatAsMissing, generate a Set for elements which are not None nor NaN but should be considered as missing
+        2. from featuresList, generate 2 dicts missingIdxDictFeature and missingIdxDictPoint to store locations of missing values
         3. replace missing values in features in the featuresList with NaN
         4. based on method and arguments, process self.data
         5. update points and features information.
         """
-        alsoTreatAsMissingDict = {i: np.NaN for i in alsoTreatAsMissing if (i is not None) and i == i}
-        if alsoTreatAsMissingDict:
-            myd = {i: alsoTreatAsMissingDict for i in featuresList}
-            self.data.replace(myd, inplace=True)
+        def featureMeanMedianMode(func):
+            featureMean = self.calculateForEachFeature(func, features=featuresList)
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                for i in tmpItem[1]:
+                    self.data[i, j] = featureMean[0, j]
 
+        alsoTreatAsMissingSet = set(alsoTreatAsMissing)
+        missingIdxDictFeature = {i: [] for i in featuresList}#{i: [] for i in xrange(self.features)}
+        missingIdxDictPoint = {i: [] for i in xrange(self.points)}
+        for i in xrange(self.points):
+            for j in featuresList:
+                tmpV = self.data[i, j]
+                if tmpV in alsoTreatAsMissingSet or (tmpV!=tmpV) or tmpV is None:
+                    #numpy.NaN and None are always treated as missing
+                    self.data[i, j] = numpy.NaN
+                    missingIdxDictPoint[i].append(j)
+                    missingIdxDictFeature[j].append(i)
+
+        featureNames = self.getFeatureNames()
+        pointNames = self.getPointNames()
         if markMissing:
             #add extra columns to indicate if the original value was missing or not
-            extraDf = self.data[featuresList].isnull()
+            extraFeatureNames = []
+            extraDummy = []
+            for tmpItem in missingIdxDictFeature.items():
+                extraFeatureNames.append(self.getFeatureName(tmpItem[0]) + '_missing')
+                extraDummy.append([True if i in tmpItem[1] else False for i in xrange(self.points)])
+
+            extraDummy = numpy.matrix(extraDummy).transpose()
 
         #from now, based on method and arguments, process self.data
         if method == 'remove points':
             msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
             if arguments is None or arguments.lower() == 'any':
-                self.data.dropna(subset=featuresList, how='any', inplace=True)
+                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) > 0]
             elif arguments.lower() == 'all':
-                self.data.dropna(subset=featuresList, how='all', inplace=True)
+                missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.features]
             else:
                 raise ArgumentException(msg)
-
-            if 0 in self.data.shape:
+            nonmissingIdx = [i for i in xrange(self.points) if i not in missingIdx]
+            if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
+            pointNames = [self.getPointName(i) for i in nonmissingIdx]
+            if len(missingIdx) > 0:
+                self.data = numpy.delete(self.data, missingIdx, axis=0)
+                if markMissing:
+                    extraDummy = numpy.delete(extraDummy, missingIdx, axis=0)
         elif method == 'remove features':
             msg = 'for method = "remove features", the arguments can only be all( or None) or any.'
-            if len(featuresList) == self.features:
-                #if we consider all features
-                if arguments is None or arguments.lower() == 'any':
-                    self.data.dropna(axis=1, how='any', inplace=True)
-                elif arguments.lower() == 'all':
-                    self.data.dropna(axis=1, how='all', inplace=True)
-                else:
-                    raise ArgumentException(msg)
+            if arguments is None or arguments.lower() == 'any':
+                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) > 0]
+            elif arguments.lower() == 'all':
+                missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.points]
             else:
-                #if only some features are considered
-                if arguments is None or arguments.lower() == 'any':
-                    cols = self.data[featuresList].dropna(axis=1, how='any', inplace=False).columns
-                elif arguments.lower() == 'all':
-                    cols = self.data[featuresList].dropna(axis=1, how='all', inplace=False).columns
-                else:
-                    raise ArgumentException(msg)
-                dropCols = list(set(featuresList) - set(cols))
-                self.data.drop(labels=dropCols, axis=1, inplace=True)
-
-            if 0 in self.data.shape:
+                raise ArgumentException(msg)
+            nonmissingIdx = [i for i in xrange(self.features) if i not in missingIdx]
+            if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
+            featureNames = [self.getFeatureName(i) for i in nonmissingIdx]
+            if len(missingIdx) > 0:
+                self.data = numpy.delete(self.data, missingIdx, axis=1)
+                if markMissing:
+                    extraDummy = numpy.delete(extraDummy, missingIdx, axis=1)
+                    extraFeatureNames = [extraFeatureNames[i] for i in nonmissingIdx]
         elif method == 'feature mean':
-            self.data.fillna(self.data[featuresList].mean(), inplace=True)
+            #np.nanmean is faster than UML.calculate.mean
+            tmpDict = dict(zip(featuresList, numpy.nanmean(self.data[:, featuresList], axis=0).tolist()[0]))
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                for i in tmpItem[1]:
+                    self.data[i, j] = tmpDict[j]
         elif method == 'feature median':
-            self.data.fillna(self.data[featuresList].median(), inplace=True)
+            #np.nanmedian is not working well
+            featureMeanMedianMode(UML.calculate.median)
         elif method == 'feature mode':
-            #pd.DataFrame.mode is faster, but to make sure behavior consistent, let's use our own UML.calculate.mode
-            featureMode = self.calculateForEachFeature(UML.calculate.mode, features=featuresList).data.iloc[0]
-            self.data.fillna(featureMode, inplace=True)
+            featureMeanMedianMode(UML.calculate.mode)
         elif method == 'zero':
-            myd = {i: 0 for i in featuresList}
-            self.data.fillna(myd, inplace=True)
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                for i in tmpItem[1]:
+                    self.data[i, j] = 0
         elif method == 'constant':
             msg = 'for method = "constant", the arguments must be the constant.'
             if arguments is not None:
-                myd = {i: arguments for i in featuresList}
-                self.data.fillna(myd, inplace=True)
+                for tmpItem in missingIdxDictFeature.items():
+                    j = tmpItem[0]
+                    for i in tmpItem[1]:
+                        self.data[i, j] = arguments
             else:
                 raise ArgumentException(msg)
         elif method == 'forward fill':
-            self.data[featuresList] = self.data[featuresList].fillna(method='ffill')
+            for tmpItem in missingIdxDictFeature.items():
+                    j = tmpItem[0]
+                    for i in tmpItem[1]:
+                        if i > 0:
+                            self.data[i, j] = self.data[i-1, j]
         elif method == 'backward fill':
-            self.data[featuresList] = self.data[featuresList].fillna(method='bfill')
+            for tmpItem in missingIdxDictFeature.items():
+                    j = tmpItem[0]
+                    for i in sorted(tmpItem[1], reverse=True):
+                        if i < self.points - 1:
+                            self.data[i, j] = self.data[i+1, j]
         elif method == 'interpolate':
-            if arguments is None:
-                arguments = {}
-            elif isinstance(arguments, dict):
-                pass
-            else:
-                msg = 'for method = "interpolate", the arguments must be None or a dict.'
-                raise ArgumentException(msg)
-            if len(featuresList) == self.features:
-                    self.data.interpolate(inplace=True, **arguments)
-            else:
-                self.data[featuresList] = self.data[featuresList].interpolate(**arguments)
-        elif hasattr(method, '__name__') and 'KNeighbors' in method.__name__:
-            if arguments is None:
-                arguments = {}
-            neigh = method(**arguments)
-            tmpList = []#store idx, col and values for missing values
-            for col in featuresList:
-                colBln = (self.data.columns == col)
-                for idx in self.data.index:
-                    #do KNN point by point
-                    if pd.isnull(self.data.ix[idx, colBln].values[0]):
-                        #prepare training data
-                        notNullCols = ~self.data.ix[idx, :].isnull()
-                        predictData = self.data.ix[idx, notNullCols]
-                        notNullCols[col] = True
-                        trainingData = self.data.ix[:, notNullCols].dropna(how='any')
-                        #train
-                        neigh.fit(trainingData.ix[:, ~colBln], trainingData.ix[:, colBln])
-                        #predict
-                        tmpList.append([idx, col, neigh.predict(predictData.reshape(1, -1))[0][0] ])
-            for idx, col, v in tmpList:
-                self.data.ix[idx, col] = v
-        else:
-            msg = 'method can be "remove points", "remove features", "feature mean", "feature median", \
-            "feature mode", "zero", "constant", "forward fill", "backward fill", "extra dummy", "interpolate", \
-                  sklearn.neighbors.KNeighborsRegressor, sklearn.neighbors.KNeighborsClassifier'
-            raise ArgumentException(msg)
+            for tmpItem in missingIdxDictFeature.items():
+                j = tmpItem[0]
+                interpX = tmpItem[1]
+                if len(interpX) == 0:
+                    continue
+                if arguments is None:
+                    xp = [i for i in xrange(self.points) if i not in interpX]
+                    fp = self.data[xp, j].reshape(1, -1).tolist()[0]
+                    tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
+                elif isinstance(arguments, dict):
+                    tmpArguments = arguments.copy()
+                    tmpArguments['x'] = interpX
+                else:
+                    msg = 'for method = "interpolate", the arguments must be None or a dict.'
+                    raise ArgumentException(msg)
+
+                tmpV = numpy.interp(**tmpArguments)
+                for k, i in enumerate(interpX):
+                    self.data[i, j] = tmpV[k]
 
         if markMissing:
-            self.data = self.data.join(extraDf[[i for i in featuresList if i in self.data.columns]], rsuffix='_missing', how='left')
+            self.data = numpy.append(self.data, extraDummy, axis=1)
+            featureNames += extraFeatureNames
         pCount, fCount = self.data.shape
         self._featureCount = fCount
-        self.setFeatureNames(self.data.columns.tolist())
+        self.setFeatureNames(featureNames)
         self._pointCount = pCount
-        self.setPointNames(self.data.index.tolist())
+        self.setPointNames(pointNames)
 
     def _flattenToOnePoint_implementation(self):
         numElements = self.points * self.features
-        self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
+        self.data = self.data.reshape((1, numElements), order='C')
 
     def _flattenToOneFeature_implementation(self):
         numElements = self.points * self.features
-        self.data = pd.DataFrame(self.data.values.reshape((numElements,1), order='F'))
-
+        self.data = self.data.reshape((numElements,1), order='F')
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         numFeatures = self.features / numPoints
-        self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='C'))
+        self.data = self.data.reshape((numPoints, numFeatures), order='C')
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         numPoints = self.points / numFeatures
-        self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
+        self.data = self.data.reshape((numPoints, numFeatures), order='F')
 
     def _getitem_implementation(self, x, y):
-        # return self.data.ix[x, y]
-        #use self.data.values is much faster
-        return self.data.values[x, y]
+        cdef int xint = x
+        cdef int yint = y
+        return self.data[xint, yint]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart, featureEnd):
-        """
-
-        """
-
-        class DataFrameView(BaseView, DataFrame):
+        class MatrixView(BaseView, Matrix):
             def __init__(self, **kwds):
-                super(DataFrameView, self).__init__(**kwds)
+                super(MatrixView, self).__init__(**kwds)
 
         kwds = {}
-        kwds['data'] = self.data.ix[pointStart:pointEnd, featureStart:featureEnd]
+        kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]
         kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
@@ -716,10 +790,10 @@ class DataFrame(Base):
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
 
-        return DataFrameView(**kwds)
+        return MatrixView(**kwds)
 
     def _validate_implementation(self, level):
-        shape = self.data.shape
+        shape = numpy.shape(self.data)
         assert shape[0] == self.points
         assert shape[1] == self.features
 
@@ -730,7 +804,7 @@ class DataFrame(Base):
         in this object. False otherwise
 
         """
-        return 0 in self.data.values
+        return 0 in self.data
 
     def _nonZeroIteratorPointGrouped_implementation(self):
         class nzIt(object):
@@ -746,7 +820,7 @@ class DataFrame(Base):
 
             def next(self):
                 while (self._pIndex < self._pStop):
-                    value = self._source.data.ix[self._pIndex, self._fIndex]
+                    value = self._source.data[self._pIndex, self._fIndex]
 
                     self._fIndex += 1
                     if self._fIndex >= self._fStop:
@@ -774,7 +848,7 @@ class DataFrame(Base):
 
             def next(self):
                 while (self._fIndex < self._fStop):
-                    value = self._source.data.ix[self._pIndex, self._fIndex]
+                    value = self._source.data[self._pIndex, self._fIndex]
 
                     self._pIndex += 1
                     if self._pIndex >= self._pStop:
@@ -788,6 +862,7 @@ class DataFrame(Base):
 
         return nzIt(self)
 
+
     def _matrixMultiply_implementation(self, other):
         """
         Matrix multiply this UML data object against the provided other UML data
@@ -798,10 +873,10 @@ class DataFrame(Base):
         determined according to efficiency constraints.
 
         """
-
-        leftData = np.matrix(self.data)
-        rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
-        return DataFrame(leftData * rightData)
+        if isinstance(other, Matrix) or isinstance(other, UML.data.Sparse):
+            return Matrix(self.data * other.data)
+        else:
+            return Matrix(self.data * other.copyAs("numpyarray"))
 
     def _elementwiseMultiply_implementation(self, other):
         """
@@ -813,12 +888,12 @@ class DataFrame(Base):
 
         """
         if isinstance(other, UML.data.Sparse):
-            result = other.data.multiply(self.data.values)
+            result = other.data.multiply(self.data)
             if hasattr(result, 'todense'):
                 result = result.todense()
-            self.data = pd.DataFrame(result)
+            self.data = numpy.matrix(result)
         else:
-            self.data = pd.DataFrame(np.multiply(self.data.values, other.data))
+            self.data = numpy.multiply(self.data, other.data)
 
     def _scalarMultiply_implementation(self, scalar):
         """
@@ -830,7 +905,6 @@ class DataFrame(Base):
         """
         self.data = self.data * scalar
 
-
     def _mul__implementation(self, other):
         if isinstance(other, UML.data.Base):
             return self._matrixMultiply_implementation(other)
@@ -840,196 +914,191 @@ class DataFrame(Base):
             return ret
 
     def _add__implementation(self, other):
-        """
-        """
-
-        leftData = np.matrix(self.data)
-        rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
-        ret = leftData + rightData
-
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        if isinstance(other, UML.data.Base):
+            ret = self.data + other.data
+        else:
+            ret = self.data + other
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _radd__implementation(self, other):
-        ret = other + self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        ret = other + self.data
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _iadd__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            ret = self.data + other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+            ret = self.data + other.data
         else:
-            ret = self.data + np.matrix(other)
+            ret = self.data + other
         self.data = ret
         return self
 
     def _sub__implementation(self, other):
-        leftData = np.matrix(self.data)
-        rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
-        ret = leftData - rightData
-
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        if isinstance(other, UML.data.Base):
+            ret = self.data - other.data
+        else:
+            ret = self.data - other
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _rsub__implementation(self, other):
-        ret = other - self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        ret = other - self.data
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            ret = self.data - other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+            ret = self.data - other.data
         else:
-            ret = self.data - np.matrix(other)
+            ret = self.data - other
         self.data = ret
         return self
 
     def _div__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
-                ret = self.data.values / other.data.todense()
+            if scipy and scipy.sparse.isspmatrix(other.data):
+                ret = self.data / other.data.todense()
             else:
-                ret = self.data.values / other.data
+                ret = self.data / other.data
         else:
-            ret = self.data.values / other
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+            ret = self.data / other
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rdiv__implementation(self, other):
-        ret = other / self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        ret = other / self.data
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data / other.data.todense()
             else:
-                ret = self.data / np.matrix(other.data)
+                ret = self.data / other.data
         else:
-            ret = self.data / np.matrix(other)
+            ret = self.data / other
         self.data = ret
         return self
 
     def _truediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
-                ret = self.data.values.__truediv__(other.data.todense())
+            if scipy and scipy.sparse.isspmatrix(other.data):
+                ret = self.data.__truediv__(other.data.todense())
             else:
-                ret = self.data.values.__truediv__(other.data)
+                ret = self.data.__truediv__(other.data)
         else:
-            ret = self.data.values.__itruediv__(other)
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+            ret = self.data.__itruediv__(other)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _rtruediv__implementation(self, other):
-        ret = self.data.values.__rtruediv__(other)
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        ret = self.data.__rtruediv__(other)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _itruediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.__itruediv__(other.data.todense())
             else:
-                ret = self.data.__itruediv__(np.matrix(other.data))
+                ret = self.data.__itruediv__(other.data)
         else:
-            ret = self.data.__itruediv__(np.matrix(other))
+            ret = self.data.__itruediv__(other)
         self.data = ret
         return self
 
     def _floordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
-                ret = self.data.values // other.data.todense()
+            if scipy and scipy.sparse.isspmatrix(other.data):
+                ret = self.data // other.data.todense()
             else:
-                ret = self.data.values // other.data
+                ret = self.data // other.data
         else:
-            ret = self.data.values // other
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+            ret = self.data // other
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rfloordiv__implementation(self, other):
-        ret = other // self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        ret = other // self.data
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _ifloordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data // other.data.todense()
             else:
-                ret = self.data // np.matrix(other.data)
+                ret = self.data // other.data
         else:
-            ret = self.data // np.matrix(other)
+            ret = self.data // other
         self.data = ret
         return self
 
     def _mod__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
-                ret = self.data.values % other.data.todense()
+            if scipy and scipy.sparse.isspmatrix(other.data):
+                ret = self.data % other.data.todense()
             else:
-                ret = self.data.values % other.data
+                ret = self.data % other.data
         else:
-            ret = self.data.values % other
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+            ret = self.data % other
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rmod__implementation(self, other):
-        ret = other % self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        ret = other % self.data
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _imod__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data % other.data.todense()
             else:
-                ret = self.data % np.matrix(other.data)
+                ret = self.data % other.data
         else:
-            ret = self.data % np.matrix(other)
+            ret = self.data % other
         self.data = ret
         return self
 
-    def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
-        super(DataFrame, self)._setName_implementation(oldIdentifier, newName, axis, allowDefaults)
-        #update the index or columns in self.data
-        self._updateName(axis)
 
-    def _setNamesFromList(self, assignments, count, axis):
-        super(DataFrame, self)._setNamesFromList(assignments, count, axis)
-        self._updateName(axis)
+def viewBasedApplyAlongAxis(function, axis, outerObject):
+    """ applies the given function to each view along the given axis, returning the results
+    of the function in numpy array """
+    if axis == "point":
+        maxVal = outerObject.data.shape[0]
+        viewMaker = outerObject.pointView
+    else:
+        if axis != "feature":
+            raise ArgumentException("axis must be 'point' or 'feature'")
+        maxVal = outerObject.data.shape[1]
+        viewMaker = outerObject.featureView
+    ret = numpy.zeros(maxVal, dtype=numpy.float)
+    for i in xrange(0, maxVal):
+        funcOut = function(viewMaker(i))
+        ret[i] = funcOut
 
-    def _setNamesFromDict(self, assignments, count, axis):
-        super(DataFrame, self)._setNamesFromDict(assignments, count, axis)
-        self._updateName(axis)
-
-    def _updateName(self, axis):
-        """
-        update self.data.index or self.data.columns
-        """
-        if axis == 'point':
-            self.data.index = self.getPointNames()
-        else:
-            self.data.columns = self.getFeatureNames()
-        #-----------------------------------------------------------------------
+    return ret
 
 
-    def extractPointsOrFeaturesVectorized(self, nameList, axis, inplace=True):
-        """
+def matrixBasedApplyAlongAxis(function, axis, outerObject):
+    """
+    applies the given function to the underlying numpy matrix along the given axis,
+    returning the results of the function in numpy array
+    """
+    #make sure the 3 attributes are in the function object
+    if not (hasattr(function, 'nameOfFeatureOrPoint') \
+                and hasattr(function, 'valueOfFeatureOrPoint') and hasattr(function, 'optr')):
+        msg = "some important attribute is missing in the input function"
+        raise ArgumentException(msg)
+    if axis == "point":
+        #convert name of feature to index of feature
+        indexOfFeature = outerObject.getFeatureIndex(function.nameOfFeatureOrPoint)
+        #extract the feature from the underlying matrix
+        queryData = outerObject.data[:, indexOfFeature]
+    else:
+        if axis != "feature":
+            raise ArgumentException("axis must be 'point' or 'feature'")
+        #convert name of point to index of point
+        indexOfPoint = outerObject.getPointIndex(function.nameOfFeatureOrPoint)
+        #extract the point from the underlying matrix
+        queryData = outerObject.data[indexOfPoint, :]
+    ret = function.optr(queryData, function.valueOfFeatureOrPoint)
+    #convert the result from matrix to numpy array
+    ret = ret.astype(numpy.float).A1
 
-        """
-        df = self.data
-        nameList = list(nameList)
-        if axis == 0 or axis == 'point':
-            ret = df.ix[nameList, :]
-            name = 'pointNames'
-            axis = 0
-            otherName = 'featureNames'
-            otherNameList = self.getFeatureNames()
-        elif axis == 1 or axis == 'feature':
-            ret = df.ix[:, nameList]
-            name = 'featureNames'
-            axis = 1
-            otherName = 'pointNames'
-            otherNameList = self.getPointNames()
-        else:
-            msg = 'axis can only be 0,1 or point, feature'
-            raise ArgumentException(msg)
-
-        df.drop(nameList, axis=axis, inplace=inplace)
-
-        return DataFrame(ret, **{name: nameList, otherName: otherNameList})
+    return ret

@@ -792,46 +792,50 @@ class Base(object):
             features = [features]
 
         if points is not None:
-            # points = copy.copy(points)
-            points = [self._getPointIndex(i) for i in points]
+            points = copy.copy(points)
+            for i in xrange(len(points)):
+                points[i] = self._getPointIndex(points[i])
 
         if features is not None:
-            # features = copy.copy(features)
-            features = [self._getFeatureIndex(i) for i in features]
+            features = copy.copy(features)
+            for i in xrange(len(features)):
+                features[i] = self._getFeatureIndex(features[i])
 
         self.validate()
 
-        points = points if points else range(self.points)
-        features = features if features else range(self.features)
-        valueArray = numpy.empty([len(points), len(features)])
-        p = 0
-        for i in points:
-            f = 0
-            for j in features:
-                value = self[i, j]
+        valueList = []
+        for currPointID, currPoint in enumerate(self.pointIterator()):
+            if points is not None and currPointID not in points:
+                continue
+            tempList = []
+            for j in xrange(len(currPoint)):
+                if features is not None and j not in features:
+                    continue
+                value = currPoint[j]
                 if preserveZeros and value == 0:
-                    valueArray[p, f] = 0
+                    tempList.append(0)
+                    continue
+                if oneArg:
+                    currRet = function(value)
                 else:
-                    currRet = function(value) if oneArg else function(value, i, j)
-                    if skipNoneReturnValues and currRet is None:
-                        valueArray[p, f] = value
-                    else:
-                        valueArray[p, f] = currRet
-                f += 1
-            p += 1
+                    currRet = function(value, currPointID, j)
+                if currRet is None and skipNoneReturnValues:
+                    tempList.append(value)
+                else:
+                    tempList.append(currRet)
+            valueList.append(tempList)
 
         if outputType is not None:
             optType = outputType
         else:
             optType = self.getTypeString()
 
-        ret = UML.createData(optType, valueArray)
+        ret = UML.createData(optType, valueList)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
         return ret
-
 
     def countElements(self, function):
         """
@@ -854,7 +858,7 @@ class Base(object):
         if self.points == 0 or self.features == 0:
             return 0
         valueObj = self.calculateForEachElement(lambda elementValue, pointNum, featureNum: ((math.sin(
-            pointNum) + math.cos(featureNum)) / 2.0) * elementValue, preserveZeros=True, outputType='Matrix')
+            pointNum) + math.cos(featureNum)) / 2.0) * elementValue, preserveZeros=True)
         valueList = valueObj.copyAs(format="python list")
         avg = sum(itertools.chain.from_iterable(valueList)) / float(self.points * self.features)
         bigNum = 1000000000
@@ -1418,6 +1422,7 @@ class Base(object):
         """
 
         """
+        cdef int length
         length = self._featureCount
         if y.__class__ is int or y.__class__ is numpy.integer:
             if y < -length or y >= length:
