@@ -1361,7 +1361,10 @@ class HighLevelModifying(DataTestObject):
             func = caller.normalizePoints
         else:
             func = caller.normalizeFeatures
-        a, va, vk, d = inspect.getargspec(func)
+        if hasattr(func, 'im_func'):#if it is a cython function
+            d = func.im_func.func_defaults
+        else:#if it is a normal python function
+            a, va, vk, d = inspect.getargspec(func)
         assert d == (None, None, None)
 
         if axis == 'point':
