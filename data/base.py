@@ -1893,7 +1893,7 @@ class Base(object):
                 plt.savefig(outPath, format=outFormat)
 
         toPlot = self.copyAs('numpyarray')
-        p = Process(target=plotter, kwargs={'d': self.data})
+        p = Process(target=plotter, args=[self.data])
         p.start()
         return p
 
