@@ -66,7 +66,7 @@ class LowLevelBackend(object):
     def test__addPName_exceptionPointNameWrongType(self):
         """ Test _addPointName() for ArgumentException when given a non string  pointName """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._addPointName(pointName=34)
+        toTest._addPointName(34)
 
     @raises(ArgumentException)
     def test__addPointName_exceptionNonUnique(self):
@@ -109,7 +109,7 @@ class LowLevelBackend(object):
     def test_addFeatureName_exceptionFeatureNameWrongType(self):
         """ Test _addFeatureName() for ArgumentException when given a non string featureName """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._addFeatureName(featureName=34)
+        toTest._addFeatureName(34)
 
     @raises(ArgumentException)
     def test_addFeatureName_exceptionNonUnique(self):

@@ -1361,11 +1361,12 @@ class HighLevelModifying(DataTestObject):
             func = caller.normalizePoints
         else:
             func = caller.normalizeFeatures
-        if hasattr(func, 'im_func'):#if it is a cython function
+        if 'cython' in str(func.im_func.__class__):#if it is a cython function
             d = func.im_func.func_defaults
+            assert (d is None) or (d == (None, None, None))
         else:#if it is a normal python function
             a, va, vk, d = inspect.getargspec(func)
-        assert d == (None, None, None)
+            assert d == (None, None, None)
 
         if axis == 'point':
             return caller.normalizePoints(subtract=subtract, divide=divide, applyResultTo=also)

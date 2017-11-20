@@ -5,7 +5,7 @@ import cProfile
 
 gFileName = None
 
-def report(fileName=None, sort=None, n=25, stripDirs=True):
+def report(fileName=None, sort=None, n=25, stripDirs=False):
     """
 
     """

@@ -1317,7 +1317,7 @@ class Sparse(Base):
         if markMissing:
             toAppend = UML.createData('Sparse', extraDummy, featureNames=extraFeatureNames, pointNames=self.getPointNames())
             self._sorted = None#need to reset this, o.w. may fail in validate
-            self.appendFeatures(toAppend=toAppend)
+            self.appendFeatures(toAppend)
 
     def _binarySearch(self, x, y):
             if self._sorted == 'point':
