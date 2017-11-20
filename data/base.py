@@ -23,6 +23,9 @@ import os.path
 import inspect
 import operator
 from multiprocessing import Process
+import cython
+if not cython.compiled:
+    from math import sin, cos
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -42,6 +45,18 @@ from dataHelpers import formatIfNeeded
 
 from dataHelpers import makeConsistentFNamesAndData
 
+def to2args(f):
+    """
+    this function is for __pow__. In cython, __pow__ must have 3 arguments and default can't be used there.
+    so this function is used to convert a function with 3 arguments to a function with 2 arguments when it is used
+    in python environment.
+    """
+    def tmpF(x, y):
+        return f(x, y, None)
+    return tmpF
+
+def hashCodeFunc(elementValue, pointNum, featureNum):
+    return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
 
 class Base(object):
     """
@@ -805,14 +820,14 @@ class Base(object):
         features = features if features else range(self.features)
         valueArray = numpy.empty([len(points), len(features)])
         p = 0
-        for i in points:
+        for pi in points:
             f = 0
-            for j in features:
-                value = self[i, j]
+            for fj in features:
+                value = self[pi, fj]
                 if preserveZeros and value == 0:
                     valueArray[p, f] = 0
                 else:
-                    currRet = function(value) if oneArg else function(value, i, j)
+                    currRet = function(value) if oneArg else function(value, pi, fj)
                     if skipNoneReturnValues and currRet is None:
                         valueArray[p, f] = value
                     else:
@@ -853,8 +868,7 @@ class Base(object):
 		that should almost always change when the values of the matrix are changed by a substantive amount"""
         if self.points == 0 or self.features == 0:
             return 0
-        valueObj = self.calculateForEachElement(lambda elementValue, pointNum, featureNum: ((math.sin(
-            pointNum) + math.cos(featureNum)) / 2.0) * elementValue, preserveZeros=True, outputType='Matrix')
+        valueObj = self.calculateForEachElement(hashCodeFunc, preserveZeros=True, outputType='Matrix')
         valueList = valueObj.copyAs(format="python list")
         avg = sum(itertools.chain.from_iterable(valueList)) / float(self.points * self.features)
         bigNum = 1000000000
@@ -3496,7 +3510,8 @@ class Base(object):
 		"""
         return self._genericNumericBinary('__imod__', other)
 
-    def __pow__(self, other):
+    @to2args
+    def __pow__(self, other, z):
         """
 		Perform exponentiation (iterated __mul__) using the elements of this object
 		as the bases, element wise if 'other' is a UML data object, or element wise
