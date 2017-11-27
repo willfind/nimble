@@ -1321,18 +1321,23 @@ class Sparse(Base):
 
     def _binarySearch(self, x, y):
             if self._sorted == 'point':
-                dataSortedAlong, dataOther = self.data.row, self.data.col
-                i, j = x, y
+                start, end = numpy.searchsorted(self.data.row, [x, x+1])#binary search
+                if start == end:#x is not in self.data.row
+                    return 0
+                k = numpy.searchsorted(self.data.col[start:end], y) + start
+                if k < end and self.data.col[k] == y:
+                    return self.data.data[k]
+                return 0
             elif self._sorted == 'feature':
-                dataSortedAlong, dataOther = self.data.col, self.data.row
-                i, j = y, x
+                start, end = numpy.searchsorted(self.data.col, [y, y+1])#binary search
+                if start == end:#x is not in self.data.col
+                    return 0
+                k = numpy.searchsorted(self.data.row[start:end], x) + start
+                if k < end and self.data.row[k] == x:
+                    return self.data.data[k]
+                return 0
             else:
                 raise ImproperActionException('self._sorted is not either point nor feature.')
-            start, end = numpy.searchsorted(dataSortedAlong, [i, i+1])#binary search
-            for k in xrange(start, end):
-                if dataOther[k] == j:
-                    return self.data.data[k]
-            return 0
 
     def _getitem_implementation(self, x, y):
         """
