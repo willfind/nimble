@@ -37,7 +37,7 @@ from UML.randomness import pythonRandom
 import dataHelpers
 
 # the prefix for default point and feature names
-from dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
+from dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 
 from dataHelpers import DEFAULT_NAME_PREFIX
 
@@ -1354,7 +1354,7 @@ class Base(object):
         if includePointNames:
             seen = False
             for name in self.getPointNames():
-                if not name.startswith(DEFAULT_PREFIX):
+                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
                     seen = True
             if not seen:
                 includePointNames = False
@@ -1363,7 +1363,7 @@ class Base(object):
         if includeFeatureNames:
             seen = False
             for name in self.getFeatureNames():
-                if not name.startswith(DEFAULT_PREFIX):
+                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
                     seen = True
             if not seen:
                 includeFeatureNames = False
@@ -1988,7 +1988,7 @@ class Base(object):
 
             plt.hist(d, binCount)
 
-            if name.startswith(DEFAULT_PREFIX):
+            if name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 titlemsg = '#' + str(index)
             else:
                 titlemsg = "named: " + name
@@ -2118,8 +2118,8 @@ class Base(object):
             #plt.scatter(inX, inY)
             plt.scatter(inX, inY, marker='.')
 
-            xlabel = xAxis + ' #' + str(xIndex) if xName.startswith(DEFAULT_PREFIX) else xName
-            ylabel = yAxis + ' #' + str(yIndex) if yName.startswith(DEFAULT_PREFIX) else yName
+            xlabel = xAxis + ' #' + str(xIndex) if xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX else xName
+            ylabel = yAxis + ' #' + str(yIndex) if yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX else yName
 
             xName2 = xName
             yName2 = yName
@@ -2261,7 +2261,7 @@ class Base(object):
 
             for i in xrange(origPointCountTA):
                 currName = toAppend.getPointName(i)
-                if currName.startswith(DEFAULT_PREFIX):
+                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName('point')
                 self.setPointName(origPointCountS + i, currName)
 
@@ -2271,7 +2271,7 @@ class Base(object):
 
             for i in xrange(origPointCountTA):
                 currName = toAppend.getPointName(i)
-                if currName.startswith(DEFAULT_PREFIX):
+                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName('point')
                 self._addPointName(currName)
 
@@ -2309,7 +2309,7 @@ class Base(object):
             self._appendReorder_implementation('feature', toAppend)
             for i in xrange(origFeatureCountTA):
                 currName = toAppend.getFeatureName(i)
-                if currName.startswith(DEFAULT_PREFIX):
+                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName('feature')
                 self.setFeatureName(origFeatureCountS + i, currName)
         else:
@@ -2318,7 +2318,7 @@ class Base(object):
 
             for i in xrange(origFeatureCountTA):
                 currName = toAppend.getFeatureName(i)
-                if currName.startswith(DEFAULT_PREFIX):
+                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName('feature')
                 self._addFeatureName(currName)
 
@@ -3064,8 +3064,8 @@ class Base(object):
         def checkIsDefault(axisName):
             ret = False
             try:
-                if axisName.startswith(DEFAULT_PREFIX):
-                    int(axisName[len(DEFAULT_PREFIX):])
+                if axisName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                    int(axisName[DEFAULT_PREFIX_LENGTH:])
                     ret = True
             except ValueError:
                 ret = False
@@ -4050,7 +4050,7 @@ class Base(object):
 
             currName = self.getFeatureName(nameIndex)
 
-            if currName.startswith(DEFAULT_PREFIX):
+            if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 currName = ""
             if len(currName) > nameLength:
                 currName = currName[:nameCutIndex] + nameHold
@@ -4109,7 +4109,7 @@ class Base(object):
             for i in source:
                 pname = self.getPointName(i)
                 # omit default valued names
-                if pname.startswith(DEFAULT_PREFIX):
+                if pname[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     pname = ""
 
                 # truncate names which extend past the given length
@@ -4410,8 +4410,8 @@ class Base(object):
             for index in xrange(len(leftNames)):
                 lname = leftNames[index]
                 rname = rightNames[index]
-                if not lname.startswith(DEFAULT_PREFIX):
-                    if not rname.startswith(DEFAULT_PREFIX):
+                if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                    if rname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
                         if lname != rname:
                             ret[index] = (lname, rname)
                     else:
@@ -4448,8 +4448,8 @@ class Base(object):
             for index in xrange(len(leftNames)):
                 lname = leftNames[index]
                 rname = rightNames[index]
-                if not lname.startswith(DEFAULT_PREFIX):
-                    if not rname.startswith(DEFAULT_PREFIX):
+                if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                    if rname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
                         if lname != rname:
                             ret[index] = (lname, rname)
                     else:
@@ -4493,9 +4493,9 @@ class Base(object):
             msg += "to occur: either all names must be specified, or the order must be "
             msg += "the same."
 
-            if True in map(lambda x: x.startswith(DEFAULT_PREFIX), lnames):
+            if True in map(lambda x: x[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX, lnames):
                 raise ArgumentException(msg)
-            if True in map(lambda x: x.startswith(DEFAULT_PREFIX), rnames):
+            if True in map(lambda x: x[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX, rnames):
                 raise ArgumentException(msg)
 
             ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
@@ -4758,7 +4758,7 @@ class Base(object):
         for name in assignments:
             if name is not None and name.startswith(DEFAULT_PREFIX):
                 try:
-                    num = int(name[len(DEFAULT_PREFIX):])
+                    num = int(name[DEFAULT_PREFIX_LENGTH:])
                 # Case: default prefix with non-integer suffix. This cannot
                 # cause a future integer suffix naming collision, so we
                 # can ignore it.
@@ -4831,8 +4831,8 @@ class Base(object):
 
     def _incrementDefaultIfNeeded(self, name, axis):
         self._validateAxis(axis)
-        if name.startswith(DEFAULT_PREFIX):
-            intString = name[len(DEFAULT_PREFIX):]
+        if name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            intString = name[DEFAULT_PREFIX_LENGTH:]
             try:
                 nameNum = int(intString)
             # Case: default prefix with non-integer suffix. This cannot
@@ -4920,7 +4920,7 @@ class Base(object):
         shared = []
         if intersection:
             for name in intersection:
-                if not name.startswith(DEFAULT_PREFIX):
+                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
                     shared.append(name)
 
         if shared != []:
