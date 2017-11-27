@@ -16,7 +16,9 @@ cdef class Base:
     cpdef _getfeatureCount(self)
     cpdef _calculateForEach_implementation(self, function, included, axis)
     cpdef _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits=*, maxStrLength=*, colSep=*, colHold=*, rowHold=*, strHold=*)
+    cpdef _nextDefaultName(self, axis)
     cpdef _setAllDefault(self, axis)
+    cpdef _validateAxis(self, axis)
 
     @cython.locals(avg=cython.double, bigNum=cython.long)
     cpdef hashCode(self)

@@ -37,7 +37,7 @@ from UML.randomness import pythonRandom
 import dataHelpers
 
 # the prefix for default point and feature names
-from dataHelpers import DEFAULT_PREFIX
+from dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
 
 from dataHelpers import DEFAULT_NAME_PREFIX
 
@@ -4565,10 +4565,10 @@ class Base(object):
     def _nextDefaultName(self, axis):
         self._validateAxis(axis)
         if axis == 'point':
-            ret = DEFAULT_PREFIX + str(self._nextDefaultValuePoint)
+            ret = DEFAULT_PREFIX2%self._nextDefaultValuePoint
             self._nextDefaultValuePoint += 1
         else:
-            ret = DEFAULT_PREFIX + str(self._nextDefaultValueFeature)
+            ret = DEFAULT_PREFIX2%self._nextDefaultValueFeature
             self._nextDefaultValueFeature += 1
         return ret
 

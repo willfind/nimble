@@ -13,6 +13,7 @@ from abc import abstractmethod
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
+DEFAULT_PREFIX2 = DEFAULT_PREFIX+'%s'
 
 DEFAULT_NAME_PREFIX = "OBJECT_#"
 
