@@ -25,8 +25,8 @@ if __name__ == "__main__":
     testObj = createData('Matrix', data=data2, featureNames=variables2)
 
     # baseline check
-    assert trainObj.featureCount == 3
-    assert testObj.featureCount == 3
+    assert trainObj.features == 3
+    assert testObj.features == 3
 
     # reserve the original data for comparison
     trainObjOrig = trainObj.copy()
@@ -37,8 +37,8 @@ if __name__ == "__main__":
     normalizeData('mlpy.PCA', trainObj, testX=testObj, arguments={'k': 1})
 
     # assert that we actually do have fewer dimensions
-    assert trainObj.featureCount == 1
-    assert testObj.featureCount == 1
+    assert trainObj.features == 1
+    assert testObj.features == 1
 
     # assert we can predict the correct classes
     ret = trainAndApply('mlpy.KNN', trainObj, trainObjY, testObj, arguments={'k': 1})

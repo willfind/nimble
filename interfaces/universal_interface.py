@@ -138,7 +138,7 @@ class UniversalInterface(object):
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
         if isinstance(outputData, UML.data.Base):
-            has2dOutput = outputData.featureCount > 1
+            has2dOutput = outputData.features > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 
@@ -559,7 +559,7 @@ class UniversalInterface(object):
         """
         order = self._getScoresOrder(learner)
         numLabels = len(order)
-        if numLabels == 2 and rawScores.featureCount == 1:
+        if numLabels == 2 and rawScores.features == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
             return UML.createData("Matrix", ret)
 
@@ -567,7 +567,7 @@ class UniversalInterface(object):
             applyResults = self._applier(learner, testX, arguments, customDict)
             applyResults = self._outputTransformation(learnerName, applyResults, arguments, "match", "label",
                                                       customDict)
-        if rawScores.featureCount != 3:
+        if rawScores.features != 3:
             strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
         else:
             strategy = checkClassificationStrategy(self, learnerName, arguments)
@@ -575,7 +575,7 @@ class UniversalInterface(object):
         # check the strategy, and modify it if necessary
         if not strategy:
             scores = []
-            for i in xrange(rawScores.pointCount):
+            for i in xrange(rawScores.points):
                 combinedScores = calculateSingleLabelScoresFromOneVsOneScores(rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
@@ -758,7 +758,7 @@ class UniversalInterface(object):
             has2dOutput = False
             outputData = trainX if trainY is None else trainY
             if isinstance(outputData, UML.data.Base):
-                has2dOutput = outputData.featureCount > 1
+                has2dOutput = outputData.features > 1
             elif isinstance(outputData, (list, tuple)):
                 has2dOutput = len(outputData) > 1
 

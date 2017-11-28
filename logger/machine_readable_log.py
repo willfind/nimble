@@ -78,8 +78,8 @@ class MachineReadableLogger(UmlLogger):
             logLine += "type:" + str(baseDataObject.getTypeString())
 
         if firstInfoAppended:
-            logLine += "," + "dimensions:(" + str(baseDataObject.pointCount) + ", " + str(
-                baseDataObject.featureCount) + ")"
+            logLine += "," + "dimensions:(" + str(baseDataObject.points) + ", " + str(
+                baseDataObject.features) + ")"
 
         self.logMessage(logLine)
 
@@ -113,8 +113,8 @@ class MachineReadableLogger(UmlLogger):
                 logLine += createMRLineElement("trainDataName", trainData.name)
             if trainData.path is not None:
                 logLine += createMRLineElement("trainDataPath", trainData.path)
-            logLine += createMRLineElement("numTrainDataPoints", trainData.pointCount)
-            logLine += createMRLineElement("numTrainDataFeatures", trainData.featureCount)
+            logLine += createMRLineElement("numTrainDataPoints", trainData.points)
+            logLine += createMRLineElement("numTrainDataFeatures", trainData.features)
 
         #log info about testing data, if present
         if testData is not None:
@@ -122,8 +122,8 @@ class MachineReadableLogger(UmlLogger):
                 logLine += createMRLineElement("testDataName", testData.name)
             if testData.path is not None:
                 logLine += createMRLineElement("testDataPath", testData.path)
-            logLine += createMRLineElement("numTestDataPoints", testData.pointCount)
-            logLine += createMRLineElement("numTestDataFeatures", testData.featureCount)
+            logLine += createMRLineElement("numTestDataPoints", testData.points)
+            logLine += createMRLineElement("numTestDataFeatures", testData.features)
 
         #add numFolds if it is present - generally when testData is not present, as numFolds
         #implies k-fold cross validation, in which case there is no test set
@@ -157,7 +157,7 @@ class MachineReadableLogger(UmlLogger):
                 elif isinstance(value, types.FunctionType):
                     logLine += createMRLineElement(key, value.__name__)
                 elif isinstance(value, UML.data.Base):
-                    logLine += createMRLineElement(key, str(value.pointCount) + ", " + str(value.featureCount) + ")")
+                    logLine += createMRLineElement(key, str(value.points) + ", " + str(value.features) + ")")
                 else:
                     logLine += createMRLineElement(key, value)
 

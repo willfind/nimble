@@ -17,7 +17,7 @@ class LogisticRegressionNoTraining(CustomLearner):
     learnerType = "classification"
 
     def train(self, trainX, trainY, coefs, intercept):
-        if coefs.featureCount != 1:
+        if coefs.features != 1:
             coefs.transpose()
         self.coefs = coefs
         self.intercept = float(intercept)
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     questionMetadata = UML.createData("List", path_question_metatdata)
 
 
-    catTestFraction = float(responses.pointCount - CAT_TRAIN_NUMBER) / responses.pointCount
+    catTestFraction = float(responses.points - CAT_TRAIN_NUMBER) / responses.points
 #   predict_gender_sanityCheck(responses, catTestFraction, SPLITSEED)   
     coefs, intercept = predict_gender_fullTrain(responses, catTestFraction, SPLITSEED)
 

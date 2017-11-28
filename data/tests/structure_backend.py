@@ -1887,8 +1887,8 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data, featureNames=featureNames)
         ret = toTest.extractPoints(start=0, end=2, number=2, randomize=True)
 
-        assert ret.pointCount == 2
-        assert toTest.pointCount == 1
+        assert ret.points == 2
+        assert toTest.points == 1
 
     def test_extractPoints_handmadeRangeDefaults(self):
         """ Test extractPoints uses the correct defaults in the case of range based extraction """
@@ -2635,8 +2635,8 @@ class StructureModifying(DataTestObject):
 
         orig.referenceDataFrom(other)
 
-        assert orig._pointCount == other.pointCount
-        assert orig._featureCount == other.featureCount
+        assert orig._pointCount == other.points
+        assert orig._featureCount == other.features
 
         assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
         assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
@@ -3065,7 +3065,7 @@ class StructureModifying(DataTestObject):
         arg = self.constructor(arg)
         exp = arg.copy()
 
-        ret = toTest.fillWith(arg, 0, 0, toTest.pointCount - 1, toTest.featureCount - 1)
+        ret = toTest.fillWith(arg, 0, 0, toTest.points - 1, toTest.features - 1)
         assert ret is None
 
         arg *= 10

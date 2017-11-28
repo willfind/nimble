@@ -920,7 +920,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
             timer = None
 
         #modify numFolds if needed
-        numFolds = trainX.pointCount if trainX.pointCount < 10 else 10
+        numFolds = trainX.points if trainX.points < 10 else 10
         #sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
         bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged,
                                                               numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
@@ -1038,7 +1038,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
             timer = None
 
         #modify numFolds if needed
-        numFolds = trainX.pointCount if trainX.pointCount < 10 else 10
+        numFolds = trainX.points if trainX.points < 10 else 10
         #sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
         bestArgument, bestScore = UML.crossValidateReturnBest(fullName, trainX, trainY, performanceFunction, merged,
                                                               numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
@@ -1160,7 +1160,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     argCheck = ArgumentIterator(merged)
     if argCheck.numPermutations != 1:
         #modify numFolds if needed
-        numFolds = trainX.pointCount if trainX.pointCount < 10 else 10
+        numFolds = trainX.points if trainX.points < 10 else 10
         #sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
         bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX,
                                                               trainY, performanceFunction, merged, numFolds=numFolds,

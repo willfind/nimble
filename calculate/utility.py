@@ -177,7 +177,7 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
     scoreList = [allCorrectScore]
     # range over the indices of predicted values, making them incorrect one
     # by one
-    for index in xrange(predicted.pointCount):
+    for index in xrange(predicted.points):
         _makeIncorrect(predicted, predictionType, index)
         scoreList.append(toCheck(knowns.copy(), predicted))
 
@@ -247,14 +247,14 @@ def _generatePredicted(knowns, predictionType):
         return workingCopy
     # Labels and the score for that label (aka 'bestScores')
     elif predictionType == 1:
-        scores = numpyRandom.randint(2, size=[workingCopy.pointCount, 1])
+        scores = numpyRandom.randint(2, size=[workingCopy.points, 1])
         scores = UML.createData(returnType="List", data=scores, featureNames=['LabelScore'])
         workingCopy.appendFeatures(scores)
         return workingCopy
     # Labels, and scores for all possible labels (aka 'allScores')
     else:
         dataToFill = []
-        for i in xrange(workingCopy.pointCount):
+        for i in xrange(workingCopy.points):
             currConfidences = [None, None]
             winner = numpyRandom.randint(10) + 10 + 2
             loser = numpyRandom.randint(winner - 2) + 2

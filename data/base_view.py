@@ -130,25 +130,25 @@ class BaseView(Base):
         # -1 because _pEnd and _fEnd are exclusive indices, but view takes inclusive
 
         if pointStart is None:
-            psAdj = None if self._source.pointCount == 0 else self._pStart
+            psAdj = None if self._source.points == 0 else self._pStart
         else:
             psIndex = self._source._getIndex(pointStart, 'point')
             psAdj = psIndex + self._pStart
 
         if pointEnd is None:
-            peAdj = None if self._source.pointCount == 0 else self._pEnd - 1
+            peAdj = None if self._source.points == 0 else self._pEnd - 1
         else:
             peIndex = self._source._getIndex(pointEnd, 'point')
             peAdj = peIndex + self._pStart
 
         if featureStart is None:
-            fsAdj = None if self._source.featureCount == 0 else self._fStart
+            fsAdj = None if self._source.features == 0 else self._fStart
         else:
             fsIndex = self._source._getIndex(featureStart, 'feature')
             fsAdj = fsIndex + self._fStart
 
         if featureEnd is None:
-            feAdj = None if self._source.featureCount == 0 else self._fEnd - 1
+            feAdj = None if self._source.features == 0 else self._fEnd - 1
         else:
             feIndex = self._source._getIndex(featureEnd, 'feature')
             feAdj = feIndex + self._fStart
@@ -354,7 +354,7 @@ class BaseView(Base):
         we are to be extracted, the default None means unlimited extraction. start and end are
         parameters indicating range based extraction: if range based extraction is employed,
         toExtract must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.pointCount respectably. randomize indicates whether random
+        other defaults to 0 and self.points respectably. randomize indicates whether random
         sampling is to be used in conjunction with the number parameter, if randomize is False,
         the chosen points are determined by point order, otherwise it is uniform random across the
         space of possible removals.
@@ -374,7 +374,7 @@ class BaseView(Base):
         are to be extracted, the default None means unlimited extraction. start and end are
         parameters indicating range based extraction: if range based extraction is employed,
         toExtract must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.featureCount respectably. randomize indicates whether random
+        other defaults to 0 and self.features respectably. randomize indicates whether random
         sampling is to be used in conjunction with the number parameter, if randomize is False,
         the chosen features are determined by feature order, otherwise it is uniform random across the
         space of possible removals.

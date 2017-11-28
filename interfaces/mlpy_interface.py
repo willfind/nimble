@@ -279,7 +279,7 @@ class Mlpy(UniversalInterface):
             transTestX = None
 
         if 'kernel' in arguments:
-            if arguments['kernel'] is None and trainX is not None and trainX.pointCount != trainX.featureCount:
+            if arguments['kernel'] is None and trainX is not None and trainX.points != trainX.features:
                 raise ArgumentException(
                     "For this learner, in the absence of specifying a kernel, the trainX parameter must be square (representing the inner product space of the features)")
 

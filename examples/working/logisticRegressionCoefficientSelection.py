@@ -25,8 +25,8 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
     def train(
             self, trainX, trainY, desiredNonZero, verboseStandardOut=False,
             allowSubLogging=False):
-        if desiredNonZero > trainX.featureCount:
-            desiredNonZero = trainX.featureCount
+        if desiredNonZero > trainX.features:
+            desiredNonZero = trainX.features
 
         def countNonZero(tl):
             coefs = tl.getAttributes()['coef_']
@@ -84,8 +84,8 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
     def train(
             self, trainX, trainY, desiredNonZero, verboseStandardOut=False,
             allowSubLogging=False):
-        if desiredNonZero > trainX.featureCount:
-            desiredNonZero = trainX.featureCount
+        if desiredNonZero > trainX.features:
+            desiredNonZero = trainX.features
 
         def countNonZero(tl):
             coefs = tl.getAttributes()['coef_']
@@ -169,7 +169,7 @@ class LogisticRegressionSelectByOmission(CustomLearner):
 
         # retrain without those features????
         removalIndices = [withIndices[n][1] for n in range(numberToOmit)]
-        self.wantedIndices = list(set(xrange(trainX.featureCount)) - set(removalIndices))
+        self.wantedIndices = list(set(xrange(trainX.features)) - set(removalIndices))
 
         inTrainX = trainX.copyFeatures(self.wantedIndices)
         self._trained = UML.train(sklLogReg, inTrainX, trainY, **kwargs)
@@ -210,7 +210,7 @@ class ReducedLogisticRegression(CustomLearner):
 
 
 def sanityCheck(trainX, totalScores):
-    assert trainX.featureCount == 84
+    assert trainX.features == 84
 
     for name in trainX.getFeatureNames():
         assert name[-3:] == "(M)" or name[-3:] == "(F)"
@@ -317,8 +317,8 @@ def standardizeScoreScale(obj):
             negScored.append(i)
 
     # confirm scoring range assumptions
-    for f in xrange(obj.featureCount):
-        for p in xrange(obj.pointCount):
+    for f in xrange(obj.features):
+        for p in xrange(obj.points):
             fname = obj.getFeatureName(f)
             if fname[-2] == 'M':
                 assert obj[p,f] >= 0 and obj[p, f] <= 4
@@ -566,8 +566,8 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
         currCoefsObj = UML.createData("Matrix", currCoefs)
         coefsObj.appendPoints(currCoefsObj)
 
-#   print coefsObj.pointCount
-#   print coefsObj.featureCount
+#   print coefsObj.points
+#   print coefsObj.features
 
     coefCorr = coefsObj.featureSimilarities("correlation")
     # BUT THIS IS WIERD since the questions are 'scored' on different
@@ -623,8 +623,8 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
     malePoints = trainX.extractPoints(list(nzIDs))
     femalePoints = trainX
 
-    print malePoints.pointCount
-    print femalePoints.pointCount
+    print malePoints.points
+    print femalePoints.points
 
     mMeans = malePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
     fMeans = femalePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
@@ -737,7 +737,7 @@ def featSelect_LogRegRegularization(trainX, trainY, testX, numWanted):
 
 def featSelect_LogRegOmit_LeastValue(trainX, trainY, testX, numWanted):
     name = "Custom.LogisticRegressionSelectByOmission"
-    nto = trainX.featureCount - numWanted
+    nto = trainX.features - numWanted
     cVals = tuple([100. / (10**n) for n in range(7)])
     tl = UML.train(
         name, trainX, trainY, method="least value", numberToOmit=nto,
@@ -753,7 +753,7 @@ def featSelect_LogRegOmit_LeastValue(trainX, trainY, testX, numWanted):
 
 def featSelect_LogRegOmit_LeastMagnitude(trainX, trainY, testX, numWanted):
     name = "Custom.LogisticRegressionSelectByOmission"
-    nto = trainX.featureCount - numWanted
+    nto = trainX.features - numWanted
     cVals = tuple([100. / (10**n) for n in range(7)])
     tl = UML.train(
         name, trainX, trainY, method="least magnitude", numberToOmit=nto,
@@ -1026,9 +1026,9 @@ if __name__ == "__main__":
         sanityCheck(trainX, totalScores)  # defined above __main__
 
     print ""
-    print "Train points: " + str(trainX.pointCount) 
-    print "Test points: " + str(testX.pointCount) 
-    print "Starting number of features: " + str(trainX.featureCount)
+    print "Train points: " + str(trainX.points)
+    print "Test points: " + str(testX.points)
+    print "Starting number of features: " + str(trainX.features)
     print ""
 
 

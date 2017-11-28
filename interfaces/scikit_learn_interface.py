@@ -316,7 +316,7 @@ class SciKitLearn(UniversalInterface):
                 trainX = trainX.copyAs('numpy matrix')
 
         if trainY is not None:
-            if trainY.featureCount > 1:
+            if trainY.features > 1:
                 trainY = (trainY.copyAs('numpy array'))
             else:
                 trainY = trainY.copyAs('numpy array', outputAs1D=True)

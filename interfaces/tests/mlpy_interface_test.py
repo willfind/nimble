@@ -144,18 +144,18 @@ def testMlpyScoreMode():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.pointCount == 2
-    assert ret.featureCount == 1
+    assert ret.points == 2
+    assert ret.features == 1
 
     bestScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
-    assert bestScores.pointCount == 2
-    assert bestScores.featureCount == 2
+    assert bestScores.points == 2
+    assert bestScores.features == 2
 
     allScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                   scoreMode='allScores')
-    assert allScores.pointCount == 2
-    assert allScores.featureCount == 3
+    assert allScores.points == 2
+    assert allScores.features == 3
 
     checkLabelOrderingAndScoreAssociations([0, 1, 2], bestScores, allScores)
 
@@ -171,18 +171,18 @@ def testMlpyScoreModeBinary():
 
     # default scoreMode is 'label'
     ret = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
-    assert ret.pointCount == 2
-    assert ret.featureCount == 1
+    assert ret.points == 2
+    assert ret.features == 1
 
     bestScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                    scoreMode='bestScore')
-    assert bestScores.pointCount == 2
-    assert bestScores.featureCount == 2
+    assert bestScores.points == 2
+    assert bestScores.features == 2
 
     allScores = UML.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={},
                                   scoreMode='allScores')
-    assert allScores.pointCount == 2
-    assert allScores.featureCount == 2
+    assert allScores.points == 2
+    assert allScores.features == 2
 
     checkLabelOrderingAndScoreAssociations([1, -1], bestScores, allScores)
 

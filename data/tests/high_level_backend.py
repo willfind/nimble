@@ -486,7 +486,7 @@ class HighLevelDataSafe(DataTestObject):
         for v in viewIter:
             toCheck.append(v)
 
-        assert len(toCheck) == toTest.pointCount
+        assert len(toCheck) == toTest.points
 
         assert toCheck[0][0] == 0
         assert toCheck[0][1] == 0
@@ -580,7 +580,7 @@ class HighLevelDataSafe(DataTestObject):
         for v in viewIter:
             toCheck.append(v)
 
-        assert len(toCheck) == toTest.featureCount
+        assert len(toCheck) == toTest.features
         assert toCheck[0][0] == 0
         assert toCheck[0][1] == 0
         assert toCheck[0][2] == 0
@@ -677,6 +677,45 @@ class HighLevelDataSafe(DataTestObject):
 
         assert [5, 7] in retRaw
 
+    #############################
+    # countElements() #
+    #############################
+
+    def test_countElements(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret = toTest.countElements('>=5')
+        assert ret == 5
+
+        ret = toTest.countElements(lambda x: x % 2 == 1)
+        assert ret == 5
+
+    #############################
+    # countPoints() #
+    #############################
+
+    def test_countPoints(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
+        ret = toTest.countPoints('b>=5')
+        assert ret == 2
+
+        ret = toTest.countPoints(lambda x: x['b'] >= 5)
+        assert ret == 2
+
+
+    #############################
+    # countFeatures() #
+    #############################
+
+    def test_countFeatures(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
+        ret = toTest.countFeatures('two>=5')
+        assert ret == 2
+
+        ret = toTest.countFeatures(lambda x: x['two'] >= 5)
+        assert ret == 2
 
     ########################
     # isApproximatelyEqual() #
@@ -715,10 +754,10 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, teX = toTest.trainAndTestSets(.5)
 
-        assert trX.pointCount == 2
-        assert trX.featureCount == 5
-        assert teX.pointCount == 2
-        assert teX.featureCount == 5
+        assert trX.points == 2
+        assert trX.features == 5
+        assert teX.points == 2
+        assert teX.features == 5
 
     # simple sucess - single label
     def test_trainAndTestSets_simple_singlelabel(self):
@@ -728,14 +767,14 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0)
 
-        assert trX.pointCount == 2
-        assert trX.featureCount == 4
-        assert trY.pointCount == 2
-        assert trY.featureCount == 1
-        assert teX.pointCount == 2
-        assert teX.featureCount == 4
-        assert teY.pointCount == 2
-        assert teY.featureCount == 1
+        assert trX.points == 2
+        assert trX.features == 4
+        assert trY.points == 2
+        assert trY.features == 1
+        assert teX.points == 2
+        assert teX.features == 4
+        assert teY.points == 2
+        assert teY.features == 1
 
     # simple sucess - multi label
     def test_trainAndTestSets_simple_multilabel(self):
@@ -745,14 +784,14 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=[0, 'labs2'])
 
-        assert trX.pointCount == 2
-        assert trX.featureCount == 3
-        assert trY.pointCount == 2
-        assert trY.featureCount == 2
-        assert teX.pointCount == 2
-        assert teX.featureCount == 3
-        assert teY.pointCount == 2
-        assert teY.featureCount == 2
+        assert trX.points == 2
+        assert trX.features == 3
+        assert trY.points == 2
+        assert trY.features == 2
+        assert teX.points == 2
+        assert teX.features == 3
+        assert teY.points == 2
+        assert teY.features == 2
 
     # edge cases 0/1 test portions
     def test_trainAndTestSets_0or1_testFraction(self):
@@ -761,17 +800,17 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(0, 0)
 
-        assert trX.pointCount == 4
-        assert trY.pointCount == 4
-        assert teX.pointCount == 0
-        assert teY.pointCount == 0
+        assert trX.points == 4
+        assert trY.points == 4
+        assert teX.points == 0
+        assert teY.points == 0
 
         trX, trY, teX, teY = toTest.trainAndTestSets(1, 0)
 
-        assert trX.pointCount == 0
-        assert trY.pointCount == 0
-        assert teX.pointCount == 4
-        assert teY.pointCount == 4
+        assert trX.points == 0
+        assert trY.points == 0
+        assert teX.points == 4
+        assert teY.points == 4
 
     # each returned set independant of calling set
     def test_trainAndTestSets_unconnectedReturn(self):
@@ -928,7 +967,7 @@ class HighLevelModifying(DataTestObject):
         if toTest.getTypeString() == 'List':
             toTest.appendPoints(toAdd)
             toTest.dropFeaturesContainingType(basestring)
-            assert toTest.featureCount == 1
+            assert toTest.features == 1
 
     def test_dropFeaturesContainingType_NamePath_preservation(self):
         data = [[1.0], [2.0]]
@@ -1126,7 +1165,7 @@ class HighLevelModifying(DataTestObject):
         retExp = self.constructor(data)
         while True:
             ret = toTest.extractPointsByCoinToss(.99)
-            if ret.pointCount == 1:
+            if ret.points == 1:
                 break
 
         assert retExp.isIdentical(ret)
@@ -1153,21 +1192,21 @@ class HighLevelModifying(DataTestObject):
                 assert v1[i] == v2[i]
 
         # everything in ret is in orig
-        for pIndex in range(ret.pointCount):
+        for pIndex in range(ret.points):
             currRetPoint = ret.pointView(pIndex)
             currName = ret.getPointName(pIndex)
             currOrigPoint = orig.pointView(currName)
             checkEqual(currRetPoint, currOrigPoint)
 
         # everything in toTest is in orig
-        for pIndex in range(toTest.pointCount):
+        for pIndex in range(toTest.points):
             currToTestPoint = toTest.pointView(pIndex)
             currName = toTest.getPointName(pIndex)
             currOrigPoint = orig.pointView(currName)
             checkEqual(currToTestPoint, currOrigPoint)
 
         # everything in orig in either ret or toTest
-        for pIndex in range(orig.pointCount):
+        for pIndex in range(orig.points):
             currOrigPoint = orig.pointView(pIndex)
             currName = orig.getPointName(pIndex)
             if currName in ret.getPointNames():
@@ -1322,8 +1361,12 @@ class HighLevelModifying(DataTestObject):
             func = caller.normalizePoints
         else:
             func = caller.normalizeFeatures
-        a, va, vk, d = inspect.getargspec(func)
-        assert d == (None, None, None)
+        if 'cython' in str(func.im_func.__class__):#if it is a cython function
+            d = func.im_func.func_defaults
+            assert (d is None) or (d == (None, None, None))
+        else:#if it is a normal python function
+            a, va, vk, d = inspect.getargspec(func)
+            assert d == (None, None, None)
 
         if axis == 'point':
             return caller.normalizePoints(subtract=subtract, divide=divide, applyResultTo=also)

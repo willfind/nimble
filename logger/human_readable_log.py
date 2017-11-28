@@ -249,7 +249,7 @@ def _packExtraInfo(extraInfo):
             extraTableValues.append(value.__name__)
         elif isinstance(value, UML.data.Base):
             extraTableValues.append(
-                "UML.data.Base: " + "(" + str(value.pointCount) + ", " + str(value.featureCount) + ")")
+                "UML.data.Base: " + "(" + str(value.points) + ", " + str(value.features) + ")")
         else:
             extraTableValues.append(str(value))
     extraTable = [extraTableHeaders, extraTableValues]
@@ -313,8 +313,8 @@ def _packDataInfo(dataObjects):
                 currRow.append(toAppend)
 
             # Append Point, then Feature counts
-            currRow.append(d.pointCount)
-            currRow.append(d.featureCount)
+            currRow.append(d.points)
+            currRow.append(d.features)
 
             rawShapeTable.append(currRow)
 
