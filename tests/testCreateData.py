@@ -11,6 +11,7 @@ import UML
 from UML.exceptions import ArgumentException
 from UML.exceptions import FileFormatException
 from UML.data.dataHelpers import DEFAULT_PREFIX
+from UML.helpers import _intFloatOrString
 scipy = UML.importModule('scipy.sparse')
 
 #returnTypes = ['Matrix', 'Sparse', None]  # None for auto
@@ -369,10 +370,13 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
                              pointNames=pointNames, featureNames=featureNames)
         tmpCSV.close()
     else:
-        lolFromRaw = [rawStr.split('\n')[0].split(','), rawStr.split('\n')[1].split(',')]
-        baseObj = UML.createData("Matrix", lolFromRaw)
+        fnameRow = map(_intFloatOrString, rawStr.split('\n')[0].split(','))
+        dataRow = map(_intFloatOrString, rawStr.split('\n')[1].split(','))
+        lolFromRaw = [fnameRow, dataRow]
+        baseObj = UML.createData("List", lolFromRaw, pointNames=False, featureNames=False)
         if rawType == 'scipycoo':
-            finalRaw = scipy.sparse.coo_matrix(lolFromRaw)
+            npRaw = numpy.array(lolFromRaw, dtype=object)
+            finalRaw = scipy.sparse.coo_matrix(npRaw)
         else:
             finalRaw = baseObj.copyAs(rawType)
 
@@ -384,6 +388,12 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
 def test_automaticByType_fnames_rawAndCSV():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
     for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+#        rawT = 'scipycoo'
+#        retT = 'List'
+#        print rawT + " " + str(retT)
+#        import pdb
+#        pdb.set_trace()
+
         # example which triggers automatic removal
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         correct = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames='automatic')
@@ -422,6 +432,12 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
 def test_automaticByType_pname_interaction_with_fname():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
     for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+#        rawT = 'scipycoo'
+#        retT = None
+#        print rawT + " " + str(retT)
+#        import pdb
+#        pdb.set_trace()        
+
         # pnames auto triggered with auto fnames
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
@@ -531,6 +547,7 @@ def test_extractNames_MTXArr():
         tmpMTXArr.write("3\n")
         tmpMTXArr.write("23\n")
         tmpMTXArr.flush()
+
         fromMTXArr = UML.createData(
             returnType=t, data=tmpMTXArr.name, pointNames=True, featureNames=True)
         tmpMTXArr.close()
@@ -592,6 +609,26 @@ def test_csv_extractNames_duplicateFeatureName():
         tmpCSV.flush()
 
         UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+
+
+def test_csv_roundtrip_autonames():
+    for retType in returnTypes:
+        data = [[1, 0, 5, 12], [0, 1, 3, 17], [0, 0, 8, 22]]
+        pnames = ['p0','p1','p2']
+        fnames = ['f0','f1','f2', 'f3']
+        
+        withFnames = UML.createData(retType, data, featureNames=fnames)
+        withBoth = UML.createData(retType, data, featureNames=fnames, pointNames=pnames)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVFnames:
+            withFnames.writeFile(tmpCSVFnames.name, 'csv', includeNames=True)
+            fromFileFnames = UML.createData(returnType=retType, data=tmpCSVFnames.name)
+            assert fromFileFnames == withFnames
+
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVBoth:
+            withBoth.writeFile(tmpCSVBoth.name, 'csv', includeNames=True)
+            fromFileBoth = UML.createData(returnType=retType, data=tmpCSVBoth.name)
+            assert fromFileBoth == withBoth
 
 
 ##################################

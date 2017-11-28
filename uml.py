@@ -1218,8 +1218,14 @@ def coo_matrixTodense(origTodense):
         try:
             return origTodense(self)
         except Exception:
-            ret = numpy.matrix(numpy.zeros(self.shape), dtype=self.dtype)
-            for (i, j), v in zip(list(zip(*self.nonzero())), self.data):
+            # flexible dtypes, such as strings, when used in scipy sparse object
+            # create an implicitly mixed datatype: some values are strings, but
+            # the rest are implicitly zero. In order to match that, we must
+            # explicitly specify a mixed type for our destination matrix
+            retDType = object if isinstance(self.dtype, numpy.flexible) else self.dtype
+            ret = numpy.matrix(numpy.zeros(self.shape), dtype=retDType)
+            nz = (self.row, self.col)
+            for (i, j), v in zip(zip(*nz), self.data):
                 ret[i, j] = v
             return ret
     return f
