@@ -1,0 +1,3231 @@
+{
+    "CSubsetStack": [
+        [], 
+        [
+            "other"
+        ]
+    ], 
+    "CAttenuatedEuclideanDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CLatentLabels": [
+        [], 
+        [
+            "num_samples"
+        ], 
+        [
+            "labels"
+        ]
+    ], 
+    "CIntronList": [
+        []
+    ], 
+    "CStateModel": [
+        []
+    ], 
+    "CParameterCombination": [
+        [], 
+        [
+            "param"
+        ]
+    ], 
+    "CHSIC": [
+        [], 
+        [
+            "kernel_p", 
+            "kernel_q", 
+            "p_and_q", 
+            "m"
+        ], 
+        [
+            "kernel_p", 
+            "kernel_q", 
+            "p", 
+            "q"
+        ]
+    ], 
+    "CMultitaskL12LogisticRegression": [
+        [], 
+        [
+            "rho1", 
+            "rho2", 
+            "train_features", 
+            "train_labels", 
+            "task_group"
+        ]
+    ], 
+    "CDualLibQPBMSOSVM": [
+        [], 
+        [
+            "model", 
+            "loss", 
+            "labs", 
+            "_lambda", 
+            "W"
+        ]
+    ], 
+    "CDimensionReductionPreprocessor": [
+        [], 
+        [
+            "converter"
+        ]
+    ], 
+    "CMatrixFeatures<ST>": [
+        [], 
+        [
+            "num_vecs", 
+            "num_feats"
+        ], 
+        [
+            "feats", 
+            "num_feats"
+        ], 
+        [
+            "feats", 
+            "feat_length", 
+            "num_vecs"
+        ]
+    ], 
+    "Parallel": [
+        [], 
+        [
+            "orig"
+        ]
+    ], 
+    "CPyramidChi2": [
+        [], 
+        [
+            "size", 
+            "num_cells2", 
+            "weights_foreach_cell2", 
+            "width_computation_type2", 
+            "width2"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size", 
+            "num_cells2", 
+            "weights_foreach_cell2", 
+            "width_computation_type2", 
+            "width2"
+        ]
+    ], 
+    "CWeightedCommWordStringKernel": [
+        [], 
+        [
+            "size", 
+            "us"
+        ], 
+        [
+            "l", 
+            "r", 
+            "us", 
+            "size"
+        ]
+    ], 
+    "CStreamingDotFeatures": [
+        [], 
+        [
+            "dot_features", 
+            "lab"
+        ]
+    ], 
+    "SGVector<T>": [
+        [], 
+        [
+            "v", 
+            "len", 
+            "ref_counting"
+        ], 
+        [
+            "len", 
+            "ref_counting"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CGUIKernel": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CMulticlassOneVsRestStrategy": [
+        []
+    ], 
+    "CPowerKernel": [
+        [], 
+        [
+            "cache", 
+            "degree", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "degree", 
+            "dist"
+        ]
+    ], 
+    "CBaseMulticlassMachine": [
+        []
+    ], 
+    "CGridSearchModelSelection": [
+        [], 
+        [
+            "model_parameters", 
+            "machine_eval"
+        ]
+    ], 
+    "CPlif": [
+        [
+            "l"
+        ]
+    ], 
+    "CAlphabet": [
+        [], 
+        [
+            "al", 
+            "len"
+        ], 
+        [
+            "alpha"
+        ], 
+        [
+            "a"
+        ]
+    ], 
+    "CMinkowskiMetric": [
+        [], 
+        [
+            "k_"
+        ], 
+        [
+            "l", 
+            "r", 
+            "k_"
+        ]
+    ], 
+    "CSVM": [
+        [
+            "num_sv"
+        ], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CJensenShannonKernel": [
+        [], 
+        [
+            "size"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size"
+        ]
+    ], 
+    "CEmbeddingConverter": [
+        []
+    ], 
+    "Version": [
+        []
+    ], 
+    "CMulticlassOCAS": [
+        [], 
+        [
+            "C", 
+            "train_features", 
+            "train_labels"
+        ]
+    ], 
+    "CMultitaskClusteredLogisticRegression": [
+        [], 
+        [
+            "rho1", 
+            "rho2", 
+            "train_features", 
+            "train_labels", 
+            "task_group", 
+            "n_clusters"
+        ]
+    ], 
+    "CWaveletKernel": [
+        [], 
+        [
+            "size", 
+            "a", 
+            "c"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size", 
+            "a", 
+            "c"
+        ]
+    ], 
+    "CPluginEstimate": [
+        [
+            "pos_pseudo", 
+            "neg_pseudo"
+        ]
+    ], 
+    "SVC_QMC": [
+        [
+            "prob", 
+            "param", 
+            "y_", 
+            "n_class", 
+            "fac"
+        ]
+    ], 
+    "CCommWordStringKernel": [
+        [], 
+        [
+            "size", 
+            "s"
+        ], 
+        [
+            "l", 
+            "r", 
+            "s", 
+            "size"
+        ]
+    ], 
+    "SGReferencedData": [
+        [
+            "ref_counting"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CStructuredLabels": [
+        [], 
+        [
+            "num_labels"
+        ]
+    ], 
+    "SGSparseMatrix<T>": [
+        [], 
+        [
+            "vecs", 
+            "num_feat", 
+            "num_vec", 
+            "ref_counting"
+        ], 
+        [
+            "num_feat", 
+            "num_vec", 
+            "ref_counting"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CIndexBlockGroup": [
+        []
+    ], 
+    "CRandomFourierGaussPreproc": [
+        [], 
+        [
+            "feats"
+        ]
+    ], 
+    "CSimpleLocalityImprovedStringKernel": [
+        [], 
+        [
+            "size", 
+            "l", 
+            "id", 
+            "od"
+        ], 
+        [
+            "l", 
+            "r", 
+            "len", 
+            "id", 
+            "od"
+        ]
+    ], 
+    "CLatentSOSVM": [
+        [], 
+        [
+            "model", 
+            "so_solver", 
+            "C"
+        ]
+    ], 
+    "CMultitaskLinearMachine": [
+        [], 
+        [
+            "train_features", 
+            "train_labels", 
+            "task_relation"
+        ]
+    ], 
+    "CCircularKernel": [
+        [], 
+        [
+            "size", 
+            "sig", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "sig", 
+            "dist"
+        ]
+    ], 
+    "CDenseLabels": [
+        [], 
+        [
+            "num_lab"
+        ], 
+        [
+            "loader"
+        ]
+    ], 
+    "CLinearTimeMMD": [
+        [], 
+        [
+            "kernel", 
+            "p", 
+            "q", 
+            "m", 
+            "blocksize"
+        ]
+    ], 
+    "CKernelIndependenceTestStatistic": [
+        [], 
+        [
+            "kernel_p", 
+            "kernel_q", 
+            "p_and_q", 
+            "q_start"
+        ], 
+        [
+            "kernel_p", 
+            "kernel_q", 
+            "p", 
+            "q"
+        ]
+    ], 
+    "sCache": [
+        [
+            "sk", 
+            "Mbyte", 
+            "ell"
+        ], 
+        [
+            "sk", 
+            "Mbyte", 
+            "_ell"
+        ]
+    ], 
+    "CGMNPLib": [
+        [], 
+        [
+            "vector_y", 
+            "kernel", 
+            "num_data", 
+            "num_virt_data", 
+            "num_classes", 
+            "reg_const"
+        ]
+    ], 
+    "CStreamingVwCacheFile": [
+        [], 
+        [
+            "cache_type"
+        ], 
+        [
+            "fname", 
+            "rw", 
+            "cache_type"
+        ]
+    ], 
+    "CStreamingStringFeatures<T>": [
+        [], 
+        [
+            "file", 
+            "is_labelled", 
+            "size"
+        ]
+    ], 
+    "CSegmentLoss": [
+        []
+    ], 
+    "CMKL": [
+        [
+            "s"
+        ]
+    ], 
+    "CMulticlassStrategy": [
+        []
+    ], 
+    "CPlifArray": [
+        []
+    ], 
+    "CLatentModel": [
+        [], 
+        [
+            "feats", 
+            "labels", 
+            "do_caching"
+        ]
+    ], 
+    "CHammingWordDistance": [
+        [], 
+        [
+            "sign"
+        ], 
+        [
+            "l", 
+            "r", 
+            "sign"
+        ]
+    ], 
+    "CGaussianBlobsDataGenerator": [
+        [], 
+        [
+            "sqrt_num_blobs", 
+            "distance", 
+            "stretch", 
+            "angle"
+        ]
+    ], 
+    "CGeodesicMetric": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CMachine": [
+        []
+    ], 
+    "CHMSVMModel": [
+        [], 
+        [
+            "features", 
+            "labels", 
+            "smt", 
+            "num_obs"
+        ]
+    ], 
+    "CGUIConverter": [
+        [
+            "ui"
+        ]
+    ], 
+    "CSpectrumRBFKernel": [
+        [], 
+        [
+            "size", 
+            "AA_matrix_", 
+            "degree_", 
+            "width_"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size", 
+            "AA_matrix_", 
+            "degree_", 
+            "width_"
+        ]
+    ], 
+    "CMath": [
+        []
+    ], 
+    "CLatentFeatures": [
+        [], 
+        [
+            "num_samples"
+        ]
+    ], 
+    "CMulticlassMachine": [
+        [], 
+        [
+            "strategy", 
+            "machine", 
+            "labs"
+        ]
+    ], 
+    "ONE_CLASS_Q": [
+        [
+            "prob", 
+            "param"
+        ]
+    ], 
+    "CMMDKernelSelectionOpt": [
+        [], 
+        [
+            "mmd", 
+            "lambda"
+        ]
+    ], 
+    "CQuadraticTimeMMD": [
+        [], 
+        [
+            "kernel", 
+            "p_and_q", 
+            "m"
+        ], 
+        [
+            "kernel", 
+            "p", 
+            "q"
+        ]
+    ], 
+    "CMKLMulticlass": [
+        [], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ], 
+        [
+            "cm"
+        ]
+    ], 
+    "CSNPFeatures": [
+        [], 
+        [
+            "str"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CVwRegressor": [
+        [], 
+        [
+            "env_to_use"
+        ]
+    ], 
+    "CLatentSVM": [
+        [], 
+        [
+            "model", 
+            "C"
+        ]
+    ], 
+    "CMMDKernelSelectionCombOpt": [
+        [], 
+        [
+            "mmd", 
+            "lambda"
+        ]
+    ], 
+    "CGaussianNaiveBayes": [
+        [], 
+        [
+            "train_examples", 
+            "train_labels"
+        ]
+    ], 
+    "l2r_l2_svr_fun": [
+        [
+            "prob", 
+            "Cs", 
+            "p"
+        ]
+    ], 
+    "CManhattanMetric": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CVwNonAdaptiveLearner": [
+        [], 
+        [
+            "regressor", 
+            "vw_env"
+        ]
+    ], 
+    "SGIO": [
+        [], 
+        [
+            "orig"
+        ]
+    ], 
+    "CTaskGroup": [
+        []
+    ], 
+    "CGUIPreprocessor": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CGUIHMM": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CHistogramIntersectionKernel": [
+        [], 
+        [
+            "size"
+        ], 
+        [
+            "l", 
+            "r", 
+            "beta", 
+            "size"
+        ]
+    ], 
+    "CTime": [
+        [
+            "st"
+        ]
+    ], 
+    "CMultitaskLogisticRegression": [
+        [], 
+        [
+            "z", 
+            "train_features", 
+            "train_labels", 
+            "task_relation"
+        ]
+    ], 
+    "Solver_NU": [
+        []
+    ], 
+    "SGStringList<T>": [
+        [], 
+        [
+            "s", 
+            "num_s", 
+            "max_length", 
+            "ref_counting"
+        ], 
+        [
+            "num_s", 
+            "max_length", 
+            "ref_counting"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CGNPPSVM": [
+        [], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CModelSelection": [
+        [
+            "model_parameters", 
+            "machine_eval"
+        ]
+    ], 
+    "CECOCRandomDenseEncoder": [
+        [
+            "maxiter", 
+            "codelen", 
+            "pposone"
+        ]
+    ], 
+    "CSplineKernel": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "Model": [
+        []
+    ], 
+    "CStructuredData": [
+        []
+    ], 
+    "MKLMulticlassGLPK": [
+        [], 
+        [
+            "gl"
+        ]
+    ], 
+    "CFKFeatures": [
+        [], 
+        [
+            "size", 
+            "p", 
+            "n"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CFile": [
+        [], 
+        [
+            "f", 
+            "name"
+        ], 
+        [
+            "fname", 
+            "rw", 
+            "name"
+        ]
+    ], 
+    "CTOPFeatures": [
+        [], 
+        [
+            "size", 
+            "p", 
+            "n", 
+            "neglin", 
+            "poslin"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CRegulatoryModulesStringKernel": [
+        [], 
+        [
+            "size", 
+            "w", 
+            "d", 
+            "s", 
+            "wl"
+        ], 
+        [
+            "lstr", 
+            "rstr", 
+            "lpos", 
+            "rpos", 
+            "w", 
+            "d", 
+            "s", 
+            "wl", 
+            "size"
+        ]
+    ], 
+    "CDistance": [
+        [], 
+        [
+            "p_lhs", 
+            "p_rhs"
+        ]
+    ], 
+    "CCrossValidation": [
+        [], 
+        [
+            "machine", 
+            "features", 
+            "labels", 
+            "splitting_strategy", 
+            "evaluation_criterion", 
+            "autolock"
+        ], 
+        [
+            "machine", 
+            "labels", 
+            "splitting_strategy", 
+            "evaluation_criterion", 
+            "autolock"
+        ]
+    ], 
+    "monicPoly": [
+        [
+            "degree"
+        ], 
+        [
+            "v"
+        ], 
+        [
+            "c", 
+            "degree"
+        ]
+    ], 
+    "CSerializableAsciiFile": [
+        [], 
+        [
+            "fstream", 
+            "rw"
+        ], 
+        [
+            "fname", 
+            "rw"
+        ]
+    ], 
+    "CECOCForestEncoder": [
+        []
+    ], 
+    "CWeightedDegreeStringKernel": [
+        [], 
+        [
+            "d", 
+            "t"
+        ], 
+        [
+            "w"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d"
+        ]
+    ], 
+    "CSpectrumMismatchRBFKernel": [
+        [], 
+        [
+            "size", 
+            "AA_matrix_", 
+            "nr", 
+            "nc", 
+            "degree_", 
+            "max_mismatch_", 
+            "width_"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size", 
+            "AA_matrix_", 
+            "nr", 
+            "nc", 
+            "degree_", 
+            "max_mismatch_", 
+            "width_"
+        ]
+    ], 
+    "CCombinedDotFeatures": [
+        [], 
+        [
+            "orig"
+        ]
+    ], 
+    "VwExample": [
+        []
+    ], 
+    "CScatterSVM": [
+        [], 
+        [
+            "type"
+        ], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "TParameter": [
+        [
+            "datatype", 
+            "parameter", 
+            "name", 
+            "description"
+        ]
+    ], 
+    "CGUIDistance": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CLinearHMM": [
+        [], 
+        [
+            "f"
+        ], 
+        [
+            "p_num_features", 
+            "p_num_symbols"
+        ]
+    ], 
+    "CDummyFeatures": [
+        [], 
+        [
+            "num"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CDifferentiableFunction": [
+        []
+    ], 
+    "Poly": [
+        [
+            "degree"
+        ], 
+        [
+            "v"
+        ], 
+        [
+            "c", 
+            "degree"
+        ]
+    ], 
+    "CKernelTwoSampleTestStatistic": [
+        [], 
+        [
+            "kernel", 
+            "p_and_q", 
+            "q_start"
+        ], 
+        [
+            "kernel", 
+            "p", 
+            "q"
+        ]
+    ], 
+    "l2r_l2_svc_fun": [
+        [
+            "p", 
+            "Cs"
+        ]
+    ], 
+    "CBinnedDotFeatures": [
+        [
+            "size"
+        ], 
+        [
+            "orig"
+        ], 
+        [
+            "sf", 
+            "bins"
+        ]
+    ], 
+    "CHashedWDFeatures": [
+        [], 
+        [
+            "str", 
+            "start_order", 
+            "order", 
+            "from_order", 
+            "hash_bits"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CMultitaskTraceLogisticRegression": [
+        [], 
+        [
+            "rho", 
+            "train_features", 
+            "train_labels", 
+            "task_group"
+        ]
+    ], 
+    "CGradientCriterion": [
+        []
+    ], 
+    "CTensorProductPairKernel": [
+        [], 
+        [
+            "size", 
+            "s"
+        ], 
+        [
+            "l", 
+            "r", 
+            "s"
+        ]
+    ], 
+    "Parameter": [
+        []
+    ], 
+    "CKernel": [
+        [], 
+        [
+            "size"
+        ], 
+        [
+            "p_lhs", 
+            "p_rhs", 
+            "size"
+        ]
+    ], 
+    "CWeightedDegreePositionStringKernel": [
+        [], 
+        [
+            "size", 
+            "d", 
+            "mm", 
+            "mkls"
+        ], 
+        [
+            "size", 
+            "w", 
+            "d", 
+            "mm", 
+            "s", 
+            "sl", 
+            "mkls"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d"
+        ]
+    ], 
+    "CWeightedDegreeRBFKernel": [
+        [], 
+        [
+            "size", 
+            "w", 
+            "d", 
+            "nof_prop"
+        ], 
+        [
+            "l", 
+            "r", 
+            "w", 
+            "d", 
+            "nof_prop", 
+            "size"
+        ]
+    ], 
+    "CAsciiFile": [
+        [], 
+        [
+            "f", 
+            "name"
+        ], 
+        [
+            "fname", 
+            "rw", 
+            "name"
+        ]
+    ], 
+    "CBinaryLabels": [
+        [], 
+        [
+            "num_labels"
+        ], 
+        [
+            "src"
+        ], 
+        [
+            "src", 
+            "threshold"
+        ], 
+        [
+            "loader"
+        ]
+    ], 
+    "CMKLOneClass": [
+        [
+            "s"
+        ]
+    ], 
+    "CMKLRegression": [
+        [
+            "s"
+        ]
+    ], 
+    "CVwNativeCacheReader": [
+        [], 
+        [
+            "fname", 
+            "env_to_use"
+        ], 
+        [
+            "f", 
+            "env_to_use"
+        ]
+    ], 
+    "SerializableAsciiReader00": [
+        [
+            "file"
+        ]
+    ], 
+    "task_tree_node_t": [
+        [
+            "min", 
+            "max", 
+            "w"
+        ]
+    ], 
+    "COligoStringKernel": [
+        [], 
+        [
+            "cache_sz", 
+            "kmer_len", 
+            "w"
+        ]
+    ], 
+    "CSparsePolyFeatures": [
+        [], 
+        [
+            "feat", 
+            "degree", 
+            "normalize", 
+            "hash_bits"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "ParameterMap": [
+        []
+    ], 
+    "CRelaxedTree": [
+        []
+    ], 
+    "CKernelDistance": [
+        [], 
+        [
+            "w", 
+            "k"
+        ], 
+        [
+            "l", 
+            "r", 
+            "w", 
+            "k"
+        ]
+    ], 
+    "CDenseFeatures<ST>": [
+        [
+            "size"
+        ], 
+        [
+            "orig"
+        ], 
+        [
+            "matrix"
+        ], 
+        [
+            "src", 
+            "num_feat", 
+            "num_vec"
+        ], 
+        [
+            "loader"
+        ]
+    ], 
+    "CGNPPLib": [
+        [], 
+        [
+            "vector_y", 
+            "kernel", 
+            "num_data", 
+            "reg_const"
+        ]
+    ], 
+    "CAveragedPerceptron": [
+        [], 
+        [
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "CSVMLightOneClass": [
+        [
+            "C", 
+            "k"
+        ], 
+        []
+    ], 
+    "CIndexBlockTree": [
+        [], 
+        [
+            "root_block"
+        ], 
+        [
+            "adjacency_matrix", 
+            "include_supernode"
+        ], 
+        [
+            "G", 
+            "ind_t"
+        ], 
+        [
+            "ind_t"
+        ]
+    ], 
+    "CMulticlassModel": [
+        [], 
+        [
+            "features", 
+            "labels"
+        ]
+    ], 
+    "Cache": [
+        [
+            "l", 
+            "size"
+        ], 
+        [
+            "l_", 
+            "size_"
+        ]
+    ], 
+    "CKernelMeanMatching": [
+        [], 
+        [
+            "kernel", 
+            "training_indices", 
+            "test_indices"
+        ]
+    ], 
+    "CKMeans": [
+        [], 
+        [
+            "k_", 
+            "d"
+        ]
+    ], 
+    "block_tree_node_t": [
+        [
+            "min", 
+            "max", 
+            "w"
+        ]
+    ], 
+    "CDensePreprocessor<ST>": [
+        []
+    ], 
+    "CSumOne": [
+        []
+    ], 
+    "COnlineLibLinear": [
+        [], 
+        [
+            "C_reg"
+        ], 
+        [
+            "C_reg", 
+            "traindat"
+        ], 
+        [
+            "mch"
+        ]
+    ], 
+    "LibSVMKernel": [
+        [
+            "l", 
+            "x", 
+            "param"
+        ], 
+        [
+            "l", 
+            "x_", 
+            "param"
+        ]
+    ], 
+    "CTaskTree": [
+        [], 
+        [
+            "root_task"
+        ]
+    ], 
+    "CVwParser": [
+        [], 
+        [
+            "env_to_use"
+        ]
+    ], 
+    "CLibSVMOneClass": [
+        [], 
+        [
+            "C", 
+            "k"
+        ]
+    ], 
+    "CStructuredOutputMachine": [
+        [], 
+        [
+            "model", 
+            "loss", 
+            "labs"
+        ]
+    ], 
+    "CGaussianShiftKernel": [
+        [], 
+        [
+            "size", 
+            "w", 
+            "ms", 
+            "ss"
+        ], 
+        [
+            "l", 
+            "r", 
+            "w", 
+            "ms", 
+            "ss", 
+            "size"
+        ]
+    ], 
+    "COnlineSVMSGD": [
+        [], 
+        [
+            "C"
+        ], 
+        [
+            "C", 
+            "traindat"
+        ]
+    ], 
+    "CProductKernel": [
+        [
+            "size"
+        ]
+    ], 
+    "CStreamingDenseFeatures<T>": [
+        [], 
+        [
+            "file", 
+            "is_labelled", 
+            "size"
+        ], 
+        [
+            "dense_features", 
+            "lab"
+        ]
+    ], 
+    "CSVMLin": [
+        [], 
+        [
+            "C", 
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "CLibLinear": [
+        [], 
+        [
+            "l"
+        ], 
+        [
+            "C", 
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "CCombinedKernel": [
+        [
+            "size", 
+            "asw"
+        ]
+    ], 
+    "l2r_lr_fun": [
+        [
+            "p", 
+            "Cs"
+        ]
+    ], 
+    "CNormOne": [
+        []
+    ], 
+    "CTStudentKernel": [
+        [], 
+        [
+            "cache", 
+            "d", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d", 
+            "dist"
+        ]
+    ], 
+    "CTanimotoDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CWaveKernel": [
+        [], 
+        [
+            "cache", 
+            "theta", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "theta", 
+            "dist"
+        ]
+    ], 
+    "IndexSorter<T>": [
+        [
+            "vec"
+        ]
+    ], 
+    "CSGObject": [
+        [], 
+        [
+            "orig"
+        ]
+    ], 
+    "CStringFeatures<ST>": [
+        [], 
+        [
+            "alpha"
+        ], 
+        [
+            "string_list", 
+            "alpha"
+        ], 
+        [
+            "orig"
+        ], 
+        [
+            "loader", 
+            "alpha"
+        ]
+    ], 
+    "CLinearARDKernel": [
+        [], 
+        [
+            "size"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size"
+        ]
+    ], 
+    "CCrossValidationMulticlassStorage": [
+        [
+            "compute_ROC", 
+            "compute_PRC", 
+            "compute_conf_matrices"
+        ]
+    ], 
+    "CBalancedConditionalProbabilityTree": [
+        []
+    ], 
+    "CSortUlongString": [
+        []
+    ], 
+    "CGUIStructure": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CJensenMetric": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "MKLMulticlassGradient": [
+        [], 
+        [
+            "gl"
+        ]
+    ], 
+    "CFixedDegreeStringKernel": [
+        [], 
+        [
+            "size", 
+            "d"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d"
+        ]
+    ], 
+    "CCanberraWordDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CCustomDistance": [
+        [], 
+        [
+            "d"
+        ], 
+        [
+            "distance_matrix"
+        ], 
+        [
+            "dm", 
+            "rows", 
+            "cols"
+        ]
+    ], 
+    "WeightedSolver": [
+        [
+            "cost_vec"
+        ]
+    ], 
+    "CPNorm": [
+        [], 
+        [
+            "p"
+        ]
+    ], 
+    "CPolyFeatures": [
+        [], 
+        [
+            "feat", 
+            "degree", 
+            "normalize"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "SGMatrixList<T>": [
+        [], 
+        [
+            "ml", 
+            "nmats", 
+            "ref_counting"
+        ], 
+        [
+            "nmats", 
+            "ref_counting"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CRealFileFeatures": [
+        [], 
+        [
+            "size", 
+            "fname"
+        ], 
+        [
+            "size", 
+            "file"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CSGInterface": [
+        [
+            "print_copyright"
+        ]
+    ], 
+    "CLinearStructuredOutputMachine": [
+        [], 
+        [
+            "model", 
+            "loss", 
+            "labs"
+        ]
+    ], 
+    "CGUIPluginEstimate": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CCCSOSVM": [
+        [], 
+        [
+            "model", 
+            "w"
+        ]
+    ], 
+    "CLinearStringKernel": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CCustomKernel": [
+        [], 
+        [
+            "k"
+        ], 
+        [
+            "km"
+        ]
+    ], 
+    "CStreamingVwFeatures": [
+        [], 
+        [
+            "file", 
+            "is_labelled", 
+            "size"
+        ]
+    ], 
+    "CSparseInverseCovariance": [
+        []
+    ], 
+    "ParameterMapElement": [
+        [], 
+        [
+            "key", 
+            "values"
+        ]
+    ], 
+    "CTron": [
+        [
+            "f", 
+            "e", 
+            "it"
+        ]
+    ], 
+    "CCrossValidationSplitting": [
+        [], 
+        [
+            "labels", 
+            "num_subsets"
+        ]
+    ], 
+    "CVwAdaptiveLearner": [
+        [], 
+        [
+            "regressor", 
+            "vw_env"
+        ]
+    ], 
+    "CPolyMatchWordStringKernel": [
+        [], 
+        [
+            "size", 
+            "d", 
+            "i"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d", 
+            "i"
+        ]
+    ], 
+    "CDecompressString<ST>": [
+        [], 
+        [
+            "ct"
+        ]
+    ], 
+    "CBrayCurtisDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CRandomSearchModelSelection": [
+        [], 
+        [
+            "model_parameters", 
+            "machine_eval", 
+            "ratio"
+        ]
+    ], 
+    "CCompressor": [
+        []
+    ], 
+    "CSparseSpatialSampleStringKernel": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CLaRank": [
+        [], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CChi2Kernel": [
+        [], 
+        [
+            "size", 
+            "w"
+        ], 
+        [
+            "l", 
+            "r", 
+            "w", 
+            "size"
+        ]
+    ], 
+    "sKernel": [
+        [
+            "k", 
+            "l"
+        ]
+    ], 
+    "CSalzbergWordStringKernel": [
+        [], 
+        [
+            "size", 
+            "pie", 
+            "labels"
+        ], 
+        [
+            "l", 
+            "r", 
+            "pie", 
+            "labels"
+        ]
+    ], 
+    "CMulticlassOneVsOneStrategy": [
+        []
+    ], 
+    "CECOCStrategy": [
+        [], 
+        [
+            "encoder", 
+            "decoder"
+        ]
+    ], 
+    "CZeroMean": [
+        []
+    ], 
+    "CDistribution": [
+        []
+    ], 
+    "CFeatures": [
+        [
+            "size"
+        ], 
+        [
+            "orig"
+        ], 
+        [
+            "loader"
+        ]
+    ], 
+    "SGParamInfo": [
+        [], 
+        [
+            "orig"
+        ], 
+        [
+            "name", 
+            "ctype", 
+            "stype", 
+            "ptype", 
+            "param_version"
+        ], 
+        [
+            "param", 
+            "param_version"
+        ]
+    ], 
+    "CGaussianARDKernel": [
+        [], 
+        [
+            "size", 
+            "width"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size", 
+            "width"
+        ]
+    ], 
+    "CData": [
+        []
+    ], 
+    "CVwCacheWriter": [
+        [], 
+        [
+            "fname", 
+            "env_to_use"
+        ], 
+        [
+            "f", 
+            "env_to_use"
+        ]
+    ], 
+    "CSigmoidKernel": [
+        [], 
+        [
+            "size", 
+            "g", 
+            "c"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size", 
+            "g", 
+            "c"
+        ]
+    ], 
+    "CMulticlassOVREvaluation": [
+        [], 
+        [
+            "binary_evaluation"
+        ]
+    ], 
+    "CBesselKernel": [
+        [], 
+        [
+            "size", 
+            "v", 
+            "w", 
+            "n", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "v", 
+            "w", 
+            "n", 
+            "dist", 
+            "size"
+        ]
+    ], 
+    "CEuclideanDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CVwEnvironment": [
+        []
+    ], 
+    "CGPBTSVM": [
+        [], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CHomogeneousKernelMap": [
+        [], 
+        [
+            "kernel", 
+            "wType", 
+            "gamma", 
+            "order", 
+            "period"
+        ]
+    ], 
+    "CGUIClassifier": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CMeanFunction": [
+        []
+    ], 
+    "CShareBoost": [
+        [], 
+        [
+            "features", 
+            "labs", 
+            "num_nonzero_feas"
+        ]
+    ], 
+    "CCosineDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CMatchWordStringKernel": [
+        [], 
+        [
+            "size", 
+            "d"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d"
+        ]
+    ], 
+    "CStratifiedCrossValidationSplitting": [
+        [], 
+        [
+            "labels", 
+            "num_subsets"
+        ]
+    ], 
+    "CChiSquareDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CGUILabels": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CMulticlassLibSVM": [
+        [
+            "st"
+        ], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "Solver_MCSVM_CS": [
+        [
+            "p", 
+            "n_class", 
+            "weighted_C", 
+            "w0_reg", 
+            "epsilon", 
+            "max_it", 
+            "max_time", 
+            "given_state"
+        ]
+    ], 
+    "CCanberraMetric": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CPruneVarSubMean": [
+        [
+            "divide"
+        ]
+    ], 
+    "CMultitaskCompositeMachine": [
+        [], 
+        [
+            "machine", 
+            "train_features", 
+            "train_labels", 
+            "task_group"
+        ]
+    ], 
+    "CMMDKernelSelectionMax": [
+        [], 
+        [
+            "mmd"
+        ]
+    ], 
+    "CExponentialKernel": [
+        [], 
+        [
+            "l", 
+            "r", 
+            "width", 
+            "distance", 
+            "size"
+        ]
+    ], 
+    "SGMatrix<T>": [
+        [], 
+        [
+            "ref_counting"
+        ], 
+        [
+            "m", 
+            "nrows", 
+            "ncols", 
+            "ref_counting"
+        ], 
+        [
+            "nrows", 
+            "ncols", 
+            "ref_counting"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CSVRLight": [
+        [
+            "C", 
+            "eps", 
+            "k", 
+            "lab"
+        ], 
+        []
+    ], 
+    "CLabels": [
+        []
+    ], 
+    "CExplicitSpecFeatures": [
+        [], 
+        [
+            "str", 
+            "normalize"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CCauchyKernel": [
+        [], 
+        [
+            "cache", 
+            "sigma", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "sigma", 
+            "dist"
+        ]
+    ], 
+    "CMMDKernelSelectionComb": [
+        [], 
+        [
+            "mmd"
+        ]
+    ], 
+    "CImplicitWeightedSpecFeatures": [
+        [], 
+        [
+            "str", 
+            "normalize"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CTwoStateModel": [
+        []
+    ], 
+    "CGUIFeatures": [
+        [
+            "ui_"
+        ]
+    ], 
+    "ShogunException": [
+        [
+            "str"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CVwCacheReader": [
+        [], 
+        [
+            "fname", 
+            "env_to_use"
+        ], 
+        [
+            "f", 
+            "env_to_use"
+        ]
+    ], 
+    "CStreamingSparseFeatures<T>": [
+        [], 
+        [
+            "file", 
+            "is_labelled", 
+            "size"
+        ]
+    ], 
+    "CManhattanWordDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CSparseFeatures<ST>": [
+        [
+            "size"
+        ], 
+        [
+            "src", 
+            "num_feat", 
+            "num_vec", 
+            "copy"
+        ], 
+        [
+            "sparse"
+        ], 
+        [
+            "dense"
+        ], 
+        [
+            "orig"
+        ], 
+        [
+            "loader"
+        ]
+    ], 
+    "CDotFeatures": [
+        [
+            "size"
+        ], 
+        [
+            "orig"
+        ], 
+        [
+            "loader"
+        ]
+    ], 
+    "CStreamingVwFile": [
+        [], 
+        [
+            "fname", 
+            "rw"
+        ]
+    ], 
+    "CDistantSegmentsKernel": [
+        [], 
+        [
+            "size", 
+            "delta", 
+            "theta"
+        ], 
+        [
+            "l", 
+            "r", 
+            "size", 
+            "delta", 
+            "theta"
+        ]
+    ], 
+    "CHistogram": [
+        [], 
+        [
+            "f"
+        ]
+    ], 
+    "CGHMM": [
+        []
+    ], 
+    "SVC_Q": [
+        [
+            "prob", 
+            "param", 
+            "y_"
+        ]
+    ], 
+    "CGMNPSVM": [
+        [], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "Solver_NUMC": [
+        [
+            "n_class", 
+            "svm_nu"
+        ]
+    ], 
+    "QPproblem": [
+        []
+    ], 
+    "CNearestCentroid": [
+        [], 
+        [
+            "d", 
+            "trainlab"
+        ]
+    ], 
+    "CAUCKernel": [
+        [], 
+        [
+            "size", 
+            "s"
+        ]
+    ], 
+    "CDistanceKernel": [
+        [], 
+        [
+            "size", 
+            "w", 
+            "d"
+        ], 
+        [
+            "l", 
+            "r", 
+            "w", 
+            "d"
+        ]
+    ], 
+    "CStructuredModel": [
+        [], 
+        [
+            "features", 
+            "labels"
+        ]
+    ], 
+    "CSubGradientSVM": [
+        [], 
+        [
+            "C", 
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "SGSparseVector<T>": [
+        [], 
+        [
+            "feats", 
+            "num_entries", 
+            "ref_counting"
+        ], 
+        [
+            "num_entries", 
+            "ref_counting"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CGUITime": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CKernelMulticlassMachine": [
+        [], 
+        [
+            "strategy", 
+            "kernel", 
+            "machine", 
+            "labs"
+        ]
+    ], 
+    "SVR_Q": [
+        [
+            "prob", 
+            "param"
+        ]
+    ], 
+    "CLogPlusOne": [
+        []
+    ], 
+    "CSparseEuclideanDistance": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CIOBuffer": [
+        [], 
+        [
+            "fd"
+        ]
+    ], 
+    "CHashedWDFeaturesTransposed": [
+        [], 
+        [
+            "str", 
+            "start_order", 
+            "order", 
+            "from_order", 
+            "hash_bits"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "SGString<T>": [
+        [], 
+        [
+            "s", 
+            "l", 
+            "free_s"
+        ], 
+        [
+            "v"
+        ], 
+        [
+            "len", 
+            "free_s"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CMulticlassMultipleOutputLabels": [
+        [], 
+        [
+            "num_labels"
+        ]
+    ], 
+    "CMulticlassSVM": [
+        [], 
+        [
+            "strategy"
+        ], 
+        [
+            "strategy", 
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CSubset": [
+        [], 
+        [
+            "subset_idx"
+        ]
+    ], 
+    "CECOCDiscriminantEncoder": [
+        []
+    ], 
+    "CInverseMultiQuadricKernel": [
+        [], 
+        [
+            "cache", 
+            "coefficient", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "coefficient", 
+            "dist"
+        ]
+    ], 
+    "SGNDArray<T>": [
+        [], 
+        [
+            "a", 
+            "d", 
+            "nd", 
+            "ref_counting"
+        ], 
+        [
+            "d", 
+            "nd", 
+            "ref_counting"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CStreamingFile": [
+        [], 
+        [
+            "fname", 
+            "rw"
+        ]
+    ], 
+    "CRegressionLabels": [
+        [], 
+        [
+            "num_labels"
+        ], 
+        [
+            "src"
+        ], 
+        [
+            "loader"
+        ]
+    ], 
+    "CModelSelectionParameters": [
+        [], 
+        [
+            "node_name"
+        ], 
+        [
+            "node_name", 
+            "sgobject"
+        ]
+    ], 
+    "CHistogramWordStringKernel": [
+        [], 
+        [
+            "size", 
+            "pie"
+        ], 
+        [
+            "l", 
+            "r", 
+            "pie"
+        ]
+    ], 
+    "CDomainAdaptationSVM": [
+        [], 
+        [
+            "C", 
+            "k", 
+            "lab", 
+            "pre_svm", 
+            "B_param"
+        ]
+    ], 
+    "TSGDataType": [
+        [
+            "ctype", 
+            "stype", 
+            "ptype"
+        ], 
+        [
+            "ctype", 
+            "stype", 
+            "ptype", 
+            "length"
+        ], 
+        [
+            "ctype", 
+            "stype", 
+            "ptype", 
+            "length_y", 
+            "length_x"
+        ]
+    ], 
+    "CLogKernel": [
+        [], 
+        [
+            "cache", 
+            "degree", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "degree", 
+            "dist"
+        ]
+    ], 
+    "CHMM": [
+        [], 
+        [
+            "h"
+        ], 
+        [
+            "p_N", 
+            "p_M", 
+            "p_model", 
+            "p_PSEUDO"
+        ], 
+        [
+            "obs", 
+            "p_N", 
+            "p_M", 
+            "p_PSEUDO"
+        ], 
+        [
+            "p_N", 
+            "p", 
+            "q", 
+            "a"
+        ], 
+        [
+            "p_N", 
+            "p", 
+            "q", 
+            "num_trans", 
+            "a_trans"
+        ], 
+        [
+            "model_file", 
+            "p_PSEUDO"
+        ]
+    ], 
+    "CRationalQuadraticKernel": [
+        [], 
+        [
+            "cache", 
+            "coef", 
+            "distance"
+        ], 
+        [
+            "l", 
+            "r", 
+            "coef", 
+            "dist"
+        ]
+    ], 
+    "CMMDKernelSelectionCombMaxL2": [
+        [], 
+        [
+            "mmd"
+        ]
+    ], 
+    "CBinaryFile": [
+        [], 
+        [
+            "f", 
+            "name"
+        ], 
+        [
+            "fname", 
+            "rw", 
+            "name"
+        ]
+    ], 
+    "CMPDSVM": [
+        [], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CSerializableFile": [
+        [], 
+        [
+            "fstream", 
+            "rw"
+        ], 
+        [
+            "fname", 
+            "rw"
+        ]
+    ], 
+    "CKNN": [
+        [], 
+        [
+            "k", 
+            "d", 
+            "trainlab"
+        ]
+    ], 
+    "CTask": [
+        [], 
+        [
+            "min_index", 
+            "max_index", 
+            "weight", 
+            "name"
+        ], 
+        [
+            "indices", 
+            "weight", 
+            "name"
+        ]
+    ], 
+    "CSortWordString": [
+        []
+    ], 
+    "COnlineLinearMachine": [
+        []
+    ], 
+    "CGUIMath": [
+        [
+            "ui_"
+        ]
+    ], 
+    "CMeanShiftDataGenerator": [
+        [], 
+        [
+            "mean_shift", 
+            "dimension", 
+            "dimension_shift"
+        ]
+    ], 
+    "CPolyKernel": [
+        [], 
+        [
+            "size", 
+            "d", 
+            "i"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d", 
+            "i", 
+            "size"
+        ]
+    ], 
+    "CDataGenerator": [
+        []
+    ], 
+    "CDistanceMachine": [
+        []
+    ], 
+    "CPositionalPWM": [
+        []
+    ], 
+    "CPerceptron": [
+        [], 
+        [
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "CStringFileFeatures<ST>": [
+        [], 
+        [
+            "fname", 
+            "alpha"
+        ]
+    ], 
+    "CSignal": [
+        []
+    ], 
+    "CMMDKernelSelection": [
+        [], 
+        [
+            "mmd"
+        ]
+    ], 
+    "CMultiquadricKernel": [
+        [], 
+        [
+            "cache", 
+            "coef", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "coef", 
+            "dist"
+        ]
+    ], 
+    "CPolyMatchStringKernel": [
+        [], 
+        [
+            "size", 
+            "d", 
+            "i"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d", 
+            "i"
+        ]
+    ], 
+    "CSVMOcas": [
+        [], 
+        [
+            "type"
+        ], 
+        [
+            "C", 
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "CKernelMachine": [
+        [], 
+        [
+            "k", 
+            "alphas", 
+            "svs", 
+            "b"
+        ], 
+        [
+            "machine"
+        ]
+    ], 
+    "CLocalAlignmentStringKernel": [
+        [
+            "size"
+        ], 
+        [
+            "l", 
+            "r", 
+            "opening", 
+            "extension"
+        ]
+    ], 
+    "CLinearKernel": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CStreamingAsciiFile": [
+        [], 
+        [
+            "fname", 
+            "rw"
+        ]
+    ], 
+    "CMMDKernelSelectionMedian": [
+        [], 
+        [
+            "mmd", 
+            "num_data_distance"
+        ]
+    ], 
+    "func_wrapper": [
+        [
+            "f"
+        ]
+    ], 
+    "CSplittingStrategy": [
+        [], 
+        [
+            "labels", 
+            "num_subsets"
+        ]
+    ], 
+    "CGaussianKernel": [
+        [], 
+        [
+            "size", 
+            "w"
+        ], 
+        [
+            "l", 
+            "r", 
+            "w", 
+            "size"
+        ]
+    ], 
+    "Solver": [
+        []
+    ], 
+    "CChebyshewMetric": [
+        [], 
+        [
+            "l", 
+            "r"
+        ]
+    ], 
+    "CFeatureBlockLogisticRegression": [
+        [], 
+        [
+            "z", 
+            "train_features", 
+            "train_labels", 
+            "feature_relation"
+        ]
+    ], 
+    "CMachineEvaluation": [
+        [], 
+        [
+            "machine", 
+            "features", 
+            "labels", 
+            "splitting_strategy", 
+            "evaluation_criterion", 
+            "autolock"
+        ], 
+        [
+            "machine", 
+            "labels", 
+            "splitting_strategy", 
+            "evaluation_criterion", 
+            "autolock"
+        ]
+    ], 
+    "CDynProg": [
+        [
+            "num_svms"
+        ]
+    ], 
+    "CLBPPyrDotFeatures": [
+        [], 
+        [
+            "images", 
+            "num_pyramids"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CStructuredAccuracy": [
+        []
+    ], 
+    "MKLMulticlassOptimizationBase": [
+        []
+    ], 
+    "CHierarchical": [
+        [], 
+        [
+            "merges_", 
+            "d"
+        ]
+    ], 
+    "CGaussianShortRealKernel": [
+        [], 
+        [
+            "size", 
+            "w"
+        ], 
+        [
+            "l", 
+            "r", 
+            "w", 
+            "size"
+        ]
+    ], 
+    "CPlifMatrix": [
+        []
+    ], 
+    "CGradientEvaluation": [
+        [], 
+        [
+            "machine", 
+            "features", 
+            "labels", 
+            "evaluation_crit", 
+            "autolock"
+        ]
+    ], 
+    "CMultitaskLeastSquaresRegression": [
+        [], 
+        [
+            "z", 
+            "train_features", 
+            "train_labels", 
+            "task_relation"
+        ]
+    ], 
+    "CStreamingFeatures": [
+        []
+    ], 
+    "CMKLClassification": [
+        [
+            "s"
+        ]
+    ], 
+    "CSNPStringKernel": [
+        [], 
+        [
+            "size", 
+            "degree", 
+            "win_len", 
+            "inhomogene"
+        ], 
+        [
+            "l", 
+            "r", 
+            "degree", 
+            "win_len", 
+            "inhomogene"
+        ]
+    ], 
+    "CSVMLight": [
+        [], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CIndexBlock": [
+        [], 
+        [
+            "min_index", 
+            "max_index", 
+            "weight", 
+            "name"
+        ]
+    ], 
+    "CLocalityImprovedStringKernel": [
+        [], 
+        [
+            "size", 
+            "l", 
+            "id", 
+            "od"
+        ], 
+        [
+            "l", 
+            "r", 
+            "len", 
+            "id", 
+            "od"
+        ]
+    ], 
+    "CMulticlassLabels": [
+        [], 
+        [
+            "num_labels"
+        ], 
+        [
+            "src"
+        ], 
+        [
+            "loader"
+        ]
+    ], 
+    "CAttributeFeatures": [
+        []
+    ], 
+    "CECOCRandomSparseEncoder": [
+        [
+            "maxiter", 
+            "codelen", 
+            "pzero", 
+            "pposone", 
+            "pnegone"
+        ]
+    ], 
+    "CGradientModelSelection": [
+        [
+            "model_parameters", 
+            "machine_eval"
+        ], 
+        []
+    ], 
+    "CLibSVR": [
+        [], 
+        [
+            "C", 
+            "eps", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CSGDQN": [
+        [], 
+        [
+            "C"
+        ], 
+        [
+            "C", 
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "CLibSVM": [
+        [
+            "st"
+        ], 
+        [
+            "C", 
+            "k", 
+            "lab"
+        ]
+    ], 
+    "CSVMSGD": [
+        [], 
+        [
+            "C"
+        ], 
+        [
+            "C", 
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "CHMSVMLabels": [
+        [], 
+        [
+            "num_labels", 
+            "num_states"
+        ], 
+        [
+            "labels", 
+            "label_length", 
+            "num_labels", 
+            "num_states"
+        ]
+    ], 
+    "CMulticlassLibLinear": [
+        [], 
+        [
+            "C", 
+            "features", 
+            "labs"
+        ]
+    ], 
+    "CConstKernel": [
+        [], 
+        [
+            "c"
+        ], 
+        [
+            "l", 
+            "r", 
+            "c"
+        ]
+    ], 
+    "CGradientResult": [
+        []
+    ], 
+    "CTwoDistributionsTestStatistic": [
+        [], 
+        [
+            "p_and_q", 
+            "m"
+        ], 
+        [
+            "p", 
+            "q"
+        ]
+    ], 
+    "CVowpalWabbit": [
+        [], 
+        [
+            "feat"
+        ], 
+        [
+            "vw"
+        ]
+    ], 
+    "CStreamingFileFromFeatures": [
+        [], 
+        [
+            "feat"
+        ], 
+        [
+            "feat", 
+            "lab"
+        ]
+    ], 
+    "CQPBSVMLib": [
+        [], 
+        [
+            "H", 
+            "n", 
+            "f", 
+            "m", 
+            "UB"
+        ]
+    ], 
+    "CWDSVMOcas": [
+        [], 
+        [
+            "type"
+        ], 
+        [
+            "C", 
+            "d", 
+            "from_d", 
+            "traindat", 
+            "trainlab"
+        ]
+    ], 
+    "CMulticlassSOLabels": [
+        [], 
+        [
+            "src"
+        ]
+    ], 
+    "CDiagKernel": [
+        [], 
+        [
+            "size", 
+            "d"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d"
+        ]
+    ], 
+    "CLinearLatentMachine": [
+        [], 
+        [
+            "model", 
+            "C"
+        ]
+    ], 
+    "CVwNativeCacheWriter": [
+        [], 
+        [
+            "fname", 
+            "env_to_use"
+        ]
+    ], 
+    "CCombinedFeatures": [
+        [], 
+        [
+            "orig"
+        ]
+    ], 
+    "CKernelStructuredOutputMachine": [
+        [], 
+        [
+            "model", 
+            "loss", 
+            "labs", 
+            "kernel"
+        ]
+    ], 
+    "CTestStatistic": [
+        []
+    ], 
+    "CGaussianMatchStringKernel": [
+        [], 
+        [
+            "size", 
+            "w"
+        ], 
+        [
+            "l", 
+            "r", 
+            "w"
+        ]
+    ], 
+    "CLinearMachine": [
+        [], 
+        [
+            "machine"
+        ]
+    ], 
+    "CCommUlongStringKernel": [
+        [
+            "size", 
+            "us"
+        ], 
+        [
+            "l", 
+            "r", 
+            "us", 
+            "size"
+        ]
+    ], 
+    "CANOVAKernel": [
+        [], 
+        [
+            "cache", 
+            "d"
+        ], 
+        [
+            "l", 
+            "r", 
+            "d", 
+            "cache"
+        ]
+    ], 
+    "CSphericalKernel": [
+        [], 
+        [
+            "size", 
+            "sig", 
+            "dist"
+        ], 
+        [
+            "l", 
+            "r", 
+            "sig", 
+            "dist"
+        ]
+    ], 
+    "CWDFeatures": [
+        [], 
+        [
+            "str", 
+            "order", 
+            "from_order"
+        ], 
+        [
+            "orig"
+        ]
+    ], 
+    "CEvaluationResult": [
+        []
+    ]
+}

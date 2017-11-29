@@ -5,12 +5,6 @@ Unit tests for shogun_interface.py
 
 from __future__ import absolute_import
 from six.moves import range
-try:
-    import clang
-
-    clangAvailable = True
-except ImportError:
-    clangAvailable = False
 
 import numpy
 from UML.randomness import numpyRandom
@@ -85,8 +79,6 @@ def testShogunHandmadeBinaryClassification():
 
 def testShogunHandmadeBinaryClassificationWithKernel():
     """ Test shogun by calling a binary linear classifier with a kernel """
-    if not clangAvailable:
-        return
 
     variables = ["Y", "x1", "x2"]
     data = [[5, -11, -5], [1, 0, 1], [1, 3, 2]]
@@ -126,8 +118,6 @@ def testShogunKMeans():
 
 def testShogunMulticlassSVM():
     """ Test shogun by calling a multilass classifier with a kernel """
-    if not clangAvailable:
-        return
 
     variables = ["Y", "x1", "x2"]
     data = [[0, 0, 0], [0, 0, 1], [1, -118, 1], [1, -117, 1], [2, 1, 191], [2, 1, 118], [3, -1000, -500]]
@@ -171,8 +161,6 @@ def testShogunSparseRegression():
 
 def testShogunRossData():
     """ Test shogun by calling classifers using the problematic data from Ross """
-    if not clangAvailable:
-        return
 
     p0 = [1, 0, 0, 0, 0.21, 0.12]
     p1 = [2, 0, 0.56, 0.77, 0, 0]
@@ -337,9 +325,8 @@ def testShogunListLearners():
     assert 'LaRank' in ret
     assert 'MulticlassOCAS' in ret
     assert "SVMOcas" in ret
-    if clangAvailable:
-        assert 'LibSVM' in ret
-        assert 'MulticlassLibSVM' in ret
+    assert 'LibSVM' in ret
+    assert 'MulticlassLibSVM' in ret
 
     for name in ret:
         params = UML.learnerParameters('shogun.' + name)
