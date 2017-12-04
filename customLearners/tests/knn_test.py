@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import UML
 
 from nose.tools import *
@@ -15,7 +17,7 @@ def testKNNClassificationSimple():
     name = 'Custom.KNNClassifier'
     ret = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, k=3)
 
-    print ret.data
+    print(ret.data)
 
     assert ret[0, 0] == 0
     assert ret[1, 0] == 1

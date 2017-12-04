@@ -6,6 +6,7 @@ Methods tested in this file:
 
 """
 
+from __future__ import absolute_import
 import UML
 from UML.data.tests.baseObject import DataTestObject
 

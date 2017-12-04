@@ -9,6 +9,7 @@ not allowed as a Kernel.
 # TODO: multinomialHMM requires special input processing for obs param
 
 
+from __future__ import absolute_import
 import importlib
 import inspect
 import copy
@@ -19,6 +20,7 @@ import copy
 import UML
 
 from UML.exceptions import ArgumentException
+from six.moves import range
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -166,7 +168,7 @@ class Mlpy(UniversalInterface):
         (objArgs, v, k, d) = ret
         ret = {}
         if d is not None:
-            for i in xrange(len(d)):
+            for i in range(len(d)):
                 ret[objArgs[-(i + 1)]] = d[-(i + 1)]
 
         return [ret]
@@ -193,7 +195,7 @@ class Mlpy(UniversalInterface):
             currNames = stage[0]
             currDefaults = stage[3]
             if stage[3] is not None:
-                for i in xrange(len(currDefaults)):
+                for i in range(len(currDefaults)):
                     key = currNames[-(i + 1)]
                     value = currDefaults[-(i + 1)]
                     ret[key] = value
@@ -466,7 +468,7 @@ class Mlpy(UniversalInterface):
         """
         temp = {}
         if matched is not None:
-            for i in xrange(len(full)):
+            for i in range(len(full)):
                 if i < len(matched):
                     temp[full[len(full) - 1 - i]] = matched[len(matched) - 1 - i]
                 else:
@@ -481,7 +483,7 @@ class Mlpy(UniversalInterface):
 
         retFull = []
         retMatched = []
-        for i in xrange(len(full)):
+        for i in range(len(full)):
             name = full[i]
             if name in temp:
                 retFull.append(name)

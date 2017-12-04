@@ -4,6 +4,8 @@ Module defining exceptions to be used in UML.
 """
 
 
+from __future__ import absolute_import
+from six.moves import range
 class PackageException(Exception):
     """
     Exception to be thrown when a package is not installed, but needed
@@ -100,7 +102,7 @@ def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     """
     ret = ""
     number = 0
-    for i in xrange(len(inList)):
+    for i in range(len(inList)):
         value = inList[i]
         if i > 0:
             ret += ', '
@@ -121,8 +123,8 @@ def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str, delim=
     """
     ret = ""
     number = 0
-    keyList = inDict.keys()
-    for i in xrange(len(keyList)):
+    keyList = list(inDict.keys())
+    for i in range(len(keyList)):
         key = keyList[i]
         value = inDict[key]
         if i > 0:

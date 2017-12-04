@@ -3,6 +3,7 @@ Unit tests for scikit_learn_interface.py
 
 """
 
+from __future__ import absolute_import
 import numpy.testing
 from nose.plugins.attrib import attr
 

@@ -5,8 +5,9 @@
 
 """
 
-import mahout_interface_old as mahout
-from universal_interface_lookalike import UniversalInterfaceLookalike
+from __future__ import absolute_import
+from . import mahout_interface_old as mahout
+from .universal_interface_lookalike import UniversalInterfaceLookalike
 
 
 class Mahout(UniversalInterfaceLookalike):

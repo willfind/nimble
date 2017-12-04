@@ -5,8 +5,9 @@
 
 """
 
-import regressors_interface_old as regressors
-from universal_interface_lookalike import UniversalInterfaceLookalike
+from __future__ import absolute_import
+from . import regressors_interface_old as regressors
+from .universal_interface_lookalike import UniversalInterfaceLookalike
 
 
 class Regressors(UniversalInterfaceLookalike):

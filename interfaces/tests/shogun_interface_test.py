@@ -3,6 +3,8 @@ Unit tests for shogun_interface.py
 
 """
 
+from __future__ import absolute_import
+from six.moves import range
 try:
     import clang
 
@@ -223,8 +225,8 @@ def testShogunEmbeddedRossData():
 
     numpyData = numpy.zeros((50, 10))
 
-    for i in xrange(50):
-        for j in xrange(10):
+    for i in range(50):
+        for j in range(10):
             if i < 8 and j < 6:
                 numpyData[i, j] = data[i][j]
             else:

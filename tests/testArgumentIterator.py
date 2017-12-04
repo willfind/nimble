@@ -3,8 +3,11 @@
 #crossValidateReturnBest
 #crossValidateReturnAll
 #trainAndTest
+from __future__ import absolute_import
 import sys
 import copy
+from six.moves import range
+from functools import reduce
 
 sys.path.append('../..')
 
@@ -47,10 +50,10 @@ def test_ArgumentIterator():
     iterates as otherwise expected via _buildArgPermutationsList"""
     #assert works with empty dict
     returned = ArgumentIterator({})
-    assert {} == returned.next()
+    assert {} == next(returned)
     #should be out of iterations after popping the empty list
     try:
-        returned.next()
+        next(returned)
         #if next works a second time, then ArgumentIterator has too many iterations
         assert False
     except StopIteration:
@@ -63,7 +66,7 @@ def test_ArgumentIterator():
     for curArgumentCombo in returned:
         iterationCount += 1
         assert set(argumentDict.keys()) == set(curArgumentCombo.keys())
-        assert len(argumentDict.keys()) == len(curArgumentCombo.keys())
+        assert len(list(argumentDict.keys())) == len(list(curArgumentCombo.keys()))
 
     assert iterationCount == len(_buildArgPermutationsList([], {}, 0, argumentDict))
 
@@ -77,7 +80,7 @@ def test_ArgumentIterator_stringsAndTuples():
         assert curr['a'] == 'hello'
         assert curr['b'] in (1, 2, 5)
 
-        assert len(curr.keys()) == 2
+        assert len(list(curr.keys())) == 2
 
 
 def test_ArgumentIterator_seperateResults():
@@ -91,11 +94,11 @@ def test_ArgumentIterator_seperateResults():
 
     retsCopy = copy.deepcopy(rets)
 
-    for i in xrange(len(rets)):
+    for i in range(len(rets)):
         assert rets[i] == retsCopy[i]
 
-    for i in xrange(len(rets)):
+    for i in range(len(rets)):
         rets[i]['a'] = i
-        for j in xrange(i + 1, len(rets)):
+        for j in range(i + 1, len(rets)):
             assert rets[i]['a'] != rets[j]['a']
             assert rets[j] == retsCopy[j]

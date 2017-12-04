@@ -7,6 +7,8 @@ contained values.
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import inspect
 import sys
 import pdb
@@ -20,6 +22,7 @@ from UML.data import BaseView
 from UML.exceptions import ArgumentException
 
 from UML.randomness import pythonRandom
+from six.moves import range
 
 
 numberOperations = 100
@@ -108,16 +111,16 @@ def TODO_RandomSequenceOfMethods():
 
 def runSequence(objectList):
     # setup method list, from Base dir
-    availableMethods = generators.keys()
+    availableMethods = list(generators.keys())
 
     # loop over specified number of operations
     #	for trial in xrange(numberOperations):
-    for trial in xrange(len(availableMethods)):
+    for trial in range(len(availableMethods)):
     # random number as index into available operations list
     #		index = pythonRandom.randint(0,len(availableMethods)-1)
         index = trial
         currFunc = availableMethods[index]
-        print currFunc
+        print(currFunc)
         # exclude operation we know are not runnabel given certain configurations
         if objectList[0].points == 0:
             if currFunc in unavailableNoPoints:
@@ -133,12 +136,12 @@ def runSequence(objectList):
         # set up parameters
         paramsPerObj = []
         randomseed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
-        for i in xrange(len(objectList)):
+        for i in range(len(objectList)):
             paramsPerObj.append(makeParams(currFunc, objectList[i], randomseed))
 
         # call method on each object, collect results
         results = []
-        for i in xrange(len(objectList)):
+        for i in range(len(objectList)):
             funcToCall = getattr(objectList[i], currFunc) #eval('objectList[i].' + currFunc)
             UML.randomness.startAlternateControl(randomseed)
             currResult = funcToCall(*paramsPerObj[i])
@@ -146,16 +149,16 @@ def runSequence(objectList):
             results.append(currResult)
 
         # need to check equality of results
-        for i in xrange(len(results)):
+        for i in range(len(results)):
             ithResult = results[i]
-            for j in xrange(i + 1, len(results)):
+            for j in range(i + 1, len(results)):
                 jthResult = results[j]
                 equalityWrapper(ithResult, jthResult)
 
         # check approximate equality on each of the objects
-        for i in xrange(len(objectList)):
+        for i in range(len(objectList)):
             ithDataObject = objectList[i]
-            for j in xrange(i + 1, len(objectList)):
+            for j in range(i + 1, len(objectList)):
                 jthDataObject = objectList[j]
                 assert ithDataObject.isApproximatelyEqual(jthDataObject)
                 assert ithDataObject._equalPointNames(jthDataObject)
@@ -184,16 +187,16 @@ def equalityWrapper(left, right):
         leftList = []
         rightList = []
         try:
-            while (True): leftList.append(leftIter.next())
+            while (True): leftList.append(next(leftIter))
         except StopIteration:
             pass
         try:
-            while (True): rightList.append(rightIter.next())
+            while (True): rightList.append(next(rightIter))
         except StopIteration:
             pass
 
         assert len(leftList) == len(rightList)
-        for i in xrange(len(leftList)):
+        for i in range(len(leftList)):
             currLeft = leftList[i]
             currRight = rightList[i]
             equalityWrapper(currLeft, currRight)
@@ -204,7 +207,7 @@ def equalityWrapper(left, right):
 def simpleMapper(point):
     idInt = point[0]
     intList = []
-    for i in xrange(0, len(point)):
+    for i in range(0, len(point)):
         intList.append(point[i])
     ret = []
     for value in intList:
@@ -322,7 +325,7 @@ def genIDList(dataObj, seed, axis):
         source = dataObj.getFeatureName
 
     numToSample = random.randint(1, numInAxis)
-    IDList = random.sample(range(numInAxis), numToSample)
+    IDList = random.sample(list(range(numInAxis)), numToSample)
     for i in range(len(IDList)):
         if random.randint(0, 1):
             IDList[i] = source(IDList[i])
@@ -343,7 +346,7 @@ def genPermArr(dataObj, seed, axis):
     else:
         numInAxis = dataObj.features
 
-    permArr = random.sample(range(numInAxis), numInAxis)
+    permArr = random.sample(list(range(numInAxis)), numInAxis)
 
     return permArr
 

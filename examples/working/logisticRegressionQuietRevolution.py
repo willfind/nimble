@@ -1,9 +1,12 @@
 """
 Select the best questions to keep in a survey from a larger set of questions
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy
 
-from allowImports import boilerplate
+from .allowImports import boilerplate
+import six
 
 boilerplate()
 
@@ -16,7 +19,7 @@ from UML import configuration
 from UML import createData
 from UML.calculate import fractionIncorrect
 from UML import calculate
-import tableString
+from . import tableString
 
 from UML.customLearners import CustomLearner
 
@@ -36,7 +39,7 @@ class MajorityVote(CustomLearner):
         trainY.transformEachElement(counter)
         mostCommonKey = None
         highestCount = 0
-        for key, count in counts.iteritems():
+        for key, count in six.iteritems(counts):
             if count > highestCount:
                 count = highestCount
                 mostCommonKey = key
@@ -191,9 +194,9 @@ if __name__ == "__main__":
 
             output.append([name, per(misclassified), per(misclassifiedInSample), intercept, coefs])
 
-    print "\nResult:\n"
-    print tableString.tableString(output)
-    print "\n\n"
+    print("\nResult:\n")
+    print(tableString.tableString(output))
+    print("\n\n")
 
 
 

@@ -3,6 +3,7 @@ Tests for the UML.randUML submodule
 
 """
 
+from __future__ import absolute_import
 import UML
 import random
 import numpy
@@ -11,6 +12,7 @@ import nose
 import UML.randomness
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
+from six.moves import range
 
 
 @nose.with_setup(UML.randomness.startAlternateControl, UML.randomness.endAlternateControl)
@@ -20,7 +22,7 @@ def testSetRandomSeedExplicit():
     expNp = numpy.random.RandomState(1333)
     UML.setRandomSeed(1333)
 
-    for i in xrange(50):
+    for i in range(50):
         assert pythonRandom.random() == expPy.random()
         assert numpyRandom.rand() == expNp.rand()
 

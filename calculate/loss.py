@@ -6,6 +6,7 @@ level of correctness in the predicted values.
 
 """
 
+from __future__ import absolute_import
 import numpy
 
 import UML
@@ -14,6 +15,7 @@ from UML.data import Matrix
 from math import sqrt
 
 from UML.exceptions import ArgumentException
+from six.moves import range
 
 
 def _validatePredictedAsLabels(predictedValues):
@@ -58,7 +60,7 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
     n = 0.0
     runningTotal = 0.0
     #Go through all values in known and predicted values, and pass those values to loopFunction
-    for i in xrange(predictedValues.points):
+    for i in range(predictedValues.points):
         pV = predictedValues[i, 0]
         aV = knownValues[i, 0]
         runningTotal = loopFunction(aV, pV, runningTotal)
@@ -99,7 +101,7 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
         raise ArgumentException("The known and predicted data must have the same number of points")
 
     results = []
-    for i in xrange(knownValues.features):
+    for i in range(knownValues.features):
         currKnown = knownValues.copyFeatures(i)
         currPred = predictedValues.copyFeatures(i)
         results.append(rootMeanSquareError(currKnown, currPred))

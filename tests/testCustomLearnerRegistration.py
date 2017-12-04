@@ -1,4 +1,5 @@
-import ConfigParser
+from __future__ import absolute_import
+import six.moves.configparser
 import tempfile
 import os
 import numpy
@@ -191,7 +192,7 @@ def testEffectToSettings():
     try:
         UML.settings.get(regSec, opName) == opValue
         assert False
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
 
 # test that registering a sample custom learner with option names
@@ -227,7 +228,7 @@ def testDeregisterWithSettingsChanges():
     try:
         UML.settings.get('Foo', loveName + '.option')
         assert False
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
 
     UML.deregisterCustomLearner("Foo", 'UncallableLearner')
@@ -236,7 +237,7 @@ def testDeregisterWithSettingsChanges():
     try:
         UML.settings.get('Foo', loveName + '.option')
         assert False
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
 

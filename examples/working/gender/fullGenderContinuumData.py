@@ -4,7 +4,10 @@ temperment responses to do gender classification.
 
 """
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+from __future__ import print_function
+from .allowImports import boilerplate
+from six.moves import range
 boilerplate()
 
 import os
@@ -84,8 +87,8 @@ def test_MASVD_vs_skl_noMissing():
     transSKL = sklEst.fit_transform(raw)
 #   print sklEst.components_
 
-    print transUML
-    print transSKL
+    print(transUML)
+    print(transSKL)
 
     numpy.testing.assert_array_almost_equal(transUML, transSKL)
 #   assert False
@@ -107,8 +110,8 @@ def fileLoadHelper(retType, defaultFile, allowRemLess50Load):
     else:
         inName = sys.argv[1]
 
-    print time.asctime(time.localtime())
-    print "loading: " + inName
+    print(time.asctime(time.localtime()))
+    print("loading: " + inName)
 
     if inName.endswith('csv'):
         allData = loadTransformSave(inName)
@@ -116,15 +119,15 @@ def fileLoadHelper(retType, defaultFile, allowRemLess50Load):
     else:
         allData = UML.createData(retType, inName)
 
-    print time.asctime(time.localtime())
-    print "load complete"
+    print(time.asctime(time.localtime()))
+    print("load complete")
 
     # remove hard points if needed
     if not inName.endswith('_nz50Rem.mtx'):
-        print "Removing points with <50 non-zero entries"
+        print("Removing points with <50 non-zero entries")
         preprocess_RemoveLowNZ(allData)
-        print time.asctime(time.localtime())
-        print "removal complete"
+        print(time.asctime(time.localtime()))
+        print("removal complete")
 
     return allData
 
@@ -137,10 +140,10 @@ def removeDemographics(obj):
 
     """
     removed = obj.extractFeatures(start=3, end=20)
-    print removed.getFeatureNames()
+    print(removed.getFeatureNames())
 
     removed = obj.extractFeatures(end=1)
-    print removed.getFeatureNames()
+    print(removed.getFeatureNames())
 
 def replaceNAs(obj):
     """
@@ -162,10 +165,10 @@ def keepFeaturesNoDemographics():
     to be used in the keepFeatures argument of a createData call.
 
     """
-    allIDs = range(716)
+    allIDs = list(range(716))
     results = []
     for val in allIDs:
-        if val not in [0,1] and val not in xrange(3,21):
+        if val not in [0,1] and val not in range(3,21):
             results.append(val)
 
     return results
@@ -181,29 +184,29 @@ def batchCreateFromOrigFile(name):
     kf = keepFeaturesNoDemographics()
 
     batch1 = UML.createData(
-        "List", name, featureNames=True, keepPoints=xrange(5000),
+        "List", name, featureNames=True, keepPoints=range(5000),
         keepFeatures=kf)
 
     batch2 = UML.createData(
-        "List", name, featureNames=True, keepPoints=xrange(5000,10000),
+        "List", name, featureNames=True, keepPoints=range(5000,10000),
         keepFeatures=kf)
 
     batch3 = UML.createData(
-        "List", name, featureNames=True, keepPoints=xrange(10000,15000),
+        "List", name, featureNames=True, keepPoints=range(10000,15000),
         keepFeatures=kf)
 
     batch4 = UML.createData(
-        "List", name, featureNames=True, keepPoints=xrange(15000,20000),
+        "List", name, featureNames=True, keepPoints=range(15000,20000),
         keepFeatures=kf)
 
     batch5 = UML.createData(
-        "List", name, featureNames=True, keepPoints=xrange(20000,23681),
+        "List", name, featureNames=True, keepPoints=range(20000,23681),
         keepFeatures=kf)
 
     batches = [batch1, batch2, batch3, batch4, batch5]
     trainY = batch1.extractFeatures(0)
 
-    print "batches loaded"
+    print("batches loaded")
 
     for index, obj in enumerate(batches):
         if index > 0:
@@ -212,13 +215,13 @@ def batchCreateFromOrigFile(name):
         replaceNAs(obj)
         batches[index] = obj.copyAs("List")
 
-    print batches[0].getTypeString()
-    print batches[1].getTypeString()
-    print batches[2].getTypeString()
-    print batches[3].getTypeString()
-    print batches[4].getTypeString()
+    print(batches[0].getTypeString())
+    print(batches[1].getTypeString())
+    print(batches[2].getTypeString())
+    print(batches[3].getTypeString())
+    print(batches[4].getTypeString())
 
-    print "batches NA replaced"
+    print("batches NA replaced")
 
     dataAll = batches[0]
     dataAll.appendPoints(batches[1])
@@ -226,15 +229,15 @@ def batchCreateFromOrigFile(name):
     dataAll.appendPoints(batches[3])
     dataAll.appendPoints(batches[4])
 
-    print "batches combined"
+    print("batches combined")
 
 #   trainY.transformFeatureToIntegers(0)
 #   print "transformed trainY"
 
     makeGenderIntegers(trainY)
     trainY = trainY.copyAs("List")
-    print "transformed trainY to integers"
-    print trainY.getFeatureNames()
+    print("transformed trainY to integers")
+    print(trainY.getFeatureNames())
 
     dataAll.appendFeatures(trainY)
 
@@ -376,12 +379,12 @@ def checkNumberNZ_feature(obj):
 def printInAndOutSampleError(trainedLearner, trainX, testX, testY):
     #Now measure the accuracy of the model
 #   print "\n\n"
-    print ""
+    print("")
     errorOutSample = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
-    print "Out sample error: " + str(round(errorOutSample*100,1)) + "%"
+    print("Out sample error: " + str(round(errorOutSample*100,1)) + "%")
     errorInSample = trainedLearner.test(trainX, trainY, performanceFunction=fractionIncorrect)
-    print "In sample error: " + str(round(errorInSample*100,1)) + "%"
-    print ""
+    print("In sample error: " + str(round(errorInSample*100,1)) + "%")
+    print("")
 
 
 def writeOutCoefficientsAndNames(trainedLearner, trialType):
@@ -438,12 +441,12 @@ def featureNorm_stdScore(trainX, testX):
 
 def trial_LogRegL2(trainX, trainY, testX, testY):
 
-    print "\nStarting LogRegL2"
+    print("\nStarting LogRegL2")
 #   print time.asctime(time.localtime())
 
     name = "scikitlearn.LogisticRegression"
     cVals = tuple([100. / (10**n) for n in range(7)])
-    print "Cross validated over C with values of: " + str(cVals)
+    print("Cross validated over C with values of: " + str(cVals))
     trainedLearner = UML.train(
         name, trainX, trainY, C=cVals, penalty='l2',
         performanceFunction=fractionIncorrect)
@@ -456,8 +459,8 @@ def trial_LogRegL2(trainX, trainY, testX, testY):
     return trainedLearner
 
 def trial_RegularizationSelection(trainX, trainY, testX, testY, wantedNZcoefs):
-    print "Starting LogisticRegressionSelectByRegularization"
-    print "with num wanted=" + str(wantedNZcoefs)
+    print("Starting LogisticRegressionSelectByRegularization")
+    print("with num wanted=" + str(wantedNZcoefs))
 #   print time.asctime(time.localtime())
 
     UML.registerCustomLearner("custom", LogisticRegressionSelectByRegularization)
@@ -476,8 +479,8 @@ def trial_RegularizationSelection(trainX, trainY, testX, testY, wantedNZcoefs):
 
 def trial_SelectionByOmission(trainX, trainY, testX, testY, wantedNZcoefs,
         method):
-    print "Starting LogisticRegressionSelectByOmission"
-    print "with num wanted=" + str(wantedNZcoefs) + " and method=" + method
+    print("Starting LogisticRegressionSelectByOmission")
+    print("with num wanted=" + str(wantedNZcoefs) + " and method=" + method)
 #   print time.asctime(time.localtime())
 
     UML.registerCustomLearner("custom", LogisticRegressionSelectByOmission)
@@ -486,7 +489,7 @@ def trial_SelectionByOmission(trainX, trainY, testX, testY, wantedNZcoefs,
 
     name = "custom.LogisticRegressionSelectByOmission"
     cVals = tuple([100. / (10**n) for n in range(7)])
-    print "Cross validated over C with values of: " + str(cVals)
+    print("Cross validated over C with values of: " + str(cVals))
     trainedLearner = UML.train(
         name, trainX, trainY, numberToOmit=numToOmit,
         performanceFunction=fractionIncorrect, C=cVals,
@@ -500,12 +503,12 @@ def trial_SelectionByOmission(trainX, trainY, testX, testY, wantedNZcoefs,
     return trainedLearner
 
 def trial_SVMClassifier_linear(trainX, trainY, testX, testY):
-    print "Starting SVM classifier with linear kernel"
+    print("Starting SVM classifier with linear kernel")
 #   print time.asctime(time.localtime())
 
     name = "scikitlearn.SVC"
     cVals = tuple([100. / (10**n) for n in range(7)])
-    print "Cross validated over C with values of: " + str(cVals)
+    print("Cross validated over C with values of: " + str(cVals))
     trainedLearner = UML.train(
         name, trainX, trainY, C=cVals, kernel='linear',
         performanceFunction=fractionIncorrect,
@@ -519,15 +522,15 @@ def trial_SVMClassifier_linear(trainX, trainY, testX, testY):
     return trainedLearner
 
 def trial_SVMClassifier_poly(trainX, trainY, testX, testY, degree):
-    print "Starting SVM classifier with polynomial kernel"
-    print "with degree=" + str(degree)
+    print("Starting SVM classifier with polynomial kernel")
+    print("with degree=" + str(degree))
 #   print time.asctime(time.localtime())
 
     name = "scikitlearn.SVC"
     cVals = tuple([100. / (10**n) for n in range(7)])
-    print "Cross validated over C with values of: " + str(cVals)
+    print("Cross validated over C with values of: " + str(cVals))
     coef0vals = (0,10,100)
-    print "Cross Validated over coef0 values of:" + str(coef0vals)
+    print("Cross Validated over coef0 values of:" + str(coef0vals))
     trainedLearner = UML.train(
         name, trainX, trainY, C=cVals, kernel='poly',
         degree=degree, coef0=coef0vals,
@@ -576,7 +579,7 @@ if __name__ == "__main__":
     for ptsSel in [2500,5000,10000]:
 #   for ptsSel in [250,500,1000]:
 #   for ptsSel in [20000]:
-        print "total Data: " + str(ptsSel) + " x " + str(allData.features)
+        print("total Data: " + str(ptsSel) + " x " + str(allData.features))
 
         trainX = allData.copyPoints(end=ptsSel)
         trainY = trainX.extractFeatures("gender")
@@ -609,8 +612,8 @@ if __name__ == "__main__":
 
         for kToUse in [50, 100, 200]:
 #       for kToUse in [5, 10, 20]:
-            print time.asctime(time.localtime())
-            print "\nMASVD with k=" + str(kToUse)
+            print(time.asctime(time.localtime()))
+            print("\nMASVD with k=" + str(kToUse))
             svdTL = UML.train("Custom.MissingAwareSVD", trainX, trainY, k=kToUse)
             redTrainX = svdTL.apply(trainX)
             redTestX = svdTL.apply(testX)
@@ -648,5 +651,5 @@ if __name__ == "__main__":
 
 #   writeOutCoefficientsAndNames(trainedLearner, '')
 
-    print time.asctime(time.localtime())
+    print(time.asctime(time.localtime()))
     exit(0)

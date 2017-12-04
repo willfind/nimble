@@ -2,6 +2,8 @@
 Unit tests for regressors_interface.py
 
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import UML
 
 from UML.interfaces.regressors_interface_old import setRegressorLocation
@@ -31,7 +33,7 @@ def _testRegressorsHandmade():
 
     actualOut.seek(0)
     line = actualOut.readline()
-    print line
+    print(line)
     assert line.strip() == "4.0"
 
 
@@ -56,7 +58,7 @@ def _testRegressorsHandmadeTrainMatrix():
     actualOut.seek(0)
     line = actualOut.readline()
     line = line.strip()
-    print line
+    print(line)
     assert line != ''
     assert line == "6.0"
 

@@ -5,7 +5,9 @@ set (aka Adult).
 
 """
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+from .allowImports import boilerplate
+import six
 
 boilerplate()
 
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     processed.transformFeatureToIntegers('income')
 
     # scrub the rest of the string valued data -- the ones we converted are the non-redundant ones
-    processed.dropFeaturesContainingType(basestring)
+    processed.dropFeaturesContainingType(six.string_types)
 
     # output the cleaned data set for later usage
     processed.writeFile(pathOut, includeNames=True)

@@ -20,6 +20,7 @@ shufflePoints, shuffleFeatures, normalizePoints, normalizeFeatures
 
 """
 
+from __future__ import absolute_import
 from copy import deepcopy
 from nose.tools import *
 from nose.plugins.attrib import attr
@@ -35,6 +36,8 @@ from UML.exceptions import ArgumentException, ImproperActionException
 from UML.data.tests.baseObject import DataTestObject
 
 from UML.randomness import numpyRandom
+import six
+from six.moves import range
 
 
 preserveName = "PreserveTestName"
@@ -47,7 +50,7 @@ preservePair = (preserveAPath, preserveRPath)
 def simpleMapper(point):
     idInt = point[0]
     intList = []
-    for i in xrange(1, len(point)):
+    for i in range(1, len(point)):
         intList.append(point[i])
     ret = []
     for value in intList:
@@ -431,13 +434,13 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data)
         pIter = toTest.pointIterator()
 
-        pView = pIter.next()
+        pView = next(pIter)
         assert len(pView) == 0
-        pView = pIter.next()
+        pView = next(pIter)
         assert len(pView) == 0
 
         try:
-            pIter.next()
+            next(pIter)
             assert False  # expected StopIteration from prev statement
         except StopIteration:
             pass
@@ -449,7 +452,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data)
         viewIter = toTest.pointIterator()
         try:
-            viewIter.next()
+            next(viewIter)
         except StopIteration:
             return
         assert False
@@ -523,13 +526,13 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data)
         fIter = toTest.featureIterator()
 
-        fView = fIter.next()
+        fView = next(fIter)
         assert len(fView) == 0
-        fView = fIter.next()
+        fView = next(fIter)
         assert len(fView) == 0
 
         try:
-            fIter.next()
+            next(fIter)
             assert False  # expected StopIteration from prev statement
         except StopIteration:
             pass
@@ -541,7 +544,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data)
         viewIter = toTest.featureIterator()
         try:
-            viewIter.next()
+            next(viewIter)
         except StopIteration:
             return
         assert False
@@ -725,13 +728,13 @@ class HighLevelDataSafe(DataTestObject):
     def test_isApproximatelyEqual_randomTest(self):
         """ Test isApproximatelyEqual() using randomly generated data """
 
-        for x in xrange(2):
+        for x in range(2):
             points = 100
             features = 40
             data = numpy.zeros((points, features))
 
-            for i in xrange(points):
-                for j in xrange(features):
+            for i in range(points):
+                for j in range(features):
                     data[i, j] = numpyRandom.rand() * numpyRandom.randint(0, 5)
 
             toTest = self.constructor(data)
@@ -908,7 +911,7 @@ class HighLevelDataSafe(DataTestObject):
         data = [[1, 1], [2, 2], [3, 3], [4, 4]]
         toTest = self.constructor(data)
 
-        for i in xrange(100):
+        for i in range(100):
             trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0, randomOrder=False)
 
             assert trX == trY
@@ -919,7 +922,7 @@ class HighLevelDataSafe(DataTestObject):
             assert teX[0] == 3
             assert teX[1] == 4
 
-        for i in xrange(100):
+        for i in range(100):
             trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
 
             # just to make sure everything looks right
@@ -942,7 +945,7 @@ class HighLevelModifying(DataTestObject):
         data = []
         toTest = self.constructor(data)
         unchanged = self.constructor(data)
-        ret = toTest.dropFeaturesContainingType(basestring) # RET CHECK
+        ret = toTest.dropFeaturesContainingType(six.string_types) # RET CHECK
         assert toTest.isIdentical(unchanged)
         assert ret is None
 
@@ -966,7 +969,7 @@ class HighLevelModifying(DataTestObject):
         toAdd = UML.createData('List', stringData)
         if toTest.getTypeString() == 'List':
             toTest.appendPoints(toAdd)
-            toTest.dropFeaturesContainingType(basestring)
+            toTest.dropFeaturesContainingType(six.string_types)
             assert toTest.features == 1
 
     def test_dropFeaturesContainingType_NamePath_preservation(self):
@@ -1264,7 +1267,7 @@ class HighLevelModifying(DataTestObject):
         # the odds are vanishingly low that it will do so over consecutive calls
         # however. We will pass as long as it changes once
         returns = []
-        for i in xrange(5):
+        for i in range(5):
             ret = toTest.shufflePoints() # RET CHECK
             returns.append(ret)
             if not toTest.isApproximatelyEqual(toCompare):
@@ -1319,7 +1322,7 @@ class HighLevelModifying(DataTestObject):
         # the odds are vanishly low that it will do so over consecutive calls
         # however. We will pass as long as it changes once
         returns = []
-        for i in xrange(5):
+        for i in range(5):
             ret = toTest.shuffleFeatures() # RET CHECK
             returns.append(ret)
             if not toTest.isApproximatelyEqual(toCompare):
@@ -1361,8 +1364,8 @@ class HighLevelModifying(DataTestObject):
             func = caller.normalizePoints
         else:
             func = caller.normalizeFeatures
-        if 'cython' in str(func.im_func.__class__):#if it is a cython function
-            d = func.im_func.func_defaults
+        if 'cython' in str(func.__func__.__class__):#if it is a cython function
+            d = func.__func__.__defaults__
             assert (d is None) or (d == (None, None, None))
         else:#if it is a normal python function
             a, va, vk, d = inspect.getargspec(func)

@@ -3,6 +3,7 @@ Module containing most of the user facing functions for the top level uml import
 
 """
 
+from __future__ import absolute_import
 import numpy
 import inspect
 import operator
@@ -10,7 +11,7 @@ import re
 import datetime
 import os
 import copy
-import ConfigParser
+import six.moves.configparser
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -43,6 +44,9 @@ from UML.randomness import numpyRandom
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 
 from UML.calculate import detectBestResult
+import six
+from six.moves import range
+from six.moves import zip
 scipy = UML.importModule('scipy.sparse')
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -419,7 +423,7 @@ def listDataFunctions():
             continue
 
         retString = methodName + "("
-        for i in xrange(0, len(args)):
+        for i in range(0, len(args)):
             if i != 0:
                 retString += ", "
             retString += args[i]
@@ -454,7 +458,7 @@ def listUMLFunctions():
         (args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
 
         retString = methodName + "("
-        for i in xrange(0, len(args)):
+        for i in range(0, len(args)):
             if i != 0:
                 retString += ", "
             retString += args[i]
@@ -590,7 +594,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
         return ret
     # input is an open file or a path to a file
-    elif isinstance(data, basestring) or looksFileLike(data):
+    elif isinstance(data, six.string_types) or looksFileLike(data):
         ret = createDataFromFile(
             returnType=returnType, data=data, pointNames=pointNames,
             featureNames=featureNames, fileType=fileType, name=name,
@@ -1335,7 +1339,7 @@ def coo_matrixTodense(origTodense):
             return origTodense(self)
         except Exception:
             ret = numpy.matrix(numpy.zeros(self.shape), dtype=self.dtype)
-            for (i, j), v in zip(zip(*self.nonzero()), self.data):
+            for (i, j), v in zip(list(zip(*self.nonzero())), self.data):
                 ret[i, j] = v
             return ret
     return f

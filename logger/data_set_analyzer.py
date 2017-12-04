@@ -5,11 +5,14 @@ that are calculated, depending on the type of feature: sparsity (proportion of z
 entries), min, max, mean, st. dev., # of unique values (for non-real valued features), # of
 missing values
 """
+from __future__ import absolute_import
 import math
 
 import UML
-from tableString import tableString
+from .tableString import tableString
 from UML.exceptions import ArgumentException
+import six
+from six.moves import range
 
 
 def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
@@ -41,7 +44,7 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
         columnLabels.append(label)
 
     resultsTable = [None] * dataContainer.features
-    for index in xrange(dataContainer.features):
+    for index in range(dataContainer.features):
         resultsTable[index] = dataContainer.getFeatureName(index)
 
     transposeRow(resultsTable)
@@ -87,11 +90,11 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
     #extract a subset of features from the data set and 
     if shape[1] > maxFeaturesToCover:
         if maxFeaturesToCover % 2 == 0:
-            leftIndicesToSelect = range(maxFeaturesToCover / 2)
-            rightIndicesToSelect = range(shape[1] - (maxFeaturesToCover / 2), shape[1])
+            leftIndicesToSelect = list(range(maxFeaturesToCover / 2))
+            rightIndicesToSelect = list(range(shape[1] - (maxFeaturesToCover / 2), shape[1]))
         else:
-            leftIndicesToSelect = range(math.floor(maxFeaturesToCover / 2))
-            rightIndicesToSelect = range(shape[1] - ((maxFeaturesToCover / 2) + 1), shape[1])
+            leftIndicesToSelect = list(range(math.floor(maxFeaturesToCover / 2)))
+            rightIndicesToSelect = list(range(shape[1] - ((maxFeaturesToCover / 2) + 1), shape[1]))
         subsetIndices = []
         subsetIndices.extend(leftIndicesToSelect)
         subsetIndices.extend(rightIndicesToSelect)
@@ -102,7 +105,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None, maxFeatu
 
     infoTable = produceFeaturewiseInfoTable(dataContainer, functionsToApply)
 
-    if displayDigits is not None and isinstance(displayDigits, (int, long)):
+    if displayDigits is not None and isinstance(displayDigits, six.integer_types):
         displayDigits = "." + str(displayDigits) + "f"
 
     if isSubset:
@@ -138,7 +141,7 @@ def produceAggregateTable(dataContainer):
 
     headers = []
     stats = []
-    for header, value in resultsDict.iteritems():
+    for header, value in six.iteritems(resultsDict):
         headers.append(header)
         stats.append(value)
 
@@ -156,7 +159,7 @@ def produceAggregateReport(dataContainer, displayDigits):
     """
     table = produceAggregateTable(dataContainer)
 
-    if displayDigits is not None and isinstance(displayDigits, (int, long)):
+    if displayDigits is not None and isinstance(displayDigits, six.integer_types):
         displayDigits = "." + str(displayDigits) + "f"
 
     return tableString(table, False, headers=table[0], roundDigits=displayDigits)
@@ -217,9 +220,9 @@ def appendColumns(appendTo, appendFrom):
         raise ArgumentException("Can't merge two matrices with different numbers of rows: " +
                                 str(len(appendTo)) + " != " + str(len(appendFrom)))
 
-    for i in xrange(len(appendTo)):
+    for i in range(len(appendTo)):
         appendFromRow = appendFrom[i]
-        for j in xrange(len(appendFromRow)):
+        for j in range(len(appendFromRow)):
             appendTo[i].append(appendFromRow[j])
 
     return

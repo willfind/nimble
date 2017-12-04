@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import math
 import numpy
 import scipy
@@ -5,7 +6,7 @@ import scipy
 import UML
 from UML.exceptions import ArgumentException
 
-numericalTypes = (int, float, long)
+numericalTypes = (int, float, int)
 
 
 def proportionMissing(values):
@@ -137,7 +138,7 @@ def median(values):
         return None
 
     #Filter out None/NaN values from list of values
-    sortedValues = filter(lambda x: not _isMissing(x), values)
+    sortedValues = [x for x in values if not _isMissing(x)]
 
     sortedValues = sorted(sortedValues)
 
@@ -155,7 +156,7 @@ def mode(values):
     Given a 1D vector of values, find the most frequent value.
     """
     collections = UML.importModule('collections')
-    nonMissingValues = filter(lambda x: not _isMissing(x), values)
+    nonMissingValues = [x for x in values if not _isMissing(x)]
     counter = collections.Counter(nonMissingValues)
     return counter.most_common()[0][0]
 
@@ -204,7 +205,7 @@ def uniqueCount(values):
     """
     Given a 1D vector of values, calculate the number of unique values.
     """
-    values = filter(lambda x: not _isMissing(x), values)
+    values = [x for x in values if not _isMissing(x)]
     valueSet = set(values)
     return len(valueSet)
 

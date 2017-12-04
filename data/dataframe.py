@@ -1,20 +1,22 @@
 """
 Class extending Base, using a pandas DataFrame to store data.
 """
+from __future__ import absolute_import
 import UML
 from UML.exceptions import ArgumentException, PackageException
+from six.moves import range
 
 pd = UML.importModule('pandas')
 if not pd:
     msg = 'To use class DataFrame, pandas must be installed.'
     raise PackageException(msg)
 
-from base import Base
+from .base import Base
 import numpy as np
 scipy = UML.importModule('scipy.sparse')
 
 import itertools
-from base_view import BaseView
+from .base_view import BaseView
 
 
 class DataFrame(Base):
@@ -135,7 +137,7 @@ class DataFrame(Base):
 
             viewArray.sort(cmp=comparator)
             indexPosition = []
-            for i in xrange(len(viewArray)):
+            for i in range(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
                 indexPosition.append(index)
             indexPosition = np.array(indexPosition)
@@ -151,10 +153,10 @@ class DataFrame(Base):
             scoreArray = viewArray
             if scorer is not None:
                 # use scoring function to turn views into values
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray[i] = scorer(viewArray[i])
             else:
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray[i] = viewArray[i][sortBy]
 
             # use numpy.argsort to make desired index array
@@ -171,7 +173,7 @@ class DataFrame(Base):
 
         # we convert the indices of the their previous location into their feature names
         newNameOrder = []
-        for i in xrange(len(indexPosition)):
+        for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
@@ -331,7 +333,7 @@ class DataFrame(Base):
         mapResultsMatrix = np.apply_along_axis(mapperWrapper, 1, self.data.values)
         mapResults = {}
         for pairsArray in mapResultsMatrix:
-            for i in xrange(len(pairsArray) / 2):
+            for i in range(len(pairsArray) / 2):
                 # pairsArray has key value pairs packed back to back
                 k = pairsArray[i * 2]
                 v = pairsArray[(i * 2) + 1]
@@ -514,7 +516,7 @@ class DataFrame(Base):
         except TypeError:
             oneArg = True
 
-        IDs = itertools.product(xrange(self.points), xrange(self.features))
+        IDs = itertools.product(range(self.points), range(self.features))
         for (i, j) in IDs:
             currVal = self.data.ix[i, j]
 

@@ -6,6 +6,7 @@ called from this folder aware of the package structure around it
 
 
 # PEP 366 'boilerplate', plus the necessary import of the top level package
+from __future__ import absolute_import
 def boilerplate():
     import sys
     import os

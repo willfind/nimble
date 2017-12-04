@@ -4,10 +4,11 @@ with the undlying structures being used.
 
 """
 
+from __future__ import absolute_import
 import tempfile
 import copy
 import os
-import ConfigParser
+import six.moves.configparser
 
 from nose.tools import raises
 
@@ -271,7 +272,7 @@ def test_settings_savingSection():
     try:
         val = temp.get('TestSec2', "op1")
         assert False
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
 
@@ -297,12 +298,12 @@ def test_settings_savingOption():
     try:
         val = temp.get('TestSec2', "op1")
         assert False
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
     try:
         val = temp.get('TestSec1', "op1") == '1'
         assert False
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
 
 
@@ -382,7 +383,7 @@ def test_settings_syncingChanges():
     assert UML.settings.get('Test', 'Temp0') == '0'
     try:
         UML.settings.get('Test', 'Temp1')
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
     assert UML.settings.get('Test', 'NotTemp1') == ''
 
@@ -400,7 +401,7 @@ def test_settings_allowedNames():
 
 
 @configSafetyWrapper
-@raises(ConfigParser.NoSectionError)
+@raises(six.moves.configparser.NoSectionError)
 # test that set witout save is temporary
 def test_settings_set_without_save1():
     # make some change via UML.settings.
@@ -415,7 +416,7 @@ def test_settings_set_without_save1():
 
 
 @configSafetyWrapper
-@raises(ConfigParser.NoSectionError)
+@raises(six.moves.configparser.NoSectionError)
 # test that set witout save is temporary
 def test_settings_set_without_save2():
     # make some change via UML.settings.
@@ -443,7 +444,7 @@ def test_settings_deleteThenSaveAValue():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
     assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
@@ -456,7 +457,7 @@ def test_settings_deleteThenSaveAValue():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
 
     UML.settings.saveChanges()
@@ -466,7 +467,7 @@ def test_settings_deleteThenSaveAValue():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
     assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
@@ -485,12 +486,12 @@ def test_settings_deleteThenSaveASection():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
     # change isn't reflected in file
@@ -502,12 +503,12 @@ def test_settings_deleteThenSaveASection():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
     UML.settings.saveChanges()
@@ -517,12 +518,12 @@ def test_settings_deleteThenSaveASection():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
 
@@ -540,7 +541,7 @@ def test_settings_setThenDeleteCycle_value():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
 
     # change should now be reflected in file
@@ -548,7 +549,7 @@ def test_settings_setThenDeleteCycle_value():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
 
@@ -564,7 +565,7 @@ def test_settings_setThenDeleteCycle_section():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
     # change never saved, shouldn't be in file
@@ -572,7 +573,7 @@ def test_settings_setThenDeleteCycle_section():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
 
@@ -581,7 +582,7 @@ def test_settings_setDefault():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name2')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
     UML.settings.set("tempSectionName", "temp.Option.Name1", '1')
@@ -594,7 +595,7 @@ def test_settings_setDefault():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
 
     assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
@@ -618,7 +619,7 @@ def test_settings_deleteDefault():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoOptionError
-    except ConfigParser.NoOptionError:
+    except six.moves.configparser.NoOptionError:
         pass
 
     assert UML.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
@@ -628,7 +629,7 @@ def test_settings_deleteDefault():
     try:
         UML.settings.get("tempSectionName", 'temp.Option.Name1')
         assert False  # expected ConfigParser.NoSectionError
-    except ConfigParser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         pass
 
 

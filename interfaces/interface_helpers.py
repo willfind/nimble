@@ -3,6 +3,7 @@ Utility functions that could be useful in multiple interfaces
 
 """
 
+from __future__ import absolute_import
 import numpy
 import sys
 import importlib
@@ -10,6 +11,8 @@ import importlib
 import UML
 from UML.exceptions import ArgumentException
 from UML.randomness import pythonRandom
+import six
+from six.moves import range
 
 
 def makeArgString(wanted, argDict, prefix, infix, postfix):
@@ -25,7 +28,7 @@ def makeArgString(wanted, argDict, prefix, infix, postfix):
     for arg in wanted:
         if arg in argDict:
             value = argDict[arg]
-            if isinstance(value, basestring):
+            if isinstance(value, six.string_types):
                 value = "\"" + value + "\""
             else:
                 value = str(value)
@@ -222,7 +225,7 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels, useSize=True)
     check = 20
     if length < check:
         check = length
-    checkList = pythonRandom.sample(xrange(length), check)
+    checkList = pythonRandom.sample(range(length), check)
     results = []
     for i in checkList:
         strategy = verifyOvANotOvOSingleList(scoresPerPoint.pointView(i), predictedLabels[i, 0], numLabels)
@@ -258,8 +261,8 @@ def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
     """
     # simulate OvA prediction strategy
     maxScoreIndex = -1
-    maxScore = -sys.maxint - 1
-    for i in xrange(len(scoreList)):
+    maxScore = -sys.maxsize - 1
+    for i in range(len(scoreList)):
         if scoreList[i] > maxScore:
             maxScore = scoreList[i]
             maxScoreIndex = i
@@ -269,8 +272,8 @@ def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
     # simulate OvO prediction strategy
     combinedScores = calculateSingleLabelScoresFromOneVsOneScores(scoreList, numLabels)
     maxScoreIndex = -1
-    maxScore = -sys.maxint - 1
-    for i in xrange(len(combinedScores)):
+    maxScore = -sys.maxsize - 1
+    for i in range(len(combinedScores)):
         if combinedScores[i] > maxScore:
             maxScore = combinedScores[i]
             maxScoreIndex = i
@@ -294,9 +297,9 @@ def calculateSingleLabelScoresFromOneVsOneScores(oneVOneData, numLabels):
     the ith value is the ratio of wins for label i in the label vs label tournament.
     """
     ret = []
-    for i in xrange(numLabels):
+    for i in range(numLabels):
         wins = 0
-        for j in xrange(numLabels):
+        for j in range(numLabels):
             score = valueFromOneVOneData(oneVOneData, i, j, numLabels)
             if score is not None and score > 0:
                 wins += 1
@@ -341,12 +344,12 @@ def scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder):
     # column to be that label's score
     elif scoreMode == 'bestScore':
         labelToIndexMap = {}
-        for i in xrange(len(labelOrder)):
+        for i in range(len(labelOrder)):
             ithLabel = labelOrder[i]
             labelToIndexMap[ithLabel] = i
         outData = predLabels
         bestScorePerPrediction = numpy.empty((len(scores), 1))
-        for i in xrange(len(scores)):
+        for i in range(len(scores)):
             label = predLabels[i, 0]
             index = labelToIndexMap[label]
             matchingScore = scores[i][index]
@@ -369,7 +372,7 @@ def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
 
     """
     newScoresPerPoint = []
-    for i in xrange(scoresPerPoint.points):
+    for i in range(scoresPerPoint.points):
         pointScoreList = []
         currScore = scoresPerPoint[i, 0]
         pointScoreList.append((-1) * currScore)

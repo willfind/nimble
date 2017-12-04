@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 import os
 import pstats
 import time
 import cProfile
+from six.moves import range
 
 gFileName = None
 
@@ -67,7 +69,7 @@ def dataTests(fileName=None, test=''):
 # pr.print_stats(sort='time')
 
 def funcTests(f, n=1000):
-    x = range(n)
+    x = list(range(n))
     pr = cProfile.Profile()
     pr.enable()
 

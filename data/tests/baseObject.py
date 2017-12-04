@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import UML
+import six
 #import numpy
 
 def objConstructorMaker(returnType):
@@ -11,7 +13,7 @@ def objConstructorMaker(returnType):
             data, pointNames='automatic', featureNames='automatic', elementType=None,
             name=None, path=(None, None)):
         # Case: data is a path to a file
-        if isinstance(data, basestring):
+        if isinstance(data, six.string_types):
             return UML.createData(
                 returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name)
@@ -38,7 +40,7 @@ def viewConstructorMaker(concreteType):
             data, pointNames='automatic', featureNames='automatic',
             name=None, path=(None, None)):
         # Case: data is a path to a file
-        if isinstance(data, basestring):
+        if isinstance(data, six.string_types):
             orig = UML.createData(
                 concreteType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name)

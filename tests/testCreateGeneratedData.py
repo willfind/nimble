@@ -5,6 +5,7 @@ UML.createRandomData, UML.ones, UML.zeros, UML.identity
 
 """
 
+from __future__ import absolute_import
 import numpy
 import copy
 from nose.tools import *
@@ -12,6 +13,7 @@ from nose.tools import *
 import UML
 from UML.exceptions import ArgumentException
 from UML import createRandomData
+from six.moves import range
 
 
 returnTypes = copy.copy(UML.data.available)
@@ -155,8 +157,8 @@ def back_constant_correctSizeAndContents(toTest, value):
             assert ret.points == size[0]
             assert ret.features == size[1]
 
-            for p in xrange(size[0]):
-                for f in xrange(size[1]):
+            for p in range(size[0]):
+                for f in range(size[1]):
                     assert ret[p, f] == value
 
 
@@ -280,11 +282,11 @@ def test_identity_sizeChecking():
 
 def test_identity_correctSizeAndContents():
     for t in returnTypes:
-        for size in xrange(1, 5):
+        for size in range(1, 5):
             toTest = UML.identity(t, size)
             assert t == toTest.getTypeString()
-            for p in xrange(size):
-                for f in xrange(size):
+            for p in range(size):
+                for f in range(size):
                     if p == f:
                         assert toTest[p, f] == 1
                     else:

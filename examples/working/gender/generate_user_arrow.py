@@ -1,5 +1,7 @@
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+from .allowImports import boilerplate
+from six.moves import range
 boilerplate()
 
 import UML
@@ -33,7 +35,7 @@ DPISAVE = 144.0
 
 wanted = [-9.99]
 #wanted = [.5 * i for i in xrange(-20,21)]
-wanted += [.5 * i for i in xrange(-19,20)]
+wanted += [.5 * i for i in range(-19,20)]
 wanted += [9.99]
 #wanted = [-9.99]
 for arrowX in wanted:

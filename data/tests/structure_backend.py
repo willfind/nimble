@@ -14,6 +14,8 @@ flattenToOneFeature, unflattenFromOnePoint, unflattenFromOneFeature
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import tempfile
 import numpy
 import os
@@ -34,6 +36,7 @@ from UML.exceptions import ImproperActionException
 from UML.randomness import numpyRandom
 
 from UML.data.tests.baseObject import DataTestObject
+from six.moves import map
 scipy = UML.importModule('scipy.sparse')
 pd = UML.importModule('pandas')
 
@@ -283,33 +286,33 @@ class StructureDataSafe(DataTestObject):
             orig.copyAs("List", outputAs1D=True)
             assert False
         except ArgumentException as ae:
-            print ae
+            print(ae)
         try:
             orig.copyAs("Matrix", outputAs1D=True)
             assert False
         except ArgumentException as ae:
-            print ae
+            print(ae)
         try:
             orig.copyAs("Sparse", outputAs1D=True)
             assert False
         except ArgumentException as ae:
-            print ae
+            print(ae)
         try:
             orig.copyAs("numpy matrix", outputAs1D=True)
             assert False
         except ArgumentException as ae:
-            print ae
+            print(ae)
         if scipy:
             try:
                 orig.copyAs("scipy csr", outputAs1D=True)
                 assert False
             except ArgumentException as ae:
-                print ae
+                print(ae)
             try:
                 orig.copyAs("scipy csc", outputAs1D=True)
                 assert False
             except ArgumentException as ae:
-                print ae
+                print(ae)
 
     @raises(ArgumentException)
     def test_copy_outputAs1DWrongShape(self):
@@ -2960,7 +2963,7 @@ class StructureModifying(DataTestObject):
             toTest.fillWith(set([1, 3]), 0, 0, 0, 1)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
 
@@ -2968,7 +2971,7 @@ class StructureModifying(DataTestObject):
             toTest.fillWith(lambda x: x * x, 0, 0, 0, 1)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
 
@@ -2984,7 +2987,7 @@ class StructureModifying(DataTestObject):
             toTest.fillWith(val, 0, 0, 1, 1)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
 
@@ -2994,7 +2997,7 @@ class StructureModifying(DataTestObject):
             toTest.fillWith(val, 0, 0, 1, 1)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
 
@@ -3009,28 +3012,28 @@ class StructureModifying(DataTestObject):
             toTest.fillWith(val, "hello", 0, 1, 1)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, "Wrong", 1, 1)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, 0, 2, 1)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, 0, 1, -12)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
 
@@ -3045,14 +3048,14 @@ class StructureModifying(DataTestObject):
             toTest.fillWith(val, 1, 0, 0, 1)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
         try:
             toTest.fillWith(val, 0, 1, 1, 0)
             assert False  # expected ArgumentExcpetion
         except ArgumentException as ae:
-            print ae
+            print(ae)
         except Exception:
             assert False  # expected ArgumentException
 
@@ -3454,8 +3457,8 @@ class StructureModifying(DataTestObject):
             assert n.startswith(DEFAULT_PREFIX)
             assert int(n[len(DEFAULT_PREFIX):]) >= 0
 
-        map(checkName, toTest.getPointNames())
-        map(checkName, toTest.getFeatureNames())
+        list(map(checkName, toTest.getPointNames()))
+        list(map(checkName, toTest.getFeatureNames()))
 
 
     # random round trip
@@ -3472,8 +3475,8 @@ class StructureModifying(DataTestObject):
         keptAxisLen = 50
         shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
         origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
-        namesDiscard = map(str, numpyRandom.choice(100, discardAxisLen, replace=False).tolist())
-        namesKept = map(str, numpyRandom.choice(100, keptAxisLen, replace=False).tolist())
+        namesDiscard = list(map(str, numpyRandom.choice(100, discardAxisLen, replace=False).tolist()))
+        namesKept = list(map(str, numpyRandom.choice(100, keptAxisLen, replace=False).tolist()))
         namesArgs = {"pointNames":namesDiscard, "featureNames":namesKept} if axis == 'point' else {"pointNames":namesKept, "featureNames":namesDiscard}
 
         testObj = self.constructor(origRaw, **namesArgs)
@@ -3495,7 +3498,7 @@ def exceptionHelper(testObj, target, args, wanted, checkMsg):
         assert False  # expected an exception
     except wanted as check:
         if checkMsg:
-            print check
+            print(check)
 
 
 class StructureAll(StructureDataSafe, StructureModifying):

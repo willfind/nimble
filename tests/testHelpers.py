@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy
 import math
 from math import fabs
@@ -27,6 +29,7 @@ from UML.calculate import rootMeanSquareError
 from UML.calculate import meanAbsoluteError
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
+from six.moves import range
 
 
 
@@ -71,11 +74,11 @@ class FoldIteratorTester(object):
         toTest = self.constructor(data, names)
         folds = makeFoldIterator([toTest], 2)
 
-        [(fold1Train, fold1Test)] = folds.next()
-        [(fold2Train, fold2Test)] = folds.next()
+        [(fold1Train, fold1Test)] = next(folds)
+        [(fold2Train, fold2Test)] = next(folds)
 
         try:
-            folds.next()
+            next(folds)
             assert False
         except StopIteration:
             pass
@@ -93,11 +96,11 @@ class FoldIteratorTester(object):
         toTest = self.constructor(data, names)
         folds = makeFoldIterator([toTest, None], 2)
 
-        [(fold1Train, fold1Test), (fold1NoneTrain, fold1NoneTest)] = folds.next()
-        [(fold2Train, fold2Test), (fold2NoneTrain, fold2NoneTest)] = folds.next()
+        [(fold1Train, fold1Test), (fold1NoneTrain, fold1NoneTest)] = next(folds)
+        [(fold2Train, fold2Test), (fold2NoneTrain, fold2NoneTest)] = next(folds)
 
         try:
-            folds.next()
+            next(folds)
             assert False
         except StopIteration:
             pass
@@ -127,13 +130,13 @@ class FoldIteratorTester(object):
 
         folds = makeFoldIterator([toTest0, toTest1, toTest2], 2)
 
-        fold0 = folds.next()
-        fold1 = folds.next()
+        fold0 = next(folds)
+        fold1 = next(folds)
         [(fold0Train0, fold0Test0), (fold0Train1, fold0Test1), (fold0Train2, fold0Test2)] = fold0
         [(fold1Train0, fold1Test0), (fold1Train1, fold1Test1), (fold1Train2, fold1Test2)] = fold1
 
         try:
-            folds.next()
+            next(folds)
             assert False
         except StopIteration:
             pass
@@ -159,12 +162,12 @@ class FoldIteratorTester(object):
 
             for train in trainList:
                 assert train.points == trainList[0].points
-                for index in xrange(train.points):
+                for index in range(train.points):
                     assert fabs(train[index, 0]) == fabs(trainList[0][index, 0])
 
             for test in testList:
                 assert test.points == testList[0].points
-                for index in xrange(test.points):
+                for index in range(test.points):
                     assert fabs(test[index, 0]) == fabs(testList[0][index, 0])
 
 
@@ -238,12 +241,12 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
         except AssertionError:
             errorString = 'Classification failure. Classified ' + curAlgorithm + ' as ' + predictedType + ', when it really is a ' + actualType
             if printResultsDontThrow:
-                print errorString
+                print(errorString)
             else:
                 raise AssertionError(errorString)
         else:
             if printResultsDontThrow:
-                print 'Passed test for ' + curAlgorithm
+                print('Passed test for ' + curAlgorithm)
 
 
 def testGenerateClusteredPoints():
@@ -257,14 +260,14 @@ def testGenerateClusteredPoints():
                                                                   addFeatureNoise=True, addLabelNoise=True,
                                                                   addLabelColumn=True)
     pts, feats = noiselessLabels.points, noiselessLabels.features
-    for i in xrange(pts):
-        for j in xrange(feats):
+    for i in range(pts):
+        for j in range(feats):
             #assert that the labels don't have noise in noiselessLabels
             assert (noiselessLabels[i, j] % 1 == 0.0)
 
     pts, feats = dataset.points, dataset.features
-    for i in xrange(pts):
-        for j in xrange(feats):
+    for i in range(pts):
+        for j in range(feats):
             #assert dataset has noise for all entries
             assert (dataset[i, j] % 1 != 0.0)
 
@@ -272,14 +275,14 @@ def testGenerateClusteredPoints():
                                                                   addFeatureNoise=False, addLabelNoise=False,
                                                                   addLabelColumn=True)
     pts, feats = noiselessLabels.points, noiselessLabels.features
-    for i in xrange(pts):
-        for j in xrange(feats):
+    for i in range(pts):
+        for j in range(feats):
             #assert that the labels don't have noise in noiselessLabels
             assert (noiselessLabels[i, j] % 1 == 0.0)
 
     pts, feats = dataset.points, dataset.features
-    for i in xrange(pts):
-        for j in xrange(feats):
+    for i in range(pts):
+        for j in range(feats):
             #assert dataset has no noise for all entries
             assert (dataset[i, j] % 1 == 0.0)
 
@@ -298,8 +301,8 @@ def testGenerateClusteredPoints():
                                                                         addFeatureNoise=True, addLabelNoise=True,
                                                                         addLabelColumn=True)
     pts, feats = allNoiseDataset.points, allNoiseDataset.features
-    for curRow in xrange(pts):
-        for curCol in xrange(feats):
+    for curRow in range(pts):
+        for curCol in range(feats):
             #assert dataset has no noise for all entries
             assert (allNoiseDataset[curRow, curCol] % 1 > 0.0000000001)
 
@@ -427,9 +430,9 @@ def testtrainAndApplyOneVsAll():
     results2 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='bestScore')
     results3 = trainAndApplyOneVsAll('Custom.KNNClassifier', trainObj1, trainY=3, testX=testObj1, scoreMode='allScores')
 
-    print "Results 1 output: " + str(results1.data)
-    print "Results 2 output: " + str(results2.data)
-    print "Results 3 output: " + str(results3.data)
+    print("Results 1 output: " + str(results1.data))
+    print("Results 2 output: " + str(results2.data))
+    print("Results 3 output: " + str(results3.data))
 
     assert results1.copyAs(format="python list")[0][0] >= 0.0
     assert results1.copyAs(format="python list")[0][0] <= 3.0
@@ -616,7 +619,7 @@ def testGenerateAllPairs():
     """
     testList1 = [1, 2, 3, 4]
     testPairs = generateAllPairs(testList1)
-    print testPairs
+    print(testPairs)
 
     assert len(testPairs) == 6
     assert ((1, 2) in testPairs) or ((2, 1) in testPairs)

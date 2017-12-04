@@ -5,7 +5,8 @@
 
 """
 
-from universal_interface import UniversalInterface
+from __future__ import absolute_import
+from .universal_interface import UniversalInterface
 
 
 class UniversalInterfaceLookalike(UniversalInterface):

@@ -4,6 +4,7 @@ functions.
 
 """
 
+from __future__ import absolute_import
 import inspect
 import numpy
 import math
@@ -11,6 +12,7 @@ import math
 import UML
 from UML.exceptions import ArgumentException
 from UML.randomness import numpyRandom
+from six.moves import range
 
 
 def detectBestResult(functionToCheck):
@@ -85,7 +87,7 @@ def detectBestResult(functionToCheck):
             # possible for us to generate numbers cause weirdness or outright
             # failures. We allow for one such result
             freebieAvailable = False if predictionType == 0 else True
-            for i in xrange(confidenceTrials):
+            for i in range(confidenceTrials):
                 knownsMixed = _generateMixedRandom(trialSize)
                 try:
                     resultMixed = _runTrialGivenParameters(functionToCheck, knownsMixed, predictionType)
@@ -177,7 +179,7 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
     scoreList = [allCorrectScore]
     # range over the indices of predicted values, making them incorrect one
     # by one
-    for index in xrange(predicted.points):
+    for index in range(predicted.points):
         _makeIncorrect(predicted, predictionType, index)
         scoreList.append(toCheck(knowns.copy(), predicted))
 
@@ -254,7 +256,7 @@ def _generatePredicted(knowns, predictionType):
     # Labels, and scores for all possible labels (aka 'allScores')
     else:
         dataToFill = []
-        for i in xrange(workingCopy.points):
+        for i in range(workingCopy.points):
             currConfidences = [None, None]
             winner = numpyRandom.randint(10) + 10 + 2
             loser = numpyRandom.randint(winner - 2) + 2

@@ -1,11 +1,14 @@
 
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import numpy
 import math
 
-from allowImports import boilerplate
+from .allowImports import boilerplate
+from six.moves import range
 boilerplate()
 
 import UML
@@ -36,7 +39,7 @@ class LogisticRegressionNoTraining(CustomLearner):
         ret = probabilities.calculateForEachElement(roundProb)
         
         for i,name in enumerate(testX.getFeatureNames()):
-            print name + " : " + str(self.coefs[i])
+            print(name + " : " + str(self.coefs[i]))
 
         return ret
 
@@ -50,10 +53,10 @@ def predict_gender_sanityCheck(responses, catTestFraction, splitSeed):
     UML.setRandomSeed(splitSeed)
     catTrain, catTest = responses.trainAndTestSets(testFraction=catTestFraction)
     
-    for i in xrange(0, 5):
+    for i in range(0, 5):
         currData = catTest.copy()
         s = i*100
-        print s
+        print(s)
         testX = currData.extractPoints(start=s, end=s+100)
         testY = testX.extractFeatures('male0female1')
 
@@ -62,7 +65,7 @@ def predict_gender_sanityCheck(responses, catTestFraction, splitSeed):
 
         C = tuple([100. / (10**n) for n in range(7)])
         ret = UML.trainAndTest('scikitlearn.LogisticRegression', trainX, trainY, testX, testY, fractionIncorrect, C=C)
-        print ret
+        print(ret)
 
 
 def predict_gender_fullTrain(responses, catTestFraction, splitSeed):
@@ -111,7 +114,7 @@ def outputFile_PredictionMetadata(outPath, responses, questionMetadata, coefs, c
 
         raw.append(newPoint)
 
-    coefCats = map(lambda x: "coefs|" + x, allCats)
+    coefCats = ["coefs|" + x for x in allCats]
 
     fnames = ["questions", "coding", "coefs|gender_prediction"] + coefCats
     toOutput = UML.createData("List", raw, featureNames=fnames)

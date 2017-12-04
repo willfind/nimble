@@ -6,6 +6,7 @@ UML. Run as main to execute.
 
 """
 
+from __future__ import absolute_import
 import warnings
 import inspect
 import os

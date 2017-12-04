@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import UML
 from UML.customLearners.multioutput_linear_regression import MultiOutputLinearRegression
 from UML.configuration import configSafetyWrapper

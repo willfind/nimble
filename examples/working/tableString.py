@@ -1,5 +1,8 @@
+from __future__ import absolute_import
 import copy
 import math
+import six
+from six.moves import range
 
 
 class TableError(Exception):
@@ -34,16 +37,16 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
             "table must be a list of lists but found a row that had the value " + str(row))
         if (len(row) > cols): cols = len(row)
 
-    for c in xrange(cols):
+    for c in range(cols):
         colWidths.append(1)
 
     #sort the values if sorting is on
     if sortColumn != None:
-        if isinstance(sortColumn, (str, unicode)): #if we're sorting by the column with a given name
+        if isinstance(sortColumn, (str, six.text_type)): #if we're sorting by the column with a given name
             if headers == None: raise Exception(
                 "Cannot find the sortColumn '" + str(sortColumn) + "' since headers=" + str(headers))
             sortColumn = headers.index(sortColumn)
-        if not isinstance(sortColumn, (int, long)): raise Exception(
+        if not isinstance(sortColumn, six.integer_types): raise Exception(
             "sort column must be an integer, but was: " + str(sortColumn))
         if sortColumn < 0: raise Exception(
             "sortColumn should have been a non-negative integer but was: " + str(sortColumn))
@@ -57,8 +60,8 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
             table.insert(0, tempHeaders)
 
     #replace numbers with formatting/rounding versions and update column widths to fit the values
-    for r in xrange(len(table)):
-        for c in xrange(len(table[r])):
+    for r in range(len(table)):
+        for c in range(len(table[r])):
             if roundDigits != None and isinstance(table[r][c], float):
                 #print "table[r][c]", table[r][c]
                 #print "roundDigits", roundDigits
@@ -71,7 +74,7 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
         if len(headers) != cols: raise TableError(
             "Number of table columns (" + str(cols) + ")  does not match number of header columns (" + str(
                 len(headers)) + ")!")
-        for c in xrange(len(headers)):
+        for c in range(len(headers)):
             if colWidths[c] < len(headers[c]): colWidths[c] = len(headers[c])
 
     #if there is a limit to how many rows we can show, delete the middle rows and replace them with a "..." row
@@ -87,8 +90,8 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
         table = table[:snipIndex] + [["..."] * len(table[firstToDelete])] + table[snipIndex + 1:]
 
     #modify the text in each column to give it the right length
-    for r in xrange(len(table)):
-        for c in xrange(len(table[r])):
+    for r in range(len(table)):
+        for c in range(len(table[r])):
             v = table[r][c]
             if (r > 0 and c > 0):
                 table[r][c] = v.center(colWidths[c])
@@ -103,7 +106,7 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
                 table[r][c] += columnSeperator
 
     out = ""
-    for r in xrange(len(table)):
+    for r in range(len(table)):
         if useSpaces:
             out += "   ".join(table[r]) + "\n"
         else:
@@ -135,7 +138,7 @@ def formatNumber(num, places=0):
     formatted = []
     #print integer, type(integer)
     #print len(integer)
-    for i in xrange(len(integer), 0, -1):
+    for i in range(len(integer), 0, -1):
         count += 1
         formatted.append(integer[i - 1])
         if count % 3 == 0 and i - 1:

@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from nose.tools import *
 
 from UML.logger.stopwatch import Stopwatch
 from UML.exceptions import ImproperActionException
 from UML.exceptions import MissingEntryException
+from six.moves import range
 
 
 def testBasicFuncs():

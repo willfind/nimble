@@ -6,12 +6,13 @@
 	is set to default value.
 """
 
+from __future__ import absolute_import
 import os
 import datetime
 
 import UML
-from human_readable_log import HumanReadableLogger
-from machine_readable_log import MachineReadableLogger
+from .human_readable_log import HumanReadableLogger
+from .machine_readable_log import MachineReadableLogger
 
 
 class LogManager(object):

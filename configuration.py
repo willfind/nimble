@@ -19,7 +19,8 @@ will ensure that the configuration file reflects all available options.
 # Note: .ini format's option names are not case sensitive?
 
 
-import ConfigParser
+from __future__ import absolute_import
+import six.moves.configparser
 import os
 import copy
 import sys
@@ -28,9 +29,10 @@ import tempfile
 
 import UML
 from UML.exceptions import ArgumentException
+import six
 
 
-class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
+class SortedCommentPreservingConfigParser(six.moves.configparser.SafeConfigParser):
     """
     An extension of the the standard python SafeConfigParser which will
     preserve comments present in the configuration file.
@@ -52,13 +54,13 @@ class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
         including any saved comments from when loaded.
         """
         if self._defaults:
-            secComment = self._getComment(ConfigParser.DEFAULTSECT, None)
+            secComment = self._getComment(six.moves.configparser.DEFAULTSECT, None)
             if secComment is not None:
                 fp.write(secComment)
 
-            fp.write("[%s]\n" % ConfigParser.DEFAULTSECT)
+            fp.write("[%s]\n" % six.moves.configparser.DEFAULTSECT)
             for (key, value) in self._defaults.items():
-                optComment = self._getComment(ConfigParser.DEFAULTSECT, key)
+                optComment = self._getComment(six.moves.configparser.DEFAULTSECT, key)
                 if optComment is not None:
                     fp.write(optComment)
                 fp.write("%s = %s\n" % (key, str(value).replace('\n', '\n\t')))
@@ -137,7 +139,7 @@ class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
                     sectname = mo.group('header')
                     if sectname in self._sections:
                         cursect = self._sections[sectname]
-                    elif sectname == ConfigParser.DEFAULTSECT:
+                    elif sectname == six.moves.configparser.DEFAULTSECT:
                         cursect = self._defaults
 
                         comments[sectname] = self._dict()
@@ -155,7 +157,7 @@ class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
                     optname = None
                 # no section header in the file?
                 elif cursect is None:
-                    raise ConfigParser.MissingSectionHeaderError(fpname, lineno, line)
+                    raise six.moves.configparser.MissingSectionHeaderError(fpname, lineno, line)
                 # an option line?
                 else:
                     mo = self._optcre.match(line)
@@ -188,7 +190,7 @@ class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
                         # raised at the end of the file and will contain a
                         # list of all bogus lines
                         if e is None:
-                            e = ConfigParser.ParsingError(fpname)
+                            e = six.moves.configparser.ParsingError(fpname)
                         e.append(lineno, repr(line))
         # if any parsing errors occurred, raise an exception
         if e is not None:
@@ -196,7 +198,7 @@ class SortedCommentPreservingConfigParser(ConfigParser.SafeConfigParser):
 
         # join the multi-line values collected while reading
         all_sections = [self._defaults]
-        all_sections.extend(self._sections.values())
+        all_sections.extend(list(self._sections.values()))
         for options in all_sections:
             for name, val in options.items():
                 if isinstance(val, list):
@@ -291,24 +293,24 @@ class SessionConfiguration(object):
                             else:
                                 ret[kOpt] = self.changes[kSec][kOpt]
             if not found:
-                raise ConfigParser.NoSectionError()
+                raise six.moves.configparser.NoSectionError()
             return ret
         # Otherwise, treat it as a request for a single option,
         else:
             if section in self.changes:
                 if isinstance(self.changes[section], ToDelete):
-                    raise ConfigParser.NoSectionError(section)
+                    raise six.moves.configparser.NoSectionError(section)
                 if option in self.changes[section]:
                     ret = self.changes[section][option]
                     if isinstance(ret, ToDelete):
-                        raise ConfigParser.NoOptionError(section, option)
+                        raise six.moves.configparser.NoOptionError(section, option)
                     return ret
                 else:  # option not in self.change[section]
                     try:
                         fromFile = self.cp.get(section, option)
                         return fromFile
-                    except ConfigParser.NoSectionError:
-                        raise ConfigParser.NoOptionError(section, option)
+                    except six.moves.configparser.NoSectionError:
+                        raise six.moves.configparser.NoOptionError(section, option)
             fromFile = self.cp.get(section, option)
             return fromFile
 
@@ -391,9 +393,9 @@ class SessionConfiguration(object):
                             if len(self.changes[section]) == 0:
                                 del self.changes[section]
                             return
-        except ConfigParser.NoSectionError:
+        except six.moves.configparser.NoSectionError:
             pass
-        except ConfigParser.NoOptionError:
+        except six.moves.configparser.NoOptionError:
             pass
 
         # check: is this section the name of an interface
@@ -414,7 +416,7 @@ class SessionConfiguration(object):
         except ArgumentException:
             einfo = sys.exc_info()
             if not ignore:
-                raise einfo[1], None, einfo[2]
+                six.reraise(einfo[1], None, einfo[2])
 
         if not section in self.changes or isinstance(self.changes[section], ToDelete):
             self.changes[section] = {}
@@ -546,7 +548,7 @@ def syncWithInterfaces(settingsObj):
         for opName in optionNames:
             try:
                 settingsObj.get(interfaceName, opName)
-            except ConfigParser.NoOptionError:
+            except six.moves.configparser.NoOptionError:
                 settingsObj.set(interfaceName, opName, "")
             if (interfaceName, opName) in origChanges:
                 newChanges[(interfaceName, opName)] = origChanges[(interfaceName, opName)]
@@ -596,7 +598,7 @@ def configSafetyWrapper(toWrap):
             UML.settings.set("logger", 'name', UML.settings.get("logger", 'name'))
             UML.settings.saveChanges("logger")
 
-    wrapped.func_name = toWrap.func_name
+    wrapped.__name__ = toWrap.__name__
     wrapped.__doc__ = toWrap.__doc__
 
     return wrapped

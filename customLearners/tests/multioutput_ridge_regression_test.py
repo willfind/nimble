@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import UML
 
 # test for failure to import?

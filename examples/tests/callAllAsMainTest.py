@@ -6,6 +6,8 @@ scripts contained in the examples folder.
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import StringIO
@@ -67,7 +69,7 @@ def test_callAllAsMain():
 
         for script in cleaned:
             try:
-                execfile(os.path.join(examplesDir, script))
+                exec(compile(open(os.path.join(examplesDir, script)).read(), os.path.join(examplesDir, script), 'exec'))
                 results[script] = "Success"
             except Exception:
                 results[script] = sys.exc_info()
@@ -78,18 +80,18 @@ def test_callAllAsMain():
         shutil.rmtree(tempOutDir)
         UML.randomness.endAlternateControl()
 
-    print ""
-    print "*** Results ***"
-    print ""
-    print ""
+    print("")
+    print("*** Results ***")
+    print("")
+    print("")
     fail = False
     sortedKeys = sorted(results.keys())
     for key in sortedKeys:
         val = results[key]
         if val != "Success":
             fail = True
-        print key + " : " + str(val)
-        print ""
+        print(key + " : " + str(val))
+        print("")
     assert not fail
     #if isinstance(val, tuple) and len(val) > 0 and isinstance(val[0], Exception):
     #raise val[1][1], None, val[1][2]

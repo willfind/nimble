@@ -4,7 +4,9 @@ files. Uses a portion of the UCI ML repository census income data set (aka Adult
 
 """
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+from .allowImports import boilerplate
+import six
 
 boilerplate()
 
@@ -25,7 +27,7 @@ if __name__ == "__main__":
     full = createData("DataFrame", pathOrig, featureNames=True)
 
     # scrub the set of any string valued data
-    full.dropFeaturesContainingType(basestring)
+    full.dropFeaturesContainingType(six.string_types)
 
     # demonstrate splitting the data in train and test sets out of place. By default,
     # the distribution of points between the two returned objects is random.

@@ -3,18 +3,22 @@ Class extending Base, using a numpy dense matrix to store data.
 
 """
 
+from __future__ import absolute_import
 import numpy
 import sys
 import itertools
 import copy
 
 import UML
-from base import Base
-from base_view import BaseView
-from dataHelpers import View
+from .base import Base
+from .base_view import BaseView
+from .dataHelpers import View
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
+from six.moves import range
+from six.moves import zip
+from functools import reduce
 scipy = UML.importModule('scipy.io')
 
 class Matrix(Base):
@@ -133,7 +137,7 @@ class Matrix(Base):
 
             viewArray.sort(cmp=comparator)
             indexPosition = []
-            for i in xrange(len(viewArray)):
+            for i in range(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
@@ -149,10 +153,10 @@ class Matrix(Base):
             scoreArray = viewArray
             if scorer is not None:
                 # use scoring function to turn views into values
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray[i] = scorer(viewArray[i])
             else:
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray[i] = viewArray[i][sortBy]
 
             # use numpy.argsort to make desired index array
@@ -169,7 +173,7 @@ class Matrix(Base):
 
         # we convert the indices of the their previous location into their feature names
         newNameOrder = []
-        for i in xrange(len(indexPosition)):
+        for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
@@ -266,7 +270,7 @@ class Matrix(Base):
 
         # construct featureName list
         nameList = []
-        for index in xrange(start, end + 1):
+        for index in range(start, end + 1):
             nameList.append(self.getPointName(index))
 
         return Matrix(ret, pointNames=nameList)
@@ -353,7 +357,7 @@ class Matrix(Base):
 
         # construct featureName list
         featureNameList = []
-        for index in xrange(start, end + 1):
+        for index in range(start, end + 1):
             featureNameList.append(self.getFeatureName(index))
 
         return Matrix(ret, featureNames=featureNameList)
@@ -373,7 +377,7 @@ class Matrix(Base):
         mapResultsMatrix = numpy.apply_along_axis(mapperWrapper, 1, self.data)
         mapResults = {}
         for pairsArray in mapResultsMatrix:
-            for i in xrange(len(pairsArray) / 2):
+            for i in range(len(pairsArray) / 2):
                 # pairsArray has key value pairs packed back to back
                 k = pairsArray[i * 2]
                 v = pairsArray[(i * 2) + 1]
@@ -473,7 +477,7 @@ class Matrix(Base):
 
         def makeNameString(count, namesGetter):
             nameString = "#"
-            for i in xrange(count):
+            for i in range(count):
                 nameString += namesGetter(i)
                 if not i == count - 1:
                     nameString += ','
@@ -575,7 +579,7 @@ class Matrix(Base):
         except TypeError:
             oneArg = True
 
-        IDs = itertools.product(xrange(self.points), xrange(self.features))
+        IDs = itertools.product(range(self.points), range(self.features))
         for (i, j) in IDs:
             currVal = self.data[i, j]
 
@@ -629,8 +633,8 @@ class Matrix(Base):
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
         missingIdxDictFeature = {i: [] for i in featuresList}#{i: [] for i in xrange(self.features)}
-        missingIdxDictPoint = {i: [] for i in xrange(self.points)}
-        for i in xrange(self.points):
+        missingIdxDictPoint = {i: [] for i in range(self.points)}
+        for i in range(self.points):
             for j in featuresList:
                 tmpV = self.data[i, j]
                 if tmpV in alsoTreatAsMissingSet or (tmpV!=tmpV) or tmpV is None:
@@ -647,7 +651,7 @@ class Matrix(Base):
             extraDummy = []
             for tmpItem in missingIdxDictFeature.items():
                 extraFeatureNames.append(self.getFeatureName(tmpItem[0]) + '_missing')
-                extraDummy.append([True if i in tmpItem[1] else False for i in xrange(self.points)])
+                extraDummy.append([True if i in tmpItem[1] else False for i in range(self.points)])
 
             extraDummy = numpy.matrix(extraDummy).transpose()
 
@@ -660,7 +664,7 @@ class Matrix(Base):
                 missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.features]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in xrange(self.points) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.points) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -677,7 +681,7 @@ class Matrix(Base):
                 missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.points]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in xrange(self.features) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.features) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -689,7 +693,7 @@ class Matrix(Base):
                     extraFeatureNames = [extraFeatureNames[i] for i in nonmissingIdx]
         elif method == 'feature mean':
             #np.nanmean is faster than UML.calculate.mean
-            tmpDict = dict(zip(featuresList, numpy.nanmean(self.data[:, featuresList], axis=0).tolist()[0]))
+            tmpDict = dict(list(zip(featuresList, numpy.nanmean(self.data[:, featuresList], axis=0).tolist()[0])))
             for tmpItem in missingIdxDictFeature.items():
                 j = tmpItem[0]
                 for i in tmpItem[1]:
@@ -732,7 +736,7 @@ class Matrix(Base):
                 if len(interpX) == 0:
                     continue
                 if arguments is None:
-                    xp = [i for i in xrange(self.points) if i not in interpX]
+                    xp = [i for i in range(self.points) if i not in interpX]
                     fp = self.data[xp, j].reshape(1, -1).tolist()[0]
                     tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
                 elif isinstance(arguments, dict):
@@ -1066,7 +1070,7 @@ def viewBasedApplyAlongAxis(function, axis, outerObject):
         maxVal = outerObject.data.shape[1]
         viewMaker = outerObject.featureView
     ret = numpy.zeros(maxVal, dtype=numpy.float)
-    for i in xrange(0, maxVal):
+    for i in range(0, maxVal):
         funcOut = function(viewMaker(i))
         ret[i] = funcOut
 

@@ -4,7 +4,9 @@ strategies. Also demonstrates the possible output formats allowed when calling l
 
 """
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+from __future__ import print_function
+from .allowImports import boilerplate
 
 boilerplate()
 
@@ -30,41 +32,41 @@ if __name__ == "__main__":
 
     results = trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                             testX=testObj, testY=3, performanceFunction=fractionIncorrect)
-    print 'Standard trainAndTest call, fractionIncorrect: ' + str(results)
-    print ""
+    print('Standard trainAndTest call, fractionIncorrect: ' + str(results))
+    print("")
 
     resultsLabelsOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                              testX=tesObjNoY, scoreMode='label',
                              multiClassStrategy="OneVsOne")
-    print 'One vs One predictions (aka labels format):'
-    print resultsLabelsOvO
+    print('One vs One predictions (aka labels format):')
+    print(resultsLabelsOvO)
 
     resultsBestScoreOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsOne")
-    print 'One vs One, best score format:' 
-    print resultsBestScoreOvO
+    print('One vs One, best score format:') 
+    print(resultsBestScoreOvO)
 
     resultsAllScoresOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='allScores',
                                      multiClassStrategy="OneVsOne")
-    print 'One vs One, all scores format:'
-    print resultsAllScoresOvO
+    print('One vs One, all scores format:')
+    print(resultsAllScoresOvO)
 
     resultsLabelsOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                              testX=tesObjNoY, scoreMode='label',
                              multiClassStrategy="OneVsAll")
-    print 'One vs All predictions (aka labels format):'
-    print resultsLabelsOvA
+    print('One vs All predictions (aka labels format):')
+    print(resultsLabelsOvA)
 
     resultsBestScoreOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsAll")
-    print 'One vs All, best score format:' 
-    print resultsBestScoreOvA
+    print('One vs All, best score format:') 
+    print(resultsBestScoreOvA)
 
     resultsAllScoresOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='allScores',
                                      multiClassStrategy="OneVsAll")
-    print 'One vs All, all scores format:'
-    print resultsAllScoresOvA 
+    print('One vs All, all scores format:')
+    print(resultsAllScoresOvA) 

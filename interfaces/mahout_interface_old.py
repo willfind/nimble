@@ -8,6 +8,8 @@ package
 #TODO redo output capture
 #TODO setup default temporary files/directories
 
+from __future__ import absolute_import
+from __future__ import print_function
 import subprocess
 import os
 import os.path
@@ -127,9 +129,9 @@ def mahoutTasteRecommenderEstimation(trainX, testX, output, arguments): #,redire
     for key in argsDict.keys():
         cmd += ' --' + str(key) + ' ' + str(argsDict[key])
     if redirectOutputTarget is not None:
-        print "TRYING TO REDIRECT"
+        print("TRYING TO REDIRECT")
         cmd += ' > ' + redirectOutputTarget + ' 2>&1'
-    print cmd
+    print(cmd)
     subprocess.call(cmd, shell=True)
 
     #undo batch

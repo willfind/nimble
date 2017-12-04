@@ -1,6 +1,8 @@
 """
 Select the best questions to keep in a survey from a larger set of questions
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy
 import sys
 import random
@@ -10,7 +12,10 @@ import pylab
 import bisect
 from nose.plugins.attrib import attr
 
-from allowImports import boilerplate
+from .allowImports import boilerplate
+import six
+from six.moves import range
+from six.moves import zip
 
 boilerplate()
 
@@ -49,7 +54,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
     #make our training and testing sets
     #for each of the different labels we want to predict
-    for labelNumber in xrange(len(featuresToPredict)):
+    for labelNumber in range(len(featuresToPredict)):
         #create the features for the current labelNum, and exclude irrelevant poins
         currentFeatures = data.copy()
         currentFeatures.extractPoints(
@@ -108,14 +113,14 @@ def testBuildTrainingAndTestingSetsForPredictions():
     jointXs0 = trainXs[0].copy()
     jointXs0.appendPoints(testXs[0])
     jointXs0.sortPoints("x1")
-    print "jointXs0\n", jointXs0
+    print("jointXs0\n", jointXs0)
     assert jointXs0.isApproximatelyEqual(createData("Matrix", [[1, 5, 2, 7], [3, 5, 2, 3], [4, 9.2, 3, 5]]))
 
     jointYs0 = trainYs[0].copy()
     jointYs0.appendPoints(testYs[0])
     jointYs0.sortPoints(0)
 
-    print "jointYs0\n", jointYs0
+    print("jointYs0\n", jointYs0)
     assert jointYs0.isApproximatelyEqual(createData("Matrix", [[1], [3], [5]]))
 
     jointXs1 = trainXs[1].copy()
@@ -129,7 +134,7 @@ def testBuildTrainingAndTestingSetsForPredictions():
     jointYs1.appendPoints(testYs[1])
     jointYs1.sortPoints(0)
 
-    print "jointYs1\n", jointYs1
+    print("jointYs1\n", jointYs1)
     assert jointYs1.isApproximatelyEqual(createData("Matrix", [[-7], [-3], [0], [1], [1], [9]]))
 
 
@@ -143,7 +148,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
     assert len(trainXs) == len(trainYs) and len(trainXs) == len(testXs) and len(trainXs) == len(testYs)
 
     #prevent us from modifying the original objects
-    for i in xrange(len(trainXs)):
+    for i in range(len(trainXs)):
         trainXs[i] = trainXs[i].copy()
         trainYs[i] = trainYs[i].copy()
         testXs[i] = testXs[i].copy()
@@ -157,16 +162,16 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
     droppedFeatureErrorsListInSample = []
 
     while trainXs[0].features > numFeaturesToKeep:
-        print str(trainXs[0].features) + " features left"
+        print(str(trainXs[0].features) + " features left")
 
         errorForEachFeatureDropped = []
 
         #try dropping each feature one by one
-        for featureNumToDrop in xrange(trainXs[0].features):
+        for featureNumToDrop in range(trainXs[0].features):
             #sys.stdout.write(" " + str(trainXs[0].getFeatureNames()[featureNumToDrop]))
             errorsForThisFeatureDrop = []
             #for each label we're predicting
-            for labelNum, trainX, trainY in zip(range(len(trainXs)), trainXs, trainYs):
+            for labelNum, trainX, trainY in zip(list(range(len(trainXs))), trainXs, trainYs):
                 #print "got here: " + str(featureNumToDrop) + ", " + str(labelNum)
                 #print "trainX", trainX
                 #build a feature set to train on that doesn't include the feature we're dropping
@@ -224,7 +229,7 @@ def getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, 
     parametersHash = {}
     #firstTrainX = trainXs[0]
     #now test the models out of sample on our final feature sets!
-    for labelNum, trainX, trainY, testX, testY in zip(range(len(trainXs)), trainXs, trainYs, testXs, testYs):
+    for labelNum, trainX, trainY, testX, testY in zip(list(range(len(trainXs))), trainXs, trainYs, testXs, testYs):
         algorithmName = predictionAlgorithms[labelNum]
         featureToPredict = featuresToPredict[labelNum]
         if "Logistic" in algorithmName:
@@ -247,7 +252,7 @@ def getPredictionErrors(trainXs, trainYs, testXs, testYs, predictionAlgorithms, 
             raise Exception("Don't know how to set parameters for algorithm: " + str(algorithmName))
         errorsHash[featureToPredict] = error #record the accuracy
 
-    combinedError = numpy.mean(errorsHash.values())
+    combinedError = numpy.mean(list(errorsHash.values()))
     errorsHash["Combined Error"] = combinedError
 
     return errorsHash, parametersHash
@@ -282,22 +287,22 @@ def getBestFeaturesAndErrorsPurelyRandomlyManyTimes(trials, trainXs, trainYs, te
                                                     predictionAlgorithms, featuresToPredict):
     random.seed(5)
     combinedErrors = {}
-    for trialNum in xrange(trials):
+    for trialNum in range(trials):
         trainXsTemp = copy.copy(trainXs)
         trainYsTemp = copy.copy(trainYs)
         testXsTemp = copy.copy(testXs)
         testYsTemp = copy.copy(testYs)
         numFeatures = trainXs[0].features
-        featuresToKeep = random.sample(range(numFeatures), numFeaturesToKeep)
+        featuresToKeep = random.sample(list(range(numFeatures)), numFeaturesToKeep)
         #print "featuresToKeep", featuresToKeep
-        for datasetNum in xrange(len(trainXsTemp)):
+        for datasetNum in range(len(trainXsTemp)):
             trainXsTemp[datasetNum] = trainXsTemp[datasetNum].copyFeatures(featuresToKeep)
             testXsTemp[datasetNum] = testXsTemp[datasetNum].copyFeatures(featuresToKeep)
 
         errorsHash, parametersHash = getPredictionErrors(trainXs=trainXsTemp, trainYs=trainYsTemp, testXs=testXsTemp,
                                                          testYs=testYsTemp, predictionAlgorithms=predictionAlgorithms,
                                                          featuresToPredict=featuresToPredict)
-        for key, error in errorsHash.iteritems():
+        for key, error in six.iteritems(errorsHash):
             if not key in combinedErrors:
                 combinedErrors[key] = []
             combinedErrors[key].append(error)
@@ -307,16 +312,16 @@ def getBestFeaturesAndErrorsPurelyRandomlyManyTimes(trials, trainXs, trainYs, te
 
 def toListOfLists(matrix):
     output = []
-    for row in xrange(len(matrix)):
+    for row in range(len(matrix)):
         rowVals = []
-        for col in xrange(len(matrix.T)):
+        for col in range(len(matrix.T)):
             rowVals.append(matrix[row, col])
         output.append(rowVals)
     return output
 
 
 def testToListOfLists():
-    print "toListOfLists(numpy.matrix([[1,2],[4,2]]))", toListOfLists(numpy.matrix([[1, 2], [4, 2]]))
+    print("toListOfLists(numpy.matrix([[1,2],[4,2]]))", toListOfLists(numpy.matrix([[1, 2], [4, 2]])))
     assert toListOfLists(numpy.matrix([[1, 2], [4, 2]])) == [[1, 2], [4, 2]]
 
 
@@ -349,7 +354,7 @@ def testgetBestFeaturesAndErrors():
     data = createData("Matrix", data, featureNames=True)
     fractionOfDataForTesting = 1.0 / 3.0
 
-    print "data\n", data
+    print("data\n", data)
 
     functionsToExcludePoints = [lambda r: False, lambda r: False]
     predictionAlgorithms = ["SciKitLearn.Ridge", "SciKitLearn.LogisticRegression"]
@@ -364,9 +369,9 @@ def testgetBestFeaturesAndErrors():
                                                                         numFeaturesToKeep, predictionAlgorithms,
                                                                         featuresToPredict)
 
-    print "errorsHash:", errorsHash
-    print "parametersHash", parametersHash
-    print "bestFeatures", bestFeatures
+    print("errorsHash:", errorsHash)
+    print("parametersHash", parametersHash)
+    print("bestFeatures", bestFeatures)
     if not ("x3" in bestFeatures): raise Exception("x3 was the best feature by far by was removed!")
     assert bestFeatures == ["x0", "x1", "x3"]
 
@@ -387,14 +392,14 @@ def testgetBestFeaturesAndErrors():
 
 
 def printParameters(name, parametersHash):
-    print "\n" + name
-    for key, value in parametersHash.iteritems():
+    print("\n" + name)
+    for key, value in six.iteritems(parametersHash):
         if isinstance(value, dict):
-            print "\t" + str(key).rjust(12)
-            for lowerKey, lowerValue in value.iteritems():
-                print "\t\t" + str(lowerKey).rjust(12) + ": " + str(lowerValue)
+            print("\t" + str(key).rjust(12))
+            for lowerKey, lowerValue in six.iteritems(value):
+                print("\t\t" + str(lowerKey).rjust(12) + ": " + str(lowerValue))
         else:
-            print "\t" + str(key).rjust(12) + ": " + str(value)
+            print("\t" + str(key).rjust(12) + ": " + str(value))
 
 
 def range95String(values, digits=2):
@@ -490,11 +495,11 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
     #print "lyers"
     #featuresForStats.show()
     #print "means"
-    print "minMean", pointMeans.featureStatistics("min")
-    print "maxMean", pointMeans.featureStatistics("max")
+    print("minMean", pointMeans.featureStatistics("min"))
+    print("maxMean", pointMeans.featureStatistics("max"))
     #pointMeans.show()
     pointStdDevs = featuresForStats.pointStatistics("standarddeviation")
-    print "meanStdDev", pointStdDevs.featureStatistics("mean")
+    print("meanStdDev", pointStdDevs.featureStatistics("mean"))
 
 #pointStdDevs.show()
 #stats = pointMeans.copy()
@@ -523,10 +528,10 @@ if __name__ == "__main__":
 
     fileName = "/Users/spencer2/Dropbox/Spencer/Work/Personality Matrix/public domain datasets/Selected personality data from SAPA/sapaTempData696items08dec2013thru26jul2014.csv"
 
-    print "Loading data..."
+    print("Loading data...")
     startTime = time.time()
     data = createData("Matrix", fileName, featureNames=True)
-    print "Loaded data in " + str(round(time.time() - startTime)) + " seconds."
+    print("Loaded data in " + str(round(time.time() - startTime)) + " seconds.")
 
     """
 

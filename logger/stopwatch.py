@@ -4,6 +4,7 @@ testing classifiers)within the UML code.  Can time any generic task based
 on task name.
 """
 
+from __future__ import absolute_import
 import time
 
 from UML.exceptions import MissingEntryException

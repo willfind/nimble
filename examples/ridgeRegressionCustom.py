@@ -4,7 +4,9 @@ out-of-the-box, custom learner.
 
 """
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+from __future__ import print_function
+from .allowImports import boilerplate
 
 boilerplate()
 
@@ -32,8 +34,8 @@ if __name__ == "__main__":
     # an example of getting a TrainedLearner and querying its attributes. In
     # RidgeRegression's case, we check the learned coefficients, named 'w'
     trained = UML.train("custom.RidgeRegression", trainX, trainY, arguments={'lamb': 0})
-    print "Coefficients:"
-    print trained.getAttributes()['w']
+    print("Coefficients:")
+    print(trained.getAttributes()['w'])
 
     # Two ways of getting predictions
     pred1 = trained.apply(testX, arguments={'lamb': 0})
@@ -45,12 +47,12 @@ if __name__ == "__main__":
                                           lamb=(0, .5, 1))
     bestArgument, bestScore = results
 
-    print "Best argument set: " + str(bestArgument)
-    print "Best score: " + str(bestScore)
+    print("Best argument set: " + str(bestArgument))
+    print("Best score: " + str(bestScore))
 
     # Currently, testing can only be done through the top level function trainAndTest()
     # Also: arguments to the learner are given in the python **kwargs style, not as
     # an explicit dict like  seen above.
     # Using lamb = 1 in this case so that there actually are errors
     error = UML.trainAndTest("custom.RidgeRegression", trainX, trainY, testX, testY, RMSE, lamb=1)
-    print "rootMeanSquareError of predictions with lamb=1: " + str(error)
+    print("rootMeanSquareError of predictions with lamb=1: " + str(error))

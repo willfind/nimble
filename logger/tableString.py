@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import copy
 import math
+from six.moves import range
 
 
 class TableError(Exception):
@@ -37,11 +39,11 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
             "table must be a list of lists but found a row that had the value " + str(row))
         if (len(row) > cols): cols = len(row)
 
-    for c in xrange(cols):
+    for c in range(cols):
         colWidths.append(1)
 
-    for r in xrange(len(table)):
-        for c in xrange(len(table[r])):
+    for r in range(len(table)):
+        for c in range(len(table[r])):
             if roundDigits is not None and isinstance(table[r][c], float):
                 table[r][c] = format(table[r][c], roundDigits)
             else:
@@ -52,7 +54,7 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
         if len(headers) != cols: raise TableError(
             "Number of table columns (" + str(cols) + ")  does not match number of header columns (" + str(
                 len(headers)) + ")!")
-        for c in xrange(len(headers)):
+        for c in range(len(headers)):
             if colWidths[c] < len(headers[c]): colWidths[c] = len(headers[c])
 
     #if there is a limit to how many rows we can show, delete the middle rows and replace them with a "..." row
@@ -68,8 +70,8 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
         table = table[:snipIndex] + [["..."] * len(table[0])] + table[snipIndex + 1:]
 
     #modify the text in each column to give it the right length
-    for r in xrange(len(table)):
-        for c in xrange(len(table[r])):
+    for r in range(len(table)):
+        for c in range(len(table[r])):
             v = table[r][c]
             if (r > 0 and c > 0):
                 table[r][c] = v.center(colWidths[c])
@@ -84,7 +86,7 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None, columnSep
                 table[r][c] += columnSeperator
 
     out = ""
-    for r in xrange(len(table)):
+    for r in range(len(table)):
         if useSpaces:
             out += "   ".join(table[r]) + "\n"
         else:

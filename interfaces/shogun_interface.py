@@ -9,6 +9,9 @@ for Shogun ML.
 # * different feature types (streaming, for other problem types)
 # *
 
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves import range
 try:
     import clang
 
@@ -229,7 +232,7 @@ class Shogun(UniversalInterface):
         if hasattr(predObj, 'get_multiclass_confidences'):
             # setup an array in the right shape, number of predicted labels by number of possible labels
             scoresPerPoint = numpy.empty((len(predLabels), numLabels))
-            for i in xrange(len(predLabels)):
+            for i in range(len(predLabels)):
                 currConfidences = predObj.get_multiclass_confidences(i)
                 scoresPerPoint[i, :] = currConfidences
         # otherwise we must be dealing with binary classification
@@ -470,7 +473,7 @@ class Shogun(UniversalInterface):
         try:
             retLabels = learner.apply(testX)
         except Exception as e:
-            print e
+            print(e)
             return None
         return retLabels
 
@@ -839,7 +842,7 @@ def _enforceNonUnicodeStrings(manifest):
     for name in manifest:
         groupList = manifest[name]
         for group in groupList:
-            for i in xrange(len(group)):
+            for i in range(len(group)):
                 group[i] = str(group[i])
     return manifest
 

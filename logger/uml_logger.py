@@ -1,6 +1,8 @@
+from __future__ import absolute_import
 import os
 
 from UML.exceptions import ArgumentException
+import six
 
 """
 	Handle logging of creating and testing learners.  Currently
@@ -34,7 +36,7 @@ class UmlLogger(object):
             to open it.  Otherwise, will use the file name provided when this was
             instantiated.  If successfully opens the file, set isAvailable to true.
         """
-        if newFileName is not None and isinstance(newFileName, (str, unicode)):
+        if newFileName is not None and isinstance(newFileName, (str, six.text_type)):
             self.logFileName = newFileName
 
         dirPath = os.path.dirname(self.logFileName)
