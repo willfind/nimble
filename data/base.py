@@ -2006,7 +2006,9 @@ class Base(object):
         if binWidth == 0:
             binCount = 1
         else:
-            binCount = math.ceil((valMax - valMin) / binWidth)
+            # we must convert to int, in some versions of numpy, the helper
+            # functions matplotlib calls will require it.
+            binCount = int(math.ceil((valMax - valMin) / binWidth))
 
         def plotter(d, xLim):
             import matplotlib.pyplot as plt
