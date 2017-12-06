@@ -472,7 +472,19 @@ class Shogun(UniversalInterface):
         RETURNS UML friendly results
         """
         try:
-            retLabels = learner.apply(testX)
+            ptVal = learner.get_machine_problem_type()
+            if ptVal == self.shogun.Classifier.PT_BINARY:
+                retLabels = learner.apply_binary(testX)
+            elif ptVal == self.shogun.Classifier.PT_MULTICLASS:
+                retLabels = learner.apply_multiclass(testX)
+            elif ptVal == self.shogun.Classifier.PT_REGRESSION:
+                retLabels = learner.apply_regression(testX)
+            elif ptVal == self.shogun.Classifier.PT_STRUCTURED:
+                retLabels = learner.apply_structured(testX)
+            elif ptVal == self.shogun.Classifier.PT_LATENT:
+                retLabels = learner.apply_latent(testX)
+            else:
+                retLabels = learner.apply(testX)
         except Exception as e:
             print(e)
             return None
@@ -745,7 +757,7 @@ class Shogun(UniversalInterface):
 ### GENERIC HELPERS ###
 #######################
 
-excludedLearners = [# parent classes, not actually runnable
+excludedLearners = [  # parent classes, not actually runnable
                     'BaseMulticlassMachine',
                     'CDistanceMachine',
                     'CSVM',
@@ -760,49 +772,53 @@ excludedLearners = [# parent classes, not actually runnable
                     'MultitaskLinearMachineBase',
                     'NativeMulticlassMachine',
                     'OnlineLinearMachine',
-                    'ScatterSVM', # unstable method
                     'TreeMachineWithConditionalProbabilityTreeNodeData',
                     'TreeMachineWithRelaxedTreeNodeData',
 
+                    # Deliberately unsupported
+                    'ScatterSVM',  # experimental method
+
                     # Should be implemented, but don't work
-                    #'BalancedConditionalProbabilityTree', # streaming dense features input
+                    #'BalancedConditionalProbabilityTree',  # streaming dense features input
                     #'ConditionalProbabilityTree', 	 # requires streaming features
-                    'DomainAdaptationSVMLinear', # segfault
-                    'DomainAdaptationMulticlassLibLinear', # segFault
+                    'DomainAdaptationSVMLinear',  # segfault
+                    'DomainAdaptationMulticlassLibLinear',  # segFault
                     'DomainAdaptationSVM',
                     #'DualLibQPBMSOSVM',  # problem type 3
-                    'FeatureBlockLogisticRegression', # remapping
-                    'KernelRidgeRegression', # segfault
+                    'FeatureBlockLogisticRegression',  # remapping
+                    'GaussianProcessRegression',  # segfault in testDataIntegrity
+                    'KernelRidgeRegression',  # segfault
                     #'KernelStructuredOutputMachine',  # problem type 3
-                    #'LatentSVM', # problem type 4
+                    'KRRNystrom',  # segfault on train - strict kern on init requirement?
+                    #'LatentSVM',  # problem type 4
                     'LibLinearRegression',
                     #'LibSVMOneClass',
-                    #'LinearMulticlassMachine', # mixes machines. is this even possible to run?
-                    #'LinearStructuredOutputMachine', # problem type 3
-                    #'MKLMulticlass', # needs combined kernel type?
-                    #'MKLClassification', # compute by subkernel not implemented
-                    #'MKLOneClass', # Interleaved MKL optimization is currently only supported with SVMlight
+                    #'LinearMulticlassMachine',  # mixes machines. is this even possible to run?
+                    #'LinearStructuredOutputMachine',  # problem type 3
+                    #'MKLMulticlass',  # needs combined kernel type?
+                    #'MKLClassification',  # compute by subkernel not implemented
+                    #'MKLOneClass',  # Interleaved MKL optimization is currently only supported with SVMlight
                     #'MKLRegression',  # kernel stuff?
-                    'MultitaskClusteredLogisticRegression', # assertion error
-                    'MultitaskCompositeMachine', # takes machine as input?
+                    'MultitaskClusteredLogisticRegression',  # assertion error
+                    'MultitaskCompositeMachine',  # takes machine as input?
                     #'MultitaskL12LogisticRegression',  # assertion error
-                    'MultitaskLeastSquaresRegression', # core dump
-                    'MultitaskLogisticRegression', # core dump
+                    'MultitaskLeastSquaresRegression',  # core dump
+                    'MultitaskLogisticRegression',  # core dump
                     #'MultitaskTraceLogisticRegression',  # assertion error
-                    'OnlineLibLinear', # needs streaming dot features
-                    'OnlineSVMSGD', # needs streaming dot features
-                    #'PluginEstimate', # takes string inputs?
+                    'OnlineLibLinear',  # needs streaming dot features
+                    'OnlineSVMSGD',  # needs streaming dot features
+                    #'PluginEstimate',  # takes string inputs?
                     #'RandomConditionalProbabilityTree',  # takes streaming dense features
-                    #'RelaxedTree', # [ERROR] Call set_machine_for_confusion_matrix before training
-                    #'ShareBoost', # non standard input
-                    #'StructuredOutputMachine', # problem type 3
-                    #'SubGradientSVM', #doesn't terminate
-                    'VowpalWabbit', # segfault
-                    #'WDSVMOcas', # string input
+                    #'RelaxedTree',  # [ERROR] Call set_machine_for_confusion_matrix before training
+                    #'ShareBoost',  # non standard input
+                    #'StructuredOutputMachine',  # problem type 3
+                    #'SubGradientSVM',  #doesn't terminate
+                    'VowpalWabbit',  # segfault
+                    #'WDSVMOcas',  # string input
 
                     # functioning learners
                     #'AveragedPerceptron'
-                    'GaussianNaiveBayes', # something wonky with getting scores
+                    'GaussianNaiveBayes',  # something wonky with getting scores
                     #'GMNPSVM',
                     #'GNPPSVM',
                     #'GPBTSVM',

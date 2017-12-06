@@ -240,7 +240,7 @@ def testShogunEmbeddedRossData():
 def testShogunScoreModeMulti():
     """ Test shogun returns the right dimensions when given different scoreMode flags, multi case"""
     variables = ["Y", "x1", "x2"]
-    data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2]]
+    data = [[0, 1, 1], [0, 0, 1], [1, 30, 20], [2, -300, 2]]
     trainingObj = UML.createData('Matrix', data, featureNames=variables)
 
     data2 = [[2, 3], [-200, 0]]

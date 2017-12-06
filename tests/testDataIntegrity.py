@@ -112,14 +112,10 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
     numSamples = int(len(allLearners) * portionToTest)
     toTest = pythonRandom.sample(allLearners, numSamples)
 
+#    toTest = filter(lambda x: x[:6] == 'shogun', allLearners)
+
     for learner in toTest:
         package = learner.split('.', 1)[0].lower()
-        #		if package != 'mlpy' and package != 'scikitlearn':
-        #			continue
-        #		if package == 'shogun':
-        #			print learner
-        #		else:
-        #			continue
         lType = UML.learnerType(learner)
         if lType == 'classification':
             try:
