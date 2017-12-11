@@ -94,7 +94,7 @@ def setupAndCallGetScores(learnerName, trainX, trainY, testX, testY):
     tl.getScores(testX)
 
 
-def backend(toCall, portionToTest, allowRegression=True):
+def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=False):
     cData = generateClassificationData(2, 10, 5)
     ((cTrainX, cTrainY), (cTestX, cTestY)) = cData
     backCTrainX = cTrainX.copy()
@@ -132,6 +132,11 @@ def backend(toCall, portionToTest, allowRegression=True):
             except SystemError as se:
                 pass
             #print se
+            except NotImplementedError as nie:
+                if not allowNotImplemented:
+                    raise nie
+                pass
+#                print nie
             assertUnchanged(learner, cData, backCTrainX, backCTrainY, backCTestX, backCTestY)
         if lType == 'regression' and allowRegression:
             try:
@@ -143,6 +148,11 @@ def backend(toCall, portionToTest, allowRegression=True):
             except SystemError as se:
                 pass
             #print se
+            except NotImplementedError as nie:
+                if not allowNotImplemented:
+                    raise nie
+                pass
+#                print nie
             assertUnchanged(learner, rData, backRTrainX, backRTrainY, backRTestX, backRTestY)
 
 
@@ -190,4 +200,4 @@ def testDataIntegrityCrossValidate():
 def testDataIntegrityTrainedLearner():
 #	backend(setupAndCallIncrementalTrain, 1) TODO
     backend(setupAndCallRetrain, 1)
-    backend(setupAndCallGetScores, 1, False)
+    backend(setupAndCallGetScores, 1, False, True)
