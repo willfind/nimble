@@ -120,14 +120,15 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
         if lType == 'classification':
             try:
                 toCall(learner, cTrainX, cTrainY, cTestX, cTestY)
+#                print learner
             # this is meant to safely bypass those learners that have required arguments
             except ArgumentException as ae:
                 pass
-            #print ae
+#                print ae
             # this is generally how shogun explodes
             except SystemError as se:
                 pass
-            #print se
+#                print se
             except NotImplementedError as nie:
                 if not allowNotImplemented:
                     raise nie
@@ -137,13 +138,14 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
         if lType == 'regression' and allowRegression:
             try:
                 toCall(learner, rTrainX, rTrainY, rTestX, rTestY)
+#                print learner
             # this is meant to safely bypass those learners that have required arguments
             except ArgumentException as ae:
                 pass
-            #print ae
+#                print ae
             except SystemError as se:
                 pass
-            #print se
+#                print se
             except NotImplementedError as nie:
                 if not allowNotImplemented:
                     raise nie

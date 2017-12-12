@@ -235,6 +235,9 @@ class Shogun(UniversalInterface):
             scoresPerPoint = numpy.empty((len(predLabels), numLabels))
             for i in range(len(predLabels)):
                 currConfidences = predObj.get_multiclass_confidences(i)
+                if len(currConfidences) == 0:
+                    msg = "The shogun learner %s doesn't provide confidence scores" % str(learner)
+                    raise NotImplementedError(msg)
                 scoresPerPoint[i, :] = currConfidences
         # otherwise we must be dealing with binary classification
         else:
