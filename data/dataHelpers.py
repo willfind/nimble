@@ -4,6 +4,7 @@ the main data wrapper objects defined in this module
 
 """
 
+from __future__ import division
 from __future__ import absolute_import
 import copy
 import math
@@ -204,7 +205,7 @@ def _looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
     # list python lists. We must still explicitly exclude strings because of the
     # numpy string implementation.
-    if not hasattr(val, '__div__') or isinstance(val, six.string_types):
+    if not hasattr(val, '__truediv__') or isinstance(val, six.string_types):
         return False
     return True
 

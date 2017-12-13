@@ -3,6 +3,7 @@ Class extending Base, using a list of lists to store data.
 
 """
 
+from __future__ import division
 from __future__ import absolute_import
 import copy
 import numpy
@@ -10,7 +11,7 @@ import numbers
 import itertools
 
 import UML
-from .base import Base
+from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import View
 from .dataHelpers import reorderToMatchExtractionList
@@ -189,7 +190,10 @@ class List(Base):
             viewArray.append(v)
 
         if comparator is not None:
-            viewArray.sort(cmp=comparator)
+            # try:
+            #     viewArray.sort(cmp=comparator)#python2
+            # except:
+            viewArray.sort(key=cmp_to_key(comparator))#python2 and 3
             indexPosition = []
             for i in range(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
@@ -889,7 +893,7 @@ class List(Base):
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         result = []
-        numFeatures = self.features / numPoints
+        numFeatures = self.features // numPoints
         for i in range(numPoints):
             temp = self.data[0][(i*numFeatures):((i+1)*numFeatures)]
             result.append(temp)
@@ -899,7 +903,7 @@ class List(Base):
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         result = []
-        numPoints = self.points / numFeatures
+        numPoints = self.points // numFeatures
         # reconstruct the shape we want, point by point. We access the singleton
         # values from the current data in an out of order iteration
         for i in range(numPoints):
@@ -1053,6 +1057,9 @@ class List(Base):
 
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return nzIt(self)
 
     def _nonZeroIteratorFeatureGrouped_implementation(self):
@@ -1080,6 +1087,9 @@ class List(Base):
                         return value
 
                 raise StopIteration
+
+            def __next__(self):
+                return self.next()
 
         return nzIt(self)
 

@@ -188,7 +188,6 @@ class QueryBackend(DataTestObject):
 
         # call writeFile
         toWrite.writeFile(tmpFile.name, format='csv', includeNames=True)
-
         # read it back into a different object, then test equality
         readObj = self.constructor(data=tmpFile.name)
 

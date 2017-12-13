@@ -4,6 +4,7 @@ base class for read only views of data objects.
 
 """
 
+from __future__ import division
 from __future__ import absolute_import
 from .base import Base
 from UML.exceptions import ImproperActionException

@@ -864,13 +864,13 @@ class StructureModifying(DataTestObject):
         fromList = self.constructor(data=[[1, 2, 3]])
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV = tempfile.NamedTemporaryFile(mode='w', suffix=".csv")
         tmpCSV.write("1,2,3\n")
         tmpCSV.flush()
         fromCSV = self.constructor(data=tmpCSV.name)
 
         # instantiate from mtx array file
-        tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx")
+        tmpMTXArr = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
         tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
         tmpMTXArr.write("1 3\n")
         tmpMTXArr.write("1\n")
@@ -880,7 +880,7 @@ class StructureModifying(DataTestObject):
         fromMTXArr = self.constructor(data=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
+        tmpMTXCoo = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
         tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
         tmpMTXCoo.write("1 3 3\n")
         tmpMTXCoo.write("1 1 1\n")
@@ -903,7 +903,7 @@ class StructureModifying(DataTestObject):
         fromList = self.constructor(data=[[1, 2, 3]], pointNames=['1P'], featureNames=['one', 'two', 'three'])
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV = tempfile.NamedTemporaryFile(mode='w', suffix=".csv")
         tmpCSV.write("\n")
         tmpCSV.write("\n")
         tmpCSV.write("point_names,one,two,three\n")
@@ -912,7 +912,7 @@ class StructureModifying(DataTestObject):
         fromCSV = self.constructor(data=tmpCSV.name)
 
         # instantiate from mtx file
-        tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx")
+        tmpMTXArr = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
         tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
         tmpMTXArr.write("%#1P\n")
         tmpMTXArr.write("%#one,two,three\n")
@@ -924,7 +924,7 @@ class StructureModifying(DataTestObject):
         fromMTXArr = self.constructor(data=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
+        tmpMTXCoo = tempfile.NamedTemporaryFile(mode='w', suffix=".mtx")
         tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
         tmpMTXCoo.write("%#1P\n")
         tmpMTXCoo.write("%#one,two,three\n")
@@ -3267,7 +3267,7 @@ class StructureModifying(DataTestObject):
             assert splitName[0] == keptAxisNames[i % keptAxisLen]
             # we have to go through all of the names of the kept axis before we increment
             # the name from the discarded axis
-            assert splitName[1] == discardAxisNames[i / keptAxisLen]
+            assert splitName[1] == discardAxisNames[i // keptAxisLen]
 
 
     ###################################################

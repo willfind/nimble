@@ -21,6 +21,8 @@ import datetime
 import copy
 import sys
 import itertools
+if not hasattr(itertools, 'ifilter'):#in python3, itertools.ifilter is not there anymore. it is filter.
+    itertools.ifilter = filter
 
 import UML
 
@@ -628,7 +630,7 @@ def _loadmtxForAuto(
 
     openFile.seek(startPosition)
 
-    data = scipy.io.mmread(openFile)
+    data = scipy.io.mmread(openFile.name)
 
     temp = (data, None, None)
 
@@ -2339,6 +2341,8 @@ class _foldIteratorClass():
         self.index = self.index + 1
         return resultsList
 
+    def __next__(self):
+        return self.next()
 
 class ArgumentIterator:
     """
@@ -2394,6 +2398,9 @@ class ArgumentIterator:
             permutation = self.permutationsList[self.index]
             self.index += 1
             return permutation
+
+    def __next__(self):
+        return self.next()
 
     def reset(self):
         self.index = 0

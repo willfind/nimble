@@ -6,18 +6,18 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 # TODO conversions
 # TODO who sorts inputs to derived implementations?
 
+from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 import six
 from six.moves import map
 from six.moves import range
 from six.moves import zip
+mplError = None
 try:
     import matplotlib
-
-    mplError = None
-except ImportError as mplError:
-    pass
+except ImportError as e:
+    mplError = e
 
 import math
 import numbers
@@ -748,6 +748,9 @@ class Base(object):
                     return value
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return pointIt(self)
 
     def featureIterator(self):
@@ -768,6 +771,9 @@ class Base(object):
                     self._position += 1
                     return value
                 raise StopIteration
+
+            def __next__(self):
+                return self.next()
 
         return featureIt(self)
 
@@ -2176,6 +2182,9 @@ class Base(object):
             def next(self):
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         if self.points == 0 or self.features == 0:
             return EmptyIt()
 
@@ -2670,9 +2679,9 @@ class Base(object):
                     start = 0
                 if end is None:
                     end = self.features - 1
-                if start < 0 or start > self.features:
+                if isinstance(start, str) or start < 0 or start > self.features:
                     raise ArgumentException("start must be a valid index, in the range of possible features")
-                if end < 0 or end > self.features:
+                if isinstance(end, str) or end < 0 or end > self.features:
                     raise ArgumentException("end must be a valid index, in the range of possible features")
                 if start > end:
                     raise ArgumentException("start cannot be an index greater than end")
@@ -3033,11 +3042,11 @@ class Base(object):
         self._validateAxis(addedAxis)
         if addedAxis == 'point':
             both = self.getFeatureNames()
-            keptAxisLength = self.features / addedAxisLength
+            keptAxisLength = self.features // addedAxisLength
             allDefault = self._namesAreFlattenFormatConsistent('point', addedAxisLength, keptAxisLength)
         else:
             both = self.getPointNames()
-            keptAxisLength = self.points / addedAxisLength
+            keptAxisLength = self.points // addedAxisLength
             allDefault = self._namesAreFlattenFormatConsistent('feature', addedAxisLength, keptAxisLength)
 
         if allDefault:
@@ -3162,7 +3171,7 @@ class Base(object):
 
         self._unflattenFromOnePoint_implementation(numPoints)
         ret = self._unflattenNames('point', numPoints)
-        self._featureCount = self.features / numPoints
+        self._featureCount = self.features // numPoints
         self._pointCount = numPoints
         self.setPointNames(ret[0])
         self.setFeatureNames(ret[1])
@@ -3204,7 +3213,7 @@ class Base(object):
 
         self._unflattenFromOneFeature_implementation(numFeatures)
         ret = self._unflattenNames('feature', numFeatures)
-        self._pointCount = self.points / numFeatures
+        self._pointCount = self.points // numFeatures
         self._featureCount = numFeatures
         self.setPointNames(ret[1])
         self.setFeatureNames(ret[0])
@@ -4043,7 +4052,7 @@ class Base(object):
         # why the end condition makes use of an exact stop value, which
         # varies between positive and negative depending on the number of
         # features
-        endIndex = self.features / 2
+        endIndex = self.features // 2
         if self.features % 2 == 1:
             endIndex *= -1
             endIndex -= 1
@@ -4993,3 +5002,22 @@ class Base(object):
             msg += ")"
 
             raise ArgumentException(msg)
+
+def cmp_to_key(mycmp):
+    """Convert a cmp= function for python2 into a key= function for python3"""
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K

@@ -1,3 +1,4 @@
+from __future__ import division
 from __future__ import absolute_import
 import math
 import numpy
@@ -145,7 +146,7 @@ def median(values):
     numValues = len(sortedValues)
 
     if numValues % 2 == 0:
-        median = (float(sortedValues[(numValues / 2) - 1]) + float(sortedValues[numValues / 2])) / float(2)
+        median = (float(sortedValues[(numValues // 2) - 1]) + float(sortedValues[numValues // 2])) / float(2)
     else:
         median = float(sortedValues[int(math.floor(numValues / 2))])
 
@@ -215,7 +216,8 @@ def featureType(values):
         Return the type of data: string, int, float
     """
 
-    types = numpy.unique([type(value) for value in values if not _isMissing(value)])
+    # types = numpy.unique([type(value) for value in values if not _isMissing(value)])#doesn't work in python3
+    types = list(set([type(value) for value in values if not _isMissing(value)]))
     #if all data in values are missing
     if len(types) == 0:
         return 'Unknown'

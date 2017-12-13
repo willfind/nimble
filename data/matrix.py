@@ -3,6 +3,7 @@ Class extending Base, using a numpy dense matrix to store data.
 
 """
 
+from __future__ import division
 from __future__ import absolute_import
 import numpy
 import sys
@@ -10,7 +11,7 @@ import itertools
 import copy
 
 import UML
-from .base import Base
+from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import View
 from UML.exceptions import ArgumentException, PackageException
@@ -135,7 +136,7 @@ class Matrix(Base):
             for v in viewIter:
                 viewArray.append(v)
 
-            viewArray.sort(cmp=comparator)
+            viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
@@ -458,6 +459,7 @@ class Matrix(Base):
 
                 outFile.write(fnamesLine)
 
+        with open(outPath, 'ab') as outFile:#python3 need this.
             if includePointNames:
                 pnames = numpy.matrix(self.getPointNames())
                 pnames = pnames.transpose()
@@ -768,11 +770,11 @@ class Matrix(Base):
         self.data = self.data.reshape((numElements,1), order='F')
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = self.features / numPoints
+        numFeatures = self.features // numPoints
         self.data = self.data.reshape((numPoints, numFeatures), order='C')
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = self.points / numFeatures
+        numPoints = self.points // numFeatures
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
 
     def _getitem_implementation(self, x, y):
@@ -834,6 +836,9 @@ class Matrix(Base):
 
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return nzIt(self)
 
     def _nonZeroIteratorFeatureGrouped_implementation(self):
@@ -861,6 +866,9 @@ class Matrix(Base):
                         return value
 
                 raise StopIteration
+
+            def __next__(self):
+                return self.next()
 
         return nzIt(self)
 

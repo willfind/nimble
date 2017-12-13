@@ -3,6 +3,7 @@ Class extending Base, defining an object to hold and manipulate a scipy coo_matr
 
 """
 
+from __future__ import division
 from __future__ import absolute_import
 import numpy
 import UML
@@ -19,7 +20,7 @@ import copy
 
 import UML.data
 from . import dataHelpers
-from .base import Base
+from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import View
 
@@ -99,6 +100,9 @@ class Sparse(Base):
                 self._nextID += 1
                 return value
 
+            def __next__(self):
+                return self.next()
+
         return pointIt(self)
 
 
@@ -133,6 +137,9 @@ class Sparse(Base):
                     self._sortedPosition = end
                 self._nextID += 1
                 return value
+
+            def __next__(self):
+                return self.next()
 
         return featureIt(self)
 
@@ -236,7 +243,7 @@ class Sparse(Base):
             for v in viewIter:
                 viewArray.append(v)
 
-            viewArray.sort(cmp=comparator)
+            viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
             for i in range(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
@@ -1489,6 +1496,9 @@ class Sparse(Base):
 
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return nzIt(self)
 
 
@@ -1824,6 +1834,9 @@ class SparseView(BaseView, Sparse):
 
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return GenericIt()
 
     def _copyAs_implementation(self, format):
@@ -1912,6 +1925,8 @@ class SparseView(BaseView, Sparse):
         retCol = []
         piNN = points is not None
 
+        if start is None: start = 0#in python3, compare int with None is not allowed, so we need to replace None with an int
+        if end is None: end = -1
         for pID, pView in enumerate(self.pointIterator()):
             if (piNN and pID in points) or (pID >= start and pID <= end):
                 for i, val in enumerate(pView.data.data):
@@ -1938,6 +1953,8 @@ class SparseView(BaseView, Sparse):
         retCol = []
         fiNN = features is not None
 
+        if start is None: start = 0#in python3, compare int with None is not allowed, so we need to replace None with an int
+        if end is None: end = -1
         for fID, fView in enumerate(self.featureIterator()):
             if (fiNN and fID in features) or (fID >= start and fID <= end):
                 for i, val in enumerate(fView.data.data):
@@ -1992,5 +2009,8 @@ class SparseView(BaseView, Sparse):
                     except:
                         self._currGroup = next(self._sourceIter)
                         self._index = 0
+
+            def __next__(self):
+                return self.next()
 
         return nzIt()
