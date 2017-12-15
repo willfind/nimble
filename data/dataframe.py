@@ -404,7 +404,6 @@ class DataFrame(Base):
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
-                outFile.write('\n\n')
                 if includePointNames:
                     outFile.write('point_names')
         self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)

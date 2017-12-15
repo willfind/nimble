@@ -1339,13 +1339,20 @@ class Base(object):
 
     def writeFile(self, outPath, format=None, includeNames=True):
         """
-		Function to write the data in this object to a file using the specified
-		format. outPath is the location (including file name and extension) where
-		we want to write the output file. includeNames is boolean argument
-		indicating whether the file should start with comment lines designating
-		pointNames and featureNames.
+        Write the data in this object to a file using the specified format.
 
-		"""
+        outPath: the location (including file name and extension) where
+        we want to write the output file.
+
+        format: the formating of the file we write. May be None, 'csv', or
+        'mtx'; if None, we use the extension of outPath to determine the format.
+
+        includeNames: True or False indicating whether the file will embed the point
+        and feature names into the file. The format of the embedding is dependant
+        on the format of the file: csv will embed names into the data, mtx will
+        place names in a comment.
+
+        """
         if self.points == 0 or self.features == 0:
             raise ImproperActionException("We do not allow writing to file when an object has 0 points or features")
 

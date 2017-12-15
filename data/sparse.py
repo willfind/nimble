@@ -677,9 +677,6 @@ class Sparse(Base):
         outFile = open(outPath, 'w')
 
         if includeFeatureNames:
-            # to signal that the first line contains feature Names
-            outFile.write('\n\n')
-
             def combine(a, b):
                 return a + ',' + b
 
