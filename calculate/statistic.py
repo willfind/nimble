@@ -225,7 +225,7 @@ def featureType(values):
     elif len(types) > 1:
         return 'Mixed'
     else:
-        return str(types[0])[7:-2]
+        return str(types[0]).split("'")[1]#in python2, it is like "<type 'xxx'>", while in python3, it is like "<class 'xxx'>"
 
 
 def quartiles(values, ignoreNoneOrNan=True):

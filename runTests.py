@@ -20,7 +20,10 @@ import nose.pyversion
 #pdb.set_trace()
 #print dir(nose.pyversion)
 from nose.util import ln
-from StringIO import StringIO
+try:
+    from StringIO import StringIO#python 2
+except:
+    from six import StringIO#python 3
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.append(os.path.dirname(UMLPath))
@@ -211,5 +214,5 @@ if __name__ == '__main__':
         # and there are some tests that call learners in unfortunate ways, causing
         # ALOT of annoying warnings.
         with warnings.catch_warnings():
-            nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)
+            nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)#, defaultTest='calculate/tests/statistic_test.py')
     exit(0)

@@ -617,7 +617,7 @@ class Base(object):
                 continue
             currOut = function(view)
             # first we branch on whether the output has multiple values or is singular.
-            if hasattr(currOut, '__iter__'):
+            if hasattr(currOut, '__iter__') and not isinstance(currOut, six.string_types):#in python3, string has __iter__ too.
                 # if there are multiple values, they must be random accessible
                 if not hasattr(currOut, '__getitem__'):
                     raise ArgumentException(

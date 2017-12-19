@@ -40,6 +40,24 @@ from UML.randomness import numpyRandom
 import six
 from six.moves import range
 from six.moves import zip
+from future.utils import raise_
+try:
+    from sys import intern
+    class Py2Key:#for python3
+
+        __slots__ = ("value", "typestr")
+
+        def __init__(self, value):
+            self.value   = value
+            self.typestr = intern(type(value).__name__)
+
+        def __lt__(self, other):
+            try:
+                return self.value < other.value
+            except TypeError:
+                return self.typestr < other.typestr
+except:
+    Py2Key = None#for python2
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
@@ -408,7 +426,7 @@ def initDataObject(
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
         except:
-            six.reraise(einfo[1], None, einfo[2])
+            raise_(einfo[1], None, einfo[2])
 
 
     def makeCmp(keepList, outerObj, axis):
@@ -629,8 +647,11 @@ def _loadmtxForAuto(
                 retFNames = names if names != [''] else None
 
     openFile.seek(startPosition)
-
-    data = scipy.io.mmread(openFile.name)
+    try:
+        data = scipy.io.mmread(openFile)#python 2
+    except:
+        tempName = openFile.name if hasattr(openFile, 'name') else openFile.inner.name
+        data = scipy.io.mmread(tempName)#for python3, it may need this.
 
     temp = (data, None, None)
 
@@ -1057,7 +1078,7 @@ def _validationForPointSelection(keepPoints, pointNames):
         else:
             found[keepPoints[i]] = i
 
-        if keepPoints[i] < 0:
+        if not isinstance(keepPoints[i], six.string_types) and keepPoints[i] < 0:
             msg = "Invalid value in keepPoints parameter at index ("
             msg += str(i)
             msg += "). The value ("
@@ -1268,7 +1289,7 @@ def _loadcsvUsingPython(
     # retData. Will be None and ignored if no reordering needs to take
     # place.
     retData = None
-    if keepPoints != 'all' and keepPoints != sorted(keepPoints):
+    if keepPoints != 'all' and keepPoints != sorted(keepPoints, key=Py2Key):
         retData = [None] * len(keepPoints)
         keepPointsValToIndex = {}
         for i in range(len(keepPoints)):
@@ -1368,7 +1389,7 @@ def _loadcsvUsingPython(
     # do so. If we don't need to do either of those things, then we
     # don't even enter the helper
     removalNeeded = not list(removeRecord.keys()) == [0] and not list(removeRecord.keys()) == []
-    reorderNeeded = keepFeatures != 'all' and keepFeatures != sorted(keepFeatures)
+    reorderNeeded = keepFeatures != 'all' and keepFeatures != sorted(keepFeatures, key=Py2Key)
     if removalNeeded or reorderNeeded:
         _removalCleanupAndSelectionOrdering(
             data, removeRecord, featsToRemoveList, keepFeatures)
@@ -1413,7 +1434,7 @@ def _adjustNamesGivenKeepList(retNames, keepList, needsRemoval):
 
     # if we're already sorted and we don't need to do removal, we
     # can return.
-    if sorted(keepList) == keepList and not needsRemoval:
+    if sorted(keepList, key=Py2Key) == keepList and not needsRemoval:
         return retNames
 
     # if needed, resolve names to indices for easy indexing during
@@ -1453,7 +1474,7 @@ def _removalCleanupAndSelectionOrdering(
     # feature order adjustment will take place at the same time as unwanted
     # column removal. This just defines a triggering variable.
     adjustFeatureOrder = False
-    if keepFeatures != 'all' and keepFeatures != sorted(keepFeatures):
+    if keepFeatures != 'all' and keepFeatures != sorted(keepFeatures, key=Py2Key):
         adjustFeatureOrder = True
         # maps the index of the column to the position that it should
         # be copied into.
@@ -1463,7 +1484,7 @@ def _removalCleanupAndSelectionOrdering(
         # that are currently present. Since they are stored in the
         # file in lexigraphical order, we use the sorted selection
         # list to define the reindexing
-        sortedKeepFeatures = sorted(keepFeatures)
+        sortedKeepFeatures = sorted(keepFeatures, key=Py2Key)
         for i in range(len(sortedKeepFeatures)):
             reIndexed = sortedKeepFeatures[i]
             reverseKeepFeatures[i] = keepFeatures.index(reIndexed)

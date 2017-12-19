@@ -57,7 +57,10 @@ def test_callAllAsMain():
         sys.stdout = examplesSTOUT
         sys.stderr = examplesSTERR
         sys.argv = copy.copy(sys.argv)
-        sys.argv[1] = tempOutDir
+        if len(sys.argv) > 1:
+            sys.argv[1] = tempOutDir
+        else:
+            sys.argv.append(tempOutDir)
 
         # Since they sometimes have file IO side effects to files in the
         # repo, and we don't want those effects to be reflected in changes
@@ -73,6 +76,8 @@ def test_callAllAsMain():
                 results[script] = "Success"
             except Exception:
                 results[script] = sys.exc_info()
+    except Exception:
+        pass
     finally:
         sys.stdout = backupSTOUT
         sys.stderr = backupSTERR
