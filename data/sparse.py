@@ -27,6 +27,7 @@ from .dataHelpers import View
 from UML.exceptions import ImproperActionException
 from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')
+import warnings
 
 class Sparse(Base):
 
@@ -792,7 +793,9 @@ class Sparse(Base):
         if format == 'scipycsc':
             return self.data.tocsc()
         if format == 'scipycsr':
-            return self.data.tocsr()
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                return self.data.tocsr()
 
     def _copyPoints_implementation(self, points, start, end):
         retData = []

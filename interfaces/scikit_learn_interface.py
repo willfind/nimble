@@ -16,7 +16,7 @@ import sys
 import functools
 
 import UML
-
+import warnings
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
@@ -385,7 +385,9 @@ class SciKitLearn(UniversalInterface):
             fitParams[name] = value
 
         learner = self.findCallable(learnerName)(**initParams)
-        learner.fit(**fitParams)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            learner.fit(**fitParams)
         if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba'):
             if trainY is not None:
                 labelOrder = numpy.unique(trainY)
@@ -484,13 +486,17 @@ class SciKitLearn(UniversalInterface):
         """
         Wrapper for the underlying predict function of a scikit-learn learner object
         """
-        return learner.predict(testX)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            return learner.predict(testX)
 
     def _transform(self, learner, testX, arguments, customDict):
         """
         Wrapper for the underlying transform function of a scikit-learn learner object
         """
-        return learner.transform(testX)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            return learner.transform(testX)
 
 
     ###############

@@ -49,6 +49,9 @@ class ExtensionPlugin(Plugin):
         if not file.endswith('.py'):
             return False
 
+        if file == '__init__.py' and sys.version_info.major > 2:#in python3, don't check __init__.py
+            return False
+
         dname = os.path.dirname(file)
         if dname == os.path.join(UMLPath, 'interfaces', 'tests'):
             fname = os.path.basename(file)
@@ -214,5 +217,6 @@ if __name__ == '__main__':
         # and there are some tests that call learners in unfortunate ways, causing
         # ALOT of annoying warnings.
         with warnings.catch_warnings():
-            nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)#, defaultTest='data/tests/query_backend.py')
+            # nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args, defaultTest='interfaces/tests/scikit_learn_interface_test.py')
+            nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)
     exit(0)

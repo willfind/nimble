@@ -10,7 +10,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import sys
-import StringIO
+try:
+    from StringIO import StringIO#python 2
+except:
+    from six import StringIO#python 3
 import tempfile
 import shutil
 import copy
@@ -47,8 +50,8 @@ def test_callAllAsMain():
     # we want to capture stout and sterr; this can be adjusted for debugging,
     # but without this it's challenging to check the results
     results = {}
-    examplesSTOUT = StringIO.StringIO()
-    examplesSTERR = StringIO.StringIO()
+    examplesSTOUT = StringIO()
+    examplesSTERR = StringIO()
     tempOutDir = tempfile.mkdtemp()
     backupSTOUT = sys.stdout
     backupSTERR = sys.stderr

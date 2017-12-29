@@ -27,6 +27,8 @@ from UML import train
 from UML import createData
 from UML.calculate import fractionIncorrect
 from UML import calculate
+from past.builtins import cmp
+from UML.data.base import cmp_to_key
 
 
 def rSquared(knownValues, predictedValues):
@@ -248,7 +250,7 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
                 errorForEachFeatureDropped.append((combinedErrorForFeatureDrop, featureNumToDrop))
 
 
-        errorForEachFeatureDropped.sort(lambda x,y: cmp(y[0],x[0])) #sort descending by error so that the last element corresponds to the most useless feature (i.e. the feature where we have the lowest error without it)
+        errorForEachFeatureDropped.sort(key=cmp_to_key(lambda x,y: cmp(y[0],x[0]))) #sort descending by error so that the last element corresponds to the most useless feature (i.e. the feature where we have the lowest error without it)
         #import pdb; pdb.set_trace()
         mostUselessFeatureErrorInSample = errorForEachFeatureDropped[-1][0]
         droppedFeatureErrorsListInSample.append(mostUselessFeatureErrorInSample)
