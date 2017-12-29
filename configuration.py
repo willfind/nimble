@@ -571,7 +571,7 @@ def configSafetyWrapper(toWrap):
     def wrapped(*args):
         backupFile = tempfile.TemporaryFile()
         configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'r')
-        if sys.version < '3':
+        if sys.version_info.major < 3:
             backupFile.write(configurationFile.read())
         else:
             backupFile.write(bytes(configurationFile.read(), 'utf-8'))#python 3
@@ -586,7 +586,7 @@ def configSafetyWrapper(toWrap):
         finally:
             backupFile.seek(0)
             configurationFile = open(os.path.join(UML.UMLPath, 'configuration.ini'), 'w')
-            if sys.version < '3':
+            if sys.version_info.major < 3:
                 configurationFile.write(backupFile.read())
             else:
                 configurationFile.write(backupFile.read().decode())#python3

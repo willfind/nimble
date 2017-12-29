@@ -3,7 +3,7 @@ Utility functions that could be useful in multiple interfaces
 
 """
 
-from __future__ import absolute_import
+# from __future__ import absolute_import
 import numpy
 import sys
 import importlib
@@ -13,6 +13,7 @@ from UML.exceptions import ArgumentException
 from UML.randomness import pythonRandom
 import six
 from six.moves import range
+import warnings
 
 
 def makeArgString(wanted, argDict, prefix, infix, postfix):
@@ -107,7 +108,9 @@ class PythonSearcher(object):
                 subMod = getattr(parent, name)
             except AttributeError:
                 try:
-                    subMod = importlib.import_module(parent.__name__ + "." + name)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore')#python3 needs this line to suppress warning messages.
+                        subMod = importlib.import_module(parent.__name__ + "." + name)
                 except ImportError:
                     continue
 

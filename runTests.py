@@ -214,5 +214,5 @@ if __name__ == '__main__':
         # and there are some tests that call learners in unfortunate ways, causing
         # ALOT of annoying warnings.
         with warnings.catch_warnings():
-            nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)#, defaultTest='calculate/tests/statistic_test.py')
+            nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)#, defaultTest='data/tests/query_backend.py')
     exit(0)

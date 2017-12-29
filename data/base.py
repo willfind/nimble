@@ -14,8 +14,11 @@ from six.moves import map
 from six.moves import range
 from six.moves import zip
 mplError = None
+import sys
 try:
     import matplotlib
+    if sys.version_info.major > 2:
+        matplotlib.use('agg')#in python3, it must be agg.
 except ImportError as e:
     mplError = e
 
@@ -24,7 +27,6 @@ import numbers
 import itertools
 import copy
 import numpy
-import sys
 import os.path
 import inspect
 import operator
@@ -1918,9 +1920,11 @@ class Base(object):
             else:
                 plt.savefig(outPath, format=outFormat)
 
-        toPlot = self.copyAs('numpyarray')
+        # toPlot = self.copyAs('numpyarray')
+
         p = Process(target=plotter, args=[self.data])
         p.start()
+
         return p
 
 
