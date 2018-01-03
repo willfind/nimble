@@ -108,9 +108,7 @@ class PythonSearcher(object):
                 subMod = getattr(parent, name)
             except AttributeError:
                 try:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter('ignore')#python3 needs this line to suppress warning messages.
-                        subMod = importlib.import_module(parent.__name__ + "." + name)
+                    subMod = importlib.import_module(parent.__name__ + "." + name)
                 except ImportError:
                     continue
 

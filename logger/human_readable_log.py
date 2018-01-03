@@ -99,7 +99,6 @@ class HumanReadableLogger(UmlLogger):
         # TODO: need kind of call? train vs trainAndApply?
         #		if numFolds is not None:
         #			self.logMessage("# of folds: " + str(numFolds))
-
         (dataInfo0, dataInfo1) = _packDataInfo([trainX, trainY, testX, testY])
         if dataInfo0 is not None:
             tableList.append(dataInfo0)
@@ -265,7 +264,7 @@ def _packDataInfo(dataObjects):
 
     # TODO currently ignore labels Obj from data, should record it somehow instead
     for i in range(4):
-        if isinstance(dataObjects[i], (int, six.string_types)):
+        if isinstance(dataObjects[i], (int, six.string_types, numpy.int64)):
             dataObjects[i] = None
 
     # check to see if there are meaningful values of name and path for any

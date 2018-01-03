@@ -307,7 +307,6 @@ class SciKitLearn(UniversalInterface):
 
         """
         mustCopy = ['PLSRegression']
-
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
             if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopy:
@@ -385,9 +384,7 @@ class SciKitLearn(UniversalInterface):
             fitParams[name] = value
 
         learner = self.findCallable(learnerName)(**initParams)
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            learner.fit(**fitParams)
+        learner.fit(**fitParams)
         if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba'):
             if trainY is not None:
                 labelOrder = numpy.unique(trainY)
@@ -486,17 +483,13 @@ class SciKitLearn(UniversalInterface):
         """
         Wrapper for the underlying predict function of a scikit-learn learner object
         """
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            return learner.predict(testX)
+        return learner.predict(testX)
 
     def _transform(self, learner, testX, arguments, customDict):
         """
         Wrapper for the underlying transform function of a scikit-learn learner object
         """
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            return learner.transform(testX)
+        return learner.transform(testX)
 
 
     ###############

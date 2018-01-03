@@ -27,6 +27,7 @@ from UML.logger import Stopwatch
 from UML.helpers import _mergeArguments
 import six
 from six.moves import range
+import warnings
 
 
 def captureOutput(toWrap):
@@ -174,7 +175,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         customDict = {}
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int)):
+        if isinstance(trainY, (six.string_types, int, numpy.int64)):
             trainX = trainX.copy()
             trainY = trainX.extractFeatures(toExtract=trainY)
 

@@ -2880,7 +2880,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
         raise ArgumentException("trainX may only be an object derived from Base")
 
     if trainY is not None:
-        if not (isinstance(trainY, Base) or isinstance(trainY, (six.string_types, int, int))):
+        if not (isinstance(trainY, Base) or isinstance(trainY, (six.string_types, int, numpy.int64))):
             raise ArgumentException(
                 "trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
         if isinstance(trainY, Base):

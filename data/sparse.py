@@ -793,9 +793,7 @@ class Sparse(Base):
         if format == 'scipycsc':
             return self.data.tocsc()
         if format == 'scipycsr':
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
-                return self.data.tocsr()
+            return self.data.tocsr()
 
     def _copyPoints_implementation(self, points, start, end):
         retData = []

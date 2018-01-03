@@ -217,6 +217,7 @@ if __name__ == '__main__':
         # and there are some tests that call learners in unfortunate ways, causing
         # ALOT of annoying warnings.
         with warnings.catch_warnings():
-            # nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args, defaultTest='interfaces/tests/scikit_learn_interface_test.py')
+            warnings.simplefilter('ignore')
+            # nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args, defaultTest='tests/testCrossValidate.py')
             nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)
     exit(0)

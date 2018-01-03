@@ -3923,7 +3923,7 @@ class Base(object):
                     if isinstance(target, six.string_types):
                         msg = 'the target is not a valid point name nor a valid query string'
                         raise ArgumentException(msg)
-            if isinstance(target, int):
+            if isinstance(target, (int, numpy.int, numpy.int64)):
                 target = [target]
             if isinstance(target, list):
                 #verify everything in list is a valid index and convert names into indices
