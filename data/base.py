@@ -31,11 +31,13 @@ import os.path
 import inspect
 import operator
 from multiprocessing import Process
-import cython
-if not cython.compiled:
-    from math import sin, cos
 
 import UML
+
+cython = UML.importModule('cython')
+if cython is None or not cython.compiled:
+    from math import sin, cos
+
 from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
 from UML.logger import produceFeaturewiseReport
