@@ -218,6 +218,6 @@ if __name__ == '__main__':
         # ALOT of annoying warnings.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            # nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args, defaultTest='tests/testCrossValidate.py')
+            # nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args, defaultTest='examples/working/spencerSurveyQuestionPicker.py')
             nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)
     exit(0)

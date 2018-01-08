@@ -27,7 +27,10 @@ from UML import train
 from UML import createData
 from UML.calculate import fractionIncorrect
 from UML import calculate
-from past.builtins import cmp
+try:
+    cmp(1, 1)
+except:
+    from UML.data.base import cmp#python3
 from UML.data.base import cmp_to_key
 
 
@@ -203,7 +206,8 @@ def reduceDataToBestFeatures(trainXs, trainYs, testXs, testYs, numFeaturesToKeep
         mostUselessFeatureErrorInSample = errorForEachFeatureDropped[-1][0]
         droppedFeatureErrorsListInSample.append(mostUselessFeatureErrorInSample)
         mostUselessFeatureNum = errorForEachFeatureDropped[-1][1]
-        #print "\nRemoving feature " + str(trainX.getFeatureNames()[mostUselessFeatureNum]) + " with combined error " + str(round(errorForEachFeatureDropped[-1][0],3))
+
+        # print("\nRemoving feature " + str(trainX.getFeatureNames()[mostUselessFeatureNum]) + " with combined error " + str(round(errorForEachFeatureDropped[-1][0],3)))
         for trainX, testX in zip(trainXs, testXs):
             trainX.extractFeatures(mostUselessFeatureNum)
             testX.extractFeatures(mostUselessFeatureNum)
@@ -366,9 +370,10 @@ def testgetBestFeaturesAndErrors():
                                                                                  fractionOfDataForTesting=fractionOfDataForTesting,
                                                                                  featuresToPredict=featuresToPredict,
                                                                                  functionsToExcludePoints=functionsToExcludePoints)
+
     bestFeatures, errorsHash, parametersHash = getBestFeaturesAndErrors(trainXs, trainYs, testXs, testYs,
-                                                                        numFeaturesToKeep, predictionAlgorithms,
-                                                                        featuresToPredict)
+                                                                    numFeaturesToKeep, predictionAlgorithms,
+                                                                    featuresToPredict)
 
     print("errorsHash:", errorsHash)
     print("parametersHash", parametersHash)

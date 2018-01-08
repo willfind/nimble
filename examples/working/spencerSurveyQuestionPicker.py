@@ -27,7 +27,10 @@ from UML import train
 from UML import createData
 from UML.calculate import fractionIncorrect
 from UML import calculate
-from past.builtins import cmp
+try:
+    cmp(1, 1)
+except:
+    from UML.data.base import cmp#python3
 from UML.data.base import cmp_to_key
 
 
