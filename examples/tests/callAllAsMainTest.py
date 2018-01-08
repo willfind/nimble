@@ -21,6 +21,7 @@ import copy
 import UML
 #ensures UML.examples.allowImports is in sys.modules
 import UML.examples.allowImports
+import warnings
 
 
 def test_callAllAsMain():
@@ -75,7 +76,12 @@ def test_callAllAsMain():
 
         for script in cleaned:
             try:
-                exec(compile(open(os.path.join(examplesDir, script)).read(), os.path.join(examplesDir, script), 'exec'))
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    if sys.version_info.major <= 2:
+                        execfile(os.path.join(examplesDir, script))
+                    else:
+                        exec(compile(open(os.path.join(examplesDir, script)).read(), os.path.join(examplesDir, script), 'exec'))
                 results[script] = "Success"
             except Exception:
                 results[script] = sys.exc_info()

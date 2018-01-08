@@ -8,7 +8,10 @@ be written as files in that directory
 
 from __future__ import absolute_import
 from __future__ import print_function
-from .allowImports import boilerplate
+try:
+    from allowImports import boilerplate
+except:
+    from .allowImports import boilerplate
 from six.moves import range
 
 boilerplate()

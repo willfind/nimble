@@ -502,6 +502,13 @@ class Mlpy(UniversalInterface):
         """
         namedModule = self._searcher.findInPackage(parent, name)
 
+        # TODO for python 3
+        # in python 3, inspect.getargspec(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
+        # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
+        # excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
+        # if sys.version_info.major > 2 and (parent is None or parent.lower in excludeList):
+        #     return self._paramQueryHardCoded(name, parent, ignore)
+
         if not namedModule is None:
             try:
                 (args, v, k, d) = inspect.getargspec(namedModule)
@@ -541,6 +548,8 @@ class Mlpy(UniversalInterface):
         if parent is None:
             return None
 
+        # TODO for python 3
+        # in python 3, mlpy's KNN, PCA ... may have different arguments than those in python 2 mlpy.
         if parent.lower() == 'LibSvm'.lower():
             if name == '__init__':
                 pnames = ['svm_type', 'kernel_type', 'degree', 'gamma', 'coef0', 'C', 'nu', 'eps', 'p', 'cache_size',

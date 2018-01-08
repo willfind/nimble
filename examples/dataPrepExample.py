@@ -6,7 +6,10 @@ set (aka Adult).
 """
 
 from __future__ import absolute_import
-from .allowImports import boilerplate
+try:
+    from allowImports import boilerplate
+except:
+    from .allowImports import boilerplate
 import six
 
 boilerplate()

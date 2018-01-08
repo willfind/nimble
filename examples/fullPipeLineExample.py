@@ -6,7 +6,10 @@ strategies. Also demonstrates the possible output formats allowed when calling l
 
 from __future__ import absolute_import
 from __future__ import print_function
-from .allowImports import boilerplate
+try:
+    from allowImports import boilerplate
+except:
+    from .allowImports import boilerplate
 
 boilerplate()
 
