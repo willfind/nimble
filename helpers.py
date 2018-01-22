@@ -14,6 +14,7 @@ import operator
 import inspect
 import numpy
 import importlib
+import numbers
 
 import os.path
 import re
@@ -2934,7 +2935,7 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
             raise ArgumentException(msg)
 
 
-def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
+def trainAndTestOneVsOneOld(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
                          **kwarguments):
     """
     Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
@@ -2990,7 +2991,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
     timer = Stopwatch() if useLog else None
 
     # if testY is in testX, we need to extract it before we call a trainAndApply type function
-    if isinstance(testY, (six.string_types, int, int)):
+    if isinstance(testY, (six.string_types, numbers.Integral)):
         testX = testX.copy()
         testY = testX.extractFeatures([testY])
 
@@ -3227,6 +3228,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     # has 'label', 0 otherwise.)  Train a classifier with the processed
     # labels and get predictions on the test set.
     rawPredictions = None
+    import pdb; pdb.set_trace()
     for label in labelSet:
         def relabeler(point):
             if point[0] != label:
@@ -3295,7 +3297,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
 
-def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
+def trainAndTestOneVsAllOld(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
                          **kwarguments):
     """
     Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
@@ -3364,3 +3366,48 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
                                  timer, extraInfo=merged)
 
     return results
+
+def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
+                         **kwarguments):
+
+    _validData(trainX, trainY, testX, testY, [True, True])
+    _validArguments(arguments)
+    _validArguments(kwarguments)
+    merged = _mergeArguments(arguments, kwarguments)
+
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+
+    timer = Stopwatch() if useLog else None
+
+    # if testY is in testX, we need to extract it before we call a trainAndApply type function
+    if isinstance(testY, (six.string_types, int, int)):
+        testX = testX.copy()
+        testY = testX.extractFeatures([testY])
+
+    predictions = f(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog,
+                                        timer=timer)
+
+    #now we need to compute performance metric(s) for the set of winning predictions
+    results = computeMetrics(testY, None, predictions, performanceFunction)
+
+    # Send this run to the log, if desired
+    if useLog:
+        if not isinstance(performanceFunction, list):
+            performanceFunction = [performanceFunction]
+            results = [results]
+        UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results,
+                                 timer, extraInfo=merged)
+
+    return results
+
+def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
+                         **kwarguments):
+    return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, f=trainAndApplyOneVsAll, \
+                                arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
+
+def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
+                         **kwarguments):
+    return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, f=trainAndApplyOneVsOne, \
+                                arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)

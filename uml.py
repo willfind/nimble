@@ -847,7 +847,9 @@ def learnerType(learnerNames):
 
 
 def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments={},
-          scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
+          scoreMode='label', multiClassStrategy='default', useLog=None, \
+          doneValidData=False, doneValidArguments1=False, doneValidArguments2=False, \
+          doneValidMultiClassStrategy=False, done2dOutputFlagCheck=False, **kwarguments):
     """
     Trains and returns the specified learner using the provided data. The return value is a
     UniversalInterface.trainedLearner object.
@@ -891,10 +893,16 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
 
     """
     (package, trueLearnerName) = _unpackLearnerName(learnerName)
-    _validData(trainX, trainY, None, None, [False, False])
-    _validArguments(arguments)
-    _validArguments(kwarguments)
-    _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
+    if not doneValidData:
+        _validData(trainX, trainY, None, None, [False, False])
+    if not doneValidArguments1:
+        _validArguments(arguments)
+    if not doneValidArguments2:
+        _validArguments(kwarguments)
+    if not doneValidMultiClassStrategy:
+        _validMultiClassStrategy(multiClassStrategy)
+    if not done2dOutputFlagCheck:
+        _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
     merged = _mergeArguments(arguments, kwarguments)
 
     if useLog is None:
@@ -936,9 +944,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
 
     interface = findBestInterface(package)
 
-    # TODO how do we do multiclassStrategy?
-
-    trainedLearner = interface.train(trueLearnerName, trainX, trainY, bestArgument, timer)
+    trainedLearner = interface.train(trueLearnerName, trainX, trainY, multiClassStrategy, bestArgument, useLog, timer)
 
     if useLog:
         funcString = interface.getCanonicalName() + '.' + trueLearnerName
@@ -949,6 +955,71 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
 
 
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
+                  performanceFunction=None, arguments={}, output=None, scoreMode='label',
+                  multiClassStrategy='default', useLog=None, **kwarguments):
+    """
+    Trains and returns the results of applying the learner to the test data (i.e.
+    performing prediction, transformation, etc. as appropriate to the learner).
+
+    ARGUMENTS:
+
+    learnerName: algorithm to be called, in the form 'package.learnerName'.
+
+    trainX: data set to be used for training (as some form of Base object)
+
+    trainY: used to retrieve the known class labels of the training data. Either
+    contains the labels themselves (as a Base object) or an index (numerical or string)
+    that defines their locale in the trainX object
+
+    testX: data set on which the trained learner will be applied (i.e. performing
+    prediction, transformation, etc. as appropriate to the learner). Must be
+    some form of UML data Base object.
+
+    performanceFunction: If cross validation is triggered to select from the given
+    argument set, then this function will be used to generate a performance
+    score for the run. function is of the form: def func(knownValues, predictedValues).
+    Look in UML.calculate for pre-made options. Default is None, since if
+    there is no parameter selection to be done, it is not used.
+
+    arguments: dict containing the parameters to be passed to the learner, in the
+    form of a mapping between (string) parameter names, and values. Will be merged
+    with the contents of **kwarguments before being passed on.
+
+    output: The kind of UML data object that the output of this function should be
+    in. Any of the normal string inputs to the createData 'returnType' parameter are
+    accepted here. Alternatively, the value 'match' will indicate to use the type
+    of the 'trainX' parameter.
+
+    scoreMode: In the case of a classifying learner, this specifies the type of output
+    wanted: 'label' if we class labels are desired, 'bestScore' if both the class
+    label and the score associated with that class are desired, or 'allScores' if
+    a matrix containing the scores for every class label are desired.
+
+    multiClassStrategy: may only be 'default' 'OneVsAll' or 'OneVsOne'
+
+    useLog - local control for whether to send results/timing to the logger.
+    If None (default), use the value as specified in the "logger"
+    "enabledByDefault" configuration option. If True, send to the logger
+    regardless of the global option. If False, do NOT send to the logger,
+    regardless of the global option.
+
+    kwarguments: The collection of extra key:value argument pairs included in this call to
+    train(). They will be merged with the arguments dict, and passed on through to the
+    learner.
+
+    """
+    _validData(trainX, trainY, testX, None, [False, False])
+    _validScoreMode(scoreMode)
+    _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+    trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
+                               scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
+                               doneValidData=True, done2dOutputFlagCheck=True)
+    results = trainedLearner.apply(testX, arguments, output, scoreMode, useLog)
+
+    return results
+
+
+def trainAndApplyOld(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments={}, output=None, scoreMode='label',
                   multiClassStrategy='default', useLog=None, **kwarguments):
     """
@@ -1076,8 +1147,72 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     return results
 
-
 def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
+                 arguments={}, output=None, scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
+    """
+    For each permutation of the merge of 'arguments' and 'kwarguments' (more below),
+    trainAndTest uses cross validation to generate a performance score for the algorithm,
+    given the particular argument permutation. The argument permutation that performed
+    best cross validating over the training data is then used as the lone argument for
+    training on the whole training data set. Finally, the learned model generates
+    predictions for the testing set, an the performance of those predictions is
+    calculated and returned.
+
+    If no additional arguments are supplied via arguments or **kwarguments, then
+    trainAndTest just returns the performance of the algorithm with default arguments
+    on the testing data.
+
+    ARGUMENTS:
+
+    learnerName: training algorithm to be called, in the form 'package.algorithmName'.
+
+    trainX: data set to be used for training (as some form of Base object)
+
+    trainY: used to retrieve the known class labels of the training data. Either
+    contains the labels themselves (as a Base object) or an index (numerical or string)
+    that defines their locale in the trainX object
+
+    testX: data set to be used for testing (as some form of Base object)
+
+    testY: used to retrieve the known class labels of the test data. Either
+    contains the labels themselves (as a Base object) or an index (numerical or string)
+    that defines their location in the testX object.
+
+    performanceFunction: Function used by computeMetrics to generate a performance score
+    for the run. function is of the form: def func(knownValues, predictedValues).
+    Look in UML.calculate for pre-made options.
+
+    arguments: dict containing the parameters to be passed to the learner, in the
+    form of a mapping between (string) parameter names, and values. Will be merged
+    with the contents of **kwarguments before being passed on. The syntax for prescribing
+    different arguments for algorithm: arguments of the form {arg1=(1,2,3), arg2=(4,5,6)}
+    correspond to permutations/argument states with one element from arg1 and one element
+    from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
+
+    multiClassStrategy: may only be 'default' 'OneVsAll' or 'OneVsOne'
+
+    useLog - local control for whether to send results/timing to the logger.
+    If None (default), use the value as specified in the "logger"
+    "enabledByDefault" configuration option. If True, send to the logger
+    regardless of the global option. If False, do NOT send to the logger,
+    regardless of the global option.
+
+    kwarguments: optional arguments to be passed to the specified learner. Will be merged
+    with the arguments parameter before being passed on to the learner.
+    The syntax for prescribing different arguments for algorithm:
+    **kwarguments of the form arg1=(1,2,3), arg2=(4,5,6)
+    correspond to permutations/argument states with one element from arg1 and one element
+    from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
+
+    """
+    predictions = UML.trainAndApply(learnerName, trainX, trainY, testX, performanceFunction, arguments, output, \
+                                    scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog)
+    performance = UML.helpers.computeMetrics(testY, None, predictions, performanceFunction)
+
+    return performance
+
+
+def trainAndTestOld(learnerName, trainX, trainY, testX, testY, performanceFunction,
                  arguments={}, output=None, scoreMode='label', useLog=None, **kwarguments):
     """
     For each permutation of the merge of 'arguments' and 'kwarguments' (more below),
@@ -1188,6 +1323,80 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 
 
 def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
+                               crossValidationError=False, numFolds=10, arguments={}, output=None,
+                               scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
+    """
+    trainAndTestOnTrainingData is the function for doing learner creation
+    and evaluation in a single step with only a single data set (no withheld
+    testing set). By default, this will calculate training error for the
+    learner trained on that data set. However, cross validation error can
+    instead be calculated by setting the parameter crossVadiationError to be
+    true. In that case, we will partition the training set into a parameter
+    controlled number of folds, and iteratively withhold each single fold to be
+    used as the testing set of the learner trained on the rest of the data.
+
+    ARGUMENTS:
+
+    learnerName: training algorithm to be called, in the form 'package.algorithmName'.
+
+    trainX: data set to be used for training (as some form of Base object)
+
+    trainY: used to retrieve the known class labels of the training data. Either
+    contains the labels themselves (as a Base object) or an index (numerical or string)
+    that defines their locale in the trainX object
+
+    performanceFunction: Function used by computeMetrics to generate a performance score
+    for the run. function is of the form: def func(knownValues, predictedValues).
+    Look in UML.calculate for pre-made options.
+
+    crossValidationError: True or False, according to whether we will calculate
+    cross validation error or training error. In True case, the training data
+    is split in the numFolds number of partitions. Each of those is iteratively
+    withheld and used as the testing set for a learner trained on the combination
+    of all of the non-withheld data. The performance results for each of those
+    tests are then averaged together to act as the return value. In the False
+    case, we train on the training data, and then use the same data as the
+    withheld testing data. By default, this flag is set to False.
+
+    numFolds: the (int) number of folds used in the cross validation. Can't
+    exceed the number of points in X, Y. Default is 10.
+
+    arguments: dict containing the parameters to be passed to the learner, in the
+    form of a mapping between (string) parameter names, and values. Will be merged
+    with the contents of **kwarguments before being passed on. The syntax for prescribing
+    different arguments for algorithm: arguments of the form {arg1=(1,2,3), arg2=(4,5,6)}
+    correspond to permutations/argument states with one element from arg1 and one element
+    from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
+
+    output: Can be used to force a format on the data object resulting from applying
+    the learner to whatever is considered the testing data. This object is not seen
+    by the user, but will be used by the input performanceFunction, and if the user
+    has prior knowledge of requirements of that function, then they can enforced
+    by UML instead of manually. By default, this parameter is set to None, indicating
+    to match the formatting of the training data objects.
+
+    multiClassStrategy: may only be 'default' 'OneVsAll' or 'OneVsOne'
+
+    useLog - local control for whether to send results/timing to the logger.
+    If None (default), use the value as specified in the "logger"
+    "enabledByDefault" configuration option. If True, send to the logger
+    regardless of the global option. If False, do NOT send to the logger,
+    regardless of the global option.
+
+    kwarguments: optional arguments to be passed to the specified learner. Will be merged
+    with the arguments parameter before being passed on to the learner.
+    The syntax for prescribing different arguments for algorithm:
+    **kwarguments of the form arg1=(1,2,3), arg2=(4,5,6)
+    correspond to permutations/argument states with one element from arg1 and one element
+    from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
+
+    """
+
+    performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY, performanceFunction, \
+                               arguments, output, scoreMode, multiClassStrategy, useLog)
+    return performance
+
+def trainAndTestOnTrainingDataOld(learnerName, trainX, trainY, performanceFunction,
                                crossValidationError=False, numFolds=10, arguments={}, output=None,
                                scoreMode='label', useLog=None, **kwarguments):
     """
