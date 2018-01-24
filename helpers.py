@@ -3228,7 +3228,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     # has 'label', 0 otherwise.)  Train a classifier with the processed
     # labels and get predictions on the test set.
     rawPredictions = None
-    import pdb; pdb.set_trace()
     for label in labelSet:
         def relabeler(point):
             if point[0] != label:
