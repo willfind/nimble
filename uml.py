@@ -1011,10 +1011,36 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     _validData(trainX, trainY, testX, None, [False, False])
     _validScoreMode(scoreMode)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+
+    if testX is None:
+        testX = trainX
+
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+
+    if useLog:
+        timer = Stopwatch()
+        timer.start('trainAndApply')
+    else:
+        timer = None
+
+    # deepLog = False
+    # if useLog and multiClassStrategy != 'default':
+    #     deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+    #     deepLog = True if deepLog.lower() == 'true' else False
+
+
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
                                scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
-                               doneValidData=True, done2dOutputFlagCheck=True)
-    results = trainedLearner.apply(testX, arguments, output, scoreMode, useLog)
+                               doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
+    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
+
+    if useLog:
+        timer.stop('trainAndApply')
+        funcString = learnerName
+        UML.logger.active.logRun(trainX, trainY, testX, None, funcString, None, results, None, timer,
+                                 extraInfo=None)
 
     return results
 
@@ -1205,9 +1231,33 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
 
     """
+
+    _2dOutputFlagCheck(trainX, trainY, scoreMode, None)#this line is for
+    # UML.tests.test_train_apply_test_frontends.test_trainAndTest_scoreMode_disallowed_multioutput
+    # and UML.tests.test_train_apply_test_frontends.test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput
+    trainY = copyLabels(trainX, trainY)
+    testY = copyLabels(testX, testY)
+
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+
+    #if we are logging this run, we need to start the timer
+    if useLog:
+        timer = Stopwatch()
+        timer.start('trainAndTest')
+    else:
+        timer = None
+
     predictions = UML.trainAndApply(learnerName, trainX, trainY, testX, performanceFunction, arguments, output, \
-                                    scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog)
+                                    scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, **kwarguments)
     performance = UML.helpers.computeMetrics(testY, None, predictions, performanceFunction)
+
+    if useLog:
+        timer.stop('trainAndTest')
+        funcString = learnerName
+        UML.logger.active.logRun(trainX, trainY, testX, testY, funcString, [performanceFunction], predictions,
+                                 [performance], timer, None)
 
     return performance
 
