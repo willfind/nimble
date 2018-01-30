@@ -2935,83 +2935,6 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
             raise ArgumentException(msg)
 
 
-def trainAndTestOneVsOneOld(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
-                         **kwarguments):
-    """
-    Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
-    testing, and computing performance measures to be handled.  Takes in a learner's name
-    and training and testing data sets, trains a learner, passes the test data to the
-    computed model, gets results, and calculates performance based on those results.
-
-    Arguments:
-
-        learnerName: name of the learner to be called, in the form 'package.learnerName'.
-
-        trainX: data set to be used for training (as some form of Base object)
-
-        trainY: used to retrieve the known class labels of the training data. Either
-        contains the labels themselves (in a Base object of the same type as trainX)
-        or an index (numerical or string) that defines their locale in the trainX object.
-
-        testX: data set to be used for testing (as some form of Base object)
-
-        testY: used to retrieve the known class labels of the test data. Either
-        contains the labels themselves or an index (numerical or string) that defines their locale
-        in the testX object.
-
-        arguments: optional arguments to be passed to the learner specified by 'learnerName'
-        To be merged with **kwarguments before being passed
-
-        performanceFunction: single or iterable collection of functions that can take two collections
-        of corresponding labels - one of true labels, one of predicted labels - and return a
-        performance metric.
-
-        useLog - local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the logger
-        regardless of the global option. If False, do NOT send to the logger,
-        regardless of the global option.
-
-        kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
-        the learner specified by 'learnerName'. To be merged with arguments before being passed
-
-    Returns: A dictionary associating the name or code of performance metrics with the results
-    of those metrics, computed using the predictions of 'learnerName' on testX.
-    Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
-    """
-    _validData(trainX, trainY, testX, testY, [True, True])
-    _validArguments(arguments)
-    _validArguments(kwarguments)
-    merged = _mergeArguments(arguments, kwarguments)
-
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
-
-    timer = Stopwatch() if useLog else None
-
-    # if testY is in testX, we need to extract it before we call a trainAndApply type function
-    if isinstance(testY, (six.string_types, numbers.Integral)):
-        testX = testX.copy()
-        testY = testX.extractFeatures([testY])
-
-    predictions = trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog,
-                                        timer=timer)
-
-    #now we need to compute performance metric(s) for the set of winning predictions
-    results = computeMetrics(testY, None, predictions, performanceFunction)
-
-    # Send this run to the log, if desired
-    if useLog:
-        if not isinstance(performanceFunction, list):
-            performanceFunction = [performanceFunction]
-            results = [results]
-        UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results,
-                                 timer, extraInfo=merged)
-
-    return results
-
-
 def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None,
                           **kwarguments):
     """
@@ -3296,78 +3219,11 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
 
-def trainAndTestOneVsAllOld(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
-                         **kwarguments):
-    """
-    Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
-    there are multiple (>2) class labels, and uses the one vs. all method of splitting the
-    training set into 2-label subsets. Tests performance using the metric function(s) found in
-    performanceMetricFunctions.
-
-        learnerName: name of the learner to be called, in the form 'package.learnerName'.
-
-        trainX: data set to be used for training (as some form of Base object)
-
-        trainY: used to retrieve the known class labels of the training data. Either
-        contains the labels themselves (in a Base object of the same type as trainX)
-        or an index (numerical or string) that defines their locale in the trainX object.
-
-        testX: data set to be used for testing (as some form of Base object)
-
-        testY: used to retrieve the known class labels of the test data. Either contains
-        the labels themselves or an index (numerical or string) that defines their
-        location in the testX object.
-
-        arguments: optional arguments to be passed to the learner specified by 'learnerName'
-        To be merged with **kwarguments before being passed
-
-        performanceFunction: single or iterable collection of functions that can take two collections
-        of corresponding labels - one of true labels, one of predicted labels - and return a
-        performance metric.
-
-        useLog - local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the logger
-        regardless of the global option. If False, do NOT send to the logger,
-        regardless of the global option.
-
-        kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
-        the learner specified by 'learnerName'. To be merged with arguments before being passed
-    """
-    _validData(trainX, trainY, testX, testY, [True, True])
-    _validArguments(arguments)
-    _validArguments(kwarguments)
-    merged = _mergeArguments(arguments, kwarguments)
-
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
-
-    timer = Stopwatch() if useLog else None
-
-    # if testY is in testX, we need to extract it before we call a trainAndApply type function
-    if isinstance(testY, (six.string_types, int, int)):
-        testX = testX.copy()
-        testY = testX.extractFeatures([testY])
-
-    predictions = trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=useLog,
-                                        timer=timer)
-
-    #now we need to compute performance metric(s) for the set of winning predictions
-    results = computeMetrics(testY, None, predictions, performanceFunction)
-
-    # Send this run to the log, if desired
-    if useLog:
-        if not isinstance(performanceFunction, list):
-            performanceFunction = [performanceFunction]
-            results = [results]
-        UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results,
-                                 timer, extraInfo=merged)
-
-    return results
-
 def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
                          **kwarguments):
+    """
+    This function is the base model of function trainAndTestOneVsOne and trainAndTestOneVsAll
+    """
 
     _validData(trainX, trainY, testX, testY, [True, True])
     _validArguments(arguments)
@@ -3403,10 +3259,68 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
 
 def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
                          **kwarguments):
+    """
+    Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
+    there are multiple (>2) class labels, and uses the one vs. all method of splitting the
+    training set into 2-label subsets. Tests performance using the metric function(s) found in
+    performanceMetricFunctions.
+        learnerName: name of the learner to be called, in the form 'package.learnerName'.
+        trainX: data set to be used for training (as some form of Base object)
+        trainY: used to retrieve the known class labels of the training data. Either
+        contains the labels themselves (in a Base object of the same type as trainX)
+        or an index (numerical or string) that defines their locale in the trainX object.
+        testX: data set to be used for testing (as some form of Base object)
+        testY: used to retrieve the known class labels of the test data. Either contains
+        the labels themselves or an index (numerical or string) that defines their
+        location in the testX object.
+        arguments: optional arguments to be passed to the learner specified by 'learnerName'
+        To be merged with **kwarguments before being passed
+        performanceFunction: single or iterable collection of functions that can take two collections
+        of corresponding labels - one of true labels, one of predicted labels - and return a
+        performance metric.
+        useLog - local control for whether to send results/timing to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the logger
+        regardless of the global option. If False, do NOT send to the logger,
+        regardless of the global option.
+        kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
+        the learner specified by 'learnerName'. To be merged with arguments before being passed
+    """
     return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, f=trainAndApplyOneVsAll, \
                                 arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
 
 def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
                          **kwarguments):
+    """
+    Wrapper class for trainAndApplyOneVsOne.  Useful if you want the entire process of training,
+    testing, and computing performance measures to be handled.  Takes in a learner's name
+    and training and testing data sets, trains a learner, passes the test data to the
+    computed model, gets results, and calculates performance based on those results.
+    Arguments:
+        learnerName: name of the learner to be called, in the form 'package.learnerName'.
+        trainX: data set to be used for training (as some form of Base object)
+        trainY: used to retrieve the known class labels of the training data. Either
+        contains the labels themselves (in a Base object of the same type as trainX)
+        or an index (numerical or string) that defines their locale in the trainX object.
+        testX: data set to be used for testing (as some form of Base object)
+        testY: used to retrieve the known class labels of the test data. Either
+        contains the labels themselves or an index (numerical or string) that defines their locale
+        in the testX object.
+        arguments: optional arguments to be passed to the learner specified by 'learnerName'
+        To be merged with **kwarguments before being passed
+        performanceFunction: single or iterable collection of functions that can take two collections
+        of corresponding labels - one of true labels, one of predicted labels - and return a
+        performance metric.
+        useLog - local control for whether to send results/timing to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the logger
+        regardless of the global option. If False, do NOT send to the logger,
+        regardless of the global option.
+        kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
+        the learner specified by 'learnerName'. To be merged with arguments before being passed
+    Returns: A dictionary associating the name or code of performance metrics with the results
+    of those metrics, computed using the predictions of 'learnerName' on testX.
+    Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
+    """
     return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, f=trainAndApplyOneVsOne, \
                                 arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
