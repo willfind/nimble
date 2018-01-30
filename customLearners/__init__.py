@@ -18,11 +18,12 @@ initialization and are avaiable in the interface named 'custom'.
 
 """
 
-from custom_learner import CustomLearner
-from knn_classification import KNNClassifier
-from mean_constant import MeanConstant
-from multioutput_ridge_regression import MultiOutputRidgeRegression
-from ridge_regression import RidgeRegression
+from __future__ import absolute_import
+from .custom_learner import CustomLearner
+from .knn_classification import KNNClassifier
+from .mean_constant import MeanConstant
+from .multioutput_ridge_regression import MultiOutputRidgeRegression
+from .ridge_regression import RidgeRegression
 
 __all__ = ['CustomLearner', 'KNNClassifier', 'MeanConstant',
            'MultiOutputRidgeRegression', 'RidgeRegression']

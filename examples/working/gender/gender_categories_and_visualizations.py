@@ -1,10 +1,14 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import numpy
 import os.path
 import functools
 from functools import partial
 
-from allowImports import boilerplate
+from .allowImports import boilerplate
+from six.moves import map
+from six.moves import range
 boilerplate()
 
 import UML
@@ -172,7 +176,7 @@ def checkFromFileCatScores(categoryScores, namesByCategory, categoriesByQName, r
         sub2 = generateSubScale(responses, q2, categoriesByQName[q2,1], q3, categoriesByQName[q3,1])
         fullCatScore = (sub1 + sub2) / 2.0
         roundTo1SigDig = partial(round, ndigits=1)
-        roundedCatScoreRaw = map(roundTo1SigDig, fullCatScore)
+        roundedCatScoreRaw = list(map(roundTo1SigDig, fullCatScore))
         roundedCatScore = UML.createData("Matrix", roundedCatScoreRaw)
         roundedCatScore.transpose()
 
@@ -398,19 +402,19 @@ def determineBestSubScores(namesByCategory, categoriesByQName, responses, gender
                 qToQ.append(abs(corr[0,1]))
 
         scoreCorrGenPartial = functools.partial(scoreToGenderCorrelation, genders=genderValue)
-        allCorr = map(scoreCorrGenPartial, pairwiseScale)
+        allCorr = list(map(scoreCorrGenPartial, pairwiseScale))
         best = max(allCorr)
         close = best*.1
 
         if PRINT_CLOSE_CSV:
             curr = []
-            for i in xrange(len(allCorr)):
+            for i in range(len(allCorr)):
                 if best - allCorr[i] < close:
                     line = ','.join([category, mapping[i][0], mapping[i][1], str(qToQ[i]), str(allCorr[i])])
                     curr.append(line)
             if len(curr) > 1:
                 for val in curr:
-                    print val
+                    print(val)
 
         for i,val in enumerate(allCorr):
             if val == best:
@@ -561,14 +565,14 @@ def printFullCategoryCorrelationToGender(namesByCategory, categoriesByQName, res
         sub2 = generateSubScale(responses, q2, categoriesByQName[q2,1], q3, categoriesByQName[q3,1])
         fullCatScore = (sub1 + sub2) / 2.0
         roundTo1SigDig = partial(round, ndigits=1)
-        roundedCatScoreRaw = map(roundTo1SigDig, fullCatScore)
+        roundedCatScoreRaw = list(map(roundTo1SigDig, fullCatScore))
         roundedCatScore = UML.createData("Matrix", roundedCatScoreRaw)
         roundedCatScore.transpose()
 
         fullGender = responses.copyFeatures("male0female1")
-        print category + ": " + str(scoreToGenderCorrelation(fullCatScore, fullGender))
-        print category + ": " + str(scoreToGenderCorrelation(roundedCatScore, fullGender))
-        print ""
+        print(category + ": " + str(scoreToGenderCorrelation(fullCatScore, fullGender)))
+        print(category + ": " + str(scoreToGenderCorrelation(roundedCatScore, fullGender)))
+        print("")
 
 
 def outputSelectedCategoryCorrelationToGender(responses, gender, selected,
@@ -984,7 +988,7 @@ if __name__ == '__main__':
     UML.registerCustomLearner('Custom', KDEProbability)
 
     import time
-    print time.asctime(time.localtime())
+    print(time.asctime(time.localtime()))
 
     # Source Data
     sourceDir = sys.argv[1]
@@ -1113,8 +1117,8 @@ if __name__ == '__main__':
         outputFile_SelectedCatsMetadata(outPath_selectedCat_metadata, categoriesByQName, selected, responseTest, genderTest, scaleType)
     if PRINT_SELQS:
         for cat,(q1,q2) in selected.items():
-            print cat + '\t' + q1
-            print '\t' + q2
+            print(cat + '\t' + q1)
+            print('\t' + q2)
 
     if OUTPUT_CORR_SELCAT_TO_SELCAT_OUTOFSAMPLE:
         printSelectedCategoryCorrelationMatrix(responseTest, genderTest, selected, categoriesByQName, False, outpath_selected_CatCorr_outOfSample, scaleType)
@@ -1155,7 +1159,7 @@ if __name__ == '__main__':
     if OUTPUT_PLOTS:
         generatePlots(selected, categoriesByQName, responseTest_noisy, genderTest, outDir_plots, (mBw, fBw), scaleType)
 
-    print time.asctime(time.localtime())
+    print(time.asctime(time.localtime()))
 
 
 

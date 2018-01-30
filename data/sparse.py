@@ -3,9 +3,13 @@ Class extending Base, defining an object to hold and manipulate a scipy coo_matr
 
 """
 
+from __future__ import division
+from __future__ import absolute_import
 import numpy
 import UML
 from UML.exceptions import ArgumentException, PackageException
+from six.moves import range
+from functools import reduce
 scipy = UML.importModule('scipy')
 if not scipy:
     msg = 'To use class Sparse, scipy must be installed.'
@@ -15,14 +19,15 @@ from scipy.io import mmwrite
 import copy
 
 import UML.data
-import dataHelpers
-from base import Base
-from base_view import BaseView
-from dataHelpers import View
+from . import dataHelpers
+from .base import Base, cmp_to_key
+from .base_view import BaseView
+from .dataHelpers import View
 
 from UML.exceptions import ImproperActionException
 from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')
+import warnings
 
 class Sparse(Base):
 
@@ -96,6 +101,9 @@ class Sparse(Base):
                 self._nextID += 1
                 return value
 
+            def __next__(self):
+                return self.next()
+
         return pointIt(self)
 
 
@@ -130,6 +138,9 @@ class Sparse(Base):
                     self._sortedPosition = end
                 self._nextID += 1
                 return value
+
+            def __next__(self):
+                return self.next()
 
         return featureIt(self)
 
@@ -233,9 +244,9 @@ class Sparse(Base):
             for v in viewIter:
                 viewArray.append(v)
 
-            viewArray.sort(cmp=comparator)
+            viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
-            for i in xrange(len(viewArray)):
+            for i in range(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
                 indexPosition.append(index)
             indexPosition = numpy.array(indexPosition)
@@ -252,10 +263,10 @@ class Sparse(Base):
             scoreArray = viewArray
             if scorer is not None:
                 # use scoring function to turn views into values
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray[i] = scorer(viewArray[i])
             else:
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray[i] = viewArray[i][sortBy]
 
             # use numpy.argsort to make desired index array
@@ -267,7 +278,7 @@ class Sparse(Base):
         # since we want to access with with positions in the original
         # data, we reverse the 'map'
         reverseIndexPosition = numpy.empty(indexPosition.shape[0])
-        for i in xrange(indexPosition.shape[0]):
+        for i in range(indexPosition.shape[0]):
             reverseIndexPosition[indexPosition[i]] = i
 
         if axisType == 'point':
@@ -278,7 +289,7 @@ class Sparse(Base):
         # we need to return an array of the feature names in their new order.
         # we convert the indices of the their previous location into their names
         newNameOrder = []
-        for i in xrange(len(indexPosition)):
+        for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
@@ -367,14 +378,14 @@ class Sparse(Base):
 
         # need mapping from values in sorted list to index in nonsorted list
         positionMap = {}
-        for i in xrange(len(toExtract)):
+        for i in range(len(toExtract)):
             positionMap[toExtract[i]] = i
 
         #walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
         # underlying structure to save space
         copyIndex = 0
         extractIndex = 0
-        for i in xrange(len(self.data.data)):
+        for i in range(len(self.data.data)):
             value = targetAxis[i]
             # Move extractIndex forward until we get to an entry that might
             # match the current (or a future) value
@@ -442,11 +453,11 @@ class Sparse(Base):
         extractedIDs = []
         # consume zeroed vectors, up to the first nonzero value
         if self.data.nnz > 0 and self.data.data[0] != 0:
-            for i in xrange(0, targetAxis[0]):
+            for i in range(0, targetAxis[0]):
                 if toExtract(viewMaker(i)):
                     extractedIDs.append(i)
         #walk through each coordinate entry
-        for i in xrange(len(self.data.data)):
+        for i in range(len(self.data.data)):
             #collect values into points
             targetValue = targetAxis[i]
             #if this is the end of a point
@@ -454,13 +465,13 @@ class Sparse(Base):
                 #evaluate whether curr point is to be extracted or not
                 # and perform the appropriate copies
                 if toExtract(viewMaker(targetValue)):
-                    for j in xrange(vectorStartIndex, i + 1):
+                    for j in range(vectorStartIndex, i + 1):
                         extractData.append(self.data.data[j])
                         extractOther.append(otherAxis[j])
                         extractTarget.append(len(extractedIDs))
                     extractedIDs.append(targetValue)
                 else:
-                    for j in xrange(vectorStartIndex, i + 1):
+                    for j in range(vectorStartIndex, i + 1):
                         self.data.data[copyIndex] = self.data.data[j]
                         otherAxis[copyIndex] = otherAxis[j]
                         targetAxis[copyIndex] = targetAxis[j] - len(extractedIDs)
@@ -473,7 +484,7 @@ class Sparse(Base):
                         nextValue = self.points
                     else:
                         nextValue = self.features
-                for j in xrange(targetValue + 1, nextValue):
+                for j in range(targetValue + 1, nextValue):
                     if toExtract(viewMaker(j)):
                         extractedIDs.append(j)
 
@@ -525,7 +536,7 @@ class Sparse(Base):
         # underlying structure to save space
         copyIndex = 0
 
-        for i in xrange(len(self.data.data)):
+        for i in range(len(self.data.data)):
             value = targetAxis[i]
             if value >= start and value <= end:
                 extractData.append(self.data.data[i])
@@ -554,12 +565,12 @@ class Sparse(Base):
         pnames = []
         fnames = []
         if axisType == 'point':
-            for i in xrange(start, end + 1):
+            for i in range(start, end + 1):
                 pnames.append(self.getPointName(i))
             fnames = self.getFeatureNames()
         else:
             pnames = self.getPointNames()
-            for i in xrange(start, end + 1):
+            for i in range(start, end + 1):
                 fnames.append(self.getFeatureName(i))
 
         return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
@@ -582,7 +593,7 @@ class Sparse(Base):
 
         # consume zeroed vectors, up to the first nonzero value
         if self.data.data[0] != 0:
-            for i in xrange(0, self.data.row[0]):
+            for i in range(0, self.data.row[0]):
                 currResults = mapper(self.pointView(i))
                 for (k, v) in currResults:
                     if not k in mapperResults:
@@ -591,7 +602,7 @@ class Sparse(Base):
 
         vectorStartIndex = 0
         #walk through each coordinate entry
-        for i in xrange(len(self.data.data)):
+        for i in range(len(self.data.data)):
             #collect values into points
             targetValue = self.data.row[i]
             #if this is the end of a point
@@ -609,7 +620,7 @@ class Sparse(Base):
                     nextValue = self.data.row[i + 1]
                 else:
                     nextValue = self.points
-                for j in xrange(targetValue + 1, nextValue):
+                for j in range(targetValue + 1, nextValue):
                     currResults = mapper(self.pointView(j))
                     for (k, v) in currResults:
                         if not k in mapperResults:
@@ -688,12 +699,12 @@ class Sparse(Base):
 
         pointer = 0
         pmax = len(self.data.data)
-        for i in xrange(self.points):
+        for i in range(self.points):
             currPname = self.getPointName(i)
             if includePointNames:
                 outFile.write(currPname)
                 outFile.write(',')
-            for j in xrange(self.features):
+            for j in range(self.features):
                 if pointer < pmax and i == self.data.row[pointer] and j == self.data.col[pointer]:
                     value = self.data.data[pointer]
                     pointer = pointer + 1
@@ -730,7 +741,7 @@ class Sparse(Base):
     def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
         def makeNameString(count, namesItoN):
             nameString = "#"
-            for i in xrange(count):
+            for i in range(count):
                 nameString += namesItoN[i]
                 if not i == count - 1:
                     nameString += ','
@@ -789,7 +800,7 @@ class Sparse(Base):
         retRow = []
         retCol = []
         if points is not None:
-            for i in xrange(len(self.data.data)):
+            for i in range(len(self.data.data)):
                 if self.data.row[i] in points:
                     retData.append(self.data.data[i])
                     retRow.append(points.index(self.data.row[i]))
@@ -797,7 +808,7 @@ class Sparse(Base):
 
             newShape = (len(points), numpy.shape(self.data)[1])
         else:
-            for i in xrange(len(self.data.data)):
+            for i in range(len(self.data.data)):
                 if self.data.row[i] >= start and self.data.row[i] <= end:
                     retData.append(self.data.data[i])
                     retRow.append(self.data.row[i] - start)
@@ -815,7 +826,7 @@ class Sparse(Base):
         retRow = []
         retCol = []
         if features is not None:
-            for i in xrange(len(self.data.data)):
+            for i in range(len(self.data.data)):
                 if self.data.col[i] in features:
                     retData.append(self.data.data[i])
                     retRow.append(self.data.row[i])
@@ -823,7 +834,7 @@ class Sparse(Base):
 
             newShape = (numpy.shape(self.data)[0], len(features))
         else:
-            for i in xrange(len(self.data.data)):
+            for i in range(len(self.data.data)):
                 if self.data.col[i] >= start and self.data.col[i] <= end:
                     retData.append(self.data.data[i])
                     retRow.append(self.data.row[i])
@@ -1104,7 +1115,7 @@ class Sparse(Base):
         self._sortInternal('point')
         pLen = self.features
         numElem = self.points * self.features
-        for i in xrange(len(self.data.data)):
+        for i in range(len(self.data.data)):
             if self.data.row[i] > 0:
                 self.data.col[i] += (self.data.row[i] * pLen)
                 self.data.row[i] = 0
@@ -1115,7 +1126,7 @@ class Sparse(Base):
         self._sortInternal('feature')
         fLen = self.points
         numElem = self.points * self.features
-        for i in xrange(len(self.data.data)):
+        for i in range(len(self.data.data)):
             if self.data.col[i] > 0:
                 self.data.row[i] += (self.data.col[i] * fLen)
                 self.data.col[i] = 0
@@ -1131,7 +1142,7 @@ class Sparse(Base):
         numFeatures = self.features / numPoints
         newShape = (numPoints, numFeatures)
 
-        for i in xrange(len(self.data.data)):
+        for i in range(len(self.data.data)):
             # must change the row entry before modifying the col entry
             self.data.row[i] = self.data.col[i] / numFeatures
             self.data.col[i] = self.data.col[i] % numFeatures
@@ -1147,7 +1158,7 @@ class Sparse(Base):
         numPoints = self.points / numFeatures
         newShape = (numPoints, numFeatures)
 
-        for i in xrange(len(self.data.data)):
+        for i in range(len(self.data.data)):
             # must change the col entry before modifying the row entry
             self.data.col[i] = self.data.row[i] / numPoints
             self.data.row[i] = self.data.row[i] % numPoints
@@ -1165,7 +1176,7 @@ class Sparse(Base):
         # underlying structure to save space
         copyIndex = 0
 
-        for lookIndex in xrange(len(self.data.data)):
+        for lookIndex in range(len(self.data.data)):
             currP = self.data.row[lookIndex]
             currF = self.data.col[lookIndex]
             # if it is in range we want to obliterate the entry by just passing it by
@@ -1207,8 +1218,8 @@ class Sparse(Base):
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
         missingIdxDictFeature = {i: [] for i in featuresList}
-        missingIdxDictPoint = {i: [] for i in xrange(self.points)}
-        for i in xrange(self.points):
+        missingIdxDictPoint = {i: [] for i in range(self.points)}
+        for i in range(self.points):
             for j in featuresList:
                 tmpV = self[i, j]
                 if tmpV in alsoTreatAsMissingSet or (tmpV != tmpV) or tmpV is None:
@@ -1234,7 +1245,7 @@ class Sparse(Base):
                 missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.features]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in xrange(self.points) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.points) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -1251,7 +1262,7 @@ class Sparse(Base):
                 missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.points]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in xrange(self.features) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.features) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -1300,7 +1311,7 @@ class Sparse(Base):
                 if len(interpX) == 0:
                     continue
                 if arguments is None:
-                    xp = [i for i in xrange(self.points) if i not in interpX]
+                    xp = [i for i in range(self.points) if i not in interpX]
                     fp = [self[i, j] for i in xp]
                     tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
                 elif isinstance(arguments, dict):
@@ -1485,6 +1496,9 @@ class Sparse(Base):
                         return value
 
                 raise StopIteration
+
+            def __next__(self):
+                return self.next()
 
         return nzIt(self)
 
@@ -1719,7 +1733,7 @@ class Sparse(Base):
 
 def _numLessThan(value, toCheck): # TODO caching
     ltCount = 0
-    for i in xrange(len(toCheck)):
+    for i in range(len(toCheck)):
         if toCheck[i] < value:
             ltCount += 1
 
@@ -1821,6 +1835,9 @@ class SparseView(BaseView, Sparse):
 
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return GenericIt()
 
     def _copyAs_implementation(self, format):
@@ -1852,7 +1869,7 @@ class SparseView(BaseView, Sparse):
         sIt = self.pointIterator()
         oIt = other.pointIterator()
         for sPoint in sIt:
-            oPoint = oIt.next()
+            oPoint = next(oIt)
 
             for i, val in enumerate(sPoint):
                 if val != oPoint[i]:
@@ -1909,6 +1926,8 @@ class SparseView(BaseView, Sparse):
         retCol = []
         piNN = points is not None
 
+        if start is None: start = 0#in python3, compare int with None is not allowed, so we need to replace None with an int
+        if end is None: end = -1
         for pID, pView in enumerate(self.pointIterator()):
             if (piNN and pID in points) or (pID >= start and pID <= end):
                 for i, val in enumerate(pView.data.data):
@@ -1935,6 +1954,8 @@ class SparseView(BaseView, Sparse):
         retCol = []
         fiNN = features is not None
 
+        if start is None: start = 0#in python3, compare int with None is not allowed, so we need to replace None with an int
+        if end is None: end = -1
         for fID, fView in enumerate(self.featureIterator()):
             if (fiNN and fID in features) or (fID >= start and fID <= end):
                 for i, val in enumerate(fView.data.data):
@@ -1987,7 +2008,10 @@ class SparseView(BaseView, Sparse):
                         if value != 0:
                             return value
                     except:
-                        self._currGroup = self._sourceIter.next()
+                        self._currGroup = next(self._sourceIter)
                         self._index = 0
+
+            def __next__(self):
+                return self.next()
 
         return nzIt()

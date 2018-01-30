@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from nose.tools import raises
 import sys
 
@@ -11,6 +12,8 @@ from UML import trainAndTest
 from UML.calculate import fractionIncorrect
 from UML.randomness import pythonRandom
 from UML.exceptions import ArgumentException
+import six
+from six.moves import range
 
 
 
@@ -26,7 +29,7 @@ def test_trainAndTest():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
     data1 = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
-             for _pt in xrange(numPoints)]
+             for _pt in range(numPoints)]
     # data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
     trainObj1 = createData('Matrix', data=data1, featureNames=variables)
 
@@ -326,7 +329,7 @@ def test_frontend_CV_triggering():
             pass
     except Exception:
         einfo = sys.exc_info()
-        raise einfo[1], None, einfo[2]
+        six.reraise(einfo[1], None, einfo[2])
     finally:
         UML.helpers.crossValidateBackend = temp
 

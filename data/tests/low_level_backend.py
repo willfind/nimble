@@ -18,12 +18,14 @@ _equalFeatureNames, getPointNames, getFeatureNames, __len__
 
 """
 
+from __future__ import absolute_import
 from UML.data import Base
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nose.tools import *
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
+from six.moves import range
 
 
 

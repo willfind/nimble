@@ -3,6 +3,7 @@ Relies on being keras 2.0.8
 
 """
 
+from __future__ import absolute_import
 import importlib
 import inspect
 import copy
@@ -16,6 +17,7 @@ import UML
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
+from six.moves import range
 
 # Contains path to keras root directory
 #kerasDir = '/usr/local/lib/python2.7/dist-packages'
@@ -153,7 +155,7 @@ class Keras(UniversalInterface):
         (objArgs, v, k, d) = ret
         ret = {}
         if d is not None:
-            for i in xrange(len(d)):
+            for i in range(len(d)):
                 ret[objArgs[-(i + 1)]] = d[-(i + 1)]
 
         return [ret]
@@ -178,7 +180,7 @@ class Keras(UniversalInterface):
             currNames = stage[0]
             currDefaults = stage[3]
             if stage[3] is not None:
-                for i in xrange(len(currDefaults)):
+                for i in range(len(currDefaults)):
                     key = currNames[-(i + 1)]
                     value = currDefaults[-(i + 1)]
                     ret[key] = value
@@ -361,7 +363,7 @@ class Keras(UniversalInterface):
         if isinstance(trainX, UML.data.Sparse):
             def sparseGenerator():
                 while True:
-                    for i in xrange(trainX.points):
+                    for i in range(trainX.points):
                         tmpData = (trainX.pointView(i).copyAs('numpy matrix'), numpy.matrix(trainY[i]))
                         yield tmpData
             fitParams['generator'] = sparseGenerator()
@@ -479,7 +481,7 @@ class Keras(UniversalInterface):
             fitParams = {}
             def sparseGenerator():
                 while True:
-                    for i in xrange(testX.points):
+                    for i in range(testX.points):
                         tmpData = testX.pointView(i).copyAs('numpy matrix')
                         yield tmpData
             fitParams['generator'] = sparseGenerator()
@@ -516,7 +518,7 @@ class Keras(UniversalInterface):
         """
         temp = {}
         if matched is not None:
-            for i in xrange(len(full)):
+            for i in range(len(full)):
                 if i < len(matched):
                     temp[full[len(full) - 1 - i]] = matched[len(matched) - 1 - i]
                 else:
@@ -531,7 +533,7 @@ class Keras(UniversalInterface):
 
         retFull = []
         retMatched = []
-        for i in xrange(len(full)):
+        for i in range(len(full)):
             name = full[i]
             if name in temp:
                 retFull.append(name)

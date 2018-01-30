@@ -9,6 +9,7 @@ not allowed as a Kernel.
 # TODO: multinomialHMM requires special input processing for obs param
 
 
+from __future__ import absolute_import
 import importlib
 import inspect
 import copy
@@ -19,6 +20,7 @@ import copy
 import UML
 
 from UML.exceptions import ArgumentException
+from six.moves import range
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -166,7 +168,7 @@ class Mlpy(UniversalInterface):
         (objArgs, v, k, d) = ret
         ret = {}
         if d is not None:
-            for i in xrange(len(d)):
+            for i in range(len(d)):
                 ret[objArgs[-(i + 1)]] = d[-(i + 1)]
 
         return [ret]
@@ -193,7 +195,7 @@ class Mlpy(UniversalInterface):
             currNames = stage[0]
             currDefaults = stage[3]
             if stage[3] is not None:
-                for i in xrange(len(currDefaults)):
+                for i in range(len(currDefaults)):
                     key = currNames[-(i + 1)]
                     value = currDefaults[-(i + 1)]
                     ret[key] = value
@@ -466,7 +468,7 @@ class Mlpy(UniversalInterface):
         """
         temp = {}
         if matched is not None:
-            for i in xrange(len(full)):
+            for i in range(len(full)):
                 if i < len(matched):
                     temp[full[len(full) - 1 - i]] = matched[len(matched) - 1 - i]
                 else:
@@ -481,7 +483,7 @@ class Mlpy(UniversalInterface):
 
         retFull = []
         retMatched = []
-        for i in xrange(len(full)):
+        for i in range(len(full)):
             name = full[i]
             if name in temp:
                 retFull.append(name)
@@ -499,6 +501,13 @@ class Mlpy(UniversalInterface):
 
         """
         namedModule = self._searcher.findInPackage(parent, name)
+
+        # TODO for python 3
+        # in python 3, inspect.getargspec(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
+        # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
+        # excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
+        # if sys.version_info.major > 2 and (parent is None or parent.lower in excludeList):
+        #     return self._paramQueryHardCoded(name, parent, ignore)
 
         if not namedModule is None:
             try:
@@ -539,6 +548,8 @@ class Mlpy(UniversalInterface):
         if parent is None:
             return None
 
+        # TODO for python 3
+        # in python 3, mlpy's KNN, PCA ... may have different arguments than those in python 2 mlpy.
         if parent.lower() == 'LibSvm'.lower():
             if name == '__init__':
                 pnames = ['svm_type', 'kernel_type', 'degree', 'gamma', 'coef0', 'C', 'nu', 'eps', 'p', 'cache_size',

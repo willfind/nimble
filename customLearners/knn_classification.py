@@ -11,6 +11,7 @@ If there is a tie, use k=1
 
 """
 
+from __future__ import absolute_import
 import UML
 from UML.customLearners import CustomLearner
 from UML.exceptions import PackageException

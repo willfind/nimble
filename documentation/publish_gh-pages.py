@@ -28,6 +28,8 @@ https://gist.github.com/domenic/ec8b0fc8ab45f39403dd
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import inspect
 import subprocess
 import sys
@@ -42,7 +44,7 @@ currDirPath = os.path.dirname(currFilePath)
 
 def printAndCall(cmd):
     if not SUPPRESSOUTPUT:
-        print cmd
+        print(cmd)
         stdout = None
     else:
         stdout = open(os.devnull, 'w')
@@ -55,20 +57,20 @@ def checkMasterUpToDate():
     # get SHA of current master
     cmd = "git rev-parse --verify refs/heads/master"
     if not SUPPRESSOUTPUT:
-        print cmd
+        print(cmd)
     currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     localSHA = currP.stdout.readline().strip()
     if not SUPPRESSOUTPUT:
-        print localSHA
+        print(localSHA)
 
     # get SHA of origin master
     cmd = "git rev-parse --verify refs/remotes/origin/master"
     if not SUPPRESSOUTPUT:
-        print cmd
+        print(cmd)
     currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     remoteSHA = currP.stdout.readline().strip()
     if not SUPPRESSOUTPUT:
-        print remoteSHA
+        print(remoteSHA)
 
     return localSHA == remoteSHA
 
@@ -83,11 +85,11 @@ if __name__ == '__main__':
     # Some commands are reliant on the current working directory being
     # the same as the location of this script.
     if not SUPPRESSOUTPUT:
-        print "Changing to: " + currDirPath
+        print("Changing to: " + currDirPath)
     os.chdir(currDirPath)
 
     if not checkMasterUpToDate():
-        print "We require the master branch to be up to date before publishing docs to gh-pages"
+        print("We require the master branch to be up to date before publishing docs to gh-pages")
         sys.exit(1)
 
     try:
@@ -117,6 +119,6 @@ if __name__ == '__main__':
         msg += "are therefore no longer current."
         sys.exit(2)
 
-    print "Successfully published"
+    print("Successfully published")
 
 # EOF marker

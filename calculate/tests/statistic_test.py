@@ -9,6 +9,7 @@ Tests for UML.calculate.statistics
 # hierarchy in UML.data.tests.query_backend
 
 
+from __future__ import absolute_import
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
@@ -21,6 +22,7 @@ from UML.calculate import standardDeviation
 from UML.calculate import quartiles
 from UML.exceptions import ArgumentException
 from UML.helpers import generateRegressionData
+from six.moves import range
 
 
 def testStDev():
@@ -222,26 +224,26 @@ def testQuartiles():
 
 
 def testIsMissing():
-    raw = [1, 2.0, 3L, np.nan, None, 'a']
+    raw = [1, 2.0, 3, np.nan, None, 'a']
     func = UML.calculate.statistic._isMissing
     ret = [func(i) for i in raw]
     retCorrect = [False, False, False, True, True, False]
-    assert all([ret[i] == retCorrect[i] for i in xrange(len(raw))])
+    assert all([ret[i] == retCorrect[i] for i in range(len(raw))])
 
 
 def testIsNumericalFeatureGuesser():
     func = UML.calculate.statistic._isNumericalFeatureGuesser
-    raw = [1, 2.0, 3L, np.nan, None]
+    raw = [1, 2.0, 3, np.nan, None]
     assert func(raw)
-    raw = [1, 2.0, 3L, np.nan, None, 'a']
+    raw = [1, 2.0, 3, np.nan, None, 'a']
     assert ~func(raw)
-    raw = [1, 2.0, 3L, np.nan, None, np.complex(1, 1)]
+    raw = [1, 2.0, 3, np.nan, None, np.complex(1, 1)]
     assert ~func(raw)
 
 
 def testIsNumericalPoint():
     func = UML.calculate.statistic._isNumericalPoint
-    assert func(1) and func(2.0) and func(3L)
+    assert func(1) and func(2.0) and func(3)
     assert ~func(np.nan)
     assert ~func(None)
     assert ~func('a')

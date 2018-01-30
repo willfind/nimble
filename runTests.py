@@ -6,6 +6,7 @@ UML. Run as main to execute.
 
 """
 
+from __future__ import absolute_import
 import warnings
 import inspect
 import os
@@ -19,7 +20,10 @@ import nose.pyversion
 #pdb.set_trace()
 #print dir(nose.pyversion)
 from nose.util import ln
-from StringIO import StringIO
+try:
+    from StringIO import StringIO#python 2
+except:
+    from six import StringIO#python 3
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.append(os.path.dirname(UMLPath))
@@ -43,6 +47,9 @@ class ExtensionPlugin(Plugin):
     def wantFile(self, file):
         # TODO fix selection of files in interfaces/tests
         if not file.endswith('.py'):
+            return False
+
+        if file == '__init__.py' and sys.version_info.major > 2:#in python3, don't check __init__.py
             return False
 
         dname = os.path.dirname(file)
@@ -210,5 +217,7 @@ if __name__ == '__main__':
         # and there are some tests that call learners in unfortunate ways, causing
         # ALOT of annoying warnings.
         with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            # nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args, defaultTest='interfaces/tests/mlpy_interface_test.py')
             nose.run(addplugins=[ExtensionPlugin(), CaptureError()], argv=args)
     exit(0)

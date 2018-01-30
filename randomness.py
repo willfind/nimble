@@ -5,6 +5,7 @@ UML functions and tests
 
 """
 
+from __future__ import absolute_import
 import random
 import numpy
 import sys
@@ -86,7 +87,7 @@ def endAlternateControl():
 
     """
     global _saved
-    if _saved is not (None, None):
+    if _saved != (None, None):
         pythonRandom.setstate(_saved[0])
         numpyRandom.set_state(_saved[1])
         _saved = (None, None)

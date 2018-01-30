@@ -3,23 +3,28 @@ Class extending Base, using a list of lists to store data.
 
 """
 
+from __future__ import division
+from __future__ import absolute_import
 import copy
 import numpy
 import numbers
 import itertools
 
 import UML
-from base import Base
-from base_view import BaseView
-from dataHelpers import View
-from dataHelpers import reorderToMatchExtractionList
+from .base import Base, cmp_to_key
+from .base_view import BaseView
+from .dataHelpers import View
+from .dataHelpers import reorderToMatchExtractionList
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
+import six
+from six.moves import range
+from functools import reduce
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
 
-allowedItemType = (numbers.Number, basestring)
+allowedItemType = (numbers.Number, six.string_types)
 def isAllowedSingleElement(x):
     """
     This function is to determine if an element is an allowed single element
@@ -116,10 +121,10 @@ class List(Base):
         tempFeatures = len(self.data)
         transposed = []
         #load the new data with an empty point for each feature in the original
-        for i in xrange(self.features):
+        for i in range(self.features):
             transposed.append([])
         for point in self.data:
-            for i in xrange(len(point)):
+            for i in range(len(point)):
                 transposed[i].append(point[i])
 
         self.data = transposed
@@ -130,7 +135,7 @@ class List(Base):
         Append the points from the toAppend object to the bottom of the features in this object
 
         """
-        for pointIndex in xrange(toAppend.points):
+        for pointIndex in range(toAppend.points):
             self.data.append(copy.deepcopy(toAppend.data[pointIndex]))
 
     def _appendFeatures_implementation(self, toAppend):
@@ -138,7 +143,7 @@ class List(Base):
         Append the features from the toAppend object to right ends of the points in this object
 
         """
-        for i in xrange(self.points):
+        for i in range(self.points):
             self.data[i] += copy.deepcopy(toAppend.data[i])
         self._numFeatures = self._numFeatures + toAppend.features
 
@@ -185,9 +190,12 @@ class List(Base):
             viewArray.append(v)
 
         if comparator is not None:
-            viewArray.sort(cmp=comparator)
+            # try:
+            #     viewArray.sort(cmp=comparator)#python2
+            # except:
+            viewArray.sort(key=cmp_to_key(comparator))#python2 and 3
             indexPosition = []
-            for i in xrange(len(viewArray)):
+            for i in range(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
                 indexPosition.append(index)
         else:
@@ -195,10 +203,10 @@ class List(Base):
             scoreArray = []
             if scorer is not None:
                 # use scoring function to turn views into values
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray.append(scorer(viewArray[i]))
             else:
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray.append(viewArray[i][sortBy])
 
             # use numpy.argsort to make desired index array
@@ -210,18 +218,18 @@ class List(Base):
         # run through target axis and change indices
         if axis == 'point':
             source = copy.copy(self.data)
-            for i in xrange(len(self.data)):
+            for i in range(len(self.data)):
                 self.data[i] = source[indexPosition[i]]
         else:
-            for i in xrange(len(self.data)):
+            for i in range(len(self.data)):
                 currPoint = self.data[i]
                 temp = copy.copy(currPoint)
-                for j in xrange(len(indexPosition)):
+                for j in range(len(indexPosition)):
                     currPoint[j] = temp[indexPosition[j]]
 
         # we convert the indices of the their previous location into their feature names
         newNameOrder = []
-        for i in xrange(len(indexPosition)):
+        for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
@@ -266,7 +274,7 @@ class List(Base):
         """
         toWrite = 0
         satisfying = []
-        for i in xrange(self.points):
+        for i in range(self.points):
             if i not in toExtract:
                 self.data[toWrite] = self.data[i]
                 toWrite += 1
@@ -274,7 +282,7 @@ class List(Base):
                 satisfying.append(self.data[i])
 
         # blank out the elements beyond our last copy, ie our last wanted point.
-        for index in xrange(toWrite, len(self.data)):
+        for index in range(toWrite, len(self.data)):
             self.data.pop()
 
         # construct pointName list
@@ -300,7 +308,7 @@ class List(Base):
         # walk through each point, copying the wanted points back to the toWrite index
         # toWrite is only incremented when we see a wanted point; unwanted points are copied
         # over
-        for index in xrange(len(self.data)):
+        for index in range(len(self.data)):
             point = self.data[index]
             if number > 0 and toExtract(self.pointView(index)):
                 satisfying.append(point)
@@ -311,12 +319,12 @@ class List(Base):
                 toWrite += 1
 
         # blank out the elements beyond our last copy, ie our last wanted point.
-        for index in xrange(toWrite, len(self.data)):
+        for index in range(toWrite, len(self.data)):
             self.data.pop()
 
         if len(satisfying) == 0:
             rawTrans = []
-            for i in xrange(self.features):
+            for i in range(self.features):
                 rawTrans.append([])
             ret = List(rawTrans)
             ret.transpose()
@@ -332,7 +340,7 @@ class List(Base):
         """
         toWrite = start
         inRange = []
-        for i in xrange(start, self.points):
+        for i in range(start, self.points):
             if i <= end:
                 inRange.append(self.data[i])
             else:
@@ -340,12 +348,12 @@ class List(Base):
                 toWrite += 1
 
         # blank out the elements beyond our last copy, ie our last wanted point.
-        for index in xrange(toWrite, len(self.data)):
+        for index in range(toWrite, len(self.data)):
             self.data.pop()
 
         # construct featureName list
         nameList = []
-        for index in xrange(start, end + 1):
+        for index in range(start, end + 1):
             nameList.append(self.getPointName(index))
 
         return List(inRange, pointNames=nameList, reuseData=True)
@@ -388,7 +396,7 @@ class List(Base):
 
         """
         targetPos = {}
-        for index in xrange(len(toExtract)):
+        for index in range(len(toExtract)):
             targetPos[toExtract[index]] = index
 
         # we want to extract values from a list from the end
@@ -439,7 +447,7 @@ class List(Base):
         for point in self.data:
             extractedPoint = []
             #end + 1 because our ranges are inclusive, xrange's are not
-            for index in reversed(xrange(start, end + 1)):
+            for index in reversed(range(start, end + 1)):
                 extractedPoint.append(point.pop(index))
             extractedPoint.reverse()
             extractedData.append(extractedPoint)
@@ -448,7 +456,7 @@ class List(Base):
 
         # construct featureName list
         featureNameList = []
-        for index in xrange(start, end + 1):
+        for index in range(start, end + 1):
             featureNameList.append(self.getFeatureName(index))
 
         return List(extractedData, featureNames=featureNameList, reuseData=True)
@@ -456,7 +464,7 @@ class List(Base):
     def _mapReducePoints_implementation(self, mapper, reducer):
         mapResults = {}
         # apply the mapper to each point in the data
-        for i in xrange(self.points):
+        for i in range(self.points):
             currResults = mapper(self.pointView(i))
             # the mapper will return a list of key value pairs
             for (k, v) in currResults:
@@ -487,7 +495,7 @@ class List(Base):
             return False
         if self.features != other.features:
             return False
-        for index in xrange(self.points):
+        for index in range(self.points):
             if self.data[index] != other.data[index]:
                 return False
         return True
@@ -579,8 +587,8 @@ class List(Base):
 
         outFile.write(str(self.points) + " " + str(self.features) + "\n")
 
-        for j in xrange(self.features):
-            for i in xrange(self.points):
+        for j in range(self.features):
+            for i in range(self.points):
                 value = self.data[i][j]
                 outFile.write(str(value) + '\n')
         outFile.close()
@@ -680,7 +688,7 @@ class List(Base):
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
 
-            for i in xrange(self.points):
+            for i in range(self.points):
                 self.data[i][j] = currRet[i]
 
     def _transformEachElement_implementation(self, function, points, features, preserveZeros, skipNoneReturnValues):
@@ -690,7 +698,7 @@ class List(Base):
         except TypeError:
             oneArg = True
 
-        IDs = itertools.product(xrange(self.points), xrange(self.features))
+        IDs = itertools.product(range(self.points), range(self.features))
         for (i, j) in IDs:
             currVal = self.data[i][j]
 
@@ -715,10 +723,10 @@ class List(Base):
     def _fillWith_implementation(self, values, pointStart, featureStart, pointEnd, featureEnd):
         if not isinstance(values, UML.data.Base):
             values = [values] * (featureEnd - featureStart + 1)
-            for p in xrange(pointStart, pointEnd + 1):
+            for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values
         else:
-            for p in xrange(pointStart, pointEnd + 1):
+            for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values.data[p - pointStart]
 
     def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
@@ -745,8 +753,8 @@ class List(Base):
 
         alsoTreatAsMissingSet = set(alsoTreatAsMissing)
         missingIdxDictFeature = {i: [] for i in featuresList}
-        missingIdxDictPoint = {i: [] for i in xrange(self.points)}
-        for i in xrange(self.points):
+        missingIdxDictPoint = {i: [] for i in range(self.points)}
+        for i in range(self.points):
             for j in featuresList:
                 tmpV = self.data[i][j]
                 if tmpV in alsoTreatAsMissingSet or (tmpV!=tmpV) or tmpV is None:
@@ -776,7 +784,7 @@ class List(Base):
                 missingIdx = [i[0] for i in missingIdxDictPoint.items() if len(i[1]) == self.features]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in xrange(self.points) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.points) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -793,7 +801,7 @@ class List(Base):
                 missingIdx = [i[0] for i in missingIdxDictFeature.items() if len(i[1]) == self.points]
             else:
                 raise ArgumentException(msg)
-            nonmissingIdx = [i for i in xrange(self.features) if i not in missingIdx]
+            nonmissingIdx = [i for i in range(self.features) if i not in missingIdx]
             if len(nonmissingIdx) == 0:
                 msg = 'All data are removed. Please use another method or other arguments.'
                 raise ArgumentException(msg)
@@ -842,7 +850,7 @@ class List(Base):
                 if len(interpX) == 0:
                     continue
                 if arguments is None:
-                    xp = [i for i in xrange(self.points) if i not in interpX]
+                    xp = [i for i in range(self.points) if i not in interpX]
                     fp = [self.data[i][j] for i in xp]
                     tmpArguments = {'x': interpX, 'xp': xp, 'fp': fp}
                 elif isinstance(arguments, dict):
@@ -857,7 +865,7 @@ class List(Base):
                     self.data[i][j] = tmpV[k]
 
         if markMissing:
-            for i in xrange(len(self.data)):
+            for i in range(len(self.data)):
                 self.data[i].extend(extraDummy[i])
             featureNames += extraFeatureNames
         pCount, fCount = len(self.data), len(self.data[0])
@@ -868,7 +876,7 @@ class List(Base):
 
     def _flattenToOnePoint_implementation(self):
         onto = self.data[0]
-        for i in xrange(1,self.points):
+        for i in range(1,self.points):
             onto += self.data[1]
             del self.data[1]
 
@@ -876,7 +884,7 @@ class List(Base):
 
     def _flattenToOneFeature_implementation(self):
         result = []
-        for i in xrange(self.features):
+        for i in range(self.features):
             for p in self.data:
                 result.append([p[i]])
 
@@ -885,8 +893,8 @@ class List(Base):
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
         result = []
-        numFeatures = self.features / numPoints
-        for i in xrange(numPoints):
+        numFeatures = self.features // numPoints
+        for i in range(numPoints):
             temp = self.data[0][(i*numFeatures):((i+1)*numFeatures)]
             result.append(temp)
 
@@ -895,12 +903,12 @@ class List(Base):
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
         result = []
-        numPoints = self.points / numFeatures
+        numPoints = self.points // numFeatures
         # reconstruct the shape we want, point by point. We access the singleton
         # values from the current data in an out of order iteration
-        for i in xrange(numPoints):
+        for i in range(numPoints):
             temp = []
-            for j in xrange(i, self.points, numPoints):
+            for j in range(i, self.points, numPoints):
                 temp += self.data[j]
             result.append(temp)
 
@@ -919,8 +927,8 @@ class List(Base):
             def _copyAs_implementation(self, format):
                 # we only want to change how List and pythonlist copying is done
                 # we also temporarily convert self.data to a python list for copyAs
-                listForm = [[self._source.data[pID][fID] for fID in xrange(self._fStart, self._fEnd)] \
-                            for pID in xrange(self._pStart, self._pEnd)]
+                listForm = [[self._source.data[pID][fID] for fID in range(self._fStart, self._fEnd)] \
+                            for pID in range(self._pStart, self._pEnd)]
                 if format is None:
                     format = 'List'
                 if format != 'List' and format != 'pythonlist':
@@ -1049,6 +1057,9 @@ class List(Base):
 
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return nzIt(self)
 
     def _nonZeroIteratorFeatureGrouped_implementation(self):
@@ -1077,6 +1088,9 @@ class List(Base):
 
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return nzIt(self)
 
 
@@ -1103,7 +1117,7 @@ class List(Base):
             retP = []
             for oFeature in other.featureIterator():
                 runningTotal = 0
-                for index in xrange(other.points):
+                for index in range(other.points):
                     runningTotal += sPoint[index] * oFeature[index]
                 retP.append(runningTotal)
             ret.append(retP)
@@ -1119,8 +1133,8 @@ class List(Base):
         be the inplace modification of the calling object.
 
         """
-        for pNum in xrange(self.points):
-            for fNum in xrange(self.features):
+        for pNum in range(self.points):
+            for fNum in range(self.features):
                 self.data[pNum][fNum] *= other[pNum, fNum]
 
     def _scalarMultiply_implementation(self, scalar):
@@ -1132,7 +1146,7 @@ class List(Base):
 
         """
         for point in self.data:
-            for i in xrange(len(point)):
+            for i in range(len(point)):
                 point[i] *= scalar
 
     def outputMatrixData(self):

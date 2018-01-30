@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import UML
 
 from nose.tools import *
@@ -5,6 +6,7 @@ import numpy.testing
 
 from UML.customLearners import CustomLearner
 from UML.configuration import configSafetyWrapper
+from six.moves import range
 
 
 @raises(TypeError)

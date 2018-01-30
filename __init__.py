@@ -9,6 +9,7 @@ data, and do package level configuration and information querying.
 
 """
 
+from __future__ import absolute_import
 import os
 import inspect
 
@@ -35,32 +36,32 @@ import UML.logger
 # top level
 from UML.randomness import setRandomSeed
 
-from uml import train
-from uml import trainAndApply
-from uml import trainAndTest
-from uml import trainAndTestOnTrainingData
-from uml import createData
-from uml import createRandomData
-from uml import ones
-from uml import zeros
-from uml import identity
-from uml import normalizeData
+from .uml import train
+from .uml import trainAndApply
+from .uml import trainAndTest
+from .uml import trainAndTestOnTrainingData
+from .uml import createData
+from .uml import createRandomData
+from .uml import ones
+from .uml import zeros
+from .uml import identity
+from .uml import normalizeData
 
-from uml import registerCustomLearner
-from uml import registerCustomLearnerAsDefault
-from uml import deregisterCustomLearner
-from uml import deregisterCustomLearnerAsDefault
-from uml import listDataFunctions
-from uml import listUMLFunctions
-from uml import listLearners
-from uml import learnerParameters
-from uml import learnerDefaultValues
+from .uml import registerCustomLearner
+from .uml import registerCustomLearnerAsDefault
+from .uml import deregisterCustomLearner
+from .uml import deregisterCustomLearnerAsDefault
+from .uml import listDataFunctions
+from .uml import listUMLFunctions
+from .uml import listLearners
+from .uml import learnerParameters
+from .uml import learnerDefaultValues
 
-from uml import crossValidate
-from uml import crossValidateReturnAll
-from uml import crossValidateReturnBest
+from .uml import crossValidate
+from .uml import crossValidateReturnAll
+from .uml import crossValidateReturnBest
 
-from uml import learnerType
+from .uml import learnerType
 
 # now finish out with any other configuration that needs to be done
 

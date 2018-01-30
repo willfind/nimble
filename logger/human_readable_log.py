@@ -1,13 +1,17 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 import numpy
 import inspect
 import types
 import os.path
-from tableString import *
+from .tableString import *
 
 import UML
 from UML.exceptions import ArgumentException
-from uml_logger import UmlLogger
+from .uml_logger import UmlLogger
+import six
+from six.moves import range
 
 
 class HumanReadableLogger(UmlLogger):
@@ -30,7 +34,7 @@ class HumanReadableLogger(UmlLogger):
         """
         super(HumanReadableLogger, self).logMessage(message, addNewLine)
         if UML.settings.get('logger', 'mirrorToStandardOut').lower() == 'true':
-            print message
+            print(message)
 
     def _logData_implementation(self, baseDataObject):
         """
@@ -95,7 +99,6 @@ class HumanReadableLogger(UmlLogger):
         # TODO: need kind of call? train vs trainAndApply?
         #		if numFolds is not None:
         #			self.logMessage("# of folds: " + str(numFolds))
-
         (dataInfo0, dataInfo1) = _packDataInfo([trainX, trainY, testX, testY])
         if dataInfo0 is not None:
             tableList.append(dataInfo0)
@@ -243,7 +246,7 @@ def _packMetricInfo(testY, metrics, predictions, performance):
 def _packExtraInfo(extraInfo):
     extraTableHeaders = []
     extraTableValues = []
-    for key, value in extraInfo.iteritems():
+    for key, value in six.iteritems(extraInfo):
         extraTableHeaders.append(str(key))
         if isinstance(value, types.FunctionType):
             extraTableValues.append(value.__name__)
@@ -261,7 +264,7 @@ def _packDataInfo(dataObjects):
 
     # TODO currently ignore labels Obj from data, should record it somehow instead
     for i in range(4):
-        if isinstance(dataObjects[i], (int, basestring)):
+        if isinstance(dataObjects[i], (int, six.string_types, numpy.int64)):
             dataObjects[i] = None
 
     # check to see if there are meaningful values of name and path for any

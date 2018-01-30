@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 
 import UML
@@ -62,7 +63,7 @@ class CustomLearnerInterface(UniversalInterface):
 
         # TODO remove option names
         toRemove = self.registeredLearners[learnerName].options()
-        fullNameToRemove = map(lambda x: learnerName + '.' + x, toRemove)
+        fullNameToRemove = [learnerName + '.' + x for x in toRemove]
 
         temp = []
         for opName in self._configurableOptionNamesAvailable:
@@ -92,7 +93,7 @@ class CustomLearnerInterface(UniversalInterface):
         Return a list of all learners callable through this interface.
 
         """
-        return self.registeredLearners.keys()
+        return list(self.registeredLearners.keys())
 
 
     def learnerType(self, name):

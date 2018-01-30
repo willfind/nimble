@@ -7,9 +7,12 @@ Possible requirements: scipy, matplotlib, svm
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import os.path
 import sys
+from six.moves import range
 
 
 try:
@@ -46,12 +49,12 @@ def regressor(learnerName, trainX, trainY=None, testX=None, arguments={}, output
     """
     if not loaded:
         print('Numpy must be installed in order for the regressors package to function')
-        print ie
+        print(ie)
         return
 
     if not regressorsPresent():
-        print('Cannot find the regressors package, please call setRegressorsLocation() with the ' +
-              'path of the Regressors root directory')
+        print(('Cannot find the regressors package, please call setRegressorsLocation() with the ' +
+              'path of the Regressors root directory'))
         return
 
     if isinstance(testX, UML.data.Base):
@@ -84,14 +87,14 @@ def regressor(learnerName, trainX, trainY=None, testX=None, arguments={}, output
         cmd = "import " + learnerName
         exec (cmd)
     except ImportError as e:
-        print "regressors_interface failed to import " + learnerName
-        print e
+        print("regressors_interface failed to import " + learnerName)
+        print(e)
         return
 
     # determine the name of the regressor class in the file we've just imported
     learnerClass = findRegressorClassName(regressorsDir + "/" + learnerName + ".py")
     if learnerClass is None:
-        print "Cannot find or determine a subclass of Regressor in " + learnerName
+        print("Cannot find or determine a subclass of Regressor in " + learnerName)
         return
 
     #start timing of classifier training, if timer is present
@@ -119,7 +122,7 @@ def regressor(learnerName, trainX, trainY=None, testX=None, arguments={}, output
         if lineList == []:
             continue
         xVector = []
-        for i in xrange(len(lineList)):
+        for i in range(len(lineList)):
             xVector.append(float(lineList[i]))
 
         result = regressor.estimate(xVector)

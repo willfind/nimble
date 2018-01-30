@@ -6,7 +6,13 @@ be written as files in that directory
 
 """
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+from __future__ import print_function
+try:
+    from allowImports import boilerplate
+except:
+    from .allowImports import boilerplate
+from six.moves import range
 
 boilerplate()
 
@@ -22,7 +28,7 @@ if __name__ == "__main__":
     givenOutDir = None
     if len(sys.argv) > 1:
         givenOutDir = sys.argv[1]
-        print givenOutDir
+        print(givenOutDir)
 
     rawNorm = numpy.random.normal(loc=0, scale=1, size=(1000, 1))
     objNorm = UML.createData("Matrix", rawNorm, featureNames=["N(0,1)"])
@@ -31,7 +37,7 @@ if __name__ == "__main__":
     def plotDistributionNormal(plotObj, outDir):
         outPath = None
         if outDir is not None:
-            print "hello"
+            print("hello")
             outPath = os.path.join(outDir, "NormalDistribution")
 
         plotObj.plotFeatureDistribution(0, outPath=outPath)

@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import numpy
+from six.moves import range
 
 try:
     from sklearn.linear_model import LinearRegression
@@ -25,7 +27,7 @@ class MultiOutputLinearRegression(CustomLearner):
         self._models = []
         rawTrainX = trainX.copyAs('numpymatrix')
 
-        for i in xrange(trainY.features):
+        for i in range(trainY.features):
             currY = trainY.copyFeatures(i)
             rawCurrY = currY.copyAs('numpyarray', outputAs1D=True)
 
@@ -37,7 +39,7 @@ class MultiOutputLinearRegression(CustomLearner):
         results = []
         rawTestX = testX.copyAs('numpymatrix')
 
-        for i in xrange(len(self._models)):
+        for i in range(len(self._models)):
             curr = self._models[i].predict(rawTestX)
             results.append(curr)
 

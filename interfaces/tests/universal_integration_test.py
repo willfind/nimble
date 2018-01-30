@@ -5,6 +5,8 @@ the UniversalInterface api.
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import nose
 from nose.tools import raises
 from nose.plugins.attrib import attr
@@ -99,7 +101,7 @@ def testGetScoresFormat():
         learners = interface.listLearners()
         for lName in learners:
             if interfaceName == 'shogun':
-                print lName
+                print(lName)
 
             fullName = interfaceName + '.' + lName
             if UML.learnerType(fullName) == 'classifier':
@@ -141,7 +143,7 @@ def testRandomnessControl():
 
         for learner in listOf:
             if interfaceName == 'shogun':
-                print learner
+                print(learner)
             currType = UML.learnerType(interfaceName + '.' + learner)
             if currType == 'regression':
                 ((trainData, trainLabels), (testData, testLabels)) = generateRegressionData(5, 10, 5)
@@ -170,7 +172,7 @@ def testRandomnessControl():
             #					if 'random_state' in args[0]:
             #						print "   ^^^^"
             except Exception as e:
-                print interfaceName + '.' + learner + ' BANG: ' + str(e)
+                print(interfaceName + '.' + learner + ' BANG: ' + str(e))
                 continue
 
             if result1 is not None:

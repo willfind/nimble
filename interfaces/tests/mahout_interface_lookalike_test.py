@@ -3,6 +3,8 @@ Unit tests for mahout_interface.py
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import UML
 import os
 
@@ -32,7 +34,7 @@ def MahoutHandmadeOutput():
 
     actualOut.seek(0)
     line = actualOut.readline()
-    print line
+    print(line)
     assert line.strip() == "3,2,5.0"
 
 
@@ -56,7 +58,7 @@ def MahoutTasteHandmadeOutput():
 
     actualOut.seek(0)
     line = actualOut.readline()
-    print line
+    print(line)
     assert line.strip() == "3,2,5.0"
 
 

@@ -7,6 +7,8 @@ the distraction of helpers
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import operator
 import inspect
@@ -17,9 +19,10 @@ import os.path
 import re
 import datetime
 import copy
-import StringIO
 import sys
 import itertools
+if not hasattr(itertools, 'ifilter'):#in python3, itertools.ifilter is not there anymore. it is filter.
+    itertools.ifilter = filter
 
 import UML
 
@@ -34,6 +37,27 @@ from UML.data import Base
 
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
+import six
+from six.moves import range
+from six.moves import zip
+from future.utils import raise_
+try:
+    from sys import intern
+    class Py2Key:#for python3
+
+        __slots__ = ("value", "typestr")
+
+        def __init__(self, value):
+            self.value   = value
+            self.typestr = intern(type(value).__name__)
+
+        def __lt__(self, other):
+            try:
+                return self.value < other.value
+            except TypeError:
+                return self.typestr < other.typestr
+except:
+    Py2Key = None#for python2
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
@@ -103,7 +127,7 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
     retPNames = None
     if pnamesID is not None:
         temp = []
-        for i in xrange(len(rawData)):
+        for i in range(len(rawData)):
             # grab and remove each value in the feature associated
             # with point names
             currVal = rawData[i].pop(pnamesID)
@@ -121,7 +145,7 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
         # if they existed we had already removed those values.
         # Therefore: just pop that entire point
         temp = rawData.pop(fnamesID)
-        for i in xrange(len(temp)):
+        for i in range(len(temp)):
             temp[i] = str(temp[i])
         retFNames = temp
 
@@ -203,7 +227,7 @@ def transposeMatrix(matrixObj):
     copy.deepcopy(np.transpose(matrixObj)) may generate a messed data, so I created
     this function.
     """
-    return numpy.matrix(zip(*matrixObj.tolist()), dtype=matrixObj.dtype)
+    return numpy.matrix(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
 def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType):
     """
@@ -220,8 +244,8 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         #pointNames must be False or automatic
         if isinstance(rawData, dict):
             if rawData:
-                featureNames = rawData.keys()
-                rawData = numpy.matrix(rawData.values(), dtype=elementType)
+                featureNames = list(rawData.keys())
+                rawData = numpy.matrix(list(rawData.values()), dtype=elementType)
                 if len(featureNames) == len(rawData):
                     #{'a':[1,3], 'b':[2,4], 'c':['a', 'b']} --> keys = ['a', 'c', 'b']
                     #np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
@@ -241,13 +265,13 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         #featureNames must be those keys
         #pointNames must be False or automatic
         elif isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
-            values = [rawData[0].values()]
-            keys = rawData[0].keys()
+            values = [list(rawData[0].values())]
+            keys = list(rawData[0].keys())
             for row in rawData[1:]:
-                if row.keys() != keys:
+                if list(row.keys()) != keys:
                     msg = "keys don't match."
                     raise ArgumentException(msg)
-                values.append(row.values())
+                values.append(list(row.values()))
             rawData = numpy.matrix(values, dtype=elementType)
             featureNames = keys
             pointNames = None
@@ -402,7 +426,7 @@ def initDataObject(
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
         except:
-            raise einfo[1], None, einfo[2]
+            raise_(einfo[1], None, einfo[2])
 
 
     def makeCmp(keepList, outerObj, axis):
@@ -411,7 +435,7 @@ def initDataObject(
         else:
             indexGetter = lambda x: outerObj.getFeatureIndex(x.getFeatureName(0))
         positions = {}
-        for i in xrange(len(keepList)):
+        for i in range(len(keepList)):
             positions[keepList[i]] = i
 
         def retCmp(view1, view2):
@@ -504,7 +528,7 @@ def createDataFromFile(
     # Use the path' extension if fileType isn't specified
     if fileType is None:
         path = data
-        if not isinstance(path, basestring):
+        if not isinstance(path, six.string_types):
             try:
                 path = data.name
             except AttributeError:
@@ -540,7 +564,7 @@ def createDataFromFile(
     retData, retPNames, retFNames, selectSuccess = None, None, None, False
 
     toPass = data
-    if isinstance(toPass, basestring):
+    if isinstance(toPass, six.string_types):
         toPass = open(data, 'rU')
     if directPath in globals():
         loader = globals()[directPath]
@@ -560,7 +584,7 @@ def createDataFromFile(
     (retData, retPNames, retFNames, selectSuccess) = loaded
 
     # auto set name if unspecified, and is possible
-    if isinstance(data, basestring):
+    if isinstance(data, six.string_types):
         path = data
     elif hasattr(data, 'name'):
         path = data.name
@@ -623,8 +647,11 @@ def _loadmtxForAuto(
                 retFNames = names if names != [''] else None
 
     openFile.seek(startPosition)
-
-    data = scipy.io.mmread(openFile)
+    try:
+        data = scipy.io.mmread(openFile)#python 2
+    except:
+        tempName = openFile.name if hasattr(openFile, 'name') else openFile.inner.name
+        data = scipy.io.mmread(tempName)#for python3, it may need this.
 
     temp = (data, None, None)
 
@@ -689,9 +716,9 @@ def extractNamesFromCoo(data, pnamesID, fnamesID):
     newData = numpy.empty(newLen, dtype=data.dtype)
     writeIndex = 0
     # adjust the sentinal value for easier index modification
-    pnamesID = sys.maxint if pnamesID is None else pnamesID
-    fnamesID = sys.maxint if fnamesID is None else fnamesID
-    for i in xrange(len(data.data)):
+    pnamesID = sys.maxsize if pnamesID is None else pnamesID
+    fnamesID = sys.maxsize if fnamesID is None else fnamesID
+    for i in range(len(data.data)):
         row = data.row[i]
         setRow = row if row < fnamesID else row - 1
         col = data.col[i]
@@ -728,8 +755,8 @@ def extractNamesFromCoo(data, pnamesID, fnamesID):
             pass
 
     inTup = (newData, (newRows, newCols))
-    rshape = data.shape[0] if fnamesID == sys.maxint else data.shape[0] - 1
-    cshape = data.shape[1] if pnamesID == sys.maxint else data.shape[1] - 1
+    rshape = data.shape[0] if fnamesID == sys.maxsize else data.shape[0] - 1
+    cshape = data.shape[1] if pnamesID == sys.maxsize else data.shape[1] - 1
     data = scipy.sparse.coo_matrix(inTup, shape=(rshape, cshape))
 
     # process our results: fill in a zero entry if missing on
@@ -737,7 +764,7 @@ def extractNamesFromCoo(data, pnamesID, fnamesID):
     def processTempNames(temp, axisName, axisNum):
         retNames = []
         zeroPlaced = None
-        for i in xrange(data.shape[axisNum]):
+        for i in range(data.shape[axisNum]):
             if i not in temp:
                 if zeroPlaced is not None:
                     msg = axisName + " names not fully specified in the "
@@ -914,7 +941,7 @@ def _csv_getFNamesAndAnalyzeRows(
 
     """
     if featureNames is True:
-        fnamesRow = lineReader.next()
+        fnamesRow = next(lineReader)
         # Number values in a row excluding point names
         numFeatures = len(fnamesRow)
         # Number of value in a row
@@ -930,7 +957,7 @@ def _csv_getFNamesAndAnalyzeRows(
         startPosition = openFile.tell()
         filtered = itertools.ifilter(_filterCSVRow, openFile)
         trialReader = csv.reader(filtered)
-        trialRow = trialReader.next()
+        trialRow = next(trialReader)
         # Number values in a row excluding point names
         numFeatures = len(trialRow)
         # Number of value in a row
@@ -974,7 +1001,7 @@ def _setupAndValidationForFeatureSelection(
         for val in keepFeatures:
             selIndex = val
             # this case can only be true if names were extracted or provided
-            if isinstance(val, basestring):
+            if isinstance(val, six.string_types):
                 try:
                     selIndex = retFNames.index(val)
                 except ValueError:
@@ -986,7 +1013,7 @@ def _setupAndValidationForFeatureSelection(
 
         # check for duplicates, and that values are in range
         found = {}
-        for i in xrange(len(cleaned)):
+        for i in range(len(cleaned)):
             if cleaned[i] in found:
                 msg = "Duplicate values were present in the keepFeatures "
                 msg += "parameter, at indices ("
@@ -1015,7 +1042,7 @@ def _setupAndValidationForFeatureSelection(
         keepFeatures = cleaned
         if len(cleaned) > 0:
             removeRecord[0] = []
-        for i in xrange(numFeatures):
+        for i in range(numFeatures):
             if i not in cleaned:
                 featsToRemoveSet.add(i)
                 removeRecord[0].append(i)
@@ -1044,14 +1071,14 @@ def _validationForPointSelection(keepPoints, pointNames):
 
     found = {}
     cleaned = []
-    for i in xrange(len(keepPoints)):
+    for i in range(len(keepPoints)):
         if keepPoints[i] in found:
             _raiseSelectionDuplicateException(
                 "keepPoints", found[keepPoints[i]], i, keepPoints)
         else:
             found[keepPoints[i]] = i
 
-        if keepPoints[i] < 0:
+        if not isinstance(keepPoints[i], six.string_types) and keepPoints[i] < 0:
             msg = "Invalid value in keepPoints parameter at index ("
             msg += str(i)
             msg += "). The value ("
@@ -1062,7 +1089,7 @@ def _validationForPointSelection(keepPoints, pointNames):
             raise ArgumentException(msg)
 
         if isinstance(pointNames, list):
-            if isinstance(keepPoints[i], basestring):
+            if isinstance(keepPoints[i], six.string_types):
                 try:
                     cleaned.append(pointNames.index(keepPoints[i]))
                 except ValueError:
@@ -1074,7 +1101,7 @@ def _validationForPointSelection(keepPoints, pointNames):
 
     if cleaned != []:
         found = {}
-        for i in xrange(len(cleaned)):
+        for i in range(len(cleaned)):
             if cleaned[i] in found:
                 msg = "Duplicate values were present in the keepPoints "
                 msg += "parameter, at indices ("
@@ -1230,7 +1257,7 @@ def _loadcsvUsingPython(
     notYetFoundPoints = None
     if keepPoints != 'all':
         notYetFoundPoints = {}
-        for i in xrange(len(keepPoints)):
+        for i in range(len(keepPoints)):
             notYetFoundPoints[keepPoints[i]] = i
 
     # This is a record of the discovery of features to remove. It maps
@@ -1262,10 +1289,10 @@ def _loadcsvUsingPython(
     # retData. Will be None and ignored if no reordering needs to take
     # place.
     retData = None
-    if keepPoints != 'all' and keepPoints != sorted(keepPoints):
+    if keepPoints != 'all' and keepPoints != sorted(keepPoints, key=Py2Key):
         retData = [None] * len(keepPoints)
         keepPointsValToIndex = {}
-        for i in xrange(len(keepPoints)):
+        for i in range(len(keepPoints)):
             keepPointsValToIndex[keepPoints[i]] = i
 
     # incremented at beginning of loop, so starts negative.
@@ -1361,8 +1388,8 @@ def _loadcsvUsingPython(
     # selection paramters, and this is a convenient and efficient place to
     # do so. If we don't need to do either of those things, then we
     # don't even enter the helper
-    removalNeeded = not removeRecord.keys() == [0] and not removeRecord.keys() == []
-    reorderNeeded = keepFeatures != 'all' and keepFeatures != sorted(keepFeatures)
+    removalNeeded = not list(removeRecord.keys()) == [0] and not list(removeRecord.keys()) == []
+    reorderNeeded = keepFeatures != 'all' and keepFeatures != sorted(keepFeatures, key=Py2Key)
     if removalNeeded or reorderNeeded:
         _removalCleanupAndSelectionOrdering(
             data, removeRecord, featsToRemoveList, keepFeatures)
@@ -1372,7 +1399,7 @@ def _loadcsvUsingPython(
         copyIndex = 0
         # ASSUMPTION: featsToRemoveList is a sorted list
         removeListIndex = 0
-        for i in xrange(len(retFNames)):
+        for i in range(len(retFNames)):
             # if it is a feature that has been removed from the data,
             # we skip over and don't copy it.
             if removeListIndex < len(featsToRemoveList) and i == featsToRemoveList[removeListIndex]:
@@ -1407,13 +1434,13 @@ def _adjustNamesGivenKeepList(retNames, keepList, needsRemoval):
 
     # if we're already sorted and we don't need to do removal, we
     # can return.
-    if sorted(keepList) == keepList and not needsRemoval:
+    if sorted(keepList, key=Py2Key) == keepList and not needsRemoval:
         return retNames
 
     # if needed, resolve names to indices for easy indexing during
     # the sort
     for i, val in enumerate(keepList):
-        if isinstance(val, basestring):
+        if isinstance(val, six.string_types):
             keepList[i] = retNames.index(val)
 
     newRetFNames = []
@@ -1447,7 +1474,7 @@ def _removalCleanupAndSelectionOrdering(
     # feature order adjustment will take place at the same time as unwanted
     # column removal. This just defines a triggering variable.
     adjustFeatureOrder = False
-    if keepFeatures != 'all' and keepFeatures != sorted(keepFeatures):
+    if keepFeatures != 'all' and keepFeatures != sorted(keepFeatures, key=Py2Key):
         adjustFeatureOrder = True
         # maps the index of the column to the position that it should
         # be copied into.
@@ -1457,8 +1484,8 @@ def _removalCleanupAndSelectionOrdering(
         # that are currently present. Since they are stored in the
         # file in lexigraphical order, we use the sorted selection
         # list to define the reindexing
-        sortedKeepFeatures = sorted(keepFeatures)
-        for i in xrange(len(sortedKeepFeatures)):
+        sortedKeepFeatures = sorted(keepFeatures, key=Py2Key)
+        for i in range(len(sortedKeepFeatures)):
             reIndexed = sortedKeepFeatures[i]
             reverseKeepFeatures[i] = keepFeatures.index(reIndexed)
 
@@ -1475,7 +1502,7 @@ def _removalCleanupAndSelectionOrdering(
 
     copySpace = [None] * len(data[len(data) - 1])
 
-    for rowIndex in xrange(len(data)):
+    for rowIndex in range(len(data)):
         # check if some feature was added at this row, and if so, delete
         # those indices from the removalList, adjusting feature IDs to be
         # relative the new length as you go
@@ -1485,7 +1512,7 @@ def _removalCleanupAndSelectionOrdering(
             addedIndex = 0  # index into the list held in record[rowIndex]
             shift = 0  # the amount we have to shift each index downward
             copyIndex = 0
-            for i in xrange(len(absRemoveList)):
+            for i in range(len(absRemoveList)):
                 if addedIndex < len(record[rowIndex]) and absRemoveList[i] == record[rowIndex][addedIndex]:
                     shift += 1
                     addedIndex += 1
@@ -1506,7 +1533,7 @@ def _removalCleanupAndSelectionOrdering(
         # as the index of the feature, to do a lookup for the copy index.
         numCopied = 0
 
-        for i in xrange(len(data[rowIndex])):
+        for i in range(len(data[rowIndex])):
             if remIndex < len(relRemoveList) and i == relRemoveList[remIndex]:
                 remIndex += 1
             else:
@@ -1520,12 +1547,12 @@ def _removalCleanupAndSelectionOrdering(
                 numCopied += 1
 
         # copy the finalized point back into the list referenced by data
-        for i in xrange(len(copySpace)):
+        for i in range(len(copySpace)):
             data[rowIndex][i] = copySpace[i]
 
         # TODO: run time trials to compare pop vs copying into new list
         needToPop = len(data[rowIndex]) - numCopied
-        for i in xrange(needToPop):
+        for i in range(needToPop):
             data[rowIndex].pop()
 
 
@@ -1557,7 +1584,7 @@ def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
     # We use copying of values and then returning the appropriate range
     # to simulate removal of unwanted features
     copyIndex = 0
-    for i in xrange(len(row)):
+    for i in range(len(row)):
         value = row[i]
         processed = _intFloatOrString(value)
 
@@ -1565,7 +1592,7 @@ def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
         if i in toRemoveSet:
             pass
         # A new feature to ignore, have to do book keeping
-        elif isinstance(processed, basestring) and ignoreNonNumericalFeatures:
+        elif isinstance(processed, six.string_types) and ignoreNonNumericalFeatures:
             if pointIndex in record:
                 record[pointIndex].append(i)
             else:
@@ -1598,8 +1625,11 @@ def autoRegisterFromSettings():
     toRegister = UML.settings.get('RegisteredLearners', None)
     # call register custom learner on them
     for key in toRegister:
-        (packName, learnerName) = key.split('.')
-        (modPath, attrName) = toRegister[key].rsplit('.', 1)
+        try:
+            (packName, learnerName) = key.split('.')
+            (modPath, attrName) = toRegister[key].rsplit('.', 1)
+        except Exception:
+            continue
         try:
             module = importlib.import_module(modPath)
             learnerClass = getattr(module, attrName)
@@ -1610,7 +1640,7 @@ def autoRegisterFromSettings():
             msg += "the learner object from the location " + toRegister[key]
             msg += " and have therefore ignored that configuration "
             msg += "entry"
-            print >> sys.stderr, msg
+            print(msg, file=sys.stderr)
 
 
 def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
@@ -1700,7 +1730,7 @@ def extractWinningPredictionLabel(predictions):
 
     #get the class that won the most tournaments
     #TODO: what if there are ties?
-    return max(predictionCounts.iterkeys(), key=(lambda key: predictionCounts[key]))
+    return max(six.iterkeys(predictionCounts), key=(lambda key: predictionCounts[key]))
 
 
 def extractWinningPredictionIndex(predictionScores):
@@ -1786,7 +1816,7 @@ def copyLabels(dataSet, dependentVar):
         #The known Indicator argument already contains all known
         #labels, so we do not need to do any further processing
         labels = dependentVar
-    elif isinstance(dependentVar, (str, unicode, int)):
+    elif isinstance(dependentVar, (str, six.text_type, int)):
         #known Indicator is an index; we extract the column it indicates
         #from knownValues
         labels = dataSet.copyFeatures([dependentVar])
@@ -1816,7 +1846,7 @@ def executeCode(code, inputHash):
     #inputHash = inputHash.copy() #make a copy so we don't modify it... but it doesn't seem necessary
     if isSingleLineOfCode(code):
         return executeOneLinerCode(code, inputHash) #it's one line of text (with ;'s to seperate statemetns')
-    elif isinstance(code, (str, unicode)):
+    elif isinstance(code, (str, six.text_type)):
         return executeFunctionCode(code, inputHash) #it's the text of a function definition
     else:
         return code(**inputHash)    #assume it's a function itself
@@ -1853,13 +1883,13 @@ def executeFunctionCode(codeText, inputHash):
     exec (codeText, globals(), localVariables)    #apply the code, which declares the function definition
     #foundFunc = False
     #result = None
-    for varName, varValue in localVariables.iteritems():
+    for varName, varValue in six.iteritems(localVariables):
         if "function" in str(type(varValue)):
             return varValue(**inputHash)
 
 
 def isSingleLineOfCode(codeText):
-    if not isinstance(codeText, (str, unicode)): return False
+    if not isinstance(codeText, (str, six.text_type)): return False
     codeText = codeText.strip()
     try:
         codeText.strip().index("\n")
@@ -2062,8 +2092,8 @@ def print_confusion_matrix(confusionMatrix):
     count of posts that fell into that slot.  Does not need to be sorted.
     """
     #print heading
-    print "*" * 30 + "Confusion Matrix" + "*" * 30
-    print "\n\n"
+    print("*" * 30 + "Confusion Matrix" + "*" * 30)
+    print("\n\n")
 
     #print top line - just the column headings for
     #predicted labels
@@ -2072,7 +2102,7 @@ def print_confusion_matrix(confusionMatrix):
     for knownLabel in sortedLabels:
         spacer += " " * (6 - len(knownLabel)) + knownLabel
 
-    print spacer
+    print(spacer)
     totalPostCount = 0
     for knownLabel in sortedLabels:
         outputBuffer = knownLabel + " " * (15 - len(knownLabel))
@@ -2080,9 +2110,9 @@ def print_confusion_matrix(confusionMatrix):
             count = confusionMatrix[knownLabel][predictedLabel]
             totalPostCount += count
             outputBuffer += " " * (6 - len(count)) + count
-        print outputBuffer
+        print(outputBuffer)
 
-    print "Total post count: " + totalPostCount
+    print("Total post count: " + totalPostCount)
 
 
 def checkPrintConfusionMatrix():
@@ -2127,9 +2157,9 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     if not isinstance(X, Base):
         raise ArgumentException("X must be a Base object")
     if Y is not None:
-        if not isinstance(Y, (Base, int, basestring, list)):
+        if not isinstance(Y, (Base, int, six.string_types, list)):
             raise ArgumentException("Y must be a Base object or an index (int) from X where Y's data can be found")
-        if isinstance(Y, (int, basestring, list)):
+        if isinstance(Y, (int, six.string_types, list)):
             X = X.copy()
             Y = X.extractFeatures(Y)
 
@@ -2166,7 +2196,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     # a list for the results of those args on each fold
     numArgSets = argumentCombinationIterator.numPermutations
     performanceOfEachCombination = []
-    for i in xrange(numArgSets):
+    for i in range(numArgSets):
         performanceOfEachCombination.append([None, []])
 
     # control variables determining if we save all results before calculating performance
@@ -2225,7 +2255,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             finalPerformance = sum(results) / float(len(results))
         # we combine the results objects into one, and then calc performance
         else:
-            for resultIndex in xrange(1, len(results)):
+            for resultIndex in range(1, len(results)):
                 results[0].appendPoints(results[resultIndex])
 
             # TODO raise RuntimeError("How do we guarantee Y and results are in same order?")
@@ -2273,10 +2303,10 @@ def makeFoldIterator(dataList, folds):
         raise ArgumentException("Must specify few enough folds so there is a point in each")
 
     # randomly select the folded portions
-    indices = range(points)
+    indices = list(range(points))
     pythonRandom.shuffle(indices)
     foldList = []
-    for fold in xrange(folds):
+    for fold in range(folds):
         start = fold * numInFold
         if fold == folds - 1:
             end = points
@@ -2332,6 +2362,8 @@ class _foldIteratorClass():
         self.index = self.index + 1
         return resultsList
 
+    def __next__(self):
+        return self.next()
 
 class ArgumentIterator:
     """
@@ -2388,6 +2420,9 @@ class ArgumentIterator:
             self.index += 1
             return permutation
 
+    def __next__(self):
+        return self.next()
+
     def reset(self):
         self.index = 0
 
@@ -2414,13 +2449,13 @@ def _buildArgPermutationsList(listOfDicts, curCompoundArg, curKeyIndex, rawArgIn
     #append a DEEP COPY of the dict to the listOfDicts. Copy is deep
     #because dict entries will be changed when recursive stack is popped.
     #Only complete, and distict dicts are appended to listOfDicts
-    if curKeyIndex >= len(rawArgInput.keys()):
+    if curKeyIndex >= len(list(rawArgInput.keys())):
         listOfDicts.append(copy.deepcopy(curCompoundArg))
         return listOfDicts
 
     else:
         #retrieve all values for the current key being populated
-        curKey = rawArgInput.keys()[curKeyIndex]
+        curKey = list(rawArgInput.keys())[curKeyIndex]
         curValues = rawArgInput[curKey]
 
         try:
@@ -2509,9 +2544,9 @@ def generateClusteredPoints(numClusters, numPointsPerCluster, numFeaturesPerPoin
     def _noiseTerm():
         return pythonRandom.random() * 0.0001 - 0.00005
 
-    for curCluster in xrange(numClusters):
-        for curPoint in xrange(numPointsPerCluster):
-            curFeatureVector = [float(curCluster) for x in xrange(numFeaturesPerPoint)]
+    for curCluster in range(numClusters):
+        for curPoint in range(numPointsPerCluster):
+            curFeatureVector = [float(curCluster) for x in range(numFeaturesPerPoint)]
 
             if addFeatureNoise:
                 curFeatureVector = [_noiseTerm() + entry for entry in curFeatureVector]
@@ -2612,7 +2647,7 @@ class LearnerInspector:
         of problem the learnerName learner is designed to run on.
         Example output: 'classification', 'regression', 'other'
         """
-        if not isinstance(learnerName, basestring):
+        if not isinstance(learnerName, six.string_types):
             raise ArgumentException("learnerName must be a string")
         return self._classifyAlgorithmDecisionTree(learnerName)
 
@@ -2730,12 +2765,12 @@ class LearnerInspector:
         #so pass back that labels are repeated
         # if runResults are all in trainLabels, then it's repeating:
         alreadySeenLabelsList = []
-        for curPointIndex in xrange(trainLabels.points):
+        for curPointIndex in range(trainLabels.points):
             alreadySeenLabelsList.append(trainLabels[curPointIndex, 0])
 
         #check if the learner generated any new label (one it hadn't seen in training)
         unseenLabelFound = False
-        for curResultPointIndex in xrange(runResults.points):
+        for curResultPointIndex in range(runResults.points):
             if runResults[curResultPointIndex, 0] not in alreadySeenLabelsList:
                 unseenLabelFound = True
                 break
@@ -2845,7 +2880,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
         raise ArgumentException("trainX may only be an object derived from Base")
 
     if trainY is not None:
-        if not (isinstance(trainY, Base) or isinstance(trainY, (basestring, int, long))):
+        if not (isinstance(trainY, Base) or isinstance(trainY, (six.string_types, int, numpy.int64))):
             raise ArgumentException(
                 "trainY may only be an object derived from Base, or an ID of the feature containing labels in testX")
         if isinstance(trainY, Base):
@@ -2866,7 +2901,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
     if testRequired[1] and testY is None:
         raise ArgumentException("testY must be provided")
     if testY is not None:
-        if not isinstance(testY, (Base, basestring, int, long)):
+        if not isinstance(testY, (Base, six.string_types, int, int)):
             raise ArgumentException(
                 "testY may only be an object derived from Base, or an ID of the feature containing labels in testX")
         if isinstance(trainY, Base):
@@ -2955,7 +2990,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
     timer = Stopwatch() if useLog else None
 
     # if testY is in testX, we need to extract it before we call a trainAndApply type function
-    if isinstance(testY, (basestring, int, long)):
+    if isinstance(testY, (six.string_types, int, int)):
         testX = testX.copy()
         testY = testX.extractFeatures([testY])
 
@@ -3099,7 +3134,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
         return resultsContainer
     elif scoreMode.lower() == 'allScores'.lower():
         columnHeaders = sorted([str(i) for i in labelSet])
-        labelIndexDict = {str(v): k for k, v in zip(range(len(columnHeaders)), columnHeaders)}
+        labelIndexDict = {str(v): k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
         predictionMatrix = rawPredictions.copyAs(format="python list")
         resultsContainer = []
         for row in predictionMatrix:
@@ -3163,7 +3198,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     merged = _mergeArguments(arguments, kwarguments)
 
     #Remove true labels from from training set, if not already separated
-    if isinstance(trainY, (str, int, long)):
+    if isinstance(trainY, (str, int, int)):
         trainX = trainX.copy()
         trainY = trainX.extractFeatures(trainY)
 
@@ -3241,7 +3276,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         #create list of Feature Names/Column Headers for final return object
         columnHeaders = sorted([str(i) for i in labelSet])
         #create map between label and index in list, so we know where to put each value
-        labelIndexDict = {v: k for k, v in zip(range(len(columnHeaders)), columnHeaders)}
+        labelIndexDict = {v: k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
         featureNamesItoN = rawPredictions.getFeatureNames()
         predictionMatrix = rawPredictions.copyAs(format="python list")
         resultsContainer = []
@@ -3310,7 +3345,7 @@ def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, arguments={}
     timer = Stopwatch() if useLog else None
 
     # if testY is in testX, we need to extract it before we call a trainAndApply type function
-    if isinstance(testY, (basestring, int, long)):
+    if isinstance(testY, (six.string_types, int, int)):
         testX = testX.copy()
         testY = testX.extractFeatures([testY])
 

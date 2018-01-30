@@ -3,13 +3,14 @@ Unit tests for mlpy_interface.py
 
 """
 
+from __future__ import absolute_import
 import UML
 
 from nose.tools import *
 import numpy.testing
 
 from UML.exceptions import ArgumentException
-from test_helpers import checkLabelOrderingAndScoreAssociations
+from .test_helpers import checkLabelOrderingAndScoreAssociations
 
 
 def testMlpyHandmadeSVMClassification():

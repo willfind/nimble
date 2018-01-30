@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from UML.exceptions import ArgumentException
 
 

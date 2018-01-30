@@ -3,10 +3,12 @@ Functions that could be useful accross multple interface test suites
 
 """
 
+from __future__ import absolute_import
 import numpy
 
 from UML.data import Base
 from ..interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+from six.moves import range
 #from ..interface_helpers import valueFromOneVOneData
 
 def test_OvOTournament():
@@ -32,11 +34,11 @@ def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
         allScores = allScores.data
 
     assert len(bestScores) == len(allScores)
-    for i in xrange(len(bestScores)):
+    for i in range(len(bestScores)):
         currBest = numpy.array(bestScores[i]).flatten()
         currAll = numpy.array(allScores[i]).flatten()
         #score in bestScore matches winning score's slot in allScores
-        for j in xrange(len(allLabels)):
+        for j in range(len(allLabels)):
             if currBest[0] == allLabels[j]:
                 index = j
                 break

@@ -4,12 +4,16 @@ the main data wrapper objects defined in this module
 
 """
 
+from __future__ import division
+from __future__ import absolute_import
 import copy
 import math
 import string
 
 from abc import ABCMeta
 from abc import abstractmethod
+import six
+from six.moves import range
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -21,9 +25,7 @@ DEFAULT_NAME_PREFIX = "OBJECT_#"
 defaultObjectNumber = 0
 
 
-class View():
-    __metaclass__ = ABCMeta
-
+class View(six.with_metaclass(ABCMeta)):
     def equals(self, other):
         if not isinstance(other, View):
             return False
@@ -34,7 +36,7 @@ class View():
         if not self.name().startswith(DEFAULT_PREFIX) and not other.name().startswith(DEFAULT_PREFIX):
             if self.name() != other.name():
                 return False
-        for i in xrange(len(self)):
+        for i in range(len(self)):
             if self[i] != other[i]:
                 return False
         return True
@@ -146,7 +148,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
     # merge helper
     def mergeNames(baseNames, otherNames):
         ret = {}
-        for i in xrange(len(baseNames)):
+        for i in range(len(baseNames)):
             baseName = baseNames[i]
             otherName = otherNames[i]
             baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
@@ -182,7 +184,7 @@ def reorderToMatchExtractionList(dataObject, extractionList, axis):
     sortedList = copy.copy(extractionList)
     sortedList.sort()
     mappedOrig = {}
-    for i in xrange(len(extractionList)):
+    for i in range(len(extractionList)):
         mappedOrig[extractionList[i]] = i
 
     if axis == 'point':
@@ -203,7 +205,7 @@ def _looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
     # list python lists. We must still explicitly exclude strings because of the
     # numpy string implementation.
-    if not hasattr(val, '__div__') or isinstance(val, basestring):
+    if not hasattr(val, '__truediv__') or isinstance(val, six.string_types):
         return False
     return True
 
@@ -238,8 +240,8 @@ def indicesSplit(allowed, total):
     forward = int(math.ceil(allowed / 2.0))
     backward = int(math.floor(allowed / 2.0))
 
-    fIndices = range(forward)
-    bIndices = range(-backward, 0)
+    fIndices = list(range(forward))
+    bIndices = list(range(-backward, 0))
 
     for i in range(len(bIndices)):
         bIndices[i] = bIndices[i] + total
@@ -252,9 +254,9 @@ def indicesSplit(allowed, total):
 
 def hasNonDefault(obj, axis):
     if axis == 'point':
-        possibleIndices = xrange(obj.points)
+        possibleIndices = range(obj.points)
     else:
-        possibleIndices = xrange(obj.features)
+        possibleIndices = range(obj.features)
 
     getter = obj.getPointName if axis == 'point' else obj.getFeatureName
 
@@ -372,7 +374,7 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
 
     # remove values so that we reach the target length
     for row in removalVals:
-        for i in xrange(remNum):
+        for i in range(remNum):
             row.pop(removeIndex)
 
     # now that we are at the target length, we have to modify
@@ -382,7 +384,7 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
 
     if removalWidths is not None:
         # remove those widths associated with omitted values
-        for i in xrange(remNum):
+        for i in range(remNum):
             removalWidths.pop(removeIndex)
 
         # modify the width associated with the colHold

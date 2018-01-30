@@ -1,9 +1,12 @@
+from __future__ import absolute_import
 import abc
 import inspect
 import numpy
+import six
+from six.moves import range
 
 
-class CustomLearner(object):
+class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
     """
     Base class defining a hierarchy of objects which encapsulate what is needed
     to be a single learner callable through the Custom Universal Interface. At
@@ -14,8 +17,6 @@ class CustomLearner(object):
     for its __init__() method.
 
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         pass
@@ -75,7 +76,7 @@ class CustomLearner(object):
         if not isinstance(options, list):
             raise TypeError("The classmethod options must return a list of stings")
         for name in options:
-            if not isinstance(name, basestring):
+            if not isinstance(name, six.string_types):
                 raise TypeError("The classmethod options must return a list of stings")
 
         # check that we can instantiate this subclass
@@ -102,7 +103,7 @@ class CustomLearner(object):
         learner parameter default values to the user through the
         standard UML functions.
         """
-        return dict(cls.getTrainDefaults().items() + cls.getApplyDefaults().items())
+        return dict(list(cls.getTrainDefaults().items()) + list(cls.getApplyDefaults().items()))
 
     @classmethod
     def getTrainParameters(cls):
@@ -123,7 +124,7 @@ class CustomLearner(object):
         (objArgs, v, k, d) = info
         ret = {}
         if d is not None:
-            for i in xrange(len(d)):
+            for i in range(len(d)):
                 ret[objArgs[-(i + 1)]] = d[-(i + 1)]
         return ret
 
@@ -146,7 +147,7 @@ class CustomLearner(object):
         (objArgs, v, k, d) = info
         ret = {}
         if d is not None:
-            for i in xrange(len(d)):
+            for i in range(len(d)):
                 ret[objArgs[-(i + 1)]] = d[-(i + 1)]
         return ret
 

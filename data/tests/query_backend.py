@@ -9,6 +9,8 @@ nonZeroIteratorPointGrouped, nonZeroIteratorFeatureGrouped
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import math
 import tempfile
 import numpy
@@ -26,6 +28,10 @@ from UML.data.dataHelpers import formatIfNeeded
 from UML.data.dataHelpers import makeConsistentFNamesAndData
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.exceptions import ArgumentException
+from six.moves import map
+from six.moves import range
+from six.moves import zip
+from functools import reduce
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -35,14 +41,14 @@ preservePair = (preserveAPath, preserveRPath)
 
 def _fnames(num):
     ret = []
-    for i in xrange(num):
+    for i in range(num):
         ret.append('f' + str(i))
     return ret
 
 
 def _pnames(num):
     ret = []
-    for i in xrange(num):
+    for i in range(num):
         ret.append('p' + str(i))
     return ret
 
@@ -182,7 +188,6 @@ class QueryBackend(DataTestObject):
 
         # call writeFile
         toWrite.writeFile(tmpFile.name, format='csv', includeNames=True)
-
         # read it back into a different object, then test equality
         readObj = self.constructor(data=tmpFile.name)
 
@@ -237,7 +242,7 @@ class QueryBackend(DataTestObject):
             assert readObj.isIdentical(exclude)
             assert exclude.isIdentical(readObj)
 
-            for i in xrange(count):
+            for i in range(count):
                 origName = getattr(exclude, getter)(i)
                 readName = getattr(readObj, getter)(i)
                 assert getDefNameIndex(origName) > 100
@@ -427,11 +432,11 @@ class QueryBackend(DataTestObject):
         assert any(pv)
         assert any(fv)
 
-        assert filter(lambda x: x > 0, pv) == [2, 3, 4, 5]
-        assert filter(lambda x: x > 0, fv) == [2, 3, 4, 5]
+        assert [x for x in pv if x > 0] == [2, 3, 4, 5]
+        assert [x for x in fv if x > 0] == [2, 3, 4, 5]
 
-        assert map(abs, pv) == [1, 2, 3, 4, 5]
-        assert map(abs, fv) == [1, 2, 3, 4, 5]
+        assert list(map(abs, pv)) == [1, 2, 3, 4, 5]
+        assert list(map(abs, fv)) == [1, 2, 3, 4, 5]
 
         assert max(pv) == 5
         assert max(fv) == 5
@@ -454,7 +459,7 @@ class QueryBackend(DataTestObject):
         assert tuple(pv) == (-1, 2, 3, 4, 5)
         assert tuple(fv) == (-1, 2, 3, 4, 5)
 
-        assert zip(pv, fv) == [(-1, -1), (2, 2), (3, 3), (4, 4), (5, 5)]
+        assert list(zip(pv, fv)) == [(-1, -1), (2, 2), (3, 3), (4, 4), (5, 5)]
 
 
     ################
@@ -543,28 +548,28 @@ class QueryBackend(DataTestObject):
             assert False  # pointStart is non-ID didn't raise exception
         except ArgumentException as ae:
             if textCheck:
-                print ae
+                print(ae)
 
         try:
             toTest.view(pointEnd=5)
             assert False  # pointEnd > pointCount didn't raise exception
         except ArgumentException as ae:
             if textCheck:
-                print ae
+                print(ae)
 
         try:
             toTest.view(pointEnd=1.4)
             assert False  # pointEnd is non-ID didn't raise exception
         except ArgumentException as ae:
             if textCheck:
-                print ae
+                print(ae)
 
         try:
             toTest.view(pointStart='7', pointEnd='4')
             assert False  # pointStart > pointEnd didn't raise exception
         except ArgumentException as ae:
             if textCheck:
-                print ae
+                print(ae)
 
     def test_view_featureStart_featureEnd_validation(self):
         pointNames = ['1', '4', '7']
@@ -579,28 +584,28 @@ class QueryBackend(DataTestObject):
             assert False  # featureStart is non-ID didn't raise exception
         except ArgumentException as ae:
             if textCheck:
-                print ae
+                print(ae)
 
         try:
             toTest.view(featureEnd=4)
             assert False  # featureEnd > featureCount didn't raise exception
         except ArgumentException as ae:
             if textCheck:
-                print ae
+                print(ae)
 
         try:
             toTest.view(featureEnd=1.4)
             assert False  # featureEnd is non-ID didn't raise exception
         except ArgumentException as ae:
             if textCheck:
-                print ae
+                print(ae)
 
         try:
             toTest.view(featureStart='three', featureEnd='two')
             assert False  # featureStart > featureEnd didn't raise exception
         except ArgumentException as ae:
             if textCheck:
-                print ae
+                print(ae)
 
 
     def test_ViewAccess_AllLimits(self):
@@ -616,8 +621,8 @@ class QueryBackend(DataTestObject):
         def checkAccess(v, pStart, pEnd, fStart, fEnd):
             pSize = pEnd - pStart
             fSize = fEnd - fStart
-            for i in xrange(pSize):
-                for j in xrange(fSize):
+            for i in range(pSize):
+                for j in range(fSize):
                     assert v[i, j] == orig[i + pStart, j + fStart]
 
             # getPointNames
@@ -625,7 +630,7 @@ class QueryBackend(DataTestObject):
             assert v.getPointNames() == pnames[pStart:pEnd + 1]
 
             # getPointIndex, getPointName
-            for i in xrange(pStart, pEnd):
+            for i in range(pStart, pEnd):
                 origName = pnames[i]
                 assert v.getPointName(i - pStart) == origName
                 assert v.getPointIndex(origName) == i - pStart
@@ -635,15 +640,15 @@ class QueryBackend(DataTestObject):
             assert v.getFeatureNames() == fnames[fStart:fEnd + 1]
 
             # getFeatureIndex, getFeatureName
-            for i in xrange(fStart, fEnd):
+            for i in range(fStart, fEnd):
                 origName = fnames[i]
                 assert v.getFeatureName(i - fStart) == origName
                 assert v.getFeatureIndex(origName) == i - fStart
 
-        for pStart in xrange(origPLen):
-            for pEnd in xrange(pStart, origPLen):
-                for fStart in xrange(origFLen):
-                    for fEnd in xrange(fStart, origFLen):
+        for pStart in range(origPLen):
+            for pEnd in range(pStart, origPLen):
+                for fStart in range(origFLen):
+                    for fEnd in range(fStart, origFLen):
                         testView = orig.view(pointStart=pStart, pointEnd=pEnd,
                                              featureStart=fStart, featureEnd=fEnd)
                         checkAccess(testView, pStart, pEnd, fStart, fEnd)
@@ -1015,7 +1020,7 @@ class QueryBackend(DataTestObject):
                 assert lenSum <= (maxW - ((len(pRep) - 1) * len(colSep)))
 
             if len(ret) > 0:
-                for fIndex in xrange(len(ret[0])):
+                for fIndex in range(len(ret[0])):
                     widthBound = 0
                     for pRep in ret:
                         val = pRep[fIndex]

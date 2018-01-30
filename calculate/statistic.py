@@ -1,3 +1,5 @@
+from __future__ import division
+from __future__ import absolute_import
 import math
 import numpy
 import scipy
@@ -5,7 +7,7 @@ import scipy
 import UML
 from UML.exceptions import ArgumentException
 
-numericalTypes = (int, float, long)
+numericalTypes = (int, float, int)
 
 
 def proportionMissing(values):
@@ -137,14 +139,14 @@ def median(values):
         return None
 
     #Filter out None/NaN values from list of values
-    sortedValues = filter(lambda x: not _isMissing(x), values)
+    sortedValues = [x for x in values if not _isMissing(x)]
 
     sortedValues = sorted(sortedValues)
 
     numValues = len(sortedValues)
 
     if numValues % 2 == 0:
-        median = (float(sortedValues[(numValues / 2) - 1]) + float(sortedValues[numValues / 2])) / float(2)
+        median = (float(sortedValues[(numValues // 2) - 1]) + float(sortedValues[numValues // 2])) / float(2)
     else:
         median = float(sortedValues[int(math.floor(numValues / 2))])
 
@@ -155,7 +157,7 @@ def mode(values):
     Given a 1D vector of values, find the most frequent value.
     """
     collections = UML.importModule('collections')
-    nonMissingValues = filter(lambda x: not _isMissing(x), values)
+    nonMissingValues = [x for x in values if not _isMissing(x)]
     counter = collections.Counter(nonMissingValues)
     return counter.most_common()[0][0]
 
@@ -204,7 +206,7 @@ def uniqueCount(values):
     """
     Given a 1D vector of values, calculate the number of unique values.
     """
-    values = filter(lambda x: not _isMissing(x), values)
+    values = [x for x in values if not _isMissing(x)]
     valueSet = set(values)
     return len(valueSet)
 
@@ -214,7 +216,8 @@ def featureType(values):
         Return the type of data: string, int, float
     """
 
-    types = numpy.unique([type(value) for value in values if not _isMissing(value)])
+    # types = numpy.unique([type(value) for value in values if not _isMissing(value)])#doesn't work in python3
+    types = list(set([type(value) for value in values if not _isMissing(value)]))
     #if all data in values are missing
     if len(types) == 0:
         return 'Unknown'
@@ -222,7 +225,7 @@ def featureType(values):
     elif len(types) > 1:
         return 'Mixed'
     else:
-        return str(types[0])[7:-2]
+        return str(types[0]).split("'")[1]#in python2, it is like "<type 'xxx'>", while in python3, it is like "<class 'xxx'>"
 
 
 def quartiles(values, ignoreNoneOrNan=True):

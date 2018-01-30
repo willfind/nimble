@@ -26,7 +26,7 @@ def test_createData_CSV_data():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
@@ -40,7 +40,7 @@ def test_createData_CSV_data_noComment():
         fromList = UML.createData(returnType=t, data=[[1, 2], [1, 2]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,#3\n")
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
@@ -54,7 +54,7 @@ def test_createData_CSV_data_ListOnly():
     fromList = UML.createData(returnType="List", data=[[1, 2, 'three'], [4, 5, 'six']])
 
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,three\n")
         tmpCSV.write("4,5,six\n")
         tmpCSV.flush()
@@ -68,7 +68,7 @@ def test_createData_CSV_data_ListOnly_noComment():
     fromList = UML.createData(returnType="List", data=[[1, 2, 'three'], [4, 5, '#six']])
 
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,three\n")
         tmpCSV.write("4,5,#six\n")
         tmpCSV.flush()
@@ -84,7 +84,7 @@ def test_createData_MTXArr_data():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx array file
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("1 3\n")
             tmpMTXArr.write("1\n")
@@ -106,7 +106,7 @@ def test_createData_MTXCoo_data():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.write("1 1 1\n")
@@ -124,7 +124,7 @@ def test_createData_MTXCoo_data():
 
 @raises(FileFormatException)
 def test_createData_CSV_unequalRowLength_short():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3,4\n")
         tmpCSV.write("4,5,6\n")
         tmpCSV.flush()
@@ -134,7 +134,7 @@ def test_createData_CSV_unequalRowLength_short():
 
 @raises(FileFormatException)
 def test_createData_CSV_unequalRowLength_long():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("4,5,6,7\n")
@@ -145,7 +145,7 @@ def test_createData_CSV_unequalRowLength_long():
 
 @raises(FileFormatException)
 def test_createData_CSV_unequalRowLength_definedByNames():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("one,two,three\n")
         tmpCSV.write("11,22,33,44\n")
         tmpCSV.write("4,5,6,7\n")
@@ -155,7 +155,7 @@ def test_createData_CSV_unequalRowLength_definedByNames():
 
 
 def test_createData_CSV_unequalRowLength_position():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("#ignore\n")
         tmpCSV.write("1,2,3,4,0,0,0,0\n")
         tmpCSV.write("\n")
@@ -188,7 +188,7 @@ def test_createData_CSV_unequalRowLength_position():
 def test_createData_objName_and_path_CSV():
     for t in returnTypes:
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
 
@@ -209,7 +209,7 @@ def test_createData_objName_and_path_CSV():
 def test_createData_objName_and_path_MTXArr():
     for t in returnTypes:
         # instantiate from mtx array file
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("1 3\n")
             tmpMTXArr.write("1\n")
@@ -234,7 +234,7 @@ def test_createData_objName_and_path_MTXArr():
 def test_createData_objName_and_path_MTXCoo():
     for t in returnTypes:
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.write("1 1 1\n")
@@ -269,7 +269,7 @@ def test_extractNames_CSV():
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write('ignore,one,two,three\n')
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
@@ -288,7 +288,7 @@ def test_names_AutoDetected_CSV():
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write("\n")
         tmpCSV.write("\n")
         tmpCSV.write("point_names,one,two,three\n")
@@ -306,7 +306,7 @@ def test_featNamesOnly_AutoDetected_CSV():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]], featureNames=fNames)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write("\n")
         tmpCSV.write("\n")
         tmpCSV.write("one,two,three\n")
@@ -326,7 +326,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write("\n")
         tmpCSV.write("\n")
         tmpCSV.write("point_names,one,two,three\n")
@@ -343,7 +343,7 @@ def test_specifiedIgnore_overides_autoDetect_CSV():
         fromList = UML.createData(returnType=t, data=data)
 
         # instantiate from csv file
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write("\n")
         tmpCSV.write("\n")
         tmpCSV.write('0,1,2,3\n')
@@ -363,7 +363,7 @@ def test_namesInComment_MTXArr():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx array file
-        tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx")
+        tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
         tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
         tmpMTXArr.write("%#pn1\n")
         tmpMTXArr.write("%#one,two,three\n")
@@ -389,7 +389,7 @@ def test_namesInComment_MTXCoo():
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
+        tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
         tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
         tmpMTXCoo.write("%#pn1\n")
         tmpMTXCoo.write("%#one,two,three\n")
@@ -415,7 +415,7 @@ def test_extractNames_MTXArr():
             returnType=t, data=[[21, 22, 23]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx array file
-        tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx")
+        tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
         tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
         tmpMTXArr.write("2 4\n")
         tmpMTXArr.write("-4\n")
@@ -445,7 +445,7 @@ def test_extractNames_MTXCoo():
             returnType=t, data=[[22, -5, 23]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx coordinate file
-        tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx")
+        tmpMTXCoo = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
         tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
         tmpMTXCoo.write("2 4 8\n")
         tmpMTXCoo.write("1 1 11\n")
@@ -469,7 +469,7 @@ def test_extractNames_MTXCoo():
 @raises(ArgumentException)
 def test_csv_extractNames_duplicatePointName():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write('ignore,one,two,three\n')
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.write("pn1,11,22,33\n")
@@ -481,7 +481,7 @@ def test_csv_extractNames_duplicatePointName():
 @raises(ArgumentException)
 def test_csv_extractNames_duplicateFeatureName():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write('one,two,one\n')
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
@@ -606,7 +606,7 @@ def test_createData_CSV_passedOpen():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
@@ -635,7 +635,7 @@ def test_createData_MTXArr_passedOpen():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx array file
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("1 3\n")
             tmpMTXArr.write("1\n")
@@ -672,7 +672,7 @@ def test_createData_MTXCoo_passedOpen():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+        with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.write("1 1 1\n")
@@ -713,7 +713,7 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
         fromList = UML.createData(returnType=t, data=[[1, 3], [5, 7]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,two,3.0,four\n")
             tmpCSV.write("5,six,7,8\n")
             tmpCSV.flush()
@@ -733,7 +733,7 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
         fromList = UML.createData(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3.0,4.0,1\n")
             tmpCSV.write("5,six,7,8,1\n")
             tmpCSV.write("11,6,12,eight,1.0\n")
@@ -755,7 +755,7 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
         fromList = UML.createData(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,two,3.0,four,one\n")
             tmpCSV.write("5,6,7,8,1\n")
             tmpCSV.write("11,6,12,8,1.0\n")
@@ -777,7 +777,7 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3,4\n")
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.flush()
@@ -798,7 +798,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
         fromList = UML.createData(returnType=t, featureNames=fnames, data=[[5, 6, 7, 8]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3,four\n")
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.flush()
@@ -817,7 +817,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesAdjusted():
         fromList = UML.createData(returnType=t, featureNames=fNames, data=data)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3,4\n")
             tmpCSV.write("1,2,3,four\n")
             tmpCSV.write("5,6,7,H8\n")
@@ -836,7 +836,7 @@ def test_CSV_createData_ignoreNonNumericalFeatures_allRemoved():
         fromList = UML.createData(returnType=t, pointNames=pNames, data=[[], [], []])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write(",ones,twos,threes\n")
             tmpCSV.write("single,1A,2A,3A\n")
             tmpCSV.write("dubs,11,22A,33\n")
@@ -859,7 +859,7 @@ def test_CSVformatting_simpleQuotedValues():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,\"2\",\"3\",4\n")
             tmpCSV.write("5,\"6\",\"7\",8\n")
             tmpCSV.flush()
@@ -877,7 +877,7 @@ def test_CSVformatting_specialCharsInQuotes():
         fromList = UML.createData(returnType=t, featureNames=fNames[:3], data=data)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("\"1,ONE\",\"2;TWO\",\"3\t'EE'\",\"4f\"\n")
             tmpCSV.write("1,2,3,four\n")
             tmpCSV.write("5,6,7,H8\n")
@@ -900,7 +900,7 @@ def test_CSVformatting_emptyAndCommentLines():
         fromList = UML.createData(returnType=t, data=data)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("#stuff\n")
             tmpCSV.write("\n")
             tmpCSV.write("\n")
@@ -926,7 +926,7 @@ def test_CSVformatting_scientificNotation():
         fromRaw = UML.createData(returnType=t, data=data)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1.000000000e+00,2.000000000e+00,3.000000000e+00\n")
             tmpCSV.write("1.100000000e+01,2.200000000e+01,3.300000000e+01\n")
             tmpCSV.write("1.110000000e+02,2.220000000e+02,3.330000000e+02\n")
@@ -1017,11 +1017,11 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
                 pSelUse = copy.copy(pSel)
                 fSelUse = copy.copy(fSel)
                 if pSel != 'all':
-                    for i in xrange(len(pSel)):
+                    for i in range(len(pSel)):
                         pSelUse[i] = ret.getPointName(i)
 
                 if fSel != 'all':
-                    for i in xrange(len(fSel)):
+                    for i in range(len(fSel)):
                         fSelUse[i] = ret.getFeatureName(i)
 
                 retN = UML.createData(
@@ -1062,11 +1062,11 @@ def test_createData_keepPF_AllPossibleWithNames_listProvided():
                 pSelUse = copy.copy(pSel)
                 fSelUse = copy.copy(fSel)
                 if pSel != 'all':
-                    for i in xrange(len(pSel)):
+                    for i in range(len(pSel)):
                         pSelUse[i] = ret.getPointName(i)
 
                 if fSel != 'all':
-                    for i in xrange(len(fSel)):
+                    for i in range(len(fSel)):
                         fSelUse[i] = ret.getFeatureName(i)
 
                 retN = UML.createData(
@@ -1107,11 +1107,11 @@ def test_createData_keepPF_AllPossibleWithNames_dictProvided():
                 pSelUse = copy.copy(pSel)
                 fSelUse = copy.copy(fSel)
                 if pSel != 'all':
-                    for i in xrange(len(pSel)):
+                    for i in range(len(pSel)):
                         pSelUse[i] = ret.getPointName(i)
 
                 if fSel != 'all':
-                    for i in xrange(len(fSel)):
+                    for i in range(len(fSel)):
                         fSelUse[i] = ret.getFeatureName(i)
 
                 retN = UML.createData(
@@ -1128,7 +1128,7 @@ def test_createData_csv_keepPoints_IndexingGivenFeatureNames():
     fnames = ['1', '2', '3']
     wanted = UML.createData("Matrix", data=data, featureNames=fnames)
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -1167,7 +1167,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
         UML.helpers.initDataObject = fakeinitDataObject
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.write("11,22,33\n")
             tmpCSV.write("111,222,333\n")
@@ -1194,7 +1194,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #		UML.helpers.initDataObject = fakeinitDataObject
 #
 #		# instantiate from mtx array file
-#		with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+#		with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
 #			tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
 #			tmpMTXArr.write("1 3\n")
 #			tmpMTXArr.write("1\n")
@@ -1224,7 +1224,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #		UML.helpers.initDataObject = fakeinitDataObject
 #
 #		# instantiate from mtx coordinate file
-#		with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+#		with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
 #			tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
 #			tmpMTXCoo.write("1 3 3\n")
 #			tmpMTXCoo.write("1 1 1\n")
@@ -1244,7 +1244,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 def test_createData_keepPF_csv_simple():
     wanted = UML.createData("Matrix", data=[[222], [22]])
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -1259,7 +1259,7 @@ def test_createData_keepPF_mtxArr_simple():
     fromList = UML.createData(returnType='Matrix', data=[[2]])
 
     # instantiate from mtx array file
-    with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXArr:
+    with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
         tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
         tmpMTXArr.write("1 3\n")
         tmpMTXArr.write("1\n")
@@ -1277,7 +1277,7 @@ def test_createData_keepPF_mtxCoo_simple():
     fromList = UML.createData(returnType='Matrix', data=[[2]])
 
     # instantiate from mtx coordinate file
-    with tempfile.NamedTemporaryFile(suffix=".mtx") as tmpMTXCoo:
+    with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
         tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
         tmpMTXCoo.write("1 3 3\n")
         tmpMTXCoo.write("1 1 1\n")
@@ -1374,7 +1374,7 @@ def test_createData_keepPF_spCsc_simple():
 @raises(ArgumentException)
 def test_keepPF_csv_ExceptionUnknownFeatureName_Extracted():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -1389,7 +1389,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Extracted():
 @raises(ArgumentException)
 def test_keepPF_csv_ExceptionUnknownFeatureName_Provided():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -1402,7 +1402,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Provided():
 
 @raises(ArgumentException)
 def test_csv_keepFeatures_indexNotInFile():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -1416,7 +1416,7 @@ def test_csv_keepFeatures_indexNotInFile():
 
 @raises(ArgumentException)
 def test_csv_keepPoints_indexNotInFile():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -1431,7 +1431,7 @@ def test_csv_keepPoints_indexNotInFile():
 @raises(ArgumentException)
 def test_keepPF_csv_ExceptionUnknownPointName_extracted():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -1446,7 +1446,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_extracted():
 @raises(ArgumentException)
 def test_keepPF_csv_ExceptionUnknownPointName_provided():
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("111,222,333\n")
@@ -1459,7 +1459,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_provided():
 
 @raises(ArgumentException)
 def test_csv_keepPoints_noNamesButNameSpecified():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -1473,7 +1473,7 @@ def test_csv_keepPoints_noNamesButNameSpecified():
 
 @raises(ArgumentException)
 def test_csv_keepFeatures_noNamesButNameSpecified():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -1486,7 +1486,7 @@ def test_csv_keepFeatures_noNamesButNameSpecified():
 
 
 def test_csv_keepFeatures_duplicatesInList():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -1532,7 +1532,7 @@ def test_csv_keepFeatures_duplicatesInList():
 
 
 def test_csv_keepPoints_duplicatesInList():
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("pns,ones,twos,threes\n")
         tmpCSV.write("single,1,2,3\n")
         tmpCSV.write("dubs,11,22,33\n")
@@ -1587,7 +1587,7 @@ def test_createData_csv_keepPF_and_ignoreFlag():
             returnType=t, data=data, pointNames=pnames, featureNames=fnames)
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("pns,ones,twos,threes\n")
             tmpCSV.write("single,1,2,3A\n")
             tmpCSV.write("dubs,11,22A,33\n")
@@ -1605,7 +1605,7 @@ def test_createData_csv_keepPF_and_ignoreFlag():
 def test_createData_keepPoints_csv_endAfterAllFound():
     wanted = UML.createData("Matrix", data=[[11, 22, 33], [1, 2, 3]])
     # instantiate from csv file
-    with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         # This line has an extra value - if it was actually read by the
@@ -1632,7 +1632,7 @@ def test_createData_csv_nonremoval_efficiency():
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSV:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
@@ -1661,4 +1661,3 @@ def test_createData_csv_nonremoval_efficiency():
 
 # unit tests demonstrating our file loaders can handle arbitrarly placed blank lines
 # comment lines
-                                                                           

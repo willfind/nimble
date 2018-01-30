@@ -3,6 +3,7 @@ Tests for the top level function UML.normalizeData
 
 """
 
+from __future__ import absolute_import
 import UML
 
 from UML.customLearners import CustomLearner

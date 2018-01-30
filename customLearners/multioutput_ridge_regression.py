@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import UML
 from UML.customLearners import CustomLearner
+from six.moves import range
 
 
 class MultiOutputRidgeRegression(CustomLearner):
@@ -15,7 +17,7 @@ class MultiOutputRidgeRegression(CustomLearner):
     def train(self, trainX, trainY, lamb=0):
         self._learners = []
 
-        for i in xrange(trainY.features):
+        for i in range(trainY.features):
             currY = trainY.copyFeatures(i)
 
             currTL = UML.train('Custom.RidgeRegression', trainX, currY, lamb=lamb)
@@ -24,7 +26,7 @@ class MultiOutputRidgeRegression(CustomLearner):
     def apply(self, testX):
         results = None
 
-        for i in xrange(len(self._learners)):
+        for i in range(len(self._learners)):
             curr = self._learners[i].apply(testX, useLog=False)
             if results is None:
                 results = curr

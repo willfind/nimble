@@ -1,20 +1,24 @@
 """
 Class extending Base, using a pandas DataFrame to store data.
 """
+
+from __future__ import division
+from __future__ import absolute_import
 import UML
 from UML.exceptions import ArgumentException, PackageException
+from six.moves import range
 
 pd = UML.importModule('pandas')
 if not pd:
     msg = 'To use class DataFrame, pandas must be installed.'
     raise PackageException(msg)
 
-from base import Base
+from .base import Base, cmp_to_key
 import numpy as np
 scipy = UML.importModule('scipy.sparse')
 
 import itertools
-from base_view import BaseView
+from .base_view import BaseView
 
 
 class DataFrame(Base):
@@ -133,9 +137,9 @@ class DataFrame(Base):
             for v in viewIter:
                 viewArray.append(v)
 
-            viewArray.sort(cmp=comparator)
+            viewArray.sort(key=cmp_to_key(comparator))
             indexPosition = []
-            for i in xrange(len(viewArray)):
+            for i in range(len(viewArray)):
                 index = indexGetter(getattr(viewArray[i], nameGetterStr)(0))
                 indexPosition.append(index)
             indexPosition = np.array(indexPosition)
@@ -151,10 +155,10 @@ class DataFrame(Base):
             scoreArray = viewArray
             if scorer is not None:
                 # use scoring function to turn views into values
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray[i] = scorer(viewArray[i])
             else:
-                for i in xrange(len(viewArray)):
+                for i in range(len(viewArray)):
                     scoreArray[i] = viewArray[i][sortBy]
 
             # use numpy.argsort to make desired index array
@@ -171,7 +175,7 @@ class DataFrame(Base):
 
         # we convert the indices of the their previous location into their feature names
         newNameOrder = []
-        for i in xrange(len(indexPosition)):
+        for i in range(len(indexPosition)):
             oldIndex = indexPosition[i]
             newName = nameGetter(oldIndex)
             newNameOrder.append(newName)
@@ -331,7 +335,7 @@ class DataFrame(Base):
         mapResultsMatrix = np.apply_along_axis(mapperWrapper, 1, self.data.values)
         mapResults = {}
         for pairsArray in mapResultsMatrix:
-            for i in xrange(len(pairsArray) / 2):
+            for i in range(len(pairsArray) / 2):
                 # pairsArray has key value pairs packed back to back
                 k = pairsArray[i * 2]
                 v = pairsArray[(i * 2) + 1]
@@ -514,7 +518,7 @@ class DataFrame(Base):
         except TypeError:
             oneArg = True
 
-        IDs = itertools.product(xrange(self.points), xrange(self.features))
+        IDs = itertools.product(range(self.points), range(self.features))
         for (i, j) in IDs:
             currVal = self.data.ix[i, j]
 
@@ -686,11 +690,11 @@ class DataFrame(Base):
 
 
     def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = self.features / numPoints
+        numFeatures = self.features // numPoints
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='C'))
 
     def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = self.points / numFeatures
+        numPoints = self.points // numFeatures
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
     def _getitem_implementation(self, x, y):
@@ -758,6 +762,9 @@ class DataFrame(Base):
 
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return nzIt(self)
 
     def _nonZeroIteratorFeatureGrouped_implementation(self):
@@ -785,6 +792,9 @@ class DataFrame(Base):
                         return value
 
                 raise StopIteration
+
+            def __next__(self):
+                return self.next()
 
         return nzIt(self)
 

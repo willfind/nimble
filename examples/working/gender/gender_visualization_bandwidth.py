@@ -6,13 +6,16 @@ survery data.
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import math
 import numpy
 import sys
 import os
 import colorsys
 
-from allowImports import boilerplate
+from .allowImports import boilerplate
+from six.moves import range
 boilerplate()
 
 import UML
@@ -273,7 +276,7 @@ def collateBW():
     mbw2,fbw2 = fixedBandwidth_noisy_all()
     mbw3,fbw3 = fixedBandwidth_all()
 
-    print "Male"
+    print("Male")
     mAvg = 0
     for k in mbw1.keys():
         v1 = mbw1[k]
@@ -282,11 +285,11 @@ def collateBW():
         avgV = (v1 + v2 + v3) / 3
         avgS = '%.3f' % round(avgV, 3)
         mAvg += avgV
-        print (k + ": ").ljust(30) + str(v1) + " " + str(v2) + " " + str(v3) + " " + avgS
+        print((k + ": ").ljust(30) + str(v1) + " " + str(v2) + " " + str(v3) + " " + avgS)
 
-    print mAvg / len(mbw1)
+    print(mAvg / len(mbw1))
 
-    print "\n Female"
+    print("\n Female")
     fAvg = 0
     for k in fbw1.keys():
         v1 = fbw1[k]
@@ -295,9 +298,9 @@ def collateBW():
         avgV = (v1 + v2 + v3) / 3
         avgS = '%.3f' % round(avgV, 3)
         fAvg += avgV
-        print (k + ": ").ljust(30) + str(v1) + " " + str(v2) + " " + str(v3) + " " + avgS
+        print((k + ": ").ljust(30) + str(v1) + " " + str(v2) + " " + str(v3) + " " + avgS)
 
-    print fAvg / len(fbw1)
+    print(fAvg / len(fbw1))
 
 
 
@@ -347,10 +350,10 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
 #       fSubscale = generateSubScale(femalePoints, q1, q1Gender, q2, q2Gender).extractPoints(end=10)
 
 #       bw = tuple([.02 + i*.02 for i in xrange(25)])
-        bw = tuple([.5 - i*.02 for i in xrange(24)])
+        bw = tuple([.5 - i*.02 for i in range(24)])
 #       bw = (.1,.2,.3)
 
-        print "\n" + cat
+        print("\n" + cat)
         if LOOfolding:
             mfolds = mSubscale.points
         else:
@@ -365,7 +368,7 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
         UML.logger.active.humanReadableLog.logMessage(boundary + "\n" + cat)
 
         mAll = UML.crossValidateReturnAll("custom.KDEProbability", mSubscale, None, bandwidth=bw, numFolds=mfolds, performanceFunction=perfFunc)
-        print mAll
+        print(mAll)
         mBest = cvUnpackBest(mAll, False)
         mResults[cat] = mBest[0]['bandwidth']
 #       print "MSCALE"
@@ -378,7 +381,7 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
             ffolds = 10
 #       print ffolds
         fAll = UML.crossValidateReturnAll("custom.KDEProbability", fSubscale, None, bandwidth=bw, numFolds=ffolds, performanceFunction=perfFunc)
-        print fAll
+        print(fAll)
         fBest = cvUnpackBest(fAll, False)
         fResults[cat] = fBest[0]['bandwidth']
 #       print "FSCALE"
@@ -393,7 +396,7 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
 
             def absDiffs(vals):
                 ret = []
-                for i in xrange(len(vals)-1):
+                for i in range(len(vals)-1):
                     ret.append(abs(vals[i] - vals[i+1]))
                 return ret
 
@@ -414,9 +417,9 @@ def bandwidthTrials(picked, categoriesByQName, responses, genderValue, scaleType
             plt.close()
 
 
-    print ""
-    print mResults
-    print fResults
+    print("")
+    print(mResults)
+    print(fResults)
     return mResults, fResults
 
 
@@ -466,8 +469,8 @@ def colorTrials(responses, genderValue):
 
     currL = toRGB(bestOut_M)
     currR = toRGB(bestOut_F)
-    print currL
-    print currR
+    print(currL)
+    print(currR)
 
 #   for mH in xrange(210,231,5):
 
@@ -516,13 +519,13 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
 
 #   bw = tuple([.02 + i*.02 for i in xrange(25)])
     bwBaseM = silver_factor(genDataM.points, genDataM.features)
-    bw = tuple([bwBaseM * (1.1 ** i) for i in xrange(-15,15)])
+    bw = tuple([bwBaseM * (1.1 ** i) for i in range(-15,15)])
     mfolds = 10
     mAll = UML.crossValidateReturnAll("custom.KDEProbability", genDataM, None, bandwidth=bw, numFolds=mfolds, performanceFunction=LogLikelihoodSum)
     mBW = cvUnpackBest(mAll, False)[0]['bandwidth']
 
     bwBaseF = silver_factor(genDataM.points, genDataM.features)
-    bw = tuple([bwBaseF * (1.1 ** i) for i in xrange(-15,15)])
+    bw = tuple([bwBaseF * (1.1 ** i) for i in range(-15,15)])
     ffolds = 10
     fAll = UML.crossValidateReturnAll("custom.KDEProbability", genDataF, None, bandwidth=bw, numFolds=ffolds, performanceFunction=LogLikelihoodSum)
     fBW = cvUnpackBest(fAll, False)[0]['bandwidth']
@@ -536,7 +539,7 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
     opts['yLimits'] = (0, .15)
     plotDualWithBlendFill(genDataM, genDataF, None, None, **opts)
 
-    baseX = [(0.5 * x) - 10 for x in xrange(0,41)]
+    baseX = [(0.5 * x) - 10 for x in range(0,41)]
     plt.plot(baseX, scipy.stats.norm.pdf(baseX, muM, sigmaM), linewidth=2, color='blue')
     plt.plot(baseX, scipy.stats.norm.pdf(baseX, muF, sigmaF), linewidth=2, color='red')
 
@@ -564,13 +567,13 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
     genDataF.transpose()
 
     bwBaseM = silver_factor(genDataM.points, genDataM.features)
-    bw = tuple([bwBaseM * (1.1 ** i) for i in xrange(-15,15)])
+    bw = tuple([bwBaseM * (1.1 ** i) for i in range(-15,15)])
     mfolds = 10
     mAll = UML.crossValidateReturnAll("custom.KDEProbability", genDataM, None, bandwidth=bw, numFolds=mfolds, performanceFunction=LogLikelihoodSum)
     mBW = cvUnpackBest(mAll, False)[0]['bandwidth']
 
     bwBaseF = silver_factor(genDataM.points, genDataM.features)
-    bw = tuple([bwBaseF * (1.1 ** i) for i in xrange(-15,15)])
+    bw = tuple([bwBaseF * (1.1 ** i) for i in range(-15,15)])
     ffolds = 10
     fAll = UML.crossValidateReturnAll("custom.KDEProbability", genDataF, None, bandwidth=bw, numFolds=ffolds, performanceFunction=LogLikelihoodSum)
     fBW = cvUnpackBest(fAll, False)[0]['bandwidth']
@@ -584,7 +587,7 @@ def verifyBandwidthSelectionWorks(responses, genderValue):
     opts['yLimits'] = (0, .15)
     plotDualWithBlendFill(genDataM, genDataF, mBW, fBW, **opts)
 
-    baseX = [(0.5 * x) - 10 for x in xrange(0,41)]
+    baseX = [(0.5 * x) - 10 for x in range(0,41)]
 
     def pdfM(vals):
         return (scipy.stats.norm.pdf(vals, muM1, sigmaM1) / 2.0) + (scipy.stats.norm.pdf(vals, muM2, sigmaM2) / 2.0)

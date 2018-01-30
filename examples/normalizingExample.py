@@ -4,7 +4,11 @@ datasets.
 
 """
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+try:
+    from allowImports import boilerplate
+except:
+    from .allowImports import boilerplate
 
 boilerplate()
 

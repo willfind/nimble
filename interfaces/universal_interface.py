@@ -5,6 +5,7 @@
 
 """
 
+from __future__ import absolute_import
 import inspect
 import copy
 import abc
@@ -24,6 +25,9 @@ from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
 
 from UML.helpers import _mergeArguments
+import six
+from six.moves import range
+import warnings
 
 
 def captureOutput(toWrap):
@@ -44,12 +48,10 @@ def captureOutput(toWrap):
     return wrapped
 
 
-class UniversalInterface(object):
+class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
     """
 
     """
-
-    __metaclass__ = abc.ABCMeta
 
     _listLearnersCached = None
 
@@ -173,7 +175,7 @@ class UniversalInterface(object):
         customDict = {}
 
         # separate training data / labels if needed
-        if isinstance(trainY, (basestring, int)):
+        if isinstance(trainY, (six.string_types, int, numpy.int64)):
             trainX = trainX.copy()
             trainY = trainX.extractFeatures(toExtract=trainY)
 
@@ -233,15 +235,16 @@ class UniversalInterface(object):
         #			raise ArgumentException("Missing arguments")
         (neededParams, availableDefaults) = (possibleParamSets[bestIndex], possibleDefaults[bestIndex])
         available = copy.deepcopy(arguments)
+
         (ret, ignore) = self._validateArgumentDistributionHelper(baseCallName, neededParams, availableDefaults,
                                                                  available, False, arguments)
         return ret
 
     def _isInstantiable(self, val, hasDefault, defVal):
-        if hasDefault and isinstance(defVal, basestring):
+        if hasDefault and isinstance(defVal, six.string_types):
             return False
 
-        if isinstance(val, basestring):
+        if isinstance(val, six.string_types):
             tmpCallable = self.findCallable(val)
             if (tmpCallable is not None) and hasattr(tmpCallable, "__init__"):
             #if the tmpCallable is a function, then it is not instantiable
@@ -404,7 +407,7 @@ class UniversalInterface(object):
                 msg += "When trying to validate arguments for "
                 msg += currCallName + ", "
                 msg += "the following list of parameter names were not matched: "
-                msg += prettyListString(available.keys(), useAnd=True)
+                msg += prettyListString(list(available.keys()), useAnd=True)
                 msg += ". The allowed parameters were: "
                 msg += prettyListString(currNeededParams, useAnd=True)
                 msg += ". These were choosen as the best guess given the inputs"
@@ -481,7 +484,7 @@ class UniversalInterface(object):
         ret = {}
         for paramName in toProcess:
             paramValue = toProcess[paramName]
-            if isinstance(paramValue, basestring):
+            if isinstance(paramValue, six.string_types):
                 ignoreKeys.append(paramValue)
                 toCall = self.findCallable(paramValue)
                 # if we can find an object for it, and we've prepped the arguments,
@@ -575,7 +578,7 @@ class UniversalInterface(object):
         # check the strategy, and modify it if necessary
         if not strategy:
             scores = []
-            for i in xrange(rawScores.points):
+            for i in range(rawScores.points):
                 combinedScores = calculateSingleLabelScoresFromOneVsOneScores(rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
@@ -798,7 +801,7 @@ class UniversalInterface(object):
 
             for key in inputs.keys():
                 value = inputs[key]
-                if key in discovered.keys():
+                if key in list(discovered.keys()):
                     if value != discovered[key]:
                         newKey = self.learnerName + '.' + key
                         discovered[newKey] = discovered[key]

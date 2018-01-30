@@ -3,6 +3,8 @@ the backend helpers they rely on.
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import math
 import sys
 import numpy
@@ -25,6 +27,7 @@ from UML.helpers import computeMetrics
 from UML.helpers import generateClassificationData
 from UML.customLearners import CustomLearner
 from UML.configuration import configSafetyWrapper
+from six.moves import range
 
 
 def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):
@@ -33,11 +36,11 @@ def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLab
     the second object in the tuple contains the labels for each feature ('Y' in UML language)
     """
     if numLabels is None:
-        labelsRaw = [[pythonRandom.random()] for _x in xrange(numPoints)]
+        labelsRaw = [[pythonRandom.random()] for _x in range(numPoints)]
     else:  # labels data set
-        labelsRaw = [[int(pythonRandom.random() * numLabels)] for _x in xrange(numPoints)]
+        labelsRaw = [[int(pythonRandom.random() * numLabels)] for _x in range(numPoints)]
 
-    rawFeatures = [[pythonRandom.random() for _x in xrange(numFeatures)] for _y in xrange(numPoints)]
+    rawFeatures = [[pythonRandom.random() for _x in range(numFeatures)] for _y in range(numPoints)]
 
     return (createData(dataType, rawFeatures), createData(dataType, labelsRaw))
 
@@ -123,7 +126,7 @@ def test_crossValidate_reasonable_results():
     #make random data set where all points lie on a linear hyperplane
     numFeats = 3
     numPoints = 50
-    points = [[pythonRandom.gauss(0, 1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
+    points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector)] for featVector in points]
     X = createData('Matrix', points)
     Y = createData('Matrix', labels)
@@ -160,7 +163,7 @@ def test_crossValidate_2d_api_check():
     #make random data set where all points lie on a linear hyperplane
     numFeats = 3
     numPoints = 50
-    points = [[pythonRandom.gauss(0, 1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
+    points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector), sum(featVector)] for featVector in points]
     X = createData('Matrix', points)
     Y = createData('Matrix', labels)
@@ -214,7 +217,7 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
     #make random data set where all points lie on a linear hyperplane
     numFeats = 3
     numPoints = 50
-    points = [[pythonRandom.gauss(0, 1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
+    points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector), sum(featVector)] for featVector in points]
     X = createData('Matrix', points)
     Y = createData('Matrix', labels)
@@ -268,10 +271,10 @@ def test_crossValidate_foldingRandomness():
 
     """
     numTrials = 5
-    for _ in xrange(numTrials):
+    for _ in range(numTrials):
         X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
         seed = UML.randomness.pythonRandom.randint(0, 2**32 - 1)
-        print seed
+        print(seed)
         UML.setRandomSeed(seed)
         resultOne = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, numFolds=3)
         UML.setRandomSeed(seed)
@@ -351,7 +354,7 @@ def test_crossValidateReturnBest():
         def apply(self, testX):
             num = int(math.floor(testX.points * self.flip))
             ret = self.trained.apply(testX).copyAs('pythonList')
-            for i in xrange(num):
+            for i in range(num):
                 if ret[i][0] == 0:
                     ret[i][0] = 1
                 else:
@@ -382,8 +385,8 @@ def test_crossValidateReturnBest():
 
         # confirm that we have actually tested something: ie, that there is a difference
         # in the results and the ordering therefore matters
-        for i in xrange(len(allScores)):
-            for j in xrange(i + 1, len(allScores)):
+        for i in range(len(allScores)):
+            for j in range(i + 1, len(allScores)):
                 assert allScores[i] != allScores[j]
 
         # verify that resultTuple was in fact the best in allResultsList
@@ -449,7 +452,7 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
     #make random data set where all points lie on a linear hyperplane
     numFeats = 3
     numPoints = 50
-    points = [[pythonRandom.gauss(0, 1) for _x in xrange(numFeats)] for _y in xrange(numPoints)]
+    points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector)] for featVector in points]
     X = createData('Matrix', points)
     Y = createData('Matrix', labels)

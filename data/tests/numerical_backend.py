@@ -12,6 +12,7 @@ elementwisePower, elementwiseMultiply, __imul__, __iadd__, __isub__,
 __idiv__, __itruediv__, __ifloordiv__,  __imod__, __ipow__, 
 
 """
+from __future__ import absolute_import
 import sys
 import numpy
 import os
@@ -28,6 +29,8 @@ from UML.data.tests.baseObject import DataTestObject
 
 from UML.randomness import numpyRandom
 from UML.randomness import pythonRandom
+import six
+from six.moves import range
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -111,7 +114,7 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
             assert 'p1' not in caller.getPointNames()
         except AssertionError:
             einfo = sys.exc_info()
-            raise einfo[1], None, einfo[2]
+            six.reraise(einfo[1], None, einfo[2])
         #		except ArgumentException:
         #			einfo = sys.exc_info()
         #			raise einfo[1], None, einfo[2]
@@ -165,7 +168,7 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     # if it isn't the exception we expect, pass it on
     except:
         einfo = sys.exc_info()
-        raise einfo[1], None, einfo[2]
+        six.reraise(einfo[1], None, einfo[2])
 
     # names interwoven
     other = callerCon(otherRaw, pnames, False)
@@ -339,7 +342,7 @@ def back_matrixmul_pfname_preservations(callerCon, op, inplace):
     # if it isn't the exception we expect, pass it on
     except:
         einfo = sys.exc_info()
-        raise einfo[1], None, einfo[2]
+        six.reraise(einfo[1], None, einfo[2])
 
     # names interwoven
     interPnames = ['f1', 'f2', None]
@@ -1344,7 +1347,7 @@ class NumericalModifying(DataTestObject):
         # if it isn't the exception we expect, pass it on
         except:
             einfo = sys.exc_info()
-            raise einfo[1], None, einfo[2]
+            six.reraise(einfo[1], None, einfo[2])
 
         # names interwoven
         other = self.constructor(otherRaw, pnames, False)

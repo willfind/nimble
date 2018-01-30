@@ -6,6 +6,7 @@ Relies on being scikit-learn 0.9 or above
 # TODO: multinomialHMM requires special input processing for obs param
 
 
+from __future__ import absolute_import
 import importlib
 import inspect
 import copy
@@ -15,10 +16,11 @@ import sys
 import functools
 
 import UML
-
+import warnings
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
+from six.moves import range
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -198,7 +200,7 @@ class SciKitLearn(UniversalInterface):
         (objArgs, v, k, d) = ret
         ret = {}
         if d is not None:
-            for i in xrange(len(d)):
+            for i in range(len(d)):
                 ret[objArgs[-(i + 1)]] = d[-(i + 1)]
 
         return [ret]
@@ -231,7 +233,7 @@ class SciKitLearn(UniversalInterface):
             currNames = stage[0]
             currDefaults = stage[3]
             if stage[3] is not None:
-                for i in xrange(len(currDefaults)):
+                for i in range(len(currDefaults)):
                     key = currNames[-(i + 1)]
                     value = currDefaults[-(i + 1)]
                     ret[key] = value
@@ -305,7 +307,6 @@ class SciKitLearn(UniversalInterface):
 
         """
         mustCopy = ['PLSRegression']
-
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
             if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopy:
@@ -517,7 +518,7 @@ class SciKitLearn(UniversalInterface):
         """
         temp = {}
         if matched is not None:
-            for i in xrange(len(full)):
+            for i in range(len(full)):
                 if i < len(matched):
                     temp[full[len(full) - 1 - i]] = matched[len(matched) - 1 - i]
                 else:
@@ -532,7 +533,7 @@ class SciKitLearn(UniversalInterface):
 
         retFull = []
         retMatched = []
-        for i in xrange(len(full)):
+        for i in range(len(full)):
             name = full[i]
             if name in temp:
                 retFull.append(name)

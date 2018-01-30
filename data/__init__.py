@@ -10,12 +10,13 @@ documentation.
 
 """
 
-from base import Base
-from base_view import BaseView
-from list import List
-from matrix import Matrix
-from sparse import Sparse
-from dataframe import DataFrame
+from __future__ import absolute_import
+from .base import Base
+from .base_view import BaseView
+from .list import List
+from .matrix import Matrix
+from .sparse import Sparse
+from .dataframe import DataFrame
 
 
 # We want this for unit testing

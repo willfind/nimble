@@ -1,12 +1,16 @@
+from __future__ import absolute_import
 import time
 import inspect
 import re
 import types
 
 import UML
-from uml_logger import UmlLogger
+from .uml_logger import UmlLogger
 
 from UML.exceptions import ArgumentException
+import six
+from six.moves import range
+from six.moves import zip
 
 
 class MachineReadableLogger(UmlLogger):
@@ -137,7 +141,7 @@ class MachineReadableLogger(UmlLogger):
                 duration = timer.calcRunTime(label)
                 logLine += createMRLineElement(label, "{0:.2f}".format(duration))
 
-        if isinstance(function, (str, unicode)):
+        if isinstance(function, (str, six.text_type)):
             logLine += createMRLineElement("function", function)
         else:
             #we get the source code of the function as a list of strings and glue them together
@@ -151,7 +155,7 @@ class MachineReadableLogger(UmlLogger):
 
         #add any extraInfo to the log string
         if extraInfo is not None:
-            for key, value in extraInfo.iteritems():
+            for key, value in six.iteritems(extraInfo):
                 if isinstance(key, (str, int, float, bool)) and isinstance(value, (str, int, float, bool)):
                     logLine += createMRLineElement(key, value)
                 elif isinstance(value, types.FunctionType):
@@ -163,7 +167,7 @@ class MachineReadableLogger(UmlLogger):
 
         if metrics is not None:
             for metric, result in zip(metrics, performance):
-                if isinstance(metric, (str, unicode)):
+                if isinstance(metric, (str, six.text_type)):
                     logLine += createMRLineElement(str(metric), result)
                 else:
                     metricLines = inspect.getsourcelines(metric)
@@ -276,7 +280,7 @@ def createMRLineElement(key, value, addComma=True):
         value are not included if value is a number.  The trailing comma is added by
         default but will be ommitted if addComma is False.
     """
-    if isinstance(value, basestring):
+    if isinstance(value, six.string_types):
         processedValue = "\"" + sanitizeStringForLog(value) + "\""
     else:
         processedValue = str(value)

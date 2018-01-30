@@ -1,9 +1,13 @@
+from __future__ import absolute_import
 import tempfile
 import sys
 import os
 import numpy
 import time
-import StringIO
+try:
+    from StringIO import StringIO#python 2
+except:
+    from six import StringIO#python 3
 
 import UML
 from UML.customLearners import CustomLearner
@@ -16,8 +20,8 @@ from UML.calculate import fractionIncorrect
 def test_mirrorTostandardOut():
     UML.settings.set('logger', 'mirrorToStandardOut', 'True')
 
-    logTarget = tempfile.NamedTemporaryFile()
-    stdoutReplacement = tempfile.NamedTemporaryFile()
+    logTarget = tempfile.NamedTemporaryFile('w')
+    stdoutReplacement = tempfile.NamedTemporaryFile('w')
     sys.stdout = stdoutReplacement
 
     try:

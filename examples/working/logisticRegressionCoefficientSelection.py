@@ -4,7 +4,12 @@ data given via a path on the command line.
 
 """
 
-from allowImports import boilerplate
+from __future__ import absolute_import
+from __future__ import print_function
+from .allowImports import boilerplate
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 boilerplate()
 
@@ -61,10 +66,10 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
             iteration += 1
 
             if verboseStandardOut:
-                print '\n# iteration #: ' + str(iteration)
-                print 'multiplier: ' + str(multiplier)
-                print 'inC: ' + str(inC)
-                print 'nz: '+str(numpy.count_nonzero(trained.getAttributes()['coef_']))
+                print('\n# iteration #: ' + str(iteration))
+                print('multiplier: ' + str(multiplier))
+                print('inC: ' + str(inC))
+                print('nz: '+str(numpy.count_nonzero(trained.getAttributes()['coef_'])))
 
         self._trained = trained
         # expose everything from the underlying learner
@@ -120,10 +125,10 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
             iteration += 1
 
             if verboseStandardOut:
-                print '\n# iteration #: ' + str(iteration)
-                print 'multiplier: ' + str(multiplier)
-                print 'inC: ' + str(inC)
-                print 'nz: ' + str(numpy.count_nonzero(trained.getAttributes()['coef_']))
+                print('\n# iteration #: ' + str(iteration))
+                print('multiplier: ' + str(multiplier))
+                print('inC: ' + str(inC))
+                print('nz: ' + str(numpy.count_nonzero(trained.getAttributes()['coef_'])))
 
         self._trained = trained
         # expose everything from the underlying learner
@@ -162,14 +167,14 @@ class LogisticRegressionSelectByOmission(CustomLearner):
         coefs = self.origCoefs
 
         if ordering == 'magnitude':
-            coefs = map(abs, coefs)
+            coefs = list(map(abs, coefs))
 
-        withIndices = zip(coefs, range(len(coefs)))
+        withIndices = list(zip(coefs, list(range(len(coefs)))))
         withIndices.sort(key=lambda x:x[0])
 
         # retrain without those features????
         removalIndices = [withIndices[n][1] for n in range(numberToOmit)]
-        self.wantedIndices = list(set(xrange(trainX.features)) - set(removalIndices))
+        self.wantedIndices = list(set(range(trainX.features)) - set(removalIndices))
 
         inTrainX = trainX.copyFeatures(self.wantedIndices)
         self._trained = UML.train(sklLogReg, inTrainX, trainY, **kwargs)
@@ -259,18 +264,18 @@ def printCoefficientsHR(trainedLearner):
     coefs = coefs.flatten()
     chosen = []
     chosenCoefs = []
-    for i in xrange(len(coefs)):
+    for i in range(len(coefs)):
         value = coefs[i]
         if value != 0:
             chosen.append(trainX.getFeatureName(i))
             chosenCoefs.append(coefs[i])
 
     # display those questions which were the most useful
-    print "\n"
+    print("\n")
     i = 1
     for question, coef in zip(chosen, chosenCoefs):
 #       print str(i).ljust(3) + "\t" + str(round(coef,3)).ljust(8) + question.strip()
-        print str(i).ljust(3) + "\t" + str(coef).ljust(20) + "\t" + question.strip()
+        print(str(i).ljust(3) + "\t" + str(coef).ljust(20) + "\t" + question.strip())
         i = i + 1
 
 def printCoefficientsPythonLists(trainedLearner, trainX, randomize=False):
@@ -279,7 +284,7 @@ def printCoefficientsPythonLists(trainedLearner, trainX, randomize=False):
     chosen = []
     coefs = []
     paired = []
-    for i in xrange(len(coefsFromLearner)):
+    for i in range(len(coefsFromLearner)):
         name = trainX.getFeatureName(i).strip()
         paired.append((name, coefsFromLearner[i]))
 
@@ -291,12 +296,12 @@ def printCoefficientsPythonLists(trainedLearner, trainX, randomize=False):
         coefs.append(c)
 
     # display those questions which were the most useful
-    print ""
-    print chosen
-    print len(chosen)
-    print ""
-    print coefs
-    print len(coefs)
+    print("")
+    print(chosen)
+    print(len(chosen))
+    print("")
+    print(coefs)
+    print(len(coefs))
 
 def saveCoefficients(trainedLearner, names, outPath):
     coefs = trainedLearner.getAttributes()["coef_"]
@@ -317,8 +322,8 @@ def standardizeScoreScale(obj):
             negScored.append(i)
 
     # confirm scoring range assumptions
-    for f in xrange(obj.features):
-        for p in xrange(obj.points):
+    for f in range(obj.features):
+        for p in range(obj.points):
             fname = obj.getFeatureName(f)
             if fname[-2] == 'M':
                 assert obj[p,f] >= 0 and obj[p, f] <= 4
@@ -352,10 +357,10 @@ def standardizeScoreScale(obj):
 def printAccuracy(trainedLearner, trainX, trainY, testX, testY):
 #   print "\n\n"
     errorOutSample = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
-    print "Out of sample error rate: " + str(round(errorOutSample*100,1)) + "%"
+    print("Out of sample error rate: " + str(round(errorOutSample*100,1)) + "%")
     errorInSample = trainedLearner.test(trainX, trainY, performanceFunction=fractionIncorrect, useLog=False)
-    print "In sample error rate: " + str(round(errorInSample*100,1)) + "%"
-    print "\n"
+    print("In sample error rate: " + str(round(errorInSample*100,1)) + "%")
+    print("\n")
 
 
 
@@ -370,7 +375,7 @@ def SVC_full_data_outSample_only(trainX, trainY, testX, testY):
 #   bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, C=0.3) #19.7% out of sample error
 #   bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=2, coef0=1, C=0.01) #19.2%
     bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1) 
-    print "bestError out of sample: ", str(round(bestError*100,1)) + "%"
+    print("bestError out of sample: ", str(round(bestError*100,1)) + "%")
     sys.exit(0)
 
 
@@ -381,7 +386,7 @@ def trial_Coefficient_removal_by_least_magnitude(trainX, trainY, testX, testY):
 #       cVals = (100., 55., 10., 5.5, 1., 0.55, 0.1, 0.055, 0.01, 0.0055, 0.001, 0.00055, 0.0001)
 #       cVals = 1
 
-    print "Cross validated over C with values of: " + str(cVals)
+    print("Cross validated over C with values of: " + str(cVals))
 
     results = []
     omit = [0,10,15,20,25,30,35,40,45,50,55,60,65,70]
@@ -414,7 +419,7 @@ def trial_Coefficient_removal_by_least_value(trainX, trainY, testX, testY):
                 name, trainX, trainY, numberToOmit=num, method="least value",
                 C=cVals, performanceFunction=fractionIncorrect)
         result = trainedLearner.test(testX, testY, performanceFunction=fractionIncorrect)
-        print result
+        print(result)
         results.append(result)
 
     pnames = ['number Omitted', 'out sample error: fractionIncorrect']
@@ -454,7 +459,7 @@ def analysis_removal_comparison(trainX, trainY, testX, testY):
 
         tlLM.append(trainedLearnerLM)
 
-        print "\nnum " + str(num) + "\n"
+        print("\nnum " + str(num) + "\n")
 
         LVWanted = trainedLearnerLV.getAttributes()['wantedIndices']
         LMWanted = trainedLearnerLM.getAttributes()['wantedIndices']
@@ -560,7 +565,7 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
     currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
     coefsObj = UML.createData("Matrix", currCoefs)
 
-    for i in xrange(1,len(allTL)):
+    for i in range(1,len(allTL)):
         currTL = allTL[i]
         currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
         currCoefsObj = UML.createData("Matrix", currCoefs)
@@ -572,8 +577,8 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
     coefCorr = coefsObj.featureSimilarities("correlation")
     # BUT THIS IS WIERD since the questions are 'scored' on different
     # scales depending on whether it ends with an (M) or (F)
-    coefCorr.setPointNames([str(val) for val in xrange(75)])
-    coefCorr.setFeatureNames([str(val) for val in xrange(75)])
+    coefCorr.setPointNames([str(val) for val in range(75)])
+    coefCorr.setFeatureNames([str(val) for val in range(75)])
     coefCorr.show("coef correlation", maxWidth=None, maxHeight=80,
         includeObjectName=False)
 
@@ -598,9 +603,9 @@ def analysis_finalModel_decisionScore_proba(trainX, trainY, testX, testY):
     toCheck = [toCheckMe, toCheckRando, toCheckAllF, toCheckAllM]
     #print dir(trainedLearner.backend)
 #       print trainedLearner.backend.coef_
-    print trainedLearner.backend.predict(toCheck)
-    print trainedLearner.backend.decision_function(toCheck)
-    print trainedLearner.backend.predict_proba(toCheck)
+    print(trainedLearner.backend.predict(toCheck))
+    print(trainedLearner.backend.decision_function(toCheck))
+    print(trainedLearner.backend.predict_proba(toCheck))
 
 
 
@@ -613,7 +618,7 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
     (trainX, testX) = selector(trainX, trainY, testX, desiredNonZeroCoefficients)
     trainedLearner = trainer(trainX, trainY, testX, testY)
     coefs = trainedLearner.backend.coef_.flatten()
-    print coefs.shape
+    print(coefs.shape)
 
     trainX.appendPoints(testX)
     trainY.appendPoints(testY)
@@ -623,23 +628,24 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
     malePoints = trainX.extractPoints(list(nzIDs))
     femalePoints = trainX
 
-    print malePoints.points
-    print femalePoints.points
+    print(malePoints.points)
+    print(femalePoints.points)
 
     mMeans = malePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
     fMeans = femalePoints.featureStatistics("mean").copyAs("pythonlist", outputAs1D=True)
 
-    print mMeans
-    print ""
-    print fMeans
+    print(mMeans)
+    print("")
+    print(fMeans)
 
     names = trainX.getFeatureNames()
-    zipped = zip(mMeans, fMeans, coefs, names)
+    zipped = list(zip(mMeans, fMeans, coefs, names))
 
-    def r((m,f,c,n)):
+    def r(xxx_todo_changeme):
+        (m,f,c,n) = xxx_todo_changeme
         return (round(m,3),round(f,3),round(c,3),n)
 
-    zipped = map(r, zipped)
+    zipped = list(map(r, zipped))
 
 #   for i, (mMean, fMean) in enumerate()
     for (mMean, fMean, coef, Q) in zipped:
@@ -651,7 +657,7 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
             msg += " "
         msg += str(abs(coef)).ljust(6) + " "
         msg += Q
-        print msg
+        print(msg)
 
 
 #################################
@@ -835,7 +841,7 @@ def featSelect_handmade_random(trainX, trainY, testX, numWanted):
 def train_LogReg_with_L1(trainX, trainY, testX, testY):
     name = "scikitlearn.LogisticRegression"
     cVals = tuple([100. / (10**n) for n in range(7)])
-    print "Cross validated over C with values of: " + str(cVals)
+    print("Cross validated over C with values of: " + str(cVals))
     trainedLearner = UML.train(
         name, trainX, trainY, C=cVals, penalty='l1',
         performanceFunction=fractionIncorrect)
@@ -846,7 +852,7 @@ def train_LogReg_with_L1(trainX, trainY, testX, testY):
 def train_LogReg_with_L2(trainX, trainY, testX, testY):
     name = "scikitlearn.LogisticRegression"
     cVals = tuple([100. / (10**n) for n in range(7)])
-    print "Cross validated over C with values of: " + str(cVals)
+    print("Cross validated over C with values of: " + str(cVals))
     trainedLearner = UML.train(
         name, trainX, trainY, C=cVals, penalty='l2',
         performanceFunction=fractionIncorrect)
@@ -855,7 +861,7 @@ def train_LogReg_with_L2(trainX, trainY, testX, testY):
 
 def train_ridgeClassifier(trainX, trainY, testX, testY):
     aVals = tuple([1. / (10**n) for n in range(9)])
-    print "Cross validated over alpha with values of: " + str(aVals)
+    print("Cross validated over alpha with values of: " + str(aVals))
     trainedLearner = UML.train('skl.RidgeClassifier', trainX, trainY,
         alpha=aVals, performanceFunction=fractionIncorrect)
 
@@ -865,7 +871,7 @@ def train_SVM_Linear_kernel(trainX, trainY, testX, testY):
     name = "scikitlearn.SVC"
     cVals = tuple([100. / (10**n) for n in range(7)])
 
-    print "Cross validated over C with values of: " + str(cVals)
+    print("Cross validated over C with values of: " + str(cVals))
     trainedLearner = UML.train(
         name, trainX, trainY, C=cVals, kernel='linear',
         performanceFunction=fractionIncorrect, max_iter=2000)
@@ -878,8 +884,8 @@ def train_SVM_rbf_kernel(trainX, trainY, testX, testY):
     cVals = tuple([100. / (10**n) for n in range(7)])
     gamVals = tuple([100. / (10**n) for n in range(7)])
 
-    print "Cross validated over C with values of: " + str(cVals)
-    print "Cross validated over gamma with values of: " + str(gamVals)
+    print("Cross validated over C with values of: " + str(cVals))
+    print("Cross validated over gamma with values of: " + str(gamVals))
     trainedLearner = UML.train(
         name, trainX, trainY, C=cVals, gamma=gamVals, kernel='rbf',
         performanceFunction=fractionIncorrect, max_iter=2000)
@@ -901,8 +907,8 @@ def train_SVM_with_poly_kernel(trainX, trainY, testX, testY, degree):
     cVals = tuple([100. / (10**n) for n in range(7)])
     coef0Vals = (0,10,100)
 
-    print "Cross validated over C with values of: " + str(cVals)
-    print "Cross validated over coef0 with values of: " + str(coef0Vals)
+    print("Cross validated over C with values of: " + str(cVals))
+    print("Cross validated over coef0 with values of: " + str(coef0Vals))
     trainedLearner = UML.train(
         name, trainX, trainY, C=cVals, coef0=coef0Vals, kernel='poly',
         degree=degree, performanceFunction=fractionIncorrect, max_iter=2000)
@@ -918,7 +924,7 @@ def train_SVM_with_poly_kernel(trainX, trainY, testX, testY, degree):
 
 def selAndTrain_by_regularization_pick35(trainX, trainY, testX, testY):
     name = "custom.LogisticRegressionSelectByRegularization"
-    print "Finding exactly " + str(35) + " coefficients..."
+    print("Finding exactly " + str(35) + " coefficients...")
     trainedLearner = UML.train(name, trainX, trainY, desiredNonZero=35)
 
     return trainedLearner
@@ -927,8 +933,8 @@ def selAndTrain_by_regularization_pick35(trainX, trainY, testX, testY):
 def selAndTrain_by_least_magnitude_pick35(trainX, trainY, testX, testY):
     name = "custom.LogisticRegressionSelectByOmission"
     cVals = tuple([100. / (10**n) for n in range(7)])
-    print "Cross validated over C with values of: " + str(cVals)
-    print "Finding exactly " + str(35) + " coefficients..."
+    print("Cross validated over C with values of: " + str(cVals))
+    print("Finding exactly " + str(35) + " coefficients...")
     trainedLearner = UML.train(name, trainX, trainY, numberToOmit=40,
         method='least magnitude', C=cVals, performanceFunction=fractionIncorrect)
 
@@ -938,8 +944,8 @@ def selAndTrain_by_least_magnitude_pick35(trainX, trainY, testX, testY):
 def selAndTrain_by_least_value_pick35(trainX, trainY, testX, testY):
     name = "custom.LogisticRegressionSelectByOmission"
     cVals = tuple([100. / (10**n) for n in range(7)])
-    print "Cross validated over C with values of: " + str(cVals)
-    print "Finding exactly " + str(35) + " coefficients..."
+    print("Cross validated over C with values of: " + str(cVals))
+    print("Finding exactly " + str(35) + " coefficients...")
     trainedLearner = UML.train(name, trainX, trainY, numberToOmit=40,
         method='least value', C=cVals, performanceFunction=fractionIncorrect)
 
@@ -1025,11 +1031,11 @@ if __name__ == "__main__":
         totalScores = dataAll.extractFeatures("totalScorePosOrNeg")
         sanityCheck(trainX, totalScores)  # defined above __main__
 
-    print ""
-    print "Train points: " + str(trainX.points)
-    print "Test points: " + str(testX.points)
-    print "Starting number of features: " + str(trainX.features)
-    print ""
+    print("")
+    print("Train points: " + str(trainX.points))
+    print("Test points: " + str(testX.points))
+    print("Starting number of features: " + str(trainX.features))
+    print("")
 
 
     fullTrialChoices = []
@@ -1041,7 +1047,7 @@ if __name__ == "__main__":
     fullTrialChoices.append(analysis_finalModel_decisionScore_proba)  # 5
     fullTrialChoices.append(analysis_finalModel_perGenderAvgScores)  # 6
     fullTrialMode = fullTrialChoices[6]
-    print fullTrialMode.__name__
+    print(fullTrialMode.__name__)
     fullTrialMode(trainX, trainY, testX, testY) 
     exit(0)
 
@@ -1086,9 +1092,9 @@ if __name__ == "__main__":
     for (normalizer, selector, trainer) in choices:
         trainX = origTrainX.copy()
         testX = origTestX.copy()
-        print normalizer.__name__
-        print selector.__name__
-        print trainer.__name__
+        print(normalizer.__name__)
+        print(selector.__name__)
+        print(trainer.__name__)
 
         normalizer(trainX, testX)
         (trainX, testX) = selector(trainX, trainY, testX, desiredNonZeroCoefficients)
@@ -1108,8 +1114,8 @@ if __name__ == "__main__":
     for (normalizer, trainer) in choices:
         trainX = origTrainX.copy()
         testX = origTestX.copy()
-        print normalizer.__name__
-        print trainer.__name__
+        print(normalizer.__name__)
+        print(trainer.__name__)
 
         normalizer(trainX, testX)
         trainedLearner = trainer(trainX, trainY, testX, testY)

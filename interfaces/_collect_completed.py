@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import importlib
 import abc
-import universal_interface
+from . import universal_interface
 
 displayErrors = False
 
@@ -52,7 +54,7 @@ def collect(modulePath):
         # if ANYTHING goes wrong, just go on without that interface
         except Exception as e:
             if displayErrors:
-                print str(e)
+                print(str(e))
             continue
         if tempObj is not None:
             instantiated.append(tempObj)
@@ -61,7 +63,7 @@ def collect(modulePath):
     nameToInterface = {}
     for namedInterface in instantiated:
         canonicalName = namedInterface.getCanonicalName()
-        if canonicalName in nameToInterface.keys():
+        if canonicalName in list(nameToInterface.keys()):
             # TODO register error with subsystem
             nameToInterface[canonicalName] = None
         else:

@@ -6,19 +6,27 @@ Anchors the hierarchy of data representation types, providing stubs and common f
 # TODO conversions
 # TODO who sorts inputs to derived implementations?
 
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+import six
+from six.moves import map
+from six.moves import range
+from six.moves import zip
+mplError = None
+import sys
 try:
     import matplotlib
-
-    mplError = None
-except ImportError as mplError:
-    pass
+    if sys.version_info.major > 2:
+        matplotlib.use('agg')#in python3, it must be agg.
+except ImportError as e:
+    mplError = e
 
 import math
 import numbers
 import itertools
 import copy
 import numpy
-import sys
 import os.path
 import inspect
 import operator
@@ -34,16 +42,16 @@ from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
 from UML.randomness import pythonRandom
 
-import dataHelpers
+from . import dataHelpers
 
 # the prefix for default point and feature names
-from dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
+from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 
-from dataHelpers import DEFAULT_NAME_PREFIX
+from .dataHelpers import DEFAULT_NAME_PREFIX
 
-from dataHelpers import formatIfNeeded
+from .dataHelpers import formatIfNeeded
 
-from dataHelpers import makeConsistentFNamesAndData
+from .dataHelpers import makeConsistentFNamesAndData
 
 def to2args(f):
     """
@@ -147,14 +155,14 @@ class Base(object):
             self._name = name
 
         # Set up paths
-        if paths[0] is not None and not isinstance(paths[0], basestring):
+        if paths[0] is not None and not isinstance(paths[0], six.string_types):
             raise ArgumentException(
                 "paths[0] must be None or an absolute path to the file from which the data originates")
         if paths[0] is not None and not os.path.isabs(paths[0]):
             raise ArgumentException("paths[0] must be an absolute path")
         self._absPath = paths[0]
 
-        if paths[1] is not None and not isinstance(paths[1], basestring):
+        if paths[1] is not None and not isinstance(paths[1], six.string_types):
             raise ArgumentException(
                 "paths[1] must be None or a relative path to the file from which the data originates")
         self._relPath = paths[1]
@@ -184,7 +192,7 @@ class Base(object):
         if value is None:
             self._name = dataHelpers.nextDefaultObjectName()
         else:
-            if not isinstance(value, basestring):
+            if not isinstance(value, six.string_types):
                 msg = "The name of an object may only be a string, or the value None"
                 raise ValueError(msg)
             self._name = value
@@ -359,7 +367,7 @@ class Base(object):
 		type as values. None is always returned.
 
 		"""
-        if not isinstance(typeToDrop, list):
+        if not isinstance(typeToDrop, (list, tuple)):
             if not isinstance(typeToDrop, type):
                 raise ArgumentException(
                     "The only allowed inputs are a list of types or a single type, yet the input is neither a list or a type")
@@ -533,7 +541,7 @@ class Base(object):
             points = [points]
 
         if points is not None:
-            for i in xrange(len(points)):
+            for i in range(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
         self.validate()
@@ -541,7 +549,7 @@ class Base(object):
         ret = self._calculateForEach_implementation(function, points, 'point')
 
         if points is not None:
-            setNames = map(lambda x: self.getPointName(x), sorted(points))
+            setNames = [self.getPointName(x) for x in sorted(points)]
             ret.setPointNames(setNames)
         else:
             ret.setPointNames(self.getPointNames())
@@ -575,13 +583,13 @@ class Base(object):
             raise ArgumentException("function must not be None")
 
         if features is not None and not isinstance(features, list):
-            if not (isinstance(features, int) or isinstance(features, basestring)):
+            if not (isinstance(features, int) or isinstance(features, six.string_types)):
                 raise ArgumentException(
                     "Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
             features = [features]
 
         if features is not None:
-            for i in xrange(len(features)):
+            for i in range(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
         self.validate()
@@ -589,7 +597,7 @@ class Base(object):
         ret = self._calculateForEach_implementation(function, features, 'feature')
 
         if features is not None:
-            setNames = map(lambda x: self.getFeatureName(x), sorted(features))
+            setNames = [self.getFeatureName(x) for x in sorted(features)]
             ret.setFeatureNames(setNames)
         else:
             ret.setFeatureNames(self.getFeatureNames())
@@ -611,7 +619,7 @@ class Base(object):
                 continue
             currOut = function(view)
             # first we branch on whether the output has multiple values or is singular.
-            if hasattr(currOut, '__iter__'):
+            if hasattr(currOut, '__iter__') and not isinstance(currOut, six.string_types):#in python3, string has __iter__ too.
                 # if there are multiple values, they must be random accessible
                 if not hasattr(currOut, '__getitem__'):
                     raise ArgumentException(
@@ -687,7 +695,7 @@ class Base(object):
         def findKey2(point, by):#if by is a list of string or a list of int
             return tuple([point[i] for i in by])
 
-        if isinstance(by, (basestring, numbers.Number)):#if by is a list, then use findKey2; o.w. use findKey1
+        if isinstance(by, (six.string_types, numbers.Number)):#if by is a list, then use findKey2; o.w. use findKey1
             findKey = findKey1
         else:
             findKey = findKey2
@@ -742,6 +750,9 @@ class Base(object):
                     return value
                 raise StopIteration
 
+            def __next__(self):
+                return self.next()
+
         return pointIt(self)
 
     def featureIterator(self):
@@ -762,6 +773,9 @@ class Base(object):
                     self._position += 1
                     return value
                 raise StopIteration
+
+            def __next__(self):
+                return self.next()
 
         return featureIt(self)
 
@@ -795,13 +809,13 @@ class Base(object):
             oneArg = True
 
         if points is not None and not isinstance(points, list):
-            if not isinstance(points, (int, basestring)):
+            if not isinstance(points, (int, six.string_types)):
                 raise ArgumentException(
                     "Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
             points = [points]
 
         if features is not None and not isinstance(features, list):
-            if not isinstance(features, (int, basestring)):
+            if not isinstance(features, (int, six.string_types)):
                 raise ArgumentException(
                     "Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
             features = [features]
@@ -816,8 +830,8 @@ class Base(object):
 
         self.validate()
 
-        points = points if points else range(self.points)
-        features = features if features else range(self.features)
+        points = points if points else list(range(self.points))
+        features = features if features else list(range(self.features))
         valueArray = numpy.empty([len(points), len(features)])
         p = 0
         for pi in points:
@@ -856,7 +870,7 @@ class Base(object):
         """
         if callable(function):
             ret = self.calculateForEachElement(function=function, outputType='Matrix')
-        elif isinstance(function, basestring):
+        elif isinstance(function, six.string_types):
             func = lambda x: eval('x'+function)
             ret = self.calculateForEachElement(function=func, outputType='Matrix')
         else:
@@ -898,7 +912,7 @@ class Base(object):
 
 		"""
         if indices is None:
-            indices = range(0, self.points)
+            indices = list(range(0, self.points))
             pythonRandom.shuffle(indices)
         else:
             if len(indices) != self.points:
@@ -924,7 +938,7 @@ class Base(object):
 
 		"""
         if indices is None:
-            indices = range(0, self.features)
+            indices = list(range(0, self.features))
             pythonRandom.shuffle(indices)
         else:
             if len(indices) != self.features:
@@ -1096,20 +1110,20 @@ class Base(object):
 
         # check it is within the desired types
         if subtract is not None:
-            if not isinstance(subtract, (int, float, basestring, UML.data.Base)):
+            if not isinstance(subtract, (int, float, six.string_types, UML.data.Base)):
                 msg = "The argument named subtract must have a value that is "
                 msg += "an int, float, string, or is a UML data object"
                 raise ArgumentException(msg)
         if divide is not None:
-            if not isinstance(divide, (int, float, basestring, UML.data.Base)):
+            if not isinstance(divide, (int, float, six.string_types, UML.data.Base)):
                 msg = "The argument named divide must have a value that is "
                 msg += "an int, float, string, or is a UML data object"
                 raise ArgumentException(msg)
 
         # check that if it is a string, it is one of the accepted values
-        if isinstance(subtract, basestring):
+        if isinstance(subtract, six.string_types):
             self._validateStatisticalFunctionInputString(subtract)
-        if isinstance(divide, basestring):
+        if isinstance(divide, six.string_types):
             self._validateStatisticalFunctionInputString(divide)
 
         # arg generic helper to check that objects are of the
@@ -1217,18 +1231,18 @@ class Base(object):
 
         if axis == 'point':
             indexGetter = lambda x: self.getPointIndex(x.getPointName(0))
-            if isinstance(subtract, basestring):
+            if isinstance(subtract, six.string_types):
                 subtract = self.pointStatistics(subtract)
                 subIsVec = True
-            if isinstance(divide, basestring):
+            if isinstance(divide, six.string_types):
                 divide = self.pointStatistics(divide)
                 divIsVec = True
         else:
             indexGetter = lambda x: self.getFeatureIndex(x.getFeatureName(0))
-            if isinstance(subtract, basestring):
+            if isinstance(subtract, six.string_types):
                 subtract = self.featureStatistics(subtract)
                 subIsVec = True
-            if isinstance(divide, basestring):
+            if isinstance(divide, six.string_types):
                 divide = self.featureStatistics(divide)
                 divIsVec = True
 
@@ -1405,7 +1419,7 @@ class Base(object):
             else:
                 return x + length, True
 
-        if x.__class__ is str or x.__class__ is unicode:
+        if x.__class__ is str or x.__class__ is six.text_type:
             return self.getPointIndex(x), True
 
         if x.__class__ is float:
@@ -1444,7 +1458,7 @@ class Base(object):
             else:
                 return y + length, True
 
-        if y.__class__ is str or y.__class__ is unicode:
+        if y.__class__ is str or y.__class__ is six.text_type:
             return self.getFeatureIndex(y), True
 
         if y.__class__ is float:
@@ -1737,9 +1751,9 @@ class Base(object):
 
         # set up output string
         out = ""
-        for r in xrange(len(finalTable)):
+        for r in range(len(finalTable)):
             row = finalTable[r]
-            for c in xrange(len(row)):
+            for c in range(len(row)):
                 val = row[c]
                 if c == 0 and includePNames:
                     padded = getattr(val, pNameOrientation)(finalWidths[c])
@@ -1859,7 +1873,7 @@ class Base(object):
 
 		"""
         if description is not None:
-            print description
+            print(description)
 
         if includeObjectName:
             context = self.name + " : "
@@ -1867,8 +1881,8 @@ class Base(object):
             context = ""
         context += str(self.points) + "pt x "
         context += str(self.features) + "ft"
-        print context
-        print self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, maxColumnWidth)
+        print(context)
+        print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits, maxColumnWidth))
 
 
     def plot(self, outPath=None, includeColorbar=False):
@@ -1877,7 +1891,7 @@ class Base(object):
 
     def _setupOutFormatForPlotting(self, outPath):
         outFormat = None
-        if isinstance(outPath, basestring):
+        if isinstance(outPath, six.string_types):
             (path, ext) = os.path.splitext(outPath)
             if len(ext) == 0:
                 outFormat = 'png'
@@ -1906,9 +1920,11 @@ class Base(object):
             else:
                 plt.savefig(outPath, format=outFormat)
 
-        toPlot = self.copyAs('numpyarray')
+        # toPlot = self.copyAs('numpyarray')
+
         p = Process(target=plotter, args=[self.data])
         p.start()
+
         return p
 
 
@@ -2107,7 +2123,7 @@ class Base(object):
 
         if sampleSizeForAverage:
             #do rolling average
-            xToPlot, yToPlot = zip(*sorted(zip(xToPlot, yToPlot), key=lambda x: x[0]))
+            xToPlot, yToPlot = list(zip(*sorted(zip(xToPlot, yToPlot), key=lambda x: x[0])))
             convShape = numpy.ones(sampleSizeForAverage)/float(sampleSizeForAverage)
             startIdx = sampleSizeForAverage-1
             xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
@@ -2169,6 +2185,9 @@ class Base(object):
 
             def next(self):
                 raise StopIteration
+
+            def __next__(self):
+                return self.next()
 
         if self.points == 0 or self.features == 0:
             return EmptyIt()
@@ -2259,7 +2278,7 @@ class Base(object):
         if isReordered:  # we make use of the generic reordering append code
             self._appendReorder_implementation('point', toAppend)
 
-            for i in xrange(origPointCountTA):
+            for i in range(origPointCountTA):
                 currName = toAppend.getPointName(i)
                 if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName('point')
@@ -2269,7 +2288,7 @@ class Base(object):
             self._appendPoints_implementation(toAppend)
             self._pointCount += toAppend.points
 
-            for i in xrange(origPointCountTA):
+            for i in range(origPointCountTA):
                 currName = toAppend.getPointName(i)
                 if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName('point')
@@ -2307,7 +2326,7 @@ class Base(object):
         isReordered = self._validateReorderedNames('point', 'appendFeatures', toAppend)
         if isReordered:
             self._appendReorder_implementation('feature', toAppend)
-            for i in xrange(origFeatureCountTA):
+            for i in range(origFeatureCountTA):
                 currName = toAppend.getFeatureName(i)
                 if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName('feature')
@@ -2316,7 +2335,7 @@ class Base(object):
             self._appendFeatures_implementation(toAppend)
             self._featureCount += toAppend.features
 
-            for i in xrange(origFeatureCountTA):
+            for i in range(origFeatureCountTA):
                 currName = toAppend.getFeatureName(i)
                 if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName('feature')
@@ -2342,7 +2361,7 @@ class Base(object):
 
         if axis == 'point':
             newObj.fillWith(toAppend, self.points, 0, newObj.points - 1, newObj.features - 1)
-            resortOrder = [self.getFeatureIndex(toAppend.getFeatureName(i)) for i in xrange(self.features)]
+            resortOrder = [self.getFeatureIndex(toAppend.getFeatureName(i)) for i in range(self.features)]
             orderObj = UML.createData(self.getTypeString(), resortOrder)
             newObj.fillWith(orderObj, self.points - 1, 0, self.points - 1, newObj.features - 1)
             newObj.sortFeatures(sortBy=self.points - 1)
@@ -2350,7 +2369,7 @@ class Base(object):
             self.referenceDataFrom(newObj)
         else:
             newObj.fillWith(toAppend, 0, self.features, newObj.points - 1, newObj.features - 1)
-            resortOrder = [self.getPointIndex(toAppend.getPointName(i)) for i in xrange(self.points)]
+            resortOrder = [self.getPointIndex(toAppend.getPointName(i)) for i in range(self.points)]
             orderObj = UML.createData(self.getTypeString(), resortOrder)
             orderObj.transpose()
             newObj.fillWith(orderObj, 0, self.features - 1, newObj.points - 1, self.features - 1)
@@ -2374,7 +2393,7 @@ class Base(object):
         if sortBy is None and sortHelper is None:
             raise ArgumentException("Either sortBy or sortHelper must not be None")
 
-        if sortBy is not None and isinstance(sortBy, basestring):
+        if sortBy is not None and isinstance(sortBy, six.string_types):
             sortBy = self._getFeatureIndex(sortBy)
 
         newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
@@ -2398,7 +2417,7 @@ class Base(object):
         if sortBy is None and sortHelper is None:
             raise ArgumentException("Either sortBy or sortHelper must not be None")
 
-        if sortBy is not None and isinstance(sortBy, basestring):
+        if sortBy is not None and isinstance(sortBy, six.string_types):
             sortBy = self._getPointIndex(sortBy)
 
         newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
@@ -2571,7 +2590,7 @@ class Base(object):
                 return []
             if self.features == 0:
                 ret = []
-                for i in xrange(self.points):
+                for i in range(self.points):
                     ret.append([])
                 return ret
         if format.startswith('scipy'):
@@ -2601,7 +2620,7 @@ class Base(object):
 		the calling object object.
 		
 		"""
-        if isinstance(points, (int, basestring)):
+        if isinstance(points, (int, six.string_types)):
             points = [points]
         if self.points == 0:
             raise ArgumentException("Object contains 0 points, there is no valid possible input")
@@ -2653,7 +2672,7 @@ class Base(object):
 		this object.
 		
 		"""
-        if isinstance(features, basestring) or isinstance(features, int):
+        if isinstance(features, six.string_types) or isinstance(features, int):
             features = [features]
         if self.features == 0:
             raise ArgumentException("Object contains 0 features, there is no valid possible input")
@@ -2664,9 +2683,9 @@ class Base(object):
                     start = 0
                 if end is None:
                     end = self.features - 1
-                if start < 0 or start > self.features:
+                if isinstance(start, str) or start < 0 or start > self.features:
                     raise ArgumentException("start must be a valid index, in the range of possible features")
-                if end < 0 or end > self.features:
+                if isinstance(end, str) or end < 0 or end > self.features:
                     raise ArgumentException("end must be a valid index, in the range of possible features")
                 if start > end:
                     raise ArgumentException("start cannot be an index greater than end")
@@ -2725,7 +2744,7 @@ class Base(object):
 
         if points is not None:
             points = copy.copy(points)
-            for i in xrange(len(points)):
+            for i in range(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
         self.validate()
@@ -2753,14 +2772,14 @@ class Base(object):
             raise ArgumentException("function must not be None")
 
         if features is not None and not isinstance(features, list):
-            if not (isinstance(features, int) or isinstance(features, basestring)):
+            if not (isinstance(features, int) or isinstance(features, six.string_types)):
                 raise ArgumentException(
                     "Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
             features = [features]
 
         if features is not None:
             features = copy.copy(features)
-            for i in xrange(len(features)):
+            for i in range(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
         self.validate()
@@ -2788,25 +2807,25 @@ class Base(object):
 
 		"""
         if points is not None and not isinstance(points, list):
-            if not isinstance(points, (int, basestring)):
+            if not isinstance(points, (int, six.string_types)):
                 raise ArgumentException(
                     "Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
             points = [points]
 
         if features is not None and not isinstance(features, list):
-            if not isinstance(features, (int, basestring)):
+            if not isinstance(features, (int, six.string_types)):
                 raise ArgumentException(
                     "Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
             features = [features]
 
         if points is not None:
             points = copy.copy(points)
-            for i in xrange(len(points)):
+            for i in range(len(points)):
                 points[i] = self._getPointIndex(points[i])
 
         if features is not None:
             features = copy.copy(features)
-            for i in xrange(len(features)):
+            for i in range(len(features)):
                 features[i] = self._getFeatureIndex(features[i])
 
         self.validate()
@@ -2869,7 +2888,7 @@ class Base(object):
             if values.getTypeString() != self.getTypeString():
                 values = values.copyAs(self.getTypeString())
 
-        elif dataHelpers._looksNumeric(values) or isinstance(values, basestring):
+        elif dataHelpers._looksNumeric(values) or isinstance(values, six.string_types):
             pass  # no modificaitons needed
         else:
             msg = "values may only be a UML data object, or a single numeric value, yet "
@@ -2905,15 +2924,15 @@ class Base(object):
         #convert features to a list of index
         msg = 'features can only be a str, an int, or a list of str or a list of int'
         if features is None:
-            featuresList = range(self._getfeatureCount())
-        elif isinstance(features, basestring):
+            featuresList = list(range(self._getfeatureCount()))
+        elif isinstance(features, six.string_types):
             featuresList = [self.getFeatureIndex(features)]
         elif isinstance(features, int):
             featuresList = [features]
         elif isinstance(features, list):
             featuresList = []
             for i in features:
-                if isinstance(i, basestring):
+                if isinstance(i, six.string_types):
                     featuresList.append(self.getFeatureIndex(i))
                 elif isinstance(i, int):
                     featuresList.append(i)
@@ -2923,7 +2942,7 @@ class Base(object):
             raise ArgumentException(msg)
 
         #convert single value alsoTreatAsMissing to a list
-        if not hasattr(alsoTreatAsMissing, '__len__') or isinstance(alsoTreatAsMissing, basestring):
+        if not hasattr(alsoTreatAsMissing, '__len__') or isinstance(alsoTreatAsMissing, six.string_types):
             alsoTreatAsMissing = [alsoTreatAsMissing]
 
         if isinstance(self, UML.data.DataFrame):
@@ -3027,11 +3046,11 @@ class Base(object):
         self._validateAxis(addedAxis)
         if addedAxis == 'point':
             both = self.getFeatureNames()
-            keptAxisLength = self.features / addedAxisLength
+            keptAxisLength = self.features // addedAxisLength
             allDefault = self._namesAreFlattenFormatConsistent('point', addedAxisLength, keptAxisLength)
         else:
             both = self.getPointNames()
-            keptAxisLength = self.points / addedAxisLength
+            keptAxisLength = self.points // addedAxisLength
             allDefault = self._namesAreFlattenFormatConsistent('feature', addedAxisLength, keptAxisLength)
 
         if allDefault:
@@ -3043,7 +3062,7 @@ class Base(object):
             # index of the first of each chunk. We allow that first name to be
             # representative for that chunk: all will have the same stuff past
             # the vertical bar.
-            locations = xrange(0, len(both), keptAxisLength)
+            locations = range(0, len(both), keptAxisLength)
             addedAxisName = [both[n].split(" | ")[1] for n in locations]
             keptAxisName = [name.split(" | ")[0] for name in both[:keptAxisLength]]
 
@@ -3104,16 +3123,16 @@ class Base(object):
         # consistency only relevant if we have non-default names
         if not allDefaultStatus:
             # seen values - consistent wrt original flattend axis names
-            for i in xrange(newFLen):
+            for i in range(newFLen):
                 same = formatted[newUFLen*i].split(' | ')[1]
                 for name in formatted[newUFLen*i:newUFLen*(i+1)]:
                     if same != name.split(' | ')[1]:
                         raise ImproperActionException(msg)
 
             # seen values - consistent wrt original unflattend axis names
-            for i in xrange(newUFLen):
+            for i in range(newUFLen):
                 same = formatted[i].split(' | ')[0]
-                for j in xrange(newFLen):
+                for j in range(newFLen):
                     name = formatted[i + (j * newUFLen)]
                     if same != name.split(' | ')[0]:
                         raise ImproperActionException(msg)
@@ -3156,7 +3175,7 @@ class Base(object):
 
         self._unflattenFromOnePoint_implementation(numPoints)
         ret = self._unflattenNames('point', numPoints)
-        self._featureCount = self.features / numPoints
+        self._featureCount = self.features // numPoints
         self._pointCount = numPoints
         self.setPointNames(ret[0])
         self.setFeatureNames(ret[1])
@@ -3198,7 +3217,7 @@ class Base(object):
 
         self._unflattenFromOneFeature_implementation(numFeatures)
         ret = self._unflattenNames('feature', numFeatures)
-        self._pointCount = self.points / numFeatures
+        self._pointCount = self.points // numFeatures
         self._featureCount = numFeatures
         self.setPointNames(ret[1])
         self.setFeatureNames(ret[0])
@@ -3729,7 +3748,7 @@ class Base(object):
             'correlation', 'covariance', 'dot product', 'sample covariance',
             'population covariance'
         ]
-        accepted = map(dataHelpers.cleanKeywordInput, acceptedPretty)
+        accepted = list(map(dataHelpers.cleanKeywordInput, acceptedPretty))
 
         msg = "The similarityFunction must be equivaltent to one of the "
         msg += "following: "
@@ -3737,7 +3756,7 @@ class Base(object):
         msg += "' was given instead. Note: casing and whitespace is "
         msg += "ignored when checking the input."
 
-        if not isinstance(similarityFunction, basestring):
+        if not isinstance(similarityFunction, six.string_types):
             raise ArgumentException(msg)
 
         cleanFuncName = dataHelpers.cleanKeywordInput(similarityFunction)
@@ -3854,7 +3873,7 @@ class Base(object):
         if target is not None:
             if start is not None or end is not None:
                 raise ArgumentException("Range removal is exclusive, to use it, target must be None")
-            if isinstance(target, basestring):
+            if isinstance(target, six.string_types):
                 if hasNameChecker1(target):
                     target = [target]
                 #if axis=point and target is not a point name, or
@@ -3886,7 +3905,7 @@ class Base(object):
                             datatype = type(self[(0, nameOfFeatureOrPoint)]) if axis == 'point' \
                                 else type(self[(nameOfFeatureOrPoint, 0)])
 
-                            if (datatype is int) or (datatype is long) or issubclass(datatype, numpy.number):
+                            if (datatype is int) or (datatype is int) or issubclass(datatype, numpy.number):
                                 datatype = float
 
                             valueOfFeatureOrPoint = datatype(valueOfFeatureOrPoint)
@@ -3901,10 +3920,10 @@ class Base(object):
                             target = target_f
                             break
                     #if the target can't be converted to a function
-                    if isinstance(target, basestring):
+                    if isinstance(target, six.string_types):
                         msg = 'the target is not a valid point name nor a valid query string'
                         raise ArgumentException(msg)
-            if isinstance(target, int):
+            if isinstance(target, (int, numpy.int, numpy.int64)):
                 target = [target]
             if isinstance(target, list):
                 #verify everything in list is a valid index and convert names into indices
@@ -3918,7 +3937,7 @@ class Base(object):
                 # if randomize, use random sample
                 if randomize:
                     indices = []
-                    for i in xrange(len(target)):
+                    for i in range(len(target)):
                         indices.append(i)
                     randomIndices = pythonRandom.sample(indices, number)
                     randomIndices.sort()
@@ -3957,7 +3976,7 @@ class Base(object):
                 raise ArgumentException("The start index cannot be greater than the end index")
 
             if randomize:
-                target = pythonRandom.sample(xrange(start, end), number)
+                target = pythonRandom.sample(range(start, end), number)
                 target.sort()
                 return backEnd(target, None, None, number, False)
 
@@ -3982,7 +4001,7 @@ class Base(object):
                            fnames, pnameSep):
 
         if fnames is not None:
-            fnamesWidth = map(len, fnames)
+            fnamesWidth = list(map(len, fnames))
         else:
             fnamesWidth = []
 
@@ -3991,7 +4010,7 @@ class Base(object):
 
         # glue point names onto the left of the data
         if pnames is not None:
-            for i in xrange(len(dataTable)):
+            for i in range(len(dataTable)):
                 dataTable[i] = [pnames[i], pnameSep] + dataTable[i]
             dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
 
@@ -4007,7 +4026,7 @@ class Base(object):
 
             dataTable = [fnames, gapRow] + dataTable
             # finalize widths by taking the largest of the two possibilities
-            for i in xrange(len(fnames)):
+            for i in range(len(fnames)):
                 nameWidth = fnamesWidth[i]
                 valWidth = dataWidths[i]
                 dataWidths[i] = max(nameWidth, valWidth)
@@ -4037,7 +4056,7 @@ class Base(object):
         # why the end condition makes use of an exact stop value, which
         # varies between positive and negative depending on the number of
         # features
-        endIndex = self.features / 2
+        endIndex = self.features // 2
         if self.features % 2 == 1:
             endIndex *= -1
             endIndex -= 1
@@ -4166,7 +4185,7 @@ class Base(object):
         if len(combinedRowIDs) < self.points:
             rowHolderIndex = len(tRowIDs)
         else:
-            rowHolderIndex = sys.maxint
+            rowHolderIndex = sys.maxsize
 
         lTable, rTable = [], []
         lColWidths, rColWidths = [], []
@@ -4181,7 +4200,7 @@ class Base(object):
         # why the end condition makes use of an exact stop value, which
         # varies between positive and negative depending on the number of
         # features
-        endIndex = self.features / 2
+        endIndex = self.features // 2
         if self.features % 2 == 1:
             endIndex *= -1
             endIndex -= 1
@@ -4262,7 +4281,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
 
-        return self.pointNames.viewkeys() - other.pointNames.viewkeys()
+        return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)
 
     def _featureNameDifference(self, other):
         """
@@ -4274,7 +4293,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName difference")
 
-        return self.featureNames.viewkeys() - other.featureNames.viewkeys()
+        return six.viewkeys(self.featureNames) - six.viewkeys(other.featureNames)
 
     def _pointNameIntersection(self, other):
         """
@@ -4286,7 +4305,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName intersection")
 
-        return self.pointNames.viewkeys() & other.pointNames.viewkeys()
+        return six.viewkeys(self.pointNames) & six.viewkeys(other.pointNames)
 
     def _featureNameIntersection(self, other):
         """
@@ -4298,7 +4317,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName intersection")
 
-        return self.featureNames.viewkeys() & other.featureNames.viewkeys()
+        return six.viewkeys(self.featureNames) & six.viewkeys(other.featureNames)
 
 
     def _pointNameSymmetricDifference(self, other):
@@ -4311,7 +4330,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
 
-        return self.pointNames.viewkeys() ^ other.pointNames.viewkeys()
+        return six.viewkeys(self.pointNames) ^ six.viewkeys(other.pointNames)
 
     def _featureNameSymmetricDifference(self, other):
         """
@@ -4323,7 +4342,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName difference")
 
-        return self.featureNames.viewkeys() ^ other.featureNames.viewkeys()
+        return six.viewkeys(self.featureNames) ^ six.viewkeys(other.featureNames)
 
     def _pointNameUnion(self, other):
         """
@@ -4335,7 +4354,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointNames union")
 
-        return self.pointNames.viewkeys() | other.pointNames.viewkeys()
+        return six.viewkeys(self.pointNames) | six.viewkeys(other.pointNames)
 
     def _featureNameUnion(self, other):
         """
@@ -4347,7 +4366,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName union")
 
-        return self.featureNames.viewkeys() | other.featureNames.viewkeys()
+        return six.viewkeys(self.featureNames) | six.viewkeys(other.featureNames)
 
 
     def _equalPointNames(self, other):
@@ -4389,7 +4408,7 @@ class Base(object):
             msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
             msg += "calling left." + callSym + "(right) \n"
             msg += UML.logger.tableString.tableString(table)
-            print >> sys.stderr, msg
+            print(msg, file=sys.stderr)
             raise ArgumentException(msg)
 
     def _inconsistentNames(self, selfNames, otherNames):
@@ -4407,7 +4426,7 @@ class Base(object):
         inconsistencies = {}
 
         def checkFromLeftKeys(ret, leftNames, rightNames):
-            for index in xrange(len(leftNames)):
+            for index in range(len(leftNames)):
                 lname = leftNames[index]
                 rname = rightNames[index]
                 if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
@@ -4445,7 +4464,7 @@ class Base(object):
         inconsistencies = {}
 
         def checkFromLeftKeys(ret, leftNames, rightNames):
-            for index in xrange(len(leftNames)):
+            for index in range(len(leftNames)):
                 lname = leftNames[index]
                 rname = rightNames[index]
                 if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
@@ -4493,9 +4512,9 @@ class Base(object):
             msg += "to occur: either all names must be specified, or the order must be "
             msg += "the same."
 
-            if True in map(lambda x: x[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX, lnames):
+            if True in [x[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX for x in lnames]:
                 raise ArgumentException(msg)
-            if True in map(lambda x: x[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX, rnames):
+            if True in [x[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX for x in rnames]:
                 raise ArgumentException(msg)
 
             ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
@@ -4510,7 +4529,7 @@ class Base(object):
                     table.append([lGetter(lname), lname, "   ", rGetter(rname), rname])
 
                 msg += UML.logger.tableString.tableString(table)
-                print >> sys.stderr, msg
+                print(msg, file=sys.stderr)
 
                 raise ArgumentException(msg)
             else:  # names are not different, but are reordered
@@ -4528,7 +4547,7 @@ class Base(object):
     def _getIndex(self, identifier, axis):
         num = len(self.getPointNames()) if axis == 'point' else len(self.getFeatureNames())
         nameGetter = self.getPointIndex if axis == 'point' else self.getFeatureIndex
-        accepted = (basestring, int, numpy.integer)
+        accepted = (six.string_types, int, numpy.integer)
 
         toReturn = identifier
         if num == 0:
@@ -4553,7 +4572,7 @@ class Base(object):
                 msg += "of possible indices in the " + axis + " axis (0 to "
                 msg += str(num - 1) + ")."
                 raise ArgumentException(msg)
-        if isinstance(identifier, basestring):
+        if isinstance(identifier, six.string_types):
             try:
                 toReturn = nameGetter(identifier)
             except KeyError:
@@ -4586,7 +4605,7 @@ class Base(object):
             names = self.featureNames
             invNames = self.featureNamesInverse
             count = self._featureCount
-        for i in xrange(count):
+        for i in range(count):
             defaultName = self._nextDefaultName(axis)
             invNames.append(defaultName)
             names[defaultName] = i
@@ -4607,7 +4626,7 @@ class Base(object):
 		ArgumentException will be raised.
 
 		"""
-        if name is not None and not isinstance(name, basestring):
+        if name is not None and not isinstance(name, six.string_types):
             raise ArgumentException("The name must be a string")
         if name in selfNames:
             raise ArgumentException("This name is already in use")
@@ -4666,7 +4685,7 @@ class Base(object):
 
         del selfNames[name]
         # remapping each index starting with the one we removed
-        for i in xrange(index, numInAxis - 1):
+        for i in range(index, numInAxis - 1):
             nextName = selfNamesInv[i + 1]
             selfNames[nextName] = i
 
@@ -4694,7 +4713,7 @@ class Base(object):
             index = self._getFeatureIndex(oldIdentifier)
 
         if newName is not None:
-            if not isinstance(newName, basestring):
+            if not isinstance(newName, six.string_types):
                 raise ArgumentException("The new name must be either None or a string")
             #			if not allowDefaults and newFeatureName.startswith(DEFAULT_PREFIX):
             #				raise ArgumentException("Cannot manually add a featureName with the default prefix")
@@ -4768,7 +4787,7 @@ class Base(object):
 
         #convert to dict so we only write the checking code once
         temp = {}
-        for index in xrange(len(assignments)):
+        for index in range(len(assignments)):
             name = assignments[index]
             # take this to mean fill it in with a default name
             if name is None:
@@ -4803,7 +4822,7 @@ class Base(object):
         # at this point, the input must be a dict
         #check input before performing any action
         for name in assignments.keys():
-            if not None and not isinstance(name, basestring):
+            if not None and not isinstance(name, six.string_types):
                 raise ArgumentException("Names must be strings")
             if not isinstance(assignments[name], int):
                 raise ArgumentException("Indices must be integers")
@@ -4956,7 +4975,7 @@ class Base(object):
             'population standard deviation', 'sample std',
             'sample standard deviation'
         ]
-        accepted = map(dataHelpers.cleanKeywordInput, acceptedPretty)
+        accepted = list(map(dataHelpers.cleanKeywordInput, acceptedPretty))
 
         msg = "The statisticsFunction must be equivaltent to one of the "
         msg += "following: "
@@ -4964,7 +4983,7 @@ class Base(object):
         msg += "' was given instead. Note: casing and whitespace is "
         msg += "ignored when checking the statisticsFunction."
 
-        if not isinstance(statisticsFunction, basestring):
+        if not isinstance(statisticsFunction, six.string_types):
             raise ArgumentException(msg)
 
         cleanFuncName = dataHelpers.cleanKeywordInput(statisticsFunction)
@@ -4987,3 +5006,30 @@ class Base(object):
             msg += ")"
 
             raise ArgumentException(msg)
+
+def cmp_to_key(mycmp):
+    """Convert a cmp= function for python2 into a key= function for python3"""
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
+
+def cmp(x, y):
+    if x < y:
+        return -1
+    elif x > y:
+        return 1
+    else:
+        return 0
