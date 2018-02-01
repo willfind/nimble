@@ -866,7 +866,7 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
 
             # sanity check
             fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-            assert fromCSV.featureCount == 4
+            assert fromCSV.features == 4
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
@@ -888,7 +888,7 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
 
             # sanity check
             fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-            assert fromCSV.featureCount == 5
+            assert fromCSV.features == 5
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
@@ -910,7 +910,7 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
 
             # sanity check
             fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-            assert fromCSV.featureCount == 5
+            assert fromCSV.features == 5
 
 
 def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
@@ -929,7 +929,7 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
             assert fromList == fromCSV
 
             fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-            assert fromCSV.featureCount == 4
+            assert fromCSV.features == 4
 
 
 def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
