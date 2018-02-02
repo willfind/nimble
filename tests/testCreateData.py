@@ -363,15 +363,15 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
 
     """
     if rawType == 'csv':
-        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv")
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write(rawStr)
         tmpCSV.flush()
         ret = UML.createData(returnType=returnType, data=tmpCSV.name,
                              pointNames=pointNames, featureNames=featureNames)
         tmpCSV.close()
     else:
-        fnameRow = map(_intFloatOrString, rawStr.split('\n')[0].split(','))
-        dataRow = map(_intFloatOrString, rawStr.split('\n')[1].split(','))
+        fnameRow = list(map(_intFloatOrString, rawStr.split('\n')[0].split(',')))
+        dataRow = list(map(_intFloatOrString, rawStr.split('\n')[1].split(',')))
         lolFromRaw = [fnameRow, dataRow]
         baseObj = UML.createData("List", lolFromRaw, pointNames=False, featureNames=False)
         if rawType == 'scipycoo':

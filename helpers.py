@@ -296,7 +296,8 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     #featureNames must be those keys
     #pointNames must be False or automatic
     elif isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
-        values = [rawData[0].values()]
+        # double nested list contained list-type forced values from the first row
+        values = [list(rawData[0].values())]
         keys = list(rawData[0].keys())
         for row in rawData[1:]:
             if list(row.keys()) != keys:
@@ -744,7 +745,7 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
         addedDim = True
 
     def cleanRow(npRow):
-        return map(_intFloatOrString, list(numpy.array(npRow).flatten()))
+        return list(map(_intFloatOrString, list(numpy.array(npRow).flatten())))
     firstRow = cleanRow(data[0]) if len(data) > 0 else None
     secondRow = cleanRow(data[1]) if len(data) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow, secondRow)
@@ -806,14 +807,14 @@ def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
     retFNames = None
     if featureNames == 0:
         retFNames = rawData[0].toarray().flatten().tolist()
-        retFNames = map(str, retFNames)
+        retFNames = list(map(str, retFNames))
         rawData = rawData[1:]
 
     retPNames = None
     if pointNames == 0:
         rawData = scipy.sparse.csc_matrix(rawData)
         retPNames = rawData[:,0].toarray().flatten().tolist()
-        retPNames = map(str, retPNames)
+        retPNames = list(map(str, retPNames))
         rawData = rawData[:, 1:]
         retFNames = retFNames[1:]
 
@@ -993,12 +994,16 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues, secondValues):
     if featureNames is False:
         return (failPN, failFN)
 
+    def teq(double):
+        x, y = double
+        return type(x) != type(y)
+
     if (pointNames is True or pointNames == 'automatic') and firstValues[0] == 'point_names':
-        allText = all(map(lambda x: isinstance(x,basestring), firstValues[1:]))
-        allDiff = all(map(lambda (x,y): type(x) != type(y), zip(firstValues[1:],secondValues[1:])))
+        allText = all(map(lambda x: isinstance(x,six.string_types), firstValues[1:]))
+        allDiff = all(map(teq, zip(firstValues[1:],secondValues[1:])))
     else:
-        allText = all(map(lambda x: isinstance(x,basestring), firstValues))
-        allDiff = all(map(lambda (x,y): type(x) != type(y), zip(firstValues,secondValues)))
+        allText = all(map(lambda x: isinstance(x,six.string_types), firstValues))
+        allDiff = all(map(teq, zip(firstValues,secondValues)))
 
     if featureNames == 'automatic' and allText and allDiff:
         featureNames = True
@@ -1047,51 +1052,22 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
     openFile.seek(startPosition)
     rowReader = csv.reader(openFile)
     try:
-        firstDataRow = rowReader.next()
+        firstDataRow = next(rowReader)
         while firstDataRow == []:
-            firstDataRow = rowReader.next()
-        secondDataRow = rowReader.next()
+            firstDataRow = next(rowReader)
+        secondDataRow = next(rowReader)
         while secondDataRow == []:
-            secondDataRow = rowReader.next()
+            secondDataRow = next(rowReader)
     except StopIteration:
         firstDataRow = None
         secondDataRow = None
 
     if firstDataRow is not None:
-        firstDataRow = map(_intFloatOrString, firstDataRow)
+        firstDataRow = list(map(_intFloatOrString, firstDataRow))
     if secondDataRow is not None:
-        secondDataRow = map(_intFloatOrString, secondDataRow)
+        secondDataRow = list(map(_intFloatOrString, secondDataRow))
     (pointNames, featureNames) = autoDetectNamesFromRaw(pointNames, featureNames,
                                                         firstDataRow, secondDataRow)
-
-#    # Do autodetection of feature names by type
-#    if featureNames == 'automatic':
-#        if secondDataRow is not None:
-#            firstValues = map(_intFloatOrString, firstDataRow)
-#            secondValues = map(_intFloatOrString, secondDataRow)
-
-#            if (pointNames is True or pointNames == 'automatic') and firstValues[0] == 'point_names':
-#                firstValues = firstValues[1:]
-#                secondValues = secondValues[2:]
-
-#            allText = all(map(lambda x: isinstance(x,basestring), firstValues))
-#            allDiff = all(map(lambda (x,y): type(x) != type(y), zip(firstValues,secondValues)))
-#            if allText and allDiff:
-#                featureNames = True
-
-    # if we made it this far but haven't detected featureNames
-    # then we can specify them as not being present
-#    if featureNames == 'automatic':
-#        featureNames = False
-
-    # find the first data line and attempt to auto detect point names,
-    # but only if we think the feature names are in that first row
-#    if featureNames is True and pointNames == 'automatic':
-#        if firstDataRow[0] == 'point_names':
-#            pointNames = True
-
-#    if pointNames == 'automatic':
-#        pointNames = False
 
     # reset everyting to make the loop easier
     openFile.seek(startPosition)
