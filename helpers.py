@@ -2233,34 +2233,7 @@ def computeMetrics(dependentVar, knownData, predictedData, performanceFunction):
         # columns it indicates from knownValues
         knownLabels = knownData.copyFeatures(dependentVar)
 
-    try:
-        (args, vargs, kw, defaults) = inspect.getargspec(performanceFunction)
-    except TypeError:
-        msg = "performanceFunction is only allowed to be a python function"
-        raise ArgumentException(msg)
-    if len(args) != 2 and len(args) != 3:
-        msg = "performanceFunction may only be a python function which takes either "
-        msg += "two or three args. In the two arg case, it is to be two sets of data "
-        msg += "or labels to be compared. In the three arg case, the first two args "
-        msg += "are the same as in the two arg case, and the third arg must take "
-        msg += "the value of what is to be considered the positive label in this "
-        msg += "binary classification problem"
-        raise ArgumentException(msg)
-
-    if isinstance(performanceFunction, list):
-        raise ArgumentException("performanceFunction")
-
-    if len(args) == 2:
-        #the metric function only takes two arguments: we assume they
-        #are the known class labels and the predicted class labels
-        result = performanceFunction(knownLabels, predictedData)
-    else:
-        msg = "One of the functions (" + performanceFunction.__name__
-        msg += ") passed to "
-        msg += "computeMetrics has an invalid signature, two arguments "
-        msg += "are required, yet this had " + str(len(args))
-
-        raise ArgumentException(msg)
+    result = performanceFunction(knownLabels, predictedData)
 
     return result
 

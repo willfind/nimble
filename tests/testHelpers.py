@@ -585,8 +585,8 @@ def test_computeMetrics_1d_2d_symmetric():
     assert result == 1.0
 
 # multi metrics should not be allowed
-@raises(ArgumentException)
-def test_cocmputeMetrics_multiple_metrics_disallowed():
+@raises(TypeError)
+def test_computeMetrics_multiple_metrics_disallowed():
     origData = numpy.array([[1.0], [2.0], [3.0]])
     outputData = numpy.array([[1.0], [2.0], [3.0]])
 

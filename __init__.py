@@ -51,8 +51,6 @@ from .uml import registerCustomLearner
 from .uml import registerCustomLearnerAsDefault
 from .uml import deregisterCustomLearner
 from .uml import deregisterCustomLearnerAsDefault
-from .uml import listDataFunctions
-from .uml import listUMLFunctions
 from .uml import listLearners
 from .uml import learnerParameters
 from .uml import learnerDefaultValues
