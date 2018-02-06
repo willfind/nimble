@@ -12,6 +12,7 @@ import abc
 import functools
 import numpy
 import sys
+import numbers
 
 import UML
 from UML.exceptions import ArgumentException
@@ -24,7 +25,7 @@ from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
 
-from UML.helpers import _mergeArguments
+from UML.helpers import _mergeArguments, generateAllPairs, countWins
 import six
 from six.moves import range
 import warnings
@@ -133,7 +134,110 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         return ret
 
     @captureOutput
-    def train(self, learnerName, trainX, trainY=None, arguments={}, timer=None):
+    def train(self, learnerName, trainX, trainY=None, multiClassStrategy='default', arguments={}, useLog=None, timer=None):
+        """
+
+        """
+        if multiClassStrategy != 'default':
+            #if we need to do multiclassification by ourselves
+            trialResult = checkClassificationStrategy(self, learnerName, arguments)
+
+            #1 VS All
+            if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
+                #Remove true labels from from training set, if not already separated
+                if isinstance(trainY, (str, numbers.Integral)):
+                    trainX = trainX.copy()
+                    trainY = trainX.extractFeatures(trainY)
+
+                # Get set of unique class labels
+                labelVector = trainY.copy()
+                labelVector.transpose()
+                labelSet = list(set(labelVector.copyAs(format="python list")[0]))
+
+                if useLog is None:
+                    useLog = UML.settings.get("logger", "enabledByDefault")
+                    useLog = True if useLog.lower() == 'true' else False
+                deepLog = False
+                if useLog:
+                    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+                    deepLog = True if deepLog.lower() == 'true' else False
+                    useLog = deepLog
+
+                #if we are logging this run, we need to start the timer
+                if useLog:
+                    if timer is None:
+                        timer = Stopwatch()
+
+                    timer.start('trainOVA')
+
+                # For each class label in the set of labels:  convert the true
+                # labels in trainY into boolean labels (1 if the point
+                # has 'label', 0 otherwise.)  Train a classifier with the processed
+                # labels and get predictions on the test set.
+                trainedLearners = []
+                for label in labelSet:
+                    relabeler.func_defaults = (label,)
+                    trainLabels = trainY.calculateForEachPoint(relabeler)
+                    trainedLearner = self._train(learnerName, trainX, trainLabels, arguments=arguments, \
+                                                       timer=timer)
+                    trainedLearner.label = label
+                    trainedLearners.append(trainedLearner)
+
+                if useLog:
+                    timer.stop('trainOVA')
+                return self.TrainedLearners(trainedLearners, 'OneVsAll', labelSet)
+
+            #1 VS 1
+            if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
+                # we want the data and the labels together in one object or this method
+                if isinstance(trainY, UML.data.Base):
+                    trainX = trainX.copy()
+                    trainX.appendFeatures(trainY)
+                    trainY = trainX.features - 1
+
+                # Get set of unique class labels, then generate list of all 2-combinations of
+                # class labels
+                labelVector = trainX.copyFeatures([trainY])
+                labelVector.transpose()
+                labelSet = list(set(labelVector.copyAs(format="python list")[0]))
+                labelPairs = generateAllPairs(labelSet)
+
+                if useLog is None:
+                    useLog = UML.settings.get("logger", "enabledByDefault")
+                    useLog = True if useLog.lower() == 'true' else False
+                deepLog = False
+                if useLog:
+                    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+                    deepLog = True if deepLog.lower() == 'true' else False
+                    useLog = deepLog
+
+                #if we are logging this run, we need to start the timer
+                if useLog:
+                    if timer is None:
+                        timer = Stopwatch()
+
+                    timer.start('trainOVO')
+
+                # For each pair of class labels: remove all points with one of those labels,
+                # train a classifier on those points, get predictions based on that model,
+                # and put the points back into the data object
+                trainedLearners = []
+                for pair in labelPairs:
+                    #get all points that have one of the labels in pair
+                    pairData = trainX.extractPoints(lambda point: (point[trainY] == pair[0]) or (point[trainY] == pair[1]))
+                    pairTrueLabels = pairData.extractFeatures(trainY)
+                    trainedLearners.append(self._train(learnerName, pairData.copy(), pairTrueLabels.copy(), arguments=arguments, \
+                                                       timer=timer))
+                    pairData.appendFeatures(pairTrueLabels)
+                    trainX.appendPoints(pairData)
+                if useLog:
+                    timer.stop('trainOVO')
+                return self.TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
+
+        return self._train(learnerName, trainX, trainY, arguments, timer)
+
+    @captureOutput
+    def _train(self, learnerName, trainX, trainY=None, arguments={}, timer=None):
         (trainedBackend, transformedInputs, customDict) = self._trainBackend(learnerName, trainX, trainY, arguments,
                                                                              timer)
 
@@ -634,7 +738,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             """
             Returns the evaluation of predictions of testX using the argument
             performanceFunction to do the evalutation. Equivalent to having called
-            this interface's trainAndTest method, as long as the data and parameter
+            this interface's trainAndqTest method, as long as the data and parameter
             setup for training was the same.
 
             """
@@ -843,6 +947,140 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
             formatedRawOrder.sortFeatures(sortHelper=sortScorer)
             return formatedRawOrder
+
+    class TrainedLearners(TrainedLearner):
+        """
+
+        """
+        def __init__(self, trainedLearners, method, labelSet):
+            """
+
+            """
+            self.trainedLearnersList = trainedLearners
+            self.method = method
+            self.labelSet = labelSet
+            self.has2dOutput = trainedLearners[0].has2dOutput
+            self.transformedArguments = trainedLearners[0].transformedArguments
+            self.interface = trainedLearners[0].interface
+            self.learnerName = trainedLearners[0].learnerName
+
+        @captureOutput
+        def apply(self, testX, arguments={}, output='match', scoreMode='label',
+                useLog=None, **kwarguments):
+            """
+
+            """
+            rawPredictions = None
+            # import pdb; pdb.set_trace()
+            #1 VS All
+            if self.method == 'OneVsAll':
+                for trainedLearner in self.trainedLearnersList:
+                    oneLabelResults = trainedLearner.apply(testX, arguments, output, 'label', useLog)
+                    label = trainedLearner.label
+                    #put all results into one Base container, of the same type as trainX
+                    if rawPredictions is None:
+                        rawPredictions = oneLabelResults
+                        #as it's added to results object, rename each column with its corresponding class label
+                        rawPredictions.setFeatureName(0, str(label))
+                    else:
+                        #as it's added to results object, rename each column with its corresponding class label
+                        oneLabelResults.setFeatureName(0, str(label))
+                        rawPredictions.appendFeatures(oneLabelResults)
+
+                if scoreMode.lower() == 'label'.lower():
+                    winningPredictionIndices = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionIndex).copyAs(
+                        format="python list")
+                    winningLabels = []
+                    for [winningIndex] in winningPredictionIndices:
+                        winningLabels.append([self.labelSet[int(winningIndex)]])
+                    return UML.createData(rawPredictions.getTypeString(), winningLabels, featureNames=['winningLabel'])
+
+                elif scoreMode.lower() == 'bestScore'.lower():
+                    #construct a list of lists, with each row in the list containing the predicted
+                    #label and score of that label for the corresponding row in rawPredictions
+                    predictionMatrix = rawPredictions.copyAs(format="python list")
+                    indexToLabel = rawPredictions.getFeatureNames()
+                    tempResultsList = []
+                    for row in predictionMatrix:
+                        bestLabelAndScore = UML.helpers.extractWinningPredictionIndexAndScore(row, indexToLabel)
+                        tempResultsList.append([bestLabelAndScore[0], bestLabelAndScore[1]])
+                    #wrap the results data in a List container
+                    featureNames = ['PredictedClassLabel', 'LabelScore']
+                    resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
+                    return resultsContainer
+
+                elif scoreMode.lower() == 'allScores'.lower():
+                    #create list of Feature Names/Column Headers for final return object
+                    columnHeaders = sorted([str(i) for i in self.labelSet])
+                    #create map between label and index in list, so we know where to put each value
+                    labelIndexDict = {v: k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
+                    featureNamesItoN = rawPredictions.getFeatureNames()
+                    predictionMatrix = rawPredictions.copyAs(format="python list")
+                    resultsContainer = []
+                    for row in predictionMatrix:
+                        finalRow = [0] * len(columnHeaders)
+                        scores = UML.helpers.extractConfidenceScores(row, featureNamesItoN)
+                        for label, score in scores.items():
+                            #get numerical index of label in return object
+                            finalIndex = labelIndexDict[label]
+                            #put score into proper place in its row
+                            finalRow[finalIndex] = score
+                        resultsContainer.append(finalRow)
+                    #wrap data in Base container
+                    return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
+
+            #1 VS 1
+            elif self.method == 'OneVsOne':
+                predictionFeatureID = 0
+                for trainedLearner in self.trainedLearnersList:
+                    #train classifier on that data; apply it to the test set
+                    partialResults = trainedLearner.apply(testX, arguments, output, 'label', useLog)
+                    #put predictions into table of predictions
+                    if rawPredictions is None:
+                        rawPredictions = partialResults.copyAs(format="List")
+                    else:
+                        partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
+                        rawPredictions.appendFeatures(partialResults.copyAs(format="List"))
+                    predictionFeatureID += 1
+                #set up the return data based on which format has been requested
+                if scoreMode.lower() == 'label'.lower():
+                    ret = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionLabel)
+                    ret.setFeatureName(0, "winningLabel")
+                    return ret
+                elif scoreMode.lower() == 'bestScore'.lower():
+                    #construct a list of lists, with each row in the list containing the predicted
+                    #label and score of that label for the corresponding row in rawPredictions
+                    predictionMatrix = rawPredictions.copyAs(format="python list")
+                    tempResultsList = []
+                    for row in predictionMatrix:
+                        scores = countWins(row)
+                        sortedScores = sorted(scores, key=scores.get, reverse=True)
+                        bestLabel = sortedScores[0]
+                        tempResultsList.append([bestLabel, scores[bestLabel]])
+
+                    #wrap the results data in a List container
+                    featureNames = ['PredictedClassLabel', 'LabelScore']
+                    resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
+                    return resultsContainer
+                elif scoreMode.lower() == 'allScores'.lower():
+                    columnHeaders = sorted([str(i) for i in self.labelSet])
+                    labelIndexDict = {str(v): k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
+                    predictionMatrix = rawPredictions.copyAs(format="python list")
+                    resultsContainer = []
+                    for row in predictionMatrix:
+                        finalRow = [0] * len(columnHeaders)
+                        scores = countWins(row)
+                        for label, score in scores.items():
+                            finalIndex = labelIndexDict[str(label)]
+                            finalRow[finalIndex] = score
+                        resultsContainer.append(finalRow)
+
+                    return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
+
+
+            else:
+                raise(ArgumentException('Wrong multiclassification method.'))
+
 
     ##############################################
     ### CACHING FRONTENDS FOR ABSTRACT METHODS ###
@@ -1122,3 +1360,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         """
         pass
+
+def relabeler(point, label=None):
+    if point[0] != label:
+        return 0
+    else:
+        return 1
