@@ -1783,6 +1783,17 @@ def _resync(obj):
         obj.col = obj.col
         obj.shape = obj.shape
 
+
+
+def removeDuplicatesNative(coo_obj):
+    raise NotImplementedError
+
+def removeDuplicatesByConversion(coo_obj):
+    raise NotImplementedError
+
+
+
+
 class SparseVectorView(BaseView, Sparse):
     """
     A view of a Sparse data object limited to a full point or full feature

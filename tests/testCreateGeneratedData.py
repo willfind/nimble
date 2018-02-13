@@ -96,6 +96,12 @@ def testSparsityReturnedPlausible():
 
                     assert (difference < .01)
 
+
+def test_createRandomizedData_names_passed():
+    raise NotImplementedError
+
+
+
 #todo check that sizes of returned objects are what you request via npoints and nfeatures
 
 
