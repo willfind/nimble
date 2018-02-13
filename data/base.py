@@ -2579,11 +2579,30 @@ class Base(object):
                 msg += ", 'python list', 'numpy array', 'numpy matrix', 'scipy csr', and 'scipy csc'"
                 raise ArgumentException(msg)
 
+        # we only allow 'numpyarray' and 'pythonlist' to be used with the outpuAs1D flag
         if outputAs1D:
             if format != 'numpyarray' and format != 'pythonlist':
                 raise ArgumentException("Cannot output as 1D if format != 'numpy array' or 'python list'")
             if self.points != 1 and self.features != 1:
                 raise ArgumentException("To output as 1D there may either be only one point or one feature")
+
+        # certain shapes and formats are incompatible
+        if format.startswith('scipy'):
+            if self.points == 0 or self.features == 0:
+                raise ArgumentException('Cannot output a point or feature empty object in a scipy format')
+
+        ret = self._copyAs_implementation_base(format, rowsArePoints, outputAs1D)
+
+        if isinstance(ret, UML.data.Base):
+            ret._name = self.name
+            ret._relPath = self.relativePath
+            ret._absPath = self.absolutePath
+
+        return ret
+
+    def _copyAs_implementation_base(self, format, rowsArePoints, outputAs1D):
+        # in copyAs, we've already limited outputAs1D to the 'numpyarray' and 'python list' formats
+        if outputAs1D:
             if self.points == 0 or self.features == 0:
                 if format == 'numpyarray':
                     return numpy.array([])
@@ -2604,16 +2623,8 @@ class Base(object):
                 for i in range(self.points):
                     ret.append([])
                 return ret
-        if format.startswith('scipy'):
-            if self.points == 0 or self.features == 0:
-                raise ArgumentException('Cannot output a point or feature empty object in a scipy format')
 
         ret = self._copyAs_implementation(format)
-
-        if isinstance(ret, UML.data.Base):
-            ret._name = self.name
-            ret._relPath = self.relativePath
-            ret._absPath = self.absolutePath
 
         if not rowsArePoints:
             if format in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2624,6 +2635,7 @@ class Base(object):
                 ret = numpy.transpose(ret).tolist()
 
         return ret
+
 
     def copyPoints(self, points=None, start=None, end=None):
         """

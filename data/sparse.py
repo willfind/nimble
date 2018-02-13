@@ -1706,24 +1706,8 @@ class Sparse(Base):
         if self._sorted == axis or self.points == 0 or self.features == 0:
             return
 
-        # sort least significant axis first
-        if axis == "point":
-            sortPrime = self.data.row
-            sortOff = self.data.col
-        else:
-            sortPrime = self.data.col
-            sortOff = self.data.row
-
-        sortKeys = numpy.lexsort((sortOff, sortPrime))
-
-        newData = self.data.data[sortKeys]
-        newRow = self.data.row[sortKeys]
-        newCol = self.data.col[sortKeys]
-
-        n = len(newData)
-        self.data.data[:n] = newData
-        self.data.row[:n] = newRow
-        self.data.col[:n] = newCol
+        sortAsParam = 'row-major' if axis == 'point' else 'col-major'
+        _sortInternal_coo_matrix(self.data, sortAsParam)
 
         # flag that we are internally sorted
         self._sorted = axis
@@ -1732,6 +1716,31 @@ class Sparse(Base):
 ###################
 # Generic Helpers #
 ###################
+
+
+def _sortInternal_coo_matrix(obj, sortAs):
+    if sortAs != 'row-major' and sortAs != 'col-major':
+        raise ArgumentException("invalid axis type")
+
+    # sort least significant axis first
+    if sortAs == "row-major":
+        sortPrime = obj.row
+        sortOff = obj.col
+    else:
+        sortPrime = obj.col
+        sortOff = obj.row
+
+    sortKeys = numpy.lexsort((sortOff, sortPrime))
+
+    newData = obj.data[sortKeys]
+    newRow = obj.row[sortKeys]
+    newCol = obj.col[sortKeys]
+
+    n = len(newData)
+    obj.data[:n] = newData
+    obj.row[:n] = newRow
+    obj.col[:n] = newCol
+
 
 def _numLessThan(value, toCheck): # TODO caching
     ltCount = 0
