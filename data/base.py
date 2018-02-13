@@ -3712,7 +3712,7 @@ class Base(object):
     def _genericNumericBinary_implementation(self, opName, other):
         startType = self.getTypeString()
         implName = opName[1:] + 'implementation'
-        if startType == 'Matrix':
+        if startType == 'Matrix' or startType == 'DataFrame':
             toCall = getattr(self, implName)
             ret = toCall(other)
         else:
