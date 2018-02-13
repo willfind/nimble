@@ -70,40 +70,40 @@ def hashCodeFunc(elementValue, pointNum, featureNum):
 
 class Base(object):
     """
-	Class defining important data manipulation operations and giving functionality
-	for the naming the features of that data. A mapping from feature names to feature
-	indices is given by the featureNames attribute, the inverse of that mapping is
-	given by featureNamesInverse.
+    Class defining important data manipulation operations and giving functionality
+    for the naming the features of that data. A mapping from feature names to feature
+    indices is given by the featureNames attribute, the inverse of that mapping is
+    given by featureNamesInverse.
 
-	"""
+    """
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
         """
-		Instantiates the book-keeping structures that are taken to be common
-		across all data types. Specifically, this includes point and feature
-		names, an object name, and originating pathes for the data in this
-		object. Note: this method (as should all other __init__ methods in
-		this hierarchy) makes use of super()
-		
-		pointNames: may be a list or dict mapping names to indices. None is
-		given if default names are desired.
+        Instantiates the book-keeping structures that are taken to be common
+        across all data types. Specifically, this includes point and feature
+        names, an object name, and originating pathes for the data in this
+        object. Note: this method (as should all other __init__ methods in
+        this hierarchy) makes use of super()
 
-		featureNames: may be a list or dict mapping names to indices. None is
-		given if default names are desired.
+        pointNames: may be a list or dict mapping names to indices. None is
+        given if default names are desired.
 
-		name: the name to be associated with this object.
+        featureNames: may be a list or dict mapping names to indices. None is
+        given if default names are desired.
 
-		pathes: a tuple, where the first entry is taken to be the string
-		representing the absolute path to the source file of the data and
-		the second entry is taken to be the relative path. Both may be
-		None if these values are to be unspecified.
+        name: the name to be associated with this object.
 
-		**kwds: potentially full of arguments further up the class hierarchy,
-		as following best practices for use of super(). Note however, that
-		this class is the root of the object hierarchy as statically defined. 
+        pathes: a tuple, where the first entry is taken to be the string
+        representing the absolute path to the source file of the data and
+        the second entry is taken to be the relative path. Both may be
+        None if these values are to be unspecified.
 
-		"""
+        **kwds: potentially full of arguments further up the class hierarchy,
+        as following best practices for use of super(). Note however, that
+        this class is the root of the object hierarchy as statically defined. 
+
+        """
         self._pointCount = shape[0]
         self._featureCount = shape[1]
 
@@ -240,32 +240,32 @@ class Base(object):
 
     def setPointName(self, oldIdentifier, newName):
         """
-		Changes the pointName specified by previous to the supplied input name.
-		
-		oldIdentifier must be a non None string or integer, specifying either a current pointName
-		or the index of a current pointName. newName may be either a string not currently
-		in the pointName set, or None for an default pointName. newName cannot begin with the
-		default prefix.
+        Changes the pointName specified by previous to the supplied input name.
 
-		None is always returned.
+        oldIdentifier must be a non None string or integer, specifying either a current pointName
+        or the index of a current pointName. newName may be either a string not currently
+        in the pointName set, or None for an default pointName. newName cannot begin with the
+        default prefix.
 
-		"""
+        None is always returned.
+
+        """
         if self.points == 0:
             raise ArgumentException("Cannot set any point names; this object has no points ")
         self._setName_implementation(oldIdentifier, newName, 'point', False)
 
     def setFeatureName(self, oldIdentifier, newName):
         """
-		Changes the featureName specified by previous to the supplied input name.
-		
-		oldIdentifier must be a non None string or integer, specifying either a current featureName
-		or the index of a current featureName. newName may be either a string not currently
-		in the featureName set, or None for an default featureName. newName cannot begin with the
-		default prefix.
+        Changes the featureName specified by previous to the supplied input name.
 
-		None is always returned.
+        oldIdentifier must be a non None string or integer, specifying either a current featureName
+        or the index of a current featureName. newName may be either a string not currently
+        in the featureName set, or None for an default featureName. newName cannot begin with the
+        default prefix.
 
-		"""
+        None is always returned.
+
+        """
         if self.features == 0:
             raise ArgumentException("Cannot set any feature names; this object has no features ")
         self._setName_implementation(oldIdentifier, newName, 'feature', False)
@@ -273,16 +273,16 @@ class Base(object):
 
     def setPointNames(self, assignments=None):
         """
-		Rename all of the point names of this object according to the values
-		specified by the assignments parameter. If given a list, then we use
-		the mapping between names and array indices to define the point
-		names. If given a dict, then that mapping will be used to define the
-		point names. If assignments is None, then all point names will be
-		given new default values. If assignment is an unexpected type, the names
-		are not strings, the names are not unique, or point indices are missing,
-		then an ArgumentException will be raised. None is always returned.
+        Rename all of the point names of this object according to the values
+        specified by the assignments parameter. If given a list, then we use
+        the mapping between names and array indices to define the point
+        names. If given a dict, then that mapping will be used to define the
+        point names. If assignments is None, then all point names will be
+        given new default values. If assignment is an unexpected type, the names
+        are not strings, the names are not unique, or point indices are missing,
+        then an ArgumentException will be raised. None is always returned.
 
-		"""
+        """
         if assignments is None or isinstance(assignments, list):
             self._setNamesFromList(assignments, self.points, 'point')
         elif isinstance(assignments, dict):
@@ -294,16 +294,16 @@ class Base(object):
 
     def setFeatureNames(self, assignments=None):
         """
-		Rename all of the feature names of this object according to the values
-		specified by the assignments parameter. If given a list, then we use
-		the mapping between names and array indices to define the feature
-		names. If given a dict, then that mapping will be used to define the
-		feature names. If assignments is None, then all feature names will be
-		given new default values. If assignment is an unexpected type, the names
-		are not strings, the names are not unique, or feature indices are missing,
-		then an ArgumentException will be raised. None is always returned.
+        Rename all of the feature names of this object according to the values
+        specified by the assignments parameter. If given a list, then we use
+        the mapping between names and array indices to define the feature
+        names. If given a dict, then that mapping will be used to define the
+        feature names. If assignments is None, then all feature names will be
+        given new default values. If assignment is an unexpected type, the names
+        are not strings, the names are not unique, or feature indices are missing,
+        then an ArgumentException will be raised. None is always returned.
 
-		"""
+        """
         if assignments is None or isinstance(assignments, list):
             self._setNamesFromList(assignments, self.features, 'feature')
         elif isinstance(assignments, dict):
@@ -319,18 +319,18 @@ class Base(object):
 
     def getPointNames(self):
         """Returns a list containing all point names, where their index
-		in the list is the same as the index of the point they correspond
-		to.
+        in the list is the same as the index of the point they correspond
+        to.
 
-		"""
+        """
         return copy.copy(self.pointNamesInverse)
 
     def getFeatureNames(self):
         """Returns a list containing all feature names, where their index
-		in the list is the same as the index of the feature they
-		correspond to.
+        in the list is the same as the index of the feature they
+        correspond to.
 
-		"""
+        """
         return copy.copy(self.featureNamesInverse)
 
     def getPointName(self, index):
@@ -365,10 +365,10 @@ class Base(object):
 
     def dropFeaturesContainingType(self, typeToDrop):
         """
-		Modify this object so that it no longer contains features which have the specified
-		type as values. None is always returned.
+        Modify this object so that it no longer contains features which have the specified
+        type as values. None is always returned.
 
-		"""
+        """
         if not isinstance(typeToDrop, (list, tuple)):
             if not isinstance(typeToDrop, type):
                 raise ArgumentException(
@@ -395,11 +395,11 @@ class Base(object):
 
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):
         """
-		Modify this object so that the chosen feature is removed, and binary valued
-		features are added, one for each possible value seen in the original feature.
-		None is always returned.
+        Modify this object so that the chosen feature is removed, and binary valued
+        features are added, one for each possible value seen in the original feature.
+        None is always returned.
 
-		"""
+        """
         if self.points == 0:
             raise ImproperActionException("This action is impossible, the object has 0 points")
 
@@ -446,11 +446,11 @@ class Base(object):
 
     def transformFeatureToIntegers(self, featureToConvert):
         """
-		Modify this object so that the chosen feature in removed, and a new integer
-		valued feature is added with values 0 to n-1, one for each of n values present
-		in the original feature. None is always returned.
+        Modify this object so that the chosen feature in removed, and a new integer
+        valued feature is added with values 0 to n-1, one for each of n values present
+        in the original feature. None is always returned.
 
-		"""
+        """
         if self.points == 0:
             raise ImproperActionException("This action is impossible, the object has 0 points")
 
@@ -491,12 +491,12 @@ class Base(object):
 
     def extractPointsByCoinToss(self, extractionProbability):
         """
-		Return a new object containing a randomly selected sample of points
-		from this object, where a random experiment is performed for each
-		point, with the chance of selection equal to the extractionProbabilty
-		parameter. Those selected values are also removed from this object.
+        Return a new object containing a randomly selected sample of points
+        from this object, where a random experiment is performed for each
+        point, with the chance of selection equal to the extractionProbabilty
+        parameter. Those selected values are also removed from this object.
 
-		"""
+        """
         #		if self.points == 0:
         #			raise ImproperActionException("Cannot extract points from an object with 0 points")
 
@@ -517,16 +517,16 @@ class Base(object):
 
     def calculateForEachPoint(self, function, points=None):
         """
-		Calculates the results of the given function on the specified points
-		in this object, with output values collected into a new object that
-		is returned upon completion.
+        Calculates the results of the given function on the specified points
+        in this object, with output values collected into a new object that
+        is returned upon completion.
 
-		function must not be none and accept the view of a point as an argument
+        function must not be none and accept the view of a point as an argument
 
-		points may be None to indicate application to all points, a single point
-		ID or a list of point IDs to limit application only to those specified.
+        points may be None to indicate application to all points, a single point
+        ID or a list of point IDs to limit application only to those specified.
 
-		"""
+        """
         if points is not None:
             points = copy.copy(points)
         if self.points == 0:
@@ -564,17 +564,17 @@ class Base(object):
 
     def calculateForEachFeature(self, function, features=None):
         """
-		Calculates the results of the given function on the specified features
-		in this object, with output values collected into a new object that is
-		returned upon completion.
+        Calculates the results of the given function on the specified features
+        in this object, with output values collected into a new object that is
+        returned upon completion.
 
-		function must not be none and accept the view of a point as an argument
+        function must not be none and accept the view of a point as an argument
 
-		features may be None to indicate application to all features, a single
-		feature ID or a list of feature IDs to limit application only to those
-		specified.
+        features may be None to indicate application to all features, a single
+        feature ID or a list of feature IDs to limit application only to those
+        specified.
 
-		"""
+        """
         if features is not None:
             features = copy.copy(features)
         if self.points == 0:
@@ -785,25 +785,25 @@ class Base(object):
     def calculateForEachElement(self, function, points=None, features=None, preserveZeros=False,
                                 skipNoneReturnValues=False, outputType=None):
         """
-		Returns a new object containing the results of calling function(elementValue)
-		or function(elementValue, pointNum, featureNum) for each element.
+        Returns a new object containing the results of calling function(elementValue)
+        or function(elementValue, pointNum, featureNum) for each element.
 
-		points: Limit to only elements of the specified points; may be None for
-		all points, a single ID, or a list of IDs; this will affect the shape
-		of the returned object.
+        points: Limit to only elements of the specified points; may be None for
+        all points, a single ID, or a list of IDs; this will affect the shape
+        of the returned object.
 
-		features: Limit to only elements of the specified features; may be None for
-		all features, a single ID, or a list of IDs; this will affect the shape
-		of the returned object.
+        features: Limit to only elements of the specified features; may be None for
+        all features, a single ID, or a list of IDs; this will affect the shape
+        of the returned object.
 
-		preserveZeros: If True it does not apply the function to elements in
-		the data that are 0 and a 0 is placed in its place in the output.
+        preserveZeros: If True it does not apply the function to elements in
+        the data that are 0 and a 0 is placed in its place in the output.
 
-		skipNoneReturnValues: If True, any time function() returns None, the
-		value that was input to the function will be put in the output in place
-		of None.
+        skipNoneReturnValues: If True, any time function() returns None, the
+        value that was input to the function will be put in the output in place
+        of None.
 
-		"""
+        """
         oneArg = False
         try:
             function(0, 0, 0)
@@ -881,7 +881,7 @@ class Base(object):
 
     def hashCode(self):
         """returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
-		that should almost always change when the values of the matrix are changed by a substantive amount"""
+        that should almost always change when the values of the matrix are changed by a substantive amount"""
         if self.points == 0 or self.features == 0:
             return 0
         valueObj = self.calculateForEachElement(hashCodeFunc, preserveZeros=True, outputType='Matrix')
@@ -894,9 +894,9 @@ class Base(object):
 
     def isApproximatelyEqual(self, other):
         """If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data. 
-		If it returns True, they probably do but you can't be absolutely sure.
-		Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
-		passed are of the same type (Matrix, Sparse, etc.)"""
+        If it returns True, they probably do but you can't be absolutely sure.
+        Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
+        passed are of the same type (Matrix, Sparse, etc.)"""
         self.validate()
         #first check to make sure they have the same number of rows and columns
         if self.points != other.points: return False
@@ -908,11 +908,11 @@ class Base(object):
 
     def shufflePoints(self, indices=None):
         """
-		Permute the indexing of the points so they are in a random order. Note: this relies on
-		python's random.shuffle() so may not be sufficiently random for large number of points.
-		See shuffle()'s documentation. None is always returned.
+        Permute the indexing of the points so they are in a random order. Note: this relies on
+        python's random.shuffle() so may not be sufficiently random for large number of points.
+        See shuffle()'s documentation. None is always returned.
 
-		"""
+        """
         if indices is None:
             indices = list(range(0, self.points))
             pythonRandom.shuffle(indices)
@@ -934,11 +934,11 @@ class Base(object):
 
     def shuffleFeatures(self, indices=None):
         """
-		Permute the indexing of the features so they are in a random order. Note: this relies on
-		python's random.shuffle() so may not be sufficiently random for large number of features.
-		See shuffle()'s documentation. None is always returned.
+        Permute the indexing of the features so they are in a random order. Note: this relies on
+        python's random.shuffle() so may not be sufficiently random for large number of features.
+        See shuffle()'s documentation. None is always returned.
 
-		"""
+        """
         if indices is None:
             indices = list(range(0, self.features))
             pythonRandom.shuffle(indices)
@@ -958,38 +958,38 @@ class Base(object):
 
     def copy(self):
         """
-		Return a new object which has the same data (and featureNames, depending on
-		the return type) and in the same UML format as this object.
+        Return a new object which has the same data (and featureNames, depending on
+        the return type) and in the same UML format as this object.
 
-		"""
+        """
         return self.copyAs(self.getTypeString())
 
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True):
         """Partitions this object into training / testing, data / labels
-		sets, returning a new object for each as needed.
+        sets, returning a new object for each as needed.
 
-		testFraction: the fraction of the data to be placed in the testing
-		sets. If randomOrder is False, then the points are taken from the
-		end of this object. 
+        testFraction: the fraction of the data to be placed in the testing
+        sets. If randomOrder is False, then the points are taken from the
+        end of this object. 
 
-		labels: may be None, a single feature ID, or a list of feature
-		IDs depending on whether one is dealing with data for unsupervised
-		learning, single variable supervised learning, or multi-output
-		supervised learning. This parameter will affect the shape of the
-		returned tuple.
+        labels: may be None, a single feature ID, or a list of feature
+        IDs depending on whether one is dealing with data for unsupervised
+        learning, single variable supervised learning, or multi-output
+        supervised learning. This parameter will affect the shape of the
+        returned tuple.
 
-		randomOrder: controls whether the order of the points in the returns
-		sets matches that of the original object, or if their order is
-		randomized.
+        randomOrder: controls whether the order of the points in the returns
+        sets matches that of the original object, or if their order is
+        randomized.
 
-		Returns either a length 2 or a length 4 tuple. If labels=None, then
-		returns a length 2 tuple containing the training object, then the
-		testing object (trainX, testX). If labels is non-None, a length 4
-		tuple is returned, containing the training data object, then the
-		training labels object, then the testing data object, and finally
-		the testing labels (trainX, trainY, testX, testY).
+        Returns either a length 2 or a length 4 tuple. If labels=None, then
+        returns a length 2 tuple containing the training object, then the
+        testing object (trainX, testX). If labels is non-None, a length 4
+        tuple is returned, containing the training data object, then the
+        training labels object, then the testing data object, and finally
+        the testing labels (trainX, trainY, testX, testY).
 
-		"""
+        """
         toSplit = self.copy()
         if randomOrder:
             toSplit.shufflePoints()
@@ -1026,76 +1026,76 @@ class Base(object):
 
     def normalizePoints(self, subtract=None, divide=None, applyResultTo=None):
         """
-		Modify all points in this object according to the given
-		operations.
+        Modify all points in this object according to the given
+        operations.
 
-		applyResultTo: default None, if a UML object is given, then
-		perform the same operations to it as are applied to the calling
-		object. However, if a statistical method is specified as subtract
-		or divide, then	concrete values are first calculated only from
-		querying the calling object, and the operation is performed on
-		applyResultTo using the results; as if a UML object was given
-		for the subtract or divide arguments.
+        applyResultTo: default None, if a UML object is given, then
+        perform the same operations to it as are applied to the calling
+        object. However, if a statistical method is specified as subtract
+        or divide, then	concrete values are first calculated only from
+        querying the calling object, and the operation is performed on
+        applyResultTo using the results; as if a UML object was given
+        for the subtract or divide arguments.
 
-		subtract: what should be subtracted from data. May be a fixed
-		numerical value, a string defining a statistical function (all of
-		the same ones callable though pointStatistics), or a UML data
-		object. If a vector shaped object is given, then the value
-		associated with each point will be subtracted from all values of
-		that point. Otherwise, the values in the object are used for
-		elementwise subtraction. Default None - equivalent to subtracting
-		0.
+        subtract: what should be subtracted from data. May be a fixed
+        numerical value, a string defining a statistical function (all of
+        the same ones callable though pointStatistics), or a UML data
+        object. If a vector shaped object is given, then the value
+        associated with each point will be subtracted from all values of
+        that point. Otherwise, the values in the object are used for
+        elementwise subtraction. Default None - equivalent to subtracting
+        0.
 
-		divide: defines the denominator for dividing the data. May be a
-		fixed numerical value, a string defining a statistical function
-		(all of the same ones callable though pointStatistics), or a UML
-		data object. If a vector shaped object is given, then the value
-		associated with each point will be used in division of all values
-		for that point. Otherwise, the values in the object are used for
-		elementwise division. Default None - equivalent to dividing by
-		1.
+        divide: defines the denominator for dividing the data. May be a
+        fixed numerical value, a string defining a statistical function
+        (all of the same ones callable though pointStatistics), or a UML
+        data object. If a vector shaped object is given, then the value
+        associated with each point will be used in division of all values
+        for that point. Otherwise, the values in the object are used for
+        elementwise division. Default None - equivalent to dividing by
+        1.
 
-		Returns None while having affected the data of the calling
-		object and applyResultTo (if non-None).
+        Returns None while having affected the data of the calling
+        object and applyResultTo (if non-None).
 
-		"""
+        """
         self._normalizeGeneric("point", subtract, divide, applyResultTo)
 
     def normalizeFeatures(self, subtract=None, divide=None, applyResultTo=None):
         """
-		Modify all features in this object according to the given
-		operations.
+        Modify all features in this object according to the given
+        operations.
 
-		applyResultTo: default None, if a UML object is given, then
-		perform the same operations to it as are applied to the calling
-		object. However, if a statistical method is specified as subtract
-		or divide, then	concrete values are first calculated only from
-		querying the calling object, and the operation is performed on
-		applyResultTo using the results; as if a UML object was given
-		for the subtract or divide arguments.
+        applyResultTo: default None, if a UML object is given, then
+        perform the same operations to it as are applied to the calling
+        object. However, if a statistical method is specified as subtract
+        or divide, then	concrete values are first calculated only from
+        querying the calling object, and the operation is performed on
+        applyResultTo using the results; as if a UML object was given
+        for the subtract or divide arguments.
 
-		subtract: what should be subtracted from data. May be a fixed
-		numerical value, a string defining a statistical function (all of
-		the same ones callable though featureStatistics), or a UML data
-		object. If a vector shaped object is given, then the value
-		associated with each feature will be subtracted from all values of
-		that feature. Otherwise, the values in the object are used for
-		elementwise subtraction. Default None - equivalent to subtracting
-		0.
+        subtract: what should be subtracted from data. May be a fixed
+        numerical value, a string defining a statistical function (all of
+        the same ones callable though featureStatistics), or a UML data
+        object. If a vector shaped object is given, then the value
+        associated with each feature will be subtracted from all values of
+        that feature. Otherwise, the values in the object are used for
+        elementwise subtraction. Default None - equivalent to subtracting
+        0.
 
-		divide: defines the denominator for dividing the data. May be a
-		fixed numerical value, a string defining a statistical function
-		(all of the same ones callable though featureStatistics), or a UML
-		data object. If a vector shaped object is given, then the value
-		associated with each feature will be used in division of all values
-		for that feature. Otherwise, the values in the object are used for
-		elementwise division. Default None - equivalent to dividing by
-		1.
+        divide: defines the denominator for dividing the data. May be a
+        fixed numerical value, a string defining a statistical function
+        (all of the same ones callable though featureStatistics), or a UML
+        data object. If a vector shaped object is given, then the value
+        associated with each feature will be used in division of all values
+        for that feature. Otherwise, the values in the object are used for
+        elementwise division. Default None - equivalent to dividing by
+        1.
 
-		Returns None while having affected the data of the calling
-		object and applyResultTo (if non-None).
+        Returns None while having affected the data of the calling
+        object and applyResultTo (if non-None).
 
-		"""
+        """
         self._normalizeGeneric("feature", subtract, divide, applyResultTo)
 
     def _normalizeGeneric(self, axis, subtract, divide, applyResultTo):
@@ -1173,12 +1173,12 @@ class Base(object):
 
         def checkAlsoShape(caller, also, objIn, axis):
             """
-			Raises an exception if the normalized axis shape doesn't match the
-			calling object, or if when subtract of divide takes an object, also
-			doesn't match the shape of the caller (this is to be called after)
-			the check that the caller's shape matches that of the subtract or
-			divide argument.
-			"""
+            Raises an exception if the normalized axis shape doesn't match the
+            calling object, or if when subtract of divide takes an object, also
+            doesn't match the shape of the caller (this is to be called after)
+            the check that the caller's shape matches that of the subtract or
+            divide argument.
+            """
             offAxis = 'feature' if axis == 'point' else 'point'
             callerP = caller.points
             callerF = caller.features
@@ -1307,19 +1307,19 @@ class Base(object):
 
     def featureReport(self, maxFeaturesToCover=50, displayDigits=2):
         """
-		Produce a report, in a string formatted as a table, containing summary and statistical
-		information about each feature in the data set, up to 50 features.  If there are more
-		than 50 features, only information about 50 of those features will be reported.
-		"""
+        Produce a report, in a string formatted as a table, containing summary and statistical
+        information about each feature in the data set, up to 50 features.  If there are more
+        than 50 features, only information about 50 of those features will be reported.
+        """
         return produceFeaturewiseReport(self, maxFeaturesToCover=maxFeaturesToCover, displayDigits=displayDigits)
 
     def summaryReport(self, displayDigits=2):
         """
-		Produce a report, in a string formatted as a table, containing summary 
-		information about the data set contained in this object.  Includes 
-		proportion of missing values, proportion of zero values, total # of points,
-		and number of features.
-		"""
+        Produce a report, in a string formatted as a table, containing summary 
+        information about the data set contained in this object.  Includes 
+        proportion of missing values, proportion of zero values, total # of points,
+        and number of features.
+        """
         return produceAggregateReport(self, displayDigits=displayDigits)
 
 
@@ -1406,10 +1406,10 @@ class Base(object):
 
     def getTypeString(self):
         """
-			Return a string representing the non-abstract type of this object (e.g. Matrix,
-			Sparse, etc.) that can be passed to createData() function to create a new object
-			of the same type.
-		"""
+        Return a string representing the non-abstract type of this object (e.g. Matrix,
+        Sparse, etc.) that can be passed to createData() function to create a new object
+        of the same type.
+        """
         return self._getTypeString_implementation()
 
     def _processSingleX(self, x):
@@ -1565,11 +1565,11 @@ class Base(object):
 
     def pointView(self, ID):
         """
-		Returns a View object into the data of the point with the given ID. See View object
-		comments for its capabilities. This View is only valid until the next modification
-		to the shape or ordering of the internal data. After such a modification, there is
-		no guarantee to the validity of the results.
-		"""
+        Returns a View object into the data of the point with the given ID. See View object
+        comments for its capabilities. This View is only valid until the next modification
+        to the shape or ordering of the internal data. After such a modification, there is
+        no guarantee to the validity of the results.
+        """
         if self.points == 0:
             raise ImproperActionException("ID is invalid, This object contains no points")
 
@@ -1578,11 +1578,11 @@ class Base(object):
 
     def featureView(self, ID):
         """
-		Returns a View object into the data of the point with the given ID. See View object
-		comments for its capabilities. This View is only valid until the next modification
-		to the shape or ordering of the internal data. After such a modification, there is
-		no guarantee to the validity of the results.
-		"""
+        Returns a View object into the data of the point with the given ID. See View object
+        comments for its capabilities. This View is only valid until the next modification
+        to the shape or ordering of the internal data. After such a modification, there is
+        no guarantee to the validity of the results.
+        """
         if self.features == 0:
             raise ImproperActionException("ID is invalid, This object contains no features")
 
@@ -1592,36 +1592,36 @@ class Base(object):
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
         """
-		Factory function to create a read only view into the calling data
-		object. Views may only be constructed from contiguous, in-order
-		points and features whose overlap defines a window into the data.
-		The returned View object is part of UML's datatypes hiearchy, and
-		will have access to all of the same methods as anything that
-		inherits from UML.data.Base; though only those that do not modify
-		the data can be called without an exception being raised. The
-		returned view will also reflect any subsequent changes made to the
-		original object. This is the only accepted method for a user to
-		construct a View object (it should never be done directly), though
-		view objects may be provided to the user, for example via user
-		defined functions passed to extractPoints or calculateForEachFeature.
+        Factory function to create a read only view into the calling data
+        object. Views may only be constructed from contiguous, in-order
+        points and features whose overlap defines a window into the data.
+        The returned View object is part of UML's datatypes hiearchy, and
+        will have access to all of the same methods as anything that
+        inherits from UML.data.Base; though only those that do not modify
+        the data can be called without an exception being raised. The
+        returned view will also reflect any subsequent changes made to the
+        original object. This is the only accepted method for a user to
+        construct a View object (it should never be done directly), though
+        view objects may be provided to the user, for example via user
+        defined functions passed to extractPoints or calculateForEachFeature.
 
-		pointStart: the inclusive index of the first point to be accessible
-		in the returned view. Is None by default, meaning to include from
-		the beginning of the object.
+        pointStart: the inclusive index of the first point to be accessible
+        in the returned view. Is None by default, meaning to include from
+        the beginning of the object.
 
-		pointEnd: the inclusive index of the last point to be accessible in
-		the returned view. Is None by default, meaning to include up to the
-		end of the object.
+        pointEnd: the inclusive index of the last point to be accessible in
+        the returned view. Is None by default, meaning to include up to the
+        end of the object.
 
-		featureStart: the inclusive index of the first feature to be
-		accessible in the returned view. Is None by default, meaning to
-		include from the beginning of the object.
+        featureStart: the inclusive index of the first feature to be
+        accessible in the returned view. Is None by default, meaning to
+        include from the beginning of the object.
 
-		featureEnd: the inclusive index of the last feature to be accessible in
-		the returned view. Is None by default, meaning to include up to the
-		end of the object.
+        featureEnd: the inclusive index of the last feature to be accessible in
+        the returned view. Is None by default, meaning to include up to the
+        end of the object.
 
-		"""
+        """
         # transform defaults to mean take as much data as possible,
         # transform end values to be EXCLUSIVE
         if pointStart is None:
@@ -1659,10 +1659,10 @@ class Base(object):
 
     def validate(self, level=1):
         """
-		Checks the integrity of the data with respect to the limitations and invariants
-		that our objects enforce.
+        Checks the integrity of the data with respect to the limitations and invariants
+        that our objects enforce.
 
-		"""
+        """
         assert self.features == len(self.getFeatureNames())
         assert self.points == len(self.getPointNames())
 
@@ -1677,10 +1677,10 @@ class Base(object):
 
     def containsZero(self):
         """
-		Returns True if there is a value that is equal to integer 0 contained
-		in this object. False otherwise
+        Returns True if there is a value that is equal to integer 0 contained
+        in this object. False otherwise
 
-		"""
+        """
         # trivially False.
         if self.points == 0 or self.features == 0:
             return False
@@ -1852,35 +1852,35 @@ class Base(object):
     def show(self, description, includeObjectName=True, includeAxisNames=True, maxWidth=120,
              maxHeight=30, sigDigits=3, maxColumnWidth=19):
         """Method to simplify printing a representation of this data object,
-		with some context. The backend is the toString() method, and this
-		method includes control over all of the same functionality via
-		arguments. Prior to the names and data, it additionally prints a
-		description provided by the user, (optionally) this object's name
-		attribute, and the number of points and features that are in the
-		data.
+        with some context. The backend is the toString() method, and this
+        method includes control over all of the same functionality via
+        arguments. Prior to the names and data, it additionally prints a
+        description provided by the user, (optionally) this object's name
+        attribute, and the number of points and features that are in the
+        data.
 
-		description: Unless None, this is printed as-is before the rest of
-		the output.
+        description: Unless None, this is printed as-is before the rest of
+        the output.
 
-		includeObjectName: if True, the object's name attribute will be
-		printed.
+        includeObjectName: if True, the object's name attribute will be
+        printed.
 
-		includeAxisNames: if True, the point and feature names will be
-		printed.
+        includeAxisNames: if True, the point and feature names will be
+        printed.
 
-		maxWidth: a bound on the maximum number of characters printed on
-		each line of the output.
+        maxWidth: a bound on the maximum number of characters printed on
+        each line of the output.
 
-		maxHeight: a bound on the maximum number of lines printed in the
-		outout.
+        maxHeight: a bound on the maximum number of lines printed in the
+        outout.
 
-		sigDigits: the number of decimal places to show when printing
-		float valued data.
+        sigDigits: the number of decimal places to show when printing
+        float valued data.
 
-		nameLength: a bound on the maximum number of characters we allow
-		for each point or feature name.
+        nameLength: a bound on the maximum number of characters we allow
+        for each point or feature name.
 
-		"""
+        """
         if description is not None:
             print(description)
 
@@ -1939,21 +1939,21 @@ class Base(object):
 
     def plotPointDistribution(self, point, outPath=None, xMin=None, xMax=None):
         """Plot a histogram of the distribution of values in the specified
-		point. Along the x axis of the plot will be the values seen in
-		the point, grouped into bins; along the y axis will be the number
-		of values in each bin. Bin width is calculated using
-		Freedman-Diaconis' rule. Control over the width of the x axis
-		is also given, with the warning that user specified values
-		can obscure data that would otherwise be plotted given default
-		inputs.
+        point. Along the x axis of the plot will be the values seen in
+        the point, grouped into bins; along the y axis will be the number
+        of values in each bin. Bin width is calculated using
+        Freedman-Diaconis' rule. Control over the width of the x axis
+        is also given, with the warning that user specified values
+        can obscure data that would otherwise be plotted given default
+        inputs.
 
-		point: the identifier (index of name) of the point to show
+        point: the identifier (index of name) of the point to show
 
-		xMin: the least value shown on the x axis of the resultant plot.
+        xMin: the least value shown on the x axis of the resultant plot.
 
-		xMax: the largest value shown on the x axis of teh resultant plot
-		
-		"""
+        xMax: the largest value shown on the x axis of teh resultant plot
+
+        """
         self._plotPointDistribution(point, outPath, xMin, xMax)
 
     def _plotPointDistribution(self, point, outPath, xMin=None, xMax=None):
@@ -1962,21 +1962,21 @@ class Base(object):
 
     def plotFeatureDistribution(self, feature, outPath=None, xMin=None, xMax=None):
         """Plot a histogram of the distribution of values in the specified
-		Feature. Along the x axis of the plot will be the values seen in
-		the feature, grouped into bins; along the y axis will be the number
-		of values in each bin. Bin width is calculated using
-		Freedman-Diaconis' rule. Control over the width of the x axis
-		is also given, with the warning that user specified values
-		can obscure data that would otherwise be plotted given default
-		inputs.
+        Feature. Along the x axis of the plot will be the values seen in
+        the feature, grouped into bins; along the y axis will be the number
+        of values in each bin. Bin width is calculated using
+        Freedman-Diaconis' rule. Control over the width of the x axis
+        is also given, with the warning that user specified values
+        can obscure data that would otherwise be plotted given default
+        inputs.
 
-		feature: the identifier (index of name) of the feature to show
+        feature: the identifier (index of name) of the feature to show
 
-		xMin: the least value shown on the x axis of the resultant plot.
+        xMin: the least value shown on the x axis of the resultant plot.
 
-		xMax: the largest value shown on the x axis of teh resultant plot
-		
-		"""
+        xMax: the largest value shown on the x axis of teh resultant plot
+
+        """
         self._plotFeatureDistribution(feature, outPath, xMin, xMax)
 
     def _plotFeatureDistribution(self, feature, outPath=None, xMin=None, xMax=None):
@@ -2038,26 +2038,26 @@ class Base(object):
     def plotPointAgainstPoint(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
                               yMax=None):
         """Plot a scatter plot of the two input points using the pairwise
-		combination of their values as coordinates. Control over the width
-		of the both axes is given, with the warning that user specified
-		values can obscure data that would otherwise be plotted given default
-		inputs.
+        combination of their values as coordinates. Control over the width
+        of the both axes is given, with the warning that user specified
+        values can obscure data that would otherwise be plotted given default
+        inputs.
 
-		x: the identifier (index of name) of the point from which we
-		draw x-axis coordinates
+        x: the identifier (index of name) of the point from which we
+        draw x-axis coordinates
 
-		y: the identifier (index of name) of the point from which we
-		draw y-axis coordinates
+        y: the identifier (index of name) of the point from which we
+        draw y-axis coordinates
 
-		xMin: the least value shown on the x axis of the resultant plot.
+        xMin: the least value shown on the x axis of the resultant plot.
 
-		xMax: the largest value shown on the x axis of teh resultant plot
+        xMax: the largest value shown on the x axis of teh resultant plot
 
-		yMin: the least value shown on the y axis of the resultant plot.
+        yMin: the least value shown on the y axis of the resultant plot.
 
-		yMax: the largest value shown on the y axis of teh resultant plot
-		
-		"""
+        yMax: the largest value shown on the y axis of teh resultant plot
+
+        """
         self._plotPointAgainstPoint(x, y, outPath, xMin, xMax, yMin, yMax)
 
     def _plotPointAgainstPoint(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
@@ -2073,26 +2073,26 @@ class Base(object):
     def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
                                   yMax=None):
         """Plot a scatter plot of the two input features using the pairwise
-		combination of their values as coordinates. Control over the width
-		of the both axes is given, with the warning that user specified
-		values can obscure data that would otherwise be plotted given default
-		inputs.
+        combination of their values as coordinates. Control over the width
+        of the both axes is given, with the warning that user specified
+        values can obscure data that would otherwise be plotted given default
+        inputs.
 
-		x: the identifier (index of name) of the feature from which we
-		draw x-axis coordinates
+        x: the identifier (index of name) of the feature from which we
+        draw x-axis coordinates
 
-		y: the identifier (index of name) of the feature from which we
-		draw y-axis coordinates
+        y: the identifier (index of name) of the feature from which we
+        draw y-axis coordinates
 
-		xMin: the least value shown on the x axis of the resultant plot.
+        xMin: the least value shown on the x axis of the resultant plot.
 
-		xMax: the largest value shown on the x axis of the resultant plot
+        xMax: the largest value shown on the x axis of the resultant plot
 
-		yMin: the least value shown on the y axis of the resultant plot.
+        yMin: the least value shown on the y axis of the resultant plot.
 
-		yMax: the largest value shown on the y axis of the resultant plot
-		
-		"""
+        yMax: the largest value shown on the y axis of the resultant plot
+
+        """
         self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax)
 
     def _plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
@@ -2181,14 +2181,14 @@ class Base(object):
 
     def nonZeroIterator(self):
         """
-		Returns an iterator for all non-zero elements contained in this
-		object so long as this object is empty or vector shaped. In these
-		cases the order returned by nonZeroIteratorPointGrouped and
-		nonZeroIteratorFeatureGrouped would be the same, making this method
-		a helpful shorthand. If the object is not empty or vector shaped,
-		an ImproperActionException is raised.
+        Returns an iterator for all non-zero elements contained in this
+        object so long as this object is empty or vector shaped. In these
+        cases the order returned by nonZeroIteratorPointGrouped and
+        nonZeroIteratorFeatureGrouped would be the same, making this method
+        a helpful shorthand. If the object is not empty or vector shaped,
+        an ImproperActionException is raised.
 
-		"""
+        """
 
         class EmptyIt(object):
             def __iter__(self):
@@ -2217,22 +2217,22 @@ class Base(object):
 
     def nonZeroIteratorPointGrouped(self):
         """
-		Returns an iterator for all non-zero elements contained in this
-		object, where the values in the same point will be contiguous,
-		with the earlier indexed points coming before the later indexed
-		points
+        Returns an iterator for all non-zero elements contained in this
+        object, where the values in the same point will be contiguous,
+        with the earlier indexed points coming before the later indexed
+        points
 
-		"""
+        """
         return self._nonZeroIteratorPointGrouped_implementation()
 
     def nonZeroIteratorFeatureGrouped(self):
         """
-		Returns an iterator for all non-zero elements contained in this
-		object, where the values in the same feature will be contiguous,
-		with the earlier indexed features coming before the later indexed
-		features
+        Returns an iterator for all non-zero elements contained in this
+        object, where the values in the same feature will be contiguous,
+        with the earlier indexed features coming before the later indexed
+        features
 
-		"""
+        """
         return self._nonZeroIteratorFeatureGrouped_implementation()
 
     ##################################################################
@@ -2244,10 +2244,10 @@ class Base(object):
 
     def transpose(self):
         """
-		Function to transpose the data, ie invert the feature and point indices of the data.
-		The point and feature names are also swapped. None is always returned.
+        Function to transpose the data, ie invert the feature and point indices of the data.
+        The point and feature names are also swapped. None is always returned.
 
-		"""
+        """
         self._transpose_implementation()
 
         self._pointCount, self._featureCount = self._featureCount, self._pointCount
@@ -2260,22 +2260,22 @@ class Base(object):
 
     def appendPoints(self, toAppend):
         """
-		Expand this object by appending the points from the toAppend object
-		after the points currently in this object, merging together their
-		features. The features in toAppend do not need to be in the same
-		order as in the calling object; the data will automatically be
-		placed using the calling object's feature order if there is an
-		unambiguous mapping. toAppend will be unaffected by calling this
-		method.
+        Expand this object by appending the points from the toAppend object
+        after the points currently in this object, merging together their
+        features. The features in toAppend do not need to be in the same
+        order as in the calling object; the data will automatically be
+        placed using the calling object's feature order if there is an
+        unambiguous mapping. toAppend will be unaffected by calling this
+        method.
 
-		toAppend - the UML data object whose contents we will be including
-		in this object. Must be the same type as the calling object. Must
-		have the same number of features as the calling object. Must not
-		share any point names with the calling object. Must have
-		the same feature names as the calling object, but not necessary
-		in the same order.
-		
-		"""
+        toAppend - the UML data object whose contents we will be including
+        in this object. Must be the same type as the calling object. Must
+        have the same number of features as the calling object. Must not
+        share any point names with the calling object. Must have
+        the same feature names as the calling object, but not necessary
+        in the same order.
+
+        """
         self._validateValueIsNotNone("toAppend", toAppend)
         self._validateValueIsUMLDataObject("toAppend", toAppend, True)
         self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
@@ -2309,22 +2309,22 @@ class Base(object):
 
     def appendFeatures(self, toAppend):
         """
-		Expand this object by appending the features from the toAppend object
-		after the features currently in this object, merging together their
-		points. The points in toAppend do not need to be in the same
-		order as in the calling object; the data will automatically be
-		placed using the calling object's point order if there is an
-		unambiguous mapping. toAppend will be unaffected by calling this
-		method.
+        Expand this object by appending the features from the toAppend object
+        after the features currently in this object, merging together their
+        points. The points in toAppend do not need to be in the same
+        order as in the calling object; the data will automatically be
+        placed using the calling object's point order if there is an
+        unambiguous mapping. toAppend will be unaffected by calling this
+        method.
 
-		toAppend - the UML data object whose contents we will be including
-		in this object. Must be the same type as the calling object. Must
-		have the same number of points as the calling object. Must not
-		share any feature names with the calling object. Must have
-		the same point names as the calling object, but not necessary
-		in the same order.
-		
-		"""
+        toAppend - the UML data object whose contents we will be including
+        in this object. Must be the same type as the calling object. Must
+        have the same number of points as the calling object. Must not
+        share any feature names with the calling object. Must have
+        the same point names as the calling object, but not necessary
+        in the same order.
+
+        """
         self._validateValueIsNotNone("toAppend", toAppend)
         self._validateValueIsUMLDataObject("toAppend", toAppend, True)
         self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
@@ -2391,11 +2391,11 @@ class Base(object):
 
     def sortPoints(self, sortBy=None, sortHelper=None):
         """ 
-		Modify this object so that the points are sorted in place, where sortBy may
-		indicate the feature to sort by or None if the entire point is to be taken as a key,
-		sortHelper may either be comparator, a scoring function, or None to indicate the natural
-		ordering. None is always returned.
-		"""
+        Modify this object so that the points are sorted in place, where sortBy may
+        indicate the feature to sort by or None if the entire point is to be taken as a key,
+        sortHelper may either be comparator, a scoring function, or None to indicate the natural
+        ordering. None is always returned.
+        """
         # its already sorted in these cases
         if self.features == 0 or self.points == 0 or self.points == 1:
             return
@@ -2414,12 +2414,12 @@ class Base(object):
 
     def sortFeatures(self, sortBy=None, sortHelper=None):
         """ 
-		Modify this object so that the features are sorted in place, where sortBy may
-		indicate the feature to sort by or None if the entire point is to be taken as a key,
-		sortHelper may either be comparator, a scoring function, or None to indicate the natural
-		ordering.  None is always returned.
+        Modify this object so that the features are sorted in place, where sortBy may
+        indicate the feature to sort by or None if the entire point is to be taken as a key,
+        sortHelper may either be comparator, a scoring function, or None to indicate the natural
+        ordering.  None is always returned.
 
-		"""
+        """
         # its already sorted in these cases
         if self.features == 0 or self.points == 0 or self.features == 1:
             return
@@ -2439,20 +2439,20 @@ class Base(object):
 
     def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
         """
-		Modify this object, removing those points that are specified by the input, and returning
-		an object containing those removed points.
+        Modify this object, removing those points that are specified by the input, and returning
+        an object containing those removed points.
 
-		toExtract may be a single identifier, a list of identifiers, or a function that when
-		given a point will return True if it is to be removed. number is the quantity of points that
-		we are to be extracted, the default None means unlimited extraction. start and end are
-		parameters indicating range based extraction: if range based extraction is employed,
-		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.points respectably. randomize indicates whether random
-		sampling is to be used in conjunction with the number parameter, if randomize is False,
-		the chosen points are determined by point order, otherwise it is uniform random across the
-		space of possible removals.
+        toExtract may be a single identifier, a list of identifiers, or a function that when
+        given a point will return True if it is to be removed. number is the quantity of points that
+        we are to be extracted, the default None means unlimited extraction. start and end are
+        parameters indicating range based extraction: if range based extraction is employed,
+        toExtract must be None, and vice versa. If only one of start and end are non-None, the
+        other defaults to 0 and self.points respectably. randomize indicates whether random
+        sampling is to be used in conjunction with the number parameter, if randomize is False,
+        the chosen points are determined by point order, otherwise it is uniform random across the
+        space of possible removals.
 
-		"""
+        """
         ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, toExtract, start, end,
                                               number, randomize, 'toExtract')
 
@@ -2470,22 +2470,22 @@ class Base(object):
 
     def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
         """
-		Modify this object, removing those features that are specified by the input, and returning
-		an object containing those removed features. This particular function only does argument
-		checking and modifying the featureNames for this object. It is the job of helper functions in
-		the derived class to perform the removal and assign featureNames for the returned object.
+        Modify this object, removing those features that are specified by the input, and returning
+        an object containing those removed features. This particular function only does argument
+        checking and modifying the featureNames for this object. It is the job of helper functions in
+        the derived class to perform the removal and assign featureNames for the returned object.
 
-		toExtract may be a single identifier, a list of identifiers, or a function that when
-		given a feature will return True if it is to be removed. number is the quantity of features that
-		are to be extracted, the default None means unlimited extraction. start and end are
-		parameters indicating range based extraction: if range based extraction is employed,
-		toExtract must be None, and vice versa. If only one of start and end are non-None, the
-		other defaults to 0 and self.features respectably. randomize indicates whether random
-		sampling is to be used in conjunction with the number parameter, if randomize is False,
-		the chosen features are determined by feature order, otherwise it is uniform random across the
-		space of possible removals.
+        toExtract may be a single identifier, a list of identifiers, or a function that when
+        given a feature will return True if it is to be removed. number is the quantity of features that
+        are to be extracted, the default None means unlimited extraction. start and end are
+        parameters indicating range based extraction: if range based extraction is employed,
+        toExtract must be None, and vice versa. If only one of start and end are non-None, the
+        other defaults to 0 and self.features respectably. randomize indicates whether random
+        sampling is to be used in conjunction with the number parameter, if randomize is False,
+        the chosen features are determined by feature order, otherwise it is uniform random across the
+        space of possible removals.
 
-		"""
+        """
         ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, start, end,
                                               number, randomize, 'toExtract')
 
@@ -2529,13 +2529,13 @@ class Base(object):
 
     def referenceDataFrom(self, other):
         """
-		Modifies the internal data of this object to refer to the same data as other. In other
-		words, the data wrapped by both the self and other objects resides in the
-		same place in memory. Other must be an object of the same type as
-		the calling object. Also, the shape of other should be consistent with the set
-		of featureNames currently in this object. None is always returned.
+        Modifies the internal data of this object to refer to the same data as other. In other
+        words, the data wrapped by both the self and other objects resides in the
+        same place in memory. Other must be an object of the same type as
+        the calling object. Also, the shape of other should be consistent with the set
+        of featureNames currently in this object. None is always returned.
 
-		"""
+        """
         # this is called first because it checks the data type
         self._referenceDataFrom_implementation(other)
         self.pointNames = other.pointNames
@@ -2557,14 +2557,14 @@ class Base(object):
 
     def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
         """
-		Return a new object which has the same data (and featureNames, depending on
-		the return type) as this object. To return a specific kind of UML data
-		object, one may specify the format parameter to be 'List', 'Matrix', or
-		'Sparse'. To specify a raw return type (which will not include feature names),
-		one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr'
-		or 'scypy csc'.
+        Return a new object which has the same data (and featureNames, depending on
+        the return type) as this object. To return a specific kind of UML data
+        object, one may specify the format parameter to be 'List', 'Matrix', or
+        'Sparse'. To specify a raw return type (which will not include feature names),
+        one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr'
+        or 'scypy csc'.
 
-		"""
+        """
         #make lower case, strip out all white space and periods, except if format
         # is one of the accepted UML data types
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2627,10 +2627,10 @@ class Base(object):
 
     def copyPoints(self, points=None, start=None, end=None):
         """
-		Return a new object which consists only of those specified points, without mutating
-		the calling object object.
-		
-		"""
+        Return a new object which consists only of those specified points, without mutating
+        the calling object object.
+
+        """
         if isinstance(points, (int, six.string_types)):
             points = [points]
         if self.points == 0:
@@ -2679,10 +2679,10 @@ class Base(object):
 
     def copyFeatures(self, features=None, start=None, end=None):
         """
-		Return a new object which consists only of those specified features, without mutating
-		this object.
-		
-		"""
+        Return a new object which consists only of those specified features, without mutating
+        this object.
+
+        """
         if isinstance(features, six.string_types) or isinstance(features, int):
             features = [features]
         if self.features == 0:
@@ -2731,15 +2731,15 @@ class Base(object):
 
     def transformEachPoint(self, function, points=None):
         """
-		Modifies this object to contain the results of the given function
-		calculated on the specified points in this object.
+        Modifies this object to contain the results of the given function
+        calculated on the specified points in this object.
 
-		function must not be none and accept the view of a point as an argument
+        function must not be none and accept the view of a point as an argument
 
-		points may be None to indicate application to all points, a single point
-		ID or a list of point IDs to limit application only to those specified.
+        points may be None to indicate application to all points, a single point
+        ID or a list of point IDs to limit application only to those specified.
 
-		"""
+        """
         if self.points == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
         if self.features == 0:
@@ -2765,16 +2765,16 @@ class Base(object):
 
     def transformEachFeature(self, function, features=None):
         """
-		Modifies this object to contain the results of the given function
-		calculated on the specified features in this object.
+        Modifies this object to contain the results of the given function
+        calculated on the specified features in this object.
 
-		function must not be none and accept the view of a feature as an argument
+        function must not be none and accept the view of a feature as an argument
 
-		features may be None to indicate application to all features, a single
-		feature ID or a list of feature IDs to limit application only to those
-		specified.
+        features may be None to indicate application to all features, a single
+        feature ID or a list of feature IDs to limit application only to those
+        specified.
 
-		"""
+        """
         if self.points == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
         if self.features == 0:
@@ -2801,22 +2801,22 @@ class Base(object):
     def transformEachElement(self, function, points=None, features=None, preserveZeros=False,
                              skipNoneReturnValues=False):
         """
-		Modifies this object to contain the results of calling function(elementValue)
-		or function(elementValue, pointNum, featureNum) for each element. 
+        Modifies this object to contain the results of calling function(elementValue)
+        or function(elementValue, pointNum, featureNum) for each element. 
 
-		points: Limit to only elements of the specified points; may be None for
-		all points, a single ID, or a list of IDs.
+        points: Limit to only elements of the specified points; may be None for
+        all points, a single ID, or a list of IDs.
 
-		features: Limit to only elements of the specified features; may be None for
-		all features, a single ID, or a list of IDs.
+        features: Limit to only elements of the specified features; may be None for
+        all features, a single ID, or a list of IDs.
 
-		preserveZeros: If True it does not apply the function to elements in
-		the data that are 0, and that 0 is not modified.
+        preserveZeros: If True it does not apply the function to elements in
+        the data that are 0, and that 0 is not modified.
 
-		skipNoneReturnValues: If True, any time function() returns None, the
-		value originally in the data will remain unmodified.
+        skipNoneReturnValues: If True, any time function() returns None, the
+        value originally in the data will remain unmodified.
 
-		"""
+        """
         if points is not None and not isinstance(points, list):
             if not isinstance(points, (int, six.string_types)):
                 raise ArgumentException(
@@ -2846,25 +2846,25 @@ class Base(object):
 
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
         """
-		Revise the contents of the calling object so that it contains the provided
-		values in the given location.
+        Revise the contents of the calling object so that it contains the provided
+        values in the given location.
 
-		values - Either a constant value or a UML object whose size is consistent
-		with the given start and end indices.
+        values - Either a constant value or a UML object whose size is consistent
+        with the given start and end indices.
 
-		pointStart - the inclusive ID of the first point in the calling object
-		whose contents will be modified.
+        pointStart - the inclusive ID of the first point in the calling object
+        whose contents will be modified.
 
-		featureStart - the inclusive ID of the first feature in the calling object
-		whose contents will be modified.
+        featureStart - the inclusive ID of the first feature in the calling object
+        whose contents will be modified.
 
-		pointEnd - the inclusive ID of the last point in the calling object
-		whose contents will be modified.
+        pointEnd - the inclusive ID of the last point in the calling object
+        whose contents will be modified.
 
-		featureEnd - the inclusive ID of the last feature in the calling object
-		whose contents will be modified.
+        featureEnd - the inclusive ID of the last feature in the calling object
+        whose contents will be modified.
 
-		"""
+        """
         psIndex = self._getPointIndex(pointStart)
         peIndex = self._getPointIndex(pointEnd)
         fsIndex = self._getFeatureIndex(featureStart)
@@ -3242,13 +3242,13 @@ class Base(object):
 
     def elementwiseMultiply(self, other):
         """
-		Perform element wise multiplication of this UML data object against the
-		provided other UML data object, with the result being stored in-place in
-		the calling object. Both objects must contain only numeric data. The
-		pointCount and featureCount of both objects must be equal. The types of
-		the two objects may be different. None is always returned.
+        Perform element wise multiplication of this UML data object against the
+        provided other UML data object, with the result being stored in-place in
+        the calling object. Both objects must contain only numeric data. The
+        pointCount and featureCount of both objects must be equal. The types of
+        the two objects may be different. None is always returned.
 
-		"""
+        """
         if not isinstance(other, UML.data.Base):
             raise ArgumentException("'other' must be an instance of a UML data object")
         # Test element type self
@@ -3325,10 +3325,10 @@ class Base(object):
 
     def __mul__(self, other):
         """
-		Perform matrix multiplication or scalar multiplication on this object depending on
-		the input 'other'
+        Perform matrix multiplication or scalar multiplication on this object depending on
+        the input 'other'
 
-		"""
+        """
         if not isinstance(other, UML.data.Base) and not dataHelpers._looksNumeric(other):
             return NotImplemented
 
@@ -3378,10 +3378,10 @@ class Base(object):
 
     def __imul__(self, other):
         """
-		Perform in place matrix multiplication or scalar multiplication, depending in the
-		input 'other'
+        Perform in place matrix multiplication or scalar multiplication, depending in the
+        input 'other'
 
-		"""
+        """
         ret = self.__mul__(other)
         if ret is not NotImplemented:
             self.referenceDataFrom(ret)
@@ -3391,11 +3391,11 @@ class Base(object):
 
     def __add__(self, other):
         """
-		Perform addition on this object, element wise if 'other' is a UML data
-		object, or element wise with a scalar if other is some kind of numeric
-		value.
+        Perform addition on this object, element wise if 'other' is a UML data
+        object, or element wise with a scalar if other is some kind of numeric
+        value.
 
-		"""
+        """
         return self._genericNumericBinary('__add__', other)
 
     def __radd__(self, other):
@@ -3404,150 +3404,150 @@ class Base(object):
 
     def __iadd__(self, other):
         """
-		Perform in-place addition on this object, element wise if 'other' is a UML data
-		object, or element wise with a scalar if other is some kind of numeric
-		value.
+        Perform in-place addition on this object, element wise if 'other' is a UML data
+        object, or element wise with a scalar if other is some kind of numeric
+        value.
 
-		"""
+        """
         return self._genericNumericBinary('__iadd__', other)
 
     def __sub__(self, other):
         """
-		Subtract from this object, element wise if 'other' is a UML data
-		object, or element wise by a scalar if other is some kind of numeric
-		value.
+        Subtract from this object, element wise if 'other' is a UML data
+        object, or element wise by a scalar if other is some kind of numeric
+        value.
 
-		"""
+        """
         return self._genericNumericBinary('__sub__', other)
 
     def __rsub__(self, other):
         """
-		Subtract each element of this object from the given scalar
+        Subtract each element of this object from the given scalar
 
-		"""
+        """
         return self._genericNumericBinary('__rsub__', other)
 
     def __isub__(self, other):
         """
-		Subtract (in place) from this object, element wise if 'other' is a UML data
-		object, or element wise with a scalar if other is some kind of numeric
-		value. 
+        Subtract (in place) from this object, element wise if 'other' is a UML data
+        object, or element wise with a scalar if other is some kind of numeric
+        value. 
 
-		"""
+        """
         return self._genericNumericBinary('__isub__', other)
 
     def __div__(self, other):
         """
-		Perform division using this object as the numerator, element wise if 'other'
-		is a UML data object, or element wise by a scalar if other is some kind of
-		numeric value.
+        Perform division using this object as the numerator, element wise if 'other'
+        is a UML data object, or element wise by a scalar if other is some kind of
+        numeric value.
 
-		"""
+        """
         return self._genericNumericBinary('__div__', other)
 
     def __rdiv__(self, other):
         """
-		Perform element wise division using this object as the denominator, and the
-		given scalar value as the numerator
+        Perform element wise division using this object as the denominator, and the
+        given scalar value as the numerator
 
-		"""
+        """
         return self._genericNumericBinary('__rdiv__', other)
 
     def __idiv__(self, other):
         """
-		Perform division (in place) using this object as the numerator, element
-		wise if 'other' is a UML data object, or element wise by a scalar if other
-		is some kind of numeric value.
+        Perform division (in place) using this object as the numerator, element
+        wise if 'other' is a UML data object, or element wise by a scalar if other
+        is some kind of numeric value.
 
-		"""
+        """
         return self._genericNumericBinary('__idiv__', other)
 
     def __truediv__(self, other):
         """
-		Perform true division using this object as the numerator, element wise
-		if 'other' is a UML data object, or element wise by a scalar if other is
-		some kind of numeric value.
+        Perform true division using this object as the numerator, element wise
+        if 'other' is a UML data object, or element wise by a scalar if other is
+        some kind of numeric value.
 
-		"""
+        """
         return self._genericNumericBinary('__truediv__', other)
 
     def __rtruediv__(self, other):
         """
-		Perform element wise true division using this object as the denominator,
-		and the given scalar value as the numerator
+        Perform element wise true division using this object as the denominator,
+        and the given scalar value as the numerator
 
-		"""
+        """
         return self._genericNumericBinary('__rtruediv__', other)
 
     def __itruediv__(self, other):
         """
-		Perform true division (in place) using this object as the numerator, element
-		wise if 'other' is a UML data object, or element wise by a scalar if other
-		is some kind of numeric value.
+        Perform true division (in place) using this object as the numerator, element
+        wise if 'other' is a UML data object, or element wise by a scalar if other
+        is some kind of numeric value.
 
-		"""
+        """
         return self._genericNumericBinary('__itruediv__', other)
 
     def __floordiv__(self, other):
         """
-		Perform floor division using this object as the numerator, element wise
-		if 'other' is a UML data object, or element wise by a scalar if other is
-		some kind of numeric value.
+        Perform floor division using this object as the numerator, element wise
+        if 'other' is a UML data object, or element wise by a scalar if other is
+        some kind of numeric value.
 
-		"""
+        """
         return self._genericNumericBinary('__floordiv__', other)
 
     def __rfloordiv__(self, other):
         """
-		Perform element wise floor division using this object as the denominator,
-		and the given scalar value as the numerator
+        Perform element wise floor division using this object as the denominator,
+        and the given scalar value as the numerator
 
-		"""
+        """
         return self._genericNumericBinary('__rfloordiv__', other)
 
     def __ifloordiv__(self, other):
         """
-		Perform floor division (in place) using this object as the numerator, element
-		wise if 'other' is a UML data object, or element wise by a scalar if other
-		is some kind of numeric value.
+        Perform floor division (in place) using this object as the numerator, element
+        wise if 'other' is a UML data object, or element wise by a scalar if other
+        is some kind of numeric value.
 
-		"""
+        """
         return self._genericNumericBinary('__ifloordiv__', other)
 
     def __mod__(self, other):
         """
-		Perform mod using the elements of this object as the dividends, element wise
-		if 'other' is a UML data object, or element wise by a scalar if other is
-		some kind of numeric value.
+        Perform mod using the elements of this object as the dividends, element wise
+        if 'other' is a UML data object, or element wise by a scalar if other is
+        some kind of numeric value.
 
-		"""
+        """
         return self._genericNumericBinary('__mod__', other)
 
     def __rmod__(self, other):
         """
-		Perform mod using the elements of this object as the divisors, and the
-		given scalar value as the dividend
+        Perform mod using the elements of this object as the divisors, and the
+        given scalar value as the dividend
 
-		"""
+        """
         return self._genericNumericBinary('__rmod__', other)
 
     def __imod__(self, other):
         """
-		Perform mod (in place) using the elements of this object as the dividends,
-		element wise if 'other' is a UML data object, or element wise by a scalar
-		if other is some kind of numeric value.
+        Perform mod (in place) using the elements of this object as the dividends,
+        element wise if 'other' is a UML data object, or element wise by a scalar
+        if other is some kind of numeric value.
 
-		"""
+        """
         return self._genericNumericBinary('__imod__', other)
 
     @to2args
     def __pow__(self, other, z):
         """
-		Perform exponentiation (iterated __mul__) using the elements of this object
-		as the bases, element wise if 'other' is a UML data object, or element wise
-		by a scalar if other is some kind of numeric value.
+        Perform exponentiation (iterated __mul__) using the elements of this object
+        as the bases, element wise if 'other' is a UML data object, or element wise
+        by a scalar if other is some kind of numeric value.
 
-		"""
+        """
         if self.points == 0 or self.features == 0:
             raise ImproperActionException("Cannot do ** when points or features is empty")
         if not dataHelpers._looksNumeric(other):
@@ -3602,12 +3602,12 @@ class Base(object):
 
     def __ipow__(self, other):
         """
-		Perform in-place exponentiation (iterated __mul__) using the elements
-		of this object as the bases, element wise if 'other' is a UML data
-		object, or element wise by a scalar if other is some kind of numeric
-		value.
+        Perform in-place exponentiation (iterated __mul__) using the elements
+        of this object as the bases, element wise if 'other' is a UML data
+        object, or element wise by a scalar if other is some kind of numeric
+        value.
 
-		"""
+        """
         ret = self.__pow__(other)
         self.referenceDataFrom(ret)
         return self
@@ -4046,11 +4046,11 @@ class Base(object):
 
     def _arrangeFeatureNames(self, maxWidth, nameLength, colSep, colHold, nameHold):
         """Prepare feature names for string output. Grab only those names that
-		fit according to the given width limitation, process them for length,
-		omit them if they are default. Returns a list of prepared names, and
-		a list of the length of each name in the return.
+        fit according to the given width limitation, process them for length,
+        omit them if they are default. Returns a list of prepared names, and
+        a list of the length of each name in the return.
 
-		"""
+        """
         colHoldWidth = len(colHold)
         colHoldTotal = len(colSep) + colHoldWidth
         nameCutIndex = nameLength - len(nameHold)
@@ -4118,11 +4118,11 @@ class Base(object):
 
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
         """Prepare point names for string output. Grab only those names that
-		fit according to the given row limitation, process them for length,
-		omit them if they are default. Returns a list of prepared names, and
-		a int bounding the length of each name representation.
+        fit according to the given row limitation, process them for length,
+        omit them if they are default. Returns a list of prepared names, and
+        a int bounding the length of each name representation.
 
-		"""
+        """
         names = []
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
@@ -4157,18 +4157,18 @@ class Base(object):
     def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits=3,
                                maxStrLength=19, colSep=' ', colHold='--', rowHold='|', strHold='...'):
         """
-		Arrange the data in this object into a table structure, while
-		respecting the given boundaries. If there is more data than
-		what fits within the limitations, then omit points or features
-		from the middle portions of the data.
+        Arrange the data in this object into a table structure, while
+        respecting the given boundaries. If there is more data than
+        what fits within the limitations, then omit points or features
+        from the middle portions of the data.
 
-		Returns a list of list of strings. The length of the outer list
-		is less than or equal to maxHeight. The length of the inner lists
-		will all be the same, a length we will designate as n. The sum of
-		the individual strings in each inner list will be less than or
-		equal to maxWidth - ((n-1) * len(colSep)). 
+        Returns a list of list of strings. The length of the outer list
+        is less than or equal to maxHeight. The length of the inner lists
+        will all be the same, a length we will designate as n. The sum of
+        the individual strings in each inner list will be less than or
+        equal to maxWidth - ((n-1) * len(colSep)). 
 
-		"""
+        """
         if self.points == 0 or self.features == 0:
             return [[]], []
 
@@ -4284,9 +4284,9 @@ class Base(object):
 
     def _pointNameDifference(self, other):
         """
-		Returns a set containing those pointNames in this object that are not also in the input object.
+        Returns a set containing those pointNames in this object that are not also in the input object.
 
-		"""
+        """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
@@ -4296,9 +4296,9 @@ class Base(object):
 
     def _featureNameDifference(self, other):
         """
-		Returns a set containing those featureNames in this object that are not also in the input object.
+        Returns a set containing those featureNames in this object that are not also in the input object.
 
-		"""
+        """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
@@ -4308,9 +4308,9 @@ class Base(object):
 
     def _pointNameIntersection(self, other):
         """
-		Returns a set containing only those pointNames that are shared by this object and the input object.
+        Returns a set containing only those pointNames that are shared by this object and the input object.
 
-		"""
+        """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
@@ -4320,9 +4320,9 @@ class Base(object):
 
     def _featureNameIntersection(self, other):
         """
-		Returns a set containing only those featureNames that are shared by this object and the input object.
+        Returns a set containing only those featureNames that are shared by this object and the input object.
 
-		"""
+        """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
@@ -4333,9 +4333,9 @@ class Base(object):
 
     def _pointNameSymmetricDifference(self, other):
         """
-		Returns a set containing only those pointNames not shared between this object and the input object.
+        Returns a set containing only those pointNames not shared between this object and the input object.
 
-		"""
+        """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
@@ -4345,9 +4345,9 @@ class Base(object):
 
     def _featureNameSymmetricDifference(self, other):
         """
-		Returns a set containing only those featureNames not shared between this object and the input object.
+        Returns a set containing only those featureNames not shared between this object and the input object.
 
-		"""
+        """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
@@ -4357,9 +4357,9 @@ class Base(object):
 
     def _pointNameUnion(self, other):
         """
-		Returns a set containing all pointNames in either this object or the input object.
+        Returns a set containing all pointNames in either this object or the input object.
 
-		"""
+        """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
@@ -4369,9 +4369,9 @@ class Base(object):
 
     def _featureNameUnion(self, other):
         """
-		Returns a set containing all featureNames in either this object or the input object.
+        Returns a set containing all featureNames in either this object or the input object.
 
-		"""
+        """
         if other is None:
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
@@ -4392,12 +4392,12 @@ class Base(object):
 
     def _equalNames(self, selfNames, otherNames):
         """Private function to determine equality of either pointNames of
-		featureNames. It ignores equality of default values, considering only
-		whether non default names consistent (position by position) and
-		uniquely positioned (if a non default name is present in both, then
-		it is in the same position in both).
+        featureNames. It ignores equality of default values, considering only
+        whether non default names consistent (position by position) and
+        uniquely positioned (if a non default name is present in both, then
+        it is in the same position in both).
 
-		"""
+        """
         if len(selfNames) != len(otherNames):
             return False
 
@@ -4424,16 +4424,16 @@ class Base(object):
 
     def _inconsistentNames(self, selfNames, otherNames):
         """Private function to find and return all name inconsistencies
-		between the given two sets. It ignores equality of default values,
-		considering only whether non default names consistent (position by
-		position) and uniquely positioned (if a non default name is present
-		in both, then it is in the same position in both). The return value
-		is a dict between integer IDs and the pair of offending names at
-		that position in both objects.
+        between the given two sets. It ignores equality of default values,
+        considering only whether non default names consistent (position by
+        position) and uniquely positioned (if a non default name is present
+        in both, then it is in the same position in both). The return value
+        is a dict between integer IDs and the pair of offending names at
+        that position in both objects.
 
-		Assumptions: the size of the two name sets is equal.
+        Assumptions: the size of the two name sets is equal.
 
-		"""
+        """
         inconsistencies = {}
 
         def checkFromLeftKeys(ret, leftNames, rightNames):
@@ -4462,16 +4462,16 @@ class Base(object):
 
     def _unequalNames(self, selfNames, otherNames):
         """Private function to find and return all name inconsistencies
-		between the given two sets. It ignores equality of default values,
-		considering only whether non default names consistent (position by
-		position) and uniquely positioned (if a non default name is present
-		in both, then it is in the same position in both). The return value
-		is a dict between integer IDs and the pair of offending names at
-		that position in both objects.
+        between the given two sets. It ignores equality of default values,
+        considering only whether non default names consistent (position by
+        position) and uniquely positioned (if a non default name is present
+        in both, then it is in the same position in both). The return value
+        is a dict between integer IDs and the pair of offending names at
+        that position in both objects.
 
-		Assumptions: the size of the two name sets is equal.
+        Assumptions: the size of the two name sets is equal.
 
-		"""
+        """
         inconsistencies = {}
 
         def checkFromLeftKeys(ret, leftNames, rightNames):
@@ -4494,12 +4494,12 @@ class Base(object):
 
     def _validateReorderedNames(self, axis, callSym, other):
         """
-		Validate axis names to check to see if they are equal ignoring order.
-		Returns True if the names are equal but reordered, False if they are
-		equal and the same order (ignoring defaults), and raises an exception
-		if they do not share exactly the same names, or requires reordering in
-		the presence of default names.
-		"""
+        Validate axis names to check to see if they are equal ignoring order.
+        Returns True if the names are equal but reordered, False if they are
+        equal and the same order (ignoring defaults), and raises an exception
+        if they do not share exactly the same names, or requires reordering in
+        the presence of default names.
+        """
         if axis == 'point':
             lnames = self.getPointNames()
             rnames = other.getPointNames()
@@ -4629,14 +4629,14 @@ class Base(object):
 
     def _addName(self, name, selfNames, selfNamesInv, axis):
         """
-		Name the next vector outside of the current possible range on the given axis using the
-		provided name.
+        Name the next vector outside of the current possible range on the given axis using the
+        provided name.
 
-		name may be either a string, or None if you want a default name. If the name is
-		not a string, or already being used as another name on this axis, an
-		ArgumentException will be raised.
+        name may be either a string, or None if you want a default name. If the name is
+        not a string, or already being used as another name on this axis, an
+        ArgumentException will be raised.
 
-		"""
+        """
         if name is not None and not isinstance(name, six.string_types):
             raise ArgumentException("The name must be a string")
         if name in selfNames:
@@ -4653,40 +4653,40 @@ class Base(object):
 
     def _removePointNameAndShift(self, toRemove):
         """
-		Removes the specified name from pointNames, changing the indices
-		of other pointNames to fill in the missing index.
+        Removes the specified name from pointNames, changing the indices
+        of other pointNames to fill in the missing index.
 
-		toRemove must be a non None string or integer, specifying either a current pointName
-		or the index of a current pointName in the given axis.
-		
-		"""
+        toRemove must be a non None string or integer, specifying either a current pointName
+        or the index of a current pointName in the given axis.
+
+        """
         self._removeNameAndShift(toRemove, 'point', self.pointNames, self.pointNamesInverse)
 
     def _removeFeatureNameAndShift(self, toRemove):
         """
-		Removes the specified name from featureNames, changing the indices
-		of other featureNames to fill in the missing index.
+        Removes the specified name from featureNames, changing the indices
+        of other featureNames to fill in the missing index.
 
-		toRemove must be a non None string or integer, specifying either a current featureNames
-		or the index of a current featureNames in the given axis.
-		
-		"""
+        toRemove must be a non None string or integer, specifying either a current featureNames
+        or the index of a current featureNames in the given axis.
+
+        """
         self._removeNameAndShift(toRemove, 'feature', self.featureNames, self.featureNamesInverse)
 
     def _removeNameAndShift(self, toRemove, axis, selfNames, selfNamesInv):
         """
-		Removes the specified name from the name set for the given axis, changing the indices
-		of other names to fill in the missing index.
+        Removes the specified name from the name set for the given axis, changing the indices
+        of other names to fill in the missing index.
 
-		toRemove must be a non None string or integer, specifying either a current name
-		or the index of a current name in the given axis.
+        toRemove must be a non None string or integer, specifying either a current name
+        or the index of a current name in the given axis.
 
-		axis must be either 'point' or 'feature'
-		
-		selfNames must be the names dict associated with the provided axis in this object
+        axis must be either 'point' or 'feature'
 
-		selfNamesInv must be the indices to names dict associated with the provided axis
-		in this object
+        selfNames must be the names dict associated with the provided axis in this object
+
+        selfNamesInv must be the indices to names dict associated with the provided axis
+        in this object
 
 		"""
         #this will throw the appropriate exceptions, if need be
@@ -4705,14 +4705,14 @@ class Base(object):
 
     def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
         """
-		Changes the featureName specified by previous to the supplied input featureName.
-		
-		oldIdentifier must be a non None string or integer, specifying either a current featureName
-		or the index of a current featureName. newFeatureName may be either a string not currently
-		in the featureName set, or None for an default featureName. newFeatureName may begin with the
-		default prefix
+        Changes the featureName specified by previous to the supplied input featureName.
 
-		"""
+        oldIdentifier must be a non None string or integer, specifying either a current featureName
+        or the index of a current featureName. newFeatureName may be either a string not currently
+        in the featureName set, or None for an default featureName. newFeatureName may begin with the
+        default prefix
+
+        """
         self._validateAxis(axis)
         if axis == 'point':
             names = self.pointNames
