@@ -13,8 +13,8 @@ _pointNameIntersection, _featureNameIntersection, _pointNameSymmetricDifference,
 _featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
 setPointName, setFeatureName, setPointNames, setFeatureNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
-_equalFeatureNames, getPointNames, getFeatureNames, __len__
-
+_equalFeatureNames, getPointNames, getFeatureNames, __len__,
+getFeatureIndex, getFeatureName, getPointIndex, getPointName
 
 """
 
@@ -25,7 +25,9 @@ from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nose.tools import *
 from UML.exceptions import ArgumentException
 from UML.exceptions import ImproperActionException
+
 from six.moves import range
+from UML.randomness import pythonRandom
 
 
 
@@ -1096,6 +1098,36 @@ class LowLevelBackend(object):
         assert ret[1] == 'one'
         assert toTest.getFeatureIndex('zero') == 0
         assert toTest.getFeatureName(0) == 'zero'
+
+
+    ################################################################
+    # getFeatureIndex, getFeatureName, getPointIndex, getPointName #
+    ################################################################
+
+    # consistency checks between all sources of axis name information
+    def test_name_index_consistency(self):
+        pnames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        fnames = ['fa', 'fb', 'fc']
+
+        toTest = self.constructor(featureNames=fnames, pointNames=pnames)
+
+        pByGetAll = toTest.getPointNames()
+        pByIndex = [toTest.getPointName(i) for i in range(toTest.points)]
+        assert pByIndex == pByGetAll
+
+        pnamesShuffle = pythonRandom.sample(pnames, len(pnames))
+        pByName = [toTest.getPointIndex(n) for n in pnamesShuffle]
+        pByPyIndex = [pnames.index(n) for n in pnamesShuffle]
+        assert pByName == pByPyIndex
+
+        fByGetAll = toTest.getFeatureNames()
+        fByIndex = [toTest.getFeatureName(i) for i in range(toTest.features)]
+        assert fByIndex == fByGetAll
+
+        fnamesShuffle = pythonRandom.sample(fnames, len(fnames))
+        fByName = [toTest.getFeatureIndex(n) for n in fnamesShuffle]
+        fByPyIndex = [fnames.index(n) for n in fnamesShuffle]
+        assert fByName == fByPyIndex
 
 
     ###########

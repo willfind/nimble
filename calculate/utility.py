@@ -40,14 +40,6 @@ def detectBestResult(functionToCheck):
     if larger values are associated with correctness. If we are unable to
     determine which is correct, then an ArgumentException is thrown.
     """
-    (args, varargs, keywords, defaults) = inspect.getargspec(functionToCheck)
-
-    if len(args) != 2:
-        msg = "functionToCheck takes (" + str(len(args)) + ") parameters, "
-        msg += "yet performance functions can only take exactly (2). Therefore "
-        msg += "it cannot be a performance function."
-        raise ArgumentException(msg)
-
     if hasattr(functionToCheck, 'optimal'):
         if functionToCheck.optimal == 'min':
             return 'min'

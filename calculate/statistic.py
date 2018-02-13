@@ -2,10 +2,11 @@ from __future__ import division
 from __future__ import absolute_import
 import math
 import numpy
-import scipy
 
 import UML
-from UML.exceptions import ArgumentException
+from UML.exceptions import ArgumentException, PackageException
+
+scipy = UML.importModule('scipy')
 
 numericalTypes = (int, float, int)
 
@@ -305,6 +306,10 @@ def residuals(toPredict, controlVars):
     of if they have a different number of points.
 
     """
+    if scipy is None:
+        msg = "scipy must be installed in order to use the residuals function."
+        raise PackageException(msg)
+
     if not isinstance(toPredict, UML.data.Base):
         msg = "toPredict must be a UML data object"
         raise ArgumentException(msg)

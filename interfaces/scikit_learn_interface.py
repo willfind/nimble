@@ -251,7 +251,7 @@ class SciKitLearn(UniversalInterface):
         elif hasattr(learner, 'predict_proba'):
             toCall = learner.predict_proba
         else:
-            raise ArgumentException('Cannot get scores for this learner')
+            raise NotImplementedError('Cannot get scores for this learner')
         raw = toCall(testX)
         # in binary classification, we return a row vector. need to reshape
         if len(raw.shape) == 1:

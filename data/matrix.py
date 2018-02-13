@@ -445,9 +445,6 @@ class Matrix(Base):
         with open(outPath, 'w') as outFile:
 
             if includeFeatureNames:
-                # to signal that the first line contains feature Names
-                outFile.write('\n\n')
-
                 def combine(a, b):
                     return a + ',' + b
 

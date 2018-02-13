@@ -14,6 +14,7 @@ from __future__ import print_function
 from six.moves import range
 try:
     import clang
+    import clang.cindex
 
     clangAvailable = True
 except ImportError:
@@ -234,6 +235,9 @@ class Shogun(UniversalInterface):
             scoresPerPoint = numpy.empty((len(predLabels), numLabels))
             for i in range(len(predLabels)):
                 currConfidences = predObj.get_multiclass_confidences(i)
+                if len(currConfidences) == 0:
+                    msg = "The shogun learner %s doesn't provide confidence scores" % str(learner)
+                    raise NotImplementedError(msg)
                 scoresPerPoint[i, :] = currConfidences
         # otherwise we must be dealing with binary classification
         else:
@@ -471,7 +475,19 @@ class Shogun(UniversalInterface):
         RETURNS UML friendly results
         """
         try:
-            retLabels = learner.apply(testX)
+            ptVal = learner.get_machine_problem_type()
+            if ptVal == self.shogun.Classifier.PT_BINARY:
+                retLabels = learner.apply_binary(testX)
+            elif ptVal == self.shogun.Classifier.PT_MULTICLASS:
+                retLabels = learner.apply_multiclass(testX)
+            elif ptVal == self.shogun.Classifier.PT_REGRESSION:
+                retLabels = learner.apply_regression(testX)
+            elif ptVal == self.shogun.Classifier.PT_STRUCTURED:
+                retLabels = learner.apply_structured(testX)
+            elif ptVal == self.shogun.Classifier.PT_LATENT:
+                retLabels = learner.apply_latent(testX)
+            else:
+                retLabels = learner.apply(testX)
         except Exception as e:
             print(e)
             return None
@@ -545,44 +561,36 @@ class Shogun(UniversalInterface):
         """
         # Attempt setup for clang. If successful, we will consider
         # allowing discovery of parameters
-        allowDiscovery = False
         try:
             location = self.getOption('libclangLocation')
             clang.cindex.Config.set_library_file(location)
             clang.cindex.Index.create()
             allowDiscovery = True
-        except Exception as e:
-            pass
+        except Exception:
+            allowDiscovery = False
+
+        # TODO For now, discovery is intentionally disabled until clang
+        # issues have been resolved.
+        allowDiscovery = False
+
+        self._paramsManifest = {}
+        ranDiscovery = False
 
         # find most likely manifest file
         metadataPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata')
-        best = self._findBestManifest(metadataPath)
+        best, exact = self._findBestManifest(metadataPath)
         exists = os.path.exists(best) if best is not None else False
-
-        shogunSourcePath = self.getOption('sourceLocation')
-
-        ranDiscovery = False
         if exists:
             with open(best, 'r') as fp:
                 self._paramsManifest = json.load(fp, object_hook=_enforceNonUnicodeStrings)
-            accurate = None
-            empty = (self._paramsManifest == {})
-            # grab version data
-            if not empty:
-                accurate = True  # TODO: actually do some checks
-            # if empty or different version:
-            if (empty or not accurate):
-                if allowDiscovery:
-                    self._paramsManifest = discoverConstructors(shogunSourcePath)
-                    ranDiscovery = True
-                else:
-                    self._paramsManifest = {}
-        else:
+
+        # if empty or different version:
+        if (self._paramsManifest == {}) or (not exact):
+            # If we can, try to load the exact correct information
             if allowDiscovery:
+                shogunSourcePath = self.getOption('sourceLocation')
                 self._paramsManifest = discoverConstructors(shogunSourcePath)
                 ranDiscovery = True
-            else:
-                self._paramsManifest = {}
 
         modified = False
         # check params for each learner in listLearner
@@ -592,33 +600,37 @@ class Shogun(UniversalInterface):
 
         # has it been written to a file? did we modify the manifest in memory?
         if ranDiscovery or modified:
-            writePath = os.path.join(metadataPath, ('shogunParameterManifest_' + self.version()))
+            selfVersion = self.version().split('_')[0]
+            writePath = os.path.join(metadataPath, ('shogunParameterManifest_%s' % selfVersion))
             with open(writePath, 'w') as fp:
                 json.dump(self._paramsManifest, fp, indent=4)
 
-
     def _findBestManifest(self, metadataPath):
         """
-        Returns absolute path to the manifest file that is the closest match for
-        this version of shogun or None if there is no such file.
+        Returns a double. The first value is the absolute path to the manifest
+        file that is the closest match for this version of shogun, or None if
+        there is no such file. The second value is a boolean stating whether
+        the first value is an exact match for the desired version.
 
         """
-        ourVersion = self.version()
-        ourVersion = distutils.version.LooseVersion(ourVersion.split('_')[0])
+        def _getSignificantVersion(versionString):
+            return distutils.version.LooseVersion(versionString.split('_')[0]).version
+
+        ourVersion = _getSignificantVersion(self.version())
 
         possible = os.listdir(metadataPath)
         if len(possible) == 0:
-            return None
+            return None, False
 
         ours = (ourVersion, None, None)
         toSort = [ours]
         for name in possible:
             if name.startswith("shogunParameterManifest"):
                 pieces = name.split('_')
-                currVersion = distutils.version.LooseVersion(pieces[1])
+                currVersion = _getSignificantVersion(pieces[1])
                 toSort.append((currVersion, name, ))
         if len(toSort) == 1:
-            return None
+            return None, False
 
         sortedPairs = sorted(toSort, key=(lambda p: p[0]))
         ourIndex = sortedPairs.index(ours)
@@ -640,10 +652,10 @@ class Shogun(UniversalInterface):
         # are non None
         else:
             best = left[1]
-            for index in range(len(ourVersion.version)):
-                currOurs = ourVersion.version[index]
-                currL = left[0].version[index]
-                currR = right[0].version[index]
+            for index in range(len(ourVersion)):
+                currOurs = ourVersion[index]
+                currL = left[0][index]
+                currR = right[0][index]
 
                 if currL == currOurs and currR != currOurs:
                     best = left
@@ -652,7 +664,7 @@ class Shogun(UniversalInterface):
                     best = right
                     break
 
-        return os.path.join(metadataPath, best[1])
+        return os.path.join(metadataPath, best[1]), ourVersion == best[0]
 
 
     def _inputTransLabelHelper(self, labelsObj, learnerName, customDict):
@@ -748,7 +760,7 @@ class Shogun(UniversalInterface):
 ### GENERIC HELPERS ###
 #######################
 
-excludedLearners = [# parent classes, not actually runnable
+excludedLearners = [  # parent classes, not actually runnable
                     'BaseMulticlassMachine',
                     'CDistanceMachine',
                     'CSVM',
@@ -763,49 +775,53 @@ excludedLearners = [# parent classes, not actually runnable
                     'MultitaskLinearMachineBase',
                     'NativeMulticlassMachine',
                     'OnlineLinearMachine',
-                    'ScatterSVM', # unstable method
                     'TreeMachineWithConditionalProbabilityTreeNodeData',
                     'TreeMachineWithRelaxedTreeNodeData',
 
+                    # Deliberately unsupported
+                    'ScatterSVM',  # experimental method
+
                     # Should be implemented, but don't work
-                    #'BalancedConditionalProbabilityTree', # streaming dense features input
+                    #'BalancedConditionalProbabilityTree',  # streaming dense features input
                     #'ConditionalProbabilityTree', 	 # requires streaming features
-                    'DomainAdaptationSVMLinear', # segfault
-                    'DomainAdaptationMulticlassLibLinear', # segFault
+                    'DomainAdaptationSVMLinear',  # segfault
+                    'DomainAdaptationMulticlassLibLinear',  # segFault
                     'DomainAdaptationSVM',
                     #'DualLibQPBMSOSVM',  # problem type 3
-                    'FeatureBlockLogisticRegression', # remapping
-                    'KernelRidgeRegression', # segfault
+                    'FeatureBlockLogisticRegression',  # remapping
+                    'GaussianProcessRegression',  # segfault in testDataIntegrity
+                    'KernelRidgeRegression',  # segfault
                     #'KernelStructuredOutputMachine',  # problem type 3
-                    #'LatentSVM', # problem type 4
+                    'KRRNystrom',  # segfault on train - strict kern on init requirement?
+                    #'LatentSVM',  # problem type 4
                     'LibLinearRegression',
                     #'LibSVMOneClass',
-                    #'LinearMulticlassMachine', # mixes machines. is this even possible to run?
-                    #'LinearStructuredOutputMachine', # problem type 3
-                    #'MKLMulticlass', # needs combined kernel type?
-                    #'MKLClassification', # compute by subkernel not implemented
-                    #'MKLOneClass', # Interleaved MKL optimization is currently only supported with SVMlight
+                    #'LinearMulticlassMachine',  # mixes machines. is this even possible to run?
+                    #'LinearStructuredOutputMachine',  # problem type 3
+                    #'MKLMulticlass',  # needs combined kernel type?
+                    #'MKLClassification',  # compute by subkernel not implemented
+                    #'MKLOneClass',  # Interleaved MKL optimization is currently only supported with SVMlight
                     #'MKLRegression',  # kernel stuff?
-                    'MultitaskClusteredLogisticRegression', # assertion error
-                    'MultitaskCompositeMachine', # takes machine as input?
+                    'MultitaskClusteredLogisticRegression',  # assertion error
+                    'MultitaskCompositeMachine',  # takes machine as input?
                     #'MultitaskL12LogisticRegression',  # assertion error
-                    'MultitaskLeastSquaresRegression', # core dump
-                    'MultitaskLogisticRegression', # core dump
+                    'MultitaskLeastSquaresRegression',  # core dump
+                    'MultitaskLogisticRegression',  # core dump
                     #'MultitaskTraceLogisticRegression',  # assertion error
-                    'OnlineLibLinear', # needs streaming dot features
-                    'OnlineSVMSGD', # needs streaming dot features
-                    #'PluginEstimate', # takes string inputs?
+                    'OnlineLibLinear',  # needs streaming dot features
+                    'OnlineSVMSGD',  # needs streaming dot features
+                    #'PluginEstimate',  # takes string inputs?
                     #'RandomConditionalProbabilityTree',  # takes streaming dense features
-                    #'RelaxedTree', # [ERROR] Call set_machine_for_confusion_matrix before training
-                    #'ShareBoost', # non standard input
-                    #'StructuredOutputMachine', # problem type 3
-                    #'SubGradientSVM', #doesn't terminate
-                    'VowpalWabbit', # segfault
-                    #'WDSVMOcas', # string input
+                    #'RelaxedTree',  # [ERROR] Call set_machine_for_confusion_matrix before training
+                    #'ShareBoost',  # non standard input
+                    #'StructuredOutputMachine',  # problem type 3
+                    #'SubGradientSVM',  #doesn't terminate
+                    'VowpalWabbit',  # segfault
+                    #'WDSVMOcas',  # string input
 
                     # functioning learners
                     #'AveragedPerceptron'
-                    'GaussianNaiveBayes', # something wonky with getting scores
+                    'GaussianNaiveBayes',  # something wonky with getting scores
                     #'GMNPSVM',
                     #'GNPPSVM',
                     #'GPBTSVM',
@@ -829,13 +845,6 @@ excludedLearners = [# parent classes, not actually runnable
                     #'SVMSGD',
                     #'SVRLight',
 ]
-
-# TODO - other learners should be added to the kernel only list.
-# Can we actually check interitence between things? check for any child of
-# CKernelMachine?
-kernelOnly = ['MulticlassLibSVM', 'LibSVM']
-if not clangAvailable:
-    excludedLearners += kernelOnly
 
 
 def _enforceNonUnicodeStrings(manifest):
@@ -937,7 +946,6 @@ def discoverConstructors(path, desiredFile=None, desiredExt=['.cpp']):
     findConstructors for each cpp source file
 
     """
-
     results = {}
     contents = []
     for (folderPath, subFolders, contents) in os.walk(path):
@@ -955,8 +963,8 @@ def discoverConstructors(path, desiredFile=None, desiredExt=['.cpp']):
 def findConstructors(fileName, results, targetDirectory):
     """ Find all constructors and list their params in the given file """
     index = clang.cindex.Index.create()
-    tu = index.parse(fileName)
-    findConstructorsBackend(tu.cursor, results, targetDirectory)
+    tuNode = index.parse(fileName).cursor
+    findConstructorsBackend(tuNode, results, targetDirectory)
 
 
 def findConstructorsBackend(node, results, targetDirectory):
@@ -965,20 +973,6 @@ def findConstructorsBackend(node, results, targetDirectory):
         if not node.location.file.name.startswith(targetDirectory):
             return
 
-        #	hasConstructor = False
-        #	for child in node.get_children():
-        #		if child.kind == clang.cindex.CursorKind.CONSTRUCTOR:
-        #			hasConstructor = True
-        #	if hasConstructor:
-        #		for child in node.get_children():
-        #			pass
-
-        #	print node.kind
-        #	print node.spelling
-        #	if node.kind == clang.cindex.CursorKind.CLASS_DECL:
-        #		print node.spelling
-        #		for child in node.get_children():
-        #			print child.kind
     if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
         constructorName = node.spelling
         args = []
@@ -986,7 +980,7 @@ def findConstructorsBackend(node, results, targetDirectory):
             args.append(value.spelling)
         # TODO value.type.spelling
 
-        #print "%s%s" % (constructorName, str(args))
+#        print "%s%s" % (constructorName, str(args))
         if not constructorName in results:
             results[constructorName] = []
         if args not in results[constructorName]:
@@ -995,4 +989,3 @@ def findConstructorsBackend(node, results, targetDirectory):
     else:
         for child in node.get_children():
             findConstructorsBackend(child, results, targetDirectory)
-

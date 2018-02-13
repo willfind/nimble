@@ -402,76 +402,6 @@ def listLearners(package=None):
     return results
 
 
-def listDataFunctions():
-    """
-    Returns a list of funciton signatures of every method available
-    from the UML data container objects.
-
-    """
-    methodList = dir(UML.data.Base)
-    visibleMethodList = []
-    for methodName in methodList:
-        if not methodName.startswith('_'):
-            visibleMethodList.append(methodName)
-
-    ret = []
-    for methodName in visibleMethodList:
-        currMethod = getattr(UML.data.Base, methodName)
-        try:
-            (args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
-        except TypeError:
-            continue
-
-        retString = methodName + "("
-        for i in range(0, len(args)):
-            if i != 0:
-                retString += ", "
-            retString += args[i]
-            if defaults is not None and i >= (len(args) - len(defaults)):
-                retString += "=" + str(defaults[i - (len(args) - len(defaults))])
-
-        # obliterate the last comma
-        retString += ")"
-        ret.append(retString)
-
-    return ret
-
-
-def listUMLFunctions():
-    """
-    Returns a list of funciton signatures of every function available
-    in the top level UML package.
-
-    """
-    methodList = dir(UML)
-
-    visibleMethodList = []
-    for methodName in methodList:
-        if not methodName.startswith('_'):
-            visibleMethodList.append(methodName)
-
-    ret = []
-    for methodName in visibleMethodList:
-        currMethod = eval("UML." + methodName)
-        if "__call__" not in dir(currMethod):
-            continue
-        (args, varargs, keywords, defaults) = inspect.getargspec(currMethod)
-
-        retString = methodName + "("
-        for i in range(0, len(args)):
-            if i != 0:
-                retString += ", "
-            retString += args[i]
-            if defaults is not None and i >= (len(args) - len(defaults)):
-                retString += "=" + str(defaults[i - (len(args) - len(defaults))])
-
-        # obliterate the last comma
-        retString += ")"
-        ret.append(retString)
-
-    return ret
-
-
 def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
                fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
                ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
@@ -1218,8 +1148,14 @@ def coo_matrixTodense(origTodense):
         try:
             return origTodense(self)
         except Exception:
-            ret = numpy.matrix(numpy.zeros(self.shape), dtype=self.dtype)
-            for (i, j), v in zip(list(zip(*self.nonzero())), self.data):
+            # flexible dtypes, such as strings, when used in scipy sparse object
+            # create an implicitly mixed datatype: some values are strings, but
+            # the rest are implicitly zero. In order to match that, we must
+            # explicitly specify a mixed type for our destination matrix
+            retDType = object if isinstance(self.dtype, numpy.flexible) else self.dtype
+            ret = numpy.matrix(numpy.zeros(self.shape), dtype=retDType)
+            nz = (self.row, self.col)
+            for (i, j), v in zip(zip(*nz), self.data):
                 ret[i, j] = v
             return ret
     return f

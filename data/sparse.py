@@ -6,17 +6,18 @@ Class extending Base, defining an object to hold and manipulate a scipy coo_matr
 from __future__ import division
 from __future__ import absolute_import
 import numpy
+import copy
+
 import UML
+
 from UML.exceptions import ArgumentException, PackageException
 from six.moves import range
 from functools import reduce
+
 scipy = UML.importModule('scipy')
-if not scipy:
-    msg = 'To use class Sparse, scipy must be installed.'
-    raise PackageException(msg)
-from scipy.sparse import coo_matrix
-from scipy.io import mmwrite
-import copy
+if scipy is not None:
+    from scipy.sparse import coo_matrix
+    from scipy.io import mmwrite
 
 import UML.data
 from . import dataHelpers
@@ -25,6 +26,7 @@ from .base_view import BaseView
 from .dataHelpers import View
 
 from UML.exceptions import ImproperActionException
+from UML.exceptions import PackageException
 from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')
 import warnings
@@ -35,6 +37,9 @@ class Sparse(Base):
         """
 
         """
+        if not scipy:
+            msg = 'To use class Sparse, scipy must be installed.'
+            raise PackageException(msg)
 
         if (not isinstance(data, numpy.matrix)) and (not scipy.sparse.isspmatrix(data)):
             msg = "the input data can only be a scipy sparse matrix or a numpy matrix or CooWithEmpty or CooDummy."
@@ -677,9 +682,6 @@ class Sparse(Base):
         outFile = open(outPath, 'w')
 
         if includeFeatureNames:
-            # to signal that the first line contains feature Names
-            outFile.write('\n\n')
-
             def combine(a, b):
                 return a + ',' + b
 

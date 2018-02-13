@@ -167,7 +167,8 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
 
         This method may be optionally overridden by a concrete subclass.
         """
-        raise NotImplementedError
+        msg = "This custom learner has not implemented the getScores method"
+        raise NotImplementedError(msg)
 
     def trainForInterface(self, trainX, trainY, arguments):
 

@@ -211,7 +211,7 @@ class Mlpy(UniversalInterface):
         if hasattr(learner, 'pred_values'):
             return learner.pred_values(testX)
         else:
-            raise ArgumentException('Cannot get scores for this learner')
+            raise NotImplementedError('Cannot get scores for this learner')
 
 
     def _getScoresOrder(self, learner):

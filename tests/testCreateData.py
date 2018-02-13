@@ -10,6 +10,8 @@ import itertools
 import UML
 from UML.exceptions import ArgumentException
 from UML.exceptions import FileFormatException
+from UML.data.dataHelpers import DEFAULT_PREFIX
+from UML.helpers import _intFloatOrString
 scipy = UML.importModule('scipy.sparse')
 
 #returnTypes = ['Matrix', 'Sparse', None]  # None for auto
@@ -280,7 +282,7 @@ def test_extractNames_CSV():
         assert fromList == fromCSV
 
 
-def test_names_AutoDetected_CSV():
+def test_names_AutoDetectedBlankLines_CSV():
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
@@ -300,7 +302,7 @@ def test_names_AutoDetected_CSV():
         assert fromList == fromCSV
 
 
-def test_featNamesOnly_AutoDetected_CSV():
+def test_featNamesOnly_AutoDetectedBlankLines_CSV():
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
         fromList = UML.createData(returnType=t, data=[[1, 2, 3]], featureNames=fNames)
@@ -316,7 +318,6 @@ def test_featNamesOnly_AutoDetected_CSV():
         fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
         tmpCSV.close()
         assert fromList == fromCSV
-
 
 def test_pointNames_AutoDetected_from_specified_featNames_CSV():
     fNames = ['one', 'two', 'three']
@@ -337,7 +338,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
         assert fromList == fromCSV
 
 
-def test_specifiedIgnore_overides_autoDetect_CSV():
+def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
     for t in returnTypes:
         data = [[0, 1, 2, 3], [10, 11, 12, 13]]
         fromList = UML.createData(returnType=t, data=data)
@@ -353,6 +354,125 @@ def test_specifiedIgnore_overides_autoDetect_CSV():
             returnType=t, data=tmpCSV.name, pointNames=False, featureNames=False)
         tmpCSV.close()
         assert fromList == fromCSV
+
+
+def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
+    """
+    Writes a CSV and reads it in using UML.createData, fixing in place the given arguments,
+    returning the resultant object
+
+    """
+    if rawType == 'csv':
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
+        tmpCSV.write(rawStr)
+        tmpCSV.flush()
+        ret = UML.createData(returnType=returnType, data=tmpCSV.name,
+                             pointNames=pointNames, featureNames=featureNames)
+        tmpCSV.close()
+    else:
+        fnameRow = list(map(_intFloatOrString, rawStr.split('\n')[0].split(',')))
+        dataRow = list(map(_intFloatOrString, rawStr.split('\n')[1].split(',')))
+        lolFromRaw = [fnameRow, dataRow]
+        baseObj = UML.createData("List", lolFromRaw, pointNames=False, featureNames=False)
+        if rawType == 'scipycoo':
+            npRaw = numpy.array(lolFromRaw, dtype=object)
+            finalRaw = scipy.sparse.coo_matrix(npRaw)
+        else:
+            finalRaw = baseObj.copyAs(rawType)
+
+        ret = UML.createData(returnType=returnType, data=finalRaw,
+                             pointNames=pointNames, featureNames=featureNames)
+
+    return ret
+
+def test_automaticByType_fnames_rawAndCSV():
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+#        rawT = 'scipycoo'
+#        retT = 'List'
+#        print rawT + " " + str(retT)
+#        import pdb
+#        pdb.set_trace()
+
+        # example which triggers automatic removal
+        correctRaw = "fname0,fname1,fname2\n1,2,3\n"
+        correct = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert correct.getFeatureNames() == ['fname0','fname1','fname2']
+
+        # example where first line contains a non-string interpretable value
+        nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
+        fail1 = helper_auto(nonStringFail1Raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail1.getFeatureNames()))
+
+        # example where the first line contains all strings, but second line also contains strings
+        sameTypeFail2Raw = "fname0,fname1,fname2\n1,data2,3"
+        fail2 = helper_auto(sameTypeFail2Raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail2.getFeatureNames()))
+
+
+def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+        # example where user provided False overides automatic detection
+        correctRaw = "fname0,fname1,fname2\n1,2,3\n"
+        overide1 = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1.getFeatureNames()))
+
+        # example where user provided True extracts non-detectable first line
+        nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
+        overide2 = helper_auto(nonStringFail1Raw, rawT, retT, pointNames='automatic', featureNames=True)
+        assert overide2.getFeatureNames() == ['fname0', '1.0', 'fname2']
+
+        # example where user provided True extracts non-detectable first line
+        sameTypeFail2Raw = "fname0,fname1,fname2\ndata1,data2,data3"
+        overide3 = helper_auto(sameTypeFail2Raw, rawT, retT, pointNames='automatic', featureNames=True)
+        assert overide3.getFeatureNames() == ['fname0', 'fname1', 'fname2']
+
+
+def test_automaticByType_pname_interaction_with_fname():
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+#        rawT = 'scipycoo'
+#        retT = None
+#        print rawT + " " + str(retT)
+#        import pdb
+#        pdb.set_trace()        
+
+        # pnames auto triggered with auto fnames
+        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert testObj.getFeatureNames() == ['fname0','fname1','fname2']
+        assert testObj.getPointNames() == ['pname0']
+
+        # pnames auto triggereed with explicit fnames
+        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=True)
+        assert testObj.getFeatureNames() == ['fname0','fname1','fname2']
+        assert testObj.getPointNames() == ['pname0']
+
+        #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE1
+        raw = "point_names,fname0,1.0,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+
+        #pnames not triggered given 'point_names' at [0,0] when fnames auto trigger fails CASE2
+        raw = "point_names,fname0,fname1,fname2\npname0,data1,data2,data3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+
+        #pnames not triggered given 'point_names' at [0,0] when fnames explicit False
+        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=False)
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getFeatureNames()))
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
+
+        #pnames explicit False given 'point_names' at [0,0] and fname auto extraction
+        raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
+        testObj = helper_auto(raw, rawT, retT, pointNames=False, featureNames=True)
+        assert testObj.getFeatureNames() == ['point_names', 'fname0', 'fname1', 'fname2']
+        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.getPointNames()))
 
 
 def test_namesInComment_MTXArr():
@@ -427,6 +547,7 @@ def test_extractNames_MTXArr():
         tmpMTXArr.write("3\n")
         tmpMTXArr.write("23\n")
         tmpMTXArr.flush()
+
         fromMTXArr = UML.createData(
             returnType=t, data=tmpMTXArr.name, pointNames=True, featureNames=True)
         tmpMTXArr.close()
@@ -488,6 +609,26 @@ def test_csv_extractNames_duplicateFeatureName():
         tmpCSV.flush()
 
         UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+
+
+def test_csv_roundtrip_autonames():
+    for retType in returnTypes:
+        data = [[1, 0, 5, 12], [0, 1, 3, 17], [0, 0, 8, 22]]
+        pnames = ['p0','p1','p2']
+        fnames = ['f0','f1','f2', 'f3']
+        
+        withFnames = UML.createData(retType, data, featureNames=fnames)
+        withBoth = UML.createData(retType, data, featureNames=fnames, pointNames=pnames)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVFnames:
+            withFnames.writeFile(tmpCSVFnames.name, 'csv', includeNames=True)
+            fromFileFnames = UML.createData(returnType=retType, data=tmpCSVFnames.name)
+            assert fromFileFnames == withFnames
+
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVBoth:
+            withBoth.writeFile(tmpCSVBoth.name, 'csv', includeNames=True)
+            fromFileBoth = UML.createData(returnType=retType, data=tmpCSVBoth.name)
+            assert fromFileBoth == withBoth
 
 
 ##################################
@@ -723,9 +864,9 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
 
             assert fromList == fromCSV
 
-            if t == 'List':
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-                assert fromCSV.features == 4
+            # sanity check
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            assert fromCSV.features == 4
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
@@ -745,9 +886,9 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
 
             assert fromList == fromCSV
 
-            if t == 'List':
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-                assert fromCSV.features == 5
+            # sanity check
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            assert fromCSV.features == 5
 
 
 def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
@@ -767,9 +908,9 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
 
             assert fromList == fromCSV
 
-            if t == 'List':
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-                assert fromCSV.features == 5
+            # sanity check
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            assert fromCSV.features == 5
 
 
 def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
@@ -787,9 +928,8 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
 
             assert fromList == fromCSV
 
-            if t == 'List':
-                fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
-                assert fromCSV.features == 4
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name)
+            assert fromCSV.features == 4
 
 
 def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
@@ -892,10 +1032,7 @@ def test_CSVformatting_specialCharsInQuotes():
 
 def test_CSVformatting_emptyAndCommentLines():
     for t in returnTypes:
-        if t == 'List':
-            data = [[1, 2, 3, 4], ['#11', 22, 33, 44], [5, 6, 7, 8]]
-        else:
-            data = [[1, 2, 3, 4], [5, 6, 7, 8]]
+        data = [[1, 2, 3, 4], ['#11', 22, 33, 44], [5, 6, 7, 8]]
 
         fromList = UML.createData(returnType=t, data=data)
 
@@ -907,8 +1044,7 @@ def test_CSVformatting_emptyAndCommentLines():
             tmpCSV.write("#1,2,3,4\n")
             tmpCSV.write("\n")
             tmpCSV.write("1,2,3,4\n")
-            if t == 'List':
-                tmpCSV.write("#11,22,33, 44\n")
+            tmpCSV.write("#11,22,33, 44\n")
             tmpCSV.write("\n")
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.write("\n")
@@ -1179,7 +1315,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
     finally:
         UML.helpers.initDataObject = backup
 
-#def test_createData_keepPF_mtxArr_noUncessaryStorage():
+#def TODOtest_createData_keepPF_mtxArr_noUncessaryStorage():
 #	fromList = UML.createData(returnType='Matrix', data=[[2]])
 #	backup = UML.helpers.initDataObject
 #
@@ -1210,7 +1346,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #		UML.helpers.initDataObject = backup
 
 
-#def test_createData_keepPF_mtxCoo_noUncessaryStorage():
+#def TODOtest_createData_keepPF_mtxCoo_noUncessaryStorage():
 #	fromList = UML.createData(returnType='Matrix', data=[[2]])
 #	backup = UML.helpers.initDataObject
 #
@@ -1660,4 +1796,6 @@ def test_createData_csv_nonremoval_efficiency():
 
 
 # unit tests demonstrating our file loaders can handle arbitrarly placed blank lines
+
+
 # comment lines

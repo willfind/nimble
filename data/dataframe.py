@@ -9,9 +9,6 @@ from UML.exceptions import ArgumentException, PackageException
 from six.moves import range
 
 pd = UML.importModule('pandas')
-if not pd:
-    msg = 'To use class DataFrame, pandas must be installed.'
-    raise PackageException(msg)
 
 from .base import Base, cmp_to_key
 import numpy as np
@@ -34,6 +31,10 @@ class DataFrame(Base):
             data: pandas DataFrame, or numpy matrix.
             reuseData: boolean. only used when data is a pandas DataFrame.
         """
+        if not pd:
+            msg = 'To use class DataFrame, pandas must be installed.'
+            raise PackageException(msg)
+
         if (not isinstance(data, (pd.DataFrame, np.matrix))):
             msg = "the input data can only be a pandas DataFrame or a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
@@ -404,7 +405,6 @@ class DataFrame(Base):
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
-                outFile.write('\n\n')
                 if includePointNames:
                     outFile.write('point_names')
         self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
