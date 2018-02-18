@@ -54,7 +54,7 @@ UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 
 def createRandomData(
         returnType, numPoints, numFeatures, sparsity, numericType="float",
-        featureNames='automatic', name=None):
+        pointNames='automatic', featureNames='automatic', name=None):
     """
     Generates a data object with random contents and numPoints points and numFeatures features.
 
@@ -120,7 +120,7 @@ def createRandomData(
             else:
                 randData = binarySparsityMatrix * filledFloatMatrix
 
-    return createData(returnType, data=randData, featureNames=featureNames, name=name)
+    return createData(returnType, data=randData, pointNames=pointNames, featureNames=featureNames, name=name)
 
 
 def ones(returnType, numPoints, numFeatures, pointNames='automatic',
