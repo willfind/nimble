@@ -98,9 +98,34 @@ def testSparsityReturnedPlausible():
 
 
 def test_createRandomizedData_names_passed():
-    raise NotImplementedError
+    '''
+    function that tests:
+    - Given correctly sized lists of strings for pointNames and featureNames
+    arguments, checks if the returned object has those axis names.
 
+    - Validity checking of n
 
+    - These tests are run for all combinations of the paramaters:
+    supportedFundamentalTypes = ['int', 'float']
+    returnTypes = ['Matrix','Sparse','List']
+    sparsities = [0.0, 0.5, .99]
+    '''
+    supportedFundamentalTypes = ['int', 'float']
+    sparsities = [0.0, 0.5, .99]
+
+    pnames = ['p{}'.format(i) for i in range(0, 10)]
+    fnames = ['f{}'.format(i) for i in range(0, 3)]
+
+    # TODO create a funcion summarizing the calling of the function with the different combinations.
+    for curType in supportedFundamentalTypes:
+        for curReturnType in returnTypes:
+            for curSparsity in sparsities:
+                ret = createRandomData(
+                    curReturnType, len(pnames), len(fnames), curSparsity,
+                    numericType=curType, pointNames=pnames, featureNames=fnames)
+
+                assert ret.getPointNames() == pnames
+                assert ret.getFeatureNames() == fnames
 
 #todo check that sizes of returned objects are what you request via npoints and nfeatures
 
