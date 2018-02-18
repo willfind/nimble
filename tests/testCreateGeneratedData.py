@@ -103,7 +103,9 @@ def test_createRandomizedData_names_passed():
     - Given correctly sized lists of strings for pointNames and featureNames
     arguments, checks if the returned object has those axis names.
 
-    - Validity checking of n
+    - Validity checking of pointNames and featureNames is not tested
+    since it is done exclusively in createData. We only check for successful
+    behavior.
 
     - These tests are run for all combinations of the paramaters:
     supportedFundamentalTypes = ['int', 'float']
@@ -116,7 +118,8 @@ def test_createRandomizedData_names_passed():
     pnames = ['p{}'.format(i) for i in range(0, 10)]
     fnames = ['f{}'.format(i) for i in range(0, 3)]
 
-    # TODO create a funcion summarizing the calling of the function with the different combinations.
+    # TODO create a function summarizing the calling of the function with
+    # the different combinations.
     for curType in supportedFundamentalTypes:
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
@@ -227,7 +230,7 @@ def back_constant_conversionEqualityBetweenTypes(toTest):
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
-# validity checking of those arguments is therefore not tested, since 
+# validity checking of those arguments is therefore not tested, since
 # it is done exclusively in createData. We only check for successful behaviour.
 
 def test_ones_sizeChecking():
@@ -258,7 +261,7 @@ def test_ones_conversionEqualityBetweenTypes():
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
-# validity checking of those arguments is therefore not tested, since 
+# validity checking of those arguments is therefore not tested, since
 # it is done exclusively in createData. We only check for successful behaviour.
 
 def test_zeros_sizeChecking():
@@ -289,7 +292,7 @@ def test_zeros_conversionEqualityBetweenTypes():
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
-# validity checking of those arguments is therefore not tested, since 
+# validity checking of those arguments is therefore not tested, since
 # it is done exclusively in createData. We only check for successful behaviour.
 
 
