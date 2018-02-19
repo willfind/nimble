@@ -949,6 +949,10 @@ class StructureModifying(DataTestObject):
         self.constructor([[[1, 2, 3]]])
 
 
+    def test_init_coo_matrix_duplicates(self):
+        raise NotImplementedError
+
+
     ###############
     # transpose() #
     ###############
