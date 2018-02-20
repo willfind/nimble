@@ -2658,11 +2658,11 @@ class Base(object):
                 ret.transpose()
             elif format == 'listofdict':
                 ret = ret.transpose()
-                ret = _createListOfDict(ret, self.getPointNames())
+                ret = _createListOfDict(data=ret, featureNames=self.getPointNames())
                 return ret
             elif format == 'dictoflist':
                 ret = ret.transpose()
-                ret = _createDictOfList(ret, self.getPointNames(), self.points)
+                ret = _createDictOfList(data=ret, featureNames=self.getPointNames(), nFeatures=self.points)
                 return ret
             elif format != 'pythonlist':
                 ret = ret.transpose()
@@ -2670,9 +2670,9 @@ class Base(object):
                 ret = numpy.transpose(ret).tolist()
 
         if format == 'listofdict':
-            ret = _createListOfDict(ret, self.getFeatureNames())
+            ret = _createListOfDict(data=ret, featureNames=self.getFeatureNames())
         if format == 'dictoflist':
-            ret = _createDictOfList(ret, self.getFeatureNames(), self.features)
+            ret = _createDictOfList(data=ret, featureNames=self.getFeatureNames(), nFeatures=self.features)
 
         return ret
 
