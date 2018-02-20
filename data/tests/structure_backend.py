@@ -121,6 +121,12 @@ class StructureDataSafe(DataTestObject):
         numpyMatrix = orig.copyAs(format='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
+        listOfDict = orig.copyAs(format='list of dict')
+        assert listOfDict == []
+
+        dictOfList = orig.copyAs(format='dict of list')
+        assert dictOfList == {'_DEFAULT_#0': [], '_DEFAULT_#1': []}
+
 
     def test_copy_Fempty(self):
         """ test copyAs() produces the correct outputs when given an feature empty object """
@@ -153,6 +159,12 @@ class StructureDataSafe(DataTestObject):
         numpyMatrix = orig.copyAs(format='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
+        listOfDict = orig.copyAs(format='list of dict')
+        assert listOfDict == [{}, {}]
+
+        dictOfList = orig.copyAs(format='dict of list')
+        assert dictOfList == {}
+
     def test_copy_Trueempty(self):
         """ test copyAs() produces the correct outputs when given a point and feature empty object """
         data = numpy.empty(shape=(0, 0))
@@ -183,6 +195,11 @@ class StructureDataSafe(DataTestObject):
         numpyMatrix = orig.copyAs(format='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
+        listOfDict = orig.copyAs(format='list of dict')
+        assert listOfDict == []
+
+        dictOfList = orig.copyAs(format='dict of list')
+        assert dictOfList == {}
 
     def test_copy_rightTypeTrueCopy(self):
         """ Test copyAs() will return all of the right type and do not show each other's modifications"""
@@ -260,6 +277,16 @@ class StructureDataSafe(DataTestObject):
             spcsr[0, 0] = 5
             assert orig[0, 0] == 1
 
+        listOfDict = orig.copyAs(format='list of dict')
+        assert type(listOfDict) == list
+        listOfDict[0]['one'] = 5
+        assert orig[0, 0] == 1
+
+        dictOfList = orig.copyAs(format='dict of list')
+        assert type(dictOfList) == dict
+        dictOfList['one'][0] = 5
+        assert orig[0, 0] == 1
+
     def test_copy_rowsArePointsFalse(self):
         """ Test copyAs() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
@@ -272,6 +299,20 @@ class StructureDataSafe(DataTestObject):
         out = orig.copyAs(orig.getTypeString(), rowsArePoints=False)
 
         desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+
+        assert out == desired
+
+        out = orig.copyAs(format='list of dict', rowsArePoints=False)
+
+        desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+        desired = desired.copyAs(format='list of dict')
+
+        assert out == desired
+
+        out = orig.copyAs(format='dict of list', rowsArePoints=False)
+
+        desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+        desired = desired.copyAs(format='dict of list')
 
         assert out == desired
 
@@ -313,6 +354,16 @@ class StructureDataSafe(DataTestObject):
                 assert False
             except ArgumentException as ae:
                 print(ae)
+        try:
+            orig.copyAs("list of dict", outputAs1D=True)
+            assert False
+        except ArgumentException as ae:
+            print(ae)
+        try:
+            orig.copyAs("dict of list", outputAs1D=True)
+            assert False
+        except ArgumentException as ae:
+            print(ae)
 
     @raises(ArgumentException)
     def test_copy_outputAs1DWrongShape(self):

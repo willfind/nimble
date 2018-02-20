@@ -101,7 +101,7 @@ class Base(object):
 
         **kwds: potentially full of arguments further up the class hierarchy,
         as following best practices for use of super(). Note however, that
-        this class is the root of the object hierarchy as statically defined. 
+        this class is the root of the object hierarchy as statically defined.
 
         """
         self._pointCount = shape[0]
@@ -893,9 +893,9 @@ class Base(object):
 
 
     def isApproximatelyEqual(self, other):
-        """If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data. 
+        """If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data.
         If it returns True, they probably do but you can't be absolutely sure.
-        Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects 
+        Note that only the actual data stored is considered, it doesn't matter whether the data matrix objects
         passed are of the same type (Matrix, Sparse, etc.)"""
         self.validate()
         #first check to make sure they have the same number of rows and columns
@@ -970,7 +970,7 @@ class Base(object):
 
         testFraction: the fraction of the data to be placed in the testing
         sets. If randomOrder is False, then the points are taken from the
-        end of this object. 
+        end of this object.
 
         labels: may be None, a single feature ID, or a list of feature
         IDs depending on whether one is dealing with data for unsupervised
@@ -1315,8 +1315,8 @@ class Base(object):
 
     def summaryReport(self, displayDigits=2):
         """
-        Produce a report, in a string formatted as a table, containing summary 
-        information about the data set contained in this object.  Includes 
+        Produce a report, in a string formatted as a table, containing summary
+        information about the data set contained in this object.  Includes
         proportion of missing values, proportion of zero values, total # of points,
         and number of features.
         """
@@ -1736,7 +1736,7 @@ class Base(object):
                                                           rowHold, nameHolder)
             # The available space for the data is reduced by the width of the
             # pnames, a column separator, the pnames seperator, and another
-            # column seperator 
+            # column seperator
             maxDataWidth = maxWidth - (pnamesWidth + 2 * len(colSep) + len(pnameSep))
 
         # Set up data values to fit in the available space
@@ -2390,7 +2390,7 @@ class Base(object):
 
 
     def sortPoints(self, sortBy=None, sortHelper=None):
-        """ 
+        """
         Modify this object so that the points are sorted in place, where sortBy may
         indicate the feature to sort by or None if the entire point is to be taken as a key,
         sortHelper may either be comparator, a scoring function, or None to indicate the natural
@@ -2413,7 +2413,7 @@ class Base(object):
         self.validate()
 
     def sortFeatures(self, sortBy=None, sortHelper=None):
-        """ 
+        """
         Modify this object so that the features are sorted in place, where sortBy may
         indicate the feature to sort by or None if the entire point is to be taken as a key,
         sortHelper may either be comparator, a scoring function, or None to indicate the natural
@@ -2561,8 +2561,8 @@ class Base(object):
         the return type) as this object. To return a specific kind of UML data
         object, one may specify the format parameter to be 'List', 'Matrix', or
         'Sparse'. To specify a raw return type (which will not include feature names),
-        one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr'
-        or 'scypy csc'.
+        one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr',
+        'scypy csc', 'list of dict' or 'dict of list'.
 
         """
         #make lower case, strip out all white space and periods, except if format
@@ -2574,9 +2574,11 @@ class Base(object):
             format = ''.join(tokens)
             tokens = format.split('.')
             format = ''.join(tokens)
-            if format not in ['pythonlist', 'numpyarray', 'numpymatrix', 'scipycsr', 'scipycsc']:
+            if format not in ['pythonlist', 'numpyarray', 'numpymatrix', 'scipycsr', 'scipycsc',
+                              'listofdict', 'dictoflist']:
                 msg = "The only accepted asTypes are: 'List', 'Matrix', 'Sparse'"
-                msg += ", 'python list', 'numpy array', 'numpy matrix', 'scipy csr', and 'scipy csc'"
+                msg += ", 'python list', 'numpy array', 'numpy matrix', 'scipy csr', 'scipy csc'"
+                msg += ", 'list of dict', and 'dict of list'"
                 raise ArgumentException(msg)
 
         # we only allow 'numpyarray' and 'pythonlist' to be used with the outpuAs1D flag
@@ -2624,15 +2626,53 @@ class Base(object):
                     ret.append([])
                 return ret
 
-        ret = self._copyAs_implementation(format)
+        if format in ['listofdict', 'dictoflist']:
+            ret = self._copyAs_implementation('numpyarray')
+        else:
+            ret = self._copyAs_implementation(format)
+
+        def _createListOfDict(data, featureNames):
+            # creates a list of dictionaries mapping feature names to the point's values
+            # dictionaries are in point order
+            listofdict = []
+            for point in data:
+                feature_dict = {}
+                for i, value in enumerate(point):
+                    feature = featureNames[i]
+                    feature_dict[feature] = value
+                listofdict.append(feature_dict)
+            return listofdict
+
+        def _createDictOfList(data, featureNames, nFeatures):
+            # creates a python dict maps feature names to python lists containing
+            # all of that feature's values
+            dictoflist = {}
+            for i in range(nFeatures):
+                feature = featureNames[i]
+                values_list = data[:,i].tolist()
+                dictoflist[feature] = values_list
+            return dictoflist
 
         if not rowsArePoints:
             if format in ['List', 'Matrix', 'Sparse', 'DataFrame']:
                 ret.transpose()
+            elif format == 'listofdict':
+                ret = ret.transpose()
+                ret = _createListOfDict(ret, self.getPointNames())
+                return ret
+            elif format == 'dictoflist':
+                ret = ret.transpose()
+                ret = _createDictOfList(ret, self.getPointNames(), self.points)
+                return ret
             elif format != 'pythonlist':
                 ret = ret.transpose()
             else:
                 ret = numpy.transpose(ret).tolist()
+
+        if format == 'listofdict':
+            ret = _createListOfDict(ret, self.getFeatureNames())
+        if format == 'dictoflist':
+            ret = _createDictOfList(ret, self.getFeatureNames(), self.features)
 
         return ret
 
@@ -2814,7 +2854,7 @@ class Base(object):
                              skipNoneReturnValues=False):
         """
         Modifies this object to contain the results of calling function(elementValue)
-        or function(elementValue, pointNum, featureNum) for each element. 
+        or function(elementValue, pointNum, featureNum) for each element.
 
         points: Limit to only elements of the specified points; may be None for
         all points, a single ID, or a list of IDs.
@@ -3443,7 +3483,7 @@ class Base(object):
         """
         Subtract (in place) from this object, element wise if 'other' is a UML data
         object, or element wise with a scalar if other is some kind of numeric
-        value. 
+        value.
 
         """
         return self._genericNumericBinary('__isub__', other)
@@ -4178,7 +4218,7 @@ class Base(object):
         is less than or equal to maxHeight. The length of the inner lists
         will all be the same, a length we will designate as n. The sum of
         the individual strings in each inner list will be less than or
-        equal to maxWidth - ((n-1) * len(colSep)). 
+        equal to maxWidth - ((n-1) * len(colSep)).
 
         """
         if self.points == 0 or self.features == 0:
