@@ -555,7 +555,7 @@ class Keras(UniversalInterface):
                      'validation_steps', \
                      'class_weight', 'max_queue_size', 'workers', 'use_multiprocessing', \
                      'initial_epoch'], 'args', 'kwargs', \
-                    [1,1,None, None, None, None, 10, 1, False, 0])
+                    [1,1,1,None, None, None, None, 10, 1, False, 0])
 
         namedModule = self._searcher.findInPackage(parent, name)
 
