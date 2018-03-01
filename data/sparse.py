@@ -7,6 +7,7 @@ from __future__ import division
 from __future__ import absolute_import
 import numpy
 import copy
+from collections import defaultdict
 
 import UML
 
@@ -55,6 +56,11 @@ class Sparse(Base):
             self.data = data.tocoo()
         else:#data is numpy.matrix
             self.data = scipy.sparse.coo_matrix(data)
+            
+        #print('self.data: {}'.format(self.data))
+        #print('type(self.data): {}'.format(type(self.data)))
+        
+        #self.data = removeDuplicatesByConversion(self.data)
 
         self._sorted = None
         kwds['shape'] = self.data.shape
@@ -1460,6 +1466,8 @@ class Sparse(Base):
 
             if self._sorted == 'feature':
                 assert all(self.data.col[:-1] <= self.data.col[1:])
+            without_replicas_coo = removeDuplicatesByConversion(self.data)
+            assert len(self.data.data) == len(without_replicas_coo.data)
 
     def _containsZero_implementation(self):
         """
@@ -1786,10 +1794,37 @@ def _resync(obj):
 
 
 def removeDuplicatesNative(coo_obj):
-    raise NotImplementedError
+
+    dict_coo = defaultdict(lambda: defaultdict(int))
+    for i,j,v in zip(coo_obj.row, coo_obj.col, coo_obj.data):
+        try:
+            dict_coo[i][j] += v
+        except TypeError:
+            raise TypeError('Unable to represent this configuration of data in Sparse object.')
+        
+    rows = []
+    cols = []
+    data = []
+        
+    for row in dict_coo:
+        for col in dict_coo[row]:
+            rows.append(row)
+            cols.append(col)
+            data.append(dict_coo[row][col])
+            
+    new_coo = coo_matrix((data, (rows, cols)),
+                         shape=coo_obj.shape)
+
+    return new_coo
+
 
 def removeDuplicatesByConversion(coo_obj):
-    raise NotImplementedError
+    try:
+        return coo_obj.tocsr().tocoo()
+        # return coo_obj.tocsc().tocoo()
+    except TypeError:
+        print('coo_obj: \n{}'.format(coo_obj))
+        raise TypeError('Unable to represent this configuration of data in Sparse object.')
 
 
 
