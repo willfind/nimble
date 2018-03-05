@@ -810,7 +810,7 @@ class DataFrame(Base):
         """
 
         leftData = np.matrix(self.data)
-        rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+        rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
         return DataFrame(leftData * rightData)
 
     def _elementwiseMultiply_implementation(self, other):
@@ -854,12 +854,12 @@ class DataFrame(Base):
         """
         leftData = np.matrix(self.data)
         if isinstance(other, UML.data.Base):
-            rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+            rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
         else:
             rightData = other
-        ret = leftData + rightData
+        leftData += rightData
 
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', leftData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _radd__implementation(self, other):
         ret = other + self.data.values
@@ -867,7 +867,7 @@ class DataFrame(Base):
 
     def _iadd__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            ret = np.matrix(self.data) + (other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data))
+            ret = np.matrix(self.data) + (other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data))
         else:
             ret = np.matrix(self.data) + np.matrix(other)
         self.data = pd.DataFrame(ret)
@@ -876,12 +876,12 @@ class DataFrame(Base):
     def _sub__implementation(self, other):
         leftData = np.matrix(self.data)
         if isinstance(other, UML.data.Base):
-            rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+            rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
         else:
             rightData = other
-        ret = leftData - rightData
+        leftData -= rightData
 
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', leftData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data.values
@@ -889,7 +889,7 @@ class DataFrame(Base):
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            ret = np.matrix(self.data) - (other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data))
+            ret = np.matrix(self.data) - (other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data))
         else:
             ret = np.matrix(self.data) - np.matrix(other)
         self.data = pd.DataFrame(ret)
@@ -913,12 +913,12 @@ class DataFrame(Base):
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = np.matrix(self.data) / other.data.todense()
+                self.data /= other.data.todense()
             else:
-                ret = np.matrix(self.data) / np.matrix(other.data)
+                self.data /= np.matrix(other.data)
         else:
-            ret = np.matrix(self.data) / np.matrix(other)
-        self.data = pd.DataFrame(ret)
+            tmp_mat = np.matrix(other)
+            self.data /= (other if tmp_mat.shape == (1, 1) else tmp_mat)
         return self
 
     def _truediv__implementation(self, other):
@@ -991,12 +991,13 @@ class DataFrame(Base):
     def _imod__implementation(self, other):
         if isinstance(other, UML.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = np.matrix(self.data) % other.data.todense()
+                self.data %= other.data.todense()
             else:
-                ret = np.matrix(self.data) % np.matrix(other.data)
+                self.data %= np.matrix(other.data)
         else:
-            ret = np.matrix(self.data) % np.matrix(other)
-        self.data = pd.DataFrame(ret)
+            tmp_mat = np.matrix(other)
+            self.data %= (other if tmp_mat.shape == (1, 1) else tmp_mat)
+
         return self
 
     def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
