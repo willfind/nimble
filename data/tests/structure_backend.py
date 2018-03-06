@@ -998,7 +998,7 @@ class StructureModifying(DataTestObject):
         col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
         data = numpy.array([1, 7, 1, 'AAA', 4, 2, 'BBB'])
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
-        ret = self.constructor(coo_str)
+        self.constructor(coo_str)
 
 
     ###############
