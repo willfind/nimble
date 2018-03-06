@@ -58,8 +58,8 @@ class Sparse(Base):
             self.data = scipy.sparse.coo_matrix(data)
             
         try:
-            self.data = removeDuplicatesByConversion(self.data)
-        except TypeError:
+            self.data = removeDuplicatesNative(self.data)
+        except ValueError:
             pass
             
         #print('self.data: {}'.format(self.data))
@@ -1471,12 +1471,7 @@ class Sparse(Base):
             if self._sorted == 'feature':
                 assert all(self.data.col[:-1] <= self.data.col[1:])
             
-            # print('self.data: {}'.format(self.data))
-            # print('self.data.data: {}'.format(self.data.data))
-            # print('without_replicas_coo: {}'.format(without_replicas_coo))
-            # print('without_replicas_coo.data: {}'.format(without_replicas_coo.data))
-            
-            without_replicas_coo = removeDuplicatesByConversion(self.data)
+            without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
             
 
@@ -1807,23 +1802,36 @@ def _resync(obj):
 
 def removeDuplicatesNative(coo_obj):
 
+    if coo_obj.data is None:
+        #When coo_obj data is not iterable: Empty
+        #It will throw TypeError: zip argument #3 must support iteration.
+        #Decided just to do this quick check instead of duck typing.
+        return coo_obj
+    
     dict_coo = defaultdict(lambda: defaultdict(int))
     for i,j,v in zip(coo_obj.row, coo_obj.col, coo_obj.data):
-        try:
-            dict_coo[i][j] += v
-        except TypeError:
-            raise TypeError('Unable to represent this configuration of data in Sparse object.')
-        
+        if dict_coo[i][j] == 0:
+            try:
+                dict_coo[i][j] = float(v)
+            except ValueError:
+                dict_coo[i][j] = v
+        else:
+            try:
+                dict_coo[i][j] += float(v)
+            except ValueError:
+                raise ValueError('Unable to represent this configuration of data in Sparse object.\
+                                At least one of the duplicate entries is a non-numerical type')
+
     rows = []
     cols = []
     data = []
-        
+
     for row in dict_coo:
         for col in dict_coo[row]:
             rows.append(row)
             cols.append(col)
             data.append(dict_coo[row][col])
-            
+
     new_coo = coo_matrix((data, (rows, cols)),
                          shape=coo_obj.shape)
 
