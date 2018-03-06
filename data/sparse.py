@@ -57,10 +57,14 @@ class Sparse(Base):
         else:#data is numpy.matrix
             self.data = scipy.sparse.coo_matrix(data)
             
+        try:
+            self.data = removeDuplicatesByConversion(self.data)
+        except TypeError:
+            pass
+            
         #print('self.data: {}'.format(self.data))
         #print('type(self.data): {}'.format(type(self.data)))
         
-        #self.data = removeDuplicatesByConversion(self.data)
 
         self._sorted = None
         kwds['shape'] = self.data.shape
@@ -1466,9 +1470,17 @@ class Sparse(Base):
 
             if self._sorted == 'feature':
                 assert all(self.data.col[:-1] <= self.data.col[1:])
+            
+            # print('self.data: {}'.format(self.data))
+            # print('self.data.data: {}'.format(self.data.data))
+            # print('without_replicas_coo: {}'.format(without_replicas_coo))
+            # print('without_replicas_coo.data: {}'.format(without_replicas_coo.data))
+            
             without_replicas_coo = removeDuplicatesByConversion(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
+            
 
+            
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained
