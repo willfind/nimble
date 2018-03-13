@@ -279,11 +279,13 @@ class StructureDataSafe(DataTestObject):
 
         listOfDict = orig.copyAs(format='list of dict')
         assert type(listOfDict) == list
+        assert type(listOfDict[0]) == dict
         listOfDict[0]['one'] = 5
         assert orig[0, 0] == 1
 
         dictOfList = orig.copyAs(format='dict of list')
         assert type(dictOfList) == dict
+        assert type(dictOfList['one']) == list
         dictOfList['one'][0] = 5
         assert orig[0, 0] == 1
 
