@@ -1,7 +1,7 @@
 """
 Relies on being scikit-learn 0.9 or above
 
-OLS and LARS learners are not allowed as learners. KernelExponential is 
+OLS and LARS learners are not allowed as learners. KernelExponential is
 not allowed as a Kernel.
 
 """
@@ -502,12 +502,13 @@ class Mlpy(UniversalInterface):
         """
         namedModule = self._searcher.findInPackage(parent, name)
 
-        # TODO for python 3
+        # for python 3
         # in python 3, inspect.getargspec(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
         # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
-        # excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
-        # if sys.version_info.major > 2 and (parent is None or parent.lower in excludeList):
-        #     return self._paramQueryHardCoded(name, parent, ignore)
+        excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
+        if 'kernel' not in name.lower():
+            if sys.version_info.major > 2 and (parent is None or parent.lower() in excludeList):
+                return self._paramQueryHardCoded(name, parent, ignore)
 
         if not namedModule is None:
             try:
