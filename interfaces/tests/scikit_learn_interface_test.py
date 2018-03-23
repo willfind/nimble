@@ -266,37 +266,37 @@ def testSciKitLearnListLearners():
                         assert key in pSet
 
 
-def findSciKitLearnLearnerFunction(learner):
-    """ imports the skl module containing the needed function to call to instantiate
-    the learner and returns the function"""
+def findSciKitLearnLearnerInstantiate(learner):
+    """ returns the instantiation object for scikitlearn learners"""
 
     skl = SciKitLearn()
-    module = skl.findCallable(learner)
-    learnerName = module.__name__
-    submodules = str(module).split('.')[1:-1] # isolate submodule directories
-    submodules = ".".join(submodules)
-    importedModule = importlib.import_module('sklearn.'+ submodules)
-    sciKitFunction = getattr(importedModule, learnerName)
+    fullModulePath = skl.findCallable(learner)
+    learnerName = fullModulePath.__name__
+    submoduleDirs = str(fullModulePath).split('.')[1:-1]
+    submodulePath = ".".join(submoduleDirs)
+    importedModule = importlib.import_module('sklearn.'+ submodulePath)
+    instantiate = getattr(importedModule, learnerName)
 
-    return sciKitFunction
+    return instantiate
+
 
 def testSciKitLearnPredictiveLearnersPrediction():
-    """ Test that predictions from scikit learn learners with predict attribute match predictions
-    from UML.trainAndApply"""
+    """ Test that predictions from UML.trainAndApply match predictions from scikitlearn learners
+    with predict method"""
 
-    trainX = numpy.array([[ 5.8,  4. ,  1.2,  0.2], [ 4.8,  3. ,  1.4,  0.1], [ 6.5,  3.2,  5.1,  2. ],
-                          [ 5.1,  3.7,  1.5,  0.4], [ 5. ,  3.3,  1.4,  0.2], [ 6.3,  2.5,  4.9,  1.5],
-                          [ 5.8,  2.8,  5.1,  2.4], [ 5.7,  4.4,  1.5,  0.4], [ 6.7,  3.1,  4.7,  1.5],
-                          [ 6.6,  3. ,  4.4,  1.4], [ 6. ,  2.7,  5.1,  1.6], [ 4.3,  3. ,  1.1,  0.1],
-                          [ 5.5,  2.6,  4.4,  1.2], [ 5. ,  3.5,  1.3,  0.3], [ 6.5,  3. ,  5.8,  2.2],
-                          [ 4.8,  3.4,  1.6,  0.2], [ 5.7,  2.5,  5. ,  2. ], [ 5.9,  3. ,  5.1,  1.8],
-                          [ 4.4,  2.9,  1.4,  0.2], [ 5.8,  2.7,  4.1,  1. ]])
-    trainY = numpy.array([[0], [0], [2], [0], [0], [1], [2], [0], [1], [1],
-                          [1], [0], [1], [0], [2], [0], [2], [2], [0], [1]])
-    testX = numpy.array([[ 5.7,  2.8,  4.5,  1.3], [ 6.4,  3.2,  5.3,  2.3], [ 5.6,  3. ,  4.5,  1.5],
-                         [ 7. ,  3.2,  4.7,  1.4], [ 5.4,  3.4,  1.5,  0.4], [ 5. ,  3.5,  1.6,  0.6],
-                         [ 5.1,  3.3,  1.7,  0.5], [ 5.1,  3.8,  1.6,  0.2], [ 6.4,  2.8,  5.6,  2.2],
-                         [ 6. ,  3. ,  4.8,  1.8]])
+    trainX = numpy.array([[ 7.9,  3.8,  6.4,  2. ], [ 5.4,  3.9,  1.3,  0.4], [ 5.5,  2.4,  3.8,  1.1],
+                          [ 5.7,  3. ,  4.2,  1.2], [ 6.8,  2.8,  4.8,  1.4], [ 6.1,  2.8,  4.7,  1.2],
+                          [ 6.6,  3. ,  4.4,  1.4], [ 5.1,  3.3,  1.7,  0.5], [ 5.3,  3.7,  1.5,  0.2],
+                          [ 5. ,  3. ,  1.6,  0.2], [ 7.7,  3. ,  6.1,  2.3], [ 6.3,  2.5,  5. ,  1.9],
+                          [ 6.5,  3. ,  5.8,  2.2], [ 5.4,  3.7,  1.5,  0.2], [ 5.4,  3.4,  1.7,  0.2],
+                          [ 5.1,  3.8,  1.5,  0.3], [ 5.6,  2.5,  3.9,  1.1], [ 4.8,  3.4,  1.9,  0.2],
+                          [ 5.9,  3. ,  4.2,  1.5], [ 4.7,  3.2,  1.3,  0.2]])
+    trainY = numpy.array([[2], [0] ,[1] ,[1] ,[1], [1], [1], [0], [0], [0],
+                          [2], [2], [2], [0], [0], [0], [1], [0], [1], [0]])
+    testX = numpy.array([[ 5.8,  2.7,  4.1,  1. ], [ 7.7,  2.8,  6.7,  2. ], [ 6.4,  3.1,  5.5,  1.8],
+                         [ 5. ,  3.2,  1.2,  0.2], [ 5. ,  2.3,  3.3,  1. ], [ 5.1,  3.8,  1.6,  0.2],
+                         [ 6.9,  3.2,  5.7,  2.3], [ 6.3,  3.4,  5.6,  2.4], [ 6.9,  3.1,  4.9,  1.5],
+                         [ 7.6,  3. ,  6.6,  2.1]])
 
     trainObjX = UML.createData('Matrix', trainX)
     trainObjY = UML.createData('Matrix', trainY)
@@ -307,12 +307,12 @@ def testSciKitLearnPredictiveLearnersPrediction():
                'MultiTaskLasso', 'MultiTaskLassoCV', 'ZeroEstimator']
 
     for learner in learners:
-        sciKitFunction = findSciKitLearnLearnerFunction(learner)
-        if hasattr(sciKitFunction, 'predict') and learner not in exclude:
+        sciKitInstantiate = findSciKitLearnLearnerInstantiate(learner)
+        if hasattr(sciKitInstantiate, 'predict') and learner not in exclude:
             try:
                 predictionUML = UML.trainAndApply(toCall(learner), trainX=trainObjX, trainY=trainObjY,
                                                   testX=testObjX, arguments={'random_state':1})
-                sciKitLearnObj = sciKitFunction(random_state=1)
+                sciKitLearnObj = sciKitInstantiate(random_state=1)
                 sciKitLearnObj.fit(trainX, trainY)
                 predictionSciKit = sciKitLearnObj.predict(testX)
                 # convert to UML data object for comparison
@@ -323,7 +323,7 @@ def testSciKitLearnPredictiveLearnersPrediction():
             except ArgumentException:
                 predictionUML = UML.trainAndApply(toCall(learner), trainX = trainObjX, trainY=trainObjY,
                                                   testX= testObjX, arguments={})
-                sciKitLearnObj = sciKitFunction()
+                sciKitLearnObj = sciKitInstantiate()
                 sciKitLearnObj.fit(trainX, trainY)
                 predictionSciKit = sciKitLearnObj.predict(testX)
                 # convert to UML data object for comparison
@@ -333,23 +333,23 @@ def testSciKitLearnPredictiveLearnersPrediction():
 
 
 def testSciKitLearnPredictiveLearnersEvaluation():
-    """ Test that evaluation metric from scikit learn learners with predict attribute match evaluation
-    metric from UML.trainAndTest"""
+    """ Test that the evaluation metric from UML.trainAndTest match evaluation metric from
+    scikit learn learners with predict method"""
 
-    trainX = numpy.array([[ 5.8,  4. ,  1.2,  0.2], [ 4.8,  3. ,  1.4,  0.1], [ 6.5,  3.2,  5.1,  2. ],
-                          [ 5.1,  3.7,  1.5,  0.4], [ 5. ,  3.3,  1.4,  0.2], [ 6.3,  2.5,  4.9,  1.5],
-                          [ 5.8,  2.8,  5.1,  2.4], [ 5.7,  4.4,  1.5,  0.4], [ 6.7,  3.1,  4.7,  1.5],
-                          [ 6.6,  3. ,  4.4,  1.4], [ 6. ,  2.7,  5.1,  1.6], [ 4.3,  3. ,  1.1,  0.1],
-                          [ 5.5,  2.6,  4.4,  1.2], [ 5. ,  3.5,  1.3,  0.3], [ 6.5,  3. ,  5.8,  2.2],
-                          [ 4.8,  3.4,  1.6,  0.2], [ 5.7,  2.5,  5. ,  2. ], [ 5.9,  3. ,  5.1,  1.8],
-                          [ 4.4,  2.9,  1.4,  0.2], [ 5.8,  2.7,  4.1,  1. ]])
-    trainY = numpy.array([[0], [0], [2], [0], [0], [1], [2], [0], [1], [1],
-                          [1], [0], [1], [0], [2], [0], [2], [2], [0], [1]])
-    testX = numpy.array([[ 5.7,  2.8,  4.5,  1.3], [ 6.4,  3.2,  5.3,  2.3], [ 5.6,  3. ,  4.5,  1.5],
-                         [ 7. ,  3.2,  4.7,  1.4], [ 5.4,  3.4,  1.5,  0.4], [ 5. ,  3.5,  1.6,  0.6],
-                         [ 5.1,  3.3,  1.7,  0.5], [ 5.1,  3.8,  1.6,  0.2], [ 6.4,  2.8,  5.6,  2.2],
-                         [ 6. ,  3. ,  4.8,  1.8]])
-    testY = numpy.zeros((testX.shape[0], 1))
+    trainX = numpy.array([[ 7.9,  3.8,  6.4,  2. ], [ 5.4,  3.9,  1.3,  0.4], [ 5.5,  2.4,  3.8,  1.1],
+                          [ 5.7,  3. ,  4.2,  1.2], [ 6.8,  2.8,  4.8,  1.4], [ 6.1,  2.8,  4.7,  1.2],
+                          [ 6.6,  3. ,  4.4,  1.4], [ 5.1,  3.3,  1.7,  0.5], [ 5.3,  3.7,  1.5,  0.2],
+                          [ 5. ,  3. ,  1.6,  0.2], [ 7.7,  3. ,  6.1,  2.3], [ 6.3,  2.5,  5. ,  1.9],
+                          [ 6.5,  3. ,  5.8,  2.2], [ 5.4,  3.7,  1.5,  0.2], [ 5.4,  3.4,  1.7,  0.2],
+                          [ 5.1,  3.8,  1.5,  0.3], [ 5.6,  2.5,  3.9,  1.1], [ 4.8,  3.4,  1.9,  0.2],
+                          [ 5.9,  3. ,  4.2,  1.5], [ 4.7,  3.2,  1.3,  0.2]])
+    trainY = numpy.array([[2], [0] ,[1] ,[1] ,[1], [1], [1], [0], [0], [0],
+                          [2], [2], [2], [0], [0], [0], [1], [0], [1], [0]])
+    testX = numpy.array([[ 5.8,  2.7,  4.1,  1. ], [ 7.7,  2.8,  6.7,  2. ], [ 6.4,  3.1,  5.5,  1.8],
+                         [ 5. ,  3.2,  1.2,  0.2], [ 5. ,  2.3,  3.3,  1. ], [ 5.1,  3.8,  1.6,  0.2],
+                         [ 6.9,  3.2,  5.7,  2.3], [ 6.3,  3.4,  5.6,  2.4], [ 6.9,  3.1,  4.9,  1.5],
+                         [ 7.6,  3. ,  6.6,  2.1]])
+    testY = numpy.array([[1], [2], [2], [0], [1], [0], [2], [2], [1], [2]])
 
     trainObjX = UML.createData('Matrix', trainX)
     trainObjY = UML.createData('Matrix', trainY)
@@ -364,14 +364,13 @@ def testSciKitLearnPredictiveLearnersEvaluation():
     from sklearn.metrics import mean_squared_error
 
     for learner in learners:
-        sciKitFunction = findSciKitLearnLearnerFunction(learner)
-        if hasattr(sciKitFunction, 'predict') and learner not in exclude:
+        sciKitInstantiate = findSciKitLearnLearnerInstantiate(learner)
+        if hasattr(sciKitInstantiate, 'predict') and learner not in exclude:
             try:
                 umlRMSE = UML.trainAndTest(toCall(learner), trainX=trainObjX, trainY=trainObjY,
                                                   testY= testObjY, performanceFunction = rootMeanSquareError,
-                                                  testX=testObjX, arguments={'random_state':1}
-                                                  )
-                sciKitLearnObj = sciKitFunction(random_state=1)
+                                                  testX=testObjX, arguments={'random_state':1})
+                sciKitLearnObj = sciKitInstantiate(random_state=1)
                 sciKitLearnObj.fit(trainX, trainY)
                 predictionSciKit = sciKitLearnObj.predict(testX)
                 sciKitMSE = mean_squared_error(testY, predictionSciKit)
@@ -384,7 +383,7 @@ def testSciKitLearnPredictiveLearnersEvaluation():
                 umlRMSE = UML.trainAndTest(toCall(learner), trainX = trainObjX, trainY=trainObjY,
                                                   testY= testObjY, performanceFunction = rootMeanSquareError,
                                                   testX= testObjX, arguments={})
-                sciKitLearnObj = sciKitFunction()
+                sciKitLearnObj = sciKitInstantiate()
                 sciKitLearnObj.fit(trainX, trainY)
                 predictionSciKit = sciKitLearnObj.predict(testX)
                 sciKitMSE = mean_squared_error(testY, predictionSciKit)
