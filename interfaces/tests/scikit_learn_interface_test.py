@@ -275,15 +275,16 @@ def findSciKitLearnLearnerInstantiate(learner):
     submoduleDirs = str(fullModulePath).split('.')[1:-1]
     submodulePath = ".".join(submoduleDirs)
     importedModule = importlib.import_module('sklearn.'+ submodulePath)
-    instantiate = getattr(importedModule, learnerName)
+    instantiateObj = getattr(importedModule, learnerName)
 
-    return instantiate
+    return instantiateObj
 
 
 def testSciKitLearnPredictiveLearnersPrediction():
     """ Test that predictions from UML.trainAndApply match predictions from scikitlearn learners
     with predict method"""
 
+    # small random subset of iris dataset
     trainX = numpy.array([[ 7.9,  3.8,  6.4,  2. ], [ 5.4,  3.9,  1.3,  0.4], [ 5.5,  2.4,  3.8,  1.1],
                           [ 5.7,  3. ,  4.2,  1.2], [ 6.8,  2.8,  4.8,  1.4], [ 6.1,  2.8,  4.7,  1.2],
                           [ 6.6,  3. ,  4.4,  1.4], [ 5.1,  3.3,  1.7,  0.5], [ 5.3,  3.7,  1.5,  0.2],
@@ -336,6 +337,7 @@ def testSciKitLearnPredictiveLearnersEvaluation():
     """ Test that the evaluation metric from UML.trainAndTest match evaluation metric from
     scikit learn learners with predict method"""
 
+    # small random subset of iris dataset
     trainX = numpy.array([[ 7.9,  3.8,  6.4,  2. ], [ 5.4,  3.9,  1.3,  0.4], [ 5.5,  2.4,  3.8,  1.1],
                           [ 5.7,  3. ,  4.2,  1.2], [ 6.8,  2.8,  4.8,  1.4], [ 6.1,  2.8,  4.7,  1.2],
                           [ 6.6,  3. ,  4.4,  1.4], [ 5.1,  3.3,  1.7,  0.5], [ 5.3,  3.7,  1.5,  0.2],
@@ -391,6 +393,32 @@ def testSciKitLearnPredictiveLearnersEvaluation():
 
                 # assertion can fail incorrectly without rounding
                 assert round(umlRMSE,11) == round(sciKitRMSE, 11)
+
+
+def testSciKitLearnMultiTaskLearners():
+    """ Test that predictions for Scikitlearn MultiTask Learners from UML.trainAndApply
+    match predictions from scikitlearn learners with predict method"""
+    trainX = [[0,0], [1, 1], [2, 2]]
+    trainY = [[0, 0], [1, 1], [2, 2]]
+    testX = [[2,2], [0,0], [1,1]]
+
+    trainXObj = UML.createData('Matrix', trainX)
+    trainYObj = UML.createData('Matrix', trainY)
+    testXObj = UML.createData('Matrix', testX)
+
+    multiTaskLearners = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',]
+
+    for learner in multiTaskLearners:
+        print(learner)
+        predictionUML = UML.trainAndApply(toCall(learner),trainX=trainXObj, trainY=trainYObj, testX=testXObj)
+        sciKitInstantiate = findSciKitLearnLearnerInstantiate(learner)
+        sciKitLearnObj = sciKitInstantiate()
+        sciKitLearnObj.fit(trainX, trainY)
+        predictionSciKit = sciKitLearnObj.predict(testX)
+        # convert to UML data object for comparison
+        predictionSciKit = UML.createData('Matrix', predictionSciKit)
+
+        assert predictionUML.isIdentical(predictionSciKit)
 
 
 def testCustomRidgeRegressionCompare():
