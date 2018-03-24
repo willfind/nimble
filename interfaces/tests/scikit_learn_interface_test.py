@@ -409,7 +409,6 @@ def testSciKitLearnMultiTaskLearners():
     multiTaskLearners = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',]
 
     for learner in multiTaskLearners:
-        print(learner)
         predictionUML = UML.trainAndApply(toCall(learner),trainX=trainXObj, trainY=trainYObj, testX=testXObj)
         sciKitInstantiate = findSciKitLearnLearnerInstantiate(learner)
         sciKitLearnObj = sciKitInstantiate()
