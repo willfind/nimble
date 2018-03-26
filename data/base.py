@@ -35,7 +35,7 @@ try:
 except ImportError as e:
     mplError = e
 
-print('matplotlib backend: {}'.format(matplotlib.get_backend()))
+#print('matplotlib backend: {}'.format(matplotlib.get_backend()))
 
 import math
 import numbers
@@ -1921,6 +1921,22 @@ class Base(object):
                 outFormat = 'png'
         return outFormat
 
+    def _matplotlibBackendHandleing(self, outPath, plotter, **kwargs):
+        if outPath is None:
+            if matplotlib.get_backend() == 'Agg':
+                warnings.warn(
+                    'Running non interactive session. '
+                    'Providing a path to save plots recommended. '
+                    'Agg matplotlib backend is being use (not plots displayed).')
+            else:
+                plotter(**kwargs)
+            p = Process(target=lambda: None)
+            p.start()
+        else:
+            p = Process(target=plotter, kwargs=kwargs)
+            p.start()
+        return p
+
     def _plot(self, outPath=None, includeColorbar=False):
         self._validateMatPlotLibImport(mplError, 'plot')
         outFormat = self._setupOutFormatForPlotting(outPath)
@@ -1949,22 +1965,6 @@ class Base(object):
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
         p = self._matplotlibBackendHandleing(outPath, plotter, d=self.data)
-        return p
-
-    def _matplotlibBackendHandleing(self, outPath, plotter, **kwargs):
-        if outPath is None:
-            if matplotlib.get_backend() == 'Agg':
-                warnings.warn(
-                    'Running non interactive session. '
-                    'Providing a path to save plots recommended. '
-                    'Agg matplotlib backend is being use (not plots displayed).')
-            else:
-                plotter(**kwargs)
-            p = Process(target=lambda: None)
-            p.start()
-        else:
-            p = Process(target=plotter, kwargs=kwargs)
-            p.start()
         return p
 
 
@@ -2060,9 +2060,10 @@ class Base(object):
                 plt.show()
             else:
                 plt.savefig(outPath, format=outFormat)
-
-        p = Process(target=plotter, kwargs={'d': toPlot, 'xLim': (xMin, xMax)})
-        p.start()
+        
+        # problem if we were to use mutiprocessing with backends
+        # different than Agg.
+        p= self._matplotlibBackendHandleing(outPath, plotter, d=toPlot, xLim=(xMin, xMax))
         return p
 
 
@@ -2206,10 +2207,14 @@ class Base(object):
             else:
                 plt.savefig(outPath, format=outFormat)
 
-        p = Process(target=plotter, kwargs={'inX': xToPlot, 'inY': yToPlot, 'xLim': (xMin, xMax), 'yLim': (yMin, yMax), 'sampleSizeForAverage':sampleSizeForAverage})
-        p.start()
+        # problem if we were to use mutiprocessing with backends
+        # different than Agg.
+        p= self._matplotlibBackendHandleing(outPath, plotter, inX=xToPlot, inY=yToPlot,
+                                             xLim=(xMin, xMax), yLim=(yMin, yMax), 
+                                             sampleSizeForAverage=sampleSizeForAverage)
         return p
 
+        
     def nonZeroIterator(self):
         """
         Returns an iterator for all non-zero elements contained in this
