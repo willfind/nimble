@@ -6,7 +6,6 @@ Unit tests for scikit_learn_interface.py
 from __future__ import absolute_import
 import numpy.testing
 from nose.plugins.attrib import attr
-from sklearn import datasets
 import importlib
 
 import UML
@@ -19,7 +18,10 @@ from UML.randomness import numpyRandom
 from UML.exceptions import ArgumentException
 from UML.helpers import generateClassificationData
 from UML.helpers import generateRegressionData
+from UML.calculate.loss import rootMeanSquareError
 from UML.interfaces.scikit_learn_interface import SciKitLearn
+
+from sklearn.metrics import mean_squared_error
 
 scipy = UML.importModule('scipy.sparse')
 
@@ -280,34 +282,44 @@ def findSciKitLearnLearnerInstantiate(learner):
     return instantiateObj
 
 
+# @attr('slow')
 def testSciKitLearnPredictiveLearnersPrediction():
     """ Test that predictions from UML.trainAndApply match predictions from scikitlearn learners
     with predict method"""
 
-    # small random subset of iris dataset
-    trainX = numpy.array([[ 7.9,  3.8,  6.4,  2. ], [ 5.4,  3.9,  1.3,  0.4], [ 5.5,  2.4,  3.8,  1.1],
-                          [ 5.7,  3. ,  4.2,  1.2], [ 6.8,  2.8,  4.8,  1.4], [ 6.1,  2.8,  4.7,  1.2],
-                          [ 6.6,  3. ,  4.4,  1.4], [ 5.1,  3.3,  1.7,  0.5], [ 5.3,  3.7,  1.5,  0.2],
-                          [ 5. ,  3. ,  1.6,  0.2], [ 7.7,  3. ,  6.1,  2.3], [ 6.3,  2.5,  5. ,  1.9],
-                          [ 6.5,  3. ,  5.8,  2.2], [ 5.4,  3.7,  1.5,  0.2], [ 5.4,  3.4,  1.7,  0.2],
-                          [ 5.1,  3.8,  1.5,  0.3], [ 5.6,  2.5,  3.9,  1.1], [ 4.8,  3.4,  1.9,  0.2],
-                          [ 5.9,  3. ,  4.2,  1.5], [ 4.7,  3.2,  1.3,  0.2]])
-    trainY = numpy.array([[2], [0] ,[1] ,[1] ,[1], [1], [1], [0], [0], [0],
-                          [2], [2], [2], [0], [0], [0], [1], [0], [1], [0]])
-    testX = numpy.array([[ 5.8,  2.7,  4.1,  1. ], [ 7.7,  2.8,  6.7,  2. ], [ 6.4,  3.1,  5.5,  1.8],
-                         [ 5. ,  3.2,  1.2,  0.2], [ 5. ,  2.3,  3.3,  1. ], [ 5.1,  3.8,  1.6,  0.2],
-                         [ 6.9,  3.2,  5.7,  2.3], [ 6.3,  3.4,  5.6,  2.4], [ 6.9,  3.1,  4.9,  1.5],
-                         [ 7.6,  3. ,  6.6,  2.1]])
-
-    trainObjX = UML.createData('Matrix', trainX)
-    trainObjY = UML.createData('Matrix', trainY)
-    testObjX = UML.createData('Matrix', testX)
+    ((cTrainX, cTrainY) , (cTestX, cTestY)) = generateClassificationData(2, 10, 5)
+    ((rTrainX, rTrainY) , (rTestX, rTestY)) = generateRegressionData(2, 10, 5)
+    # some learners cannot handle negative data
+    cTrainX, cTrainY, cTestX, cTestY = abs(cTrainX), abs(cTrainY), abs(cTestX), abs(cTestY)
 
     learners = UML.listLearners('scikitlearn')
     exclude = ['DummyClassifier', 'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV', 'ZeroEstimator']
 
     for learner in learners:
+        fullName = 'scikitlearn.' + learner
+        lType = UML.learnerType(fullName)
+        if lType == 'classification':
+            trainX = cTrainX.data
+            trainY = cTrainY.data
+            testX = cTestX.data
+            testY = cTestY.data
+        elif lType == 'regression':
+            trainX = rTrainX.data
+            trainY = rTrainY.data
+            testX = rTestX.data
+            testY = rTestY.data
+        else:
+            # TODO data for learners with other learner types
+            trainX = cTrainX.data
+            trainY = cTrainY.data
+            testX = cTestX.data
+            testY = cTestY.data
+
+        trainObjX = UML.createData('Matrix', trainX)
+        trainObjY = UML.createData('Matrix', trainY)
+        testObjX = UML.createData('Matrix', testX)
+
         sciKitInstantiate = findSciKitLearnLearnerInstantiate(learner)
         if hasattr(sciKitInstantiate, 'predict') and learner not in exclude:
             try:
@@ -333,68 +345,6 @@ def testSciKitLearnPredictiveLearnersPrediction():
                 assert predictionUML.isIdentical(predictionSciKit)
 
 
-def testSciKitLearnPredictiveLearnersEvaluation():
-    """ Test that the evaluation metric from UML.trainAndTest match evaluation metric from
-    scikit learn learners with predict method"""
-
-    # small random subset of iris dataset
-    trainX = numpy.array([[ 7.9,  3.8,  6.4,  2. ], [ 5.4,  3.9,  1.3,  0.4], [ 5.5,  2.4,  3.8,  1.1],
-                          [ 5.7,  3. ,  4.2,  1.2], [ 6.8,  2.8,  4.8,  1.4], [ 6.1,  2.8,  4.7,  1.2],
-                          [ 6.6,  3. ,  4.4,  1.4], [ 5.1,  3.3,  1.7,  0.5], [ 5.3,  3.7,  1.5,  0.2],
-                          [ 5. ,  3. ,  1.6,  0.2], [ 7.7,  3. ,  6.1,  2.3], [ 6.3,  2.5,  5. ,  1.9],
-                          [ 6.5,  3. ,  5.8,  2.2], [ 5.4,  3.7,  1.5,  0.2], [ 5.4,  3.4,  1.7,  0.2],
-                          [ 5.1,  3.8,  1.5,  0.3], [ 5.6,  2.5,  3.9,  1.1], [ 4.8,  3.4,  1.9,  0.2],
-                          [ 5.9,  3. ,  4.2,  1.5], [ 4.7,  3.2,  1.3,  0.2]])
-    trainY = numpy.array([[2], [0] ,[1] ,[1] ,[1], [1], [1], [0], [0], [0],
-                          [2], [2], [2], [0], [0], [0], [1], [0], [1], [0]])
-    testX = numpy.array([[ 5.8,  2.7,  4.1,  1. ], [ 7.7,  2.8,  6.7,  2. ], [ 6.4,  3.1,  5.5,  1.8],
-                         [ 5. ,  3.2,  1.2,  0.2], [ 5. ,  2.3,  3.3,  1. ], [ 5.1,  3.8,  1.6,  0.2],
-                         [ 6.9,  3.2,  5.7,  2.3], [ 6.3,  3.4,  5.6,  2.4], [ 6.9,  3.1,  4.9,  1.5],
-                         [ 7.6,  3. ,  6.6,  2.1]])
-    testY = numpy.array([[1], [2], [2], [0], [1], [0], [2], [2], [1], [2]])
-
-    trainObjX = UML.createData('Matrix', trainX)
-    trainObjY = UML.createData('Matrix', trainY)
-    testObjX = UML.createData('Matrix', testX)
-    testObjY = UML.createData('Matrix', testY)
-
-    learners = UML.listLearners('scikitlearn')
-    exclude = ['DummyClassifier', 'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'ZeroEstimator']
-
-    from UML.calculate.loss import rootMeanSquareError
-    from sklearn.metrics import mean_squared_error
-
-    for learner in learners:
-        sciKitInstantiate = findSciKitLearnLearnerInstantiate(learner)
-        if hasattr(sciKitInstantiate, 'predict') and learner not in exclude:
-            try:
-                umlRMSE = UML.trainAndTest(toCall(learner), trainX=trainObjX, trainY=trainObjY,
-                                                  testY= testObjY, performanceFunction = rootMeanSquareError,
-                                                  testX=testObjX, arguments={'random_state':1})
-                sciKitLearnObj = sciKitInstantiate(random_state=1)
-                sciKitLearnObj.fit(trainX, trainY)
-                predictionSciKit = sciKitLearnObj.predict(testX)
-                sciKitMSE = mean_squared_error(testY, predictionSciKit)
-                sciKitRMSE = numpy.sqrt(sciKitMSE)
-
-                # assertion can fail incorrectly without rounding
-                assert round(umlRMSE,11) == round(sciKitRMSE, 11)
-
-            except ArgumentException:
-                umlRMSE = UML.trainAndTest(toCall(learner), trainX = trainObjX, trainY=trainObjY,
-                                                  testY= testObjY, performanceFunction = rootMeanSquareError,
-                                                  testX= testObjX, arguments={})
-                sciKitLearnObj = sciKitInstantiate()
-                sciKitLearnObj.fit(trainX, trainY)
-                predictionSciKit = sciKitLearnObj.predict(testX)
-                sciKitMSE = mean_squared_error(testY, predictionSciKit)
-                sciKitRMSE = numpy.sqrt(sciKitMSE)
-
-                # assertion can fail incorrectly without rounding
-                assert round(umlRMSE,11) == round(sciKitRMSE, 11)
-
-
 def testSciKitLearnMultiTaskLearners():
     """ Test that predictions for Scikitlearn MultiTask Learners from UML.trainAndApply
     match predictions from scikitlearn learners with predict method"""
@@ -406,7 +356,7 @@ def testSciKitLearnMultiTaskLearners():
     trainYObj = UML.createData('Matrix', trainY)
     testXObj = UML.createData('Matrix', testX)
 
-    multiTaskLearners = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',]
+    multiTaskLearners = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV']
 
     for learner in multiTaskLearners:
         predictionUML = UML.trainAndApply(toCall(learner),trainX=trainXObj, trainY=trainYObj, testX=testXObj)
@@ -418,6 +368,49 @@ def testSciKitLearnMultiTaskLearners():
         predictionSciKit = UML.createData('Matrix', predictionSciKit)
 
         assert predictionUML.isIdentical(predictionSciKit)
+
+# @attr('slow')
+def testSciKitLearnTransformedData():
+    """ Test that transformations from UML match transformations run with SciKitLearn directly"""
+
+    ((trainObjX, trainObjY) , (testObjX, testObjY)) = generateClassificationData(3, 4, 5)
+
+    trainX = trainObjX.data
+    trainY = trainObjY.data
+    testX = testObjX.data
+    testY = testObjY.data
+
+    learners = UML.listLearners('scikitlearn')
+    exclude = ['SkewedChi2Sampler', 'TfidfVectorizer', 'LabelBinarizer', 'LatentDirichletAllocation',
+               'RandomizedLasso', 'LabelEncoder', 'Normalizer', 'MultiLabelBinarizer', 'StandardScaler',
+               'MiniBatchSparsePCA', 'AdditiveChi2Sampler', 'CountVectorizer', 'PatchExtractor',
+               'SelectKBest', 'SparseRandomProjection', 'GaussianRandomProjection', 'NMF', 'SparsePCA',
+               'RandomizedLogisticRegression', 'RandomizedPCA', 'DictVectorizer', 'FeatureHasher',
+               'KernelCenterer']
+
+    for learner in learners:
+        sciKitInstantiate = findSciKitLearnLearnerInstantiate(learner)
+        if not hasattr(sciKitInstantiate, 'predict'):
+            if hasattr(sciKitInstantiate, 'transform') and learner not in exclude:
+                try:
+                    transformUML = UML.trainAndApply(toCall(learner), trainX=trainObjX, trainY=trainObjY,
+                                                     testX=None, arguments={'random_state': 1})
+                    sciKitLearnObj = sciKitInstantiate(random_state=1)
+                    sciKitLearnObj.fit(trainX, trainY)
+                    transformSciKit = sciKitLearnObj.transform(trainX)
+                    transformSciKit = UML.createData('Matrix', transformSciKit)
+
+                    assert transformUML.isIdentical(transformSciKit)
+
+                except ArgumentException:
+                    transformUML = UML.trainAndApply(toCall(learner), trainX=trainObjX, trainY=trainObjY,
+                                                     testX=None, arguments={})
+                    sciKitLearnObj = sciKitInstantiate()
+                    sciKitLearnObj.fit(trainX, trainY)
+                    transformSciKit = sciKitLearnObj.transform(trainX)
+                    transformSciKit = UML.createData('Matrix', transformSciKit)
+
+                    assert transformUML.isIdentical(transformSciKit)
 
 
 def testCustomRidgeRegressionCompare():
