@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import numpy.testing
 from nose.plugins.attrib import attr
 import importlib
+import inspect
 
 import UML
 
@@ -283,7 +284,7 @@ def findSciKitLearnLearnerInstantiate(learner):
 
 
 # @attr('slow')
-def testSciKitLearnPredictiveLearnersPrediction():
+def testSciKitLearnPredictiveLearners():
     """ Test that predictions from UML.trainAndApply match predictions from scikitlearn learners
     with predict method"""
 
@@ -369,6 +370,19 @@ def testSciKitLearnMultiTaskLearners():
 
         assert predictionUML.isIdentical(predictionSciKit)
 
+
+def _getMethodArgs(argspec, trainX, trainY):
+    args, _, _, _ = inspect.getargspec(argspec)
+    if ('X' in args or 'x' in args) and ('y' in args or 'Y' in args):
+        return [trainX, trainY]
+    elif 'X' in args or 'x' in args:
+        return [trainX]
+    elif 'y' in args or 'Y' in args:
+        return [trainY]
+    else:
+        return [None]
+
+
 # @attr('slow')
 def testSciKitLearnTransformedData():
     """ Test that transformations from UML match transformations run with SciKitLearn directly"""
@@ -377,37 +391,38 @@ def testSciKitLearnTransformedData():
 
     trainX = trainObjX.data
     trainY = trainObjY.data
-    testX = testObjX.data
-    testY = testObjY.data
 
     learners = UML.listLearners('scikitlearn')
-    exclude = ['SkewedChi2Sampler', 'TfidfVectorizer', 'LabelBinarizer', 'LatentDirichletAllocation',
-               'RandomizedLasso', 'LabelEncoder', 'Normalizer', 'MultiLabelBinarizer', 'StandardScaler',
-               'MiniBatchSparsePCA', 'AdditiveChi2Sampler', 'CountVectorizer', 'PatchExtractor',
-               'SelectKBest', 'SparseRandomProjection', 'GaussianRandomProjection', 'NMF', 'SparsePCA',
-               'RandomizedLogisticRegression', 'RandomizedPCA', 'DictVectorizer', 'FeatureHasher',
-               'KernelCenterer']
+    exclude = ['LabelBinarizer', 'LabelEncoder', 'PLSSVD', 'MiniBatchSparsePCA', 'NMF', 'RandomizedPCA',
+    'SparsePCA', 'LatentDirichletAllocation', 'DictVectorizer', 'PatchExtractor', 'CountVectorizer',
+    'TfidfVectorizer', 'FeatureHasher', 'SelectKBest', 'AdditiveChi2Sampler', 'KernelCenterer',
+    'MultiLabelBinarizer', 'Normalizer', 'StandardScaler', 'SparseRandomProjection', 'GaussianRandomProjection']
 
     for learner in learners:
         sciKitInstantiate = findSciKitLearnLearnerInstantiate(learner)
         if not hasattr(sciKitInstantiate, 'predict'):
             if hasattr(sciKitInstantiate, 'transform') and learner not in exclude:
+                print(learner)
                 try:
                     transformUML = UML.trainAndApply(toCall(learner), trainX=trainObjX, trainY=trainObjY,
-                                                     testX=None, arguments={'random_state': 1})
+                                                     arguments={'random_state': 1})
                     sciKitLearnObj = sciKitInstantiate(random_state=1)
-                    sciKitLearnObj.fit(trainX, trainY)
-                    transformSciKit = sciKitLearnObj.transform(trainX)
+                    argsFit = _getMethodArgs(sciKitLearnObj.fit, trainX, trainY)
+                    sciKitLearnObj.fit(*argsFit)
+                    argsTransform = _getMethodArgs(sciKitLearnObj.transform, trainX, trainY)
+                    transformSciKit = sciKitLearnObj.transform(*argsTransform)
                     transformSciKit = UML.createData('Matrix', transformSciKit)
 
                     assert transformUML.isIdentical(transformSciKit)
 
                 except ArgumentException:
                     transformUML = UML.trainAndApply(toCall(learner), trainX=trainObjX, trainY=trainObjY,
-                                                     testX=None, arguments={})
+                                                     arguments={})
                     sciKitLearnObj = sciKitInstantiate()
-                    sciKitLearnObj.fit(trainX, trainY)
-                    transformSciKit = sciKitLearnObj.transform(trainX)
+                    argsFit = _getMethodArgs(sciKitLearnObj.fit, trainX, trainY)
+                    sciKitLearnObj.fit(*argsFit)
+                    argsTransform = _getMethodArgs(sciKitLearnObj.transform, trainX, trainY)
+                    transformSciKit = sciKitLearnObj.transform(*argsTransform)
                     transformSciKit = UML.createData('Matrix', transformSciKit)
 
                     assert transformUML.isIdentical(transformSciKit)
