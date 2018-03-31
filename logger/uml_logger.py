@@ -42,12 +42,53 @@ def initSQLTables(connection, cursor):
     testDataPath text,
     numTestPoints int,
     numTestFeatures int,
-    numFolds int,
-    errorMetricName	text,
-    errorMetricValue real,
-    timer real,
-    lastEpochLoss real);"""
+    customParams int,
+    errorMetrics int,
+    crossValidation int,
+    epochData int,
+    timer real);"""
     cursor.execute(initLevel1Table)
+    connection.commit()
+
+    initLevel2Table = """
+    CREATE TABLE IF NOT EXISTS parameters (
+    runNumber int,
+    paramName text,
+    paramValue text,
+    paramID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initLevel2Table)
+    connection.commit()
+
+    initLevel3Table = """
+    CREATE TABLE IF NOT EXISTS metrics (
+    runNumber int,
+    metricName text,
+    metricValue text,
+    metricID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initLevel3Table)
+    connection.commit()
+
+    initLevel4Table = """
+    CREATE TABLE IF NOT EXISTS crossValidation (
+    runNumber int,
+    foldNumber int,
+    foldScore real,
+    cvID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initLevel4Table)
+    connection.commit()
+
+    initLevel5Table = """
+    CREATE TABLE IF NOT EXISTS epochs (
+    runNumber int,
+    epochNumber int,
+    epochLoss real,
+    epochTime real,
+    epochID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initLevel5Table)
     connection.commit()
 
 
@@ -172,51 +213,40 @@ class UmlLogger(object):
             numTestPoints = testData.points
             numTestFeatures = testData.features
 
-        if numFolds is not None:
-            pass
+        # SQLite does not have a boolean type; using 0 or 1
+        if extraInfo is not None:
+            #TODO insert into parameters table
+            customParams = 1
         else:
-            numFolds = 0
+            customParams = 0
 
-        errorMetricName	= None #TODO
+        if numFolds is not None:
+            # TODO insert into crossValidation table
+            cross_validation = 1
+        else:
+            crossValidation = 0
 
-        errorMetricValue = 0 #TODO
+        if metrics is not None:
+            # TODO insert into metrics table
+            errorMetrics = 1
+        else:
+            errorMetrics = 0
 
-        total_time = 0
+        # TODO add epoch information for neural nets; maybe by checking function?
+        # if epochData is not None:
+        #    insert into epochs table
+        #    epochData = 1
+        epochData = 0
+
+        timer_time = 0
         for eachTime in timer.cumulativeTimes:
-            total_time += timer.cumulativeTimes[eachTime]
-
-        lastEpochLoss = 0 #TODO
-
-        #add any extraInfo to the log string
-        # if extraInfo is not None:
-        #     for key, value in six.iteritems(extraInfo):
-        #         if isinstance(key, (str, int, float, bool)) and isinstance(value, (str, int, float, bool)):
-        #             logLine += createMRLineElement(key, value)
-        #         elif isinstance(value, types.FunctionType):
-        #             logLine += createMRLineElement(key, value.__name__)
-        #         elif isinstance(value, UML.data.Base):
-        #             logLine += createMRLineElement(key, str(value.points) + ", " + str(value.features) + ")")
-        #         else:
-        #             logLine += createMRLineElement(key, value)
-
-        # if metrics is not None:
-        #     for metric, result in zip(metrics, performance):
-        #         if isinstance(metric, (str, six.text_type)):
-        #             logLine += createMRLineElement(str(metric), result)
-        #         else:
-        #             metricLines = inspect.getsourcelines(metric)
-        #             metricString = ""
-        #             for i in range(len(metricLines) - 1):
-        #                 metricString += str(metricLines[i])
-        #             if metricLines is None:
-        #                 metricLines = "N/A"
-        #             logLine += createMRLineElement(metricString, result)
+            timer_time += timer.cumulativeTimes[eachTime]
 
         logLine = ("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);")
         values = (timestamp, runNumber, functionCall, trainDataName, trainDataPath,
                   numTrainPoints, numTrainFeatures, testDataName, testDataPath,
-                  numTestPoints, numTestFeatures, numFolds, errorMetricName,
-                  errorMetricValue, total_time, lastEpochLoss)
+                  numTestPoints, numTestFeatures, customParams, errorMetrics,
+                  crossValidation, epochData, timer_time)
 
         self.logStatement(logLine, values)
 
