@@ -81,7 +81,7 @@ UML.helpers.autoRegisterFromSettings()
 UML.configuration.syncWithInterfaces(UML.settings)
 
 # initialize the logging file
-UML.logger.log_manager.initLoggerAndLogConfig()
+UML.logger.uml_logger.initLoggerAndLogConfig()
 
 __all__ = ['createData', 'createRandomData', 'crossValidate',
            'crossValidateReturnAll', 'crossValidateReturnBest',
