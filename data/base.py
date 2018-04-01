@@ -1923,11 +1923,11 @@ class Base(object):
 
     def _matplotlibBackendHandleing(self, outPath, plotter, **kwargs):
         if outPath is None:
-            if matplotlib.get_backend() == 'Agg':
-                warnings.warn(
-                    'Running non interactive session. '
-                    'Providing a path to save plots recommended. '
-                    'Agg matplotlib backend is being use (not plots displayed).')
+            if matplotlib.get_backend() == 'agg':
+                import matplotlib.pyplot as plt
+                plt.switch_backend('TkAgg')
+                plotter(**kwargs)
+                plt.switch_backend('agg')
             else:
                 plotter(**kwargs)
             p = Process(target=lambda: None)
