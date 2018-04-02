@@ -967,9 +967,28 @@ class StructureModifying(DataTestObject):
         assert ret[0,0] == exp[0,0]
         assert ret[3,3] == exp[3,3]
         assert ret[1,1] == exp[1,1]
+
+    def test_init_coo_matrix_duplicates_introduces_zero(self):
+        # Constructing a matrix with duplicate indices
+        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
+        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
+        data = numpy.array([1, 7, 1, 6, -1, 2, 1])
+        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        ret = self.constructor(coo)
+        # Expected coo_matrix duplicates sum
+        row  = numpy.array([0, 0, 3])
+        col  = numpy.array([0, 2, 3])
+        data = numpy.array([4, 7, 6])
+        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        exp = self.constructor(coo)
         
+        assert ret.isIdentical(exp)
+        assert ret[0,0] == exp[0,0]
+        assert ret[3,3] == exp[3,3]
+        assert ret[0,2] == exp[0,2]
+
+
     def test_init_coo_matrix_duplicateswithNoDupStrings(self):
-        
         # Constructing a matrix with duplicate indices
         # with String, but not in duplicate entry
         row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
@@ -996,9 +1015,9 @@ class StructureModifying(DataTestObject):
         # # with String, in a duplicate entry
         row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
         col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
-        data = numpy.array([1, 7, 1, 'AAA', 4, 2, 'BBB'])
+        data = numpy.array([1, 7, 1, 'AAA', 4, 2, 'BBB'], dtype='O')
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
-        self.constructor(coo_str)
+        ret = self.constructor(coo_str)
 
 
     ###############

@@ -57,11 +57,6 @@ class Sparse(Base):
         else:#data is numpy.matrix
             self.data = scipy.sparse.coo_matrix(data)
             
-        try:
-            self.data = removeDuplicatesNative(self.data)
-        except ValueError:
-            pass
-            
         #print('self.data: {}'.format(self.data))
         #print('type(self.data): {}'.format(type(self.data)))
         
@@ -657,7 +652,6 @@ class Sparse(Base):
         return Sparse(numpy.matrix(ret))
 
     def _isIdentical_implementation(self, other):
-        #import pdb; pdb.set_trace()
         if not isinstance(other, Sparse):
             return False
         # for nonempty matrices, we use a shape mismatch to indicate non-equality
@@ -787,7 +781,8 @@ class Sparse(Base):
     def _copyAs_implementation(self, format):
         if format is None or format == 'Sparse':
             ret = UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            ret._sorted = self._sorted
+            # Due to duplicate removal done in createData, we cannot gurantee that the internal
+            # sorting is preserved in the returned object.
             return ret
         if format == 'List':
             return UML.createData('List', self.data, pointNames=self.getPointNames(),
@@ -1799,41 +1794,54 @@ def _resync(obj):
         obj.shape = obj.shape
 
 
-
 def removeDuplicatesNative(coo_obj):
+    """
+    Creates a new coo_matrix, using summation for numeric data to remove duplicates.
+    If there are duplicate entires involving non-numeric data, an exception is raised.
 
+    coo_obj : the coo_matrix from which the data of the return object originates from. It
+    will not be modified by the function.
+
+    Returns : a new coo_matrix with the same data as in the input matrix, except with duplicate
+    numerical entries summed to a single value. This operation is NOT stable - the row / col
+    attributes are not guaranteed to have an ordering related to those from the input object.
+    This operation is guaranteed to not introduce any 0 values to the data attribute.
+
+    """
     if coo_obj.data is None:
         #When coo_obj data is not iterable: Empty
         #It will throw TypeError: zip argument #3 must support iteration.
         #Decided just to do this quick check instead of duck typing.
         return coo_obj
-    
-    dict_coo = defaultdict(lambda: defaultdict(int))
+
+    seen = {}
     for i,j,v in zip(coo_obj.row, coo_obj.col, coo_obj.data):
-        if dict_coo[i][j] == 0:
-            try:
-                dict_coo[i][j] = float(v)
-            except ValueError:
-                dict_coo[i][j] = v
+        if (i,j) not in seen:
+            # all types are allows to be present once
+            seen[(i,j)] = v
         else:
             try:
-                dict_coo[i][j] += float(v)
+                seen[(i,j)] += float(v)
             except ValueError:
                 raise ValueError('Unable to represent this configuration of data in Sparse object.\
-                                At least one of the duplicate entries is a non-numerical type')
+                                At least one removeDuplicatesNativeof the duplicate entries is a non-numerical type')
 
     rows = []
     cols = []
     data = []
 
-    for row in dict_coo:
-        for col in dict_coo[row]:
-            rows.append(row)
-            cols.append(col)
-            data.append(dict_coo[row][col])
+    for (i,j) in seen:
+        if seen[(i,j)] != 0:
+            rows.append(i)
+            cols.append(j)
+            data.append(seen[(i,j)])
 
-    new_coo = coo_matrix((data, (rows, cols)),
-                         shape=coo_obj.shape)
+    dataNP = numpy.array(data)
+    # if there are mixed strings and numeric values numpy will automatically turn everything
+    # into strings. This will check to see if that has happened and use the object dtype instead.
+    if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
+        dataNP = numpy.array(data, dtype='O')
+    new_coo = coo_matrix((dataNP, (rows, cols)), shape=coo_obj.shape)
 
     return new_coo
 
