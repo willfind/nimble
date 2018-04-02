@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # we specify that we want a List object returned, and that we want the first row to
     # taken as the featureNames. Given the .csv extension on the path it will infer the
     # format of the file to be loaded, though that could be explicitly specified if desired.
-    processed = createData("List", pathOrig, featureNames=True)
+    processed = createData("List", pathOrig, featureNames=True, useLog=True)
 
     # this feature is a precalculated similarity rating. Let's not make it too easy...
     processed.extractFeatures('fnlwgt')

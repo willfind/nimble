@@ -11,6 +11,7 @@ from UML.exceptions import ArgumentException
 import six
 from six.moves import range
 from six.moves import zip
+import sqlite3
 
 
 class MachineReadableLogger(UmlLogger):
@@ -106,43 +107,16 @@ class MachineReadableLogger(UmlLogger):
 
             Format is key:value,key:value,...,key:value
         """
-        #Create a string to be logged (as one line), and add dimensions and the function
-        logLine = "{RUN}::"
-        logLine += createMRLineElement("timestamp", time.strftime('%Y-%m-%d %H:%M:%S'))
 
-        #log info about training data, if present
-        if trainData is not None:
-            #If present, add name and path of source files for train and test data
-            if trainData.name is not None:
-                logLine += createMRLineElement("trainDataName", trainData.name)
-            if trainData.path is not None:
-                logLine += createMRLineElement("trainDataPath", trainData.path)
-            logLine += createMRLineElement("numTrainDataPoints", trainData.points)
-            logLine += createMRLineElement("numTrainDataFeatures", trainData.features)
+        timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
 
-        #log info about testing data, if present
-        if testData is not None:
-            if testData.name is not None:
-                logLine += createMRLineElement("testDataName", testData.name)
-            if testData.path is not None:
-                logLine += createMRLineElement("testDataPath", testData.path)
-            logLine += createMRLineElement("numTestDataPoints", testData.points)
-            logLine += createMRLineElement("numTestDataFeatures", testData.features)
-
-        #add numFolds if it is present - generally when testData is not present, as numFolds
-        #implies k-fold cross validation, in which case there is no test set
-        if numFolds is not None:
-            logLine += createMRLineElement("numFolds", numFolds)
-
-        #add timing info
-        #logLine += createMRLineElement("runTime", "{0:.2f}".format(runTime))
-        if timer is not None and len(timer.cumulativeTimes) > 0:
-            for label in timer.cumulativeTimes.keys():
-                duration = timer.calcRunTime(label)
-                logLine += createMRLineElement(label, "{0:.2f}".format(duration))
-
+        try:
+            runNumber = _getNextRunNumber(self.cursor)
+        except AttributeError:
+            runNumber = 0
+        # get function called in string format
         if isinstance(function, (str, six.text_type)):
-            logLine += createMRLineElement("function", function)
+            functionCall = function
         else:
             #we get the source code of the function as a list of strings and glue them together
             funcLines = inspect.getsourcelines(function)
@@ -151,42 +125,87 @@ class MachineReadableLogger(UmlLogger):
                 funcString += str(funcLines[i])
             if funcLines is None:
                 funcLines = "N/A"
-            logLine += createMRLineElement("function", funcString)
+            functionCall = funcString
+
+        trainDataName = None
+        trainDataPath = None
+        testDataName = None
+        testDataPath = None
+
+        #log info about training data, if present
+        if trainData is not None:
+            #If present, add name and path of source files for train and test data
+            if trainData.name is not None:
+                trainDataName = trainData.name
+            if trainData.path is not None:
+                trainDataPath = trainData.path
+            numTrainPoints = trainData.points
+            numTrainFeatures = trainData.features
+
+        numTestPoints = 0
+        numTestFeatures = 0
+        #log info about testing data, if present
+        if testData is not None:
+            if testData.name is not None:
+                testDataName = testData.name
+            if testData.path is not None:
+                testDataPath = testData.path
+            numTestPoints = testData.points
+            numTestFeatures = testData.features
+
+        if numFolds is not None:
+            pass
+        else:
+            numFolds = 0
+
+        errorMetricName	= None #TODO
+
+        errorMetricValue = 0 #TODO
+
+        total_time = 0
+        for eachTime in timer.cumulativeTimes:
+            total_time += timer.cumulativeTimes[eachTime]
+
+        lastEpochLoss = 0 #TODO
 
         #add any extraInfo to the log string
-        if extraInfo is not None:
-            for key, value in six.iteritems(extraInfo):
-                if isinstance(key, (str, int, float, bool)) and isinstance(value, (str, int, float, bool)):
-                    logLine += createMRLineElement(key, value)
-                elif isinstance(value, types.FunctionType):
-                    logLine += createMRLineElement(key, value.__name__)
-                elif isinstance(value, UML.data.Base):
-                    logLine += createMRLineElement(key, str(value.points) + ", " + str(value.features) + ")")
-                else:
-                    logLine += createMRLineElement(key, value)
+        # if extraInfo is not None:
+        #     for key, value in six.iteritems(extraInfo):
+        #         if isinstance(key, (str, int, float, bool)) and isinstance(value, (str, int, float, bool)):
+        #             logLine += createMRLineElement(key, value)
+        #         elif isinstance(value, types.FunctionType):
+        #             logLine += createMRLineElement(key, value.__name__)
+        #         elif isinstance(value, UML.data.Base):
+        #             logLine += createMRLineElement(key, str(value.points) + ", " + str(value.features) + ")")
+        #         else:
+        #             logLine += createMRLineElement(key, value)
 
-        if metrics is not None:
-            for metric, result in zip(metrics, performance):
-                if isinstance(metric, (str, six.text_type)):
-                    logLine += createMRLineElement(str(metric), result)
-                else:
-                    metricLines = inspect.getsourcelines(metric)
-                    metricString = ""
-                    for i in range(len(metricLines) - 1):
-                        metricString += str(metricLines[i])
-                    if metricLines is None:
-                        metricLines = "N/A"
-                    logLine += createMRLineElement(metricString, result)
+        # if metrics is not None:
+        #     for metric, result in zip(metrics, performance):
+        #         if isinstance(metric, (str, six.text_type)):
+        #             logLine += createMRLineElement(str(metric), result)
+        #         else:
+        #             metricLines = inspect.getsourcelines(metric)
+        #             metricString = ""
+        #             for i in range(len(metricLines) - 1):
+        #                 metricString += str(metricLines[i])
+        #             if metricLines is None:
+        #                 metricLines = "N/A"
+        #             logLine += createMRLineElement(metricString, result)
 
-        if logLine[-1] == ',':
-            logLine = logLine[:-1]
+        logLine = ("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);")
+        values = (timestamp, runNumber, functionCall, trainDataName, trainDataPath,
+                  numTrainPoints, numTrainFeatures, testDataName, testDataPath,
+                  numTestPoints, numTestFeatures, numFolds, errorMetricName,
+                  errorMetricValue, total_time, lastEpochLoss)
 
-        self.logMessage(logLine)
+        self.logStatement(logLine, values)
 
 
     def _logCrossValidation_implemention(self, trainData, trainLabels, learnerName,
                                          metric, performance, timer, learnerArgs, folds=None):
         pass
+
 
 
 def parseLog(pathToLogFile):

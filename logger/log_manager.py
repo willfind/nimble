@@ -1,9 +1,9 @@
 """
-	A class that manages logging from a high level.  Creates two low-level logger objects -
-	a human readable logger and a machine-readable logger - and passes run information to each
-	of them.  The logs are put in the default location (home directory) unless the log path is provided
-	when instantiated.  Likewise with the name of the log file: unless provided at instantiation, it
-	is set to default value.
+    A class that manages logging from a high level.  Creates two low-level logger objects -
+    a human readable logger and a machine-readable logger - and passes run information to each
+    of them.  The logs are put in the default location (home directory) unless the log path is provided
+    when instantiated.  Likewise with the name of the log file: unless provided at instantiation, it
+    is set to default value.
 """
 
 from __future__ import absolute_import
@@ -19,25 +19,25 @@ class LogManager(object):
     def __init__(self, logLocation, logName):
         fullLogDesignator = os.path.join(logLocation, logName)
 
-        self.humanReadableLog = HumanReadableLogger(fullLogDesignator + ".txt")
+        # self.humanReadableLog = HumanReadableLogger(fullLogDesignator + ".txt")
         self.machineReadableLog = MachineReadableLogger(fullLogDesignator + ".mr")
 
     def cleanup(self):
-        self.humanReadableLog.cleanup()
+        # self.humanReadableLog.cleanup()
         self.machineReadableLog.cleanup()
 
     def logData(self, baseDataObject):
         """
         Send information about a data set to the log(s).
         """
-        self.humanReadableLog.logData(baseDataObject)
+        # self.humanReadableLog.logData(baseDataObject)
         self.machineReadableLog.logData(baseDataObject)
 
     def logLoad(self, dataFilePath=None):
         """
         Send information about the loading of a data set to the log(s).
         """
-        self.humanReadableLog.logLoad(dataFilePath)
+        # self.humanReadableLog.logLoad(dataFilePath)
         self.machineReadableLog.logLoad(dataFilePath)
 
     def logRun(self, trainData, trainLabels, testData, testLabels, function,
@@ -47,15 +47,15 @@ class LogManager(object):
             Pass the information about this run to both logs:  human and machine
             readable, which will write it out to the log files.
         """
-        self.humanReadableLog.logRun(trainData, trainLabels, testData, testLabels, function, metrics, predictions,
-                                     performance, timer, extraInfo, numFolds)
+        # self.humanReadableLog.logRun(trainData, trainLabels, testData, testLabels, function, metrics, predictions,
+        #                              performance, timer, extraInfo, numFolds)
         self.machineReadableLog.logRun(trainData, trainLabels, testData, testLabels, function, metrics, predictions,
                                        performance, timer, extraInfo, numFolds)
 
     def logCrossValidation(self, trainData, trainLabels, learnerName, metric, performance,
                            timer, learnerArgs, folds=None):
-        self.humanReadableLog.logCrossValidation(trainData, trainLabels, learnerName, metric, performance, timer,
-                                                 learnerArgs, folds)
+        # self.humanReadableLog.logCrossValidation(trainData, trainLabels, learnerName, metric, performance, timer,
+        #                                          learnerArgs, folds)
         self.machineReadableLog.logCrossValidation(trainData, trainLabels, learnerName, metric, performance, timer,
                                                    learnerArgs, folds)
 
@@ -68,6 +68,10 @@ def initLoggerAndLogConfig():
     """
     try:
         location = UML.settings.get("logger", "location")
+        if location == "":
+            location = './logs-UML'
+            UML.settings.set("logger", "location", location)
+            UML.settings.saveChanges("logger", "location")
     except:
         location = './logs-UML'
         UML.settings.set("logger", "location", location)
@@ -76,8 +80,7 @@ def initLoggerAndLogConfig():
         def cleanThenReInit_Loc(newLocation):
             UML.logger.active.cleanup()
             currName = UML.settings.get("logger", 'name')
-            UML.logger.active = UML.logger.log_manager.LogManager(newLocation, currName)
-
+            UML.logger.active = UML.logger.uml_logger.UmlLogger(newLocation, currName)
         UML.settings.hook("logger", "location", cleanThenReInit_Loc)
 
     try:
@@ -90,7 +93,7 @@ def initLoggerAndLogConfig():
         def cleanThenReInit_Name(newName):
             UML.logger.active.cleanup()
             currLoc = UML.settings.get("logger", 'location')
-            UML.logger.active = UML.logger.log_manager.LogManager(currLoc, newName)
+            UML.logger.active = UML.logger.uml_logger.UmlLogger(currLoc, newName)
 
         UML.settings.hook("logger", "name", cleanThenReInit_Name)
 
@@ -121,5 +124,5 @@ def initLoggerAndLogConfig():
         deepMulti = 'False'
         UML.settings.set("logger", 'enableMultiClassStrategyDeepLogging', deepMulti)
         UML.settings.saveChanges("logger", 'enableMultiClassStrategyDeepLogging')
-
-    UML.logger.active = UML.logger.log_manager.LogManager(location, name)
+    print(location,name)
+    UML.logger.active = UML.logger.uml_logger.UmlLogger(location, name)

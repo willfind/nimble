@@ -1139,6 +1139,38 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
                                arguments, output, scoreMode, multiClassStrategy, useLog)
     return performance
 
+def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
+            saveToFileName=None, maximumEntries=100, searchForText=None):
+    """
+    showLog parses the active logfile based on the arguments passed and prints a human readable
+    interpretation of the log file.
+
+    ARGUMENTS:
+    levelOfDetail: The (int) value for the level of detail from 1 (least detail) to 4 (most detail)
+        Level 1: Outputs basic information about the run (timestamp, run number, learner name, train
+                 and test object details) and boolean values for availability of additional Information
+                 (parameters, metrics, timer, cross validation, epochs).
+        Level 2: Adds parameter, metric, and timer data if available in addition to the Level 1 logs
+        Level 3: TODO
+        Level 4: TODO
+
+    leastRunsAgo: The (int)
+
+    mostRunsAgo:
+
+    startDate:
+
+    endDate:
+
+    saveToFileName:
+
+    maximumEntries:
+
+    searchForText:
+
+    """
+    return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
+                saveToFileName, maximumEntries, searchForText)
 
 def coo_matrixTodense(origTodense):
     """

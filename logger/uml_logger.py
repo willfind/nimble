@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import os
 import time
 import six
@@ -7,7 +8,7 @@ import sqlite3
 import UML
 from UML.exceptions import ArgumentException
 
-
+#TODO edit description
 """
     Handle logging of creating and testing learners.  Currently
     creates two versions of a log for each run:  one that is human-readable,
@@ -26,70 +27,6 @@ from UML.exceptions import ArgumentException
     results of performance metric
     Any additional information
 """
-
-
-def initSQLTables(connection, cursor):
-    initLevel1Table = """
-    CREATE TABLE IF NOT EXISTS runs (
-    timestamp date,
-    runNumber int PRIMARY KEY,
-    functionCall text,
-    trainDataName text,
-    trainDataPath text,
-    numTrainPoints int,
-    numTrainFeatures int,
-    testDataName text,
-    testDataPath text,
-    numTestPoints int,
-    numTestFeatures int,
-    customParams int,
-    errorMetrics int,
-    crossValidation int,
-    epochData int,
-    timer real);"""
-    cursor.execute(initLevel1Table)
-    connection.commit()
-
-    initLevel2Table = """
-    CREATE TABLE IF NOT EXISTS parameters (
-    runNumber int,
-    paramName text,
-    paramValue text,
-    paramID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initLevel2Table)
-    connection.commit()
-
-    initLevel3Table = """
-    CREATE TABLE IF NOT EXISTS metrics (
-    runNumber int,
-    metricName text,
-    metricValue text,
-    metricID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initLevel3Table)
-    connection.commit()
-
-    initLevel4Table = """
-    CREATE TABLE IF NOT EXISTS crossValidation (
-    runNumber int,
-    foldNumber int,
-    foldScore real,
-    cvID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initLevel4Table)
-    connection.commit()
-
-    initLevel5Table = """
-    CREATE TABLE IF NOT EXISTS epochs (
-    runNumber int,
-    epochNumber int,
-    epochLoss real,
-    epochTime real,
-    epochID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initLevel5Table)
-    connection.commit()
 
 
 class UmlLogger(object):
@@ -122,13 +59,11 @@ class UmlLogger(object):
         if self.isAvailable:
             self.connect.close()
 
-    def logStatement(self, statement, values):
+    def insertIntoLog(self, table, values):
         """
-            Generic function to write a message to this object's log file.  Does
-            no formatting; just writes whatever is in 'message' to the file.  Attempt
-            to open the log file if it has not yet been opened.  By default, adds a
-            new line to each message sent, but if addNewLine is false, will not put
-            the message on a new line.
+            Generic function to write a sql insert into to this object's log file.
+            statement is sqlite code with ? as placeholder for variables
+            values are a tuple of variable valuables
         """
 
         #if the log file hasn't been created, we try to create it now
@@ -137,17 +72,12 @@ class UmlLogger(object):
         else:
             self.setup()
 
+        placeholder_list = ["?" for value in values]
+        placeholders = ",".join(placeholder_list)
+        statement = "INSERT INTO {table} VALUES ({placeholders});"
+        statement = statement.format(table=table, placeholders=placeholders)
         self.cursor.execute(statement, values)
         self.connect.commit()
-
-    # def logRun(self, trainData, trainLabels, testData, testLabels, function, metrics,
-    #            predictions, performance, timer, extraInfo=None, numFolds=None):
-    #     """
-    #     Send pertinent information about a cycle of train a learner and test its performance
-    #     to the log file
-    #     """
-    #     self._logRun_implementation(trainData, trainLabels, testData, testLabels,
-    #                                 function, metrics, predictions, performance, timer, extraInfo, numFolds)
 
     def logRun(self, trainData, trainLabels, testData, testLabels,
                                function, metrics, predictions, performance, timer,
@@ -168,12 +98,13 @@ class UmlLogger(object):
             Format is key:value,key:value,...,key:value
         """
 
+        table = 'runs'
+
         timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
 
-        try:
-            runNumber = _getNextRunNumber(self.cursor)
-        except AttributeError:
-            runNumber = 0
+        lastRun = self.getColumnMax(table, 'runNumber')
+        runNumber = lastRun + 1
+
         # get function called in string format
         if isinstance(function, (str, six.text_type)):
             functionCall = function
@@ -191,6 +122,8 @@ class UmlLogger(object):
         trainDataPath = None
         testDataName = None
         testDataPath = None
+        numTrainPoints = None
+        numTrainFeatures = None
 
         #log info about training data, if present
         if trainData is not None:
@@ -202,8 +135,8 @@ class UmlLogger(object):
             numTrainPoints = trainData.points
             numTrainFeatures = trainData.features
 
-        numTestPoints = 0
-        numTestFeatures = 0
+        numTestPoints = None
+        numTestFeatures = None
         #log info about testing data, if present
         if testData is not None:
             if testData.name is not None:
@@ -213,88 +146,178 @@ class UmlLogger(object):
             numTestPoints = testData.points
             numTestFeatures = testData.features
 
-        # SQLite does not have a boolean type; using 0 or 1
-        if extraInfo is not None:
-            #TODO insert into parameters table
-            customParams = 1
+        # SQLite does not have a boolean type
+        if extraInfo is not None and extraInfo is not {}:
+            print(extraInfo)
+            self.logRunDetailDicts('parameters', runNumber, extraInfo)
+            customParameters = 'True'
         else:
-            customParams = 0
+            customParameters = 'False'
+
+        if metrics is not None:
+            #self.logRunDetails('metrics', runNumber, metrics)
+            errorMetrics = 'True'
+        else:
+            errorMetrics = 'False'
 
         if numFolds is not None:
             # TODO insert into crossValidation table
-            cross_validation = 1
+            cross_validation = 'True'
         else:
-            crossValidation = 0
-
-        if metrics is not None:
-            # TODO insert into metrics table
-            errorMetrics = 1
-        else:
-            errorMetrics = 0
+            crossValidation = 'False'
 
         # TODO add epoch information for neural nets; maybe by checking function?
         # if epochData is not None:
         #    insert into epochs table
         #    epochData = 1
-        epochData = 0
+        epochData = 'False'
 
-        timer_time = 0
-        for eachTime in timer.cumulativeTimes:
-            timer_time += timer.cumulativeTimes[eachTime]
+        if timer is not None and timer.cumulativeTimes is not {}:
+            self.logRunDetailDicts('timers', runNumber, timer.cumulativeTimes)
+            timed = 'True'
+        else:
+            timed = None
+        # for eachTime in timer.cumulativeTimes:
+        #     timer_time += timer.cumulativeTimes[eachTime]
 
-        logLine = ("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);")
         values = (timestamp, runNumber, functionCall, trainDataName, trainDataPath,
                   numTrainPoints, numTrainFeatures, testDataName, testDataPath,
-                  numTestPoints, numTestFeatures, customParams, errorMetrics,
-                  crossValidation, epochData, timer_time)
+                  numTestPoints, numTestFeatures, customParameters, errorMetrics, timed,
+                  crossValidation, epochData)
 
-        self.logStatement(logLine, values)
-
-
-
-    def logData(self, baseDataObject):
-        """
-        Send pertinent information about a data object that has been loaded/created to the log file
-        """
-        self._logData_implementation(baseDataObject)
+        self.insertIntoLog(table, values)
 
 
-    def logLoad(self, dataFileName, baseDataType=None, name=None):
-        """
-        Send pertinent information about the loading of some data set to the log file
-        """
-        if dataFileName is None and baseDataType is None and name is None:
-            raise ArgumentException("logLoad requires at least one non-None argument")
+    def logRunDetailDicts(self, table, runNumber, details):
+        """ logs details (parameters, metrics, and timer) from each run """
+        column = table + "ID"
+        uniqueID = self.getColumnMax(table, column)
+        for detailName, detailValue in six.iteritems(details):
+            uniqueID += 1
+            values = (runNumber, detailName, detailValue, uniqueID)
+            self.insertIntoLog(table, values)
+
+    def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
+                               endDate, saveToFileName, maximumEntries, searchForText):
+        """ Implementation of showLog function for UML"""
+        lastRun = self.getColumnMax('runs', 'runNumber')
+        startRun = lastRun - mostRunsAgo
+        endRun = lastRun - leastRunsAgo
+        if levelOfDetail == 1:
+            fullLog = '*' * 35 + " RUN LOGS " + '*' * 35
+            fullLog += "\n"
+            for runNumber in range(startRun, endRun + 1):
+                fullLog += "\n"
+                fullLog += self.buildLevel1String(runNumber)
+                fullLog += '*' * 80
+                fullLog += "\n"
+            print(fullLog)
+
+
+    def buildLevel1String(self, runNumber, maximumEntries=100, searchForText=None):
+        """ """
+        query = "SELECT * FROM runs WHERE runNumber = ?;"
+        values = tuple((runNumber,))
+        self.cursor.execute(query, values)
+        rows = self.cursor.fetchall()
+        if rows == []:
+            fullLog = "No Results Found"
         else:
-            self._logLoad_implementation(dataFileName, baseDataType, name)
+            columnNames = [descripton[0] for descripton in self.cursor.description]
+            for row in rows:
+                # add timestamp, runNumber and learnerName to first row
+                # convert all values to strings for concatenation and printing
+                row = map(str, row)
+                fullLog = columnNames[0]+ ': ' + row[0] + '\n'
+                fullLog += columnNames[1]+ ': ' + row[1] + '\n'
+                fullLog += columnNames[2]+ ': ' + row[2] + '\n\n'
+                # add data about training set, if present
+                trainDataColNames = [columnNames[3], columnNames[4], columnNames[5], columnNames[6]]
+                trainDataRowValues = [row[3], row[4], row[5], row[6]]
+                fullLog += formatRunLine(trainDataColNames, trainDataRowValues)
+                # add data about testing set, if present
+                testDataColNames = [columnNames[7], columnNames[8], columnNames[9], columnNames[10]]
+                testDataRowValues = [row[7], row[8], row[9], row[10]]
+                fullLog += formatRunLine(testDataColNames, testDataRowValues)
+                # add information about other available data tables
+                otherTablesColNames = [columnNames[11], columnNames[12], columnNames[13],
+                                          columnNames[14], columnNames[15]]
+                otherTablesRowValues = [row[11], row[12], row[13], row[14], row[15]]
+                fullLog += formatRunLine(otherTablesColNames, otherTablesRowValues)
 
-    def logCrossValidation(self, trainData, trainLabels, learnerName, metric, performance,
-                           timer, learnerArgs, folds=None):
-        """
-        Send information about selection of a set of parameters using cross validation
-        """
-        self._logCrossValidation_implemention(trainData, trainLabels, learnerName, metric,
-                                              performance, timer, learnerArgs, folds)
+        return fullLog
 
-def addTableValue(value, dataType):
-    if dataType == 'int' or dataType == 'real':
-        logLine = "{}, ".format(value)
-        return logLine
-    else:
-        logLine = "'{}', ".format(value)
-        return logLine
+    def getColumnMax(self, table, column):
+        """ Returns the maximum number in the given column for the specified table """
+        query = "SELECT {column} FROM {table} ORDER BY {column} DESC LIMIT 1"
+        query = query.format(column=column, table=table)
+        self.cursor.execute(query)
+        try:
+            lastNumber = self.cursor.fetchone()[0]
+        except TypeError:
+            lastNumber = -1
+
+        return lastNumber
+
+    # def logData(self, baseDataObject):
+    #     """
+    #     Send pertinent information about a data object that has been loaded/created to the log file
+    #     """
+    #     self._logData_implementation(baseDataObject)
+    #
+    #
+    # def logLoad(self, dataFileName, baseDataType=None, name=None):
+    #     """
+    #     Send pertinent information about the loading of some data set to the log file
+    #     """
+    #     if dataFileName is None and baseDataType is None and name is None:
+    #         raise ArgumentException("logLoad requires at least one non-None argument")
+    #     else:
+    #         self._logLoad_implementation(dataFileName, baseDataType, name)
+    #
+    # def logCrossValidation(self, trainData, trainLabels, learnerName, metric, performance,
+    #                        timer, learnerArgs, folds=None):
+    #     """
+    #     Send information about selection of a set of parameters using cross validation
+    #     """
+    #     self._logCrossValidation_implemention(trainData, trainLabels, learnerName, metric,
+    #                                           performance, timer, learnerArgs, folds)
 
 
-def _getNextRunNumber(cursor):
-    query = "SELECT runNumber FROM runs ORDER BY runNumber DESC LIMIT 1"
-    cursor.execute(query)
-    try:
-        lastRun = cursor.fetchone()[0] #returns tuple
-    except TypeError:
-        lastRun = -1
-    nextRun = lastRun + 1
+########################
+#   Helper Functions   #
+########################
 
-    return nextRun
+def formatRunLine(columnNames, rowValues):
+    """ Formats """
+    columnNames, rowValues = removeItemsWithoutData(columnNames, rowValues)
+    if columnNames == []:
+        return ""
+    lineLog = ("{:20s}" * len(columnNames)).format(*columnNames)
+    lineLog += "\n"
+    lineLog += ("{:20s}" * len(rowValues)).format(*rowValues)
+    lineLog += "\n\n"
+
+    return lineLog
+
+
+def removeItemsWithoutData(columnNames, rowValues):
+    """ Prevents the Log from displaying columns that do not have a data"""
+    keepIndexes = []
+    for index, item in enumerate(rowValues):
+        if item !=  "False":
+            keepIndexes.append(index)
+    keepColumnName = []
+    keepRowValue = []
+    for index in keepIndexes:
+        keepColumnName.append(columnNames[index])
+        keepRowValue.append(rowValues[index])
+    return keepColumnName, keepRowValue
+
+
+#########################
+#    Initialization     #
+#########################
 
 def initLoggerAndLogConfig():
     """Sets up or reads configuration options associated with logging,
@@ -361,3 +384,90 @@ def initLoggerAndLogConfig():
         UML.settings.set("logger", 'enableMultiClassStrategyDeepLogging', deepMulti)
         UML.settings.saveChanges("logger", 'enableMultiClassStrategyDeepLogging')
     UML.logger.active = UmlLogger(location, name)
+
+
+def initSQLTables(connection, cursor):
+    """ creates data and level1-level5 sql tables for logger if the table is not already in the database"""
+
+    initDataTable = """
+    CREATE TABLE IF NOT EXISTS data (
+    dataID int,
+    runNumber int,
+    objectName text,
+    numPoints int,
+    numFeatures int);
+    """
+    cursor.execute(initDataTable)
+    connection.commit()
+
+    initRunsTable = """
+    CREATE TABLE IF NOT EXISTS runs (
+    timestamp date,
+    runNumber int PRIMARY KEY,
+    learnerName text,
+    trainDataName text,
+    trainDataPath text,
+    numTrainPoints int,
+    numTrainFeatures int,
+    testDataName text,
+    testDataPath text,
+    numTestPoints int,
+    numTestFeatures int,
+    customParams int,
+    errorMetrics int,
+    timed int,
+    crossValidation int,
+    epochData int);"""
+    cursor.execute(initRunsTable)
+    connection.commit()
+
+    initParametersTable = """
+    CREATE TABLE IF NOT EXISTS parameters (
+    runNumber int,
+    paramName text,
+    paramValue text,
+    parametersID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initParametersTable)
+    connection.commit()
+
+    initMetricsTable = """
+    CREATE TABLE IF NOT EXISTS metrics (
+    runNumber int,
+    metricName text,
+    metricValue text,
+    metricsID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initMetricsTable)
+    connection.commit()
+
+    initTimersTable = """
+    CREATE TABLE IF NOT EXISTS timers (
+    runNumber int,
+    timedProcess text,
+    ProcessingTime text,
+    timersID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initTimersTable)
+    connection.commit()
+
+    initCVTable = """
+    CREATE TABLE IF NOT EXISTS cv (
+    runNumber int,
+    foldNumber int,
+    foldScore real,
+    cvID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initCVTable)
+    connection.commit()
+
+    initEpochsTable = """
+    CREATE TABLE IF NOT EXISTS epochs (
+    runNumber int,
+    epochNumber int,
+    epochLoss real,
+    epochTime real,
+    epochsID int PRIMARY KEY,
+    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
+    cursor.execute(initEpochsTable)
+    connection.commit()

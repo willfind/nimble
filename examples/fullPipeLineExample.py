@@ -14,6 +14,7 @@ except:
 boilerplate()
 
 if __name__ == "__main__":
+    import UML
     from UML import createData
     from UML import trainAndTest
     from UML import trainAndApply
@@ -47,7 +48,7 @@ if __name__ == "__main__":
     resultsBestScoreOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsOne")
-    print('One vs One, best score format:') 
+    print('One vs One, best score format:')
     print(resultsBestScoreOvO)
 
     resultsAllScoresOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
@@ -65,11 +66,13 @@ if __name__ == "__main__":
     resultsBestScoreOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsAll")
-    print('One vs All, best score format:') 
+    print('One vs All, best score format:')
     print(resultsBestScoreOvA)
 
     resultsAllScoresOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='allScores',
-                                     multiClassStrategy="OneVsAll")
+                                     multiClassStrategy="OneVsAll", arguments={'C':.01})
     print('One vs All, all scores format:')
-    print(resultsAllScoresOvA) 
+    print(resultsAllScoresOvA)
+
+    UML.showLog(levelOfDetail=1, mostRunsAgo=3)
