@@ -8,29 +8,28 @@ import sqlite3
 import UML
 from UML.exceptions import ArgumentException
 
-#TODO edit description
-"""
-    Handle logging of creating and testing learners.  Currently
-    creates two versions of a log for each run:  one that is human-readable,
-    and one that is machine-readable (csv).
-    Should report, for each run:
-    Size of input data
-    # of features  (columns)
-    # of points (rows)
-    # points used for training
-    # points used for testing
 
-    Name of package (mlpy, scikit learn, etc.)
-    Name of learner
-    parameters of learner
-    performance metric(s)
-    results of performance metric
-    Any additional information
+"""
+    Handle logging of creating and testing learners.
+    Currently stores data in a SQLite database file and generates
+    a human readable log by querying the tables within the database.
+    There is a hierarchical structure to the log, allowing the user
+    to specify the level of detail in the log:
+
+    Current Hierarchy
+    Level ?: Data creation and preprocessing logs
+    Level 1: Outputs basic information about the run (timestamp, run number,
+             learner name, train and test object details) and boolean values
+             for the availability of additional information
+    Level 2: Parameter, metric, and timer data if available
+    Level 3: Cross validation
+    Level 4: Epoch data
 """
 
 
 class UmlLogger(object):
     def __init__(self, logLocation, logName):
+        self.logLocation = logLocation
         fullLogDesignator = os.path.join(logLocation, logName)
         self.logFileName = fullLogDesignator + ".mr"
         self.isAvailable = self.setup(self.logFileName)
@@ -59,51 +58,51 @@ class UmlLogger(object):
         if self.isAvailable:
             self.connect.close()
 
-    def insertIntoLog(self, table, values):
+    def insertIntoLog(self, tableName, rowValues):
         """
             Generic function to write a sql insert into to this object's log file.
             statement is sqlite code with ? as placeholder for variables
-            values are a tuple of variable valuables
+            values must be a tuple of variable valuables
         """
 
-        #if the log file hasn't been created, we try to create it now
-        if self.isAvailable:
-            pass
-        else:
-            self.setup()
-
-        placeholder_list = ["?" for value in values]
+        placeholder_list = ["?" for value in rowValues]
         placeholders = ",".join(placeholder_list)
         statement = "INSERT INTO {table} VALUES ({placeholders});"
-        statement = statement.format(table=table, placeholders=placeholders)
-        self.cursor.execute(statement, values)
+        statement = statement.format(table=tableName, placeholders=placeholders)
+        self.cursor.execute(statement, rowValues)
         self.connect.commit()
 
     def logRun(self, trainData, trainLabels, testData, testLabels,
                                function, metrics, predictions, performance, timer,
                                extraInfo=None, numFolds=None):
         """
-            Write one (data + classifer + error metrics) combination to a log file
-            in machine readable format.  Should include as much information as possible,
-            to allow someone to reproduce the test.  Information included:
-            # of training data points
-            # of testing data points
-            # of features in training data
-            # of features in testing data
-            Function defining the classifer (learnerName, parameters, etc.)
-            Error metrics computed based on predictions of classifier: name/function and numerical
-            result)
-            Any additional information, definedy by user, passed as 'extraInfo'
+            logRun directs the data from the arguments and additional data derived from the
+            arguments to the appropriate SQL tables and generates a sequential run number
+            and inserts the values into each table.
 
-            Format is key:value,key:value,...,key:value
+            |------------------------------------------------------------------------------|
+            | Table        | Columns                                                       |
+            |--------------|---------------------------------------------------------------|
+            | runs         | timestamp, runNumber, learnerName,                            |
+            |              | trainDataName, trainDataPath, numTrainPoint, numTrainFeatures,|
+            |              | testDataName, testDataPath, numTestPoints, numTestFeatures,   |
+            |              | customParams, errorMetrics, timer, crossValidation, epochs    |
+            |--------------|---------------------------------------------------------------|
+            | parameters   | runNumber, paramName, paramValue, parametersID                |
+            |--------------|---------------------------------------------------------------|
+            | metrics      | runNumber, metricName, metricValue, metricsID                 |
+            |--------------|---------------------------------------------------------------|
+            | timers       | runNumber, timedProcess, processingTime, timersID             |
+            |--------------|---------------------------------------------------------------|
+            | cv           | runNumber, foldNumber, fold_score, cvID                       |
+            |--------------|---------------------------------------------------------------|
+            | epochs       | runNumber, epochNumber, epochLoss, epochTime, epochsID        |
+            |--------------|---------------------------------------------------------------|
         """
-
-        table = 'runs'
 
         timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
 
-        lastRun = self.getColumnMax(table, 'runNumber')
-        runNumber = lastRun + 1
+        runNumber = self.getNextID('runs', 'runNumber')
 
         # get function called in string format
         if isinstance(function, (str, six.text_type)):
@@ -149,13 +148,13 @@ class UmlLogger(object):
         # SQLite does not have a boolean type
         if extraInfo is not None and extraInfo is not {}:
             print(extraInfo)
-            self.logRunDetailDicts('parameters', runNumber, extraInfo)
+            self._logDictionary(extraInfo, 'parameters', runNumber)
             customParameters = 'True'
         else:
             customParameters = 'False'
 
         if metrics is not None:
-            #self.logRunDetails('metrics', runNumber, metrics)
+            self.logMetrics(runNumber, metrics, performance)
             errorMetrics = 'True'
         else:
             errorMetrics = 'False'
@@ -173,13 +172,12 @@ class UmlLogger(object):
         epochData = 'False'
 
         if timer is not None and timer.cumulativeTimes is not {}:
-            self.logRunDetailDicts('timers', runNumber, timer.cumulativeTimes)
+            self._logDictionary(timer.cumulativeTimes, 'timers', runNumber)
             timed = 'True'
         else:
             timed = None
-        # for eachTime in timer.cumulativeTimes:
-        #     timer_time += timer.cumulativeTimes[eachTime]
 
+        table = 'runs'
         values = (timestamp, runNumber, functionCall, trainDataName, trainDataPath,
                   numTrainPoints, numTrainFeatures, testDataName, testDataPath,
                   numTestPoints, numTestFeatures, customParameters, errorMetrics, timed,
@@ -187,77 +185,126 @@ class UmlLogger(object):
 
         self.insertIntoLog(table, values)
 
+    def logParameters(self, runNumber, parameters):
+        """ Logs parameter names and values used in run into the parameters table"""
+        table = 'parameters'
+        self._logDictionary(parameters, table, runNumber)
 
-    def logRunDetailDicts(self, table, runNumber, details):
-        """ logs details (parameters, metrics, and timer) from each run """
+
+    def logTimers(self, runNumber, timers):
+        """ Logs timer values used in run in the timers table"""
+        table = 'timers'
+        self._logDictionary(parameters, table, runNumber)
+
+
+    def logMetrics(self, runNumber, metrics, performance):
+        """ Logs metric names and values into the metrics table"""
+        nextID = self.getNextID('metrics', 'metricsID')
+        for metric, perf in zip(metrics, performance):
+            metricName = metric.__name__
+            values = (runNumber, metricName, perf, nextID)
+            self.insertIntoLog('metrics', values)
+            nextID += 1
+
+
+    def _logDictionary(self, dictionary, table, runNumber):
+        """ Logs dictionary type arguments into the specified table
+        with the designated runNumber"""
         column = table + "ID"
-        uniqueID = self.getColumnMax(table, column)
-        for detailName, detailValue in six.iteritems(details):
-            uniqueID += 1
-            values = (runNumber, detailName, detailValue, uniqueID)
+        nextID = self.getNextID(table, column)
+        for key, value in six.iteritems(dictionary):
+            values = (runNumber, key, value, nextID)
             self.insertIntoLog(table, values)
+            nextID += 1
+
 
     def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
                                endDate, saveToFileName, maximumEntries, searchForText):
         """ Implementation of showLog function for UML"""
-        lastRun = self.getColumnMax('runs', 'runNumber')
-        startRun = lastRun - mostRunsAgo
-        endRun = lastRun - leastRunsAgo
+        nextRun = self.getNextID('runs', 'runNumber')
+        startRun = nextRun - mostRunsAgo
+        endRun = nextRun - leastRunsAgo
+        runNumbers = range(startRun, endRun)
+
+        if startDate is not None and endDate is not None:
+            query = "SELECT runNumber FROM runs WHERE timestamp >= ? and timestamp <= ?"
+            values = (startDate, endDate)
+            self.cursor.execute(query, values)
+            fetchRows = self.cursor.fetchall()
+            # fetchall returns a list of tuples [(0,), (1,), ...]
+            runNumbers = []
+            for value in fetchRows:
+                runNumbers.append(value[0])
+
+
         if levelOfDetail == 1:
             fullLog = '*' * 35 + " RUN LOGS " + '*' * 35
             fullLog += "\n"
-            for runNumber in range(startRun, endRun + 1):
+            for runNumber in runNumbers:
                 fullLog += "\n"
                 fullLog += self.buildLevel1String(runNumber)
                 fullLog += '*' * 80
                 fullLog += "\n"
-            print(fullLog)
+            if saveToFileName is not None:
+                filePath = os.path.join(self.logLocation, saveToFileName)
+                with open(filePath, mode='w') as f:
+                    f.write(fullLog)
+            else:
+                print(fullLog)
 
 
     def buildLevel1String(self, runNumber, maximumEntries=100, searchForText=None):
-        """ """
+        """ Extracts and formats information from the 'runs' table for printable output """
         query = "SELECT * FROM runs WHERE runNumber = ?;"
         values = tuple((runNumber,))
         self.cursor.execute(query, values)
-        rows = self.cursor.fetchall()
-        if rows == []:
+        fetchRows = self.cursor.fetchall()
+        if fetchRows == []:
             fullLog = "No Results Found"
+            fullLog += "\n"
         else:
             columnNames = [descripton[0] for descripton in self.cursor.description]
-            for row in rows:
-                # add timestamp, runNumber and learnerName to first row
+            for row in fetchRows:
                 # convert all values to strings for concatenation and printing
                 row = map(str, row)
+                # add timestamp, runNumber and learnerName
                 fullLog = columnNames[0]+ ': ' + row[0] + '\n'
                 fullLog += columnNames[1]+ ': ' + row[1] + '\n'
                 fullLog += columnNames[2]+ ': ' + row[2] + '\n\n'
-                # add data about training set, if present
+                # add training set data, if present
                 trainDataColNames = [columnNames[3], columnNames[4], columnNames[5], columnNames[6]]
                 trainDataRowValues = [row[3], row[4], row[5], row[6]]
-                fullLog += formatRunLine(trainDataColNames, trainDataRowValues)
-                # add data about testing set, if present
+                fullLog += _formatRunLine(trainDataColNames, trainDataRowValues)
+                # add testing set data, if present
                 testDataColNames = [columnNames[7], columnNames[8], columnNames[9], columnNames[10]]
                 testDataRowValues = [row[7], row[8], row[9], row[10]]
-                fullLog += formatRunLine(testDataColNames, testDataRowValues)
+                fullLog += _formatRunLine(testDataColNames, testDataRowValues)
                 # add information about other available data tables
                 otherTablesColNames = [columnNames[11], columnNames[12], columnNames[13],
                                           columnNames[14], columnNames[15]]
                 otherTablesRowValues = [row[11], row[12], row[13], row[14], row[15]]
-                fullLog += formatRunLine(otherTablesColNames, otherTablesRowValues)
+                fullLog += _formatRunLine(otherTablesColNames, otherTablesRowValues)
 
         return fullLog
 
-    def getColumnMax(self, table, column):
+
+    def buildLevel2String(self, runNumber, maximumEntries=100, searchForText=None):
+        pass
+
+
+    def getNextID(self, table, column):
         """ Returns the maximum number in the given column for the specified table """
         query = "SELECT {column} FROM {table} ORDER BY {column} DESC LIMIT 1"
         query = query.format(column=column, table=table)
         self.cursor.execute(query)
         try:
-            lastNumber = self.cursor.fetchone()[0]
+            lastNumber = self.cursor.fetchone()
+            # fetchone returns a tuple (0,)
+            nextNumber = lastNumber[0] + 1
         except TypeError:
-            lastNumber = -1
+            nextNumber = 0
 
-        return lastNumber
+        return nextNumber
 
     # def logData(self, baseDataObject):
     #     """
@@ -284,13 +331,13 @@ class UmlLogger(object):
     #                                           performance, timer, learnerArgs, folds)
 
 
-########################
-#   Helper Functions   #
-########################
+#######################
+### Generic Helpers ###
+#######################
 
-def formatRunLine(columnNames, rowValues):
+def _formatRunLine(columnNames, rowValues):
     """ Formats """
-    columnNames, rowValues = removeItemsWithoutData(columnNames, rowValues)
+    columnNames, rowValues = _removeItemsWithoutData(columnNames, rowValues)
     if columnNames == []:
         return ""
     lineLog = ("{:20s}" * len(columnNames)).format(*columnNames)
@@ -301,7 +348,7 @@ def formatRunLine(columnNames, rowValues):
     return lineLog
 
 
-def removeItemsWithoutData(columnNames, rowValues):
+def _removeItemsWithoutData(columnNames, rowValues):
     """ Prevents the Log from displaying columns that do not have a data"""
     keepIndexes = []
     for index, item in enumerate(rowValues):
@@ -445,7 +492,7 @@ def initSQLTables(connection, cursor):
     CREATE TABLE IF NOT EXISTS timers (
     runNumber int,
     timedProcess text,
-    ProcessingTime text,
+    ProcessingTime real,
     timersID int PRIMARY KEY,
     FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
     cursor.execute(initTimersTable)

@@ -1142,31 +1142,45 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
 def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
             saveToFileName=None, maximumEntries=100, searchForText=None):
     """
-    showLog parses the active logfile based on the arguments passed and prints a human readable
-    interpretation of the log file.
+    showLog parses the active logfile based on the arguments passed and prints a
+    human readable interpretation of the log file.
 
     ARGUMENTS:
-    levelOfDetail: The (int) value for the level of detail from 1 (least detail) to 4 (most detail)
-        Level 1: Outputs basic information about the run (timestamp, run number, learner name, train
-                 and test object details) and boolean values for availability of additional Information
-                 (parameters, metrics, timer, cross validation, epochs).
-        Level 2: Adds parameter, metric, and timer data if available in addition to the Level 1 logs
-        Level 3: TODO
-        Level 4: TODO
+    levelOfDetail:  The (int) value for the level of detail from 1, the least detail,
+                    to 4 (most detail)
+        **Level?: Data creation and preprocessing
+        *Level 1: Outputs basic information about the run (timestamp, run number,
+                 learner name, train and test object details) and boolean values
+                 for the availability of additional information
+        **Level 2: Adds parameter, metric, and timer data if available
+        **Level 3: TODO
+        **Level 4: TODO
 
-    leastRunsAgo: The (int)
+    leastRunsAgo:   The (int) value for the least number of runs since the most recent
+                    run to include in the log. Defaults to 0 (final log entry is the
+                    most recent run)
 
-    mostRunsAgo:
+    mostRunsAgo:    The (int) value for the least number of runs since the most recent run to include
+                    in the log.
 
-    startDate:
+    *startDate:      A string of the date to start adding runs to the log.
+                    Acceptable formats:
+                      "YYYY-MM-DD"
+                      "YYYY-MM-DD HH:MM"
+                      "YYYY-MM-DD HH:MM:SS"
 
-    endDate:
+    *endDate:        A string of the date to stop adding runs to the log.
+                    See startDate for formatting.
 
-    saveToFileName:
+    *saveToFileName: The name of the file where the human readable log will be saved. File will be
+                    Default is None, showLog will print to standard out
 
-    maximumEntries:
+    **maximumEntries: Maximum number of entries to allow before stopping the log
 
-    searchForText:
+    **searchForText:  string or regular expression to search for in the log runs
+
+    * Partially implemented
+    ** Not yet implemented
 
     """
     return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,

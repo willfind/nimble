@@ -39,40 +39,40 @@ if __name__ == "__main__":
     print('Standard trainAndTest call, fractionIncorrect: ' + str(results))
     print("")
 
-    resultsLabelsOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                             testX=tesObjNoY, scoreMode='label',
-                             multiClassStrategy="OneVsOne")
-    print('One vs One predictions (aka labels format):')
-    print(resultsLabelsOvO)
-
-    resultsBestScoreOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                                     testX=tesObjNoY, scoreMode='bestScore',
-                                     multiClassStrategy="OneVsOne")
-    print('One vs One, best score format:')
-    print(resultsBestScoreOvO)
-
-    resultsAllScoresOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                                     testX=tesObjNoY, scoreMode='allScores',
-                                     multiClassStrategy="OneVsOne")
-    print('One vs One, all scores format:')
-    print(resultsAllScoresOvO)
-
-    resultsLabelsOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                             testX=tesObjNoY, scoreMode='label',
-                             multiClassStrategy="OneVsAll")
-    print('One vs All predictions (aka labels format):')
-    print(resultsLabelsOvA)
-
-    resultsBestScoreOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                                     testX=tesObjNoY, scoreMode='bestScore',
-                                     multiClassStrategy="OneVsAll")
-    print('One vs All, best score format:')
-    print(resultsBestScoreOvA)
-
-    resultsAllScoresOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                                     testX=tesObjNoY, scoreMode='allScores',
-                                     multiClassStrategy="OneVsAll", arguments={'C':.01})
-    print('One vs All, all scores format:')
-    print(resultsAllScoresOvA)
-
-    UML.showLog(levelOfDetail=1, mostRunsAgo=3)
+    # resultsLabelsOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+    #                          testX=tesObjNoY, scoreMode='label',
+    #                          multiClassStrategy="OneVsOne")
+    # print('One vs One predictions (aka labels format):')
+    # print(resultsLabelsOvO)
+    #
+    # resultsBestScoreOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+    #                                  testX=tesObjNoY, scoreMode='bestScore',
+    #                                  multiClassStrategy="OneVsOne")
+    # print('One vs One, best score format:')
+    # print(resultsBestScoreOvO)
+    #
+    # resultsAllScoresOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+    #                                  testX=tesObjNoY, scoreMode='allScores',
+    #                                  multiClassStrategy="OneVsOne")
+    # print('One vs One, all scores format:')
+    # print(resultsAllScoresOvO)
+    #
+    # resultsLabelsOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+    #                          testX=tesObjNoY, scoreMode='label',
+    #                          multiClassStrategy="OneVsAll")
+    # print('One vs All predictions (aka labels format):')
+    # print(resultsLabelsOvA)
+    #
+    # resultsBestScoreOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+    #                                  testX=tesObjNoY, scoreMode='bestScore',
+    #                                  multiClassStrategy="OneVsAll")
+    # print('One vs All, best score format:')
+    # print(resultsBestScoreOvA)
+    #
+    # resultsAllScoresOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
+    #                                  testX=tesObjNoY, scoreMode='allScores',
+    #                                  multiClassStrategy="OneVsAll", arguments={'C':.01})
+    # print('One vs All, all scores format:')
+    # print(resultsAllScoresOvA)
+    #
+    UML.showLog(levelOfDetail=1, startDate="2018-04-02 14:06:29", endDate="2018-04-02 14:11:59")
