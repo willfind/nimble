@@ -325,7 +325,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             func = extractNamesFromPdDataFrame
         elif pd and isinstance(rawData, pd.Series):
             func = extractNamesFromPdSeries
-       
+
         rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames, featureNames)
 
         # tempPointNames and tempFeatures may either be None or explicit names.
@@ -788,7 +788,7 @@ def extractNamesFromScipySparse(rawData, pointNames, featureNames):
 
     """
 #    try:
-#        ret = extractNamesFromScipyConversion(rawData, pointNames, featureNames)       
+#        ret = extractNamesFromScipyConversion(rawData, pointNames, featureNames)
 #    except (NotImplementedError, TypeError):
     ret = extractNamesFromCooDirect(rawData, pointNames, featureNames)
 
@@ -837,7 +837,7 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
                 secondRow[data.col[i]] = val
 
         pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow, secondRow)
-    
+
     fnamesID = 0 if fnamesID is True else None
     pnamesID = 0 if pnamesID is True else None
 
@@ -940,7 +940,7 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     retPNames = None
     if tempPointNames != {}:
         retPNames = processTempNames(tempPointNames, 'point', 0)
-    retFNames = None 
+    retFNames = None
     if tempFeatureNames != {}:
         retFNames = processTempNames(tempFeatureNames, 'feature', 1)
 
@@ -3430,7 +3430,7 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
         if not isinstance(performanceFunction, list):
             performanceFunction = [performanceFunction]
             results = [results]
-        UML.logger.active.logRun(trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results,
+        UML.logger.active.logRun("trainAndTestOneVsAny", trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results,
                                  timer, extraInfo=merged)
 
     return results

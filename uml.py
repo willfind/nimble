@@ -404,7 +404,7 @@ def listLearners(package=None):
 
 def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
                fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
+               ignoreNonNumericalFeatures=False, useLog=False, reuseData=False):
     """Function to instantiate one of the UML data container types.
 
     returnType: string (or None) indicating which kind of UML data type you want
@@ -495,6 +495,10 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     default is used.
 
     """
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+
     # validation of pointNames and featureNames
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
         msg = "pointNames may only be the values True, False, 'automatic' or "
@@ -522,6 +526,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
+        if useLog:
+            UML.logger.active.logLoad('createData', returnType, name, path)
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
@@ -530,10 +536,13 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             featureNames=featureNames, fileType=fileType, name=name,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             keepPoints=keepPoints, keepFeatures=keepFeatures)
+        if useLog:
+            UML.logger.active.logLoad('createData', returnType, name, path)
         return ret
     # no other allowed inputs
     else:
         raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
+
 
 
 def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None,
@@ -878,7 +887,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
 
     if useLog:
         funcString = interface.getCanonicalName() + '.' + trueLearnerName
-        UML.logger.active.logRun(trainX, trainY, None, None, funcString, None, None, None, timer,
+        UML.logger.active.logRun("train", trainX, trainY, None, None, funcString, None, None, None, timer,
                                  extraInfo=bestArgument)
 
     return trainedLearner
@@ -962,15 +971,15 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
 
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
-                               scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
+                               scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=False, \
                                doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
     results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
 
     if useLog:
         timer.stop('trainAndApply')
         funcString = learnerName
-        UML.logger.active.logRun(trainX, trainY, testX, None, funcString, None, results, None, timer,
-                                 extraInfo=None)
+        UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None, funcString, None, results, None, timer,
+                                 extraInfo=arguments)
 
     return results
 
@@ -1052,14 +1061,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
         timer = None
 
     predictions = UML.trainAndApply(learnerName, trainX, trainY, testX, performanceFunction, arguments, output, \
-                                    scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, **kwarguments)
+                                    scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=False, **kwarguments)
     performance = UML.helpers.computeMetrics(testY, None, predictions, performanceFunction)
 
     if useLog:
         timer.stop('trainAndTest')
         funcString = learnerName
-        UML.logger.active.logRun(trainX, trainY, testX, testY, funcString, [performanceFunction], predictions,
-                                 [performance], timer, None)
+        UML.logger.active.logRun("trainAndTest", trainX, trainY, testX, testY, funcString, [performanceFunction], predictions,
+                                 [performance], timer, extraInfo=arguments)
 
     return performance
 
@@ -1183,8 +1192,11 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
     ** Not yet implemented
 
     """
-    return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
-                saveToFileName, maximumEntries, searchForText)
+    pass
+    # if 1 in levelOfDetail:
+        # UML.logger.active._buildLevel1Log()
+    # return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
+    #             saveToFileName, maximumEntries, searchForText)
 
 def coo_matrixTodense(origTodense):
     """

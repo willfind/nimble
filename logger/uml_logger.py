@@ -3,7 +3,10 @@ from __future__ import print_function
 import os
 import time
 import six
-import sqlite3
+import inspect
+from tinydb import TinyDB
+from tinydb import Query
+from tinydb import where
 
 import UML
 from UML.exceptions import ArgumentException
@@ -47,82 +50,91 @@ class UmlLogger(object):
         dirPath = os.path.dirname(self.logFileName)
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
-        self.connect = sqlite3.connect(self.logFileName)
-        self.cursor = self.connect.cursor()
-        initSQLTables(self.connect, self.cursor) # check
+        self.db = TinyDB(self.logFileName)
 
         return True
 
     def cleanup(self):
         # only need to call if we have previously called setup
         if self.isAvailable:
-            self.connect.close()
+            self.db.close()
 
-    def insertIntoLog(self, tableName, rowValues):
+
+    def insertIntoLog(self, logMessage):
+        """ Inserts a json style message into the log"""
+        self.db.insert(logMessage)
+
+
+    def logLoad(self, umlFunction, returnType, name=None, path=None):
         """
-            Generic function to write a sql insert into to this object's log file.
-            statement is sqlite code with ? as placeholder for variables
-            values must be a tuple of variable valuables
+        Send pertinent information about the loading of some data set to the log file
         """
 
-        placeholder_list = ["?" for value in rowValues]
-        placeholders = ",".join(placeholder_list)
-        statement = "INSERT INTO {table} VALUES ({placeholders});"
-        statement = statement.format(table=tableName, placeholders=placeholders)
-        self.cursor.execute(statement, rowValues)
-        self.connect.commit()
+        logMessage = {"type": "load"}
+        timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
+        logMessage["timestamp"] = timestamp
+        logMessage["function"] = umlFunction
+        logMessage["name"] = name
+        logMessage["path"] = path
 
-    def logRun(self, trainData, trainLabels, testData, testLabels,
-                               function, metrics, predictions, performance, timer,
+        self.insertIntoLog(logMessage)
+
+
+    # def logData(self): #TODO
+    #     """
+    #     Send pertinent information about a data object that has been loaded/created to the log file
+    #     """
+    #     timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
+    #     logMessage = {"type" : "data",
+                  # "timestamp": timestamp,
+                  # "function": function, } #TODO
+    #     self.insertIntoLog(logMessage)
+    #
+    #
+    # def logPrep(self): #TODO
+    #     """
+    #     Send pertinent information about the data preparation step performed to the log file
+    #     """
+    #     timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
+    #     logMessage = {"type" : "prep",
+                  # "timestamp": timestamp,
+                  # "function": function, } #TODO
+    #     self.insertIntoLog(logMessage)
+
+
+    def logRun(self, umlFunction, trainData, trainLabels, testData, testLabels,
+                               learnerFunction, metrics, predictions, performance, timer,
                                extraInfo=None, numFolds=None):
         """
-            logRun directs the data from the arguments and additional data derived from the
-            arguments to the appropriate SQL tables and generates a sequential run number
-            and inserts the values into each table.
-
-            |------------------------------------------------------------------------------|
-            | Table        | Columns                                                       |
-            |--------------|---------------------------------------------------------------|
-            | runs         | timestamp, runNumber, learnerName,                            |
-            |              | trainDataName, trainDataPath, numTrainPoint, numTrainFeatures,|
-            |              | testDataName, testDataPath, numTestPoints, numTestFeatures,   |
-            |              | customParams, errorMetrics, timer, crossValidation, epochs    |
-            |--------------|---------------------------------------------------------------|
-            | parameters   | runNumber, paramName, paramValue, parametersID                |
-            |--------------|---------------------------------------------------------------|
-            | metrics      | runNumber, metricName, metricValue, metricsID                 |
-            |--------------|---------------------------------------------------------------|
-            | timers       | runNumber, timedProcess, processingTime, timersID             |
-            |--------------|---------------------------------------------------------------|
-            | cv           | runNumber, foldNumber, fold_score, cvID                       |
-            |--------------|---------------------------------------------------------------|
-            | epochs       | runNumber, epochNumber, epochLoss, epochTime, epochsID        |
-            |--------------|---------------------------------------------------------------|
+        Send the pertinent information about the run to the log file
         """
+        logMessage = {"type" : "run"}
+        logMessage["function"] = umlFunction
 
         timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
+        logMessage["timestamp"] = timestamp
 
-        runNumber = self.getNextID('runs', 'runNumber')
-
-        # get function called in string format
-        if isinstance(function, (str, six.text_type)):
-            functionCall = function
+        if isinstance(learnerFunction, (str, six.text_type)):
+            functionCall = learnerFunction
         else:
             #we get the source code of the function as a list of strings and glue them together
-            funcLines = inspect.getsourcelines(function)
+            funcLines = inspect.getsourcelines(learnerFunction)
             funcString = ""
             for i in range(len(funcLines) - 1):
                 funcString += str(funcLines[i])
             if funcLines is None:
                 funcLines = "N/A"
             functionCall = funcString
+        logMessage["learner"] = functionCall
 
         trainDataName = None
         trainDataPath = None
-        testDataName = None
-        testDataPath = None
         numTrainPoints = None
         numTrainFeatures = None
+        testDataName = None
+        testDataPath = None
+        numTestPoints = None
+        numTestFeatures = None
 
         #log info about training data, if present
         if trainData is not None:
@@ -134,8 +146,6 @@ class UmlLogger(object):
             numTrainPoints = trainData.points
             numTrainFeatures = trainData.features
 
-        numTestPoints = None
-        numTestFeatures = None
         #log info about testing data, if present
         if testData is not None:
             if testData.name is not None:
@@ -145,147 +155,47 @@ class UmlLogger(object):
             numTestPoints = testData.points
             numTestFeatures = testData.features
 
-        # SQLite does not have a boolean type
-        if extraInfo is not None and extraInfo is not {}:
-            print(extraInfo)
-            self._logDictionary(extraInfo, 'parameters', runNumber)
-            customParameters = 'True'
-        else:
-            customParameters = 'False'
+        logMessage["trainDataName"] = trainDataName
+        logMessage["trainDataPath"] = trainDataPath
+        logMessage["numTrainPoints"] = numTrainPoints
+        logMessage["numTrainFeatures"] = numTrainFeatures
+        logMessage["testDataName"] = testDataName
+        logMessage["testDataPath"] = testDataPath
+        logMessage["numTestPoints"] = numTestPoints
+        logMessage["numTestFeatures"] = numTestFeatures
 
-        if metrics is not None:
-            self.logMetrics(runNumber, metrics, performance)
-            errorMetrics = 'True'
-        else:
-            errorMetrics = 'False'
+        if extraInfo is not None and extraInfo != {}:
+            logMessage['parameters'] = extraInfo
 
-        if numFolds is not None:
-            # TODO insert into crossValidation table
-            cross_validation = 'True'
-        else:
-            crossValidation = 'False'
-
-        # TODO add epoch information for neural nets; maybe by checking function?
-        # if epochData is not None:
-        #    insert into epochs table
-        #    epochData = 1
-        epochData = 'False'
+        if metrics is not None and performance is not None:
+            metricsDict = {}
+            for key, value in zip(metrics, performance):
+                metricsDict[key.__name__] = value
+            logMessage["metrics"] = metricsDict
 
         if timer is not None and timer.cumulativeTimes is not {}:
-            self._logDictionary(timer.cumulativeTimes, 'timers', runNumber)
-            timed = 'True'
-        else:
-            timed = None
+            logMessage["timer"] = timer.cumulativeTimes
 
-        table = 'runs'
-        values = (timestamp, runNumber, functionCall, trainDataName, trainDataPath,
-                  numTrainPoints, numTrainFeatures, testDataName, testDataPath,
-                  numTestPoints, numTestFeatures, customParameters, errorMetrics, timed,
-                  crossValidation, epochData)
-
-        self.insertIntoLog(table, values)
-
-    def logParameters(self, runNumber, parameters):
-        """ Logs parameter names and values used in run into the parameters table"""
-        table = 'parameters'
-        self._logDictionary(parameters, table, runNumber)
+        self.insertIntoLog(logMessage)
 
 
-    def logTimers(self, runNumber, timers):
-        """ Logs timer values used in run in the timers table"""
-        table = 'timers'
-        self._logDictionary(parameters, table, runNumber)
-
-
-    def logMetrics(self, runNumber, metrics, performance):
-        """ Logs metric names and values into the metrics table"""
-        nextID = self.getNextID('metrics', 'metricsID')
-        for metric, perf in zip(metrics, performance):
-            metricName = metric.__name__
-            values = (runNumber, metricName, perf, nextID)
-            self.insertIntoLog('metrics', values)
-            nextID += 1
-
-
-    def _logDictionary(self, dictionary, table, runNumber):
-        """ Logs dictionary type arguments into the specified table
-        with the designated runNumber"""
-        column = table + "ID"
-        nextID = self.getNextID(table, column)
-        for key, value in six.iteritems(dictionary):
-            values = (runNumber, key, value, nextID)
-            self.insertIntoLog(table, values)
-            nextID += 1
+    def logCrossValidation(self, trainData, trainLabels, learnerName, metric, performance,
+                           timer, learnerArgs, folds=None):
+        """
+        Send information about selection of a set of parameters using cross validation
+        """
+        pass
 
 
     def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
                                endDate, saveToFileName, maximumEntries, searchForText):
         """ Implementation of showLog function for UML"""
-        nextRun = self.getNextID('runs', 'runNumber')
-        startRun = nextRun - mostRunsAgo
-        endRun = nextRun - leastRunsAgo
-        runNumbers = range(startRun, endRun)
-
-        if startDate is not None and endDate is not None:
-            query = "SELECT runNumber FROM runs WHERE timestamp >= ? and timestamp <= ?"
-            values = (startDate, endDate)
-            self.cursor.execute(query, values)
-            fetchRows = self.cursor.fetchall()
-            # fetchall returns a list of tuples [(0,), (1,), ...]
-            runNumbers = []
-            for value in fetchRows:
-                runNumbers.append(value[0])
+        pass
 
 
-        if levelOfDetail == 1:
-            fullLog = '*' * 35 + " RUN LOGS " + '*' * 35
-            fullLog += "\n"
-            for runNumber in runNumbers:
-                fullLog += "\n"
-                fullLog += self.buildLevel1String(runNumber)
-                fullLog += '*' * 80
-                fullLog += "\n"
-            if saveToFileName is not None:
-                filePath = os.path.join(self.logLocation, saveToFileName)
-                with open(filePath, mode='w') as f:
-                    f.write(fullLog)
-            else:
-                print(fullLog)
-
-
-    def buildLevel1String(self, runNumber, maximumEntries=100, searchForText=None):
+    def buildLevel1Log(self, runNumber, maximumEntries=100, searchForText=None):
         """ Extracts and formats information from the 'runs' table for printable output """
-        query = "SELECT * FROM runs WHERE runNumber = ?;"
-        values = tuple((runNumber,))
-        self.cursor.execute(query, values)
-        fetchRows = self.cursor.fetchall()
-        if fetchRows == []:
-            fullLog = "No Results Found"
-            fullLog += "\n"
-        else:
-            columnNames = [descripton[0] for descripton in self.cursor.description]
-            for row in fetchRows:
-                # convert all values to strings for concatenation and printing
-                row = map(str, row)
-                # add timestamp, runNumber and learnerName
-                fullLog = columnNames[0]+ ': ' + row[0] + '\n'
-                fullLog += columnNames[1]+ ': ' + row[1] + '\n'
-                fullLog += columnNames[2]+ ': ' + row[2] + '\n\n'
-                # add training set data, if present
-                trainDataColNames = [columnNames[3], columnNames[4], columnNames[5], columnNames[6]]
-                trainDataRowValues = [row[3], row[4], row[5], row[6]]
-                fullLog += _formatRunLine(trainDataColNames, trainDataRowValues)
-                # add testing set data, if present
-                testDataColNames = [columnNames[7], columnNames[8], columnNames[9], columnNames[10]]
-                testDataRowValues = [row[7], row[8], row[9], row[10]]
-                fullLog += _formatRunLine(testDataColNames, testDataRowValues)
-                # add information about other available data tables
-                otherTablesColNames = [columnNames[11], columnNames[12], columnNames[13],
-                                          columnNames[14], columnNames[15]]
-                otherTablesRowValues = [row[11], row[12], row[13], row[14], row[15]]
-                fullLog += _formatRunLine(otherTablesColNames, otherTablesRowValues)
-
-        return fullLog
+        pass
 
 
     def buildLevel2String(self, runNumber, maximumEntries=100, searchForText=None):
@@ -294,41 +204,7 @@ class UmlLogger(object):
 
     def getNextID(self, table, column):
         """ Returns the maximum number in the given column for the specified table """
-        query = "SELECT {column} FROM {table} ORDER BY {column} DESC LIMIT 1"
-        query = query.format(column=column, table=table)
-        self.cursor.execute(query)
-        try:
-            lastNumber = self.cursor.fetchone()
-            # fetchone returns a tuple (0,)
-            nextNumber = lastNumber[0] + 1
-        except TypeError:
-            nextNumber = 0
-
-        return nextNumber
-
-    # def logData(self, baseDataObject):
-    #     """
-    #     Send pertinent information about a data object that has been loaded/created to the log file
-    #     """
-    #     self._logData_implementation(baseDataObject)
-    #
-    #
-    # def logLoad(self, dataFileName, baseDataType=None, name=None):
-    #     """
-    #     Send pertinent information about the loading of some data set to the log file
-    #     """
-    #     if dataFileName is None and baseDataType is None and name is None:
-    #         raise ArgumentException("logLoad requires at least one non-None argument")
-    #     else:
-    #         self._logLoad_implementation(dataFileName, baseDataType, name)
-    #
-    # def logCrossValidation(self, trainData, trainLabels, learnerName, metric, performance,
-    #                        timer, learnerArgs, folds=None):
-    #     """
-    #     Send information about selection of a set of parameters using cross validation
-    #     """
-    #     self._logCrossValidation_implemention(trainData, trainLabels, learnerName, metric,
-    #                                           performance, timer, learnerArgs, folds)
+        pass
 
 
 #######################
@@ -362,9 +238,9 @@ def _removeItemsWithoutData(columnNames, rowValues):
     return keepColumnName, keepRowValue
 
 
-#########################
-#    Initialization     #
-#########################
+#######################
+### Initialization  ###
+#######################
 
 def initLoggerAndLogConfig():
     """Sets up or reads configuration options associated with logging,
@@ -431,90 +307,3 @@ def initLoggerAndLogConfig():
         UML.settings.set("logger", 'enableMultiClassStrategyDeepLogging', deepMulti)
         UML.settings.saveChanges("logger", 'enableMultiClassStrategyDeepLogging')
     UML.logger.active = UmlLogger(location, name)
-
-
-def initSQLTables(connection, cursor):
-    """ creates data and level1-level5 sql tables for logger if the table is not already in the database"""
-
-    initDataTable = """
-    CREATE TABLE IF NOT EXISTS data (
-    dataID int,
-    runNumber int,
-    objectName text,
-    numPoints int,
-    numFeatures int);
-    """
-    cursor.execute(initDataTable)
-    connection.commit()
-
-    initRunsTable = """
-    CREATE TABLE IF NOT EXISTS runs (
-    timestamp date,
-    runNumber int PRIMARY KEY,
-    learnerName text,
-    trainDataName text,
-    trainDataPath text,
-    numTrainPoints int,
-    numTrainFeatures int,
-    testDataName text,
-    testDataPath text,
-    numTestPoints int,
-    numTestFeatures int,
-    customParams int,
-    errorMetrics int,
-    timed int,
-    crossValidation int,
-    epochData int);"""
-    cursor.execute(initRunsTable)
-    connection.commit()
-
-    initParametersTable = """
-    CREATE TABLE IF NOT EXISTS parameters (
-    runNumber int,
-    paramName text,
-    paramValue text,
-    parametersID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initParametersTable)
-    connection.commit()
-
-    initMetricsTable = """
-    CREATE TABLE IF NOT EXISTS metrics (
-    runNumber int,
-    metricName text,
-    metricValue text,
-    metricsID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initMetricsTable)
-    connection.commit()
-
-    initTimersTable = """
-    CREATE TABLE IF NOT EXISTS timers (
-    runNumber int,
-    timedProcess text,
-    ProcessingTime real,
-    timersID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initTimersTable)
-    connection.commit()
-
-    initCVTable = """
-    CREATE TABLE IF NOT EXISTS cv (
-    runNumber int,
-    foldNumber int,
-    foldScore real,
-    cvID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initCVTable)
-    connection.commit()
-
-    initEpochsTable = """
-    CREATE TABLE IF NOT EXISTS epochs (
-    runNumber int,
-    epochNumber int,
-    epochLoss real,
-    epochTime real,
-    epochsID int PRIMARY KEY,
-    FOREIGN KEY (runNumber) REFERENCES runs(runNumber));"""
-    cursor.execute(initEpochsTable)
-    connection.commit()

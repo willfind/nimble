@@ -767,9 +767,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # (self, trainData, trainLabels, testData, testLabels, function,
                 # metrics, predictions, performance, timer, extraInfo=None,
                 # numFolds=None)
-                UML.logger.active.logRun(
+                UML.logger.active.logRun("test",
                     trainData=None, trainLabels=None, testData=testX,
-                    testLabels=testY, function=fullName,
+                    testLabels=testY, learnerFunction=fullName,
                     metrics=[performanceFunction], predictions=pred,
                     performance=[performance], timer=timer,
                     extraInfo=mergedArguments, numFolds=None)
@@ -852,9 +852,9 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # (self, trainData, trainLabels, testData, testLabels, function,
                 # metrics, predictions, performance, timer, extraInfo=None,
                 # numFolds=None)
-                UML.logger.active.logRun(
+                UML.logger.active.logRun("apply",
                     trainData=None, trainLabels=None, testData=testX,
-                    testLabels=None, function=fullName, metrics=None,
+                    testLabels=None, learnerFunction=fullName, metrics=None,
                     predictions=ret, performance=None, timer=timer,
                     extraInfo=mergedArguments, numFolds=None)
 
