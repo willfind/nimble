@@ -490,7 +490,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     selection occurring, then only those values within selected points and
     features are considered when determining whether to apply this operation.
 
-    useLog: True, False, or None (default) valued flag indicating whether this
+    useLog: True, False (default), or None valued flag indicating whether this
     call should be logged by the UML logger. If None, the configurable	global
     default is used.
 
@@ -527,7 +527,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
         if useLog:
-            UML.logger.active.logLoad('createData', returnType, name, path)
+            UML.logger.active.logLoad(returnType, name, path)
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
@@ -537,7 +537,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             keepPoints=keepPoints, keepFeatures=keepFeatures)
         if useLog:
-            UML.logger.active.logLoad('createData', returnType, name, path)
+            UML.logger.active.logLoad(returnType, name, path)
         return ret
     # no other allowed inputs
     else:
@@ -1073,7 +1073,6 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     return performance
 
 
-
 def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
                                crossValidationError=False, numFolds=10, arguments={}, output=None,
                                scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
@@ -1147,6 +1146,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
     performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY, performanceFunction, \
                                arguments, output, scoreMode, multiClassStrategy, useLog)
     return performance
+
 
 def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
             saveToFileName=None, maximumEntries=100, searchForText=None):

@@ -36,6 +36,7 @@ class UmlLogger(object):
         fullLogDesignator = os.path.join(logLocation, logName)
         self.logFileName = fullLogDesignator + ".mr"
         self.isAvailable = self.setup(self.logFileName)
+        self.suspended = False
 
     def setup(self, newFileName=None):
         """
@@ -65,7 +66,7 @@ class UmlLogger(object):
         self.db.insert(logMessage)
 
 
-    def logLoad(self, umlFunction, returnType, name=None, path=None):
+    def logLoad(self, returnType, name=None, path=None):
         """
         Send pertinent information about the loading of some data set to the log file
         """
@@ -73,7 +74,6 @@ class UmlLogger(object):
         logMessage = {"type": "load"}
         timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
         logMessage["timestamp"] = timestamp
-        logMessage["function"] = umlFunction
         logMessage["name"] = name
         logMessage["path"] = path
 
