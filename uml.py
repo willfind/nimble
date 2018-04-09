@@ -12,6 +12,7 @@ import datetime
 import os
 import copy
 import six.moves.configparser
+import math
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -87,8 +88,17 @@ def createRandomData(
         density = 1.0 - float(sparsity)
         numNonZeroValues = int(numPoints * numFeatures * density)
 
-        pointIndices = numpyRandom.randint(low=0, high=numPoints, size=numNonZeroValues)
-        featureIndices = numpyRandom.randint(low=0, high=numFeatures, size=numNonZeroValues)
+        # We want to sample over positions, not point/feature indices, so
+        # we consider the possible possitions as numbered in a row-major
+        # order on a grid, and sample that without replacement
+        gridSize = numPoints * numFeatures
+        nzLocation = numpy.random.choice(gridSize, size=numNonZeroValues, replace=False)
+
+        # The point value is determined by counting how many groups of numFeatures fit into
+        # the position number
+        pointIndices = numpy.floor(nzLocation / numFeatures)
+        # The feature value is determined by counting the offset from each point edge.
+        featureIndices = nzLocation % numFeatures
 
         if numericType == 'int':
             dataVector = numpyRandom.randint(low=1, high=100, size=numNonZeroValues)
