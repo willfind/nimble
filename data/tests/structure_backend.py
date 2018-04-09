@@ -993,14 +993,15 @@ class StructureModifying(DataTestObject):
         # with String, but not in duplicate entry
         row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
         col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
-        data = numpy.array([1, 7, 1, 'AAA', 4, 2, 1])
+        # need to specify object dtype, otherwise it will generate a all string object
+        data = numpy.array([1, 7, 1, 'AAA', 4, 2, 1], dtype='O')
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo_str)
         # Expected coo_matrix duplicates sum 
         # with String, but not in duplicate entry
         row  = numpy.array([0, 0, 1, 3])
         col  = numpy.array([0, 2, 1, 3])
-        data = numpy.array([4, 7, 5, 'AAA'])
+        data = numpy.array([4, 7, 5, 'AAA'], dtype='O')
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         exp = self.constructor(coo_str)
         
@@ -1009,7 +1010,7 @@ class StructureModifying(DataTestObject):
         assert ret[3,3] == exp[3,3]
         assert ret[1,1] == exp[1,1]
         
-    @raises(ArgumentException, ValueError)
+    @raises(ValueError)
     def test_init_coo_matrix_duplicateswithDupStrings(self):
         # Constructing a matrix with duplicate indices
         # # with String, in a duplicate entry
