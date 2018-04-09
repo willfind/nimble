@@ -98,9 +98,37 @@ def testSparsityReturnedPlausible():
 
 
 def test_createRandomizedData_names_passed():
-    raise NotImplementedError
+    '''
+    function that tests:
+    - Given correctly sized lists of strings for pointNames and featureNames
+    arguments, checks if the returned object has those axis names.
 
+    - Validity checking of pointNames and featureNames is not tested
+    since it is done exclusively in createData. We only check for successful
+    behavior.
 
+    - These tests are run for all combinations of the paramaters:
+    supportedFundamentalTypes = ['int', 'float']
+    returnTypes = ['Matrix','Sparse','List']
+    sparsities = [0.0, 0.5, .99]
+    '''
+    supportedFundamentalTypes = ['int', 'float']
+    sparsities = [0.0, 0.5, .99]
+
+    pnames = ['p{}'.format(i) for i in range(0, 10)]
+    fnames = ['f{}'.format(i) for i in range(0, 3)]
+
+    # TODO create a function summarizing the calling of the function with
+    # the different combinations.
+    for curType in supportedFundamentalTypes:
+        for curReturnType in returnTypes:
+            for curSparsity in sparsities:
+                ret = createRandomData(
+                    curReturnType, len(pnames), len(fnames), curSparsity,
+                    numericType=curType, pointNames=pnames, featureNames=fnames)
+
+                assert ret.getPointNames() == pnames
+                assert ret.getFeatureNames() == fnames
 
 #todo check that sizes of returned objects are what you request via npoints and nfeatures
 
@@ -202,7 +230,7 @@ def back_constant_conversionEqualityBetweenTypes(toTest):
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
-# validity checking of those arguments is therefore not tested, since 
+# validity checking of those arguments is therefore not tested, since
 # it is done exclusively in createData. We only check for successful behaviour.
 
 def test_ones_sizeChecking():
@@ -233,7 +261,7 @@ def test_ones_conversionEqualityBetweenTypes():
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
-# validity checking of those arguments is therefore not tested, since 
+# validity checking of those arguments is therefore not tested, since
 # it is done exclusively in createData. We only check for successful behaviour.
 
 def test_zeros_sizeChecking():
@@ -264,7 +292,7 @@ def test_zeros_conversionEqualityBetweenTypes():
 
 # This function relies on createData to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
-# validity checking of those arguments is therefore not tested, since 
+# validity checking of those arguments is therefore not tested, since
 # it is done exclusively in createData. We only check for successful behaviour.
 
 
