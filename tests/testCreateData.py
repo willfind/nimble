@@ -713,9 +713,9 @@ def test_extractNames_CscSparse():
 
     for t in returnTypes:
         inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
-        inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
+        inDataRaw = scipy.sparse.csc_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
-        specRaw = scipy.sparse.coo_matrix(specRaw)
+        specRaw = scipy.sparse.csc_matrix(specRaw)
 
         inData = UML.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)

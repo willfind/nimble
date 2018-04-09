@@ -74,7 +74,7 @@ def testSparsityReturnedPlausible():
     supportedFundamentalTypes = ['int', 'float']
     sparsities = [0.0, 0.5, .99]
 
-    nPoints = 800
+    nPoints = 500
     nFeatures = 1000
     #sparsity = .5
 
