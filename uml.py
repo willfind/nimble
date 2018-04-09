@@ -38,6 +38,7 @@ from UML.helpers import isAllowedRaw
 from UML.helpers import initDataObject
 from UML.helpers import createDataFromFile
 from UML.helpers import createConstantHelper
+from UML.helpers import trainLogging
 
 from UML.randomness import numpyRandom
 
@@ -404,7 +405,7 @@ def listLearners(package=None):
 
 def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
                fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=False, reuseData=False):
+               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
     """Function to instantiate one of the UML data container types.
 
     returnType: string (or None) indicating which kind of UML data type you want
@@ -526,8 +527,9 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
-        if useLog:
-            UML.logger.active.logLoad(returnType, name, path)
+        if UML.settings.get("logger", "enableRawDataLogging").lower() == 'true':    
+            if useLog and UML.logger.active.keepData:
+                UML.logger.active.logLoad(returnType, name, path)
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
@@ -536,7 +538,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             featureNames=featureNames, fileType=fileType, name=name,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             keepPoints=keepPoints, keepFeatures=keepFeatures)
-        if useLog:
+        if useLog and UML.logger.active.keepData:
             UML.logger.active.logLoad(returnType, name, path)
         return ret
     # no other allowed inputs
@@ -892,7 +894,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
 
     return trainedLearner
 
-
+@trainLogging
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments={}, output=None, scoreMode='label',
                   multiClassStrategy='default', useLog=None, **kwarguments):
@@ -983,7 +985,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     return results
 
-
+@trainLogging
 def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
                  arguments={}, output=None, scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
     """

@@ -4,9 +4,7 @@ import os
 import time
 import six
 import inspect
-from tinydb import TinyDB
-from tinydb import Query
-from tinydb import where
+from unqlite import UnQLite
 
 import UML
 from UML.exceptions import ArgumentException
@@ -36,7 +34,8 @@ class UmlLogger(object):
         fullLogDesignator = os.path.join(logLocation, logName)
         self.logFileName = fullLogDesignator + ".mr"
         self.isAvailable = self.setup(self.logFileName)
-        self.suspended = False
+        self.keepData = True
+
 
     def setup(self, newFileName=None):
         """
@@ -51,9 +50,10 @@ class UmlLogger(object):
         dirPath = os.path.dirname(self.logFileName)
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
-        self.db = TinyDB(self.logFileName)
-
-        return True
+        self.db = UnQLite(self.logFileName)
+        self.log = self.db.collection('log')
+        self.log.create()
+        return self.log.exists()
 
     def cleanup(self):
         # only need to call if we have previously called setup
@@ -63,7 +63,7 @@ class UmlLogger(object):
 
     def insertIntoLog(self, logMessage):
         """ Inserts a json style message into the log"""
-        self.db.insert(logMessage)
+        self.log.store(logMessage)
 
 
     def logLoad(self, returnType, name=None, path=None):

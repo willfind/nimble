@@ -64,6 +64,16 @@ except:
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
 
+
+def trainLogging(toWrap):
+    def wrapper(*args, **kwargs):
+        UML.logger.active.keepData = False
+        ret = toWrap(*args, **kwargs)
+        UML.logger.active.keepData = True
+        return ret
+    return wrapper
+
+
 def findBestInterface(package):
     """
     Takes the name of a possible interface provided to some other function by
