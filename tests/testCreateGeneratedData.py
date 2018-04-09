@@ -115,8 +115,10 @@ def test_createRandomizedData_names_passed():
     supportedFundamentalTypes = ['int', 'float']
     sparsities = [0.0, 0.5, .99]
 
-    pnames = ['p{}'.format(i) for i in range(0, 10)]
-    fnames = ['f{}'.format(i) for i in range(0, 3)]
+    numberPoints = 10
+    numberFeatures = 3
+    pnames = ['p{}'.format(i) for i in range(0, numberPoints)]
+    fnames = ['f{}'.format(i) for i in range(0, numberFeatures)]
 
     # TODO create a function summarizing the calling of the function with
     # the different combinations.
@@ -124,7 +126,7 @@ def test_createRandomizedData_names_passed():
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
                 ret = createRandomData(
-                    curReturnType, len(pnames), len(fnames), curSparsity,
+                    curReturnType, numberPoints, numberFeatures, curSparsity,
                     numericType=curType, pointNames=pnames, featureNames=fnames)
 
                 assert ret.getPointNames() == pnames
