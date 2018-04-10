@@ -527,7 +527,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
-        if UML.settings.get("logger", "enableRawDataLogging").lower() == 'true':    
+        if UML.settings.get("logger", "enableRawDataLogging").lower() == 'true':
             if useLog and UML.logger.active.keepData:
                 UML.logger.active.logLoad(returnType, name, path)
         return ret
@@ -889,8 +889,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
 
     if useLog:
         funcString = interface.getCanonicalName() + '.' + trueLearnerName
-        UML.logger.active.logRun("train", trainX, trainY, None, None, funcString, None, None, None, timer,
-                                 extraInfo=bestArgument)
+        UML.logger.active.logRun("train", trainX, trainY, None, None, funcString, bestArgument, None, timer)
 
     return trainedLearner
 
@@ -980,8 +979,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     if useLog:
         timer.stop('trainAndApply')
         funcString = learnerName
-        UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None, funcString, None, results, None, timer,
-                                 extraInfo=arguments)
+        UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None, funcString,
+                                 trainedLearner.arguments, None, timer)
 
     return results
 
@@ -1062,15 +1061,23 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     else:
         timer = None
 
-    predictions = UML.trainAndApply(learnerName, trainX, trainY, testX, performanceFunction, arguments, output, \
-                                    scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=False, **kwarguments)
+    trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
+                               scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=False, \
+                               doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
+    predictions = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
     performance = UML.helpers.computeMetrics(testY, None, predictions, performanceFunction)
+
+    metrics = {}
+    for key, value in zip([performanceFunction], [performance]):
+        metrics[key.__name__] = value
 
     if useLog:
         timer.stop('trainAndTest')
         funcString = learnerName
-        UML.logger.active.logRun("trainAndTest", trainX, trainY, testX, testY, funcString, [performanceFunction], predictions,
-                                 [performance], timer, extraInfo=arguments)
+        UML.logger.active.logRun("trainAndTest", trainX, trainY, testX, testY, funcString, arguments,
+                                 metrics, timer)
+
+
 
     return performance
 
@@ -1159,13 +1166,12 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
     ARGUMENTS:
     levelOfDetail:  The (int) value for the level of detail from 1, the least detail,
                     to 4 (most detail)
-        **Level?: Data creation and preprocessing
-        *Level 1: Outputs basic information about the run (timestamp, run number,
-                 learner name, train and test object details) and boolean values
-                 for the availability of additional information
-        **Level 2: Adds parameter, metric, and timer data if available
-        **Level 3: TODO
-        **Level 4: TODO
+        **Level 1: Data loading and preprocessing
+        *Level 2: Outputs basic information about the run (timestamp, run number,
+                 learner name, train and test object details) and parameter, metric,
+                 and timer data if available
+        **Level 3: TODO (CrossValidation and Multiclass)
+        **Level 4: TODO 
 
     leastRunsAgo:   The (int) value for the least number of runs since the most recent
                     run to include in the log. Defaults to 0 (final log entry is the
@@ -1194,11 +1200,8 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
     ** Not yet implemented
 
     """
-    pass
-    # if 1 in levelOfDetail:
-        # UML.logger.active._buildLevel1Log()
-    # return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
-    #             saveToFileName, maximumEntries, searchForText)
+    return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
+                saveToFileName, maximumEntries, searchForText)
 
 def coo_matrixTodense(origTodense):
     """

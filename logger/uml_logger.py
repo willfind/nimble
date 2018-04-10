@@ -103,7 +103,7 @@ class UmlLogger(object):
 
 
     def logRun(self, umlFunction, trainData, trainLabels, testData, testLabels,
-                               learnerFunction, metrics, predictions, performance, timer,
+                               learnerFunction, parameters, metrics, timer,
                                extraInfo=None, numFolds=None):
         """
         Send the pertinent information about the run to the log file
@@ -164,17 +164,14 @@ class UmlLogger(object):
         logMessage["numTestPoints"] = numTestPoints
         logMessage["numTestFeatures"] = numTestFeatures
 
-        if extraInfo is not None and extraInfo != {}:
-            logMessage['parameters'] = extraInfo
+        if parameters is not None and parameters != {}:
+            logMessage['parameters'] = parameters
 
-        if metrics is not None and performance is not None:
-            metricsDict = {}
-            for key, value in zip(metrics, performance):
-                metricsDict[key.__name__] = value
-            logMessage["metrics"] = metricsDict
+        if metrics is not None and metrics is not {}:
+            logMessage["metrics"] = metrics
 
         if timer is not None and timer.cumulativeTimes is not {}:
-            logMessage["timer"] = timer.cumulativeTimes
+            logMessage["timer"] = sum(timer.cumulativeTimes.values())
 
         self.insertIntoLog(logMessage)
 
@@ -190,16 +187,81 @@ class UmlLogger(object):
     def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
                                endDate, saveToFileName, maximumEntries, searchForText):
         """ Implementation of showLog function for UML"""
-        pass
+        """ Implementation of showLog function for UML"""
+        nextRun = self.log.last_record_id() + 1
+        startRun = nextRun - mostRunsAgo
+        endRun = nextRun - leastRunsAgo
+        runNumbers = range(startRun, endRun)
+        if levelOfDetail == 1:
+            pass
+        elif levelOfDetail == 2:
+            fullLog = '*' * 35 + " UML LOGS " + '*' * 35
+            for runNumber in runNumbers:
+                log = self.log.fetch(runNumber)
+                if log["type"] == 'load':
+                    fullLog += self.buildLoadLogString(log)
+                    fullLog += '*' * 80
+                elif log["type"] == 'prep':
+                    fullLog += "\n"
+                    fullLog += "Prep: TODO" # TODO
+                    fullLog += '*' * 80
+                elif log["type"] == 'run':
+                    fullLog += "\n"
+                    fullLog += self.buildRunLogString(log)
+                    fullLog += '*' * 80
+                else:
+                    fullLog += "\n"
+                    fullLog += "Data: TODO" # TODO
+                    fullLog += '*' * 80
+            if saveToFileName is not None:
+                filePath = os.path.join(self.logLocation, saveToFileName)
+                with open(filePath, mode='w') as f:
+                    f.write(fullLog)
+            else:
+                print(fullLog)
 
 
-    def buildLevel1Log(self, runNumber, maximumEntries=100, searchForText=None):
+    def buildRunLogString(self, log, maximumEntries=100, searchForText=None):
         """ Extracts and formats information from the 'runs' table for printable output """
-        pass
+        # header data
+        fullLog = "\n"
+        fullLog += "Run Number: {}\n".format(log['__id'])
+        fullLog += "Timestamp: {}\n".format(log['timestamp'])
+        fullLog += "UML Function: {}\n".format(log['function'])
+        fullLog += "Learner Function: {}\n".format(log['learner'])
+        timer = log.get("timer", False)
+        if timer:
+            fullLog += "Completed in {} seconds\n".format(log['timer'])
+        fullLog += "\n"
+        # training data
+        trainDataKeys = ["trainDataName", "trainDataPath", "numTrainPoints", "numTrainFeatures"]
+        trainDataValues = [str(log[key]) for key in trainDataKeys] # must be strings
+        fullLog += _formatRunLine(trainDataKeys, trainDataValues)
+        # testing data
+        testDataKeys = ["testDataName", "testDataPath", "numTestPoints", "numTestFeatures"]
+        testDataValues = [str(log[key]) for key in testDataKeys] # must be strings
+        fullLog += _formatRunLine(testDataKeys, testDataValues)
+        # parameter data
+        parameters = log.get("parameters", None)
+        if parameters is not None:
+            fullLog += _logDictionary("parameters", parameters)
+        # metric data
+        metrics = log.get("metrics", None)
+        if metrics is not None:
+            fullLog += _logDictionary("metrics", metrics)
+
+        return fullLog
 
 
-    def buildLevel2String(self, runNumber, maximumEntries=100, searchForText=None):
-        pass
+    def buildLoadLogString(self, log, maximumEntries=100, searchForText=None):
+        fullLog = "\n"
+        fullLog += "Index: {}\n".format(log['__id'])
+        fullLog += "Data loaded at: {}\n".format(log['timestamp'])
+        if log['path'] is not None:
+            fullLog += "Path: {}\n".format(log['path'])
+        if log['name'] is not None:
+            fullLog += "Name: {}\n".format(log['name'])
+        return fullLog
 
 
     def getNextID(self, table, column):
@@ -210,6 +272,13 @@ class UmlLogger(object):
 #######################
 ### Generic Helpers ###
 #######################
+
+def _logDictionary(key, dictionary):
+    dictionaryKeys = dictionary.keys()
+    dictionaryValues = [dictionary[key] for key in dictionaryKeys]
+    # values must be strings
+    dictionaryValues = map(str, dictionaryValues)
+    return _formatRunLine(dictionaryKeys, dictionaryValues)
 
 def _formatRunLine(columnNames, rowValues):
     """ Formats """
@@ -228,7 +297,7 @@ def _removeItemsWithoutData(columnNames, rowValues):
     """ Prevents the Log from displaying columns that do not have a data"""
     keepIndexes = []
     for index, item in enumerate(rowValues):
-        if item !=  "False":
+        if item !=  "None":
             keepIndexes.append(index)
     keepColumnName = []
     keepRowValue = []

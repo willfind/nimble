@@ -963,6 +963,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             self.transformedArguments = trainedLearners[0].transformedArguments
             self.interface = trainedLearners[0].interface
             self.learnerName = trainedLearners[0].learnerName
+            self.arguments = trainedLearners[0].arguments
 
         @captureOutput
         def apply(self, testX, arguments={}, output='match', scoreMode='label',

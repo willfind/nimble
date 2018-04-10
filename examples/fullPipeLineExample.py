@@ -75,3 +75,4 @@ if __name__ == "__main__":
     print('One vs All, all scores format:')
     print(resultsAllScoresOvA)
 
+    UML.showLog(mostRunsAgo=9)
