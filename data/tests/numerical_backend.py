@@ -500,7 +500,6 @@ def back_autoVsNumpyObjCallee(constructor, npOp, UMLOp, UMLinplace, sparsity):
 
         datas = makeAllData(constructor, constructor, n, sparsity)
         (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
-
         resultf = npOp(lhsf, rhsf)
         resulti = npOp(lhsi, rhsi)
         resfObj = getattr(lhsfObj, UMLOp)(rhsfObj)
