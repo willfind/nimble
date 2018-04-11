@@ -37,6 +37,8 @@ from UML.data import Matrix  # needed for 1s or 0s obj creation
 from UML.data import Base
 from UML.data.list import isAllowedSingleElement
 
+from UML.data.sparse import removeDuplicatesNative
+
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
 import six
@@ -330,6 +332,10 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
             func = extractNamesFromNumpy
         elif scipy and scipy.sparse.issparse(rawData):
+            # all input coo_matrices must have their duplicates removed; all helpers
+            # past this point rely on there being single entires only.
+            if isinstance(rawData, scipy.sparse.coo_matrix):
+                rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
         elif pd and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame)):
             func = extractNamesFromPdDataFrame

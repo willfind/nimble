@@ -121,6 +121,12 @@ class StructureDataSafe(DataTestObject):
         numpyMatrix = orig.copyAs(format='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
+        listOfDict = orig.copyAs(format='list of dict')
+        assert listOfDict == []
+
+        dictOfList = orig.copyAs(format='dict of list')
+        assert dictOfList == {'_DEFAULT_#0': [], '_DEFAULT_#1': []}
+
 
     def test_copy_Fempty(self):
         """ test copyAs() produces the correct outputs when given an feature empty object """
@@ -153,6 +159,12 @@ class StructureDataSafe(DataTestObject):
         numpyMatrix = orig.copyAs(format='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
+        listOfDict = orig.copyAs(format='list of dict')
+        assert listOfDict == [{}, {}]
+
+        dictOfList = orig.copyAs(format='dict of list')
+        assert dictOfList == {}
+
     def test_copy_Trueempty(self):
         """ test copyAs() produces the correct outputs when given a point and feature empty object """
         data = numpy.empty(shape=(0, 0))
@@ -183,6 +195,11 @@ class StructureDataSafe(DataTestObject):
         numpyMatrix = orig.copyAs(format='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
+        listOfDict = orig.copyAs(format='list of dict')
+        assert listOfDict == []
+
+        dictOfList = orig.copyAs(format='dict of list')
+        assert dictOfList == {}
 
     def test_copy_rightTypeTrueCopy(self):
         """ Test copyAs() will return all of the right type and do not show each other's modifications"""
@@ -260,6 +277,18 @@ class StructureDataSafe(DataTestObject):
             spcsr[0, 0] = 5
             assert orig[0, 0] == 1
 
+        listOfDict = orig.copyAs(format='list of dict')
+        assert type(listOfDict) == list
+        assert type(listOfDict[0]) == dict
+        listOfDict[0]['one'] = 5
+        assert orig[0, 0] == 1
+
+        dictOfList = orig.copyAs(format='dict of list')
+        assert type(dictOfList) == dict
+        assert type(dictOfList['one']) == list
+        dictOfList['one'][0] = 5
+        assert orig[0, 0] == 1
+
     def test_copy_rowsArePointsFalse(self):
         """ Test copyAs() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
@@ -272,6 +301,20 @@ class StructureDataSafe(DataTestObject):
         out = orig.copyAs(orig.getTypeString(), rowsArePoints=False)
 
         desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+
+        assert out == desired
+
+        out = orig.copyAs(format='list of dict', rowsArePoints=False)
+
+        desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+        desired = desired.copyAs(format='list of dict')
+
+        assert out == desired
+
+        out = orig.copyAs(format='dict of list', rowsArePoints=False)
+
+        desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+        desired = desired.copyAs(format='dict of list')
 
         assert out == desired
 
@@ -313,6 +356,16 @@ class StructureDataSafe(DataTestObject):
                 assert False
             except ArgumentException as ae:
                 print(ae)
+        try:
+            orig.copyAs("list of dict", outputAs1D=True)
+            assert False
+        except ArgumentException as ae:
+            print(ae)
+        try:
+            orig.copyAs("dict of list", outputAs1D=True)
+            assert False
+        except ArgumentException as ae:
+            print(ae)
 
     @raises(ArgumentException)
     def test_copy_outputAs1DWrongShape(self):
@@ -950,7 +1003,75 @@ class StructureModifying(DataTestObject):
 
 
     def test_init_coo_matrix_duplicates(self):
-        raise NotImplementedError
+        # Constructing a matrix with duplicate indices
+        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
+        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
+        data = numpy.array([1, 7, 1, 6, 4, 2, 1])
+        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        ret = self.constructor(coo)
+        # Expected coo_matrix duplicates sum
+        row  = numpy.array([0, 0, 1, 3])
+        col  = numpy.array([0, 2, 1, 3])
+        data = numpy.array([4, 7, 5, 6])
+        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        exp = self.constructor(coo)
+        
+        assert ret.isIdentical(exp)
+        assert ret[0,0] == exp[0,0]
+        assert ret[3,3] == exp[3,3]
+        assert ret[1,1] == exp[1,1]
+
+    def test_init_coo_matrix_duplicates_introduces_zero(self):
+        # Constructing a matrix with duplicate indices
+        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
+        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
+        data = numpy.array([1, 7, 1, 6, -1, 2, 1])
+        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        ret = self.constructor(coo)
+        # Expected coo_matrix duplicates sum
+        row  = numpy.array([0, 0, 3])
+        col  = numpy.array([0, 2, 3])
+        data = numpy.array([4, 7, 6])
+        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        exp = self.constructor(coo)
+        
+        assert ret.isIdentical(exp)
+        assert ret[0,0] == exp[0,0]
+        assert ret[3,3] == exp[3,3]
+        assert ret[0,2] == exp[0,2]
+
+
+    def test_init_coo_matrix_duplicateswithNoDupStrings(self):
+        # Constructing a matrix with duplicate indices
+        # with String, but not in duplicate entry
+        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
+        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
+        # need to specify object dtype, otherwise it will generate a all string object
+        data = numpy.array([1, 7, 1, 'AAA', 4, 2, 1], dtype='O')
+        coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        ret = self.constructor(coo_str)
+        # Expected coo_matrix duplicates sum 
+        # with String, but not in duplicate entry
+        row  = numpy.array([0, 0, 1, 3])
+        col  = numpy.array([0, 2, 1, 3])
+        data = numpy.array([4, 7, 5, 'AAA'], dtype='O')
+        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        exp = self.constructor(coo_str)
+        
+        assert ret.isIdentical(exp)
+        assert ret[0,0] == exp[0,0]
+        assert ret[3,3] == exp[3,3]
+        assert ret[1,1] == exp[1,1]
+        
+    @raises(ValueError)
+    def test_init_coo_matrix_duplicateswithDupStrings(self):
+        # Constructing a matrix with duplicate indices
+        # # with String, in a duplicate entry
+        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
+        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
+        data = numpy.array([1, 7, 1, 'AAA', 4, 2, 'BBB'], dtype='O')
+        coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
+        ret = self.constructor(coo_str)
 
 
     ###############

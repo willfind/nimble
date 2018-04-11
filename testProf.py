@@ -9,7 +9,10 @@ gFileName = None
 
 def report(fileName=None, sort=None, n=25, stripDirs=False):
     """
+    This function is to read a report and sort it by either cumtime and tottime
+    and then display top rows.
 
+    If fileName is None, then it will read gFileName.
     """
     global gFileName
     if fileName is None:
@@ -32,7 +35,9 @@ def report(fileName=None, sort=None, n=25, stripDirs=False):
 
 def runTests(fileName=None):
     """
-
+    This function is to run
+    python runTests.py
+    and store cprofile report in fileName
     """
     global gFileName
     if fileName is None:
@@ -44,7 +49,14 @@ def runTests(fileName=None):
 
 def dataTests(fileName=None, test=''):
     """
+    This function is to run
+    nosetests testObjects.py
+    or
+    nosetests testObjects.py:xxxx
 
+    xxxx is the string in test
+
+    fileName is the name of the file that the cprofile report will be stored
     """
     global gFileName
     if fileName is None:
