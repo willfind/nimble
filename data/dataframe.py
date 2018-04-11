@@ -355,7 +355,7 @@ class DataFrame(Base):
             if redRet is not None:
                 (redKey, redValue) = redRet
                 ret.append([redKey, redValue])
-        return DataFrame(ret)
+        return UML.createData('DataFrame', ret)
 
     def _getTypeString_implementation(self):
         return 'DataFrame'
@@ -476,7 +476,7 @@ class DataFrame(Base):
         else:
             ret = self.data.ix[start:end + 1, :]
 
-        return DataFrame(ret)
+        return UML.createData('DataFrame', ret)
 
     def _copyFeatures_implementation(self, indices, start, end):
         if indices is not None:
@@ -484,7 +484,7 @@ class DataFrame(Base):
         else:
             ret = self.data.ix[:, start:end + 1]
 
-        return DataFrame(ret)
+        return UML.createData('DataFrame', ret)
 
     def _transformEachPoint_implementation(self, function, points):
         """
@@ -810,7 +810,7 @@ class DataFrame(Base):
         """
 
         leftData = np.matrix(self.data)
-        rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+        rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
         return DataFrame(leftData * rightData)
 
     def _elementwiseMultiply_implementation(self, other):
@@ -852,146 +852,152 @@ class DataFrame(Base):
     def _add__implementation(self, other):
         """
         """
-
         leftData = np.matrix(self.data)
-        rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
-        ret = leftData + rightData
+        if isinstance(other, UML.data.Base):
+            rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+        else:
+            rightData = other
+        leftData += rightData
 
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', leftData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _radd__implementation(self, other):
         ret = other + self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _iadd__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            ret = self.data + other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+            ret = np.matrix(self.data) + (other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data))
         else:
-            ret = self.data + np.matrix(other)
-        self.data = ret
+            ret = np.matrix(self.data) + np.matrix(other)
+        self.data = pd.DataFrame(ret)
         return self
 
     def _sub__implementation(self, other):
         leftData = np.matrix(self.data)
-        rightData = other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
-        ret = leftData - rightData
+        if isinstance(other, UML.data.Base):
+            rightData = other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+        else:
+            rightData = other
+        leftData -= rightData
 
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', leftData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            ret = self.data - other.data.todense() if isinstance(other, UML.data.Sparse) else np.matrix(other.data)
+            ret = np.matrix(self.data) - (other.data if isinstance(other, UML.data.Sparse) else np.matrix(other.data))
         else:
-            ret = self.data - np.matrix(other)
-        self.data = ret
+            ret = np.matrix(self.data) - np.matrix(other)
+        self.data = pd.DataFrame(ret)
         return self
 
     def _div__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values / other.data.todense()
             else:
                 ret = self.data.values / other.data
         else:
             ret = self.data.values / other
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rdiv__implementation(self, other):
         ret = other / self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
-                ret = self.data / other.data.todense()
+            if scipy and scipy.sparse.isspmatrix(other.data):
+                self.data /= other.data.todense()
             else:
-                ret = self.data / np.matrix(other.data)
+                self.data /= np.matrix(other.data)
         else:
-            ret = self.data / np.matrix(other)
-        self.data = ret
+            tmp_mat = np.matrix(other)
+            self.data /= (other if tmp_mat.shape == (1, 1) else tmp_mat)
         return self
 
     def _truediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values.__truediv__(other.data.todense())
             else:
                 ret = self.data.values.__truediv__(other.data)
         else:
             ret = self.data.values.__itruediv__(other)
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _rtruediv__implementation(self, other):
         ret = self.data.values.__rtruediv__(other)
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _itruediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
-                ret = self.data.__itruediv__(other.data.todense())
+            if scipy and scipy.sparse.isspmatrix(other.data):
+                ret = np.matrix(self.data).__itruediv__(other.data.todense())
             else:
-                ret = self.data.__itruediv__(np.matrix(other.data))
+                ret = np.matrix(self.data).__itruediv__(np.matrix(other.data))
         else:
-            ret = self.data.__itruediv__(np.matrix(other))
-        self.data = ret
+            ret = np.matrix(self.data).__itruediv__(np.matrix(other))
+        self.data = pd.DataFrame(ret)
         return self
 
     def _floordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values // other.data.todense()
             else:
                 ret = self.data.values // other.data
         else:
             ret = self.data.values // other
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rfloordiv__implementation(self, other):
         ret = other // self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _ifloordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
-                ret = self.data // other.data.todense()
+            if scipy and scipy.sparse.isspmatrix(other.data):
+                ret = np.matrix(self.data) // other.data.todense()
             else:
-                ret = self.data // np.matrix(other.data)
+                ret = np.matrix(self.data) // np.matrix(other.data)
         else:
-            ret = self.data // np.matrix(other)
-        self.data = ret
+            ret = np.matrix(self.data) // np.matrix(other)
+        self.data = pd.DataFrame(ret)
         return self
 
     def _mod__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
+            if scipy and scipy.sparse.isspmatrix(other.data):
                 ret = self.data.values % other.data.todense()
             else:
                 ret = self.data.values % other.data
         else:
             ret = self.data.values % other
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rmod__implementation(self, other):
         ret = other % self.data.values
-        return DataFrame(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _imod__implementation(self, other):
         if isinstance(other, UML.data.Base):
-            if scipy and scipy.sparse.scipy.sparse.isspmatrix(other.data):
-                ret = self.data % other.data.todense()
+            if scipy and scipy.sparse.isspmatrix(other.data):
+                self.data %= other.data.todense()
             else:
-                ret = self.data % np.matrix(other.data)
+                self.data %= np.matrix(other.data)
         else:
-            ret = self.data % np.matrix(other)
-        self.data = ret
+            tmp_mat = np.matrix(other)
+            self.data %= (other if tmp_mat.shape == (1, 1) else tmp_mat)
+
         return self
 
     def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
@@ -1042,4 +1048,4 @@ class DataFrame(Base):
 
         df.drop(nameList, axis=axis, inplace=inplace)
 
-        return DataFrame(ret, **{name: nameList, otherName: otherNameList})
+        return UML.createData('DataFrame', ret, **{name: nameList, otherName: otherNameList})

@@ -12,6 +12,7 @@ import datetime
 import os
 import copy
 import six.moves.configparser
+import math
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -54,18 +55,35 @@ UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 
 def createRandomData(
         returnType, numPoints, numFeatures, sparsity, numericType="float",
-        featureNames='automatic', name=None):
+        pointNames='automatic', featureNames='automatic', name=None):
     """
-    Generates a data object with random contents and numPoints points and numFeatures features.
+    Generates a data object with random contents.
 
-    If numericType is 'float' (default) then the value of (point, feature) pairs are sampled from a normal
-    distribution (location 0, scale 1).
+    returnType - May only be one of the allowed types specified in
+    UML.data.available.
 
-    If numericType is 'int' then value of (point, feature) pairs are sampled from uniform integer distribution [1 100].
+    numPoints - the number of points in the returned object.
 
-    The sparsity is the likelihood that the value of a (point,feature) pair is zero.
+    numFeatures - the number of features in the returned object.
 
-    Zeros are not counted in/do not affect the aforementioned sampling distribution.
+    sparsity - is the likelihood that the value of a (point,feature) pair is
+    zero.
+
+    numericType - if is 'float' (default) then the value of (point, feature)
+    pairs are sampled from a normal distribution (location 0, scale 1). If
+    numericType is 'int' then value of (point, feature) pairs are sampled from
+    uniform integer distribution [1 100]. Zeros are not counted in/do not
+    affect the aforementioned sampling distribution.
+
+    pointNames - names to be associated with the points in the returned object.
+    If 'automatic', default names will be assigned.
+
+    featureNames - names to be associated with the features in the returned
+    object. If 'automatic', default names will be assigned.
+
+    name - When not None, this value is set as the name attribute of the
+    returned object.
+
     """
 
     if numPoints < 1:
@@ -87,8 +105,17 @@ def createRandomData(
         density = 1.0 - float(sparsity)
         numNonZeroValues = int(numPoints * numFeatures * density)
 
-        pointIndices = numpyRandom.randint(low=0, high=numPoints, size=numNonZeroValues)
-        featureIndices = numpyRandom.randint(low=0, high=numFeatures, size=numNonZeroValues)
+        # We want to sample over positions, not point/feature indices, so
+        # we consider the possible possitions as numbered in a row-major
+        # order on a grid, and sample that without replacement
+        gridSize = numPoints * numFeatures
+        nzLocation = numpy.random.choice(gridSize, size=numNonZeroValues, replace=False)
+
+        # The point value is determined by counting how many groups of numFeatures fit into
+        # the position number
+        pointIndices = numpy.floor(nzLocation / numFeatures)
+        # The feature value is determined by counting the offset from each point edge.
+        featureIndices = nzLocation % numFeatures
 
         if numericType == 'int':
             dataVector = numpyRandom.randint(low=1, high=100, size=numNonZeroValues)
@@ -120,7 +147,8 @@ def createRandomData(
             else:
                 randData = binarySparsityMatrix * filledFloatMatrix
 
-    return createData(returnType, data=randData, featureNames=featureNames, name=name)
+    return createData(returnType, data=randData, pointNames=pointNames,
+                      featureNames=featureNames, name=name)
 
 
 def ones(returnType, numPoints, numFeatures, pointNames='automatic',
