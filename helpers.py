@@ -2367,10 +2367,9 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
         useLog = True if useLog.lower() == 'true' else False
-    deepLog = False
-    if useLog:
-        deepLog = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
-        deepLog = True if deepLog.lower() == 'true' else False
+
+    deepLog = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
+    deepLog = True if deepLog.lower() == 'true' else False
 
     merged = _mergeArguments(arguments, kwarguments)
 
@@ -2454,7 +2453,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
     # log results of this cross validation
-    if useLog:
+    if deepLog:
         # TODO: should we have an actual timer here? if we do should we remove
         # the CV timing from logRun?
         timer = None

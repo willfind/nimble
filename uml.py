@@ -527,9 +527,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
-        if UML.settings.get("logger", "enableRawDataLogging").lower() == 'true':
-            if useLog and UML.logger.active.keepData:
-                UML.logger.active.logLoad(returnType, name, path)
+        if useLog and UML.logger.active.keepData:
+            UML.logger.active.logLoad(returnType, name, path)
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
@@ -1171,7 +1170,7 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
                  learner name, train and test object details) and parameter, metric,
                  and timer data if available
         **Level 3: TODO (CrossValidation and Multiclass)
-        **Level 4: TODO 
+        **Level 4: TODO
 
     leastRunsAgo:   The (int) value for the least number of runs since the most recent
                     run to include in the log. Defaults to 0 (final log entry is the

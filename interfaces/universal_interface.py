@@ -760,6 +760,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             pred = self.apply(testX, mergedArguments, output, scoreMode, useLog=False)
             performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction)
 
+            metrics = {}
+            for key, value in zip([performanceFunction], [performance]):
+                metrics[key.__name__] = value
+
             if useLog:
                 timer.stop('test')
                 fullName = self.interface.getCanonicalName() + self.learnerName
@@ -770,9 +774,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 UML.logger.active.logRun("test",
                     trainData=None, trainLabels=None, testData=testX,
                     testLabels=testY, learnerFunction=fullName,
-                    metrics=[performanceFunction], predictions=pred,
-                    performance=[performance], timer=timer,
-                    extraInfo=mergedArguments, numFolds=None)
+                    arguments=mergedArguments, metrics=metrics, timer=timer,
+                    extraInfo=None, numFolds=None)
 
             return performance
 
@@ -854,9 +857,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # numFolds=None)
                 UML.logger.active.logRun("apply",
                     trainData=None, trainLabels=None, testData=testX,
-                    testLabels=None, learnerFunction=fullName, metrics=None,
-                    predictions=ret, performance=None, timer=timer,
-                    extraInfo=mergedArguments, numFolds=None)
+                    testLabels=None, learnerFunction=fullName, arguments=mergedArguments,
+                    metrics=None, performance=None, timer=timer, extraInfo=None, numFolds=None)
 
             return ret
 

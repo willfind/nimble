@@ -4,6 +4,8 @@ import os
 import time
 import six
 import inspect
+from datetime import datetime
+from dateutil.parser import parse
 from unqlite import UnQLite
 
 import UML
@@ -30,11 +32,13 @@ from UML.exceptions import ArgumentException
 
 class UmlLogger(object):
     def __init__(self, logLocation, logName):
-        self.logLocation = logLocation
         fullLogDesignator = os.path.join(logLocation, logName)
+        self.logLocation = logLocation
+        self.logName = logName
         self.logFileName = fullLogDesignator + ".mr"
-        self.isAvailable = self.setup(self.logFileName)
+        self.isAvailable = False
         self.keepData = True
+        self.runNumber = None
 
 
     def setup(self, newFileName=None):
@@ -53,7 +57,13 @@ class UmlLogger(object):
         self.db = UnQLite(self.logFileName)
         self.log = self.db.collection('log')
         self.log.create()
-        return self.log.exists()
+        try:
+            lastLog = self.log.last_record_id()
+            lastRun = self.log.fetch(lastLog)["runNumber"]
+            self.runNumber = lastRun + 1
+        except TypeError:
+            self.runNumber = 0
+        self.isAvailable = self.log.exists()
 
     def cleanup(self):
         # only need to call if we have previously called setup
@@ -63,17 +73,23 @@ class UmlLogger(object):
 
     def insertIntoLog(self, logMessage):
         """ Inserts a json style message into the log"""
-        self.log.store(logMessage)
+        if self.isAvailable:
+            self.log.store(logMessage)
+        else:
+            self.setup(self.logFileName)
+            logMessage["runNumber"] = self.runNumber
+            self.log.store(logMessage)
 
 
     def logLoad(self, returnType, name=None, path=None):
         """
         Send pertinent information about the loading of some data set to the log file
         """
-
+        #TODO only log if name or path is present?
         logMessage = {"type": "load"}
         timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
         logMessage["timestamp"] = timestamp
+        logMessage["runNumber"] = self.runNumber
         logMessage["name"] = name
         logMessage["path"] = path
 
@@ -114,6 +130,7 @@ class UmlLogger(object):
         timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
         logMessage["timestamp"] = timestamp
 
+        logMessage["runNumber"] = self.runNumber
         if isinstance(learnerFunction, (str, six.text_type)):
             functionCall = learnerFunction
         else:
@@ -182,38 +199,79 @@ class UmlLogger(object):
         Send information about selection of a set of parameters using cross validation
         """
         pass
+        #print("metric", metric, "performance", performance, "learnerArgs", learnerArgs)
 
 
     def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
                                endDate, saveToFileName, maximumEntries, searchForText):
         """ Implementation of showLog function for UML"""
-        """ Implementation of showLog function for UML"""
-        nextRun = self.log.last_record_id() + 1
-        startRun = nextRun - mostRunsAgo
-        endRun = nextRun - leastRunsAgo
-        runNumbers = range(startRun, endRun)
+
+        # search for text
+        if searchForText is not None:
+            runLogs = self.log.filter(lambda log: (searchForText in log.keys() or searchForText in log.values()))
+
+        # search by runsAgo
+        elif startDate is None and endDate is None:
+            lastLog = self.log.last_record_id()
+            try:
+                nextRun = self.log.fetch(lastLog)["runNumber"] + 1
+            except TypeError:
+                nextRun = 1
+            startRun = nextRun - mostRunsAgo
+            if startRun < 0:
+                msg = "mostRunsAgo is greater than the number of runs. "
+                msg += "This number cannot exceed {}".format(nextRun)
+                raise ArgumentException(msg)
+            endRun = nextRun - leastRunsAgo
+            if endRun < startRun:
+                raise ArgumentException("leastRunsAgo must be less than mostRunsAgo")
+            runNumbers = range(startRun, endRun)
+            runLogs = self.log.filter(lambda log: log["runNumber"] in runNumbers)
+
+        # search by date
+        elif startDate is not None and endDate is not None:
+            startDate = parse(startDate)
+            endDate = parse(endDate)
+            strip = datetime.strptime
+            runLogs = self.log.filter(lambda log: strip(log["timestamp"], "%Y-%m-%d %H:%M:%S") >= startDate
+                                              and strip(log["timestamp"], "%Y-%m-%d %H:%M:%S") <= endDate)
+        elif startDate is not None:
+            startDate = parse(startDate)
+            runLogs = self.log.filter(lambda log: datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S") >= startDate)
+        elif endDate is not None:
+            endDate = parse(endDate)
+            runLogs = self.log.filter(lambda log: datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S") <= endDate)
+
+        # filter logs for specified run numbers
+        if len(runLogs) > maximumEntries:
+            entryCutoff = len(runLogs) - maximumEntries
+            runLogs = runLogs[entryCutoff:]
+
+        # adjust for level of detail
         if levelOfDetail == 1:
             pass
         elif levelOfDetail == 2:
             fullLog = '*' * 35 + " UML LOGS " + '*' * 35
-            for runNumber in runNumbers:
-                log = self.log.fetch(runNumber)
+            for log in runLogs:
                 if log["type"] == 'load':
                     fullLog += self.buildLoadLogString(log)
                     fullLog += '*' * 80
                 elif log["type"] == 'prep':
-                    fullLog += "\n"
-                    fullLog += "Prep: TODO" # TODO
-                    fullLog += '*' * 80
+                    pass
+                    # fullLog += "\n"
+                    # fullLog +=  # TODO
+                    # fullLog += '*' * 80
                 elif log["type"] == 'run':
                     fullLog += "\n"
                     fullLog += self.buildRunLogString(log)
                     fullLog += '*' * 80
                 else:
-                    fullLog += "\n"
-                    fullLog += "Data: TODO" # TODO
-                    fullLog += '*' * 80
+                    pass
+                    # fullLog += "\n"
+                    # fullLog += # TODO
+                    # fullLog += '*' * 80
             if saveToFileName is not None:
+                # TODO check if file exists and append if already exists?
                 filePath = os.path.join(self.logLocation, saveToFileName)
                 with open(filePath, mode='w') as f:
                     f.write(fullLog)
@@ -225,13 +283,13 @@ class UmlLogger(object):
         """ Extracts and formats information from the 'runs' table for printable output """
         # header data
         fullLog = "\n"
-        fullLog += "Run Number: {}\n".format(log['__id'])
+        fullLog += "Run Number: {}\n".format(log['runNumber'])
         fullLog += "Timestamp: {}\n".format(log['timestamp'])
         fullLog += "UML Function: {}\n".format(log['function'])
         fullLog += "Learner Function: {}\n".format(log['learner'])
         timer = log.get("timer", False)
         if timer:
-            fullLog += "Completed in {} seconds\n".format(log['timer'])
+            fullLog += "Completed in {:.3f} seconds\n".format(log['timer'])
         fullLog += "\n"
         # training data
         trainDataKeys = ["trainDataName", "trainDataPath", "numTrainPoints", "numTrainFeatures"]
@@ -255,18 +313,13 @@ class UmlLogger(object):
 
     def buildLoadLogString(self, log, maximumEntries=100, searchForText=None):
         fullLog = "\n"
-        fullLog += "Index: {}\n".format(log['__id'])
+        fullLog += "Run Number: {}\n".format(log['runNumber'])
         fullLog += "Data loaded at: {}\n".format(log['timestamp'])
         if log['path'] is not None:
             fullLog += "Path: {}\n".format(log['path'])
         if log['name'] is not None:
             fullLog += "Name: {}\n".format(log['name'])
         return fullLog
-
-
-    def getNextID(self, table, column):
-        """ Returns the maximum number in the given column for the specified table """
-        pass
 
 
 #######################
