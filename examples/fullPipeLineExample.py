@@ -36,7 +36,7 @@ if __name__ == "__main__":
     tesObjNoY = testObj.copyFeatures([0,1,2])
     start = time.time()
     results = trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                            testX=testObj, testY=3, performanceFunction=fractionIncorrect, arguments={"C":1})
+                            testX=testObj, testY=3, performanceFunction=fractionIncorrect, arguments={"C":(1, .1), "kernel":("linear","rbf")})
     # end = time.time()
     # print(end-start)
     # print('Standard trainAndTest call, fractionIncorrect: ' + str(results))
@@ -79,10 +79,10 @@ if __name__ == "__main__":
     # print(resultsAllScoresOvA)
     end = time.time()
 
-    print(end-start)
+    #print(end-start)
 
     start = time.time()
-    UML.showLog(mostRunsAgo=3, searchForText="load", saveToFileName="test.txt")
+    UML.showLog(levelOfDetail=3, mostRunsAgo=1, saveToFileName="test.txt")
     end = time.time()
 
-    print(end-start)
+    #print(end-start)

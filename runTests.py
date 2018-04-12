@@ -192,12 +192,16 @@ class LoggerControl(object):
         UML.settings.set('logger', 'location', location)
         UML.settings.set("logger", 'name', 'log-UML-unitTests')
         UML.settings.saveChanges("logger")
+        UML.settings.set("logger", "_runTestsActive", "True")
+        UML.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
         UML.settings.set("logger", 'location', self._backupLoc)
         UML.settings.saveChanges("logger", 'location')
         UML.settings.set("logger", 'name', self._backupName)
         UML.settings.saveChanges("logger", 'name')
+        UML.settings.set("logger", "_runTestsActive", "False")
+        UML.settings.saveChanges("logger", "_runTestsActive")
 
 
 if __name__ == '__main__':

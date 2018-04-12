@@ -527,6 +527,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     if useLog is None:
         useLog = UML.settings.get("logger", "enabledByDefault")
         useLog = True if useLog.lower() == 'true' else False
+    if UML.settings.get("logger", "_runTestsActive").lower() == 'true':
+        useLog = False
 
     # validation of pointNames and featureNames
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
@@ -1003,11 +1005,15 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
     results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
 
+    merged = _mergeArguments(arguments, kwarguments)
+    extraInfo = None
+    if merged != trainedLearner.arguments:
+        extraInfo = {"bestParams": trainedLearner.arguments}
     if useLog:
         timer.stop('trainAndApply')
         funcString = learnerName
         UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None, funcString,
-                                 trainedLearner.arguments, None, timer)
+                                 merged, None, timer, extraInfo=extraInfo)
 
     return results
 
@@ -1097,12 +1103,15 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     metrics = {}
     for key, value in zip([performanceFunction], [performance]):
         metrics[key.__name__] = value
-
+    merged = _mergeArguments(arguments, kwarguments)
+    extraInfo = None
+    if merged != trainedLearner.arguments:
+        extraInfo = {"bestParams": trainedLearner.arguments}
     if useLog:
         timer.stop('trainAndTest')
         funcString = learnerName
-        UML.logger.active.logRun("trainAndTest", trainX, trainY, testX, testY, funcString, arguments,
-                                 metrics, timer)
+        UML.logger.active.logRun("trainAndTest", trainX, trainY, testX, testY, funcString,
+                                 merged, metrics, timer, extraInfo=extraInfo)
 
 
 
@@ -1227,8 +1236,12 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
     ** Not yet implemented
 
     """
-    return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
-                saveToFileName, maximumEntries, searchForText)
+    if UML.logger.active.isAvailable:
+        UML.logger.active.db.commit()
+    else:
+        UML.logger.active.setup()
+    return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
+                                             endDate, saveToFileName, maximumEntries, searchForText)
 
 def coo_matrixTodense(origTodense):
     """

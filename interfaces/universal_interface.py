@@ -25,7 +25,7 @@ from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
 
-from UML.helpers import _mergeArguments, generateAllPairs, countWins
+from UML.helpers import _mergeArguments, generateAllPairs, countWins, trainLogging
 import six
 from six.moves import range
 import warnings
@@ -732,6 +732,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 setattr(self, methodName, wrapped)
 
         @captureOutput
+        @trainLogging
         def test(
                 self, testX, testY, performanceFunction, arguments={},
                 output='match', scoreMode='label', useLog=None, **kwarguments):
@@ -774,7 +775,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 UML.logger.active.logRun("test",
                     trainData=None, trainLabels=None, testData=testX,
                     testLabels=testY, learnerFunction=fullName,
-                    arguments=mergedArguments, metrics=metrics, timer=timer,
+                    parameters=mergedArguments, metrics=metrics, timer=timer,
                     extraInfo=None, numFolds=None)
 
             return performance
@@ -790,6 +791,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             return ret
 
         @captureOutput
+        @trainLogging
         def apply(
                 self, testX, arguments={}, output='match', scoreMode='label',
                 useLog=None, **kwarguments):
@@ -857,8 +859,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # numFolds=None)
                 UML.logger.active.logRun("apply",
                     trainData=None, trainLabels=None, testData=testX,
-                    testLabels=None, learnerFunction=fullName, arguments=mergedArguments,
-                    metrics=None, performance=None, timer=timer, extraInfo=None, numFolds=None)
+                    testLabels=None, learnerFunction=fullName, parameters=mergedArguments,
+                    metrics=None, timer=timer, extraInfo=None, numFolds=None)
 
             return ret
 

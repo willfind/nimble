@@ -69,9 +69,10 @@ pd = UML.importModule('pandas')
 
 def trainLogging(toWrap):
     def wrapper(*args, **kwargs):
+        keepData = UML.logger.active.keepData
         UML.logger.active.keepData = False
         ret = toWrap(*args, **kwargs)
-        UML.logger.active.keepData = True
+        UML.logger.active.keepData = keepData
         return ret
     return wrapper
 
@@ -2417,7 +2418,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             #run algorithm on the folds' training and testing sets
             curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
                                              testX=curTestingX, arguments=curArgumentCombination, scoreMode=scoreMode,
-                                             useLog=deepLog)
+                                             useLog=False)
 
             performanceOfEachCombination[argSetIndex][0] = curArgumentCombination
 
@@ -3411,7 +3412,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     else:
         raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
-
+@trainLogging
 def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
                          **kwarguments):
     """
@@ -3440,13 +3441,17 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
     #now we need to compute performance metric(s) for the set of winning predictions
     results = computeMetrics(testY, None, predictions, performanceFunction)
 
+    metrics = {}
+    for key, value in zip([performanceFunction], [results]):
+        metrics[key.__name__] = value
+
     # Send this run to the log, if desired
     if useLog:
         if not isinstance(performanceFunction, list):
             performanceFunction = [performanceFunction]
             results = [results]
-        UML.logger.active.logRun("trainAndTestOneVsAny", trainX, trainY, testX, testY, learnerName, performanceFunction, predictions, results,
-                                 timer, extraInfo=merged)
+        UML.logger.active.logRun("trainAndTestOneVsAny", trainX, trainY, testX, testY, learnerName,
+                                 merged, metrics, timer)
 
     return results
 

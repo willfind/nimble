@@ -4,6 +4,7 @@ import os
 import time
 import six
 import inspect
+import numpy
 from datetime import datetime
 from dateutil.parser import parse
 from unqlite import UnQLite
@@ -65,6 +66,7 @@ class UmlLogger(object):
             self.runNumber = 0
         self.isAvailable = self.log.exists()
 
+
     def cleanup(self):
         # only need to call if we have previously called setup
         if self.isAvailable:
@@ -111,6 +113,7 @@ class UmlLogger(object):
     #     """
     #     Send pertinent information about the data preparation step performed to the log file
     #     """
+        # logMessage["runNumber"] = self.runNumber
     #     timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
     #     logMessage = {"type" : "prep",
                   # "timestamp": timestamp,
@@ -144,42 +147,29 @@ class UmlLogger(object):
             functionCall = funcString
         logMessage["learner"] = functionCall
 
-        trainDataName = None
-        trainDataPath = None
-        numTrainPoints = None
-        numTrainFeatures = None
-        testDataName = None
-        testDataPath = None
-        numTestPoints = None
-        numTestFeatures = None
-
-        #log info about training data, if present
+        # check for integers or strings passed for Y values. TODO Should be done somewhere else?
+        if isinstance(trainLabels, (six.string_types, int, numpy.int64)):
+            trainData = trainData.copy()
+            trainLabels = trainData.extractFeatures(trainLabels)
+        if isinstance(testLabels, (six.string_types, int, numpy.int64)):
+            testData = trainData.copy()
+            testLabels = trainData.extractFeatures(testLabels)
         if trainData is not None:
-            #If present, add name and path of source files for train and test data
-            if trainData.name is not None:
-                trainDataName = trainData.name
-            if trainData.path is not None:
-                trainDataPath = trainData.path
-            numTrainPoints = trainData.points
-            numTrainFeatures = trainData.features
-
-        #log info about testing data, if present
+            logMessage["trainData"] = trainData.name
+            logMessage["trainDataPoints"] = trainData.points
+            logMessage["trainDataFeatures"] = trainData.features
+        if trainLabels is not None:
+            logMessage["trainLabels"] = trainLabels.name
+            logMessage["trainLabelsPoints"] = trainLabels.points
+            logMessage["trainLabelsFeatures"] = trainLabels.features
         if testData is not None:
-            if testData.name is not None:
-                testDataName = testData.name
-            if testData.path is not None:
-                testDataPath = testData.path
-            numTestPoints = testData.points
-            numTestFeatures = testData.features
-
-        logMessage["trainDataName"] = trainDataName
-        logMessage["trainDataPath"] = trainDataPath
-        logMessage["numTrainPoints"] = numTrainPoints
-        logMessage["numTrainFeatures"] = numTrainFeatures
-        logMessage["testDataName"] = testDataName
-        logMessage["testDataPath"] = testDataPath
-        logMessage["numTestPoints"] = numTestPoints
-        logMessage["numTestFeatures"] = numTestFeatures
+            logMessage["testData"] = testData.name
+            logMessage["testDataPoints"] = testData.points
+            logMessage["testDataFeatures"] = testData.features
+        if testLabels is not None:
+            logMessage["testLabels"] = testLabels.name
+            logMessage["testLabelsPoints"] = testLabels.points
+            logMessage["testLabelsFeatures"] = testLabels.features
 
         if parameters is not None and parameters != {}:
             logMessage['parameters'] = parameters
@@ -190,6 +180,9 @@ class UmlLogger(object):
         if timer is not None and timer.cumulativeTimes is not {}:
             logMessage["timer"] = sum(timer.cumulativeTimes.values())
 
+        if extraInfo is not None and extraInfo is not {}:
+            logMessage["extraInfo"] = extraInfo
+
         self.insertIntoLog(logMessage)
 
 
@@ -198,8 +191,19 @@ class UmlLogger(object):
         """
         Send information about selection of a set of parameters using cross validation
         """
-        pass
-        #print("metric", metric, "performance", performance, "learnerArgs", learnerArgs)
+        logMessage = {"type" : "cv"}
+
+        timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
+        logMessage["timestamp"] = timestamp
+        logMessage["runNumber"] = self.runNumber
+        logMessage["learner"] = learnerName
+        logMessage["learnerArgs"] = learnerArgs
+        logMessage["folds"] = folds
+        logMessage["metric"] = metric.__name__
+        logMessage["performance"] = performance
+
+
+        self.insertIntoLog(logMessage)
 
 
     def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
@@ -233,6 +237,7 @@ class UmlLogger(object):
             startDate = parse(startDate)
             endDate = parse(endDate)
             strip = datetime.strptime
+            # checks log date is between startDate and EndDate, both inclusive
             runLogs = self.log.filter(lambda log: strip(log["timestamp"], "%Y-%m-%d %H:%M:%S") >= startDate
                                               and strip(log["timestamp"], "%Y-%m-%d %H:%M:%S") <= endDate)
         elif startDate is not None:
@@ -242,44 +247,55 @@ class UmlLogger(object):
             endDate = parse(endDate)
             runLogs = self.log.filter(lambda log: datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S") <= endDate)
 
-        # filter logs for specified run numbers
+        # limit log entries to maximumEntries
         if len(runLogs) > maximumEntries:
             entryCutoff = len(runLogs) - maximumEntries
             runLogs = runLogs[entryCutoff:]
 
-        # adjust for level of detail
-        if levelOfDetail == 1:
-            pass
-        elif levelOfDetail == 2:
-            fullLog = '*' * 35 + " UML LOGS " + '*' * 35
-            for log in runLogs:
-                if log["type"] == 'load':
-                    fullLog += self.buildLoadLogString(log)
-                    fullLog += '*' * 80
-                elif log["type"] == 'prep':
+        fullLog = '*' * 35 + " UML LOGS " + '*' * 35
+        for log in runLogs:
+            # adjust for level of detail
+            if log["type"] == 'load':
+                fullLog += self.buildLoadLogString(log)
+                fullLog += '*' * 80
+            elif log["type"] == 'data':
+                pass
+                # fullLog += "\n"
+                # fullLog +=  # TODO
+                # fullLog += '*' * 80
+            elif log["type"] == 'prep':
+                if levelOfDetail > 1:
                     pass
                     # fullLog += "\n"
                     # fullLog +=  # TODO
                     # fullLog += '*' * 80
-                elif log["type"] == 'run':
-                    fullLog += "\n"
+            elif log["type"] == 'run':
+                if levelOfDetail > 1:
                     fullLog += self.buildRunLogString(log)
                     fullLog += '*' * 80
-                else:
+            elif log["type"] == 'cv':
+                if levelOfDetail > 2:
+                    fullLog += self.buildCVLogString(log)
+                    fullLog += '*' * 80
+            else:
+                if levelOfDetail > 3:
                     pass
                     # fullLog += "\n"
-                    # fullLog += # TODO
+                    # fullLog += # self.buildMultiClassLogString
                     # fullLog += '*' * 80
-            if saveToFileName is not None:
-                # TODO check if file exists and append if already exists?
-                filePath = os.path.join(self.logLocation, saveToFileName)
-                with open(filePath, mode='w') as f:
-                    f.write(fullLog)
-            else:
-                print(fullLog)
+        if saveToFileName is not None:
+            # TODO check if file exists and append if already exists?
+            filePath = os.path.join(self.logLocation, saveToFileName)
+            with open(filePath, mode='w') as f:
+                f.write(fullLog)
+        else:
+            print(fullLog)
 
-
-    def buildRunLogString(self, log, maximumEntries=100, searchForText=None):
+    ###################
+    ### LOG STRINGS ###
+    ###################
+    # TODO spacing and wrapping for long strings
+    def buildRunLogString(self, log):
         """ Extracts and formats information from the 'runs' table for printable output """
         # header data
         fullLog = "\n"
@@ -291,27 +307,31 @@ class UmlLogger(object):
         if timer:
             fullLog += "Completed in {:.3f} seconds\n".format(log['timer'])
         fullLog += "\n"
-        # training data
-        trainDataKeys = ["trainDataName", "trainDataPath", "numTrainPoints", "numTrainFeatures"]
-        trainDataValues = [str(log[key]) for key in trainDataKeys] # must be strings
-        fullLog += _formatRunLine(trainDataKeys, trainDataValues)
-        # testing data
-        testDataKeys = ["testDataName", "testDataPath", "numTestPoints", "numTestFeatures"]
-        testDataValues = [str(log[key]) for key in testDataKeys] # must be strings
-        fullLog += _formatRunLine(testDataKeys, testDataValues)
+        # train and test data
+        fullLog += _formatRunLine("Data", "# points", "# features")
+        if log.get("trainData", False):
+            fullLog += _formatRunLine("trainX", log["trainDataPoints"], log["trainDataFeatures"])
+        if log.get("trainLabels", False):
+            fullLog += _formatRunLine("trainY", log["trainLabelsPoints"], log["trainLabelsFeatures"])
+        if log.get("testData", False):
+            fullLog += _formatRunLine("testX", log["testDataPoints"], log["testDataFeatures"])
+        if log.get("testLabels", False):
+            fullLog += _formatRunLine("testY", log["testLabelsPoints"], log["testLabelsFeatures"])
+        fullLog += "\n"
         # parameter data
-        parameters = log.get("parameters", None)
-        if parameters is not None:
-            fullLog += _logDictionary("parameters", parameters)
+        if log.get("parameters", False):
+            fullLog += _logDictionary(log["parameters"])
         # metric data
-        metrics = log.get("metrics", None)
-        if metrics is not None:
-            fullLog += _logDictionary("metrics", metrics)
+        if log.get("metrics", False):
+            fullLog += _logDictionary(log["metrics"])
+        # extraInfo
+        if log.get("extraInfo", False):
+            fullLog += _logDictionary(log["extraInfo"])
 
         return fullLog
 
 
-    def buildLoadLogString(self, log, maximumEntries=100, searchForText=None):
+    def buildLoadLogString(self, log):
         fullLog = "\n"
         fullLog += "Run Number: {}\n".format(log['runNumber'])
         fullLog += "Data loaded at: {}\n".format(log['timestamp'])
@@ -322,19 +342,47 @@ class UmlLogger(object):
         return fullLog
 
 
+    def buildCVLogString(self, log):
+        fullLog = "\n"
+        fullLog += "Run Number: {}\n".format(log['runNumber'])
+        fullLog += "Timestamp: {}\n\n".format(log['timestamp'])
+        fullLog += "Cross Validating for {}\n\n".format(log["learner"])
+        fullLog += "Variable Arguments\n"
+        # TODO when is learnerArgs returning an empty list?
+        if isinstance(log["learnerArgs"], dict):
+            fullLog += _logDictionary(log["learnerArgs"])
+        folds = log["folds"]
+        metric = log["metric"]
+        fullLog += "{}-folding using {} optimizing for min values\n".format(folds, metric)
+        fullLog += _formatRunLine("Result", "Chosen Argument")
+        for arguments, result in log["performance"]:
+            fullLog += _formatRunLine(result, arguments)
+        fullLog += "\n"
+        return fullLog
+
+
 #######################
 ### Generic Helpers ###
 #######################
 
-def _logDictionary(key, dictionary):
+def _logDictionary(dictionary):
     dictionaryKeys = dictionary.keys()
     dictionaryValues = [dictionary[key] for key in dictionaryKeys]
     # values must be strings
     dictionaryValues = map(str, dictionaryValues)
-    return _formatRunLine(dictionaryKeys, dictionaryValues)
+    return _formatDictLines(dictionaryKeys, dictionaryValues)
 
-def _formatRunLine(columnNames, rowValues):
-    """ Formats """
+def _formatRunLine(*args):
+    """ Formats equally spaced values for each column"""
+    args = map(str, args)
+    lineLog = ("{:20s}" * len(args)).format(*args)
+    lineLog += "\n"
+
+    return lineLog
+
+def _formatDictLines(columnNames, rowValues):
+    # TODO lines with greater than four columns
+    """ Formats dictionary lines to display key/value pairs """
     columnNames, rowValues = _removeItemsWithoutData(columnNames, rowValues)
     if columnNames == []:
         return ""
@@ -409,11 +457,11 @@ def initLoggerAndLogConfig():
         UML.settings.saveChanges("logger", "enabledByDefault")
 
     try:
-        mirror = UML.settings.get("logger", "mirrorToStandardOut")
+        runTests = UML.settings.get("logger", "_runTestsActive")
     except:
-        mirror = 'False'
-        UML.settings.set("logger", "mirrorToStandardOut", mirror)
-        UML.settings.saveChanges("logger", "mirrorToStandardOut")
+        runTests = 'False'
+        UML.settings.set("logger", "_runTestsActive", runTests)
+        UML.settings.saveChanges("logger", "_runTestsActive")
 
     try:
         deepCV = UML.settings.get("logger", 'enableCrossValidationDeepLogging')
