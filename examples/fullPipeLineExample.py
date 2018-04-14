@@ -14,12 +14,11 @@ except:
 boilerplate()
 
 if __name__ == "__main__":
-    import UML
+    #import UML
     from UML import createData
     from UML import trainAndTest
     from UML import trainAndApply
     from UML.calculate import fractionIncorrect
-    import time
 
     variables = ["x1", "x2", "x3", "label"]
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
@@ -34,11 +33,10 @@ if __name__ == "__main__":
              [0, 0, 1, 3]]
     testObj = createData('Matrix', data=data2, featureNames=variables)
     tesObjNoY = testObj.copyFeatures([0,1,2])
-    start = time.time()
+
     results = trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                             testX=testObj, testY=3, performanceFunction=fractionIncorrect, arguments={"C":(1, .1), "kernel":("linear","rbf")})
-    # end = time.time()
-    # print(end-start)
+
     # print('Standard trainAndTest call, fractionIncorrect: ' + str(results))
     # print("")
 
@@ -77,12 +75,3 @@ if __name__ == "__main__":
                                      multiClassStrategy="OneVsAll", arguments={'C':.01})
     # print('One vs All, all scores format:')
     # print(resultsAllScoresOvA)
-    end = time.time()
-
-    #print(end-start)
-
-    start = time.time()
-    UML.showLog(levelOfDetail=3, mostRunsAgo=1, saveToFileName="test.txt")
-    end = time.time()
-
-    #print(end-start)

@@ -19,6 +19,7 @@ from UML.exceptions import ArgumentException, PackageException
 
 from UML.logger import UmlLogger
 from UML.logger import Stopwatch
+from UML.logger import useLogCheck
 
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery
@@ -39,7 +40,6 @@ from UML.helpers import isAllowedRaw
 from UML.helpers import initDataObject
 from UML.helpers import createDataFromFile
 from UML.helpers import createConstantHelper
-from UML.helpers import trainLogging
 
 from UML.randomness import numpyRandom
 
@@ -252,7 +252,7 @@ def identity(returnType, size, pointNames='automatic', featureNames='automatic',
         return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
 
 
-def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **kwarguments):
+def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, useLog=None, **kwarguments):
     """
     Calls on the functionality of a package to train on some data and then modify both
     the training data and a set of test data according to the produced model.
@@ -277,15 +277,17 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **
     format as the arguments parameter.
 
     """
+    logState = useLogCheck(useLog)
+
     (packName, trueLearnerName) = _unpackLearnerName(learnerName)
 
-    tl = UML.train(learnerName, trainX, trainY, arguments=arguments, **kwarguments)
-    normalizedTrain = tl.apply(trainX, arguments=arguments, **kwarguments)
+    tl = UML.train(learnerName, trainX, trainY, arguments=arguments, useLog=False, **kwarguments)
+    normalizedTrain = tl.apply(trainX, arguments=arguments, useLog=False, **kwarguments)
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
 
     if testX is not None:
-        normalizedTest = tl.apply(testX, arguments=arguments, **kwarguments)
+        normalizedTest = tl.apply(testX, arguments=arguments, useLog=False, **kwarguments)
         if normalizedTest.getTypeString() != testX.getTypeString():
             normalizedTest = normalizedTest.copyAs(testX.getTypeString())
 
@@ -296,6 +298,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, **
     if testX is not None:
         testX.referenceDataFrom(normalizedTest)
         testX.name = testX.name + " " + trueLearnerName
+
+
+    if logState:
+        merged = _mergeArguments(arguments, kwarguments)
+        UML.logger.active.logRun("normalizeData", trainX, trainY, testX, None, learnerName, merged, None, None)
 
 
 def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
@@ -524,11 +531,10 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     default is used.
 
     """
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+    toLog, unsuspend = useLogCheck(useLog)
+    #suspend data logging during runTests
     if UML.settings.get("logger", "_runTestsActive").lower() == 'true':
-        useLog = False
+        toLog = False
 
     # validation of pointNames and featureNames
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
@@ -557,8 +563,10 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
-        if useLog and UML.logger.active.keepData:
+        if toLog:
             UML.logger.active.logLoad(returnType, name, path)
+        if unsuspend:
+            UML.logger.active.suspended = False
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
@@ -567,8 +575,10 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             featureNames=featureNames, fileType=fileType, name=name,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             keepPoints=keepPoints, keepFeatures=keepFeatures)
-        if useLog and UML.logger.active.keepData:
+        if toLog:
             UML.logger.active.logLoad(returnType, name, path)
+        if unsuspend:
+            UML.logger.active.suspended = False
         return ret
     # no other allowed inputs
     else:
@@ -875,11 +885,9 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
         _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
     merged = _mergeArguments(arguments, kwarguments)
 
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+    toLog, unsuspend = useLogCheck(useLog)
 
-    if useLog:
+    if toLog:
         timer = Stopwatch()
     else:
         timer = None
@@ -895,7 +903,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
             raise ArgumentException(msg)
 
         #if we are logging this run, we need to start the timer
-        if useLog:
+        if toLog:
             timer = Stopwatch()
             timer.start('crossValidateReturnBest')
         else:
@@ -905,24 +913,26 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
         numFolds = trainX.points if trainX.points < 10 else 10
         #sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
         bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged,
-                                                              numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
+                                                              numFolds=numFolds, scoreMode=scoreMode, useLog=False)
 
-        if useLog:
+        if toLog:
             timer.stop('crossValidateReturnBest')
     else:
         bestArgument = merged
 
     interface = findBestInterface(package)
 
-    trainedLearner = interface.train(trueLearnerName, trainX, trainY, multiClassStrategy, bestArgument, useLog, timer)
+    trainedLearner = interface.train(trueLearnerName, trainX, trainY, multiClassStrategy, bestArgument, toLog, timer)
 
-    if useLog:
+    if toLog:
         funcString = interface.getCanonicalName() + '.' + trueLearnerName
         UML.logger.active.logRun("train", trainX, trainY, None, None, funcString, bestArgument, None, timer)
+    if unsuspend:
+        UML.logger.active.suspended = False
 
     return trainedLearner
 
-@trainLogging
+
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments={}, output=None, scoreMode='label',
                   multiClassStrategy='default', useLog=None, **kwarguments):
@@ -984,18 +994,16 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     if testX is None:
         testX = trainX
 
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+    toLog, unsuspend = useLogCheck(useLog)
 
-    if useLog:
+    if toLog:
         timer = Stopwatch()
         timer.start('trainAndApply')
     else:
         timer = None
 
     # deepLog = False
-    # if useLog and multiClassStrategy != 'default':
+    # if toLog and multiClassStrategy != 'default':
     #     deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
     #     deepLog = True if deepLog.lower() == 'true' else False
 
@@ -1003,21 +1011,23 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
                                scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=False, \
                                doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
-    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
+    results = trainedLearner.apply(testX, {}, output, scoreMode, toLog=False)
 
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
-    if useLog:
+    if toLog:
         timer.stop('trainAndApply')
         funcString = learnerName
         UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None, funcString,
                                  merged, None, timer, extraInfo=extraInfo)
+    if unsuspend:
+        UML.logger.active.suspended = False
 
     return results
 
-@trainLogging
+
 def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
                  arguments={}, output=None, scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
     """
@@ -1080,15 +1090,19 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)#this line is for
     # UML.tests.test_train_apply_test_frontends.test_trainAndTest_scoreMode_disallowed_multioutput
     # and UML.tests.test_train_apply_test_frontends.test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput
-    trainY = copyLabels(trainX, trainY)
-    testY = copyLabels(testX, testY)
+    if isinstance(trainY, (six.string_types, int, numpy.int64)):
+        trainX = trainX.copy()
+        trainY = trainX.extractFeatures(toExtract=trainY)
+    if isinstance(testY, (six.string_types, int, numpy.int64)):
+        testX = testX.copy()
+        testY = testX.extractFeatures(toExtract=testY)
+    # trainY = copyLabels(trainX, trainY)
+    # testY = copyLabels(testX, testY)
 
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
+    toLog, suspend = useLogCheck(useLog)
 
     #if we are logging this run, we need to start the timer
-    if useLog:
+    if toLog:
         timer = Stopwatch()
         timer.start('trainAndTest')
     else:
@@ -1107,13 +1121,13 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
-    if useLog:
+    if toLog:
         timer.stop('trainAndTest')
         funcString = learnerName
         UML.logger.active.logRun("trainAndTest", trainX, trainY, testX, testY, funcString,
                                  merged, metrics, timer, extraInfo=extraInfo)
-
-
+    if unsuspend:
+        UML.logger.active.suspended = False
 
     return performance
 
@@ -1187,7 +1201,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
     from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
 
     """
-
+    #TODO logging
     performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY, performanceFunction, \
                                arguments, output, scoreMode, multiClassStrategy, useLog)
     return performance

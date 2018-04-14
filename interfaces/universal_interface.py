@@ -24,8 +24,8 @@ from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
-
-from UML.helpers import _mergeArguments, generateAllPairs, countWins, trainLogging
+from UML.logger import useLogCheck
+from UML.helpers import _mergeArguments, generateAllPairs, countWins
 import six
 from six.moves import range
 import warnings
@@ -154,17 +154,15 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 labelVector.transpose()
                 labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 
-                if useLog is None:
-                    useLog = UML.settings.get("logger", "enabledByDefault")
-                    useLog = True if useLog.lower() == 'true' else False
+                toLog, unsuspend = useLogCheck(useLog)
                 deepLog = False
-                if useLog:
+                if toLog:
                     deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
                     deepLog = True if deepLog.lower() == 'true' else False
-                    useLog = deepLog
+                    toLog = deepLog
 
                 #if we are logging this run, we need to start the timer
-                if useLog:
+                if toLog:
                     if timer is None:
                         timer = Stopwatch()
 
@@ -183,7 +181,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     trainedLearner.label = label
                     trainedLearners.append(trainedLearner)
 
-                if useLog:
+                if toLog:
                     timer.stop('trainOVA')
                 return self.TrainedLearners(trainedLearners, 'OneVsAll', labelSet)
 
@@ -202,17 +200,15 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 labelSet = list(set(labelVector.copyAs(format="python list")[0]))
                 labelPairs = generateAllPairs(labelSet)
 
-                if useLog is None:
-                    useLog = UML.settings.get("logger", "enabledByDefault")
-                    useLog = True if useLog.lower() == 'true' else False
+                toLog, unsuspend = useLogCheck(useLog)
                 deepLog = False
-                if useLog:
+                if toLog:
                     deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
                     deepLog = True if deepLog.lower() == 'true' else False
-                    useLog = deepLog
+                    toLog = deepLog
 
                 #if we are logging this run, we need to start the timer
-                if useLog:
+                if toLog:
                     if timer is None:
                         timer = Stopwatch()
 
@@ -230,7 +226,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                                                        timer=timer))
                     pairData.appendFeatures(pairTrueLabels)
                     trainX.appendPoints(pairData)
-                if useLog:
+                if toLog:
                     timer.stop('trainOVO')
                 return self.TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
@@ -732,7 +728,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 setattr(self, methodName, wrapped)
 
         @captureOutput
-        @trainLogging
         def test(
                 self, testX, testY, performanceFunction, arguments={},
                 output='match', scoreMode='label', useLog=None, **kwarguments):
@@ -743,12 +738,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             setup for training was the same.
 
             """
-            if useLog is None:
-                useLog = UML.settings.get("logger", "enabledByDefault")
-                useLog = True if useLog.lower() == 'true' else False
+            toLog, unsuspend = useLogCheck(useLog)
 
             timer = None
-            if useLog:
+            if toLog:
                 timer = Stopwatch()
                 timer.start("test")
 
@@ -765,7 +758,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             for key, value in zip([performanceFunction], [performance]):
                 metrics[key.__name__] = value
 
-            if useLog:
+            if toLog:
                 timer.stop('test')
                 fullName = self.interface.getCanonicalName() + self.learnerName
                 # Signature:
@@ -775,7 +768,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 UML.logger.active.logRun("test",
                     trainData=None, trainLabels=None, testData=testX,
                     testLabels=testY, learnerFunction=fullName,
-                    parameters=mergedArguments, metrics=metrics, timer=timer,
+                    arguments=mergedArguments, metrics=metrics, timer=timer,
                     extraInfo=None, numFolds=None)
 
             return performance
@@ -791,7 +784,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             return ret
 
         @captureOutput
-        @trainLogging
         def apply(
                 self, testX, arguments={}, output='match', scoreMode='label',
                 useLog=None, **kwarguments):
@@ -804,12 +796,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             """
             UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
-            if useLog is None:
-                useLog = UML.settings.get("logger", "enabledByDefault")
-                useLog = True if useLog.lower() == 'true' else False
+            toLog, unsuspend = useLogCheck(useLog)
 
             timer = None
-            if useLog:
+            if toLog:
                 timer = Stopwatch()
                 timer.start("apply")
 
@@ -850,7 +840,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 ret = labels
 
-            if useLog:
+            if toLog:
                 timer.stop('apply')
                 fullName = self.interface.getCanonicalName() + self.learnerName
                 # Signature:
@@ -859,8 +849,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # numFolds=None)
                 UML.logger.active.logRun("apply",
                     trainData=None, trainLabels=None, testData=testX,
-                    testLabels=None, learnerFunction=fullName, parameters=mergedArguments,
+                    testLabels=None, learnerFunction=fullName, arguments=mergedArguments,
                     metrics=None, timer=timer, extraInfo=None, numFolds=None)
+            if unsuspend:
+                UML.logger.active.suspended = False
 
             return ret
 
