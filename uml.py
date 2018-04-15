@@ -1099,7 +1099,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     # trainY = copyLabels(trainX, trainY)
     # testY = copyLabels(testX, testY)
 
-    toLog, suspend = useLogCheck(useLog)
+    toLog, unsuspend = useLogCheck(useLog)
 
     #if we are logging this run, we need to start the timer
     if toLog:
@@ -1250,10 +1250,6 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
     ** Not yet implemented
 
     """
-    if UML.logger.active.isAvailable:
-        UML.logger.active.db.commit()
-    else:
-        UML.logger.active.setup()
     return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
                                              endDate, saveToFileName, maximumEntries, searchForText)
 

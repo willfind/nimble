@@ -46,12 +46,14 @@ def useLogCheck(useLog):
     UML.logger.active.suspended = True
     return useLog, unsuspend
 
+
 class UmlLogger(object):
     def __init__(self, logLocation, logName):
         fullLogDesignator = os.path.join(logLocation, logName)
         self.logLocation = logLocation
         self.logName = logName
         self.logFileName = fullLogDesignator + ".mr"
+        #self.runFileName = fullLogDesignator + ".run"
         self.runNumber = None
         self.isAvailable = False
         self.suspended = False
@@ -70,14 +72,17 @@ class UmlLogger(object):
         dirPath = os.path.dirname(self.logFileName)
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
-        self.db = UnQLite(self.logFileName)
-        self.log = self.db.collection('log')
+        #self.runDB = UnQLite(self.runFileName)
+        self.logDB = UnQLite(self.logFileName)
+        self.log = self.logDB.collection('log')
         self.log.create()
         try:
             lastLog = self.log.last_record_id()
+            self.id = lastLog + 1
             lastRun = self.log.fetch(lastLog)["runNumber"]
             self.runNumber = lastRun + 1
         except (TypeError, KeyError):
+            self.id = 0
             self.runNumber = 0
         self.isAvailable = self.log.exists()
 
@@ -85,17 +90,26 @@ class UmlLogger(object):
     def cleanup(self):
         # only need to call if we have previously called setup
         if self.isAvailable:
-            self.db.close()
+            self.logDB.close()
 
 
     def insertIntoLog(self, logMessage):
-        """ Inserts a json style message into the log"""
+        """ Inserts a json style message into the log and indexes the runNumber"""
+        runNumber = logMessage["runNumber"]
         if self.isAvailable:
+            try:
+                toAppend = " " + str(self.id)
+                self.logDB.append(runNumber,toAppend)
+            except (TypeError, KeyError):
+                self.logDB[runNumber] = self.id
             self.log.store(logMessage)
+            self.id += 1
         else:
             self.setup(self.logFileName)
             logMessage["runNumber"] = self.runNumber
+            self.logDB[self.runNumber] = self.id
             self.log.store(logMessage)
+            self.id += 1
 
 
     def logLoad(self, returnType, name=None, path=None):
@@ -226,14 +240,15 @@ class UmlLogger(object):
                                endDate, saveToFileName, maximumEntries, searchForText):
         """ Implementation of showLog function for UML"""
 
-        # search for text
+
+        # search for text TODO timeit
         if searchForText is not None:
             runLogs = self.log.filter(lambda log: (searchForText in log.keys() or searchForText in log.values()))
 
         # search by runsAgo
         elif startDate is None and endDate is None:
-            lastLog = self.log.last_record_id()
             try:
+                lastLog = self.log.last_record_id()
                 nextRun = self.log.fetch(lastLog)["runNumber"] + 1
             except TypeError:
                 nextRun = 1
@@ -243,12 +258,18 @@ class UmlLogger(object):
                 msg += "This number cannot exceed {}".format(nextRun)
                 raise ArgumentException(msg)
             endRun = nextRun - leastRunsAgo
+
             if endRun < startRun:
                 raise ArgumentException("leastRunsAgo must be less than mostRunsAgo")
             runNumbers = range(startRun, endRun)
-            runLogs = self.log.filter(lambda log: log["runNumber"] in runNumbers)
+            allRunIds = ""
+            for run in runNumbers:
+                run = str(run)
+                allRunIds += self.logDB[run]
+            runLogsList = allRunIds.split()
+            runLogs = [self.log.fetch(run) for run in runLogsList]
 
-        # search by date
+        # search by date TODO timeit
         elif startDate is not None and endDate is not None:
             startDate = parse(startDate)
             endDate = parse(endDate)
