@@ -154,7 +154,7 @@ class Base(object):
         # Set up feature names
         self._nextDefaultValueFeature = 0
         if featureNames is None:
-        self._setAllDefault('feature')
+            self._setAllDefault('feature')
         elif isinstance(featureNames, list):
             self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
