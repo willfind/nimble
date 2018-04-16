@@ -1011,7 +1011,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
                                scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=False, \
                                doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
-    results = trainedLearner.apply(testX, {}, output, scoreMode, toLog=False)
+    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
 
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None

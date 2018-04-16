@@ -13,7 +13,7 @@ featureIterator, calculateForEachElement, isApproximatelyEqual,
 trainAndTestSets
 
 In object HighLevelModifying:
-dropFeaturesContainingType, replaceFeatureWithBinaryFeatures, 
+dropFeaturesContainingType, replaceFeatureWithBinaryFeatures,
 transformFeatureToIntegers, extractPointsByCoinToss,
 shufflePoints, shuffleFeatures, normalizePoints, normalizeFeatures
 
@@ -1369,7 +1369,8 @@ class HighLevelModifying(DataTestObject):
             assert (d is None) or (d == (None, None, None))
         else:#if it is a normal python function
             a, va, vk, d = inspect.getargspec(func)
-            assert d == (None, None, None)
+            print(a, va, vk, d)
+            assert d == (None, None, None, None)
 
         if axis == 'point':
             return caller.normalizePoints(subtract=subtract, divide=divide, applyResultTo=also)

@@ -409,7 +409,7 @@ class Base(object):
         removed = self.extractFeatures(hasType)
         if toLog:
             dropNames = [drop.__name__ for drop in typeToDrop]
-            dropString = ", ".join(dropNames)
+            dropString = str(dropNames)
             UML.logger.active.logPrep("dropFeaturesContainingType",
                                       {"typeToDrop": dropString})
         if unsuspend:

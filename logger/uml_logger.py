@@ -13,6 +13,8 @@ from textwrap import wrap
 import UML
 from UML.exceptions import ArgumentException
 
+from .logger_helpers import useLogCheck, _formatRunLine, _logHeader, _removeItemsWithoutData
+
 
 """
     Handle logging of creating and testing learners.
@@ -334,7 +336,7 @@ class UmlLogger(object):
     def buildRunLogString(self, log):
         """ Extracts and formats information from the 'runs' table for printable output """
         # header data
-        fullLog = logHeader(log["runNumber"], log["timestamp"])
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
         fullLog += "UML Function: {}\n".format(log['function'])
         fullLog += "Learner Function: {}\n".format(log['learner'])
         timer = log.get("timer", False)
@@ -378,7 +380,7 @@ class UmlLogger(object):
 
 
     def buildLoadLogString(self, log):
-        fullLog = logHeader(log["runNumber"], log["timestamp"])
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
         fullLog += "Data Loaded\n"
         if log['path'] is not None:
             fullLog += "Path: {}\n".format(log['path'])
@@ -387,7 +389,7 @@ class UmlLogger(object):
         return fullLog
 
     def buildPrepLogString(self, log):
-        fullLog = logHeader(log["runNumber"], log["timestamp"])
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
         fullLog += "Function Called: {}\n".format(log["function"])
         argString = "Arguments Passed: "
         argString += str(log["arguments"])
@@ -403,7 +405,7 @@ class UmlLogger(object):
 
 
     def buildCVLogString(self, log):
-        fullLog = logHeader(log["runNumber"], log["timestamp"])
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
         fullLog += "Cross Validating for {}\n\n".format(log["learner"])
         # TODO when is learnerArgs returning an empty list?
         if isinstance(log["learnerArgs"], dict):
@@ -419,57 +421,6 @@ class UmlLogger(object):
             fullLog += _formatRunLine(result, arguments)
         fullLog += "\n"
         return fullLog
-
-
-#######################
-### Generic Helpers ###
-#######################
-
-def _logDictionary(dictionary):
-    dictionaryKeys = dictionary.keys()
-    dictionaryValues = [dictionary[key] for key in dictionaryKeys]
-    # values must be strings
-    dictionaryValues = map(str, dictionaryValues)
-    return _formatDictLines(dictionaryKeys, dictionaryValues)
-
-def _formatRunLine(*args):
-    """ Formats equally spaced values for each column"""
-    args = map(str, args)
-    lineLog = ("{:20s}" * len(args)).format(*args)
-    lineLog += "\n"
-    return lineLog
-
-def _formatDictLines(columnNames, rowValues):
-    # TODO lines with greater than four columns
-    """ Formats dictionary lines to display key/value pairs """
-    columnNames, rowValues = _removeItemsWithoutData(columnNames, rowValues)
-    if columnNames == []:
-        return ""
-    lineLog = ("{:20s}" * len(columnNames)).format(*columnNames)
-    lineLog += "\n"
-    lineLog += ("{:20s}" * len(rowValues)).format(*rowValues)
-    lineLog += "\n\n"
-    return lineLog
-
-def logHeader(runNumber, timestamp):
-    lineLog = "\n"
-    numberLog = "Run: {}".format(runNumber)
-    lineLog += "Timestamp: {}{:>50}\n".format(timestamp, numberLog)
-    return lineLog
-
-
-def _removeItemsWithoutData(columnNames, rowValues):
-    """ Prevents the Log from displaying columns that do not have a data"""
-    keepIndexes = []
-    for index, item in enumerate(rowValues):
-        if item !=  "None":
-            keepIndexes.append(index)
-    keepColumnName = []
-    keepRowValue = []
-    for index in keepIndexes:
-        keepColumnName.append(columnNames[index])
-        keepRowValue.append(rowValues[index])
-    return keepColumnName, keepRowValue
 
 
 #######################
