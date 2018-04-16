@@ -135,9 +135,7 @@ class Base(object):
 
         # Set up point names
         self._nextDefaultValuePoint = 0
-        self._pointNamesDefault = False
         if pointNames is None:
-            self._pointNamesDefault = True
             self._setAllDefault('point')
         elif isinstance(pointNames, list):
             self._nextDefaultValuePoint = self._pointCount
@@ -155,16 +153,18 @@ class Base(object):
 
         # Set up feature names
         self._nextDefaultValueFeature = 0
+        if featureNames is None:
         self._setAllDefault('feature')
-        if isinstance(featureNames, list):
+        elif isinstance(featureNames, list):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
         elif isinstance(featureNames, dict):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
         # could still be an ordered container, pass it on to the list helper
         elif hasattr(featureNames, '__len__') and hasattr(featureNames, '__getitem__'):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
-        elif featureNames is None:
-            pass
         else:
             raise ArgumentException(
                 "featureNames may only be a list, an ordered container, or a dict, defining a mapping between integers and featureNames")
