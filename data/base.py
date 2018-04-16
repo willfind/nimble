@@ -121,7 +121,7 @@ class Base(object):
         """
         self._pointCount = shape[0]
         self._featureCount = shape[1]
-
+        
         if pointNames is not None and len(pointNames) != shape[0]:
             msg = "The length of the pointNames (" + str(len(pointNames))
             msg += ") must match the points given in shape (" + str(shape[0])
@@ -135,16 +135,20 @@ class Base(object):
 
         # Set up point names
         self._nextDefaultValuePoint = 0
-        self._setAllDefault('point')
-        if isinstance(pointNames, list):
+        self._pointNamesDefault = False
+        if pointNames is None:
+            self._pointNamesDefault = True
+            self._setAllDefault('point')
+        elif isinstance(pointNames, list):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
         elif isinstance(pointNames, dict):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
         # could still be an ordered container, pass it on to the list helper
         elif hasattr(pointNames, '__len__') and hasattr(pointNames, '__getitem__'):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
-        elif pointNames is None:
-            pass
         else:
             raise ArgumentException(
                 "pointNames may only be a list, an ordered container, or a dict, defining a mapping between integers and pointNames")
@@ -4860,6 +4864,7 @@ class Base(object):
                 msg = "assignments is too large (" + str(len(assignments))
                 msg += "); this axis is empty"
                 raise ArgumentException(msg)
+            self._setNamesFromDict({}, count, axis)
             return
         if len(assignments) != count:
             msg = "assignments may only be an ordered container type, with as "
