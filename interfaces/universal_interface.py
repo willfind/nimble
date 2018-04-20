@@ -24,7 +24,7 @@ from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
-from UML.logger import useLogCheck
+from UML.logger.logger_helpers import useLogCheck
 from UML.helpers import _mergeArguments, generateAllPairs, countWins
 import six
 from six.moves import range

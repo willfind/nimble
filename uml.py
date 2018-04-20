@@ -19,7 +19,7 @@ from UML.exceptions import ArgumentException, PackageException
 
 from UML.logger import UmlLogger
 from UML.logger import Stopwatch
-from UML.logger import useLogCheck
+from UML.logger.logger_helpers import useLogCheck
 
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery

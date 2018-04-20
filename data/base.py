@@ -57,7 +57,7 @@ from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
-from UML.logger import useLogCheck
+from UML.logger.logger_helpers import useLogCheck
 from UML.randomness import pythonRandom
 
 from . import dataHelpers
