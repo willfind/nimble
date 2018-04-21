@@ -564,7 +564,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
         if toLog:
-            UML.logger.active.logLoad(returnType, name, path)
+            UML.logger.active.logLoad(returnType, ret.points, ret.features, name, path)
         if unsuspend:
             UML.logger.active.suspended = False
         return ret
@@ -576,7 +576,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             keepPoints=keepPoints, keepFeatures=keepFeatures)
         if toLog:
-            UML.logger.active.logLoad(returnType, name, path)
+            UML.logger.active.logLoad(returnType, ret.points, ret.features, name, path)
         if unsuspend:
             UML.logger.active.suspended = False
         return ret
@@ -1090,7 +1090,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)#this line is for
     # UML.tests.test_train_apply_test_frontends.test_trainAndTest_scoreMode_disallowed_multioutput
     # and UML.tests.test_train_apply_test_frontends.test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput
-    
+
     trainY = copyLabels(trainX, trainY)
     testY = copyLabels(testX, testY)
 

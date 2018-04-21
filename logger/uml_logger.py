@@ -98,8 +98,11 @@ class UmlLogger(object):
         logLine = "{0};{1};{2}\n".format(runNumber, date, logMessage)
         self.logFile.write(logLine)
 
+    ###################
+    ### CREATE LOGS ###
+    ###################
 
-    def logLoad(self, returnType, name=None, path=None):
+    def logLoad(self, returnType, numPoints, numFeatures, name=None, path=None):
         """
         Send pertinent information about the loading of some data set to the log file
         """
@@ -108,9 +111,10 @@ class UmlLogger(object):
         timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
         logMessage["timestamp"] = timestamp
         logMessage["runNumber"] = self.runNumber
+        logMessage["numPoints"] = numPoints
+        logMessage["numFeatures"] = numFeatures
         logMessage["name"] = name
         logMessage["path"] = path
-
         self.insertIntoLog(logMessage)
 
 
@@ -209,7 +213,6 @@ class UmlLogger(object):
         Send information about selection of a set of arguments using cross validation
         """
         logMessage = {"type" : "cv"}
-
         timestamp = (time.strftime('%Y-%m-%d %H:%M:%S'))
         logMessage["timestamp"] = timestamp
         logMessage["runNumber"] = self.runNumber
@@ -219,9 +222,112 @@ class UmlLogger(object):
         logMessage["metric"] = metric.__name__
         logMessage["performance"] = performance
 
-
         self.insertIntoLog(logMessage)
 
+
+    ###################
+    ### LOG STRINGS ###
+    ###################
+    # TODO spacing and wrapping for long strings
+
+    def buildRunLogString(self, log):
+        """ Extracts and formats information from the 'runs' table for printable output """
+        # header data
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
+        timer = log.get("timer", False)
+        if timer:
+            fullLog += "Completed in {0:.3f} seconds\n".format(log['timer'])
+        fullLog += "\n"
+        fullLog += 'UML.{0}("{1}")\n'.format(log['function'], log["learner"])
+
+        # train and test data
+        fullLog += _formatRunLine("Data", "# points", "# features")
+        if log.get("trainData", False):
+            fullLog += _formatRunLine("trainX", log["trainDataPoints"], log["trainDataFeatures"])
+        if log.get("trainLabels", False):
+            fullLog += _formatRunLine("trainY", log["trainLabelsPoints"], log["trainLabelsFeatures"])
+        if log.get("testData", False):
+            fullLog += _formatRunLine("testX", log["testDataPoints"], log["testDataFeatures"])
+        if log.get("testLabels", False):
+            fullLog += _formatRunLine("testY", log["testLabelsPoints"], log["testLabelsFeatures"])
+        # parameter data
+        if log.get("arguments", False):
+            fullLog += "\n"
+            argString = "Arguments: "
+            argString += str(log["arguments"])
+            for string in wrap(argString, 80, subsequent_indent=" "*19):
+                fullLog += string
+                fullLog += "\n"
+            #fullLog += _logDictionary(log["arguments"])
+        # metric data
+        if log.get("metrics", False):
+            fullLog += "\n"
+            fullLog += "Metrics: "
+            fullLog += str(log["metrics"])
+            #fullLog += _logDictionary(log["metrics"])
+        # extraInfo
+        if log.get("extraInfo", False):
+            fullLog += "\n"
+            fullLog += "Extra Info: "
+            fullLog += str(log["extraInfo"])
+            #fullLog += _logDictionary(log["extraInfo"])
+
+        return fullLog
+
+
+    def buildLoadLogString(self, log):
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
+        dataCol = "Data Loaded"
+        if log['path'] is not None:
+            fullLog += _formatRunLine(dataCol, "path", log["path"])
+            dataCol = ""
+        if log['name'] is not None:
+            fullLog += _formatRunLine(dataCol, "name", log["name"])
+            dataCol = ""
+        fullLog += _formatRunLine(dataCol, "# of points", log["numPoints"])
+        fullLog += _formatRunLine("", "# of features", log["numFeatures"])
+        return fullLog
+
+    def buildPrepLogString(self, log):
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
+        fullLog += "UML.{0}\n".format(log["function"])
+        argString = "Arguments: "
+
+        argString += str(log["arguments"])
+        for string in wrap(argString, 80, subsequent_indent=" "*19):
+            fullLog += string
+            fullLog += "\n"
+        # for argName, argValue in six.iteritems(log["arguments"]):
+        #     fullLog += "{} = {}, ".format(argName, argValue)
+        # # remove trailing comma
+        # fullLog = fullLog[:-2]
+        return fullLog
+
+
+    def buildCVLogString(self, log):
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
+        fullLog += "Cross Validating for {0}\n\n".format(log["learner"])
+        # TODO when is learnerArgs returning an empty list?
+        if isinstance(log["learnerArgs"], dict):
+            fullLog += "Variable Arguments: "
+            fullLog += str(log["learnerArgs"])
+            fullLog += "\n\n"
+            #fullLog += _logDictionary(log["learnerArgs"])
+        folds = log["folds"]
+        metric = log["metric"]
+        fullLog += "{0}-folding using {1} optimizing for min values\n\n".format(folds, metric)
+        fullLog += _formatRunLine("Result", "Arguments")
+        for arguments, result in log["performance"]:
+            fullLog += ("{0:<20.3f}{1:20s}" * len(arguments)).format(result, str(arguments))
+            fullLog += "\n"
+        return fullLog
+
+
+    ##################
+    ### PRINT LOGS ###
+    ##################
+
+    # TODO Divider for runs
 
     def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
                                endDate, saveToFileName, maximumEntries, searchForText):
@@ -346,100 +452,6 @@ class UmlLogger(object):
                 f.write(fullLog)
         else:
             print(fullLog)
-
-    ###################
-    ### LOG STRINGS ###
-    ###################
-    # TODO spacing and wrapping for long strings
-
-    def buildRunLogString(self, log):
-        """ Extracts and formats information from the 'runs' table for printable output """
-        # header data
-        fullLog = _logHeader(log["runNumber"], log["timestamp"])
-        fullLog += "UML Function: {}\n".format(log['function'])
-        fullLog += "Learner Function: {}\n".format(log['learner'])
-        timer = log.get("timer", False)
-        if timer:
-            fullLog += "Completed in {:.3f} seconds\n".format(log['timer'])
-        fullLog += "\n"
-        # train and test data
-        fullLog += _formatRunLine("Data", "# points", "# features")
-        if log.get("trainData", False):
-            fullLog += _formatRunLine("trainX", log["trainDataPoints"], log["trainDataFeatures"])
-        if log.get("trainLabels", False):
-            fullLog += _formatRunLine("trainY", log["trainLabelsPoints"], log["trainLabelsFeatures"])
-        if log.get("testData", False):
-            fullLog += _formatRunLine("testX", log["testDataPoints"], log["testDataFeatures"])
-        if log.get("testLabels", False):
-            fullLog += _formatRunLine("testY", log["testLabelsPoints"], log["testLabelsFeatures"])
-        fullLog += "\n"
-        # parameter data
-        if log.get("arguments", False):
-            argString = "Arguments Passed: "
-            argString += str(log["arguments"])
-            for string in wrap(argString, 80, subsequent_indent=" "*19):
-                fullLog += string
-                fullLog += "\n"
-            fullLog += "\n"
-            #fullLog += _logDictionary(log["arguments"])
-        # metric data
-        if log.get("metrics", False):
-            fullLog += "Metrics: "
-            fullLog += str(log["metrics"])
-            fullLog += "\n"
-            #fullLog += _logDictionary(log["metrics"])
-        # extraInfo
-        if log.get("extraInfo", False):
-            fullLog += "Extra Info: "
-            fullLog += str(log["extraInfo"])
-            fullLog += "\n"
-            #fullLog += _logDictionary(log["extraInfo"])
-
-        return fullLog
-
-
-    def buildLoadLogString(self, log):
-        fullLog = _logHeader(log["runNumber"], log["timestamp"])
-        fullLog += "Data Loaded\n"
-        if log['path'] is not None:
-            fullLog += "Path: {}\n".format(log['path'])
-        if log['name'] is not None:
-            fullLog += "Name: {}\n".format(log['name'])
-        return fullLog
-
-    def buildPrepLogString(self, log):
-        fullLog = _logHeader(log["runNumber"], log["timestamp"])
-        fullLog += "Function Called: {}\n".format(log["function"])
-        argString = "Arguments Passed: "
-        argString += str(log["arguments"])
-        for string in wrap(argString, 80, subsequent_indent=" "*19):
-            fullLog += string
-            fullLog += "\n"
-        fullLog += "\n"
-        # for argName, argValue in six.iteritems(log["arguments"]):
-        #     fullLog += "{} = {}, ".format(argName, argValue)
-        # # remove trailing comma
-        # fullLog = fullLog[:-2]
-        return fullLog
-
-
-    def buildCVLogString(self, log):
-        fullLog = _logHeader(log["runNumber"], log["timestamp"])
-        fullLog += "Cross Validating for {}\n\n".format(log["learner"])
-        # TODO when is learnerArgs returning an empty list?
-        if isinstance(log["learnerArgs"], dict):
-            fullLog += "Variable Arguments: "
-            fullLog += str(log["learnerArgs"])
-            fullLog += "\n\n"
-            #fullLog += _logDictionary(log["learnerArgs"])
-        folds = log["folds"]
-        metric = log["metric"]
-        fullLog += "{}-folding using {} optimizing for min values\n\n".format(folds, metric)
-        fullLog += _formatRunLine("Result", "Chosen Arguments")
-        for arguments, result in log["performance"]:
-            fullLog += _formatRunLine(result, arguments)
-        fullLog += "\n"
-        return fullLog
 
 
 #######################
