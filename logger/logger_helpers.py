@@ -17,6 +17,24 @@ def useLogCheck(useLog):
     UML.logger.active.suspended = True
     return useLog, unsuspend
 
+def textSearch(dataframe, searchForText):
+    runLogs = []
+    for entry in dataframe['loggerInfo']:
+        if searchForText is not None and searchForText in entry:
+            runLogs.append(entry)
+        elif searchForText is None:
+            runLogs.append(entry)
+    return runLogs
+
+
+def checkMaxEntries(dataframe, maximumEntries):
+    if maximumEntries is not None:
+        if len(dataframe) > maximumEntries:
+            start = len(dataframe) - maximumEntries
+            dataframe = dataframe.iloc[start:]
+            return dataframe
+    return dataframe
+
 
 # def _logDictionary(dictionary):
 #     dictionaryKeys = dictionary.keys()

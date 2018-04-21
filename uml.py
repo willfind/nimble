@@ -1090,14 +1090,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)#this line is for
     # UML.tests.test_train_apply_test_frontends.test_trainAndTest_scoreMode_disallowed_multioutput
     # and UML.tests.test_train_apply_test_frontends.test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput
-    if isinstance(trainY, (six.string_types, int, numpy.int64)):
-        trainX = trainX.copy()
-        trainY = trainX.extractFeatures(toExtract=trainY)
-    if isinstance(testY, (six.string_types, int, numpy.int64)):
-        testX = testX.copy()
-        testY = testX.extractFeatures(toExtract=testY)
-    # trainY = copyLabels(trainX, trainY)
-    # testY = copyLabels(testX, testY)
+    
+    trainY = copyLabels(trainX, trainY)
+    testY = copyLabels(testX, testY)
 
     toLog, unsuspend = useLogCheck(useLog)
 

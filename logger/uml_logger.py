@@ -14,8 +14,12 @@ import pandas as pd
 import UML
 from UML.exceptions import ArgumentException
 
-from .logger_helpers import useLogCheck, _formatRunLine, _logHeader, _removeItemsWithoutData
-
+from .logger_helpers import useLogCheck
+from .logger_helpers import _formatRunLine
+from .logger_helpers import _logHeader
+from .logger_helpers import _removeItemsWithoutData
+from .logger_helpers import textSearch
+from .logger_helpers import checkMaxEntries
 
 """
     Handle logging of creating and testing learners.
@@ -40,9 +44,7 @@ class UmlLogger(object):
         self.logLocation = logLocation
         self.logName = logName
         self.logFileName = fullLogDesignator + ".csv"
-        #self.runFileName = fullLogDesignator + ".run"
         self.runNumber = None
-        self.logID = None
         self.isAvailable = False
         self.suspended = False
 
@@ -62,27 +64,18 @@ class UmlLogger(object):
             os.makedirs(dirPath)
         if not os.path.exists(self.logFileName):
             self.logFile = open(self.logFileName, 'w')
-            # setupLines = "keyDefaultValue;logs;list;None"
-            # setupLines += "\n"
-            # setupLines += "keyDefaultValue;runs;dict;None"
-            # setupLines += "\n"
-            # setupLines += "keyDefaultValue;dates;dict;None"
-            # setupLines += "\n"
-            # self.logFile.write(setupLines)
+            setupLines = "runNumber;date;loggerInfo"
+            setupLines += "\n"
+            self.logFile.write(setupLines)
             self.runNumber = 0
-            self.logID = 0
             self.logFile.close()
         else:
             self.logFile = open(self.logFileName, 'r')
             contents = self.logFile.readlines()
             lastLine = contents[-1]
             lastLineList = lastLine.split(";")
-            if lastLineList[0] == "keyDefaultValue":
-                self.runNumber = 0
-                self.logID = 0
-            else:
-                self.runNumber = int(lastLineList[0]) + 1
-                self.logID = int(lastLineList[1]) + 1
+            lastRunNumber = int(lastLineList[0])
+            self.runNumber = lastRunNumber + 1
             self.logFile.close()
 
         self.logFile = open(self.logFileName, "a")
@@ -101,11 +94,9 @@ class UmlLogger(object):
             self.setup(self.logFileName)
             logMessage["runNumber"] = self.runNumber
         runNumber = self.runNumber
-        logID = self.logID
         date = datetime.date(datetime.today())
-        logLine = "{0};{1};{2};{3}\n".format(runNumber, logID, date, logMessage)
+        logLine = "{0};{1};{2}\n".format(runNumber, date, logMessage)
         self.logFile.write(logLine)
-        self.logID += 1
 
 
     def logLoad(self, returnType, name=None, path=None):
@@ -238,40 +229,27 @@ class UmlLogger(object):
         if self.isAvailable:
             self.cleanup()
 
-        logger = pd.read_csv(self.logFileName, sep=";", header=None)
-        logger[0] = pd.to_numeric(logger[0], errors='ignore')
-        logger[1] = pd.to_numeric(logger[1], errors='ignore')
-        logger[2] = pd.to_datetime(logger[2], errors ='ignore')
-        print(logger.info())
+        ##List of pandas operations
+        # read file with ; separator
+        # changed types to numeric and datetime
+        # filtered dataframe by column and multiple booleans
+        # indexed the last row of dataframe
 
-        # start = time.time()
-        # logger = {}
-        # logFile = open(self.logFileName, 'r')
-        # for logLine in logFile.readlines():
-        #     lineList = logLine.split(";")
-        #     if lineList[0] == "keyDefaultValue":
-        #         key = str(lineList[1])
-        #         if lineList[2][:4] == 'list':
-        #             logger[key] = list()
-        #         else:
-        #             logger[key] = dict()
-        #     else:
-        #         print(logger.values())
-        #         runNumber = int(lineList[0])
-        #         logID = int(lineList[1])
-        #         date = parse(lineList[2])
-        #         date = datetime.date(date)
-        #         logEntry = ast.literal_eval(lineList[3])
-        #         logger['logs'].append(logEntry)
-        #         currentRunLogIDs = logger['runs'].get(runNumber, [])
-        #         currentRunLogIDs.append(logID)
-        #         logger['runs'][runNumber] = currentRunLogIDs
-        #         currentDateRunNumbers = logger['dates'].get(date, set()) #TODO set or if statement?
-        #         currentDateRunNumbers.add(runNumber)
-        #         logger['dates'][date] = currentDateRunNumbers
-        # logFile.close()
-        # end = time.time()
-        # print(end-start)
+        logger = pd.read_csv(self.logFileName, sep=";")
+        logger['runNumber'] = pd.to_numeric(logger['runNumber'])
+        logger['date'] = pd.to_datetime(logger['date'])
+
+
+        # logger = UML.createData('DataFrame', logger, featureNames=True)
+        # logger.transformFeatureToIntegers('runNumber', useLog=False)
+        # def convertToDatetime(features):
+        #     converted = []
+        #     for feature in features:
+        #         feature = parse(feature)
+        #         feature = datetime.date(feature)
+        #         converted.append(feature)
+        #     return converted
+        # logger.transformEachFeature(convertToDatetime, features='date')
 
 
         # search for text TODO timeit
@@ -281,13 +259,10 @@ class UmlLogger(object):
         # search by runsAgo
         if startDate is None and endDate is None:
             try:
-                with open(self.logFileName) as logFile:
-                    logLines = logFile.readlines()
-                    lastLog = logLines[-1].split(";")
-                    lastRun = int(lastLog[0])
-                    nextRun = lastRun + 1
-            except ValueError as e:
-                print("error in getting lastLog")
+                lastEntryLog = logger.iloc[-1]
+                lastEntryRun = lastEntryLog["runNumber"]
+                nextRun = lastEntryRun + 1
+            except ValueError:
                 nextRun = 1
             startRun = nextRun - mostRunsAgo
             if startRun < 0:
@@ -299,11 +274,12 @@ class UmlLogger(object):
             if endRun < startRun:
                 raise ArgumentException("leastRunsAgo must be less than mostRunsAgo")
             runNumbers = range(startRun, endRun)
-            runLogs = []
-            for number in runNumbers:
-                logByRun = logger[logger[0] == number]
-                runLogs.extend(logByRun[3].tolist()) # TODO iteritems
-            runLogs = map(eval,runLogs)
+            logByRun = logger[logger['runNumber'].isin(runNumbers)]
+                # logByRun = logger.copy()
+                # filter = "runNumber = " + str(number)
+                # logByRun = logByRun.extractPoints(filter)
+            logByRun = checkMaxEntries(logByRun, maximumEntries)
+            runLogs = textSearch(logByRun, searchForText)
             # allRunIds = ""
             # for run in runNumbers:
             #     run = str(run)
@@ -313,53 +289,56 @@ class UmlLogger(object):
 
         # search by date TODO timeit
         elif startDate is not None and endDate is not None:
+            #TODO ducktype dates
             startDate = parse(startDate)
             endDate = parse(endDate)
-            strip = datetime.strptime
-            # checks log date is between startDate and EndDate, both inclusive
-            runLogs = self.log.filter(lambda log: strip(log["timestamp"], "%Y-%m-%d %H:%M:%S") >= startDate
-                                              and strip(log["timestamp"], "%Y-%m-%d %H:%M:%S") <= endDate)
+            logByDate = logger[(logger['date'] >= startDate) & (logger['date'] <= endDate)]
+            logByDate = checkMaxEntries(logByDate, maximumEntries)
+            runLogs = textSearch(logByDate, searchForText)
         elif startDate is not None:
             startDate = parse(startDate)
-            runLogs = self.log.filter(lambda log: datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S") >= startDate)
+            logByDate = logger[logger['date'] >= startDate]
+            logByDate = checkMaxEntries(logByDate, maximumEntries)
+            runLogs = textSearch(logByDate, searchForText)
         elif endDate is not None:
             endDate = parse(endDate)
-            runLogs = self.log.filter(lambda log: datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S") <= endDate)
+            logByDate = logger[logger['date'] <= endDate]
+            logByDate = checkMaxEntries(logByDate, maximumEntries)
+            runLogs = textSearch(logByDate, searchForText)
+        elif searchForText is not None:
+            runLogs = textSearch(dataframe, searchForText)
+            runLogs = checkMaxEntries(runLogs, maximumEntries)
 
-        # limit log entries to maximumEntries
-        if len(runLogs) > maximumEntries:
-            entryCutoff = len(runLogs) - maximumEntries
-            runLogs = runLogs[entryCutoff:]
-
-        fullLog = '*' * 35 + " UML LOGS " + '*' * 35
+        fullLog = '.' * 35 + " UML LOGS " + '.' * 35
         for log in runLogs:
+            log = eval(log) #TODO ast?
             # adjust for level of detail
             if log["type"] == 'load':
                 fullLog += self.buildLoadLogString(log)
-                fullLog += '*' * 80
+                fullLog += '.' * 80
             elif log["type"] == 'data':
                 pass
                 # fullLog += "\n"
                 # fullLog +=  # TODO
-                # fullLog += '*' * 80
+                # fullLog += '.' * 80
             elif log["type"] == 'prep':
                 if levelOfDetail > 1:
                     fullLog +=  self.buildPrepLogString(log)
-                    fullLog += '*' * 80
+                    fullLog += '.' * 80
             elif log["type"] == 'run':
                 if levelOfDetail > 1:
                     fullLog += self.buildRunLogString(log)
-                    fullLog += '*' * 80
+                    fullLog += '.' * 80
             elif log["type"] == 'cv':
                 if levelOfDetail > 2:
                     fullLog += self.buildCVLogString(log)
-                    fullLog += '*' * 80
+                    fullLog += '.' * 80
             else:
                 if levelOfDetail > 3:
                     pass
                     # fullLog += "\n"
                     # fullLog += # self.buildMultiClassLogString
-                    # fullLog += '*' * 80
+                    # fullLog += '.' * 80
         if saveToFileName is not None:
             # TODO check if file exists and append if already exists?
             filePath = os.path.join(self.logLocation, saveToFileName)
@@ -376,7 +355,6 @@ class UmlLogger(object):
     def buildRunLogString(self, log):
         """ Extracts and formats information from the 'runs' table for printable output """
         # header data
-        print(type(log), log, log["runNumber"])
         fullLog = _logHeader(log["runNumber"], log["timestamp"])
         fullLog += "UML Function: {}\n".format(log['function'])
         fullLog += "Learner Function: {}\n".format(log['learner'])
