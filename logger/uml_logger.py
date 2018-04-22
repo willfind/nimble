@@ -7,7 +7,7 @@ import inspect
 import numpy
 from datetime import datetime
 from dateutil.parser import parse
-import ast
+from ast import literal_eval
 from textwrap import wrap
 import pandas as pd
 
@@ -20,6 +20,7 @@ from .logger_helpers import _logHeader
 from .logger_helpers import _removeItemsWithoutData
 from .logger_helpers import textSearch
 from .logger_helpers import checkMaxEntries
+from .logger_helpers import dictToKeywordString
 
 """
     Handle logging of creating and testing learners.
@@ -224,110 +225,9 @@ class UmlLogger(object):
 
         self.insertIntoLog(logMessage)
 
-
-    ###################
-    ### LOG STRINGS ###
-    ###################
-    # TODO spacing and wrapping for long strings
-
-    def buildRunLogString(self, log):
-        """ Extracts and formats information from the 'runs' table for printable output """
-        # header data
-        fullLog = _logHeader(log["runNumber"], log["timestamp"])
-        timer = log.get("timer", False)
-        if timer:
-            fullLog += "Completed in {0:.3f} seconds\n".format(log['timer'])
-        fullLog += "\n"
-        fullLog += 'UML.{0}("{1}")\n'.format(log['function'], log["learner"])
-
-        # train and test data
-        fullLog += _formatRunLine("Data", "# points", "# features")
-        if log.get("trainData", False):
-            fullLog += _formatRunLine("trainX", log["trainDataPoints"], log["trainDataFeatures"])
-        if log.get("trainLabels", False):
-            fullLog += _formatRunLine("trainY", log["trainLabelsPoints"], log["trainLabelsFeatures"])
-        if log.get("testData", False):
-            fullLog += _formatRunLine("testX", log["testDataPoints"], log["testDataFeatures"])
-        if log.get("testLabels", False):
-            fullLog += _formatRunLine("testY", log["testLabelsPoints"], log["testLabelsFeatures"])
-        # parameter data
-        if log.get("arguments", False):
-            fullLog += "\n"
-            argString = "Arguments: "
-            argString += str(log["arguments"])
-            for string in wrap(argString, 80, subsequent_indent=" "*19):
-                fullLog += string
-                fullLog += "\n"
-            #fullLog += _logDictionary(log["arguments"])
-        # metric data
-        if log.get("metrics", False):
-            fullLog += "\n"
-            fullLog += "Metrics: "
-            fullLog += str(log["metrics"])
-            #fullLog += _logDictionary(log["metrics"])
-        # extraInfo
-        if log.get("extraInfo", False):
-            fullLog += "\n"
-            fullLog += "Extra Info: "
-            fullLog += str(log["extraInfo"])
-            #fullLog += _logDictionary(log["extraInfo"])
-
-        return fullLog
-
-
-    def buildLoadLogString(self, log):
-        fullLog = _logHeader(log["runNumber"], log["timestamp"])
-        dataCol = "Data Loaded"
-        if log['path'] is not None:
-            fullLog += _formatRunLine(dataCol, "path", log["path"])
-            dataCol = ""
-        if log['name'] is not None:
-            fullLog += _formatRunLine(dataCol, "name", log["name"])
-            dataCol = ""
-        fullLog += _formatRunLine(dataCol, "# of points", log["numPoints"])
-        fullLog += _formatRunLine("", "# of features", log["numFeatures"])
-        return fullLog
-
-    def buildPrepLogString(self, log):
-        fullLog = _logHeader(log["runNumber"], log["timestamp"])
-        fullLog += "UML.{0}\n".format(log["function"])
-        argString = "Arguments: "
-
-        argString += str(log["arguments"])
-        for string in wrap(argString, 80, subsequent_indent=" "*19):
-            fullLog += string
-            fullLog += "\n"
-        # for argName, argValue in six.iteritems(log["arguments"]):
-        #     fullLog += "{} = {}, ".format(argName, argValue)
-        # # remove trailing comma
-        # fullLog = fullLog[:-2]
-        return fullLog
-
-
-    def buildCVLogString(self, log):
-        fullLog = _logHeader(log["runNumber"], log["timestamp"])
-        fullLog += "Cross Validating for {0}\n\n".format(log["learner"])
-        # TODO when is learnerArgs returning an empty list?
-        if isinstance(log["learnerArgs"], dict):
-            fullLog += "Variable Arguments: "
-            fullLog += str(log["learnerArgs"])
-            fullLog += "\n\n"
-            #fullLog += _logDictionary(log["learnerArgs"])
-        folds = log["folds"]
-        metric = log["metric"]
-        fullLog += "{0}-folding using {1} optimizing for min values\n\n".format(folds, metric)
-        fullLog += _formatRunLine("Result", "Arguments")
-        for arguments, result in log["performance"]:
-            fullLog += ("{0:<20.3f}{1:20s}" * len(arguments)).format(result, str(arguments))
-            fullLog += "\n"
-        return fullLog
-
-
     ##################
     ### PRINT LOGS ###
     ##################
-
-    # TODO Divider for runs
 
     def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
                                endDate, saveToFileName, maximumEntries, searchForText):
@@ -415,9 +315,18 @@ class UmlLogger(object):
             runLogs = textSearch(dataframe, searchForText)
             runLogs = checkMaxEntries(runLogs, maximumEntries)
 
-        fullLog = '.' * 35 + " UML LOGS " + '.' * 35
+        fullLog = "{0:^80}\n".format("UML LOGS")
+        fullLog += "." * 80
+        previousLogRunNumber = None
         for log in runLogs:
-            log = eval(log) #TODO ast?
+            log = literal_eval(log)
+            if log["runNumber"] != previousLogRunNumber:
+                fullLog += "\n"
+                logString = "RUN {0}".format(log["runNumber"])
+                fullLog += ".{0:^78}.".format(logString)
+                fullLog += "\n"
+                fullLog += "." * 80
+                previousLogRunNumber = log["runNumber"]
             # adjust for level of detail
             if log["type"] == 'load':
                 fullLog += self.buildLoadLogString(log)
@@ -452,6 +361,102 @@ class UmlLogger(object):
                 f.write(fullLog)
         else:
             print(fullLog)
+
+
+    ###################
+    ### LOG STRINGS ###
+    ###################
+
+    def buildRunLogString(self, log):
+        """ Extracts and formats information from the 'runs' table for printable output """
+        # header data
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
+        timer = log.get("timer", False)
+        if timer:
+            fullLog += "Completed in {0:.3f} seconds\n".format(log['timer'])
+        fullLog += "\n"
+        fullLog += 'UML.{0}("{1}")\n'.format(log['function'], log["learner"])
+
+        # train and test data
+        fullLog += _formatRunLine("Data", "# points", "# features")
+        if log.get("trainData", False):
+            fullLog += _formatRunLine("trainX", log["trainDataPoints"], log["trainDataFeatures"])
+        if log.get("trainLabels", False):
+            fullLog += _formatRunLine("trainY", log["trainLabelsPoints"], log["trainLabelsFeatures"])
+        if log.get("testData", False):
+            fullLog += _formatRunLine("testX", log["testDataPoints"], log["testDataFeatures"])
+        if log.get("testLabels", False):
+            fullLog += _formatRunLine("testY", log["testLabelsPoints"], log["testLabelsFeatures"])
+        # parameter data
+        if log.get("arguments", False):
+            fullLog += "\n"
+            argString = "Arguments: "
+            argString += str(log["arguments"])
+            for string in wrap(argString, 80, subsequent_indent=" "*19):
+                fullLog += string
+                fullLog += "\n"
+            #fullLog += _logDictionary(log["arguments"])
+        # metric data
+        if log.get("metrics", False):
+            fullLog += "\n"
+            fullLog += "Metrics: "
+            fullLog += str(log["metrics"])
+            fullLog += "\n"
+            #fullLog += _logDictionary(log["metrics"])
+        # extraInfo
+        if log.get("extraInfo", False):
+            fullLog += "\n"
+            fullLog += "Extra Info: "
+            fullLog += str(log["extraInfo"])
+            fullLog += "\n"
+            #fullLog += _logDictionary(log["extraInfo"])
+
+        return fullLog
+
+
+    def buildLoadLogString(self, log):
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
+        dataCol = "Data Loaded"
+        if log['path'] is not None:
+            fullLog += _formatRunLine(dataCol, "path", log["path"])
+            dataCol = ""
+        if log['name'] is not None:
+            fullLog += _formatRunLine(dataCol, "name", log["name"])
+            dataCol = ""
+        fullLog += _formatRunLine(dataCol, "# of points", log["numPoints"])
+        fullLog += _formatRunLine("", "# of features", log["numFeatures"])
+        return fullLog
+
+    def buildPrepLogString(self, log):
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
+        fullLog += "UML.{0}\n".format(log["function"])
+        if log['arguments'] != {}:
+            argString = "Arguments: "
+            argString += str(log["arguments"])
+            for string in wrap(argString, 80, subsequent_indent=" "*19):
+                fullLog += string
+                fullLog += "\n"
+        return fullLog
+
+
+    def buildCVLogString(self, log):
+        fullLog = _logHeader(log["runNumber"], log["timestamp"])
+        fullLog += "Cross Validating for {0}\n\n".format(log["learner"])
+        # TODO when is learnerArgs returning an empty list?
+        if isinstance(log["learnerArgs"], dict):
+            fullLog += "Variable Arguments: "
+            fullLog += str(log["learnerArgs"])
+            fullLog += "\n\n"
+            #fullLog += _logDictionary(log["learnerArgs"])
+        folds = log["folds"]
+        metric = log["metric"]
+        fullLog += "{0}-folding using {1} optimizing for min values\n\n".format(folds, metric)
+        fullLog += _formatRunLine("Result", "Arguments")
+        for arguments, result in log["performance"]:
+            argString = argString = dictToKeywordString(arguments)
+            fullLog += "{0:<20.3f}{1:20s}".format(result, argString)
+            fullLog += "\n"
+        return fullLog
 
 
 #######################

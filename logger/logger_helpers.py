@@ -43,11 +43,17 @@ def checkMaxEntries(dataframe, maximumEntries):
 #     dictionaryValues = map(str, dictionaryValues)
 #     return _formatDictLines(dictionaryKeys, dictionaryValues)
 
+def dictToKeywordString(dictionary):
+    kvStrings = []
+    for key, value in dictionary.items():
+        string = "{0}={1}".format(key,value)
+        kvStrings.append(string)
+    return ", ".join(kvStrings)
 
 def _formatRunLine(*args):
     """ Formats equally spaced values for each column"""
     args = list(map(str, args))
-    lineLog = ("{:20s}" * len(args)).format(*args)
+    lineLog = ("{:20s}" * len(args)).format(*args) #TODO works below python2.7?
     lineLog += "\n"
     return lineLog
 
@@ -68,8 +74,9 @@ def _formatRunLine(*args):
 def _logHeader(runNumber, timestamp):
     """ Formats the top line of each log entry"""
     lineLog = "\n"
-    numberLog = "Run: {}".format(runNumber)
-    lineLog += "Timestamp: {}{:>50}\n".format(timestamp, numberLog)
+    # numberLog = "Run: {0}".format(runNumber)
+    # lineLog += "Timestamp: {0}{1:>61}\n".format(timestamp, numberLog)
+    lineLog += "{0:>80}\n".format(timestamp)
     return lineLog
 
 
