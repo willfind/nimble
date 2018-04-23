@@ -597,19 +597,24 @@ class List(Base):
         self.data = other.data
         self._numFeatures = other._numFeatures
 
-    def _copyAs_implementation(self, format):
+    def _copyAs_implementation(self, format, dataCopy=True):
         if format == 'Sparse':
             if self.points == 0 or self.features == 0:
                 emptyData = numpy.empty(shape=(self.points, self.features))
-                return UML.createData('Sparse', emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+                return UML.createData('Sparse', emptyData, pointNames=self.getPointNames(),
+                                      featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
 
         if format is None or format == 'List':
-            return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('List', self.data, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
@@ -929,7 +934,7 @@ class List(Base):
             def __init__(self, **kwds):
                 super(ListView, self).__init__(**kwds)
 
-            def _copyAs_implementation(self, format):
+            def _copyAs_implementation(self, format, dataCopy=False):
                 # we only want to change how List and pythonlist copying is done
                 # we also temporarily convert self.data to a python list for copyAs
                 listForm = [[self._source.data[pID][fID] for fID in range(self._fStart, self._fEnd)] \
@@ -939,7 +944,7 @@ class List(Base):
                 if format != 'List' and format != 'pythonlist':
                     origData = self.data
                     self.data = listForm
-                    res = super(ListView, self)._copyAs_implementation(format)
+                    res = super(ListView, self)._copyAs_implementation(format, dataCopy)
                     self.data = origData
                     return res
 
