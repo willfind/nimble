@@ -547,7 +547,7 @@ def createData(
         ret = initDataObject(
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
-            keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
+            keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData, dataCopy=dataCopy)
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
