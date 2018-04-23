@@ -93,7 +93,7 @@ class Base(object):
     """
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
-                 paths=(None, None), **kwds):
+                 paths=(None, None), dataCopy=False,  **kwds):
         """
         Instantiates the book-keeping structures that are taken to be common
         across all data types. Specifically, this includes point and feature
@@ -121,7 +121,6 @@ class Base(object):
         """
         self._pointCount = shape[0]
         self._featureCount = shape[1]
-        
         if pointNames is not None and len(pointNames) != shape[0]:
             msg = "The length of the pointNames (" + str(len(pointNames))
             msg += ") must match the points given in shape (" + str(shape[0])
@@ -137,6 +136,8 @@ class Base(object):
         self._nextDefaultValuePoint = 0
         if pointNames is None:
             self._setAllDefault('point')
+        elif dataCopy:
+            pass
         elif isinstance(pointNames, list):
             self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
@@ -155,6 +156,8 @@ class Base(object):
         self._nextDefaultValueFeature = 0
         if featureNames is None:
             self._setAllDefault('feature')
+        elif dataCopy:
+            pass
         elif isinstance(featureNames, list):
             self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
@@ -2604,7 +2607,7 @@ class Base(object):
         one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr',
         'scypy csc', 'list of dict' or 'dict of list'.
 
-        """
+        """        
         #make lower case, strip out all white space and periods, except if format
         # is one of the accepted UML data types
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2669,7 +2672,33 @@ class Base(object):
         if format in ['listofdict', 'dictoflist']:
             ret = self._copyAs_implementation('numpyarray')
         else:
-            ret = self._copyAs_implementation(format)
+            def _copyNames(ret):
+                # I we would like to support Views with dataCopy
+                # if self.__class__.__name__.endswith("View"):
+                #     ret.pointNamesInverse = self.getPointNames()
+                #     ret.pointNames = self._source.pointNames
+                #     del ret.pointNames['firstPNonView']
+                #     del ret['lastPNonView'] 
+                #     ret.featureNamesInverse = self.getFeatureNames()
+                #     ret.featureNames = self._source.featureNames
+                #     ret._nextDefaultValueFeature = self._source._nextDefaultValueFeature
+                #     ret._nextDefaultValuePoint = self._source._nextDefaultValuePoint
+                # else:
+                ret.pointNames = copy.deepcopy(self.pointNames)
+                ret.pointNamesInverse = copy.deepcopy(self.pointNamesInverse)
+                ret.featureNames = copy.deepcopy(self.featureNames)
+                ret.featureNamesInverse = copy.deepcopy(self.featureNamesInverse)
+                ret._nextDefaultValueFeature = self._nextDefaultValueFeature
+                ret._nextDefaultValuePoint = self._nextDefaultValuePoint
+
+            if self.__class__.__name__.endswith("View"):
+                ret = self._copyAs_implementation(format, dataCopy=False)
+            else:
+                ret = self._copyAs_implementation(format)
+                if isinstance(ret, UML.data.Base):
+                    _copyNames(ret)
+            
+
 
         def _createListOfDict(data, featureNames):
             # creates a list of dictionaries mapping feature names to the point's values
