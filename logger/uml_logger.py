@@ -5,11 +5,13 @@ import time
 import six
 import inspect
 import numpy
+import pandas
+import sqlite3
 from datetime import datetime
 from dateutil.parser import parse
 from ast import literal_eval
 from textwrap import wrap
-import pandas as pd
+
 
 import UML
 from UML.exceptions import ArgumentException
@@ -237,25 +239,29 @@ class UmlLogger(object):
 
         ##List of pandas operations
         # read file with ; separator
-        # changed types to numeric and datetime
-        # filtered dataframe by column and multiple booleans
+        # convert to datetime
+        # filtered dataframe using isin(list)
+        # filtered by multiple booleans (could do because was and)
         # indexed the last row of dataframe
 
-        logger = pd.read_csv(self.logFileName, sep=";")
-        logger['runNumber'] = pd.to_numeric(logger['runNumber'])
-        logger['date'] = pd.to_datetime(logger['date'])
+        # transformFeatureToIntegers returning floats
+        # date in future does not return points
+
+        logger = pandas.read_csv(self.logFileName, sep=";")
+        # logger['runNumber'] = pandas.to_numeric(logger['runNumber'])
+        # logger['date'] = pandas.to_datetime(logger['date'])
 
 
-        # logger = UML.createData('DataFrame', logger, featureNames=True)
-        # logger.transformFeatureToIntegers('runNumber', useLog=False)
-        # def convertToDatetime(features):
-        #     converted = []
-        #     for feature in features:
-        #         feature = parse(feature)
-        #         feature = datetime.date(feature)
-        #         converted.append(feature)
-        #     return converted
-        # logger.transformEachFeature(convertToDatetime, features='date')
+        logger = UML.createData('DataFrame', logger, featureNames=True)
+        logger.transformFeatureToIntegers('runNumber', useLog=False)
+        def convertToDatetime(features):
+            converted = []
+            for feature in features:
+                feature = parse(feature)
+                feature = datetime.ctime(feature)
+                converted.append(feature)
+            return converted
+        logger.transformEachFeature(convertToDatetime, features='date')
 
 
         # search for text TODO timeit
@@ -265,8 +271,9 @@ class UmlLogger(object):
         # search by runsAgo
         if startDate is None and endDate is None:
             try:
-                lastEntryLog = logger.iloc[-1]
-                lastEntryRun = lastEntryLog["runNumber"]
+                # lastEntryLog = logger.iloc[-1]
+                lastEntryRun = logger[-1 , "runNumber"]
+                # lastEntryRun = lastEntryLog["runNumber"]
                 nextRun = lastEntryRun + 1
             except ValueError:
                 nextRun = 1
@@ -279,40 +286,51 @@ class UmlLogger(object):
 
             if endRun < startRun:
                 raise ArgumentException("leastRunsAgo must be less than mostRunsAgo")
-            runNumbers = range(startRun, endRun)
-            logByRun = logger[logger['runNumber'].isin(runNumbers)]
-                # logByRun = logger.copy()
-                # filter = "runNumber = " + str(number)
-                # logByRun = logByRun.extractPoints(filter)
+            runNumbers = range(int(startRun), int(endRun))
+            logByRun = UML.createData("DataFrame", [], featureNames=logger.getFeatureNames(), useLog=False)
+            for number in runNumbers:
+            # logByRun = logger[logger['runNumber'].isin(runNumbers)]
+                filteredLog = logger.copy()
+                filter = "runNumber = " + str(number)
+                filteredLog = filteredLog.extractPoints(filter)
+                logByRun.appendPoints(filteredLog)
             logByRun = checkMaxEntries(logByRun, maximumEntries)
             runLogs = textSearch(logByRun, searchForText)
-            # allRunIds = ""
-            # for run in runNumbers:
-            #     run = str(run)
-            #     allRunIds += self.logDB[run]
-            # runLogsList = allRunIds.split()
-            # runLogs = [self.log.fetch(run) for run in runLogsList]
 
         # search by date TODO timeit
         elif startDate is not None and endDate is not None:
             #TODO ducktype dates
             startDate = parse(startDate)
+            startDate = datetime.ctime(startDate)
             endDate = parse(endDate)
-            logByDate = logger[(logger['date'] >= startDate) & (logger['date'] <= endDate)]
+            endDate = datetime.ctime(endDate)
+            logByDate = logger.copy()
+            print(datetime.ctime(datetime.today()) <= endDate)
+            filter1 = "date >= " + str(startDate)
+            filter2 = "date <=" + str(endDate)
+            logByDate = logByDate.extractPoints(filter1)
+            logByDate = logByDate.extractPoints(filter2)
+            # logByDate = logger[(logger['date'] >= startDate) & (logger['date'] <= endDate)]
             logByDate = checkMaxEntries(logByDate, maximumEntries)
             runLogs = textSearch(logByDate, searchForText)
         elif startDate is not None:
             startDate = parse(startDate)
-            logByDate = logger[logger['date'] >= startDate]
+            logByDate = logger.copy()
+            filter = "date >= " + str(startDate)
+            logByDate = logByDate.extractPoints(filter)
+            # logByDate = logger[logger['date'] >= startDate]
             logByDate = checkMaxEntries(logByDate, maximumEntries)
             runLogs = textSearch(logByDate, searchForText)
         elif endDate is not None:
             endDate = parse(endDate)
-            logByDate = logger[logger['date'] <= endDate]
+            logByDate = logger.copy()
+            filter = "date <=" + str(endDate)
+            logByDate = logByDate.extractPoints(filter)
+            # logByDate = logger[logger['date'] <= endDate]
             logByDate = checkMaxEntries(logByDate, maximumEntries)
             runLogs = textSearch(logByDate, searchForText)
         elif searchForText is not None:
-            runLogs = textSearch(dataframe, searchForText)
+            runLogs = textSearch(logger, searchForText)
             runLogs = checkMaxEntries(runLogs, maximumEntries)
 
         fullLog = "{0:^80}\n".format("UML LOGS")
@@ -391,7 +409,8 @@ class UmlLogger(object):
         if log.get("arguments", False):
             fullLog += "\n"
             argString = "Arguments: "
-            argString += str(log["arguments"])
+            argString += dictToKeywordString(log["arguments"])
+            # argString += str(log["arguments"])
             for string in wrap(argString, 80, subsequent_indent=" "*19):
                 fullLog += string
                 fullLog += "\n"
@@ -400,14 +419,16 @@ class UmlLogger(object):
         if log.get("metrics", False):
             fullLog += "\n"
             fullLog += "Metrics: "
-            fullLog += str(log["metrics"])
+            fullLog += dictToKeywordString(log["metrics"])
+            # fullLog += str(log["metrics"])
             fullLog += "\n"
             #fullLog += _logDictionary(log["metrics"])
         # extraInfo
         if log.get("extraInfo", False):
             fullLog += "\n"
             fullLog += "Extra Info: "
-            fullLog += str(log["extraInfo"])
+            fullLog += dictToKeywordString(log["extraInfo"])
+            # fullLog += str(log["extraInfo"])
             fullLog += "\n"
             #fullLog += _logDictionary(log["extraInfo"])
 
@@ -432,7 +453,8 @@ class UmlLogger(object):
         fullLog += "UML.{0}\n".format(log["function"])
         if log['arguments'] != {}:
             argString = "Arguments: "
-            argString += str(log["arguments"])
+            argString += dictToKeywordString(log["arguments"])
+            # argString += str(log["arguments"])
             for string in wrap(argString, 80, subsequent_indent=" "*19):
                 fullLog += string
                 fullLog += "\n"
@@ -445,7 +467,8 @@ class UmlLogger(object):
         # TODO when is learnerArgs returning an empty list?
         if isinstance(log["learnerArgs"], dict):
             fullLog += "Variable Arguments: "
-            fullLog += str(log["learnerArgs"])
+            fullLog += dictToKeywordString(log["learnerArgs"])
+            # fullLog += str(log["learnerArgs"])
             fullLog += "\n\n"
             #fullLog += _logDictionary(log["learnerArgs"])
         folds = log["folds"]
@@ -453,7 +476,7 @@ class UmlLogger(object):
         fullLog += "{0}-folding using {1} optimizing for min values\n\n".format(folds, metric)
         fullLog += _formatRunLine("Result", "Arguments")
         for arguments, result in log["performance"]:
-            argString = argString = dictToKeywordString(arguments)
+            argString = dictToKeywordString(arguments)
             fullLog += "{0:<20.3f}{1:20s}".format(result, argString)
             fullLog += "\n"
         return fullLog

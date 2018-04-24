@@ -18,8 +18,10 @@ def useLogCheck(useLog):
     return useLog, unsuspend
 
 def textSearch(dataframe, searchForText):
+    if searchForText is None:
+        return dataframe[:, "loggerInfo"]
     runLogs = []
-    for entry in dataframe['loggerInfo']:
+    for entry in dataframe[:, 'loggerInfo']:
         if searchForText is not None and searchForText in entry:
             runLogs.append(entry)
         elif searchForText is None:
@@ -29,9 +31,9 @@ def textSearch(dataframe, searchForText):
 
 def checkMaxEntries(dataframe, maximumEntries):
     if maximumEntries is not None:
-        if len(dataframe) > maximumEntries:
-            start = len(dataframe) - maximumEntries
-            dataframe = dataframe.iloc[start:]
+        if dataframe.points > maximumEntries:
+            start = dataframe.points - maximumEntries
+            dataframe = dataframe[start:,:]
             return dataframe
     return dataframe
 
