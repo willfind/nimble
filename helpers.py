@@ -496,15 +496,18 @@ def initDataObject(
 
     initMethod = getattr(UML.data, returnType)
     try:
-        # print('initMethod -> {}'.format(initMethod))
-        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData, dataCopy=dataCopy)
-        # print('HERE initDataObject!! (no names in this return)')
+        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames,
+                         name=name, paths=pathsToPass, elementType=elementType,
+                         reuseData=reuseData, dataCopy=dataCopy)
+
     except Exception as e:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
         try:
             autoMethod = getattr(UML.data, autoType)
-            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData, dataCopy=dataCopy)
+            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames,
+                             name=name, paths=pathsToPass, elementType=elementType,
+                             reuseData=reuseData, dataCopy=dataCopy)
             ret = ret.copyAs(returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
