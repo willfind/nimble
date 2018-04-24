@@ -73,7 +73,7 @@ def _formatRunLine(*args):
 #     return lineLog
 
 
-def _logHeader(runNumber, timestamp):
+def _logHeader(timestamp):
     """ Formats the top line of each log entry"""
     lineLog = "\n"
     # numberLog = "Run: {0}".format(runNumber)
