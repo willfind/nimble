@@ -13,15 +13,15 @@ from textwrap import wrap
 
 import UML
 from UML.exceptions import ArgumentException
-
+# TODO
 """
     Handle logging of creating and testing learners.
     Currently stores data in a SQLite database file and generates
-    a human readable log by querying the tables within the database.
+    a human readable log by querying the table within the database.
     There is a hierarchical structure to the log, allowing the user
     to specify the level of detail in the log:
 
-    Current Hierarchy
+    Hierarchy
     Level ?: Data creation and preprocessing logs
     Level 1: Outputs basic information about the run (timestamp, run number,
              learner name, train and test object details) and boolean values
@@ -222,19 +222,53 @@ class UmlLogger(object):
     ### LOG OUTPUT ###
     ##################
 
-    def showLog(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
-                endDate, saveToFileName, maximumEntries, searchForText):
-        """ Implementation of showLog function for UML"""
+    def showLog(self, levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
+                saveToFileName=None, maximumEntries=100, searchForText=None):
+        """
+        showLog parses the active logfile based on the arguments passed and prints a
+        human readable interpretation of the log file.
+
+        ARGUMENTS:
+        levelOfDetail:  The (int) value for the level of detail from 1, the least detail,
+                        to 4 (most detail)
+            **Level 1: Data loading and preprocessing
+            *Level 2: Outputs basic information about the run (timestamp, run number,
+                     learner name, train and test object details) and parameter, metric,
+                     and timer data if available
+            **Level 3: TODO (CrossValidation and Multiclass)
+            **Level 4: TODO
+
+        leastRunsAgo:   The (int) value for the least number of runs since the most recent
+                        run to include in the log. Defaults to 0
+
+        mostRunsAgo:    The (int) value for the least number of runs since the most recent
+                        run to include in the log. Defaults to 2
+
+        startDate:      A string or datetime object of the date to start adding runs to the log.
+                        Acceptable formats:
+                          "YYYY-MM-DD"
+                          "YYYY-MM-DD HH:MM"
+                          "YYYY-MM-DD HH:MM:SS"
+
+        endDate:        A string of the date to stop adding runs to the log.
+                        See startDate for formatting.
+
+        saveToFileName: The name of the file where the human readable log will be saved. File will be
+                        Default is None, showLog will print to standard out
+
+        maximumEntries: Maximum number of entries to allow before stopping the log
+
+        searchForText:  string (or regular expression TODO) to search for in the log runs
+        """
+
         if not self.isAvailable:
             self.setup()
 
         query, values = _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
                                                endDate, maximumEntries, searchForText)
-
         runLogs = self.extractFromLog(query, values)
-
         if maximumEntries is not None:
-            # sorted descending by sqlite to get most recent entries
+            # sorted descending in sqlite to get most recent entries
             # need to reverse to return to chronological order
             runLogs = runLogs[::-1]
 
@@ -247,7 +281,6 @@ class UmlLogger(object):
                 f.write(logOutput)
         else:
             print(logOutput)
-
 
 ###################
 ### LOG HELPERS ###

@@ -46,7 +46,6 @@ from .uml import ones
 from .uml import zeros
 from .uml import identity
 from .uml import normalizeData
-from .uml import showLog
 
 from .uml import registerCustomLearner
 from .uml import registerCustomLearnerAsDefault
@@ -91,5 +90,5 @@ __all__ = ['createData', 'createRandomData', 'crossValidate',
            'learnerType', 'listDataFunctions', 'listLearners',
            'listUMLFunctions', 'normalizeData', 'ones',
            'registerCustomLearner', 'registerCustomLearnerAsDefault',
-           'setRandomSeed', 'settings', 'showLog', 'train', 'trainAndApply',
+           'setRandomSeed', 'settings', 'train', 'trainAndApply',
            'trainAndTest', 'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
