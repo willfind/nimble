@@ -1245,7 +1245,7 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
     ** Not yet implemented
 
     """
-    return UML.logger.active._showLogImplementation(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
+    return UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate,
                                              endDate, saveToFileName, maximumEntries, searchForText)
 
 def coo_matrixTodense(origTodense):

@@ -59,4 +59,4 @@ if __name__ == "__main__":
     # Using lamb = 1 in this case so that there actually are errors
     error = UML.trainAndTest("custom.RidgeRegression", trainX, trainY, testX, testY, RMSE, lamb=1)
     print("rootMeanSquareError of predictions with lamb=1: " + str(error))
-    UML.showLog(levelOfDetail=3)
+    UML.showLog(levelOfDetail=3, mostRunsAgo=1, saveToFileName="test.txt")
