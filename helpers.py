@@ -28,7 +28,7 @@ if not hasattr(itertools, 'ifilter'):#in python3, itertools.ifilter is not there
 import UML
 
 from UML.logger import Stopwatch
-from UML.logger.logger_helpers import useLogCheck
+from UML.logger.uml_logger import useLogCheck
 
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.exceptions import PackageException

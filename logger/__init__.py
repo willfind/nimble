@@ -3,6 +3,5 @@ from .data_set_analyzer import produceFeaturewiseReport
 from .data_set_analyzer import produceAggregateReport
 from .uml_logger import UmlLogger
 from .uml_logger import useLogCheck
-from .log_manager import LogManager
 from .stopwatch import Stopwatch
 

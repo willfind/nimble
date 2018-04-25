@@ -308,11 +308,11 @@ def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
     includedValues = []
     if leastRunsAgo is not None:
         # difference between the next runNumber and leastRunsAgo (final run value)
-        whereQueryList.append("runNumber <= ((SELECT MAX(runNumber) FROM logger) - ? + 1)")
+        whereQueryList.append("runNumber <= ((SELECT MAX(runNumber) FROM logger) - ?)")
         includedValues.append(leastRunsAgo)
     if mostRunsAgo is not None:
         # difference between the next runNumber and mostRunsAgo (starting run value)
-        whereQueryList.append("runNumber >= ((SELECT MAX(runNumber) FROM logger) - ? + 1)")
+        whereQueryList.append("runNumber > ((SELECT MAX(runNumber) FROM logger) - ?)")
         includedValues.append(mostRunsAgo)
     if startDate is not None:
         whereQueryList.append("timestamp >= ?")
