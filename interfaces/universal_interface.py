@@ -770,6 +770,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     testLabels=testY, learnerFunction=fullName,
                     arguments=mergedArguments, metrics=metrics, timer=timer,
                     extraInfo=None, numFolds=None)
+            if unsuspend:
+                UML.logger.active.suspended = False
 
             return performance
 

@@ -913,7 +913,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
         numFolds = trainX.points if trainX.points < 10 else 10
         #sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
         bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged,
-                                                              numFolds=numFolds, scoreMode=scoreMode, useLog=False)
+                                                              numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
 
         if toLog:
             timer.stop('crossValidateReturnBest')
@@ -1009,9 +1009,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
 
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
-                               scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=False, \
+                               scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
                                doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
-    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
+    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
 
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
@@ -1104,9 +1104,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
         timer = None
 
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
-                               scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=False, \
+                               scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
                                doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
-    predictions = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
+    predictions = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
     performance = UML.helpers.computeMetrics(testY, None, predictions, performanceFunction)
 
     metrics = {}

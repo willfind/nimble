@@ -180,10 +180,7 @@ class LoggerControl(object):
 
         # delete previous testing logs:
         location = os.path.join(UMLPath, 'logs-UML')
-        hrPath = os.path.join(location, 'log-UML-unitTests.txt')
         mrPath = os.path.join(location, 'log-UML-unitTests.mr')
-        if os.path.exists(hrPath):
-            os.remove(hrPath)
         if os.path.exists(mrPath):
             os.remove(mrPath)
 

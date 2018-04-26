@@ -56,6 +56,9 @@ class UmlLogger(object):
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
         self.connection = sqlite3.connect(self.logFileName)
+        self.cursor = self.connection.cursor()
+        statement = "VACUUM;"
+        self.cursor.execute(statement)
         statement = """
         CREATE TABLE IF NOT EXISTS logger (
         entry INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +67,6 @@ class UmlLogger(object):
         logType TEXT,
         logDict TEXT);
         """
-        self.cursor = self.connection.cursor()
         self.cursor.execute(statement)
         self.connection.commit()
 
@@ -87,7 +89,10 @@ class UmlLogger(object):
 
 
     def insertIntoLog(self, logType, logDict):
-        """ Inserts the timestamp, runNumber, log logType and the log"""
+        """ Inserts timestamp, runNumber, logType in their respective columns of the
+            sqlite table. A string of the python dictionary containing any unstructured
+            information for the log entry is stored in the final column, logDict.
+        """
         if not self.isAvailable:
             self.setup(self.logFileName)
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S')

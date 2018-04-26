@@ -2362,10 +2362,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     if folds == 0:
         raise ArgumentException("Tried to cross validate over 0 folds")
 
-    toLog, unsuspend = useLogCheck(useLog)
-
-    deepLog = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
-    deepLog = True if deepLog.lower() == 'true' else False
+    UML.logger.active.suspended = True
 
     merged = _mergeArguments(arguments, kwarguments)
 
@@ -2449,7 +2446,13 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
     # log results of this cross validation
-    if deepLog:
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+    deepLog = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
+    deepLog = True if deepLog.lower() == 'true' else False
+    toLog = useLog and deepLog
+    if toLog:
         # TODO: should we have an actual timer here? if we do should we remove
         # the CV timing from logRun?
         timer = None
@@ -2457,6 +2460,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # (self, trainData, trainLabels, learnerName, metric, performance, timer, learnerArgs, folds)
         UML.logger.active.logCrossValidation(X, Y, learnerName, performanceFunction,
                                              performanceOfEachCombination, timer, merged, folds)
+    UML.logger.active.suspended = True
 
     #return the list of tuples - tracking the performance of each argument
     return performanceOfEachCombination
@@ -3418,7 +3422,7 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
         testX = testX.copy()
         testY = testX.extractFeatures([testY])
 
-    predictions = f(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=toLog,
+    predictions = f(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=False,
                                         timer=timer)
 
     #now we need to compute performance metric(s) for the set of winning predictions
