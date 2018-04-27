@@ -40,6 +40,7 @@ from UML.helpers import isAllowedRaw
 from UML.helpers import initDataObject
 from UML.helpers import createDataFromFile
 from UML.helpers import createConstantHelper
+from UML.helpers import computeMetrics
 
 from UML.randomness import numpyRandom
 
@@ -922,7 +923,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
 
     interface = findBestInterface(package)
 
-    trainedLearner = interface.train(trueLearnerName, trainX, trainY, multiClassStrategy, bestArgument, toLog, timer)
+    trainedLearner = interface.train(trueLearnerName, trainX, trainY, multiClassStrategy, bestArgument, useLog, timer)
 
     if toLog:
         funcString = interface.getCanonicalName() + '.' + trueLearnerName
@@ -1107,7 +1108,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
                                scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
                                doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
     predictions = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
-    performance = UML.helpers.computeMetrics(testY, None, predictions, performanceFunction)
+    performance = computeMetrics(testY, None, predictions, performanceFunction)
 
     metrics = {}
     for key, value in zip([performanceFunction], [performance]):

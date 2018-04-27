@@ -1479,14 +1479,20 @@ class Base(object):
         """
         return produceFeaturewiseReport(self, maxFeaturesToCover=maxFeaturesToCover, displayDigits=displayDigits)
 
-    def summaryReport(self, displayDigits=2):
+    def summaryReport(self, displayDigits=2, useLog=None):
         """
         Produce a report, in a string formatted as a table, containing summary
         information about the data set contained in this object.  Includes
         proportion of missing values, proportion of zero values, total # of points,
         and number of features.
         """
-        return produceAggregateReport(self, displayDigits=displayDigits)
+        toLog, unsuspend = useLogCheck(useLog)
+        ret = produceAggregateReport(self, displayDigits=displayDigits)
+        if toLog:
+            UML.logger.active.logData(ret)
+        if unsuspend:
+            UML.logger.active.suspended = False
+        return ret
 
 
     ###############################################################

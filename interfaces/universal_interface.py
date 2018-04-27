@@ -25,7 +25,7 @@ from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
 from UML.logger.uml_logger import useLogCheck
-from UML.helpers import _mergeArguments, generateAllPairs, countWins
+from UML.helpers import _mergeArguments, generateAllPairs, countWins, computeMetrics
 import six
 from six.moves import range
 import warnings
@@ -154,12 +154,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 labelVector.transpose()
                 labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 
-                toLog, unsuspend = useLogCheck(useLog)
-                deepLog = False
-                if toLog:
-                    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-                    deepLog = True if deepLog.lower() == 'true' else False
-                    toLog = deepLog
+                if useLog is None:
+                    useLog = UML.settings.get("logger", "enabledByDefault")
+                    useLog = True if useLog.lower() == 'true' else False
+                deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+                deepLog = True if deepLog.lower() == 'true' else False
+                toLog = useLog and deepLog
 
                 #if we are logging this run, we need to start the timer
                 if toLog:
@@ -200,12 +200,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 labelSet = list(set(labelVector.copyAs(format="python list")[0]))
                 labelPairs = generateAllPairs(labelSet)
 
-                toLog, unsuspend = useLogCheck(useLog)
-                deepLog = False
-                if toLog:
-                    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-                    deepLog = True if deepLog.lower() == 'true' else False
-                    toLog = deepLog
+                if useLog is None:
+                    useLog = UML.settings.get("logger", "enabledByDefault")
+                    useLog = True if useLog.lower() == 'true' else False
+                deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+                deepLog = True if deepLog.lower() == 'true' else False
+                toLog = useLog and deepLog
 
                 #if we are logging this run, we need to start the timer
                 if toLog:
@@ -738,7 +738,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             setup for training was the same.
 
             """
-            toLog, unsuspend = useLogCheck(useLog)
+            if useLog is None:
+                useLog = UML.settings.get("logger", "enabledByDefault")
+                useLog = True if useLog.lower() == 'true' else False
+            deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+            deepLog = True if deepLog.lower() == 'true' else False
+            toLog = useLog and deepLog
 
             timer = None
             if toLog:
@@ -752,7 +757,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
 
             pred = self.apply(testX, mergedArguments, output, scoreMode, useLog=False)
-            performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction)
+            performance = computeMetrics(testY, None, pred, performanceFunction)
 
             metrics = {}
             for key, value in zip([performanceFunction], [performance]):
@@ -770,8 +775,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     testLabels=testY, learnerFunction=fullName,
                     arguments=mergedArguments, metrics=metrics, timer=timer,
                     extraInfo=None, numFolds=None)
-            if unsuspend:
-                UML.logger.active.suspended = False
 
             return performance
 
@@ -797,8 +800,14 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
             """
             UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
+            if useLog is None:
+                useLog = UML.settings.get("logger", "enabledByDefault")
+                useLog = True if useLog.lower() == 'true' else False
 
-            toLog, unsuspend = useLogCheck(useLog)
+            deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+
+            deepLog = True if deepLog.lower() == 'true' else False
+            toLog = useLog and deepLog
 
             timer = None
             if toLog:
@@ -853,8 +862,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     trainData=None, trainLabels=None, testData=testX,
                     testLabels=None, learnerFunction=fullName, arguments=mergedArguments,
                     metrics=None, timer=timer, extraInfo=None, numFolds=None)
-            if unsuspend:
-                UML.logger.active.suspended = False
 
             return ret
 

@@ -2362,8 +2362,6 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     if folds == 0:
         raise ArgumentException("Tried to cross validate over 0 folds")
 
-    UML.logger.active.suspended = True
-
     merged = _mergeArguments(arguments, kwarguments)
 
     #get an iterator for the argument combinations- iterator
@@ -2404,7 +2402,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             #run algorithm on the folds' training and testing sets
             curRunResult = UML.trainAndApply(learnerName=learnerName, trainX=curTrainX, trainY=curTrainY,
                                              testX=curTestingX, arguments=curArgumentCombination, scoreMode=scoreMode,
-                                             useLog=False)
+                                             useLog=useLog)
 
             performanceOfEachCombination[argSetIndex][0] = curArgumentCombination
 
@@ -2460,7 +2458,6 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # (self, trainData, trainLabels, learnerName, metric, performance, timer, learnerArgs, folds)
         UML.logger.active.logCrossValidation(X, Y, learnerName, performanceFunction,
                                              performanceOfEachCombination, timer, merged, folds)
-    UML.logger.active.suspended = True
 
     #return the list of tuples - tracking the performance of each argument
     return performanceOfEachCombination
@@ -3183,11 +3180,13 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
     labelPairs = generateAllPairs(labelSet)
 
-    toLog, unsuspend = useLogCheck(useLog)
-    deepLog = False
-    if toLog:
-        deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-        deepLog = True if deepLog.lower() == 'true' else False
+    #TODO log check to log partialResults
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+    deepLog = True if deepLog.lower() == 'true' else False
+    toLog = useLog and deepLog
 
     #if we are logging this run, we need to start the timer
     if toLog:
@@ -3207,7 +3206,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
         pairTrueLabels = pairData.extractFeatures(trainY)
         #train classifier on that data; apply it to the test set
         partialResults = UML.trainAndApply(learnerName, pairData, pairTrueLabels, testX, output=None, arguments=merged,
-                                           useLog=deepLog)
+                                           useLog=useLog)
         #put predictions into table of predictions
         if rawPredictions is None:
             rawPredictions = partialResults.copyAs(format="List")
@@ -3316,11 +3315,13 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     labelVector.transpose()
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 
-    toLog, unsuspend = useLogCheck(useLog)
-    deepLog = False
-    if toLog:
-        deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-        deepLog = True if deepLog.lower() == 'true' else False
+    #TODO log check to log oneLabelResults
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
+    deepLog = True if deepLog.lower() == 'true' else False
+    toLog = useLog and deepLog
 
     #if we are logging this run, we need to start the timer
     if toLog:
@@ -3343,7 +3344,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
 
         trainLabels = trainY.calculateForEachPoint(relabeler)
         oneLabelResults = UML.trainAndApply(learnerName, trainX, trainLabels, testX, output=None, arguments=merged,
-                                            useLog=deepLog)
+                                            useLog=useLog)
         #put all results into one Base container, of the same type as trainX
         if rawPredictions is None:
             rawPredictions = oneLabelResults
