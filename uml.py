@@ -627,8 +627,13 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds
     the learner when the learner was passed all three values of a, separately.
 
     """
+    toLog, unsuspend = useLogCheck(useLog)
+
     bestResult = crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog,
                                          **kwarguments)
+    if unsuspend:
+        UML.logger.active.suspended = False
+
     return bestResult[1]
 
 #return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog, **kwarguments)
@@ -690,8 +695,14 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments={},
     three values of a, separately.
 
     """
-    return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog,
+    toLog, unsuspend = useLogCheck(useLog)
+
+    ret = crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog,
                                 **kwarguments)
+    if unsuspend:
+        UML.logger.active.suspended = False
+
+    return ret
 
 
 def crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments={},
@@ -740,6 +751,8 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments={}
     three values of a, separately.
 
     """
+    toLog, unsuspend = useLogCheck(useLog)
+
     resultsAll = crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog,
                                         **kwarguments)
 
@@ -771,6 +784,8 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments={}
                 bestArgumentAndScoreTuple = curResultTuple
             if ((not maximumIsBest) and curScore < bestArgumentAndScoreTuple[1]):
                 bestArgumentAndScoreTuple = curResultTuple
+    if unsuspend:
+        UML.logger.active.suspended = False
 
     return bestArgumentAndScoreTuple
 

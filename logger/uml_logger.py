@@ -87,7 +87,6 @@ class UmlLogger(object):
 
 
     def insertIntoLog(self, logType, logInfo):
-        print(logType)
         """ Inserts timestamp, runNumber, logType in their respective columns of the
             sqlite table. A string of the python dictionary containing any unstructured
             information for the log entry is stored in the final column, logInfo.

@@ -43,7 +43,9 @@ def runAndCheck(toCall, useLog):
     # make sure it has the expected effect on the count
     entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
     endCount = entryCount[0][0]
-
+    lastLogs = logger.extractFromLog("SELECT * FROM logger ORDER BY entry LIMIT 2")
+    #print(lastLogs)
+    print(startCount, endCount)
     return (startCount, endCount)
 
 
@@ -134,7 +136,7 @@ def test_trainAndTestOnTrainingData_CVError():
 
 #	backend(wrapped)
 
-def test_TrainedLearer_apply():
+def test_TrainedLearner_apply():
     cData = generateClassificationData(2, 10, 2)
     ((trainX, trainY), (testX, testY)) = cData
     # get a trained learner
@@ -146,7 +148,7 @@ def test_TrainedLearer_apply():
     backend(wrapped)
 
 
-def test_TrainedLearer_test():
+def test_TrainedLearner_test():
     cData = generateClassificationData(2, 10, 2)
     ((trainX, trainY), (testX, testY)) = cData
     # get a trained learner
