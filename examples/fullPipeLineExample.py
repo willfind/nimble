@@ -14,7 +14,7 @@ except:
 boilerplate()
 
 if __name__ == "__main__":
-    #import UML
+    import UML
     from UML import createData
     from UML import trainAndTest
     from UML import trainAndApply
@@ -26,7 +26,7 @@ if __name__ == "__main__":
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3],
              [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
     trainObj = createData('Matrix', data=data1, featureNames=variables)
-
+    trainObj.summaryReport()
     # formated vertically for easier comparison with printed results
     data2 = [[1, 0, 0, 1],
              [0, 1, 0, 2],
@@ -75,3 +75,4 @@ if __name__ == "__main__":
                                      multiClassStrategy="OneVsAll", arguments={'C':.01})
     # print('One vs All, all scores format:')
     # print(resultsAllScoresOvA)
+    UML.logger.active.showLog(levelOfDetail=3)
