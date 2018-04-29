@@ -287,7 +287,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
                 pass
         except AttributeError:
             msg = ("if pointNames and featureNames are not 'bool' or a 'str'"
-                   "they should be other an 'iterable' object")
+                   "they should be other 'iterable' object")
             raise AttributeError(msg)
 
 
