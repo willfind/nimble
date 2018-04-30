@@ -3316,7 +3316,8 @@ class Base(object):
             msg = "Can only flattenToOnePoint when there is one or more features. " \
                   "This object has 0 features."
             raise ImproperActionException(msg)
-        
+
+        # TODO: flatten nameless Objects without the need to generate default names for them.
         if self.pointNamesInverse is None:
             self._setAllDefault('point')
         if self.featureNamesInverse is None:
@@ -3344,7 +3345,7 @@ class Base(object):
         The single feature will have a name of "Flattened".
 
         Raises: ImproperActionException if an axis has length 0
-
+        
         """
         if self.points == 0:
             msg = "Can only flattenToOneFeature when there is one or more points. " \
@@ -3354,6 +3355,12 @@ class Base(object):
             msg = "Can only flattenToOneFeature when there is one or more features. " \
                   "This object has 0 features."
             raise ImproperActionException(msg)
+
+        # TODO: flatten nameless Objects without the need to generate default names for them.
+        if self.pointNamesInverse is None:
+            self._setAllDefault('point')
+        if self.featureNamesInverse is None:
+            self._setAllDefault('feature')
 
         self._flattenToOneFeature_implementation()
 
