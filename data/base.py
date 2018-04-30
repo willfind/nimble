@@ -135,9 +135,11 @@ class Base(object):
         # Set up point names
         self._nextDefaultValuePoint = 0
         if pointNames is None:
-            pass
+            self.pointNamesInverse = None
+            self.pointNames = None
         elif dataCopy:
-            pass
+            self.pointNamesInverse = None
+            self.pointNames = None
         elif isinstance(pointNames, list):
             self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
@@ -155,9 +157,11 @@ class Base(object):
         # Set up feature names
         self._nextDefaultValueFeature = 0
         if featureNames is None:
-            pass
+            self.featureNamesInverse = None
+            self.featureNames = None
         elif dataCopy:
-            pass
+            self.featureNamesInverse = None
+            self.featureNames = None
         elif isinstance(featureNames, list):
             self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
@@ -351,11 +355,9 @@ class Base(object):
         to.
 
         """
-        try:
-            return copy.copy(self.pointNamesInverse)
-        except AttributeError:
+        if self.pointNamesInverse is None:
             self._setAllDefault('point')
-            return copy.copy(self.pointNamesInverse)
+        return copy.copy(self.pointNamesInverse)
 
     def getFeatureNames(self):
         """Returns a list containing all feature names, where their index
@@ -363,17 +365,18 @@ class Base(object):
         correspond to.
 
         """
-        try:
-            return copy.copy(self.featureNamesInverse)
-        except AttributeError:
+        if self.featureNamesInverse is None:
             self._setAllDefault('feature')
-            return copy.copy(self.featureNamesInverse)
-
+        return copy.copy(self.featureNamesInverse)
 
     def getPointName(self, index):
+        if self.pointNamesInverse is None:
+            self._setAllDefault('point')
         return self.pointNamesInverse[index]
 
     def getPointIndex(self, name):
+        if self.pointNamesInverse is None:
+            self._setAllDefault('point')
         return self.pointNames[name]
 
     def hasPointName(self, name):
@@ -384,11 +387,15 @@ class Base(object):
             return False
 
     def getFeatureName(self, index):
+        if self.featureNamesInverse is None:
+            self._setAllDefault('feature')
         return self.featureNamesInverse[index]
 
     def getFeatureIndex(self, name):
+        if self.featureNamesInverse is None:
+            self._setAllDefault('feature')
         return self.featureNames[name]
-
+            
     def hasFeatureName(self, name):
         try:
             self.getFeatureIndex(name)
@@ -1740,14 +1747,21 @@ class Base(object):
         that our objects enforce.
 
         """
-        assert self.features == len(self.getFeatureNames())
-        assert self.points == len(self.getPointNames())
+        if self.pointNamesInverse is not None:
+            print(self.points, len(self.getPointNames()))
+            assert self.points == len(self.getPointNames())
+        if self.featureNamesInverse is not None:
+            print(self.features, len(self.getFeatureNames()))
+            assert self.features == len(self.getFeatureNames())
+        
 
         if level > 0:
-            for key in self.getPointNames():
-                assert self.getPointName(self.getPointIndex(key)) == key
-            for key in self.getFeatureNames():
-                assert self.getFeatureName(self.getFeatureIndex(key)) == key
+            if self.pointNamesInverse is not None:
+                for key in self.getPointNames():
+                    assert self.getPointName(self.getPointIndex(key)) == key
+            if self.featureNamesInverse is not None:
+                for key in self.getFeatureNames():
+                    assert self.getFeatureName(self.getFeatureIndex(key)) == key
 
         self._validate_implementation(level)
 
@@ -2275,9 +2289,24 @@ class Base(object):
 
         self._pointCount, self._featureCount = self._featureCount, self._pointCount
 
-        self.pointNames, self.featureNames = self.featureNames, self.pointNames
-        self.setFeatureNames(self.featureNames)
-        self.setPointNames(self.pointNames)
+        if self.pointNamesInverse is not None and self.featureNamesInverse is not None:
+            self.pointNames, self.featureNames = self.featureNames, self.pointNames
+            self.setFeatureNames(self.featureNames)
+            self.setPointNames(self.pointNames)
+        elif self.pointNamesInverse is not None:
+            self.featureNames = self.pointNames
+            self.pointNames = None
+            self.pointNamesInverse = None
+            print('here: {}'.format(self.featureNames))
+            self.setFeatureNames(self.featureNames)
+        elif self.featureNamesInverse is not None:
+            self.pointNames = self.featureNames
+            self.featureNames = None
+            self.featureNamesInverse = None
+            print('here: {}'.format(self.pointNames))
+            self.setPointNames(self.pointNames)
+        else:
+            pass
 
         self.validate()
 
