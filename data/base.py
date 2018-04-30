@@ -2909,10 +2909,20 @@ class Base(object):
         return ret
 
     def _copyNames (self, CopyObj):
-        CopyObj.pointNamesInverse = self.getPointNames()
-        CopyObj.featureNamesInverse = self.getFeatureNames()
-        CopyObj.pointNames = copy.copy(self.pointNames)
-        CopyObj.featureNames = copy.copy(self.featureNames)
+        if self.pointNamesInverse is not None:
+            CopyObj.pointNamesInverse = self.getPointNames()
+            CopyObj.pointNames = copy.copy(self.pointNames)
+        else:
+            CopyObj.pointNamesInverse = None
+            CopyObj.pointNames = None
+
+        if self._source.featureNamesInverse is not None:
+            CopyObj.featureNamesInverse = self.getFeatureNames()
+            CopyObj.featureNames = copy.copy(self.featureNames)
+        else:
+            CopyObj.featureNamesInverse = None
+            CopyObj.featureNames = None
+        
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
