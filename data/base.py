@@ -2685,6 +2685,10 @@ class Base(object):
 
         if toLog:
             argDict = {}
+            if toExtract is not None:
+                # TODO extract code if toExtract is a function
+                # must convert to string in case toExtract is a function
+                argDict["toExtract"] = str(toExtract)
             if start is not None:
                 argDict["start"] = start
             if end is not None:
@@ -2736,7 +2740,9 @@ class Base(object):
         if toLog:
             argDict = {}
             if toExtract is not None:
-                argDict["toExtract"] = toExtract
+                # TODO extract code if toExtract is a function
+                # must convert to string in case toExtract is a function
+                argDict["toExtract"] = str(toExtract)
             if start is not None:
                 argDict["start"] = start
             if end is not None:
@@ -4204,8 +4210,6 @@ class Base(object):
                                 msg = "the target(%s) is a query string but there is an error" % target
                                 raise ArgumentException(msg)
                             nameOfFeatureOrPoint, valueOfFeatureOrPoint = targetList
-                            nameOfFeatureOrPoint = nameOfFeatureOrPoint.strip()
-                            valueOfFeatureOrPoint = valueOfFeatureOrPoint.strip()
 
                             #when axis=point, check if the feature exists or not
                             #when axis=feature, check if the point exists or not

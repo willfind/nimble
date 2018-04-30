@@ -118,7 +118,7 @@ class UmlLogger(object):
         """
         Log information about the loading of a data set
         """
-        #TODO only log if name or path is present?
+
         logType = "load"
         logInfo = {}
         logInfo["returnType"] = returnType
@@ -239,8 +239,8 @@ class UmlLogger(object):
             *Level 2: Outputs basic information about the run (timestamp, run number,
                      learner name, train and test object details) and parameter, metric,
                      and timer data if available
-            **Level 3: TODO (CrossValidation and Multiclass)
-            **Level 4: TODO
+            **Level 3: CrossValidation TODO expand to more detail?
+            **Level 4: TODO Multiclass
 
         leastRunsAgo:   The (int) value for the least number of runs since the most recent
                         run to include in the log. Defaults to 0
@@ -491,7 +491,10 @@ def _dictToKeywordString(dictionary):
 def _formatRunLine(*args):
     """ Formats equally spaced values for each column"""
     args = list(map(str, args))
-    lineLog = ("{:20s}" * len(args)).format(*args) #TODO works below python2.7?
+    lineLog = ""
+    for arg in args:
+        whitespace = 20 - len(arg)
+        lineLog += arg + " " * whitespace
     lineLog += "\n"
     return lineLog
 
