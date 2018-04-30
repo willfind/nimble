@@ -4963,9 +4963,13 @@ class Base(object):
             names[defaultName] = i
 
     def _addPointName(self, pointName):
+        if self.pointNamesInverse is None:
+            self._setAllDefault('point')
         self._addName(pointName, self.pointNames, self.pointNamesInverse, 'point')
 
     def _addFeatureName(self, featureName):
+        if self.featureNamesInverse is None:
+            self._setAllDefault('feature')
         self._addName(featureName, self.featureNames, self.featureNamesInverse, 'feature')
 
     def _addName(self, name, selfNames, selfNamesInv, axis):
