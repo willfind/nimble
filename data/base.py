@@ -135,7 +135,7 @@ class Base(object):
         # Set up point names
         self._nextDefaultValuePoint = 0
         if pointNames is None:
-            self._setAllDefault('point')
+            pass
         elif dataCopy:
             pass
         elif isinstance(pointNames, list):
@@ -155,7 +155,7 @@ class Base(object):
         # Set up feature names
         self._nextDefaultValueFeature = 0
         if featureNames is None:
-            self._setAllDefault('feature')
+            pass
         elif dataCopy:
             pass
         elif isinstance(featureNames, list):
@@ -351,7 +351,11 @@ class Base(object):
         to.
 
         """
-        return copy.copy(self.pointNamesInverse)
+        try:
+            return copy.copy(self.pointNamesInverse)
+        except AttributeError:
+            self._setAllDefault('point')
+            return copy.copy(self.pointNamesInverse)
 
     def getFeatureNames(self):
         """Returns a list containing all feature names, where their index
@@ -359,7 +363,12 @@ class Base(object):
         correspond to.
 
         """
-        return copy.copy(self.featureNamesInverse)
+        try:
+            return copy.copy(self.featureNamesInverse)
+        except AttributeError:
+            self._setAllDefault('feature')
+            return copy.copy(self.featureNamesInverse)
+
 
     def getPointName(self, index):
         return self.pointNamesInverse[index]
