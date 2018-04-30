@@ -22,16 +22,16 @@ try:
     import matplotlib
     # for .show() to work in interactive sessions
     # a backend different than Agg needs to be use
-    # The interactive session can choose by default e.g., 
+    # The interactive session can choose by default e.g.,
     # in jupyter-notebook inline is the default.
     if hasattr(main, '__file__'):
         # It must be agg  for non-interactive sessions
         # otherwise the combination of matplotlib and multiprocessing
         # produces a segfault.
         # Open matplotlib issue here: https://github.com/matplotlib/matplotlib/issues/8795
-        # It applies for both for python 2 and 3        
+        # It applies for both for python 2 and 3
         matplotlib.use('Agg')
-            
+
 except ImportError as e:
     mplError = e
 
@@ -2060,7 +2060,7 @@ class Base(object):
                 plt.show()
             else:
                 plt.savefig(outPath, format=outFormat)
-        
+
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
         p= self._matplotlibBackendHandleing(outPath, plotter, d=toPlot, xLim=(xMin, xMax))
@@ -2210,11 +2210,11 @@ class Base(object):
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
         p= self._matplotlibBackendHandleing(outPath, plotter, inX=xToPlot, inY=yToPlot,
-                                             xLim=(xMin, xMax), yLim=(yMin, yMax), 
+                                             xLim=(xMin, xMax), yLim=(yMin, yMax),
                                              sampleSizeForAverage=sampleSizeForAverage)
         return p
 
-        
+
     def nonZeroIterator(self):
         """
         Returns an iterator for all non-zero elements contained in this
@@ -3990,6 +3990,8 @@ class Base(object):
                                 msg = "the target(%s) is a query string but there is an error" % target
                                 raise ArgumentException(msg)
                             nameOfFeatureOrPoint, valueOfFeatureOrPoint = targetList
+                            nameOfFeatureOrPoint = nameOfFeatureOrPoint.strip()
+                            valueOfFeatureOrPoint = valueOfFeatureOrPoint.strip()
 
                             #when axis=point, check if the feature exists or not
                             #when axis=feature, check if the point exists or not
