@@ -4602,12 +4602,12 @@ class Base(object):
             if self.pointNames is None:
                 self._setAllDefault('point')
             if other.pointNames is None:
-                self._setAllDefault('point')
+                other._setAllDefault('point')
         elif axis == 'feature':
             if self.featureNames is None:
                 self._setAllDefault('feature')
             if other.featureNames is None:
-                self._setAllDefault('feature')
+                other._setAllDefault('feature')
         else:
             raise ArgumentException("invalid axis")
 
