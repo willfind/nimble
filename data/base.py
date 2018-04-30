@@ -2825,33 +2825,9 @@ class Base(object):
         if format in ['listofdict', 'dictoflist']:
             ret = self._copyAs_implementation('numpyarray')
         else:
-            def _copyNames(ret):
-                # I we would like to support Views with dataCopy
-                # if self.__class__.__name__.endswith("View"):
-                #     ret.pointNamesInverse = self.getPointNames()
-                #     ret.pointNames = self._source.pointNames
-                #     del ret.pointNames['firstPNonView']
-                #     del ret['lastPNonView'] 
-                #     ret.featureNamesInverse = self.getFeatureNames()
-                #     ret.featureNames = self._source.featureNames
-                #     ret._nextDefaultValueFeature = self._source._nextDefaultValueFeature
-                #     ret._nextDefaultValuePoint = self._source._nextDefaultValuePoint
-                # else:
-                ret.pointNames = copy.deepcopy(self.pointNames)
-                ret.pointNamesInverse = copy.deepcopy(self.pointNamesInverse)
-                ret.featureNames = copy.deepcopy(self.featureNames)
-                ret.featureNamesInverse = copy.deepcopy(self.featureNamesInverse)
-                ret._nextDefaultValueFeature = self._nextDefaultValueFeature
-                ret._nextDefaultValuePoint = self._nextDefaultValuePoint
-
-            if self.__class__.__name__.endswith("View"):
-                ret = self._copyAs_implementation(format, dataCopy=False)
-            else:
-                ret = self._copyAs_implementation(format)
-                if isinstance(ret, UML.data.Base):
-                    _copyNames(ret)
-            
-
+            ret = self._copyAs_implementation(format)
+            if isinstance(ret, UML.data.Base):
+                self._copyNames(ret)
 
         def _createListOfDict(data, featureNames):
             # creates a list of dictionaries mapping feature names to the point's values
@@ -2897,6 +2873,14 @@ class Base(object):
             ret = _createDictOfList(data=ret, featureNames=self.getFeatureNames(), nFeatures=self.features)
 
         return ret
+
+    def _copyNames (self, CopyObj):
+        CopyObj.pointNamesInverse = self.getPointNames()
+        CopyObj.featureNamesInverse = self.getFeatureNames()
+        CopyObj.pointNames = copy.copy(self.pointNames)
+        CopyObj.featureNames = copy.copy(self.featureNames)
+        CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
+        CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
 
     def copyPoints(self, points=None, start=None, end=None):
@@ -5023,7 +5007,6 @@ class Base(object):
         # setup the new featureName
         invNames[index] = newName
         names[newName] = index
-
         self._incrementDefaultIfNeeded(newName, axis)
 
     def _setNamesFromList(self, assignments, count, axis):
