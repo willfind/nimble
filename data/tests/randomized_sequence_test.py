@@ -75,7 +75,7 @@ def TODO_RandomSequenceOfMethods():
     # dense int trial
     sparcity = 0.05
     objectList = []
-    first = UML.createRandomData('List', points, features, sparcity, 'int')
+    first = UML.createRandomData('List', points, features, sparcity, elementType='int')
     objectList.append(first)
     objectList.append(first.copyAs(format='Matrix'))
     objectList.append(first.copyAs(format='Sparse'))
@@ -84,7 +84,7 @@ def TODO_RandomSequenceOfMethods():
     ## dense float trial
     sparcity = 0.05
     objectList = []
-    first = UML.createRandomData('List', points, features, sparcity, 'float')
+    first = UML.createRandomData('List', points, features, sparcity, elementType='float')
     objectList.append(first)
     objectList.append(first.copyAs(format='Matrix'))
     objectList.append(first.copyAs(format='Sparse'))
@@ -93,7 +93,7 @@ def TODO_RandomSequenceOfMethods():
     # sparse int trial
     sparcity = 0.9
     objectList = []
-    first = UML.createRandomData('List', points, features, sparcity, 'int')
+    first = UML.createRandomData('List', points, features, sparcity, elementType='int')
     objectList.append(first)
     objectList.append(first.copyAs(format='Matrix'))
     objectList.append(first.copyAs(format='Sparse'))
@@ -102,7 +102,7 @@ def TODO_RandomSequenceOfMethods():
     # sparse float trial
     sparcity = 0.9
     objectList = []
-    first = UML.createRandomData('List', points, features, sparcity, 'float')
+    first = UML.createRandomData('List', points, features, sparcity, elementType='float')
     objectList.append(first)
     objectList.append(first.copyAs(format='Matrix'))
     objectList.append(first.copyAs(format='Sparse'))
@@ -259,7 +259,7 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
     else:
         UML.randomness.startAlternateControl()
         UML.setRandomSeed(random.randint(0, 2**32 - 1))
-        ret = UML.createRandomData("Matrix", points, features, .5, 'int')
+        ret = UML.createRandomData("Matrix", points, features, .5, elementType='int')
         ret = ret.copyAs(dataType)
         UML.randomness.endAlternateControl()
     return ret
