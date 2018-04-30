@@ -4621,7 +4621,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
         
-        _defaultNamesGeneration_NamesSetOperations(self, other, 'point')
+        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
         return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)
 
@@ -4635,7 +4635,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName difference")
 
-        _defaultNamesGeneration_NamesSetOperations(self, other, 'feature')
+        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
         return six.viewkeys(self.featureNames) - six.viewkeys(other.featureNames)
 
@@ -4649,7 +4649,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName intersection")
 
-        _defaultNamesGeneration_NamesSetOperations(self, other, 'point')
+        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
         return six.viewkeys(self.pointNames) & six.viewkeys(other.pointNames)
 
@@ -4663,7 +4663,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName intersection")
 
-        _defaultNamesGeneration_NamesSetOperations(self, other, 'feature')
+        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
         return six.viewkeys(self.featureNames) & six.viewkeys(other.featureNames)
 
@@ -4678,7 +4678,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
 
-        _defaultNamesGeneration_NamesSetOperations(self, other, 'point')
+        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
         return six.viewkeys(self.pointNames) ^ six.viewkeys(other.pointNames)
 
@@ -4692,7 +4692,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName difference")
 
-        _defaultNamesGeneration_NamesSetOperations(self, other, 'feature')
+        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
         return six.viewkeys(self.featureNames) ^ six.viewkeys(other.featureNames)
 
@@ -4706,7 +4706,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointNames union")
 
-        _defaultNamesGeneration_NamesSetOperations(self, other, 'point')
+        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
         return six.viewkeys(self.pointNames) | six.viewkeys(other.pointNames)
 
@@ -4720,7 +4720,7 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName union")
 
-        _defaultNamesGeneration_NamesSetOperations(self, other, 'feature')
+        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
         return six.viewkeys(self.featureNames) | six.viewkeys(other.featureNames)
 
