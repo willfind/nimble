@@ -1748,10 +1748,8 @@ class Base(object):
 
         """
         if self.pointNamesInverse is not None:
-            print(self.points, len(self.getPointNames()))
             assert self.points == len(self.getPointNames())
         if self.featureNamesInverse is not None:
-            print(self.features, len(self.getFeatureNames()))
             assert self.features == len(self.getFeatureNames())
         
 
@@ -2297,13 +2295,11 @@ class Base(object):
             self.featureNames = self.pointNames
             self.pointNames = None
             self.pointNamesInverse = None
-            print('here: {}'.format(self.featureNames))
             self.setFeatureNames(self.featureNames)
         elif self.featureNamesInverse is not None:
             self.pointNames = self.featureNames
             self.featureNames = None
             self.featureNamesInverse = None
-            print('here: {}'.format(self.pointNames))
             self.setPointNames(self.pointNames)
         else:
             pass
