@@ -4589,7 +4589,7 @@ class Base(object):
 
         return lTable, lColWidths
 
-    def _defaultNamesGeneration_NamesSetOperations(self, other, axis)
+    def _defaultNamesGeneration_NamesSetOperations(self, other, axis):
         """
         TODO: Find a shorter descriptive name.
         TODO: Should we place this function in dataHelpers.py?
