@@ -4589,6 +4589,23 @@ class Base(object):
 
         return lTable, lColWidths
 
+    def _defaultNamesGeneration_NamesSetOperations(self, other, axis)
+        """
+        TODO: Find a shorter descriptive name.
+        TODO: Should we place this function in dataHelpers.py?
+        """
+        if axis == 'point':
+            if self.pointNames is None:
+                self._setAllDefault('point')
+            if other.pointNames is None:
+                self._setAllDefault('point')
+        elif axis == 'feature':
+            if self.featureNames is None:
+                self._setAllDefault('feature')
+            if other.featureNames is None:
+                self._setAllDefault('feature')
+        else:
+            raise ArgumentException("invalid axis")
 
     def _pointNameDifference(self, other):
         """
@@ -4599,6 +4616,8 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
+        
+        _defaultNamesGeneration_SetNamesOperations(self, other, 'point')
 
         return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)
 
@@ -4612,6 +4631,8 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName difference")
 
+        _defaultNamesGeneration_SetNamesOperations(self, other, 'feature')
+
         return six.viewkeys(self.featureNames) - six.viewkeys(other.featureNames)
 
     def _pointNameIntersection(self, other):
@@ -4624,6 +4645,8 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName intersection")
 
+        _defaultNamesGeneration_SetNamesOperations(self, other, 'point')
+
         return six.viewkeys(self.pointNames) & six.viewkeys(other.pointNames)
 
     def _featureNameIntersection(self, other):
@@ -4635,6 +4658,8 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName intersection")
+
+        _defaultNamesGeneration_SetNamesOperations(self, other, 'feature')
 
         return six.viewkeys(self.featureNames) & six.viewkeys(other.featureNames)
 
@@ -4649,6 +4674,8 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
 
+        _defaultNamesGeneration_SetNamesOperations(self, other, 'point')
+
         return six.viewkeys(self.pointNames) ^ six.viewkeys(other.pointNames)
 
     def _featureNameSymmetricDifference(self, other):
@@ -4660,6 +4687,8 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName difference")
+
+        _defaultNamesGeneration_SetNamesOperations(self, other, 'feature')
 
         return six.viewkeys(self.featureNames) ^ six.viewkeys(other.featureNames)
 
@@ -4673,6 +4702,8 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointNames union")
 
+        _defaultNamesGeneration_SetNamesOperations(self, other, 'point')
+
         return six.viewkeys(self.pointNames) | six.viewkeys(other.pointNames)
 
     def _featureNameUnion(self, other):
@@ -4684,6 +4715,8 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName union")
+
+        _defaultNamesGeneration_SetNamesOperations(self, other, 'feature')
 
         return six.viewkeys(self.featureNames) | six.viewkeys(other.featureNames)
 
