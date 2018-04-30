@@ -3316,6 +3316,11 @@ class Base(object):
             msg = "Can only flattenToOnePoint when there is one or more features. " \
                   "This object has 0 features."
             raise ImproperActionException(msg)
+        
+        if self.pointNamesInverse is None:
+            self._setAllDefault('point')
+        if self.featureNamesInverse is None:
+            self._setAllDefault('feature')
 
         self._flattenToOnePoint_implementation()
 
