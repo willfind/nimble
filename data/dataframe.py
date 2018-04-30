@@ -51,14 +51,14 @@ class DataFrame(Base):
         kwds['shape'] = self.data.shape
         kwds['dataCopy'] = dataCopy
         super(DataFrame, self).__init__(**kwds)
-        #it is very import to set up self.data's index and columns, other wise int index or column name will be set
-        #if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
+        # it is very import to set up self.data's index and columns, other wise int index or column name will be set
+        # if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
         if not dataCopy:
             self.data.index = self.getPointNames()
             self.data.columns = self.getFeatureNames()
         else:
-            self.data.index = copy.deepcopy(kwds['pointNames'])
-            self.data.columns = copy.deepcopy(kwds['featureNames'])
+            self.data.index = copy.copy(kwds['pointNames'])
+            self.data.columns = copy.copy(kwds['featureNames'])
 
 
     def _transpose_implementation(self):
