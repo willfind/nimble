@@ -284,6 +284,8 @@ class Base(object):
         """
         if self.points == 0:
             raise ArgumentException("Cannot set any point names; this object has no points ")
+        if self.pointNames is None:
+            self._setAllDefault('point')
         self._setName_implementation(oldIdentifier, newName, 'point', False)
 
     def setFeatureName(self, oldIdentifier, newName):
@@ -300,6 +302,8 @@ class Base(object):
         """
         if self.features == 0:
             raise ArgumentException("Cannot set any feature names; this object has no features ")
+        if self.featureNames is None:
+            self._setAllDefault('feature') 
         self._setName_implementation(oldIdentifier, newName, 'feature', False)
 
 
