@@ -533,9 +533,6 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
 
     """
     toLog, unsuspend = useLogCheck(useLog)
-    #suspend data logging during runTests
-    if UML.settings.get("logger", "_runTestsActive").lower() == 'true':
-        toLog = False
 
     # validation of pointNames and featureNames
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):

@@ -177,6 +177,7 @@ class LoggerControl(object):
     def __enter__(self):
         self._backupLoc = UML.settings.get('logger', 'location')
         self._backupName = UML.settings.get('logger', 'name')
+        self._backupEnabled = UML.settings.get('logger', 'enabledByDefault')
 
         # delete previous testing logs:
         location = os.path.join(UMLPath, 'logs-UML')
@@ -189,7 +190,7 @@ class LoggerControl(object):
         UML.settings.set('logger', 'location', location)
         UML.settings.set("logger", 'name', 'log-UML-unitTests')
         UML.settings.saveChanges("logger")
-        UML.settings.set("logger", "_runTestsActive", "True")
+        UML.settings.set("logger", "enabledByDefault", "False")
         UML.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
@@ -197,8 +198,8 @@ class LoggerControl(object):
         UML.settings.saveChanges("logger", 'location')
         UML.settings.set("logger", 'name', self._backupName)
         UML.settings.saveChanges("logger", 'name')
-        UML.settings.set("logger", "_runTestsActive", "False")
-        UML.settings.saveChanges("logger", "_runTestsActive")
+        UML.settings.set("logger", "enabledByDefault", "False")
+        UML.settings.saveChanges("logger", self._backupEnabled)
 
 
 if __name__ == '__main__':

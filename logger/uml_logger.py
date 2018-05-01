@@ -5,6 +5,7 @@ import time
 import six
 import inspect
 import numpy
+import re
 import sqlite3
 from datetime import datetime
 from dateutil.parser import parse
@@ -22,12 +23,11 @@ from UML.exceptions import ArgumentException
     to specify the level of detail in the log:
 
     Hierarchy
-    Level ?: Data creation and preprocessing logs
-    Level 1: Outputs basic information about the run (timestamp, run number,
-             learner name, train and test object details) and boolean values
-             for the availability of additional information
-    Level 2: Parameter, metric, and timer data if available
-    Level 3: Cross validation
+    Level 1: Data creation and preprocessing logs
+    Level 2: Outputs basic information about the run, including timestamp,
+             run number, learner name, train and test object details, parameter,
+             metric and timer data if available
+    Level 3: Cross validation and multiClassStrategy deepLogs
     Level 4: Epoch data
 """
 
@@ -56,6 +56,9 @@ class UmlLogger(object):
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
         self.connection = sqlite3.connect(self.logFileName)
+        def regexp(y, x, search=re.search):
+            return 1 if search(y, x) else 0
+        self.connection.create_function('regexp', 2, regexp)
         self.cursor = self.connection.cursor()
         statement = """
         CREATE TABLE IF NOT EXISTS logger (
@@ -99,6 +102,7 @@ class UmlLogger(object):
         statement = "INSERT INTO logger (timestamp,runNumber,logType,logInfo) VALUES (?,?,?,?)"
         self.cursor.execute(statement, (timestamp, runNumber, logType, logInfo))
         self.connection.commit()
+
 
     def extractFromLog(self, query, values=None):
         if not self.isAvailable:
@@ -222,12 +226,14 @@ class UmlLogger(object):
 
         self.insertIntoLog(logType, logInfo)
 
+    #TODO multiClassStrategy
+
     ###################
     ### LOG OUTPUT ###
     ##################
 
     def showLog(self, levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
-                saveToFileName=None, maximumEntries=100, searchForText=None):
+                maximumEntries=100, searchForText=None, saveToFileName=None, append=False):
         """
         showLog parses the active logfile based on the arguments passed and prints a
         human readable interpretation of the log file.
@@ -271,18 +277,18 @@ class UmlLogger(object):
         query, values = _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
                                                endDate, maximumEntries, searchForText)
         runLogs = self.extractFromLog(query, values)
-        if maximumEntries is not None:
-            # sorted descending in sqlite to get most recent entries
-            # need to reverse to return to chronological order
-            runLogs = runLogs[::-1]
 
         logOutput = _showLogOutputString(runLogs, levelOfDetail)
 
         if saveToFileName is not None:
             # TODO append if already exists?
             filePath = os.path.join(self.logLocation, saveToFileName)
-            with open(filePath, mode='w') as f:
-                f.write(logOutput)
+            if append:
+                with open(filePath, mode='a') as f:
+                    f.write(logOutput)
+            else:
+                with open(filePath, mode='w') as f:
+                    f.write(logOutput)
         else:
             print(logOutput)
 
@@ -307,7 +313,7 @@ def useLogCheck(useLog):
 
 def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
                            endDate, maximumEntries, searchForText):
-    selectQuery = "SELECT timestamp, runNumber, logType, logInfo FROM logger"
+    selectQuery = "SELECT timestamp, runNumber, logType, logInfo FROM (SELECT * FROM logger"
     whereQueryList = []
     includedValues = []
     if leastRunsAgo is not None:
@@ -325,9 +331,9 @@ def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
         whereQueryList.append("timestamp <= ?")
         includedValues.append(parse(endDate))
     if searchForText is not None:
-        # add % to search for text anywhere within string
-        searchForText = "%" + searchForText + "%"
-        whereQueryList.append("(logType LIKE ? or logInfo LIKE ?)")
+        # convert to regex and get pattern
+        searchForText = re.compile(searchForText).pattern
+        whereQueryList.append("(logType REGEXP ? or logInfo REGEXP ?)")
         includedValues.append(searchForText)
         includedValues.append(searchForText)
 
@@ -341,7 +347,7 @@ def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
         fullQuery += " ORDER BY entry DESC "
         fullQuery += "LIMIT ?"
         includedValues.append(maximumEntries)
-    fullQuery += ";"
+    fullQuery += ") ORDER BY entry ASC;"
     includedValues = tuple(includedValues)
 
     return fullQuery, includedValues
@@ -551,13 +557,6 @@ def initLoggerAndLogConfig():
         loggingEnabled = 'True'
         UML.settings.set("logger", "enabledByDefault", loggingEnabled)
         UML.settings.saveChanges("logger", "enabledByDefault")
-
-    try:
-        runTests = UML.settings.get("logger", "_runTestsActive")
-    except:
-        runTests = 'False'
-        UML.settings.set("logger", "_runTestsActive", runTests)
-        UML.settings.saveChanges("logger", "_runTestsActive")
 
     try:
         deepCV = UML.settings.get("logger", 'enableCrossValidationDeepLogging')
