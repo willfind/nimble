@@ -198,8 +198,8 @@ class LoggerControl(object):
         UML.settings.saveChanges("logger", 'location')
         UML.settings.set("logger", 'name', self._backupName)
         UML.settings.saveChanges("logger", 'name')
-        UML.settings.set("logger", "enabledByDefault", "False")
-        UML.settings.saveChanges("logger", self._backupEnabled)
+        UML.settings.set("logger", "enabledByDefault", self._backupEnabled)
+        UML.settings.saveChanges("logger", "enabledByDefault")
 
 
 if __name__ == '__main__':

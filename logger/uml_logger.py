@@ -285,6 +285,7 @@ class UmlLogger(object):
             filePath = os.path.join(self.logLocation, saveToFileName)
             if append:
                 with open(filePath, mode='a') as f:
+                    f.write("\n")
                     f.write(logOutput)
             else:
                 with open(filePath, mode='w') as f:
