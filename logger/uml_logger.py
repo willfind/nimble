@@ -14,21 +14,20 @@ from textwrap import wrap
 
 import UML
 from UML.exceptions import ArgumentException
-# TODO
+
 """
     Handle logging of creating and testing learners.
     Currently stores data in a SQLite database file and generates
     a human readable log by querying the table within the database.
-    There is a hierarchical structure to the log, allowing the user
-    to specify the level of detail in the log:
+    There is a hierarchical structure to the log, this limits the to
+    entries with only the specified level of detail.
 
     Hierarchy
     Level 1: Data creation and preprocessing logs
     Level 2: Outputs basic information about the run, including timestamp,
              run number, learner name, train and test object details, parameter,
              metric and timer data if available
-    Level 3: Cross validation and multiClassStrategy deepLogs
-    Level 4: Epoch data
+    Level 3: Cross validation
 """
 
 class UmlLogger(object):
@@ -221,7 +220,7 @@ class UmlLogger(object):
         """
         Log the results of cross validation
         """
-        logType = "cv"
+        logType = "crossVal"
         logInfo = {}
         logInfo["learner"] = learnerName
         logInfo["learnerArgs"] = learnerArgs
@@ -231,7 +230,6 @@ class UmlLogger(object):
 
         self.insertIntoLog(logType, logInfo)
 
-    #TODO multiClassStrategy
 
     ###################
     ### LOG OUTPUT ###
@@ -333,8 +331,11 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
         runNumber = log[1]
         logType = log[2]
         logString = log[3]
-        logInfo = literal_eval(logString)
-
+        try:
+            logInfo = literal_eval(logString)
+        except SyntaxError:
+            # logString is a string (cannot eval)
+            logInfo = logString
         if runNumber != previousLogRunNumber:
             fullLog += "\n"
             logString = "RUN {0}".format(runNumber)
@@ -342,74 +343,32 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
             fullLog += "\n"
             fullLog += "." * 80
             previousLogRunNumber = runNumber
-
-        if logType == 'load':
-            fullLog += _buildLoadLogString(timestamp, logInfo)
-            fullLog += '.' * 80
-        elif logType == 'data':
-            fullLog +=  _buildDataLogString(timestamp, logInfo)
-            fullLog += '.' * 80
-        elif logType == 'prep':
-            if levelOfDetail > 1:
-                fullLog +=  _buildPrepLogString(timestamp, logInfo)
+        try:
+            if logType == 'load':
+                fullLog += _buildLoadLogString(timestamp, logInfo)
                 fullLog += '.' * 80
-        elif logType == 'run':
-            if levelOfDetail > 1:
-                fullLog += _buildRunLogString(timestamp, logInfo)
+            elif logType == 'data':
+                fullLog +=  _buildDataLogString(timestamp, logInfo)
                 fullLog += '.' * 80
-        elif logType == 'cv':
-            if levelOfDetail > 2:
-                fullLog += _buildCVLogString(timestamp, logInfo)
+            elif logType == 'prep':
+                if levelOfDetail > 1:
+                    fullLog +=  _buildPrepLogString(timestamp, logInfo)
+                    fullLog += '.' * 80
+            elif logType == 'run':
+                if levelOfDetail > 1:
+                    fullLog += _buildRunLogString(timestamp, logInfo)
+                    fullLog += '.' * 80
+            elif logType == 'crossVal':
+                if levelOfDetail > 2:
+                    fullLog += _buildCVLogString(timestamp, logInfo)
+                    fullLog += '.' * 80
+            else:
+                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
                 fullLog += '.' * 80
-        else:
-            #TODO
-            fullLog += "\n"
-            fullLog += logType
-            fullLog += "\n"
-            fullLog += str(logInfo)
-            fullLog += "\n"
+        except Exception:
+            # handles any user log entries with same logType
+            fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
             fullLog += '.' * 80
-    return fullLog
-
-def _buildRunLogString(timestamp, log):
-    """ """
-    # header data
-    timer = log.get("timer", "")
-    if timer:
-        timer = "Completed in {0:.3f} seconds".format(log['timer'])
-    fullLog = _logHeader(timer, timestamp)
-    fullLog += '\nUML.{0}("{1}")\n'.format(log['function'], log["learner"])
-    # train and test data
-    fullLog += _formatRunLine("Data", "# points", "# features")
-    if log.get("trainData", False):
-        fullLog += _formatRunLine("trainX", log["trainDataPoints"], log["trainDataFeatures"])
-    if log.get("trainLabels", False):
-        fullLog += _formatRunLine("trainY", log["trainLabelsPoints"], log["trainLabelsFeatures"])
-    if log.get("testData", False):
-        fullLog += _formatRunLine("testX", log["testDataPoints"], log["testDataFeatures"])
-    if log.get("testLabels", False):
-        fullLog += _formatRunLine("testY", log["testLabelsPoints"], log["testLabelsFeatures"])
-    # parameter data
-    if log.get("arguments", False):
-        fullLog += "\n"
-        argString = "Arguments: "
-        argString += _dictToKeywordString(log["arguments"])
-        for string in wrap(argString, 80, subsequent_indent=" "*19):
-            fullLog += string
-            fullLog += "\n"
-    # metric data
-    if log.get("metrics", False):
-        fullLog += "\n"
-        fullLog += "Metrics: "
-        fullLog += _dictToKeywordString(log["metrics"])
-        fullLog += "\n"
-    # extraInfo
-    if log.get("extraInfo", False):
-        fullLog += "\n"
-        fullLog += "Extra Info: "
-        fullLog += _dictToKeywordString(log["extraInfo"])
-        fullLog += "\n"
-
     return fullLog
 
 def _buildLoadLogString(timestamp, log):
@@ -438,14 +397,65 @@ def _buildPrepLogString(timestamp, log):
 
 def _buildDataLogString(timestamp, log):
     fullLog = _logHeader("Summary Report", timestamp)
+    fullLog += "\n"
     fullLog += log["summary"]
+    return fullLog
+
+def _buildRunLogString(timestamp, log):
+    """ """
+    # header data
+    timer = log.get("timer", "")
+    if timer:
+        timer = "Completed in {0:.3f} seconds".format(log['timer'])
+    fullLog = _logHeader(timer, timestamp)
+    fullLog += '\n{0}("{1}")\n'.format(log['function'], log["learner"])
+    # train and test data
+    fullLog += _formatRunLine("Data", "# points", "# features")
+    if log.get("trainData", False):
+        if log["trainData"].startswith("OBJECT_#"):
+            fullLog += _formatRunLine("trainX", log["trainDataPoints"], log["trainDataFeatures"])
+        else:
+            fullLog += _formatRunLine(log["trainData"], log["trainDataPoints"], log["trainDataFeatures"])
+    if log.get("trainLabels", False):
+        if log["trainLabels"].startswith("OBJECT_#"):
+            fullLog += _formatRunLine("trainY", log["trainLabelsPoints"], log["trainLabelsFeatures"])
+        else:
+            fullLog += _formatRunLine(log["trainLabels"], log["trainLabelsPoints"], log["trainLabelsFeatures"])
+    if log.get("testData", False):
+        if log["testData"].startswith("OBJECT_#"):
+            fullLog += _formatRunLine("testX", log["testDataPoints"], log["testDataFeatures"])
+        else:
+            fullLog += _formatRunLine(log["testData"], log["testDataPoints"], log["testDataFeatures"])
+    if log.get("testLabels", False):
+        if log["testLabels"].startswith("OBJECT_#"):
+            fullLog += _formatRunLine("testY", log["testLabelsPoints"], log["testLabelsFeatures"])
+        else:
+            fullLog += _formatRunLine(log["testLabels"], log["testLabelsPoints"], log["testLabelsFeatures"])
+    fullLog += "\n"
+    # parameter data
+    if log.get("arguments", False):
+        argString = "Arguments: "
+        argString += _dictToKeywordString(log["arguments"])
+        for string in wrap(argString, 80, subsequent_indent=" "*19):
+            fullLog += string
+            fullLog += "\n"
+    # metric data
+    if log.get("metrics", False):
+        fullLog += "Metrics: "
+        fullLog += _dictToKeywordString(log["metrics"])
+        fullLog += "\n"
+    # extraInfo
+    if log.get("extraInfo", False):
+        fullLog += "Extra Info: "
+        fullLog += _dictToKeywordString(log["extraInfo"])
+        fullLog += "\n"
+
     return fullLog
 
 def _buildCVLogString(timestamp, log):
     crossVal = "Cross Validating for {0}".format(log["learner"])
     fullLog = _logHeader(crossVal, timestamp)
     fullLog += "\n"
-    # TODO when is learnerArgs returning an empty list?
     if isinstance(log["learnerArgs"], dict):
         fullLog += "Variable Arguments: "
         fullLog += _dictToKeywordString(log["learnerArgs"])
@@ -458,6 +468,24 @@ def _buildCVLogString(timestamp, log):
         argString = _dictToKeywordString(arguments)
         fullLog += "{0:<20.3f}{1:20s}".format(result, argString)
         fullLog += "\n"
+    return fullLog
+
+def _buildDefaultLogString(timestamp, logType, log):
+    fullLog = _logHeader(logType, timestamp)
+    if isinstance(log, six.string_types):
+        for string in wrap(log, 80):
+            fullLog += string
+            fullLog += "\n"
+    elif isinstance(log, list):
+        listString = _formatRunLine(log)
+        for string in wrap(listString, 80):
+            fullLog += string
+            fullLog += "\n"
+    else:
+        dictString = _dictToKeywordString(log)
+        for string in wrap(dictString, 80):
+            fullLog += string
+            fullLog += "\n"
     return fullLog
 
 def _dictToKeywordString(dictionary):

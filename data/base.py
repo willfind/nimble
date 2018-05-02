@@ -410,12 +410,12 @@ class Base(object):
 
         removed = self.extractFeatures(hasType)
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             dropNames = [drop.__name__ for drop in typeToDrop]
             dropString = str(dropNames)
             argDict["typeToDrop"] = dropString
-            UML.logger.active.logPrep("dropFeaturesContainingType", dataObject, argDict)
+            UML.logger.active.logPrep("dropFeaturesContainingType", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -475,10 +475,10 @@ class Base(object):
         self.appendFeatures(toConvert)
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             argDict["featureToReplace"] = featureToReplace
-            UML.logger.active.logPrep("replaceFeatureWithBinaryFeatures", dataObject, argDict)
+            UML.logger.active.logPrep("replaceFeatureWithBinaryFeatures", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -531,10 +531,10 @@ class Base(object):
         self.appendFeatures(converted)
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             argDict["featureToConvert"] = featureToConvert
-            UML.logger.active.logPrep("transformFeatureToIntegers", dataObject, argDict)
+            UML.logger.active.logPrep("transformFeatureToIntegers", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -564,10 +564,10 @@ class Base(object):
         ret = self.extractPoints(experiment)
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             argDict["extractionProbability"] = extractionProbability
-            UML.logger.active.logPrep("extractPointsByCoinToss", dataObject, argDict)
+            UML.logger.active.logPrep("extractPointsByCoinToss", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -621,12 +621,12 @@ class Base(object):
         ret._relPath = self.relativePath
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             argDict['function'] = extractFunctionString(function)
             if points is not None:
                 argDict['points'] = points
-            UML.logger.active.logPrep("calculateForEachPoint", dataObject, argDict)
+            UML.logger.active.logPrep("calculateForEachPoint", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -681,12 +681,12 @@ class Base(object):
         ret._relPath = self.relativePath
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             argDict['function'] = extractFunctionString(function)
             if features is not None:
                 argDict['features'] = features
-            UML.logger.active.logPrep("calculateForEachFeature", dataObject, argDict)
+            UML.logger.active.logPrep("calculateForEachFeature", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -770,11 +770,11 @@ class Base(object):
         ret._relPath = self.relativePath
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             argDict["mapper"] = extractFunctionString(mapper)
             argDict["reducer"] = extractFunctionString(reducer)
-            UML.logger.active.logPrep("mapReducePoints", dataObject, argDict)
+            UML.logger.active.logPrep("mapReducePoints", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -822,12 +822,12 @@ class Base(object):
                 res[k] = tmp
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             argDict['by'] = by
             if points is not None:
                 argDict['countUniqueValueOnly'] = countUniqueValueOnly
-            UML.logger.active.logPrep("groupByFeature", dataObject, argDict)
+            UML.logger.active.logPrep("groupByFeature", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -973,9 +973,9 @@ class Base(object):
         ret._relPath = self.relativePath
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
-            argDict['function'] = function.__name__
+            argDict['function'] = extractFunctionString(function)
             if points is not None:
                 argDict['points'] = points
             if features is not None:
@@ -986,7 +986,7 @@ class Base(object):
                 argDict['skipNoneReturnValues'] = skipNoneReturnValues
             if outputType is not None:
                 argDict['outputType'] = outputType
-            UML.logger.active.logPrep("calculateForEachElement", dataObject, argDict)
+            UML.logger.active.logPrep("calculateForEachElement", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -1063,11 +1063,11 @@ class Base(object):
         self.sortPoints(sortHelper=permuter)
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             if indices is not None:
                 argDict["indices"] = indices
-            UML.logger.active.logPrep("shufflePoints", dataObject, argDict)
+            UML.logger.active.logPrep("shufflePoints", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -1098,11 +1098,11 @@ class Base(object):
         self.sortFeatures(sortHelper=permuter)
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             if indices is not None:
                 argDict["indices"] = indices
-            UML.logger.active.logPrep("shuffleFeatures", dataObject, argDict)
+            UML.logger.active.logPrep("shuffleFeatures", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -1176,14 +1176,14 @@ class Base(object):
         testY.name = self.name + " testY"
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             argDict['testFraction'] = testFraction
             if labels is not None:
                 argDict['labels'] = labels
             if not randomOrder:
                 argDict['randomOrder'] = randomOrder
-            UML.logger.active.logPrep("trainAndTestSets", dataObject, argDict)
+            UML.logger.active.logPrep("trainAndTestSets", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -1463,7 +1463,7 @@ class Base(object):
                     applyResultTo /= divide
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             if axis == 'point':
                 name = "normalizePoints"
             else:
@@ -1476,7 +1476,7 @@ class Base(object):
             if applyResultTo is not None:
                 argDict["applyResultTo"] = applyResultTo
 
-            UML.logger.active.logPrep(name, dataObject, argDict)
+            UML.logger.active.logPrep(name, self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -1509,8 +1509,8 @@ class Base(object):
         toLog, unsuspend = useLogCheck(useLog)
         ret = produceAggregateReport(self, displayDigits=displayDigits)
         if toLog:
-            dataObject = self.getTypeString()
-            UML.logger.active.logData(dataObject, ret)
+            ""
+            UML.logger.active.logData(self.getTypeString(), ret)
         if unsuspend:
             UML.logger.active.suspended = False
         return ret
@@ -2628,13 +2628,13 @@ class Base(object):
         self.validate()
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             if sortBy is not None:
                 argDict["sortBy"] = sortBy
             if sortHelper is not None:
                 argDict["sortHelper"] = sortHelper
-            UML.logger.active.logPrep("sortPoints", dataObject, argDict)
+            UML.logger.active.logPrep("sortPoints", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -2665,13 +2665,13 @@ class Base(object):
         self.validate()
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             if sortBy is not None:
                 argDict["sortBy"] = sortBy
             if sortHelper is not None:
                 argDict["sortHelper"] = sortHelper
-            UML.logger.active.logPrep("sortPoints", dataObject, argDict)
+            UML.logger.active.logPrep("sortPoints", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -2707,7 +2707,7 @@ class Base(object):
         self.validate()
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             if toExtract is not None:
                 argDict["toExtract"] = extractFunctionString(toExtract)
@@ -2719,7 +2719,7 @@ class Base(object):
                 argDict["number"] = number
             if randomize:
                 argDict["randomize"] = randomize
-            UML.logger.active.logPrep("extractPoints", dataObject, argDict)
+            UML.logger.active.logPrep("extractPoints", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
         return ret
@@ -2760,7 +2760,7 @@ class Base(object):
         self.validate()
 
         if toLog:
-            dataObject = self.getTypeString()
+            ""
             argDict = {}
             if toExtract is not None:
                 argDict["toExtract"] = extractFunctionString(toExtract)
@@ -2772,7 +2772,7 @@ class Base(object):
                 argDict["number"] = number
             if randomize:
                 argDict["randomize"] = randomize
-            UML.logger.active.logPrep("extractFeatures", dataObject, argDict)
+            UML.logger.active.logPrep("extractFeatures", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
         return ret

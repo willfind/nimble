@@ -278,12 +278,18 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, us
     format as the arguments parameter.
 
     """
-    logState = useLogCheck(useLog)
+    toLog, unsuspend = useLogCheck(useLog)
 
     (packName, trueLearnerName) = _unpackLearnerName(learnerName)
 
+    if toLog:
+        timer = Stopwatch()
+        timer.start("normalizeData")
+    else:
+        timer = None
     tl = UML.train(learnerName, trainX, trainY, arguments=arguments, useLog=False, **kwarguments)
     normalizedTrain = tl.apply(trainX, arguments=arguments, useLog=False, **kwarguments)
+
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copyAs(trainX.getTypeString())
 
@@ -301,9 +307,12 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, us
         testX.name = testX.name + " " + trueLearnerName
 
 
-    if logState:
+    if toLog:
+        timer.stop("normalizeData")
         merged = _mergeArguments(arguments, kwarguments)
-        UML.logger.active.logRun("normalizeData", trainX, trainY, testX, None, learnerName, merged, None, None)
+        UML.logger.active.logRun("normalizeData", trainX, trainY, testX, None, learnerName, merged, None, timer)
+    if unsuspend:
+        UML.logger.active.suspended = False
 
 
 def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
@@ -1219,6 +1228,8 @@ def log(logType, logInfo):
              for unrecognized types
     logInfo: A python string, list or dictionary containing any information to be logged
     """
+    if not isinstance(logInfo, (six.string_types, list, dict)):
+        raise AttributeError("logInfo must be a python string, list, or dictionary type")
     UML.logger.active.insertIntoLog(logType, logInfo)
 
 
@@ -1231,11 +1242,11 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
         ARGUMENTS:
         levelOfDetail:  The (int) value for the level of detail from 1, the least detail,
                         to 3 (most detail). Default is 2
-               Level 1: Data loading, data preparation and preprocessing, TODO other logs types
-               Level 2: Outputs basic information about each run. Includes timestamp, run number,
+              Level 1:  Data loading, data preparation and preprocessing, custom user logs
+              Level 2:  Outputs basic information about each run. Includes timestamp, run number,
                         learner name, train and test object details, parameter, metric, and
                         timer data if available
-               Level 3: CrossValidation
+              Level 3:  Cross Validation data
 
         leastRunsAgo:   The integer value for the least number of runs since the most recent
                         run to include in the log. Default is 0
