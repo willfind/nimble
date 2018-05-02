@@ -1015,12 +1015,6 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     else:
         timer = None
 
-    # deepLog = False
-    # if toLog and multiClassStrategy != 'default':
-    #     deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-    #     deepLog = True if deepLog.lower() == 'true' else False
-
-
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
                                scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
                                doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
@@ -1209,11 +1203,69 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
     from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
 
     """
-    #TODO logging
     performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY, performanceFunction, \
                                arguments, output, scoreMode, multiClassStrategy, useLog)
     return performance
 
+
+def log(logType, logInfo):
+    """
+    log will enter a log entry into the active logger's database files. The log entry will
+    include a timestamp and a run number in addition to the logType and logInfo
+
+    ARGUMENTS:
+    logType: A string of the type of log entered. "load", "prep", "run", and "crossVal" types
+             have builtin processing for logInfo. A default processing of logInfo will be used
+             for unrecognized types
+    logInfo: A python string, list or dictionary containing any information to be logged
+    """
+    UML.logger.active.insertIntoLog(logType, logInfo)
+
+
+def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
+            maximumEntries=100, searchForText=None, saveToFileName=None, append=False):
+        """
+        showLog parses the active logfile based on the arguments passed and prints a
+        human readable interpretation of the log file.
+
+        ARGUMENTS:
+        levelOfDetail:  The (int) value for the level of detail from 1, the least detail,
+                        to 3 (most detail). Default is 2
+               Level 1: Data loading, data preparation and preprocessing, TODO other logs types
+               Level 2: Outputs basic information about each run. Includes timestamp, run number,
+                        learner name, train and test object details, parameter, metric, and
+                        timer data if available
+               Level 3: CrossValidation
+
+        leastRunsAgo:   The integer value for the least number of runs since the most recent
+                        run to include in the log. Default is 0
+
+        mostRunsAgo:    The integer value for the least number of runs since the most recent
+                        run to include in the log. Default is 2
+
+        startDate:      A string or datetime.datetime object of the date to begin adding runs to the log.
+                        Acceptable formats:
+                          "YYYY-MM-DD"
+                          "YYYY-MM-DD HH:MM"
+                          "YYYY-MM-DD HH:MM:SS"
+
+        endDate:        A string or datetime.datetime object of the date to stop adding runs to the log.
+                        See startDate for formatting.
+
+        maximumEntries: Maximum number of entries to allow before stopping the log
+                        Default is 100. None will allow all entries provided from the query
+        searchForText:  string or regular expression to search for in each log entry.
+                        Default is None
+
+        saveToFileName: The name of a file where the human readable log will be saved.
+                        Default is None, showLog will print to standard out
+
+        append:         Append logs to the file in saveToFileName instead of overwriting file.
+                        Default is False
+        """
+        UML.logger.active._showLogImplementation(
+                    levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
+                    maximumEntries, searchForText, saveToFileName, append)
 
 def coo_matrixTodense(origTodense):
     """

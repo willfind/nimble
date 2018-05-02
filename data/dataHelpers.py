@@ -9,6 +9,8 @@ from __future__ import absolute_import
 import copy
 import math
 import string
+import inspect
+import re
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -390,3 +392,38 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
         # modify the width associated with the colHold
         if removalWidths is not None:
             removalWidths[removeIndex] = len(colHold)
+
+
+def extractFunctionString(function):
+    """Extracts function name or lambda function if passed a function,
+       Otherwise returns a string"""
+    try:
+        functionName = function.__name__
+        if functionName != "<lambda>":
+            return functionName
+        else:
+            return lambdaFunctionString(function)
+    except AttributeError:
+        return str(function)
+
+def lambdaFunctionString(function):
+    """Returns a string of a lambda function"""
+    sourceLine = inspect.getsourcelines(function)[0][0]
+    line = re.findall(r'lambda.*',sourceLine)[0]
+    lambdaString = ""
+    afterColon = False
+    openParenthesis = 1
+    for letter in line:
+        if letter == "(":
+            openParenthesis += 1
+        elif letter == ")":
+            openParenthesis -= 1
+        elif letter == ":":
+            afterColon = True
+        elif letter == "," and afterColon:
+            return lambdaString
+        if openParenthesis == 0:
+            return lambdaString
+        else:
+            lambdaString += letter
+    return lambdaString

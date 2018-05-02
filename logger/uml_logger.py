@@ -90,9 +90,10 @@ class UmlLogger(object):
 
 
     def insertIntoLog(self, logType, logInfo):
-        """ Inserts timestamp, runNumber, logType in their respective columns of the
-            sqlite table. A string of the python dictionary containing any unstructured
-            information for the log entry is stored in the final column, logInfo.
+        """
+        Inserts timestamp, runNumber, logType in their respective columns of the
+        sqlite table. A string of the python dictionary containing any unstructured
+        information for the log entry is stored in the final column, logInfo.
         """
         if not self.isAvailable:
             self.setup(self.logFileName)
@@ -133,21 +134,24 @@ class UmlLogger(object):
 
         self.insertIntoLog(logType, logInfo)
 
-    def logData(self, summary):
+    def logData(self, dataObject, summary):
         """
         Send pertinent information about a data object that has been loaded/created to the log file
         """
         logType = "data"
-        logInfo = {"summary": summary}
+        logInfo = {}
+        logInfo["object"] = dataObject
+        logInfo["summary"] = summary
         self.insertIntoLog(logType, logInfo)
 
-    def logPrep(self, umlFunction, arguments):
+    def logPrep(self, umlFunction, dataObject, arguments):
         """
         Log information about a data preparation step performed
         """
         logType = "prep"
         logInfo = {}
         logInfo["function"] = umlFunction
+        logInfo["object"] = dataObject
         logInfo["arguments"] = arguments
 
         self.insertIntoLog(logType, logInfo)
@@ -164,6 +168,7 @@ class UmlLogger(object):
         if isinstance(learnerFunction, (str, six.text_type)):
             functionCall = learnerFunction
         else:
+            #TODO test this
             #we get the source code of the function as a list of strings and glue them together
             funcLines = inspect.getsourcelines(learnerFunction)
             funcString = ""
@@ -232,43 +237,10 @@ class UmlLogger(object):
     ### LOG OUTPUT ###
     ##################
 
-    def showLog(self, levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
-                maximumEntries=100, searchForText=None, saveToFileName=None, append=False):
+    def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
+                maximumEntries, searchForText, saveToFileName, append):
         """
-        showLog parses the active logfile based on the arguments passed and prints a
-        human readable interpretation of the log file.
-
-        ARGUMENTS:
-        levelOfDetail:  The (int) value for the level of detail from 1, the least detail,
-                        to 4 (most detail)
-            **Level 1: Data loading and preprocessing
-            *Level 2: Outputs basic information about the run (timestamp, run number,
-                     learner name, train and test object details) and parameter, metric,
-                     and timer data if available
-            **Level 3: CrossValidation TODO expand to more detail?
-            **Level 4: TODO Multiclass
-
-        leastRunsAgo:   The (int) value for the least number of runs since the most recent
-                        run to include in the log. Defaults to 0
-
-        mostRunsAgo:    The (int) value for the least number of runs since the most recent
-                        run to include in the log. Defaults to 2
-
-        startDate:      A string or datetime object of the date to start adding runs to the log.
-                        Acceptable formats:
-                          "YYYY-MM-DD"
-                          "YYYY-MM-DD HH:MM"
-                          "YYYY-MM-DD HH:MM:SS"
-
-        endDate:        A string of the date to stop adding runs to the log.
-                        See startDate for formatting.
-
-        saveToFileName: The name of the file where the human readable log will be saved. File will be
-                        Default is None, showLog will print to standard out
-
-        maximumEntries: Maximum number of entries to allow before stopping the log
-
-        searchForText:  string (or regular expression TODO) to search for in the log runs
+        implementation of UML.showLog
         """
 
         if not self.isAvailable:
@@ -281,7 +253,6 @@ class UmlLogger(object):
         logOutput = _showLogOutputString(runLogs, levelOfDetail)
 
         if saveToFileName is not None:
-            # TODO append if already exists?
             filePath = os.path.join(self.logLocation, saveToFileName)
             if append:
                 with open(filePath, mode='a') as f:
@@ -391,12 +362,13 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
                 fullLog += _buildCVLogString(timestamp, logInfo)
                 fullLog += '.' * 80
         else:
-            if levelOfDetail > 3:
-                pass
-                # TODO
-                # fullLog += "\n"
-                # fullLog += _buildMultiClassLogString(timestamp, logInfo)
-                # fullLog += '.' * 80
+            #TODO
+            fullLog += "\n"
+            fullLog += logType
+            fullLog += "\n"
+            fullLog += str(logInfo)
+            fullLog += "\n"
+            fullLog += '.' * 80
     return fullLog
 
 def _buildRunLogString(timestamp, log):
@@ -454,7 +426,7 @@ def _buildLoadLogString(timestamp, log):
     return fullLog
 
 def _buildPrepLogString(timestamp, log):
-    function = "UML.{0}".format(log["function"])
+    function = "{0}.{1}".format(log["object"], log["function"])
     fullLog = _logHeader(function, timestamp)
     if log['arguments'] != {}:
         argString = "Arguments: "
@@ -566,10 +538,4 @@ def initLoggerAndLogConfig():
         UML.settings.set("logger", 'enableCrossValidationDeepLogging', deepCV)
         UML.settings.saveChanges("logger", 'enableCrossValidationDeepLogging')
 
-    try:
-        deepMulti = UML.settings.get("logger", 'enableMultiClassStrategyDeepLogging')
-    except:
-        deepMulti = 'False'
-        UML.settings.set("logger", 'enableMultiClassStrategyDeepLogging', deepMulti)
-        UML.settings.saveChanges("logger", 'enableMultiClassStrategyDeepLogging')
     UML.logger.active = UmlLogger(location, name)

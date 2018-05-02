@@ -3180,21 +3180,6 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
     labelPairs = generateAllPairs(labelSet)
 
-    #TODO log check to log partialResults
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
-    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-    deepLog = True if deepLog.lower() == 'true' else False
-    toLog = useLog and deepLog
-
-    #if we are logging this run, we need to start the timer
-    if toLog:
-        if timer is None:
-            timer = Stopwatch()
-
-        timer.start('train')
-
     # For each pair of class labels: remove all points with one of those labels,
     # train a classifier on those points, get predictions based on that model,
     # and put the points back into the data object
@@ -3216,9 +3201,6 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
         pairData.appendFeatures(pairTrueLabels)
         trainX.appendPoints(pairData)
         predictionFeatureID += 1
-
-    if toLog:
-        timer.stop('train')
 
     #set up the return data based on which format has been requested
     if scoreMode.lower() == 'label'.lower():
@@ -3315,21 +3297,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     labelVector.transpose()
     labelSet = list(set(labelVector.copyAs(format="python list")[0]))
 
-    #TODO log check to log oneLabelResults
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
-    deepLog = UML.settings.get('logger', 'enableMultiClassStrategyDeepLogging')
-    deepLog = True if deepLog.lower() == 'true' else False
-    toLog = useLog and deepLog
-
-    #if we are logging this run, we need to start the timer
-    if toLog:
-        if timer is None:
-            timer = Stopwatch()
-
-        timer.start('train')
-
     # For each class label in the set of labels:  convert the true
     # labels in trainY into boolean labels (1 if the point
     # has 'label', 0 otherwise.)  Train a classifier with the processed
@@ -3354,9 +3321,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
             #as it's added to results object, rename each column with its corresponding class label
             oneLabelResults.setFeatureName(0, str(label))
             rawPredictions.appendFeatures(oneLabelResults)
-
-    if toLog:
-        timer.stop('train')
 
     if scoreMode.lower() == 'label'.lower():
         winningPredictionIndices = rawPredictions.calculateForEachPoint(extractWinningPredictionIndex).copyAs(

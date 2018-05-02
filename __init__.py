@@ -59,6 +59,9 @@ from .uml import crossValidate
 from .uml import crossValidateReturnAll
 from .uml import crossValidateReturnBest
 
+from .uml import log
+from .uml import showLog
+
 from .uml import learnerType
 
 # now finish out with any other configuration that needs to be done
@@ -88,7 +91,7 @@ __all__ = ['createData', 'createRandomData', 'crossValidate',
            'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
            'identity', 'learnerDefaultValues', 'learnerParameters',
            'learnerType', 'listDataFunctions', 'listLearners',
-           'listUMLFunctions', 'normalizeData', 'ones',
+           'listUMLFunctions', 'log', 'normalizeData', 'ones',
            'registerCustomLearner', 'registerCustomLearnerAsDefault',
-           'setRandomSeed', 'settings', 'train', 'trainAndApply',
+           'setRandomSeed', 'settings', 'showLog', 'train', 'trainAndApply',
            'trainAndTest', 'trainAndTestOnTrainingData', 'UMLPath', 'zeros']

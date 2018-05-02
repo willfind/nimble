@@ -20,7 +20,6 @@ learnerName = 'custom.KNNClassifier'
 
 # helper function which checks log staus
 def runAndCheck(toCall, useLog):
-
     # generate data
     cData = generateClassificationData(2, 10, 2)
     ((trainX, trainY), (testX, testY)) = cData
@@ -302,43 +301,3 @@ def test_Deep_trainAndTest():
         UML.settings.set('logger', 'enableCrossValidationDeepLogging', val)
 
     backendDeep(wrapped, setter)
-
-#def test_Deep_trainAndTestOnTrainingData_CVError():
-# TODO
-
-def test_Deep_TrainAndApplyOvO():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.trainAndApply(learnerName, trainX, trainY, testX, multiClassStrategy='OneVsOne', useLog=useLog)
-
-    def setter(val):
-        UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
-
-    backendDeep(wrapped, setter)
-
-
-def test_Deep_trainAndApplyOVA():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.trainAndApply(learnerName, trainX, trainY, testX, multiClassStrategy='OneVsAll', useLog=useLog)
-
-    def setter(val):
-        UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
-
-    backendDeep(wrapped, setter)
-
-#def test_Deep_TrainAndTestOvO():
-#	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, multiClassStrategy='OneVsOne', useLog=useLog)
-
-#	def setter(val):
-#		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
-
-#	backendDeep(wrapped, setter)
-
-#def test_Deep_trainAndTestOVA():
-#	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return UML.trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, multiClassStrategy='OneVsAll', useLog=useLog)
-
-#	def setter(val):
-#		UML.settings.set('logger', 'enableMultiClassStrategyDeepLogging', val)
-
-#	backendDeep(wrapped, setter)
