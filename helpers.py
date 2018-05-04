@@ -380,7 +380,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     if (elementType is None) and (\
         (isinstance(rawData, list) and returnType == 'List' and len(rawData) != 0 and (\
             #this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
-            #otherwise, we need t covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
+            #otherwise, we need to covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
             isAllowedSingleElement(rawData[0]) or isinstance(rawData[0], list) or hasattr(rawData[0], 'setLimit'))) or \
         (pd and isinstance(rawData, pd.DataFrame) and returnType == 'DataFrame') or \
         (scipy and scipy.sparse.isspmatrix(rawData) and returnType == 'Sparse')\
