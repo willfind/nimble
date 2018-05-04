@@ -64,6 +64,28 @@ class DataFrame(Base):
                 self.data.columns = copy.copy(kwds['featureNames'])
 
 
+    def getPointNames(self):
+        """Returns a list containing all point names, where their index
+        in the list is the same as the index of the point they correspond
+        to.
+
+        """
+        if self.pointNamesInverse is None:
+            self._setAllDefault('point')
+            self.data.index = self.pointNamesInverse
+        return copy.copy(self.pointNamesInverse)
+
+    def getFeatureNames(self):
+        """Returns a list containing all feature names, where their index
+        in the list is the same as the index of the feature they
+        correspond to.
+
+        """
+        if self.featureNamesInverse is None:
+            self._setAllDefault('feature')
+            self.data.columns = self.featureNamesInverse
+        return copy.copy(self.featureNamesInverse)
+
     def _transpose_implementation(self):
         """
         Function to transpose the data, ie invert the feature and point indices of the data.
