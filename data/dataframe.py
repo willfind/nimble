@@ -53,12 +53,15 @@ class DataFrame(Base):
         super(DataFrame, self).__init__(**kwds)
         # it is very import to set up self.data's index and columns, other wise int index or column name will be set
         # if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
+
         if not dataCopy:
             self.data.index = self.getPointNames()
             self.data.columns = self.getFeatureNames()
         else:
-            self.data.index = copy.copy(kwds['pointNames'])
-            self.data.columns = copy.copy(kwds['featureNames'])
+            if kwds['pointNames'] is not None:
+                self.data.index = copy.copy(kwds['pointNames'])
+            if kwds['featureNames'] is not None:
+                self.data.columns = copy.copy(kwds['featureNames'])
 
 
     def _transpose_implementation(self):
