@@ -331,7 +331,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             func = extractNamesFromPdDataFrame
         elif pd and isinstance(rawData, pd.Series):
             func = extractNamesFromPdSeries
-       
+
         rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames, featureNames)
 
         # tempPointNames and tempFeatures may either be None or explicit names.
@@ -378,10 +378,10 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     #4. if type(data) dosen't match returnType, then convert data to numpy matrix or coo_matrix.
     #if elementType is not None, then convert each element in data to elementType.
     if (elementType is None) and (\
-        (isinstance(rawData, list) and returnType == 'List' and \
-            #this list can only be [], [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
-            #otherwise, we need to covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
-             (len(rawData) == 0 or isAllowedSingleElement(rawData[0]) or isinstance(rawData[0], list) or hasattr(rawData[0], 'setLimit'))) or \
+        (isinstance(rawData, list) and returnType == 'List' and len(rawData) != 0 and (\
+            #this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
+            #otherwise, we need t covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
+            isAllowedSingleElement(rawData[0]) or isinstance(rawData[0], list) or hasattr(rawData[0], 'setLimit'))) or \
         (pd and isinstance(rawData, pd.DataFrame) and returnType == 'DataFrame') or \
         (scipy and scipy.sparse.isspmatrix(rawData) and returnType == 'Sparse')\
         ):
@@ -794,7 +794,7 @@ def extractNamesFromScipySparse(rawData, pointNames, featureNames):
 
     """
 #    try:
-#        ret = extractNamesFromScipyConversion(rawData, pointNames, featureNames)       
+#        ret = extractNamesFromScipyConversion(rawData, pointNames, featureNames)
 #    except (NotImplementedError, TypeError):
     ret = extractNamesFromCooDirect(rawData, pointNames, featureNames)
 
@@ -843,7 +843,7 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
                 secondRow[data.col[i]] = val
 
         pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow, secondRow)
-    
+
     fnamesID = 0 if fnamesID is True else None
     pnamesID = 0 if pnamesID is True else None
 
@@ -946,7 +946,7 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     retPNames = None
     if tempPointNames != {}:
         retPNames = processTempNames(tempPointNames, 'point', 0)
-    retFNames = None 
+    retFNames = None
     if tempFeatureNames != {}:
         retFNames = processTempNames(tempFeatureNames, 'feature', 1)
 
