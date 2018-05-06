@@ -3402,7 +3402,7 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
         if not isinstance(performanceFunction, list):
             performanceFunction = [performanceFunction]
             results = [results]
-        UML.logger.active.logRun("trainAndTestOneVsAny", trainX, trainY, testX, testY, learnerName,
+        UML.logger.active.logRun(f.__name__, trainX, trainY, testX, testY, learnerName,
                                  merged, metrics, timer)
     if unsuspend:
         UML.logger.active.suspended = False

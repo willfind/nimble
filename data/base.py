@@ -409,8 +409,8 @@ class Base(object):
             return False
 
         removed = self.extractFeatures(hasType)
+
         if toLog:
-            ""
             argDict = {}
             dropNames = [drop.__name__ for drop in typeToDrop]
             dropString = str(dropNames)
@@ -475,7 +475,6 @@ class Base(object):
         self.appendFeatures(toConvert)
 
         if toLog:
-            ""
             argDict = {}
             argDict["featureToReplace"] = featureToReplace
             UML.logger.active.logPrep("replaceFeatureWithBinaryFeatures", self.getTypeString(), argDict)
@@ -531,7 +530,6 @@ class Base(object):
         self.appendFeatures(converted)
 
         if toLog:
-            ""
             argDict = {}
             argDict["featureToConvert"] = featureToConvert
             UML.logger.active.logPrep("transformFeatureToIntegers", self.getTypeString(), argDict)
@@ -564,7 +562,6 @@ class Base(object):
         ret = self.extractPoints(experiment)
 
         if toLog:
-            ""
             argDict = {}
             argDict["extractionProbability"] = extractionProbability
             UML.logger.active.logPrep("extractPointsByCoinToss", self.getTypeString(), argDict)
@@ -621,7 +618,6 @@ class Base(object):
         ret._relPath = self.relativePath
 
         if toLog:
-            ""
             argDict = {}
             argDict['function'] = extractFunctionString(function)
             if points is not None:
@@ -681,7 +677,6 @@ class Base(object):
         ret._relPath = self.relativePath
 
         if toLog:
-            ""
             argDict = {}
             argDict['function'] = extractFunctionString(function)
             if features is not None:
@@ -770,7 +765,6 @@ class Base(object):
         ret._relPath = self.relativePath
 
         if toLog:
-            ""
             argDict = {}
             argDict["mapper"] = extractFunctionString(mapper)
             argDict["reducer"] = extractFunctionString(reducer)
@@ -822,10 +816,9 @@ class Base(object):
                 res[k] = tmp
 
         if toLog:
-            ""
             argDict = {}
             argDict['by'] = by
-            if points is not None:
+            if countUniqueValueOnly:
                 argDict['countUniqueValueOnly'] = countUniqueValueOnly
             UML.logger.active.logPrep("groupByFeature", self.getTypeString(), argDict)
         if unsuspend:
@@ -973,7 +966,6 @@ class Base(object):
         ret._relPath = self.relativePath
 
         if toLog:
-            ""
             argDict = {}
             argDict['function'] = extractFunctionString(function)
             if points is not None:
@@ -1063,7 +1055,6 @@ class Base(object):
         self.sortPoints(sortHelper=permuter)
 
         if toLog:
-            ""
             argDict = {}
             if indices is not None:
                 argDict["indices"] = indices
@@ -1098,7 +1089,6 @@ class Base(object):
         self.sortFeatures(sortHelper=permuter)
 
         if toLog:
-            ""
             argDict = {}
             if indices is not None:
                 argDict["indices"] = indices
@@ -1160,6 +1150,16 @@ class Base(object):
         if labels is None:
             toSplit.name = self.name + " trainX"
             testX.name = self.name + " testX"
+            if toLog:
+                argDict = {}
+                argDict['testFraction'] = testFraction
+                if labels is not None:
+                    argDict['labels'] = labels
+                if not randomOrder:
+                    argDict['randomOrder'] = randomOrder
+                UML.logger.active.logPrep("trainAndTestSets", self.getTypeString(), argDict)
+            if unsuspend:
+                UML.logger.active.suspended = False
             return toSplit, testX
 
         # safety for empty objects
@@ -1176,7 +1176,6 @@ class Base(object):
         testY.name = self.name + " testY"
 
         if toLog:
-            ""
             argDict = {}
             argDict['testFraction'] = testFraction
             if labels is not None:
@@ -1463,7 +1462,6 @@ class Base(object):
                     applyResultTo /= divide
 
         if toLog:
-            ""
             if axis == 'point':
                 name = "normalizePoints"
             else:
@@ -1491,13 +1489,19 @@ class Base(object):
     ########################################
 
 
-    def featureReport(self, maxFeaturesToCover=50, displayDigits=2):
+    def featureReport(self, maxFeaturesToCover=50, displayDigits=2, useLog=None):
         """
         Produce a report, in a string formatted as a table, containing summary and statistical
         information about each feature in the data set, up to 50 features.  If there are more
         than 50 features, only information about 50 of those features will be reported.
         """
-        return produceFeaturewiseReport(self, maxFeaturesToCover=maxFeaturesToCover, displayDigits=displayDigits)
+        toLog, unsuspend = useLogCheck(useLog)
+        ret = produceFeaturewiseReport(self, maxFeaturesToCover=maxFeaturesToCover, displayDigits=displayDigits)
+        if toLog:
+            UML.logger.active.logData("feature", ret)
+        if unsuspend:
+            UML.logger.active.suspended = False
+        return ret
 
     def summaryReport(self, displayDigits=2, useLog=None):
         """
@@ -1509,8 +1513,7 @@ class Base(object):
         toLog, unsuspend = useLogCheck(useLog)
         ret = produceAggregateReport(self, displayDigits=displayDigits)
         if toLog:
-            ""
-            UML.logger.active.logData(self.getTypeString(), ret)
+            UML.logger.active.logData("summary", ret)
         if unsuspend:
             UML.logger.active.suspended = False
         return ret
@@ -2628,7 +2631,6 @@ class Base(object):
         self.validate()
 
         if toLog:
-            ""
             argDict = {}
             if sortBy is not None:
                 argDict["sortBy"] = sortBy
@@ -2665,13 +2667,12 @@ class Base(object):
         self.validate()
 
         if toLog:
-            ""
             argDict = {}
             if sortBy is not None:
                 argDict["sortBy"] = sortBy
             if sortHelper is not None:
                 argDict["sortHelper"] = sortHelper
-            UML.logger.active.logPrep("sortPoints", self.getTypeString(), argDict)
+            UML.logger.active.logPrep("sortFeatures", self.getTypeString(), argDict)
         if unsuspend:
             UML.logger.active.suspended = False
 
@@ -2707,7 +2708,6 @@ class Base(object):
         self.validate()
 
         if toLog:
-            ""
             argDict = {}
             if toExtract is not None:
                 argDict["toExtract"] = extractFunctionString(toExtract)
@@ -2760,7 +2760,6 @@ class Base(object):
         self.validate()
 
         if toLog:
-            ""
             argDict = {}
             if toExtract is not None:
                 argDict["toExtract"] = extractFunctionString(toExtract)

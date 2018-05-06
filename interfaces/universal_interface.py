@@ -138,7 +138,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         """
 
         """
-        toLog, unsuspend = useLogCheck(useLog)
 
         if multiClassStrategy != 'default':
             #if we need to do multiclassification by ourselves
@@ -155,13 +154,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 labelVector = trainY.copy()
                 labelVector.transpose()
                 labelSet = list(set(labelVector.copyAs(format="python list")[0]))
-
-                #if we are logging this run, we need to start the timer
-                if toLog:
-                    if timer is None:
-                        timer = Stopwatch()
-
-                    timer.start('trainOVA')
 
                 # For each class label in the set of labels:  convert the true
                 # labels in trainY into boolean labels (1 if the point
@@ -193,13 +185,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 labelSet = list(set(labelVector.copyAs(format="python list")[0]))
                 labelPairs = generateAllPairs(labelSet)
 
-                #if we are logging this run, we need to start the timer
-                if toLog:
-                    if timer is None:
-                        timer = Stopwatch()
-
-                    timer.start('trainOVO')
-
                 # For each pair of class labels: remove all points with one of those labels,
                 # train a classifier on those points, get predictions based on that model,
                 # and put the points back into the data object
@@ -212,10 +197,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                                                        timer=timer))
                     pairData.appendFeatures(pairTrueLabels)
                     trainX.appendPoints(pairData)
-                if toLog:
-                    timer.stop('trainOVO')
-                if unsuspend:
-                    UML.logger.active.suspended = False
+
                 return self.TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
         return self._train(learnerName, trainX, trainY, arguments, timer)
@@ -739,7 +721,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             # need to do this here so we
             mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
 
-            pred = self.apply(testX, mergedArguments, output, scoreMode, useLog=False)
+            pred = self.apply(testX, mergedArguments, output, scoreMode, useLog=useLog)
             performance = computeMetrics(testY, None, pred, performanceFunction)
 
             metrics = {}
@@ -784,9 +766,10 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             on.
 
             """
+            toLog, unsuspend = useLogCheck(useLog)
+
             UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
-            toLog, unsuspend = useLogCheck(useLog)
             timer = None
             if toLog:
                 timer = Stopwatch()
@@ -951,8 +934,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             self.arguments = trainedLearners[0].arguments
 
         @captureOutput
-        def apply(self, testX, arguments={}, output='match', scoreMode='label',
-                useLog=None, **kwarguments):
+        def apply(self, testX, arguments={}, output='match', scoreMode='label', **kwarguments):
             """
 
             """
@@ -961,7 +943,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             #1 VS All
             if self.method == 'OneVsAll':
                 for trainedLearner in self.trainedLearnersList:
-                    oneLabelResults = trainedLearner.apply(testX, arguments, output, 'label', useLog)
+                    oneLabelResults = trainedLearner.apply(testX, arguments, output, 'label', useLog=False)
                     label = trainedLearner.label
                     #put all results into one Base container, of the same type as trainX
                     if rawPredictions is None:
@@ -1020,7 +1002,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 predictionFeatureID = 0
                 for trainedLearner in self.trainedLearnersList:
                     #train classifier on that data; apply it to the test set
-                    partialResults = trainedLearner.apply(testX, arguments, output, 'label', useLog)
+                    partialResults = trainedLearner.apply(testX, arguments, output, 'label', useLog=False)
                     #put predictions into table of predictions
                     if rawPredictions is None:
                         rawPredictions = partialResults.copyAs(format="List")

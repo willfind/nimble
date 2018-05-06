@@ -894,6 +894,8 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
     learner.
 
     """
+    toLog, unsuspend = useLogCheck(useLog)
+
     (package, trueLearnerName) = _unpackLearnerName(learnerName)
     if not doneValidData:
         _validData(trainX, trainY, None, None, [False, False])
@@ -906,8 +908,6 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
     if not done2dOutputFlagCheck:
         _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
     merged = _mergeArguments(arguments, kwarguments)
-
-    toLog, unsuspend = useLogCheck(useLog)
 
     if toLog:
         timer = Stopwatch()
@@ -1009,14 +1009,14 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     learner.
 
     """
+    toLog, unsuspend = useLogCheck(useLog)
+
     _validData(trainX, trainY, testX, None, [False, False])
     _validScoreMode(scoreMode)
     _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
 
     if testX is None:
         testX = trainX
-
-    toLog, unsuspend = useLogCheck(useLog)
 
     if toLog:
         timer = Stopwatch()
@@ -1045,7 +1045,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
 
 def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
-                 arguments={}, output=None, scoreMode='label', multiClassStrategy='default', useLog=None, **kwarguments):
+                 arguments={}, output=None, scoreMode='label', multiClassStrategy='default',
+                 useLog=None, _onTraining=False, **kwarguments):
     """
     For each permutation of the merge of 'arguments' and 'kwarguments' (more below),
     trainAndTest uses cross validation to generate a performance score for the algorithm,
@@ -1102,15 +1103,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
 
     """
-
+    toLog, unsuspend = useLogCheck(useLog)
+    
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)#this line is for
     # UML.tests.test_train_apply_test_frontends.test_trainAndTest_scoreMode_disallowed_multioutput
     # and UML.tests.test_train_apply_test_frontends.test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput
 
     trainY = copyLabels(trainX, trainY)
     testY = copyLabels(testX, testY)
-
-    toLog, unsuspend = useLogCheck(useLog)
 
     #if we are logging this run, we need to start the timer
     if toLog:
@@ -1134,8 +1134,12 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
         extraInfo = {"bestParams": trainedLearner.arguments}
     if toLog:
         timer.stop('trainAndTest')
+        if _onTraining:
+            name = "trainAndTestOnTrainingData"
+        else:
+            name = "trainAndTest"
         funcString = learnerName
-        UML.logger.active.logRun("trainAndTest", trainX, trainY, testX, testY, funcString,
+        UML.logger.active.logRun(name, trainX, trainY, testX, testY, funcString,
                                  merged, metrics, timer, extraInfo=extraInfo)
     if unsuspend:
         UML.logger.active.suspended = False
@@ -1213,7 +1217,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
 
     """
     performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY, performanceFunction, \
-                               arguments, output, scoreMode, multiClassStrategy, useLog)
+                               arguments, output, scoreMode, multiClassStrategy, useLog, _onTraining=True)
     return performance
 
 

@@ -29,21 +29,19 @@ def runAndCheck(toCall, useLog):
     name = UML.settings.get('logger', 'name')
 
     path = os.path.join(loc, name + '.mr')
+    UML.logger.active = UML.logger.UmlLogger(loc, name)
     logger = UML.logger.active
-
     # count number of starting log entries
-    logger = UML.logger.UmlLogger(loc, name)
     entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
     startCount = entryCount[0][0]
 
     # call the
     toCall(trainX, trainY, testX, testY, useLog)
-
     # make sure it has the expected effect on the count
     entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
     endCount = entryCount[0][0]
     lastLogs = logger.extractFromLog("SELECT * FROM logger ORDER BY entry LIMIT 2")
-    #print(lastLogs)
+
     print(startCount, endCount)
     return (startCount, endCount)
 

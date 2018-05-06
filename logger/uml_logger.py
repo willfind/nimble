@@ -99,7 +99,7 @@ class UmlLogger(object):
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
         runNumber = self.runNumber
         logInfo = str(logInfo)
-        statement = "INSERT INTO logger (timestamp,runNumber,logType,logInfo) VALUES (?,?,?,?)"
+        statement = "INSERT INTO logger (timestamp,runNumber,logType,logInfo) VALUES (?,?,?,?);"
         self.cursor.execute(statement, (timestamp, runNumber, logType, logInfo))
         self.connection.commit()
 
@@ -133,14 +133,14 @@ class UmlLogger(object):
 
         self.insertIntoLog(logType, logInfo)
 
-    def logData(self, dataObject, summary):
+    def logData(self, reportType, reportInfo):
         """
         Send pertinent information about a data object that has been loaded/created to the log file
         """
         logType = "data"
         logInfo = {}
-        logInfo["object"] = dataObject
-        logInfo["summary"] = summary
+        logInfo["reportType"] = reportType
+        logInfo["reportInfo"] = reportInfo
         self.insertIntoLog(logType, logInfo)
 
     def logPrep(self, umlFunction, dataObject, arguments):
@@ -177,7 +177,7 @@ class UmlLogger(object):
                 funcLines = "N/A"
             functionCall = funcString
         logInfo["learner"] = functionCall
-        # check for integers or strings passed for Y values. TODO Should be done somewhere else?
+        # check for integers or strings passed for Y values, convert if necessary
         if isinstance(trainLabels, (six.string_types, int, numpy.int64)):
             trainData = trainData.copy()
             trainLabels = trainData.extractFeatures(trainLabels)
@@ -333,7 +333,7 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
         logString = log[3]
         try:
             logInfo = literal_eval(logString)
-        except SyntaxError:
+        except (ValueError, SyntaxError):
             # logString is a string (cannot eval)
             logInfo = logString
         if runNumber != previousLogRunNumber:
@@ -344,29 +344,26 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
             fullLog += "." * 80
             previousLogRunNumber = runNumber
         try:
-            if logType == 'load':
+            if logType not in ["load", "data", "prep", "run", "crossVal"]:
+                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
+                fullLog += '.' * 80
+            elif logType == 'load':
                 fullLog += _buildLoadLogString(timestamp, logInfo)
                 fullLog += '.' * 80
             elif logType == 'data':
                 fullLog +=  _buildDataLogString(timestamp, logInfo)
                 fullLog += '.' * 80
-            elif logType == 'prep':
-                if levelOfDetail > 1:
-                    fullLog +=  _buildPrepLogString(timestamp, logInfo)
-                    fullLog += '.' * 80
-            elif logType == 'run':
-                if levelOfDetail > 1:
-                    fullLog += _buildRunLogString(timestamp, logInfo)
-                    fullLog += '.' * 80
-            elif logType == 'crossVal':
-                if levelOfDetail > 2:
-                    fullLog += _buildCVLogString(timestamp, logInfo)
-                    fullLog += '.' * 80
-            else:
-                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
+            elif logType == 'prep' and levelOfDetail > 1:
+                fullLog +=  _buildPrepLogString(timestamp, logInfo)
                 fullLog += '.' * 80
-        except Exception:
-            # handles any user log entries with same logType
+            elif logType == 'run' and levelOfDetail > 1:
+                fullLog += _buildRunLogString(timestamp, logInfo)
+                fullLog += '.' * 80
+            elif logType == 'crossVal' and levelOfDetail > 2:
+                fullLog += _buildCVLogString(timestamp, logInfo)
+                fullLog += '.' * 80
+        except (TypeError, KeyError): #TODO test
+            # handles any user logs with a UML logType that cannot be processed by UML logger
             fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
             fullLog += '.' * 80
     return fullLog
@@ -396,9 +393,10 @@ def _buildPrepLogString(timestamp, log):
     return fullLog
 
 def _buildDataLogString(timestamp, log):
-    fullLog = _logHeader("Summary Report", timestamp)
+    reportName = log["reportType"].capitalize() + " Report"
+    fullLog = _logHeader(reportName, timestamp)
     fullLog += "\n"
-    fullLog += log["summary"]
+    fullLog += log["reportInfo"]
     return fullLog
 
 def _buildRunLogString(timestamp, log):
@@ -508,7 +506,7 @@ def _formatRunLine(*args):
 def _logHeader(left, right):
     """ Formats the top line of each log entry"""
     lineLog = "\n"
-    lineLog += "{0:40}{1:>40}\n".format(left, right)
+    lineLog += "{0:60}{1:>20}\n".format(left, right)
     return lineLog
 
 #######################

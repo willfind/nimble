@@ -60,7 +60,9 @@ if __name__ == "__main__":
     error = UML.trainAndTest("custom.RidgeRegression", trainX, trainY, testX, testY, RMSE, lamb=1)
     print("rootMeanSquareError of predictions with lamb=1: " + str(error))
 
-    UML.log("randomString", "I am logging a                                    reasonably long                        string to make sure that everything in the code that I wrote is working correctly so lets see how this goes ok bye")
-    UML.log("randomList",[1, "g", 9, 888, "hello", "bye"]*5)
-    UML.log("randomDict", {"this": "is", "a":1, "random":"dictionary", "with":"many", 5:10000000000, 6:334040404040, "different":"keys"})
-    UML.showLog(mostRunsAgo=6, saveToFileName="test.txt")
+    # UML.log("randomString", "I am logging a                                    reasonably long                        string to make sure that everything in the code that I wrote is working correctly so lets see how this goes ok bye")
+    # UML.log("randomList",[1, "g", 9, 888, "hello", "bye"]*5)
+    # UML.log("randomDict", {"this": "is", "a":1, "random":"dictionary", "with":"many", 5:10000000000, 6:334040404040, "different":"keys"})
+    # trainX[:,0].featureReport()
+    # trainX.summaryReport()
+    UML.showLog(levelOfDetail=3, mostRunsAgo=6, saveToFileName="test.txt")
