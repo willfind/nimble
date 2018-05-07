@@ -24,7 +24,7 @@ from UML.interfaces.interface_helpers import ovaNotOvOFormatted
 from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
-from UML.logger.uml_logger import useLogCheck
+from UML.logger.uml_logger import logSuspension
 from UML.helpers import _mergeArguments, generateAllPairs, countWins, computeMetrics
 import six
 from six.moves import range
@@ -698,6 +698,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 setattr(self, methodName, wrapped)
 
         @captureOutput
+        @logSuspension
         def test(
                 self, testX, testY, performanceFunction, arguments={},
                 output='match', scoreMode='label', useLog=None, **kwarguments):
@@ -708,10 +709,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             setup for training was the same.
 
             """
-            toLog, unsuspend = useLogCheck(useLog)
-
             timer = None
-            if toLog:
+            if useLog:
                 timer = Stopwatch()
                 timer.start("test")
 
@@ -728,7 +727,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             for key, value in zip([performanceFunction], [performance]):
                 metrics[key.__name__] = value
 
-            if toLog:
+            if useLog:
                 timer.stop('test')
                 fullName = self.interface.getCanonicalName() + self.learnerName
                 # Signature:
@@ -740,8 +739,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     testLabels=testY, learnerFunction=fullName,
                     arguments=mergedArguments, metrics=metrics, timer=timer,
                     extraInfo=None, numFolds=None)
-            if unsuspend:
-                UML.logger.active.suspended = False
 
             return performance
 
@@ -756,6 +753,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             return ret
 
         @captureOutput
+        @logSuspension
         def apply(
                 self, testX, arguments={}, output='match', scoreMode='label',
                 useLog=None, **kwarguments):
@@ -766,12 +764,11 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             on.
 
             """
-            toLog, unsuspend = useLogCheck(useLog)
 
             UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
 
             timer = None
-            if toLog:
+            if useLog:
                 timer = Stopwatch()
                 timer.start("apply")
 
@@ -812,7 +809,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 ret = labels
 
-            if toLog:
+            if useLog:
                 timer.stop('apply')
                 fullName = self.interface.getCanonicalName() + self.learnerName
                 # Signature:
@@ -823,8 +820,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     trainData=None, trainLabels=None, testData=testX,
                     testLabels=None, learnerFunction=fullName, arguments=mergedArguments,
                     metrics=None, timer=timer, extraInfo=None, numFolds=None)
-            if unsuspend:
-                UML.logger.active.suspended = False
 
             return ret
 

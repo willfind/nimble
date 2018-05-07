@@ -193,16 +193,16 @@ def backendDeep(toCall, setter):
     # the deep logging flag is continget on global and local
     # control, so we confirm that in those instances where
     # logging should be disable, it is still disabled
-    (startT1, endT1) = runAndCheck(toCall, useLog=True)
-    (startT2, endT2) = runAndCheck(toCall, useLog=None)
-    (startT3, endT3) = runAndCheck(toCall, useLog=False)
+    (startT1, endT1) = runAndCheck(toCall, useLog=True) # 2 more
+    (startT2, endT2) = runAndCheck(toCall, useLog=None) # 2 more
+    (startT3, endT3) = runAndCheck(toCall, useLog=False) # 0 more
     assert startT3 == endT3
 
     setter('False')
 
-    (startF1, endF1) = runAndCheck(toCall, useLog=True)
-    (startF2, endF2) = runAndCheck(toCall, useLog=None)
-    (startF3, endF3) = runAndCheck(toCall, useLog=False)
+    (startF1, endF1) = runAndCheck(toCall, useLog=True) # 1 more
+    (startF2, endF2) = runAndCheck(toCall, useLog=None) # 1 more
+    (startF3, endF3) = runAndCheck(toCall, useLog=False) # 0 more
     assert startF3 == endF3
 
     # next we compare the differences between the calls when

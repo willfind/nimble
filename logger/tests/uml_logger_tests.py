@@ -5,29 +5,31 @@ import shutil
 import time
 import ast
 from nose import with_setup
+from nose.tools import raises
 
 import UML
 from UML.helpers import generateClassificationData
 from UML.calculate import rootMeanSquareError as RMSE
+from UML.exceptions import ArgumentException
 
 """
 Unit tests for functionality of the UMLLogger
 
 """
 def setup_func():
-    location = UML.settings.get("logger", "location")
-    name = UML.settings.get("logger", "name")
-    pathToFile = os.path.join(location, name + ".mr")
-
-    if os.path.exists(location):
-        shutil.rmtree(location)
-
+    UML.logger.active.cleanup()
     UML.settings.set("logger", "enabledByDefault", "True")
-    UML.logger.uml_logger.initLoggerAndLogConfig()
 
 def teardown_func():
     UML.logger.active.cleanup()
     UML.settings.set("logger", "enabledByDefault", "False")
+
+def removeLogFile():
+    location = UML.settings.get("logger", "location")
+    name = UML.settings.get("logger", "name")
+    pathToFile = os.path.join(location, name + ".mr")
+    if os.path.exists(pathToFile):
+        os.remove(pathToFile)
 
 def singleValueQueries(*queries):
     out = []
@@ -43,6 +45,9 @@ def testLogDirectoryAndFileSetup():
     location = UML.settings.get("logger", "location")
     name = UML.settings.get("logger", "name")
     pathToFile = os.path.join(location, name + ".mr")
+    if os.path.exists(location):
+        shutil.rmtree(location)
+
     X = UML.createData("Matrix", [])
 
     assert os.path.exists(location)
@@ -54,12 +59,13 @@ def testLogDirectoryAndFileSetup():
 
 @with_setup(setup_func, teardown_func)
 def testTopLevelInputFunction():
+    removeLogFile()
     """assert the UML.log function correctly inserts data into the log"""
-    logType = "insertAndExtract"
-    logInfo = {"test": "testInsertAndExtract"}
+    logType = "input"
+    logInfo = {"test": "testInput"}
     UML.log(logType, logInfo)
     # select all columns from the last entry into the logger
-    query = "SELECT * FROM logger ORDER BY entry DESC LIMIT 1"
+    query = "SELECT * FROM logger"
     lastLog = UML.logger.active.extractFromLog(query)
     lastLog = lastLog[0]
 
@@ -70,6 +76,7 @@ def testTopLevelInputFunction():
 
 @with_setup(setup_func, teardown_func)
 def testNewRunNumberEachSetup():
+    removeLogFile()
     """assert that a new, sequential runNumber is generated each time the log file is reopened"""
     for run in range(5):
         logType = "newRunNumber"
@@ -85,6 +92,7 @@ def testNewRunNumberEachSetup():
 
 @with_setup(setup_func, teardown_func)
 def testTopLevelFunctionsUseLog():
+    removeLogFile()
     """assert that each call to a top level function with a useLog argument generates a log entry"""
     lengthQuery = "SELECT COUNT(entry) FROM logger"
     infoQuery = "SELECT logInfo FROM logger ORDER BY entry DESC LIMIT 1"
@@ -163,6 +171,7 @@ def testTopLevelFunctionsUseLog():
 
 @with_setup(setup_func, teardown_func)
 def testBaseObjectFunctionsUseLog():
+    removeLogFile()
     lengthQuery = "SELECT COUNT(entry) FROM logger"
     infoQuery = "SELECT logInfo FROM logger ORDER BY entry DESC LIMIT 1"
     lengthExpected = 0

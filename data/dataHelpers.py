@@ -427,3 +427,28 @@ def lambdaFunctionString(function):
         else:
             lambdaString += letter
     return lambdaString
+
+def buildArgDict(argNames, defaults, *args, **kwargs):
+    argNames.remove("self")
+    nameArgMap = {}
+    for name, arg in zip(argNames,args):
+        if str(arg).startswith("<") and str(arg).endswith(">"):
+            nameArgMap[name] = extractFunctionString(arg)
+        else:
+            nameArgMap[name] = str(arg)
+    startDefaults = len(argNames) - len(defaults)
+    defaultArgs = argNames[startDefaults:]
+    defaultDict = {}
+    for name, value in zip(defaultArgs, defaults):
+        if name != "useLog":
+            defaultDict[name] = value
+
+    argDict = {}
+    for name in nameArgMap:
+        if name not in defaultDict:
+            argDict[name] = nameArgMap[name]
+        elif name in defaultDict and defaultDict[name] != nameArgMap[name]:
+            argDict[name] = nameArgMap[name]
+    for name in kwargs:
+        if name in defaultDict and defaultDict[name] != kwargs[name]:
+            argDict[name] = kwargs[name]

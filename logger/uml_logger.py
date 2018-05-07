@@ -82,6 +82,7 @@ class UmlLogger(object):
 
 
     def cleanup(self):
+        """TODO"""
         # only need to call if we have previously called setup
         if self.isAvailable:
             self.connection.close()
@@ -105,6 +106,7 @@ class UmlLogger(object):
 
 
     def extractFromLog(self, query, values=None):
+        """TODO"""
         if not self.isAvailable:
             self.setup()
         if values is None:
@@ -266,23 +268,52 @@ class UmlLogger(object):
 ### LOG HELPERS ###
 ###################
 
-def useLogCheck(useLog):
-    # if logger is suspended do not log and do not unsuspend
-    if UML.logger.active.suspended:
-        toLog = False
-        unsuspend = False
-        return toLog, unsuspend
-    # if logger NOT suspended log based on useLog and unsuspend
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
-    toLog = useLog
-    unsuspend = True
-    UML.logger.active.suspended = True
-    return useLog, unsuspend
+def logSuspension(toWrap):
+    """
+    Suspends the logger when the user calls a UML function, preventing any internal calls to
+    UML functions from being logged.unsuspends the logger if an error is raised. This allows
+    the logger to continue logging in the case that the user is capturing/ignoring Exceptions
+    """
+    def wrapper(*args, **kwargs):
+        suspended = UML.logger.active.suspended
+        toWrapArgs, varArgs, keywords, defaults = inspect.getargspec(toWrap)
+        # useLog passed as arg
+        try:
+            useLogIndex = toWrapArgs.index("useLog")
+            useLog = args[useLogIndex]
+            if useLog is None:
+                useLog = UML.settings.get("logger", "enabledByDefault")
+                useLog = True if useLog.lower() == 'true' else False
+            args = list(args)
+            args[useLogIndex] = useLog
+        # useLog passed as kwarg
+        except IndexError:
+            if suspended:
+                kwargs["useLog"] = False
+            else:
+                useLog = kwargs.get("useLog", None)
+                if useLog is None:
+                    useLog = UML.settings.get("logger", "enabledByDefault")
+                    useLog = True if useLog.lower() == 'true' else False
+                kwargs["useLog"] = useLog
+        if keywords is not None and hasattr(UML.data.base.Base, toWrap.__name__):
+            kwargs["argNames"] = toWrapArgs
+            kwargs["defaults"] = defaults
+
+        UML.logger.active.suspended = True
+        try:
+            ret = toWrap(*args,**kwargs)
+            UML.logger.active.suspended = suspended
+            return ret
+        except Exception as e:
+            UML.logger.active.suspended = False
+            raise e
+    return wrapper
+
 
 def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
                            endDate, maximumEntries, searchForText):
+    """TODO"""
     selectQuery = "SELECT timestamp, runNumber, logType, logInfo FROM (SELECT * FROM logger"
     whereQueryList = []
     includedValues = []
@@ -323,6 +354,7 @@ def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
     return fullQuery, includedValues
 
 def _showLogOutputString(listOfLogs, levelOfDetail):
+    """TODO"""
     fullLog = "{0:^80}\n".format("UML LOGS")
     fullLog += "." * 80
     previousLogRunNumber = None
@@ -369,6 +401,7 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
     return fullLog
 
 def _buildLoadLogString(timestamp, log):
+    """TODO"""
     dataCol = "{0} Loaded".format(log["returnType"])
     fullLog = _logHeader(dataCol,timestamp)
     if log['path'] is not None:
@@ -382,6 +415,7 @@ def _buildLoadLogString(timestamp, log):
     return fullLog
 
 def _buildPrepLogString(timestamp, log):
+    """TODO"""
     function = "{0}.{1}".format(log["object"], log["function"])
     fullLog = _logHeader(function, timestamp)
     if log['arguments'] != {}:
@@ -393,6 +427,7 @@ def _buildPrepLogString(timestamp, log):
     return fullLog
 
 def _buildDataLogString(timestamp, log):
+    """TODO"""
     reportName = log["reportType"].capitalize() + " Report"
     fullLog = _logHeader(reportName, timestamp)
     fullLog += "\n"
@@ -400,7 +435,7 @@ def _buildDataLogString(timestamp, log):
     return fullLog
 
 def _buildRunLogString(timestamp, log):
-    """ """
+    """TODO"""
     # header data
     timer = log.get("timer", "")
     if timer:
@@ -451,6 +486,7 @@ def _buildRunLogString(timestamp, log):
     return fullLog
 
 def _buildCVLogString(timestamp, log):
+    """TODO"""
     crossVal = "Cross Validating for {0}".format(log["learner"])
     fullLog = _logHeader(crossVal, timestamp)
     fullLog += "\n"
@@ -469,6 +505,7 @@ def _buildCVLogString(timestamp, log):
     return fullLog
 
 def _buildDefaultLogString(timestamp, logType, log):
+    """TODO"""
     fullLog = _logHeader(logType, timestamp)
     if isinstance(log, six.string_types):
         for string in wrap(log, 80):
@@ -487,6 +524,7 @@ def _buildDefaultLogString(timestamp, logType, log):
     return fullLog
 
 def _dictToKeywordString(dictionary):
+    """TODO"""
     kvStrings = []
     for key, value in dictionary.items():
         string = "{0}={1}".format(key,value)

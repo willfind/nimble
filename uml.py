@@ -19,7 +19,7 @@ from UML.exceptions import ArgumentException, PackageException
 
 from UML.logger import UmlLogger
 from UML.logger import Stopwatch
-from UML.logger.uml_logger import useLogCheck
+from UML.logger.uml_logger import logSuspension
 
 from UML.helpers import findBestInterface
 from UML.helpers import _learnerQuery
@@ -252,7 +252,7 @@ def identity(returnType, size, pointNames='automatic', featureNames='automatic',
         raw = numpy.identity(size)
         return UML.createData(returnType, raw, pointNames=pointNames, featureNames=featureNames, name=name)
 
-
+@logSuspension
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, useLog=None, **kwarguments):
     """
     Calls on the functionality of a package to train on some data and then modify both
@@ -278,11 +278,10 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, us
     format as the arguments parameter.
 
     """
-    toLog, unsuspend = useLogCheck(useLog)
 
     (packName, trueLearnerName) = _unpackLearnerName(learnerName)
 
-    if toLog:
+    if useLog:
         timer = Stopwatch()
         timer.start("normalizeData")
     else:
@@ -307,12 +306,10 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments={}, us
         testX.name = testX.name + " " + trueLearnerName
 
 
-    if toLog:
+    if useLog:
         timer.stop("normalizeData")
         merged = _mergeArguments(arguments, kwarguments)
         UML.logger.active.logRun("normalizeData", trainX, trainY, testX, None, learnerName, merged, None, timer)
-    if unsuspend:
-        UML.logger.active.suspended = False
 
 
 def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
@@ -448,6 +445,7 @@ def listLearners(package=None):
     return results
 
 
+@logSuspension
 def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
                fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
                ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
@@ -541,7 +539,6 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     default is used.
 
     """
-    toLog, unsuspend = useLogCheck(useLog)
 
     # validation of pointNames and featureNames
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
@@ -570,10 +567,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
-        if toLog:
+        if useLog:
             UML.logger.active.logLoad(returnType, ret.points, ret.features, name, path)
-        if unsuspend:
-            UML.logger.active.suspended = False
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
@@ -582,15 +577,12 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             featureNames=featureNames, fileType=fileType, name=name,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             keepPoints=keepPoints, keepFeatures=keepFeatures)
-        if toLog:
+        if useLog:
             UML.logger.active.logLoad(returnType, ret.points, ret.features, name, path)
-        if unsuspend:
-            UML.logger.active.suspended = False
         return ret
     # no other allowed inputs
     else:
         raise ArgumentException("data must contain either raw data or the path to a file to be loaded")
-
 
 
 def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None,
@@ -633,16 +625,14 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments={}, numFolds
     the learner when the learner was passed all three values of a, separately.
 
     """
-    toLog, unsuspend = useLogCheck(useLog)
 
-    bestResult = crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog,
-                                         **kwarguments)
-    if unsuspend:
-        UML.logger.active.suspended = False
+    bestResult = crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments,
+                                         numFolds, scoreMode, useLog, **kwarguments)
 
     return bestResult[1]
 
 #return crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog, **kwarguments)
+
 
 def crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label',
                            useLog=None, **kwarguments):
@@ -701,12 +691,9 @@ def crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments={},
     three values of a, separately.
 
     """
-    toLog, unsuspend = useLogCheck(useLog)
 
-    ret = crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog,
-                                **kwarguments)
-    if unsuspend:
-        UML.logger.active.suspended = False
+    ret = crossValidateBackend(learnerName, X, Y, performanceFunction, arguments, numFolds,
+                                scoreMode, useLog, **kwarguments)
 
     return ret
 
@@ -757,10 +744,9 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments={}
     three values of a, separately.
 
     """
-    toLog, unsuspend = useLogCheck(useLog)
 
-    resultsAll = crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments, numFolds, scoreMode, useLog,
-                                        **kwarguments)
+    resultsAll = crossValidateReturnAll(learnerName, X, Y, performanceFunction, arguments,
+                                        numFolds, scoreMode, useLog, **kwarguments)
 
     bestArgumentAndScoreTuple = None
 
@@ -790,8 +776,6 @@ def crossValidateReturnBest(learnerName, X, Y, performanceFunction, arguments={}
                 bestArgumentAndScoreTuple = curResultTuple
             if ((not maximumIsBest) and curScore < bestArgumentAndScoreTuple[1]):
                 bestArgumentAndScoreTuple = curResultTuple
-    if unsuspend:
-        UML.logger.active.suspended = False
 
     return bestArgumentAndScoreTuple
 
@@ -847,9 +831,9 @@ def learnerType(learnerNames):
 
     return resultsList
 
-
+@logSuspension
 def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments={},
-          scoreMode='label', multiClassStrategy='default', useLog=None, \
+          scoreMode='label', multiClassStrategy='default', useLog=None, useLogDeep=None, \
           doneValidData=False, doneValidArguments1=False, doneValidArguments2=False, \
           doneValidMultiClassStrategy=False, done2dOutputFlagCheck=False, **kwarguments):
     """
@@ -894,7 +878,6 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
     learner.
 
     """
-    toLog, unsuspend = useLogCheck(useLog)
 
     (package, trueLearnerName) = _unpackLearnerName(learnerName)
     if not doneValidData:
@@ -909,7 +892,9 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
         _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
     merged = _mergeArguments(arguments, kwarguments)
 
-    if toLog:
+    if useLogDeep is None:
+        useLogDeep = useLog
+    if useLogDeep:
         timer = Stopwatch()
     else:
         timer = None
@@ -925,7 +910,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
             raise ArgumentException(msg)
 
         #if we are logging this run, we need to start the timer
-        if toLog:
+        if useLogDeep:
             timer = Stopwatch()
             timer.start('crossValidateReturnBest')
         else:
@@ -935,26 +920,25 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None, arguments=
         numFolds = trainX.points if trainX.points < 10 else 10
         #sig (learnerName, X, Y, performanceFunction, arguments={}, numFolds=10, scoreMode='label', useLog=None, maximize=False, **kwarguments):
         bestArgument, bestScore = UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction, merged,
-                                                              numFolds=numFolds, scoreMode=scoreMode, useLog=useLog)
+                                                              numFolds=numFolds, scoreMode=scoreMode, useLog=useLogDeep)
 
-        if toLog:
+        if useLogDeep:
             timer.stop('crossValidateReturnBest')
     else:
         bestArgument = merged
 
     interface = findBestInterface(package)
 
-    trainedLearner = interface.train(trueLearnerName, trainX, trainY, multiClassStrategy, bestArgument, useLog, timer)
+    trainedLearner = interface.train(trueLearnerName, trainX, trainY, multiClassStrategy,
+                                     bestArgument, useLog, timer)
 
-    if toLog:
+    if useLog:
         funcString = interface.getCanonicalName() + '.' + trueLearnerName
         UML.logger.active.logRun("train", trainX, trainY, None, None, funcString, bestArgument, None, timer)
-    if unsuspend:
-        UML.logger.active.suspended = False
 
     return trainedLearner
 
-
+@logSuspension
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments={}, output=None, scoreMode='label',
                   multiClassStrategy='default', useLog=None, **kwarguments):
@@ -1009,7 +993,6 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     learner.
 
     """
-    toLog, unsuspend = useLogCheck(useLog)
 
     _validData(trainX, trainY, testX, None, [False, False])
     _validScoreMode(scoreMode)
@@ -1018,7 +1001,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     if testX is None:
         testX = trainX
 
-    if toLog:
+    if useLog:
         timer = Stopwatch()
         timer.start('trainAndApply')
     else:
@@ -1026,24 +1009,22 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
                                scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
-                               doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
+                               useLogDeep=useLog, doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
     results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
 
     merged = _mergeArguments(arguments, kwarguments)
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
-    if toLog:
+    if useLog:
         timer.stop('trainAndApply')
         funcString = learnerName
         UML.logger.active.logRun("trainAndApply", trainX, trainY, testX, None, funcString,
                                  merged, None, timer, extraInfo=extraInfo)
-    if unsuspend:
-        UML.logger.active.suspended = False
 
     return results
 
-
+@logSuspension
 def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
                  arguments={}, output=None, scoreMode='label', multiClassStrategy='default',
                  useLog=None, _onTraining=False, **kwarguments):
@@ -1103,8 +1084,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     from arg2, such that an example generated permutation/argument state would be "arg1=2, arg2=4"
 
     """
-    toLog, unsuspend = useLogCheck(useLog)
-    
+
     _2dOutputFlagCheck(trainX, trainY, scoreMode, None)#this line is for
     # UML.tests.test_train_apply_test_frontends.test_trainAndTest_scoreMode_disallowed_multioutput
     # and UML.tests.test_train_apply_test_frontends.test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput
@@ -1113,7 +1093,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     testY = copyLabels(testX, testY)
 
     #if we are logging this run, we need to start the timer
-    if toLog:
+    if useLog:
         timer = Stopwatch()
         timer.start('trainAndTest')
     else:
@@ -1121,7 +1101,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
 
     trainedLearner = UML.train(learnerName, trainX, trainY, performanceFunction, arguments, \
                                scoreMode='label', multiClassStrategy=multiClassStrategy, useLog=useLog, \
-                               doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
+                               useLogDeep=useLog, doneValidData=True, done2dOutputFlagCheck=True, **kwarguments)
     predictions = trainedLearner.apply(testX, {}, output, scoreMode, useLog=useLog)
     performance = computeMetrics(testY, None, predictions, performanceFunction)
 
@@ -1132,7 +1112,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
-    if toLog:
+    if useLog:
         timer.stop('trainAndTest')
         if _onTraining:
             name = "trainAndTestOnTrainingData"
@@ -1141,8 +1121,6 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY, performanceFunction,
         funcString = learnerName
         UML.logger.active.logRun(name, trainX, trainY, testX, testY, funcString,
                                  merged, metrics, timer, extraInfo=extraInfo)
-    if unsuspend:
-        UML.logger.active.suspended = False
 
     return performance
 
@@ -1217,7 +1195,8 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
 
     """
     performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY, performanceFunction, \
-                               arguments, output, scoreMode, multiClassStrategy, useLog, _onTraining=True)
+                               arguments, output, scoreMode, multiClassStrategy,
+                               useLog, _onTraining=True)
     return performance
 
 
