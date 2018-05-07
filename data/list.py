@@ -598,23 +598,43 @@ class List(Base):
         self._numFeatures = other._numFeatures
 
     def _copyAs_implementation(self, format, dataCopy=True):
+
+        if self.pointNamesInverse is None:
+            pNames = False
+        else:
+            pNames = self.getPointNames()
+        if self.featureNamesInverse is None:
+            fNames = False
+        else:
+            fNames = self.getFeatureNames()
+
         if format == 'Sparse':
             if self.points == 0 or self.features == 0:
                 emptyData = numpy.empty(shape=(self.points, self.features))
-                return UML.createData('Sparse', emptyData, pointNames=self.getPointNames(),
-                                      featureNames=self.getFeatureNames(), dataCopy=dataCopy)
-            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+                return UML.createData('Sparse', emptyData, pointNames=pNames,
+                                      featureNames=fNames, dataCopy=dataCopy)
+            return UML.createData('Sparse', self.data, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
 
         if format is None or format == 'List':
-            return UML.createData('List', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            if self.points == 0 or self.features == 0:
+                emptyData = numpy.empty(shape=(self.points, self.features))
+                return UML.createData('List', emptyData, pointNames=pNames,
+                                      featureNames=fNames, dataCopy=dataCopy)
+            else:
+                return UML.createData('List', self.data, pointNames=pNames,
+                                      featureNames=fNames, dataCopy=dataCopy)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            if self.points == 0 or self.features == 0:
+                emptyData = numpy.empty(shape=(self.points, self.features))
+                return UML.createData('Matrix', emptyData, pointNames=pNames,
+                                      featureNames=fNames, dataCopy=dataCopy)
+            else:
+                return UML.createData('Matrix', self.data, pointNames=pNames,
+                                      featureNames=fNames, dataCopy=dataCopy)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('DataFrame', self.data, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
@@ -925,7 +945,6 @@ class List(Base):
         self.data = result
         self._numFeatures = numFeatures
 
-
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
 
@@ -937,20 +956,36 @@ class List(Base):
             def _copyAs_implementation(self, format, dataCopy=False):
                 # we only want to change how List and pythonlist copying is done
                 # we also temporarily convert self.data to a python list for copyAs
-                listForm = [[self._source.data[pID][fID] for fID in range(self._fStart, self._fEnd)] \
+                if self._source.pointNamesInverse is None:
+                    pNames = False
+                else:
+                    pNames = self.getPointNames()
+                if self._source.featureNamesInverse is None:
+                    fNames = False
+                else:
+                    fNames = self.getFeatureNames()
+
+                if (self.points == 0 or self.features == 0) and format != 'List':
+                    emptyStandin = numpy.empty((self.points, self.features))
+                    intermediate = UML.createData('Matrix', emptyStandin, pointNames=pNames,
+                                                  featureNames=fNames)
+                    return intermediate.copyAs(format)
+
+                listForm = [[self._source.data[pID][fID] for fID in range(self._fStart, self._fEnd)]
                             for pID in range(self._pStart, self._pEnd)]
                 if format is None:
                     format = 'List'
                 if format != 'List' and format != 'pythonlist':
                     origData = self.data
                     self.data = listForm
-                    res = super(ListView, self)._copyAs_implementation(format, dataCopy)
+                    res = super(ListView, self)._copyAs_implementation(
+                        format, dataCopy)
                     self.data = origData
                     return res
 
                 if format == 'List':
-                    return UML.createData('List', listForm, pointNames=self.getPointNames(),
-                                         featureNames=self.getFeatureNames())
+                    return UML.createData('List', listForm, pointNames=pNames,
+                                          featureNames=fNames)
                 else:
                     return listForm
 
