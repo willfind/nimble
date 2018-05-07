@@ -779,21 +779,31 @@ class Sparse(Base):
         self._sorted = other._sorted
 
     def _copyAs_implementation(self, format, dataCopy=True):
+
+        if self.pointNamesInverse is None:
+            pNames = False
+        else:
+            pNames = self.getPointNames()
+        if self.featureNamesInverse is None:
+            fNames = False
+        else:
+            fNames = self.getFeatureNames()
+
         if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self.data, pointNames=self.getPointNames(),
-                                 featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            ret = UML.createData('Sparse', self.data, pointNames=pNames,
+                                 featureNames=fNames, dataCopy=dataCopy)
             # Due to duplicate removal done in createData, we cannot guarantee that the internal
             # sorting is preserved in the returned object.
             return ret
         if format == 'List':
-            return UML.createData('List', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('List', self.data, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('Matrix', self.data, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('DataFrame', self.data, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
         if format == 'pythonlist':
             return self.data.todense().tolist()
         if format == 'numpyarray':
@@ -1942,10 +1952,20 @@ class SparseView(BaseView, Sparse):
         return GenericIt()
 
     def _copyAs_implementation(self, format, dataCopy=False):
+
+        if self.pointNamesInverse is None:
+            pNames = False
+        else:
+            pNames = self.getPointNames()
+        if self.featureNamesInverse is None:
+            fNames = False
+        else:
+            fNames = self.getFeatureNames()
+
         if self.points == 0 or self.features == 0:
             emptyStandin = numpy.empty((self.points, self.features))
-            intermediate = UML.createData('Matrix', emptyStandin, pointNames=self.getPointNames(),
-                                           featureNames=self.getFeatureNames())
+            intermediate = UML.createData('Matrix', emptyStandin, pointNames=pNames,
+                                           featureNames=fNames)
             return intermediate.copyAs(format)
 
         limited = self._source.copyPoints(start=self._pStart, end=self._pEnd - 1)
