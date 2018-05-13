@@ -2,7 +2,7 @@
 
 Methods tested in this file (none modify the data):
 
-pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView, 
+pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView,
 featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
 featureSimilarities, pointStatistics, featureStatistics,
 nonZeroIteratorPointGrouped, nonZeroIteratorFeatureGrouped
@@ -1805,28 +1805,6 @@ class QueryBackend(DataTestObject):
             endSize = os.path.getsize(path)
             assert startSize < endSize
 
-    #########################
-    # plotPointDistribution #
-    #########################
-
-    @attr('slow')
-    def test_plotPointDistribution_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
-            path = outFile.name
-            startSize = os.path.getsize(path)
-            assert startSize == 0
-
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
-            raw = randGenerated.copyAs('pythonlist')
-            obj = self.constructor(raw)
-            #we call the leading underscore version, because it
-            # returns the process
-            p = obj._plotPointDistribution(point=0, outPath=path)
-            p.join()
-
-            endSize = os.path.getsize(path)
-            assert startSize < endSize
-
     ###########################
     # plotFeatureDistribution #
     ###########################
@@ -1849,27 +1827,6 @@ class QueryBackend(DataTestObject):
             endSize = os.path.getsize(path)
             assert startSize < endSize
 
-    #########################
-    # plotPointAgainstPoint #
-    #########################
-
-    @attr('slow')
-    def test_plotPointAgainstPoint_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
-            path = outFile.name
-            startSize = os.path.getsize(path)
-            assert startSize == 0
-
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
-            raw = randGenerated.copyAs('pythonlist')
-            obj = self.constructor(raw)
-            #we call the leading underscore version, because it
-            # returns the process
-            p = obj._plotPointAgainstPoint(x=0, y=1, outPath=path)
-            p.join()
-
-            endSize = os.path.getsize(path)
-            assert startSize < endSize
 
     #############################
     # plotFeatureAgainstFeature #
