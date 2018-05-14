@@ -471,19 +471,28 @@ class DataFrame(Base):
             format: string. Sparse, List, Matrix, pythonlist, numpyarray, numpymatrix, scipycsc, scipycsr or None
                     if format is None, a new DataFrame will be created.
         """
+        if self.pointNamesInverse is None:
+            pNames = False
+        else:
+            pNames = self.getPointNames()
+        if self.featureNamesInverse is None:
+            fNames = False
+        else:
+            fNames = self.getFeatureNames()
+
         dataArray = self.data.values.copy()
         if format is None or format == 'DataFrame':
-            return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('DataFrame', dataArray, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
         if format == 'Sparse':
-            return UML.createData('Sparse', dataArray, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('Sparse', dataArray, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
         if format == 'List':
-            return UML.createData('List', dataArray, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('List', dataArray, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
         if format == 'Matrix':
-            return UML.createData('Matrix', dataArray, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
+            return UML.createData('Matrix', dataArray, pointNames=pNames,
+                                  featureNames=fNames, dataCopy=dataCopy)
         if format == 'pythonlist':
             return dataArray.tolist()
         if format == 'numpyarray':
