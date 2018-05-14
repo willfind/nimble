@@ -4062,9 +4062,7 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.retainPoints(start=0, end=2)
-        print(toTest)
         toTest.retainPoints(start=0, end=2, number=2, randomize=True)
-        print(toTest)
         assert toTest.points == 2
 
     def test_retainPoints_handmadeRangeDefaults(self):
@@ -4092,11 +4090,8 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        print(toTest)
         toTest.retainPoints(start='4', end='7')
-        print(toTest)
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
-        print(expectedTest)
         assert expectedTest.isIdentical(toTest)
 
     def test_retainPoints_handmadeString(self):

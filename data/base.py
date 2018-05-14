@@ -2695,8 +2695,13 @@ class Base(object):
         if number is not None:
             start = number
             end = values - 1
+            print(self, "\n", values)
+            if randomize:
+                indices = list(range(0, values))
+                pythonRandom.shuffle(indices)
+                shuffleValues(indices)
             ret = self._genericStructuralFrontend(axis, backEnd, None, start, end,
-                                                      None, randomize, 'toRetain', invertTarget=True)
+                                                      None, None, 'toRetain')
             self._adjustNamesAndValidate(ret, axis)
 
 
@@ -4240,12 +4245,8 @@ class Base(object):
             if start > end:
                 raise ArgumentException("The start index cannot be greater than the end index")
 
-            if randomize and not invertTarget:
+            if randomize:
                 target = pythonRandom.sample(range(start, end), number)
-                target.sort()
-                return backEnd(target, None, None, number, False)
-            elif randomize and invertTarget:
-                target = pythonRandom.sample(range(start), number)
                 target.sort()
                 return backEnd(target, None, None, number, False)
 
