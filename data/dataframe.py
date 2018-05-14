@@ -763,6 +763,29 @@ class DataFrame(Base):
             def __init__(self, **kwds):
                 super(DataFrameView, self).__init__(**kwds)
 
+            def getPointNames(self):
+                """Returns a list containing all point names, where their index
+                in the list is the same as the index of the point they correspond
+                to.
+
+                """
+                print('Here point views names getter')
+                if self.pointNamesInverse is None:
+                    self._setAllDefault('point')
+                    self.data.index = self._source.pointNamesInverse[pointStart:pointEnd]
+                return copy.copy(self._source.pointNamesInverse[pointStart:pointEnd])
+
+            def getFeatureNames(self):
+                """Returns a list containing all feature names, where their index
+                in the list is the same as the index of the feature they
+                correspond to.
+
+                """
+                if self.featureNamesInverse is None:
+                    self._setAllDefault('feature')
+                    self.data.columns = self._source.featureNamesInverse[featureStart:featureEnd]
+                return copy.copy(self._source.featureNamesInverse[featureStart:featureEnd])
+
         kwds = {}
         kwds['data'] = self.data.ix[pointStart:pointEnd, featureStart:featureEnd]
         kwds['source'] = self
