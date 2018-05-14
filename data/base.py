@@ -2607,21 +2607,23 @@ class Base(object):
         self._retain_implementation('feature', toRetain, start, end, number, randomize)
 
 
-    def _retain_implementation(self, axis, toRetain=None, start=None, end=None, number=None, randomize=False):
+    def _retain_implementation(self, axis, toRetain, start, end, number, randomize):
+        """Implements retainPoints or retainFeatures based on the axis"""
         if axis == 'point':
             hasName = self.hasPointName
             getNames = self.getPointNames
             getIndex = self._getPointIndex
             values = self.points
             backEnd = self._extractPoints_implementation
-            shuffle = self.shufflePoints
+            shuffleValues = self.shufflePoints
         else:
             hasName = self.hasFeatureName
             getNames = self.getFeatureNames
             getIndex = self._getFeatureIndex
             values = self.features
             backEnd = self._extractFeatures_implementation
-            shuffle = self.shuffleFeatures
+            shuffleValues = self.shuffleFeatures
+
         if toRetain is not None:
             if isinstance(toRetain, six.string_types):
                 if hasName(toRetain):
@@ -2630,9 +2632,11 @@ class Base(object):
                 else:
                     toExtract = toRetain
                     invertTarget = True
+
             elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
                 toExtract = [value for value in range(values) if value != toRetain]
                 invertTarget = False
+
             elif isinstance(toRetain, list):
                 if isinstance(toRetain[0], six.string_types):
                     toExtract = [self._getIndex(value, axis) for value in getNames() if value not in toRetain]
@@ -2641,22 +2645,26 @@ class Base(object):
                 else:
                     toExtract = [value for value in range(values) if value not in toRetain]
                     invertTarget = False
-                # change the order of the values to match toRetain
+                # change the index order of the values to match toRetain
                 reindex = toRetain + toExtract
                 indices = [None for _ in range(values)]
                 for idx, value in enumerate(reindex):
                     indices[value] = idx
-                shuffle(indices)
+                shuffleValues(indices)
                 # extract any values after the toRetain values
                 toExtract = list(range(len(toRetain), values))
 
             else:
+                # toRetain is a function
                 toExtract = toRetain
+                # invertTarget wraps the function and returns the opposite
                 invertTarget = True
 
             ret = self._genericStructuralFrontend(axis, backEnd, toExtract, start, end, number,
                                                   randomize, 'toRetain', invertTarget=invertTarget)
             self._adjustNamesAndValidate(ret, axis)
+
+        # convert start and end to indexes
         if start is not None and end is not None:
             start = getIndex(start)
             end = getIndex(end)
@@ -2671,9 +2679,6 @@ class Base(object):
             start = getIndex(start)
         elif end is not None:
             end = getIndex(end)
-        if start is not None and end is not None and start > end:
-            msg = "the value for start ({0}) exceeds the value of end ({1})".format(start,end)
-            raise ArgumentException(msg)
         if start is not None:
             # only need to perform if start is not the first value
             if start - 1 >= 0:
