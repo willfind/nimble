@@ -2656,16 +2656,7 @@ class Base(object):
 
             ret = self._genericStructuralFrontend(axis, backEnd, toExtract, start, end, number,
                                                   randomize, 'toRetain', invertTarget=invertTarget)
-            if axis == 'point':
-                self._pointCount -= ret.points
-                for key in ret.getPointNames():
-                    self._removePointNameAndShift(key)
-                self.validate()
-            else:
-                self._featureCount -= ret.features
-                for key in ret.getFeatureNames():
-                    self._removeFeatureNameAndShift(key)
-                self.validate()
+            self._adjustNamesAndValidate(ret, axis)
         if start is not None and end is not None:
             start = getIndex(start)
             end = getIndex(end)
@@ -2688,48 +2679,21 @@ class Base(object):
             if start - 1 >= 0:
                 ret = self._genericStructuralFrontend(axis, backEnd, None, 0, start - 1,
                                                           None, randomize, 'toRetain')
-                if axis == 'point':
-                    self._pointCount -= ret.points
-                    for key in ret.getPointNames():
-                        self._removePointNameAndShift(key)
-                    self.validate()
-                else:
-                    self._featureCount -= ret.features
-                    for key in ret.getFeatureNames():
-                        self._removeFeatureNameAndShift(key)
-                    self.validate()
+                self._adjustNamesAndValidate(ret, axis)
         if end is not None:
             # only need to perform if end is not the last value
             if end + 1 <= values - 1:
                 ret = self._genericStructuralFrontend(axis, backEnd, None, end + 1, values - 1,
                                                           None, randomize, 'toRetain')
-                if axis == 'point':
-                    self._pointCount -= ret.points
-                    for key in ret.getPointNames():
-                        self._removePointNameAndShift(key)
-                    self.validate()
-                else:
-                    self._featureCount -= ret.features
-                    for key in ret.getFeatureNames():
-                        self._removeFeatureNameAndShift(key)
-                    self.validate()
+                self._adjustNamesAndValidate(ret, axis)
 
         if number is not None:
             start = number
             end = values - 1
             ret = self._genericStructuralFrontend(axis, backEnd, None, start, end,
                                                       None, randomize, 'toRetain', invertTarget=True)
+            self._adjustNamesAndValidate(ret, axis)
 
-            if axis == 'point':
-                self._pointCount -= ret.points
-                for key in ret.getPointNames():
-                    self._removePointNameAndShift(key)
-                self.validate()
-            else:
-                self._featureCount -= ret.features
-                for key in ret.getFeatureNames():
-                    self._removeFeatureNameAndShift(key)
-                self.validate()
 
     def countPoints(self, condition):
         """
@@ -5306,6 +5270,18 @@ class Base(object):
             msg += ")"
 
             raise ArgumentException(msg)
+
+
+    def _adjustNamesAndValidate(self, ret, axis):
+        if axis == 'point':
+            self._pointCount -= ret.points
+            for key in ret.getPointNames():
+                self._removePointNameAndShift(key)
+        else:
+            self._featureCount -= ret.features
+            for key in ret.getFeatureNames():
+                self._removeFeatureNameAndShift(key)
+        self.validate()
 
 def cmp_to_key(mycmp):
     """Convert a cmp= function for python2 into a key= function for python3"""
