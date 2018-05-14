@@ -942,8 +942,8 @@ class Base(object):
         def permuter(pView):
             return indices[self.getPointIndex(pView.getPointName(0))]
 
-        permuter.permuter = True
-        permuter.indices = indices
+        # permuter.permuter = True
+        # permuter.indices = indices
         self.sortPoints(sortHelper=permuter)
 
 
@@ -2587,78 +2587,7 @@ class Base(object):
         the chosen points are determined by point order, otherwise it is uniform random across the
         space of possible removals.
         """
-        if toRetain is not None:
-            if isinstance(toRetain, six.string_types):
-                if self.hasPointName(toRetain):
-                    toExtract = [point for point in self.getPointNames() if point != toRetain]
-                    invertTarget = False
-                else:
-                    toExtract = toRetain
-                    invertTarget = True
-            elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
-                toExtract = [point for point in range(self.points) if point != toRetain]
-                invertTarget = False
-            elif isinstance(toRetain, list):
-                if isinstance(toRetain[0], six.string_types):
-                    toExtract = [point for point in self.getPointNames() if point not in toRetain]
-                    invertTarget = False
-                else:
-                    toExtract = [point for point in range(self.points) if point not in toRetain]
-                    invertTarget = False
-            else:
-                toExtract = toRetain
-                invertTarget = True
-
-            ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, toExtract, start, end,
-                                                          number, randomize, 'toRetain', invertTarget=invertTarget)
-            self._pointCount -= ret.points
-            for key in ret.getPointNames():
-                self._removePointNameAndShift(key)
-            self.validate()
-
-        if start is not None:
-            start = self._getPointIndex(start)
-        if end is not None:
-            end = self._getPointIndex(end)
-        if start is not None and end is not None and start > end:
-            msg = "the value for start ({0}) exceeds the value of end ({1})".format(start,end)
-            raise ArgumentException(msg)
-        if start is not None:
-            print("start", start)
-            # only need to perform if start is not the first point
-            if start - 1 >= 0:
-                ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, None, 0, start - 1,
-                                                          None, randomize, 'toRetain')
-                self._pointCount -= ret.points
-                for key in ret.getPointNames():
-                    self._removePointNameAndShift(key)
-                self.validate()
-            # adjust end value after removing values before start
-            if end is not None:
-                end -= start
-
-        if end is not None:
-            # only need to perform if end is not the last point
-            print("end", end, "maxIndex", self.points - 1)
-            if end + 1 <= self.points - 1:
-                ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, None, end + 1, self.points - 1,
-                                                          None, randomize, 'toRetain')
-                self._pointCount -= ret.points
-                for key in ret.getPointNames():
-                    self._removePointNameAndShift(key)
-                self.validate()
-
-        if number is not None:
-            start = number
-            end = self.points - 1
-            ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, None, start, end,
-                                                      None, randomize, 'toRetain', invertTarget=True)
-
-            self._pointCount -= ret.points
-            for key in ret.getPointNames():
-                self._removePointNameAndShift(key)
-            self.validate()
-
+        self._retain_implementation('point', toRetain, start, end, number, randomize)
 
 
     def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
@@ -2675,118 +2604,132 @@ class Base(object):
         the chosen features are determined by feature order, otherwise it is uniform random across the
         space of possible removals.
         """
-        # if toRetain is not None:
-        #     if isinstance(toRetain, six.string_types):
-        #         if self.hasFeatureName(toRetain):
-        #             toExtract = [feature for feature in self.getFeatureNames() if feature != toRetain]
-        #             invertTarget = False
-        #         else:
-        #             toExtract = toRetain
-        #             invertTarget = True
-        #     elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
-        #         toExtract = [feature for feature in range(self.features) if feature != toRetain]
-        #         invertTarget = False
-        #     elif isinstance(toRetain, list):
-        #         if isinstance(toRetain[0], six.string_types):
-        #             toExtract = [feature for feature in self.getFeatureNames() if feature not in toRetain]
-        #             invertTarget = False
-        #         elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
-        #             toExtract = [feature for feature in range(self.features) if feature not in toRetain]
-        #             invertTarget = False
-        #     else:
-        #         toExtract = toRetain
-        #         invertTarget = True
-        #
-        #     ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, start, end,
-        #                                                   number, randomize, 'toRetain', invertTarget=invertTarget)
-        # elif start is not None:
-        #     if isinstance(start, six.string_types):
-        #         start = self.getFeatureIndex(start)
-        #     ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, 0, start - 1,
-        #                                               number, randomize, 'toRetain', invertTarget=invertTarget)
-        # elif end is not None:
-        #     if isinstance(end, six.string_types):
-        #         end = self.getFeatureIndex(end)
-        #     ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, end + 1, self.features,
-        #                                               number, randomize, 'toRetain', invertTarget=invertTarget)
-        #
-        # self._featureCount -= ret.features
-        # for key in ret.getFeatureNames():
-        #     self._removeFeatureNameAndShift(key)
-        # self.validate()
+        self._retain_implementation('feature', toRetain, start, end, number, randomize)
 
+
+    def _retain_implementation(self, axis, toRetain=None, start=None, end=None, number=None, randomize=False):
+        if axis == 'point':
+            hasName = self.hasPointName
+            getNames = self.getPointNames
+            getIndex = self._getPointIndex
+            values = self.points
+            backEnd = self._extractPoints_implementation
+            shuffle = self.shufflePoints
+        else:
+            hasName = self.hasFeatureName
+            getNames = self.getFeatureNames
+            getIndex = self._getFeatureIndex
+            values = self.features
+            backEnd = self._extractFeatures_implementation
+            shuffle = self.shuffleFeatures
         if toRetain is not None:
             if isinstance(toRetain, six.string_types):
-                if self.hasFeatureName(toRetain):
-                    toExtract = [feature for feature in self.getFeatureNames() if feature != toRetain]
+                if hasName(toRetain):
+                    toExtract = [value for value in getNames() if value != toRetain]
                     invertTarget = False
                 else:
                     toExtract = toRetain
                     invertTarget = True
             elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
-                toExtract = [feature for feature in range(self.features) if feature != toRetain]
+                toExtract = [value for value in range(values) if value != toRetain]
                 invertTarget = False
             elif isinstance(toRetain, list):
                 if isinstance(toRetain[0], six.string_types):
-                    toExtract = [feature for feature in self.getFeatureNames() if feature not in toRetain]
+                    toExtract = [self._getIndex(value, axis) for value in getNames() if value not in toRetain]
                     invertTarget = False
+                    toRetain = [self._getIndex(value, axis) for value in toRetain]
                 else:
-                    toExtract = [feature for feature in range(self.features) if feature not in toRetain]
+                    toExtract = [value for value in range(values) if value not in toRetain]
                     invertTarget = False
+                # change the order of the values to match toRetain
+                reindex = toRetain + toExtract
+                indices = [None for _ in range(values)]
+                for idx, value in enumerate(reindex):
+                    indices[value] = idx
+                shuffle(indices)
+                # extract any values after the toRetain values
+                toExtract = list(range(len(toRetain), values))
+
             else:
                 toExtract = toRetain
                 invertTarget = True
 
-            ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, start, end,
-                                                          number, randomize, 'toRetain', invertTarget=invertTarget)
-            self._featureCount -= ret.features
-            for key in ret.getFeatureNames():
-                self._removeFeatureNameAndShift(key)
-            self.validate()
-
-        if start is not None:
-            start = self._getFeatureIndex(start)
-        if end is not None:
-            end = self._getFeatureIndex(end)
+            ret = self._genericStructuralFrontend(axis, backEnd, toExtract, start, end, number,
+                                                  randomize, 'toRetain', invertTarget=invertTarget)
+            if axis == 'point':
+                self._pointCount -= ret.points
+                for key in ret.getPointNames():
+                    self._removePointNameAndShift(key)
+                self.validate()
+            else:
+                self._featureCount -= ret.features
+                for key in ret.getFeatureNames():
+                    self._removeFeatureNameAndShift(key)
+                self.validate()
+        if start is not None and end is not None:
+            start = getIndex(start)
+            end = getIndex(end)
+            if start > end:
+                msg = "the value for start ({0}) exceeds the value of end ({1})".format(start,end)
+                raise ArgumentException(msg)
+            else:
+                # adjust end and values for start values that will be removed
+                end -= start
+                values -= start
+        elif start is not None:
+            start = getIndex(start)
+        elif end is not None:
+            end = getIndex(end)
         if start is not None and end is not None and start > end:
             msg = "the value for start ({0}) exceeds the value of end ({1})".format(start,end)
             raise ArgumentException(msg)
         if start is not None:
-            print("start", start)
-            # only need to perform if start is not the first feature
+            # only need to perform if start is not the first value
             if start - 1 >= 0:
-                ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, None, 0, start - 1,
+                ret = self._genericStructuralFrontend(axis, backEnd, None, 0, start - 1,
                                                           None, randomize, 'toRetain')
-                self._featureCount -= ret.features
-                for key in ret.getFeatureNames():
-                    self._removeFeatureNameAndShift(key)
-                self.validate()
-            # adjust end value after removing values before start
-            if end is not None:
-                end -= start
-
+                if axis == 'point':
+                    self._pointCount -= ret.points
+                    for key in ret.getPointNames():
+                        self._removePointNameAndShift(key)
+                    self.validate()
+                else:
+                    self._featureCount -= ret.features
+                    for key in ret.getFeatureNames():
+                        self._removeFeatureNameAndShift(key)
+                    self.validate()
         if end is not None:
-            # only need to perform if end is not the last feature
-            print("end", end, "maxIndex", self.features - 1)
-            if end + 1 <= self.features - 1:
-                ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, None, end + 1, self.features - 1,
+            # only need to perform if end is not the last value
+            if end + 1 <= values - 1:
+                ret = self._genericStructuralFrontend(axis, backEnd, None, end + 1, values - 1,
                                                           None, randomize, 'toRetain')
-                self._featureCount -= ret.features
-                for key in ret.getFeatureNames():
-                    self._removeFeatureNameAndShift(key)
-                self.validate()
+                if axis == 'point':
+                    self._pointCount -= ret.points
+                    for key in ret.getPointNames():
+                        self._removePointNameAndShift(key)
+                    self.validate()
+                else:
+                    self._featureCount -= ret.features
+                    for key in ret.getFeatureNames():
+                        self._removeFeatureNameAndShift(key)
+                    self.validate()
 
         if number is not None:
             start = number
-            end = self.features - 1
-            ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, None, start, end,
+            end = values - 1
+            ret = self._genericStructuralFrontend(axis, backEnd, None, start, end,
                                                       None, randomize, 'toRetain', invertTarget=True)
 
-            self._featureCount -= ret.features
-            for key in ret.getFeatureNames():
-                self._removeFeatureNameAndShift(key)
-            self.validate()
-
+            if axis == 'point':
+                self._pointCount -= ret.points
+                for key in ret.getPointNames():
+                    self._removePointNameAndShift(key)
+                self.validate()
+            else:
+                self._featureCount -= ret.features
+                for key in ret.getFeatureNames():
+                    self._removeFeatureNameAndShift(key)
+                self.validate()
 
     def countPoints(self, condition):
         """
@@ -4329,7 +4272,6 @@ class Base(object):
                 raise ArgumentException("The start index cannot be greater than the end index")
 
             if randomize and not invertTarget:
-                print("rando", start,end,number)
                 target = pythonRandom.sample(range(start, end), number)
                 target.sort()
                 return backEnd(target, None, None, number, False)
