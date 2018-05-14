@@ -129,10 +129,21 @@ class BaseView(Base):
             raise KeyError()
 
     def _copyNames(self, CopyObj):
-        CopyObj.pointNamesInverse = self.getPointNames()
-        CopyObj.featureNamesInverse = self.getFeatureNames()
-        CopyObj.pointNames = copy.copy(self._source.pointNames)
-        CopyObj.featureNames = copy.copy(self._source.featureNames)
+
+        if self._source.pointNamesInverse is not None:
+            CopyObj.pointNamesInverse = self.getPointNames()
+            CopyObj.pointNames = copy.copy(self._source.pointNames)
+        else:
+            CopyObj.pointNamesInverse = None
+            CopyObj.pointNames = None
+
+        if self._source.featureNamesInverse is not None:
+            CopyObj.featureNamesInverse = self.getFeatureNames()
+            CopyObj.featureNames = copy.copy(self._source.featureNames)
+        else:
+            CopyObj.featureNamesInverse = None
+            CopyObj.featureNames = None
+
         CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
 
