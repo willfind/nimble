@@ -633,8 +633,13 @@ class List(Base):
                 return UML.createData('Matrix', self.data, pointNames=pNames,
                                       featureNames=fNames, dataCopy=dataCopy)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=pNames,
-                                  featureNames=fNames, dataCopy=dataCopy)
+            if self.points == 0 or self.features == 0:
+                emptyData = numpy.empty(shape=(self.points, self.features))
+                return UML.createData('DataFrame', emptyData, pointNames=pNames,
+                                      featureNames=fNames, dataCopy=dataCopy)
+            else:
+                return UML.createData('DataFrame', self.data, pointNames=pNames,
+                                      featureNames=fNames, dataCopy=dataCopy)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
