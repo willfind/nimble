@@ -373,7 +373,8 @@ def checkNumberNZ_feature(obj):
 #   nzObj.show("nz", maxHeight=100)
 
     path = "/home/tpburns/gimbel_tech/sparse-gender-nz-Qs.png"
-    nzObj.plotPointDistribution(0, outPath=path)
+    nzObj.transpose()
+    nzObj.plotFeatureDistribution(0, outPath=path)
 
 
 def printInAndOutSampleError(trainedLearner, trainX, testX, testY):
