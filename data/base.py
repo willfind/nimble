@@ -4026,17 +4026,34 @@ class Base(object):
         # figure out return obj's point / feature names
         # if unary:
         if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
-            retPNames = self.getPointNames()
-            retFNames = self.getFeatureNames()
+            if self.pointNamesInverse is not None:
+                retPNames = self.getPointNames()
+            else:
+                retPNames = None
+            if self.featureNamesInverse is not None:
+                retFNames = self.getFeatureNames()
+            else:
+                refFNames = None
         # else (everything else that uses this helper is a binary scalar op)
         else:
             (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
 
         ret = self._genericNumericBinary_implementation(opName, other)
 
-        ret.setPointNames(retPNames)
-        ret.setFeatureNames(retFNames)
+        if retPNames is not None:
+            ret.setPointNames(retPNames)
+        else:
+            ret.pointNamesInverse =  None
+            ret.pointNames = None
 
+        if retFNames is not None:
+            ret.setFeatureNames(retFNames)
+            ret.pointNamesInverse = None
+        else:
+            ret.featuresNamesInverse =  None
+            ret.featuresNames = None      
+
+    
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if isUML else 'self'
         dataHelpers.binaryOpNamePathMerge(self, other, ret, nameSource, pathSource)

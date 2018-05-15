@@ -161,8 +161,14 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
         return ret
 
-    retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
-    retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
+    if baseSource.pointNamesInverse is not None and otherSource.pointNamesInverse is not None:
+        retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
+    else:
+        retPNames = None
+    if baseSource.featureNamesInverse is not None and otherSource.featureNamesInverse is not None:
+        retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
+    else:
+        retFNames = None
 
     return (retPNames, retFNames)
 
