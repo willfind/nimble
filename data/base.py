@@ -2624,6 +2624,7 @@ class Base(object):
             backEnd = self._extractFeatures_implementation
             shuffleValues = self.shuffleFeatures
 
+        # extract points not in toRetain
         if toRetain is not None:
             if isinstance(toRetain, six.string_types):
                 if hasName(toRetain):
@@ -2661,7 +2662,7 @@ class Base(object):
                 invertTarget = True
 
             ret = self._genericStructuralFrontend(axis, backEnd, toExtract, start, end, number,
-                                                  randomize, 'toRetain', invertTarget=invertTarget)
+                                                  False, 'toRetain', invertTarget=invertTarget)
             self._adjustNamesAndValidate(ret, axis)
 
         # convert start and end to indexes
@@ -2679,29 +2680,31 @@ class Base(object):
             start = getIndex(start)
         elif end is not None:
             end = getIndex(end)
+
+        # extract points not between start and end
         if start is not None:
             # only need to perform if start is not the first value
             if start - 1 >= 0:
                 ret = self._genericStructuralFrontend(axis, backEnd, None, 0, start - 1,
-                                                          None, randomize, 'toRetain')
+                                                          None, False, 'toRetain')
                 self._adjustNamesAndValidate(ret, axis)
         if end is not None:
             # only need to perform if end is not the last value
             if end + 1 <= values - 1:
                 ret = self._genericStructuralFrontend(axis, backEnd, None, end + 1, values - 1,
-                                                          None, randomize, 'toRetain')
+                                                          None, False, 'toRetain')
                 self._adjustNamesAndValidate(ret, axis)
+
+        if randomize:
+            indices = list(range(0, values))
+            pythonRandom.shuffle(indices)
+            shuffleValues(indices)
 
         if number is not None:
             start = number
             end = values - 1
-            print(self, "\n", values)
-            if randomize:
-                indices = list(range(0, values))
-                pythonRandom.shuffle(indices)
-                shuffleValues(indices)
             ret = self._genericStructuralFrontend(axis, backEnd, None, start, end,
-                                                      None, None, 'toRetain')
+                                                      None, False, 'toRetain')
             self._adjustNamesAndValidate(ret, axis)
 
 
