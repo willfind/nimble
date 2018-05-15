@@ -2747,10 +2747,7 @@ class StructureModifying(DataTestObject):
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.extractFeatures('p1<1')
-        if self.returnType == 'Sparse':
-            expectedRet = self.constructor([], pointNames=pointNames)
-        else:
-            expectedRet = self.constructor([[], [], []], pointNames=pointNames)
+        expectedRet = self.constructor([], pointNames=pointNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
@@ -2759,10 +2756,7 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.extractFeatures('p1>0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        if self.returnType == 'Sparse':
-            expectedTest = self.constructor([], pointNames=pointNames)
-        else:
-            expectedTest = self.constructor([[], [], []], pointNames=pointNames)
+        expectedTest = self.constructor([], pointNames=pointNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
@@ -2831,10 +2825,7 @@ class StructureModifying(DataTestObject):
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.extractFeatures('p1 < 1')
-        if self.returnType == 'Sparse':
-            expectedRet = self.constructor([], pointNames=pointNames)
-        else:
-            expectedRet = self.constructor([[], [], []], pointNames=pointNames)
+        expectedRet = self.constructor([], pointNames=pointNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
@@ -2843,10 +2834,7 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.extractFeatures('p1 > 0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        if self.returnType == 'Sparse':
-            expectedTest = self.constructor([], pointNames=pointNames)
-        else:
-            expectedTest = self.constructor([[], [], []], pointNames=pointNames)
+        expectedTest = self.constructor([], pointNames=pointNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
