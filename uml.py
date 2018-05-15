@@ -54,8 +54,8 @@ UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 
 
 def createRandomData(
-        returnType, numPoints, numFeatures, sparsity, numericType="float",
-        pointNames='automatic', featureNames='automatic', name=None):
+        returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
+        featureNames='automatic', elementType='float', name=None):
     """
     Generates a data object with random contents.
 
@@ -69,9 +69,9 @@ def createRandomData(
     sparsity - is the likelihood that the value of a (point,feature) pair is
     zero.
 
-    numericType - if is 'float' (default) then the value of (point, feature)
+    elementType - if is 'float' (default) then the value of (point, feature)
     pairs are sampled from a normal distribution (location 0, scale 1). If
-    numericType is 'int' then value of (point, feature) pairs are sampled from
+    elementType is 'int' then value of (point, feature) pairs are sampled from
     uniform integer distribution [1 100]. Zeros are not counted in/do not
     affect the aforementioned sampling distribution.
 
@@ -92,8 +92,8 @@ def createRandomData(
         raise ArgumentException("must specify a positive nonzero number of features")
     if sparsity < 0 or sparsity >= 1:
         raise ArgumentException("sparsity must be greater than zero and less than one")
-    if numericType != "int" and numericType != "float":
-        raise ArgumentException("numericType may only be 'int' or 'float'")
+    if elementType != "int" and elementType != "float":
+        raise ArgumentException("elementType may only be 'int' or 'float'")
 
 
     #note: sparse is not stochastic sparsity, it uses rigid density measures
@@ -117,7 +117,7 @@ def createRandomData(
         # The feature value is determined by counting the offset from each point edge.
         featureIndices = nzLocation % numFeatures
 
-        if numericType == 'int':
+        if elementType == 'int':
             dataVector = numpyRandom.randint(low=1, high=100, size=numNonZeroValues)
         #numeric type is float; distribution is normal
         else:
@@ -128,21 +128,21 @@ def createRandomData(
 
     #for non-sparse matrices, use numpy to generate matrices with sparsity characterics
     else:
-        if numericType == 'int':
+        if elementType == 'int':
             filledIntMatrix = numpyRandom.randint(1, 100, (numPoints, numFeatures))
         else:
             filledFloatMatrix = numpyRandom.normal(loc=0.0, scale=1.0, size=(numPoints, numFeatures))
 
         #if sparsity is zero
         if abs(float(sparsity) - 0.0) < 0.0000000001:
-            if numericType == 'int':
+            if elementType == 'int':
                 randData = filledIntMatrix
             else:
                 randData = filledFloatMatrix
         else:
             binarySparsityMatrix = numpyRandom.binomial(1, 1.0 - sparsity, (numPoints, numFeatures))
 
-            if numericType == 'int':
+            if elementType == 'int':
                 randData = binarySparsityMatrix * filledIntMatrix
             else:
                 randData = binarySparsityMatrix * filledFloatMatrix
