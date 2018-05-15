@@ -3993,8 +3993,10 @@ class Base(object):
 
         # check name restrictions
         if isUML:
-            self._validateEqualNames('point', 'point', opName, other)
-            self._validateEqualNames('feature', 'feature', opName, other)
+            if self.pointNamesInverse is not None and other.pointNamesInverse is not None:
+                self._validateEqualNames('point', 'point', opName, other)
+            if self.featureNamesInverse is not None and other.featureNamesInverse is not None:
+                self._validateEqualNames('feature', 'feature', opName, other)
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
                     '__itruediv__', '__floordiv__', '__rfloordiv__', '__ifloordiv__',
