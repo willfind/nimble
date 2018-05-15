@@ -402,7 +402,8 @@ def trial_Coefficient_removal_by_least_magnitude(trainX, trainY, testX, testY):
     objName = predictionMode
     raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
     figurePath = './results-least_magnitude.png'
-    raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+    raw.transpose()
+    raw.plotFeatureAgainstFeature(0,1, outPath=figurePath)
     exit(0)
 
 
@@ -426,7 +427,8 @@ def trial_Coefficient_removal_by_least_value(trainX, trainY, testX, testY):
     objName = predictionMode
     raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
     figurePath = './results-least_value.png'
-    raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+    raw.transpose()
+    raw.plotFeatureAgainstFeature(0,1, outPath=figurePath)
     exit(0)
 
 
@@ -552,12 +554,14 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
 #   corrOmit = [val for pair in zip(omit, omit, omit) for val in pair]
 #   raw = UML.createData("List", [corrOmit, resultsLV], pointNames=pnames, name=objName)
 #   figurePath = './results-least_value_triple_trials.png'
-#   raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+#   raw.transpose()
+#   raw.plotFeatureAgainstFeature(0,1, outPath=figurePath)
 
 #   objName = "Least Magnitude randomness analysis"
 #   raw = UML.createData("List", [corrOmit, resultsLM], pointNames=pnames, name=objName)
 #   figurePath = './results-least_magnitude_triple_trials.png'
-#   raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+#   raw.transpose()
+#   raw.plotFeatureAgainstFeature(0,1, outPath=figurePath)
 
     # coefficients
     allTL = tlLV + tlLM
