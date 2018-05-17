@@ -429,6 +429,7 @@ def lambdaFunctionString(function):
     return lambdaString
 
 def buildArgDict(argNames, defaults, *args, **kwargs):
+    print(argNames, type(argNames))
     argNames.remove("self")
     nameArgMap = {}
     for name, arg in zip(argNames,args):
@@ -452,3 +453,4 @@ def buildArgDict(argNames, defaults, *args, **kwargs):
     for name in kwargs:
         if name in defaultDict and defaultDict[name] != kwargs[name]:
             argDict[name] = kwargs[name]
+    return argDict

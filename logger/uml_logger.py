@@ -11,9 +11,11 @@ from datetime import datetime
 from dateutil.parser import parse
 from ast import literal_eval
 from textwrap import wrap
+from functools import wraps
 
 import UML
 from UML.exceptions import ArgumentException
+from .stopwatch import Stopwatch
 
 """
     Handle logging of creating and testing learners.
@@ -30,6 +32,116 @@ from UML.exceptions import ArgumentException
     Level 3: Cross validation
 """
 
+def logCapture(function):
+    """UML function wrapper to determine whether the provided function will be added to log
+        """
+    def wrapper(*args, **kwargs):
+        funcName = function.__name__
+        args = args
+        kwargs = kwargs
+        a, v, k, d = inspect.getargspec(function)
+        argNames = a
+        defaults = d
+        logger = UML.logger.active
+        logger.counter += 1
+        timer = Stopwatch()
+        timer.start("timer")
+        try:
+            ret = function(*args, **kwargs)
+            logger.counter -= 1
+        except Exception as e:
+            logger.counter = 0
+            raise e
+        finally:
+            timer.stop("timer")
+        if logger.counter == 0:
+            if funcName == "crossValidateBackend":
+                useLog, deepLog = getUseLog(argNames, args, kwargs)
+                if useLog and deepLog:
+                    logger.insertIntoLog(logger.logType, logger.logInfo)
+            elif "useLog" in argNames and hasattr(UML.data.base.Base, funcName):
+                # special cases logging is handled in base.py
+                specialCases = ["dropFeaturesContainingType", "_normalizeGeneric",
+                                "featureReport", "summaryReport"]
+                if funcName not in specialCases:
+                    argDict = buildArgDict(argNames, defaults, args, kwargs)
+                    logger.logPrep(funcName, args[0].getTypeString(), argDict)
+                logger.insertIntoLog(logger.logType, logger.logInfo)
+            elif "useLog" in argNames:
+                useLog, _ = getUseLog(argNames, args, kwargs)
+                if useLog:
+                    logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
+                    logger.insertIntoLog(logger.logType, logger.logInfo)
+        elif funcName == "crossValidateBackend":
+            useLog, deepLog = getUseLog(argNames, args, kwargs)
+            if useLog and deepLog:
+                logger.insertIntoLog(logger.logType, logger.logInfo)
+        return ret
+    return wrapper
+
+
+def getUseLog(argNames, args, kwargs):
+    try:
+        useLogIndex = argNames.index("useLog")
+        useLog = args[useLogIndex]
+    except IndexError:
+        useLog = kwargs.get("useLog", None)
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+    deepLog = UML.settings.get("logger", "enableCrossValidationDeepLogging")
+    deepLog = True if deepLog.lower() == 'true' else False
+    return useLog, deepLog
+
+
+# def logged(toWrap):
+#     """
+#     Suspends the logger when the user calls a UML function, preventing any internal calls to
+#     UML functions from being logged.unsuspends the logger if an error is raised. This allows
+#     the logger to continue logging in the case that the user is capturing/ignoring Exceptions
+#     """
+#     @wraps(toWrap)
+#     def wrapper(*args, **kwargs):
+#         logger = UML.logger.active
+#         if logger.counter == 0 or toWrap.__name__ == "crossValidateBackend":
+#             a, v, k, d = inspect.getargspec(toWrap)
+#             print(toWrap.__name__)
+#             print(a)
+#             try:
+#                 useLogIndex = a.index("useLog")
+#                 useLog = args[useLogIndex]
+#             except IndexError:
+#                 useLog = kwargs.get("useLog", None)
+#             if useLog is None:
+#                 useLog = UML.settings.get("logger", "enabledByDefault")
+#                 useLog = True if useLog.lower() == 'true' else False
+#             deepLog = UML.settings.get("logger", "enableCrossValidationDeepLogging")
+#             deepLog = True if deepLog.lower() == 'true' else False
+#         else:
+#             useLog = False
+#         logger.counter += 1
+#         try:
+#             if useLog:
+#                 timer = Stopwatch()
+#                 timer.start("timer")
+#             ret = toWrap(*args,**kwargs)
+#             logger.counter -= 1
+#             if useLog:
+#                 timer.stop("timer")
+#             if toWrap.__name__ == "crossValidateBackend":
+#                 if useLog and deepLog:
+#                     logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
+#                     logger.insertIntoLog(logger.logType, logger.logInfo)
+#             elif useLog and logger.counter == 0:
+#                 logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
+#                 logger.insertIntoLog(logger.logType, logger.logInfo)
+#         except Exception as e:
+#             logger.counter = 0
+#             raise e
+#         return ret
+#     return wrapper
+
+
 class UmlLogger(object):
     def __init__(self, logLocation, logName):
         fullLogDesignator = os.path.join(logLocation, logName)
@@ -38,7 +150,9 @@ class UmlLogger(object):
         self.logFileName = fullLogDesignator + ".mr"
         self.runNumber = None
         self.isAvailable = False
-        self.suspended = False
+        self.counter = 0
+        self.logType = None
+        self.logInfo = {}
 
 
     def setup(self, newFileName=None):
@@ -133,7 +247,8 @@ class UmlLogger(object):
         logInfo["name"] = name
         logInfo["path"] = path
 
-        self.insertIntoLog(logType, logInfo)
+        self.logType = logType
+        self.logInfo = logInfo
 
     def logData(self, reportType, reportInfo):
         """
@@ -143,7 +258,9 @@ class UmlLogger(object):
         logInfo = {}
         logInfo["reportType"] = reportType
         logInfo["reportInfo"] = reportInfo
-        self.insertIntoLog(logType, logInfo)
+
+        self.logType = logType
+        self.logInfo = logInfo
 
     def logPrep(self, umlFunction, dataObject, arguments):
         """
@@ -155,14 +272,15 @@ class UmlLogger(object):
         logInfo["object"] = dataObject
         logInfo["arguments"] = arguments
 
-        self.insertIntoLog(logType, logInfo)
+        self.logType = logType
+        self.logInfo = logInfo
 
     def logRun(self, umlFunction, trainData, trainLabels, testData, testLabels,
-                               learnerFunction, arguments, metrics, timer,
-                               extraInfo=None, numFolds=None):
+               learnerFunction, arguments, metrics, extraInfo=None, numFolds=None):
         """
         Log information about each run
         """
+
         logType = "run"
         logInfo = {}
         logInfo["function"] = umlFunction
@@ -209,16 +327,14 @@ class UmlLogger(object):
         if metrics is not None and metrics is not {}:
             logInfo["metrics"] = metrics
 
-        if timer is not None and timer.cumulativeTimes is not {}:
-            logInfo["timer"] = sum(timer.cumulativeTimes.values())
-
         if extraInfo is not None and extraInfo is not {}:
             logInfo["extraInfo"] = extraInfo
 
-        self.insertIntoLog(logType, logInfo)
+        self.logType = logType
+        self.logInfo = logInfo
 
     def logCrossValidation(self, trainData, trainLabels, learnerName, metric, performance,
-                           timer, learnerArgs, folds=None):
+                           learnerArgs, folds=None):
         """
         Log the results of cross validation
         """
@@ -230,7 +346,8 @@ class UmlLogger(object):
         logInfo["metric"] = metric.__name__
         logInfo["performance"] = performance
 
-        self.insertIntoLog(logType, logInfo)
+        self.logType = logType
+        self.logInfo = logInfo
 
 
     ###################
@@ -268,48 +385,66 @@ class UmlLogger(object):
 ### LOG HELPERS ###
 ###################
 
-def logSuspension(toWrap):
-    """
-    Suspends the logger when the user calls a UML function, preventing any internal calls to
-    UML functions from being logged.unsuspends the logger if an error is raised. This allows
-    the logger to continue logging in the case that the user is capturing/ignoring Exceptions
-    """
-    def wrapper(*args, **kwargs):
-        suspended = UML.logger.active.suspended
-        toWrapArgs, varArgs, keywords, defaults = inspect.getargspec(toWrap)
-        # useLog passed as arg
-        try:
-            useLogIndex = toWrapArgs.index("useLog")
-            useLog = args[useLogIndex]
-            if useLog is None:
-                useLog = UML.settings.get("logger", "enabledByDefault")
-                useLog = True if useLog.lower() == 'true' else False
-            args = list(args)
-            args[useLogIndex] = useLog
-        # useLog passed as kwarg
-        except IndexError:
-            if suspended:
-                kwargs["useLog"] = False
-            else:
-                useLog = kwargs.get("useLog", None)
-                if useLog is None:
-                    useLog = UML.settings.get("logger", "enabledByDefault")
-                    useLog = True if useLog.lower() == 'true' else False
-                kwargs["useLog"] = useLog
-        if keywords is not None and hasattr(UML.data.base.Base, toWrap.__name__):
-            kwargs["argNames"] = toWrapArgs
-            kwargs["defaults"] = defaults
+def extractFunctionString(function):
+    """Extracts function name or lambda function if passed a function,
+       Otherwise returns a string"""
+    try:
+        functionName = function.__name__
+        if functionName != "<lambda>":
+            return functionName
+        else:
+            return lambdaFunctionString(function)
+    except AttributeError:
+        return str(function)
 
-        UML.logger.active.suspended = True
-        try:
-            ret = toWrap(*args,**kwargs)
-            UML.logger.active.suspended = suspended
-            return ret
-        except Exception as e:
-            UML.logger.active.suspended = False
-            raise e
-    return wrapper
+def lambdaFunctionString(function):
+    """Returns a string of a lambda function"""
+    sourceLine = inspect.getsourcelines(function)[0][0]
+    line = re.findall(r'lambda.*',sourceLine)[0]
+    lambdaString = ""
+    afterColon = False
+    openParenthesis = 1
+    for letter in line:
+        if letter == "(":
+            openParenthesis += 1
+        elif letter == ")":
+            openParenthesis -= 1
+        elif letter == ":":
+            afterColon = True
+        elif letter == "," and afterColon:
+            return lambdaString
+        if openParenthesis == 0:
+            return lambdaString
+        else:
+            lambdaString += letter
+    return lambdaString
 
+def buildArgDict(argNames, defaults, args, kwargs):
+    argNames.remove("self")
+    args = args[1:]
+    nameArgMap = {}
+    for name, arg in zip(argNames,args):
+        if str(arg).startswith("<") and str(arg).endswith(">"):
+            nameArgMap[name] = extractFunctionString(arg)
+        else:
+            nameArgMap[name] = str(arg)
+    startDefaults = len(argNames) - len(defaults)
+    defaultArgs = argNames[startDefaults:]
+    defaultDict = {}
+    for name, value in zip(defaultArgs, defaults):
+        if name != "useLog":
+            defaultDict[name] = value
+
+    argDict = {}
+    for name in nameArgMap:
+        if name not in defaultDict:
+            argDict[name] = nameArgMap[name]
+        elif name in defaultDict and defaultDict[name] != nameArgMap[name]:
+            argDict[name] = nameArgMap[name]
+    for name in kwargs:
+        if name in defaultDict and defaultDict[name] != kwargs[name]:
+            argDict[name] = kwargs[name]
+    return argDict
 
 def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
                            endDate, maximumEntries, searchForText):

@@ -28,7 +28,7 @@ if not hasattr(itertools, 'ifilter'):#in python3, itertools.ifilter is not there
 import UML
 
 from UML.logger import Stopwatch
-from UML.logger.uml_logger import logSuspension
+from UML.logger.uml_logger import logCapture
 
 from UML.exceptions import ArgumentException, ImproperActionException
 from UML.exceptions import PackageException
@@ -2333,7 +2333,7 @@ def generateAllPairs(items):
 
     return pairs
 
-
+@logCapture
 def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, folds=10, scoreMode='label', useLog=None,
                          **kwarguments):
     """
@@ -2341,8 +2341,6 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
     which is allowed to be either an int indicating the number of folds to use, or a foldIterator object
     to use explicitly.
     """
-    suspended = UML.logger.active.suspended
-    UML.logger.active.suspended = True
     if not isinstance(X, Base):
         raise ArgumentException("X must be a Base object")
     if Y is not None:
@@ -2445,22 +2443,8 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # we use the current results container to be the return value
         performanceOfEachCombination[i] = (curArgSet, finalPerformance)
 
-    # log results of this cross validation
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
-    deepLog = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
-    deepLog = True if deepLog.lower() == 'true' else False
-    toLog = useLog and deepLog
-    if toLog:
-        # TODO: should we have an actual timer here? if we do should we remove
-        # the CV timing from logRun?
-        timer = None
-
-        # (self, trainData, trainLabels, learnerName, metric, performance, timer, learnerArgs, folds)
-        UML.logger.active.logCrossValidation(X, Y, learnerName, performanceFunction,
-                                             performanceOfEachCombination, timer, merged, folds)
-    UML.logger.active.suspended = suspended
+    UML.logger.active.logCrossValidation(X, Y, learnerName, performanceFunction,
+                                         performanceOfEachCombination, merged, folds)
     #return the list of tuples - tracking the performance of each argument
     return performanceOfEachCombination
 
@@ -3368,7 +3352,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
     else:
         raise ArgumentException('Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode))
 
-@logSuspension
+
 def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments={}, performanceFunction=None, useLog=None,
                          **kwarguments):
     """
@@ -3380,7 +3364,7 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
     _validArguments(kwarguments)
     merged = _mergeArguments(arguments, kwarguments)
 
-    timer = Stopwatch() if useLog else None
+    # timer = Stopwatch() if useLog else None
 
     # if testY is in testX, we need to extract it before we call a trainAndApply type function
     if isinstance(testY, (six.string_types, int, int)):
@@ -3398,12 +3382,12 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
         metrics[key.__name__] = value
 
     # Send this run to the log, if desired
-    if useLog:
-        if not isinstance(performanceFunction, list):
-            performanceFunction = [performanceFunction]
-            results = [results]
-        UML.logger.active.logRun(f.__name__, trainX, trainY, testX, testY, learnerName,
-                                 merged, metrics, timer)
+    # if useLog:
+    #     if not isinstance(performanceFunction, list):
+    #         performanceFunction = [performanceFunction]
+    #         results = [results]
+    #     UML.logger.active.logRun(f.__name__, trainX, trainY, testX, testY, learnerName,
+    #                              merged, metrics, timer)
 
     return results
 

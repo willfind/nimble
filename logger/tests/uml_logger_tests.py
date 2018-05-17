@@ -92,8 +92,8 @@ def testNewRunNumberEachSetup():
 
 @with_setup(setup_func, teardown_func)
 def testTopLevelFunctionsUseLog():
+    """tests that top level functions not tested in testLoggingFlags are being logged"""
     removeLogFile()
-    """assert that each call to a top level function with a useLog argument generates a log entry"""
     lengthQuery = "SELECT COUNT(entry) FROM logger"
     infoQuery = "SELECT logInfo FROM logger ORDER BY entry DESC LIMIT 1"
     lengthExpected = 0
@@ -125,40 +125,13 @@ def testTopLevelFunctionsUseLog():
     #normalizeData
     # copy to avoid modifying original data
     trainXNormalize = trainXObj.copy()
-    lengthExpected += 1
     testXNormalize = testXObj.copy()
-    lengthExpected += 1
     UML.normalizeData('mlpy.PCA', trainXNormalize, testX=testXNormalize, arguments={'k': 1})
     lengthExpected += 1
 
     logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
     assert logLength == lengthExpected
     assert "'function': 'normalizeData'" in logInfo
-
-    #train
-    trainedLearner = UML.train("sciKitLearn.SVC", trainXObj, trainYObj)
-    lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'train'" in logInfo
-
-    #trainAndApply
-    predictions = UML.trainAndApply("sciKitLearn.SVC", trainXObj, trainYObj, testXObj)
-    lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'trainAndApply'" in logInfo
-
-    #trainAndTest
-    results = UML.trainAndTest("sciKitLearn.SVC", trainXObj, trainYObj, testXObj, testYObj,
-                                 performanceFunction=RMSE)
-    lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'trainAndTest'" in logInfo
 
     #trainAndTestOnTrainingData
     results = UML.trainAndTestOnTrainingData("sciKitLearn.SVC", trainXObj, trainYObj,
@@ -171,6 +144,7 @@ def testTopLevelFunctionsUseLog():
 
 @with_setup(setup_func, teardown_func)
 def testBaseObjectFunctionsUseLog():
+    """Test that the functions in base using useLog are being logged"""
     removeLogFile()
     lengthQuery = "SELECT COUNT(entry) FROM logger"
     infoQuery = "SELECT logInfo FROM logger ORDER BY entry DESC LIMIT 1"
@@ -193,7 +167,6 @@ def testBaseObjectFunctionsUseLog():
     assert "'function': 'dropFeaturesContainingType'" in logInfo
 
     # replaceFeatureWithBinaryFeatures; createData not logged
-
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.replaceFeatureWithBinaryFeatures(0)
     lengthExpected += 1
@@ -219,24 +192,6 @@ def testBaseObjectFunctionsUseLog():
     logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
     assert logLength == lengthExpected
     assert "'function': 'extractPointsByCoinToss'" in logInfo
-
-    # calculateForEachPoint; createData not logged
-    dataObj = UML.createData("Matrix", data, useLog=False)
-    calculated = dataObj.calculateForEachPoint(lambda x: [point for point in x])
-    lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'calculateForEachPoint'" in logInfo
-
-    # calculateForEachFeature; createData not logged
-    dataObj = UML.createData("Matrix", data, useLog=False)
-    calculated = dataObj.calculateForEachFeature(lambda x: [point for point in x], features=0)
-    lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'calculateForEachFeature'" in logInfo
 
     # #TODO mapReducePoints; createData not logged
     # dataObj = UML.createData("Matrix", data, useLog=False)
@@ -332,6 +287,20 @@ def testBaseObjectFunctionsUseLog():
     assert logLength == lengthExpected
     assert "'function': 'normalizeFeatures'" in logInfo
 
+    # featureReport; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    fReport = dataObj[:,1].featureReport()
+    lengthExpected += 1
+
+    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
+    assert logLength == lengthExpected
+    assert "'reportType': 'feature'" in logInfo
+
+    # summaryReport; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    sReport = dataObj.summaryReport()
+    lengthExpected += 1
+
     # sortPoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.sortPoints(sortBy=dataObj.getFeatureName(0))
@@ -368,62 +337,144 @@ def testBaseObjectFunctionsUseLog():
     assert logLength == lengthExpected
     assert "'function': 'extractFeatures'" in logInfo
 
-    # sortFeatures; createData not logged
+    # transformEachPoint; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
-    dataObj.sortFeatures(sortBy=dataObj.getFeatureName(0))
+    dataCopy = dataObj.copy()
+    calculated = dataCopy.transformEachPoint(lambda x: [point for point in x])
     lengthExpected += 1
 
     logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
     assert logLength == lengthExpected
-    assert "'function': 'sortFeatures'" in logInfo
+    assert "'function': 'transformEachPoint'" in logInfo
 
-    # featureReport; createData not logged
+    # transformEachFeature; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
-    fReport = dataObj[:,1].featureReport()
+    dataCopy = dataObj.copy()
+    calculated = dataCopy.transformEachFeature(lambda x: [point for point in x], features=0)
     lengthExpected += 1
 
     logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
     assert logLength == lengthExpected
-    assert "'reportType': 'feature'" in logInfo
+    assert "'function': 'transformEachFeature'" in logInfo
 
-    # summaryReport; createData not logged
+    # transformEachElement; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
-    sReport = dataObj.summaryReport()
+    dataCopy = dataObj.copy()
+    calculated = dataCopy.transformEachElement(lambda x: [point for point in x], features=0)
     lengthExpected += 1
 
     logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
     assert logLength == lengthExpected
-    assert "'reportType': 'summary'" in logInfo
+    assert "'function': 'transformEachElement'" in logInfo
 
-# @with_setup(setup_func, teardown_func)
-# def testUniversalInterfaceUseLog():
-#     pass
-#
-# @with_setup(setup_func, teardown_func)
-# def testHelpersUseLog():
-#     pass
-#
-# @with_setup(setup_func, teardown_func)
-# def testLogEntriesByType():
-#     #logRun test nonstring learnerType
-#     pass
-#
-# @with_setup(setup_func, teardown_func)
-# def testLogEntriesByType():
-#     pass
-#
-# @with_setup(setup_func, teardown_func)
-# def testHandmadeLogEntriesInput():
-#     pass
-#
-# ##############
-# ### OUTPUT ###
-# ##############
-#
-# @with_setup(setup_func, teardown_func)
-# def testShowLogSearchFilters():
-#     #runNumber, date, text, maxEntries, all permutations
-#     pass
+
+@with_setup(setup_func, teardown_func)
+def testBaseObjectFunctionsWithoutUseLog():
+    """test a handful of base objects that make calls to logged functions"""
+    removeLogFile()
+    lengthQuery = "SELECT COUNT(entry) FROM logger"
+    lengthLog = UML.logger.active.extractFromLog(lengthQuery)[0][0] # returns list of tuples i.e. [(0,)]
+    # ensure starting table has no values
+    assert lengthLog == 0
+
+    data = [["a", 1], ["a", 1], ["a", 1], ["a", 1], ["a", 1], ["a", 1],
+            ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2],
+            ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3]]
+
+    # copyPoints; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    dataCopy = dataObj.copyPoints(start=1)
+
+    logLength = singleValueQueries(lengthQuery)[0]
+    assert logLength == 0
+
+    # copyFeatures; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    dataCopy = dataObj.copyFeatures(start=1)
+
+    logLength = singleValueQueries(lengthQuery)[0]
+    assert logLength == 0
+
+    # copyAs; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    dataCopy = dataObj.copyAs("pythonlist")
+
+    logLength = singleValueQueries(lengthQuery)[0]
+    assert logLength == 0
+
+    # countPoints; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    count = dataObj.countPoints(lambda x: x>0)
+
+    logLength = singleValueQueries(lengthQuery)[0]
+    assert logLength == 0
+
+    # countFeatures; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    count = dataObj.countFeatures(lambda x: x>0)
+
+    logLength = singleValueQueries(lengthQuery)[0]
+    assert logLength == 0
+
+
+@with_setup(setup_func, teardown_func)
+def testHandmadeLogEntriesInput():
+    removeLogFile()
+    lengthQuery = "SELECT COUNT(entry) FROM logger"
+    infoQuery = "SELECT logInfo FROM logger ORDER BY entry DESC LIMIT 1"
+    lengthExpected = 0
+    lengthLog = UML.logger.active.extractFromLog(lengthQuery)[0][0] # returns list of tuples i.e. [(0,)]
+    # ensure starting table has no values
+    assert lengthLog == lengthExpected
+
+    # custom string
+    customString = "enter this string into the log"
+    UML.log("customString", customString)
+    lengthExpected += 1
+
+    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
+    assert logLength == lengthExpected
+    assert customString in logInfo
+
+    #custom list
+    customList = ["this", "custom", "list", 1, 2, 3, {"list":"tested"}]
+    UML.log("customList", customList)
+    lengthExpected += 1
+
+    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
+    assert logLength == lengthExpected
+    for value in customList:
+        assert str(value) in logInfo
+
+    #custom dict
+    customDict = {"custom":"dict", "log":"testing", 1:2, 3:"four"}
+    UML.log("customDict", customDict)
+    lengthExpected += 1
+
+    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
+    assert logLength == lengthExpected
+    for key in customDict.keys():
+        assert str(key) in logInfo
+    for value in customDict.values():
+        assert str(value) in logInfo
+
+@raises(ArgumentException)
+def testLogUnacceptedlogType():
+    UML.log(["unacceptable"], "you can't do this")
+
+@raises(ArgumentException)
+def testLogUnacceptedlogInfo():
+    dataObj = UML.createData("Matrix", [[1]], useLog=False)
+    UML.log("acceptable", dataObj)
+
+##############
+### OUTPUT ###
+##############
+
+@with_setup(setup_func, teardown_func)
+def testShowLogSearchFilters():
+    #runNumber, date, text, maxEntries, all permutations
+    pass
 #
 # @with_setup(setup_func, teardown_func)
 # def testShowLogToStdOut():

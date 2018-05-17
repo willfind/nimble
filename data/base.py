@@ -57,7 +57,7 @@ from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
-from UML.logger.uml_logger import logSuspension
+from UML.logger.uml_logger import logCapture
 from UML.randomness import pythonRandom
 
 from . import dataHelpers
@@ -379,7 +379,7 @@ class Base(object):
     ###########################
     # Higher Order Operations #
     ###########################
-    @logSuspension
+    @logCapture
     def dropFeaturesContainingType(self, typeToDrop, useLog=None):
         """
         Modify this object so that it no longer contains features which have the specified
@@ -408,16 +408,15 @@ class Base(object):
 
         removed = self.extractFeatures(hasType)
 
-        if useLog:
-            argDict = {}
-            dropNames = [drop.__name__ for drop in typeToDrop]
-            dropString = str(dropNames)
-            argDict["typeToDrop"] = dropString
-            UML.logger.active.logPrep("dropFeaturesContainingType", self.getTypeString(), argDict)
+        argDict = {}
+        dropNames = [drop.__name__ for drop in typeToDrop]
+        dropString = str(dropNames)
+        argDict["typeToDrop"] = dropString
+        UML.logger.active.logPrep("dropFeaturesContainingType", self.getTypeString(), argDict)
 
         return
 
-    @logSuspension
+    @logCapture
     def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
         """
         Modify this object so that the chosen feature is removed, and binary valued
@@ -469,12 +468,8 @@ class Base(object):
         toConvert.extractFeatures([varName])
         self.appendFeatures(toConvert)
 
-        if useLog:
-            argDict = {}
-            argDict["featureToReplace"] = featureToReplace
-            UML.logger.active.logPrep("replaceFeatureWithBinaryFeatures", self.getTypeString(), argDict)
 
-    @logSuspension
+    @logCapture
     def transformFeatureToIntegers(self, featureToConvert, useLog=None):
         """
         Modify this object so that the chosen feature in removed, and a new integer
@@ -521,12 +516,8 @@ class Base(object):
 
         self.appendFeatures(converted)
 
-        if useLog:
-            argDict = {}
-            argDict["featureToConvert"] = featureToConvert
-            UML.logger.active.logPrep("transformFeatureToIntegers", self.getTypeString(), argDict)
 
-    @logSuspension
+    @logCapture
     def extractPointsByCoinToss(self, extractionProbability, useLog=None):
         """
         Return a new object containing a randomly selected sample of points
@@ -550,14 +541,9 @@ class Base(object):
 
         ret = self.extractPoints(experiment)
 
-        if useLog:
-            argDict = {}
-            argDict["extractionProbability"] = extractionProbability
-            UML.logger.active.logPrep("extractPointsByCoinToss", self.getTypeString(), argDict)
-
         return ret
 
-    @logSuspension
+    @logCapture
     def calculateForEachPoint(self, function, points=None, useLog=None):
         """
         Calculates the results of the given function on the specified points
@@ -603,16 +589,9 @@ class Base(object):
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
-        if useLog:
-            argDict = {}
-            argDict['function'] = extractFunctionString(function)
-            if points is not None:
-                argDict['points'] = points
-            UML.logger.active.logPrep("calculateForEachPoint", self.getTypeString(), argDict)
-
         return ret
 
-    @logSuspension
+    @logCapture
     def calculateForEachFeature(self, function, features=None, useLog=None, **kwargs):
         """
         Calculates the results of the given function on the specified features
@@ -659,13 +638,6 @@ class Base(object):
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
-        if useLog:
-            argDict = {}
-            argDict['function'] = extractFunctionString(function)
-            if features is not None:
-                argDict['features'] = features
-            UML.logger.active.logPrep("calculateForEachFeature", self.getTypeString(), argDict)
-
         return ret
 
 
@@ -701,7 +673,7 @@ class Base(object):
 
         return ret
 
-    @logSuspension
+    @logCapture
     def mapReducePoints(self, mapper, reducer, useLog=None):
         if self.points == 0:
             return UML.createData(self.getTypeString(), numpy.empty(shape=(0, 0)))
@@ -743,15 +715,9 @@ class Base(object):
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
-        if useLog:
-            argDict = {}
-            argDict["mapper"] = extractFunctionString(mapper)
-            argDict["reducer"] = extractFunctionString(reducer)
-            UML.logger.active.logPrep("mapReducePoints", self.getTypeString(), argDict)
-
         return ret
 
-    @logSuspension
+    @logCapture
     def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
         """
         Group data object by one or more features.
@@ -791,16 +757,9 @@ class Base(object):
                 tmp.extractFeatures(by)
                 res[k] = tmp
 
-        if useLog:
-            argDict = {}
-            argDict['by'] = by
-            if countUniqueValueOnly:
-                argDict['countUniqueValueOnly'] = countUniqueValueOnly
-            UML.logger.active.logPrep("groupByFeature", self.getTypeString(), argDict)
-
         return res
 
-
+    @logCapture
     def countUniqueFeatureValues(self, feature):
         """
         Count unique values for one feature or multiple features combination.
@@ -857,7 +816,7 @@ class Base(object):
 
         return featureIt(self)
 
-    @logSuspension
+    @logCapture
     def calculateForEachElement(self, function, points=None, features=None, preserveZeros=False,
                                 skipNoneReturnValues=False, outputType=None, useLog=None):
         """
@@ -938,24 +897,9 @@ class Base(object):
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
-        if useLog:
-            argDict = {}
-            argDict['function'] = extractFunctionString(function)
-            if points is not None:
-                argDict['points'] = points
-            if features is not None:
-                argDict['features'] = features
-            if preserveZeros:
-                argDict['preserveZeros'] = preserveZeros
-            if skipNoneReturnValues:
-                argDict['skipNoneReturnValues'] = skipNoneReturnValues
-            if outputType is not None:
-                argDict['outputType'] = outputType
-            UML.logger.active.logPrep("calculateForEachElement", self.getTypeString(), argDict)
-
         return ret
 
-
+    @logCapture
     def countElements(self, function):
         """
         Apply the function onto each element, the result should be True or False, or 1 or 0. Then return back the sum of
@@ -971,6 +915,7 @@ class Base(object):
             raise ArgumentException('function can only be a function or str, not else')
         return int(numpy.sum(ret.data))
 
+    @logCapture
     def hashCode(self):
         """returns a hash for this matrix, which is a number x in the range 0<= x < 1 billion
         that should almost always change when the values of the matrix are changed by a substantive amount"""
@@ -983,7 +928,7 @@ class Base(object):
         #this should return an integer x in the range 0<= x < 1 billion
         return int(int(round(bigNum * avg)) % bigNum)
 
-
+    @logCapture
     def isApproximatelyEqual(self, other):
         """If it returns False, this DataMatrix and otherDataMatrix definitely don't store equivalent data.
         If it returns True, they probably do but you can't be absolutely sure.
@@ -997,7 +942,7 @@ class Base(object):
         if self.hashCode() != other.hashCode(): return False
         return True
 
-    @logSuspension
+    @logCapture
     def shufflePoints(self, indices=None, useLog=None):
         """
         Permute the indexing of the points so they are in a random order. Note: this relies on
@@ -1024,13 +969,8 @@ class Base(object):
         permuter.indices = indices
         self.sortPoints(sortHelper=permuter)
 
-        if useLog:
-            argDict = {}
-            if indices is not None:
-                argDict["indices"] = indices
-            UML.logger.active.logPrep("shufflePoints", self.getTypeString(), argDict)
 
-    @logSuspension
+    @logCapture
     def shuffleFeatures(self, indices=None, useLog=None):
         """
         Permute the indexing of the features so they are in a random order. Note: this relies on
@@ -1055,12 +995,6 @@ class Base(object):
 
         self.sortFeatures(sortHelper=permuter)
 
-        if useLog:
-            argDict = {}
-            if indices is not None:
-                argDict["indices"] = indices
-            UML.logger.active.logPrep("shuffleFeatures", self.getTypeString(), argDict)
-
 
     def copy(self):
         """
@@ -1070,7 +1004,7 @@ class Base(object):
         """
         return self.copyAs(self.getTypeString())
 
-    @logSuspension
+    @logCapture
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True, useLog=None):
         """Partitions this object into training / testing, data / labels
         sets, returning a new object for each as needed.
@@ -1114,14 +1048,7 @@ class Base(object):
         if labels is None:
             toSplit.name = self.name + " trainX"
             testX.name = self.name + " testX"
-            if useLog:
-                argDict = {}
-                argDict['testFraction'] = testFraction
-                if labels is not None:
-                    argDict['labels'] = labels
-                if not randomOrder:
-                    argDict['randomOrder'] = randomOrder
-                UML.logger.active.logPrep("trainAndTestSets", self.getTypeString(), argDict)
+
             return toSplit, testX
 
         # safety for empty objects
@@ -1136,15 +1063,6 @@ class Base(object):
         trainY.name = self.name + " trainY"
         testX.name = self.name + " testX"
         testY.name = self.name + " testY"
-
-        if useLog:
-            argDict = {}
-            argDict['testFraction'] = testFraction
-            if labels is not None:
-                argDict['labels'] = labels
-            if not randomOrder:
-                argDict['randomOrder'] = randomOrder
-            UML.logger.active.logPrep("trainAndTestSets", self.getTypeString(), argDict)
 
         return toSplit, trainY, testX, testY
 
@@ -1222,7 +1140,7 @@ class Base(object):
         """
         self._normalizeGeneric("feature", subtract, divide, applyResultTo, useLog=useLog)
 
-    @logSuspension
+    @logCapture
     def _normalizeGeneric(self, axis, subtract, divide, applyResultTo, useLog=None):
 
         # used to trigger later conditionals
@@ -1419,20 +1337,19 @@ class Base(object):
                 if alsoIsObj:
                     applyResultTo /= divide
 
-        if useLog:
-            if axis == 'point':
-                name = "normalizePoints"
-            else:
-                name = "normalizeFeatures"
-            argDict = {}
-            if subtract is not None:
-                argDict["subtract"] = subtract
-            if divide is not None:
-                argDict["divide"] = divide
-            if applyResultTo is not None:
-                argDict["applyResultTo"] = applyResultTo
+        if axis == 'point':
+            name = "normalizePoints"
+        else:
+            name = "normalizeFeatures"
+        argDict = {}
+        if subtract is not None:
+            argDict["subtract"] = subtract
+        if divide is not None:
+            argDict["divide"] = divide
+        if applyResultTo is not None:
+            argDict["applyResultTo"] = applyResultTo
 
-            UML.logger.active.logPrep(name, self.getTypeString(), argDict)
+        UML.logger.active.logPrep(name, self.getTypeString(), argDict)
 
         # this operation is self modifying, so we return None
         return None
@@ -1444,7 +1361,7 @@ class Base(object):
     ########################################
     ########################################
 
-    @logSuspension
+    @logCapture
     def featureReport(self, maxFeaturesToCover=50, displayDigits=2, useLog=None):
         """
         Produce a report, in a string formatted as a table, containing summary and statistical
@@ -1452,11 +1369,11 @@ class Base(object):
         than 50 features, only information about 50 of those features will be reported.
         """
         ret = produceFeaturewiseReport(self, maxFeaturesToCover=maxFeaturesToCover, displayDigits=displayDigits)
-        if useLog:
-            UML.logger.active.logData("feature", ret)
+
+        UML.logger.active.logData("feature", ret)
         return ret
 
-    @logSuspension
+    @logCapture
     def summaryReport(self, displayDigits=2, useLog=None):
         """
         Produce a report, in a string formatted as a table, containing summary
@@ -1465,8 +1382,8 @@ class Base(object):
         and number of features.
         """
         ret = produceAggregateReport(self, displayDigits=displayDigits)
-        if useLog:
-            UML.logger.active.logData("summary", ret)
+
+        UML.logger.active.logData("summary", ret)
         return ret
 
 
@@ -2409,7 +2326,7 @@ class Base(object):
     ##################################################################
     ##################################################################
 
-
+    @logCapture
     def transpose(self):
         """
         Function to transpose the data, ie invert the feature and point indices of the data.
@@ -2426,6 +2343,7 @@ class Base(object):
 
         self.validate()
 
+    @logCapture
     def appendPoints(self, toAppend):
         """
         Expand this object by appending the points from the toAppend object
@@ -2475,6 +2393,7 @@ class Base(object):
 
         self.validate()
 
+    @logCapture
     def appendFeatures(self, toAppend):
         """
         Expand this object by appending the features from the toAppend object
@@ -2556,7 +2475,7 @@ class Base(object):
             newObj.fillWith(self, 0, 0, newObj.points - 1, self.features - 1)
             self.referenceDataFrom(newObj)
 
-    @logSuspension
+    @logCapture
     def sortPoints(self, sortBy=None, sortHelper=None, useLog=None):
         """
         Modify this object so that the points are sorted in place, where sortBy may
@@ -2580,15 +2499,8 @@ class Base(object):
 
         self.validate()
 
-        if useLog:
-            argDict = {}
-            if sortBy is not None:
-                argDict["sortBy"] = sortBy
-            if sortHelper is not None:
-                argDict["sortHelper"] = sortHelper
-            UML.logger.active.logPrep("sortPoints", self.getTypeString(), argDict)
 
-    @logSuspension
+    @logCapture
     def sortFeatures(self, sortBy=None, sortHelper=None, useLog=None):
         """
         Modify this object so that the features are sorted in place, where sortBy may
@@ -2613,15 +2525,8 @@ class Base(object):
 
         self.validate()
 
-        if useLog:
-            argDict = {}
-            if sortBy is not None:
-                argDict["sortBy"] = sortBy
-            if sortHelper is not None:
-                argDict["sortHelper"] = sortHelper
-            UML.logger.active.logPrep("sortFeatures", self.getTypeString(), argDict)
 
-    @logSuspension
+    @logCapture
     def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False, useLog=None):
         """
         Modify this object, removing those points that are specified by the input, and returning
@@ -2651,22 +2556,9 @@ class Base(object):
 
         self.validate()
 
-        if useLog:
-            argDict = {}
-            if toExtract is not None:
-                argDict["toExtract"] = extractFunctionString(toExtract)
-            if start is not None:
-                argDict["start"] = start
-            if end is not None:
-                argDict["end"] = end
-            if number is not None:
-                argDict["number"] = number
-            if randomize:
-                argDict["randomize"] = randomize
-            UML.logger.active.logPrep("extractPoints", self.getTypeString(), argDict)
         return ret
 
-    @logSuspension
+    @logCapture
     def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False, useLog=None):
         """
         Modify this object, removing those features that are specified by the input, and returning
@@ -2700,22 +2592,9 @@ class Base(object):
 
         self.validate()
 
-        if useLog:
-            argDict = {}
-            if toExtract is not None:
-                argDict["toExtract"] = extractFunctionString(toExtract)
-            if start is not None:
-                argDict["start"] = start
-            if end is not None:
-                argDict["end"] = end
-            if number is not None:
-                argDict["number"] = number
-            if randomize:
-                argDict["randomize"] = randomize
-            UML.logger.active.logPrep("extractFeatures", self.getTypeString(), argDict)
-
         return ret
 
+    @logCapture
     def countPoints(self, condition):
         """
         Similar to function extractPoints. Here we return back the number of points which satisfy the condition.
@@ -2729,6 +2608,7 @@ class Base(object):
         """
         return numpy.sum([target(i) for i in self.pointIterator()])
 
+    @logCapture
     def countFeatures(self, condition):
         """
         Similar to function extractFeatures. Here we return back the number of features which satisfy the condition.
@@ -2769,7 +2649,7 @@ class Base(object):
 
         self.validate()
 
-
+    @logCapture
     def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
         """
         Return a new object which has the same data (and featureNames, depending on
@@ -2891,7 +2771,7 @@ class Base(object):
 
         return ret
 
-
+    @logCapture
     def copyPoints(self, points=None, start=None, end=None):
         """
         Return a new object which consists only of those specified points, without mutating
@@ -2944,7 +2824,7 @@ class Base(object):
 
         return retObj
 
-
+    @logCapture
     def copyFeatures(self, features=None, start=None, end=None):
         """
         Return a new object which consists only of those specified features, without mutating
@@ -2996,8 +2876,8 @@ class Base(object):
 
         return ret
 
-    #TODO
-    def transformEachPoint(self, function, points=None):
+    @logCapture
+    def transformEachPoint(self, function, points=None, useLog=None):
         """
         Modifies this object to contain the results of the given function
         calculated on the specified points in this object.
@@ -3030,8 +2910,8 @@ class Base(object):
 
         self._transformEachPoint_implementation(function, points)
 
-    #TODO
-    def transformEachFeature(self, function, features=None):
+    @logCapture
+    def transformEachFeature(self, function, features=None, useLog=None):
         """
         Modifies this object to contain the results of the given function
         calculated on the specified features in this object.
@@ -3065,9 +2945,9 @@ class Base(object):
 
         self._transformEachFeature_implementation(function, features)
 
-    #TODO
+    @logCapture
     def transformEachElement(self, function, points=None, features=None, preserveZeros=False,
-                             skipNoneReturnValues=False):
+                             skipNoneReturnValues=False, useLog=None):
         """
         Modifies this object to contain the results of calling function(elementValue)
         or function(elementValue, pointNum, featureNum) for each element.
@@ -3111,8 +2991,8 @@ class Base(object):
 
         self._transformEachElement_implementation(function, points, features, preserveZeros, skipNoneReturnValues)
 
-    #TODO
-    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
+    @logCapture
+    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd, useLog=None):
         """
         Revise the contents of the calling object so that it contains the provided
         values in the given location.
@@ -3177,8 +3057,9 @@ class Base(object):
         self._fillWith_implementation(values, psIndex, fsIndex, peIndex, feIndex)
         self.validate()
 
-    #TODO
-    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
+    @logCapture
+    def handleMissingValues(self, method='remove points', features=None, arguments=None,
+                            alsoTreatAsMissing=[], markMissing=False, useLog=None):
         """
         This function is to remove, replace or impute missing values in an UML container data object.
 
@@ -3251,7 +3132,7 @@ class Base(object):
 
         return ret
 
-    #TODO
+    @logCapture
     def flattenToOnePoint(self):
         """
         Adjust this object in place so that the same values are all in a single point.
@@ -3284,7 +3165,7 @@ class Base(object):
         self.setFeatureNames(self._flattenNames('point'))
         self.setPointNames(['Flattened'])
 
-    #TODO
+    @logCapture
     def flattenToOneFeature(self):
         """
         Adjust this object in place so that the same values are all in a single feature.
@@ -3419,7 +3300,7 @@ class Base(object):
 
         return allDefaultStatus
 
-    #TODO
+    @logCapture
     def unflattenFromOnePoint(self, numPoints):
         """
         Adjust this point vector in place to an object that it could have been flattend from.
@@ -3460,7 +3341,7 @@ class Base(object):
         self.setPointNames(ret[0])
         self.setFeatureNames(ret[1])
 
-    #TODO
+    @logCapture
     def unflattenFromOneFeature(self, numFeatures):
         """
         Adjust this feature vector in place to an object that it could have been flattend from.

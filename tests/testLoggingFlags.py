@@ -24,12 +24,6 @@ def runAndCheck(toCall, useLog):
     cData = generateClassificationData(2, 10, 2)
     ((trainX, trainY), (testX, testY)) = cData
 
-    # log file path
-    loc = UML.settings.get('logger', 'location')
-    name = UML.settings.get('logger', 'name')
-
-    path = os.path.join(loc, name + '.mr')
-    UML.logger.active = UML.logger.UmlLogger(loc, name)
     logger = UML.logger.active
     # count number of starting log entries
     entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
@@ -40,9 +34,7 @@ def runAndCheck(toCall, useLog):
     # make sure it has the expected effect on the count
     entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
     endCount = entryCount[0][0]
-    lastLogs = logger.extractFromLog("SELECT * FROM logger ORDER BY entry LIMIT 2")
 
-    print(startCount, endCount)
     return (startCount, endCount)
 
 
@@ -183,7 +175,7 @@ def test_crossValidateReturnBest():
 # ??????????????????
 # incremental train?
 # reTrain?
-# createData?
+
 
 @configSafetyWrapper
 def backendDeep(toCall, setter):
