@@ -1015,7 +1015,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array([4, 7, 5, 6])
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         exp = self.constructor(coo)
-        
+
         assert ret.isIdentical(exp)
         assert ret[0,0] == exp[0,0]
         assert ret[3,3] == exp[3,3]
@@ -1034,7 +1034,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array([4, 7, 6])
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         exp = self.constructor(coo)
-        
+
         assert ret.isIdentical(exp)
         assert ret[0,0] == exp[0,0]
         assert ret[3,3] == exp[3,3]
@@ -1050,19 +1050,19 @@ class StructureModifying(DataTestObject):
         data = numpy.array([1, 7, 1, 'AAA', 4, 2, 1], dtype='O')
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo_str)
-        # Expected coo_matrix duplicates sum 
+        # Expected coo_matrix duplicates sum
         # with String, but not in duplicate entry
         row  = numpy.array([0, 0, 1, 3])
         col  = numpy.array([0, 2, 1, 3])
         data = numpy.array([4, 7, 5, 'AAA'], dtype='O')
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         exp = self.constructor(coo_str)
-        
+
         assert ret.isIdentical(exp)
         assert ret[0,0] == exp[0,0]
         assert ret[3,3] == exp[3,3]
         assert ret[1,1] == exp[1,1]
-        
+
     @raises(ValueError)
     def test_init_coo_matrix_duplicateswithDupStrings(self):
         # Constructing a matrix with duplicate indices
@@ -2135,6 +2135,107 @@ class StructureModifying(DataTestObject):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
+    def test_extractPoints_handmadeStringWithOperatorWhitespace(self):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        #test featureName=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one = 1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName==value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one == 1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one < 2')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one <= 1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName>value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one > 4')
+        expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
+        expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName>=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one >= 7')
+        expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
+        expectedTest = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=pointNames[:-1], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName!=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one != 4')
+        expectedRet = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
+                                       featureNames=featureNames)
+        expectedTest = self.constructor([[4, 5, 6]], pointNames=[pointNames[1]], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value and return back an empty
+        assert expectedTest.isIdentical(toTest)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one < 1')
+        expectedRet = self.constructor([], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value and return back all data
+        assert expectedTest.isIdentical(toTest)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('one > 0')
+        expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        expectedTest = self.constructor([], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+    def test_extractPoints_handmadeStringWithFeatureWhitespace(self):
+        featureNames = ["feature one", "feature two", "feature three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        #test featureName=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('feature one=1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName=value with operator whitespace
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractPoints('feature one = 1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
     @raises(ArgumentException)
     def test_extractPoints_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
@@ -2646,10 +2747,7 @@ class StructureModifying(DataTestObject):
         #test featureName<value and return back an empty
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.extractFeatures('p1<1')
-        if self.returnType == 'Sparse':
-            expectedRet = self.constructor([], pointNames=pointNames)
-        else:
-            expectedRet = self.constructor([[], [], []], pointNames=pointNames)
+        expectedRet = self.constructor([], pointNames=pointNames)
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
@@ -2658,10 +2756,108 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.extractFeatures('p1>0')
         expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        if self.returnType == 'Sparse':
-            expectedTest = self.constructor([], pointNames=pointNames)
-        else:
-            expectedTest = self.constructor([[], [], []], pointNames=pointNames)
+        expectedTest = self.constructor([], pointNames=pointNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+    def test_extractFeatures_handmadeStringWithOperatorWhitespace(self):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['p1', 'p2', 'p3']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        #test pointName=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p2 = 5')
+        expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
+        expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
+                                        featureNames=[featureNames[0], featureNames[-1]])
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName==value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p1 == 1')
+        expectedRet = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
+        expectedTest = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p3 < 9')
+        expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
+        expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p3 <= 8')
+        expectedRet = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
+        expectedTest = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName>value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p3 > 8')
+        expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
+        expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName>=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p3 > 8.5')
+        expectedRet = self.constructor([[3], [6], [9]], pointNames=pointNames, featureNames=[featureNames[-1]])
+        expectedTest = self.constructor([[1, 2], [4, 5], [7, 8]], pointNames=pointNames, featureNames=featureNames[:-1])
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName!=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p1 != 1.0')
+        expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=featureNames[1:])
+        expectedTest = self.constructor([[1], [4], [7]], pointNames=pointNames, featureNames=[featureNames[0]])
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value and return back an empty
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p1 < 1')
+        expectedRet = self.constructor([], pointNames=pointNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value and return back all data
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('p1 > 0')
+        expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        expectedTest = self.constructor([], pointNames=pointNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+    def test_extractFeatures_handmadeStringWithPointWhitespace(self):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['pt 1', 'pt 2', 'pt 3']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        #test pointName=value with no operator whitespace
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('pt 2=5')
+        expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
+        expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
+                                        featureNames=[featureNames[0], featureNames[-1]])
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test pointName=value with operator whitespace
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.extractFeatures('pt 2 = 5')
+        expectedRet = self.constructor([[2], [5], [8]], pointNames=pointNames, featureNames=[featureNames[1]])
+        expectedTest = self.constructor([[1, 3], [4, 6], [7, 9]], pointNames=pointNames,
+                                        featureNames=[featureNames[0], featureNames[-1]])
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 

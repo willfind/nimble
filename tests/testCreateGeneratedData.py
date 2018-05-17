@@ -47,7 +47,7 @@ def testReturnsFundamentalsCorrect():
     for curType in supportedFundamentalTypes:
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
-                returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, numericType=curType)
+                returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, elementType=curType)
 
                 assert (returned.points == nPoints)
                 assert (returned.features == nFeatures)
@@ -81,7 +81,7 @@ def testSparsityReturnedPlausible():
     for curType in supportedFundamentalTypes:
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
-                returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, numericType=curType)
+                returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, elementType=curType)
 
                 if curReturnType.lower() == 'sparse':
                     nonZerosCount = returned.data.nnz
@@ -127,7 +127,7 @@ def test_createRandomizedData_names_passed():
             for curSparsity in sparsities:
                 ret = createRandomData(
                     curReturnType, numberPoints, numberFeatures, curSparsity,
-                    numericType=curType, pointNames=pnames, featureNames=fnames)
+                    elementType=curType, pointNames=pnames, featureNames=fnames)
 
                 assert ret.getPointNames() == pnames
                 assert ret.getFeatureNames() == fnames

@@ -2016,30 +2016,6 @@ class Base(object):
         p = self._matplotlibBackendHandleing(outPath, plotter, d=self.data)
         return p
 
-
-    def plotPointDistribution(self, point, outPath=None, xMin=None, xMax=None):
-        """Plot a histogram of the distribution of values in the specified
-        point. Along the x axis of the plot will be the values seen in
-        the point, grouped into bins; along the y axis will be the number
-        of values in each bin. Bin width is calculated using
-        Freedman-Diaconis' rule. Control over the width of the x axis
-        is also given, with the warning that user specified values
-        can obscure data that would otherwise be plotted given default
-        inputs.
-
-        point: the identifier (index of name) of the point to show
-
-        xMin: the least value shown on the x axis of the resultant plot.
-
-        xMax: the largest value shown on the x axis of teh resultant plot
-
-        """
-        self._plotPointDistribution(point, outPath, xMin, xMax)
-
-    def _plotPointDistribution(self, point, outPath, xMin=None, xMax=None):
-        self._validateMatPlotLibImport(mplError, 'plotPointDistribution')
-        return self._plotDistribution('point', point, outPath, xMin, xMax)
-
     def plotFeatureDistribution(self, feature, outPath=None, xMin=None, xMax=None):
         """Plot a histogram of the distribution of values in the specified
         Feature. Along the x axis of the plot will be the values seen in
@@ -2114,37 +2090,6 @@ class Base(object):
         # different than Agg.
         p= self._matplotlibBackendHandleing(outPath, plotter, d=toPlot, xLim=(xMin, xMax))
         return p
-
-
-    def plotPointAgainstPoint(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
-                              yMax=None):
-        """Plot a scatter plot of the two input points using the pairwise
-        combination of their values as coordinates. Control over the width
-        of the both axes is given, with the warning that user specified
-        values can obscure data that would otherwise be plotted given default
-        inputs.
-
-        x: the identifier (index of name) of the point from which we
-        draw x-axis coordinates
-
-        y: the identifier (index of name) of the point from which we
-        draw y-axis coordinates
-
-        xMin: the least value shown on the x axis of the resultant plot.
-
-        xMax: the largest value shown on the x axis of teh resultant plot
-
-        yMin: the least value shown on the y axis of the resultant plot.
-
-        yMax: the largest value shown on the y axis of teh resultant plot
-
-        """
-        self._plotPointAgainstPoint(x, y, outPath, xMin, xMax, yMin, yMax)
-
-    def _plotPointAgainstPoint(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
-                               yMax=None):
-        self._validateMatPlotLibImport(mplError, 'plotPointComparison')
-        return self._plotCross(x, 'point', y, 'point', outPath, xMin, xMax, yMin, yMax)
 
     def plotFeatureAgainstFeatureRollingAverage(self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
                                   yMax=None, sampleSizeForAverage=20):
@@ -4052,6 +3997,8 @@ class Base(object):
                                 msg = "the target(%s) is a query string but there is an error" % target
                                 raise ArgumentException(msg)
                             nameOfFeatureOrPoint, valueOfFeatureOrPoint = targetList
+                            nameOfFeatureOrPoint = nameOfFeatureOrPoint.strip()
+                            valueOfFeatureOrPoint = valueOfFeatureOrPoint.strip()
 
                             #when axis=point, check if the feature exists or not
                             #when axis=feature, check if the point exists or not

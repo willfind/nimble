@@ -2,7 +2,7 @@
 
 Methods tested in this file (none modify the data):
 
-pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView, 
+pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView,
 featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
 featureSimilarities, pointStatistics, featureStatistics,
 nonZeroIteratorPointGrouped, nonZeroIteratorFeatureGrouped
@@ -743,7 +743,7 @@ class QueryBackend(DataTestObject):
         """ Regression test with random data and limits. Recreates expected results """
         for pNum in [3, 9]:
             for fNum in [2, 5, 8, 15]:
-                randGen = UML.createRandomData("List", pNum, fNum, 0, numericType='int')
+                randGen = UML.createRandomData("List", pNum, fNum, 0, elementType='int')
                 raw = randGen.data
 
                 fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc',
@@ -976,7 +976,7 @@ class QueryBackend(DataTestObject):
 
     @raises(ArgumentException)
     def test_arrangeDataWithLimits_exception_maxH(self):
-        randGen = UML.createRandomData("List", 5, 5, 0, numericType='int')
+        randGen = UML.createRandomData("List", 5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
 
     @attr('slow')
@@ -1005,7 +1005,7 @@ class QueryBackend(DataTestObject):
                 data.extractFeatures(0)
             else:
                 if valLen is None:
-                    data = UML.createRandomData("List", pNum, fNum, .25, numericType='int')
+                    data = UML.createRandomData("List", pNum, fNum, .25, elementType='int')
                 else:
                     data = makeUniformLength("List", pNum, fNum, valLen)
                 #			raw = data.data
@@ -1805,28 +1805,6 @@ class QueryBackend(DataTestObject):
             endSize = os.path.getsize(path)
             assert startSize < endSize
 
-    #########################
-    # plotPointDistribution #
-    #########################
-
-    @attr('slow')
-    def test_plotPointDistribution_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
-            path = outFile.name
-            startSize = os.path.getsize(path)
-            assert startSize == 0
-
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
-            raw = randGenerated.copyAs('pythonlist')
-            obj = self.constructor(raw)
-            #we call the leading underscore version, because it
-            # returns the process
-            p = obj._plotPointDistribution(point=0, outPath=path)
-            p.join()
-
-            endSize = os.path.getsize(path)
-            assert startSize < endSize
-
     ###########################
     # plotFeatureDistribution #
     ###########################
@@ -1849,27 +1827,6 @@ class QueryBackend(DataTestObject):
             endSize = os.path.getsize(path)
             assert startSize < endSize
 
-    #########################
-    # plotPointAgainstPoint #
-    #########################
-
-    @attr('slow')
-    def test_plotPointAgainstPoint_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='png') as outFile:
-            path = outFile.name
-            startSize = os.path.getsize(path)
-            assert startSize == 0
-
-            randGenerated = UML.createRandomData("List", 10, 10, 0)
-            raw = randGenerated.copyAs('pythonlist')
-            obj = self.constructor(raw)
-            #we call the leading underscore version, because it
-            # returns the process
-            p = obj._plotPointAgainstPoint(x=0, y=1, outPath=path)
-            p.join()
-
-            endSize = os.path.getsize(path)
-            assert startSize < endSize
 
     #############################
     # plotFeatureAgainstFeature #
