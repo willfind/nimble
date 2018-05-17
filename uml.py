@@ -1218,9 +1218,8 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
         append:         Append logs to the file in saveToFileName instead of overwriting file.
                         Default is False
         """
-        UML.logger.active._showLogImplementation(
-                    levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
-                    maximumEntries, searchForText, saveToFileName, append)
+        UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
+                                  maximumEntries, searchForText, saveToFileName, append)
 
 def coo_matrixTodense(origTodense):
     """

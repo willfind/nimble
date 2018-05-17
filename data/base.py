@@ -71,7 +71,6 @@ from .dataHelpers import formatIfNeeded
 
 from .dataHelpers import makeConsistentFNamesAndData
 
-from .dataHelpers import extractFunctionString, lambdaFunctionString, buildArgDict
 def to2args(f):
     """
     this function is for __pow__. In cython, __pow__ must have 3 arguments and default can't be used there.

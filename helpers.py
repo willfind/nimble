@@ -3105,7 +3105,7 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
             raise ArgumentException(msg)
 
 
-def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None,
+def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None,
                           **kwarguments):
     """
     Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
@@ -3140,9 +3140,6 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
         "enabledByDefault" configuration option. If True, send to the logger
         regardless of the global option. If False, do NOT send to the logger,
         regardless of the global option.
-
-        timer: If logging was initiated in a call higher in the stack, then the timing object
-        constructed there will be passed down through this parameter.
 
         kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
         the learner specified by 'learnerName'. To be merged with arguments before being passed
@@ -3226,7 +3223,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
         raise ArgumentException('Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode))
 
 
-def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None, timer=None,
+def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scoreMode='label', useLog=None,
                           **kwarguments):
     """
     Calls on trainAndApply() to train and evaluate the learner defined by 'learnerName.'  Assumes
@@ -3261,9 +3258,6 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         "enabledByDefault" configuration option. If True, send to the logger
         regardless of the global option. If False, do NOT send to the logger,
         regardless of the global option.
-
-        timer: If logging was initiated in a call higher in the stack, then the timing object
-        constructed there will be passed down through this parameter.
 
         kwarguments: optional arguments collected using python's **kwargs syntax, to be passed to
         the learner specified by 'learnerName'. To be merged with arguments before being passed
@@ -3371,8 +3365,7 @@ def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY, arguments
         testX = testX.copy()
         testY = testX.extractFeatures([testY])
 
-    predictions = f(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=False,
-                                        timer=timer)
+    predictions = f(learnerName, trainX, trainY, testX, merged, scoreMode='label', useLog=False)
 
     #now we need to compute performance metric(s) for the set of winning predictions
     results = computeMetrics(testY, None, predictions, performanceFunction)

@@ -149,29 +149,6 @@ def test_TrainedLearner_test():
     backend(wrapped)
 
 
-def test_crossValidate():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.crossValidate(learnerName, trainX, trainY, performanceFunction=fractionIncorrect, useLog=useLog)
-
-    backend(wrapped)
-
-
-def test_crossValidateReturnAll():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.crossValidateReturnAll(learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
-                                          useLog=useLog)
-
-    backend(wrapped)
-
-
-def test_crossValidateReturnBest():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return UML.crossValidateReturnBest(learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
-                                           useLog=useLog)
-
-    backend(wrapped)
-
-
 # ??????????????????
 # incremental train?
 # reTrain?

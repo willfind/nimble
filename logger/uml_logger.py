@@ -33,8 +33,13 @@ from .stopwatch import Stopwatch
 """
 
 def logCapture(function):
-    """UML function wrapper to determine whether the provided function will be added to log
-        """
+    """
+    UML function wrapper for handling logging. Ensures that only calls made by user are
+    logged, ignoring internal calls to logged functions. Performs the timing of each operation.
+    Determines whether the function will be added to the log and inserts the necessary
+    information into the log. Additionally performs the logging for the prep logType, except
+    in a few specified cases.
+    """
     def wrapper(*args, **kwargs):
         funcName = function.__name__
         args = args
@@ -42,6 +47,7 @@ def logCapture(function):
         a, v, k, d = inspect.getargspec(function)
         argNames = a
         defaults = d
+
         logger = UML.logger.active
         logger.counter += 1
         timer = Stopwatch()
@@ -56,7 +62,7 @@ def logCapture(function):
             timer.stop("timer")
         if logger.counter == 0:
             if funcName == "crossValidateBackend":
-                useLog, deepLog = getUseLog(argNames, args, kwargs)
+                useLog, deepLog = _getLogValues(argNames, args, kwargs)
                 if useLog and deepLog:
                     logger.insertIntoLog(logger.logType, logger.logInfo)
             elif "useLog" in argNames and hasattr(UML.data.base.Base, funcName):
@@ -64,86 +70,29 @@ def logCapture(function):
                 specialCases = ["dropFeaturesContainingType", "_normalizeGeneric",
                                 "featureReport", "summaryReport"]
                 if funcName not in specialCases:
-                    argDict = buildArgDict(argNames, defaults, args, kwargs)
+                    argDict = _buildArgDict(argNames, defaults, args, kwargs)
                     logger.logPrep(funcName, args[0].getTypeString(), argDict)
-                logger.insertIntoLog(logger.logType, logger.logInfo)
+                useLog, _ = _getLogValues(argNames, args, kwargs)
+                if useLog:
+                    logger.insertIntoLog(logger.logType, logger.logInfo)
             elif "useLog" in argNames:
-                useLog, _ = getUseLog(argNames, args, kwargs)
+                useLog, _ = _getLogValues(argNames, args, kwargs)
                 if useLog:
                     logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
                     logger.insertIntoLog(logger.logType, logger.logInfo)
         elif funcName == "crossValidateBackend":
-            useLog, deepLog = getUseLog(argNames, args, kwargs)
+            useLog, deepLog = _getLogValues(argNames, args, kwargs)
             if useLog and deepLog:
                 logger.insertIntoLog(logger.logType, logger.logInfo)
         return ret
     return wrapper
 
 
-def getUseLog(argNames, args, kwargs):
-    try:
-        useLogIndex = argNames.index("useLog")
-        useLog = args[useLogIndex]
-    except IndexError:
-        useLog = kwargs.get("useLog", None)
-    if useLog is None:
-        useLog = UML.settings.get("logger", "enabledByDefault")
-        useLog = True if useLog.lower() == 'true' else False
-    deepLog = UML.settings.get("logger", "enableCrossValidationDeepLogging")
-    deepLog = True if deepLog.lower() == 'true' else False
-    return useLog, deepLog
-
-
-# def logged(toWrap):
-#     """
-#     Suspends the logger when the user calls a UML function, preventing any internal calls to
-#     UML functions from being logged.unsuspends the logger if an error is raised. This allows
-#     the logger to continue logging in the case that the user is capturing/ignoring Exceptions
-#     """
-#     @wraps(toWrap)
-#     def wrapper(*args, **kwargs):
-#         logger = UML.logger.active
-#         if logger.counter == 0 or toWrap.__name__ == "crossValidateBackend":
-#             a, v, k, d = inspect.getargspec(toWrap)
-#             print(toWrap.__name__)
-#             print(a)
-#             try:
-#                 useLogIndex = a.index("useLog")
-#                 useLog = args[useLogIndex]
-#             except IndexError:
-#                 useLog = kwargs.get("useLog", None)
-#             if useLog is None:
-#                 useLog = UML.settings.get("logger", "enabledByDefault")
-#                 useLog = True if useLog.lower() == 'true' else False
-#             deepLog = UML.settings.get("logger", "enableCrossValidationDeepLogging")
-#             deepLog = True if deepLog.lower() == 'true' else False
-#         else:
-#             useLog = False
-#         logger.counter += 1
-#         try:
-#             if useLog:
-#                 timer = Stopwatch()
-#                 timer.start("timer")
-#             ret = toWrap(*args,**kwargs)
-#             logger.counter -= 1
-#             if useLog:
-#                 timer.stop("timer")
-#             if toWrap.__name__ == "crossValidateBackend":
-#                 if useLog and deepLog:
-#                     logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
-#                     logger.insertIntoLog(logger.logType, logger.logInfo)
-#             elif useLog and logger.counter == 0:
-#                 logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
-#                 logger.insertIntoLog(logger.logType, logger.logInfo)
-#         except Exception as e:
-#             logger.counter = 0
-#             raise e
-#         return ret
-#     return wrapper
-
-
 class UmlLogger(object):
     def __init__(self, logLocation, logName):
+        """
+        Instantiates the logger at the passed location with the passed file name.
+        """
         fullLogDesignator = os.path.join(logLocation, logName)
         self.logLocation = logLocation
         self.logName = logName
@@ -157,10 +106,10 @@ class UmlLogger(object):
 
     def setup(self, newFileName=None):
         """
-            Try to open the file that will be used for logging.  If newFileName
-            is present, will reset the log file to use the new file name and Attempt
-            to open it.  Otherwise, will use the file name provided when this was
-            instantiated.  If successfully opens the file, set isAvailable to true.
+        Try to open the file that will be used for logging.  If newFileName
+        is present, will reset the log file to use the new file name and Attempt
+        to open it.  Otherwise, will use the file name provided when this was
+        instantiated.  If successfully opens the file, set isAvailable to true.
         """
         if newFileName is not None and isinstance(newFileName, (str, six.text_type)):
             self.logFileName = newFileName
@@ -196,7 +145,7 @@ class UmlLogger(object):
 
 
     def cleanup(self):
-        """TODO"""
+        """Closes the connection to the logger database if it is open"""
         # only need to call if we have previously called setup
         if self.isAvailable:
             self.connection.close()
@@ -220,7 +169,11 @@ class UmlLogger(object):
 
 
     def extractFromLog(self, query, values=None):
-        """TODO"""
+        """
+        Returns a list of tuples for values matching a SQLite query statement
+        query - a SQLite query statement
+        values - tuple of values to use in place of the "?" placeholders used in the query
+        """
         if not self.isAvailable:
             self.setup()
         if values is None:
@@ -354,10 +307,46 @@ class UmlLogger(object):
     ### LOG OUTPUT ###
     ##################
 
-    def _showLogImplementation(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
+    def showLog(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
                 maximumEntries, searchForText, saveToFileName, append):
         """
-        implementation of UML.showLog
+        showLog parses the active logfile based on the arguments passed and prints a
+        human readable interpretation of the log file.
+
+        ARGUMENTS:
+        levelOfDetail:  The (int) value for the level of detail from 1, the least detail,
+                        to 3 (most detail). Default is 2
+              Level 1:  Data loading, data preparation and preprocessing, custom user logs
+              Level 2:  Outputs basic information about each run. Includes timestamp, run number,
+                        learner name, train and test object details, parameter, metric, and
+                        timer data if available
+              Level 3:  Cross Validation data
+
+        leastRunsAgo:   The integer value for the least number of runs since the most recent
+                        run to include in the log. Default is 0
+
+        mostRunsAgo:    The integer value for the least number of runs since the most recent
+                        run to include in the log. Default is 2
+
+        startDate:      A string or datetime.datetime object of the date to begin adding runs to the log.
+                        Acceptable formats:
+                          "YYYY-MM-DD"
+                          "YYYY-MM-DD HH:MM"
+                          "YYYY-MM-DD HH:MM:SS"
+
+        endDate:        A string or datetime.datetime object of the date to stop adding runs to the log.
+                        See startDate for formatting.
+
+        maximumEntries: Maximum number of entries to allow before stopping the log
+                        Default is 100. None will allow all entries provided from the query
+        searchForText:  string or regular expression to search for in each log entry.
+                        Default is None
+
+        saveToFileName: The name of a file where the human readable log will be saved.
+                        Default is None, showLog will print to standard out
+
+        append:         Append logs to the file in saveToFileName instead of overwriting file.
+                        Default is False
         """
 
         if not self.isAvailable:
@@ -385,7 +374,23 @@ class UmlLogger(object):
 ### LOG HELPERS ###
 ###################
 
-def extractFunctionString(function):
+def _getLogValues(argNames, args, kwargs):
+    """
+    Returns the values for useLog and deepLog for logging the function
+    """
+    try:
+        useLogIndex = argNames.index("useLog")
+        useLog = args[useLogIndex]
+    except IndexError:
+        useLog = kwargs.get("useLog", None)
+    if useLog is None:
+        useLog = UML.settings.get("logger", "enabledByDefault")
+        useLog = True if useLog.lower() == 'true' else False
+    deepLog = UML.settings.get("logger", "enableCrossValidationDeepLogging")
+    deepLog = True if deepLog.lower() == 'true' else False
+    return useLog, deepLog
+
+def _extractFunctionString(function):
     """Extracts function name or lambda function if passed a function,
        Otherwise returns a string"""
     try:
@@ -393,11 +398,11 @@ def extractFunctionString(function):
         if functionName != "<lambda>":
             return functionName
         else:
-            return lambdaFunctionString(function)
+            return _lambdaFunctionString(function)
     except AttributeError:
         return str(function)
 
-def lambdaFunctionString(function):
+def _lambdaFunctionString(function):
     """Returns a string of a lambda function"""
     sourceLine = inspect.getsourcelines(function)[0][0]
     line = re.findall(r'lambda.*',sourceLine)[0]
@@ -419,14 +424,16 @@ def lambdaFunctionString(function):
             lambdaString += letter
     return lambdaString
 
-def buildArgDict(argNames, defaults, args, kwargs):
-    argNames.remove("self")
-    args = args[1:]
+def _buildArgDict(argNames, defaults, args, kwargs):
+    """
+    Creates the dictionary of arguments for the prep logType. Adds all required arguments
+    and any keyword arguments that are not the default values
+    """
     nameArgMap = {}
     for name, arg in zip(argNames,args):
         if str(arg).startswith("<") and str(arg).endswith(">"):
-            nameArgMap[name] = extractFunctionString(arg)
-        else:
+            nameArgMap[name] = _extractFunctionString(arg)
+        elif name != "self":
             nameArgMap[name] = str(arg)
     startDefaults = len(argNames) - len(defaults)
     defaultArgs = argNames[startDefaults:]
@@ -448,7 +455,10 @@ def buildArgDict(argNames, defaults, args, kwargs):
 
 def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
                            endDate, maximumEntries, searchForText):
-    """TODO"""
+    """
+    Constructs the query string and stores the variables based on the arguments passed
+    to the showLog function
+    """
     selectQuery = "SELECT timestamp, runNumber, logType, logInfo FROM (SELECT * FROM logger"
     whereQueryList = []
     includedValues = []
@@ -489,7 +499,7 @@ def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
     return fullQuery, includedValues
 
 def _showLogOutputString(listOfLogs, levelOfDetail):
-    """TODO"""
+    """Formats the string that will be output for calls to the showLog function"""
     fullLog = "{0:^80}\n".format("UML LOGS")
     fullLog += "." * 80
     previousLogRunNumber = None
@@ -536,7 +546,7 @@ def _showLogOutputString(listOfLogs, levelOfDetail):
     return fullLog
 
 def _buildLoadLogString(timestamp, log):
-    """TODO"""
+    """Constructs the string that will be output for load logTypes"""
     dataCol = "{0} Loaded".format(log["returnType"])
     fullLog = _logHeader(dataCol,timestamp)
     if log['path'] is not None:
@@ -550,7 +560,7 @@ def _buildLoadLogString(timestamp, log):
     return fullLog
 
 def _buildPrepLogString(timestamp, log):
-    """TODO"""
+    """Constructs the string that will be output for prep logTypes"""
     function = "{0}.{1}".format(log["object"], log["function"])
     fullLog = _logHeader(function, timestamp)
     if log['arguments'] != {}:
@@ -562,7 +572,7 @@ def _buildPrepLogString(timestamp, log):
     return fullLog
 
 def _buildDataLogString(timestamp, log):
-    """TODO"""
+    """Constructs the string that will be output for data logTypes"""
     reportName = log["reportType"].capitalize() + " Report"
     fullLog = _logHeader(reportName, timestamp)
     fullLog += "\n"
@@ -570,7 +580,7 @@ def _buildDataLogString(timestamp, log):
     return fullLog
 
 def _buildRunLogString(timestamp, log):
-    """TODO"""
+    """Constructs the string that will be output for run logTypes"""
     # header data
     timer = log.get("timer", "")
     if timer:
@@ -621,7 +631,7 @@ def _buildRunLogString(timestamp, log):
     return fullLog
 
 def _buildCVLogString(timestamp, log):
-    """TODO"""
+    """Constructs the string that will be output for crossVal logTypes"""
     crossVal = "Cross Validating for {0}".format(log["learner"])
     fullLog = _logHeader(crossVal, timestamp)
     fullLog += "\n"
@@ -640,7 +650,10 @@ def _buildCVLogString(timestamp, log):
     return fullLog
 
 def _buildDefaultLogString(timestamp, logType, log):
-    """TODO"""
+    """
+    Constructs the string that will be output for any unrecognized logTypes. Formatting
+    varies based on string, list and dictionary types passed as the log
+    """
     fullLog = _logHeader(logType, timestamp)
     if isinstance(log, six.string_types):
         for string in wrap(log, 80):
@@ -659,7 +672,7 @@ def _buildDefaultLogString(timestamp, logType, log):
     return fullLog
 
 def _dictToKeywordString(dictionary):
-    """TODO"""
+    """Formats dictionaries to be more human-readable"""
     kvStrings = []
     for key, value in dictionary.items():
         string = "{0}={1}".format(key,value)
@@ -667,7 +680,7 @@ def _dictToKeywordString(dictionary):
     return ", ".join(kvStrings)
 
 def _formatRunLine(*args):
-    """ Formats equally spaced values for each column"""
+    """Formats equally spaced values for each column"""
     args = list(map(str, args))
     lineLog = ""
     for arg in args:
@@ -677,7 +690,7 @@ def _formatRunLine(*args):
     return lineLog
 
 def _logHeader(left, right):
-    """ Formats the top line of each log entry"""
+    """Formats the first line of each log entry"""
     lineLog = "\n"
     lineLog += "{0:60}{1:>20}\n".format(left, right)
     return lineLog

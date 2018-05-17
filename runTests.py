@@ -178,6 +178,7 @@ class LoggerControl(object):
         self._backupLoc = UML.settings.get('logger', 'location')
         self._backupName = UML.settings.get('logger', 'name')
         self._backupEnabled = UML.settings.get('logger', 'enabledByDefault')
+        self._crossValBackupEnabled = UML.settings.get('logger', 'enableCrossValidationDeepLogging')
 
         # delete previous testing logs:
         location = os.path.join(UMLPath, 'logs-UML')
@@ -192,6 +193,8 @@ class LoggerControl(object):
         UML.settings.saveChanges("logger")
         UML.settings.set("logger", "enabledByDefault", "False")
         UML.settings.saveChanges("logger")
+        UML.settings.set("logger", "enableCrossValidationDeepLogging", "False")
+        UML.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
         UML.settings.set("logger", 'location', self._backupLoc)
@@ -199,6 +202,8 @@ class LoggerControl(object):
         UML.settings.set("logger", 'name', self._backupName)
         UML.settings.saveChanges("logger", 'name')
         UML.settings.set("logger", "enabledByDefault", self._backupEnabled)
+        UML.settings.saveChanges("logger", "enabledByDefault")
+        UML.settings.set("logger", "enabledByDefault", self._crossValBackupEnabled)
         UML.settings.saveChanges("logger", "enabledByDefault")
 
 
