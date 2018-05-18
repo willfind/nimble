@@ -56,10 +56,10 @@ class Sparse(Base):
             self.data = data.tocoo()
         else:#data is numpy.matrix
             self.data = scipy.sparse.coo_matrix(data)
-            
+
         #print('self.data: {}'.format(self.data))
         #print('type(self.data): {}'.format(type(self.data)))
-        
+
 
         self._sorted = None
         kwds['shape'] = self.data.shape
@@ -909,7 +909,10 @@ class Sparse(Base):
         try:
             function(0, 0, 0)
         except TypeError:
-            oneArg = True
+            if isinstance(function, dict):
+                oneArg = None
+            else:
+                oneArg = True
 
         if oneArg and function(0) == 0:
             preserveZeros = True
@@ -931,7 +934,12 @@ class Sparse(Base):
             if features is not None and fID not in features:
                 return None
 
-            if oneArg:
+            if oneArg is None:
+                if value in function.keys():
+                    return function[value]
+                else:
+                    return None
+            elif oneArg:
                 return function(value)
             else:
                 return function(value, pID, fID)
@@ -958,7 +966,12 @@ class Sparse(Base):
             if features is not None and fID not in features:
                 continue
 
-            if oneArg:
+            if oneArg is None:
+                if val in function.keys():
+                    currRet = function[val]
+                else:
+                    continue
+            elif oneArg:
                 currRet = function(val)
             else:
                 currRet = function(val, pID, fID)
@@ -1465,12 +1478,12 @@ class Sparse(Base):
 
             if self._sorted == 'feature':
                 assert all(self.data.col[:-1] <= self.data.col[1:])
-            
+
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
-            
 
-            
+
+
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained

@@ -576,7 +576,10 @@ class Matrix(Base):
         try:
             function(0, 0, 0)
         except TypeError:
-            oneArg = True
+            if isinstance(function, dict):
+                oneArg = None
+            else:
+                oneArg = True
 
         IDs = itertools.product(range(self.points), range(self.features))
         for (i, j) in IDs:
@@ -589,7 +592,12 @@ class Matrix(Base):
             if preserveZeros and currVal == 0:
                 continue
 
-            if oneArg:
+            if oneArg is None:
+                if currVal in function.keys():
+                    currRet = function[currVal]
+                else:
+                    continue
+            elif oneArg:
                 currRet = function(currVal)
             else:
                 currRet = function(currVal, i, j)
