@@ -571,12 +571,12 @@ class Matrix(Base):
 
             self.data[:, j] = numpy.array(currRet).reshape(self.points, 1)
 
-    def _transformEachElement_implementation(self, function, points, features, preserveZeros, skipNoneReturnValues):
+    def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
         oneArg = False
         try:
-            function(0, 0, 0)
+            toTransform(0, 0, 0)
         except TypeError:
-            if isinstance(function, dict):
+            if isinstance(toTransform, dict):
                 oneArg = None
             else:
                 oneArg = True
@@ -593,14 +593,14 @@ class Matrix(Base):
                 continue
 
             if oneArg is None:
-                if currVal in function.keys():
-                    currRet = function[currVal]
+                if currVal in toTransform.keys():
+                    currRet = toTransform[currVal]
                 else:
                     continue
             elif oneArg:
-                currRet = function(currVal)
+                currRet = toTransform(currVal)
             else:
-                currRet = function(currVal, i, j)
+                currRet = toTransform(currVal, i, j)
 
             if skipNoneReturnValues and currRet is None:
                 continue

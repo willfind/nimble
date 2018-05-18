@@ -904,27 +904,27 @@ class Sparse(Base):
         return ret
 
 
-    def _transformEachElement_implementation(self, function, points, features, preserveZeros, skipNoneReturnValues):
+    def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
         oneArg = False
         try:
-            function(0, 0, 0)
+            toTransform(0, 0, 0)
         except TypeError:
-            if isinstance(function, dict):
+            if isinstance(toTransform, dict):
                 oneArg = None
             else:
                 oneArg = True
 
-        if oneArg and function(0) == 0:
+        if oneArg and toTransform(0) == 0:
             preserveZeros = True
 
         if preserveZeros:
-            self._transformEachElement_zeroPreserve_implementation(function, points, features, skipNoneReturnValues,
+            self._transformEachElement_zeroPreserve_implementation(toTransform, points, features, skipNoneReturnValues,
                                                                    oneArg)
         else:
-            self._transformEachElement_noPreserve_implementation(function, points, features, skipNoneReturnValues,
+            self._transformEachElement_noPreserve_implementation(toTransform, points, features, skipNoneReturnValues,
                                                                  oneArg)
 
-    def _transformEachElement_noPreserve_implementation(self, function, points, features, skipNoneReturnValues, oneArg):
+    def _transformEachElement_noPreserve_implementation(self, toTransform, points, features, skipNoneReturnValues, oneArg):
         # returns None if outside of the specified points and feature so that
         # when calculateForEach is called we are given a full data object
         # with only certain values modified.
@@ -935,14 +935,14 @@ class Sparse(Base):
                 return None
 
             if oneArg is None:
-                if value in function.keys():
-                    return function[value]
+                if value in toTransform.keys():
+                    return toTransform[value]
                 else:
                     return None
             elif oneArg:
-                return function(value)
+                return toTransform(value)
             else:
-                return function(value, pID, fID)
+                return toTransform(value, pID, fID)
 
         # perserveZeros is always False in this helper, skipNoneReturnValues
         # is being hijacked by the wrapper: even if it was False, Sparse can't
@@ -956,7 +956,7 @@ class Sparse(Base):
         self.setFeatureNames(fnames)
 
 
-    def _transformEachElement_zeroPreserve_implementation(self, function, points, features, skipNoneReturnValues,
+    def _transformEachElement_zeroPreserve_implementation(self, toTransform, points, features, skipNoneReturnValues,
                                                           oneArg):
         for index, val in enumerate(self.data.data):
             pID = self.data.row[index]
@@ -967,14 +967,14 @@ class Sparse(Base):
                 continue
 
             if oneArg is None:
-                if val in function.keys():
-                    currRet = function[val]
+                if val in toTransform.keys():
+                    currRet = toTransform[val]
                 else:
                     continue
             elif oneArg:
-                currRet = function(val)
+                currRet = toTransform(val)
             else:
-                currRet = function(val, pID, fID)
+                currRet = toTransform(val, pID, fID)
 
             if skipNoneReturnValues and currRet is None:
                 continue
