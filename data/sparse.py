@@ -56,10 +56,10 @@ class Sparse(Base):
             self.data = data.tocoo()
         else:#data is numpy.matrix
             self.data = scipy.sparse.coo_matrix(data)
-            
+
         #print('self.data: {}'.format(self.data))
         #print('type(self.data): {}'.format(type(self.data)))
-        
+
 
         self._sorted = None
         kwds['shape'] = self.data.shape
@@ -802,30 +802,242 @@ class Sparse(Base):
         if format == 'scipycsr':
             return self.data.tocsr()
 
-    def _copyPoints_implementation(self, points, start, end):
-        retData = []
-        retRow = []
-        retCol = []
-        if points is not None:
-            for i in range(len(self.data.data)):
-                if self.data.row[i] in points:
-                    retData.append(self.data.data[i])
-                    retRow.append(points.index(self.data.row[i]))
-                    retCol.append(self.data.col[i])
 
-            newShape = (len(points), numpy.shape(self.data)[1])
+    def _copyPoints_implementation(self, toCopy, start, end, number, _):
+        """
+        Function to copy points according to the parameters, and return an object containing
+        the removed points with default names. The actual work is done by further helper
+        functions, this determines which helper to call, and modifies the input to accomodate
+        the number and randomize parameters, where number indicates how many of the possibilities
+        should be copied, and randomize indicates whether the choice of who to copy should
+        be by order or uniform random.
+
+        """
+        # list of identifiers
+        if isinstance(toCopy, list):
+            assert number == len(toCopy)
+            return self._copyByList_implementation(toCopy, 'point')
+        # boolean function
+        elif hasattr(toCopy, '__call__'):
+            return self._copyByFunction_implementation(toCopy, number, 'point')
+        # by range
+        elif start is not None or end is not None:
+            return self._copyByRange_implementation(start, end, 'point')
         else:
-            for i in range(len(self.data.data)):
-                if self.data.row[i] >= start and self.data.row[i] <= end:
-                    retData.append(self.data.data[i])
-                    retRow.append(self.data.row[i] - start)
-                    retCol.append(self.data.col[i])
+            raise ArgumentException("Malformed or missing inputs")
 
-            newShape = (end - start + 1, numpy.shape(self.data)[1])
 
-        retData = numpy.array(retData, dtype=self.data.dtype)
-        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
-        return Sparse(retData, reuseData=True)
+    # def _copyFeatures_implementation(self, toCopy, start, end, number, randomize):
+    #     """
+    #     Function to copy features according to the parameters, and return an object containing
+    #     the removed features with their featureName names from this object. The actual work is done by
+    #     further helper functions, this determines which helper to call, and modifies the input
+    #     to accomodate the number and randomize parameters, where number indicates how many of the
+    #     possibilities should be copied, and randomize indicates whether the choice of who to
+    #     copy should be by order or uniform random.
+    #
+    #     """
+    #     # list of identifiers
+    #     if isinstance(toCopy, list):
+    #         assert number == len(toCopy)
+    #         assert not randomize
+    #         return self._copyByList_implementation(toCopy, 'feature')
+    #     # boolean function
+    #     elif hasattr(toCopy, '__call__'):
+    #         if randomize:
+    #             #apply to each
+    #             raise NotImplementedError  # TODO
+    #         else:
+    #             return self._copyByFunction_implementation(toCopy, number, 'feature')
+    #     # by range
+    #     elif start is not None or end is not None:
+    #         return self._copyByRange_implementation(start, end, 'feature')
+    #     else:
+    #         raise ArgumentException("Malformed or missing inputs")
+
+
+    def _copyByList_implementation(self, toCopy, axisType):
+        copyLength = len(toCopy)
+        copyData = []
+        copyRows = []
+        copyCols = []
+
+        self._sortInternal(axisType)
+        if axisType == "feature":
+            targetAxis = self.data.col
+            otherAxis = self.data.row
+            copyTarget = copyCols
+            copyOther = copyRows
+        else:
+            targetAxis = self.data.row
+            otherAxis = self.data.col
+            copyTarget = copyRows
+            copyOther = copyCols
+
+        #List of rows or columns to copy must be sorted in ascending order
+        toCopySorted = copy.copy(toCopy)
+        toCopySorted.sort()
+
+        # need mapping from values in sorted list to index in nonsorted list
+        positionMap = {}
+        for i in range(len(toCopy)):
+            positionMap[toCopy[i]] = i
+
+        #walk through col listing and partition all data: copy, and kept, reusing the sparse matrix
+        # underlying structure to save space
+        copyIndex = 0
+        for i in range(len(self.data.data)):
+            value = targetAxis[i]
+            # Move copyIndex forward until we get to an entry that might
+            # match the current (or a future) value
+            while copyIndex < copyLength and value > toCopySorted[copyIndex]:
+                copyIndex = copyIndex + 1
+
+            # Check if the current value matches one we want copyed
+            if copyIndex < copyLength and value == toCopySorted[copyIndex]:
+                copyData.append(self.data.data[i])
+                copyOther.append(otherAxis[i])
+                copyTarget.append(positionMap[value])
+
+        # instantiate return data
+        (selfShape, copyShape) = _calcShapes(self.data.shape, copyLength, axisType)
+        ret = coo_matrix((copyData, (copyRows, copyCols)), shape=copyShape)
+
+        # get names for return obj
+        pnames = []
+        fnames = []
+        if axisType == 'point':
+            for index in toCopy:
+                pnames.append(self.getPointName(index))
+            fnames = self.getFeatureNames()
+        else:
+            pnames = self.getPointNames()
+            for index in toCopy:
+                fnames.append(self.getFeatureName(index))
+
+        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
+
+
+    def _copyByFunction_implementation(self, toCopy, number, axisType):
+        copyData = []
+        copyRows = []
+        copyCols = []
+
+        self._sortInternal(axisType)
+        if axisType == "feature":
+            targetAxis = self.data.col
+            otherAxis = self.data.row
+            copyTarget = copyCols
+            copyOther = copyRows
+            viewMaker = self.featureView
+        else:
+            targetAxis = self.data.row
+            otherAxis = self.data.col
+            copyTarget = copyRows
+            copyOther = copyCols
+            viewMaker = self.pointView
+
+        copyIndex = 0
+        vectorStartIndex = 0
+        copiedIDs = []
+        # consume zeroed vectors, up to the first nonzero value
+        if self.data.nnz > 0 and self.data.data[0] != 0:
+            for i in range(0, targetAxis[0]):
+                if toCopy(viewMaker(i)):
+                    copiedIDs.append(i)
+        #walk through each coordinate entry
+        for i in range(len(self.data.data)):
+            #collect values into points
+            targetValue = targetAxis[i]
+            #if this is the end of a point
+            if i == len(self.data.data) - 1 or targetAxis[i + 1] != targetValue:
+                #evaluate whether curr point is to be copied or not
+                # and perform the appropriate copies
+                if toCopy(viewMaker(targetValue)):
+                    for j in range(vectorStartIndex, i + 1):
+                        copyData.append(self.data.data[j])
+                        copyOther.append(otherAxis[j])
+                        copyTarget.append(len(copiedIDs))
+                    copiedIDs.append(targetValue)
+                # process zeroed vectors up to the ID of the new vector
+                if i < len(self.data.data) - 1:
+                    nextValue = targetAxis[i + 1]
+                else:
+                    if axisType == 'point':
+                        nextValue = self.points
+                    else:
+                        nextValue = self.features
+                for j in range(targetValue + 1, nextValue):
+                    if toCopy(viewMaker(j)):
+                        copiedIDs.append(j)
+
+                #reset the vector starting index
+                vectorStartIndex = i + 1
+
+
+        # instantiate return data
+        (selfShape, copyShape) = _calcShapes(self.data.shape, len(copiedIDs), axisType)
+        ret = coo_matrix((copyData, (copyRows, copyCols)), shape=copyShape)
+
+        # get names for return obj
+        pnames = []
+        fnames = []
+        if axisType == 'point':
+            for index in copiedIDs:
+                pnames.append(self.getPointName(index))
+            fnames = self.getFeatureNames()
+        else:
+            pnames = self.getPointNames()
+            for index in copiedIDs:
+                fnames.append(self.getFeatureName(index))
+
+        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
+
+    def _copyByRange_implementation(self, start, end, axisType):
+        rangeLength = end - start + 1
+        copyData = []
+        copyRows = []
+        copyCols = []
+
+        if axisType == "feature":
+            targetAxis = self.data.col
+            otherAxis = self.data.row
+            copyTarget = copyCols
+            copyOther = copyRows
+        else:
+            targetAxis = self.data.row
+            otherAxis = self.data.col
+            copyTarget = copyRows
+            copyOther = copyCols
+
+        #walk through col listing and partition all data: copy, and kept, reusing the sparse matrix
+        # underlying structure to save space
+        copyIndex = 0
+
+        for i in range(len(self.data.data)):
+            value = targetAxis[i]
+            if value >= start and value <= end:
+                copyData.append(self.data.data[i])
+                copyOther.append(otherAxis[i])
+                copyTarget.append(value - start)
+
+        # instantiate return data
+        (selfShape, copyShape) = _calcShapes(self.data.shape, rangeLength, axisType)
+        ret = coo_matrix((copyData, (copyRows, copyCols)), shape=copyShape)
+
+        # get names for return obj
+        pnames = []
+        fnames = []
+        if axisType == 'point':
+            for i in range(start, end + 1):
+                pnames.append(self.getPointName(i))
+            fnames = self.getFeatureNames()
+        else:
+            pnames = self.getPointNames()
+            for i in range(start, end + 1):
+                fnames.append(self.getFeatureName(i))
+
+        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
 
     def _copyFeatures_implementation(self, features, start, end):
@@ -1465,12 +1677,12 @@ class Sparse(Base):
 
             if self._sorted == 'feature':
                 assert all(self.data.col[:-1] <= self.data.col[1:])
-            
+
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
-            
 
-            
+
+
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained
@@ -2005,32 +2217,32 @@ class SparseView(BaseView, Sparse):
 
         return ret
 
-    def _copyPoints_implementation(self, points, start, end):
-        retData = []
-        retRow = []
-        retCol = []
-        piNN = points is not None
-
-        if start is None: start = 0#in python3, compare int with None is not allowed, so we need to replace None with an int
-        if end is None: end = -1
-        for pID, pView in enumerate(self.pointIterator()):
-            if (piNN and pID in points) or (pID >= start and pID <= end):
-                for i, val in enumerate(pView.data.data):
-                    retData.append(val)
-                    if piNN:
-                        retRow.append(points.index(pID))
-                    else:
-                        retRow.append(pID - start)
-                    retCol.append(pView.data.col[i])
-
-        if points is not None:
-            newShape = (len(points), numpy.shape(self.data)[1])
-        else:
-            newShape = (end - start + 1, numpy.shape(self.data)[1])
-
-        retData = numpy.array(retData, dtype=self._source.data.dtype)
-        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
-        return Sparse(retData, reuseData=True)
+    # def _copyPoints_implementation(self, points, start, end):
+    #     retData = []
+    #     retRow = []
+    #     retCol = []
+    #     piNN = points is not None
+    #
+    #     if start is None: start = 0#in python3, compare int with None is not allowed, so we need to replace None with an int
+    #     if end is None: end = -1
+    #     for pID, pView in enumerate(self.pointIterator()):
+    #         if (piNN and pID in points) or (pID >= start and pID <= end):
+    #             for i, val in enumerate(pView.data.data):
+    #                 retData.append(val)
+    #                 if piNN:
+    #                     retRow.append(points.index(pID))
+    #                 else:
+    #                     retRow.append(pID - start)
+    #                 retCol.append(pView.data.col[i])
+    #
+    #     if points is not None:
+    #         newShape = (len(points), numpy.shape(self.data)[1])
+    #     else:
+    #         newShape = (end - start + 1, numpy.shape(self.data)[1])
+    #
+    #     retData = numpy.array(retData, dtype=self._source.data.dtype)
+    #     retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
+    #     return Sparse(retData, reuseData=True)
 
 
     def _copyFeatures_implementation(self, features, start, end):
