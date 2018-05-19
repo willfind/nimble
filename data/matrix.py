@@ -532,13 +532,89 @@ class Matrix(Base):
 
         return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
-    def _copyPoints_implementation(self, points, start, end):
-        if points is not None:
-            ret = self.data[points]
-        else:
-            ret = self.data[start:end + 1, :]
 
-        return Matrix(ret)
+    def _copyPoints_implementation(self, toCopy, start, end, number, _):
+        """
+        Function to copy points according to the parameters, and return an object containing
+        the copied points with default names. The actual work is done by further helper
+        functions, this determines which helper to call, and modifies the input to accomodate
+        the number parameter, where number indicates how many of the possibilities
+        should be copied.
+
+        """
+        # list of identifiers
+        if isinstance(toCopy, list):
+            assert number == len(toCopy)
+            return self._copyPointsByList_implementation(toCopy)
+        # boolean function
+        elif hasattr(toCopy, '__call__'):
+            return self._copyPointsByFunction_implementation(toCopy, number)
+        # by range
+        elif start is not None or end is not None:
+            return self._copyPointsByRange_implementation(start, end)
+        else:
+            msg = "Malformed or missing inputs"
+            raise ArgumentException(msg)
+
+    def _copyPointsByList_implementation(self, toCopy):
+        """
+        Returns an object containing those points that are given in the input. No modifications
+        are made to this object.
+        """
+        ret = self.data[toCopy]
+
+        # construct featureName list
+        nameList = []
+        for index in toCopy:
+            nameList.append(self.getPointName(index))
+
+        return Matrix(ret, pointNames=nameList)
+
+    def _copyPointsByFunction_implementation(self, toCopy, number):
+        """
+        Returns an object containing those points that satisfy the function. No modifications
+        are made to this object.
+        """
+        #if the toCopy is a vectorized function, then call matrix based function
+        #otherwise, call view based function
+        if hasattr(toCopy, 'vectorized') and toCopy.vectorized:
+            function = matrixBasedApplyAlongAxis
+        else:
+            function = viewBasedApplyAlongAxis
+        results = function(toCopy, 'point', self)
+        results = results.astype(numpy.int)
+
+        # need to convert our 1/0 array to to list of points to be removed
+        # can do this by just getting the non-zero indices
+        toRemove = numpy.flatnonzero(results)
+        ###spencer added this on 3/7/2017 to make it take into account number:
+        if number is not None and len(toRemove) > number:
+            toRemove = toRemove[:number]
+            assert len(toRemove) == number
+        ###end of spencer added code
+        ret = self.data[toRemove, :]
+
+        # construct featureName list
+        nameList = []
+        for index in toRemove:
+            nameList.append(self.getPointName(index))
+
+        return Matrix(ret, pointNames=nameList)
+
+    def _copyPointsByRange_implementation(self, start, end):
+        """
+        Returns an object containing those points that are in the range. No modifications
+        are made to this object.
+        """
+        # +1 on end in ranges, because our ranges are inclusive
+        ret = self.data[start:end + 1, :]
+
+        # construct featureName list
+        nameList = []
+        for index in range(start, end + 1):
+            nameList.append(self.getPointName(index))
+
+        return Matrix(ret, pointNames=nameList)
 
     def _copyFeatures_implementation(self, indices, start, end):
         if indices is not None:

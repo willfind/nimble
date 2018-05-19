@@ -218,7 +218,7 @@ class DataFrame(Base):
 
         """
         indexList = self.data.index[toExtract]
-        return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+        return self.pointsOrFeaturesVectorized(indexList, 'point', 'extract', True)
 
     def _extractPointsByFunction_implementation(self, toExtract, number):
         """
@@ -228,7 +228,7 @@ class DataFrame(Base):
         """
         if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
             indexList = self.data.index[toExtract(self.data)]
-            return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+            return self.pointsOrFeaturesVectorized(indexList, 'point', 'extract', True)
         else:
             results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'point', self)
             results = results.astype(np.int)
@@ -248,7 +248,7 @@ class DataFrame(Base):
         """
         # +1 on end in ranges, because our ranges are inclusive
         indexList = self.data.index[start:end + 1]
-        return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+        return self.pointsOrFeaturesVectorized(indexList, 'point', 'extract', True)
 
     def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
         """
@@ -285,7 +285,7 @@ class DataFrame(Base):
 
         """
         featureList = self.data.columns[toExtract]
-        return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
+        return self.pointsOrFeaturesVectorized(featureList, 'feature', 'extract', True)
 
     def _extractFeaturesByFunction_implementation(self, toExtract, number):
         """
@@ -295,7 +295,7 @@ class DataFrame(Base):
         """
         if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
             featureList = self.data.columns[toExtract(self.data.loc)]
-            return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
+            return self.pointsOrFeaturesVectorized(featureList, 'feature', 'extract', True)
         else:
             #have to use view based method.
             results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'feature', self)
@@ -319,7 +319,7 @@ class DataFrame(Base):
         """
         # +1 on end in ranges, because our ranges are inclusive
         featureList = self.data.columns[start:end + 1]
-        return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
+        return self.pointsOrFeaturesVectorized(featureList, 'feature', 'extract', True)
 
     def _mapReducePoints_implementation(self, mapper, reducer):
         # apply_along_axis() expects a scalar or array of scalars as output,
@@ -468,15 +468,69 @@ class DataFrame(Base):
 
         return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
-    def _copyPoints_implementation(self, points, start, end):
-        if points is not None:
-            #indexList = self.data.index[points]
-            #ret = self.data.ix[indexList, :]
-            ret = self.data.ix[points, :]
-        else:
-            ret = self.data.ix[start:end + 1, :]
 
-        return UML.createData('DataFrame', ret)
+    def _copyPoints_implementation(self, toCopy, start, end, number, _):
+        """
+        Function to copy points according to the parameters, and return an object containing
+        the removed points with default names. The actual work is done by further helper
+        functions, this determines which helper to call, and modifies the input to accomodate
+        the number and randomize parameters, where number indicates how many of the possibilities
+        should be copied, and randomize indicates whether the choice of who to copy should
+        be by order or uniform random.
+
+        """
+        # list of identifiers
+        if isinstance(toCopy, list):
+            assert number == len(toCopy)
+            return self._copyPointsByList_implementation(toCopy)
+        # boolean function
+        elif hasattr(toCopy, '__call__'):
+            return self._copyPointsByFunction_implementation(toCopy, number)
+        # by range
+        elif start is not None or end is not None:
+            return self._copyPointsByRange_implementation(start, end)
+        else:
+            msg = "Malformed or missing inputs"
+            raise ArgumentException(msg)
+
+    def _copyPointsByList_implementation(self, toCopy):
+        """
+        Modify this object to have only the points that are not given in the input,
+        returning an object containing those points that are.
+
+        """
+        indexList = self.data.index[toCopy]
+        return self.pointsOrFeaturesVectorized(indexList, 'point', 'copy', True)
+
+    def _copyPointsByFunction_implementation(self, toCopy, number):
+        """
+        Modify this object to have only the points that do not satisfy the given function,
+        returning an object containing those points that do.
+
+        """
+        if hasattr(toCopy, 'vectorized') and toCopy.vectorized:
+            indexList = self.data.index[toCopy(self.data)]
+            return self.pointsOrFeaturesVectorized(indexList, 'point', 'copy', True)
+        else:
+            results = UML.data.matrix.viewBasedApplyAlongAxis(toCopy, 'point', self)
+            results = results.astype(np.int)
+
+            # need to convert our 1/0 array to to list of points to be removed
+            # can do this by just getting the non-zero indices
+            toRemove = np.flatnonzero(results)
+
+            return self._copyPointsByList_implementation(toRemove)
+
+
+    def _copyPointsByRange_implementation(self, start, end):
+        """
+        Modify this object to have only those points that are not within the given range,
+        inclusive; returning an object containing those points that are.
+
+        """
+        # +1 on end in ranges, because our ranges are inclusive
+        indexList = self.data.index[start:end + 1]
+        return self.pointsOrFeaturesVectorized(indexList, 'point', 'copy', True)
 
     def _copyFeatures_implementation(self, indices, start, end):
         if indices is not None:
@@ -1024,7 +1078,7 @@ class DataFrame(Base):
         #-----------------------------------------------------------------------
 
 
-    def extractPointsOrFeaturesVectorized(self, nameList, axis, inplace=True):
+    def pointsOrFeaturesVectorized(self, nameList, axis, funcType, inplace=True):
         """
 
         """
@@ -1046,6 +1100,7 @@ class DataFrame(Base):
             msg = 'axis can only be 0,1 or point, feature'
             raise ArgumentException(msg)
 
-        df.drop(nameList, axis=axis, inplace=inplace)
+        if funcType.lower() == "extract":
+            df.drop(nameList, axis=axis, inplace=inplace)
 
         return UML.createData('DataFrame', ret, **{name: nameList, otherName: otherNameList})

@@ -430,93 +430,380 @@ class StructureDataSafe(DataTestObject):
     # copyPoints #
     ###################
 
-    @raises(ArgumentException)
-    def test_copyPoints_exceptionNone(self):
-        """ Test copyPoints() for exception when argument is None """
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        orig = self.constructor(data1, featureNames=featureNames)
-        orig.copyPoints(None)
+    # @raises(ArgumentException)
+    # def test_copyPoints_exceptionNone(self):
+    #     """ Test copyPoints() for exception when argument is None """
+    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+    #     featureNames = ['one', 'two', 'three']
+    #     orig = self.constructor(data1, featureNames=featureNames)
+    #     orig.copyPoints(None)
+    #
+    # @raises(ArgumentException)
+    # def test_copyPoints_exceptionNonIndex(self):
+    #     """ Test copyPoints() for exception when a value in the input is not a valid index """
+    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+    #     pnames = ['1', 'one', '2', '0']
+    #     featureNames = ['one', 'two', 'three']
+    #     orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
+    #     orig.copyPoints([1, 'yes'])
+    #
+    #
+    # def test_copyPoints_FEmpty(self):
+    #     """ Test copyPoints() returns the correct data in a feature empty object """
+    #     data = [[], []]
+    #     pnames = ['1', 'one']
+    #     data = numpy.array(data)
+    #     toTest = self.constructor(data, pointNames=pnames)
+    #     ret = toTest.copyPoints([0])
+    #
+    #     data = [[]]
+    #     data = numpy.array(data)
+    #     exp = self.constructor(data, pointNames=['0'])
+    #     exp.isIdentical(ret)
+    #
+    #
+    # def test_copyPoints_handmadeContents(self):
+    #     """ Test copyPoints() returns the correct data """
+    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+    #     featureNames = ['one', 'two', 'three']
+    #     pnames = ['1', 'one', '2', '0']
+    #     orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
+    #     expOrig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
+    #
+    #     data2 = [[1, 2, 3], [2, 4, 6]]
+    #     expRet = self.constructor(data2, pointNames=['one', '2'], featureNames=featureNames)
+    #
+    #     ret = orig.copyPoints([1, 2])
+    #
+    #     assert orig.isIdentical(expOrig)
+    #     assert ret.isIdentical(expRet)
+    #
+    # def test_copyPoints_list_NamePath(self):
+    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+    #     featureNames = ['one', 'two', 'three']
+    #     pnames = ['1', 'one', '2', '0']
+    #     orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames,
+    #                             name=preserveName, path=preservePair)
+    #
+    #     ret = orig.copyPoints([1, 2])
+    #
+    #     assert orig.name == preserveName
+    #     assert orig.absolutePath == preserveAPath
+    #     assert orig.relativePath == preserveRPath
+    #
+    #     assert ret.nameIsDefault()
+    #     assert ret.absolutePath == preserveAPath
+    #     assert ret.relativePath == preserveRPath
+    #
+    #
+    # def test_copyPoints_handmadeListOrdering(self):
+    #     """ Test copyPoints() against handmade output for out of order indices """
+    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
+    #     names = ['1', '4', '7', '10', '13']
+    #     toTest = self.constructor(data, pointNames=names)
+    #     cop1 = toTest.copyPoints([3, 4, 1])
+    #     exp1 = self.constructor([[10, 11, 12], [13, 14, 15], [4, 5, 6]], pointNames=['10', '13', '4'])
+    #     assert cop1.isIdentical(exp1)
+    #
+    #
+    # @raises(ArgumentException)
+    # def test_copyPoints_exceptionStartInvalid(self):
+    #     """ Test copyPoints() for ArgumentException when start is not a valid point index """
+    #     featureNames = ["one", "two", "three"]
+    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     toTest = self.constructor(data, featureNames=featureNames)
+    #     toTest.copyPoints(start=4, end=2)
+    #
+    # @raises(ArgumentException)
+    # def test_copyPoints_exceptionEndInvalid(self):
+    #     """ Test copyPoints() for ArgumentException when start is not a valid feature index """
+    #     featureNames = ["one", "two", "three"]
+    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     toTest = self.constructor(data, featureNames=featureNames)
+    #     toTest.copyPoints(start=1, end=5)
+    #
+    # @raises(ArgumentException)
+    # def test_copyPoints_exceptionInversion(self):
+    #     """ Test copyPoints() for ArgumentException when start comes after end """
+    #     featureNames = ["one", "two", "three"]
+    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     toTest = self.constructor(data, featureNames=featureNames)
+    #     toTest.copyPoints(start=2, end=0)
+    #
+    # def test_copyPoints_handmadeRange(self):
+    #     """ Test copyPoints() against handmade output for range copying """
+    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     toTest = self.constructor(data)
+    #     ret = toTest.copyPoints(start=1, end=2)
+    #
+    #     expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]])
+    #     expectedTest = self.constructor(data)
+    #
+    #     assert expectedRet.isIdentical(ret)
+    #     assert expectedTest.isIdentical(toTest)
+    #
+    # def test_copyPoints_range_NamePath(self):
+    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     toTest = self.constructor(data, name=preserveName, path=preservePair)
+    #
+    #     ret = toTest.copyPoints(start=1, end=2)
+    #
+    #     assert toTest.name == preserveName
+    #     assert toTest.absolutePath == preserveAPath
+    #     assert toTest.relativePath == preserveRPath
+    #
+    #     assert ret.nameIsDefault()
+    #     assert ret.absolutePath == preserveAPath
+    #     assert ret.relativePath == preserveRPath
+    #
+    #
+    # def test_copyPoints_handmadeRangeWithFeatureNames(self):
+    #     """ Test copyPoints() against handmade output for range copying with featureNames """
+    #     featureNames = ["one", "two", "three"]
+    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     pnames = ['1', '4', '7']
+    #     toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+    #     ret = toTest.copyPoints(start=1, end=2)
+    #
+    #     expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
+    #     expectedTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+    #
+    #     assert expectedRet.isIdentical(ret)
+    #     assert expectedTest.isIdentical(toTest)
+    #
+    # def test_copyPoints_handmadeRangeDefaults(self):
+    #     """ Test copyPoints uses the correct defaults in the case of range based copying """
+    #     featureNames = ["one", "two", "three"]
+    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    #     toTest = self.constructor(data, featureNames=featureNames)
+    #     ret = toTest.copyPoints(end=1)
+    #
+    #     expectedRet = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
+    #     expectedTest = self.constructor(data, featureNames=featureNames)
+    #
+    #     assert expectedRet.isIdentical(ret)
+    #     assert expectedTest.isIdentical(toTest)
+    #
+    #     toTest = self.constructor(data, featureNames=featureNames)
+    #     ret = toTest.copyPoints(start=1)
+    #
+    #     expectedTest = self.constructor(data, featureNames=featureNames)
+    #     expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], featureNames=featureNames)
+    #
+    #     assert expectedRet.isIdentical(ret)
+    #     assert expectedTest.isIdentical(toTest)
 
-    @raises(ArgumentException)
-    def test_copyPoints_exceptionNonIndex(self):
-        """ Test copyPoints() for exception when a value in the input is not a valid index """
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        pnames = ['1', 'one', '2', '0']
-        featureNames = ['one', 'two', 'three']
-        orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-        orig.copyPoints([1, 'yes'])
 
+    def test_copyPoints_handmadeSingle(self):
+        """ Test copyPoints() against handmade output when extracting one point """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ext1 = toTest.copyPoints(0)
+        exp1 = self.constructor([[1, 2, 3]])
+        assert ext1.isIdentical(exp1)
+        expEnd = self.constructor(data)
+        assert toTest.isIdentical(expEnd)
 
-    def test_copyPoints_FEmpty(self):
-        """ Test copyPoints() returns the correct data in a feature empty object """
-        data = [[], []]
-        pnames = ['1', 'one']
-        data = numpy.array(data)
-        toTest = self.constructor(data, pointNames=pnames)
-        ret = toTest.copyPoints([0])
+    def test_copyPoints_index_NamePath_Preserve(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        if isinstance(toTest, UML.data.BaseView):
+            return
+        #don't test view.
+        toTest._name = 'testName'
+        toTest._absPath = 'testAbsPath'
+        toTest._relPath = 'testRelPath'
 
-        data = [[]]
-        data = numpy.array(data)
-        exp = self.constructor(data, pointNames=['0'])
-        exp.isIdentical(ret)
+        ext1 = toTest.copyPoints(0)
 
+        assert ext1.nameIsDefault()
+        assert ext1.path == 'testAbsPath'
+        assert ext1.absolutePath == 'testAbsPath'
+        assert ext1.relativePath == 'testRelPath'
 
-    def test_copyPoints_handmadeContents(self):
-        """ Test copyPoints() returns the correct data """
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pnames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-        expOrig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
+        assert toTest.name == "testName"
+        assert toTest.absolutePath == "testAbsPath"
+        assert toTest.relativePath == 'testRelPath'
 
-        data2 = [[1, 2, 3], [2, 4, 6]]
-        expRet = self.constructor(data2, pointNames=['one', '2'], featureNames=featureNames)
+    def test_copyPoints_ListIntoPEmpty(self):
+        """ Test copyPoints() by removing a list of all points """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        toTest = self.constructor(data)
+        expRet = self.constructor(data)
+        expTest = toTest.copy()
+        ret = toTest.copyPoints([0, 1, 2, 3])
 
-        ret = orig.copyPoints([1, 2])
-
-        assert orig.isIdentical(expOrig)
         assert ret.isIdentical(expRet)
+        assert toTest.isIdentical(expTest)
 
-    def test_copyPoints_list_NamePath(self):
-        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-        featureNames = ['one', 'two', 'three']
-        pnames = ['1', 'one', '2', '0']
-        orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames,
-                                name=preserveName, path=preservePair)
 
-        ret = orig.copyPoints([1, 2])
-
-        assert orig.name == preserveName
-        assert orig.absolutePath == preserveAPath
-        assert orig.relativePath == preserveRPath
-
-        assert ret.nameIsDefault()
-        assert ret.absolutePath == preserveAPath
-        assert ret.relativePath == preserveRPath
-
+    def test_copyPoints_handmadeListSequence(self):
+        """ Test copyPoints() against handmade output for several list extractions """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        names = ['1', '4', '7', '10']
+        toTest = self.constructor(data, pointNames=names)
+        ext1 = toTest.copyPoints('1')
+        exp1 = self.constructor([[1, 2, 3]], pointNames=['1'])
+        assert ext1.isIdentical(exp1)
+        ext2 = toTest.copyPoints([1, 2])
+        exp2 = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'])
+        assert ext2.isIdentical(exp2)
+        expEnd = self.constructor(data, pointNames=names)
+        assert toTest.isIdentical(expEnd)
 
     def test_copyPoints_handmadeListOrdering(self):
-        """ Test copyPoints() against handmade output for out of order indices """
+        """ Test copyPoints() against handmade output for out of order extraction """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
         names = ['1', '4', '7', '10', '13']
         toTest = self.constructor(data, pointNames=names)
-        cop1 = toTest.copyPoints([3, 4, 1])
+        ext1 = toTest.copyPoints([3, 4, 1])
         exp1 = self.constructor([[10, 11, 12], [13, 14, 15], [4, 5, 6]], pointNames=['10', '13', '4'])
-        assert cop1.isIdentical(exp1)
+        assert ext1.isIdentical(exp1)
+        expEnd = self.constructor(data, pointNames=names)
+        assert toTest.isIdentical(expEnd)
+
+    def test_copyPoints_List_trickyOrdering(self):
+        data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
+        toCopy = [6, 5, 3, 9]
+
+        toTest = self.constructor(data)
+
+        ret = toTest.copyPoints(toCopy)
+
+        expRaw = [[0], [0], [2], [0]]
+        expRet = self.constructor(expRaw)
+
+        expTest = self.constructor(data)
+
+        assert ret == expRet
+        assert toTest == expTest
+
+    def test_copyPoints_function_selectionGap(self):
+        data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
+        extractIndices = [3, 5, 6, 9]
+        pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+        def sel(point):
+            if int(point.getPointName(0)) in extractIndices:
+                return True
+            else:
+                return False
+
+        toTest = self.constructor(data, pointNames=pnames)
+
+        ret = toTest.copyPoints(sel)
+
+        expRaw = [[2], [0], [0], [0]]
+        expNames = ['3', '5', '6', '9']
+        expRet = self.constructor(expRaw, pointNames=expNames)
+
+        expTest = self.constructor(data, pointNames=pnames)
+
+        assert ret == expRet
+        assert toTest == expTest
 
 
-    @raises(ArgumentException)
-    def test_copyPoints_exceptionStartInvalid(self):
-        """ Test copyPoints() for ArgumentException when start is not a valid point index """
+    def test_copyPoints_functionIntoPEmpty(self):
+        """ Test copyPoints() by copying all points using a function """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        expRet = self.constructor(data)
+
+        def allTrue(point):
+            return True
+
+        ret = toTest.copyPoints(allTrue)
+        expTest = self.constructor(data)
+
+        assert ret.isIdentical(expRet)
+        assert toTest.isIdentical(expTest)
+
+    def test_copyPoints_function_returnPointEmpty(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        expTest = self.constructor(data)
+
+        def takeNone(point):
+            return False
+
+        ret = toTest.copyPoints(takeNone)
+
+        data = [[], [], []]
+        data = numpy.array(data).T
+        expRet = self.constructor(data)
+
+        assert ret.isIdentical(expRet)
+        assert toTest.isIdentical(expTest)
+
+    def test_copyPoints_handmadeFunction(self):
+        """ Test copyPoints() against handmade output for function extraction """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+
+        def oneOrFour(point):
+            if 1 in point or 4 in point:
+                return True
+            return False
+
+        ext = toTest.copyPoints(oneOrFour)
+        exp = self.constructor([[1, 2, 3], [4, 5, 6]])
+        assert ext.isIdentical(exp)
+        expEnd = self.constructor(data)
+        assert toTest.isIdentical(expEnd)
+
+    def test_copyPoints_func_NamePath_preservation(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        if isinstance(toTest, UML.data.BaseView):
+            return
+        #don't test view.
+        def oneOrFour(point):
+            if 1 in point or 4 in point:
+                return True
+            return False
+
+        toTest._name = "testName"
+        toTest._absPath = "testAbsPath"
+        toTest._relPath = "testRelPath"
+
+        ext = toTest.copyPoints(oneOrFour)
+
+        assert toTest.name == "testName"
+        assert toTest.absolutePath == "testAbsPath"
+        assert toTest.relativePath == 'testRelPath'
+
+        assert ext.nameIsDefault()
+        assert ext.absolutePath == 'testAbsPath'
+        assert ext.relativePath == 'testRelPath'
+
+    def test_copyPoints_handmadeFuncionWithFeatureNames(self):
+        """ Test copyPoints() against handmade output for function extraction with featureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.copyPoints(start=4, end=2)
+
+        def oneOrFour(point):
+            if 1 in point or 4 in point:
+                return True
+            return False
+
+        ext = toTest.copyPoints(oneOrFour)
+        exp = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
+        assert ext.isIdentical(exp)
+        expEnd = self.constructor(data, featureNames=featureNames)
+        assert toTest.isIdentical(expEnd)
+
+    @raises(ArgumentException)
+    def test_copyPoints_exceptionStartInvalid(self):
+        """ Test extracPoints() for ArgumentException when start is not a valid point index """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.copyPoints(start=1.1, end=2)
 
     @raises(ArgumentException)
     def test_copyPoints_exceptionEndInvalid(self):
-        """ Test copyPoints() for ArgumentException when start is not a valid feature index """
+        """ Test copyPoints() for ArgumentException when start is not a valid Point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -531,7 +818,7 @@ class StructureDataSafe(DataTestObject):
         toTest.copyPoints(start=2, end=0)
 
     def test_copyPoints_handmadeRange(self):
-        """ Test copyPoints() against handmade output for range copying """
+        """ Test copyPoints() against handmade output for range extraction """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         ret = toTest.copyPoints(start=1, end=2)
@@ -542,56 +829,313 @@ class StructureDataSafe(DataTestObject):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-    def test_copyPoints_range_NamePath(self):
+    def test_copyPoints_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, name=preserveName, path=preservePair)
+        toTest = self.constructor(data)
+        if isinstance(toTest, UML.data.BaseView):
+            return
+        #don't test view.
+        toTest._name = "testName"
+        toTest._absPath = "testAbsPath"
+        toTest._relPath = "testRelPath"
 
         ret = toTest.copyPoints(start=1, end=2)
 
-        assert toTest.name == preserveName
-        assert toTest.absolutePath == preserveAPath
-        assert toTest.relativePath == preserveRPath
+        assert toTest.name == "testName"
+        assert toTest.absolutePath == "testAbsPath"
+        assert toTest.relativePath == 'testRelPath'
 
         assert ret.nameIsDefault()
-        assert ret.absolutePath == preserveAPath
-        assert ret.relativePath == preserveRPath
+        assert ret.absolutePath == 'testAbsPath'
+        assert ret.relativePath == 'testRelPath'
+
+
+    def test_copyPoints_rangeIntoPEmpty(self):
+        """ Test copyPoints() removes all points using ranges """
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        expRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints(start=0, end=2)
+
+        assert ret.isIdentical(expRet)
+
+        expTest = self.constructor(data)
+
+        toTest.isIdentical(expTest)
 
 
     def test_copyPoints_handmadeRangeWithFeatureNames(self):
-        """ Test copyPoints() against handmade output for range copying with featureNames """
+        """ Test copyPoints() against handmade output for range extraction with featureNames """
         featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        pnames = ['1', '4', '7']
-        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.copyPoints(start=1, end=2)
 
         expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
-        expectedTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
+
 
     def test_copyPoints_handmadeRangeDefaults(self):
-        """ Test copyPoints uses the correct defaults in the case of range based copying """
+        """ Test copyPoints uses the correct defaults in the case of range based extraction """
         featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, featureNames=featureNames)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.copyPoints(end=1)
 
-        expectedRet = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
-        expectedTest = self.constructor(data, featureNames=featureNames)
+        expectedRet = self.constructor([[1, 2, 3], [4, 5, 6]], pointNames=['1', '4'], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
-        toTest = self.constructor(data, featureNames=featureNames)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.copyPoints(start=1)
 
-        expectedTest = self.constructor(data, featureNames=featureNames)
-        expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
 
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
+
+    def test_copyPoints_handmade_calling_pointNames(self):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints(start='4', end='7')
+
+        expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+    def test_copyPoints_handmadeString(self):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        #test featureName=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one=1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName==value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one==1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one<2')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one<=1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName>value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one>4')
+        expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName>=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one>=7')
+        expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName!=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one!=4')
+        expectedRet = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
+                                       featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value and return back an empty
+        assert expectedTest.isIdentical(toTest)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one<1')
+        expectedRet = self.constructor([], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value and return back all data
+        assert expectedTest.isIdentical(toTest)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one>0')
+        expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+    def test_copyPoints_handmadeStringWithOperatorWhitespace(self):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        #test featureName=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one = 1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName==value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one == 1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one < 2')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one <= 1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName>value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one > 4')
+        expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName>=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one >= 7')
+        expectedRet = self.constructor([[7, 8, 9]], pointNames=pointNames[-1:], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName!=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one != 4')
+        expectedRet = self.constructor([[1, 2, 3], [7, 8, 9]], pointNames=[pointNames[0], pointNames[-1]],
+                                       featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value and return back an empty
+        assert expectedTest.isIdentical(toTest)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one < 1')
+        expectedRet = self.constructor([], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName<value and return back all data
+        assert expectedTest.isIdentical(toTest)
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('one > 0')
+        expectedRet = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+    def test_copyPoints_handmadeStringWithFeatureWhitespace(self):
+        featureNames = ["feature one", "feature two", "feature three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        #test featureName=value
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('feature one=1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+        #test featureName=value with operator whitespace
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('feature one = 1')
+        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1], featureNames=featureNames)
+        expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        assert expectedRet.isIdentical(ret)
+        assert expectedTest.isIdentical(toTest)
+
+    @raises(ArgumentException)
+    def test_copyPoints_handmadeString_featureNotExist(self):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = toTest.copyPoints('four=1')
+
+    def test_copyPoints_numberOnly(self):
+        self.back_copy_numberOnly('point')
+
+
+    #######################
+    # copy common backend #
+    #######################
+
+    def back_copy_numberOnly(self, axis):
+        if axis == 'point':
+            toCall = "copyPoints"
+        else:
+            toCall = "copyFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        ret = getattr(toTest, toCall)(number=3)
+        if axis == 'point':
+            exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
+            rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        else:
+            exp = self.constructor([p[:3] for p in data], pointNames=pnames, featureNames=fnames[:3])
+            rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        assert exp.isIdentical(ret)
+        assert rem.isIdentical(toTest)
 
 
     #####################
@@ -1740,7 +2284,6 @@ class StructureModifying(DataTestObject):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-
     def test_extractPoints_ListIntoPEmpty(self):
         """ Test extractPoints() by removing a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -2269,7 +2812,6 @@ class StructureModifying(DataTestObject):
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
         ret = getattr(toTest, toCall)(number=3)
-
         if axis == 'point':
             exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
             rem = self.constructor(data[3:], pointNames=pnames[3:], featureNames=fnames)
