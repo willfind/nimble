@@ -4015,7 +4015,6 @@ class Base(object):
                 msg += + "is zero"
                 raise ZeroDivisionError(msg)
 
-
     def _genericNumericBinary(self, opName, other):
         ret = self._genericNumericBinary_validation(opName, other)
         if ret == NotImplemented:
@@ -4041,18 +4040,19 @@ class Base(object):
         if retPNames is not None:
             ret.setPointNames(retPNames)
         else:
-            ret.pointNamesInverse =  None
+            ret.pointNamesInverse = None
             ret.pointNames = None
 
         if retFNames is not None:
             ret.setFeatureNames(retFNames)
         else:
-            ret.featuresNamesInverse =  None
-            ret.featuresNames = None      
+            ret.featuresNamesInverse = None
+            ret.featuresNames = None
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if isUML else 'self'
-        dataHelpers.binaryOpNamePathMerge(self, other, ret, nameSource, pathSource)
+        dataHelpers.binaryOpNamePathMerge(
+            self, other, ret, nameSource, pathSource)
         return ret
 
     def _genericNumericBinary_implementation(self, opName, other):
