@@ -967,7 +967,17 @@ class Matrix(Base):
             ret = self.data - other.data
         else:
             ret = self.data - other
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+        if self.pointNamesInverse is None:
+            pNames = None
+        else:
+            pNames = self.getPointNames()
+        if self.featureNamesInverse is None:
+            fNames = None
+        else:
+            fNames = self.getFeatureNames()
+
+        return Matrix(ret, pointNames=pNames, featureNames=fNames, reuseData=True, dataCopy=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data
