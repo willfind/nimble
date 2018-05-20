@@ -532,13 +532,71 @@ class DataFrame(Base):
         indexList = self.data.index[start:end + 1]
         return self.pointsOrFeaturesVectorized(indexList, 'point', 'copy', True)
 
-    def _copyFeatures_implementation(self, indices, start, end):
-        if indices is not None:
-            ret = self.data.ix[:, indices]
-        else:
-            ret = self.data.ix[:, start:end + 1]
+    def _copyFeatures_implementation(self, toCopy, start, end, number, _):
+        """
+        Function to copy features according to the parameters, and return an object containing
+        the removed features with their featureName names from this object. The actual work is done by
+        further helper functions, this determines which helper to call, and modifies the input
+        to accomodate the number and randomize parameters, where number indicates how many of the
+        possibilities should be copied, and randomize indicates whether the choice of who to
+        copy should be by order or uniform random.
 
-        return UML.createData('DataFrame', ret)
+        """
+        # list of identifiers
+        if isinstance(toCopy, list):
+            assert number == len(toCopy)
+            return self._copyFeaturesByList_implementation(toCopy)
+        # boolean function
+        elif hasattr(toCopy, '__call__'):
+            return self._copyFeaturesByFunction_implementation(toCopy, number)
+        # by range
+        elif start is not None or end is not None:
+            return self._copyFeaturesByRange_implementation(start, end)
+        else:
+            raise ArgumentException("Malformed or missing inputs")
+
+    def _copyFeaturesByList_implementation(self, toCopy):
+        """
+        Modify this object to have only the features that are not given in the input,
+        returning an object containing those features that are.
+
+        """
+        featureList = self.data.columns[toCopy]
+        return self.pointsOrFeaturesVectorized(featureList, 'feature', 'copy', True)
+
+    def _copyFeaturesByFunction_implementation(self, toCopy, number):
+        """
+        Modify this object to have only the features whose views do not satisfy the given
+        function, returning an object containing those features whose views do.
+
+        """
+        if hasattr(toCopy, 'vectorized') and toCopy.vectorized:
+            featureList = self.data.columns[toCopy(self.data.loc)]
+            return self.pointsOrFeaturesVectorized(featureList, 'feature', 'copy', True)
+        else:
+            #have to use view based method.
+            results = UML.data.matrix.viewBasedApplyAlongAxis(toCopy, 'feature', self)
+            results = results.astype(np.int)
+
+            # need to convert our 1/0 array to to list of points to be removed
+            # can do this by just getting the non-zero indices
+            toRemove = np.flatnonzero(results)
+
+            return self._copyFeaturesByList_implementation(toRemove)
+
+
+    def _copyFeaturesByRange_implementation(self, start, end):
+        """
+        Modify this object to have only those features that are not within the given range,
+        inclusive; returning an object containing those features that are.
+
+        start and end must not be null, must be within the range of possible features,
+        and start must not be greater than end
+
+        """
+        # +1 on end in ranges, because our ranges are inclusive
+        featureList = self.data.columns[start:end + 1]
+        return self.pointsOrFeaturesVectorized(featureList, 'feature', 'copy', True)
 
     def _transformEachPoint_implementation(self, function, points):
         """
