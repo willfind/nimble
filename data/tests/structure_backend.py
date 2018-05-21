@@ -690,15 +690,12 @@ class StructureDataSafe(DataTestObject):
                 return False
 
         toTest = self.constructor(data, pointNames=pnames)
-
         ret = toTest.copyPoints(sel)
 
         expRaw = [[2], [0], [0], [0]]
         expNames = ['3', '5', '6', '9']
         expRet = self.constructor(expRaw, pointNames=expNames)
-
         expTest = self.constructor(data, pointNames=pnames)
-
         assert ret == expRet
         assert toTest == expTest
 
