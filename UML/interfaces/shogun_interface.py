@@ -88,10 +88,22 @@ class Shogun(UniversalInterface):
 
             return True
 
-        self._searcher = PythonSearcher(self.shogun, self.shogun.__all__, {}, isLearner, 2)
+        self.hasAll = hasattr(self.shogun, '__all__')
+        contents = self.shogun.__all__ if self.hasALL else dir(self.shogun)
+        self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner, 2)
 
-        self.setupParameterManifest()
+        self.loadParameterManifest()
 
+    def _access(self, module, target):
+        if self.hasAll:
+            if not hasattr(self.shogun, module):
+                submod = importlib.import_module('shogun.Library')
+            else:
+                submod = getattr(self.shogun, module)
+        else:
+            submod = self.shogun
+
+        return getattr(submod, target)
 
     def accessible(self):
         try:
@@ -442,8 +454,11 @@ class Shogun(UniversalInterface):
 
     def version(self):
         if self.versionString is None:
-            shogunLib = importlib.import_module('shogun.Library')
-            self.versionString = shogunLib.Version_get_version_release()
+            if hasattr(self.shogun, "Version"):
+                self.versionString = self.shogun.Version.get_version_release()
+            else:
+                shogunLib = importlib.import_module('shogun.Library')
+                self.versionString = shogunLib.Version_get_version_release()
 
         return self.versionString
 
@@ -451,7 +466,7 @@ class Shogun(UniversalInterface):
     ### METHOD HELPERS ###
     ######################
 
-    def setupParameterManifest(self):
+    def loadParameterManifest(self):
         """
         Load manifest containing parameter names and defaults for all relevant objects
         in shogun. If manifest is missing, empty, or outdated then run the discovery code.
@@ -459,23 +474,6 @@ class Shogun(UniversalInterface):
         associated with the 'location' option.
 
         """
-        # Attempt setup for clang. If successful, we will consider
-        # allowing discovery of parameters
-        try:
-            location = self.getOption('libclangLocation')
-            clang.cindex.Config.set_library_file(location)
-            clang.cindex.Index.create()
-            allowDiscovery = True
-        except Exception:
-            allowDiscovery = False
-
-        # TODO For now, discovery is intentionally disabled until clang
-        # issues have been resolved.
-        allowDiscovery = False
-
-        self._paramsManifest = {}
-        ranDiscovery = False
-
         # find most likely manifest file
         metadataPath = os.path.join(UML.UMLPath, 'interfaces', 'metadata')
         best, exact = self._findBestManifest(metadataPath)
@@ -484,26 +482,6 @@ class Shogun(UniversalInterface):
             with open(best, 'r') as fp:
                 self._paramsManifest = json.load(fp, object_hook=_enforceNonUnicodeStrings)
 
-        # if empty or different version:
-        if (self._paramsManifest == {}) or (not exact):
-            # If we can, try to load the exact correct information
-            if allowDiscovery:
-                shogunSourcePath = self.getOption('sourceLocation')
-                self._paramsManifest = discoverConstructors(shogunSourcePath)
-                ranDiscovery = True
-
-        modified = False
-        # check params for each learner in listLearner
-        # if no params:
-        # modify manifest to have empty param name list for that learner
-        # but wait, do we really want this ???
-
-        # has it been written to a file? did we modify the manifest in memory?
-        if ranDiscovery or modified:
-            selfVersion = self.version().split('_')[0]
-            writePath = os.path.join(metadataPath, ('shogunParameterManifest_%s' % selfVersion))
-            with open(writePath, 'w') as fp:
-                json.dump(self._paramsManifest, fp, indent=4)
 
     def _findBestManifest(self, metadataPath):
         """
@@ -838,54 +816,3 @@ def _remapLabelsSpecific(toRemap, space):
     toRemap.features.transform(remap)
 
     return inverse
-
-
-def discoverConstructors(path, desiredFile=None, desiredExt=['.cpp']):
-    """
-    Recursively visit all directories in the given path, calling
-    findConstructors for each cpp source file
-
-    """
-    results = {}
-    contents = []
-    for (folderPath, subFolders, contents) in os.walk(path):
-        for fileName in contents:
-            filePath = os.path.join(folderPath, fileName)
-            (rootName, ext) = os.path.splitext(fileName)
-            (rootPath, ext) = os.path.splitext(filePath)
-            if desiredFile is None or rootName in desiredFile:
-                if ext in desiredExt:
-                    findConstructors(filePath, results, rootPath)
-
-    return results
-
-
-def findConstructors(fileName, results, targetDirectory):
-    """ Find all constructors and list their params in the given file """
-    index = clang.cindex.Index.create()
-    tuNode = index.parse(fileName).cursor
-    findConstructorsBackend(tuNode, results, targetDirectory)
-
-
-def findConstructorsBackend(node, results, targetDirectory):
-    """ Recursively visit all nodes, checking if it is a constructor """
-    if node.location.file is not None:
-        if not node.location.file.name.startswith(targetDirectory):
-            return
-
-    if node.kind == clang.cindex.CursorKind.CONSTRUCTOR:
-        constructorName = node.spelling
-        args = []
-        for value in node.get_arguments():
-            args.append(value.spelling)
-        # TODO value.type.spelling
-
-#        print "%s%s" % (constructorName, str(args))
-        if not constructorName in results:
-            results[constructorName] = []
-        if args not in results[constructorName]:
-            results[constructorName].append(args)
-    # Recurse for children of this node if it isn't a constructor
-    else:
-        for child in node.get_children():
-            findConstructorsBackend(child, results, targetDirectory)
