@@ -328,13 +328,17 @@ class Base(object):
         then an ArgumentException will be raised. None is always returned.
 
         """
-        if assignments is None or isinstance(assignments, list):
+        if assignments is None:
+            self.pointNames = None
+            self.pointNamesInverse = None
+        elif isinstance(assignments, list):
             self._setNamesFromList(assignments, self.points, 'point')
         elif isinstance(assignments, dict):
             self._setNamesFromDict(assignments, self.points, 'point')
         else:
             msg = "'assignments' parameter may only be a list, a dict, or None, "
-            msg += "yet a value of type " + str(type(assignments)) + " was given"
+            msg += "yet a value of type " + \
+                str(type(assignments)) + " was given"
             raise ArgumentException(msg)
 
     def setFeatureNames(self, assignments=None):
@@ -349,13 +353,17 @@ class Base(object):
         then an ArgumentException will be raised. None is always returned.
 
         """
-        if assignments is None or isinstance(assignments, list):
+        if assignments is None:
+            self.featureNames = None
+            self.featureNamesInverse = None
+        elif isinstance(assignments, list):
             self._setNamesFromList(assignments, self.features, 'feature')
         elif isinstance(assignments, dict):
             self._setNamesFromDict(assignments, self.features, 'feature')
         else:
             msg = "'assignments' parameter may only be a list, a dict, or None, "
-            msg += "yet a value of type " + str(type(assignments)) + " was given"
+            msg += "yet a value of type " + \
+                str(type(assignments)) + " was given"
             raise ArgumentException(msg)
 
     def nameIsDefault(self):
