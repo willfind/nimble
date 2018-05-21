@@ -2166,7 +2166,7 @@ class Base(object):
         with the earlier indexed points|features coming before the later indexed
         points|features.
 
-        iterateBy: Choose to genereate an iterator for 'points' or 'features'. Default is points.
+        iterateBy: Genereate an iterator over 'points' or 'features'. Default is 'points'.
         
         If the object is one dimensional, iterateBy is ignored.
         """
