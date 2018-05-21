@@ -4010,9 +4010,9 @@ class Base(object):
 
         # check name restrictions
         if isUML:
-            if self.pointNamesInverse is not None and other.pointNamesInverse is not None:
+            if self._getPointNamesInverse() is not None and other._getPointNamesInverse is not None:
                 self._validateEqualNames('point', 'point', opName, other)
-            if self.featureNamesInverse is not None and other.featureNamesInverse is not None:
+            if self._getFeatureNamesInverse() is not None and other._getFeatureNamesInverse() is not None:
                 self._validateEqualNames('feature', 'feature', opName, other)
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
@@ -4044,9 +4044,9 @@ class Base(object):
         (retPNames, retFNames) = (None, None)
 
         if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
-            if self.pointNamesInverse is not None:
+            if self._getPointNamesInverse() is not None:
                 retPNames = self.getPointNames()
-            if self.featureNamesInverse is not None:
+            if self._getFeatureNamesInverse() is not None:
                 retFNames = self.getFeatureNames()
         # else (everything else that uses this helper is a binary scalar op)
         else:
@@ -4057,14 +4057,12 @@ class Base(object):
         if retPNames is not None:
             ret.setPointNames(retPNames)
         else:
-            ret.pointNamesInverse = None
-            ret.pointNames = None
+            ret.setPointNames(None)
 
         if retFNames is not None:
             ret.setFeatureNames(retFNames)
         else:
-            ret.featuresNamesInverse = None
-            ret.featuresNames = None
+            ret.setFeatureNames(None)
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if isUML else 'self'
