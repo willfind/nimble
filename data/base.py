@@ -246,6 +246,15 @@ class Base(object):
     def _getPath(self):
         return self.absolutePath
 
+    def _getPointNamesInverse(self):
+        return self.pointNamesInverse
+
+    def _getFeatureNamesInverse(self):
+        return self.featureNamesInverse
+
+    def _getData(self):
+        return self.data
+
     path = property(_getPath, doc="The path to the file this data originated from")
 
     ########################

@@ -76,6 +76,14 @@ class BaseView(Base):
 
     relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
 
+    def _getPointNamesInverse(self):
+        return self._source.pointNamesInverse
+
+    def _getFeatureNamesInverse(self):
+        return self._source.featureNamesInverse
+
+    def _getData(self):
+        return self._source.data
 
     # TODO: retType
 
