@@ -852,48 +852,33 @@ class Sparse(Base):
 
 
     def _copyByList_implementation(self, toCopy, axisType):
+
         copyLength = len(toCopy)
         copyData = []
         copyRows = []
         copyCols = []
-
-        self._sortInternal(axisType)
-        if axisType == "feature":
-            targetAxis = self.data.col
-            otherAxis = self.data.row
-            copyTarget = copyCols
-            copyOther = copyRows
+        if isinstance(self, SparseView):
+            dtype = "O"
         else:
-            targetAxis = self.data.row
-            otherAxis = self.data.col
-            copyTarget = copyRows
-            copyOther = copyCols
-
-        #List of rows or columns to copy must be sorted in ascending order
-        toCopySorted = copy.copy(toCopy)
-        toCopySorted.sort()
-
-        # need mapping from values in sorted list to index in nonsorted list
-        positionMap = {}
-        for i in range(len(toCopy)):
-            positionMap[toCopy[i]] = i
-
-        #walk through col listing and partition all data: copy, and kept, reusing the sparse matrix
-        # underlying structure to save space
-        copyIndex = 0
-        for i in range(len(self.data.data)):
-            value = targetAxis[i]
-            # Move copyIndex forward until we get to an entry that might
-            # match the current (or a future) value
-            while copyIndex < copyLength and value > toCopySorted[copyIndex]:
-                copyIndex = copyIndex + 1
-
-            # Check if the current value matches one we want copyed
-            if copyIndex < copyLength and value == toCopySorted[copyIndex]:
-                copyData.append(self.data.data[i])
-                copyOther.append(otherAxis[i])
-                copyTarget.append(positionMap[value])
-
+            dtype = self.data.dtype
+        if axisType == "feature":
+            viewIterator = self.copy().featureIterator
+        else:
+            viewIterator = self.copy().pointIterator
+        print("list1", self)
+        for targetID, view in enumerate(viewIterator()):
+            if targetID in toCopy:
+                for otherID, value in enumerate(view.data.data):
+                    copyData.append(value)
+                    if axisType == "feature":
+                        copyRows.append(view.data.row[otherID])
+                        copyCols.append(toCopy.index(targetID))
+                    else:
+                        copyRows.append(toCopy.index(targetID))
+                        copyCols.append(view.data.col[otherID])
+        print("list2", self)
+        # coo_matrix will force list to simplest numpy data type unless converted to an array
+        copyData = numpy.array(copyData, dtype=dtype)
         # instantiate return data
         (selfShape, copyShape) = _calcShapes(self.data.shape, copyLength, axisType)
         ret = coo_matrix((copyData, (copyRows, copyCols)), shape=copyShape)
@@ -914,125 +899,24 @@ class Sparse(Base):
 
 
     def _copyByFunction_implementation(self, toCopy, number, axisType):
-        copyData = []
-        copyRows = []
-        copyCols = []
-
-        self._sortInternal(axisType)
+        print("func1", self)
+        copyList = []
         if axisType == "feature":
-            targetAxis = self.data.col
-            otherAxis = self.data.row
-            copyTarget = copyCols
-            copyOther = copyRows
-            viewMaker = self.featureView
+            viewIterator = self.copy().featureIterator
         else:
-            targetAxis = self.data.row
-            otherAxis = self.data.col
-            copyTarget = copyRows
-            copyOther = copyCols
-            viewMaker = self.pointView
+            viewIterator = self.copy().pointIterator
+        for targetID, view in enumerate(viewIterator()):
+            if toCopy(view):
+                copyList.append(targetID)
+        if number:
+            copyList = copyList[:number]
+        print("func2", self)
+        return self._copyByList_implementation(copyList, axisType)
 
-        copyIndex = 0
-        vectorStartIndex = 0
-        copiedIDs = []
-        # consume zeroed vectors, up to the first nonzero value
-        if self.data.nnz > 0 and self.data.data[0] != 0:
-            for i in range(0, targetAxis[0]):
-                if toCopy(viewMaker(i)):
-                    copiedIDs.append(i)
-        #walk through each coordinate entry
-        for i in range(len(self.data.data)):
-            #collect values into points
-            targetValue = targetAxis[i]
-            #if this is the end of a point
-            if i == len(self.data.data) - 1 or targetAxis[i + 1] != targetValue:
-                #evaluate whether curr point is to be copied or not
-                # and perform the appropriate copies
-                if toCopy(viewMaker(targetValue)):
-                    for j in range(vectorStartIndex, i + 1):
-                        copyData.append(self.data.data[j])
-                        copyOther.append(otherAxis[j])
-                        copyTarget.append(len(copiedIDs))
-                    copiedIDs.append(targetValue)
-                # process zeroed vectors up to the ID of the new vector
-                if i < len(self.data.data) - 1:
-                    nextValue = targetAxis[i + 1]
-                else:
-                    if axisType == 'point':
-                        nextValue = self.points
-                    else:
-                        nextValue = self.features
-                for j in range(targetValue + 1, nextValue):
-                    if toCopy(viewMaker(j)):
-                        copiedIDs.append(j)
-
-                #reset the vector starting index
-                vectorStartIndex = i + 1
-
-
-        # instantiate return data
-        (selfShape, copyShape) = _calcShapes(self.data.shape, len(copiedIDs), axisType)
-        ret = coo_matrix((copyData, (copyRows, copyCols)), shape=copyShape)
-
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if axisType == 'point':
-            for index in copiedIDs:
-                pnames.append(self.getPointName(index))
-            fnames = self.getFeatureNames()
-        else:
-            pnames = self.getPointNames()
-            for index in copiedIDs:
-                fnames.append(self.getFeatureName(index))
-
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
     def _copyByRange_implementation(self, start, end, axisType):
-        rangeLength = end - start + 1
-        copyData = []
-        copyRows = []
-        copyCols = []
-
-        if axisType == "feature":
-            targetAxis = self.data.col
-            otherAxis = self.data.row
-            copyTarget = copyCols
-            copyOther = copyRows
-        else:
-            targetAxis = self.data.row
-            otherAxis = self.data.col
-            copyTarget = copyRows
-            copyOther = copyCols
-
-        #walk through col listing and partition all data: copy, and kept, reusing the sparse matrix
-        # underlying structure to save space
-        copyIndex = 0
-
-        for i in range(len(self.data.data)):
-            value = targetAxis[i]
-            if value >= start and value <= end:
-                copyData.append(self.data.data[i])
-                copyOther.append(otherAxis[i])
-                copyTarget.append(value - start)
-
-        # instantiate return data
-        (selfShape, copyShape) = _calcShapes(self.data.shape, rangeLength, axisType)
-        ret = coo_matrix((copyData, (copyRows, copyCols)), shape=copyShape)
-
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if axisType == 'point':
-            for i in range(start, end + 1):
-                pnames.append(self.getPointName(i))
-            fnames = self.getFeatureNames()
-        else:
-            pnames = self.getPointNames()
-            for i in range(start, end + 1):
-                fnames.append(self.getFeatureName(i))
-
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
+        copyList = [idx for idx in range(start, end + 1)]
+        return self._copyByList_implementation(copyList, axisType)
 
 
     def _transformEachPoint_implementation(self, function, points):
@@ -2186,140 +2070,6 @@ class SparseView(BaseView, Sparse):
 
         return ret
 
-
-    def _copyPoints_implementation(self, toCopy, start, end, number, _):
-        """
-        Function to copy points according to the parameters, and return an object containing
-        the removed points with default names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be copied, and randomize indicates whether the choice of who to copy should
-        be by order or uniform random.
-
-        """
-        # list of identifiers
-        if isinstance(toCopy, list):
-            assert number == len(toCopy)
-            return self._copyByList_implementation(toCopy, 'point')
-        # boolean function
-        elif hasattr(toCopy, '__call__'):
-            return self._copyByFunction_implementation(toCopy, number, 'point')
-        # by range
-        elif start is not None or end is not None:
-            return self._copyByRange_implementation(start, end, 'point')
-        else:
-            raise ArgumentException("Malformed or missing inputs")
-
-
-    def _copyFeatures_implementation(self, toCopy, start, end, number, _):
-        """
-        Function to copy features according to the parameters, and return an object containing
-        the removed features with their featureName names from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be copied, and randomize indicates whether the choice of who to
-        copy should be by order or uniform random.
-
-        """
-        # list of identifiers
-        if isinstance(toCopy, list):
-            assert number == len(toCopy)
-            return self._copyByList_implementation(toCopy, 'feature')
-        # boolean function
-        elif hasattr(toCopy, '__call__'):
-            return self._copyByFunction_implementation(toCopy, number, 'feature')
-        # by range
-        elif start is not None or end is not None:
-            return self._copyByRange_implementation(start, end, 'feature')
-        else:
-            raise ArgumentException("Malformed or missing inputs")
-
-
-    def _copyByList_implementation(self, toCopy, axisType):
-        copyLength = len(toCopy)
-        copyData = []
-        copyRows = []
-        copyCols = []
-        if axisType == "feature":
-            viewIterator = self.featureIterator
-        else:
-            viewIterator = self.pointIterator
-
-        for targetID, view in enumerate(viewIterator()):
-            for otherID, value in enumerate(view.data.data):
-                if targetID in toCopy:
-                    copyData.append(value)
-                    if axisType == "feature":
-                        copyRows.append(otherID)
-                        copyCols.append(toCopy.index(targetID))
-                    else:
-                        copyRows.append(toCopy.index(targetID))
-                        copyCols.append(otherID)
-
-        # instantiate return data
-        (selfShape, copyShape) = _calcShapes(self.data.shape, copyLength, axisType)
-        ret = coo_matrix((copyData, (copyRows, copyCols)), shape=copyShape)
-
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if axisType == 'point':
-            for index in toCopy:
-                pnames.append(self.getPointName(index))
-            fnames = self.getFeatureNames()
-        else:
-            pnames = self.getPointNames()
-            for index in toCopy:
-                fnames.append(self.getFeatureName(index))
-
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
-
-
-    def _copyByFunction_implementation(self, toCopy, number, axisType):
-        copyData = []
-        copyRows = []
-        copyCols = []
-        copyList = []
-        if axisType == "feature":
-            viewIterator = self.featureIterator
-        else:
-            viewIterator = self.pointIterator
-        for targetID, view in enumerate(viewIterator()):
-            if toCopy(view):
-                copyList.append(targetID)
-                for otherID, value in enumerate(view.data.data):
-                    copyData.append(value)
-                    if axisType == "feature":
-                        copyRows.append(otherID)
-                        copyCols.append(copyList.index(targetID))
-                    else:
-                        copyRows.append(copyList.index(targetID))
-                        copyCols.append(otherID)
-
-        # instantiate return data
-        (selfShape, copyShape) = _calcShapes(self.data.shape, len(copyList), axisType)
-        ret = coo_matrix((copyData, (copyRows, copyCols)), shape=copyShape)
-
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if axisType == 'point':
-            for index in copyList:
-                pnames.append(self.getPointName(index))
-            fnames = self.getFeatureNames()
-        else:
-            pnames = self.getPointNames()
-            for index in copyList:
-                fnames.append(self.getFeatureName(index))
-
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
-
-    def _copyByRange_implementation(self, start, end, axisType):
-        copyList = [idx for idx in range(start, end + 1)]
-        if axisType == "feature":
-            return self._copyByList_implementation(copyList, "feature")
-        else:
-            return self._copyByList_implementation(copyList, "point")
 
     def _nonZeroIteratorPointGrouped_implementation(self):
         return self._nonZeroIterator_general_implementation(self.pointIterator())

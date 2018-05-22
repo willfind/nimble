@@ -2674,51 +2674,6 @@ class Base(object):
         self.validate()
         return ret
 
-        # if isinstance(points, (int, six.string_types)):
-        #     points = [points]
-        # if self.points == 0:
-        #     raise ArgumentException("Object contains 0 points, there is no valid possible input")
-        # if points is None:
-        #     if start is not None or end is not None:
-        #         if start is None:
-        #             start = 0
-        #         if end is None:
-        #             end = self.points - 1
-        #         if start < 0 or start > self.points:
-        #             raise ArgumentException("start must be a valid index, in the range of possible features")
-        #         if end < 0 or end > self.points:
-        #             raise ArgumentException("end must be a valid index, in the range of possible features")
-        #         if start > end:
-        #             raise ArgumentException("start cannot be an index greater than end")
-        #     else:
-        #         raise ArgumentException("must specify something to copy")
-        # else:
-        #     if start is not None or end is not None:
-        #         raise ArgumentException("Cannot specify both IDs and a range")
-        #     #verify everything in list is a valid index and convert names into indices
-        #     indices = []
-        #     for identifier in points:
-        #         indices.append(self._getPointIndex(identifier))
-        #     points = indices
-        #
-        # retObj = self._copyPoints_implementation(points, start, end)
-
-        # # construct featureName list
-        # pointNameList = []
-        # if points is not None:
-        #     for i in points:
-        #         pointNameList.append(self.getPointName(i))
-        # else:
-        #     for i in range(start, end + 1):
-        #         pointNameList.append(self.getPointName(i))
-        #
-        # retObj.setPointNames(pointNameList)
-        # retObj.setFeatureNames(self.getFeatureNames())
-        #
-        # retObj._absPath = self.absolutePath
-        # retObj._relPath = self.relativePath
-        #
-        # return retObj
 
     def copyFeatures(self, toCopy=None, start=None, end=None, number=None):
         """
@@ -2735,52 +2690,6 @@ class Base(object):
         ret._relPath = self.relativePath
 
         return ret
-
-
-        # if isinstance(features, six.string_types) or isinstance(features, int):
-        #     features = [features]
-        # if self.features == 0:
-        #     raise ArgumentException("Object contains 0 features, there is no valid possible input")
-        # indices = None
-        # if features is None:
-        #     if start is not None or end is not None:
-        #         if start is None:
-        #             start = 0
-        #         if end is None:
-        #             end = self.features - 1
-        #         if isinstance(start, str) or start < 0 or start > self.features:
-        #             raise ArgumentException("start must be a valid index, in the range of possible features")
-        #         if isinstance(end, str) or end < 0 or end > self.features:
-        #             raise ArgumentException("end must be a valid index, in the range of possible features")
-        #         if start > end:
-        #             raise ArgumentException("start cannot be an index greater than end")
-        #     else:
-        #         raise ArgumentException("must specify something to copy; 'features', 'start', and 'end' were all None")
-        # else:
-        #     if start is not None or end is not None:
-        #         raise ArgumentException("Cannot specify both IDs and a range")
-        #     indices = []
-        #     for identifier in features:
-        #         indices.append(self._getFeatureIndex(identifier))
-        #
-        # ret = self._copyFeatures_implementation(indices, start, end)
-        #
-        # # construct featureName list
-        # featureNameList = []
-        # if indices is not None:
-        #     for i in indices:
-        #         featureNameList.append(self.getFeatureName(i))
-        # else:
-        #     for i in range(start, end + 1):
-        #         featureNameList.append(self.getFeatureName(i))
-        #
-        # ret.setPointNames(self.getPointNames())
-        # ret.setFeatureNames(featureNameList)
-        #
-        # ret._absPath = self.absolutePath
-        # ret._relPath = self.relativePath
-        #
-        # return ret
 
 
     def transformEachPoint(self, function, points=None):
