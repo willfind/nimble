@@ -89,19 +89,36 @@ class Shogun(UniversalInterface):
             return True
 
         self.hasAll = hasattr(self.shogun, '__all__')
-        contents = self.shogun.__all__ if self.hasALL else dir(self.shogun)
+        contents = self.shogun.__all__ if self.hasAll else dir(self.shogun)
         self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner, 2)
 
         self.loadParameterManifest()
 
     def _access(self, module, target):
+        """
+        Helper to automatically search the correct locations for target objects
+        in different historical versions of shogun that have different module
+        structures. Due to the automated component that attempts to smooth
+        over multiple competing versions of the package, this should be
+        used with caution.
+
+        """
+        # If shogun has an __all__ attribute, it is in the old style of organization,
+        # where things are separated into submodules. They need to be loaded before
+        # access.
         if self.hasAll:
-            if not hasattr(self.shogun, module):
-                submod = importlib.import_module('shogun.Library')
+            if hasattr(self.shogun, module):
+                submod = getattr(self.shogun, module)
+            else:
+                submod = importlib.import_module('shogun.' + module)
+        # If there is no __all__ attribute, we're in the newer, flatter style of module
+        # organization. Some things will still be in the submodule they were previously,
+        # others will up at the top level. This will check both locations
+        else:
+            if hasattr(self.shogun, target):
+                submod = self.shogun
             else:
                 submod = getattr(self.shogun, module)
-        else:
-            submod = self.shogun
 
         return getattr(submod, target)
 
@@ -138,13 +155,13 @@ class Shogun(UniversalInterface):
         except SystemError:
             return 'UNKNOWN'
 
-        if ptVal == self.shogun.Classifier.PT_BINARY or ptVal == self.shogun.Classifier.PT_MULTICLASS:
+        if ptVal == self._access('Classifier', 'PT_BINARY') or ptVal == self._access('Classifier', 'PT_MULTICLASS'):
             return 'classification'
-        if ptVal == self.shogun.Classifier.PT_REGRESSION:
+        if ptVal == self._access('Classifier', 'PT_REGRESSION'):
             return 'regression'
-        if ptVal == self.shogun.Classifier.PT_STRUCTURED:
+        if ptVal == self._access('Classifier', 'PT_STRUCTURED'):
             return 'UNKNOWN'
-        if ptVal == self.shogun.Classifier.PT_LATENT:
+        if ptVal == self._access('Classifier', 'PT_LATENT'):
             return 'UNKNOWN'
 
         # TODO warning, unknown problem type code
@@ -300,7 +317,7 @@ class Shogun(UniversalInterface):
 
     def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
         # often, but not always, we have to unpack a Labels object
-        if isinstance(outputValue, self.shogun.Classifier.Labels):
+        if isinstance(outputValue, self._access('Classifier', 'Labels')):
             # outputValue is a labels object, have to pull out the raw values with a function call
             retRaw = outputValue.get_labels()
             # prep for next call
@@ -355,7 +372,7 @@ class Shogun(UniversalInterface):
             else:
                 initArgs[name] = arguments[name]
 
-            if isinstance(arguments[name], self.shogun.Classifier.Kernel):
+            if isinstance(arguments[name], self._access('Classifier', 'Kernel')):
                 kernels.append(name)
 
         # if we've ignored aliased names (as demonstrated by the difference between
@@ -417,15 +434,15 @@ class Shogun(UniversalInterface):
     def _applier(self, learner, testX, arguments, customDict):
         try:
             ptVal = learner.get_machine_problem_type()
-            if ptVal == self.shogun.Classifier.PT_BINARY:
+            if ptVal == self._access('Classifier', 'PT_BINARY'):
                 retLabels = learner.apply_binary(testX)
-            elif ptVal == self.shogun.Classifier.PT_MULTICLASS:
+            elif ptVal == self._access('Classifier', 'PT_MULTICLASS'):
                 retLabels = learner.apply_multiclass(testX)
-            elif ptVal == self.shogun.Classifier.PT_REGRESSION:
+            elif ptVal == self._access('Classifier', 'PT_REGRESSION'):
                 retLabels = learner.apply_regression(testX)
-            elif ptVal == self.shogun.Classifier.PT_STRUCTURED:
+            elif ptVal == self._access('Classifier', 'PT_STRUCTURED'):
                 retLabels = learner.apply_structured(testX)
-            elif ptVal == self.shogun.Classifier.PT_LATENT:
+            elif ptVal == self._access('Classifier', 'PT_LATENT'):
                 retLabels = learner.apply_latent(testX)
             else:
                 retLabels = learner.apply(testX)
@@ -454,11 +471,7 @@ class Shogun(UniversalInterface):
 
     def version(self):
         if self.versionString is None:
-            if hasattr(self.shogun, "Version"):
-                self.versionString = self.shogun.Version.get_version_release()
-            else:
-                shogunLib = importlib.import_module('shogun.Library')
-                self.versionString = shogunLib.Version_get_version_release()
+            self.versionString = self._access('Version', 'get_version_release')()
 
         return self.versionString
 
@@ -552,23 +565,23 @@ class Shogun(UniversalInterface):
             #if labelsObj.getTypeString() != 'Matrix':
             labelsObj = labelsObj.copy(to='Matrix')
             problemType = self._getMachineProblemType(learnerName)
-            if problemType == self.shogun.Classifier.PT_MULTICLASS:
+            if problemType == self._access('Classifier', 'PT_MULTICLASS'):
                 inverseMapping = _remapLabelsRange(labelsObj)
                 customDict['remap'] = inverseMapping
                 if len(inverseMapping) == 1:
                     raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self.shogun.Features.MulticlassLabels(flattened.astype(float))
-            elif problemType == self.shogun.Classifier.PT_BINARY:
+                labels = self._access('Features', 'MulticlassLabels')(flattened.astype(float))
+            elif problemType == self._access('Classifier', 'PT_BINARY'):
                 inverseMapping = _remapLabelsSpecific(labelsObj, [-1, 1])
                 customDict['remap'] = inverseMapping
                 if len(inverseMapping) == 1:
                     raise InvalidArgumentValue("Cannot train a classifier with data containing only one label")
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self.shogun.Features.BinaryLabels(flattened.astype(float))
-            elif problemType == self.shogun.Classifier.PT_REGRESSION:
+                labels = self._access('Features', 'BinaryLabels')(flattened.astype(float))
+            elif problemType == self._access('Classifier', 'PT_REGRESSION'):
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                labels = self.shogun.Features.RegressionLabels(flattened.astype(float))
+                labels = self._access('Features', 'RegressionLabels')(flattened.astype(float))
             else:
                 raise InvalidArgumentValue("Learner problem type (" + str(problemType) + ") not supported")
         except ImportError:
@@ -585,18 +598,18 @@ class Shogun(UniversalInterface):
             #raw = dataObj.data.tocsc().astype(numpy.float)
             #raw = raw.transpose()
             raw = dataObj.copy(to="scipy csc", rowsArePoints=False)
-            trans = self.shogun.Features.SparseRealFeatures()
+            trans = self._access('Features', 'SparseRealFeatures')()
             trans.set_sparse_feature_matrix(raw)
             if 'Online' in learnerName:
-                trans = self.shogun.Features.StreamingSparseRealFeatures(trans)
+                trans = self._access('Features', 'StreamingSparseRealFeatures')(trans)
         else:
             #raw = dataObj.copy(to='numpyarray').astype(numpy.float)
             #raw = raw.transpose()
             raw = dataObj.copy(to='numpyarray', rowsArePoints=False)
-            trans = self.shogun.Features.RealFeatures()
+            trans = self._access('Features', 'RealFeatures')()
             trans.set_feature_matrix(raw)
             if 'Online' in learnerName:
-                trans = self.shogun.Features.StreamingRealFeatures()
+                trans = self._access('Features', 'StreamingRealFeatures')()
         return trans
 
     def _queryParamManifest(self, name):
