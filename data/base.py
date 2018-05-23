@@ -2761,11 +2761,14 @@ class Base(object):
         self._transformEachFeature_implementation(function, features)
 
 
-    def transformEachElement(self, function, points=None, features=None, preserveZeros=False,
+    def transformEachElement(self, toTransform, points=None, features=None, preserveZeros=False,
                              skipNoneReturnValues=False):
         """
-        Modifies this object to contain the results of calling function(elementValue)
-        or function(elementValue, pointNum, featureNum) for each element.
+        Modifies this object to contain the results of toTransform for each element.
+
+        toTransform: May be a function in the form of
+        toTransform(elementValue) or toTransform(elementValue, pointNum, featureNum),
+        or a dictionary mapping the current element [key] to the transformed element [value].
 
         points: Limit to only elements of the specified points; may be None for
         all points, a single ID, or a list of IDs.
@@ -2773,10 +2776,10 @@ class Base(object):
         features: Limit to only elements of the specified features; may be None for
         all features, a single ID, or a list of IDs.
 
-        preserveZeros: If True it does not apply the function to elements in
+        preserveZeros: If True it does not apply toTransform to elements in
         the data that are 0, and that 0 is not modified.
 
-        skipNoneReturnValues: If True, any time function() returns None, the
+        skipNoneReturnValues: If True, any time toTransform() returns None, the
         value originally in the data will remain unmodified.
 
         """
@@ -2804,7 +2807,7 @@ class Base(object):
 
         self.validate()
 
-        self._transformEachElement_implementation(function, points, features, preserveZeros, skipNoneReturnValues)
+        self._transformEachElement_implementation(toTransform, points, features, preserveZeros, skipNoneReturnValues)
 
 
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
