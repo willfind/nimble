@@ -14,7 +14,6 @@ except:
 boilerplate()
 
 if __name__ == "__main__":
-    import UML
     from UML import createData
     from UML import trainAndTest
     from UML import trainAndApply
@@ -26,7 +25,7 @@ if __name__ == "__main__":
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3],
              [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
     trainObj = createData('Matrix', data=data1, featureNames=variables)
-    trainObj.summaryReport()
+
     # formated vertically for easier comparison with printed results
     data2 = [[1, 0, 0, 1],
              [0, 1, 0, 2],
@@ -35,8 +34,7 @@ if __name__ == "__main__":
     tesObjNoY = testObj.copyFeatures([0,1,2])
 
     results = trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                            testX=testObj, testY=3, performanceFunction=fractionIncorrect, arguments={"C":(1, .1), "kernel":("linear","rbf")})
-
+                            testX=testObj, testY=3, performanceFunction=fractionIncorrect)
     print('Standard trainAndTest call, fractionIncorrect: ' + str(results))
     print("")
 
@@ -49,7 +47,7 @@ if __name__ == "__main__":
     resultsBestScoreOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsOne")
-    print('One vs One, best score format:')
+    print('One vs One, best score format:') 
     print(resultsBestScoreOvO)
 
     resultsAllScoresOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
@@ -67,11 +65,11 @@ if __name__ == "__main__":
     resultsBestScoreOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='bestScore',
                                      multiClassStrategy="OneVsAll")
-    print('One vs All, best score format:')
+    print('One vs All, best score format:') 
     print(resultsBestScoreOvA)
 
     resultsAllScoresOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
                                      testX=tesObjNoY, scoreMode='allScores',
-                                     multiClassStrategy="OneVsAll", arguments={'C':.01})
+                                     multiClassStrategy="OneVsAll")
     print('One vs All, all scores format:')
-    print(resultsAllScoresOvA)
+    print(resultsAllScoresOvA) 
