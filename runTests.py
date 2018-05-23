@@ -203,9 +203,8 @@ class LoggerControl(object):
         UML.settings.saveChanges("logger", 'name')
         UML.settings.set("logger", "enabledByDefault", self._backupEnabled)
         UML.settings.saveChanges("logger", "enabledByDefault")
-        UML.settings.set("logger", "enabledByDefault", self._crossValBackupEnabled)
-        UML.settings.saveChanges("logger", "enabledByDefault")
-
+        UML.settings.set("logger", "enableCrossValidationDeepLogging", self._crossValBackupEnabled)
+        UML.settings.saveChanges("logger", "enableCrossValidationDeepLogging")
 
 if __name__ == '__main__':
     # any args passed to this script will be passed down into nose

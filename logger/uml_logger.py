@@ -307,7 +307,7 @@ class UmlLogger(object):
     ##################
 
     def showLog(self, levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
-                maximumEntries, searchForText, saveToFileName, append):
+                maximumEntries, searchForText, regex, saveToFileName, append):
         """
         showLog parses the active logfile based on the arguments passed and prints a
         human readable interpretation of the log file.
@@ -352,7 +352,7 @@ class UmlLogger(object):
             self.setup()
 
         query, values = _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
-                                               endDate, maximumEntries, searchForText)
+                                               endDate, maximumEntries, searchForText, regex)
         runLogs = self.extractFromLog(query, values)
 
         logOutput = _showLogOutputString(runLogs, levelOfDetail)
@@ -453,7 +453,7 @@ def _buildArgDict(argNames, defaults, *args, **kwargs):
     return argDict
 
 def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
-                           endDate, maximumEntries, searchForText):
+                           endDate, maximumEntries, searchForText, regex):
     """
     Constructs the query string and stores the variables based on the arguments passed
     to the showLog function
@@ -477,10 +477,16 @@ def _showLogQueryAndValues(leastRunsAgo, mostRunsAgo, startDate,
         includedValues.append(parse(endDate))
     if searchForText is not None:
         # convert to regex and get pattern
-        searchForText = re.compile(searchForText).pattern
-        whereQueryList.append("(logType REGEXP ? or logInfo REGEXP ?)")
-        includedValues.append(searchForText)
-        includedValues.append(searchForText)
+        if regex:
+            searchForText = re.compile(searchForText).pattern
+            whereQueryList.append("(logType REGEXP ? or logInfo REGEXP ?)")
+            includedValues.append(searchForText)
+            includedValues.append(searchForText)
+        else:
+            searchForText = "%" + searchForText + "%"
+            whereQueryList.append("(logType LIKE ? or logInfo LIKE ?)")
+            includedValues.append(searchForText)
+            includedValues.append(searchForText)
 
     if whereQueryList != []:
         whereQuery = " and ".join(whereQueryList)

@@ -1178,7 +1178,7 @@ def log(logType, logInfo):
 
 
 def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
-            maximumEntries=100, searchForText=None, saveToFileName=None, append=False):
+            maximumEntries=100, searchForText=None, regex=False, saveToFileName=None, append=False):
         """
         showLog parses the active logfile based on the arguments passed and prints a
         human readable interpretation of the log file.
@@ -1219,7 +1219,7 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
                         Default is False
         """
         UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
-                                  maximumEntries, searchForText, saveToFileName, append)
+                                  maximumEntries, searchForText, regex, saveToFileName, append)
 
 def coo_matrixTodense(origTodense):
     """
