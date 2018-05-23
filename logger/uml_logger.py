@@ -40,48 +40,47 @@ def logCapture(function):
     information into the log. Additionally performs the logging for the prep logType, except
     in a few specified cases.
     """
+    @wraps(function)
     def wrapper(*args, **kwargs):
         funcName = function.__name__
-        args = args
-        kwargs = kwargs
         a, v, k, d = inspect.getargspec(function)
         argNames = a
         defaults = d
 
         logger = UML.logger.active
-        logger.counter += 1
-        timer = Stopwatch()
-        timer.start("timer")
         try:
+            logger.position += 1
+            timer = Stopwatch()
+            timer.start("timer")
             ret = function(*args, **kwargs)
-            logger.counter -= 1
+            logger.position -= 1
         except Exception as e:
-            logger.counter = 0
+            logger.position = 0
             raise e
         finally:
             timer.stop("timer")
-        if logger.counter == 0:
-            if funcName == "crossValidateBackend":
-                useLog, deepLog = _getLogValues(argNames, args, kwargs)
-                if useLog and deepLog:
+        if "useLog" in argNames and logger.position == 0:
+            useLog, deepLog = _getLogValues(argNames, *args, **kwargs)
+            if useLog:
+                # crossValidateBackend called directly
+                if funcName == "crossValidateBackend":
+                    if deepLog:
+                        logger.insertIntoLog(logger.logType, logger.logInfo)
+                # logging for prep
+                elif hasattr(UML.data.base.Base, funcName):
+                    # special cases logging is handled in base.py
+                    specialCases = ["dropFeaturesContainingType", "_normalizeGeneric",
+                                    "featureReport", "summaryReport"]
+                    if funcName not in specialCases:
+                        argDict = _buildArgDict(argNames, defaults, *args, **kwargs)
+                        logger.logPrep(funcName, args[0].getTypeString(), argDict)
                     logger.insertIntoLog(logger.logType, logger.logInfo)
-            elif "useLog" in argNames and hasattr(UML.data.base.Base, funcName):
-                # special cases logging is handled in base.py
-                specialCases = ["dropFeaturesContainingType", "_normalizeGeneric",
-                                "featureReport", "summaryReport"]
-                if funcName not in specialCases:
-                    argDict = _buildArgDict(argNames, defaults, args, kwargs)
-                    logger.logPrep(funcName, args[0].getTypeString(), argDict)
-                useLog, _ = _getLogValues(argNames, args, kwargs)
-                if useLog:
-                    logger.insertIntoLog(logger.logType, logger.logInfo)
-            elif "useLog" in argNames:
-                useLog, _ = _getLogValues(argNames, args, kwargs)
-                if useLog:
+                # logging for load, data, run
+                else:
                     logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
                     logger.insertIntoLog(logger.logType, logger.logInfo)
         elif funcName == "crossValidateBackend":
-            useLog, deepLog = _getLogValues(argNames, args, kwargs)
+            useLog, deepLog = _getLogValues(argNames, *args, **kwargs)
             if useLog and deepLog:
                 logger.insertIntoLog(logger.logType, logger.logInfo)
         return ret
@@ -99,7 +98,7 @@ class UmlLogger(object):
         self.logFileName = fullLogDesignator + ".mr"
         self.runNumber = None
         self.isAvailable = False
-        self.counter = 0
+        self.position = 0
         self.logType = None
         self.logInfo = {}
 
@@ -374,7 +373,7 @@ class UmlLogger(object):
 ### LOG HELPERS ###
 ###################
 
-def _getLogValues(argNames, args, kwargs):
+def _getLogValues(argNames, *args, **kwargs):
     """
     Returns the values for useLog and deepLog for logging the function
     """
@@ -424,7 +423,7 @@ def _lambdaFunctionString(function):
             lambdaString += letter
     return lambdaString
 
-def _buildArgDict(argNames, defaults, args, kwargs):
+def _buildArgDict(argNames, defaults, *args, **kwargs):
     """
     Creates the dictionary of arguments for the prep logType. Adds all required arguments
     and any keyword arguments that are not the default values

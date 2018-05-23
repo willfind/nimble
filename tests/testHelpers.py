@@ -405,8 +405,8 @@ def testtrainAndTestOneVsOne():
     results2 = trainAndTestOneVsOne('Custom.KNNClassifier', trainObj2, trainY=3, testX=testObj2, testY=3,
                                     performanceFunction=metricFunc)
 
-    assert results1[0] == 0.0
-    assert results2[0] == 0.25
+    assert results1 == 0.0
+    assert results2 == 0.25
 
 
 def testtrainAndApplyOneVsAll():
