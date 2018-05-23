@@ -57,9 +57,8 @@ class Sparse(Base):
         else:#data is numpy.matrix
             self.data = scipy.sparse.coo_matrix(data)
 
-        # print('self.data: {}'.format(self.data))
-        # print('type(self.data): {}'.format(type(self.data)))
-
+        #print('self.data: {}'.format(self.data))
+        #print('type(self.data): {}'.format(type(self.data)))
 
         self._sorted = None
         kwds['shape'] = self.data.shape
