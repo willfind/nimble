@@ -3270,6 +3270,163 @@ class StructureModifying(DataTestObject):
         assert [7, 8, 9] in retRaw
 
 
+    def test_transformEachElement_DictionaryAllMapped(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {1:9, 2:8, 3:7, 4:6, 5:5, 6:4, 7:3, 8:2, 9:1}
+        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionaryAllMappedStrings(self):
+        data = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {"a": 1, "b":2, "c":3, "d":4, "e":5, "f":6, "g":7, "h":8, "i": 9}
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionarySomeMapped(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {2:8, 8:2}
+        expData = [[1, 8, 3], [4, 5, 6], [7, 2, 9]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionaryMappedNotInPoints(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {2:8, 8:2}
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping, points=1)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionaryMappedNotInFeatures(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {2:8, 8:2}
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping, features=0)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionaryPreserveZerosNoZeroMap(self):
+        data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {1:2}
+        expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping, preserveZeros=True)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionaryPreserveZerosZeroMapZero(self):
+        data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {0:0, 1:2}
+        expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping, preserveZeros=True)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionaryPreserveZerosZeroMapNonZero(self):
+        data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {0:100, 1:2}
+        expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping, preserveZeros=True)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionaryDoNotPreserveZerosZeroMapNonZero(self):
+        data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {0:100}
+        expData = [[100, 100, 100], [1, 1, 1], [100, 100, 100]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping, preserveZeros=False)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionarySkipNoneReturn(self):
+        data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {1:None}
+        expData = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+
+        toTest.transformEachElement(transformMapping, skipNoneReturnValues=True)
+
+        assert toTest.isIdentical(expTest)
+
+
+    def test_transformEachElement_DictionaryDoNotSkipNoneReturn(self):
+        data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+        names = ['one', 'two', 'three']
+        pnames = ['1', '4', '7']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
+        transformMapping = {1:None}
+        if self.returnType == "Sparse":
+            # Sparse cannot contain None values
+            expData = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+            expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+        else:
+            expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
+            expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+        toTest.transformEachElement(transformMapping, skipNoneReturnValues=False)
+
+        assert toTest.isIdentical(expTest)
+
     ####################
     #### fillWith() ####
     ####################
