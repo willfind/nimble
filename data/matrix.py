@@ -571,12 +571,15 @@ class Matrix(Base):
 
             self.data[:, j] = numpy.array(currRet).reshape(self.points, 1)
 
-    def _transformEachElement_implementation(self, function, points, features, preserveZeros, skipNoneReturnValues):
+    def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
         oneArg = False
         try:
-            function(0, 0, 0)
+            toTransform(0, 0, 0)
         except TypeError:
-            oneArg = True
+            if isinstance(toTransform, dict):
+                oneArg = None
+            else:
+                oneArg = True
 
         IDs = itertools.product(range(self.points), range(self.features))
         for (i, j) in IDs:
@@ -589,10 +592,15 @@ class Matrix(Base):
             if preserveZeros and currVal == 0:
                 continue
 
-            if oneArg:
-                currRet = function(currVal)
+            if oneArg is None:
+                if currVal in toTransform.keys():
+                    currRet = toTransform[currVal]
+                else:
+                    continue
+            elif oneArg:
+                currRet = toTransform(currVal)
             else:
-                currRet = function(currVal, i, j)
+                currRet = toTransform(currVal, i, j)
 
             if skipNoneReturnValues and currRet is None:
                 continue

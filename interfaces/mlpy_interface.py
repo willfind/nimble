@@ -346,7 +346,19 @@ class Mlpy(UniversalInterface):
             learnParams[name] = value
 
         learner = self.findCallable(learnerName)(**initParams)
-        learner.learn(**learnParams)
+        try:
+            learner.learn(**learnParams)
+        except ValueError as e:
+            if learnerName not in ["DLDA", "Parzen"]:
+                raise e
+            if learnerName == "DLDA":
+                from interfaces.mlpy_patches import DLDA
+                learner = DLDA(**initParams)
+                learner.learn(**learnParams)
+            elif learnerName == "Parzen":
+                from interfaces.mlpy_patches import Parzen
+                learner = Parzen(**initParams)
+                learner.learn(**learnParams)
 
         return learner
 
