@@ -658,10 +658,68 @@ class Base(object):
 
 
     def mapReducePoints(self, mapper, reducer):
-        if self.points == 0:
+        return self._mapReduce_implementation('point', mapper, reducer)
+        # if self.points == 0:
+        #     return UML.createData(self.getTypeString(), numpy.empty(shape=(0, 0)))
+        # if self.features == 0:
+        #     raise ImproperActionException("We do not allow operations over points if there are 0 features")
+        #
+        # if mapper is None or reducer is None:
+        #     raise ArgumentException("The arguments must not be none")
+        # if not hasattr(mapper, '__call__'):
+        #     raise ArgumentException("The mapper must be callable")
+        # if not hasattr(reducer, '__call__'):
+        #     raise ArgumentException("The reducer must be callable")
+        #
+        # self.validate()
+        #
+        # mapResults = {}
+        # # apply the mapper to each point in the data
+        # for point in self.pointIterator():
+        #     currResults = mapper(point)
+        #     # the mapper will return a list of key value pairs
+        #     for (k, v) in currResults:
+        #         # if key is new, we must add an empty list
+        #         if k not in mapResults:
+        #             mapResults[k] = []
+        #         # append this value to the list of values associated with the key
+        #         mapResults[k].append(v)
+        #
+        # # apply the reducer to the list of values associated with each key
+        # ret = []
+        # for mapKey in mapResults.keys():
+        #     mapValues = mapResults[mapKey]
+        #     # the reducer will return a tuple of a key to a value
+        #     redRet = reducer(mapKey, mapValues)
+        #     if redRet is not None:
+        #         (redKey, redValue) = redRet
+        #         ret.append([redKey, redValue])
+        # ret = UML.createData(self.getTypeString(), ret)
+        #
+        # ret._absPath = self.absolutePath
+        # ret._relPath = self.relativePath
+        #
+        # return ret
+    def mapReduceFeatures(self, mapper, reducer):
+        return self._mapReduce_implementation('feature', mapper, reducer)
+
+    def _mapReduce_implementation(self, axis, mapper, reducer):
+        if axis == 'point':
+            targetCount = self.points
+            otherCount = self.features
+            valueIterator = self.pointIterator
+            otherAxis = 'feature'
+        else:
+            targetCount = self.features
+            otherCount = self.points
+            valueIterator = self.featureIterator
+            otherAxis = 'point'
+
+        if targetCount == 0:
             return UML.createData(self.getTypeString(), numpy.empty(shape=(0, 0)))
-        if self.features == 0:
-            raise ImproperActionException("We do not allow operations over points if there are 0 features")
+        if otherCount == 0:
+            msg = "We do not allow operations over {0}s if there are 0 {1}s".format(axis, otherAxis)
+            raise ImproperActionException(msg)
 
         if mapper is None or reducer is None:
             raise ArgumentException("The arguments must not be none")
@@ -674,8 +732,8 @@ class Base(object):
 
         mapResults = {}
         # apply the mapper to each point in the data
-        for point in self.pointIterator():
-            currResults = mapper(point)
+        for value in valueIterator():
+            currResults = mapper(value)
             # the mapper will return a list of key value pairs
             for (k, v) in currResults:
                 # if key is new, we must add an empty list
