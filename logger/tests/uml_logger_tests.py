@@ -6,6 +6,7 @@ import time
 import ast
 import six
 import sqlite3
+import numpy
 from nose import with_setup
 from nose.tools import raises
 
@@ -18,6 +19,9 @@ from UML.exceptions import ArgumentException
 """
 Unit tests for functionality of the UMLLogger
 """
+
+# Helpers for tests
+
 def setup_func():
     UML.logger.active.cleanup()
     UML.settings.set("logger", "enabledByDefault", "True")
@@ -43,6 +47,10 @@ def singleValueQueries(*queries):
         singleValue = valueList[0][0]
         out.append(singleValue)
     return out
+
+#############
+### SETUP ###
+#############
 
 @with_setup(setup_func, teardown_func)
 def testLogDirectoryAndFileSetup():
@@ -83,10 +91,9 @@ def testTopLevelInputFunction():
 def testNewRunNumberEachSetup():
     removeLogFile()
     """assert that a new, sequential runNumber is generated each time the log file is reopened"""
+    data = [[],[]]
     for run in range(5):
-        logType = "newRunNumber"
-        logInfo = {"test": "testNewRunNumberEachSetup"}
-        UML.logger.active.insertIntoLog(logType, logInfo)
+        UML.createData("Matrix", data)
         # cleanup will require setup before the next log entry
         UML.logger.active.cleanup()
     query = "SELECT runNumber FROM logger"
@@ -396,7 +403,7 @@ def testPrepTypeFunctionsUseLog():
 
 @with_setup(setup_func, teardown_func)
 def testDataTypeFunctionsUseLog():
-    """Test that the functions in base using useLog are being logged"""
+    """Test that the data type functions are being logged"""
     removeLogFile()
     lengthQuery = "SELECT COUNT(entry) FROM logger"
     infoQuery = "SELECT logInfo FROM logger ORDER BY entry DESC LIMIT 1"
@@ -459,15 +466,32 @@ def testBaseObjectFunctionsWithoutUseLog():
 
     # countPoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
-    count = dataObj.countPoints(lambda x: x>0)
+    count = dataObj.countPoints(lambda x: x[1]>0)
 
     logLength = singleValueQueries(lengthQuery)[0]
     assert logLength == 0
 
     # countFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
-    count = dataObj.countFeatures(lambda x: x>0)
+    count = dataObj.countFeatures(lambda x: type(x) == str)
 
+    logLength = singleValueQueries(lengthQuery)[0]
+    assert logLength == 0
+
+    # appendPoints; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    appendData = [["d", 4], ["d", 4], ["d", 4], ["d", 4], ["d", 4], ["d", 4]]
+    toAppend = UML.createData("Matrix", appendData, useLog=False)
+    dataObj.appendPoints(toAppend)
+
+    logLength = singleValueQueries(lengthQuery)[0]
+    assert logLength == 0
+
+    # appendFeatures; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    appendData = numpy.zeros((18,1))
+    toAppend = UML.createData("Matrix", appendData, useLog=False)
+    dataObj.appendFeatures(toAppend)
     logLength = singleValueQueries(lengthQuery)[0]
     assert logLength == 0
 
@@ -552,6 +576,42 @@ def testShowLogToFile():
     UML.showLog(saveToFileName=pathToFile, append=True)
     appendSize = os.path.getsize(pathToFile)
     assert appendSize > originalSize
+
+
+@with_setup(setup_func, teardown_func)
+def testShowLogToStdOut():
+    import sys
+    try:
+        from StringIO import StringIO
+    except:
+        from io import StringIO
+
+    saved_stdout = sys.stdout
+    try:
+        location = UML.settings.get("logger", "location")
+        name = "showLogTestFile.txt"
+        pathToFile = os.path.join(location,name)
+        # create showLog file with default arguments
+        UML.showLog(saveToFileName=pathToFile)
+
+        # get content of file as a string
+        with open(pathToFile) as log:
+            lines = log.readlines()
+        fileContent = "".join(lines)
+        fileContent = fileContent.strip()
+
+        # redirect stdout
+        out = StringIO()
+        sys.stdout = out
+
+        # showLog to stdout with default arguments
+        UML.showLog()
+        stdoutContent = out.getvalue().strip()
+
+        assert stdoutContent == fileContent
+
+    finally:
+        sys.stdout = saved_stdout
 
 
 @with_setup(setup_func, teardown_func)
@@ -685,13 +745,26 @@ def testShowLogSearchFilters():
     maxEntriesOneRun = os.path.getsize(pathToFile)
     assert maxEntriesOneRun == oneRunSize
 
+    # showLog returns None, file still created with only header
+    UML.showLog(levelOfDetail=3, maximumEntries=1, saveToFileName=pathToFile)
+    oneEntrySize = os.path.getsize(pathToFile)
+    # pick startDate after final date in log
+    UML.showLog(levelOfDetail=3, startDate="2018-05-24", saveToFileName=pathToFile)
+    noDataSize = os.path.getsize(pathToFile)
+    assert noDataSize < oneEntrySize
 
-# TODO
-# @with_setup(setup_func, teardown_func)
-# def testShowLogToStdOut():
-#     pass
-#
-# TODO
-# @with_setup(setup_func, teardown_func)
-# def testHandmadeLogEntriesOutput():
-#     pass
+@raises(ArgumentException)
+def testLevelofDetailNotInRange():
+    UML.showLog(levelOfDetail=6)
+
+@raises(ArgumentException)
+def testStartGreaterThanEndDate():
+    UML.showLog(startDate="2018-03-24", endDate="2018-03-22")
+
+@raises(ArgumentException)
+def testLeastRunsAgoNegative():
+    UML.showLog(leastRunsAgo= -2)
+
+@raises(ArgumentException)
+def testMostRunsLessThanLeastRuns():
+    UML.showLog(leastRunsAgo=2, mostRunsAgo=1)

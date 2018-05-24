@@ -13,6 +13,7 @@ import os
 import copy
 import six.moves.configparser
 import math
+from dateutil.parser import parse
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -1174,7 +1175,7 @@ def log(logType, logInfo):
     elif not isinstance(logInfo, (six.string_types, list, dict)):
         msg = "logInfo must be a python string, list, or dictionary type"
         raise ArgumentException(msg)
-    UML.logger.active.insertIntoLog(logType, logInfo)
+    UML.logger.active.log(logType, logInfo)
 
 
 def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endDate=None,
@@ -1218,6 +1219,21 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
         append:         Append logs to the file in saveToFileName instead of overwriting file.
                         Default is False
         """
+        if levelOfDetail < 1 or levelOfDetail > 3 or levelOfDetail is None:
+            msg = "levelOfDetail must be 1, 2, or 3"
+            raise ArgumentException(msg)
+        if startDate is not None and endDate is not None and startDate > endDate:
+            startDate = parse(startDate)
+            endDate = parse(endDate)
+            msg = "The startDate must be before the endDate"
+            raise ArgumentException(msg)
+        if leastRunsAgo is not None:
+            if leastRunsAgo < 0:
+                msg = "leastRunsAgo must be greater than zero"
+                raise ArgumentException(msg)
+            if mostRunsAgo is not None and mostRunsAgo < leastRunsAgo:
+                msg = "mostRunsAgo must be greater than or equal to leastRunsAgo"
+                raise ArgumentException(msg)
         UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
                                   maximumEntries, searchForText, regex, saveToFileName, append)
 

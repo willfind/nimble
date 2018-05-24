@@ -65,7 +65,7 @@ def logCapture(function):
                 # crossValidateBackend called directly
                 if funcName == "crossValidateBackend":
                     if deepLog:
-                        logger.insertIntoLog(logger.logType, logger.logInfo)
+                        logger.log(logger.logType, logger.logInfo)
                 # logging for prep
                 elif hasattr(UML.data.base.Base, funcName):
                     # special cases logging is handled in base.py
@@ -74,15 +74,15 @@ def logCapture(function):
                     if funcName not in specialCases:
                         argDict = _buildArgDict(argNames, defaults, *args, **kwargs)
                         logger.logPrep(funcName, args[0].getTypeString(), argDict)
-                    logger.insertIntoLog(logger.logType, logger.logInfo)
+                    logger.log(logger.logType, logger.logInfo)
                 # logging for load, data, run
                 else:
                     logger.logInfo["timer"] = sum(timer.cumulativeTimes.values())
-                    logger.insertIntoLog(logger.logType, logger.logInfo)
+                    logger.log(logger.logType, logger.logInfo)
         elif funcName == "crossValidateBackend":
             useLog, deepLog = _getLogValues(argNames, *args, **kwargs)
             if useLog and deepLog:
-                logger.insertIntoLog(logger.logType, logger.logInfo)
+                logger.log(logger.logType, logger.logInfo)
         return ret
     return wrapper
 
@@ -151,7 +151,7 @@ class UmlLogger(object):
             self.isAvailable = False
 
 
-    def insertIntoLog(self, logType, logInfo):
+    def log(self, logType, logInfo):
         """
         Inserts timestamp, runNumber, logType in their respective columns of the
         sqlite table. A string of the python dictionary containing any unstructured
