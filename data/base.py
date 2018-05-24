@@ -2890,7 +2890,7 @@ class Base(object):
         self._transformEachFeature_implementation(function, features)
 
     @logCapture
-    def transformEachElement(self, function, points=None, features=None, preserveZeros=False,
+    def transformEachElement(self, toTransform, points=None, features=None, preserveZeros=False,
                              skipNoneReturnValues=False, useLog=None):
         """
         Modifies this object to contain the results of toTransform for each element.
