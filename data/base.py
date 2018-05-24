@@ -658,49 +658,31 @@ class Base(object):
 
 
     def mapReducePoints(self, mapper, reducer):
+        """
+        Return a new object containing the results of the given mapper and
+        reducer functions
+
+        mapper:  a function receiving a point as the input and outputting an
+                 iterable containing two-tuple(s) of mapping identifier and
+                 point values
+
+        reducer: a function receiving the output of mapper as input and outputting
+                 a two-tuple containing the identifier and the reduced value
+        """
         return self._mapReduce_implementation('point', mapper, reducer)
-        # if self.points == 0:
-        #     return UML.createData(self.getTypeString(), numpy.empty(shape=(0, 0)))
-        # if self.features == 0:
-        #     raise ImproperActionException("We do not allow operations over points if there are 0 features")
-        #
-        # if mapper is None or reducer is None:
-        #     raise ArgumentException("The arguments must not be none")
-        # if not hasattr(mapper, '__call__'):
-        #     raise ArgumentException("The mapper must be callable")
-        # if not hasattr(reducer, '__call__'):
-        #     raise ArgumentException("The reducer must be callable")
-        #
-        # self.validate()
-        #
-        # mapResults = {}
-        # # apply the mapper to each point in the data
-        # for point in self.pointIterator():
-        #     currResults = mapper(point)
-        #     # the mapper will return a list of key value pairs
-        #     for (k, v) in currResults:
-        #         # if key is new, we must add an empty list
-        #         if k not in mapResults:
-        #             mapResults[k] = []
-        #         # append this value to the list of values associated with the key
-        #         mapResults[k].append(v)
-        #
-        # # apply the reducer to the list of values associated with each key
-        # ret = []
-        # for mapKey in mapResults.keys():
-        #     mapValues = mapResults[mapKey]
-        #     # the reducer will return a tuple of a key to a value
-        #     redRet = reducer(mapKey, mapValues)
-        #     if redRet is not None:
-        #         (redKey, redValue) = redRet
-        #         ret.append([redKey, redValue])
-        # ret = UML.createData(self.getTypeString(), ret)
-        #
-        # ret._absPath = self.absolutePath
-        # ret._relPath = self.relativePath
-        #
-        # return ret
+
     def mapReduceFeatures(self, mapper, reducer):
+        """
+        Return a new object containing the results of the given mapper and
+        reducer functions
+
+        mapper:  a function receiving a feature as the input and outputting an
+                 iterable containing two-tuple(s) of mapping identifier and
+                 feature values
+
+        reducer: a function receiving the output of mapper as input and outputting
+                 a two-tuple containing the identifier and the reduced value
+        """
         return self._mapReduce_implementation('feature', mapper, reducer)
 
     def _mapReduce_implementation(self, axis, mapper, reducer):
