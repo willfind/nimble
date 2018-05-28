@@ -658,10 +658,50 @@ class Base(object):
 
 
     def mapReducePoints(self, mapper, reducer):
-        if self.points == 0:
+        """
+        Return a new object containing the results of the given mapper and
+        reducer functions
+
+        mapper:  a function receiving a point as the input and outputting an
+                 iterable containing two-tuple(s) of mapping identifier and
+                 point values
+
+        reducer: a function receiving the output of mapper as input and outputting
+                 a two-tuple containing the identifier and the reduced value
+        """
+        return self._mapReduce_implementation('point', mapper, reducer)
+
+    def mapReduceFeatures(self, mapper, reducer):
+        """
+        Return a new object containing the results of the given mapper and
+        reducer functions
+
+        mapper:  a function receiving a feature as the input and outputting an
+                 iterable containing two-tuple(s) of mapping identifier and
+                 feature values
+
+        reducer: a function receiving the output of mapper as input and outputting
+                 a two-tuple containing the identifier and the reduced value
+        """
+        return self._mapReduce_implementation('feature', mapper, reducer)
+
+    def _mapReduce_implementation(self, axis, mapper, reducer):
+        if axis == 'point':
+            targetCount = self.points
+            otherCount = self.features
+            valueIterator = self.pointIterator
+            otherAxis = 'feature'
+        else:
+            targetCount = self.features
+            otherCount = self.points
+            valueIterator = self.featureIterator
+            otherAxis = 'point'
+
+        if targetCount == 0:
             return UML.createData(self.getTypeString(), numpy.empty(shape=(0, 0)))
-        if self.features == 0:
-            raise ImproperActionException("We do not allow operations over points if there are 0 features")
+        if otherCount == 0:
+            msg = "We do not allow operations over {0}s if there are 0 {1}s".format(axis, otherAxis)
+            raise ImproperActionException(msg)
 
         if mapper is None or reducer is None:
             raise ArgumentException("The arguments must not be none")
@@ -674,8 +714,8 @@ class Base(object):
 
         mapResults = {}
         # apply the mapper to each point in the data
-        for point in self.pointIterator():
-            currResults = mapper(point)
+        for value in valueIterator():
+            currResults = mapper(value)
             # the mapper will return a list of key value pairs
             for (k, v) in currResults:
                 # if key is new, we must add an empty list
