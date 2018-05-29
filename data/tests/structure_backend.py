@@ -3378,14 +3378,14 @@ class StructureModifying(DataTestObject):
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
         toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-        UML.randomness.startAlternateControl()
+        UML.randomness.startAlternateControl(seed=1)
         ret = getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl()
+        UML.randomness.startAlternateControl(seed=1)
         retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
-
+        print(ret, retRange)
         assert ret.isIdentical(retRange)
         assert toTest1.isIdentical(toTest2)
 

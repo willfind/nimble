@@ -2434,8 +2434,8 @@ class Base(object):
         space of possible removals.
 
         """
-        ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, toExtract, start, end,
-                                              number, randomize, 'toExtract')
+        ret = self._genericStructuralFrontend('extract', 'point', self._extractPoints_implementation, toExtract, start, end,
+                                              number, randomize)
 
         self._pointCount -= ret.points
         ret.setFeatureNames(self.getFeatureNames())
@@ -2467,8 +2467,8 @@ class Base(object):
         space of possible removals.
 
         """
-        ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, start, end,
-                                              number, randomize, 'toExtract')
+        ret = self._genericStructuralFrontend('extract', 'feature', self._extractFeatures_implementation, toExtract, start, end,
+                                              number, randomize)
 
         self._featureCount -= ret.features
         if ret.features != 0:
@@ -2532,7 +2532,7 @@ class Base(object):
         the chosen points are determined by point order, otherwise it is uniform random across the
         space of possible removals.
         """
-        self._retain_implementation('point', toRetain, start, end, number, randomize)
+        self._retain_implementation('retain', 'point', toRetain, start, end, number, randomize)
 
 
     def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
@@ -2549,10 +2549,10 @@ class Base(object):
         the chosen features are determined by feature order, otherwise it is uniform random across the
         space of possible removals.
         """
-        self._retain_implementation('feature', toRetain, start, end, number, randomize)
+        self._retain_implementation('retain', 'feature', toRetain, start, end, number, randomize)
 
 
-    def _retain_implementation(self, axis, toRetain, start, end, number, randomize):
+    def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
         """Implements retainPoints or retainFeatures based on the axis"""
         if axis == 'point':
             hasName = self.hasPointName
@@ -2568,29 +2568,27 @@ class Base(object):
             values = self.features
             backEnd = self._extractFeatures_implementation
             shuffleValues = self.shuffleFeatures
+        # only need targetComplement to be True if toRetain is a function
+        targetComplement = False
 
         # extract points not in toRetain
         if toRetain is not None:
             if isinstance(toRetain, six.string_types):
                 if hasName(toRetain):
                     toExtract = [value for value in getNames() if value != toRetain]
-                    invertTarget = False
                 else:
                     toExtract = toRetain
-                    invertTarget = True
+                    targetComplement = True
 
             elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
                 toExtract = [value for value in range(values) if value != toRetain]
-                invertTarget = False
 
             elif isinstance(toRetain, list):
                 if isinstance(toRetain[0], six.string_types):
                     toExtract = [self._getIndex(value, axis) for value in getNames() if value not in toRetain]
-                    invertTarget = False
                     toRetain = [self._getIndex(value, axis) for value in toRetain]
                 else:
                     toExtract = [value for value in range(values) if value not in toRetain]
-                    invertTarget = False
                 # change the index order of the values to match toRetain
                 reindex = toRetain + toExtract
                 indices = [None for _ in range(values)]
@@ -2598,16 +2596,17 @@ class Base(object):
                     indices[value] = idx
                 shuffleValues(indices)
                 # extract any values after the toRetain values
-                toExtract = list(range(len(toRetain), values))
+                extractValues = range(len(toRetain), values)
+                toExtract = list(extractValues)
 
             else:
                 # toRetain is a function
                 toExtract = toRetain
-                # invertTarget wraps the function and returns the opposite
-                invertTarget = True
+                # targetComplement wraps the function and returns the opposite
+                targetComplement = True
 
-            ret = self._genericStructuralFrontend(axis, backEnd, toExtract, start, end, number,
-                                                  False, 'toRetain', invertTarget=invertTarget)
+            ret = self._genericStructuralFrontend('retain', axis, backEnd, toExtract, start, end, number,
+                                                  False)
             self._adjustNamesAndValidate(ret, axis)
 
         # convert start and end to indexes
@@ -2630,14 +2629,14 @@ class Base(object):
         if start is not None:
             # only need to perform if start is not the first value
             if start - 1 >= 0:
-                ret = self._genericStructuralFrontend(axis, backEnd, None, 0, start - 1,
-                                                          None, False, 'toRetain')
+                ret = self._genericStructuralFrontend('retain', axis, backEnd, None, 0, start - 1,
+                                                          None, False)
                 self._adjustNamesAndValidate(ret, axis)
         if end is not None:
             # only need to perform if end is not the last value
             if end + 1 <= values - 1:
-                ret = self._genericStructuralFrontend(axis, backEnd, None, end + 1, values - 1,
-                                                          None, False, 'toRetain')
+                ret = self._genericStructuralFrontend('retain', axis, backEnd, None, end + 1, values - 1,
+                                                          None, False)
                 self._adjustNamesAndValidate(ret, axis)
 
         if randomize:
@@ -2648,8 +2647,8 @@ class Base(object):
         if number is not None:
             start = number
             end = values - 1
-            ret = self._genericStructuralFrontend(axis, backEnd, None, start, end,
-                                                      None, False, 'toRetain')
+            ret = self._genericStructuralFrontend('retain', axis, backEnd, None, start, end,
+                                                      None, False)
             self._adjustNamesAndValidate(ret, axis)
 
 
@@ -2658,26 +2657,26 @@ class Base(object):
         Similar to function extractPoints. Here we return back the number of points which satisfy the condition.
         condition: can be a string or a function object.
         """
-        return self._genericStructuralFrontend('point', self._countPoints_implementation, condition)
+        return self._genericStructuralFrontend('count', 'point', None, condition)
 
-    def _countPoints_implementation(self, target, *arguments):
-        """
-
-        """
-        return numpy.sum([target(i) for i in self.pointIterator()])
+    # def _countPoints_implementation(self, target, *arguments):
+    #     """
+    #
+    #     """
+    #     return len(target)
 
     def countFeatures(self, condition):
         """
         Similar to function extractFeatures. Here we return back the number of features which satisfy the condition.
         condition: can be a string or a function object.
         """
-        return self._genericStructuralFrontend('feature', self._countFeatures_implementation, condition)
+        return self._genericStructuralFrontend('count', 'feature', None, condition)
 
-    def _countFeatures_implementation(self, target, *arguments):
-        """
-
-        """
-        return numpy.sum([target(i) for i in self.featureIterator()])
+    # def _countFeatures_implementation(self, target, *arguments):
+    #     """
+    #
+    #     """
+    #     return len(target)
 
     def referenceDataFrom(self, other):
         """
@@ -2834,8 +2833,8 @@ class Base(object):
         the calling object object.
 
         """
-        ret = self._genericStructuralFrontend('point', self._copyPoints_implementation, toCopy,
-                                              start, end, number, False, 'toCopy')
+        ret = self._genericStructuralFrontend('copy', 'point', self._copyPoints_implementation, toCopy,
+                                              start, end, number, False)
 
         ret.setFeatureNames(self.getFeatureNames())
 
@@ -2852,8 +2851,8 @@ class Base(object):
         this object.
 
         """
-        ret = self._genericStructuralFrontend('feature', self._copyFeatures_implementation, toCopy,
-                                              start, end, number, False, 'toCopy')
+        ret = self._genericStructuralFrontend('copy', 'feature', self._copyFeatures_implementation, toCopy,
+                                              start, end, number, False)
 
         ret.setPointNames(self.getPointNames())
 
@@ -4002,18 +4001,20 @@ class Base(object):
     ############################
     ############################
 
-
-
-    def _genericStructuralFrontend(self, axis, backEnd, target=None, start=None, end=None,
-                                   number=None, randomize=False, targetName=None, invertTarget=False):
+    def _genericStructuralFrontend(self, structure, axis, backEnd, target=None, start=None,
+                                   end=None, number=None, randomize=False):
         if axis == 'point':
             getIndex = self._getPointIndex
             axisLength = self.points
             hasNameChecker1, hasNameChecker2 = self.hasPointName, self.hasFeatureName
+            viewIterator = self.copy().pointIterator
+            # genericStructuralBackend = self._genericStructuralPointsBackend
         else:
             getIndex = self._getFeatureIndex
             axisLength = self.features
             hasNameChecker1, hasNameChecker2 = self.hasFeatureName, self.hasPointName
+            viewIterator = self.copy().featureIterator
+            # genericStructuralBackend = self._genericStructuralFeaturesBackend
 
         if number is not None and number < 1:
             msg = "number must be greater than zero"
@@ -4023,7 +4024,8 @@ class Base(object):
                 raise ArgumentException("Range removal is exclusive, to use it, target must be None")
             if isinstance(target, six.string_types):
                 if hasNameChecker1(target):
-                    target = [target]
+                    target = getIndex(target)
+                    targetList = [target]
                 #if axis=point and target is not a point name, or
                 # if axis=feature and target is not a feature name,
                 # then check if it's a valid query string
@@ -4070,45 +4072,23 @@ class Base(object):
                         msg = 'the target is not a valid point name nor a valid query string'
                         raise ArgumentException(msg)
             if isinstance(target, (int, numpy.int, numpy.int64)):
-                target = [target]
+                targetList = [target]
             if isinstance(target, list):
                 #verify everything in list is a valid index and convert names into indices
-                indices = []
+                targetList = []
                 for identifier in target:
-                    indices.append(getIndex(identifier))
-                target = indices
-
-                if number is None or len(target) < number:
-                    number = len(target)
-                # if randomize, use random sample
-                if randomize:
-                    indices = []
-                    for i in range(len(target)):
-                        indices.append(i)
-                    randomIndices = pythonRandom.sample(indices, number)
-                    randomIndices.sort()
-                    temp = []
-                    for index in randomIndices:
-                        temp.append(target[index])
-                    target = temp
-                    randomize = False
-                # else take the first number members of target
-                else:
-                    target = target[:number]
-
+                    targetList.append(getIndex(identifier))
             # boolean function
             elif hasattr(target, '__call__'):
-                if invertTarget:
-                    targetFunction = target
-                    def inverse(*args):
-                        return not targetFunction(*args)
-                    target = inverse
-                if randomize:
-                    #apply to each
-                    raise NotImplementedError  # TODO randomize in the By Function case
-                else:
-                    if number is None:
-                        number = axisLength
+                if structure == 'retain':
+                    target_f = target
+                    def complement(*args):
+                        return not target_f(*args)
+                    target = complement
+                targetList = []
+                for targetID, view in enumerate(viewIterator()):
+                    if target(view):
+                        targetList.append(targetID)
 
         elif start is not None or end is not None:
             start = 0 if start is None else getIndex(start)
@@ -4126,26 +4106,27 @@ class Base(object):
             if start > end:
                 raise ArgumentException("The start index cannot be greater than the end index")
 
-            if randomize:
-                target = pythonRandom.sample(range(start, end), number)
-                target.sort()
-                return backEnd(target, None, None, number, False)
+            # end + 1 because our range is inclusive
+            targetList = list(range(start,end + 1))
 
-            possibleEnd = start + number - 1
-            if possibleEnd < end:
-                end = possibleEnd
-            else:
-                number = (end - start) + 1
         elif number is not None:
-            return self._genericStructuralFrontend(axis, backEnd,
-                                                   end=number - 1, number=None)
+            targetList = list(range(0, number))
         else:
+            targetName = "to" + structure.capitalize()
             msg = "You must provide a value for " + targetName + ", or start/end, or "
             msg += "number. "
-            raise ArgumentException("")
+            raise ArgumentException(msg)
 
-        ret = backEnd(target, start, end, number, randomize)
-        return ret
+        if randomize:
+            targetList = pythonRandom.sample(targetList, number)
+            targetList.sort()
+        if number is not None:
+            targetList = targetList[:number]
+
+        if structure == 'count':
+            return len(targetList)
+        else:
+            return backEnd(targetList)
 
 
     def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,

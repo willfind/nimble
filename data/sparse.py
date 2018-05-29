@@ -305,7 +305,7 @@ class Sparse(Base):
         return newNameOrder
 
 
-    def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
+    def _extractPoints_implementation(self, toExtract):
         """
         Function to extract points according to the parameters, and return an object containing
         the removed points with default names. The actual work is done by further helper
@@ -315,26 +315,10 @@ class Sparse(Base):
         be by order or uniform random.
 
         """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            return self._extractByList_implementation(toExtract, 'point')
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO
-            else:
-                return self._extractByFunction_implementation(toExtract, number, 'point')
-        # by range
-        elif start is not None or end is not None:
-            return self._extractByRange_implementation(start, end, 'point')
-        else:
-            raise ArgumentException("Malformed or missing inputs")
+        return self._extractByList_implementation(toExtract, 'point')
 
 
-    def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
+    def _extractFeatures_implementation(self, toExtract):
         """
         Function to extract features according to the parameters, and return an object containing
         the removed features with their featureName names from this object. The actual work is done by
@@ -344,23 +328,7 @@ class Sparse(Base):
         extract should be by order or uniform random.
 
         """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            return self._extractByList_implementation(toExtract, 'feature')
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO
-            else:
-                return self._extractByFunction_implementation(toExtract, number, 'feature')
-        # by range
-        elif start is not None or end is not None:
-            return self._extractByRange_implementation(start, end, 'feature')
-        else:
-            raise ArgumentException("Malformed or missing inputs")
+        return self._extractByList_implementation(toExtract, 'feature')
 
 
     def _extractByList_implementation(self, toExtract, axisType):
@@ -437,152 +405,6 @@ class Sparse(Base):
 
         return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
-
-    def _extractByFunction_implementation(self, toExtract, number, axisType):
-        extractData = []
-        extractRows = []
-        extractCols = []
-
-        self._sortInternal(axisType)
-        if axisType == "feature":
-            targetAxis = self.data.col
-            otherAxis = self.data.row
-            extractTarget = extractCols
-            extractOther = extractRows
-            viewMaker = self.featureView
-        else:
-            targetAxis = self.data.row
-            otherAxis = self.data.col
-            extractTarget = extractRows
-            extractOther = extractCols
-            viewMaker = self.pointView
-
-        copyIndex = 0
-        vectorStartIndex = 0
-        extractedIDs = []
-        # consume zeroed vectors, up to the first nonzero value
-        if self.data.nnz > 0 and self.data.data[0] != 0:
-            for i in range(0, targetAxis[0]):
-                if toExtract(viewMaker(i)):
-                    extractedIDs.append(i)
-        #walk through each coordinate entry
-        for i in range(len(self.data.data)):
-            #collect values into points
-            targetValue = targetAxis[i]
-            #if this is the end of a point
-            if i == len(self.data.data) - 1 or targetAxis[i + 1] != targetValue:
-                #evaluate whether curr point is to be extracted or not
-                # and perform the appropriate copies
-                if toExtract(viewMaker(targetValue)):
-                    for j in range(vectorStartIndex, i + 1):
-                        extractData.append(self.data.data[j])
-                        extractOther.append(otherAxis[j])
-                        extractTarget.append(len(extractedIDs))
-                    extractedIDs.append(targetValue)
-                else:
-                    for j in range(vectorStartIndex, i + 1):
-                        self.data.data[copyIndex] = self.data.data[j]
-                        otherAxis[copyIndex] = otherAxis[j]
-                        targetAxis[copyIndex] = targetAxis[j] - len(extractedIDs)
-                        copyIndex = copyIndex + 1
-                # process zeroed vectors up to the ID of the new vector
-                if i < len(self.data.data) - 1:
-                    nextValue = targetAxis[i + 1]
-                else:
-                    if axisType == 'point':
-                        nextValue = self.points
-                    else:
-                        nextValue = self.features
-                for j in range(targetValue + 1, nextValue):
-                    if toExtract(viewMaker(j)):
-                        extractedIDs.append(j)
-
-                #reset the vector starting index
-                vectorStartIndex = i + 1
-
-        # reinstantiate self
-        # (cannot reshape coo matrices, so cannot do this in place)
-        (selfShape, extShape) = _calcShapes(self.data.shape, len(extractedIDs), axisType)
-        self.data = coo_matrix(
-            (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex])), selfShape)
-
-        # instantiate return data
-        ret = coo_matrix((extractData, (extractRows, extractCols)), shape=extShape)
-
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if axisType == 'point':
-            for index in extractedIDs:
-                pnames.append(self.getPointName(index))
-            fnames = self.getFeatureNames()
-        else:
-            pnames = self.getPointNames()
-            for index in extractedIDs:
-                fnames.append(self.getFeatureName(index))
-
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
-
-
-    def _extractByRange_implementation(self, start, end, axisType):
-        rangeLength = end - start + 1
-        extractData = []
-        extractRows = []
-        extractCols = []
-
-        if axisType == "feature":
-            targetAxis = self.data.col
-            otherAxis = self.data.row
-            extractTarget = extractCols
-            extractOther = extractRows
-        else:
-            targetAxis = self.data.row
-            otherAxis = self.data.col
-            extractTarget = extractRows
-            extractOther = extractCols
-
-        #walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
-        # underlying structure to save space
-        copyIndex = 0
-
-        for i in range(len(self.data.data)):
-            value = targetAxis[i]
-            if value >= start and value <= end:
-                extractData.append(self.data.data[i])
-                extractOther.append(otherAxis[i])
-                extractTarget.append(value - start)
-            else:
-                self.data.data[copyIndex] = self.data.data[i]
-                otherAxis[copyIndex] = otherAxis[i]
-                if targetAxis[i] < start:
-                    targetAxis[copyIndex] = targetAxis[i]
-                else:
-                    # end is inclusive, so we subtract end + 1
-                    targetAxis[copyIndex] = targetAxis[i] - rangeLength
-                copyIndex = copyIndex + 1
-
-        # reinstantiate self
-        # (cannot reshape coo matrices, so cannot do this in place)
-        (selfShape, extShape) = _calcShapes(self.data.shape, rangeLength, axisType)
-        self.data = coo_matrix(
-            (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex])), selfShape)
-
-        # instantiate return data
-        ret = coo_matrix((extractData, (extractRows, extractCols)), shape=extShape)
-
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if axisType == 'point':
-            for i in range(start, end + 1):
-                pnames.append(self.getPointName(i))
-            fnames = self.getFeatureNames()
-        else:
-            pnames = self.getPointNames()
-            for i in range(start, end + 1):
-                fnames.append(self.getFeatureName(i))
-
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
     def _transpose_implementation(self):
         self.data = self.data.transpose()
@@ -802,7 +624,7 @@ class Sparse(Base):
             return self.data.tocsr()
 
 
-    def _copyPoints_implementation(self, toCopy, start, end, number, _):
+    def _copyPoints_implementation(self, toCopy):
         """
         Function to copy points according to the parameters, and return an object containing
         the removed points with default names. The actual work is done by further helper
@@ -812,21 +634,10 @@ class Sparse(Base):
         be by order or uniform random.
 
         """
-        # list of identifiers
-        if isinstance(toCopy, list):
-            assert number == len(toCopy)
-            return self._copyByList_implementation(toCopy, 'point')
-        # boolean function
-        elif hasattr(toCopy, '__call__'):
-            return self._copyByFunction_implementation(toCopy, number, 'point')
-        # by range
-        elif start is not None or end is not None:
-            return self._copyByRange_implementation(start, end, 'point')
-        else:
-            raise ArgumentException("Malformed or missing inputs")
+        return self._copyByList_implementation(toCopy, 'point')
 
 
-    def _copyFeatures_implementation(self, toCopy, start, end, number, _):
+    def _copyFeatures_implementation(self, toCopy):
         """
         Function to copy features according to the parameters, and return an object containing
         the removed features with their featureName names from this object. The actual work is done by
@@ -836,18 +647,7 @@ class Sparse(Base):
         copy should be by order or uniform random.
 
         """
-        # list of identifiers
-        if isinstance(toCopy, list):
-            assert number == len(toCopy)
-            return self._copyByList_implementation(toCopy, 'feature')
-        # boolean function
-        elif hasattr(toCopy, '__call__'):
-            return self._copyByFunction_implementation(toCopy, number, 'feature')
-        # by range
-        elif start is not None or end is not None:
-            return self._copyByRange_implementation(start, end, 'feature')
-        else:
-            raise ArgumentException("Malformed or missing inputs")
+        return self._copyByList_implementation(toCopy, 'feature')
 
 
     def _copyByList_implementation(self, toCopy, axisType):
@@ -864,7 +664,6 @@ class Sparse(Base):
             viewIterator = self.copy().featureIterator
         else:
             viewIterator = self.copy().pointIterator
-        print("list1", self)
         for targetID, view in enumerate(viewIterator()):
             if targetID in toCopy:
                 for otherID, value in enumerate(view.data.data):
@@ -875,7 +674,6 @@ class Sparse(Base):
                     else:
                         copyRows.append(toCopy.index(targetID))
                         copyCols.append(view.data.col[otherID])
-        print("list2", self)
         # coo_matrix will force list to simplest numpy data type unless converted to an array
         copyData = numpy.array(copyData, dtype=dtype)
         # instantiate return data
@@ -895,27 +693,6 @@ class Sparse(Base):
                 fnames.append(self.getFeatureName(index))
 
         return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
-
-
-    def _copyByFunction_implementation(self, toCopy, number, axisType):
-        print("func1", self)
-        copyList = []
-        if axisType == "feature":
-            viewIterator = self.copy().featureIterator
-        else:
-            viewIterator = self.copy().pointIterator
-        for targetID, view in enumerate(viewIterator()):
-            if toCopy(view):
-                copyList.append(targetID)
-        if number:
-            copyList = copyList[:number]
-        print("func2", self)
-        return self._copyByList_implementation(copyList, axisType)
-
-
-    def _copyByRange_implementation(self, start, end, axisType):
-        copyList = [idx for idx in range(start, end + 1)]
-        return self._copyByList_implementation(copyList, axisType)
 
 
     def _transformEachPoint_implementation(self, function, points):
