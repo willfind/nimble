@@ -362,8 +362,7 @@ class Sparse(Base):
         (selfShape, targetShape) = _calcShapes(self.data.shape, targetLength, axis)
         if structure != 'copy':
             otherData = numpy.array(keepData, dtype=dtype)
-            self.data = coo_matrix(
-                (keepData, (keepRows, keepCols)), selfShape)
+            self.data = coo_matrix((keepData, (keepRows, keepCols)), shape=selfShape)
         # coo_matrix will force list to simplest numpy dtype unless converted to an array
         targetData = numpy.array(targetData, dtype=dtype)
         ret = coo_matrix((targetData, (targetRows, targetCols)), shape=targetShape)

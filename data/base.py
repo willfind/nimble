@@ -4077,9 +4077,9 @@ class Base(object):
             # boolean function
             elif hasattr(target, '__call__'):
                 if structure == 'retain':
-                    target_f = target
+                    targetFunction = target
                     def complement(*args):
-                        return not target_f(*args)
+                        return not targetFunction(*args)
                     target = complement
                 targetList = []
                 for targetID, view in enumerate(viewIterator()):
