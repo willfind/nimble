@@ -236,75 +236,68 @@ class List(Base):
         return newNameOrder
 
 
-    def _extractPoints_implementation(self, toExtract):
+    def _extractDeleteRetainCopy_backend(self, structure, axis, targetList):
         """
-        Function to extract points according to the parameters, and return an object containing
-        the removed points with default feature names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be extracted, and randomize indicates whether the choice of who to extract should
-        be by order or uniform random.
-
+        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
+        copyPoints/Features. Returns a new object containing only the points in targetList and
+        performs some modifications to the original object if necessary. This function does not
+        perform all of the modification or process how each function handles the returned value,
+        these are managed separately by each frontend function.
         """
-        toWrite = 0
-        satisfying = []
-        for i in range(self.points):
-            if i not in toExtract:
-                self.data[toWrite] = self.data[i]
-                toWrite += 1
-            else:
-                satisfying.append(self.data[i])
+        if axis == 'point':
+            toWrite = 0
+            satisfying = []
+            for i in range(self.points):
+                if i in targetList and structure == 'copy':
+                    satisfying.append(list(self.data[i]))
+                elif i in targetList:
+                    satisfying.append(self.data[i])
+                elif structure != 'copy':
+                    self.data[toWrite] = self.data[i]
+                    toWrite += 1
 
-        # blank out the elements beyond our last copy, ie our last wanted point.
-        for index in range(toWrite, len(self.data)):
-            self.data.pop()
+            if structure != 'copy':
+                # blank out the elements beyond our last copy, ie our last wanted point.
+                for index in range(toWrite, len(self.data)):
+                    self.data.pop()
 
-        # construct pointName list
-        nameList = []
-        for index in toExtract:
-            nameList.append(self.getPointName(index))
+            # construct pointName list
+            nameList = []
+            for index in targetList:
+                nameList.append(self.getPointName(index))
 
-        extracted = List(satisfying, reuseData=True, featureNames=self.getFeatureNames())
-        reorderToMatchList(extracted, toExtract, 'point')
-        extracted.setPointNames(nameList)
+            targeted = List(satisfying, reuseData=True, featureNames=self.getFeatureNames())
+            reorderToMatchList(targeted, targetList, 'point')
+            targeted.setPointNames(nameList)
 
-        return extracted
+        else:
+            targetPos = {}
+            for index in range(len(targetList)):
+                targetPos[targetList[index]] = index
+            targetListSortRev = copy.copy(targetList)
+            targetListSortRev.sort()
+            targetListSortRev.reverse()
+            targetedData = []
+            for point in self.data:
+                targetedPoint = [None] * len(targetList)
+                for fID in targetListSortRev:
+                    if structure != 'copy':
+                        targetedPoint[targetPos[fID]] = point.pop(fID)
+                    else:
+                        targetedPoint[targetPos[fID]] = point[fID]
+                targetedData.append(targetedPoint)
 
+            if structure != 'copy':
+                self._numFeatures = self._numFeatures - len(targetList)
 
-    def _extractFeatures_implementation(self, toExtract):
-        """
-        Function to extract features according to the parameters, and return an object containing
-        the removed features with their featureNames from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be extracted, and randomize indicates whether the choice of who to
-        extract should be by order or uniform random.
+            # construct featureName list from the original unsorted toExtract
+            featureNameList = []
+            for index in targetList:
+                featureNameList.append(self.getFeatureName(index))
 
-        """
-        targetPos = {}
-        for index in range(len(toExtract)):
-            targetPos[toExtract[index]] = index
+            targeted = List(targetedData, featureNames=featureNameList, pointNames=self.getPointNames(), reuseData=True)
 
-        # we want to extract values from a list from the end
-        # for efficiency. So we sort and reverse the removal indices
-        toExtractSortRev = copy.copy(toExtract)
-        toExtractSortRev.sort()
-        toExtractSortRev.reverse()
-        extractedData = []
-        for point in self.data:
-            extractedPoint = [None] * len(toExtract)
-            for fID in toExtractSortRev:
-                extractedPoint[targetPos[fID]] = point.pop(fID)
-            extractedData.append(extractedPoint)
-
-        self._numFeatures = self._numFeatures - len(toExtract)
-
-        # construct featureName list from the original unsorted toExtract
-        featureNameList = []
-        for index in toExtract:
-            featureNameList.append(self.getFeatureName(index))
-
-        return List(extractedData, featureNames=featureNameList, pointNames=self.getPointNames(), reuseData=True)
+        return targeted
 
 
     def _mapReducePoints_implementation(self, mapper, reducer):
@@ -478,31 +471,31 @@ class List(Base):
             return scipy.sparse.csr_matrix(numpy.array(self.data))
 
 
-    def _copyPoints_implementation(self, toCopy):
-        """
-        Function to copy points according to the parameters, and return an object containing
-        the removed points with default feature names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be copied, and randomize indicates whether the choice of who to copy should
-        be by order or uniform random.
-
-        """
-        satisfying = []
-        for i in range(self.points):
-            if i in toCopy:
-                satisfying.append(list(self.data[i]))
-
-        # construct pointName list
-        nameList = []
-        for index in toCopy:
-            nameList.append(self.getPointName(index))
-
-        copied = List(satisfying, reuseData=True, featureNames=self.getFeatureNames())
-        reorderToMatchList(copied, toCopy, 'point')
-        copied.setPointNames(nameList)
-
-        return copied
+    # def _copyPoints_implementation(self, toCopy):
+    #     """
+    #     Function to copy points according to the parameters, and return an object containing
+    #     the removed points with default feature names. The actual work is done by further helper
+    #     functions, this determines which helper to call, and modifies the input to accomodate
+    #     the number and randomize parameters, where number indicates how many of the possibilities
+    #     should be copied, and randomize indicates whether the choice of who to copy should
+    #     be by order or uniform random.
+    #
+    #     """
+    #     satisfying = []
+    #     for i in range(self.points):
+    #         if i in toCopy:
+    #             satisfying.append(list(self.data[i]))
+    #
+    #     # construct pointName list
+    #     nameList = []
+    #     for index in toCopy:
+    #         nameList.append(self.getPointName(index))
+    #
+    #     copied = List(satisfying, reuseData=True, featureNames=self.getFeatureNames())
+    #     reorderToMatchList(copied, toCopy, 'point')
+    #     copied.setPointNames(nameList)
+    #
+    #     return copied
 
 
     def _copyFeatures_implementation(self, toCopy):

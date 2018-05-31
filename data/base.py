@@ -2434,7 +2434,7 @@ class Base(object):
         space of possible removals.
 
         """
-        ret = self._genericStructuralFrontend('extract', 'point', self._extractPoints_implementation, toExtract, start, end,
+        ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
                                               number, randomize)
 
         self._pointCount -= ret.points
@@ -2467,7 +2467,7 @@ class Base(object):
         space of possible removals.
 
         """
-        ret = self._genericStructuralFrontend('extract', 'feature', self._extractFeatures_implementation, toExtract, start, end,
+        ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
                                               number, randomize)
 
         self._featureCount -= ret.features
@@ -2559,14 +2559,12 @@ class Base(object):
             getNames = self.getPointNames
             getIndex = self._getPointIndex
             values = self.points
-            backEnd = self._extractPoints_implementation
             shuffleValues = self.shufflePoints
         else:
             hasName = self.hasFeatureName
             getNames = self.getFeatureNames
             getIndex = self._getFeatureIndex
             values = self.features
-            backEnd = self._extractFeatures_implementation
             shuffleValues = self.shuffleFeatures
         # only need targetComplement to be True if toRetain is a function
         targetComplement = False
@@ -2605,7 +2603,7 @@ class Base(object):
                 # targetComplement wraps the function and returns the opposite
                 targetComplement = True
 
-            ret = self._genericStructuralFrontend('retain', axis, backEnd, toExtract, start, end, number,
+            ret = self._genericStructuralFrontend('retain', axis, toExtract, start, end, number,
                                                   False)
             self._adjustNamesAndValidate(ret, axis)
 
@@ -2629,13 +2627,13 @@ class Base(object):
         if start is not None:
             # only need to perform if start is not the first value
             if start - 1 >= 0:
-                ret = self._genericStructuralFrontend('retain', axis, backEnd, None, 0, start - 1,
+                ret = self._genericStructuralFrontend('retain', axis, None, 0, start - 1,
                                                           None, False)
                 self._adjustNamesAndValidate(ret, axis)
         if end is not None:
             # only need to perform if end is not the last value
             if end + 1 <= values - 1:
-                ret = self._genericStructuralFrontend('retain', axis, backEnd, None, end + 1, values - 1,
+                ret = self._genericStructuralFrontend('retain', axis, None, end + 1, values - 1,
                                                           None, False)
                 self._adjustNamesAndValidate(ret, axis)
 
@@ -2647,7 +2645,7 @@ class Base(object):
         if number is not None:
             start = number
             end = values - 1
-            ret = self._genericStructuralFrontend('retain', axis, backEnd, None, start, end,
+            ret = self._genericStructuralFrontend('retain', axis, None, start, end,
                                                       None, False)
             self._adjustNamesAndValidate(ret, axis)
 
@@ -2657,7 +2655,7 @@ class Base(object):
         Similar to function extractPoints. Here we return back the number of points which satisfy the condition.
         condition: can be a string or a function object.
         """
-        return self._genericStructuralFrontend('count', 'point', None, condition)
+        return self._genericStructuralFrontend('count', 'point', condition)
 
     # def _countPoints_implementation(self, target, *arguments):
     #     """
@@ -2670,7 +2668,7 @@ class Base(object):
         Similar to function extractFeatures. Here we return back the number of features which satisfy the condition.
         condition: can be a string or a function object.
         """
-        return self._genericStructuralFrontend('count', 'feature', None, condition)
+        return self._genericStructuralFrontend('count', 'feature', condition)
 
     # def _countFeatures_implementation(self, target, *arguments):
     #     """
@@ -2833,8 +2831,8 @@ class Base(object):
         the calling object object.
 
         """
-        ret = self._genericStructuralFrontend('copy', 'point', self._copyPoints_implementation, toCopy,
-                                              start, end, number, False)
+        ret = self._genericStructuralFrontend('copy', 'point', toCopy, start, end,
+                                              number, False)
 
         ret.setFeatureNames(self.getFeatureNames())
 
@@ -2851,8 +2849,8 @@ class Base(object):
         this object.
 
         """
-        ret = self._genericStructuralFrontend('copy', 'feature', self._copyFeatures_implementation, toCopy,
-                                              start, end, number, False)
+        ret = self._genericStructuralFrontend('copy', 'feature', toCopy, start, end,
+                                              number, False)
 
         ret.setPointNames(self.getPointNames())
 
@@ -4001,20 +3999,18 @@ class Base(object):
     ############################
     ############################
 
-    def _genericStructuralFrontend(self, structure, axis, backEnd, target=None, start=None,
+    def _genericStructuralFrontend(self, structure, axis, target=None, start=None,
                                    end=None, number=None, randomize=False):
         if axis == 'point':
             getIndex = self._getPointIndex
             axisLength = self.points
             hasNameChecker1, hasNameChecker2 = self.hasPointName, self.hasFeatureName
             viewIterator = self.copy().pointIterator
-            # genericStructuralBackend = self._genericStructuralPointsBackend
         else:
             getIndex = self._getFeatureIndex
             axisLength = self.features
             hasNameChecker1, hasNameChecker2 = self.hasFeatureName, self.hasPointName
             viewIterator = self.copy().featureIterator
-            # genericStructuralBackend = self._genericStructuralFeaturesBackend
 
         if number is not None and number < 1:
             msg = "number must be greater than zero"
@@ -4126,7 +4122,7 @@ class Base(object):
         if structure == 'count':
             return len(targetList)
         else:
-            return backEnd(targetList)
+            return self._extractDeleteRetainCopy_backend(structure, axis, targetList)
 
 
     def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,

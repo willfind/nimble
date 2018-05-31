@@ -182,43 +182,23 @@ class DataFrame(Base):
             newNameOrder.append(newName)
         return newNameOrder
 
-    def _extractPoints_implementation(self, toExtract):
-        """
-        Function to extract points according to the parameters, and return an object containing
-        the removed points with default names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be extracted, and randomize indicates whether the choice of who to extract should
-        be by order or uniform random.
 
+    def _extractDeleteRetainCopy_backend(self, structure, axis, targetList):
         """
-        return self._extractByList_implementation(toExtract, 'point')
-
-    def _extractFeatures_implementation(self, toExtract):
-        """
-        Function to extract features according to the parameters, and return an object containing
-        the removed features with their featureName names from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be extracted, and randomize indicates whether the choice of who to
-        extract should be by order or uniform random.
-
-        """
-        featureList = self.data.columns[toExtract]
-        return self.pointsOrFeaturesVectorized(featureList, 'feature', 'extract', True)
-
-    def _extractByList_implementation(self, toExtract, axis):
-        """
-        Modify this object to have only the points that are not given in the input,
-        returning an object containing those points that are.
-
+        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
+        copyPoints/Features. Returns a new object containing only the points in targetList and
+        performs some modifications to the original object if necessary. This function does not
+        perform all of the modification or process how each function handles the returned value,
+        these are managed separately by each frontend function.
         """
         if axis == 'point':
-            indexList = self.data.index[toExtract]
+            indexList = self.data.index[targetList]
         else:
-            indexList = self.data.columns[toExtract]
-
-        return self.pointsOrFeaturesVectorized(indexList, axis, 'extract', True)
+            indexList = self.data.columns[targetList]
+        if structure == 'copy':
+            return self.pointsOrFeaturesVectorized(indexList, axis, 'copy', True)
+        else:
+            return self.pointsOrFeaturesVectorized(indexList, axis, 'extract', True)
 
 
     def _mapReducePoints_implementation(self, mapper, reducer):
@@ -367,43 +347,6 @@ class DataFrame(Base):
             return scipy.sparse.csr_matrix(dataArray)
 
         return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-
-
-    def _copyPoints_implementation(self, toCopy):
-        """
-        Function to copy points according to the parameters, and return an object containing
-        the removed points with default names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be copied, and randomize indicates whether the choice of who to copy should
-        be by order or uniform random.
-
-        """
-        return self._copyByList_implementation(toCopy, 'point')
-
-    def _copyFeatures_implementation(self, toCopy):
-        """
-        Function to copy features according to the parameters, and return an object containing
-        the removed features with their featureName names from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be copied, and randomize indicates whether the choice of who to
-        copy should be by order or uniform random.
-
-        """
-        return self._copyByList_implementation(toCopy, 'feature')
-
-    def _copyByList_implementation(self, toCopy, axis):
-        """
-        Modify this object to have only the points or features that are not given in the input,
-        returning an object containing those points or features that are.
-
-        """
-        if axis == 'point':
-            indexList = self.data.index[toCopy]
-        else:
-            indexList = self.data.columns[toCopy]
-        return self.pointsOrFeaturesVectorized(indexList, axis, 'copy', True)
 
 
     def _transformEachPoint_implementation(self, function, points):

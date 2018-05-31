@@ -181,51 +181,33 @@ class Matrix(Base):
         return newNameOrder
 
 
-    def _extractPoints_implementation(self, toExtract):
+    def _extractDeleteRetainCopy_backend(self, structure, axis, targetList):
         """
-        Function to extract points according to the parameters, and return an object containing
-        the removed points with default names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be extracted, and randomize indicates whether the choice of who to extract should
-        be by order or uniform random.
-
+        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
+        copyPoints/Features. Returns a new object containing only the points in targetList and
+        performs some modifications to the original object if necessary. This function does not
+        perform all of the modification or process how each function handles the returned value,
+        these are managed separately by each frontend function.
         """
-        return self._extractByList_implementation(toExtract, 'point')
-
-
-    def _extractFeatures_implementation(self, toExtract):
-        """
-        Function to extract features according to the parameters, and return an object containing
-        the removed features with their featureName names from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be extracted, and randomize indicates whether the choice of who to
-        extract should be by order or uniform random.
-
-        """
-        return self._extractByList_implementation(toExtract, 'feature')
-
-
-    def _extractByList_implementation(self, toExtract, axis):
         nameList = []
         if axis == 'point':
             axisVal = 0
             getName = self.getPointName
-            ret = self.data[toExtract]
+            ret = self.data[targetList]
             pointNames = nameList
             featureNames = self.getFeatureNames()
         else:
             axisVal = 1
             getName = self.getFeatureName
-            ret = self.data[:, toExtract]
+            ret = self.data[:, targetList]
             featureNames = nameList
             pointNames = self.getPointNames()
 
-        self.data = numpy.delete(self.data, toExtract, axisVal)
+        if structure != 'copy':
+            self.data = numpy.delete(self.data, targetList, axisVal)
 
-        # construct featureName list
-        for index in toExtract:
+        # construct nameList
+        for index in targetList:
             nameList.append(getName(index))
 
         return Matrix(ret, pointNames=pointNames, featureNames=featureNames)
@@ -399,51 +381,6 @@ class Matrix(Base):
             return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
         return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-
-
-    def _copyPoints_implementation(self, toCopy):
-        """
-        Function to copy points according to the parameters, and return an object containing
-        the copied points with default names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number parameter, where number indicates how many of the possibilities
-        should be copied.
-
-        """
-        return self._copyByList_implementation(toCopy, 'point')
-
-
-    def _copyFeatures_implementation(self, toCopy):
-        """
-        Function to copy features according to the parameters, and return an object containing
-        the removed features with their featureName names from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be copied, and randomize indicates whether the choice of who to
-        copy should be by order or uniform random.
-
-        """
-        return self._copyByList_implementation(toCopy, 'feature')
-
-
-    def _copyByList_implementation(self, toCopy, axis):
-        nameList = []
-        if axis == 'point':
-            getName = self.getPointName
-            ret = self.data[toCopy]
-            pointNames = nameList
-            featureNames = self.getFeatureNames()
-        else:
-            getName = self.getFeatureName
-            ret = self.data[:, toCopy]
-            featureNames = nameList
-            pointNames = self.getPointNames()
-
-        # construct names list
-        for index in toCopy:
-            nameList.append(getName(index))
-
-        return Matrix(ret, pointNames=pointNames, featureNames=featureNames)
 
 
     def _transformEachPoint_implementation(self, function, points):

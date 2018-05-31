@@ -4402,13 +4402,54 @@ class StructureModifying(DataTestObject):
         toTest.deletePoints('four=1')
 
     def test_deletePoints_numberOnly(self):
-        self.back_extract_numberOnly('point')
+        self.back_delete_numberOnly('point')
 
     def test_deletePoints_numberAndRandomize(self):
-        self.back_extract_numberAndRandomize('point')
+        self.back_delete_numberAndRandomize('point')
 
-    #TODO an extraction test where all data is removed
-    #TODO extraction tests for all of the number and randomize combinations
+    #########################
+    # delete common backend #
+    #########################
+
+    def back_delete_numberOnly(self, axis):
+        if axis == 'point':
+            toCall = "deletePoints"
+        else:
+            toCall = "deleteFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        ret = getattr(toTest, toCall)(number=3)
+        if axis == 'point':
+            rem = self.constructor(data[3:], pointNames=pnames[3:], featureNames=fnames)
+        else:
+            rem = self.constructor([p[3:] for p in data], pointNames=pnames, featureNames=fnames[3:])
+
+        assert rem.isIdentical(toTest)
+
+    def back_delete_numberAndRandomize(self, axis):
+        if axis == 'point':
+            toCall = "deletePoints"
+        else:
+            toCall = "deleteFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        UML.randomness.startAlternateControl(seed=1)
+        ret = getattr(toTest1, toCall)(number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed=1)
+        retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        assert toTest1.isIdentical(toTest2)
 
     ##################
     # deleteFeatures #
@@ -5342,6 +5383,53 @@ class StructureModifying(DataTestObject):
 
     def test_retainPoints_numberAndRandomize(self):
         self.back_extract_numberAndRandomize('point')
+
+    #########################
+    # retain common backend #
+    #########################
+
+    def back_retain_numberOnly(self, axis):
+        if axis == 'point':
+            toCall = "retainPoints"
+        else:
+            toCall = "retainFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        ret = getattr(toTest, toCall)(number=3)
+        if axis == 'point':
+            exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
+            rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        else:
+            exp = self.constructor([p[:3] for p in data], pointNames=pnames, featureNames=fnames[:3])
+            rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        assert exp.isIdentical(ret)
+        assert rem.isIdentical(toTest)
+
+    def back_retain_numberAndRandomize(self, axis):
+        if axis == 'point':
+            toCall = "retainPoints"
+        else:
+            toCall = "retainFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        UML.randomness.startAlternateControl(seed=1)
+        getattr(toTest1, toCall)(number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed=1)
+        getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        assert toTest1.isIdentical(toTest2)
 
     ##################
     # retainFeatures #
