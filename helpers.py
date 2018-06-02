@@ -34,6 +34,7 @@ from UML.exceptions import PackageException
 from UML.exceptions import FileFormatException
 from UML.data import Sparse  # needed for 1s or 0s obj creation
 from UML.data import Matrix  # needed for 1s or 0s obj creation
+from UML.data import List
 from UML.data import Base
 from UML.data.list import isAllowedSingleElement
 
@@ -442,7 +443,8 @@ def elementTypeConvert(rawData, elementType):
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path,
-        keepPoints, keepFeatures, elementType=None, reuseData=False):
+        keepPoints, keepFeatures, elementType=None, reuseData=False,
+        considerMissing='default', replaceMissing='default'):
     """
     1. set up autoType
     2.
@@ -460,6 +462,44 @@ def initDataObject(
     #may need to extract names and may need to convert data to matrix
     rawData, pointNames, featureNames = extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType)
 
+    # handle missing values
+    if considerMissing is not None:
+        if replaceMissing == 'default':
+            replaceMissing = numpy.nan
+        if considerMissing == 'default':
+            considerMissing = (None, '', 'None', 'nan')
+
+        # checks for nan values and values in considerMissing
+        def missingCheck(x):
+            if isinstance(x, float):
+                return numpy.isnan(x)
+            else:
+                return x in considerMissing
+        # vectorize missingCheck function
+        missingReplacer = numpy.vectorize(missingCheck, otypes=["bool"])
+
+        # use underlying data, converting to numpy array if necessary to apply missing
+        if isinstance(rawData, list):
+            numpyObject = numpy.array(rawData, dtype=object)
+            numpyObject[missingReplacer(numpyObject)] = replaceMissing
+            rawData = numpyObject.tolist()
+        elif isinstance(rawData, pd.DataFrame):
+            numpyObject = rawData.values.astype(object)
+            numpyObject[missingReplacer(numpyObject)] = replaceMissing
+            rawData = pd.DataFrame(numpyObject)
+        elif isinstance(rawData, scipy.sparse.coo_matrix):
+            numpyObject = numpy.array(rawData.data, dtype=object)
+            numpyObject[missingReplacer(numpyObject)] = replaceMissing
+            rawData.data = numpyObject.astype(rawData.data.dtype)
+        elif rawData.dtype == type(replaceMissing) or rawData.dtype == object:
+            rawData[missingReplacer(rawData)] = replaceMissing
+        else:
+            #TODO
+            msg = "the argument replaceMissing has type {0}, ".format(type(replaceMissing))
+            msg += "this does not align with the data type <{0}>".format(rawData.dtype)
+            raise ArgumentException(msg)
+
+
     pathsToPass = (None, None)
     if path is not None:
         # used in data type unit testing, need a way to specify path values
@@ -476,13 +516,15 @@ def initDataObject(
 
     initMethod = getattr(UML.data, returnType)
     try:
-        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData)
+        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name,
+                         paths=pathsToPass, elementType=elementType, reuseData=reuseData)
     except Exception as e:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
         try:
             autoMethod = getattr(UML.data, autoType)
-            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData)
+            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name,
+                             paths=pathsToPass, elementType=elementType, reuseData=reuseData)
             ret = ret.copyAs(returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
@@ -578,7 +620,8 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 def createDataFromFile(
         returnType, data, pointNames, featureNames, fileType, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures):
+        ignoreNonNumericalFeatures, keepPoints, keepFeatures, replaceMissing,
+        considerMissing):
     """
     Helper for createData which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -668,7 +711,8 @@ def createDataFromFile(
 
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, path,
-        keepPoints, keepFeatures)
+        keepPoints, keepFeatures, replaceMissing=replaceMissing,
+        considerMissing=considerMissing)
 
 
 def _loadmtxForAuto(

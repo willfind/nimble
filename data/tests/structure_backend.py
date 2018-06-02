@@ -906,6 +906,53 @@ class StructureModifying(DataTestObject):
         assert orig1.isIdentical(orig6)
         assert orig1.isIdentical(orig9)
 
+    def test_createDataWithMissingDefaults(self):
+        nan = numpy.nan
+        data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
+        toTest = self.constructor(data)
+        expData = [[1, 2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
+        expRet = self.constructor(expData, elementType=object)
+        assert toTest == expRet
+
+    def test_createDataNumericalWithNone(self):
+        nan = numpy.nan
+        data = [[1, 2, None], [None, 5, 6], [7, None, 9], [None, None, None]]
+        toTest = self.constructor(data)
+        expData = [[1, 2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
+        expRet = self.constructor(expData)
+        assert toTest == expRet
+
+    def test_createDataHandmadeReplaceMissing(self):
+        nan = numpy.nan
+        data = [[1, 2, nan], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
+        toTest = self.constructor(data, replaceMissing=0)
+        expData = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
+        expRet = self.constructor(expData, elementType=object)
+        assert toTest == expRet
+
+    def test_createDataNumericalReplaceMissingNonNumeric(self):
+        nan = numpy.nan
+        data = [[1, 2, None], [None, 5, 6], [7, None, 9], [None, None, None]]
+        toTest = self.constructor(data, replaceMissing="Missing")
+        expData = [[1, 2, "Missing"], ["Missing", 5, 6], [7, "Missing", 9], ["Missing", "Missing", "Missing"]]
+        expRet = self.constructor(expData)
+        assert toTest == expRet
+
+    def test_createDataHandmadeConsiderMissing(self):
+        nan = numpy.nan
+        data = [[1, 2, ""], [None, 5, 6], [7, None, 9], ["", "nan", "None"]]
+        toTest = self.constructor(data, considerMissing=[None, ""])
+        expData = [[1, 2, nan], [nan, 5, 6], [7, nan, 9], [nan, "nan", "None"]]
+        expRet = self.constructor(expData, considerMissing=None, elementType=object)
+        assert toTest == expRet
+
+    def test_createDataHandmadeConsiderAndReplaceMissing(self):
+        data = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
+        toTest = self.constructor(data, considerMissing=[0], replaceMissing='NA', elementType="object")
+        expData = [[1, 2, 'NA'], ['NA', 5, 6], [7, "NA", 9], ["NA", "NA", "NA"]]
+        expRet = self.constructor(expData)
+        assert toTest == expRet
+
 
     ##############
     # __init__() #
@@ -3422,7 +3469,7 @@ class StructureModifying(DataTestObject):
             expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
         else:
             expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
-            expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+            expTest = self.constructor(expData, pointNames=pnames, featureNames=names, considerMissing=None)
         toTest.transformEachElement(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)

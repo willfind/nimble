@@ -430,9 +430,10 @@ def listLearners(package=None):
     return results
 
 
-def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
-               fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
+def createData(returnType, data, pointNames='automatic', featureNames='automatic',
+               elementType=None, fileType=None, name=None, path=None, keepPoints='all',
+               keepFeatures='all', ignoreNonNumericalFeatures=False, useLog=None,
+               reuseData=False, considerMissing='default', replaceMissing='default'):
     """Function to instantiate one of the UML data container types.
 
     returnType: string (or None) indicating which kind of UML data type you want
@@ -498,8 +499,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     kept from the raw data. The order of this list will determine the order
     of features in the resultant object. In the case of reading data from a
     file, the selection will be done at read time, thus limiting the amount
-    of data read into memory. Names and indices are defined with respect to the data
-    regardless of filtering by the ignoreNonNumericalFeatures flag; just
+    of data read into memory. Names and indices are defined with respect to the
+    data regardless of filtering by the ignoreNonNumericalFeatures flag; just
     because a feature is removed, the indices of subsequent features will not
     be shifted. The ignoreNonNumericalFeatures flag is only consdered after
     selection: if a selected feature has non-numerical values and
@@ -522,6 +523,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     call should be logged by the UML logger. If None, the configurable	global
     default is used.
 
+    replaceMissing: TODO
+    considerMissing: TODO
     """
     # validation of pointNames and featureNames
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
@@ -549,7 +552,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
         ret = initDataObject(
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
-            keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
+            keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData,
+            considerMissing=considerMissing, replaceMissing=replaceMissing, )
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
@@ -557,7 +561,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             returnType=returnType, data=data, pointNames=pointNames,
             featureNames=featureNames, fileType=fileType, name=name,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
-            keepPoints=keepPoints, keepFeatures=keepFeatures)
+            keepPoints=keepPoints, keepFeatures=keepFeatures,
+            considerMissing=considerMissing, replaceMissing=replaceMissing)
         return ret
     # no other allowed inputs
     else:
