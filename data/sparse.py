@@ -313,73 +313,104 @@ class Sparse(Base):
         perform all of the modification or process how each function handles the returned value,
         these are managed separately by each frontend function.
         """
-        if isinstance(self, SparseView):
+        try:
+            pnames = []
+            fnames = []
+            if axis == 'point':
+                for index in targetList:
+                    pnames.append(self.getPointName(index))
+                fnames = self.getFeatureNames()
+                notTarget = [idx for idx in range(self.points) if idx not in targetList]
+                data = self.data.tocsr()
+                targeted = data[targetList, :]
+                notTargeted = data[notTarget, :]
+            else:
+                pnames = self.getPointNames()
+                for index in targetList:
+                    fnames.append(self.getFeatureName(index))
+                notTarget = [idx for idx in range(self.features) if idx not in targetList]
+                data = self.data.tocsc()
+                targeted = data[:, targetList]
+                notTargeted = data[:, notTarget]
+
+            if structure != 'copy':
+                self.data = notTargeted.tocoo()
+                self._sortInternal(axis)
+
+            ret = targeted.tocoo()
+
+            return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
+
+        # SparseView and object dtypes
+        except TypeError:
             dtype = numpy.object_
-        else:
-            dtype = self.data.dtype
-            self._sortInternal(axis)
-        if axis == 'point':
-            viewIterator = self.copy().pointIterator
-            targetCount = self.points
-        else:
-            viewIterator = self.copy().featureIterator
-            targetCount = self.features
+            # if isinstance(self, SparseView):
+            #     dtype = numpy.object_
+            # else:
+            #     dtype = self.data.dtype
+            #     self._sortInternal(axis)
+            if axis == 'point':
+                viewIterator = self.copy().pointIterator
+                targetCount = self.points
+            else:
+                viewIterator = self.copy().featureIterator
+                targetCount = self.features
 
-        targetLength = len(targetList)
-        targetData = []
-        targetRows = []
-        targetCols = []
-        keepData = []
-        keepRows = []
-        keepCols = []
-        keepIndex = 0
+            targetLength = len(targetList)
+            targetData = []
+            targetRows = []
+            targetCols = []
+            keepData = []
+            keepRows = []
+            keepCols = []
+            keepIndex = 0
 
-        # iterate through axis data
-        for targetID, view in enumerate(viewIterator()):
-            # coo_matrix data for return object
-            if targetID in targetList:
-                for otherID, value in enumerate(view.data.data):
-                    targetData.append(value)
-                    if axis == 'point':
-                        targetRows.append(targetList.index(targetID))
-                        targetCols.append(view.data.col[otherID])
-                    else:
-                        targetRows.append(view.data.row[otherID])
-                        targetCols.append(targetList.index(targetID))
-            # coo_matrix data for modified self
-            elif structure != 'copy':
-                for otherID, value in enumerate(view.data.data):
-                    keepData.append(value)
-                    if axis == 'point':
-                        keepRows.append(keepIndex)
-                        keepCols.append(view.data.col[otherID])
-                    else:
-                        keepRows.append(view.data.row[otherID])
-                        keepCols.append(keepIndex)
-                keepIndex += 1
+            # iterate through axis data
+            for targetID, view in enumerate(viewIterator()):
+                # coo_matrix data for return object
+                if targetID in targetList:
+                    for otherID, value in enumerate(view.data.data):
+                        targetData.append(value)
+                        if axis == 'point':
+                            targetRows.append(targetList.index(targetID))
+                            targetCols.append(view.data.col[otherID])
+                        else:
+                            targetRows.append(view.data.row[otherID])
+                            targetCols.append(targetList.index(targetID))
+                # coo_matrix data for modified self
+                elif structure != 'copy':
+                    for otherID, value in enumerate(view.data.data):
+                        keepData.append(value)
+                        if axis == 'point':
+                            keepRows.append(keepIndex)
+                            keepCols.append(view.data.col[otherID])
+                        else:
+                            keepRows.append(view.data.row[otherID])
+                            keepCols.append(keepIndex)
+                    keepIndex += 1
 
-        # instantiate return data
-        (selfShape, targetShape) = _calcShapes(self.data.shape, targetLength, axis)
-        if structure != 'copy':
-            otherData = numpy.array(keepData, dtype=dtype)
-            self.data = coo_matrix((keepData, (keepRows, keepCols)), shape=selfShape)
-        # coo_matrix will force list to simplest numpy dtype unless converted to an array
-        targetData = numpy.array(targetData, dtype=dtype)
-        ret = coo_matrix((targetData, (targetRows, targetCols)), shape=targetShape)
+            # instantiate return data
+            (selfShape, targetShape) = _calcShapes(self.data.shape, targetLength, axis)
+            if structure != 'copy':
+                otherData = numpy.array(keepData, dtype=dtype)
+                self.data = coo_matrix((keepData, (keepRows, keepCols)), shape=selfShape)
+            # coo_matrix will force list to simplest numpy dtype unless converted to an array
+            targetData = numpy.array(targetData, dtype=dtype)
+            ret = coo_matrix((targetData, (targetRows, targetCols)), shape=targetShape)
 
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if axis == 'point':
-            for index in targetList:
-                pnames.append(self.getPointName(index))
-            fnames = self.getFeatureNames()
-        else:
-            pnames = self.getPointNames()
-            for index in targetList:
-                fnames.append(self.getFeatureName(index))
+            # get names for return obj
+            pnames = []
+            fnames = []
+            if axis == 'point':
+                for index in targetList:
+                    pnames.append(self.getPointName(index))
+                fnames = self.getFeatureNames()
+            else:
+                pnames = self.getPointNames()
+                for index in targetList:
+                    fnames.append(self.getFeatureName(index))
 
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
+            return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
 
     def _transpose_implementation(self):

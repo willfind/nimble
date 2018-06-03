@@ -4089,7 +4089,6 @@ class Base(object):
         elif start is not None or end is not None:
             start = 0 if start is None else getIndex(start)
             end = axisLength - 1 if end is None else getIndex(end)
-            number = (end - start) + 1 if number is None else number
 
             if start < 0 or start > axisLength:
                 msg = "start must be a valid index, in the range of possible "
