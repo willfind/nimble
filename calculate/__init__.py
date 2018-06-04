@@ -33,6 +33,8 @@ from .statistic import quartiles
 from .statistic import residuals
 from .statistic import standardDeviation
 from .utility import detectBestResult
+from .linalg import inverse
+from .linalg import pseudoInverse
 
 __all__ = ['confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
            'covariance', 'detectBestResult', 'elementwiseMultiply',
@@ -41,4 +43,4 @@ __all__ = ['confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
            'meanFeaturewiseRootMeanSquareError', 'median', 'mode', 'minimum',
            'proportionMissing', 'proportionZero', 'quartiles',
            'residuals', 'rSquared', 'rootMeanSquareError', 'standardDeviation',
-           'uniqueCount', 'varianceFractionRemaining']
+           'uniqueCount', 'varianceFractionRemaining', 'inverse', 'pseudoInverse']
