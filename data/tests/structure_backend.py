@@ -1755,7 +1755,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data).T
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
 
     def test_extractPoints_handmadeListSequence(self):
@@ -1843,7 +1843,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data).T
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
     def test_extractPoints_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1992,7 +1992,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data).T
         exp = self.constructor(data, featureNames=featureNames)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
 
     def test_extractPoints_handmadeRangeWithFeatureNames(self):
@@ -2351,7 +2351,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data)
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
     def test_extractFeatures_ListIntoFEmptyOutOfOrder(self):
         """ Test extractFeatures() by removing a list of all features """
@@ -2367,7 +2367,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data)
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
 
     def test_extractFeatures_handmadeListSequence(self):
@@ -2480,7 +2480,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data)
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
     def test_extractFeatures_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -2621,7 +2621,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data)
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
     def test_extractFeatures_handmadeRange(self):
         """ Test extractFeatures() against handmade output for range extraction """
@@ -3387,7 +3387,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data)
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
 
     def test_deleteFeatures_handmadeListSequence(self):
@@ -3478,7 +3478,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data)
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
     def test_deleteFeatures_function_returnPointEmpty(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3605,7 +3605,7 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data)
         exp = self.constructor(data)
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
 
     def test_deleteFeatures_handmadeRange(self):
         """ Test deleteFeatures() against handmade output for range extraction """
@@ -3844,7 +3844,19 @@ class StructureModifying(DataTestObject):
         exp = self.constructor(data)
         toTest.retainPoints([0, 1, 2, 3])
 
-        toTest.isIdentical(exp)
+        assert toTest.isIdentical(exp)
+
+    def test_retainPoints_list_retain_nothing(self):
+        """ Test retainPoints() by retaining an empty list """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        toTest = self.constructor(data)
+        toTest.retainPoints([])
+
+        expData = [[], [], []]
+        expData = numpy.array(expData).T
+        expTest = self.constructor(expData)
+
+        assert toTest.isIdentical(expTest)
 
 
     def test_retainPoints_handmadeListSequence(self):
@@ -3860,6 +3872,16 @@ class StructureModifying(DataTestObject):
         assert toTest.isIdentical(exp2)
 
 
+    def test_retainPoints_list_mixed(self):
+        """ Test retainPoints() list input with mixed names and indices """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        names = ['1', '4', '7', '10']
+        toTest = self.constructor(data, pointNames=names)
+        toTest.retainPoints(['1',1,-1])
+        exp1 = self.constructor([[1, 2, 3], [4, 5, 6], [10, 11, 12]], pointNames=['1','4','10'])
+        assert toTest.isIdentical(exp1)
+
+
     def test_retainPoints_handmadeListOrdering(self):
         """ Test retainPoints() against handmade output for out of order retention """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
@@ -3868,6 +3890,7 @@ class StructureModifying(DataTestObject):
         toTest.retainPoints([3, 4, 1])
         exp1 = self.constructor([[10, 11, 12], [13, 14, 15], [4, 5, 6]], pointNames=['10', '13', '4'])
         assert toTest.isIdentical(exp1)
+
 
     def test_retainPoints_List_trickyOrdering(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
@@ -4306,6 +4329,19 @@ class StructureModifying(DataTestObject):
 
         assert toTest.isIdentical(expTest)
 
+    def test_retainFeatures_list_retain_nothing(self):
+        """ Test retainFeatures() by retaining an empty list """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        toTest = self.constructor(data)
+        toTest.retainFeatures([])
+
+        expData = [[], [], [], []]
+        expData = numpy.array(expData)
+        expTest = self.constructor(expData)
+
+        assert toTest.isIdentical(expTest)
+
+
     def test_retainFeatures_ListIntoFEmptyOutOfOrder(self):
         """ Test retainFeatures() by retaining a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -4339,6 +4375,16 @@ class StructureModifying(DataTestObject):
         toTest.retainFeatures(["three", "neg"])
         exp2 = self.constructor([[3, -1], [6, -2], [9, -3]], featureNames=["three", "neg"])
         assert toTest.isIdentical(exp2)
+
+
+    def test_retainFeatures_list_mixed(self):
+        """ Test retainFeatures() list input with mixed names and indices """
+        data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+        featureNames = ["one", "two", "three", "neg"]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.retainFeatures([1, "three", -1])
+        exp1 = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], featureNames=["two", "three", "neg"])
+        assert toTest.isIdentical(exp1)
 
 
     def test_retainFeatures_List_trickyOrdering(self):
