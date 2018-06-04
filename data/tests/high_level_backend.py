@@ -13,7 +13,7 @@ featureIterator, calculateForEachElement, isApproximatelyEqual,
 trainAndTestSets
 
 In object HighLevelModifying:
-dropFeaturesContainingType, replaceFeatureWithBinaryFeatures, 
+dropFeaturesContainingType, replaceFeatureWithBinaryFeatures,
 transformFeatureToIntegers, extractPointsByCoinToss,
 shufflePoints, shuffleFeatures, normalizePoints, normalizeFeatures
 
@@ -419,6 +419,106 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.mapReducePoints(simpleMapper, oddOnlyReducer)
 
         exp = self.constructor([[1, 5], [7, 17]])
+
+        assert (ret.isIdentical(exp))
+        assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
+
+
+    #######################
+    # mapReduceFeatures() #
+    #######################
+
+    @raises(ImproperActionException)
+    def test_mapReduceFeatures_argumentExceptionNoPoints(self):
+        """ Test mapReduceFeatures() for ImproperActionException when there are no points  """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        toTest.mapReduceFeatures(simpleMapper, simpleReducer)
+
+
+    def test_mapReduceFeatures_emptyResultNoFeatures(self):
+        """ Test mapReduceFeatures() when given feature empty data """
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        ret = toTest.mapReduceFeatures(simpleMapper, simpleReducer)
+
+        data = numpy.empty(shape=(0, 0))
+        exp = self.constructor(data)
+        assert ret.isIdentical(exp)
+
+
+    @raises(ArgumentException)
+    def test_mapReduceFeatures_argumentExceptionNoneMap(self):
+        """ Test mapReduceFeatures() for ArgumentException when mapper is None """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.mapReduceFeatures(None, simpleReducer)
+
+    @raises(ArgumentException)
+    def test_mapReduceFeatures_argumentExceptionNoneReduce(self):
+        """ Test mapReduceFeatures() for ArgumentException when reducer is None """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.mapReduceFeatures(simpleMapper, None)
+
+    @raises(ArgumentException)
+    def test_mapReduceFeatures_argumentExceptionUncallableMap(self):
+        """ Test mapReduceFeatures() for ArgumentException when mapper is not callable """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.mapReduceFeatures("hello", simpleReducer)
+
+    @raises(ArgumentException)
+    def test_mapReduceFeatures_argumentExceptionUncallableReduce(self):
+        """ Test mapReduceFeatures() for ArgumentException when reducer is not callable """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.mapReduceFeatures(simpleMapper, 5)
+
+
+    def test_mapReduceFeatures_handmade(self):
+        """ Test mapReduceFeatures() against handmade output """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        ret = toTest.mapReduceFeatures(simpleMapper, simpleReducer)
+
+        exp = self.constructor([[1, 11], [2, 13], [3, 15]])
+
+        assert (ret.isIdentical(exp))
+        assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
+
+    def test_mapReduceFeatures_NamePath_preservation(self):
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames,
+                                  name=preserveName, path=preservePair)
+
+        ret = toTest.mapReduceFeatures(simpleMapper, simpleReducer)
+
+        assert toTest.name == preserveName
+        assert toTest.absolutePath == preserveAPath
+        assert toTest.relativePath == preserveRPath
+
+        assert ret.nameIsDefault()
+        assert ret.absolutePath == preserveAPath
+        assert ret.relativePath == preserveRPath
+
+
+    def test_mapReduceFeatures_handmadeNoneReturningReducer(self):
+        """ Test mapReduceFeatures() against handmade output with a None returning Reducer """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        ret = toTest.mapReduceFeatures(simpleMapper, oddOnlyReducer)
+
+        exp = self.constructor([[1, 11], [3, 15]])
 
         assert (ret.isIdentical(exp))
         assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
