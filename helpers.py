@@ -442,9 +442,10 @@ def elementTypeConvert(rawData, elementType):
 
 
 def initDataObject(
-        returnType, rawData, pointNames, featureNames, name, path,
-        keepPoints, keepFeatures, elementType=None, reuseData=False,
-        considerMissing='default', replaceMissing='default'):
+        returnType, rawData, pointNames, featureNames, name, path, keepPoints, keepFeatures,
+        elementType=None, reuseData=False,
+        treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+        replaceMissingWith=numpy.nan):
     """
     1. set up autoType
     2.
@@ -463,42 +464,39 @@ def initDataObject(
     rawData, pointNames, featureNames = extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType)
 
     # handle missing values
-    if considerMissing is not None:
-        if replaceMissing == 'default':
-            replaceMissing = numpy.nan
-        if considerMissing == 'default':
-            considerMissing = (None, '', 'None', 'nan')
-
-        # checks for nan values and values in considerMissing
+    if treatAsMissing is not None:
+        # check if nan values are included in treatAsMissing
+        nanIsMissing = False
+        for missing in treatAsMissing:
+            if isinstance(missing, float) and numpy.isnan(missing):
+                nanIsMissing = True
+                break
+        # boolean function for whether value should be treated as missing
         def missingCheck(x):
-            if isinstance(x, float):
-                return numpy.isnan(x)
+            if nanIsMissing and isinstance(x, float) and numpy.isnan(x):
+                return True
             else:
-                return x in considerMissing
+                return x in treatAsMissing
         # vectorize missingCheck function
         missingReplacer = numpy.vectorize(missingCheck, otypes=["bool"])
 
-        # use underlying data, converting to numpy array if necessary to apply missing
+        # use raw data (converting to numpy array for lists) to apply vectorized function
         if isinstance(rawData, list):
-            numpyObject = numpy.array(rawData, dtype=object)
-            numpyObject[missingReplacer(numpyObject)] = replaceMissing
-            rawData = numpyObject.tolist()
+            handleMissing = numpy.array(rawData, dtype=object)
+            handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+            rawData = handleMissing.tolist()
         elif isinstance(rawData, pd.DataFrame):
-            numpyObject = rawData.values.astype(object)
-            numpyObject[missingReplacer(numpyObject)] = replaceMissing
-            rawData = pd.DataFrame(numpyObject)
+            handleMissing = rawData.values.astype(object)
+            handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+            rawData = pd.DataFrame(handleMissing)
         elif isinstance(rawData, scipy.sparse.coo_matrix):
-            numpyObject = numpy.array(rawData.data, dtype=object)
-            numpyObject[missingReplacer(numpyObject)] = replaceMissing
-            rawData.data = numpyObject.astype(rawData.data.dtype)
-        elif rawData.dtype == type(replaceMissing) or rawData.dtype == object:
-            rawData[missingReplacer(rawData)] = replaceMissing
+            handleMissing = rawData.data.astype(object)
+            handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+            rawData.data = handleMissing.astype(rawData.data.dtype)
         else:
-            #TODO
-            msg = "the argument replaceMissing has type {0}, ".format(type(replaceMissing))
-            msg += "this does not align with the data type <{0}>".format(rawData.dtype)
-            raise ArgumentException(msg)
-
+            handleMissing = numpy.matrix(rawData, dtype=object)
+            handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+            rawData = elementTypeConvert(handleMissing, elementType)
 
     pathsToPass = (None, None)
     if path is not None:
@@ -620,8 +618,8 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 def createDataFromFile(
         returnType, data, pointNames, featureNames, fileType, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures, replaceMissing,
-        considerMissing):
+        ignoreNonNumericalFeatures, keepPoints, keepFeatures, treatAsMissing,
+        replaceMissingWith):
     """
     Helper for createData which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -711,8 +709,8 @@ def createDataFromFile(
 
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, path,
-        keepPoints, keepFeatures, replaceMissing=replaceMissing,
-        considerMissing=considerMissing)
+        keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
+        replaceMissingWith=replaceMissingWith)
 
 
 def _loadmtxForAuto(

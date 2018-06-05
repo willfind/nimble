@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import UML
 import six
+import numpy
 #import numpy
 
 def objConstructorMaker(returnType):
@@ -11,21 +12,23 @@ def objConstructorMaker(returnType):
 
     def constructor(
             data, pointNames='automatic', featureNames='automatic', elementType=None,
-            name=None, path=(None, None), considerMissing='default', replaceMissing='default'):
+            name=None, path=(None, None),
+            treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+            replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
         if isinstance(data, six.string_types):
             return UML.createData(
                 returnType, data=data, pointNames=pointNames,
-                featureNames=featureNames, name=name, considerMissing=considerMissing,
-                replaceMissing=replaceMissing)
+                featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
+                replaceMissingWith=replaceMissingWith)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
         else:
             return UML.createData(returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, elementType=elementType, name=name, path=path,
-                keepPoints='all', keepFeatures='all', considerMissing=considerMissing,
-                replaceMissing=replaceMissing)
+                keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
+                replaceMissingWith=replaceMissingWith)
 
     return constructor
 
@@ -40,13 +43,15 @@ def viewConstructorMaker(concreteType):
 
     def constructor(
             data, pointNames='automatic', featureNames='automatic',
-            name=None, path=(None, None), considerMissing='default', replaceMissing='default'):
+            name=None, path=(None, None),
+            treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+            replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
         if isinstance(data, six.string_types):
             orig = UML.createData(
                 concreteType, data=data, pointNames=pointNames,
-                featureNames=featureNames, name=name, considerMissing=considerMissing,
-                replaceMissing=replaceMissing)
+                featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
+                replaceMissingWith=replaceMissingWith)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
@@ -54,8 +59,8 @@ def viewConstructorMaker(concreteType):
             orig = UML.helpers.initDataObject(
                 concreteType, rawData=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, path=path,
-                keepPoints='all', keepFeatures='all', considerMissing=considerMissing,
-                replaceMissing=replaceMissing)
+                keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
+                replaceMissingWith=replaceMissingWith)
 
         # generate points of data to be present before and after the viewable
         # data in the concrete object

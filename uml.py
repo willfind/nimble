@@ -433,7 +433,8 @@ def listLearners(package=None):
 def createData(returnType, data, pointNames='automatic', featureNames='automatic',
                elementType=None, fileType=None, name=None, path=None, keepPoints='all',
                keepFeatures='all', ignoreNonNumericalFeatures=False, useLog=None,
-               reuseData=False, considerMissing='default', replaceMissing='default'):
+               reuseData=False, treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+               replaceMissingWith=numpy.nan):
     """Function to instantiate one of the UML data container types.
 
     returnType: string (or None) indicating which kind of UML data type you want
@@ -523,8 +524,13 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     call should be logged by the UML logger. If None, the configurable	global
     default is used.
 
-    replaceMissing: TODO
-    considerMissing: TODO
+    treatAsMissing: A list of values that will be treated as missing values in
+    the data. These values will be replaced with value from replaceMissingWith
+    By default this list is [float('nan'), numpy.nan, None, '', 'None', 'nan']
+    Set to None or [], to disable replacing the values.
+
+    replaceMissingWith: A single value with which to replace any value in from
+    treatAsMissing. By default this is numpy.nan
     """
     # validation of pointNames and featureNames
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
@@ -553,7 +559,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
             keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData,
-            considerMissing=considerMissing, replaceMissing=replaceMissing, )
+            treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith)
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
@@ -562,7 +568,7 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
             featureNames=featureNames, fileType=fileType, name=name,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             keepPoints=keepPoints, keepFeatures=keepFeatures,
-            considerMissing=considerMissing, replaceMissing=replaceMissing)
+            treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith)
         return ret
     # no other allowed inputs
     else:
