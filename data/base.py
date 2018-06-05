@@ -982,8 +982,8 @@ class Base(object):
         def permuter(pView):
             return indices[self.getPointIndex(pView.getPointName(0))]
 
-        permuter.permuter = True
-        permuter.indices = indices
+        # permuter.permuter = True
+        # permuter.indices = indices
         self.sortPoints(sortHelper=permuter)
 
 
@@ -2445,7 +2445,7 @@ class Base(object):
 
         toExtract may be a single identifier, a list of identifiers, or a function that when
         given a point will return True if it is to be removed. number is the quantity of points that
-        we are to be extracted, the default None means unlimited extraction. start and end are
+        are to be extracted, the default None means unlimited extraction. start and end are
         parameters indicating range based extraction: if range based extraction is employed,
         toExtract must be None, and vice versa. If only one of start and end are non-None, the
         other defaults to 0 and self.points respectably. randomize indicates whether random
@@ -2501,6 +2501,177 @@ class Base(object):
 
         self.validate()
         return ret
+
+    def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False):
+        """
+        Modify this object, removing those points that are specified by the input.
+
+        toDelete may be a single identifier, a list of identifiers, or a function that when
+        given a point will return True if it is to be removed. number is the quantity of points that
+        are to be deleted, the default None means unlimited deletion. start and end are
+        parameters indicating range based deletion: if range based deletion is employed,
+        toDelete must be None, and vice versa. If only one of start and end are non-None, the
+        other defaults to 0 and self.points respectably. randomize indicates whether random
+        sampling is to be used in conjunction with the number parameter, if randomize is False,
+        the chosen points are determined by point order, otherwise it is uniform random across the
+        space of possible removals.
+        """
+        ret = self.extractPoints(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
+        return None
+
+
+    def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
+        """
+        Modify this object, removing those features that are specified by the input.
+
+        toDelete may be a single identifier, a list of identifiers, or a function that when
+        given a feature will return True if it is to be removed. number is the quantity of features that
+        are to be deleted, the default None means unlimited deletion. start and end are
+        parameters indicating range based deletion: if range based deletion is employed,
+        toDelete must be None, and vice versa. If only one of start and end are non-None, the
+        other defaults to 0 and self.features respectably. randomize indicates whether random
+        sampling is to be used in conjunction with the number parameter, if randomize is False,
+        the chosen features are determined by feature order, otherwise it is uniform random across the
+        space of possible removals.
+        """
+        ret = self.extractFeatures(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
+        return None
+
+
+    def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
+        """
+        Modify this object, keeping only those points that are specified by the input.
+
+        toRetain may be a single identifier, a list of identifiers, or a function that when
+        given a point will return True if it is to be retained. number is the quantity of points that
+        are to be retained, the default None means unlimited retention. start and end are
+        parameters indicating range based retention: if range based retention is employed,
+        toRetain must be None, and vice versa. If only one of start and end are non-None, the
+        other defaults to 0 and self.points respectably. randomize indicates whether random
+        sampling is to be used in conjunction with the number parameter, if randomize is False,
+        the chosen points are determined by point order, otherwise it is uniform random across the
+        space of possible removals.
+        """
+        self._retain_implementation('point', toRetain, start, end, number, randomize)
+
+
+    def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
+        """
+        Modify this object, keeping only those features that are specified by the input.
+
+        toRetain may be a single identifier, a list of identifiers, or a function that when
+        given a feature will return True if it is to be retained. number is the quantity of features that
+        are to be retained, the default None means unlimited retention. start and end are
+        parameters indicating range based retention: if range based retention is employed,
+        toRetain must be None, and vice versa. If only one of start and end are non-None, the
+        other defaults to 0 and self.features respectably. randomize indicates whether random
+        sampling is to be used in conjunction with the number parameter, if randomize is False,
+        the chosen features are determined by feature order, otherwise it is uniform random across the
+        space of possible removals.
+        """
+        self._retain_implementation('feature', toRetain, start, end, number, randomize)
+
+
+    def _retain_implementation(self, axis, toRetain, start, end, number, randomize):
+        """Implements retainPoints or retainFeatures based on the axis"""
+        if axis == 'point':
+            hasName = self.hasPointName
+            getNames = self.getPointNames
+            getIndex = self._getPointIndex
+            values = self.points
+            backEnd = self._extractPoints_implementation
+            shuffleValues = self.shufflePoints
+        else:
+            hasName = self.hasFeatureName
+            getNames = self.getFeatureNames
+            getIndex = self._getFeatureIndex
+            values = self.features
+            backEnd = self._extractFeatures_implementation
+            shuffleValues = self.shuffleFeatures
+
+        # extract points not in toRetain
+        if toRetain is not None:
+            if isinstance(toRetain, six.string_types):
+                if hasName(toRetain):
+                    toExtract = [value for value in getNames() if value != toRetain]
+                    invertTarget = False
+                else:
+                    toExtract = toRetain
+                    invertTarget = True
+
+            elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
+                toExtract = [value for value in range(values) if value != toRetain]
+                invertTarget = False
+
+            elif isinstance(toRetain, list):
+                if isinstance(toRetain[0], six.string_types):
+                    toExtract = [self._getIndex(value, axis) for value in getNames() if value not in toRetain]
+                    invertTarget = False
+                    toRetain = [self._getIndex(value, axis) for value in toRetain]
+                else:
+                    toExtract = [value for value in range(values) if value not in toRetain]
+                    invertTarget = False
+                # change the index order of the values to match toRetain
+                reindex = toRetain + toExtract
+                indices = [None for _ in range(values)]
+                for idx, value in enumerate(reindex):
+                    indices[value] = idx
+                shuffleValues(indices)
+                # extract any values after the toRetain values
+                toExtract = list(range(len(toRetain), values))
+
+            else:
+                # toRetain is a function
+                toExtract = toRetain
+                # invertTarget wraps the function and returns the opposite
+                invertTarget = True
+
+            ret = self._genericStructuralFrontend(axis, backEnd, toExtract, start, end, number,
+                                                  False, 'toRetain', invertTarget=invertTarget)
+            self._adjustNamesAndValidate(ret, axis)
+
+        # convert start and end to indexes
+        if start is not None and end is not None:
+            start = getIndex(start)
+            end = getIndex(end)
+            if start > end:
+                msg = "the value for start ({0}) exceeds the value of end ({1})".format(start,end)
+                raise ArgumentException(msg)
+            else:
+                # adjust end and values for start values that will be removed
+                end -= start
+                values -= start
+        elif start is not None:
+            start = getIndex(start)
+        elif end is not None:
+            end = getIndex(end)
+
+        # extract points not between start and end
+        if start is not None:
+            # only need to perform if start is not the first value
+            if start - 1 >= 0:
+                ret = self._genericStructuralFrontend(axis, backEnd, None, 0, start - 1,
+                                                          None, False, 'toRetain')
+                self._adjustNamesAndValidate(ret, axis)
+        if end is not None:
+            # only need to perform if end is not the last value
+            if end + 1 <= values - 1:
+                ret = self._genericStructuralFrontend(axis, backEnd, None, end + 1, values - 1,
+                                                          None, False, 'toRetain')
+                self._adjustNamesAndValidate(ret, axis)
+
+        if randomize:
+            indices = list(range(0, values))
+            pythonRandom.shuffle(indices)
+            shuffleValues(indices)
+
+        if number is not None:
+            start = number
+            end = values - 1
+            ret = self._genericStructuralFrontend(axis, backEnd, None, start, end,
+                                                      None, False, 'toRetain')
+            self._adjustNamesAndValidate(ret, axis)
+
 
     def countPoints(self, condition):
         """
@@ -3923,8 +4094,8 @@ class Base(object):
 
 
 
-    def _genericStructuralFrontend(self, axis, backEnd, target=None, start=None,
-                                   end=None, number=None, randomize=False, targetName=None):
+    def _genericStructuralFrontend(self, axis, backEnd, target=None, start=None, end=None,
+                                   number=None, randomize=False, targetName=None, invertTarget=False):
         if axis == 'point':
             getIndex = self._getPointIndex
             axisLength = self.points
@@ -3948,7 +4119,7 @@ class Base(object):
                 # then check if it's a valid query string
                 else:
                     optrDict = {'<=': operator.le, '>=': operator.ge, '!=': operator.ne, '==': operator.eq, \
-                                '=': operator.eq, '<': operator.lt, '>': operator.gt}
+                                        '=': operator.eq, '<': operator.lt, '>': operator.gt}
                     for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
                         if optr in target:
                             targetList = target.split(optr)
@@ -3969,15 +4140,11 @@ class Base(object):
                                 raise ArgumentException(msg)
 
                             optrOperator = optrDict[optr]
-                            #convert valueOfFeatureOrPoint from a string
-                            #to the same datatype of items in the nameOfFeatureOrPoint in data
-                            datatype = type(self[(0, nameOfFeatureOrPoint)]) if axis == 'point' \
-                                else type(self[(nameOfFeatureOrPoint, 0)])
-
-                            if (datatype is int) or (datatype is int) or issubclass(datatype, numpy.number):
-                                datatype = float
-
-                            valueOfFeatureOrPoint = datatype(valueOfFeatureOrPoint)
+                            #convert valueOfFeatureOrPoint from a string, if possible
+                            try:
+                                valueOfFeatureOrPoint = float(valueOfFeatureOrPoint)
+                            except ValueError:
+                                pass
                             #convert query string to a function
                             def target_f(x):
                                 return optrOperator(x[nameOfFeatureOrPoint], valueOfFeatureOrPoint)
@@ -4021,6 +4188,11 @@ class Base(object):
 
             # boolean function
             elif hasattr(target, '__call__'):
+                if invertTarget:
+                    targetFunction = target
+                    def inverse(*args):
+                        return not targetFunction(*args)
+                    target = inverse
                 if randomize:
                     #apply to each
                     raise NotImplementedError  # TODO randomize in the By Function case
@@ -5075,6 +5247,18 @@ class Base(object):
             msg += ")"
 
             raise ArgumentException(msg)
+
+
+    def _adjustNamesAndValidate(self, ret, axis):
+        if axis == 'point':
+            self._pointCount -= ret.points
+            for key in ret.getPointNames():
+                self._removePointNameAndShift(key)
+        else:
+            self._featureCount -= ret.features
+            for key in ret.getFeatureNames():
+                self._removeFeatureNameAndShift(key)
+        self.validate()
 
 def cmp_to_key(mycmp):
     """Convert a cmp= function for python2 into a key= function for python3"""
