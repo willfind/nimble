@@ -14,7 +14,7 @@ import UML
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import View
-from .dataHelpers import reorderToMatchExtractionList
+from .dataHelpers import reorderToMatchList
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 import six
@@ -291,7 +291,7 @@ class List(Base):
             nameList.append(self.getPointName(index))
 
         extracted = List(satisfying, reuseData=True, featureNames=self.getFeatureNames())
-        reorderToMatchExtractionList(extracted, toExtract, 'point')
+        reorderToMatchList(extracted, toExtract, 'point')
         extracted.setPointNames(nameList)
 
         return extracted
@@ -631,39 +631,192 @@ class List(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(numpy.array(self.data))
 
-    def _copyPoints_implementation(self, points, start, end):
-        retData = []
-        if points is not None:
-            for index in points:
-                retData.append(copy.copy(self.data[index]))
+
+    def _copyPoints_implementation(self, toCopy, start, end, number, _):
+        """
+        Function to copy points according to the parameters, and return an object containing
+        the removed points with default feature names. The actual work is done by further helper
+        functions, this determines which helper to call, and modifies the input to accomodate
+        the number and randomize parameters, where number indicates how many of the possibilities
+        should be copied, and randomize indicates whether the choice of who to copy should
+        be by order or uniform random.
+
+        """
+
+        # list of identifiers
+        if isinstance(toCopy, list):
+            assert number == len(toCopy)
+            return self._copyPointsByList_implementation(toCopy)
+        # boolean function
+        elif hasattr(toCopy, '__call__'):
+            return self._copyPointsByFunction_implementation(toCopy, number)
+        # by range
+        elif start is not None or end is not None:
+            return self._copyPointsByRange_implementation(start, end)
         else:
-            for i in range(start, end + 1):
-                retData.append(copy.copy(self.data[i]))
+            msg = "Malformed or missing inputs"
+            raise ArgumentException(msg)
 
-        return List(retData, reuseData=True)
 
-    def _copyFeatures_implementation(self, indices, start, end):
-        if self.points == 0:
-            ret = []
-            count = len(indices) if indices is not None else (end + 1 - start)
-            for i in range(count):
-                ret.append([])
-            retObj = List(ret)
-            retObj.transpose()
-            return retObj
+    def _copyPointsByList_implementation(self, toCopy):
+        """
+        Returns an object containing those points that are given in the input. No modifications
+        are made to this object.
+        """
+        satisfying = []
+        for i in range(self.points):
+            if i in toCopy:
+                satisfying.append(list(self.data[i]))
 
-        ret = []
+        # construct pointName list
+        nameList = []
+        for index in toCopy:
+            nameList.append(self.getPointName(index))
+
+        copied = List(satisfying, reuseData=True, featureNames=self.getFeatureNames())
+        reorderToMatchList(copied, toCopy, 'point')
+        copied.setPointNames(nameList)
+
+        return copied
+
+    def _copyPointsByFunction_implementation(self, toCopy, number):
+        """
+        Returns an object containing those points that satisfy the function. No modifications
+        are made to this object.
+        """
+        satisfying = []
+        names = []
+        # walk through each point, copying the wanted points back to the toWrite index
+        # toWrite is only incremented when we see a wanted point; unwanted points are copied
+        # over
+        for index in range(len(self.data)):
+            point = self.data[index]
+            if number > 0 and toCopy(self.pointView(index)):
+                satisfying.append(list(point))
+                number = number - 1
+                names.append(self.getPointName(index))
+
+        if len(satisfying) == 0:
+            rawTrans = []
+            for i in range(self.features):
+                rawTrans.append([])
+            ret = List(rawTrans)
+            ret.transpose()
+            return ret
+        else:
+            return List(satisfying, pointNames=names, reuseData=True)
+
+    def _copyPointsByRange_implementation(self, start, end):
+        """
+        Returns an object containing those points that are in the range. No modifications
+        are made to this object.
+        """
+
+        inRange = []
+        for i in range(start, self.points):
+            if i <= end:
+                inRange.append(list(self.data[i]))
+
+        # construct featureName list
+        nameList = []
+        for index in range(start, end + 1):
+            nameList.append(self.getPointName(index))
+
+        return List(inRange, pointNames=nameList, reuseData=True)
+
+
+    def _copyFeatures_implementation(self, toCopy, start, end, number, _):
+        """
+        Function to copy features according to the parameters, and return an object containing
+        the removed features with their featureNames from this object. The actual work is done by
+        further helper functions, this determines which helper to call, and modifies the input
+        to accomodate the number and randomize parameters, where number indicates how many of the
+        possibilities should be copied, and randomize indicates whether the choice of who to
+        copy should be by order or uniform random.
+
+        """
+        # list of identifiers
+        if isinstance(toCopy, list):
+            assert number == len(toCopy)
+            return self._copyFeaturesByList_implementation(toCopy)
+        # boolean function
+        elif hasattr(toCopy, '__call__'):
+            return self._copyFeaturesByFunction_implementation(toCopy, number)
+        # by range
+        elif start is not None or end is not None:
+            return self._copyFeaturesByRange_implementation(start, end)
+        else:
+            raise ArgumentException("Malformed or missing inputs")
+
+
+    def _copyFeaturesByList_implementation(self, toCopy):
+        """
+        Modify this object to have only the features that are not given in the input,
+        returning an object containing those features that are, with the same featureNames
+        they had previously. It does not modify the featureNames for the calling object.
+
+        """
+        targetPos = {}
+        for index in range(len(toCopy)):
+            targetPos[toCopy[index]] = index
+
+        # we want to copy values from a list from the end
+        # for efficiency. So we sort and reverse the removal indices
+        toCopySortRev = copy.copy(toCopy)
+        toCopySortRev.sort()
+        toCopySortRev.reverse()
+        copiedData = []
         for point in self.data:
-            retPoint = []
-            if indices is not None:
-                for i in indices:
-                    retPoint.append(point[i])
-            else:
-                for i in range(start, end + 1):
-                    retPoint.append(point[i])
-            ret.append(retPoint)
+            copiedPoint = [None] * len(toCopy)
+            for fID in toCopySortRev:
+                copiedPoint[targetPos[fID]] = point[fID]
+            copiedData.append(copiedPoint)
 
-        return List(ret, reuseData=True)
+        # construct featureName list from the original unsorted toCopy
+        featureNameList = []
+        for index in toCopy:
+            featureNameList.append(self.getFeatureName(index))
+
+        return List(copiedData, featureNames=featureNameList, pointNames=self.getPointNames(), reuseData=True)
+
+
+    def _copyFeaturesByFunction_implementation(self, function, number):
+        """
+        Modify this object to have only the features whose views do not satisfy the given
+        function, returning an object containing those features whose views do, with the
+        same featureNames	they had previously. It does not modify the featureNames for the calling object.
+
+        """
+        # all we're doing is making a list and calling copyFeaturesBy list, no need
+        # deal with featureNames or the number of features.
+        toCopy = []
+        for i, ithView in enumerate(self.featureIterator()):
+            if function(ithView):
+                toCopy.append(i)
+        return self._copyFeaturesByList_implementation(toCopy)
+
+
+    def _copyFeaturesByRange_implementation(self, start, end):
+        """
+        Modify this object to have only those features that are not within the given range,
+        inclusive; returning an object containing those features that are, with the same featureNames
+        they had previously. It does not modify the featureNames for the calling object.
+        """
+        copiedData = []
+        for point in self.data:
+            copiedPoint = []
+            #end + 1 because our ranges are inclusive, xrange's are not
+            for index in reversed(range(start, end + 1)):
+                copiedPoint.append(point[index])
+            copiedPoint.reverse()
+            copiedData.append(copiedPoint)
+
+        # construct featureName list
+        featureNameList = []
+        for index in range(start, end + 1):
+            featureNameList.append(self.getFeatureName(index))
+
+        return List(copiedData, featureNames=featureNameList, reuseData=True)
 
     def _transformEachPoint_implementation(self, function, points):
         for i, p in enumerate(self.pointIterator()):
