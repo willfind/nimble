@@ -4,8 +4,7 @@ Methods tested in this file (none modify the data):
 
 pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView,
 featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
-featureSimilarities, pointStatistics, featureStatistics,
-nonZeroIteratorPointGrouped, nonZeroIteratorFeatureGrouped
+featureSimilarities, pointStatistics, featureStatistics, nonZeroIterator
 
 """
 
@@ -1851,34 +1850,37 @@ class QueryBackend(DataTestObject):
             assert startSize < endSize
 
 
-    ###############################
-    # nonZeroIteratorPointGrouped #
-    ###############################
+    ###################
+    # nonZeroIterator #
+    ###################
 
     def test_nonZeroIteratorPointGrouped_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.nonZeroIteratorPointGrouped():
+        for val in obj.nonZeroIterator(iterateBy='points'):
             ret.append(val)
 
         assert ret == [1, 2, 4, 5]
-
-
-    #################################
-    # nonZeroIteratorFeatureGrouped #
-    #################################
 
     def test_nonZeroIteratorFeatureGrouped_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.nonZeroIteratorFeatureGrouped():
+        for val in obj.nonZeroIterator(iterateBy='features'):
             ret.append(val)
 
         assert ret == [1, 4, 2, 5]
+
+    @raises(ArgumentException)
+    def test_nonZeroIteratorException_unexpectedIterateBy(self):
+        data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
+        obj = self.constructor(data)
+
+        for val in obj.nonZeroIterator(iterateBy='elements'):
+            pass
 
 
 ###########
