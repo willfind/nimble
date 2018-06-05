@@ -658,10 +658,50 @@ class Base(object):
 
 
     def mapReducePoints(self, mapper, reducer):
-        if self.points == 0:
+        """
+        Return a new object containing the results of the given mapper and
+        reducer functions
+
+        mapper:  a function receiving a point as the input and outputting an
+                 iterable containing two-tuple(s) of mapping identifier and
+                 point values
+
+        reducer: a function receiving the output of mapper as input and outputting
+                 a two-tuple containing the identifier and the reduced value
+        """
+        return self._mapReduce_implementation('point', mapper, reducer)
+
+    def mapReduceFeatures(self, mapper, reducer):
+        """
+        Return a new object containing the results of the given mapper and
+        reducer functions
+
+        mapper:  a function receiving a feature as the input and outputting an
+                 iterable containing two-tuple(s) of mapping identifier and
+                 feature values
+
+        reducer: a function receiving the output of mapper as input and outputting
+                 a two-tuple containing the identifier and the reduced value
+        """
+        return self._mapReduce_implementation('feature', mapper, reducer)
+
+    def _mapReduce_implementation(self, axis, mapper, reducer):
+        if axis == 'point':
+            targetCount = self.points
+            otherCount = self.features
+            valueIterator = self.pointIterator
+            otherAxis = 'feature'
+        else:
+            targetCount = self.features
+            otherCount = self.points
+            valueIterator = self.featureIterator
+            otherAxis = 'point'
+
+        if targetCount == 0:
             return UML.createData(self.getTypeString(), numpy.empty(shape=(0, 0)))
-        if self.features == 0:
-            raise ImproperActionException("We do not allow operations over points if there are 0 features")
+        if otherCount == 0:
+            msg = "We do not allow operations over {0}s if there are 0 {1}s".format(axis, otherAxis)
+            raise ImproperActionException(msg)
 
         if mapper is None or reducer is None:
             raise ArgumentException("The arguments must not be none")
@@ -674,8 +714,8 @@ class Base(object):
 
         mapResults = {}
         # apply the mapper to each point in the data
-        for point in self.pointIterator():
-            currResults = mapper(point)
+        for value in valueIterator():
+            currResults = mapper(value)
             # the mapper will return a list of key value pairs
             for (k, v) in currResults:
                 # if key is new, we must add an empty list
@@ -2159,16 +2199,16 @@ class Base(object):
                                              sampleSizeForAverage=sampleSizeForAverage)
         return p
 
-
-    def nonZeroIterator(self):
+    def nonZeroIterator(self, iterateBy='points'):
         """
         Returns an iterator for all non-zero elements contained in this
-        object so long as this object is empty or vector shaped. In these
-        cases the order returned by nonZeroIteratorPointGrouped and
-        nonZeroIteratorFeatureGrouped would be the same, making this method
-        a helpful shorthand. If the object is not empty or vector shaped,
-        an ImproperActionException is raised.
+        object, where the values in the same point|feature will be contiguous,
+        with the earlier indexed points|features coming before the later indexed
+        points|features.
 
+        iterateBy: Genereate an iterator over 'points' or 'features'. Default is 'points'.
+        
+        If the object is one dimensional, iterateBy is ignored.
         """
 
         class EmptyIt(object):
@@ -2185,43 +2225,23 @@ class Base(object):
             return EmptyIt()
 
         if self.points == 1:
-            return self.nonZeroIteratorPointGrouped()
+            return self._nonZeroIteratorPointGrouped_implementation()
         if self.features == 1:
-            return self.nonZeroIteratorFeatureGrouped()
+            return self._nonZeroIteratorFeatureGrouped_implementation()
 
-        msg = "nonZeroIterator may only be called if there exists an "
-        msg += "empty axis or an axis with a length of 1. Instead, "
-        msg += "this object has (" + str(self.points) + ") points "
-        msg += "and (" + str(self.features) + ") features."
-        raise ImproperActionException(msg)
-
-
-    def nonZeroIteratorPointGrouped(self):
-        """
-        Returns an iterator for all non-zero elements contained in this
-        object, where the values in the same point will be contiguous,
-        with the earlier indexed points coming before the later indexed
-        points
-
-        """
-        return self._nonZeroIteratorPointGrouped_implementation()
-
-    def nonZeroIteratorFeatureGrouped(self):
-        """
-        Returns an iterator for all non-zero elements contained in this
-        object, where the values in the same feature will be contiguous,
-        with the earlier indexed features coming before the later indexed
-        features
-
-        """
-        return self._nonZeroIteratorFeatureGrouped_implementation()
+        if iterateBy == 'points':
+            return self._nonZeroIteratorPointGrouped_implementation()
+        elif iterateBy == 'features':
+            return self._nonZeroIteratorFeatureGrouped_implementation()
+        else:
+            msg = "iterateBy can just be 'points' or 'features'"
+            raise ArgumentException(msg)
 
     ##################################################################
     ##################################################################
     ###   Subclass implemented structural manipulation functions   ###
     ##################################################################
     ##################################################################
-
 
     def transpose(self):
         """
