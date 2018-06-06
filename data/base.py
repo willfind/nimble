@@ -2207,7 +2207,7 @@ class Base(object):
         points|features.
 
         iterateBy: Genereate an iterator over 'points' or 'features'. Default is 'points'.
-        
+
         If the object is one dimensional, iterateBy is ignored.
         """
 
@@ -2573,7 +2573,11 @@ class Base(object):
 
 
     def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
-        """Implements retainPoints or retainFeatures based on the axis"""
+        """Implements retainPoints or retainFeatures based on the axis. The complements
+        of toRetain are identified to use the extract backend, this is done within this
+        implementation except for functions which are complemented within the next helper
+        function
+        """
         if axis == 'point':
             hasName = self.hasPointName
             getNames = self.getPointNames
@@ -2586,8 +2590,6 @@ class Base(object):
             getIndex = self._getFeatureIndex
             values = self.features
             shuffleValues = self.shuffleFeatures
-        # only need targetComplement to be True if toRetain is a function
-        targetComplement = False
 
         # extract points not in toRetain
         if toRetain is not None:
@@ -2595,18 +2597,15 @@ class Base(object):
                 if hasName(toRetain):
                     toExtract = [value for value in getNames() if value != toRetain]
                 else:
+                    # toRetain is a function passed as a string
                     toExtract = toRetain
-                    targetComplement = True
 
             elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
                 toExtract = [value for value in range(values) if value != toRetain]
 
             elif isinstance(toRetain, list):
-                if isinstance(toRetain[0], six.string_types):
-                    toExtract = [self._getIndex(value, axis) for value in getNames() if value not in toRetain]
-                    toRetain = [self._getIndex(value, axis) for value in toRetain]
-                else:
-                    toExtract = [value for value in range(values) if value not in toRetain]
+                toRetain = [self._getIndex(value, axis) for value in toRetain]
+                toExtract = [value for value in range(values) if value not in toRetain]
                 # change the index order of the values to match toRetain
                 reindex = toRetain + toExtract
                 indices = [None for _ in range(values)]
@@ -2620,8 +2619,6 @@ class Base(object):
             else:
                 # toRetain is a function
                 toExtract = toRetain
-                # targetComplement wraps the function and returns the opposite
-                targetComplement = True
 
             ret = self._genericStructuralFrontend('retain', axis, toExtract, start, end, number,
                                                   False)
@@ -4101,6 +4098,7 @@ class Base(object):
                     def complement(*args):
                         return not targetFunction(*args)
                     target = complement
+                # construct list from function
                 targetList = []
                 for targetID, view in enumerate(viewIterator()):
                     if target(view):
@@ -4141,7 +4139,7 @@ class Base(object):
         if structure == 'count':
             return len(targetList)
         else:
-            return self._extractDeleteRetainCopy_backend(structure, axis, targetList)
+            return self._structuralBackend_implementation(structure, axis, targetList)
 
 
     def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,

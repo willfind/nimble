@@ -181,7 +181,7 @@ class Matrix(Base):
         return newNameOrder
 
 
-    def _extractDeleteRetainCopy_backend(self, structure, axis, targetList):
+    def _structuralBackend_implementation(self, structure, axis, targetList):
         """
         Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
         copyPoints/Features. Returns a new object containing only the points in targetList and

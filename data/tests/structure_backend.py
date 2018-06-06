@@ -431,172 +431,8 @@ class StructureDataSafe(DataTestObject):
     # copyPoints #
     ###################
 
-    # @raises(ArgumentException)
-    # def test_copyPoints_exceptionNone(self):
-    #     """ Test copyPoints() for exception when argument is None """
-    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-    #     featureNames = ['one', 'two', 'three']
-    #     orig = self.constructor(data1, featureNames=featureNames)
-    #     orig.copyPoints(None)
-    #
-    # @raises(ArgumentException)
-    # def test_copyPoints_exceptionNonIndex(self):
-    #     """ Test copyPoints() for exception when a value in the input is not a valid index """
-    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-    #     pnames = ['1', 'one', '2', '0']
-    #     featureNames = ['one', 'two', 'three']
-    #     orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-    #     orig.copyPoints([1, 'yes'])
-    #
-    #
-    # def test_copyPoints_FEmpty(self):
-    #     """ Test copyPoints() returns the correct data in a feature empty object """
-    #     data = [[], []]
-    #     pnames = ['1', 'one']
-    #     data = numpy.array(data)
-    #     toTest = self.constructor(data, pointNames=pnames)
-    #     ret = toTest.copyPoints([0])
-    #
-    #     data = [[]]
-    #     data = numpy.array(data)
-    #     exp = self.constructor(data, pointNames=['0'])
-    #     exp.isIdentical(ret)
-    #
-    #
-    # def test_copyPoints_handmadeContents(self):
-    #     """ Test copyPoints() returns the correct data """
-    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-    #     featureNames = ['one', 'two', 'three']
-    #     pnames = ['1', 'one', '2', '0']
-    #     orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-    #     expOrig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-    #
-    #     data2 = [[1, 2, 3], [2, 4, 6]]
-    #     expRet = self.constructor(data2, pointNames=['one', '2'], featureNames=featureNames)
-    #
-    #     ret = orig.copyPoints([1, 2])
-    #
-    #     assert orig.isIdentical(expOrig)
-    #     assert ret.isIdentical(expRet)
-    #
-    # def test_copyPoints_list_NamePath(self):
-    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-    #     featureNames = ['one', 'two', 'three']
-    #     pnames = ['1', 'one', '2', '0']
-    #     orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames,
-    #                             name=preserveName, path=preservePair)
-    #
-    #     ret = orig.copyPoints([1, 2])
-    #
-    #     assert orig.name == preserveName
-    #     assert orig.absolutePath == preserveAPath
-    #     assert orig.relativePath == preserveRPath
-    #
-    #     assert ret.nameIsDefault()
-    #     assert ret.absolutePath == preserveAPath
-    #     assert ret.relativePath == preserveRPath
-    #
-    #
-    # def test_copyPoints_handmadeListOrdering(self):
-    #     """ Test copyPoints() against handmade output for out of order indices """
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
-    #     names = ['1', '4', '7', '10', '13']
-    #     toTest = self.constructor(data, pointNames=names)
-    #     cop1 = toTest.copyPoints([3, 4, 1])
-    #     exp1 = self.constructor([[10, 11, 12], [13, 14, 15], [4, 5, 6]], pointNames=['10', '13', '4'])
-    #     assert cop1.isIdentical(exp1)
-    #
-    #
-    # @raises(ArgumentException)
-    # def test_copyPoints_exceptionStartInvalid(self):
-    #     """ Test copyPoints() for ArgumentException when start is not a valid point index """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyPoints(start=4, end=2)
-    #
-    # @raises(ArgumentException)
-    # def test_copyPoints_exceptionEndInvalid(self):
-    #     """ Test copyPoints() for ArgumentException when start is not a valid feature index """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyPoints(start=1, end=5)
-    #
-    # @raises(ArgumentException)
-    # def test_copyPoints_exceptionInversion(self):
-    #     """ Test copyPoints() for ArgumentException when start comes after end """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyPoints(start=2, end=0)
-    #
-    # def test_copyPoints_handmadeRange(self):
-    #     """ Test copyPoints() against handmade output for range copying """
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data)
-    #     ret = toTest.copyPoints(start=1, end=2)
-    #
-    #     expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]])
-    #     expectedTest = self.constructor(data)
-    #
-    #     assert expectedRet.isIdentical(ret)
-    #     assert expectedTest.isIdentical(toTest)
-    #
-    # def test_copyPoints_range_NamePath(self):
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, name=preserveName, path=preservePair)
-    #
-    #     ret = toTest.copyPoints(start=1, end=2)
-    #
-    #     assert toTest.name == preserveName
-    #     assert toTest.absolutePath == preserveAPath
-    #     assert toTest.relativePath == preserveRPath
-    #
-    #     assert ret.nameIsDefault()
-    #     assert ret.absolutePath == preserveAPath
-    #     assert ret.relativePath == preserveRPath
-    #
-    #
-    # def test_copyPoints_handmadeRangeWithFeatureNames(self):
-    #     """ Test copyPoints() against handmade output for range copying with featureNames """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     pnames = ['1', '4', '7']
-    #     toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
-    #     ret = toTest.copyPoints(start=1, end=2)
-    #
-    #     expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=['4', '7'], featureNames=featureNames)
-    #     expectedTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
-    #
-    #     assert expectedRet.isIdentical(ret)
-    #     assert expectedTest.isIdentical(toTest)
-    #
-    # def test_copyPoints_handmadeRangeDefaults(self):
-    #     """ Test copyPoints uses the correct defaults in the case of range based copying """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     ret = toTest.copyPoints(end=1)
-    #
-    #     expectedRet = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
-    #     expectedTest = self.constructor(data, featureNames=featureNames)
-    #
-    #     assert expectedRet.isIdentical(ret)
-    #     assert expectedTest.isIdentical(toTest)
-    #
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     ret = toTest.copyPoints(start=1)
-    #
-    #     expectedTest = self.constructor(data, featureNames=featureNames)
-    #     expectedRet = self.constructor([[4, 5, 6], [7, 8, 9]], featureNames=featureNames)
-    #
-    #     assert expectedRet.isIdentical(ret)
-    #     assert expectedTest.isIdentical(toTest)
-
-
     def test_copyPoints_handmadeSingle(self):
-        """ Test copyPoints() against handmade output when extracting one point """
+        """ Test copyPoints() against handmade output when copying one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         ext1 = toTest.copyPoints(0)
@@ -627,7 +463,7 @@ class StructureDataSafe(DataTestObject):
         assert toTest.relativePath == 'testRelPath'
 
     def test_copyPoints_ListIntoPEmpty(self):
-        """ Test copyPoints() by removing a list of all points """
+        """ Test copyPoints() by copying a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
@@ -639,7 +475,7 @@ class StructureDataSafe(DataTestObject):
 
 
     def test_copyPoints_handmadeListSequence(self):
-        """ Test copyPoints() against handmade output for several list extractions """
+        """ Test copyPoints() against handmade output for multiple copies """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
@@ -653,7 +489,7 @@ class StructureDataSafe(DataTestObject):
         assert toTest.isIdentical(expEnd)
 
     def test_copyPoints_handmadeListOrdering(self):
-        """ Test copyPoints() against handmade output for out of order extraction """
+        """ Test copyPoints() against handmade output for out of order copying """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
         names = ['1', '4', '7', '10', '13']
         toTest = self.constructor(data, pointNames=names)
@@ -681,11 +517,11 @@ class StructureDataSafe(DataTestObject):
 
     def test_copyPoints_function_selectionGap(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
-        extractIndices = [3, 5, 6, 9]
+        copyIndices = [3, 5, 6, 9]
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in extractIndices:
+            if int(point.getPointName(0)) in copyIndices:
                 return True
             else:
                 return False
@@ -734,7 +570,7 @@ class StructureDataSafe(DataTestObject):
         assert toTest.isIdentical(expTest)
 
     def test_copyPoints_handmadeFunction(self):
-        """ Test copyPoints() against handmade output for function extraction """
+        """ Test copyPoints() against handmade output for function copying """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -775,7 +611,7 @@ class StructureDataSafe(DataTestObject):
         assert ext.relativePath == 'testRelPath'
 
     def test_copyPoints_handmadeFuncionWithFeatureNames(self):
-        """ Test copyPoints() against handmade output for function extraction with featureNames"""
+        """ Test copyPoints() against handmade output for function copying with featureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -793,7 +629,7 @@ class StructureDataSafe(DataTestObject):
 
     @raises(ArgumentException)
     def test_copyPoints_exceptionStartInvalid(self):
-        """ Test extracPoints() for ArgumentException when start is not a valid point index """
+        """ Test copyPoints() for ArgumentException when start is not a valid point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -816,7 +652,7 @@ class StructureDataSafe(DataTestObject):
         toTest.copyPoints(start=2, end=0)
 
     def test_copyPoints_handmadeRange(self):
-        """ Test copyPoints() against handmade output for range extraction """
+        """ Test copyPoints() against handmade output for range copying """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         ret = toTest.copyPoints(start=1, end=2)
@@ -849,7 +685,7 @@ class StructureDataSafe(DataTestObject):
 
 
     def test_copyPoints_rangeIntoPEmpty(self):
-        """ Test copyPoints() removes all points using ranges """
+        """ Test copyPoints() copies all points using ranges """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -865,7 +701,7 @@ class StructureDataSafe(DataTestObject):
 
 
     def test_copyPoints_handmadeRangeWithFeatureNames(self):
-        """ Test copyPoints() against handmade output for range extraction with featureNames """
+        """ Test copyPoints() against handmade output for range copying with featureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -880,7 +716,7 @@ class StructureDataSafe(DataTestObject):
 
 
     def test_copyPoints_handmadeRangeDefaults(self):
-        """ Test copyPoints uses the correct defaults in the case of range based extraction """
+        """ Test copyPoints uses the correct defaults in the case of range based copy """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1097,6 +933,17 @@ class StructureDataSafe(DataTestObject):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
+    def test_copyPoints_list_mixed(self):
+        """ Test copyPoints() list input with mixed names and indices """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        names = ['1', '4', '7', '10']
+        toTest = self.constructor(data, pointNames=names)
+        ret = toTest.copyPoints(['1',1,-1])
+        expRet = self.constructor([[1, 2, 3], [4, 5, 6], [10, 11, 12]], pointNames=['1','4','10'])
+        expTest = self.constructor(data, pointNames=names)
+        assert ret.isIdentical(expRet)
+        assert toTest.isIdentical(expTest)
+
     @raises(ArgumentException)
     def test_copyPoints_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
@@ -1140,173 +987,6 @@ class StructureDataSafe(DataTestObject):
     # copyFeatures #
     #####################
 
-    # @raises(ArgumentException)
-    # def test_copyFeatures_exceptionNone(self):
-    #     """ Test copyFeatures() for exception when argument is None """
-    #
-    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-    #     featureNames = ['one', 'two', 'three']
-    #     orig = self.constructor(data1, featureNames=featureNames)
-    #     orig.copyFeatures(None)
-    #
-    # @raises(ArgumentException)
-    # def test_copyFeatures_exceptionNonIndex(self):
-    #     """ Test copyFeatures() for exception when a value in the input is not a valid index """
-    #
-    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-    #     featureNames = ['one', 'two', 'three']
-    #     orig = self.constructor(data1, featureNames=featureNames)
-    #     orig.copyFeatures([1, 'yes'])
-    #
-    # def test_copyFeatures_PEmpty(self):
-    #     """ Test copyFeatures() returns the correct data in a point empty object """
-    #     data = [[], []]
-    #     data = numpy.array(data).T
-    #     toTest = self.constructor(data)
-    #     ret = toTest.copyFeatures([0])
-    #
-    #     data = [[]]
-    #     data = numpy.array(data).T
-    #     exp = self.constructor(data)
-    #     exp.isIdentical(ret)
-    #
-    #
-    # def test_copyFeatures_handmadeContents(self):
-    #     """ Test copyFeatures() returns the correct data """
-    #
-    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-    #     featureNames = ['one', 'two', 'three']
-    #     pnames = ['1', 'one', '2', '0']
-    #     orig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-    #     expOrig = self.constructor(data1, pointNames=pnames, featureNames=featureNames)
-    #
-    #     data2 = [[1, 2], [1, 2], [2, 4], [0, 0]]
-    #
-    #     expRet = self.constructor(data2, pointNames=pnames, featureNames=['one', 'two'])
-    #
-    #     ret = orig.copyFeatures([0, 'two'])
-    #
-    #     assert orig.isIdentical(expOrig)
-    #     assert ret.isIdentical(expRet)
-    #
-    #
-    # def test_copyFeatures_list_NamePath(self):
-    #     data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
-    #     featureNames = ['one', 'two', 'three']
-    #     pnames = ['1', 'one', '2', '0']
-    #     orig = self.constructor(data1, pointNames=pnames,
-    #                             featureNames=featureNames, name=preserveName, path=preservePair)
-    #
-    #     ret = orig.copyFeatures([0, 'two'])
-    #
-    #     assert orig.name == preserveName
-    #     assert orig.absolutePath == preserveAPath
-    #     assert orig.relativePath == preserveRPath
-    #
-    #     assert ret.nameIsDefault()
-    #     assert ret.absolutePath == preserveAPath
-    #     assert ret.relativePath == preserveRPath
-    #
-    #
-    # def test_copyFeatures_handmadeListOrdering(self):
-    #     """ Test copyFeatures() against handmade output for out of order indices """
-    #     data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 122]]
-    #     names = ['1', '2', '3', 'dubs']
-    #     toTest = self.constructor(data, featureNames=names)
-    #     cop1 = toTest.copyFeatures([2, 3, 1])
-    #     exp1 = self.constructor([[3, 33, 2], [6, 66, 5], [9, 99, 8], [12, 122, 11]], featureNames=['3', 'dubs', '2'])
-    #     assert cop1.isIdentical(exp1)
-    #
-    #
-    # @raises(ArgumentException)
-    # def test_copyFeatures_exceptionStartInvalid(self):
-    #     """ Test copyFeatures() for ArgumentException when start is not a valid feature index """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyFeatures(start=-1, end=2)
-    #
-    # @raises(ArgumentException)
-    # def test_copyFeatures_exceptionStartInvalidFeatureName(self):
-    #     """ Test copyFeatures() for ArgumentException when start is not a valid feature FeatureName """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyFeatures(start="wrong", end=2)
-    #
-    # @raises(ArgumentException)
-    # def test_copyFeatures_exceptionEndInvalid(self):
-    #     """ Test copyFeatures() for ArgumentException when start is not a valid feature index """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyFeatures(start=0, end=5)
-    #
-    # @raises(ArgumentException)
-    # def test_copyFeatures_exceptionEndInvalidFeatureName(self):
-    #     """ Test copyFeatures() for ArgumentException when start is not a valid featureName """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyFeatures(start="two", end="five")
-    #
-    # @raises(ArgumentException)
-    # def test_copyFeatures_exceptionInversion(self):
-    #     """ Test copyFeatures() for ArgumentException when start comes after end """
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyFeatures(start=2, end=0)
-    #
-    # @raises(ArgumentException)
-    # def test_copyFeatures_exceptionInversionFeatureName(self):
-    #     """ Test copyFeatures() for ArgumentException when start comes after end as FeatureNames"""
-    #     featureNames = ["one", "two", "three"]
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, featureNames=featureNames)
-    #     toTest.copyFeatures(start="two", end="one")
-    #
-    # def test_copyFeatures_handmadeRange(self):
-    #     """ Test copyFeatures() against handmade output for range copying """
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data)
-    #     ret = toTest.copyFeatures(start=1, end=2)
-    #
-    #     expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]])
-    #     expectedTest = self.constructor(data)
-    #
-    #     assert expectedRet.isIdentical(ret)
-    #     assert expectedTest.isIdentical(toTest)
-    #
-    # def test_copyFeatures_range_NamePath(self):
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, name=preserveName, path=preservePair)
-    #
-    #     ret = toTest.copyFeatures(start=1, end=2)
-    #
-    #     assert toTest.name == preserveName
-    #     assert toTest.absolutePath == preserveAPath
-    #     assert toTest.relativePath == preserveRPath
-    #
-    #     assert ret.nameIsDefault()
-    #     assert ret.absolutePath == preserveAPath
-    #     assert ret.relativePath == preserveRPath
-    #
-    #
-    # def test_copyFeatures_handmadeWithFeatureNames(self):
-    #     """ Test copyFeatures() against handmade output for range copying with FeatureNames """
-    #     featureNames = ["one", "two", "three"]
-    #     pnames = ['1', '4', '7']
-    #     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    #     toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
-    #     ret = toTest.copyFeatures(start=1, end=2)
-    #
-    #     expectedRet = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pnames, featureNames=["two", "three"])
-    #     expectedTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
-    #
-    #     assert expectedRet.isIdentical(ret)
-    #     assert expectedTest.isIdentical(toTest)
-
     def test_copyFeatures_handmadeSingle(self):
         """ Test copyFeatures() against handmade output when copying one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1339,7 +1019,7 @@ class StructureDataSafe(DataTestObject):
         assert ext1.relativePath == 'testRelPath'
 
     def test_copyFeatures_ListIntoFEmpty(self):
-        """ Test copyFeatures() by removing a list of all features """
+        """ Test copyFeatures() by copying a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
@@ -1350,7 +1030,7 @@ class StructureDataSafe(DataTestObject):
         assert toTest.isIdentical(expEnd)
 
     def test_copyFeatures_ListIntoFEmptyOutOfOrder(self):
-        """ Test copyFeatures() by removing a list of all features """
+        """ Test copyFeatures() by copying a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         expData = [[3, 1, 2], [6, 4, 5], [9, 7, 8], [12, 10, 11]]
@@ -1456,7 +1136,7 @@ class StructureDataSafe(DataTestObject):
 
 
     def test_copyFeatures_functionIntoFEmpty(self):
-        """ Test copyFeatures() by removing all featuress using a function """
+        """ Test copyFeatures() by copying all featuress using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expRet = self.constructor(data)
@@ -1593,7 +1273,7 @@ class StructureDataSafe(DataTestObject):
 
 
     def test_copyFeatures_rangeIntoFEmpty(self):
-        """ Test copyFeatures() removes all Featuress using ranges """
+        """ Test copyFeatures() copies all Featuress using ranges """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -1840,6 +1520,17 @@ class StructureDataSafe(DataTestObject):
         expectedTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
+
+    def test_copyFeatures_list_mixed(self):
+        """ Test copyFeatures() list input with mixed names and indices """
+        data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+        featureNames = ["one", "two", "three", "neg"]
+        toTest = self.constructor(data, featureNames=featureNames)
+        ret = toTest.copyFeatures([1, "three", -1])
+        expRet = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], featureNames=["two", "three", "neg"])
+        expTest = self.constructor(data, featureNames=featureNames)
+        assert ret.isIdentical(expRet)
+        assert toTest.isIdentical(expTest)
 
     @raises(ArgumentException)
     def test_copyFeatures_handmadeString_pointNotExist(self):
@@ -3323,6 +3014,17 @@ class StructureModifying(DataTestObject):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
+    def test_extractPoints_list_mixed(self):
+        """ Test extractPoints() list input with mixed names and indices """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        names = ['1', '4', '7', '10']
+        toTest = self.constructor(data, pointNames=names)
+        ret = toTest.extractPoints(['1',1,-1])
+        expRet = self.constructor([[1, 2, 3], [4, 5, 6], [10, 11, 12]], pointNames=['1','4','10'])
+        expTest = self.constructor([[7, 8, 9]], pointNames=['7'])
+        assert ret.isIdentical(expRet)
+        assert toTest.isIdentical(expTest)
+
     @raises(ArgumentException)
     def test_extractPoints_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
@@ -3385,7 +3087,7 @@ class StructureModifying(DataTestObject):
         UML.randomness.startAlternateControl(seed=1)
         retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
-        print(ret, retRange)
+
         assert ret.isIdentical(retRange)
         assert toTest1.isIdentical(toTest2)
 
@@ -3947,6 +3649,17 @@ class StructureModifying(DataTestObject):
         assert expectedRet.isIdentical(ret)
         assert expectedTest.isIdentical(toTest)
 
+    def test_extractFeatures_list_mixed(self):
+        """ Test extractFeatures() list input with mixed names and indices """
+        data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+        featureNames = ["one", "two", "three", "neg"]
+        toTest = self.constructor(data, featureNames=featureNames)
+        ret = toTest.extractFeatures([1, "three", -1])
+        expRet = self.constructor([[2, 3, -1], [5, 6, -2], [8, 9, -3]], featureNames=["two", "three", "neg"])
+        expTest = self.constructor([[1], [4], [7]], featureNames=["one"])
+        assert ret.isIdentical(expRet)
+        assert toTest.isIdentical(expTest)
+
     @raises(ArgumentException)
     def test_extractFeatures_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
@@ -3967,7 +3680,7 @@ class StructureModifying(DataTestObject):
     # deletePoints #
     ################
     def test_deletePoints_handmadeSingle(self):
-        """ Test deletePoints() against handmade output when extracting one point """
+        """ Test deletePoints() against handmade output when deleting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toTest.deletePoints(0)
@@ -3990,7 +3703,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_deletePoints_ListIntoPEmpty(self):
-        """ Test deletePoints() by removing a list of all points """
+        """ Test deletePoints() by deleting a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
         toTest.deletePoints([0, 1, 2, 3])
@@ -4003,7 +3716,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_deletePoints_handmadeListSequence(self):
-        """ Test deletePoints() against handmade output for several list extractions """
+        """ Test deletePoints() against handmade output for several list deletions """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         names = ['1', '4', '7', '10']
         toTest = self.constructor(data, pointNames=names)
@@ -4015,7 +3728,7 @@ class StructureModifying(DataTestObject):
         assert toTest.isIdentical(exp2)
 
     def test_deletePoints_handmadeListOrdering(self):
-        """ Test deletePoints() against handmade output for out of order extraction """
+        """ Test deletePoints() against handmade output for out of order deletion """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]]
         names = ['1', '4', '7', '10', '13']
         toTest = self.constructor(data, pointNames=names)
@@ -4038,11 +3751,11 @@ class StructureModifying(DataTestObject):
 
     def test_deletePoints_function_selectionGap(self):
         data = [[0], [2], [2], [2], [0], [0], [0], [0], [2], [0]]
-        extractIndices = [3, 5, 6, 9]
+        deleteIndices = [3, 5, 6, 9]
         pnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         def sel(point):
-            if int(point.getPointName(0)) in extractIndices:
+            if int(point.getPointName(0)) in deleteIndices:
                 return True
             else:
                 return False
@@ -4090,7 +3803,7 @@ class StructureModifying(DataTestObject):
         assert toTest.isIdentical(exp)
 
     def test_deletePoints_handmadeFunction(self):
-        """ Test deletePoints() against handmade output for function extraction """
+        """ Test deletePoints() against handmade output for function deletion """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -4124,7 +3837,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_deletePoints_handmadeFuncionWithFeatureNames(self):
-        """ Test deletePoints() against handmade output for function extraction with featureNames"""
+        """ Test deletePoints() against handmade output for function deletion with featureNames"""
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -4141,7 +3854,7 @@ class StructureModifying(DataTestObject):
 
     @raises(ArgumentException)
     def test_deletePoints_exceptionStartInvalid(self):
-        """ Test extracPoints() for ArgumentException when start is not a valid point index """
+        """ Test deletePoints() for ArgumentException when start is not a valid point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -4164,7 +3877,7 @@ class StructureModifying(DataTestObject):
         toTest.deletePoints(start=2, end=0)
 
     def test_deletePoints_handmadeRange(self):
-        """ Test deletePoints() against handmade output for range extraction """
+        """ Test deletePoints() against handmade output for range deletion """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toTest.deletePoints(start=1, end=2)
@@ -4204,7 +3917,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_deletePoints_handmadeRangeWithFeatureNames(self):
-        """ Test deletePoints() against handmade output for range extraction with featureNames """
+        """ Test deletePoints() against handmade output for range deletion with featureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4216,7 +3929,7 @@ class StructureModifying(DataTestObject):
         assert expectedTest.isIdentical(toTest)
 
     def test_deletePoints_handmadeRangeRand_FM(self):
-        """ Test deletePoints() for correct sizes when using randomized range extraction and featureNames """
+        """ Test deletePoints() for correct sizes when using randomized range deletion and featureNames """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -4225,7 +3938,7 @@ class StructureModifying(DataTestObject):
         assert toTest.points == 1
 
     def test_deletePoints_handmadeRangeDefaults(self):
-        """ Test deletePoints uses the correct defaults in the case of range based extraction """
+        """ Test deletePoints uses the correct defaults in the case of range based deletion """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4392,6 +4105,15 @@ class StructureModifying(DataTestObject):
         expectedTest = self.constructor([[4, 5, 6], [7, 8, 9]], pointNames=pointNames[1:], featureNames=featureNames)
         assert expectedTest.isIdentical(toTest)
 
+    def test_deletePoints_list_mixed(self):
+        """ Test deletePoints() list input with mixed names and indices """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        names = ['1', '4', '7', '10']
+        toTest = self.constructor(data, pointNames=names)
+        toTest.deletePoints(['1',1,-1])
+        exp1 = self.constructor([[7, 8, 9]], pointNames=['7'])
+        assert toTest.isIdentical(exp1)
+
     @raises(ArgumentException)
     def test_deletePoints_handmadeString_featureNotExist(self):
         featureNames = ["one", "two", "three"]
@@ -4456,7 +4178,7 @@ class StructureModifying(DataTestObject):
     ##################
 
     def test_deleteFeatures_handmadeSingle(self):
-        """ Test deleteFeatures() against handmade output when extracting one feature """
+        """ Test deleteFeatures() against handmade output when deleting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toTest.deleteFeatures(0)
@@ -4505,7 +4227,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_deleteFeatures_handmadeListSequence(self):
-        """ Test deleteFeatures() against handmade output for several extractions by list """
+        """ Test deleteFeatures() against handmade output for several deletions by list """
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data, pointNames=pointNames)
@@ -4518,7 +4240,7 @@ class StructureModifying(DataTestObject):
         assert toTest.isIdentical(exp2)
 
     def test_deleteFeatures_handmadeListWithFeatureName(self):
-        """ Test deleteFeatures() against handmade output for list extraction when specifying featureNames """
+        """ Test deleteFeatures() against handmade output for list deletion when specifying featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -4608,7 +4330,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_deleteFeatures_handmadeFunction(self):
-        """ Test deleteFeatures() against handmade output for function extraction """
+        """ Test deleteFeatures() against handmade output for function deletion """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
@@ -4644,7 +4366,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_deleteFeatures_handmadeFunctionWithFeatureName(self):
-        """ Test deleteFeatures() against handmade output for function extraction with featureNames """
+        """ Test deleteFeatures() against handmade output for function deletion with featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
@@ -4707,7 +4429,6 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data, featureNames=featureNames)
         toTest.deleteFeatures(start="two", end="one")
 
-
     def test_deleteFeatures_rangeIntoFEmpty(self):
         """ Test deleteFeatures() removes all Featuress using ranges """
         featureNames = ["one", "two", "three"]
@@ -4722,7 +4443,7 @@ class StructureModifying(DataTestObject):
         assert toTest.isIdentical(exp)
 
     def test_deleteFeatures_handmadeRange(self):
-        """ Test deleteFeatures() against handmade output for range extraction """
+        """ Test deleteFeatures() against handmade output for range deletion """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toTest.deleteFeatures(start=1, end=2)
@@ -4747,7 +4468,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_deleteFeatures_handmadeWithFeatureNames(self):
-        """ Test deleteFeatures() against handmade output for range extraction with FeatureNames """
+        """ Test deleteFeatures() against handmade output for range deletion with FeatureNames """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4910,6 +4631,15 @@ class StructureModifying(DataTestObject):
                                         featureNames=[featureNames[0], featureNames[-1]])
         assert expectedTest.isIdentical(toTest)
 
+    def test_deleteFeatures_list_mixed(self):
+        """ Test deleteFeatures() list input with mixed names and indices """
+        data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+        featureNames = ["one", "two", "three", "neg"]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.deleteFeatures([1, "three", -1])
+        exp1 = self.constructor([[1], [4], [7]], featureNames=["one"])
+        assert toTest.isIdentical(exp1)
+
     @raises(ArgumentException)
     def test_deleteFeatures_handmadeString_pointNotExist(self):
         featureNames = ["one", "two", "three"]
@@ -4920,14 +4650,15 @@ class StructureModifying(DataTestObject):
         toTest.deleteFeatures('5=1')
 
     def test_deleteFeatures_numberOnly(self):
-        self.back_extract_numberOnly('feature')
+        self.back_delete_numberOnly('feature')
 
     def test_deleteFeatures_numberAndRandomize(self):
-        self.back_extract_numberAndRandomize('feature')
+        self.back_delete_numberAndRandomize('feature')
 
     ################
     # retainPoints #
     ################
+
     def test_retainPoints_handmadeSingle(self):
         """ Test retainPoints() against handmade output when retaining one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4969,7 +4700,7 @@ class StructureModifying(DataTestObject):
         expData = [[], [], []]
         expData = numpy.array(expData).T
         expTest = self.constructor(expData)
-
+        print(toTest, expTest)
         assert toTest.isIdentical(expTest)
 
 
@@ -5042,7 +4773,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_retainPoints_functionIntoPEmpty(self):
-        """ Test retainPoints() by removing all points using a function """
+        """ Test retainPoints() by retaining all points using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expTest = self.constructor(data)
@@ -5170,7 +4901,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_retainPoints_rangeIntoPEmpty(self):
-        """ Test retainPoints() removes all points using ranges """
+        """ Test retainPoints() retains all points using ranges """
         featureNames = ["one", "two", "three"]
         pointNames = ['1', '4', '7']
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -5402,10 +5133,8 @@ class StructureModifying(DataTestObject):
         toTest.retainPoints('four=1')
 
     def test_retainPoints_numberOnly(self):
-        self.back_extract_numberOnly('point')
+        self.back_retain_numberOnly('point')
 
-    def test_retainPoints_numberAndRandomize(self):
-        self.back_extract_numberAndRandomize('point')
 
     #########################
     # retain common backend #
@@ -5424,35 +5153,11 @@ class StructureModifying(DataTestObject):
         ret = getattr(toTest, toCall)(number=3)
         if axis == 'point':
             exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
-            rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
         else:
             exp = self.constructor([p[:3] for p in data], pointNames=pnames, featureNames=fnames[:3])
-            rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-        assert exp.isIdentical(ret)
-        assert rem.isIdentical(toTest)
+        assert exp.isIdentical(toTest)
 
-    def back_retain_numberAndRandomize(self, axis):
-        if axis == 'point':
-            toCall = "retainPoints"
-        else:
-            toCall = "retainFeatures"
-
-        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
-        pnames = ['1', '4', '7', '10']
-        fnames = ['a', 'b', 'd', 'gg']
-        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
-
-        UML.randomness.startAlternateControl(seed=1)
-        getattr(toTest1, toCall)(number=3, randomize=True)
-        UML.randomness.endAlternateControl()
-
-        UML.randomness.startAlternateControl(seed=1)
-        getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
-        UML.randomness.endAlternateControl()
-
-        assert toTest1.isIdentical(toTest2)
 
     ##################
     # retainFeatures #
@@ -5499,7 +5204,7 @@ class StructureModifying(DataTestObject):
         expData = [[], [], [], []]
         expData = numpy.array(expData)
         expTest = self.constructor(expData)
-
+        print(toTest, expTest)
         assert toTest.isIdentical(expTest)
 
 
@@ -5551,7 +5256,6 @@ class StructureModifying(DataTestObject):
     def test_retainFeatures_List_trickyOrdering(self):
         data = [0, 1, 1, 1, 0, 0, 0, 0, 1, 0]
         toRetain = [6, 5, 3, 9]
-        #		toExtract = [3,5,6,9]
 
         toTest = self.constructor(data)
 
@@ -5599,7 +5303,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_retainFeatures_functionIntoFEmpty(self):
-        """ Test retainFeatures() by removing all featuress using a function """
+        """ Test retainFeatures() by retaining all featuress using a function """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         expTest = self.constructor(data)
@@ -5661,7 +5365,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_retainFeatures_handmadeFunctionWithFeatureName(self):
-        """ Test retainFeatures() against handmade output for function retainion with featureNames """
+        """ Test retainFeatures() against handmade output for function retention with featureNames """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
@@ -5726,7 +5430,7 @@ class StructureModifying(DataTestObject):
 
 
     def test_retainFeatures_rangeIntoFEmpty(self):
-        """ Test retainFeatures() removes all Featuress using ranges """
+        """ Test retainFeatures() retains all features using ranges """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -5951,10 +5655,8 @@ class StructureModifying(DataTestObject):
         toTest.retainFeatures('5=1')
 
     def test_retainFeatures_numberOnly(self):
-        self.back_extract_numberOnly('feature')
+        self.back_retain_numberOnly('feature')
 
-    def test_retainFeatures_numberAndRandomize(self):
-        self.back_extract_numberAndRandomize('feature')
 
     #####################
     # referenceDataFrom #
