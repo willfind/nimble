@@ -392,7 +392,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         rawData = elementTypeConvert(rawData, elementType)
     elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
         #from sparse to sparse, instead of via np matrix
-        rawData = scipy.sparse.coo_matrix(rawData, dtype=elementType)
+        rawData = scipy.sparse.coo_matrix(rawData)
 
     elif isinstance(rawData, (list, tuple)):
         #when rawData = [], or feature empty [[]], we need to use pointNames and featureNames
@@ -441,6 +441,54 @@ def elementTypeConvert(rawData, elementType):
         return data
 
 
+def replaceMissingData(rawData, treatAsMissing, replaceMissingWith, elementType=None):
+    # if elementType is not None and type(replaceMissingWith) != elementType:
+    #     msg = "elementType does not match the type of the replaceMissingWith argument"
+    #     raise ArgumentException(msg)
+
+    # check if nan values are included in treatAsMissing
+    nanIsMissing = False
+    for missing in treatAsMissing:
+        if isinstance(missing, float) and numpy.isnan(missing):
+            nanIsMissing = True
+            break
+    # boolean function for whether value should be treated as missing
+    def missingCheck(x):
+        if nanIsMissing and isinstance(x, float) and numpy.isnan(x):
+            return True
+        else:
+            return x in treatAsMissing
+    # vectorize missingCheck function
+    missingReplacer = numpy.vectorize(missingCheck, otypes=["bool"])
+
+    if isinstance(rawData, (list, tuple)):
+        # use raw data (converting to numpy array for lists) to apply vectorized function
+        handleMissing = numpy.array(rawData, dtype=object)
+        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        rawData = handleMissing.tolist()
+
+    elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
+        handleMissing = rawData.astype(object)
+        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        rawData = elementTypeConvert(handleMissing, elementType)
+
+    elif scipy.sparse.issparse(rawData):
+        handleMissing = rawData.data.astype(object)
+        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        handleMissing = elementTypeConvert(handleMissing, elementType)
+        # elementTypeConvert returns matrix, need a 1D array
+        handleMissing = handleMissing.A1
+        rawData.data = handleMissing
+
+    #TODO SparseDataFrame
+    elif isinstance(rawData, (pd.DataFrame, pd.Series)) and not isinstance(rawData, pd.SparseDataFrame):
+        if len(rawData.values) > 0:
+            # .where keeps the values that return True, use ~ to replace those values instead
+            rawData = rawData.where(~rawData.isin(treatAsMissing), replaceMissingWith)
+
+    return rawData
+
+
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path, keepPoints, keepFeatures,
         elementType=None, reuseData=False,
@@ -461,42 +509,13 @@ def initDataObject(
         returnType = autoType
 
     #may need to extract names and may need to convert data to matrix
-    rawData, pointNames, featureNames = extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType)
+    rawData, pointNames, featureNames = extractNamesAndConvertData(
+                                            returnType, rawData, pointNames,
+                                            featureNames, elementType)
 
     # handle missing values
     if treatAsMissing is not None:
-        # check if nan values are included in treatAsMissing
-        nanIsMissing = False
-        for missing in treatAsMissing:
-            if isinstance(missing, float) and numpy.isnan(missing):
-                nanIsMissing = True
-                break
-        # boolean function for whether value should be treated as missing
-        def missingCheck(x):
-            if nanIsMissing and isinstance(x, float) and numpy.isnan(x):
-                return True
-            else:
-                return x in treatAsMissing
-        # vectorize missingCheck function
-        missingReplacer = numpy.vectorize(missingCheck, otypes=["bool"])
-
-        # use raw data (converting to numpy array for lists) to apply vectorized function
-        if isinstance(rawData, list):
-            handleMissing = numpy.array(rawData, dtype=object)
-            handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
-            rawData = handleMissing.tolist()
-        elif isinstance(rawData, pd.DataFrame):
-            handleMissing = rawData.values.astype(object)
-            handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
-            rawData = pd.DataFrame(handleMissing)
-        elif isinstance(rawData, scipy.sparse.coo_matrix):
-            handleMissing = rawData.data.astype(object)
-            handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
-            rawData.data = handleMissing.astype(rawData.data.dtype)
-        else:
-            handleMissing = numpy.matrix(rawData, dtype=object)
-            handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
-            rawData = elementTypeConvert(handleMissing, elementType)
+        rawData = replaceMissingData(rawData, treatAsMissing, replaceMissingWith, elementType)
 
     pathsToPass = (None, None)
     if path is not None:

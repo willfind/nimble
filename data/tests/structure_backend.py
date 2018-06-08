@@ -907,7 +907,11 @@ class StructureModifying(DataTestObject):
         assert orig1.isIdentical(orig6)
         assert orig1.isIdentical(orig9)
 
-    def test_createDataWithMissingDefaults(self):
+    ###############
+    # missing data#
+    ###############
+
+    def test_missingDefaults(self):
         nan = numpy.nan
         data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
         toTest = self.constructor(data)
@@ -915,21 +919,21 @@ class StructureModifying(DataTestObject):
         expRet = self.constructor(expData)
         assert toTest == expRet
 
-    def test_createDataHandmadeReplaceMissingWith(self):
+    def test_handmadeReplaceMissingWith(self):
         data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
         toTest = self.constructor(data, replaceMissingWith=0)
         expData = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
         expRet = self.constructor(expData)
         assert toTest == expRet
 
-    def test_createDataNumericalReplaceMissingWithNonNumeric(self):
+    def test_numericalReplaceMissingWithNonNumeric(self):
         data = [[1, 2, None], [None, 5, 6], [7, None, 9], [None, None, None]]
         toTest = self.constructor(data, replaceMissingWith="Missing")
         expData = [[1, 2, "Missing"], ["Missing", 5, 6], [7, "Missing", 9], ["Missing", "Missing", "Missing"]]
         expRet = self.constructor(expData)
         assert toTest == expRet
 
-    def test_createDataHandmadeTreatAsMissing(self):
+    def test_handmadeTreatAsMissing(self):
         nan = numpy.nan
         data = [[1, 2, ""], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
         toTest = self.constructor(data, treatAsMissing=[numpy.nan, None, ""])
@@ -937,37 +941,117 @@ class StructureModifying(DataTestObject):
         expRet = self.constructor(expData, treatAsMissing=None)
         assert toTest == expRet
 
-    def test_createDataHandmadeConsiderAndReplaceMissingWith(self):
+    def test_handmadeConsiderAndReplaceMissingWith(self):
         data = [[1, 2, "NA"], ["NA", 5, 6], [7, "NA", 9], ["NA", "NA", "NA"]]
         toTest = self.constructor(data, treatAsMissing=["NA"], replaceMissingWith=0)
         expData = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
         expRet = self.constructor(expData)
         assert toTest == expRet
 
-    def test_createDataReplaceDataTypeMismatch(self):
-        data = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
-        toTest = self.constructor(data, treatAsMissing=[0], replaceMissingWith="")
+    def test_replaceDataTypeMismatch(self):
+        data = [[1, 2, 99], [99, 5, 6], [7, 99, 9], [99, 99, 99]]
+        toTest = self.constructor(data, treatAsMissing=[99], replaceMissingWith="")
         expData = [[1, 2, ""], ["", 5, 6], [7, "", 9], ["", "", ""]]
         expRet = self.constructor(expData, treatAsMissing=None)
-        print(toTest, expRet)
         assert toTest == expRet
 
-    def test_createDataKeepNanAndReplaceAlternateMissing(self):
+    def test_keepNanAndReplaceAlternateMissing(self):
         nan = numpy.nan
         data = [[1, 2, "NA"], [numpy.nan, 5, 6], [7, "NA", 9], ["NA", numpy.nan, "NA"]]
         toTest = self.constructor(data, treatAsMissing=["NA"], replaceMissingWith=-1)
         expData = [[1, 2, -1], [nan, 5, 6], [7, -1, 9], [-1, nan, -1]]
         expRet = self.constructor(expData, treatAsMissing=None)
-        print(toTest, expRet)
         assert toTest == expRet
 
-    def test_createDataTreatAsMissingIsNone(self):
+    def test_treatAsMissingIsNone(self):
         nan = numpy.nan
         data = [[1, 2, None], [None, 5, 6], [7, None, 9], ["", numpy.nan, ""]]
         toTest = self.constructor(data, treatAsMissing=None)
         notExpData = [[1,2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
         notExpRet = self.constructor(notExpData, treatAsMissing=None, elementType=object)
         assert toTest != notExpRet
+
+    def test_DataOutputWithMissingDataTypes1D(self):
+        nan = numpy.nan
+        expListOutput = [[1.0, 2.0, nan]]
+        expMatrixOutput = numpy.matrix(expListOutput)
+        expDataFrameOutput = pd.DataFrame(expListOutput)
+        expSparseOutput = scipy.sparse.coo_matrix(expListOutput)
+
+        orig1 = self.constructor([1,2,"None"])
+        orig2 = self.constructor((1,2,"None"))
+        orig3 = self.constructor({'a':1, 'b':2, 'c':"None"})
+        orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig10 = self.constructor([{'a':1, 'b':2, 'c':"None"}])
+        orig10.sortFeatures(sortBy=orig10.getPointName(0))
+        orig4 = self.constructor(numpy.array([1,2,"None"]))
+        orig5 = self.constructor(numpy.matrix([1,2,"None"]))
+        if pd:
+            orig6 = self.constructor(pd.DataFrame([[1,2,"None"]]))
+            orig7 = self.constructor(pd.Series([1,2,"None"]))
+            # TODO SparseDataFrame
+        if scipy:
+            orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+
+        originals = [orig1, orig2, orig3, orig10, orig4, orig5, orig6, orig7, orig9]
+
+        for orig in originals:
+            if orig.getTypeString() == "List":
+                assert orig.data[0][0] == expListOutput[0][0]
+                assert orig.data[0][1] == expListOutput[0][1]
+                assert numpy.isnan(orig.data[0][2])
+            elif orig.getTypeString() == "Matrix":
+                assert numpy.array_equal(orig.data[0, :2], expMatrixOutput[0, :2])
+                assert numpy.isnan(orig.data[0, 2])
+            elif orig.getTypeString() == "DataFrame":
+                assert numpy.array_equal(orig.data.values[0, :2], expDataFrameOutput.values[0, :2])
+                assert numpy.isnan(orig.data.values[0, 2])
+            else:
+                orig._sortInternal('point')
+                assert numpy.array_equal(orig.data.data[:2], expSparseOutput.data[:2])
+                assert numpy.isnan(orig.data.data[2])
+
+    def test_DataOutputWithMissingDataTypes2D(self):
+        nan = numpy.nan
+        expListOutput = [[1, 2, nan], [3,4,'b']]
+        expMatrixOutput = numpy.matrix(expListOutput, dtype=object)
+        expDataFrameOutput = pd.DataFrame(expMatrixOutput)
+        expSparseOutput = scipy.sparse.coo_matrix(expMatrixOutput)
+
+        orig1 = self.constructor([[1,2,'None'], [3,4,'b']])
+        orig2 = self.constructor(((1,2,'None'), (3,4,'b')))
+        orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['None', 'b']}, elementType=object)
+        orig3.sortFeatures(sortBy=orig3.getPointName(0))
+        orig7 = self.constructor([{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
+        orig7.sortFeatures(sortBy=orig7.getPointName(0))
+        orig4 = self.constructor(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig5 = self.constructor(numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
+        if pd:
+            orig6 = self.constructor(pd.DataFrame([[1,2,'None'], [3,4,'b']]))
+            # TODO SparseDataFrame
+        if scipy:
+            orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
+
+        originals = [orig1, orig2, orig3, orig7, orig4, orig5, orig6, orig9]
+        for i, orig in enumerate(originals):
+            if orig.getTypeString() == "List":
+                assert orig.data[0][0] == expListOutput[0][0]
+                assert orig.data[0][1] == expListOutput[0][1]
+                assert numpy.isnan(orig.data[0][2])
+                assert orig.data[1] == expListOutput[1]
+            elif orig.getTypeString() == "Matrix":
+                assert numpy.array_equal(orig.data[0, :2], expMatrixOutput[0, :2])
+                assert numpy.isnan(orig.data[0, 2])
+                assert numpy.array_equal(orig.data[1,:], expMatrixOutput[1,:])
+            elif orig.getTypeString() == "DataFrame":
+                assert numpy.array_equal(orig.data.values[0, :2], expDataFrameOutput.values[0, :2])
+                assert numpy.isnan(orig.data.values[0, 2])
+                assert numpy.array_equal(orig.data.values[1,:], expDataFrameOutput.values[1,:])
+            else:
+                orig._sortInternal('point')
+                assert numpy.array_equal(orig.data.data[:2], expSparseOutput.data[:2])
+                assert numpy.isnan(orig.data.data[2])
+                assert numpy.array_equal(orig.data.data[3:], expSparseOutput.data[3:])
 
 
     ##############
