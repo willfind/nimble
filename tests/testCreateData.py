@@ -436,7 +436,7 @@ def test_automaticByType_pname_interaction_with_fname():
 #        retT = None
 #        print rawT + " " + str(retT)
 #        import pdb
-#        pdb.set_trace()        
+#        pdb.set_trace()
 
         # pnames auto triggered with auto fnames
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
@@ -616,7 +616,7 @@ def test_csv_roundtrip_autonames():
         data = [[1, 0, 5, 12], [0, 1, 3, 17], [0, 0, 8, 22]]
         pnames = ['p0','p1','p2']
         fnames = ['f0','f1','f2', 'f3']
-        
+
         withFnames = UML.createData(retType, data, featureNames=fnames)
         withBoth = UML.createData(retType, data, featureNames=fnames, pointNames=pnames)
 
@@ -844,6 +844,25 @@ def test_createData_MTXCoo_passedOpen():
             assert fromMTXCoo.absolutePath is None
             assert fromMTXCoo.relativePath is None
 
+###############################
+# webpage as a source of data #
+###############################
+
+def test_createData_http_CSV():
+    for t in returnTypes:
+        url = "http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
+        fromWeb = UML.createData(returnType=t, data=url, fileType="csv")
+
+def test_createData_http_CSVNonUnicodeValues():
+    for t in returnTypes:
+        url = "http://samplecsvs.s3.amazonaws.com/TechCrunchcontinentalUSA.csv"
+        fromWeb = UML.createData(returnType=t, data=url, fileType="csv")
+
+@raises(ArgumentException)
+def test_createData_http_linkError():
+    for t in returnTypes:
+        url = "http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.dat"
+        fromWeb = UML.createData(returnType=t, data=url, fileType="csv")
 
 ###################################
 # ignoreNonNumericalFeatures flag #
