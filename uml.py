@@ -527,9 +527,9 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     treatAsMissing: A list of values that will be treated as missing values in
     the data. These values will be replaced with value from replaceMissingWith
     By default this list is [float('nan'), numpy.nan, None, '', 'None', 'nan']
-    Set to None or [], to disable replacing the values.
+    Set to None or [] to disable replacing missing values.
 
-    replaceMissingWith: A single value with which to replace any value in from
+    replaceMissingWith: A single value with which to replace any value in
     treatAsMissing. By default this is numpy.nan
     """
     # validation of pointNames and featureNames

@@ -34,7 +34,6 @@ from UML.exceptions import PackageException
 from UML.exceptions import FileFormatException
 from UML.data import Sparse  # needed for 1s or 0s obj creation
 from UML.data import Matrix  # needed for 1s or 0s obj creation
-from UML.data import List
 from UML.data import Base
 from UML.data.list import isAllowedSingleElement
 
@@ -392,7 +391,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         rawData = elementTypeConvert(rawData, elementType)
     elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
         #from sparse to sparse, instead of via np matrix
-        rawData = scipy.sparse.coo_matrix(rawData)
+        rawData = scipy.sparse.coo_matrix(rawData, dtype=elementType)
 
     elif isinstance(rawData, (list, tuple)):
         #when rawData = [], or feature empty [[]], we need to use pointNames and featureNames
