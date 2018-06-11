@@ -54,12 +54,11 @@ def inverse(A):
     return inv_obj
 
 
-def pseudoInverse(A, method='least-squares'):
+def pseudoInverse(A, method='svd'):
     """
         Compute the (Moore-Penrose) pseudo-inverse of a UML object.
-        Method: 'least-squares' or 'svd. 
-        Uses least squares solver by default and supports singular-value decomposition.
-
+        Method: 'svd' or 'least-squares'. 
+        Uses singular-value decomposition by default. Least squares solver included as an option.
     """
     if not isinstance(A, UML.data.Base):
         raise ArgumentException("Object must be derived class of UML.data.Base.")
@@ -74,13 +73,13 @@ def pseudoInverse(A, method='least-squares'):
                 raise ArgumentException(msg)
 
     pinv_obj = A.copyAs('Matrix')
-    if method == 'least-squares':
+    if method == 'svd':
         try:
-            pinv_data = scipy.linalg.pinv(pinv_obj.data)
+            pinv_data = scipy.linalg.pinv2(pinv_obj.data)
         except ValueError as e:
             _handleNonSupportedTypes(e)
     else:
-        pinv_data = scipy.linalg.pinv2(pinv_obj.data)
+        pinv_data = scipy.linalg.pinv(pinv_obj.data)
     pinv_obj.transpose()
     pinv_obj.data = pinv_data
     if A.getTypeString() != 'Matrix':
