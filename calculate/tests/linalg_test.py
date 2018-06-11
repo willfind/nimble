@@ -53,7 +53,7 @@ def testInverseNonSquareObject():
     """
         Test inverse for non square object.
     """
-    data = [[1, 2, 3], [3, 4, 5]]
+    data = [[1, 2, 3], [4, 5, 6]]
 
     for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
         obj = createData(dataType, data)
@@ -61,8 +61,10 @@ def testInverseNonSquareObject():
             obj_inv = inverse(obj)
         except ArgumentException as e:
             pass
+        else:
+            raise AssertionError
+        
                 
-
 def testNonInvertibleObject():
     """
         Test inverse for non invertible object.
@@ -75,6 +77,8 @@ def testNonInvertibleObject():
             obj_inv = inverse(obj)
         except ArgumentException as e:
             pass
+        else:
+            raise AssertionError
 
 #################
 # pseudoInverse #
