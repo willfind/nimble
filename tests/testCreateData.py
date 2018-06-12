@@ -436,7 +436,7 @@ def test_automaticByType_pname_interaction_with_fname():
 #        retT = None
 #        print rawT + " " + str(retT)
 #        import pdb
-#        pdb.set_trace()        
+#        pdb.set_trace()
 
         # pnames auto triggered with auto fnames
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
@@ -616,7 +616,7 @@ def test_csv_roundtrip_autonames():
         data = [[1, 0, 5, 12], [0, 1, 3, 17], [0, 0, 8, 22]]
         pnames = ['p0','p1','p2']
         fnames = ['f0','f1','f2', 'f3']
-        
+
         withFnames = UML.createData(retType, data, featureNames=fnames)
         withBoth = UML.createData(retType, data, featureNames=fnames, pointNames=pnames)
 
@@ -1295,7 +1295,8 @@ def test_createData_keepPF_csv_noUncessaryStorage():
     try:
         def fakeinitDataObject(
                 returnType, rawData, pointNames, featureNames, name, path,
-                keepPoints, keepFeatures):
+                keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
+                reuseData=False):
             assert len(rawData) == 2
             assert len(rawData[0]) == 1
             return UML.data.List(rawData)

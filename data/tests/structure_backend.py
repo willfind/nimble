@@ -989,11 +989,11 @@ class StructureModifying(DataTestObject):
         if pd:
             orig6 = self.constructor(pd.DataFrame([[1,2,"None"]]))
             orig7 = self.constructor(pd.Series([1,2,"None"]))
-            # TODO SparseDataFrame
+            orig8 = self.constructor(pd.SparseDataFrame([[1,2,"None"]]))
         if scipy:
             orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
 
-        originals = [orig1, orig2, orig3, orig10, orig4, orig5, orig6, orig7, orig9]
+        originals = [orig1, orig2, orig3, orig10, orig4, orig5, orig6, orig7, orig8, orig9]
 
         for orig in originals:
             if orig.getTypeString() == "List":
@@ -1028,12 +1028,12 @@ class StructureModifying(DataTestObject):
         orig5 = self.constructor(numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         if pd:
             orig6 = self.constructor(pd.DataFrame([[1,2,'None'], [3,4,'b']]))
-            # TODO SparseDataFrame
+            orig8 = self.constructor(pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
         if scipy:
             orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
 
-        originals = [orig1, orig2, orig3, orig7, orig4, orig5, orig6, orig9]
-        for i, orig in enumerate(originals):
+        originals = [orig1, orig2, orig3, orig7, orig4, orig5, orig6, orig8, orig9]
+        for orig in originals:
             if orig.getTypeString() == "List":
                 assert orig.data[0][0] == expListOutput[0][0]
                 assert orig.data[0][1] == expListOutput[0][1]

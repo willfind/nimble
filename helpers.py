@@ -382,16 +382,17 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             #this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
             #otherwise, we need to covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
             isAllowedSingleElement(rawData[0]) or isinstance(rawData[0], list) or hasattr(rawData[0], 'setLimit'))) or \
-        (pd and isinstance(rawData, pd.DataFrame) and returnType == 'DataFrame') or \
+        (pd and isinstance(rawData, pd.DataFrame) and not isinstance(rawData, pd.SparseDataFrame) and returnType == 'DataFrame') or \
         (scipy and scipy.sparse.isspmatrix(rawData) and returnType == 'Sparse')\
         ):
         pass
     elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
         #if the input data is a np matrix, then convert it anyway to make sure try dtype=float 1st.
         rawData = elementTypeConvert(rawData, elementType)
-    elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
+    elif pd and isinstance(rawData, pd.SparseDataFrame):
         #from sparse to sparse, instead of via np matrix
-        rawData = scipy.sparse.coo_matrix(rawData, dtype=elementType)
+        rawData = elementTypeConvert(rawData, elementType)
+        rawData = scipy.sparse.coo_matrix(rawData)
 
     elif isinstance(rawData, (list, tuple)):
         #when rawData = [], or feature empty [[]], we need to use pointNames and featureNames
@@ -406,7 +407,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         else:
             rawData = elementTypeConvert(rawData, elementType)
 
-    elif pd and isinstance(rawData, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
+    elif pd and isinstance(rawData, (pd.DataFrame, pd.Series)):
         rawData = elementTypeConvert(rawData, elementType)
 
     elif scipy and scipy.sparse.isspmatrix(rawData):
@@ -441,10 +442,9 @@ def elementTypeConvert(rawData, elementType):
 
 
 def replaceMissingData(rawData, treatAsMissing, replaceMissingWith, elementType=None):
-    # if elementType is not None and type(replaceMissingWith) != elementType:
-    #     msg = "elementType does not match the type of the replaceMissingWith argument"
-    #     raise ArgumentException(msg)
-
+    """
+    convert any values in rawData found in treatAsMissing with replaceMissingWith value
+    """
     # check if nan values are included in treatAsMissing
     nanIsMissing = False
     for missing in treatAsMissing:
@@ -479,8 +479,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith, elementType=
         handleMissing = handleMissing.A1
         rawData.data = handleMissing
 
-    #TODO SparseDataFrame
-    elif isinstance(rawData, (pd.DataFrame, pd.Series)) and not isinstance(rawData, pd.SparseDataFrame):
+    elif isinstance(rawData, (pd.DataFrame, pd.Series)):
         if len(rawData.values) > 0:
             # .where keeps the values that return True, use ~ to replace those values instead
             rawData = rawData.where(~rawData.isin(treatAsMissing), replaceMissingWith)
