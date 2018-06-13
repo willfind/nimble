@@ -4,8 +4,13 @@ from nose.plugins.attrib import attr
 import tempfile
 import numpy
 import os
+import sys
 import copy
 import itertools
+try:
+    from unittest import mock #python3
+except:
+    import mock #python2
 
 import UML
 from UML.exceptions import ArgumentException
@@ -848,21 +853,109 @@ def test_createData_MTXCoo_passedOpen():
 # webpage as a source of data #
 ###############################
 
-def test_createData_http_CSV():
-    for t in returnTypes:
-        url = "http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
-        fromWeb = UML.createData(returnType=t, data=url, fileType="csv")
+def mocked_requests_get(*args, **kwargs):
+    class MockResponse:
+        """mock of Response object returned by a call to requests.get"""
+        def __init__(self, content, status_code, ok=True, reason=None, encoding='utf-8'):
+            # In Response object, .content returns bytes and .text returns unicode
+            # python2 uses .content and python3 uses .text in the code, so setting
+            # self.content and self.text to content replicates the desired behavior
+            self.content = content
+            self.text = content
+            self.status_code = status_code
+            self.ok = ok
+            self.reason = reason
+            self.apparent_encoding = encoding
 
-def test_createData_http_CSVNonUnicodeValues():
+    if args[0] == 'http://mockrequests.uml/CSVfiletypeneeded.data':
+        return MockResponse('1,2,3\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSVfiletypeok.csv':
+        return MockResponse('1,2,3\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSVcarriagereturn.csv':
+        return MockResponse('1,2,3\r4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSVunicodetest.csv':
+        return MockResponse('1,2,\xc2\xa1\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSVquotednewline.csv':
+        # csv allows for newline characters in field values within double quotes
+        return MockResponse('1,2,"a/nb"\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/MTXfiletypeneeded.data':
+        mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
+        return MockResponse(mtx, 200)
+    elif args[0] == 'http://mockrequests.uml/MTXfiletypeok.mtx':
+        mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
+        return MockResponse(mtx, 200)
+
+    return MockResponse(None, 404, False, 'Not Found')
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVFileTypeRequired(mock_get):
     for t in returnTypes:
-        url = "http://samplecsvs.s3.amazonaws.com/TechCrunchcontinentalUSA.csv"
+        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVfiletypeneeded.data'
         fromWeb = UML.createData(returnType=t, data=url, fileType="csv")
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVFileOK(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVfiletypeok.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVCarraigeReturn(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVcarriagereturn.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVNonUnicodeValues(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVunicodetest.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
+        print(exp)
+        print(fromWeb)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVQuotedNewLine(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVquotednewline.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_MTXFileTypeRequired(mock_get):
+    for t in returnTypes:
+        # None returnType for url will default to Sparse so use coo_matrix for data
+        data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
+        exp = UML.createData(returnType=t, data=data)
+        url = 'http://mockrequests.uml/MTXfiletypeneeded.data'
+        fromWeb = UML.createData(returnType=t, data=url, fileType="mtx")
+        print(t, fromWeb == exp)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_MTXFileTypeOK(mock_get):
+    for t in returnTypes:
+        # None returnType for url will default to Sparse so use coo_matrix for data
+        data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
+        exp = UML.createData(returnType=t, data=data)
+        url = 'http://mockrequests.uml/MTXfiletypeok.mtx'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
 
 @raises(ArgumentException)
-def test_createData_http_linkError():
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_linkError(mock_get):
     for t in returnTypes:
-        url = "http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.dat"
-        fromWeb = UML.createData(returnType=t, data=url, fileType="csv")
+        url = 'http://mockrequests.uml/linknotfound.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
 
 ###################################
 # ignoreNonNumericalFeatures flag #

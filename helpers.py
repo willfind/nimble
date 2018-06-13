@@ -16,10 +16,7 @@ import numpy
 import importlib
 import numbers
 import requests
-try:
-    from StringIO import StringIO #python2
-except Exception:
-    from io import StringIO #python3
+from io import StringIO, BytesIO
 
 import os.path
 import re
@@ -631,17 +628,28 @@ def createDataFromFile(
 
     toPass = data
     if isinstance(toPass, six.string_types):
-        if toPass[:4] == 'http' and fileType == 'csv':
+        if toPass[:4] == 'http':
             response = requests.get(data, stream=True)
             if not response.ok:
                 msg = "The data could not be accessed from the webpage. "
                 msg += "HTTP Status: {0}, ".format(response.status_code)
                 msg += "Reason: {0}".format(response.reason)
                 raise ArgumentException(msg)
-            content = response.content
-            # split content by line and join with \n to format filelike object
-            content = "\n".join(content.splitlines())
-            toPass = StringIO(content)
+
+            py3 = sys.version_info[0] == 3
+            if py3 and fileType == 'csv':
+                toPass = StringIO(response.text, newline=None)
+            elif py3 and fileType == 'mtx':
+                # scipy.io.mmreader needs bytes object
+                toPass = BytesIO(bytes(response.content, response.apparent_encoding))
+            elif fileType in ['csv', 'mtx']:
+                # handle universal newline
+                content = "\n".join(response.content.splitlines())
+                toPass = BytesIO(content)
+            else:
+                msg = "The file must be a supported extension, or a type must "
+                msg += "be specified using the 'fileType' parameter"
+                raise ArgumentException(msg)
         else:
             toPass = open(data, 'rU')
     if directPath in globals():
