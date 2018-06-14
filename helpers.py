@@ -636,6 +636,7 @@ def createDataFromFile(
                 msg += "Reason: {0}".format(response.reason)
                 raise ArgumentException(msg)
 
+            # check python version
             py3 = sys.version_info[0] == 3
             if py3 and fileType == 'csv':
                 toPass = StringIO(response.text, newline=None)

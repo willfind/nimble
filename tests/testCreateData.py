@@ -8,9 +8,9 @@ import sys
 import copy
 import itertools
 try:
-    from unittest import mock #python3
+    from unittest import mock #python >=3.3
 except:
-    import mock #python2
+    import mock
 
 import UML
 from UML.exceptions import ArgumentException
@@ -849,9 +849,9 @@ def test_createData_MTXCoo_passedOpen():
             assert fromMTXCoo.absolutePath is None
             assert fromMTXCoo.relativePath is None
 
-###############################
-# webpage as a source of data #
-###############################
+###########################
+# url as a source of data #
+###########################
 
 def mocked_requests_get(*args, **kwargs):
     class MockResponse:
@@ -904,7 +904,7 @@ def test_createData_http_CSVFileOK(mock_get):
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVCarraigeReturn(mock_get):
+def test_createData_http_CSVCarriageReturn(mock_get):
     for t in returnTypes:
         exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
         url = 'http://mockrequests.uml/CSVcarriagereturn.csv'
@@ -949,6 +949,13 @@ def test_createData_http_MTXFileTypeOK(mock_get):
         url = 'http://mockrequests.uml/MTXfiletypeok.mtx'
         fromWeb = UML.createData(returnType=t, data=url)
         assert fromWeb == exp
+
+@raises(ArgumentException)
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVFileTypeRequired(mock_get):
+    for t in returnTypes:
+        url = 'http://mockrequests.uml/CSVfiletypeneeded.data'
+        fromWeb = UML.createData(returnType=t, data=url)
 
 @raises(ArgumentException)
 @mock.patch('requests.get', side_effect=mocked_requests_get)
