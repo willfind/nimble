@@ -5,8 +5,7 @@ from nose.tools import *
 import UML
 from UML import createData
 from UML.exceptions import ArgumentException
-from UML.calculate import inverse
-from UML.calculate import pseudoInverse
+from UML.calculate import inverse, pseudoInverse, leastSquaresSolution, solve
 
 
 ###########
@@ -16,7 +15,7 @@ from UML.calculate import pseudoInverse
 def testInverseSquareObject():
     """
         Test success of inverse for a square object and
-        test that input object is not modified.
+        test that input object is not modified.mm
     """
     data = [[1, 1, 0], [1, 0, 1], [1, 1, 1]]
     pnames = ['p1', 'p2', 'p3']
@@ -63,8 +62,8 @@ def testInverseNonSquareObject():
             pass
         else:
             raise AssertionError
-        
-                
+
+
 def testNonInvertibleObject():
     """
         Test inverse for non invertible object.
@@ -83,6 +82,7 @@ def testNonInvertibleObject():
 #################
 # pseudoInverse #
 #################
+
 
 def testPseudoInverseObject():
     """
@@ -119,7 +119,7 @@ def testPseudoInverseObject():
         obj = createData(dataType, data)
         objs_list.append(obj)
 
-        data = [[1,2]]
+        data = [[1, 2]]
         obj = createData(dataType, data)
         objs_list.append(obj)
 
@@ -156,5 +156,123 @@ def testPseudoInverseEmptyObject():
         obj = createData(dataType, data)
         obj_inv = pseudoInverse(obj)
         assert obj_inv == obj
-        
-        
+
+#########
+# solve #
+#########
+
+
+def testSolve_succes():
+    """
+        Test success for solve
+    """
+
+    a = numpy.array([[1, 20], [-30, 4]])
+    b_s = [numpy.array([-30, 4]), numpy.array([[-30], [4]])]
+
+    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+        for dataType_b in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+            for b_np in b_s:
+                A = createData(dataType, a, featureNames=['f1', 'f2'])
+                b = createData(dataType_b, b_np)
+                sol = solve(A, b)
+                A_inv = inverse(A)
+                if b.features > 1:
+                    b.transpose()
+                reference = (A_inv * b)
+                reference.transpose()
+                reference.setPointNames(['b'])
+                assert sol.isApproximatelyEqual(reference)
+                assert A.getFeatureNames() == sol.getFeatureNames()
+                assert sol.getPointNames() == ['b']
+                assert sol.getTypeString() == A.getTypeString()
+
+
+#######################
+# leastSquareSolution #
+#######################
+
+def testLeastSquareSolution_exact():
+    """
+        Test success for leastSquareSolution exact case.
+    """
+    a = numpy.array([[1, 20], [-30, 4]])
+    b_s = [numpy.array([-30, 4]), numpy.array([[-30], [4]])]
+
+    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+        for dataType_b in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+            for b_np in b_s:
+                A = createData(dataType, a, featureNames=['f1', 'f2'])
+                b = createData(dataType_b, b_np)
+                sol = leastSquaresSolution(A, b)
+                A_inv = inverse(A)
+                if b.features > 1:
+                    b.transpose()
+                reference = (A_inv * b)
+                reference.transpose()
+                reference.setPointNames(['b'])
+                assert sol.isApproximatelyEqual(reference)
+                assert A.getFeatureNames() == sol.getFeatureNames()
+                assert sol.getPointNames() == ['b']
+                assert sol.getTypeString() == A.getTypeString()
+
+
+def testLeastSquareSolution_overdetermined():
+    """
+        Test success for leastSquareSolution overdetermined system.
+    """
+    a = numpy.array([[1, 2], [4, 5], [3, 4]])
+    b_s = [numpy.array([1, 2, 3]), numpy.array([[1], [2], [3]])]
+    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+        for dataType_b in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+            for b_np in b_s:
+                A_orig = createData(dataType, a, featureNames=['f1', 'f2'])
+                A = createData(dataType, a, featureNames=['f1', 'f2'])
+                b_orig = createData(dataType_b, b_np)
+                b = createData(dataType_b, b_np)
+                sol = leastSquaresSolution(A, b)
+
+                assert A == A_orig
+                assert b == b_orig
+
+                A_pinv = pseudoInverse(A)
+                if b.features > 1:
+                    b.transpose()
+                reference = (A_pinv * b)
+                reference.transpose()
+                reference.setPointNames(['b'])
+                assert sol.isApproximatelyEqual(reference)
+                assert A.getFeatureNames() == sol.getFeatureNames()
+                assert sol.getPointNames() == ['b']
+                assert sol.getTypeString() == A.getTypeString()
+
+
+def testLeastSquareSolution_underdetermined():
+    """
+        Test success for leastSquareSolution underdetermined system.
+    """
+    a = numpy.array([[1, 2, 3], [4, 5, 6]])
+    b_s = [numpy.array([1, 2]), numpy.array([[1], [2]])]
+    for dataType in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+        for dataType_b in ['Matrix', 'Sparse', 'DataFrame', 'List']:
+            for b_np in b_s:
+                A_orig = createData(
+                    dataType, a, featureNames=['f1', 'f2', 'f3'])
+                A = createData(dataType, a, featureNames=['f1', 'f2', 'f3'])
+                b_orig = createData(dataType_b, b_np)
+                b = createData(dataType_b, b_np)
+                sol = leastSquaresSolution(A, b)
+
+                assert A == A_orig
+                assert b == b_orig
+
+                A_pinv = pseudoInverse(A)
+                if b.features > 1:
+                    b.transpose()
+                reference = (A_pinv * b)
+                reference.transpose()
+                reference.setPointNames(['b'])
+                assert sol.isApproximatelyEqual(reference)
+                assert A.getFeatureNames() == sol.getFeatureNames()
+                assert sol.getPointNames() == ['b']
+                assert sol.getTypeString() == A.getTypeString()
