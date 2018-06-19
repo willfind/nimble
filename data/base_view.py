@@ -9,6 +9,8 @@ from __future__ import absolute_import
 from .base import Base
 from UML.exceptions import ImproperActionException
 
+import copy
+
 
 class BaseView(Base):
     """
@@ -126,6 +128,33 @@ class BaseView(Base):
         else:
             raise KeyError()
 
+    def _copyNames(self, CopyObj):
+        CopyObj.pointNamesInverse = self.getPointNames()
+        CopyObj.featureNamesInverse = self.getFeatureNames()
+        CopyObj.pointNames = copy.copy(self._source.pointNames)
+        CopyObj.featureNames = copy.copy(self._source.featureNames)
+        CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
+        CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
+
+        if self.points != self._source.points:
+            if self._pStart != 0:
+                CopyObj.pointNames = {}
+                for idx, name in enumerate(CopyObj.pointNamesInverse):
+                    CopyObj.pointNames[name] = idx
+            else:
+                for name in self._source.pointNamesInverse[self._pEnd:self._source.points + 1]:
+                    del CopyObj.pointNames[name]
+
+        if self.features != self._source.features:
+            if self._fStart != 0:
+                CopyObj.featureNames = {}
+                for idx, name in enumerate(CopyObj.featureNamesInverse):
+                    CopyObj.featureNames[name] = idx
+            else:
+                for name in self._source.featureNamesInverse[self._fEnd:self._source.features + 1]:
+                    del CopyObj.featureNames[name]
+
+
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
 
@@ -156,6 +185,7 @@ class BaseView(Base):
             feAdj = feIndex + self._fStart
 
         return self._source.view(psAdj, peAdj, fsAdj, feAdj)
+
 
     ####################################
     # Low Level Operations, Disallowed #

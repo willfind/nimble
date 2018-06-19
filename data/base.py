@@ -93,7 +93,7 @@ class Base(object):
     """
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
-                 paths=(None, None), **kwds):
+                 paths=(None, None), dataCopy=False,  **kwds):
         """
         Instantiates the book-keeping structures that are taken to be common
         across all data types. Specifically, this includes point and feature
@@ -121,7 +121,6 @@ class Base(object):
         """
         self._pointCount = shape[0]
         self._featureCount = shape[1]
-
         if pointNames is not None and len(pointNames) != shape[0]:
             msg = "The length of the pointNames (" + str(len(pointNames))
             msg += ") must match the points given in shape (" + str(shape[0])
@@ -135,32 +134,40 @@ class Base(object):
 
         # Set up point names
         self._nextDefaultValuePoint = 0
-        self._setAllDefault('point')
-        if isinstance(pointNames, list):
+        if pointNames is None:
+            self._setAllDefault('point')
+        elif dataCopy:
+            pass
+        elif isinstance(pointNames, list):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
         elif isinstance(pointNames, dict):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
         # could still be an ordered container, pass it on to the list helper
         elif hasattr(pointNames, '__len__') and hasattr(pointNames, '__getitem__'):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
-        elif pointNames is None:
-            pass
         else:
             raise ArgumentException(
                 "pointNames may only be a list, an ordered container, or a dict, defining a mapping between integers and pointNames")
 
         # Set up feature names
         self._nextDefaultValueFeature = 0
-        self._setAllDefault('feature')
-        if isinstance(featureNames, list):
+        if featureNames is None:
+            self._setAllDefault('feature')
+        elif dataCopy:
+            pass
+        elif isinstance(featureNames, list):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
         elif isinstance(featureNames, dict):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
         # could still be an ordered container, pass it on to the list helper
         elif hasattr(featureNames, '__len__') and hasattr(featureNames, '__getitem__'):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
-        elif featureNames is None:
-            pass
         else:
             raise ArgumentException(
                 "featureNames may only be a list, an ordered container, or a dict, defining a mapping between integers and featureNames")
@@ -2736,7 +2743,7 @@ class Base(object):
         one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr',
         'scypy csc', 'list of dict' or 'dict of list'.
 
-        """
+        """        
         #make lower case, strip out all white space and periods, except if format
         # is one of the accepted UML data types
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2802,6 +2809,8 @@ class Base(object):
             ret = self._copyAs_implementation('numpyarray')
         else:
             ret = self._copyAs_implementation(format)
+            if isinstance(ret, UML.data.Base):
+                self._copyNames(ret)
 
         def _createListOfDict(data, featureNames):
             # creates a list of dictionaries mapping feature names to the point's values
@@ -2847,6 +2856,14 @@ class Base(object):
             ret = _createDictOfList(data=ret, featureNames=self.getFeatureNames(), nFeatures=self.features)
 
         return ret
+
+    def _copyNames (self, CopyObj):
+        CopyObj.pointNamesInverse = self.getPointNames()
+        CopyObj.featureNamesInverse = self.getFeatureNames()
+        CopyObj.pointNames = copy.copy(self.pointNames)
+        CopyObj.featureNames = copy.copy(self.featureNames)
+        CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
+        CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
 
     def copyPoints(self, points=None, start=None, end=None):
@@ -4973,7 +4990,6 @@ class Base(object):
         # setup the new featureName
         invNames[index] = newName
         names[newName] = index
-
         self._incrementDefaultIfNeeded(newName, axis)
 
     def _setNamesFromList(self, assignments, count, axis):
@@ -5000,6 +5016,7 @@ class Base(object):
                 msg = "assignments is too large (" + str(len(assignments))
                 msg += "); this axis is empty"
                 raise ArgumentException(msg)
+            self._setNamesFromDict({}, count, axis)
             return
         if len(assignments) != count:
             msg = "assignments may only be an ordered container type, with as "

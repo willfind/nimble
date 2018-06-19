@@ -15,6 +15,7 @@ import numpy as np
 scipy = UML.importModule('scipy.sparse')
 
 import itertools
+import copy
 from .base_view import BaseView
 
 
@@ -24,7 +25,7 @@ class DataFrame(Base):
     in a pandas DataFrame.
     """
 
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, reuseData=False, elementType=None, dataCopy=False, **kwds):
         """
         The initializer.
         Inputs:
@@ -48,11 +49,16 @@ class DataFrame(Base):
             self.data = pd.DataFrame(data)
 
         kwds['shape'] = self.data.shape
+        kwds['dataCopy'] = dataCopy
         super(DataFrame, self).__init__(**kwds)
         #it is very import to set up self.data's index and columns, other wise int index or column name will be set
         #if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
-        self.data.index = self.getPointNames()
-        self.data.columns = self.getFeatureNames()
+        if not dataCopy:
+            self.data.index = self.getPointNames()
+            self.data.columns = self.getFeatureNames()
+        else:
+            self.data.index = copy.deepcopy(kwds['pointNames'])
+            self.data.columns = copy.deepcopy(kwds['featureNames'])
 
 
     def _transpose_implementation(self):
@@ -433,7 +439,7 @@ class DataFrame(Base):
 
         self.data = other.data
 
-    def _copyAs_implementation(self, format):
+    def _copyAs_implementation(self, format, dataCopy=True):
         """
         Copy the current DataFrame object to another one in the format.
         Input:
@@ -442,13 +448,17 @@ class DataFrame(Base):
         """
         dataArray = self.data.values.copy()
         if format is None or format == 'DataFrame':
-            return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
         if format == 'Sparse':
-            return UML.createData('Sparse', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Sparse', dataArray, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
         if format == 'List':
-            return UML.createData('List', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('List', dataArray, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
         if format == 'Matrix':
-            return UML.createData('Matrix', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', dataArray, pointNames=self.getPointNames(),
+                                  featureNames=self.getFeatureNames(), dataCopy=dataCopy)
         if format == 'pythonlist':
             return dataArray.tolist()
         if format == 'numpyarray':
