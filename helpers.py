@@ -578,7 +578,7 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 def createDataFromFile(
         returnType, data, pointNames, featureNames, fileType, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures):
+        ignoreNonNumericalFeatures, keepPoints, keepFeatures, delimiter):
     """
     Helper for createData which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -627,20 +627,15 @@ def createDataFromFile(
     toPass = data
     if isinstance(toPass, six.string_types):
         toPass = open(data, 'rU')
-    if directPath in globals():
-        loader = globals()[directPath]
-        loaded = loader(
+    if fileType == 'csv':
+        loaded = _loadcsvForMatrix(
+            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+            keepPoints, keepFeatures, delimiter)
+    elif fileType == 'mtx':
+        loaded = _loadmtxForAuto(
             toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
             keepPoints, keepFeatures)
-    else:
-        if fileType == 'csv':
-            loaded = _loadcsvForMatrix(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures)
-        if fileType == 'mtx':
-            loaded = _loadmtxForAuto(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures)
+    # TODO what if not one of these types?
 
     (retData, retPNames, retFNames, selectSuccess) = loaded
 
@@ -1026,7 +1021,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues, secondValues):
 
     return (pointNames, featureNames)
 
-def _checkCSV_for_Names(openFile, pointNames, featureNames):
+def _checkCSV_for_Names(openFile, pointNames, featureNames, delimiter):
     """
     Will check for triggers to automatically determine the positions of
     the point or feature names if they have not been specified by the
@@ -1056,7 +1051,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
     # Use the robust csv reader to read the first two lines (if available)
     # these are saved to used in further autodection
     openFile.seek(startPosition)
-    rowReader = csv.reader(openFile)
+    rowReader = csv.reader(openFile, delimiter=delimiter)
     try:
         firstDataRow = next(rowReader)
         while firstDataRow == []:
@@ -1142,7 +1137,7 @@ def _selectionNameValidation(keep, hasNames, kind):
 
 
 def _csv_getFNamesAndAnalyzeRows(
-        pointNames, featureNames, openFile, lineReader, skippedLines):
+        pointNames, featureNames, openFile, lineReader, skippedLines, delimiter):
     """
     If needed, take the first row from the lineReader to define the
     feature names. Regardless of whether feature names are desired,
@@ -1168,7 +1163,7 @@ def _csv_getFNamesAndAnalyzeRows(
     else:
         startPosition = openFile.tell()
         filtered = itertools.ifilter(_filterCSVRow, openFile)
-        trialReader = csv.reader(filtered)
+        trialReader = csv.reader(filtered, delimiter=delimiter)
         trialRow = next(trialReader)
         # Number values in a row excluding point names
         numFeatures = len(trialRow)
@@ -1373,7 +1368,7 @@ def _namesDictToList(names, kind, paramName):
 
 def _loadcsvUsingPython(
         openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
-        keepPoints, keepFeatures):
+        keepPoints, keepFeatures, delimiter):
     """
     Loads a csv file using a reader from python's csv module
 
@@ -1423,7 +1418,7 @@ def _loadcsvUsingPython(
 
     """
     (pointNames, featureNames) = _checkCSV_for_Names(
-        openFile, pointNames, featureNames)
+        openFile, pointNames, featureNames, delimiter)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
     featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')
@@ -1436,7 +1431,7 @@ def _loadcsvUsingPython(
     # remake the file iterator to ignore empty lines
     filtered = itertools.ifilter(_filterCSVRow, openFile)
     # send that line iterator to the csv reader
-    lineReader = csv.reader(filtered)
+    lineReader = csv.reader(filtered, delimiter=delimiter)
 
     # after _checkCSV_for_Names then both pointNames and featureNames
     # should either be True, False, a list or a dict. In the case of
@@ -1450,7 +1445,7 @@ def _loadcsvUsingPython(
     # columns in a row, and record a few book-keeping details
     # to be output in case of an exception
     namesAndMore = _csv_getFNamesAndAnalyzeRows(
-        pointNames, featureNames, openFile, lineReader, skippedLines)
+        pointNames, featureNames, openFile, lineReader, skippedLines, delimiter)
     retFNames = namesAndMore[0]
     numFeatures = namesAndMore[1]
     numColumns = namesAndMore[2]

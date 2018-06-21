@@ -436,7 +436,7 @@ def test_automaticByType_pname_interaction_with_fname():
 #        retT = None
 #        print rawT + " " + str(retT)
 #        import pdb
-#        pdb.set_trace()        
+#        pdb.set_trace()
 
         # pnames auto triggered with auto fnames
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
@@ -616,7 +616,7 @@ def test_csv_roundtrip_autonames():
         data = [[1, 0, 5, 12], [0, 1, 3, 17], [0, 0, 8, 22]]
         pnames = ['p0','p1','p2']
         fnames = ['f0','f1','f2', 'f3']
-        
+
         withFnames = UML.createData(retType, data, featureNames=fnames)
         withBoth = UML.createData(retType, data, featureNames=fnames, pointNames=pnames)
 
@@ -1752,6 +1752,32 @@ def test_createData_keepPoints_csv_endAfterAllFound():
         fromCSV = UML.createData("Matrix", data=tmpCSV.name, keepPoints=[1, 0])
         assert fromCSV == wanted
 
+#################
+### delimiter ###
+#################
+
+def test_createData_csv_delimiterNone():
+    wanted = UML.createData("Matrix", data=[[1,2,3], [4,5,6]])
+    # instantiate from csv file
+    with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+        tmpCSV.write("1,2,3\n")
+        tmpCSV.write("4,5,6\n")
+        tmpCSV.flush()
+
+        fromCSV = UML.createData("Matrix", data=tmpCSV.name)
+        assert fromCSV == wanted
+
+def test_createData_csv_notCommaDelimited():
+    wanted = UML.createData("Matrix", data=[[1,2,3], [4,5,6]])
+    # instantiate from csv file
+    for delimiter in ['\t', ' ', ':', ';', '|']:
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("1{0}2{0}3\n".format(delimiter))
+            tmpCSV.write("4{0}5{0}6\n".format(delimiter))
+            tmpCSV.flush()
+
+            fromCSV = UML.createData("Matrix", data=tmpCSV.name, delimiter=delimiter)
+            assert fromCSV == wanted
 
 ###################
 ### Other tests ###

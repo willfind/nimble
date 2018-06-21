@@ -432,7 +432,7 @@ def listLearners(package=None):
 
 def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
                fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
+               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False, delimiter=None):
     """Function to instantiate one of the UML data container types.
 
     returnType: string (or None) indicating which kind of UML data type you want
@@ -522,6 +522,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     call should be logged by the UML logger. If None, the configurable	global
     default is used.
 
+    delimiter: TODO
+
     """
     # validation of pointNames and featureNames
     if pointNames != 'automatic' and not isinstance(pointNames, (bool, list, dict)):
@@ -553,11 +555,13 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
+        if delimiter is None:
+            delimiter = ','
         ret = createDataFromFile(
             returnType=returnType, data=data, pointNames=pointNames,
             featureNames=featureNames, fileType=fileType, name=name,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
-            keepPoints=keepPoints, keepFeatures=keepFeatures)
+            keepPoints=keepPoints, keepFeatures=keepFeatures, delimiter=delimiter)
         return ret
     # no other allowed inputs
     else:
