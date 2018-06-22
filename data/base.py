@@ -2443,15 +2443,21 @@ class Base(object):
         Modify this object, removing those points that are specified by the input, and returning
         an object containing those removed points.
 
-        toExtract may be a single identifier, a list of identifiers, or a function that when
-        given a point will return True if it is to be removed. number is the quantity of points that
-        are to be extracted, the default None means unlimited extraction. start and end are
-        parameters indicating range based extraction: if range based extraction is employed,
-        toExtract must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.points respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen points are determined by point order, otherwise it is uniform random across the
-        space of possible removals.
+        toExtract may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be extracted, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be extracted, the default None means
+        unrestricted extraction.
+
+        start and end are parameters indicating range based extraction: if range based
+        extraction is employed, toExtract must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible removals.
 
         """
         ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
@@ -2472,19 +2478,23 @@ class Base(object):
     def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
         """
         Modify this object, removing those features that are specified by the input, and returning
-        an object containing those removed features. This particular function only does argument
-        checking and modifying the featureNames for this object. It is the job of helper functions in
-        the derived class to perform the removal and assign featureNames for the returned object.
+        an object containing those removed features.
 
-        toExtract may be a single identifier, a list of identifiers, or a function that when
-        given a feature will return True if it is to be removed. number is the quantity of features that
-        are to be extracted, the default None means unlimited extraction. start and end are
-        parameters indicating range based extraction: if range based extraction is employed,
-        toExtract must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.features respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen features are determined by feature order, otherwise it is uniform random across the
-        space of possible removals.
+        toExtract may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be extracted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be extracted, the default None means
+        unrestricted extraction.
+
+        start and end are parameters indicating range based extraction: if range based
+        extraction is employed, toExtract must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible removals.
 
         """
         ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
@@ -2506,68 +2516,94 @@ class Base(object):
         """
         Modify this object, removing those points that are specified by the input.
 
-        toDelete may be a single identifier, a list of identifiers, or a function that when
-        given a point will return True if it is to be removed. number is the quantity of points that
-        are to be deleted, the default None means unlimited deletion. start and end are
-        parameters indicating range based deletion: if range based deletion is employed,
-        toDelete must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.points respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen points are determined by point order, otherwise it is uniform random across the
-        space of possible removals.
+        toDelete may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be deleted, the default None means
+        unrestricted deletion.
+
+        start and end are parameters indicating range based deletion: if range based
+        deletion is employed, toDelete must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible removals.
+
         """
         ret = self.extractPoints(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
-        return None
 
 
     def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
         """
         Modify this object, removing those features that are specified by the input.
 
-        toDelete may be a single identifier, a list of identifiers, or a function that when
-        given a feature will return True if it is to be removed. number is the quantity of features that
-        are to be deleted, the default None means unlimited deletion. start and end are
-        parameters indicating range based deletion: if range based deletion is employed,
-        toDelete must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.features respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen features are determined by feature order, otherwise it is uniform random across the
-        space of possible removals.
+        toDelete may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be deleted, the default None means
+        unrestricted deleted.
+
+        start and end are parameters indicating range based deletion: if range based
+        deletion is employed, toDelete must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible removals.
+
         """
         ret = self.extractFeatures(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
-        return None
 
 
     def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
         """
-        Modify this object, keeping only those points that are specified by the input.
+        Modify this object, retaining those points that are specified by the input.
 
-        toRetain may be a single identifier, a list of identifiers, or a function that when
-        given a point will return True if it is to be retained. number is the quantity of points that
-        are to be retained, the default None means unlimited retention. start and end are
-        parameters indicating range based retention: if range based retention is employed,
-        toRetain must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.points respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen points are determined by point order, otherwise it is uniform random across the
-        space of possible removals.
+        toRetain may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be retained, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be retained, the default None means
+        unrestricted retention.
+
+        start and end are parameters indicating range based retention: if range based
+        retention is employed, toRetain must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible retentions.
+
         """
         self._retain_implementation('retain', 'point', toRetain, start, end, number, randomize)
 
 
     def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
         """
-        Modify this object, keeping only those features that are specified by the input.
+        Modify this object, retaining those features that are specified by the input.
 
-        toRetain may be a single identifier, a list of identifiers, or a function that when
-        given a feature will return True if it is to be retained. number is the quantity of features that
-        are to be retained, the default None means unlimited retention. start and end are
-        parameters indicating range based retention: if range based retention is employed,
-        toRetain must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.features respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen features are determined by feature order, otherwise it is uniform random across the
-        space of possible removals.
+        toRetain may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be retained, the default None means
+        unrestricted retention.
+
+        start and end are parameters indicating range based retention: if range based
+        retention is employed, toRetain must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible retentions.
+
         """
         self._retain_implementation('retain', 'feature', toRetain, start, end, number, randomize)
 
@@ -2674,11 +2710,6 @@ class Base(object):
         """
         return self._genericStructuralFrontend('count', 'point', condition)
 
-    # def _countPoints_implementation(self, target, *arguments):
-    #     """
-    #
-    #     """
-    #     return len(target)
 
     def countFeatures(self, condition):
         """
@@ -2687,11 +2718,6 @@ class Base(object):
         """
         return self._genericStructuralFrontend('count', 'feature', condition)
 
-    # def _countFeatures_implementation(self, target, *arguments):
-    #     """
-    #
-    #     """
-    #     return len(target)
 
     def referenceDataFrom(self, other):
         """
@@ -2842,14 +2868,30 @@ class Base(object):
 
         return ret
 
-    def copyPoints(self, toCopy=None, start=None, end=None, number=None):
+    def copyPoints(self, toCopy=None, start=None, end=None, number=None, randomize=False):
         """
-        Return a new object which consists only of those specified points, without mutating
-        the calling object object.
+        Returns an object containing those points that are specified by the input, without
+        modification to this object.
+
+        toCopy may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be copied, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be copied, the default None means
+        unrestricted copying.
+
+        start and end are parameters indicating range based copying: if range based
+        copying is employed, toCopy must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible points.
 
         """
         ret = self._genericStructuralFrontend('copy', 'point', toCopy, start, end,
-                                              number, False)
+                                              number, randomize)
 
         ret.setFeatureNames(self.getFeatureNames())
 
@@ -2860,14 +2902,30 @@ class Base(object):
         return ret
 
 
-    def copyFeatures(self, toCopy=None, start=None, end=None, number=None):
+    def copyFeatures(self, toCopy=None, start=None, end=None, number=None, randomize=False):
         """
-        Return a new object which consists only of those specified features, without mutating
-        this object.
+        Returns an object containing those features that are specified by the input, without
+        modification to this object.
+
+        toCopy may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be copied, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be copied, the default None means
+        unrestricted copying.
+
+        start and end are parameters indicating range based copying: if range based
+        copying is employed, toCopy must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible features.
 
         """
         ret = self._genericStructuralFrontend('copy', 'feature', toCopy, start, end,
-                                              number, False)
+                                              number, randomize)
 
         ret.setPointNames(self.getPointNames())
 

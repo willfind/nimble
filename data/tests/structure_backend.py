@@ -715,6 +715,17 @@ class StructureDataSafe(DataTestObject):
         assert expectedTest.isIdentical(toTest)
 
 
+    def test_copyPoints_handmadeRangeRand_FM(self):
+        """ Test copyPoints() for correct sizes when using randomized range extraction and featureNames """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        ret = toTest.copyPoints(start=0, end=2, number=2, randomize=True)
+
+        assert ret.points == 2
+        assert toTest.points == 3
+
+
     def test_copyPoints_handmadeRangeDefaults(self):
         """ Test copyPoints uses the correct defaults in the case of range based copy """
         featureNames = ["one", "two", "three"]
@@ -956,6 +967,8 @@ class StructureDataSafe(DataTestObject):
     def test_copyPoints_numberOnly(self):
         self.back_copy_numberOnly('point')
 
+    def test_copyPoints_numberAndRandomize(self):
+        self.back_copy_numberAndRandomize('point')
 
     #######################
     # copy common backend #
@@ -982,6 +995,28 @@ class StructureDataSafe(DataTestObject):
         assert exp.isIdentical(ret)
         assert rem.isIdentical(toTest)
 
+    def back_copy_numberAndRandomize(self, axis):
+        if axis == 'point':
+            toCall = "copyPoints"
+        else:
+            toCall = "copyFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        UML.randomness.startAlternateControl(seed=1)
+        ret = getattr(toTest1, toCall)(number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed=1)
+        retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        assert ret.isIdentical(retRange)
+        assert toTest1.isIdentical(toTest2)
 
     #####################
     # copyFeatures #
@@ -1543,6 +1578,9 @@ class StructureDataSafe(DataTestObject):
 
     def test_copyFeatures_numberOnly(self):
         self.back_copy_numberOnly('feature')
+
+    def test_copyFeatures_numberAndRandomize(self):
+        self.back_copy_numberAndRandomize('feature')
 
 
 class StructureModifying(DataTestObject):
@@ -4929,7 +4967,6 @@ class StructureModifying(DataTestObject):
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-        toTest.retainPoints(start=0, end=2)
         toTest.retainPoints(start=0, end=2, number=2, randomize=True)
         assert toTest.points == 2
 
@@ -5135,6 +5172,9 @@ class StructureModifying(DataTestObject):
     def test_retainPoints_numberOnly(self):
         self.back_retain_numberOnly('point')
 
+    def test_retainPoints_numberAndRandomize(self):
+        self.back_retain_numberAndRandomize('point')
+
 
     #########################
     # retain common backend #
@@ -5157,6 +5197,28 @@ class StructureModifying(DataTestObject):
             exp = self.constructor([p[:3] for p in data], pointNames=pnames, featureNames=fnames[:3])
 
         assert exp.isIdentical(toTest)
+
+    def back_retain_numberAndRandomize(self, axis):
+        if axis == 'point':
+            toCall = "retainPoints"
+        else:
+            toCall = "retainFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        UML.randomness.startAlternateControl(seed=1)
+        getattr(toTest1, toCall)(number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed=1)
+        getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        assert toTest1.isIdentical(toTest2)
 
 
     ##################
@@ -5656,6 +5718,9 @@ class StructureModifying(DataTestObject):
 
     def test_retainFeatures_numberOnly(self):
         self.back_retain_numberOnly('feature')
+
+    def test_retainFeatures_numberAndRandomize(self):
+        self.back_retain_numberAndRandomize('feature')
 
 
     #####################
