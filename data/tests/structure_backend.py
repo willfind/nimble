@@ -1261,24 +1261,34 @@ class StructureModifying(DataTestObject):
 
     def backend_append_exceptionDifferentUMLDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
-        retType0 = UML.data.available[0]
-        retType1 = UML.data.available[1]
-        if toTest.getTypeString() == retType0:
-            other = UML.createData(retType1, data)
-        else:
-            other = UML.createData(retType0, data)
-
+        exp = self.constructor(data)
+        toAppend = self.constructor(data)
         if axis == 'point':
-            toTest.appendPoints(other)
+            exp.appendPoints(toAppend)
         else:
-            toTest.appendFeatures(other)
+            exp.appendFeatures(toAppend)
 
-    @raises(ArgumentException)
+        retType = exp.getTypeString()
+        retTypes = ["List", "Matrix", "Sparse", "DataFrame"]
+        otherTypes = [rtype for rtype in retTypes if rtype != retType]
+        appended = []
+        for other in otherTypes:
+            toTest = self.constructor(data)
+            otherTest = UML.createData(other, data)
+            if axis == 'point':
+                toTest.appendPoints(otherTest)
+                appended.append(toTest)
+            else:
+                toTest.appendFeatures(otherTest)
+                appended.append(toTest)
+
+        assert all(exp == obj for obj in appended)
+
+
     def test_appendPoints_exceptionDifferentUMLDataType(self):
         self.backend_append_exceptionDifferentUMLDataType('point')
 
-    @raises(ArgumentException)
+
     def test_appendFeatures_exceptionDifferentUMLDataType(self):
         self.backend_append_exceptionDifferentUMLDataType('feature')
 

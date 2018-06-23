@@ -202,6 +202,12 @@ class Base(object):
 
     features = property(_getfeatureCount, doc="The number of features in this object")
 
+    def _setpointCount(self, value):
+        self._pointCount = value
+
+    def _setfeatureCount(self, value):
+        self._featureCount = value
+
     def _getObjName(self):
         return self._name
 
@@ -2207,7 +2213,7 @@ class Base(object):
         points|features.
 
         iterateBy: Genereate an iterator over 'points' or 'features'. Default is 'points'.
-        
+
         If the object is one dimensional, iterateBy is ignored.
         """
 
@@ -2277,36 +2283,8 @@ class Base(object):
         in the same order.
 
         """
-        self._validateValueIsNotNone("toAppend", toAppend)
-        self._validateValueIsUMLDataObject("toAppend", toAppend, True)
-        self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
-        self._validateEmptyNamesIntersection("point", "toAppend", toAppend)
+        self.append_implementation('point', toAppend)
 
-        # need this in case we are self appending
-        origPointCountS = self.points
-        origPointCountTA = toAppend.points
-
-        isReordered = self._validateReorderedNames('feature', 'appendPoints', toAppend)
-        if isReordered:  # we make use of the generic reordering append code
-            self._appendReorder_implementation('point', toAppend)
-
-            for i in range(origPointCountTA):
-                currName = toAppend.getPointName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName('point')
-                self.setPointName(origPointCountS + i, currName)
-
-        else:
-            self._appendPoints_implementation(toAppend)
-            self._pointCount += toAppend.points
-
-            for i in range(origPointCountTA):
-                currName = toAppend.getPointName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName('point')
-                self._addPointName(currName)
-
-        self.validate()
 
     def appendFeatures(self, toAppend):
         """
@@ -2326,32 +2304,66 @@ class Base(object):
         in the same order.
 
         """
+        self.append_implementation('feature', toAppend)
+
+
+    def append_implementation(self, axis, toAppend):
         self._validateValueIsNotNone("toAppend", toAppend)
         self._validateValueIsUMLDataObject("toAppend", toAppend, True)
-        self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
-        self._validateEmptyNamesIntersection('feature', "toAppend", toAppend)
+        self._validateEmptyNamesIntersection(axis, "toAppend", toAppend)
 
-        # need this in case we are self appending
-        origFeatureCountS = self.features
-        origFeatureCountTA = toAppend.features
+        if axis == 'point':
+            self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
+            # need this in case we are self appending
+            origCountS = self.points
+            origCountTA = toAppend.points
 
-        isReordered = self._validateReorderedNames('point', 'appendFeatures', toAppend)
-        if isReordered:
-            self._appendReorder_implementation('feature', toAppend)
-            for i in range(origFeatureCountTA):
-                currName = toAppend.getFeatureName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName('feature')
-                self.setFeatureName(origFeatureCountS + i, currName)
+            otherAxis = 'feature'
+            funcString = 'appendPoints'
+            selfSetName = self.setPointName
+            appendGetName = toAppend.getPointName
+            selfAppendImplementation = self._appendPoints_implementation
+            selfSetCount = self._setpointCount
+            selfCount = self._pointCount
+            appendCount = toAppend.points
+            selfAddName = self._addPointName
         else:
-            self._appendFeatures_implementation(toAppend)
-            self._featureCount += toAppend.features
+            self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
+            # need this in case we are self appending
+            origCountS = self.features
+            origCountTA = toAppend.features
 
-            for i in range(origFeatureCountTA):
-                currName = toAppend.getFeatureName(i)
+            otherAxis = 'point'
+            funcString = 'appendFeatures'
+            selfSetName = self.setFeatureName
+            selfAppendImplementation = self._appendFeatures_implementation
+            appendGetName = toAppend.getFeatureName
+            selfSetName = self.setFeatureName
+            selfSetCount = self._setfeatureCount
+            selfCount = self._featureCount
+            appendCount = toAppend.features
+            selfAddName = self._addFeatureName
+
+        isReordered = self._validateReorderedNames(otherAxis, funcString, toAppend)
+        differentType = self.getTypeString() != toAppend.getTypeString()
+        if isReordered or differentType:  # we make use of the generic reordering append code
+            self._appendReorder_implementation(axis, toAppend)
+
+            for i in range(origCountTA):
+                currName = appendGetName(i)
                 if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName('feature')
-                self._addFeatureName(currName)
+                    currName = self._nextDefaultName(axis)
+                selfSetName(origCountS + i, currName)
+
+        else:
+            selfAppendImplementation(toAppend)
+            selfSetCount(selfCount + appendCount)
+
+            for i in range(origCountTA):
+                currName = appendGetName(i)
+                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                    currName = self._nextDefaultName(axis)
+                selfAddName(currName)
 
         self.validate()
 
@@ -5120,13 +5132,6 @@ class Base(object):
             msg += str(value) + ", had the type " + str(type(value))
             msg += ", and a method resolution order of "
             msg += str(inspect.getmro(value.__class__))
-            raise ArgumentException(msg)
-        if same and self.getTypeString() != value.getTypeString():
-            msg = "The argument named " + name + " must be an instance "
-            msg += "of the UML.data.Base class, and it must be of the "
-            msg += "same type as the calling object. The value we recieved "
-            msg += "had a type string of " + value.getTypeString() + " but "
-            msg += "self has a type string of " + self.getTypeString()
             raise ArgumentException(msg)
 
     def _shapeCompareString(self, argName, argValue):
