@@ -2276,10 +2276,9 @@ class Base(object):
         method.
 
         toAppend - the UML data object whose contents we will be including
-        in this object. Must be the same type as the calling object. Must
-        have the same number of features as the calling object. Must not
-        share any point names with the calling object. Must have
-        the same feature names as the calling object, but not necessary
+        in this object. Must have the same number of features as the calling
+        object. Must not share any point names with the calling object. Must
+        have the same feature names as the calling object, but not necessarily
         in the same order.
 
         """
@@ -2297,11 +2296,10 @@ class Base(object):
         method.
 
         toAppend - the UML data object whose contents we will be including
-        in this object. Must be the same type as the calling object. Must
-        have the same number of points as the calling object. Must not
-        share any feature names with the calling object. Must have
-        the same point names as the calling object, but not necessary
-        in the same order.
+        in this object. Must have the same number of points as the calling
+        object. Must not share any feature names with the calling object.
+        Must have the same point names as the calling object, but not
+        necessarily in the same order.
 
         """
         self.append_implementation('feature', toAppend)
