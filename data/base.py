@@ -2319,11 +2319,11 @@ class Base(object):
             otherAxis = 'feature'
             funcString = 'appendPoints'
             selfSetName = self.setPointName
-            appendGetName = toAppend.getPointName
+            toAppendGetName = toAppend.getPointName
             selfAppendImplementation = self._appendPoints_implementation
             selfSetCount = self._setpointCount
             selfCount = self._pointCount
-            appendCount = toAppend.points
+            toAppendCount = toAppend.points
             selfAddName = self._addPointName
         else:
             self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
@@ -2335,11 +2335,11 @@ class Base(object):
             funcString = 'appendFeatures'
             selfSetName = self.setFeatureName
             selfAppendImplementation = self._appendFeatures_implementation
-            appendGetName = toAppend.getFeatureName
+            toAppendGetName = toAppend.getFeatureName
             selfSetName = self.setFeatureName
             selfSetCount = self._setfeatureCount
             selfCount = self._featureCount
-            appendCount = toAppend.features
+            toAppendCount = toAppend.features
             selfAddName = self._addFeatureName
 
         isReordered = self._validateReorderedNames(otherAxis, funcString, toAppend)
@@ -2348,17 +2348,17 @@ class Base(object):
             self._appendReorder_implementation(axis, toAppend)
 
             for i in range(origCountTA):
-                currName = appendGetName(i)
+                currName = toAppendGetName(i)
                 if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName(axis)
                 selfSetName(origCountS + i, currName)
 
         else:
             selfAppendImplementation(toAppend)
-            selfSetCount(selfCount + appendCount)
+            selfSetCount(selfCount + toAppendCount)
 
             for i in range(origCountTA):
-                currName = appendGetName(i)
+                currName = toAppendGetName(i)
                 if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                     currName = self._nextDefaultName(axis)
                 selfAddName(currName)
