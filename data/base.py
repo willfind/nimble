@@ -2282,7 +2282,7 @@ class Base(object):
         in the same order.
 
         """
-        self.append_implementation('point', toAppend)
+        self._append_implementation('point', toAppend)
 
 
     def appendFeatures(self, toAppend):
@@ -2302,10 +2302,10 @@ class Base(object):
         necessarily in the same order.
 
         """
-        self.append_implementation('feature', toAppend)
+        self._append_implementation('feature', toAppend)
 
 
-    def append_implementation(self, axis, toAppend):
+    def _append_implementation(self, axis, toAppend):
         self._validateValueIsNotNone("toAppend", toAppend)
         self._validateValueIsUMLDataObject("toAppend", toAppend, True)
         self._validateEmptyNamesIntersection(axis, "toAppend", toAppend)
