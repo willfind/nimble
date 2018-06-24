@@ -1265,8 +1265,10 @@ class StructureModifying(DataTestObject):
         toAppend = self.constructor(data)
         if axis == 'point':
             exp.appendPoints(toAppend)
+            assert exp.points == 6
         else:
             exp.appendFeatures(toAppend)
+            assert exp.features == 6
 
         retType = exp.getTypeString()
         retTypes = ["List", "Matrix", "Sparse", "DataFrame"]
