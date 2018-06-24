@@ -1374,6 +1374,7 @@ def _namesDictToList(names, kind, paramName):
     return ret
 
 def _detectDialectFromSeparator(openFile, inputSeparator):
+    "find the dialect to pass to csv.reader based on inputSeparator"
     startPosition = openFile.tell()
     # skip commented lines
     skipped = _advancePastComments(openFile)
@@ -1381,6 +1382,9 @@ def _detectDialectFromSeparator(openFile, inputSeparator):
         # detect the delimiter from the first line of data
         dialect = csv.Sniffer().sniff(openFile.readline())
         openFile.seek(startPosition)
+    elif len(inputSeparator) > 1:
+        msg = "inputSeparator must be a single character"
+        raise ArgumentException(msg)
     elif inputSeparator == '\t':
         dialect = csv.excel_tab
     else:

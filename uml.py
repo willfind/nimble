@@ -515,8 +515,10 @@ def createData(
     call should be logged by the UML logger. If None, the configurable	global
     default is used.
 
-    inputSeparator: the character that should be used to separate fields in the
-    input file, if necessary. By default, a value of 'automatic' TODO
+    inputSeparator: The character that is used to separate fields in the input
+    file, if necessary. By default, a value of 'automatic' will attempt to 
+    determine the appropriate separator. Otherwise, a single character string
+    of the separator in the file can be passed.
 
     """
     # validation of pointNames and featureNames

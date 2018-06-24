@@ -1846,6 +1846,16 @@ def test_createData_csv_inputSeparatorConfusion():
 
         fromCSV = UML.createData("Matrix", data=tmpCSV.name)
 
+@raises(ArgumentException)
+def test_createData_csv_inputSeparatorNot1Character():
+    with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+        tmpCSV.write("1,,2,,3\n")
+        tmpCSV.write("4,,5,,6\n")
+        tmpCSV.flush()
+
+        fromCSV = UML.createData("Matrix", data=tmpCSV.name, inputSeparator=',,')
+
+
 
 ###################
 ### Other tests ###
