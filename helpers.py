@@ -577,8 +577,8 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 
 def createDataFromFile(
-        returnType, data, pointNames, featureNames, fileType, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures):
+        returnType, data, pointNames, featureNames, name,
+        ignoreNonNumericalFeatures, keepPoints, keepFeatures, inputSeparator):
     """
     Helper for createData which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -586,61 +586,61 @@ def createDataFromFile(
     createData's parameters with the same names).
 
     """
-    # Use the path' extension if fileType isn't specified
-    if fileType is None:
+    # try to find an extension for possible optimizations
+    if isinstance(data, six.string_types):
         path = data
-        if not isinstance(path, six.string_types):
-            try:
-                path = data.name
-            except AttributeError:
-                msg = "The file must be recognizable by it's extension, or a type must "
-                msg += "be specified using the 'fileType' parameter. However, since an "
-                msg += "open file object was passed which didn't have a name attribute, we "
-                msg += "cannot determine the type of the file"
-                raise ArgumentException(msg)
+    else:
+        # try getting name attribute from file
+        try:
+            path = data.name
+        except AttributeError:
+            path=None
 
+    if path is not None:
         split = path.rsplit('.', 1)
         extension = None
         if len(split) > 1:
             extension = split[1].lower()
-        if extension is None:
-            msg = "The file must be recognizable by extension, or a type must "
-            msg += "be specified using the 'fileType' parameter"
-            raise ArgumentException(msg)
-        fileType = extension
+    else:
+        extension = None
 
     loadType = returnType
     if loadType is None:
-        if fileType == 'csv':
-            loadType = 'Matrix'
-        elif fileType == 'mtx':
+        if extension == 'mtx':
             loadType = 'Auto'
         else:
             loadType = 'Matrix'
 
     # Choose what code to use to load the file. Take into consideration the end
     # result we are trying to load into.
-    directPath = "_load" + fileType + "For" + loadType
-    # try to get loading function
-    retData, retPNames, retFNames, selectSuccess = None, None, None, False
+    if loadType is not None and extension is not None:
+        directPath = "_load" + extension + "For" + loadType
+    else:
+        directPath = None
 
     toPass = data
     if isinstance(toPass, six.string_types):
         toPass = open(data, 'rU')
+    # find first non empty line to check header
+    startPosition = toPass.tell()
+    currLine = toPass.readline()
+    while currLine == '':
+        currLine = toPass.readline()
+    header = currLine
+    toPass.seek(startPosition)
     if directPath in globals():
         loader = globals()[directPath]
         loaded = loader(
             toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+            keepPoints, keepFeatures, inputSeparator=inputSeparator)
+    elif header[:14] == "%%MatrixMarket":
+        loaded = _loadmtxForAuto(
+            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
             keepPoints, keepFeatures)
     else:
-        if fileType == 'csv':
-            loaded = _loadcsvForMatrix(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures)
-        if fileType == 'mtx':
-            loaded = _loadmtxForAuto(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures)
+        loaded = _loadcsvUsingPython(
+            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+            keepPoints, keepFeatures, inputSeparator=inputSeparator)
 
     (retData, retPNames, retFNames, selectSuccess) = loaded
 
@@ -673,7 +673,7 @@ def createDataFromFile(
 
 def _loadmtxForAuto(
         openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
-        keepPoints, keepFeatures):
+        keepPoints, keepFeatures, **kwargs):
     """
     Uses scipy helpers to read a matrix market file; returning whatever is most
     appropriate for the file. If it is a matrix market array type, a numpy
@@ -1026,7 +1026,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues, secondValues):
 
     return (pointNames, featureNames)
 
-def _checkCSV_for_Names(openFile, pointNames, featureNames):
+def _checkCSV_for_Names(openFile, pointNames, featureNames, dialect):
     """
     Will check for triggers to automatically determine the positions of
     the point or feature names if they have not been specified by the
@@ -1056,7 +1056,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
     # Use the robust csv reader to read the first two lines (if available)
     # these are saved to used in further autodection
     openFile.seek(startPosition)
-    rowReader = csv.reader(openFile)
+    rowReader = csv.reader(openFile, dialect)
     try:
         firstDataRow = next(rowReader)
         while firstDataRow == []:
@@ -1075,7 +1075,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
     (pointNames, featureNames) = autoDetectNamesFromRaw(pointNames, featureNames,
                                                         firstDataRow, secondDataRow)
 
-    # reset everyting to make the loop easier
+    # reset everything to make the loop easier
     openFile.seek(startPosition)
 
     return (pointNames, featureNames)
@@ -1142,7 +1142,7 @@ def _selectionNameValidation(keep, hasNames, kind):
 
 
 def _csv_getFNamesAndAnalyzeRows(
-        pointNames, featureNames, openFile, lineReader, skippedLines):
+        pointNames, featureNames, openFile, lineReader, skippedLines, dialect):
     """
     If needed, take the first row from the lineReader to define the
     feature names. Regardless of whether feature names are desired,
@@ -1168,7 +1168,7 @@ def _csv_getFNamesAndAnalyzeRows(
     else:
         startPosition = openFile.tell()
         filtered = itertools.ifilter(_filterCSVRow, openFile)
-        trialReader = csv.reader(filtered)
+        trialReader = csv.reader(filtered, dialect)
         trialRow = next(trialReader)
         # Number values in a row excluding point names
         numFeatures = len(trialRow)
@@ -1183,7 +1183,7 @@ def _csv_getFNamesAndAnalyzeRows(
 
 
 def _validateRowLength(
-        row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex):
+        row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex, delimiter):
     """
     Given a row read from a csv line reader, and the expected length of
     that row, raise an appropriately worded exception if there is a
@@ -1194,7 +1194,8 @@ def _validateRowLength(
         msg += str(len(row)) + ". We expected a length of "
         msg += str(numColumns) + ". The expected row length was defined "
         msg += "by looking at the " + columnsDefSrc + " on line "
-        msg += str(columnsDefIndex) + "."
+        msg += str(columnsDefIndex) + " and using '" + delimiter
+        msg += "' as the separator."
         raise FileFormatException(msg)
 
 
@@ -1370,10 +1371,32 @@ def _namesDictToList(names, kind, paramName):
 
     return ret
 
+def _detectDialectFromSeparator(openFile, inputSeparator):
+    "find the dialect to pass to csv.reader based on inputSeparator"
+    startPosition = openFile.tell()
+    # skip commented lines
+    skipped = _advancePastComments(openFile)
+    if inputSeparator == 'automatic':
+        # detect the delimiter from the first line of data
+        dialect = csv.Sniffer().sniff(openFile.readline())
+    elif len(inputSeparator) > 1:
+        msg = "inputSeparator must be a single character"
+        raise ArgumentException(msg)
+    elif inputSeparator == '\t':
+        dialect = csv.excel_tab
+    else:
+        dialect = csv.excel
+        dialect.delimiter = inputSeparator
+
+    # reset everything to make the loop easier
+    openFile.seek(startPosition)
+
+    return dialect
+
 
 def _loadcsvUsingPython(
         openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
-        keepPoints, keepFeatures):
+        keepPoints, keepFeatures, **kwargs):
     """
     Loads a csv file using a reader from python's csv module
 
@@ -1422,13 +1445,14 @@ def _loadcsvUsingPython(
     were applied in this function call.
 
     """
+    inputSeparator = kwargs['inputSeparator']
+    dialect = _detectDialectFromSeparator(openFile, inputSeparator)
+
     (pointNames, featureNames) = _checkCSV_for_Names(
-        openFile, pointNames, featureNames)
+        openFile, pointNames, featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
     featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')
-
-    # TODO Try to determine formating
 
     # Advance the file past any beginning of file comments, record
     # how many are skipped
@@ -1436,7 +1460,7 @@ def _loadcsvUsingPython(
     # remake the file iterator to ignore empty lines
     filtered = itertools.ifilter(_filterCSVRow, openFile)
     # send that line iterator to the csv reader
-    lineReader = csv.reader(filtered)
+    lineReader = csv.reader(filtered, dialect)
 
     # after _checkCSV_for_Names then both pointNames and featureNames
     # should either be True, False, a list or a dict. In the case of
@@ -1450,7 +1474,7 @@ def _loadcsvUsingPython(
     # columns in a row, and record a few book-keeping details
     # to be output in case of an exception
     namesAndMore = _csv_getFNamesAndAnalyzeRows(
-        pointNames, featureNames, openFile, lineReader, skippedLines)
+        pointNames, featureNames, openFile, lineReader, skippedLines, dialect)
     retFNames = namesAndMore[0]
     numFeatures = namesAndMore[1]
     numColumns = namesAndMore[2]
@@ -1528,7 +1552,8 @@ def _loadcsvUsingPython(
 
         # Validation: require equal length of all rows
         _validateRowLength(
-            row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex)
+            row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex,
+            delimiter=dialect.delimiter)
 
         # grab the pointName if needed
         currPName = None
