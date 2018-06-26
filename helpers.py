@@ -602,7 +602,7 @@ def createDataFromFile(
         if len(split) > 1:
             extension = split[1].lower()
     else:
-        extension=None
+        extension = None
 
     loadType = returnType
     if loadType is None:
@@ -617,8 +617,6 @@ def createDataFromFile(
         directPath = "_load" + extension + "For" + loadType
     else:
         directPath = None
-    # try to get loading function
-    retData, retPNames, retFNames, selectSuccess = None, None, None, False
 
     toPass = data
     if isinstance(toPass, six.string_types):
@@ -1381,7 +1379,6 @@ def _detectDialectFromSeparator(openFile, inputSeparator):
     if inputSeparator == 'automatic':
         # detect the delimiter from the first line of data
         dialect = csv.Sniffer().sniff(openFile.readline())
-        openFile.seek(startPosition)
     elif len(inputSeparator) > 1:
         msg = "inputSeparator must be a single character"
         raise ArgumentException(msg)
