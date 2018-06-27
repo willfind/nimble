@@ -1136,6 +1136,36 @@ class StructureModifying(DataTestObject):
         assert dataObj1.isIdentical(dataObj2)
         assert dataObj2.isIdentical(dataObjT)
 
+    def test_transpose_handmadeWithAxisNames(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0]]
+        dataTrans = [[1, 4, 7, 0], [2, 5, 8, 0], [3, 6, 9, 0]]
+
+        origPointNames = ['1','2','3','4']
+        origFeatureNames = ['a','b','c']
+        transPointNames = origFeatureNames
+        transFeatureNames = origPointNames
+
+        dataObj1 = self.constructor(deepcopy(data), pointNames=origPointNames,
+                                                    featureNames=origFeatureNames)
+        dataObj2 = self.constructor(deepcopy(data), pointNames=origPointNames,
+                                                    featureNames=origFeatureNames)
+        dataObjT = self.constructor(deepcopy(dataTrans), pointNames=transPointNames,
+                                                         featureNames=transFeatureNames)
+        dataObj1.transpose()
+        assert dataObj1.getPointNames() == transPointNames
+        assert dataObj1.getFeatureNames() == transFeatureNames
+        assert dataObj1.isIdentical(dataObjT)
+
+        dataObj1.transpose()
+        dataObjT.transpose()
+        assert dataObj1.getPointNames() == dataObj2.getPointNames()
+        assert dataObj1.getFeatureNames() == dataObj2.getFeatureNames()
+        assert dataObj1.isIdentical(dataObj2)
+
+        assert dataObj2.getPointNames() == dataObjT.getPointNames()
+        assert dataObj2.getFeatureNames() == dataObjT.getFeatureNames()
+        assert dataObj2.isIdentical(dataObjT)
+
     def test_transpose_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, 0, 0], [11, 12, 13]]
 
