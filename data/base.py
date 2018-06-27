@@ -2342,25 +2342,32 @@ class Base(object):
             toAppendCount = toAppend.features
             selfAddName = self._addFeatureName
 
+        # Two cases will require us to use a generic implementation with
+        # reordering capabilities: the names are consistent but out of order,
+        # or the type of the objects is different.
         isReordered = self._validateReorderedNames(otherAxis, funcString, toAppend)
         differentType = self.getTypeString() != toAppend.getTypeString()
-        if isReordered or differentType:  # we make use of the generic reordering append code
+
+        if isReordered or differentType:
             self._appendReorder_implementation(axis, toAppend)
-
-            for i in range(origCountTA):
-                currName = toAppendGetName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName(axis)
-                selfSetName(origCountS + i, currName)
-
         else:
             selfAppendImplementation(toAppend)
             selfSetCount(selfCount + toAppendCount)
 
-            for i in range(origCountTA):
-                currName = toAppendGetName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName(axis)
+        # Have to make sure the point/feature names match the extended data. In
+        # the case that the reordering implementation is used, the new points or
+        # features already have default name assignments, so we set the correct
+        # names. In the case of the standard implementation, we must use Base's
+        # helper to add new names.
+        for i in range(origCountTA):
+            currName = toAppendGetName(i)
+            # This insures there is no name collision with defaults already
+            # present in the original object
+            if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                currName = self._nextDefaultName(axis)
+            if isReordered or differentType:
+                selfSetName(origCountS + i, currName)
+            else:
                 selfAddName(currName)
 
         self.validate()

@@ -1259,7 +1259,7 @@ class StructureModifying(DataTestObject):
         self.backend_append_exceptionNonUMLDataType('feature')
 
 
-    def backend_append_exceptionDifferentUMLDataType(self, axis):
+    def backend_append_allPossibleUMLDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         exp = self.constructor(data)
         toAppend = self.constructor(data)
@@ -1270,9 +1270,9 @@ class StructureModifying(DataTestObject):
             exp.appendFeatures(toAppend)
             assert exp.features == 6
 
-        retType = exp.getTypeString()
-        retTypes = ["List", "Matrix", "Sparse", "DataFrame"]
-        otherTypes = [rtype for rtype in retTypes if rtype != retType]
+        currType = exp.getTypeString()
+        availableTypes = UML.data.available
+        otherTypes = [retType for retType in availableTypes if retType != currType]
         appended = []
         for other in otherTypes:
             toTest = self.constructor(data)
@@ -1287,12 +1287,12 @@ class StructureModifying(DataTestObject):
         assert all(exp == obj for obj in appended)
 
 
-    def test_appendPoints_exceptionDifferentUMLDataType(self):
-        self.backend_append_exceptionDifferentUMLDataType('point')
+    def test_appendPoints_allPossibleUMLDataType(self):
+        self.backend_append_allPossibleUMLDataType('point')
 
 
-    def test_appendFeatures_exceptionDifferentUMLDataType(self):
-        self.backend_append_exceptionDifferentUMLDataType('feature')
+    def test_appendFeatures_allPossibleUMLDataType(self):
+        self.backend_append_allPossibleUMLDataType('feature')
 
 
     def backend_append_exception_outOfOrder_with_defaults(self, axis):
