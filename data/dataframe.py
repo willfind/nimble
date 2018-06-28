@@ -486,6 +486,15 @@ class DataFrame(Base):
 
         return UML.createData('DataFrame', ret)
 
+
+    def _calculateForEachElement_implementation(self, function, toCalculate,
+                                                preserveZeros, outputType):
+        toCalculate = toCalculate.copyAs('numpyarray')
+        values = function(toCalculate)
+
+        return UML.createData(outputType, values)
+
+
     def _transformEachPoint_implementation(self, function, points):
         """
 

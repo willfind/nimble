@@ -665,6 +665,15 @@ class List(Base):
 
         return List(ret, reuseData=True)
 
+
+    def _calculateForEachElement_implementation(self, function, toCalculate,
+                                                preserveZeros, outputType):
+        toCalculate = toCalculate.copyAs('numpyarray')
+        values = function(toCalculate)
+
+        return UML.createData(outputType, values)
+
+
     def _transformEachPoint_implementation(self, function, points):
         for i, p in enumerate(self.pointIterator()):
             if points is not None and i not in points:
