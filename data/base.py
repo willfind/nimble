@@ -889,6 +889,31 @@ class Base(object):
 
         points = points if points else list(range(self.points))
         features = features if features else list(range(self.features))
+
+        # Use vectorized for functions with oneArg except List
+        # Lists do not benefit from vectorized
+        if oneArg and not isinstance(self.data, list):
+            valueArray = self._calculateForEachElementVectorized(
+                function, points, features, preserveZeros, skipNoneReturnValues)
+        else:
+            valueArray = self._calculateForEachElementIterative(
+                function, points, features, oneArg, preserveZeros, skipNoneReturnValues)
+
+        if outputType is not None:
+            optType = outputType
+        else:
+            optType = self.getTypeString()
+
+        ret = UML.createData(optType, valueArray)
+
+        ret._absPath = self.absolutePath
+        ret._relPath = self.relativePath
+
+        return ret
+
+
+    def _calculateForEachElementIterative(self, function, points, features, oneArg,
+                                          preserveZeros, skipNoneReturnValues):
         valueArray = numpy.empty([len(points), len(features)])
         p = 0
         for pi in points:
@@ -906,17 +931,27 @@ class Base(object):
                 f += 1
             p += 1
 
-        if outputType is not None:
-            optType = outputType
-        else:
-            optType = self.getTypeString()
+        return valueArray
 
-        ret = UML.createData(optType, valueArray)
 
-        ret._absPath = self.absolutePath
-        ret._relPath = self.relativePath
+    def _calculateForEachElementVectorized(self, function, points, features,
+                                           preserveZeros, skipNoneReturnValues):
+        toCalculate = self[points, features]
+        toCalculate = toCalculate.copyAs("Matrix")
 
-        return ret
+        def functionWrap(value):
+            if preserveZeros and value == 0:
+                return 0
+            currRet = function(value)
+            if skipNoneReturnValues and currRet is None:
+                return value
+            else:
+                return currRet
+
+        vectorized = numpy.vectorize(functionWrap)
+        valueArray = vectorized(toCalculate.data)
+
+        return valueArray
 
 
     def countElements(self, function):
@@ -2207,7 +2242,7 @@ class Base(object):
         points|features.
 
         iterateBy: Genereate an iterator over 'points' or 'features'. Default is 'points'.
-        
+
         If the object is one dimensional, iterateBy is ignored.
         """
 
