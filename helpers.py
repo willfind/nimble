@@ -1297,7 +1297,6 @@ def _validationForPointSelection(keepPoints, pointNames):
             msg += str(keepPoints[i])
             msg += ") was less than 0, yet we only allow valid non-negative "
             msg += "interger indices or point names as values."
-            msg += str(numFeatures - 1)  # we want inclusive end points
             raise ArgumentException(msg)
 
         if isinstance(pointNames, list):

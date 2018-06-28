@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from UML.exceptions import ArgumentException
+from UML.data import Base
 
 
 def elementwiseMultiply(left, right):
@@ -12,7 +13,7 @@ def elementwiseMultiply(left, right):
 
     """
     # check left is UML
-    if not isinstance(left, UML.data.Base):
+    if not isinstance(left, Base):
         raise ArgumentException("'left' must be an instance of a UML data object")
 
     left = left.copy()
@@ -27,7 +28,7 @@ def elementwisePower(left, right):
     will be created, and the input obects will be un-modified.
     """
     # check left is UML
-    if not isinstance(left, UML.data.Base):
+    if not isinstance(left, Base):
         raise ArgumentException("'left' must be an instance of a UML data object")
 
     left = left.copy()
