@@ -15,6 +15,8 @@ import inspect
 import numpy
 import importlib
 import numbers
+import requests
+from io import StringIO, BytesIO
 
 import os.path
 import re
@@ -594,8 +596,9 @@ def createDataFromFile(
         try:
             path = data.name
         except AttributeError:
-            path=None
+            path = None
 
+    # detect extension from the path
     if path is not None:
         split = path.rsplit('.', 1)
         extension = None
@@ -604,12 +607,58 @@ def createDataFromFile(
     else:
         extension = None
 
+    def isMtxFileChecker(ioStream):
+        # find first non empty line to check header
+        startPosition = ioStream.tell()
+        currLine = ioStream.readline()
+        while currLine == '':
+            currLine = ioStream.readline()
+        header = currLine
+        ioStream.seek(startPosition)
+
+        # check beginning of header for sentinal - on both string or binary stream
+        return header[:14] == "%%MatrixMarket" or header[:14] == b"%%MatrixMarket"
+
+    toPass = data
+    # Case: string value means we need to open the file, either directly or through
+    # an http request
+    if isinstance(toPass, six.string_types):
+        if toPass[:4] == 'http':
+            response = requests.get(data, stream=True)
+            if not response.ok:
+                msg = "The data could not be accessed from the webpage. "
+                msg += "HTTP Status: {0}, ".format(response.status_code)
+                msg += "Reason: {0}".format(response.reason)
+                raise ArgumentException(msg)
+
+            # check python version
+            py3 = sys.version_info[0] == 3
+            if py3:
+                toPass = StringIO(response.text, newline=None)
+                isMtxFile = isMtxFileChecker(toPass)
+                # scipy.io.mmreader needs bytes object
+                if isMtxFile:
+                    toPass = BytesIO(bytes(response.content, response.apparent_encoding))
+            # in python 2, we can just always use BytesIO
+            else:
+                # handle universal newline
+                content = "\n".join(response.content.splitlines())
+                toPass = BytesIO(content)
+                isMtxFile = isMtxFileChecker(toPass)
+        else:
+            toPass = open(data, 'rU')
+            isMtxFile = isMtxFileChecker(toPass)
+    # Case: we are given an open file already
+    else:
+        isMtxFile = isMtxFileChecker(toPass)
+
     loadType = returnType
     if loadType is None:
-        if extension == 'mtx':
-            loadType = 'Auto'
-        else:
-            loadType = 'Matrix'
+        loadType = 'Auto' if isMtxFile else 'Matrix'
+
+    # use detected format to override file extension
+    if isMtxFile:
+        extension = 'mtx'
 
     # Choose what code to use to load the file. Take into consideration the end
     # result we are trying to load into.
@@ -618,25 +667,12 @@ def createDataFromFile(
     else:
         directPath = None
 
-    toPass = data
-    if isinstance(toPass, six.string_types):
-        toPass = open(data, 'rU')
-    # find first non empty line to check header
-    startPosition = toPass.tell()
-    currLine = toPass.readline()
-    while currLine == '':
-        currLine = toPass.readline()
-    header = currLine
-    toPass.seek(startPosition)
     if directPath in globals():
         loader = globals()[directPath]
         loaded = loader(
             toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
             keepPoints, keepFeatures, inputSeparator=inputSeparator)
-    elif header[:14] == "%%MatrixMarket":
-        loaded = _loadmtxForAuto(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures)
+    # If we don't know, default to trying to load a value separated file
     else:
         loaded = _loadcsvUsingPython(
             toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
@@ -1850,8 +1886,11 @@ def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
 _loadcsvForList = _loadcsvUsingPython
 _loadcsvForMatrix = _loadcsvUsingPython
 _loadcsvForSparse = _loadcsvUsingPython
+_loadcsvForDataFrame = _loadcsvUsingPython
+_loadmtxForList = _loadmtxForAuto
 _loadmtxForMatrix = _loadmtxForAuto
 _loadmtxForSparse = _loadmtxForAuto
+_loadmtxForDataFrame = _loadmtxForAuto
 
 
 def autoRegisterFromSettings():
