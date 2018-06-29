@@ -897,7 +897,11 @@ class Base(object):
 
         # Use vectorized for functions with oneArg except List
         if oneArg:
-            toCalculate = self[points, features]
+            toCalculate = self.copyAs('numpyarray')
+            points = numpy.array(points)
+            features = numpy.array(features)
+            toCalculate = toCalculate[points[:,None], features]
+
             def functionWrap(value):
                 if preserveZeros and value == 0:
                     return 0
@@ -908,40 +912,34 @@ class Base(object):
                     return currRet
 
             vectorized = numpy.vectorize(functionWrap)
+            values = vectorized(toCalculate)
 
-            ret = self._calculateForEachElement_implementation(
-                vectorized, toCalculate, preserveZeros, optType)
+            ret = UML.createData(optType, values)
+
         else:
-            ret = self._calculateForEachElementIterative(
-                function, points, features, oneArg, preserveZeros, skipNoneReturnValues, optType)
+            valueArray = numpy.empty([len(points), len(features)])
+            p = 0
+            for pi in points:
+                f = 0
+                for fj in features:
+                    value = self[pi, fj]
+                    if preserveZeros and value == 0:
+                        valueArray[p, f] = 0
+                    else:
+                        currRet = function(value) if oneArg else function(value, pi, fj)
+                        if skipNoneReturnValues and currRet is None:
+                            valueArray[p, f] = value
+                        else:
+                            valueArray[p, f] = currRet
+                    f += 1
+                p += 1
+
+            ret = UML.createData(optType, valueArray)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
         return ret
-
-
-    def _calculateForEachElementIterative(
-            self, function, points, features, oneArg,
-            preserveZeros, skipNoneReturnValues, outputType):
-        valueArray = numpy.empty([len(points), len(features)])
-        p = 0
-        for pi in points:
-            f = 0
-            for fj in features:
-                value = self[pi, fj]
-                if preserveZeros and value == 0:
-                    valueArray[p, f] = 0
-                else:
-                    currRet = function(value) if oneArg else function(value, pi, fj)
-                    if skipNoneReturnValues and currRet is None:
-                        valueArray[p, f] = value
-                    else:
-                        valueArray[p, f] = currRet
-                f += 1
-            p += 1
-
-        return UML.createData(outputType, valueArray)
 
 
     def countElements(self, function):

@@ -854,24 +854,6 @@ class Sparse(Base):
         return Sparse(retData, reuseData=True)
 
 
-    def _calculateForEachElement_implementation(self, function, toCalculate,
-                                                preserveZeros, outputType):
-        if preserveZeros:
-            toCalculate = toCalculate.data
-            values = function(toCalculate.data)
-            row = toCalculate.row
-            col = toCalculate.col
-            shape = toCalculate.shape
-            retData = coo_matrix((values, (row, col)), shape=shape)
-            ret = UML.createData(outputType, retData)
-        else:
-            toCalculate = toCalculate.data.toarray()
-            values = function(toCalculate)
-            ret = UML.createData(outputType, values)
-
-        return ret
-
-
     def _transformEachPoint_implementation(self, function, points):
         self._transformEach_implementation(function, points, 'point')
 
