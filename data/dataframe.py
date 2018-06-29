@@ -486,7 +486,6 @@ class DataFrame(Base):
 
         return UML.createData('DataFrame', ret)
 
-
     def _transformEachPoint_implementation(self, function, points):
         """
 
