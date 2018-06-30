@@ -895,11 +895,12 @@ class Base(object):
         else:
             optType = self.getTypeString()
 
-        # Use vectorized for functions with oneArg except List
+        # Use vectorized for functions with oneArg
         if oneArg:
             toCalculate = self.copyAs('numpyarray')
             points = numpy.array(points)
             features = numpy.array(features)
+            # array with only desired points and features
             toCalculate = toCalculate[points[:,None], features]
 
             def functionWrap(value):
