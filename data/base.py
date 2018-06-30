@@ -5085,46 +5085,32 @@ class Base(object):
             self.featureNamesInverse = reverseMap
 
 
-    def _containerToIndicesList(self, axis, values):
+    def _constructIndicesList(self, axis, values):
         """
-        convert values from container-type objects to a list of indices
+        Construct a list of indices from a valid integer (python or numpy) or
+        string, or a one-dimensional, iterable container of valid integers
+        and/or strings
+
         """
-        acceptedTypes = (int, numpy.integer, six.string_types)
-        if isinstance(values, acceptedTypes):
+        if isinstance(values, (int, numpy.integer, six.string_types)):
             values = self._getIndex(values, axis)
             return [values]
-        valList = []
-        for val in values:
-            valList.append(val)
-        is1D = isinstance(valList[0], acceptedTypes)
-        if is1D:
-            pass
-        # if not 1D, check if 2D axis has dimension of 1
-        elif not is1D and isinstance(valList[0][0], acceptedTypes):
-            # two-dimensional, one row
-            if len(valList) == 1:
-                valList = [val for val in valList[0]]
-            # two-dimensional, one column
-            elif len(valList[0]) == 1:
-                valList = [val[0] for val in valList]
-            else:
-                msg = "The input container for {0}s is not valid. ".format(axis)
-                msg += "The container must be one-dimensional or two-dimensional "
-                msg += "with one axis having a dimension of 1. This container has "
-                msg += "dimensions: {0}x{1}".format(len(valList), len(valList[0]))
-                raise ArgumentException(msg)
-        # multi-dimensional
-        else:
-            msg = "The input container for {0}s is not valid. ".format(axis)
-            msg += "This container has more than two-dimensions. The value "
-            msg += "at index [0,0] was {0} ".format(type(valList[0][0]))
-            msg += "with a value of {0}".format(valList[0][0])
-
+        valuesList = []
+        try:
+            for val in values:
+                valuesList.append(val)
+            indicesList = [self._getIndex(val, axis) for val in valuesList]
+        except TypeError:
+            msg = "The argument named '{0}s' ".format(axis)
+            msg += "is not iterable."
+            raise ArgumentException(msg)
+        # _getIndex failed, use it's descriptive message
+        except ArgumentException as ae:
+            msg = "Invalid index value for the argument '{0}s'. ".format(axis)
+            msg += str(ae)[1:-1]
             raise ArgumentException(msg)
 
-        valList = [self._getIndex(val, axis) for val in valList]
-
-        return valList
+        return indicesList
 
 
     def _validateAxis(self, axis):
