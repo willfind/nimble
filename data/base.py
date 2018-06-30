@@ -5101,8 +5101,7 @@ class Base(object):
                 valuesList.append(val)
             indicesList = [self._getIndex(val, axis) for val in valuesList]
         except TypeError:
-            msg = "The argument named '{0}s' ".format(axis)
-            msg += "is not iterable."
+            msg = "The argument '{0}s' is not iterable.".format(axis)
             raise ArgumentException(msg)
         # _getIndex failed, use it's descriptive message
         except ArgumentException as ae:
