@@ -240,14 +240,27 @@ class Base(object):
     def _getPath(self):
         return self.absolutePath
 
-    def _getPointNamesInverse(self):
-        return self.pointNamesInverse
+    def _pointNamesCreated(self):
+        """
+        Returns True if point default names have been created/assigned
+        to the object.
+        If the object does not have points it returns True.
+        """
+        if self.pointNamesInverse is None:
+            return False
+        else:
+            return True
 
-    def _getFeatureNamesInverse(self):
-        return self.featureNamesInverse
-
-    def _getData(self):
-        return self.data
+    def _featureNamesCreated(self):
+        """
+        Returns True if feature default names have been created/assigned
+        to the object.
+        If the object does not have features it returns True.
+        """
+        if self.featureNamesInverse is None:
+            return False
+        else:
+            return True
 
     path = property(_getPath, doc="The path to the file this data originated from")
 
@@ -370,7 +383,7 @@ class Base(object):
         to.
 
         """
-        if self.pointNamesInverse is None:
+        if not self._pointNamesCreated():
             self._setAllDefault('point')
         return copy.copy(self.pointNamesInverse)
 
@@ -380,17 +393,17 @@ class Base(object):
         correspond to.
 
         """
-        if self.featureNamesInverse is None:
+        if not self._featureNamesCreated():
             self._setAllDefault('feature')
         return copy.copy(self.featureNamesInverse)
 
     def getPointName(self, index):
-        if self.pointNamesInverse is None:
+        if not self._pointNamesCreated():
             self._setAllDefault('point')
         return self.pointNamesInverse[index]
 
     def getPointIndex(self, name):
-        if self.pointNamesInverse is None:
+        if not self._pointNamesCreated():
             self._setAllDefault('point')
         return self.pointNames[name]
 
@@ -402,12 +415,12 @@ class Base(object):
             return False
 
     def getFeatureName(self, index):
-        if self.featureNamesInverse is None:
+        if not self._featureNamesCreated():
             self._setAllDefault('feature')
         return self.featureNamesInverse[index]
 
     def getFeatureIndex(self, name):
-        if self.featureNamesInverse is None:
+        if not self._featureNamesCreated():
             self._setAllDefault('feature')
         return self.featureNames[name]
             
@@ -1760,19 +1773,17 @@ class Base(object):
         """
         Checks the integrity of the data with respect to the limitations and invariants
         that our objects enforce.
-
         """
-        if self.pointNamesInverse is not None:
+        if self._pointNamesCreated():
             assert self.points == len(self.getPointNames())
-        if self.featureNamesInverse is not None:
+        if self._featureNamesCreated():
             assert self.features == len(self.getFeatureNames())
-        
 
         if level > 0:
-            if self.pointNamesInverse is not None:
+            if self._pointNamesCreated():
                 for key in self.getPointNames():
                     assert self.getPointName(self.getPointIndex(key)) == key
-            if self.featureNamesInverse is not None:
+            if self._featureNamesCreated():
                 for key in self.getFeatureNames():
                     assert self.getFeatureName(self.getFeatureIndex(key)) == key
 
@@ -2302,16 +2313,16 @@ class Base(object):
 
         self._pointCount, self._featureCount = self._featureCount, self._pointCount
 
-        if self.pointNamesInverse is not None and self.featureNamesInverse is not None:
+        if self._pointNamesCreated() and self._featureNamesCreated():
             self.pointNames, self.featureNames = self.featureNames, self.pointNames
             self.setFeatureNames(self.featureNames)
             self.setPointNames(self.pointNames)
-        elif self.pointNamesInverse is not None:
+        elif self._pointNamesCreated():
             self.featureNames = self.pointNames
             self.pointNames = None
             self.pointNamesInverse = None
             self.setFeatureNames(self.featureNames)
-        elif self.featureNamesInverse is not None:
+        elif self._featureNamesCreated():
             self.pointNames = self.featureNames
             self.featureNames = None
             self.featureNamesInverse = None
@@ -2924,16 +2935,20 @@ class Base(object):
         return ret
 
     def _copyNames (self, CopyObj):
-        if self.pointNamesInverse is not None:
+        if self._pointNamesCreated():
             CopyObj.pointNamesInverse = self.getPointNames()
             CopyObj.pointNames = copy.copy(self.pointNames)
+            if CopyObj.getTypeString() == 'DataFrame':
+                CopyObj.data.index = self.getPointNames()
         else:
             CopyObj.pointNamesInverse = None
             CopyObj.pointNames = None
 
-        if self.featureNamesInverse is not None:
+        if self._featureNamesCreated():
             CopyObj.featureNamesInverse = self.getFeatureNames()
             CopyObj.featureNames = copy.copy(self.featureNames)
+            if CopyObj.getTypeString() == 'DataFrame':
+                CopyObj.data.columns = self.getFeatureNames()
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
@@ -3329,9 +3344,9 @@ class Base(object):
             raise ImproperActionException(msg)
 
         # TODO: flatten nameless Objects without the need to generate default names for them.
-        if self.pointNamesInverse is None:
+        if not self._pointNamesCreated():
             self._setAllDefault('point')
-        if self.featureNamesInverse is None:
+        if not self._featureNamesCreated():
             self._setAllDefault('feature')
 
         self._flattenToOnePoint_implementation()
@@ -3368,9 +3383,9 @@ class Base(object):
             raise ImproperActionException(msg)
 
         # TODO: flatten nameless Objects without the need to generate default names for them.
-        if self.pointNamesInverse is None:
+        if not self._pointNamesCreated():
             self._setAllDefault('point')
-        if self.featureNamesInverse is None:
+        if not self._featureNamesCreated():
             self._setAllDefault('feature')
 
         self._flattenToOneFeature_implementation()
@@ -3516,6 +3531,11 @@ class Base(object):
                   "number of points."
             raise ArgumentException(msg)
 
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
+
         self._unflattenFromOnePoint_implementation(numPoints)
         ret = self._unflattenNames('point', numPoints)
         self._featureCount = self.features // numPoints
@@ -3557,6 +3577,11 @@ class Base(object):
                   "it will not be possible to equally divide the elements into the desired " \
                   "number of features."
             raise ArgumentException(msg)
+        
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
 
         self._unflattenFromOneFeature_implementation(numFeatures)
         ret = self._unflattenNames('feature', numFeatures)
@@ -4004,9 +4029,9 @@ class Base(object):
 
         # check name restrictions
         if isUML:
-            if self._getPointNamesInverse() is not None and other._getPointNamesInverse is not None:
+            if self._pointNamesCreated() and other._pointNamesCreated is not None:
                 self._validateEqualNames('point', 'point', opName, other)
-            if self._getFeatureNamesInverse() is not None and other._getFeatureNamesInverse() is not None:
+            if self._featureNamesCreated() and other._featureNamesCreated():
                 self._validateEqualNames('feature', 'feature', opName, other)
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
@@ -5002,12 +5027,12 @@ class Base(object):
             names[defaultName] = i
 
     def _addPointName(self, pointName):
-        if self.pointNamesInverse is None:
+        if not self._pointNamesCreated():
             self._setAllDefault('point')
         self._addName(pointName, self.pointNames, self.pointNamesInverse, 'point')
 
     def _addFeatureName(self, featureName):
-        if self.featureNamesInverse is None:
+        if not self._featureNamesCreated():
             self._setAllDefault('feature')
         self._addName(featureName, self.featureNames, self.featureNamesInverse, 'feature')
 
