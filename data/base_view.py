@@ -76,11 +76,27 @@ class BaseView(Base):
 
     relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
 
-    def _getPointNamesInverse(self):
-        return self._source.pointNamesInverse
+    def _pointNamesCreated(self):
+        """
+        Returns True if point default names have been created/assigned
+        to the object.
+        If the object does not have points it returns True.
+        """
+        if self._source.pointNamesInverse is None:
+            return False
+        else:
+            return True
 
-    def _getFeatureNamesInverse(self):
-        return self._source.featureNamesInverse
+    def _featureNamesCreated(self):
+        """
+        Returns True if feature default names have been created/assigned
+        to the object.
+        If the object does not have features it returns True.
+        """
+        if self._source.featureNamesInverse is None:
+            return False
+        else:
+            return True
 
     def _getData(self):
         return self._source.data
@@ -138,16 +154,20 @@ class BaseView(Base):
 
     def _copyNames(self, CopyObj):
 
-        if self._source.pointNamesInverse is not None:
+        if self._pointNamesCreated():
             CopyObj.pointNamesInverse = self.getPointNames()
             CopyObj.pointNames = copy.copy(self._source.pointNames)
+            if CopyObj.getTypeString() == 'DataFrame':
+                CopyObj.data.index = self.getPointNames()
         else:
             CopyObj.pointNamesInverse = None
             CopyObj.pointNames = None
 
-        if self._source.featureNamesInverse is not None:
+        if self._featureNamesCreated():
             CopyObj.featureNamesInverse = self.getFeatureNames()
             CopyObj.featureNames = copy.copy(self._source.featureNames)
+            if CopyObj.getTypeString() == 'DataFrame':
+                CopyObj.data.columns = self.getFeatureNames()
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
