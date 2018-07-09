@@ -887,9 +887,6 @@ class Base(object):
 
         self.validate()
 
-        points = points if points else list(range(self.points))
-        features = features if features else list(range(self.features))
-
         if outputType is not None:
             optType = outputType
         else:
@@ -897,12 +894,9 @@ class Base(object):
 
         # Use vectorized for functions with oneArg
         if oneArg:
-            toCalculate = self.copyAs('numpyarray')
-            points = numpy.array(points)
-            features = numpy.array(features)
-            # array with only desired points and features
-            toCalculate = toCalculate[points[:,None], features]
-
+            if not preserveZeros:
+                # check if the function preserves zero values
+                preserveZeros = function(0) == 0
             def functionWrap(value):
                 if preserveZeros and value == 0:
                     return 0
@@ -913,11 +907,11 @@ class Base(object):
                     return currRet
 
             vectorized = numpy.vectorize(functionWrap)
-            values = vectorized(toCalculate)
-
-            ret = UML.createData(optType, values)
-
+            ret = self._calculateForEachElement_implementation(
+                     vectorized, points, features, preserveZeros, optType)
         else:
+            points = points if points else list(range(self.points))
+            features = features if features else list(range(self.features))
             valueArray = numpy.empty([len(points), len(features)])
             p = 0
             for pi in points:
@@ -941,6 +935,17 @@ class Base(object):
         ret._relPath = self.relativePath
 
         return ret
+
+    def _calculateForEachElementGenericVectorized(self, function, points, features,
+                                                  outputType):
+        # need points/features as arrays for indexing
+        points = numpy.array(points) if points else numpy.array(range(self.points))
+        features = numpy.array(features) if features else numpy.array(range(self.features))
+        toCalculate = self.copyAs('numpyarray')
+        # array with only desired points and features
+        toCalculate = toCalculate[points[:,None], features]
+        values = function(toCalculate)
+        return UML.createData(outputType, values)
 
 
     def countElements(self, function):
@@ -3880,7 +3885,9 @@ class Base(object):
 
     def __abs__(self):
         """ Perform element wise absolute value on this object """
+        print(self)
         ret = self.calculateForEachElement(abs)
+        print(ret)
         ret.setPointNames(self.getPointNames())
         ret.setFeatureNames(self.getFeatureNames())
 
