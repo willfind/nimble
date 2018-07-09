@@ -25,7 +25,7 @@ class DataFrame(Base):
     in a pandas DataFrame.
     """
 
-    def __init__(self, data, reuseData=False, elementType=None, dataCopy=False, **kwds):
+    def __init__(self, data, reuseData=False, elementType=None, **kwds):
         """
         The initializer.
         Inputs:
@@ -49,42 +49,21 @@ class DataFrame(Base):
             self.data = pd.DataFrame(data)
 
         kwds['shape'] = self.data.shape
-        kwds['dataCopy'] = dataCopy
         super(DataFrame, self).__init__(**kwds)
         # it is very import to set up self.data's index and columns, other wise int index or column name will be set
         # if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
 
-        if not dataCopy:
+        if self._pointNamesCreated():
             self.data.index = self.getPointNames()
+        if self._featureNamesCreated():
             self.data.columns = self.getFeatureNames()
-        else:
-            if kwds['pointNames'] is not None:
-                self.data.index = copy.copy(kwds['pointNames'])
-            if kwds['featureNames'] is not None:
-                self.data.columns = copy.copy(kwds['featureNames'])
 
-
-    def getPointNames(self):
-        """Returns a list containing all point names, where their index
-        in the list is the same as the index of the point they correspond
-        to.
-
-        """
-        if self.pointNamesInverse is None:
-            self._setAllDefault('point')
+    def _setAllDefault(self, axis):
+        super(DataFrame, self)._setAllDefault(axis)
+        if axis == 'point':
             self.data.index = self.pointNamesInverse
-        return copy.copy(self.pointNamesInverse)
-
-    def getFeatureNames(self):
-        """Returns a list containing all feature names, where their index
-        in the list is the same as the index of the feature they
-        correspond to.
-
-        """
-        if self.featureNamesInverse is None:
-            self._setAllDefault('feature')
+        else:
             self.data.columns = self.featureNamesInverse
-        return copy.copy(self.featureNamesInverse)
 
     def _transpose_implementation(self):
         """
@@ -464,35 +443,22 @@ class DataFrame(Base):
 
         self.data = other.data
 
-    def _copyAs_implementation(self, format, dataCopy=True):
+    def _copyAs_implementation(self, format):
         """
         Copy the current DataFrame object to another one in the format.
         Input:
             format: string. Sparse, List, Matrix, pythonlist, numpyarray, numpymatrix, scipycsc, scipycsr or None
                     if format is None, a new DataFrame will be created.
         """
-        if self.pointNamesInverse is None:
-            pNames = False
-        else:
-            pNames = self.getPointNames()
-        if self.featureNamesInverse is None:
-            fNames = False
-        else:
-            fNames = self.getFeatureNames()
-
         dataArray = self.data.values.copy()
         if format is None or format == 'DataFrame':
-            return UML.createData('DataFrame', dataArray, pointNames=pNames,
-                                  featureNames=fNames, dataCopy=dataCopy)
+            return UML.createData('DataFrame', dataArray)
         if format == 'Sparse':
-            return UML.createData('Sparse', dataArray, pointNames=pNames,
-                                  featureNames=fNames, dataCopy=dataCopy)
+            return UML.createData('Sparse', dataArray)
         if format == 'List':
-            return UML.createData('List', dataArray, pointNames=pNames,
-                                  featureNames=fNames, dataCopy=dataCopy)
+            return UML.createData('List', dataArray)
         if format == 'Matrix':
-            return UML.createData('Matrix', dataArray, pointNames=pNames,
-                                  featureNames=fNames, dataCopy=dataCopy)
+            return UML.createData('Matrix', dataArray)
         if format == 'pythonlist':
             return dataArray.tolist()
         if format == 'numpyarray':
@@ -510,7 +476,7 @@ class DataFrame(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(dataArray)
 
-        return UML.createData('DataFrame', dataArray, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+        return UML.createData('DataFrame', dataArray)
 
     def _copyPoints_implementation(self, points, start, end):
         if points is not None:
