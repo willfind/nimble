@@ -429,10 +429,10 @@ def listLearners(package=None):
 
     return results
 
-
-def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
-               fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
+def createData(
+        returnType, data, pointNames='automatic', featureNames='automatic',
+        elementType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
+        ignoreNonNumericalFeatures=False, useLog=None, reuseData=False, inputSeparator='automatic'):
     """Function to instantiate one of the UML data container types.
 
     returnType: string (or None) indicating which kind of UML data type you

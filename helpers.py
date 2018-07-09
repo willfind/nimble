@@ -460,10 +460,9 @@ def elementTypeConvert(rawData, elementType):
             data = numpy.matrix(rawData, dtype=object)
         return data
 
-
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path,
-        keepPoints, keepFeatures, elementType=None, reuseData=False, dataCopy=False):
+        keepPoints, keepFeatures, elementType=None, reuseData=False):
     """
     1. set up autoType
     2.
