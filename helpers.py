@@ -266,7 +266,7 @@ def transposeMatrix(matrixObj):
     return numpy.matrix(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
 
-def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType, dataCopy):
+def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType):
     """
     1. if rawData is like {'a':[1,2], 'b':[3,4]}, then convert it to np.matrix and extract
     featureNames from keys.
@@ -480,7 +480,7 @@ def initDataObject(
 
     # may need to extract names and may need to convert data to matrix
     rawData, pointNames, featureNames = extractNamesAndConvertData(
-        returnType, rawData, pointNames, featureNames, elementType, dataCopy)
+        returnType, rawData, pointNames, featureNames, elementType)
     # print(pointNames, featureNames)
     pathsToPass = (None, None)
     if path is not None:
@@ -500,7 +500,7 @@ def initDataObject(
     try:
         ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames,
                          name=name, paths=pathsToPass, elementType=elementType,
-                         reuseData=reuseData, dataCopy=dataCopy)
+                         reuseData=reuseData)
 
     except Exception as e:
         einfo = sys.exc_info()
@@ -509,7 +509,7 @@ def initDataObject(
             autoMethod = getattr(UML.data, autoType)
             ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames,
                              name=name, paths=pathsToPass, elementType=elementType,
-                             reuseData=reuseData, dataCopy=dataCopy)
+                             reuseData=reuseData)
             ret = ret.copyAs(returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
