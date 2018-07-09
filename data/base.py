@@ -4063,9 +4063,9 @@ class Base(object):
         (retPNames, retFNames) = (None, None)
 
         if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
-            if self._getPointNamesInverse() is not None:
+            if self._pointNamesCreated():
                 retPNames = self.getPointNames()
-            if self._getFeatureNamesInverse() is not None:
+            if self._featureNamesCreated():
                 retFNames = self.getFeatureNames()
         # else (everything else that uses this helper is a binary scalar op)
         else:
