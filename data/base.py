@@ -93,7 +93,7 @@ class Base(object):
     """
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
-                 paths=(None, None), dataCopy=False,  **kwds):
+                 paths=(None, None), **kwds):
         """
         Instantiates the book-keeping structures that are taken to be common
         across all data types. Specifically, this includes point and feature
@@ -137,9 +137,6 @@ class Base(object):
         if pointNames is None:
             self.pointNamesInverse = None
             self.pointNames = None
-        elif dataCopy:
-            self.pointNamesInverse = None
-            self.pointNames = None
         elif isinstance(pointNames, list):
             self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
@@ -157,9 +154,6 @@ class Base(object):
         # Set up feature names
         self._nextDefaultValueFeature = 0
         if featureNames is None:
-            self.featureNamesInverse = None
-            self.featureNames = None
-        elif dataCopy:
             self.featureNamesInverse = None
             self.featureNames = None
         elif isinstance(featureNames, list):
