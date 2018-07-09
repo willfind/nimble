@@ -778,32 +778,19 @@ class Sparse(Base):
         self.data = other.data
         self._sorted = other._sorted
 
-    def _copyAs_implementation(self, format, dataCopy=True):
-
-        if self.pointNamesInverse is None:
-            pNames = False
-        else:
-            pNames = self.getPointNames()
-        if self.featureNamesInverse is None:
-            fNames = False
-        else:
-            fNames = self.getFeatureNames()
+    def _copyAs_implementation(self, format):
 
         if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self.data, pointNames=pNames,
-                                 featureNames=fNames, dataCopy=dataCopy)
+            ret = UML.createData('Sparse', self.data)
             # Due to duplicate removal done in createData, we cannot guarantee that the internal
             # sorting is preserved in the returned object.
             return ret
         if format == 'List':
-            return UML.createData('List', self.data, pointNames=pNames,
-                                  featureNames=fNames, dataCopy=dataCopy)
+            return UML.createData('List', self.data)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=pNames,
-                                  featureNames=fNames, dataCopy=dataCopy)
+            return UML.createData('Matrix', self.data)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=pNames,
-                                  featureNames=fNames, dataCopy=dataCopy)
+            return UML.createData('DataFrame', self.data)
         if format == 'pythonlist':
             return self.data.todense().tolist()
         if format == 'numpyarray':
@@ -1172,13 +1159,18 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('point')
 
-        numFeatures = self.features / numPoints
+        numFeatures = self.features // numPoints
         newShape = (numPoints, numFeatures)
 
         for i in range(len(self.data.data)):
             # must change the row entry before modifying the col entry
             self.data.row[i] = self.data.col[i] / numFeatures
             self.data.col[i] = self.data.col[i] % numFeatures
+        
+        print('self.data.data:\n{}'.format(self.data.data))
+        print('self.data.row:\n{}'.format(self.data.row))
+        print('self.data.col:\n{}'.format(self.data.col))
+        print('newShape:{}'.format(newShape))
 
         self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), newShape)
         self._sorted = 'point'
@@ -1188,7 +1180,7 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('feature')
 
-        numPoints = self.points / numFeatures
+        numPoints = self.points // numFeatures
         newShape = (numPoints, numFeatures)
 
         for i in range(len(self.data.data)):
@@ -1951,21 +1943,11 @@ class SparseView(BaseView, Sparse):
 
         return GenericIt()
 
-    def _copyAs_implementation(self, format, dataCopy=False):
-
-        if self.pointNamesInverse is None:
-            pNames = False
-        else:
-            pNames = self.getPointNames()
-        if self.featureNamesInverse is None:
-            fNames = False
-        else:
-            fNames = self.getFeatureNames()
+    def _copyAs_implementation(self, format):
 
         if self.points == 0 or self.features == 0:
             emptyStandin = numpy.empty((self.points, self.features))
-            intermediate = UML.createData('Matrix', emptyStandin, pointNames=pNames,
-                                           featureNames=fNames)
+            intermediate = UML.createData('Matrix', emptyStandin)
             return intermediate.copyAs(format)
 
         limited = self._source.copyPoints(start=self._pStart, end=self._pEnd - 1)
@@ -1974,7 +1956,7 @@ class SparseView(BaseView, Sparse):
         if format is None or format == 'Sparse':
             return limited
         else:
-            return limited._copyAs_implementation(format, dataCopy)
+            return limited._copyAs_implementation(format)
 
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Sparse):
