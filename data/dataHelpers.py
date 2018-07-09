@@ -163,20 +163,20 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
     (retPNames, retFNames) = (None, None)
         
-    if baseSource._getPointNamesInverse() is not None and otherSource._getPointNamesInverse() is not None:
+    if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
         retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
-    elif baseSource._getPointNamesInverse() is not None and otherSource._getPointNamesInverse() is None:
+    elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
         retPNames = baseSource.pointNames
-    elif baseSource._getPointNamesInverse() is None and otherSource._getPointNamesInverse() is not None:
+    elif not baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
         retPNames = otherSource.pointNames
     else:
         retPNames = None
 
-    if baseSource._getFeatureNamesInverse() is not None and otherSource._getFeatureNamesInverse() is not None:
+    if baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
         retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
-    elif baseSource._getFeatureNamesInverse() is not None and otherSource._getFeatureNamesInverse() is None:
+    elif baseSource._featureNamesCreated() and not otherSource._featureNamesCreated():
         retFNames = baseSource.featureNames
-    elif baseSource._getFeatureNamesInverse() is None and otherSource._getFeatureNamesInverse() is not None:
+    elif not baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
         retFNames = otherSource.featureNames
     else:
         retFNames = None
