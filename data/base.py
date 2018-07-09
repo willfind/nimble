@@ -4810,22 +4810,38 @@ class Base(object):
         return unequalNames == {}
 
     def _validateEqualNames(self, leftAxis, rightAxis, callSym, other):
-        lnames = self.getPointNames() if leftAxis == 'point' else self.getFeatureNames()
-        rnames = other.getPointNames() if rightAxis == 'point' else other.getFeatureNames()
-        inconsistencies = self._inconsistentNames(lnames, rnames)
 
-        if inconsistencies != {}:
-            table = [['left', 'ID', 'right']]
-            for i in sorted(inconsistencies.keys()):
-                lname = '"' + lnames[i] + '"'
-                rname = '"' + rnames[i] + '"'
-                table.append([lname, str(i), rname])
+        def _validateEqualNames_implementation():
+            lnames = self.getPointNames() if leftAxis == 'point' else self.getFeatureNames()
+            rnames = other.getPointNames() if rightAxis == 'point' else other.getFeatureNames()
+            inconsistencies = self._inconsistentNames(lnames, rnames)
 
-            msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
-            msg += "calling left." + callSym + "(right) \n"
-            msg += UML.logger.tableString.tableString(table)
-            print(msg, file=sys.stderr)
-            raise ArgumentException(msg)
+            if inconsistencies != {}:
+                table = [['left', 'ID', 'right']]
+                for i in sorted(inconsistencies.keys()):
+                    lname = '"' + lnames[i] + '"'
+                    rname = '"' + rnames[i] + '"'
+                    table.append([lname, str(i), rname])
+
+                msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
+                msg += "calling left." + callSym + "(right) \n"
+                msg += UML.logger.tableString.tableString(table)
+                print(msg, file=sys.stderr)
+                raise ArgumentException(msg)
+
+        if leftAxis == 'point' and rightAxis == 'point':
+            if self._pointNamesCreated() or other._pointNamesCreated():
+                _validateEqualNames_implementation()
+        elif leftAxis == 'feature' and rightAxis == 'feature':
+            if self._featureNamesCreated() or other._featureNamesCreated():
+                _validateEqualNames_implementation()
+        elif leftAxis == 'point' and rightAxis == 'feature':
+            if self._pointNamesCreated() or other._featureNamesCreated():
+                _validateEqualNames_implementation()
+        elif leftAxis == 'feature' and rightAxis == 'point':
+            if self._featureNamesCreated() or other._pointNamesCreated():
+                _validateEqualNames_implementation()
+
 
     def _inconsistentNames(self, selfNames, otherNames):
         """Private function to find and return all name inconsistencies
