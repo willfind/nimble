@@ -1313,6 +1313,10 @@ class LowLevelBackend(object):
         self._constructIndicesList_backend(lambda lst: numpy.matrix(lst))
 
     @raises(ArgumentException)
+    def test_constructIndicesList_pandasDataFrame(self):
+        self._constructIndicesList_backend(lambda lst: pandas.DataFrame(lst))
+
+    @raises(ArgumentException)
     def test_constructIndicesList_handmade2DOne(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']

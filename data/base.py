@@ -49,6 +49,8 @@ from multiprocessing import Process
 
 import UML
 
+pd = UML.importModule('pandas')
+
 cython = UML.importModule('cython')
 if cython is None or not cython.compiled:
     from math import sin, cos
@@ -5095,6 +5097,11 @@ class Base(object):
         if isinstance(values, (int, numpy.integer, six.string_types)):
             values = self._getIndex(values, axis)
             return [values]
+        if pd and isinstance(values, pd.DataFrame):
+            msg = "A pandas DataFrame object is not a valid input "
+            msg += "for '{0}s'. ".format(axis)
+            msg += "Only one-dimensional objects are accepted."
+            raise ArgumentException(msg)
         valuesList = []
         try:
             for val in values:
