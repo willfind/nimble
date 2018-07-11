@@ -843,7 +843,7 @@ class Base(object):
                     res[k].extend(point.getPointNames())
 
             for k in res:
-                tmp = self.copyPoints(points=res[k])
+                tmp = self.copyPoints(toCopy=res[k])
                 tmp.extractFeatures(by)
                 res[k] = tmp
 
@@ -1685,7 +1685,7 @@ class Base(object):
             else:
                 y = [self._processSingleY(yi)[0] for yi in y]
 
-        return self.copyPoints(points=x).copyFeatures(features=y)
+        return self.copyPoints(toCopy=x).copyFeatures(toCopy=y)
 
     def pointView(self, ID):
         """
@@ -2195,8 +2195,8 @@ class Base(object):
         yIndex = self._getIndex(y, yAxis)
 
         def customGetter(index, axis):
-            copyied = self.copyPoints(index) if axis == 'point' else self.copyFeatures(index)
-            return copyied.copyAs('numpyarray', outputAs1D=True)
+            copied = self.copyPoints(index) if axis == 'point' else self.copyFeatures(index)
+            return copied.copyAs('numpyarray', outputAs1D=True)
 
         def pGetter(index):
             return customGetter(index, 'point')
@@ -2539,19 +2539,25 @@ class Base(object):
         Modify this object, removing those points that are specified by the input, and returning
         an object containing those removed points.
 
-        toExtract may be a single identifier, a list of identifiers, or a function that when
-        given a point will return True if it is to be removed. number is the quantity of points that
-        are to be extracted, the default None means unlimited extraction. start and end are
-        parameters indicating range based extraction: if range based extraction is employed,
-        toExtract must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.points respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen points are determined by point order, otherwise it is uniform random across the
-        space of possible removals.
+        toExtract may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be extracted, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be extracted, the default None means
+        unrestricted extraction.
+
+        start and end are parameters indicating range based extraction: if range based
+        extraction is employed, toExtract must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible removals.
 
         """
-        ret = self._genericStructuralFrontend('point', self._extractPoints_implementation, toExtract, start, end,
-                                              number, randomize, 'toExtract')
+        ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
+                                              number, randomize)
 
         self._pointCount -= ret.points
         ret.setFeatureNames(self.getFeatureNames())
@@ -2568,23 +2574,27 @@ class Base(object):
     def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
         """
         Modify this object, removing those features that are specified by the input, and returning
-        an object containing those removed features. This particular function only does argument
-        checking and modifying the featureNames for this object. It is the job of helper functions in
-        the derived class to perform the removal and assign featureNames for the returned object.
+        an object containing those removed features.
 
-        toExtract may be a single identifier, a list of identifiers, or a function that when
-        given a feature will return True if it is to be removed. number is the quantity of features that
-        are to be extracted, the default None means unlimited extraction. start and end are
-        parameters indicating range based extraction: if range based extraction is employed,
-        toExtract must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.features respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen features are determined by feature order, otherwise it is uniform random across the
-        space of possible removals.
+        toExtract may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be extracted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be extracted, the default None means
+        unrestricted extraction.
+
+        start and end are parameters indicating range based extraction: if range based
+        extraction is employed, toExtract must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible removals.
 
         """
-        ret = self._genericStructuralFrontend('feature', self._extractFeatures_implementation, toExtract, start, end,
-                                              number, randomize, 'toExtract')
+        ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
+                                              number, randomize)
 
         self._featureCount -= ret.features
         if ret.features != 0:
@@ -2602,87 +2612,115 @@ class Base(object):
         """
         Modify this object, removing those points that are specified by the input.
 
-        toDelete may be a single identifier, a list of identifiers, or a function that when
-        given a point will return True if it is to be removed. number is the quantity of points that
-        are to be deleted, the default None means unlimited deletion. start and end are
-        parameters indicating range based deletion: if range based deletion is employed,
-        toDelete must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.points respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen points are determined by point order, otherwise it is uniform random across the
-        space of possible removals.
+        toDelete may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be deleted, the default None means
+        unrestricted deletion.
+
+        start and end are parameters indicating range based deletion: if range based
+        deletion is employed, toDelete must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible removals.
+
         """
         ret = self.extractPoints(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
-        return None
 
 
     def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
         """
         Modify this object, removing those features that are specified by the input.
 
-        toDelete may be a single identifier, a list of identifiers, or a function that when
-        given a feature will return True if it is to be removed. number is the quantity of features that
-        are to be deleted, the default None means unlimited deletion. start and end are
-        parameters indicating range based deletion: if range based deletion is employed,
-        toDelete must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.features respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen features are determined by feature order, otherwise it is uniform random across the
-        space of possible removals.
+        toDelete may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be deleted, the default None means
+        unrestricted deleted.
+
+        start and end are parameters indicating range based deletion: if range based
+        deletion is employed, toDelete must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible removals.
+
         """
         ret = self.extractFeatures(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
-        return None
 
 
     def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
         """
-        Modify this object, keeping only those points that are specified by the input.
+        Modify this object, retaining those points that are specified by the input.
 
-        toRetain may be a single identifier, a list of identifiers, or a function that when
-        given a point will return True if it is to be retained. number is the quantity of points that
-        are to be retained, the default None means unlimited retention. start and end are
-        parameters indicating range based retention: if range based retention is employed,
-        toRetain must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.points respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen points are determined by point order, otherwise it is uniform random across the
-        space of possible removals.
+        toRetain may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be retained, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be retained, the default None means
+        unrestricted retention.
+
+        start and end are parameters indicating range based retention: if range based
+        retention is employed, toRetain must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible retentions.
+
         """
-        self._retain_implementation('point', toRetain, start, end, number, randomize)
+        self._retain_implementation('retain', 'point', toRetain, start, end, number, randomize)
 
 
     def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
         """
-        Modify this object, keeping only those features that are specified by the input.
+        Modify this object, retaining those features that are specified by the input.
 
-        toRetain may be a single identifier, a list of identifiers, or a function that when
-        given a feature will return True if it is to be retained. number is the quantity of features that
-        are to be retained, the default None means unlimited retention. start and end are
-        parameters indicating range based retention: if range based retention is employed,
-        toRetain must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.features respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen features are determined by feature order, otherwise it is uniform random across the
-        space of possible removals.
+        toRetain may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be retained, the default None means
+        unrestricted retention.
+
+        start and end are parameters indicating range based retention: if range based
+        retention is employed, toRetain must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible retentions.
+
         """
-        self._retain_implementation('feature', toRetain, start, end, number, randomize)
+        self._retain_implementation('retain', 'feature', toRetain, start, end, number, randomize)
 
 
-    def _retain_implementation(self, axis, toRetain, start, end, number, randomize):
-        """Implements retainPoints or retainFeatures based on the axis"""
+    def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
+        """Implements retainPoints or retainFeatures based on the axis. The complements
+        of toRetain are identified to use the extract backend, this is done within this
+        implementation except for functions which are complemented within the next helper
+        function
+        """
         if axis == 'point':
             hasName = self.hasPointName
             getNames = self.getPointNames
             getIndex = self._getPointIndex
             values = self.points
-            backEnd = self._extractPoints_implementation
             shuffleValues = self.shufflePoints
         else:
             hasName = self.hasFeatureName
             getNames = self.getFeatureNames
             getIndex = self._getFeatureIndex
             values = self.features
-            backEnd = self._extractFeatures_implementation
             shuffleValues = self.shuffleFeatures
 
         # extract points not in toRetain
@@ -2690,23 +2728,16 @@ class Base(object):
             if isinstance(toRetain, six.string_types):
                 if hasName(toRetain):
                     toExtract = [value for value in getNames() if value != toRetain]
-                    invertTarget = False
                 else:
+                    # toRetain is a function passed as a string
                     toExtract = toRetain
-                    invertTarget = True
 
             elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
                 toExtract = [value for value in range(values) if value != toRetain]
-                invertTarget = False
 
             elif isinstance(toRetain, list):
-                if isinstance(toRetain[0], six.string_types):
-                    toExtract = [self._getIndex(value, axis) for value in getNames() if value not in toRetain]
-                    invertTarget = False
-                    toRetain = [self._getIndex(value, axis) for value in toRetain]
-                else:
-                    toExtract = [value for value in range(values) if value not in toRetain]
-                    invertTarget = False
+                toRetain = [self._getIndex(value, axis) for value in toRetain]
+                toExtract = [value for value in range(values) if value not in toRetain]
                 # change the index order of the values to match toRetain
                 reindex = toRetain + toExtract
                 indices = [None for _ in range(values)]
@@ -2714,16 +2745,15 @@ class Base(object):
                     indices[value] = idx
                 shuffleValues(indices)
                 # extract any values after the toRetain values
-                toExtract = list(range(len(toRetain), values))
+                extractValues = range(len(toRetain), values)
+                toExtract = list(extractValues)
 
             else:
                 # toRetain is a function
                 toExtract = toRetain
-                # invertTarget wraps the function and returns the opposite
-                invertTarget = True
 
-            ret = self._genericStructuralFrontend(axis, backEnd, toExtract, start, end, number,
-                                                  False, 'toRetain', invertTarget=invertTarget)
+            ret = self._genericStructuralFrontend('retain', axis, toExtract, start, end, number,
+                                                  False)
             self._adjustNamesAndValidate(ret, axis)
 
         # convert start and end to indexes
@@ -2746,14 +2776,14 @@ class Base(object):
         if start is not None:
             # only need to perform if start is not the first value
             if start - 1 >= 0:
-                ret = self._genericStructuralFrontend(axis, backEnd, None, 0, start - 1,
-                                                          None, False, 'toRetain')
+                ret = self._genericStructuralFrontend('retain', axis, None, 0, start - 1,
+                                                          None, False)
                 self._adjustNamesAndValidate(ret, axis)
         if end is not None:
             # only need to perform if end is not the last value
             if end + 1 <= values - 1:
-                ret = self._genericStructuralFrontend(axis, backEnd, None, end + 1, values - 1,
-                                                          None, False, 'toRetain')
+                ret = self._genericStructuralFrontend('retain', axis, None, end + 1, values - 1,
+                                                          None, False)
                 self._adjustNamesAndValidate(ret, axis)
 
         if randomize:
@@ -2764,8 +2794,8 @@ class Base(object):
         if number is not None:
             start = number
             end = values - 1
-            ret = self._genericStructuralFrontend(axis, backEnd, None, start, end,
-                                                      None, False, 'toRetain')
+            ret = self._genericStructuralFrontend('retain', axis, None, start, end,
+                                                      None, False)
             self._adjustNamesAndValidate(ret, axis)
 
 
@@ -2774,26 +2804,16 @@ class Base(object):
         Similar to function extractPoints. Here we return back the number of points which satisfy the condition.
         condition: can be a string or a function object.
         """
-        return self._genericStructuralFrontend('point', self._countPoints_implementation, condition)
+        return self._genericStructuralFrontend('count', 'point', condition)
 
-    def _countPoints_implementation(self, target, *arguments):
-        """
-
-        """
-        return numpy.sum([target(i) for i in self.pointIterator()])
 
     def countFeatures(self, condition):
         """
         Similar to function extractFeatures. Here we return back the number of features which satisfy the condition.
         condition: can be a string or a function object.
         """
-        return self._genericStructuralFrontend('feature', self._countFeatures_implementation, condition)
+        return self._genericStructuralFrontend('count', 'feature', condition)
 
-    def _countFeatures_implementation(self, target, *arguments):
-        """
-
-        """
-        return numpy.sum([target(i) for i in self.featureIterator()])
 
     def referenceDataFrom(self, other):
         """
@@ -2968,104 +2988,66 @@ class Base(object):
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
-
-    def copyPoints(self, points=None, start=None, end=None):
+    def copyPoints(self, toCopy=None, start=None, end=None, number=None, randomize=False):
         """
-        Return a new object which consists only of those specified points, without mutating
-        the calling object object.
+        Returns an object containing those points that are specified by the input, without
+        modification to this object.
 
-        """
-        if isinstance(points, (int, six.string_types)):
-            points = [points]
-        if self.points == 0:
-            raise ArgumentException("Object contains 0 points, there is no valid possible input")
-        if points is None:
-            if start is not None or end is not None:
-                if start is None:
-                    start = 0
-                if end is None:
-                    end = self.points - 1
-                if start < 0 or start > self.points:
-                    raise ArgumentException("start must be a valid index, in the range of possible features")
-                if end < 0 or end > self.points:
-                    raise ArgumentException("end must be a valid index, in the range of possible features")
-                if start > end:
-                    raise ArgumentException("start cannot be an index greater than end")
-            else:
-                raise ArgumentException("must specify something to copy")
-        else:
-            if start is not None or end is not None:
-                raise ArgumentException("Cannot specify both IDs and a range")
-            #verify everything in list is a valid index and convert names into indices
-            indices = []
-            for identifier in points:
-                indices.append(self._getPointIndex(identifier))
-            points = indices
+        toCopy may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be copied, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
 
-        retObj = self._copyPoints_implementation(points, start, end)
+        number is the quantity of points that are to be copied, the default None means
+        unrestricted copying.
 
-        # construct featureName list
-        pointNameList = []
-        if points is not None:
-            for i in points:
-                pointNameList.append(self.getPointName(i))
-        else:
-            for i in range(start, end + 1):
-                pointNameList.append(self.getPointName(i))
+        start and end are parameters indicating range based copying: if range based
+        copying is employed, toCopy must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
 
-        retObj.setPointNames(pointNameList)
-        retObj.setFeatureNames(self.getFeatureNames())
-
-        retObj._absPath = self.absolutePath
-        retObj._relPath = self.relativePath
-
-        return retObj
-
-    def copyFeatures(self, features=None, start=None, end=None):
-        """
-        Return a new object which consists only of those specified features, without mutating
-        this object.
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible points.
 
         """
-        if isinstance(features, six.string_types) or isinstance(features, int):
-            features = [features]
-        if self.features == 0:
-            raise ArgumentException("Object contains 0 features, there is no valid possible input")
-        indices = None
-        if features is None:
-            if start is not None or end is not None:
-                if start is None:
-                    start = 0
-                if end is None:
-                    end = self.features - 1
-                if isinstance(start, str) or start < 0 or start > self.features:
-                    raise ArgumentException("start must be a valid index, in the range of possible features")
-                if isinstance(end, str) or end < 0 or end > self.features:
-                    raise ArgumentException("end must be a valid index, in the range of possible features")
-                if start > end:
-                    raise ArgumentException("start cannot be an index greater than end")
-            else:
-                raise ArgumentException("must specify something to copy; 'features', 'start', and 'end' were all None")
-        else:
-            if start is not None or end is not None:
-                raise ArgumentException("Cannot specify both IDs and a range")
-            indices = []
-            for identifier in features:
-                indices.append(self._getFeatureIndex(identifier))
+        ret = self._genericStructuralFrontend('copy', 'point', toCopy, start, end,
+                                              number, randomize)
 
-        ret = self._copyFeatures_implementation(indices, start, end)
+        ret.setFeatureNames(self.getFeatureNames())
 
-        # construct featureName list
-        featureNameList = []
-        if indices is not None:
-            for i in indices:
-                featureNameList.append(self.getFeatureName(i))
-        else:
-            for i in range(start, end + 1):
-                featureNameList.append(self.getFeatureName(i))
+        ret._relPath = self.relativePath
+        ret._absPath = self.absolutePath
+
+        self.validate()
+        return ret
+
+
+    def copyFeatures(self, toCopy=None, start=None, end=None, number=None, randomize=False):
+        """
+        Returns an object containing those features that are specified by the input, without
+        modification to this object.
+
+        toCopy may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be copied, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be copied, the default None means
+        unrestricted copying.
+
+        start and end are parameters indicating range based copying: if range based
+        copying is employed, toCopy must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible features.
+
+        """
+        ret = self._genericStructuralFrontend('copy', 'feature', toCopy, start, end,
+                                              number, randomize)
 
         ret.setPointNames(self.getPointNames())
-        ret.setFeatureNames(featureNameList)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -4246,18 +4228,18 @@ class Base(object):
     ############################
     ############################
 
-
-
-    def _genericStructuralFrontend(self, axis, backEnd, target=None, start=None, end=None,
-                                   number=None, randomize=False, targetName=None, invertTarget=False):
+    def _genericStructuralFrontend(self, structure, axis, target=None, start=None,
+                                   end=None, number=None, randomize=False):
         if axis == 'point':
             getIndex = self._getPointIndex
             axisLength = self.points
             hasNameChecker1, hasNameChecker2 = self.hasPointName, self.hasFeatureName
+            viewIterator = self.copy().pointIterator
         else:
             getIndex = self._getFeatureIndex
             axisLength = self.features
             hasNameChecker1, hasNameChecker2 = self.hasFeatureName, self.hasPointName
+            viewIterator = self.copy().featureIterator
 
         if number is not None and number < 1:
             msg = "number must be greater than zero"
@@ -4267,7 +4249,8 @@ class Base(object):
                 raise ArgumentException("Range removal is exclusive, to use it, target must be None")
             if isinstance(target, six.string_types):
                 if hasNameChecker1(target):
-                    target = [target]
+                    target = getIndex(target)
+                    targetList = [target]
                 #if axis=point and target is not a point name, or
                 # if axis=feature and target is not a feature name,
                 # then check if it's a valid query string
@@ -4314,50 +4297,28 @@ class Base(object):
                         msg = 'the target is not a valid point name nor a valid query string'
                         raise ArgumentException(msg)
             if isinstance(target, (int, numpy.int, numpy.int64)):
-                target = [target]
+                targetList = [target]
             if isinstance(target, list):
                 #verify everything in list is a valid index and convert names into indices
-                indices = []
+                targetList = []
                 for identifier in target:
-                    indices.append(getIndex(identifier))
-                target = indices
-
-                if number is None or len(target) < number:
-                    number = len(target)
-                # if randomize, use random sample
-                if randomize:
-                    indices = []
-                    for i in range(len(target)):
-                        indices.append(i)
-                    randomIndices = pythonRandom.sample(indices, number)
-                    randomIndices.sort()
-                    temp = []
-                    for index in randomIndices:
-                        temp.append(target[index])
-                    target = temp
-                    randomize = False
-                # else take the first number members of target
-                else:
-                    target = target[:number]
-
+                    targetList.append(getIndex(identifier))
             # boolean function
             elif hasattr(target, '__call__'):
-                if invertTarget:
+                if structure == 'retain':
                     targetFunction = target
-                    def inverse(*args):
+                    def complement(*args):
                         return not targetFunction(*args)
-                    target = inverse
-                if randomize:
-                    #apply to each
-                    raise NotImplementedError  # TODO randomize in the By Function case
-                else:
-                    if number is None:
-                        number = axisLength
+                    target = complement
+                # construct list from function
+                targetList = []
+                for targetID, view in enumerate(viewIterator()):
+                    if target(view):
+                        targetList.append(targetID)
 
         elif start is not None or end is not None:
             start = 0 if start is None else getIndex(start)
             end = axisLength - 1 if end is None else getIndex(end)
-            number = (end - start) + 1 if number is None else number
 
             if start < 0 or start > axisLength:
                 msg = "start must be a valid index, in the range of possible "
@@ -4370,26 +4331,27 @@ class Base(object):
             if start > end:
                 raise ArgumentException("The start index cannot be greater than the end index")
 
-            if randomize:
-                target = pythonRandom.sample(range(start, end), number)
-                target.sort()
-                return backEnd(target, None, None, number, False)
+            # end + 1 because our range is inclusive
+            targetList = list(range(start,end + 1))
 
-            possibleEnd = start + number - 1
-            if possibleEnd < end:
-                end = possibleEnd
-            else:
-                number = (end - start) + 1
         elif number is not None:
-            return self._genericStructuralFrontend(axis, backEnd,
-                                                   end=number - 1, number=None)
+            targetList = list(range(0, number))
         else:
+            targetName = "to" + structure.capitalize()
             msg = "You must provide a value for " + targetName + ", or start/end, or "
             msg += "number. "
-            raise ArgumentException("")
+            raise ArgumentException(msg)
 
-        ret = backEnd(target, start, end, number, randomize)
-        return ret
+        if randomize:
+            targetList = pythonRandom.sample(targetList, number)
+            targetList.sort()
+        if number is not None:
+            targetList = targetList[:number]
+
+        if structure == 'count':
+            return len(targetList)
+        else:
+            return self._structuralBackend_implementation(structure, axis, targetList)
 
 
     def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,

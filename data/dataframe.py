@@ -8,6 +8,8 @@ import UML
 from UML.exceptions import ArgumentException, PackageException
 from six.moves import range
 
+import numpy
+
 pd = UML.importModule('pandas')
 
 from .base import Base, cmp_to_key
@@ -180,166 +182,19 @@ class DataFrame(Base):
             newNameOrder.append(newName)
         return newNameOrder
 
-    def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
+    def _structuralBackend_implementation(self, structure, axis, targetList):
         """
-        Function to extract points according to the parameters, and return an object containing
-        the removed points with default names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be extracted, and randomize indicates whether the choice of who to extract should
-        be by order or uniform random.
-
+        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
+        copyPoints/Features. Returns a new object containing only the points in targetList and
+        performs some modifications to the original object if necessary. This function does not
+        perform all of the modification or process how each function handles the returned value,
+        these are managed separately by each frontend function.
         """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            ret = self._extractPointsByList_implementation(toExtract)
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO randomize in the extractPointByFunction case
-            else:
-                ret = self._extractPointsByFunction_implementation(toExtract, number)
-        # by range
-        elif start is not None or end is not None:
-            ret = self._extractPointsByRange_implementation(start, end)
+        if structure == 'copy':
+            return self.pointsOrFeaturesVectorized(targetList, axis, 'copy', True)
         else:
-            msg = "Malformed or missing inputs"
-            raise ArgumentException(msg)
-        self._updateName('point')
-        return ret
+            return self.pointsOrFeaturesVectorized(targetList, axis, 'extract', True)
 
-    def _extractPointsByList_implementation(self, toExtract):
-        """
-        Modify this object to have only the points that are not given in the input,
-        returning an object containing those points that are.
-
-        """
-        pointList = [self.getPointNames()[i] for i in toExtract]
-        return self.extractPointsOrFeaturesVectorized(pointList, 'point', True)
-
-    def _extractPointsByFunction_implementation(self, toExtract, number):
-        """
-        Modify this object to have only the points that do not satisfy the given function,
-        returning an object containing those points that do.
-
-        """
-        if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-            nameOfFeatureOrPoint = self.getFeatureIndex(toExtract.nameOfFeatureOrPoint)
-
-            def target_f(x):
-                return toExtract.optr(x[nameOfFeatureOrPoint], toExtract.valueOfFeatureOrPoint)
-
-            indexList = self.data.index[target_f(self.data)]
-            pointList = [self.getPointNames()[i] for i in indexList]
-
-            return self.extractPointsOrFeaturesVectorized(pointList, 'point', True)
-
-        else:
-            results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'point', self)
-            results = results.astype(np.int)
-
-            # need to convert our 1/0 array to to list of points to be removed
-            # can do this by just getting the non-zero indices
-            toRemove = np.flatnonzero(results)
-
-            return self._extractPointsByList_implementation(toRemove)
-
-
-    def _extractPointsByRange_implementation(self, start, end):
-        """
-        Modify this object to have only those points that are not within the given range,
-        inclusive; returning an object containing those points that are.
-
-        """
-        # +1 on end in ranges, because our ranges are inclusive
-        range_toExtract = range(start, end + 1)
-        pointList = [self.getPointNames()[i] for i in range_toExtract]
-        return self.extractPointsOrFeaturesVectorized(pointList, 'point', True)
-
-    def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
-        """
-        Function to extract features according to the parameters, and return an object containing
-        the removed features with their featureName names from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be extracted, and randomize indicates whether the choice of who to
-        extract should be by order or uniform random.
-
-        """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            ret = self._extractFeaturesByList_implementation(toExtract)
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO
-            else:
-                ret = self._extractFeaturesByFunction_implementation(toExtract, number)
-        # by range
-        elif start is not None or end is not None:
-            ret = self._extractFeaturesByRange_implementation(start, end)
-        else:
-            raise ArgumentException("Malformed or missing inputs")
-        self._updateName('feature')
-        return ret
-
-    def _extractFeaturesByList_implementation(self, toExtract):
-        """
-        Modify this object to have only the features that are not given in the input,
-        returning an object containing those features that are.
-
-        """
-        featureList = [self.getFeatureNames()[i] for i in toExtract]
-        return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
-
-    def _extractFeaturesByFunction_implementation(self, toExtract, number):
-        """
-        Modify this object to have only the features whose views do not satisfy the given
-        function, returning an object containing those features whose views do.
-
-        """
-        if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-            # featureList = self.data.columns[toExtract(self.data.loc)]
-            nameOfFeatureOrPoint = self.getPointIndex(toExtract.nameOfFeatureOrPoint)
-
-            def target_f(x):
-                return toExtract.optr(x[nameOfFeatureOrPoint], toExtract.valueOfFeatureOrPoint)
-
-            featureList = self.data.columns[target_f(self.data.loc)]
-            featureList = [self.getFeatureNames()[i] for i in featureList]
-
-            return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
-        else:
-            #have to use view based method.
-            results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'feature', self)
-            results = results.astype(np.int)
-
-            # need to convert our 1/0 array to to list of points to be removed
-            # can do this by just getting the non-zero indices
-            toRemove = np.flatnonzero(results)
-
-            return self._extractFeaturesByList_implementation(toRemove)
-
-
-    def _extractFeaturesByRange_implementation(self, start, end):
-        """
-        Modify this object to have only those features that are not within the given range,
-        inclusive; returning an object containing those features that are.
-
-        start and end must not be null, must be within the range of possible features,
-        and start must not be greater than end
-
-        """
-        # +1 on end in ranges, because our ranges are inclusive
-        range_toExtract = range(start, end + 1)
-        featureList = [self.getFeatureNames()[i] for i in range_toExtract]
-        return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
 
     def _mapReducePoints_implementation(self, mapper, reducer):
         # apply_along_axis() expects a scalar or array of scalars as output,
@@ -487,24 +342,6 @@ class DataFrame(Base):
             return scipy.sparse.csr_matrix(dataArray)
 
         return UML.createData('DataFrame', dataArray)
-
-    def _copyPoints_implementation(self, points, start, end):
-        if points is not None:
-            #indexList = self.data.index[points]
-            #ret = self.data.iloc[indexList, :]
-            ret = self.data.iloc[points, :]
-        else:
-            ret = self.data.iloc[start:end + 1, :]
-
-        return UML.createData('DataFrame', ret)
-
-    def _copyFeatures_implementation(self, indices, start, end):
-        if indices is not None:
-            ret = self.data.iloc[:, indices]
-        else:
-            ret = self.data.iloc[:, start:end + 1]
-
-        return UML.createData('DataFrame', ret)
 
     def _transformEachPoint_implementation(self, function, points):
         """
@@ -1074,31 +911,36 @@ class DataFrame(Base):
         #-----------------------------------------------------------------------
 
 
-    def extractPointsOrFeaturesVectorized(self, nameList, axis, inplace=True):
+    def pointsOrFeaturesVectorized(self, indexList, axis, funcType, inplace=True):
         """
 
         """
         df = self.data
-        nameList = list(nameList)
-        
+
         if axis == 0 or axis == 'point':
-            indexList = self.getPointIndices(nameList)
             ret = df.iloc[indexList, :]
-            name = 'pointNames'
             axis = 0
+            name = 'pointNames'
+            nameList = [self.getPointName(i) for i in indexList]
             otherName = 'featureNames'
             otherNameList = self.getFeatureNames()
         elif axis == 1 or axis == 'feature':
-            indexList = self.getFeatureIndices(nameList)
             ret = df.iloc[:, indexList]
-            name = 'featureNames'
             axis = 1
+            name = 'featureNames'
+            nameList = [self.getFeatureName(i) for i in indexList]
             otherName = 'pointNames'
             otherNameList = self.getPointNames()
         else:
             msg = 'axis can only be 0,1 or point, feature'
             raise ArgumentException(msg)
 
-        df.drop(indexList, axis=axis, inplace=inplace)
+        if funcType.lower() == "extract":
+            df.drop(indexList, axis=axis, inplace=inplace)
+
+        if axis == 0:
+            df.index = numpy.arange(len(df.index), dtype=df.index.dtype)
+        else:
+            df.columns = numpy.arange(len(df.columns), dtype=df.columns.dtype)
 
         return UML.createData('DataFrame', ret, **{name: nameList, otherName: otherNameList})
