@@ -2938,8 +2938,8 @@ class Base(object):
         if self._pointNamesCreated():
             CopyObj.pointNamesInverse = self.getPointNames()
             CopyObj.pointNames = copy.copy(self.pointNames)
-            if CopyObj.getTypeString() == 'DataFrame':
-                CopyObj.data.index = self.getPointNames()
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.index = self.getPointNames()
         else:
             CopyObj.pointNamesInverse = None
             CopyObj.pointNames = None
@@ -2947,8 +2947,8 @@ class Base(object):
         if self._featureNamesCreated():
             CopyObj.featureNamesInverse = self.getFeatureNames()
             CopyObj.featureNames = copy.copy(self.featureNames)
-            if CopyObj.getTypeString() == 'DataFrame':
-                CopyObj.data.columns = self.getFeatureNames()
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.columns = self.getFeatureNames()
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None

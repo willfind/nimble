@@ -157,8 +157,8 @@ class BaseView(Base):
         if self._pointNamesCreated():
             CopyObj.pointNamesInverse = self.getPointNames()
             CopyObj.pointNames = copy.copy(self._source.pointNames)
-            if CopyObj.getTypeString() == 'DataFrame':
-                CopyObj.data.index = self.getPointNames()
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.index = self.getPointNames()
         else:
             CopyObj.pointNamesInverse = None
             CopyObj.pointNames = None
@@ -166,8 +166,8 @@ class BaseView(Base):
         if self._featureNamesCreated():
             CopyObj.featureNamesInverse = self.getFeatureNames()
             CopyObj.featureNames = copy.copy(self._source.featureNames)
-            if CopyObj.getTypeString() == 'DataFrame':
-                CopyObj.data.columns = self.getFeatureNames()
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.columns = self.getFeatureNames()
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
