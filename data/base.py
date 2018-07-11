@@ -49,6 +49,8 @@ from multiprocessing import Process
 
 import UML
 
+pd = UML.importModule('pandas')
+
 cython = UML.importModule('cython')
 if cython is None or not cython.compiled:
     from math import sin, cos
@@ -121,7 +123,6 @@ class Base(object):
         """
         self._pointCount = shape[0]
         self._featureCount = shape[1]
-
         if pointNames is not None and len(pointNames) != shape[0]:
             msg = "The length of the pointNames (" + str(len(pointNames))
             msg += ") must match the points given in shape (" + str(shape[0])
@@ -135,32 +136,38 @@ class Base(object):
 
         # Set up point names
         self._nextDefaultValuePoint = 0
-        self._setAllDefault('point')
-        if isinstance(pointNames, list):
+        if pointNames is None:
+            self.pointNamesInverse = None
+            self.pointNames = None
+        elif isinstance(pointNames, list):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
         elif isinstance(pointNames, dict):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
         # could still be an ordered container, pass it on to the list helper
         elif hasattr(pointNames, '__len__') and hasattr(pointNames, '__getitem__'):
+            self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
-        elif pointNames is None:
-            pass
         else:
             raise ArgumentException(
                 "pointNames may only be a list, an ordered container, or a dict, defining a mapping between integers and pointNames")
 
         # Set up feature names
         self._nextDefaultValueFeature = 0
-        self._setAllDefault('feature')
-        if isinstance(featureNames, list):
+        if featureNames is None:
+            self.featureNamesInverse = None
+            self.featureNames = None
+        elif isinstance(featureNames, list):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
         elif isinstance(featureNames, dict):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
         # could still be an ordered container, pass it on to the list helper
         elif hasattr(featureNames, '__len__') and hasattr(featureNames, '__getitem__'):
+            self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
-        elif featureNames is None:
-            pass
         else:
             raise ArgumentException(
                 "featureNames may only be a list, an ordered container, or a dict, defining a mapping between integers and featureNames")
@@ -202,6 +209,12 @@ class Base(object):
 
     features = property(_getfeatureCount, doc="The number of features in this object")
 
+    def _setpointCount(self, value):
+        self._pointCount = value
+
+    def _setfeatureCount(self, value):
+        self._featureCount = value
+
     def _getObjName(self):
         return self._name
 
@@ -228,6 +241,28 @@ class Base(object):
 
     def _getPath(self):
         return self.absolutePath
+
+    def _pointNamesCreated(self):
+        """
+        Returns True if point default names have been created/assigned
+        to the object.
+        If the object does not have points it returns True.
+        """
+        if self.pointNamesInverse is None:
+            return False
+        else:
+            return True
+
+    def _featureNamesCreated(self):
+        """
+        Returns True if feature default names have been created/assigned
+        to the object.
+        If the object does not have features it returns True.
+        """
+        if self.featureNamesInverse is None:
+            return False
+        else:
+            return True
 
     path = property(_getPath, doc="The path to the file this data originated from")
 
@@ -267,6 +302,8 @@ class Base(object):
         """
         if self.points == 0:
             raise ArgumentException("Cannot set any point names; this object has no points ")
+        if self.pointNames is None:
+            self._setAllDefault('point')
         self._setName_implementation(oldIdentifier, newName, 'point', False)
 
     def setFeatureName(self, oldIdentifier, newName):
@@ -283,6 +320,8 @@ class Base(object):
         """
         if self.features == 0:
             raise ArgumentException("Cannot set any feature names; this object has no features ")
+        if self.featureNames is None:
+            self._setAllDefault('feature') 
         self._setName_implementation(oldIdentifier, newName, 'feature', False)
 
 
@@ -298,13 +337,17 @@ class Base(object):
         then an ArgumentException will be raised. None is always returned.
 
         """
-        if assignments is None or isinstance(assignments, list):
+        if assignments is None:
+            self.pointNames = None
+            self.pointNamesInverse = None
+        elif isinstance(assignments, list):
             self._setNamesFromList(assignments, self.points, 'point')
         elif isinstance(assignments, dict):
             self._setNamesFromDict(assignments, self.points, 'point')
         else:
             msg = "'assignments' parameter may only be a list, a dict, or None, "
-            msg += "yet a value of type " + str(type(assignments)) + " was given"
+            msg += "yet a value of type " + \
+                str(type(assignments)) + " was given"
             raise ArgumentException(msg)
 
     def setFeatureNames(self, assignments=None):
@@ -319,13 +362,17 @@ class Base(object):
         then an ArgumentException will be raised. None is always returned.
 
         """
-        if assignments is None or isinstance(assignments, list):
+        if assignments is None:
+            self.featureNames = None
+            self.featureNamesInverse = None
+        elif isinstance(assignments, list):
             self._setNamesFromList(assignments, self.features, 'feature')
         elif isinstance(assignments, dict):
             self._setNamesFromDict(assignments, self.features, 'feature')
         else:
             msg = "'assignments' parameter may only be a list, a dict, or None, "
-            msg += "yet a value of type " + str(type(assignments)) + " was given"
+            msg += "yet a value of type " + \
+                str(type(assignments)) + " was given"
             raise ArgumentException(msg)
 
     def nameIsDefault(self):
@@ -338,6 +385,8 @@ class Base(object):
         to.
 
         """
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
         return copy.copy(self.pointNamesInverse)
 
     def getFeatureNames(self):
@@ -346,13 +395,24 @@ class Base(object):
         correspond to.
 
         """
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
         return copy.copy(self.featureNamesInverse)
 
     def getPointName(self, index):
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
         return self.pointNamesInverse[index]
 
     def getPointIndex(self, name):
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
         return self.pointNames[name]
+
+    def getPointIndices(self, names): 
+        if not self._pointNamesCreated(): 
+            self._setAllDefault('point') 
+        return [self.pointNames[n] for n in names] 
 
     def hasPointName(self, name):
         try:
@@ -362,11 +422,20 @@ class Base(object):
             return False
 
     def getFeatureName(self, index):
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
         return self.featureNamesInverse[index]
 
     def getFeatureIndex(self, name):
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
         return self.featureNames[name]
 
+    def getFeatureIndices(self, names): 
+        if not self._featureNamesCreated(): 
+            self._setAllDefault('feature') 
+        return [self.featureNames[n] for n in names] 
+            
     def hasFeatureName(self, name):
         try:
             self.getFeatureIndex(name)
@@ -1716,16 +1785,19 @@ class Base(object):
         """
         Checks the integrity of the data with respect to the limitations and invariants
         that our objects enforce.
-
         """
-        assert self.features == len(self.getFeatureNames())
-        assert self.points == len(self.getPointNames())
+        if self._pointNamesCreated():
+            assert self.points == len(self.getPointNames())
+        if self._featureNamesCreated():
+            assert self.features == len(self.getFeatureNames())
 
         if level > 0:
-            for key in self.getPointNames():
-                assert self.getPointName(self.getPointIndex(key)) == key
-            for key in self.getFeatureNames():
-                assert self.getFeatureName(self.getFeatureIndex(key)) == key
+            if self._pointNamesCreated():
+                for key in self.getPointNames():
+                    assert self.getPointName(self.getPointIndex(key)) == key
+            if self._featureNamesCreated():
+                for key in self.getFeatureNames():
+                    assert self.getFeatureName(self.getFeatureIndex(key)) == key
 
         self._validate_implementation(level)
 
@@ -2253,9 +2325,22 @@ class Base(object):
 
         self._pointCount, self._featureCount = self._featureCount, self._pointCount
 
-        self.pointNames, self.featureNames = self.featureNames, self.pointNames
-        self.setFeatureNames(self.featureNames)
-        self.setPointNames(self.pointNames)
+        if self._pointNamesCreated() and self._featureNamesCreated():
+            self.pointNames, self.featureNames = self.featureNames, self.pointNames
+            self.setFeatureNames(self.featureNames)
+            self.setPointNames(self.pointNames)
+        elif self._pointNamesCreated():
+            self.featureNames = self.pointNames
+            self.pointNames = None
+            self.pointNamesInverse = None
+            self.setFeatureNames(self.featureNames)
+        elif self._featureNamesCreated():
+            self.pointNames = self.featureNames
+            self.featureNames = None
+            self.featureNamesInverse = None
+            self.setPointNames(self.pointNames)
+        else:
+            pass
 
         self.validate()
 
@@ -2270,43 +2355,14 @@ class Base(object):
         method.
 
         toAppend - the UML data object whose contents we will be including
-        in this object. Must be the same type as the calling object. Must
-        have the same number of features as the calling object. Must not
-        share any point names with the calling object. Must have
-        the same feature names as the calling object, but not necessary
+        in this object. Must have the same number of features as the calling
+        object. Must not share any point names with the calling object. Must
+        have the same feature names as the calling object, but not necessarily
         in the same order.
 
         """
-        self._validateValueIsNotNone("toAppend", toAppend)
-        self._validateValueIsUMLDataObject("toAppend", toAppend, True)
-        self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
-        self._validateEmptyNamesIntersection("point", "toAppend", toAppend)
+        self._append_implementation('point', toAppend)
 
-        # need this in case we are self appending
-        origPointCountS = self.points
-        origPointCountTA = toAppend.points
-
-        isReordered = self._validateReorderedNames('feature', 'appendPoints', toAppend)
-        if isReordered:  # we make use of the generic reordering append code
-            self._appendReorder_implementation('point', toAppend)
-
-            for i in range(origPointCountTA):
-                currName = toAppend.getPointName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName('point')
-                self.setPointName(origPointCountS + i, currName)
-
-        else:
-            self._appendPoints_implementation(toAppend)
-            self._pointCount += toAppend.points
-
-            for i in range(origPointCountTA):
-                currName = toAppend.getPointName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName('point')
-                self._addPointName(currName)
-
-        self.validate()
 
     def appendFeatures(self, toAppend):
         """
@@ -2319,39 +2375,79 @@ class Base(object):
         method.
 
         toAppend - the UML data object whose contents we will be including
-        in this object. Must be the same type as the calling object. Must
-        have the same number of points as the calling object. Must not
-        share any feature names with the calling object. Must have
-        the same point names as the calling object, but not necessary
-        in the same order.
+        in this object. Must have the same number of points as the calling
+        object. Must not share any feature names with the calling object.
+        Must have the same point names as the calling object, but not
+        necessarily in the same order.
 
         """
+        self._append_implementation('feature', toAppend)
+
+
+    def _append_implementation(self, axis, toAppend):
         self._validateValueIsNotNone("toAppend", toAppend)
         self._validateValueIsUMLDataObject("toAppend", toAppend, True)
-        self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
-        self._validateEmptyNamesIntersection('feature', "toAppend", toAppend)
+        self._validateEmptyNamesIntersection(axis, "toAppend", toAppend)
 
-        # need this in case we are self appending
-        origFeatureCountS = self.features
-        origFeatureCountTA = toAppend.features
+        if axis == 'point':
+            self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
+            # need this in case we are self appending
+            origCountS = self.points
+            origCountTA = toAppend.points
 
-        isReordered = self._validateReorderedNames('point', 'appendFeatures', toAppend)
-        if isReordered:
-            self._appendReorder_implementation('feature', toAppend)
-            for i in range(origFeatureCountTA):
-                currName = toAppend.getFeatureName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName('feature')
-                self.setFeatureName(origFeatureCountS + i, currName)
+            otherAxis = 'feature'
+            funcString = 'appendPoints'
+            selfSetName = self.setPointName
+            toAppendGetName = toAppend.getPointName
+            selfAppendImplementation = self._appendPoints_implementation
+            selfSetCount = self._setpointCount
+            selfCount = self._pointCount
+            toAppendCount = toAppend.points
+            selfAddName = self._addPointName
         else:
-            self._appendFeatures_implementation(toAppend)
-            self._featureCount += toAppend.features
+            self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
+            # need this in case we are self appending
+            origCountS = self.features
+            origCountTA = toAppend.features
 
-            for i in range(origFeatureCountTA):
-                currName = toAppend.getFeatureName(i)
-                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    currName = self._nextDefaultName('feature')
-                self._addFeatureName(currName)
+            otherAxis = 'point'
+            funcString = 'appendFeatures'
+            selfSetName = self.setFeatureName
+            selfAppendImplementation = self._appendFeatures_implementation
+            toAppendGetName = toAppend.getFeatureName
+            selfSetName = self.setFeatureName
+            selfSetCount = self._setfeatureCount
+            selfCount = self._featureCount
+            toAppendCount = toAppend.features
+            selfAddName = self._addFeatureName
+
+        # Two cases will require us to use a generic implementation with
+        # reordering capabilities: the names are consistent but out of order,
+        # or the type of the objects is different.
+        isReordered = self._validateReorderedNames(otherAxis, funcString, toAppend)
+        differentType = self.getTypeString() != toAppend.getTypeString()
+
+        if isReordered or differentType:
+            self._appendReorder_implementation(axis, toAppend)
+        else:
+            selfAppendImplementation(toAppend)
+            selfSetCount(selfCount + toAppendCount)
+
+        # Have to make sure the point/feature names match the extended data. In
+        # the case that the reordering implementation is used, the new points or
+        # features already have default name assignments, so we set the correct
+        # names. In the case of the standard implementation, we must use Base's
+        # helper to add new names.
+        for i in range(origCountTA):
+            currName = toAppendGetName(i)
+            # This insures there is no name collision with defaults already
+            # present in the original object
+            if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                currName = self._nextDefaultName(axis)
+            if isReordered or differentType:
+                selfSetName(origCountS + i, currName)
+            else:
+                selfAddName(currName)
 
         self.validate()
 
@@ -2756,7 +2852,7 @@ class Base(object):
         one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr',
         'scypy csc', 'list of dict' or 'dict of list'.
 
-        """
+        """        
         #make lower case, strip out all white space and periods, except if format
         # is one of the accepted UML data types
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2822,6 +2918,8 @@ class Base(object):
             ret = self._copyAs_implementation('numpyarray')
         else:
             ret = self._copyAs_implementation(format)
+            if isinstance(ret, UML.data.Base):
+                self._copyNames(ret)
 
         def _createListOfDict(data, featureNames):
             # creates a list of dictionaries mapping feature names to the point's values
@@ -2867,6 +2965,28 @@ class Base(object):
             ret = _createDictOfList(data=ret, featureNames=self.getFeatureNames(), nFeatures=self.features)
 
         return ret
+
+    def _copyNames (self, CopyObj):
+        if self._pointNamesCreated():
+            CopyObj.pointNamesInverse = self.getPointNames()
+            CopyObj.pointNames = copy.copy(self.pointNames)
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.index = self.getPointNames()
+        else:
+            CopyObj.pointNamesInverse = None
+            CopyObj.pointNames = None
+
+        if self._featureNamesCreated():
+            CopyObj.featureNamesInverse = self.getFeatureNames()
+            CopyObj.featureNames = copy.copy(self.featureNames)
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.columns = self.getFeatureNames()
+        else:
+            CopyObj.featureNamesInverse = None
+            CopyObj.featureNames = None
+        
+        CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
+        CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
     def copyPoints(self, toCopy=None, start=None, end=None, number=None, randomize=False):
         """
@@ -3217,6 +3337,12 @@ class Base(object):
                   "This object has 0 features."
             raise ImproperActionException(msg)
 
+        # TODO: flatten nameless Objects without the need to generate default names for them.
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
+
         self._flattenToOnePoint_implementation()
 
         self._featureCount = self.points * self.features
@@ -3239,7 +3365,7 @@ class Base(object):
         The single feature will have a name of "Flattened".
 
         Raises: ImproperActionException if an axis has length 0
-
+        
         """
         if self.points == 0:
             msg = "Can only flattenToOneFeature when there is one or more points. " \
@@ -3249,6 +3375,12 @@ class Base(object):
             msg = "Can only flattenToOneFeature when there is one or more features. " \
                   "This object has 0 features."
             raise ImproperActionException(msg)
+
+        # TODO: flatten nameless Objects without the need to generate default names for them.
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
 
         self._flattenToOneFeature_implementation()
 
@@ -3393,6 +3525,11 @@ class Base(object):
                   "number of points."
             raise ArgumentException(msg)
 
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
+
         self._unflattenFromOnePoint_implementation(numPoints)
         ret = self._unflattenNames('point', numPoints)
         self._featureCount = self.features // numPoints
@@ -3434,6 +3571,11 @@ class Base(object):
                   "it will not be possible to equally divide the elements into the desired " \
                   "number of features."
             raise ArgumentException(msg)
+        
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
 
         self._unflattenFromOneFeature_implementation(numFeatures)
         ret = self._unflattenNames('feature', numFeatures)
@@ -3881,8 +4023,10 @@ class Base(object):
 
         # check name restrictions
         if isUML:
-            self._validateEqualNames('point', 'point', opName, other)
-            self._validateEqualNames('feature', 'feature', opName, other)
+            if self._pointNamesCreated() and other._pointNamesCreated is not None:
+                self._validateEqualNames('point', 'point', opName, other)
+            if self._featureNamesCreated() and other._featureNamesCreated():
+                self._validateEqualNames('feature', 'feature', opName, other)
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
                     '__itruediv__', '__floordiv__', '__rfloordiv__', '__ifloordiv__',
@@ -3901,7 +4045,6 @@ class Base(object):
                 msg += + "is zero"
                 raise ZeroDivisionError(msg)
 
-
     def _genericNumericBinary(self, opName, other):
         ret = self._genericNumericBinary_validation(opName, other)
         if ret == NotImplemented:
@@ -3911,22 +4054,33 @@ class Base(object):
 
         # figure out return obj's point / feature names
         # if unary:
+        (retPNames, retFNames) = (None, None)
+
         if opName in ['__pos__', '__neg__', '__abs__'] or not isUML:
-            retPNames = self.getPointNames()
-            retFNames = self.getFeatureNames()
+            if self._pointNamesCreated():
+                retPNames = self.getPointNames()
+            if self._featureNamesCreated():
+                retFNames = self.getFeatureNames()
         # else (everything else that uses this helper is a binary scalar op)
         else:
             (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
 
         ret = self._genericNumericBinary_implementation(opName, other)
 
-        ret.setPointNames(retPNames)
-        ret.setFeatureNames(retFNames)
+        if retPNames is not None:
+            ret.setPointNames(retPNames)
+        else:
+            ret.setPointNames(None)
+
+        if retFNames is not None:
+            ret.setFeatureNames(retFNames)
+        else:
+            ret.setFeatureNames(None)
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if isUML else 'self'
-        dataHelpers.binaryOpNamePathMerge(self, other, ret, nameSource, pathSource)
-
+        dataHelpers.binaryOpNamePathMerge(
+            self, other, ret, nameSource, pathSource)
         return ret
 
     def _genericNumericBinary_implementation(self, opName, other):
@@ -4473,6 +4627,23 @@ class Base(object):
 
         return lTable, lColWidths
 
+    def _defaultNamesGeneration_NamesSetOperations(self, other, axis):
+        """
+        TODO: Find a shorter descriptive name.
+        TODO: Should we place this function in dataHelpers.py?
+        """
+        if axis == 'point':
+            if self.pointNames is None:
+                self._setAllDefault('point')
+            if other.pointNames is None:
+                other._setAllDefault('point')
+        elif axis == 'feature':
+            if self.featureNames is None:
+                self._setAllDefault('feature')
+            if other.featureNames is None:
+                other._setAllDefault('feature')
+        else:
+            raise ArgumentException("invalid axis")
 
     def _pointNameDifference(self, other):
         """
@@ -4483,6 +4654,8 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
+        
+        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
         return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)
 
@@ -4496,6 +4669,8 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName difference")
 
+        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
+
         return six.viewkeys(self.featureNames) - six.viewkeys(other.featureNames)
 
     def _pointNameIntersection(self, other):
@@ -4508,6 +4683,8 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName intersection")
 
+        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
+
         return six.viewkeys(self.pointNames) & six.viewkeys(other.pointNames)
 
     def _featureNameIntersection(self, other):
@@ -4519,6 +4696,8 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName intersection")
+
+        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
         return six.viewkeys(self.featureNames) & six.viewkeys(other.featureNames)
 
@@ -4533,6 +4712,8 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
 
+        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
+
         return six.viewkeys(self.pointNames) ^ six.viewkeys(other.pointNames)
 
     def _featureNameSymmetricDifference(self, other):
@@ -4544,6 +4725,8 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName difference")
+
+        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
         return six.viewkeys(self.featureNames) ^ six.viewkeys(other.featureNames)
 
@@ -4557,6 +4740,8 @@ class Base(object):
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointNames union")
 
+        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
+
         return six.viewkeys(self.pointNames) | six.viewkeys(other.pointNames)
 
     def _featureNameUnion(self, other):
@@ -4568,6 +4753,8 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine featureName union")
+
+        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
 
         return six.viewkeys(self.featureNames) | six.viewkeys(other.featureNames)
 
@@ -4597,22 +4784,38 @@ class Base(object):
         return unequalNames == {}
 
     def _validateEqualNames(self, leftAxis, rightAxis, callSym, other):
-        lnames = self.getPointNames() if leftAxis == 'point' else self.getFeatureNames()
-        rnames = other.getPointNames() if rightAxis == 'point' else other.getFeatureNames()
-        inconsistencies = self._inconsistentNames(lnames, rnames)
 
-        if inconsistencies != {}:
-            table = [['left', 'ID', 'right']]
-            for i in sorted(inconsistencies.keys()):
-                lname = '"' + lnames[i] + '"'
-                rname = '"' + rnames[i] + '"'
-                table.append([lname, str(i), rname])
+        def _validateEqualNames_implementation():
+            lnames = self.getPointNames() if leftAxis == 'point' else self.getFeatureNames()
+            rnames = other.getPointNames() if rightAxis == 'point' else other.getFeatureNames()
+            inconsistencies = self._inconsistentNames(lnames, rnames)
 
-            msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
-            msg += "calling left." + callSym + "(right) \n"
-            msg += UML.logger.tableString.tableString(table)
-            print(msg, file=sys.stderr)
-            raise ArgumentException(msg)
+            if inconsistencies != {}:
+                table = [['left', 'ID', 'right']]
+                for i in sorted(inconsistencies.keys()):
+                    lname = '"' + lnames[i] + '"'
+                    rname = '"' + rnames[i] + '"'
+                    table.append([lname, str(i), rname])
+
+                msg = leftAxis + " to " + rightAxis + " name inconsistencies when "
+                msg += "calling left." + callSym + "(right) \n"
+                msg += UML.logger.tableString.tableString(table)
+                print(msg, file=sys.stderr)
+                raise ArgumentException(msg)
+
+        if leftAxis == 'point' and rightAxis == 'point':
+            if self._pointNamesCreated() or other._pointNamesCreated():
+                _validateEqualNames_implementation()
+        elif leftAxis == 'feature' and rightAxis == 'feature':
+            if self._featureNamesCreated() or other._featureNamesCreated():
+                _validateEqualNames_implementation()
+        elif leftAxis == 'point' and rightAxis == 'feature':
+            if self._pointNamesCreated() or other._featureNamesCreated():
+                _validateEqualNames_implementation()
+        elif leftAxis == 'feature' and rightAxis == 'point':
+            if self._featureNamesCreated() or other._pointNamesCreated():
+                _validateEqualNames_implementation()
+
 
     def _inconsistentNames(self, selfNames, otherNames):
         """Private function to find and return all name inconsistencies
@@ -4814,9 +5017,13 @@ class Base(object):
             names[defaultName] = i
 
     def _addPointName(self, pointName):
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
         self._addName(pointName, self.pointNames, self.pointNamesInverse, 'point')
 
     def _addFeatureName(self, featureName):
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
         self._addName(featureName, self.featureNames, self.featureNamesInverse, 'feature')
 
     def _addName(self, name, selfNames, selfNamesInv, axis):
@@ -4935,7 +5142,6 @@ class Base(object):
         # setup the new featureName
         invNames[index] = newName
         names[newName] = index
-
         self._incrementDefaultIfNeeded(newName, axis)
 
     def _setNamesFromList(self, assignments, count, axis):
@@ -4962,6 +5168,7 @@ class Base(object):
                 msg = "assignments is too large (" + str(len(assignments))
                 msg += "); this axis is empty"
                 raise ArgumentException(msg)
+            self._setNamesFromDict({}, count, axis)
             return
         if len(assignments) != count:
             msg = "assignments may only be an ordered container type, with as "
@@ -5047,6 +5254,38 @@ class Base(object):
             self.featureNamesInverse = reverseMap
 
 
+    def _constructIndicesList(self, axis, values):
+        """
+        Construct a list of indices from a valid integer (python or numpy) or
+        string, or a one-dimensional, iterable container of valid integers
+        and/or strings
+
+        """
+        if isinstance(values, (int, numpy.integer, six.string_types)):
+            values = self._getIndex(values, axis)
+            return [values]
+        if pd and isinstance(values, pd.DataFrame):
+            msg = "A pandas DataFrame object is not a valid input "
+            msg += "for '{0}s'. ".format(axis)
+            msg += "Only one-dimensional objects are accepted."
+            raise ArgumentException(msg)
+        valuesList = []
+        try:
+            for val in values:
+                valuesList.append(val)
+            indicesList = [self._getIndex(val, axis) for val in valuesList]
+        except TypeError:
+            msg = "The argument '{0}s' is not iterable.".format(axis)
+            raise ArgumentException(msg)
+        # _getIndex failed, use it's descriptive message
+        except ArgumentException as ae:
+            msg = "Invalid index value for the argument '{0}s'. ".format(axis)
+            msg += str(ae)[1:-1]
+            raise ArgumentException(msg)
+
+        return indicesList
+
+
     def _validateAxis(self, axis):
         if axis != 'point' and axis != 'feature':
             raise ArgumentException('axis parameter may only be "point" or "feature"')
@@ -5082,13 +5321,6 @@ class Base(object):
             msg += str(value) + ", had the type " + str(type(value))
             msg += ", and a method resolution order of "
             msg += str(inspect.getmro(value.__class__))
-            raise ArgumentException(msg)
-        if same and self.getTypeString() != value.getTypeString():
-            msg = "The argument named " + name + " must be an instance "
-            msg += "of the UML.data.Base class, and it must be of the "
-            msg += "same type as the calling object. The value we recieved "
-            msg += "had a type string of " + value.getTypeString() + " but "
-            msg += "self has a type string of " + self.getTypeString()
             raise ArgumentException(msg)
 
     def _shapeCompareString(self, argName, argValue):
