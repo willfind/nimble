@@ -49,6 +49,8 @@ from multiprocessing import Process
 
 import UML
 
+pd = UML.importModule('pandas')
+
 cython = UML.importModule('cython')
 if cython is None or not cython.compiled:
     from math import sin, cos
@@ -5100,6 +5102,38 @@ class Base(object):
         else:
             self.featureNames = copy.deepcopy(assignments)
             self.featureNamesInverse = reverseMap
+
+
+    def _constructIndicesList(self, axis, values):
+        """
+        Construct a list of indices from a valid integer (python or numpy) or
+        string, or a one-dimensional, iterable container of valid integers
+        and/or strings
+
+        """
+        if isinstance(values, (int, numpy.integer, six.string_types)):
+            values = self._getIndex(values, axis)
+            return [values]
+        if pd and isinstance(values, pd.DataFrame):
+            msg = "A pandas DataFrame object is not a valid input "
+            msg += "for '{0}s'. ".format(axis)
+            msg += "Only one-dimensional objects are accepted."
+            raise ArgumentException(msg)
+        valuesList = []
+        try:
+            for val in values:
+                valuesList.append(val)
+            indicesList = [self._getIndex(val, axis) for val in valuesList]
+        except TypeError:
+            msg = "The argument '{0}s' is not iterable.".format(axis)
+            raise ArgumentException(msg)
+        # _getIndex failed, use it's descriptive message
+        except ArgumentException as ae:
+            msg = "Invalid index value for the argument '{0}s'. ".format(axis)
+            msg += str(ae)[1:-1]
+            raise ArgumentException(msg)
+
+        return indicesList
 
 
     def _validateAxis(self, axis):
