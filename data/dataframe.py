@@ -51,20 +51,7 @@ class DataFrame(Base):
 
         kwds['shape'] = self.data.shape
         super(DataFrame, self).__init__(**kwds)
-        # it is very import to set up self.data's index and columns, other wise int index or column name will be set
-        # if so, pandas DataFrame ix sliding is label based, its behaviour is not what we want
 
-        if self._pointNamesCreated():
-            self.data.index = self.getPointNames()
-        if self._featureNamesCreated():
-            self.data.columns = self.getFeatureNames()
-
-    def _setAllDefault(self, axis):
-        super(DataFrame, self)._setAllDefault(axis)
-        if axis == 'point':
-            self.data.index = self.pointNamesInverse
-        else:
-            self.data.columns = self.featureNamesInverse
 
     def _transpose_implementation(self):
         """
@@ -207,20 +194,22 @@ class DataFrame(Base):
         if isinstance(toExtract, list):
             assert number == len(toExtract)
             assert not randomize
-            return self._extractPointsByList_implementation(toExtract)
+            ret = self._extractPointsByList_implementation(toExtract)
         # boolean function
         elif hasattr(toExtract, '__call__'):
             if randomize:
                 #apply to each
                 raise NotImplementedError  # TODO randomize in the extractPointByFunction case
             else:
-                return self._extractPointsByFunction_implementation(toExtract, number)
+                ret = self._extractPointsByFunction_implementation(toExtract, number)
         # by range
         elif start is not None or end is not None:
-            return self._extractPointsByRange_implementation(start, end)
+            ret = self._extractPointsByRange_implementation(start, end)
         else:
             msg = "Malformed or missing inputs"
             raise ArgumentException(msg)
+        self._updateName('point')
+        return ret
 
     def _extractPointsByList_implementation(self, toExtract):
         """
@@ -228,8 +217,8 @@ class DataFrame(Base):
         returning an object containing those points that are.
 
         """
-        indexList = self.data.index[toExtract]
-        return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+        pointList = [self.getPointNames()[i] for i in toExtract]
+        return self.extractPointsOrFeaturesVectorized(pointList, 'point', True)
 
     def _extractPointsByFunction_implementation(self, toExtract, number):
         """
@@ -238,8 +227,16 @@ class DataFrame(Base):
 
         """
         if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-            indexList = self.data.index[toExtract(self.data)]
-            return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+            nameOfFeatureOrPoint = self.getFeatureIndex(toExtract.nameOfFeatureOrPoint)
+
+            def target_f(x):
+                return toExtract.optr(x[nameOfFeatureOrPoint], toExtract.valueOfFeatureOrPoint)
+
+            indexList = self.data.index[target_f(self.data)]
+            pointList = [self.getPointNames()[i] for i in indexList]
+
+            return self.extractPointsOrFeaturesVectorized(pointList, 'point', True)
+
         else:
             results = UML.data.matrix.viewBasedApplyAlongAxis(toExtract, 'point', self)
             results = results.astype(np.int)
@@ -258,8 +255,9 @@ class DataFrame(Base):
 
         """
         # +1 on end in ranges, because our ranges are inclusive
-        indexList = self.data.index[start:end + 1]
-        return self.extractPointsOrFeaturesVectorized(indexList, 'point', True)
+        range_toExtract = range(start, end + 1)
+        pointList = [self.getPointNames()[i] for i in range_toExtract]
+        return self.extractPointsOrFeaturesVectorized(pointList, 'point', True)
 
     def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
         """
@@ -275,19 +273,21 @@ class DataFrame(Base):
         if isinstance(toExtract, list):
             assert number == len(toExtract)
             assert not randomize
-            return self._extractFeaturesByList_implementation(toExtract)
+            ret = self._extractFeaturesByList_implementation(toExtract)
         # boolean function
         elif hasattr(toExtract, '__call__'):
             if randomize:
                 #apply to each
                 raise NotImplementedError  # TODO
             else:
-                return self._extractFeaturesByFunction_implementation(toExtract, number)
+                ret = self._extractFeaturesByFunction_implementation(toExtract, number)
         # by range
         elif start is not None or end is not None:
-            return self._extractFeaturesByRange_implementation(start, end)
+            ret = self._extractFeaturesByRange_implementation(start, end)
         else:
             raise ArgumentException("Malformed or missing inputs")
+        self._updateName('feature')
+        return ret
 
     def _extractFeaturesByList_implementation(self, toExtract):
         """
@@ -295,7 +295,7 @@ class DataFrame(Base):
         returning an object containing those features that are.
 
         """
-        featureList = self.data.columns[toExtract]
+        featureList = [self.getFeatureNames()[i] for i in toExtract]
         return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
 
     def _extractFeaturesByFunction_implementation(self, toExtract, number):
@@ -305,7 +305,15 @@ class DataFrame(Base):
 
         """
         if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-            featureList = self.data.columns[toExtract(self.data.loc)]
+            # featureList = self.data.columns[toExtract(self.data.loc)]
+            nameOfFeatureOrPoint = self.getPointIndex(toExtract.nameOfFeatureOrPoint)
+
+            def target_f(x):
+                return toExtract.optr(x[nameOfFeatureOrPoint], toExtract.valueOfFeatureOrPoint)
+
+            featureList = self.data.columns[target_f(self.data.loc)]
+            featureList = [self.getFeatureNames()[i] for i in featureList]
+
             return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
         else:
             #have to use view based method.
@@ -329,7 +337,8 @@ class DataFrame(Base):
 
         """
         # +1 on end in ranges, because our ranges are inclusive
-        featureList = self.data.columns[start:end + 1]
+        range_toExtract = range(start, end + 1)
+        featureList = [self.getFeatureNames()[i] for i in range_toExtract]
         return self.extractPointsOrFeaturesVectorized(featureList, 'feature', True)
 
     def _mapReducePoints_implementation(self, mapper, reducer):
@@ -584,15 +593,17 @@ class DataFrame(Base):
         4. based on method and arguments, process self.data
         5. update points and features information.
         """
+        if featuresList is not None:
+            featuresList = self.getFeatureIndices(featuresList)
+
         alsoTreatAsMissingDict = {i: np.NaN for i in alsoTreatAsMissing if (i is not None) and i == i}
         if alsoTreatAsMissingDict:
             myd = {i: alsoTreatAsMissingDict for i in featuresList}
             self.data.replace(myd, inplace=True)
-
+            
         if markMissing:
             #add extra columns to indicate if the original value was missing or not
             extraDf = self.data[featuresList].isnull()
-
         #from now, based on method and arguments, process self.data
         if method == 'remove points':
             msg = 'for method = "remove points", the arguments can only be all( or None) or any.'
@@ -697,16 +708,22 @@ class DataFrame(Base):
         self._featureCount = fCount
 
         if self._featureNamesCreated():
-            self.setFeatureNames(self.data.columns.tolist())
-        else:
-            fNames = [DEFAULT_PREFIX + str(f_idx) for f_idx in self.data.columns.tolist()]
+            print('self.data.columns.tolist():{}'.format(self.data.columns.tolist()))
+            fNames = [self.getFeatureNames()[i] for i in self.data.columns.tolist()]
             self.setFeatureNames(fNames)
+        # else:
+        #     fNames = [DEFAULT_PREFIX + str(f_idx) for f_idx in self.data.columns.tolist()]
+        #     self.setFeatureNames(fNames)
         self._pointCount = pCount
+
         if self._pointNamesCreated():
-            self.setPointNames(self.data.index.tolist())
-        else:
-            pNames = [DEFAULT_PREFIX + str(p_idx) for p_idx in self.data.index.tolist()]
-            self.setPointNames(pNames)
+            PNames = [self.getPointNames()[i] for i in self.data.index.tolist()]
+            self.setPointNames(PNames)
+        # else:
+        #     pNames = [DEFAULT_PREFIX + str(p_idx) for p_idx in self.data.index.tolist()]
+        #     self.setPointNames(pNames)
+        self._updateName('point')
+        self._updateName('feature')
             
     def _flattenToOnePoint_implementation(self):
         numElements = self.points * self.features
@@ -742,10 +759,6 @@ class DataFrame(Base):
             def _setAllDefault(self, axis):
                 print(super(DataFrameView, self))
                 super(DataFrameView, self)._setAllDefault(axis)
-                if axis == 'point':
-                    self.data.index = self._source.pointNamesInverse[pointStart:pointEnd]
-                else:
-                    self.data.columns = self._source.featureNamesInverse[featureStart:featureEnd]
 
         kwds = {}
         kwds['data'] = self.data.iloc[pointStart:pointEnd, featureStart:featureEnd]
@@ -1054,9 +1067,10 @@ class DataFrame(Base):
         update self.data.index or self.data.columns
         """
         if axis == 'point':
-            self.data.index = self.getPointNames()
+            self.data.index = list(range(len(self.data.index)))
         else:
-            self.data.columns = self.getFeatureNames()
+            # self.data.columns = self.getFeatureNames()
+            self.data.columns = list(range(len(self.data.columns)))
         #-----------------------------------------------------------------------
 
 
@@ -1066,14 +1080,17 @@ class DataFrame(Base):
         """
         df = self.data
         nameList = list(nameList)
+        
         if axis == 0 or axis == 'point':
-            ret = df.loc[nameList, :]
+            indexList = self.getPointIndices(nameList)
+            ret = df.iloc[indexList, :]
             name = 'pointNames'
             axis = 0
             otherName = 'featureNames'
             otherNameList = self.getFeatureNames()
         elif axis == 1 or axis == 'feature':
-            ret = df.loc[:, nameList]
+            indexList = self.getFeatureIndices(nameList)
+            ret = df.iloc[:, indexList]
             name = 'featureNames'
             axis = 1
             otherName = 'pointNames'
@@ -1082,6 +1099,6 @@ class DataFrame(Base):
             msg = 'axis can only be 0,1 or point, feature'
             raise ArgumentException(msg)
 
-        df.drop(nameList, axis=axis, inplace=inplace)
+        df.drop(indexList, axis=axis, inplace=inplace)
 
         return UML.createData('DataFrame', ret, **{name: nameList, otherName: otherNameList})

@@ -407,6 +407,11 @@ class Base(object):
             self._setAllDefault('point')
         return self.pointNames[name]
 
+    def getPointIndices(self, names): 
+        if not self._pointNamesCreated(): 
+            self._setAllDefault('point') 
+        return [self.pointNames[n] for n in names] 
+
     def hasPointName(self, name):
         try:
             self.getPointIndex(name)
@@ -423,6 +428,11 @@ class Base(object):
         if not self._featureNamesCreated():
             self._setAllDefault('feature')
         return self.featureNames[name]
+
+    def getFeatureIndices(self, names): 
+        if not self._featureNamesCreated(): 
+            self._setAllDefault('feature') 
+        return [self.featureNames[n] for n in names] 
             
     def hasFeatureName(self, name):
         try:
@@ -2938,8 +2948,8 @@ class Base(object):
         if self._pointNamesCreated():
             CopyObj.pointNamesInverse = self.getPointNames()
             CopyObj.pointNames = copy.copy(self.pointNames)
-            if CopyObj.getTypeString() == 'DataFrame':
-                CopyObj.data.index = self.getPointNames()
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.index = self.getPointNames()
         else:
             CopyObj.pointNamesInverse = None
             CopyObj.pointNames = None
@@ -2947,8 +2957,8 @@ class Base(object):
         if self._featureNamesCreated():
             CopyObj.featureNamesInverse = self.getFeatureNames()
             CopyObj.featureNames = copy.copy(self.featureNames)
-            if CopyObj.getTypeString() == 'DataFrame':
-                CopyObj.data.columns = self.getFeatureNames()
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.columns = self.getFeatureNames()
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
