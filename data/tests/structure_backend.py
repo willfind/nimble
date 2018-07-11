@@ -29,6 +29,7 @@ import UML
 from UML import createData
 from UML.data import List
 from UML.data import Matrix
+from UML.data import DataFrame
 from UML.data import Sparse
 from UML.data import BaseView
 from UML.data.dataHelpers import DEFAULT_PREFIX
@@ -100,6 +101,7 @@ class StructureDataSafe(DataTestObject):
         sparseObj = createData(returnType="Sparse", data=data)
         listObj = createData(returnType="List", data=data)
         matixObj = createData(returnType="Matrix", data=data)
+        dataframeObj = createData(returnType="DataFrame", data=data)
 
         copySparse = orig.copyAs(format='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -112,6 +114,10 @@ class StructureDataSafe(DataTestObject):
         copyMatrix = orig.copyAs(format='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
+
+        copyDataFrame = orig.copyAs(format='DataFrame')
+        assert copyDataFrame.isIdentical(copyDataFrame)
+        assert dataframeObj.isIdentical(copyDataFrame)
 
         pyList = orig.copyAs(format='python list')
         assert pyList == []
@@ -138,6 +144,7 @@ class StructureDataSafe(DataTestObject):
         sparseObj = createData(returnType="Sparse", data=data)
         listObj = createData(returnType="List", data=data)
         matixObj = createData(returnType="Matrix", data=data)
+        dataframeObj = createData(returnType="DataFrame", data=data)
 
         copySparse = orig.copyAs(format='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -150,6 +157,10 @@ class StructureDataSafe(DataTestObject):
         copyMatrix = orig.copyAs(format='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
+
+        copyDataFrame = orig.copyAs(format='DataFrame')
+        assert copyDataFrame.isIdentical(copyDataFrame)
+        assert dataframeObj.isIdentical(copyDataFrame)
 
         pyList = orig.copyAs(format='python list')
         assert pyList == [[], []]
@@ -174,6 +185,7 @@ class StructureDataSafe(DataTestObject):
         sparseObj = createData(returnType="Sparse", data=data)
         listObj = createData(returnType="List", data=data)
         matixObj = createData(returnType="Matrix", data=data)
+        dataframeObj = createData(returnType="DataFrame", data=data)
 
         copySparse = orig.copyAs(format='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -186,6 +198,10 @@ class StructureDataSafe(DataTestObject):
         copyMatrix = orig.copyAs(format='Matrix')
         assert copyMatrix.isIdentical(matixObj)
         assert matixObj.isIdentical(copyMatrix)
+
+        copyDataFrame = orig.copyAs(format='DataFrame')
+        assert copyDataFrame.isIdentical(copyDataFrame)
+        assert dataframeObj.isIdentical(copyDataFrame)
 
         pyList = orig.copyAs(format='python list')
         assert pyList == []
@@ -212,9 +228,10 @@ class StructureDataSafe(DataTestObject):
         sparseObj = createData(returnType="Sparse", data=data, pointNames=pointNames, featureNames=featureNames)
         listObj = createData(returnType="List", data=data, pointNames=pointNames, featureNames=featureNames)
         matixObj = createData(returnType="Matrix", data=data, pointNames=pointNames, featureNames=featureNames)
+        dataframeObj = createData(returnType="DataFrame", data=data, pointNames=pointNames, featureNames=featureNames)
 
         pointsShuffleIndices = [3, 1, 2, 0]
-        featuresshuffleIndices = [1, 2, 0]
+        featuresShuffleIndices = [1, 2, 0]
 
         copySparse = orig.copyAs(format='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -225,7 +242,7 @@ class StructureDataSafe(DataTestObject):
         assert 'two' in orig.getFeatureNames()
         assert 'one' in orig.getPointNames()
         copySparse.shufflePoints(pointsShuffleIndices)
-        copySparse.shuffleFeatures(featuresshuffleIndices)
+        copySparse.shuffleFeatures(featuresShuffleIndices)
         assert orig[0, 0] == 1
 
         copyList = orig.copyAs(format='List')
@@ -237,7 +254,7 @@ class StructureDataSafe(DataTestObject):
         assert 'two' in orig.getFeatureNames()
         assert 'one' in orig.getPointNames()
         copyList.shufflePoints(pointsShuffleIndices)
-        copyList.shuffleFeatures(featuresshuffleIndices)
+        copyList.shuffleFeatures(featuresShuffleIndices)
         assert orig[0, 0] == 1
 
         copyMatrix = orig.copyAs(format='Matrix')
@@ -249,8 +266,21 @@ class StructureDataSafe(DataTestObject):
         assert 'two' in orig.getFeatureNames()
         assert 'one' in orig.getPointNames()
         copyMatrix.shufflePoints(pointsShuffleIndices)
-        copyMatrix.shuffleFeatures(featuresshuffleIndices)
+        copyMatrix.shuffleFeatures(featuresShuffleIndices)
         assert orig[0, 0] == 1
+
+        copyDataFrame = orig.copyAs(format='DataFrame')
+        assert copyDataFrame.isIdentical(dataframeObj)
+        assert dataframeObj.isIdentical(copyDataFrame)
+        assert type(copyDataFrame) == DataFrame
+        copyDataFrame.setFeatureName('two', '2')
+        copyDataFrame.setPointName('one', 'WHAT')
+        assert 'two' in orig.getFeatureNames()
+        assert 'one' in orig.getPointNames()
+        copyDataFrame.shufflePoints(pointsShuffleIndices)
+        copyDataFrame.shuffleFeatures(featuresShuffleIndices)
+        assert orig[0, 0] == 1
+
 
         pyList = orig.copyAs(format='python list')
         assert type(pyList) == list
@@ -425,6 +455,12 @@ class StructureDataSafe(DataTestObject):
         assert copyMatrix.path == orig.path
         assert copyMatrix.absolutePath == path
         assert copyMatrix.relativePath == os.path.relpath(path)
+
+        copyDataFrame = orig.copyAs(format='DataFrame')
+        assert copyDataFrame.name == orig.name
+        assert copyDataFrame.path == orig.path
+        assert copyDataFrame.absolutePath == path
+        assert copyDataFrame.relativePath == os.path.relpath(path)
 
 
     ###################

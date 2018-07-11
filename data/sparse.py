@@ -779,18 +779,18 @@ class Sparse(Base):
         self._sorted = other._sorted
 
     def _copyAs_implementation(self, format):
+
         if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            # Due to duplicate removal done in createData, we cannot gurantee that the internal
+            ret = UML.createData('Sparse', self.data)
+            # Due to duplicate removal done in createData, we cannot guarantee that the internal
             # sorting is preserved in the returned object.
             return ret
         if format == 'List':
-            return UML.createData('List', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames())
+            return UML.createData('List', self.data)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', self.data)
         if format == 'pythonlist':
             return self.data.todense().tolist()
         if format == 'numpyarray':
@@ -1159,13 +1159,18 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('point')
 
-        numFeatures = self.features / numPoints
+        numFeatures = self.features // numPoints
         newShape = (numPoints, numFeatures)
 
         for i in range(len(self.data.data)):
             # must change the row entry before modifying the col entry
             self.data.row[i] = self.data.col[i] / numFeatures
             self.data.col[i] = self.data.col[i] % numFeatures
+        
+        print('self.data.data:\n{}'.format(self.data.data))
+        print('self.data.row:\n{}'.format(self.data.row))
+        print('self.data.col:\n{}'.format(self.data.col))
+        print('newShape:{}'.format(newShape))
 
         self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), newShape)
         self._sorted = 'point'
@@ -1175,7 +1180,7 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('feature')
 
-        numPoints = self.points / numFeatures
+        numPoints = self.points // numFeatures
         newShape = (numPoints, numFeatures)
 
         for i in range(len(self.data.data)):
@@ -1939,10 +1944,10 @@ class SparseView(BaseView, Sparse):
         return GenericIt()
 
     def _copyAs_implementation(self, format):
+
         if self.points == 0 or self.features == 0:
             emptyStandin = numpy.empty((self.points, self.features))
-            intermediate = UML.createData('Matrix', emptyStandin, pointNames=self.getPointNames(),
-                                           featureNames=self.getFeatureNames())
+            intermediate = UML.createData('Matrix', emptyStandin)
             return intermediate.copyAs(format)
 
         limited = self._source.copyPoints(start=self._pStart, end=self._pEnd - 1)

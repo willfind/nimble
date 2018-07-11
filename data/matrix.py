@@ -33,7 +33,6 @@ class Matrix(Base):
         """
         data can only be a numpy matrix
         """
-
         if (not isinstance(data, (numpy.matrix, numpy.ndarray))):# and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
@@ -53,7 +52,7 @@ class Matrix(Base):
                     self.data = numpy.matrix(data, dtype=numpy.float)
                 except ValueError:
                     self.data = numpy.matrix(data, dtype=object)
-
+        
         kwds['featureNames'] = featureNames
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
@@ -505,12 +504,15 @@ class Matrix(Base):
         self.data = other.data
 
     def _copyAs_implementation(self, format):
-        if format == 'Sparse':
-            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-        if format == 'List':
-            return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+
         if format is None or format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data)
+        if format == 'Sparse':
+            return UML.createData('Sparse', self.data)
+        if format == 'List':
+            return UML.createData('List', self.data)
+        if format == 'DataFrame':
+            return UML.createData('DataFrame', self.data)
         if format == 'pythonlist':
             return self.data.tolist()
         if format == 'numpyarray':
@@ -527,10 +529,9 @@ class Matrix(Base):
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(self.data)
-        if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
-        return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+        return UML.createData('Matrix', self.data)
+        
 
     def _copyPoints_implementation(self, points, start, end):
         if points is not None:
@@ -952,7 +953,17 @@ class Matrix(Base):
             ret = self.data - other.data
         else:
             ret = self.data - other
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+        if not self._pointNamesCreated():
+            pNames = None
+        else:
+            pNames = self.getPointNames()
+        if not self._featureNamesCreated():
+            fNames = None
+        else:
+            fNames = self.getFeatureNames()
+
+        return Matrix(ret, pointNames=pNames, featureNames=fNames, reuseData=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data
