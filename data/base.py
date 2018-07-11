@@ -407,6 +407,11 @@ class Base(object):
             self._setAllDefault('point')
         return self.pointNames[name]
 
+    def getPointIndices(self, names): 
+        if not self._pointNamesCreated(): 
+            self._setAllDefault('point') 
+        return [self.pointNames[n] for n in names] 
+
     def hasPointName(self, name):
         try:
             self.getPointIndex(name)
@@ -423,6 +428,11 @@ class Base(object):
         if not self._featureNamesCreated():
             self._setAllDefault('feature')
         return self.featureNames[name]
+
+    def getFeatureIndices(self, names): 
+        if not self._featureNamesCreated(): 
+            self._setAllDefault('feature') 
+        return [self.featureNames[n] for n in names] 
             
     def hasFeatureName(self, name):
         try:
