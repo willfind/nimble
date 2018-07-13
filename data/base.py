@@ -72,6 +72,8 @@ from .dataHelpers import formatIfNeeded
 
 from .dataHelpers import makeConsistentFNamesAndData
 
+from .dataHelpers import valuesToPythonList
+
 def to2args(f):
     """
     this function is for __pow__. In cython, __pow__ must have 3 arguments and default can't be used there.
@@ -139,38 +141,26 @@ class Base(object):
         if pointNames is None:
             self.pointNamesInverse = None
             self.pointNames = None
-        elif isinstance(pointNames, list):
-            self._nextDefaultValuePoint = self._pointCount
-            self.setPointNames(pointNames)
         elif isinstance(pointNames, dict):
             self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
-        # could still be an ordered container, pass it on to the list helper
-        elif hasattr(pointNames, '__len__') and hasattr(pointNames, '__getitem__'):
+        else:
+            pointNames = valuesToPythonList(pointNames, 'pointNames')
             self._nextDefaultValuePoint = self._pointCount
             self.setPointNames(pointNames)
-        else:
-            raise ArgumentException(
-                "pointNames may only be a list, an ordered container, or a dict, defining a mapping between integers and pointNames")
 
         # Set up feature names
         self._nextDefaultValueFeature = 0
         if featureNames is None:
             self.featureNamesInverse = None
             self.featureNames = None
-        elif isinstance(featureNames, list):
-            self._nextDefaultValueFeature = self._featureCount
-            self.setFeatureNames(featureNames)
         elif isinstance(featureNames, dict):
             self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
-        # could still be an ordered container, pass it on to the list helper
-        elif hasattr(featureNames, '__len__') and hasattr(featureNames, '__getitem__'):
+        else:
+            featureNames = valuesToPythonList(featureNames, 'featureNames')
             self._nextDefaultValueFeature = self._featureCount
             self.setFeatureNames(featureNames)
-        else:
-            raise ArgumentException(
-                "featureNames may only be a list, an ordered container, or a dict, defining a mapping between integers and featureNames")
 
         # Set up object name
         if name is None:
@@ -321,7 +311,7 @@ class Base(object):
         if self.features == 0:
             raise ArgumentException("Cannot set any feature names; this object has no features ")
         if self.featureNames is None:
-            self._setAllDefault('feature') 
+            self._setAllDefault('feature')
         self._setName_implementation(oldIdentifier, newName, 'feature', False)
 
 
@@ -340,15 +330,11 @@ class Base(object):
         if assignments is None:
             self.pointNames = None
             self.pointNamesInverse = None
-        elif isinstance(assignments, list):
-            self._setNamesFromList(assignments, self.points, 'point')
         elif isinstance(assignments, dict):
             self._setNamesFromDict(assignments, self.points, 'point')
         else:
-            msg = "'assignments' parameter may only be a list, a dict, or None, "
-            msg += "yet a value of type " + \
-                str(type(assignments)) + " was given"
-            raise ArgumentException(msg)
+            assignments = valuesToPythonList(assignments, 'assignments')
+            self._setNamesFromList(assignments, self.points, 'point')
 
     def setFeatureNames(self, assignments=None):
         """
@@ -365,15 +351,12 @@ class Base(object):
         if assignments is None:
             self.featureNames = None
             self.featureNamesInverse = None
-        elif isinstance(assignments, list):
-            self._setNamesFromList(assignments, self.features, 'feature')
         elif isinstance(assignments, dict):
             self._setNamesFromDict(assignments, self.features, 'feature')
         else:
-            msg = "'assignments' parameter may only be a list, a dict, or None, "
-            msg += "yet a value of type " + \
-                str(type(assignments)) + " was given"
-            raise ArgumentException(msg)
+            assignments = valuesToPythonList(assignments, 'assignments')
+            self._setNamesFromList(assignments, self.features, 'feature')
+
 
     def nameIsDefault(self):
         """Returns True if self.name has a default value"""
@@ -409,10 +392,10 @@ class Base(object):
             self._setAllDefault('point')
         return self.pointNames[name]
 
-    def getPointIndices(self, names): 
-        if not self._pointNamesCreated(): 
-            self._setAllDefault('point') 
-        return [self.pointNames[n] for n in names] 
+    def getPointIndices(self, names):
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        return [self.pointNames[n] for n in names]
 
     def hasPointName(self, name):
         try:
@@ -431,11 +414,11 @@ class Base(object):
             self._setAllDefault('feature')
         return self.featureNames[name]
 
-    def getFeatureIndices(self, names): 
-        if not self._featureNamesCreated(): 
-            self._setAllDefault('feature') 
-        return [self.featureNames[n] for n in names] 
-            
+    def getFeatureIndices(self, names):
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
+        return [self.featureNames[n] for n in names]
+
     def hasFeatureName(self, name):
         try:
             self.getFeatureIndex(name)
@@ -613,22 +596,13 @@ class Base(object):
         """
         if points is not None:
             points = copy.copy(points)
+            points = self._constructIndicesList('point', points)
         if self.points == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
         if self.features == 0:
             raise ImproperActionException("We disallow this function when there are 0 features")
         if function is None:
             raise ArgumentException("function must not be None")
-
-        if points is not None and not isinstance(points, list):
-            if not isinstance(points, int):
-                raise ArgumentException(
-                    "Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
-            points = [points]
-
-        if points is not None:
-            for i in range(len(points)):
-                points[i] = self._getPointIndex(points[i])
 
         self.validate()
 
@@ -661,22 +635,13 @@ class Base(object):
         """
         if features is not None:
             features = copy.copy(features)
+            features = self._constructIndicesList('feature', features)
         if self.points == 0:
             raise ImproperActionException("We disallow this function when there are 0 points")
         if self.features == 0:
             raise ImproperActionException("We disallow this function when there are 0 features")
         if function is None:
             raise ArgumentException("function must not be None")
-
-        if features is not None and not isinstance(features, list):
-            if not (isinstance(features, int) or isinstance(features, six.string_types)):
-                raise ArgumentException(
-                    "Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
-            features = [features]
-
-        if features is not None:
-            for i in range(len(features)):
-                features[i] = self._getFeatureIndex(features[i])
 
         self.validate()
 
@@ -934,25 +899,10 @@ class Base(object):
         except TypeError:
             oneArg = True
 
-        if points is not None and not isinstance(points, list):
-            if not isinstance(points, (int, six.string_types)):
-                raise ArgumentException(
-                    "Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
-            points = [points]
-
-        if features is not None and not isinstance(features, list):
-            if not isinstance(features, (int, six.string_types)):
-                raise ArgumentException(
-                    "Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
-            features = [features]
-
         if points is not None:
-            # points = copy.copy(points)
-            points = [self._getPointIndex(i) for i in points]
-
+            points = self._constructIndicesList('point', points)
         if features is not None:
-            # features = copy.copy(features)
-            features = [self._getFeatureIndex(i) for i in features]
+            features = self._constructIndicesList('feature', features)
 
         self.validate()
 
@@ -2852,7 +2802,7 @@ class Base(object):
         one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr',
         'scypy csc', 'list of dict' or 'dict of list'.
 
-        """        
+        """
         #make lower case, strip out all white space and periods, except if format
         # is one of the accepted UML data types
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2984,7 +2934,7 @@ class Base(object):
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
-        
+
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
@@ -3072,17 +3022,8 @@ class Base(object):
             raise ImproperActionException("We disallow this function when there are 0 features")
         if function is None:
             raise ArgumentException("function must not be None")
-
-        if points is not None and not isinstance(points, list):
-            if not isinstance(points, int):
-                raise ArgumentException(
-                    "Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
-            points = [points]
-
         if points is not None:
-            points = copy.copy(points)
-            for i in range(len(points)):
-                points[i] = self._getPointIndex(points[i])
+            points = self._constructIndicesList('point', points)
 
         self.validate()
 
@@ -3107,17 +3048,8 @@ class Base(object):
             raise ImproperActionException("We disallow this function when there are 0 features")
         if function is None:
             raise ArgumentException("function must not be None")
-
-        if features is not None and not isinstance(features, list):
-            if not (isinstance(features, int) or isinstance(features, six.string_types)):
-                raise ArgumentException(
-                    "Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
-            features = [features]
-
         if features is not None:
-            features = copy.copy(features)
-            for i in range(len(features)):
-                features[i] = self._getFeatureIndex(features[i])
+            features = self._constructIndicesList('feature', features)
 
         self.validate()
 
@@ -3146,27 +3078,10 @@ class Base(object):
         value originally in the data will remain unmodified.
 
         """
-        if points is not None and not isinstance(points, list):
-            if not isinstance(points, (int, six.string_types)):
-                raise ArgumentException(
-                    "Only allowable inputs to 'points' parameter is an int ID, a list of int ID's, or None")
-            points = [points]
-
-        if features is not None and not isinstance(features, list):
-            if not isinstance(features, (int, six.string_types)):
-                raise ArgumentException(
-                    "Only allowable inputs to 'features' parameter is an ID, a list of int ID's, or None")
-            features = [features]
-
         if points is not None:
-            points = copy.copy(points)
-            for i in range(len(points)):
-                points[i] = self._getPointIndex(points[i])
-
+            points = self._constructIndicesList('point', points)
         if features is not None:
-            features = copy.copy(features)
-            for i in range(len(features)):
-                features[i] = self._getFeatureIndex(features[i])
+            features = self._constructIndicesList('feature', features)
 
         self.validate()
 
@@ -3262,24 +3177,10 @@ class Base(object):
         indicate if the value in a cell is originally missing or not.
         """
         #convert features to a list of index
-        msg = 'features can only be a str, an int, or a list of str or a list of int'
-        if features is None:
-            featuresList = list(range(self._getfeatureCount()))
-        elif isinstance(features, six.string_types):
-            featuresList = [self.getFeatureIndex(features)]
-        elif isinstance(features, int):
-            featuresList = [features]
-        elif isinstance(features, list):
-            featuresList = []
-            for i in features:
-                if isinstance(i, six.string_types):
-                    featuresList.append(self.getFeatureIndex(i))
-                elif isinstance(i, int):
-                    featuresList.append(i)
-                else:
-                    raise ArgumentException(msg)
+        if features is not None:
+            featuresList = self._constructIndicesList('feature', features)
         else:
-            raise ArgumentException(msg)
+            featuresList = list(range(self._getfeatureCount()))
 
         #convert single value alsoTreatAsMissing to a list
         if not hasattr(alsoTreatAsMissing, '__len__') or isinstance(alsoTreatAsMissing, six.string_types):
@@ -3365,7 +3266,7 @@ class Base(object):
         The single feature will have a name of "Flattened".
 
         Raises: ImproperActionException if an axis has length 0
-        
+
         """
         if self.points == 0:
             msg = "Can only flattenToOneFeature when there is one or more points. " \
@@ -3571,7 +3472,7 @@ class Base(object):
                   "it will not be possible to equally divide the elements into the desired " \
                   "number of features."
             raise ArgumentException(msg)
-        
+
         if not self._pointNamesCreated():
             self._setAllDefault('point')
         if not self._featureNamesCreated():
@@ -4294,17 +4195,18 @@ class Base(object):
                             break
                     #if the target can't be converted to a function
                     if isinstance(target, six.string_types):
-                        msg = 'the target is not a valid point name nor a valid query string'
-                        raise ArgumentException(msg)
-            if isinstance(target, (int, numpy.int, numpy.int64)):
-                targetList = [target]
-            if isinstance(target, list):
-                #verify everything in list is a valid index and convert names into indices
-                targetList = []
-                for identifier in target:
-                    targetList.append(getIndex(identifier))
+                        try:
+                            target = self._constructIndicesList(axis, target)
+                        except ArgumentException:
+                            argName = 'to' + structure.capitalize()
+                            msg = '{0} '.format(argName)
+                            msg += 'is not a valid point name nor a valid query string'
+                            raise ArgumentException(msg)
+            if not hasattr(target, '__call__'):
+                argName = 'to' + structure.capitalize()
+                targetList = self._constructIndicesList(axis, target, argName)
             # boolean function
-            elif hasattr(target, '__call__'):
+            else:
                 if structure == 'retain':
                     targetFunction = target
                     def complement(*args):
@@ -4654,7 +4556,7 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
-        
+
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
         return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)
@@ -5158,11 +5060,7 @@ class Base(object):
         if assignments is None:
             self._setAllDefault(axis)
             return
-        if not hasattr(assignments, '__getitem__') or not hasattr(assignments, '__len__'):
-            msg = "assignments may only be an ordered container type, with "
-            msg += "implentations for both __len__ and __getitem__, where "
-            msg += "__getitem__ accepts non-negative integers"
-            raise ArgumentException(msg)
+
         if count == 0:
             if len(assignments) > 0:
                 msg = "assignments is too large (" + str(len(assignments))
@@ -5175,16 +5073,11 @@ class Base(object):
             msg += "many entries (" + str(len(assignments)) + ") as this axis "
             msg += "is long (" + str(count) + ")"
             raise ArgumentException(msg)
-        try:
-            assignments[0]
-        except IndexError:
-            msg = "assignments may only be an ordered container type, with "
-            msg += "implentations for both __len__ and __getitem__, where "
-            msg += "__getitem__ accepts non-negative integers"
-            raise ArgumentException(msg)
 
-        # adjust nextDefaultValue as needed given contents of assignments
         for name in assignments:
+            if name is not None and not isinstance(name, six.string_types):
+                msg = 'assignments must contain only string values'
+                raise ArgumentException(msg)
             if name is not None and name.startswith(DEFAULT_PREFIX):
                 try:
                     num = int(name[DEFAULT_PREFIX_LENGTH:])
@@ -5254,32 +5147,28 @@ class Base(object):
             self.featureNamesInverse = reverseMap
 
 
-    def _constructIndicesList(self, axis, values):
+    def _constructIndicesList(self, axis, values, argName=None):
         """
         Construct a list of indices from a valid integer (python or numpy) or
         string, or a one-dimensional, iterable container of valid integers
         and/or strings
 
         """
-        if isinstance(values, (int, numpy.integer, six.string_types)):
-            values = self._getIndex(values, axis)
-            return [values]
+        if argName is None:
+            argName = axis + 's'
+        # pandas DataFrames are iterable but do not iterate through the values
         if pd and isinstance(values, pd.DataFrame):
             msg = "A pandas DataFrame object is not a valid input "
-            msg += "for '{0}s'. ".format(axis)
+            msg += "for '{0}'. ".format(argName)
             msg += "Only one-dimensional objects are accepted."
             raise ArgumentException(msg)
-        valuesList = []
+
+        valuesList = valuesToPythonList(values, argName)
         try:
-            for val in values:
-                valuesList.append(val)
             indicesList = [self._getIndex(val, axis) for val in valuesList]
-        except TypeError:
-            msg = "The argument '{0}s' is not iterable.".format(axis)
-            raise ArgumentException(msg)
-        # _getIndex failed, use it's descriptive message
         except ArgumentException as ae:
-            msg = "Invalid index value for the argument '{0}s'. ".format(axis)
+            msg = "Invalid index value for the argument '{0}'. ".format(argName)
+            # add more detail to msg; slicing to exclude quotes
             msg += str(ae)[1:-1]
             raise ArgumentException(msg)
 

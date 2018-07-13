@@ -9,11 +9,14 @@ from __future__ import absolute_import
 import copy
 import math
 import string
+import numpy
 
 from abc import ABCMeta
 from abc import abstractmethod
 import six
 from six.moves import range
+
+from UML.exceptions import ArgumentException
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -162,7 +165,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         return ret
 
     (retPNames, retFNames) = (None, None)
-        
+
     if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
         retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
     elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
@@ -180,7 +183,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         retFNames = otherSource.featureNames
     else:
         retFNames = None
-        
+
     return (retPNames, retFNames)
 
 
@@ -408,3 +411,23 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
         # modify the width associated with the colHold
         if removalWidths is not None:
             removalWidths[removeIndex] = len(colHold)
+
+
+def valuesToPythonList(values, argName):
+    """
+    Create a python list of values from an integer (python or numpy),
+    string, or an iterable container object
+
+    """
+    if isinstance(values, (int, numpy.integer, six.string_types)):
+        return [values]
+    valuesList = []
+    try:
+        for val in values:
+            valuesList.append(val)
+    except TypeError:
+        msg = "The argument '{0}' is not an integer ".format(argName)
+        msg += "(python or numpy), string, or an iterable container object."
+        raise ArgumentException(msg)
+
+    return valuesList

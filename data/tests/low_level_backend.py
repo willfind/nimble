@@ -14,7 +14,8 @@ _featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
 setPointName, setFeatureName, setPointNames, setFeatureNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, getPointNames, getFeatureNames, __len__,
-getFeatureIndex, getFeatureName, getPointIndex, getPointName
+getFeatureIndex, getFeatureName, getPointIndex, getPointName,
+_constructIndicesList
 
 """
 
@@ -540,14 +541,14 @@ class LowLevelBackend(object):
     @raises(ArgumentException)
     def test_setPointNames_exceptionNonStringPointNameInList(self):
         """ Test setPointNames() for ArgumentException when a list element is not a string """
-        toTest = self.constructor(pointNames=['one'])
-        nonStringNames = [1, 2, 3]
-        toTest.setPointNames(nonStringNames)
+        toTest = self.constructor(pointNames=['one', 'two', 'three'])
+        nonStringName = ['one', 'two', 3]
+        toTest.setPointNames(nonStringName)
 
     @raises(ArgumentException)
     def test_setPointNames_exceptionNonUniqueStringInList(self):
         """ Test setPointNames() for ArgumentException when a list element is not unique """
-        toTest = self.constructor(pointNames=['one'])
+        toTest = self.constructor(pointNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
         toTest.setPointNames(nonUnique)
 
@@ -704,14 +705,14 @@ class LowLevelBackend(object):
     @raises(ArgumentException)
     def test_setFeatureNames_exceptionNonStringFeatureNameInList(self):
         """ Test setFeatureNames() for ArgumentException when a list element is not a string """
-        toTest = self.constructor(featureNames=['one'])
-        nonStringFeatureNames = [1, 2, 3]
+        toTest = self.constructor(featureNames=['one', 'two', 'three'])
+        nonStringFeatureNames = ['one', 'two', 3]
         toTest.setFeatureNames(nonStringFeatureNames)
 
     @raises(ArgumentException)
     def test_setFeatureNames_exceptionNonUniqueStringInList(self):
         """ Test setFeatureNames() for ArgumentException when a list element is not unique """
-        toTest = self.constructor(featureNames=['one'])
+        toTest = self.constructor(featureNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
         toTest.setFeatureNames(nonUnique)
 
