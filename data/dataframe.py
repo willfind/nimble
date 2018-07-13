@@ -18,6 +18,7 @@ scipy = UML.importModule('scipy.sparse')
 
 import itertools
 import copy
+import re
 from .base_view import BaseView
 from .dataHelpers import DEFAULT_PREFIX
 
@@ -437,7 +438,7 @@ class DataFrame(Base):
         if alsoTreatAsMissingDict:
             myd = {i: alsoTreatAsMissingDict for i in featuresList}
             self.data.replace(myd, inplace=True)
-            
+
         if markMissing:
             #add extra columns to indicate if the original value was missing or not
             extraDf = self.data[featuresList].isnull()
@@ -541,12 +542,29 @@ class DataFrame(Base):
 
         if markMissing:
             self.data = self.data.join(extraDf[[i for i in featuresList if i in self.data.columns]], rsuffix='_missing', how='left')
-        pCount, fCount = self.data.shape
-        self._featureCount = fCount
 
-        if self._featureNamesCreated():
-            print('self.data.columns.tolist():{}'.format(self.data.columns.tolist()))
-            fNames = [self.getFeatureNames()[i] for i in self.data.columns.tolist()]
+            def fix_name(x):
+                x = str(x)
+                search_res = re.search('^(.+)_missing', x)
+                if search_res:
+                    name = self.getFeatureNames()[int(search_res.group(1))] + '_missing'
+                else:
+                    name = self.getFeatureNames()[int(x)]
+                return name
+
+            fNames = [fix_name(i) for i in self.data.columns]
+
+            self.data.columns = range(len(self.data.columns))
+
+            pCount, fCount = self.data.shape
+            self._featureCount = fCount
+            self.setFeatureNames(fNames)
+        else:
+            pCount, fCount = self.data.shape
+            self._featureCount = fCount
+
+        if self._featureNamesCreated() and not markMissing:
+            fNames = [self.getFeatureNames()[i] for i in self.data.columns.tolist()[:self.features]]
             self.setFeatureNames(fNames)
         # else:
         #     fNames = [DEFAULT_PREFIX + str(f_idx) for f_idx in self.data.columns.tolist()]
@@ -561,7 +579,7 @@ class DataFrame(Base):
         #     self.setPointNames(pNames)
         self._updateName('point')
         self._updateName('feature')
-            
+
     def _flattenToOnePoint_implementation(self):
         numElements = self.points * self.features
         self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
@@ -594,7 +612,6 @@ class DataFrame(Base):
                 super(DataFrameView, self).__init__(**kwds)
 
             def _setAllDefault(self, axis):
-                print(super(DataFrameView, self))
                 super(DataFrameView, self)._setAllDefault(axis)
 
         kwds = {}
