@@ -1043,11 +1043,12 @@ class StructureDataSafe(DataTestObject):
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
         toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-        UML.randomness.startAlternateControl(seed=1)
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed=1)
+        UML.randomness.startAlternateControl(seed)
         retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
@@ -1124,7 +1125,6 @@ class StructureDataSafe(DataTestObject):
         ext2 = toTest.copyFeatures([3, 2])
         exp2 = self.constructor([[-1, 3], [-2, 6], [-3, 9]], pointNames=pointNames)
         assert ext2.isIdentical(exp2)
-        expEndData = [[2], [5], [8]]
         expEnd = self.constructor(data, pointNames=pointNames)
         assert toTest.isIdentical(expEnd)
 
@@ -3196,11 +3196,12 @@ class StructureModifying(DataTestObject):
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
         toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-        UML.randomness.startAlternateControl(seed=1)
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed=1)
+        UML.randomness.startAlternateControl(seed)
         retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
@@ -4279,11 +4280,12 @@ class StructureModifying(DataTestObject):
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
         toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-        UML.randomness.startAlternateControl(seed=1)
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed=1)
+        UML.randomness.startAlternateControl(seed)
         retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
@@ -4816,7 +4818,6 @@ class StructureModifying(DataTestObject):
         expData = [[], [], []]
         expData = numpy.array(expData).T
         expTest = self.constructor(expData)
-        print(toTest, expTest)
         assert toTest.isIdentical(expTest)
 
 
@@ -5288,16 +5289,16 @@ class StructureModifying(DataTestObject):
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
         toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
-        UML.randomness.startAlternateControl(seed=1)
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed=1)
+        UML.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
         assert toTest1.isIdentical(toTest2)
-
 
     ##################
     # retainFeatures #
@@ -5344,7 +5345,6 @@ class StructureModifying(DataTestObject):
         expData = [[], [], [], []]
         expData = numpy.array(expData)
         expTest = self.constructor(expData)
-        print(toTest, expTest)
         assert toTest.isIdentical(expTest)
 
 

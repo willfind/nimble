@@ -83,7 +83,7 @@ class Sparse(Base):
     def pointIterator(self):
         self._sortInternal('point')
 
-        class pointIt():
+        class pointIt(object):
             def __init__(self, outer):
                 self._outer = outer
                 self._nextID = 0
@@ -135,7 +135,6 @@ class Sparse(Base):
                     raise StopIteration
                 if self._outer._sorted != "feature" or not self._stillSorted:
                 #					print "actually called"
-
                     self._stillSorted = False
                     value = self._outer.featureView(self._nextID)
                 else:
@@ -321,25 +320,33 @@ class Sparse(Base):
 
 
     def _structuralVectorized_implementation(self, structure, axis, targetList):
-        pnames = []
-        fnames = []
-        data = self.data
+        """
+        Make use of scipy csr or csc matrices for indexing targeted values
+
+        """
+        axisNames = []
         if axis == 'point':
-            for index in targetList:
-                pnames.append(self.getPointName(index))
-            fnames = self.getFeatureNames()
-            notTarget = [idx for idx in range(self.points) if idx not in targetList]
-            data = data.tocsr()
+            getAxisName = self.getPointName
+            getOtherNames = self.getFeatureNames
+            data = self.data.tocsr()
             targeted = data[targetList, :]
-            notTargeted = data[notTarget, :]
+            if structure != 'copy':
+                notTarget = [idx for idx in range(self.points) if idx not in targetList]
+                notTargeted = data[notTarget, :]
         else:
-            pnames = self.getPointNames()
-            for index in targetList:
-                fnames.append(self.getFeatureName(index))
-            notTarget = [idx for idx in range(self.features) if idx not in targetList]
-            data = data.tocsc()
+            getAxisName = self.getFeatureName
+            getOtherNames = self.getPointNames
+            data = self.data.tocsc()
             targeted = data[:, targetList]
-            notTargeted = data[:, notTarget]
+            if structure != 'copy':
+                notTarget = [idx for idx in range(self.features) if idx not in targetList]
+                notTargeted = data[:, notTarget]
+
+        self._validateAxis(axis)
+
+        for index in targetList:
+            axisNames.append(getAxisName(index))
+        otherNames = getOtherNames()
 
         if structure != 'copy':
             self.data = notTargeted.tocoo()
@@ -347,16 +354,23 @@ class Sparse(Base):
 
         ret = targeted.tocoo()
 
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
+        if axis == 'point':
+            return Sparse(ret, pointNames=axisNames, featureNames=otherNames, reuseData=True)
+        else:
+            return Sparse(ret, pointNames=otherNames, featureNames=axisNames, reuseData=True)
 
 
     def _structuralIterative_implementation(self, structure, axis, targetList):
+        """
+        Iterate through each point in the object to index targeted values
+
+        """
         dtype = numpy.object_
         if axis == 'point':
-            viewIterator = self.copy().pointIterator
+            viewIterator = self.pointIterator
             targetCount = self.points
         else:
-            viewIterator = self.copy().featureIterator
+            viewIterator = self.featureIterator
             targetCount = self.features
 
         targetLength = len(targetList)
@@ -946,7 +960,7 @@ class Sparse(Base):
             # must change the row entry before modifying the col entry
             self.data.row[i] = self.data.col[i] / numFeatures
             self.data.col[i] = self.data.col[i] % numFeatures
-        
+
         print('self.data.data:\n{}'.format(self.data.data))
         print('self.data.row:\n{}'.format(self.data.row))
         print('self.data.col:\n{}'.format(self.data.col))
@@ -1540,15 +1554,18 @@ def _sortInternal_coo_matrix(obj, sortAs):
 
     sortKeys = numpy.lexsort((sortOff, sortPrime))
 
-    newData = obj.data[sortKeys]
-    newRow = obj.row[sortKeys]
-    newCol = obj.col[sortKeys]
+    obj.data = obj.data[sortKeys]
+    obj.row = obj.row[sortKeys]
+    obj.col = obj.col[sortKeys]
 
-    n = len(newData)
-    obj.data[:n] = newData
-    obj.row[:n] = newRow
-    obj.col[:n] = newCol
-
+    # newData = obj.data[sortKeys]
+    # newRow = obj.row[sortKeys]
+    # newCol = obj.col[sortKeys]
+    #
+    # n = len(newData)
+    # obj.data[:n] = newData
+    # obj.row[:n] = newRow
+    # obj.col[:n] = newCol
 
 def _numLessThan(value, toCheck): # TODO caching
     ltCount = 0
