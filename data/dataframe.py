@@ -281,9 +281,19 @@ class DataFrame(Base):
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
+                self.data.columns = self.getFeatureNames()
                 if includePointNames:
                     outFile.write('point_names')
+            
+            if includePointNames:
+                    self.data.index = self.getPointNames()
+
         self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
+        
+        if includePointNames:
+            self._updateName('point')
+        if includeFeatureNames:
+            self._updateName('feature') 
 
     def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
         """
@@ -298,9 +308,9 @@ class DataFrame(Base):
 
         comment = '#'
         if includePointNames:
-            comment += ','.join(self.data.index)
+            comment += ','.join(self.getPointNames())
         if includeFeatureNames:
-            comment += '\n#' + ','.join(self.data.columns)
+            comment += '\n#' + ','.join(self.getFeatureNames())
         mmwrite(outPath, self.data, comment=comment)
 
     def _referenceDataFrom_implementation(self, other):
