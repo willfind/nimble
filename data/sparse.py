@@ -60,7 +60,6 @@ class Sparse(Base):
         #print('self.data: {}'.format(self.data))
         #print('type(self.data): {}'.format(type(self.data)))
 
-
         self._sorted = None
         kwds['shape'] = self.data.shape
         kwds['pointNames'] = pointNames
@@ -306,284 +305,116 @@ class Sparse(Base):
         return newNameOrder
 
 
-    def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
+    def _structuralBackend_implementation(self, structure, axis, targetList):
         """
-        Function to extract points according to the parameters, and return an object containing
-        the removed points with default names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be extracted, and randomize indicates whether the choice of who to extract should
-        be by order or uniform random.
-
+        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
+        copyPoints/Features. Returns a new object containing only the points in targetList and
+        performs some modifications to the original object if necessary. This function does not
+        perform all of the modification or process how each function handles the returned value,
+        these are managed separately by each frontend function.
         """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            return self._extractByList_implementation(toExtract, 'point')
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO
-            else:
-                return self._extractByFunction_implementation(toExtract, number, 'point')
-        # by range
-        elif start is not None or end is not None:
-            return self._extractByRange_implementation(start, end, 'point')
+        if self.data.data is not None and self.data.data.dtype != 'O':
+            return self._structuralVectorized_implementation(structure, axis, targetList)
         else:
-            raise ArgumentException("Malformed or missing inputs")
+            # object dtype or SparseView
+            return self._structuralIterative_implementation(structure, axis, targetList)
 
 
-    def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
-        """
-        Function to extract features according to the parameters, and return an object containing
-        the removed features with their featureName names from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be extracted, and randomize indicates whether the choice of who to
-        extract should be by order or uniform random.
-
-        """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            return self._extractByList_implementation(toExtract, 'feature')
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO
-            else:
-                return self._extractByFunction_implementation(toExtract, number, 'feature')
-        # by range
-        elif start is not None or end is not None:
-            return self._extractByRange_implementation(start, end, 'feature')
-        else:
-            raise ArgumentException("Malformed or missing inputs")
-
-
-    def _extractByList_implementation(self, toExtract, axisType):
-        extractLength = len(toExtract)
-        extractData = []
-        extractRows = []
-        extractCols = []
-
-        self._sortInternal(axisType)
-        if axisType == "feature":
-            targetAxis = self.data.col
-            otherAxis = self.data.row
-            extractTarget = extractCols
-            extractOther = extractRows
-        else:
-            targetAxis = self.data.row
-            otherAxis = self.data.col
-            extractTarget = extractRows
-            extractOther = extractCols
-
-        #List of rows or columns to extract must be sorted in ascending order
-        toExtractSorted = copy.copy(toExtract)
-        toExtractSorted.sort()
-
-        # need mapping from values in sorted list to index in nonsorted list
-        positionMap = {}
-        for i in range(len(toExtract)):
-            positionMap[toExtract[i]] = i
-
-        #walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
-        # underlying structure to save space
-        copyIndex = 0
-        extractIndex = 0
-        for i in range(len(self.data.data)):
-            value = targetAxis[i]
-            # Move extractIndex forward until we get to an entry that might
-            # match the current (or a future) value
-            while extractIndex < extractLength and value > toExtractSorted[extractIndex]:
-                extractIndex = extractIndex + 1
-
-            # Check if the current value matches one we want extracted
-            if extractIndex < extractLength and value == toExtractSorted[extractIndex]:
-                extractData.append(self.data.data[i])
-                extractOther.append(otherAxis[i])
-                extractTarget.append(positionMap[value])
-            # Not extracted. Copy / pack to front of arrays, adjusting for
-            # those already extracted
-            else:
-                self.data.data[copyIndex] = self.data.data[i]
-                otherAxis[copyIndex] = otherAxis[i]
-                targetAxis[copyIndex] = targetAxis[i] - extractIndex
-                copyIndex = copyIndex + 1
-
-        # reinstantiate self
-        # (cannot reshape coo matrices, so cannot do this in place)
-        (selfShape, extShape) = _calcShapes(self.data.shape, extractLength, axisType)
-        self.data = coo_matrix(
-            (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex])), selfShape)
-
-        # instantiate return data
-        ret = coo_matrix((extractData, (extractRows, extractCols)), shape=extShape)
-
-        # get names for return obj
+    def _structuralVectorized_implementation(self, structure, axis, targetList):
         pnames = []
         fnames = []
-        if axisType == 'point':
-            for index in toExtract:
+        data = self.data
+        if axis == 'point':
+            for index in targetList:
                 pnames.append(self.getPointName(index))
             fnames = self.getFeatureNames()
+            notTarget = [idx for idx in range(self.points) if idx not in targetList]
+            data = data.tocsr()
+            targeted = data[targetList, :]
+            notTargeted = data[notTarget, :]
         else:
             pnames = self.getPointNames()
-            for index in toExtract:
+            for index in targetList:
                 fnames.append(self.getFeatureName(index))
+            notTarget = [idx for idx in range(self.features) if idx not in targetList]
+            data = data.tocsc()
+            targeted = data[:, targetList]
+            notTargeted = data[:, notTarget]
+
+        if structure != 'copy':
+            self.data = notTargeted.tocoo()
+            self._sortInternal(axis)
+
+        ret = targeted.tocoo()
 
         return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
 
-    def _extractByFunction_implementation(self, toExtract, number, axisType):
-        extractData = []
-        extractRows = []
-        extractCols = []
-
-        self._sortInternal(axisType)
-        if axisType == "feature":
-            targetAxis = self.data.col
-            otherAxis = self.data.row
-            extractTarget = extractCols
-            extractOther = extractRows
-            viewMaker = self.featureView
+    def _structuralIterative_implementation(self, structure, axis, targetList):
+        dtype = numpy.object_
+        if axis == 'point':
+            viewIterator = self.copy().pointIterator
+            targetCount = self.points
         else:
-            targetAxis = self.data.row
-            otherAxis = self.data.col
-            extractTarget = extractRows
-            extractOther = extractCols
-            viewMaker = self.pointView
+            viewIterator = self.copy().featureIterator
+            targetCount = self.features
 
-        copyIndex = 0
-        vectorStartIndex = 0
-        extractedIDs = []
-        # consume zeroed vectors, up to the first nonzero value
-        if self.data.nnz > 0 and self.data.data[0] != 0:
-            for i in range(0, targetAxis[0]):
-                if toExtract(viewMaker(i)):
-                    extractedIDs.append(i)
-        #walk through each coordinate entry
-        for i in range(len(self.data.data)):
-            #collect values into points
-            targetValue = targetAxis[i]
-            #if this is the end of a point
-            if i == len(self.data.data) - 1 or targetAxis[i + 1] != targetValue:
-                #evaluate whether curr point is to be extracted or not
-                # and perform the appropriate copies
-                if toExtract(viewMaker(targetValue)):
-                    for j in range(vectorStartIndex, i + 1):
-                        extractData.append(self.data.data[j])
-                        extractOther.append(otherAxis[j])
-                        extractTarget.append(len(extractedIDs))
-                    extractedIDs.append(targetValue)
-                else:
-                    for j in range(vectorStartIndex, i + 1):
-                        self.data.data[copyIndex] = self.data.data[j]
-                        otherAxis[copyIndex] = otherAxis[j]
-                        targetAxis[copyIndex] = targetAxis[j] - len(extractedIDs)
-                        copyIndex = copyIndex + 1
-                # process zeroed vectors up to the ID of the new vector
-                if i < len(self.data.data) - 1:
-                    nextValue = targetAxis[i + 1]
-                else:
-                    if axisType == 'point':
-                        nextValue = self.points
+        targetLength = len(targetList)
+        targetData = []
+        targetRows = []
+        targetCols = []
+        keepData = []
+        keepRows = []
+        keepCols = []
+        keepIndex = 0
+
+        # iterate through axis data
+        for targetID, view in enumerate(viewIterator()):
+            # coo_matrix data for return object
+            if targetID in targetList:
+                for otherID, value in enumerate(view.data.data):
+                    targetData.append(value)
+                    if axis == 'point':
+                        targetRows.append(targetList.index(targetID))
+                        targetCols.append(view.data.col[otherID])
                     else:
-                        nextValue = self.features
-                for j in range(targetValue + 1, nextValue):
-                    if toExtract(viewMaker(j)):
-                        extractedIDs.append(j)
-
-                #reset the vector starting index
-                vectorStartIndex = i + 1
-
-        # reinstantiate self
-        # (cannot reshape coo matrices, so cannot do this in place)
-        (selfShape, extShape) = _calcShapes(self.data.shape, len(extractedIDs), axisType)
-        self.data = coo_matrix(
-            (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex])), selfShape)
+                        targetRows.append(view.data.row[otherID])
+                        targetCols.append(targetList.index(targetID))
+            # coo_matrix data for modified self
+            elif structure != 'copy':
+                for otherID, value in enumerate(view.data.data):
+                    keepData.append(value)
+                    if axis == 'point':
+                        keepRows.append(keepIndex)
+                        keepCols.append(view.data.col[otherID])
+                    else:
+                        keepRows.append(view.data.row[otherID])
+                        keepCols.append(keepIndex)
+                keepIndex += 1
 
         # instantiate return data
-        ret = coo_matrix((extractData, (extractRows, extractCols)), shape=extShape)
+        (selfShape, targetShape) = _calcShapes(self.data.shape, targetLength, axis)
+        if structure != 'copy':
+            otherData = numpy.array(keepData, dtype=dtype)
+            self.data = coo_matrix((keepData, (keepRows, keepCols)), shape=selfShape)
+        # coo_matrix will force list to simplest numpy dtype unless converted to an array
+        targetData = numpy.array(targetData, dtype=dtype)
+        ret = coo_matrix((targetData, (targetRows, targetCols)), shape=targetShape)
 
         # get names for return obj
         pnames = []
         fnames = []
-        if axisType == 'point':
-            for index in extractedIDs:
+        if axis == 'point':
+            for index in targetList:
                 pnames.append(self.getPointName(index))
             fnames = self.getFeatureNames()
         else:
             pnames = self.getPointNames()
-            for index in extractedIDs:
+            for index in targetList:
                 fnames.append(self.getFeatureName(index))
 
         return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
-
-    def _extractByRange_implementation(self, start, end, axisType):
-        rangeLength = end - start + 1
-        extractData = []
-        extractRows = []
-        extractCols = []
-
-        if axisType == "feature":
-            targetAxis = self.data.col
-            otherAxis = self.data.row
-            extractTarget = extractCols
-            extractOther = extractRows
-        else:
-            targetAxis = self.data.row
-            otherAxis = self.data.col
-            extractTarget = extractRows
-            extractOther = extractCols
-
-        #walk through col listing and partition all data: extract, and kept, reusing the sparse matrix
-        # underlying structure to save space
-        copyIndex = 0
-
-        for i in range(len(self.data.data)):
-            value = targetAxis[i]
-            if value >= start and value <= end:
-                extractData.append(self.data.data[i])
-                extractOther.append(otherAxis[i])
-                extractTarget.append(value - start)
-            else:
-                self.data.data[copyIndex] = self.data.data[i]
-                otherAxis[copyIndex] = otherAxis[i]
-                if targetAxis[i] < start:
-                    targetAxis[copyIndex] = targetAxis[i]
-                else:
-                    # end is inclusive, so we subtract end + 1
-                    targetAxis[copyIndex] = targetAxis[i] - rangeLength
-                copyIndex = copyIndex + 1
-
-        # reinstantiate self
-        # (cannot reshape coo matrices, so cannot do this in place)
-        (selfShape, extShape) = _calcShapes(self.data.shape, rangeLength, axisType)
-        self.data = coo_matrix(
-            (self.data.data[0:copyIndex], (self.data.row[0:copyIndex], self.data.col[0:copyIndex])), selfShape)
-
-        # instantiate return data
-        ret = coo_matrix((extractData, (extractRows, extractCols)), shape=extShape)
-
-        # get names for return obj
-        pnames = []
-        fnames = []
-        if axisType == 'point':
-            for i in range(start, end + 1):
-                pnames.append(self.getPointName(i))
-            fnames = self.getFeatureNames()
-        else:
-            pnames = self.getPointNames()
-            for i in range(start, end + 1):
-                fnames.append(self.getFeatureName(i))
-
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
 
     def _transpose_implementation(self):
         self.data = self.data.transpose()
@@ -779,18 +610,18 @@ class Sparse(Base):
         self._sorted = other._sorted
 
     def _copyAs_implementation(self, format):
+
         if format is None or format == 'Sparse':
-            ret = UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            # Due to duplicate removal done in createData, we cannot gurantee that the internal
+            ret = UML.createData('Sparse', self.data)
+            # Due to duplicate removal done in createData, we cannot guarantee that the internal
             # sorting is preserved in the returned object.
             return ret
         if format == 'List':
-            return UML.createData('List', self.data, pointNames=self.getPointNames(),
-                                  featureNames=self.getFeatureNames())
+            return UML.createData('List', self.data)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('DataFrame', self.data)
         if format == 'pythonlist':
             return self.data.todense().tolist()
         if format == 'numpyarray':
@@ -801,57 +632,6 @@ class Sparse(Base):
             return self.data.tocsc()
         if format == 'scipycsr':
             return self.data.tocsr()
-
-    def _copyPoints_implementation(self, points, start, end):
-        retData = []
-        retRow = []
-        retCol = []
-        if points is not None:
-            for i in range(len(self.data.data)):
-                if self.data.row[i] in points:
-                    retData.append(self.data.data[i])
-                    retRow.append(points.index(self.data.row[i]))
-                    retCol.append(self.data.col[i])
-
-            newShape = (len(points), numpy.shape(self.data)[1])
-        else:
-            for i in range(len(self.data.data)):
-                if self.data.row[i] >= start and self.data.row[i] <= end:
-                    retData.append(self.data.data[i])
-                    retRow.append(self.data.row[i] - start)
-                    retCol.append(self.data.col[i])
-
-            newShape = (end - start + 1, numpy.shape(self.data)[1])
-
-        retData = numpy.array(retData, dtype=self.data.dtype)
-        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
-        return Sparse(retData, reuseData=True)
-
-
-    def _copyFeatures_implementation(self, features, start, end):
-        retData = []
-        retRow = []
-        retCol = []
-        if features is not None:
-            for i in range(len(self.data.data)):
-                if self.data.col[i] in features:
-                    retData.append(self.data.data[i])
-                    retRow.append(self.data.row[i])
-                    retCol.append(features.index(self.data.col[i]))
-
-            newShape = (numpy.shape(self.data)[0], len(features))
-        else:
-            for i in range(len(self.data.data)):
-                if self.data.col[i] >= start and self.data.col[i] <= end:
-                    retData.append(self.data.data[i])
-                    retRow.append(self.data.row[i])
-                    retCol.append(self.data.col[i] - start)
-
-            newShape = (numpy.shape(self.data)[0], end - start + 1)
-
-        retData = numpy.array(retData, dtype=self.data.dtype)
-        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
-        return Sparse(retData, reuseData=True)
 
 
     def _transformEachPoint_implementation(self, function, points):
@@ -1159,13 +939,18 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('point')
 
-        numFeatures = self.features / numPoints
+        numFeatures = self.features // numPoints
         newShape = (numPoints, numFeatures)
 
         for i in range(len(self.data.data)):
             # must change the row entry before modifying the col entry
             self.data.row[i] = self.data.col[i] / numFeatures
             self.data.col[i] = self.data.col[i] % numFeatures
+        
+        print('self.data.data:\n{}'.format(self.data.data))
+        print('self.data.row:\n{}'.format(self.data.row))
+        print('self.data.col:\n{}'.format(self.data.col))
+        print('newShape:{}'.format(newShape))
 
         self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), newShape)
         self._sorted = 'point'
@@ -1175,7 +960,7 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('feature')
 
-        numPoints = self.points / numFeatures
+        numPoints = self.points // numFeatures
         newShape = (numPoints, numFeatures)
 
         for i in range(len(self.data.data)):
@@ -1939,10 +1724,10 @@ class SparseView(BaseView, Sparse):
         return GenericIt()
 
     def _copyAs_implementation(self, format):
+
         if self.points == 0 or self.features == 0:
             emptyStandin = numpy.empty((self.points, self.features))
-            intermediate = UML.createData('Matrix', emptyStandin, pointNames=self.getPointNames(),
-                                           featureNames=self.getFeatureNames())
+            intermediate = UML.createData('Matrix', emptyStandin)
             return intermediate.copyAs(format)
 
         limited = self._source.copyPoints(start=self._pStart, end=self._pEnd - 1)
@@ -2017,61 +1802,6 @@ class SparseView(BaseView, Sparse):
         ret = UML.createData(self.getTypeString(), ret.data)
 
         return ret
-
-    def _copyPoints_implementation(self, points, start, end):
-        retData = []
-        retRow = []
-        retCol = []
-        piNN = points is not None
-
-        if start is None: start = 0#in python3, compare int with None is not allowed, so we need to replace None with an int
-        if end is None: end = -1
-        for pID, pView in enumerate(self.pointIterator()):
-            if (piNN and pID in points) or (pID >= start and pID <= end):
-                for i, val in enumerate(pView.data.data):
-                    retData.append(val)
-                    if piNN:
-                        retRow.append(points.index(pID))
-                    else:
-                        retRow.append(pID - start)
-                    retCol.append(pView.data.col[i])
-
-        if points is not None:
-            newShape = (len(points), numpy.shape(self.data)[1])
-        else:
-            newShape = (end - start + 1, numpy.shape(self.data)[1])
-
-        retData = numpy.array(retData, dtype=self._source.data.dtype)
-        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
-        return Sparse(retData, reuseData=True)
-
-
-    def _copyFeatures_implementation(self, features, start, end):
-        retData = []
-        retRow = []
-        retCol = []
-        fiNN = features is not None
-
-        if start is None: start = 0#in python3, compare int with None is not allowed, so we need to replace None with an int
-        if end is None: end = -1
-        for fID, fView in enumerate(self.featureIterator()):
-            if (fiNN and fID in features) or (fID >= start and fID <= end):
-                for i, val in enumerate(fView.data.data):
-                    retData.append(val)
-                    retRow.append(fView.data.row[i])
-                    if fiNN:
-                        retCol.append(features.index(fID))
-                    else:
-                        retCol.append(fID - start)
-
-        if features is not None:
-            newShape = (numpy.shape(self.data)[0], len(features))
-        else:
-            newShape = (numpy.shape(self.data)[0], end - start + 1)
-
-        retData = numpy.array(retData, dtype=self._source.data.dtype)
-        retData = coo_matrix((retData, (retRow, retCol)), shape=newShape)
-        return Sparse(retData, reuseData=True)
 
 
     def _nonZeroIteratorPointGrouped_implementation(self):

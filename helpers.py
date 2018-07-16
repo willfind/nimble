@@ -265,6 +265,7 @@ def transposeMatrix(matrixObj):
     """
     return numpy.matrix(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
+
 def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType):
     """
     1. if rawData is like {'a':[1,2], 'b':[3,4]}, then convert it to np.matrix and extract
@@ -274,20 +275,36 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     if featureNames is True, then extract feature names from the 1st row in rawData
     4. convert data to np matrix
     """
-    #1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
-    #featureNames must be those keys
-    #pointNames must be False or automatic
-    if isinstance(rawData, dict):
+    if not isinstance(pointNames, str) and not isinstance(featureNames, str) \
+            and not isinstance(pointNames, bool) and not isinstance(featureNames, bool)\
+            and pointNames is not None and featureNames is not None:
+
+        try:
+            if callable(getattr(pointNames, '__len__')) \
+                    and callable(getattr(pointNames, '__getitem__')) \
+                    and callable(getattr(featureNames, '__len__')) \
+                    and callable(getattr(featureNames, '__getitem__')):
+                pass
+        except AttributeError:
+            msg = ("if pointNames and featureNames are not 'bool' or a 'str'"
+                   "they should be other 'iterable' object")
+            raise AttributeError(msg)
+
+
+    # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
+    # featureNames must be those keys
+    # pointNames must be False or automatic
+    elif isinstance(rawData, dict):
         if rawData:
             featureNames = list(rawData.keys())
             rawData = numpy.matrix(list(rawData.values()), dtype=elementType)
             if len(featureNames) == len(rawData):
-                #{'a':[1,3], 'b':[2,4], 'c':['a', 'b']} --> keys = ['a', 'c', 'b']
-                #np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
-                #thus transpose is needed
-                #{'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
-                #np.matrix(values()) = [[1,3,2]]
-                #transpose is not needed
+                # {'a':[1,3], 'b':[2,4], 'c':['a', 'b']} --> keys = ['a', 'c', 'b']
+                # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
+                # thus transpose is needed
+                # {'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
+                # np.matrix(values()) = [[1,3,2]]
+                # transpose is not needed
                 rawData = transposeMatrix(rawData)
             pointNames = None
 
@@ -296,9 +313,9 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             rawData = numpy.matrix(numpy.empty([0, 0]), dtype=elementType)
             pointNames = None
 
-    #2. convert list of dict like [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
-    #featureNames must be those keys
-    #pointNames must be False or automatic
+    # 2. convert list of dict like [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
+    # featureNames must be those keys
+    # pointNames must be False or automatic
     elif isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
         # double nested list contained list-type forced values from the first row
         values = [list(rawData[0].values())]
@@ -377,8 +394,9 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             assert tempFeatureNames is None
             featureNames = featureNames
 
-    #4. if type(data) dosen't match returnType, then convert data to numpy matrix or coo_matrix.
-    #if elementType is not None, then convert each element in data to elementType.
+
+    # 4. if type(data) doesn't match returnType, then convert data to numpy matrix or coo_matrix.
+    # if elementType is not None, then convert each element in data to elementType.
     if (elementType is None) and (\
         (isinstance(rawData, list) and returnType == 'List' and len(rawData) != 0 and (\
             #this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
@@ -420,6 +438,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
 
     return rawData, pointNames, featureNames
 
+
 def elementTypeConvert(rawData, elementType):
     """
     convert rawData to numpy matrix with dtype = elementType, or try dtype=float then try dtype=object
@@ -441,7 +460,6 @@ def elementTypeConvert(rawData, elementType):
             data = numpy.matrix(rawData, dtype=object)
         return data
 
-
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name, path,
         keepPoints, keepFeatures, elementType=None, reuseData=False):
@@ -459,9 +477,10 @@ def initDataObject(
     if returnType is None:
         returnType = autoType
 
-    #may need to extract names and may need to convert data to matrix
-    rawData, pointNames, featureNames = extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType)
-
+    # may need to extract names and may need to convert data to matrix
+    rawData, pointNames, featureNames = extractNamesAndConvertData(
+        returnType, rawData, pointNames, featureNames, elementType)
+    # print(pointNames, featureNames)
     pathsToPass = (None, None)
     if path is not None:
         # used in data type unit testing, need a way to specify path values
@@ -478,13 +497,18 @@ def initDataObject(
 
     initMethod = getattr(UML.data, returnType)
     try:
-        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData)
+        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames,
+                         name=name, paths=pathsToPass, elementType=elementType,
+                         reuseData=reuseData)
+
     except Exception as e:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
         try:
             autoMethod = getattr(UML.data, autoType)
-            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData)
+            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames,
+                             name=name, paths=pathsToPass, elementType=elementType,
+                             reuseData=reuseData)
             ret = ret.copyAs(returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
