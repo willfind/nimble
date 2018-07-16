@@ -2746,17 +2746,19 @@ class Base(object):
             elif isinstance(toRetain, list):
                 toRetain = [self._getIndex(value, axis) for value in toRetain]
                 if randomize:
+                    number = number if number else len(toRetain)
                     toRetain = pythonRandom.sample(toRetain, number)
                 toExtract = [value for value in range(axisLength) if value not in toRetain]
                 # change the index order of the values to match toRetain
-                reindex = toRetain + toExtract
-                indices = [None for _ in range(axisLength)]
-                for idx, value in enumerate(reindex):
-                    indices[value] = idx
-                shuffleAxis(indices)
-                # extract any values after the toRetain values
-                extractValues = range(len(toRetain), axisLength)
-                toExtract = list(extractValues)
+                if not randomize:
+                    reindex = toRetain + toExtract
+                    indices = [None for _ in range(axisLength)]
+                    for idx, value in enumerate(reindex):
+                        indices[value] = idx
+                    shuffleAxis(indices)
+                    # extract any values after the toRetain values
+                    extractValues = range(len(toRetain), axisLength)
+                    toExtract = list(extractValues)
 
             else:
                 # toRetain is a function
@@ -2771,6 +2773,7 @@ class Base(object):
             self._validateStartEndRange(start, end, axisLength)
             toRetain = [value for value in range(start, end + 1)]
             if randomize:
+                number = number if number else len(toRetain)
                 toRetain = pythonRandom.sample(toRetain, number)
             toExtract = [value for value in range(axisLength) if value not in toRetain]
 
@@ -4313,13 +4316,14 @@ class Base(object):
                         targetList.append(targetID)
                     elif structure == 'retain':
                         keepList.append(targetID)
-
                 # add additional indexes to targetList if not keeping every
                 # index from returned function
                 if structure == 'retain' and number is not None:
+                    addBack = len(keepList) - number
+                    addBack = addBack if addBack > 0 else 0
                     if randomize:
                         pythonRandom.shuffle(keepList)
-                    for i in range(number):
+                    for i in range(addBack):
                         targetList.append(keepList[i])
 
         elif start is not None or end is not None:
@@ -4342,7 +4346,7 @@ class Base(object):
         if number is not None and structure != 'retain':
             if randomize:
                 targetList = pythonRandom.sample(targetList, number)
-                targetList.sort()
+                #targetList.sort()
             else:
                 targetList = targetList[:number]
 
