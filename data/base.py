@@ -3885,9 +3885,7 @@ class Base(object):
 
     def __abs__(self):
         """ Perform element wise absolute value on this object """
-        print(self)
         ret = self.calculateForEachElement(abs)
-        print(ret)
         ret.setPointNames(self.getPointNames())
         ret.setFeatureNames(self.getFeatureNames())
 
