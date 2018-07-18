@@ -182,7 +182,7 @@ class Base(object):
         if paths[0] is not None and not isinstance(paths[0], six.string_types):
             raise ArgumentException(
                 "paths[0] must be None or an absolute path to the file from which the data originates")
-        if paths[0] is not None and not os.path.isabs(paths[0]):
+        if paths[0] is not None and not os.path.isabs(paths[0]) and not paths[0].startswith('http'):
             raise ArgumentException("paths[0] must be an absolute path")
         self._absPath = paths[0]
 
@@ -321,7 +321,7 @@ class Base(object):
         if self.features == 0:
             raise ArgumentException("Cannot set any feature names; this object has no features ")
         if self.featureNames is None:
-            self._setAllDefault('feature') 
+            self._setAllDefault('feature')
         self._setName_implementation(oldIdentifier, newName, 'feature', False)
 
 
@@ -409,10 +409,10 @@ class Base(object):
             self._setAllDefault('point')
         return self.pointNames[name]
 
-    def getPointIndices(self, names): 
-        if not self._pointNamesCreated(): 
-            self._setAllDefault('point') 
-        return [self.pointNames[n] for n in names] 
+    def getPointIndices(self, names):
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        return [self.pointNames[n] for n in names]
 
     def hasPointName(self, name):
         try:
@@ -431,11 +431,11 @@ class Base(object):
             self._setAllDefault('feature')
         return self.featureNames[name]
 
-    def getFeatureIndices(self, names): 
-        if not self._featureNamesCreated(): 
-            self._setAllDefault('feature') 
-        return [self.featureNames[n] for n in names] 
-            
+    def getFeatureIndices(self, names):
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
+        return [self.featureNames[n] for n in names]
+
     def hasFeatureName(self, name):
         try:
             self.getFeatureIndex(name)
@@ -2852,7 +2852,7 @@ class Base(object):
         one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr',
         'scypy csc', 'list of dict' or 'dict of list'.
 
-        """        
+        """
         #make lower case, strip out all white space and periods, except if format
         # is one of the accepted UML data types
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2984,7 +2984,7 @@ class Base(object):
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
-        
+
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
@@ -3365,7 +3365,7 @@ class Base(object):
         The single feature will have a name of "Flattened".
 
         Raises: ImproperActionException if an axis has length 0
-        
+
         """
         if self.points == 0:
             msg = "Can only flattenToOneFeature when there is one or more points. " \
@@ -3571,7 +3571,7 @@ class Base(object):
                   "it will not be possible to equally divide the elements into the desired " \
                   "number of features."
             raise ArgumentException(msg)
-        
+
         if not self._pointNamesCreated():
             self._setAllDefault('point')
         if not self._featureNamesCreated():
@@ -4654,7 +4654,7 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
-        
+
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
         return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)
