@@ -44,18 +44,33 @@ class sdist(_sdist):
         _sdist.run(self)
 cmdclass['sdist'] = sdist
 
-setup(
-    name='UML',
-    version='0.0.0.dev1',
-    packages=find_packages(exclude=['*.tests',
-                                    '*.examples*']),
-    install_requires=['six>=1.5.1',
-                      'future>=0.11.4',
-                      'numpy>=1.10.4',
-                     ],
-    ext_modules = extensions,
-    cmdclass = cmdclass,
-    )
+# setup with C extensions
+try:
+    setup(
+        name='UML',
+        version='0.0.0.dev1',
+        packages=find_packages(exclude=['*.tests',
+                                        '*.examples*']),
+        install_requires=['six>=1.5.1',
+                          'future>=0.11.4',
+                          'numpy>=1.10.4',
+                         ],
+        ext_modules = extensions,
+        cmdclass = cmdclass,
+        )
+
+# setup without C extensions
+except Exception:
+    setup(
+        name='UML',
+        version='0.0.0.dev1',
+        packages=find_packages(exclude=['*.tests',
+                                        '*.examples*']),
+        install_requires=['six>=1.5.1',
+                          'future>=0.11.4',
+                          'numpy>=1.10.4',
+                         ],
+        )
 
 ## TODO
     # determine which packages to exclude in distribution
