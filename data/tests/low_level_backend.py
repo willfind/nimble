@@ -1234,6 +1234,9 @@ class LowLevelBackend(object):
     def test_constructIndicesList_pythonList(self):
         self._constructIndicesList_backend(lambda lst: lst)
 
+    def test_constructIndicesList_pythonTuple(self):
+        self._constructIndicesList_backend(lambda lst: tuple(lst))
+
     def test_constructIndicesList_pythonGenerator(self):
         self._constructIndicesList_backend(lambda lst: (val for val in lst))
 
