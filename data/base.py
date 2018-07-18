@@ -105,11 +105,11 @@ class Base(object):
         object. Note: this method (as should all other __init__ methods in
         this hierarchy) makes use of super()
 
-        pointNames: may be a list or dict mapping names to indices. None is
+        pointNames: may be an iterable or dict mapping names to indices. None is
         given if default names are desired.
 
-        featureNames: may be a list or dict mapping names to indices. None is
-        given if default names are desired.
+        featureNames: may be an iterable or dict mapping names to indices. None
+        is given if default names are desired.
 
         name: the name to be associated with this object.
 
@@ -318,7 +318,7 @@ class Base(object):
     def setPointNames(self, assignments=None):
         """
         Rename all of the point names of this object according to the values
-        specified by the assignments parameter. If given a list, then we use
+        specified by the assignments parameter. If given an iterable, then we use
         the mapping between names and array indices to define the point
         names. If given a dict, then that mapping will be used to define the
         point names. If assignments is None, then all point names will be
@@ -339,7 +339,7 @@ class Base(object):
     def setFeatureNames(self, assignments=None):
         """
         Rename all of the feature names of this object according to the values
-        specified by the assignments parameter. If given a list, then we use
+        specified by the assignments parameter. If given a iterable, then we use
         the mapping between names and array indices to define the feature
         names. If given a dict, then that mapping will be used to define the
         feature names. If assignments is None, then all feature names will be
@@ -591,7 +591,8 @@ class Base(object):
         function must not be none and accept the view of a point as an argument
 
         points may be None to indicate application to all points, a single point
-        ID or a list of point IDs to limit application only to those specified.
+        identifier (name or index) or an iterable of point identifiers to limit
+        application only to those specified.
 
         """
         if points is not None:
@@ -629,8 +630,8 @@ class Base(object):
         function must not be none and accept the view of a point as an argument
 
         features may be None to indicate application to all features, a single
-        feature ID or a list of feature IDs to limit application only to those
-        specified.
+        feature identifier (name or index) or an iterable of feature identifiers
+        to limit application only to those specified.
 
         """
         if features is not None:
@@ -878,12 +879,12 @@ class Base(object):
         or function(elementValue, pointNum, featureNum) for each element.
 
         points: Limit to only elements of the specified points; may be None for
-        all points, a single ID, or a list of IDs; this will affect the shape
-        of the returned object.
+        all points, a single identifier (name or index), or an iterable of
+        identifiers; this will affect the shape of the returned object.
 
         features: Limit to only elements of the specified features; may be None for
-        all features, a single ID, or a list of IDs; this will affect the shape
-        of the returned object.
+        all features, a single identifier (name or index), or an iterable of
+        identifiers; this will affect the shape of the returned object.
 
         preserveZeros: If True it does not apply the function to elements in
         the data that are 0 and a 0 is placed in its place in the output.
@@ -2489,7 +2490,7 @@ class Base(object):
         Modify this object, removing those points that are specified by the input, and returning
         an object containing those removed points.
 
-        toExtract may be a single identifier (name and/or index), a list of identifiers,
+        toExtract may be a single identifier (name or index), an iterable of identifiers,
         a function that when given a point will return True if it is to be extracted, or a
         filter function, as a string, containing a comparison operator between a feature name
         and a value (i.e 'feat1<10')
@@ -2526,7 +2527,7 @@ class Base(object):
         Modify this object, removing those features that are specified by the input, and returning
         an object containing those removed features.
 
-        toExtract may be a single identifier (name and/or index), a list of identifiers,
+        toExtract may be a single identifier (name or index), an iterable of identifiers,
         a function that when given a feature will return True if it is to be extracted, or a
         filter function, as a string, containing a comparison operator between a point name
         and a value (i.e 'point1<10')
@@ -2562,7 +2563,7 @@ class Base(object):
         """
         Modify this object, removing those points that are specified by the input.
 
-        toDelete may be a single identifier (name and/or index), a list of identifiers,
+        toDelete may be a single identifier (name or index), an iterable of identifiers,
         a function that when given a point will return True if it is to be deleted, or a
         filter function, as a string, containing a comparison operator between a feature name
         and a value (i.e 'feat1<10')
@@ -2586,7 +2587,7 @@ class Base(object):
         """
         Modify this object, removing those features that are specified by the input.
 
-        toDelete may be a single identifier (name and/or index), a list of identifiers,
+        toDelete may be a single identifier (name or index), an iterable of identifiers,
         a function that when given a feature will return True if it is to be deleted, or a
         filter function, as a string, containing a comparison operator between a point name
         and a value (i.e 'point1<10')
@@ -2610,7 +2611,7 @@ class Base(object):
         """
         Modify this object, retaining those points that are specified by the input.
 
-        toRetain may be a single identifier (name and/or index), a list of identifiers,
+        toRetain may be a single identifier (name or index), an iterable of identifiers,
         a function that when given a point will return True if it is to be retained, or a
         filter function, as a string, containing a comparison operator between a feature name
         and a value (i.e 'feat1<10')
@@ -2634,7 +2635,7 @@ class Base(object):
         """
         Modify this object, retaining those features that are specified by the input.
 
-        toRetain may be a single identifier (name and/or index), a list of identifiers,
+        toRetain may be a single identifier (name or index), an iterable of identifiers,
         a function that when given a feature will return True if it is to be deleted, or a
         filter function, as a string, containing a comparison operator between a point name
         and a value (i.e 'point1<10')
@@ -2943,7 +2944,7 @@ class Base(object):
         Returns an object containing those points that are specified by the input, without
         modification to this object.
 
-        toCopy may be a single identifier (name and/or index), a list of identifiers,
+        toCopy may be a single identifier (name or index), an iterable of identifiers,
         a function that when given a point will return True if it is to be copied, or a
         filter function, as a string, containing a comparison operator between a feature name
         and a value (i.e 'feat1<10')
@@ -2977,7 +2978,7 @@ class Base(object):
         Returns an object containing those features that are specified by the input, without
         modification to this object.
 
-        toCopy may be a single identifier (name and/or index), a list of identifiers,
+        toCopy may be a single identifier (name or index), an iterable of identifiers,
         a function that when given a feature will return True if it is to be copied, or a
         filter function, as a string, containing a comparison operator between a point name
         and a value (i.e 'point1<10')
@@ -3013,7 +3014,8 @@ class Base(object):
         function must not be none and accept the view of a point as an argument
 
         points may be None to indicate application to all points, a single point
-        ID or a list of point IDs to limit application only to those specified.
+        identifier (name or index) or an iterable of point identifiers to limit
+        application only to those specified.
 
         """
         if self.points == 0:
@@ -3038,8 +3040,8 @@ class Base(object):
         function must not be none and accept the view of a feature as an argument
 
         features may be None to indicate application to all features, a single
-        feature ID or a list of feature IDs to limit application only to those
-        specified.
+        feature identifier (name or index) or an iterable of feature identifiers
+        to limit application only to those specified.
 
         """
         if self.points == 0:
@@ -3066,10 +3068,10 @@ class Base(object):
         or a dictionary mapping the current element [key] to the transformed element [value].
 
         points: Limit to only elements of the specified points; may be None for
-        all points, a single ID, or a list of IDs.
+        all points, a single identifier (name or index), or an iterable of identifiers.
 
         features: Limit to only elements of the specified features; may be None for
-        all features, a single ID, or a list of IDs.
+        all features, a single identifier (name or index), or an iterable of identifiers.
 
         preserveZeros: If True it does not apply toTransform to elements in
         the data that are 0, and that 0 is not modified.
@@ -3158,23 +3160,24 @@ class Base(object):
         """
         This function is to remove, replace or impute missing values in an UML container data object.
 
-        method - a str. It can be 'remove points', 'remove features', 'feature mean', 'feature median', 'feature mode', 'zero', 'constant', 'forward fill'
-        'backward fill', 'interpolate'
+        method - a str. It can be 'remove points', 'remove features', 'feature mean', 'feature median',
+        'feature mode', 'zero', 'constant', 'forward fill', 'backward fill', 'interpolate'
 
-        features - can be None to indicate all features, or a str to indicate the name of a single feature, or an int to indicate
-        the index of a feature, or a list of feature names, or a list of features' indices, or a list of mix of feature names and feature indices. In this function, only those features in the input 'features'
-        will be processed.
+        features - can be None to indicate all features, a single feature identifier (name or index)
+        or an iterable of feature identifiers. In this function, only those features in the input
+        'features' will be processed.
 
         arguments - for some kind of methods, we need to setup arguments.
         for method = 'remove points', 'remove features', arguments can be 'all' or 'any' etc.
         for method = 'constant', arguments must be a value
         for method = 'interpolate', arguments can be a dict which stores inputs for numpy.interp
 
-        alsoTreatAsMissing -  a list. In this function, numpy.NaN and None are always treated as missing. You can add extra values which
-        should be treated as missing values too, in alsoTreatAsMissing.
+        alsoTreatAsMissing -  a list. In this function, numpy.NaN and None are always treated as missing.
+        You can add extra values which should be treated as missing values too, in alsoTreatAsMissing.
 
-        markMissing: True or False. If it is True, then extra columns for those features will be added, in which 0 (False) or 1 (True) will be filled to
-        indicate if the value in a cell is originally missing or not.
+        markMissing: True or False. If it is True, then extra columns for those features will be added,
+        in which 0 (False) or 1 (True) will be filled to indicate if the value in a cell is originally
+        missing or not.
         """
         #convert features to a list of index
         if features is not None:

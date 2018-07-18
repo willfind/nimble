@@ -22,6 +22,10 @@ _constructIndicesList
 from __future__ import absolute_import
 import numpy
 import pandas
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
 
 from UML import createData
 from UML.data import Base
@@ -59,6 +63,12 @@ class NotIterable(object):
     def __init__(self, *args):
         self.values = args
 
+class CalledFunctionException(Exception):
+    def __init__(self):
+        pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
 
 def confirmExpectedNames(toTest, axis, expected):
     if axis == 'point':
@@ -559,6 +569,12 @@ class LowLevelBackend(object):
         toAssign = ["hey", "gone", "none", "blank"]
         toTest.setPointNames(toAssign)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+        toTest = self.constructor(pointNames=['one', 'two', 'three'])
+        toTest.setPointNames(['a', 'b', 'c'])
+
     def test_setPointNames_emptyDataAndList(self):
         """ Test setPointNames() when both the data and the list are empty """
         toTest = self.constructor()
@@ -679,6 +695,12 @@ class LowLevelBackend(object):
         toTest = self.constructor(featureNames=[])
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
         toTest.setFeatureNames(toAssign)
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setFeatureNames_calls_valuesToPythonList(self, mockFunc):
+        toTest = self.constructor(featureNames=['one', 'two', 'three'])
+        toTest.setFeatureNames(['a', 'b', 'c'])
 
     def test_setFeatureNames_emptyDataAndDict(self):
         """ Test setFeatureNames() when both the data and the dict are empty """

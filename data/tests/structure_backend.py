@@ -22,6 +22,10 @@ import numpy
 import os
 import os.path
 from nose.tools import *
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
 
 from copy import deepcopy
 
@@ -63,6 +67,16 @@ def plusOneOnlyEven(value):
         return (value + 1)
     else:
         return None
+
+class CalledFunctionException(Exception):
+    def __init__(self):
+        pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
+
+def noChange(value):
+    return value
 
 
 class StructureDataSafe(DataTestObject):
@@ -466,6 +480,13 @@ class StructureDataSafe(DataTestObject):
     ###################
     # copyPoints #
     ###################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_copyPoints_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        ret = toTest.copyPoints(['a', 'b'])
 
     def test_copyPoints_handmadeSingle(self):
         """ Test copyPoints() against handmade output when copying one point """
@@ -1057,6 +1078,13 @@ class StructureDataSafe(DataTestObject):
     #####################
     # copyFeatures #
     #####################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_copyFeatures_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        ret = toTest.copyFeatures(['a', 'b'])
 
     def test_copyFeatures_handmadeSingle(self):
         """ Test copyFeatures() against handmade output when copying one feature """
@@ -1926,6 +1954,15 @@ class StructureModifying(DataTestObject):
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo_str)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_init_pointNames_calls_valuesToPythonList(self, mockFunc):
+        self.constructor([1,2,3], pointNames=['one'])
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_init_featureNames_calls_valuesToPythonList(self, mockFunc):
+        self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
     ###############
     # transpose() #
@@ -2606,6 +2643,13 @@ class StructureModifying(DataTestObject):
     # extractPoints() #
     #################
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_extractPoints_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        ret = toTest.extractPoints(['a', 'b'])
+
     def test_extractPoints_handmadeSingle(self):
         """ Test extractPoints() against handmade output when extracting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -2817,7 +2861,7 @@ class StructureModifying(DataTestObject):
 
     @raises(ArgumentException)
     def test_extractPoints_exceptionStartInvalid(self):
-        """ Test extracPoints() for ArgumentException when start is not a valid point index """
+        """ Test extractPoints() for ArgumentException when start is not a valid point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -3211,6 +3255,13 @@ class StructureModifying(DataTestObject):
     ####################
     # extractFeatures() #
     ####################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_extractFeatures_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        ret = toTest.extractFeatures(['a', 'b'])
 
     def test_extractFeatures_handmadeSingle(self):
         """ Test extractFeatures() against handmade output when extracting one feature """
@@ -3795,6 +3846,14 @@ class StructureModifying(DataTestObject):
     ################
     # deletePoints #
     ################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_deletePoints_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        toTest.deletePoints(['a', 'b'])
+
     def test_deletePoints_handmadeSingle(self):
         """ Test deletePoints() against handmade output when deleting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4293,6 +4352,13 @@ class StructureModifying(DataTestObject):
     # deleteFeatures #
     ##################
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_deleteFeatures_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        toTest.deleteFeatures(['a', 'b'])
+
     def test_deleteFeatures_handmadeSingle(self):
         """ Test deleteFeatures() against handmade output when deleting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4774,6 +4840,13 @@ class StructureModifying(DataTestObject):
     ################
     # retainPoints #
     ################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_retainPoints_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        toTest.retainPoints(['a', 'b'])
 
     def test_retainPoints_handmadeSingle(self):
         """ Test retainPoints() against handmade output when retaining one point """
@@ -5302,6 +5375,13 @@ class StructureModifying(DataTestObject):
     ##################
     # retainFeatures #
     ##################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_retainFeatures_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        toTest.retainFeatures(['a', 'b'])
 
     def test_retainFeatures_handmadeSingle(self):
         """ Test retainFeatures() against handmade output when retaining one feature """
@@ -5923,6 +6003,13 @@ class StructureModifying(DataTestObject):
 
         origObj.transformEachPoint(emitLower)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_transformEachPoint_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        toTest.transformEachPoint(noChange, points=['a', 'b'])
+
     def test_transformEachPoint_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -6039,6 +6126,12 @@ class StructureModifying(DataTestObject):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.transformEachFeature(None)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_transformEachFeature_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        toTest.transformEachFeature(noChange, features=['a', 'b'])
 
     def test_transformEachFeature_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -6127,6 +6220,26 @@ class StructureModifying(DataTestObject):
     ##########################
     # transformEachElement() #
     ##########################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_transformEachElement_calls_constructIndicesList1(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
+
+        def noChange(point):
+            return point
+
+        toTest.transformEachElement(noChange, points=['a', 'b'])
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_transformEachElement_calls_constructIndicesList2(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
+
+        def noChange(point):
+            return point
+
+        toTest.transformEachElement(noChange, features=['a', 'b'])
 
     def test_transformEachElement_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
