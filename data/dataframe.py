@@ -450,7 +450,7 @@ class DataFrame(Base):
             self.data.replace(myd, inplace=True)
 
         if markMissing:
-            #add extra columns to indicate if the original value was missing or not
+            # construct extra columns to indicate if the original value was missing or not
             extraDf = self.data[featuresList].isnull()
         #from now, based on method and arguments, process self.data
         if method == 'remove points':
@@ -550,9 +550,25 @@ class DataFrame(Base):
                   sklearn.neighbors.KNeighborsRegressor, sklearn.neighbors.KNeighborsClassifier'
             raise ArgumentException(msg)
 
+        # add the constructed columns marking missing values into the object now that it won't
+        # interfere with the rest of the processing.
         if markMissing:
             self.data = self.data.join(extraDf[[i for i in featuresList if i in self.data.columns]], rsuffix='_missing', how='left')
 
+        # there are no other structure changes to self.data beyond this point, so we can update our record
+        # of shape. We must do this before setting point/feature names.
+        pCount, fCount = self.data.shape
+        self._featureCount = fCount
+        self._pointCount = pCount
+
+        # if we've removed features or added new features to mark missing values, and we have not
+        # deferred name creation, then we must assign corrected feature names. Deferred names will
+        # take care of the adjusted size upon assignment
+        if (method == 'remove features' or markMissing) and self._featureNamesCreated():
+            # Get the correct names. In the case of column removal, data.columns uses the indices
+            # keyed to the original shape of the object, so we can easily access only the names for
+            # columns that remain. In the case of column addition, we have to convert the indices
+            # (either stand alone, or in a missing tag) to actual names.
             def fix_name(x):
                 x = str(x)
                 search_res = re.search('^(.+)_missing', x)
@@ -563,30 +579,16 @@ class DataFrame(Base):
                 return name
 
             fNames = [fix_name(i) for i in self.data.columns]
-
-            self.data.columns = range(len(self.data.columns))
-
-            pCount, fCount = self.data.shape
-            self._featureCount = fCount
             self.setFeatureNames(fNames)
-        else:
-            pCount, fCount = self.data.shape
-            self._featureCount = fCount
 
-        if self._featureNamesCreated() and not markMissing:
-            fNames = [self.getFeatureNames()[i] for i in self.data.columns.tolist()[:self.features]]
-            self.setFeatureNames(fNames)
-        # else:
-        #     fNames = [DEFAULT_PREFIX + str(f_idx) for f_idx in self.data.columns.tolist()]
-        #     self.setFeatureNames(fNames)
-        self._pointCount = pCount
+        # if we've removed points, and we have not deferred name creation,
+        # then we must assign corrected point names. Deferred names will
+        # take care of the adjusted size upon assignment
+        if method == 'remove points' and self._pointNamesCreated():
+            pNames = [self.getPointNames()[i] for i in self.data.index.tolist()]
+            self.setPointNames(pNames)
 
-        if self._pointNamesCreated():
-            PNames = [self.getPointNames()[i] for i in self.data.index.tolist()]
-            self.setPointNames(PNames)
-        # else:
-        #     pNames = [DEFAULT_PREFIX + str(p_idx) for p_idx in self.data.index.tolist()]
-        #     self.setPointNames(pNames)
+        # reset index and column to values matching self.data's current size
         self._updateName('point')
         self._updateName('feature')
 
