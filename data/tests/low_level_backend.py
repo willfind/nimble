@@ -1268,6 +1268,13 @@ class LowLevelBackend(object):
         assert toTest._constructIndicesList('point', index) == expected
         assert toTest._constructIndicesList('feature', index) == expected
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+        pointNames = ['p1','p2','p3']
+        toTest = self.constructor(pointNames=pointNames)
+        toTest._constructIndicesList(['p1', 'p2', 'p3'])
+
     def test_constructIndicesList_singleString(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
