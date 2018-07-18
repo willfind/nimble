@@ -61,6 +61,10 @@ try:
 
 # setup without C extensions
 except Exception:
+    msg = "UML is being installed without C extensions. This does NOT affect "
+    msg += "the functionality of UML, but this install will not benefit from "
+    msg += "the speed increases of the C extensions."
+    warnings.warn(msg)
     setup(
         name='UML',
         version='0.0.0.dev1',
