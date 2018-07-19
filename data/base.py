@@ -111,7 +111,7 @@ class Base(object):
 
         name: the name to be associated with this object.
 
-        pathes: a tuple, where the first entry is taken to be the string
+        paths: a tuple, where the first entry is taken to be the string
         representing the absolute path to the source file of the data and
         the second entry is taken to be the relative path. Both may be
         None if these values are to be unspecified.
@@ -242,6 +242,8 @@ class Base(object):
     def _getPath(self):
         return self.absolutePath
 
+    path = property(_getPath, doc="The path to the file this data originated from")
+
     def _pointNamesCreated(self):
         """
         Returns True if point default names have been created/assigned
@@ -263,8 +265,6 @@ class Base(object):
             return False
         else:
             return True
-
-    path = property(_getPath, doc="The path to the file this data originated from")
 
     ########################
     # Low Level Operations #
