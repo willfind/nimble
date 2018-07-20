@@ -1042,23 +1042,6 @@ class Base(object):
 
         """
         return self._genericShuffleFrontend('point')
-        # if indices is None:
-        #     indices = list(range(0, self.points))
-        #     pythonRandom.shuffle(indices)
-        # else:
-        #     if len(indices) != self.points:
-        #         raise ArgumentException(
-        #             "If indices are supplied, it must be a list with all and only valid point indices")
-        #     for value in indices:
-        #         if value < 0 or value > self.points:
-        #             raise ArgumentException("A value in indices is out of bounds of the valid range of points")
-        #
-        # def permuter(pView):
-        #     return indices[self.getPointIndex(pView.getPointName(0))]
-        #
-        # # permuter.permuter = True
-        # # permuter.indices = indices
-        # self.sortPoints(sortHelper=permuter)
 
 
     def shuffleFeatures(self):
@@ -1073,7 +1056,7 @@ class Base(object):
 
     def _genericShuffleFrontend(self, axis):
         """
-        Permute the indexing of the features so they are in a random order. Note: this relies on
+        Generic function for shufflePoints and shuffleFeatures. Note: this relies on
         python's random.shuffle() so may not be sufficiently random for large number of features.
         See shuffle()'s documentation.
 
@@ -2504,73 +2487,36 @@ class Base(object):
 
     def sortPoints(self, sortBy=None, sortHelper=None):
         """
-        Modify this object so that the points are sorted in place, where sortBy may
-        indicate the feature to sort by or None if the entire point is to be taken as a key,
-        sortHelper may either be comparator, a scoring function, or None to indicate the natural
-        ordering. None is always returned.
+        Modify this object so that the points are sorted in place.
+
+        sortBy: may indicate the feature to sort by or None if the entire point
+        is to be taken as a key
+
+        sortHelper: either an iterable, list-like object of identifiers (name or
+        index), a comparator or a scoring function, or None to indicate the
+        natural ordering
+
         """
         self._genericSortFrontend('point', sortBy, sortHelper)
 
-        # if sortBy is not None and isinstance(sortBy, six.string_types):
-        #     sortBy = self._getFeatureIndex(sortBy)
-        #
-        # if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-        #     indices = self._constructIndicesList('point', sortHelper)
-        #     if len(indices) != self.points:
-        #         msg = "This object contains {0} points, ".format(self.points)
-        #         msg += "but sortHelper contained {0} identifiers".format(len(indices))
-        #         raise ArgumentException(msg)
-        #
-        #     def permuter(pView):
-        #         return indices[self.getPointIndex(pView.getPointName(0))]
-        #
-        #     sortHelper = permuter
-        #
-        # # its already sorted in these cases
-        # if self.features == 0 or self.points == 0 or self.points == 1:
-        #     return
-        #
-        # newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
-        # self.setPointNames(newPointNameOrder)
-        #
-        # self.validate()
 
     def sortFeatures(self, sortBy=None, sortHelper=None):
         """
-        Modify this object so that the features are sorted in place, where sortBy may
-        indicate the feature to sort by or None if the entire point is to be taken as a key,
-        sortHelper may either be comparator, a scoring function, or None to indicate the natural
-        ordering.  None is always returned.
+        Modify this object so that the features are sorted in place.
+
+        sortBy: indicates the point to sort by or None if the entire point
+        is to be taken as a key
+
+        sortHelper: either an iterable, list-like object of identifiers (name or
+        index), a comparator or a scoring function, or None to indicate the
+        natural ordering
 
         """
         self._genericSortFrontend('feature', sortBy, sortHelper)
 
-        # if sortBy is not None and isinstance(sortBy, six.string_types):
-        #     sortBy = self._getPointIndex(sortBy)
-        #
-        # if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-        #     indices = self._constructIndicesList('feature', sortHelper)
-        #     if len(indices) != self.features:
-        #         msg = "This object contains {0} features, ".format(self.features)
-        #         msg += "but sortHelper contained {0} identifiers".format(len(indices))
-        #         raise ArgumentException(msg)
-        #
-        #     def permuter(fView):
-        #         return indices[self.getFeatureIndex(fView.getFeatureName(0))]
-        #
-        #     sortHelper = permuter
-        #
-        # # its already sorted in these cases
-        # if self.features == 0 or self.points == 0 or self.features == 1:
-        #     return
-        #
-        # newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
-        # self.setFeatureNames(newFeatureNameOrder)
-        #
-        # self.validate()
 
     def _genericSortFrontend(self, axis, sortBy, sortHelper):
-        """"""
+        """Generic sorting function for SortPoints and SortFeatures"""
         if sortBy is not None and sortHelper is not None:
             raise ArgumentException("Cannot specify a feature to sort by and a helper function")
         if sortBy is None and sortHelper is None:
@@ -2786,7 +2732,7 @@ class Base(object):
 
 
     def _genericRetainFrontend(self, structure, axis, toRetain, start, end, number, randomize):
-        """Implements retainPoints or retainFeatures based on the axis. The complements
+        """Generic retaining function for retainPoints or retainFeatures. The complements
         of toRetain are identified to use the extract backend, this is done within this
         implementation except for functions which are complemented within the next helper
         function
