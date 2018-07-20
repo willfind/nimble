@@ -2546,7 +2546,12 @@ class Base(object):
             indices = self._constructIndicesList(axis, sortHelper)
             if len(indices) != axisCount:
                 msg = "This object contains {0} points, ".format(axisCount)
-                msg += "but sortHelper contained {0} identifiers".format(len(indices))
+                msg += "but sortHelper has {0} identifiers".format(len(indices))
+                raise ArgumentException(msg)
+            if len(indices) != len(set(indices)):
+                msg = "This object contains {0} points, ".format(axisCount)
+                msg += "but sortHelper has {0} ".format(len(set(indices)))
+                msg += "unique identifiers"
                 raise ArgumentException(msg)
 
             sortHelper = permuter
