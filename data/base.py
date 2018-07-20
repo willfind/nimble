@@ -2560,8 +2560,8 @@ class Base(object):
         if otherCount == 0 or axisCount == 0 or axisCount == 1:
             return
 
-        newPointNameOrder = sort_implementation(sortBy, sortHelper)
-        setNames(newPointNameOrder)
+        newNameOrder = sort_implementation(sortBy, sortHelper)
+        setNames(newNameOrder)
 
         self.validate()
 
