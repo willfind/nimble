@@ -241,8 +241,8 @@ class StructureDataSafe(DataTestObject):
         copySparse.setPointName('one', 'WHAT')
         assert 'two' in orig.getFeatureNames()
         assert 'one' in orig.getPointNames()
-        copySparse.shufflePoints(pointsShuffleIndices)
-        copySparse.shuffleFeatures(featuresShuffleIndices)
+        copySparse.sortPoints(sortHelper=pointsShuffleIndices)
+        copySparse.sortFeatures(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
         copyList = orig.copyAs(format='List')
@@ -253,8 +253,8 @@ class StructureDataSafe(DataTestObject):
         copyList.setPointName('one', 'WHAT')
         assert 'two' in orig.getFeatureNames()
         assert 'one' in orig.getPointNames()
-        copyList.shufflePoints(pointsShuffleIndices)
-        copyList.shuffleFeatures(featuresShuffleIndices)
+        copyList.sortPoints(sortHelper=pointsShuffleIndices)
+        copyList.sortFeatures(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
         copyMatrix = orig.copyAs(format='Matrix')
@@ -265,8 +265,8 @@ class StructureDataSafe(DataTestObject):
         copyMatrix.setPointName('one', 'WHAT')
         assert 'two' in orig.getFeatureNames()
         assert 'one' in orig.getPointNames()
-        copyMatrix.shufflePoints(pointsShuffleIndices)
-        copyMatrix.shuffleFeatures(featuresShuffleIndices)
+        copyMatrix.sortPoints(sortHelper=pointsShuffleIndices)
+        copyMatrix.sortFeatures(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
         copyDataFrame = orig.copyAs(format='DataFrame')
@@ -277,8 +277,8 @@ class StructureDataSafe(DataTestObject):
         copyDataFrame.setPointName('one', 'WHAT')
         assert 'two' in orig.getFeatureNames()
         assert 'one' in orig.getPointNames()
-        copyDataFrame.shufflePoints(pointsShuffleIndices)
-        copyDataFrame.shuffleFeatures(featuresShuffleIndices)
+        copyDataFrame.sortPoints(sortHelper=pointsShuffleIndices)
+        copyDataFrame.sortFeatures(sortHelper=featuresShuffleIndices)
         assert orig[0, 0] == 1
 
 
@@ -2513,6 +2513,14 @@ class StructureModifying(DataTestObject):
 
         assert toTest.isIdentical(objExp)
 
+    @raises(ArgumentException)
+    def test_sortPoints_exceptionIndicesPEmpty(self):
+        """ tests sortPoints() throws an ArgumentException when given invalid indices """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        toTest.sortPoints(sortHelper=[1, 3])
+
     #################
     # sortFeatures() #
     #################
@@ -2600,6 +2608,14 @@ class StructureModifying(DataTestObject):
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
+
+    @raises(ArgumentException)
+    def test_sortFeatures_exceptionIndicesFEmpty(self):
+        """ tests sortFeatures() throws an ArgumentException when given invalid indices """
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        toTest.sortFeatures(sortHelper=[1, 3])
 
 
     #################
