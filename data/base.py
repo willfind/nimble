@@ -2728,6 +2728,11 @@ class Base(object):
         # a function where it will be handled in _genericStructuralFrontend
         passNumber = None
         passRandomize = False
+
+        # generic exception message if number is too large
+        msg = "The value for 'number', {0}, ".format(number)
+        msg += "is greater than the number of {0}s ".format(axis)
+
         # extract points not in toRetain
         if toRetain is not None:
             if isinstance(toRetain, six.string_types):
@@ -2745,8 +2750,6 @@ class Base(object):
             elif isinstance(toRetain, list):
                 toRetain = [self._getIndex(value, axis) for value in toRetain]
                 if number and number > len(toRetain):
-                    msg = "The value for 'number', {0}, ".format(number)
-                    msg += "is greater than the number of {0}s ".format(axis)
                     msg += "to retain, {0}".format(len(toRetain))
                     raise ArgumentException(msg)
                 if randomize:
@@ -2778,8 +2781,6 @@ class Base(object):
             self._validateStartEndRange(start, end, axisLength)
             toRetain = [value for value in range(start, end + 1)]
             if number and number > len(toRetain):
-                msg = "The value for 'number', {0}, ".format(number)
-                msg += "is greater than the number of {0}s ".format(axis)
                 msg += "to retain, {0}".format(len(toRetain))
                 raise ArgumentException(msg)
             if randomize:
@@ -2791,8 +2792,9 @@ class Base(object):
         # extract points after number
         else:
             allIndexes = [i for i in range(axisLength)]
+            if number > len(allIndexes):
+                raise ArgumentException(msg)
             if randomize:
-                number = number if number < len(allIndexes) else len(allIndexes)
                 toRetain = pythonRandom.sample(allIndexes, number)
             else:
                 toRetain = allIndexes[:number]
@@ -4322,11 +4324,16 @@ class Base(object):
                 # index from returned function
                 if structure == 'retain' and number is not None:
                     addBack = len(keepList) - number
-                    addBack = addBack if addBack > 0 else 0
-                    if randomize:
-                        pythonRandom.shuffle(keepList)
-                    for i in range(addBack):
-                        targetList.append(keepList[i])
+                    if addBack > 0:
+                        if randomize:
+                            pythonRandom.shuffle(keepList)
+                        for i in range(addBack):
+                            targetList.append(keepList[-i])
+                    elif addBack < 0:
+                        msg = "The value for 'number' ({0}) ".format(number)
+                        msg += "is greater than the number of {0}s ".format(axis)
+                        msg += "to retain ({0})".format(len(keepList))
+                        raise ArgumentException(msg)
 
         elif start is not None or end is not None:
             start = 0 if start is None else self._getIndex(start, axis)

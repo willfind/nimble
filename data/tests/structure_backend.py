@@ -1017,11 +1017,11 @@ class StructureDataSafe(DataTestObject):
 
     @raises(ArgumentException)
     def test_copyPoints_list_numberGreaterThanTargeted(self):
-        self.back_copy_range_numberGreaterThanTargeted('copy', 'point')
+        self.back_copy_list_numberGreaterThanTargeted('copy', 'point')
 
     @raises(ArgumentException)
     def test_copyPoints_function_numberGreaterThanTargeted(self):
-        self.back_copy_range_numberGreaterThanTargeted('copy', 'point')
+        self.back_copy_function_numberGreaterThanTargeted('copy', 'point')
 
     @raises(ArgumentException)
     def test_copyPoints_range_numberGreaterThanTargeted(self):
@@ -1769,11 +1769,11 @@ class StructureDataSafe(DataTestObject):
 
     @raises(ArgumentException)
     def test_copyFeatures_list_numberGreaterThanTargeted(self):
-        self.back_copy_range_numberGreaterThanTargeted('copy', 'feature')
+        self.back_copy_list_numberGreaterThanTargeted('copy', 'feature')
 
     @raises(ArgumentException)
     def test_copyFeatures_function_numberGreaterThanTargeted(self):
-        self.back_copy_range_numberGreaterThanTargeted('copy', 'feature')
+        self.back_copy_function_numberGreaterThanTargeted('copy', 'feature')
 
     @raises(ArgumentException)
     def test_copyFeatures_range_numberGreaterThanTargeted(self):
@@ -3357,11 +3357,11 @@ class StructureModifying(DataTestObject):
 
     @raises(ArgumentException)
     def test_extractPoints_list_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('extract', 'point')
+        self.back_structural_list_numberGreaterThanTargeted('extract', 'point')
 
     @raises(ArgumentException)
     def test_extractPoints_function_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('extract', 'point')
+        self.back_structural_function_numberGreaterThanTargeted('extract', 'point')
 
     @raises(ArgumentException)
     def test_extractPoints_range_numberGreaterThanTargeted(self):
@@ -4083,11 +4083,11 @@ class StructureModifying(DataTestObject):
 
     @raises(ArgumentException)
     def test_extractFeatures_list_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('extract', 'feature')
+        self.back_structural_list_numberGreaterThanTargeted('extract', 'feature')
 
     @raises(ArgumentException)
     def test_extractFeatures_function_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('extract', 'feature')
+        self.back_structural_function_numberGreaterThanTargeted('extract', 'feature')
 
     @raises(ArgumentException)
     def test_extractFeatures_range_numberGreaterThanTargeted(self):
@@ -4534,11 +4534,11 @@ class StructureModifying(DataTestObject):
 
     @raises(ArgumentException)
     def test_deletePoints_list_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('delete', 'point')
+        self.back_structural_list_numberGreaterThanTargeted('delete', 'point')
 
     @raises(ArgumentException)
     def test_deletePoints_function_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('delete', 'point')
+        self.back_structural_function_numberGreaterThanTargeted('delete', 'point')
 
     @raises(ArgumentException)
     def test_deletePoints_range_numberGreaterThanTargeted(self):
@@ -5140,11 +5140,11 @@ class StructureModifying(DataTestObject):
 
     @raises(ArgumentException)
     def test_deleteFeatures_list_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('delete', 'feature')
+        self.back_structural_list_numberGreaterThanTargeted('delete', 'feature')
 
     @raises(ArgumentException)
     def test_deleteFeatures_function_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('delete', 'feature')
+        self.back_structural_function_numberGreaterThanTargeted('delete', 'feature')
 
     @raises(ArgumentException)
     def test_deleteFeatures_range_numberGreaterThanTargeted(self):
@@ -5629,11 +5629,11 @@ class StructureModifying(DataTestObject):
 
     @raises(ArgumentException)
     def test_retainPoints_list_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('retain', 'point')
+        self.back_structural_list_numberGreaterThanTargeted('retain', 'point')
 
     @raises(ArgumentException)
     def test_retainPoints_function_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('retain', 'point')
+        self.back_structural_function_numberGreaterThanTargeted('retain', 'point')
 
     @raises(ArgumentException)
     def test_retainPoints_range_numberGreaterThanTargeted(self):
@@ -6259,11 +6259,11 @@ class StructureModifying(DataTestObject):
 
     @raises(ArgumentException)
     def test_retainFeatures_list_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
+        self.back_structural_list_numberGreaterThanTargeted('retain', 'feature')
 
     @raises(ArgumentException)
     def test_retainFeatures_function_numberGreaterThanTargeted(self):
-        self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
+        self.back_structural_function_numberGreaterThanTargeted('retain', 'feature')
 
     @raises(ArgumentException)
     def test_retainFeatures_range_numberGreaterThanTargeted(self):
