@@ -105,11 +105,11 @@ class Base(object):
         object. Note: this method (as should all other __init__ methods in
         this hierarchy) makes use of super()
 
-        pointNames: may be an iterable or dict mapping names to indices. None is
-        given if default names are desired.
+        pointNames: may be an iterable, list-like container or dict mapping
+        names to indices. None is given if default names are desired.
 
-        featureNames: may be an iterable or dict mapping names to indices. None
-        is given if default names are desired.
+        featureNames: may be an iterable, list-like container or dict mapping
+        names to indices. None is given if default names are desired.
 
         name: the name to be associated with this object.
 
@@ -318,13 +318,13 @@ class Base(object):
     def setPointNames(self, assignments=None):
         """
         Rename all of the point names of this object according to the values
-        specified by the assignments parameter. If given an iterable, then we use
-        the mapping between names and array indices to define the point
-        names. If given a dict, then that mapping will be used to define the
-        point names. If assignments is None, then all point names will be
-        given new default values. If assignment is an unexpected type, the names
-        are not strings, the names are not unique, or point indices are missing,
-        then an ArgumentException will be raised. None is always returned.
+        specified by the assignments parameter. If given an iterable, list-like
+        container, then we use the mapping between names and array indices to
+        define the point names. If given a dict, then that mapping will be used
+        to define the point names. If assignments is None, then all point names
+        will be given new default values. If assignment is an unexpected type,
+        the names are not strings, the names are not unique, or point indices
+        are missing, then an ArgumentException will be raised.
 
         """
         if assignments is None:
@@ -339,13 +339,13 @@ class Base(object):
     def setFeatureNames(self, assignments=None):
         """
         Rename all of the feature names of this object according to the values
-        specified by the assignments parameter. If given a iterable, then we use
-        the mapping between names and array indices to define the feature
-        names. If given a dict, then that mapping will be used to define the
-        feature names. If assignments is None, then all feature names will be
-        given new default values. If assignment is an unexpected type, the names
-        are not strings, the names are not unique, or feature indices are missing,
-        then an ArgumentException will be raised. None is always returned.
+        specified by the assignments parameter. If given a iterable, list-like
+        container, then we use the mapping between names and array indices to
+        define the feature names. If given a dict, then that mapping will be
+        used to define the feature names. If assignments is None, then all
+        feature names will be given new default values. If assignment is an
+        unexpected type, the names are not strings, the names are not unique, or
+        feature indices are missing, then an ArgumentException will be raised.
 
         """
         if assignments is None:
@@ -588,11 +588,11 @@ class Base(object):
         in this object, with output values collected into a new object that
         is returned upon completion.
 
-        function must not be none and accept the view of a point as an argument
+        function: must accept the view of a point as an argument
 
-        points may be None to indicate application to all points, a single point
-        identifier (name or index) or an iterable of point identifiers to limit
-        application only to those specified.
+        points: may be None to indicate application to all points, a single
+        point identifier (name or index) or an iterable, list-like container of
+        point identifiers to limit application only to those specified.
 
         """
         if points is not None:
@@ -627,11 +627,11 @@ class Base(object):
         in this object, with output values collected into a new object that is
         returned upon completion.
 
-        function must not be none and accept the view of a point as an argument
+        function: must accept the view of a feature as an argument
 
-        features may be None to indicate application to all features, a single
-        feature identifier (name or index) or an iterable of feature identifiers
-        to limit application only to those specified.
+        features: may be None to indicate application to all features, a single
+        feature identifier (name or index) or an iterable, list-like container
+        of feature identifiers to limit application only to those specified.
 
         """
         if features is not None:
@@ -879,12 +879,14 @@ class Base(object):
         or function(elementValue, pointNum, featureNum) for each element.
 
         points: Limit to only elements of the specified points; may be None for
-        all points, a single identifier (name or index), or an iterable of
-        identifiers; this will affect the shape of the returned object.
+        all points, a single identifier (name or index), or an iterable,
+        list-like container of identifiers; this will affect the shape of the
+        returned object.
 
-        features: Limit to only elements of the specified features; may be None for
-        all features, a single identifier (name or index), or an iterable of
-        identifiers; this will affect the shape of the returned object.
+        features: Limit to only elements of the specified features; may be None
+        for all features, a single identifier (name or index), or an iterable,
+        list-like container of identifiers; this will affect the shape of the
+        returned object.
 
         preserveZeros: If True it does not apply the function to elements in
         the data that are 0 and a 0 is placed in its place in the output.
@@ -2487,24 +2489,29 @@ class Base(object):
 
     def extractPoints(self, toExtract=None, start=None, end=None, number=None, randomize=False):
         """
-        Modify this object, removing those points that are specified by the input, and returning
-        an object containing those removed points.
+        Modify this object, removing those points that are specified by the
+        input, and returning an object containing those removed points.
 
-        toExtract may be a single identifier (name or index), an iterable of identifiers,
-        a function that when given a point will return True if it is to be extracted, or a
-        filter function, as a string, containing a comparison operator between a feature name
-        and a value (i.e 'feat1<10')
+        toExtract: may take the form of any of the following:
+          1. a single identifier (name or index)
+          2. an iterable, list-like container of identifiers
+          3. a function that when given a point will return True if it is to
+             be extracted
+          4. a filter function, as a string, containing a comparison operator
+             between a feature name and a value (i.e 'feat1<10')
 
-        number is the quantity of points that are to be extracted, the default None means
-        unrestricted extraction.
+        start and end: parameters indicating range based extraction. If range
+        based extraction is employed, toExtract must be None, and vice versa. If
+        only one of start and end are non-None, the other defaults to 0 and
+        self.points, respectively.
 
-        start and end are parameters indicating range based extraction: if range based
-        extraction is employed, toExtract must be None, and vice versa. If only one of start
-        and end are non-None, the other defaults to 0 and self.points respectably.
+        number: the quantity of points that are to be extracted, the default
+        None means unrestricted extraction.
 
-        randomize indicates whether random sampling is to be used in conjunction with the number
-        parameter, if randomize is False, the chosen points are determined by point order,
-        otherwise it is uniform random across the space of possible removals.
+        randomize: indicates whether random sampling is to be used in
+        conjunction with the number parameter, if randomize is False, the chosen
+        points are determined by point order, otherwise it is uniform random
+        across the space of possible points.
 
         """
         ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
@@ -2524,24 +2531,29 @@ class Base(object):
 
     def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
         """
-        Modify this object, removing those features that are specified by the input, and returning
-        an object containing those removed features.
+        Modify this object, removing those features that are specified by the
+        input, and returning an object containing those removed features.
 
-        toExtract may be a single identifier (name or index), an iterable of identifiers,
-        a function that when given a feature will return True if it is to be extracted, or a
-        filter function, as a string, containing a comparison operator between a point name
-        and a value (i.e 'point1<10')
+        toExtract: may take the form of any of the following:
+          1. a single identifier (name or index)
+          2. an iterable, list-like container of identifiers
+          3. a function that when given a feature will return True if it is to
+             be extracted
+          4. a filter function, as a string, containing a comparison operator
+             between a point name and a value (i.e 'point1<10')
 
-        number is the quantity of features that are to be extracted, the default None means
-        unrestricted extraction.
+        start and end: parameters indicating range based extraction. If range
+        based extraction is employed, toExtract must be None, and vice versa. If
+        only one of start and end are non-None, the other defaults to 0 and
+        self.features, respectively.
 
-        start and end are parameters indicating range based extraction: if range based
-        extraction is employed, toExtract must be None, and vice versa. If only one of start
-        and end are non-None, the other defaults to 0 and self.features respectably.
+        number: the quantity of features that are to be extracted, the default
+        None means unrestricted extraction.
 
-        randomize indicates whether random sampling is to be used in conjunction with the number
-        parameter, if randomize is False, the chosen features are determined by feature order,
-        otherwise it is uniform random across the space of possible removals.
+        randomize: indicates whether random sampling is to be used in
+        conjunction with the number parameter, if randomize is False, the chosen
+        features are determined by feature order, otherwise it is uniform random
+        across the space of possible features.
 
         """
         ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
@@ -2563,21 +2575,26 @@ class Base(object):
         """
         Modify this object, removing those points that are specified by the input.
 
-        toDelete may be a single identifier (name or index), an iterable of identifiers,
-        a function that when given a point will return True if it is to be deleted, or a
-        filter function, as a string, containing a comparison operator between a feature name
-        and a value (i.e 'feat1<10')
+        toDelete: may take the form of any of the following:
+          1. a single identifier (name or index)
+          2. an iterable, list-like container of identifiers
+          3. a function that when given a point will return True if it is to
+             be deleted
+          4. a filter function, as a string, containing a comparison operator
+             between a feature name and a value (i.e 'feat1<10')
 
-        number is the quantity of points that are to be deleted, the default None means
-        unrestricted deletion.
+        start and end: parameters indicating range based deletion. If range
+        based deletion is employed, toDelete must be None, and vice versa. If
+        only one of start and end are non-None, the other defaults to 0 and
+        self.points, respectively.
 
-        start and end are parameters indicating range based deletion: if range based
-        deletion is employed, toDelete must be None, and vice versa. If only one of start
-        and end are non-None, the other defaults to 0 and self.points respectably.
+        number: the quantity of points that are to be deleted, the default
+        None means unrestricted deletion.
 
-        randomize indicates whether random sampling is to be used in conjunction with the number
-        parameter, if randomize is False, the chosen points are determined by point order,
-        otherwise it is uniform random across the space of possible removals.
+        randomize: indicates whether random sampling is to be used in
+        conjunction with the number parameter, if randomize is False, the chosen
+        points are determined by point order, otherwise it is uniform random
+        across the space of possible points.
 
         """
         ret = self.extractPoints(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
@@ -2587,21 +2604,26 @@ class Base(object):
         """
         Modify this object, removing those features that are specified by the input.
 
-        toDelete may be a single identifier (name or index), an iterable of identifiers,
-        a function that when given a feature will return True if it is to be deleted, or a
-        filter function, as a string, containing a comparison operator between a point name
-        and a value (i.e 'point1<10')
+        toDelete: may take the form of any of the following:
+          1. a single identifier (name or index)
+          2. an iterable, list-like container of identifiers
+          3. a function that when given a feature will return True if it is to
+             be deleted
+          4. a filter function, as a string, containing a comparison operator
+             between a point name and a value (i.e 'point1<10')
 
-        number is the quantity of features that are to be deleted, the default None means
-        unrestricted deleted.
+        start and end: parameters indicating range based deletion. If range
+        based deletion is employed, toDelete must be None, and vice versa. If
+        only one of start and end are non-None, the other defaults to 0 and
+        self.features, respectively.
 
-        start and end are parameters indicating range based deletion: if range based
-        deletion is employed, toDelete must be None, and vice versa. If only one of start
-        and end are non-None, the other defaults to 0 and self.features respectably.
+        number: the quantity of features that are to be deleted, the default
+        None means unrestricted deletion.
 
-        randomize indicates whether random sampling is to be used in conjunction with the number
-        parameter, if randomize is False, the chosen features are determined by feature order,
-        otherwise it is uniform random across the space of possible removals.
+        randomize: indicates whether random sampling is to be used in
+        conjunction with the number parameter, if randomize is False, the chosen
+        features are determined by feature order, otherwise it is uniform random
+        across the space of possible features.
 
         """
         ret = self.extractFeatures(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
@@ -2611,21 +2633,26 @@ class Base(object):
         """
         Modify this object, retaining those points that are specified by the input.
 
-        toRetain may be a single identifier (name or index), an iterable of identifiers,
-        a function that when given a point will return True if it is to be retained, or a
-        filter function, as a string, containing a comparison operator between a feature name
-        and a value (i.e 'feat1<10')
+        toRetain: may take the form of any of the following:
+          1. a single identifier (name or index)
+          2. an iterable, list-like container of identifiers
+          3. a function that when given a point will return True if it is to
+             be retained
+          4. a filter function, as a string, containing a comparison operator
+             between a feature name and a value (i.e 'feat1<10')
 
-        number is the quantity of points that are to be retained, the default None means
-        unrestricted retention.
+        start and end: parameters indicating range based retention. If range
+        based retention is employed, toRetain must be None, and vice versa. If
+        only one of start and end are non-None, the other defaults to 0 and
+        self.points, respectively.
 
-        start and end are parameters indicating range based retention: if range based
-        retention is employed, toRetain must be None, and vice versa. If only one of start
-        and end are non-None, the other defaults to 0 and self.points respectably.
+        number: the quantity of points that are to be retained, the default
+        None means unrestricted retention.
 
-        randomize indicates whether random sampling is to be used in conjunction with the number
-        parameter, if randomize is False, the chosen points are determined by point order,
-        otherwise it is uniform random across the space of possible retentions.
+        randomize: indicates whether random sampling is to be used in
+        conjunction with the number parameter, if randomize is False, the chosen
+        points are determined by point order, otherwise it is uniform random
+        across the space of possible points.
 
         """
         self._retain_implementation('retain', 'point', toRetain, start, end, number, randomize)
@@ -2635,21 +2662,26 @@ class Base(object):
         """
         Modify this object, retaining those features that are specified by the input.
 
-        toRetain may be a single identifier (name or index), an iterable of identifiers,
-        a function that when given a feature will return True if it is to be deleted, or a
-        filter function, as a string, containing a comparison operator between a point name
-        and a value (i.e 'point1<10')
+        toRetain: may take the form of any of the following:
+          1. a single identifier (name or index)
+          2. an iterable, list-like container of identifiers
+          3. a function that when given a feature will return True if it is to
+             be retained
+          4. a filter function, as a string, containing a comparison operator
+             between a point name and a value (i.e 'point1<10')
 
-        number is the quantity of features that are to be retained, the default None means
-        unrestricted retention.
+        start and end: parameters indicating range based retention. If range
+        based retention is employed, toRetain must be None, and vice versa. If
+        only one of start and end are non-None, the other defaults to 0 and
+        self.features, respectively.
 
-        start and end are parameters indicating range based retention: if range based
-        retention is employed, toRetain must be None, and vice versa. If only one of start
-        and end are non-None, the other defaults to 0 and self.features respectably.
+        number: the quantity of features that are to be retained, the default
+        None means unrestricted retention.
 
-        randomize indicates whether random sampling is to be used in conjunction with the number
-        parameter, if randomize is False, the chosen features are determined by feature order,
-        otherwise it is uniform random across the space of possible retentions.
+        randomize: indicates whether random sampling is to be used in
+        conjunction with the number parameter, if randomize is False, the chosen
+        features are determined by feature order, otherwise it is uniform random
+        across the space of possible features.
 
         """
         self._retain_implementation('retain', 'feature', toRetain, start, end, number, randomize)
@@ -2944,21 +2976,26 @@ class Base(object):
         Returns an object containing those points that are specified by the input, without
         modification to this object.
 
-        toCopy may be a single identifier (name or index), an iterable of identifiers,
-        a function that when given a point will return True if it is to be copied, or a
-        filter function, as a string, containing a comparison operator between a feature name
-        and a value (i.e 'feat1<10')
+        toCopy: may take the form of any of the following:
+          1. a single identifier (name or index)
+          2. an iterable, list-like container of identifiers
+          3. a function that when given a point will return True if it is to
+             be copied
+          4. a filter function, as a string, containing a comparison operator
+             between a feature name and a value (i.e 'feat1<10')
 
-        number is the quantity of points that are to be copied, the default None means
-        unrestricted copying.
+        start and end: parameters indicating range based copying. If range
+        based copying is employed, toCopy must be None, and vice versa. If
+        only one of start and end are non-None, the other defaults to 0 and
+        self.points, respectively.
 
-        start and end are parameters indicating range based copying: if range based
-        copying is employed, toCopy must be None, and vice versa. If only one of start
-        and end are non-None, the other defaults to 0 and self.points respectably.
+        number: the quantity of points that are to be copied, the default
+        None means unrestricted copying.
 
-        randomize indicates whether random sampling is to be used in conjunction with the number
-        parameter, if randomize is False, the chosen points are determined by point order,
-        otherwise it is uniform random across the space of possible points.
+        randomize: indicates whether random sampling is to be used in
+        conjunction with the number parameter, if randomize is False, the chosen
+        points are determined by point order, otherwise it is uniform random
+        across the space of possible points.
 
         """
         ret = self._genericStructuralFrontend('copy', 'point', toCopy, start, end,
@@ -2978,21 +3015,26 @@ class Base(object):
         Returns an object containing those features that are specified by the input, without
         modification to this object.
 
-        toCopy may be a single identifier (name or index), an iterable of identifiers,
-        a function that when given a feature will return True if it is to be copied, or a
-        filter function, as a string, containing a comparison operator between a point name
-        and a value (i.e 'point1<10')
+        toCopy: may take the form of any of the following:
+          1. a single identifier (name or index)
+          2. an iterable, list-like container of identifiers
+          3. a function that when given a feature will return True if it is to
+             be copied
+          4. a filter function, as a string, containing a comparison operator
+             between a point name and a value (i.e 'point1<10')
 
-        number is the quantity of features that are to be copied, the default None means
-        unrestricted copying.
+        start and end: parameters indicating range based copying. If range
+        based copying is employed, toCopy must be None, and vice versa. If
+        only one of start and end are non-None, the other defaults to 0 and
+        self.features, respectively.
 
-        start and end are parameters indicating range based copying: if range based
-        copying is employed, toCopy must be None, and vice versa. If only one of start
-        and end are non-None, the other defaults to 0 and self.features respectably.
+        number: the quantity of features that are to be copied, the default
+        None means unrestricted copying.
 
-        randomize indicates whether random sampling is to be used in conjunction with the number
-        parameter, if randomize is False, the chosen features are determined by feature order,
-        otherwise it is uniform random across the space of possible features.
+        randomize: indicates whether random sampling is to be used in
+        conjunction with the number parameter, if randomize is False, the chosen
+        features are determined by feature order, otherwise it is uniform random
+        across the space of possible features.
 
         """
         ret = self._genericStructuralFrontend('copy', 'feature', toCopy, start, end,
@@ -3011,11 +3053,11 @@ class Base(object):
         Modifies this object to contain the results of the given function
         calculated on the specified points in this object.
 
-        function must not be none and accept the view of a point as an argument
+        function: must accept the view of a point as an argument
 
-        points may be None to indicate application to all points, a single point
-        identifier (name or index) or an iterable of point identifiers to limit
-        application only to those specified.
+        points: may be None to indicate application to all points, a single
+        point identifier (name or index) or an iterable, list-like container of
+        point identifiers to limit application only to those specified.
 
         """
         if self.points == 0:
@@ -3037,11 +3079,11 @@ class Base(object):
         Modifies this object to contain the results of the given function
         calculated on the specified features in this object.
 
-        function must not be none and accept the view of a feature as an argument
+        function: must accept the view of a feature as an argument
 
-        features may be None to indicate application to all features, a single
-        feature identifier (name or index) or an iterable of feature identifiers
-        to limit application only to those specified.
+        features: may be None to indicate application to all features, a single
+        feature identifier (name or index) or an iterable, list-like container
+        of feature identifiers to limit application only to those specified.
 
         """
         if self.points == 0:
@@ -3063,15 +3105,17 @@ class Base(object):
         """
         Modifies this object to contain the results of toTransform for each element.
 
-        toTransform: May be a function in the form of
-        toTransform(elementValue) or toTransform(elementValue, pointNum, featureNum),
-        or a dictionary mapping the current element [key] to the transformed element [value].
+        toTransform: May be a function in the form of toTransform(elementValue)
+        or toTransform(elementValue, pointNum, featureNum), or a dictionary
+        mapping the current element [key] to the transformed element [value].
 
         points: Limit to only elements of the specified points; may be None for
-        all points, a single identifier (name or index), or an iterable of identifiers.
+        all points, a single identifier (name or index), or an iterable,
+        list-like container of identifiers.
 
-        features: Limit to only elements of the specified features; may be None for
-        all features, a single identifier (name or index), or an iterable of identifiers.
+        features: Limit to only elements of the specified features; may be None
+        for all features, a single identifier (name or index), or an iterable,
+        list-like container of identifiers.
 
         preserveZeros: If True it does not apply toTransform to elements in
         the data that are 0, and that 0 is not modified.
@@ -3156,28 +3200,37 @@ class Base(object):
         self.validate()
 
 
-    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
+    def handleMissingValues(self, method='remove points', features=None, arguments=None,
+                            alsoTreatAsMissing=[], markMissing=False):
         """
-        This function is to remove, replace or impute missing values in an UML container data object.
+        This function is to remove, replace or impute missing values in an UML
+        container data object.
 
-        method - a str. It can be 'remove points', 'remove features', 'feature mean', 'feature median',
-        'feature mode', 'zero', 'constant', 'forward fill', 'backward fill', 'interpolate'
+        method - a string in the form of one of the following:
+        'remove points', 'remove features', 'feature mean', 'feature median',
+        'feature mode', 'zero', 'constant', 'forward fill', 'backward fill',
+        'interpolate'
 
-        features - can be None to indicate all features, a single feature identifier (name or index)
-        or an iterable of feature identifiers. In this function, only those features in the input
+        features - can be None to indicate all features, a single feature
+        identifier (name or index) or an iterable, list-like container of
+        feature identifiers. In this function, only those features in the input
         'features' will be processed.
 
         arguments - for some kind of methods, we need to setup arguments.
-        for method = 'remove points', 'remove features', arguments can be 'all' or 'any' etc.
+        for method = 'remove points', 'remove features', arguments can be 'all'
+        or 'any' etc.
         for method = 'constant', arguments must be a value
-        for method = 'interpolate', arguments can be a dict which stores inputs for numpy.interp
+        for method = 'interpolate', arguments can be a dict which stores inputs
+        for numpy.interp
 
-        alsoTreatAsMissing -  a list. In this function, numpy.NaN and None are always treated as missing.
-        You can add extra values which should be treated as missing values too, in alsoTreatAsMissing.
+        alsoTreatAsMissing - a list. In this function, numpy.NaN and None are
+        always treated as missing. You can add extra values which should be
+        treated as missing values too, in alsoTreatAsMissing.
 
-        markMissing: True or False. If it is True, then extra columns for those features will be added,
-        in which 0 (False) or 1 (True) will be filled to indicate if the value in a cell is originally
-        missing or not.
+        markMissing - True or False. If it is True, then extra columns for those
+        features will be added, in which 0 (False) or 1 (True) will be filled to
+        indicate if the value in a cell is originally missing or not.
+
         """
         #convert features to a list of index
         if features is not None:
@@ -5153,8 +5206,8 @@ class Base(object):
     def _constructIndicesList(self, axis, values, argName=None):
         """
         Construct a list of indices from a valid integer (python or numpy) or
-        string, or a one-dimensional, iterable container of valid integers
-        and/or strings
+        string, or an iterable, list-like container of valid integers and/or
+        strings
 
         """
         if argName is None:
