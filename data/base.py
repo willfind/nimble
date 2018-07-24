@@ -1072,7 +1072,7 @@ class Base(object):
             def permuter(fView):
                 return indices[self.getFeatureIndex(fView.getFeatureName(0))]
 
-        indices = list(range(0, values))
+        indices = list(range(values))
         pythonRandom.shuffle(indices)
 
         sorter(sortHelper=permuter)
@@ -2523,7 +2523,7 @@ class Base(object):
             raise ArgumentException("Either sortBy or sortHelper must not be None")
 
         if axis == 'point':
-            other = 'feature'
+            otherAxis = 'feature'
             axisCount = self.points
             otherCount = self.features
             sort_implementation = self._sortPoints_implementation
@@ -2531,7 +2531,7 @@ class Base(object):
             def permuter(pView):
                 return indices[self.getPointIndex(pView.getPointName(0))]
         else:
-            other = 'point'
+            otherAxis = 'point'
             axisCount = self.features
             otherCount = self.points
             sort_implementation = self._sortFeatures_implementation
@@ -2540,7 +2540,7 @@ class Base(object):
                 return indices[self.getFeatureIndex(fView.getFeatureName(0))]
 
         if sortBy is not None and isinstance(sortBy, six.string_types):
-            sortBy = self._getIndex(sortBy, other)
+            sortBy = self._getIndex(sortBy, otherAxis)
 
         if sortHelper is not None and not hasattr(sortHelper, '__call__'):
             indices = self._constructIndicesList(axis, sortHelper)

@@ -2438,6 +2438,17 @@ class StructureModifying(DataTestObject):
 
         toTest.sortPoints()
 
+    @raises(ArgumentException)
+    def test_sortPoints_exceptionBothNotNone(self):
+        """ Test sortPoints() has only one parameter """
+        data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
+        toTest = self.constructor(data)
+
+        def do_nothing(pView):
+            return pView
+
+        toTest.sortPoints(sortBy=1, sortHelper=do_nothing)
+
     def test_sortPoints_naturalByFeature(self):
         """ Test sortPoints() when we specify a feature to sort by """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
@@ -2580,6 +2591,17 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
 
         toTest.sortFeatures()
+
+    @raises(ArgumentException)
+    def test_sortFeatures_exceptionBothNotNone(self):
+        """ Test sortPoints() has only one parameter """
+        data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
+        toTest = self.constructor(data)
+
+        def do_nothing(fView):
+            return fView
+
+        toTest.sortFeatures(sortBy=1, sortHelper=do_nothing)
 
     def test_sortFeatures_naturalByPointWithNames(self):
         """ Test sortFeatures() when we specify a point to sort by; includes featureNames """
