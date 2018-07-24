@@ -488,7 +488,7 @@ def initDataObject(
             pathsToPass = path
         else:
             if path.startswith('http'):
-                pathsToPass = (path, path)
+                pathsToPass = (path, None)
             elif os.path.isabs(path):
                 absPath = path
                 relPath = os.path.relpath(path)

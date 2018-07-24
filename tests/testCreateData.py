@@ -1000,7 +1000,7 @@ def test_createData_http_CSVPathsEqualUrl(mock_get):
         url = 'http://mockrequests.uml/CSVNoExtension'
         fromWeb = UML.createData(returnType=t, data=url)
         assert fromWeb.absolutePath == url
-        assert fromWeb.relativePath == url
+        assert fromWeb.relativePath == None
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_MTXNoExtension(mock_get):
@@ -1041,7 +1041,7 @@ def test_createData_http_MTXPathsEqualUrl(mock_get):
         url = 'http://mockrequests.uml/MTXNoExtension'
         fromWeb = UML.createData(returnType=t, data=url)
         assert fromWeb.absolutePath == url
-        assert fromWeb.relativePath == url
+        assert fromWeb.relativePath == None
 
 @raises(ArgumentException)
 @mock.patch('requests.get', side_effect=mocked_requests_get)
