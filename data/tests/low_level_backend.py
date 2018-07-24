@@ -1231,6 +1231,13 @@ class LowLevelBackend(object):
         assert toTest._constructIndicesList('feature', strFts1D) == expected
         assert toTest._constructIndicesList('feature', mixFts1D) == expected
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+        pointNames = ['p1','p2','p3']
+        toTest = self.constructor(pointNames=pointNames)
+        toTest._constructIndicesList(['p1', 'p2', 'p3'])
+
     def test_constructIndicesList_pythonList(self):
         self._constructIndicesList_backend(lambda lst: lst)
 
@@ -1268,13 +1275,6 @@ class LowLevelBackend(object):
         assert toTest._constructIndicesList('point', index) == expected
         assert toTest._constructIndicesList('feature', index) == expected
 
-    @raises(CalledFunctionException)
-    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
-    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
-        pointNames = ['p1','p2','p3']
-        toTest = self.constructor(pointNames=pointNames)
-        toTest._constructIndicesList(['p1', 'p2', 'p3'])
-
     def test_constructIndicesList_singleString(self):
         pointNames = ['p1','p2','p3']
         featureNames = ['f1', 'f2', 'f3']
@@ -1286,6 +1286,17 @@ class LowLevelBackend(object):
 
         assert toTest._constructIndicesList('point', ptIndex) == expected
         assert toTest._constructIndicesList('feature', ftIndex) == expected
+
+    def test_constructIndicesList_pythonRange(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+        expected = [1, 2]
+
+        testRange = range(1,3)
+
+        assert toTest._constructIndicesList('point', testRange) == expected
+        assert toTest._constructIndicesList('feature', testRange) == expected
 
     @raises(ArgumentException)
     def test_constructIndicesList_singleFloat(self):

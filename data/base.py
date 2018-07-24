@@ -2718,8 +2718,10 @@ class Base(object):
             elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
                 toExtract = [value for value in range(values) if value != toRetain]
 
-            elif isinstance(toRetain, list):
-                toRetain = [self._getIndex(value, axis) for value in toRetain]
+            # list-like container objects
+            elif not hasattr(toRetain, '__call__'):
+                # toRetain is other container type or range() in python3
+                toRetain = self._constructIndicesList(axis, toRetain, 'toRetain')
                 toExtract = [value for value in range(values) if value not in toRetain]
                 # change the index order of the values to match toRetain
                 reindex = toRetain + toExtract
@@ -2731,8 +2733,8 @@ class Base(object):
                 extractValues = range(len(toRetain), values)
                 toExtract = list(extractValues)
 
+            # toRetain is a function
             else:
-                # toRetain is a function
                 toExtract = toRetain
 
             ret = self._genericStructuralFrontend('retain', axis, toExtract, start, end, number,
@@ -4258,6 +4260,7 @@ class Base(object):
                             msg = '{0} '.format(argName)
                             msg += 'is not a valid point name nor a valid query string'
                             raise ArgumentException(msg)
+            # list-like container types
             if not hasattr(target, '__call__'):
                 argName = 'to' + structure.capitalize()
                 targetList = self._constructIndicesList(axis, target, argName)

@@ -4844,8 +4844,8 @@ class StructureModifying(DataTestObject):
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
     def test_retainPoints_calls_constructIndicesList(self, mockFunc):
+        """ Test retainPoints calls _constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
-
         toTest.retainPoints(['a', 'b'])
 
     def test_retainPoints_handmadeSingle(self):
@@ -4871,7 +4871,7 @@ class StructureModifying(DataTestObject):
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_retainPoints_ListIntoPEmpty(self):
+    def test_retainPoints_list_retain_all(self):
         """ Test retainPoints() by retaining a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
@@ -4892,6 +4892,14 @@ class StructureModifying(DataTestObject):
         print(toTest, expTest)
         assert toTest.isIdentical(expTest)
 
+    def test_retainPoints_pythonRange(self):
+        """ Test retainPoints() by retaining a python range of points """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        toTest = self.constructor(data)
+        exp = self.constructor([[4, 5, 6], [7, 8, 9]])
+        toTest.retainPoints(range(1,3))
+
+        assert toTest.isIdentical(exp)
 
     def test_retainPoints_handmadeListSequence(self):
         """ Test retainPoints() against handmade output for several list retentions """
@@ -5406,7 +5414,7 @@ class StructureModifying(DataTestObject):
         assert toTest.absolutePath == 'testAbsPath'
         assert toTest.relativePath == 'testRelPath'
 
-    def test_retainFeatures_ListIntoFEmpty(self):
+    def test_retainFeatures_list_retain_all(self):
         """ Test retainFeatures() by retaining a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
@@ -5427,6 +5435,14 @@ class StructureModifying(DataTestObject):
         print(toTest, expTest)
         assert toTest.isIdentical(expTest)
 
+    def test_retainFeatures_pythonRange(self):
+        """ Test retainFeatures() by retaining a python range of points """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        toTest = self.constructor(data)
+        exp = self.constructor([[2, 3], [5, 6], [8, 9], [11, 12]])
+        toTest.retainFeatures(range(1,3))
+
+        assert toTest.isIdentical(exp)
 
     def test_retainFeatures_ListIntoFEmptyOutOfOrder(self):
         """ Test retainFeatures() by retaining a list of all features """
