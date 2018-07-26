@@ -50,7 +50,7 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
         adjustment = [3./4, 5./4]
         iteration = 1
         numNZ = countNonZero(trained)
-        
+
         # we stop when the number of non-zero coefficients is precisely
         # what we want it to be
         while numNZ != desiredNonZero:
@@ -60,7 +60,7 @@ class LogisticRegressionSelectByRegularization(CustomLearner):
             else:  # numNZ > desiredNonZero
                 multiplier = adjustment[0]
             inC = inC * multiplier
-            
+
             trained = UML.train(sklLogReg, trainX, trainY, C=inC,  useLog=allowSubLogging, **arguments)
             numNZ = countNonZero(trained)
             iteration += 1
@@ -374,7 +374,7 @@ def SVC_full_data_outSample_only(trainX, trainY, testX, testY):
 #   Cs = tuple([4**k for k in xrange(-8,8)])
 #   bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, C=0.3) #19.7% out of sample error
 #   bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=2, coef0=1, C=0.01) #19.2%
-    bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1) 
+    bestError = UML.trainAndTest("scikitlearn.SVC", trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, kernel="poly", degree=3, coef0=1, C=0.1)
     print("bestError out of sample: ", str(round(bestError*100,1)) + "%")
     sys.exit(0)
 
@@ -402,7 +402,8 @@ def trial_Coefficient_removal_by_least_magnitude(trainX, trainY, testX, testY):
     objName = predictionMode
     raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
     figurePath = './results-least_magnitude.png'
-    raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+    raw.transpose()
+    raw.plotFeatureAgainstFeature(0,1, outPath=figurePath)
     exit(0)
 
 
@@ -426,7 +427,8 @@ def trial_Coefficient_removal_by_least_value(trainX, trainY, testX, testY):
     objName = predictionMode
     raw = UML.createData("List", [omit, results], pointNames=pnames, name=objName)
     figurePath = './results-least_value.png'
-    raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+    raw.transpose()
+    raw.plotFeatureAgainstFeature(0,1, outPath=figurePath)
     exit(0)
 
 
@@ -523,7 +525,7 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
         resultsLV.append(result2)
 #       result3 = trainedLearnerLV3.test(testX, testY, performanceFunction=fractionIncorrect)
 #       resultsLV.append(result3)
-    
+
         trainedLearnerLM1 = UML.train(
                 name, trainX, trainY, numberToOmit=num, method="least magnitude",
                 C=cVals, performanceFunction=fractionIncorrect)
@@ -552,12 +554,14 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
 #   corrOmit = [val for pair in zip(omit, omit, omit) for val in pair]
 #   raw = UML.createData("List", [corrOmit, resultsLV], pointNames=pnames, name=objName)
 #   figurePath = './results-least_value_triple_trials.png'
-#   raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+#   raw.transpose()
+#   raw.plotFeatureAgainstFeature(0,1, outPath=figurePath)
 
 #   objName = "Least Magnitude randomness analysis"
 #   raw = UML.createData("List", [corrOmit, resultsLM], pointNames=pnames, name=objName)
 #   figurePath = './results-least_magnitude_triple_trials.png'
-#   raw.plotPointAgainstPoint(0,1, outPath=figurePath)
+#   raw.transpose()
+#   raw.plotFeatureAgainstFeature(0,1, outPath=figurePath)
 
     # coefficients
     allTL = tlLV + tlLM
@@ -1004,8 +1008,8 @@ if __name__ == "__main__":
     else:
         origFileName = sys.argv[1]
         coefOutFile = sys.argv[2]
-    
-    dataAll = UML.createData("Matrix", origFileName, featureNames=True, fileType='csv',
+
+    dataAll = UML.createData("Matrix", origFileName, featureNames=True,
         ignoreNonNumericalFeatures=True)
 
     # call helper to remove extraneous features, omit undesired
@@ -1048,7 +1052,7 @@ if __name__ == "__main__":
     fullTrialChoices.append(analysis_finalModel_perGenderAvgScores)  # 6
     fullTrialMode = fullTrialChoices[6]
     print(fullTrialMode.__name__)
-    fullTrialMode(trainX, trainY, testX, testY) 
+    fullTrialMode(trainX, trainY, testX, testY)
     exit(0)
 
     normFeatureChoices = []
@@ -1081,7 +1085,7 @@ if __name__ == "__main__":
     selAndTrainChoices.append(selAndTrain_by_regularization_pick35)  # 0
     selAndTrainChoices.append(selAndTrain_by_least_value_pick35)  # 1
     selAndTrainChoices.append(selAndTrain_by_least_magnitude_pick35)  # 2
-    
+
     # for safety
     origTrainX = trainX.copy()
     origTestX = testX.copy()

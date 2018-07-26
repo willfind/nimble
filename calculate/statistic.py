@@ -8,7 +8,7 @@ from UML.exceptions import ArgumentException, PackageException
 
 scipy = UML.importModule('scipy')
 
-numericalTypes = (int, float, int)
+numericalTypes = (int, float, int, numpy.number)
 
 
 def proportionMissing(values):

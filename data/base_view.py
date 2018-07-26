@@ -9,6 +9,8 @@ from __future__ import absolute_import
 from .base import Base
 from UML.exceptions import ImproperActionException
 
+import copy
+
 
 class BaseView(Base):
     """
@@ -74,6 +76,30 @@ class BaseView(Base):
 
     relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
 
+    def _pointNamesCreated(self):
+        """
+        Returns True if point default names have been created/assigned
+        to the object.
+        If the object does not have points it returns True.
+        """
+        if self._source.pointNamesInverse is None:
+            return False
+        else:
+            return True
+
+    def _featureNamesCreated(self):
+        """
+        Returns True if feature default names have been created/assigned
+        to the object.
+        If the object does not have features it returns True.
+        """
+        if self._source.featureNamesInverse is None:
+            return False
+        else:
+            return True
+
+    def _getData(self):
+        return self._source.data
 
     # TODO: retType
 
@@ -126,6 +152,48 @@ class BaseView(Base):
         else:
             raise KeyError()
 
+    def _copyNames(self, CopyObj):
+
+        if self._pointNamesCreated():
+            CopyObj.pointNamesInverse = self.getPointNames()
+            CopyObj.pointNames = copy.copy(self._source.pointNames)
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.index = self.getPointNames()
+        else:
+            CopyObj.pointNamesInverse = None
+            CopyObj.pointNames = None
+
+        if self._featureNamesCreated():
+            CopyObj.featureNamesInverse = self.getFeatureNames()
+            CopyObj.featureNames = copy.copy(self._source.featureNames)
+            # if CopyObj.getTypeString() == 'DataFrame':
+            #     CopyObj.data.columns = self.getFeatureNames()
+        else:
+            CopyObj.featureNamesInverse = None
+            CopyObj.featureNames = None
+
+        CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
+        CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
+
+        if self.points != self._source.points:
+            if self._pStart != 0:
+                CopyObj.pointNames = {}
+                for idx, name in enumerate(CopyObj.pointNamesInverse):
+                    CopyObj.pointNames[name] = idx
+            else:
+                for name in self._source.pointNamesInverse[self._pEnd:self._source.points + 1]:
+                    del CopyObj.pointNames[name]
+
+        if self.features != self._source.features:
+            if self._fStart != 0:
+                CopyObj.featureNames = {}
+                for idx, name in enumerate(CopyObj.featureNamesInverse):
+                    CopyObj.featureNames[name] = idx
+            else:
+                for name in self._source.featureNamesInverse[self._fEnd:self._source.features + 1]:
+                    del CopyObj.featureNames[name]
+
+
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
 
@@ -156,6 +224,7 @@ class BaseView(Base):
             feAdj = feIndex + self._fStart
 
         return self._source.view(psAdj, peAdj, fsAdj, feAdj)
+
 
     ####################################
     # Low Level Operations, Disallowed #

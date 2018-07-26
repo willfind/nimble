@@ -161,19 +161,36 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
         return ret
 
-    retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
-    retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
+    (retPNames, retFNames) = (None, None)
+        
+    if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
+        retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
+    elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
+        retPNames = baseSource.pointNames
+    elif not baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
+        retPNames = otherSource.pointNames
+    else:
+        retPNames = None
 
+    if baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
+        retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
+    elif baseSource._featureNamesCreated() and not otherSource._featureNamesCreated():
+        retFNames = baseSource.featureNames
+    elif not baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
+        retFNames = otherSource.featureNames
+    else:
+        retFNames = None
+        
     return (retPNames, retFNames)
 
 
-def reorderToMatchExtractionList(dataObject, extractionList, axis):
+def reorderToMatchList(dataObject, matchList, axis):
     """
     Helper which will reorder the data object along the specified axis so that
-    instead of being in an order corresponding to a sorted version of extractionList,
-    it will be in the order of the given extractionList.
+    instead of being in an order corresponding to a sorted version of matchList,
+    it will be in the order of the given matchList.
 
-    extractionList must contain only indices, not name based identifiers.
+    matchList must contain only indices, not name based identifiers.
 
     """
     if axis.lower() == "point":
@@ -181,11 +198,11 @@ def reorderToMatchExtractionList(dataObject, extractionList, axis):
     else:
         sortFunc = dataObject.sortFeatures
 
-    sortedList = copy.copy(extractionList)
+    sortedList = copy.copy(matchList)
     sortedList.sort()
     mappedOrig = {}
-    for i in range(len(extractionList)):
-        mappedOrig[extractionList[i]] = i
+    for i in range(len(matchList)):
+        mappedOrig[matchList[i]] = i
 
     if axis == 'point':
         indexGetter = lambda x: dataObject.getPointIndex(x.getPointName(0))
@@ -193,6 +210,7 @@ def reorderToMatchExtractionList(dataObject, extractionList, axis):
         indexGetter = lambda x: dataObject.getFeatureIndex(x.getFeatureName(0))
 
     def scorer(viewObj):
+        x = viewObj.getPointName(0)
         index = indexGetter(viewObj)
         return mappedOrig[sortedList[index]]
 

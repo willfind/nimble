@@ -12,6 +12,7 @@ import datetime
 import os
 import copy
 import six.moves.configparser
+import math
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -53,19 +54,36 @@ UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()
 
 
 def createRandomData(
-        returnType, numPoints, numFeatures, sparsity, numericType="float",
-        featureNames='automatic', name=None):
+        returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
+        featureNames='automatic', elementType='float', name=None):
     """
-    Generates a data object with random contents and numPoints points and numFeatures features.
+    Generates a data object with random contents.
 
-    If numericType is 'float' (default) then the value of (point, feature) pairs are sampled from a normal
-    distribution (location 0, scale 1).
+    returnType - May only be one of the allowed types specified in
+    UML.data.available.
 
-    If numericType is 'int' then value of (point, feature) pairs are sampled from uniform integer distribution [1 100].
+    numPoints - the number of points in the returned object.
 
-    The sparsity is the likelihood that the value of a (point,feature) pair is zero.
+    numFeatures - the number of features in the returned object.
 
-    Zeros are not counted in/do not affect the aforementioned sampling distribution.
+    sparsity - is the likelihood that the value of a (point,feature) pair is
+    zero.
+
+    elementType - if is 'float' (default) then the value of (point, feature)
+    pairs are sampled from a normal distribution (location 0, scale 1). If
+    elementType is 'int' then value of (point, feature) pairs are sampled from
+    uniform integer distribution [1 100]. Zeros are not counted in/do not
+    affect the aforementioned sampling distribution.
+
+    pointNames - names to be associated with the points in the returned object.
+    If 'automatic', default names will be assigned.
+
+    featureNames - names to be associated with the features in the returned
+    object. If 'automatic', default names will be assigned.
+
+    name - When not None, this value is set as the name attribute of the
+    returned object.
+
     """
 
     if numPoints < 1:
@@ -74,8 +92,8 @@ def createRandomData(
         raise ArgumentException("must specify a positive nonzero number of features")
     if sparsity < 0 or sparsity >= 1:
         raise ArgumentException("sparsity must be greater than zero and less than one")
-    if numericType != "int" and numericType != "float":
-        raise ArgumentException("numericType may only be 'int' or 'float'")
+    if elementType != "int" and elementType != "float":
+        raise ArgumentException("elementType may only be 'int' or 'float'")
 
 
     #note: sparse is not stochastic sparsity, it uses rigid density measures
@@ -87,10 +105,19 @@ def createRandomData(
         density = 1.0 - float(sparsity)
         numNonZeroValues = int(numPoints * numFeatures * density)
 
-        pointIndices = numpyRandom.randint(low=0, high=numPoints, size=numNonZeroValues)
-        featureIndices = numpyRandom.randint(low=0, high=numFeatures, size=numNonZeroValues)
+        # We want to sample over positions, not point/feature indices, so
+        # we consider the possible possitions as numbered in a row-major
+        # order on a grid, and sample that without replacement
+        gridSize = numPoints * numFeatures
+        nzLocation = numpy.random.choice(gridSize, size=numNonZeroValues, replace=False)
 
-        if numericType == 'int':
+        # The point value is determined by counting how many groups of numFeatures fit into
+        # the position number
+        pointIndices = numpy.floor(nzLocation / numFeatures)
+        # The feature value is determined by counting the offset from each point edge.
+        featureIndices = nzLocation % numFeatures
+
+        if elementType == 'int':
             dataVector = numpyRandom.randint(low=1, high=100, size=numNonZeroValues)
         #numeric type is float; distribution is normal
         else:
@@ -101,26 +128,27 @@ def createRandomData(
 
     #for non-sparse matrices, use numpy to generate matrices with sparsity characterics
     else:
-        if numericType == 'int':
+        if elementType == 'int':
             filledIntMatrix = numpyRandom.randint(1, 100, (numPoints, numFeatures))
         else:
             filledFloatMatrix = numpyRandom.normal(loc=0.0, scale=1.0, size=(numPoints, numFeatures))
 
         #if sparsity is zero
         if abs(float(sparsity) - 0.0) < 0.0000000001:
-            if numericType == 'int':
+            if elementType == 'int':
                 randData = filledIntMatrix
             else:
                 randData = filledFloatMatrix
         else:
             binarySparsityMatrix = numpyRandom.binomial(1, 1.0 - sparsity, (numPoints, numFeatures))
 
-            if numericType == 'int':
+            if elementType == 'int':
                 randData = binarySparsityMatrix * filledIntMatrix
             else:
                 randData = binarySparsityMatrix * filledFloatMatrix
 
-    return createData(returnType, data=randData, featureNames=featureNames, name=name)
+    return createData(returnType, data=randData, pointNames=pointNames,
+                      featureNames=featureNames, name=name)
 
 
 def ones(returnType, numPoints, numFeatures, pointNames='automatic',
@@ -401,14 +429,14 @@ def listLearners(package=None):
 
     return results
 
-
-def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
-               fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
+def createData(
+        returnType, data, pointNames='automatic', featureNames='automatic',
+        elementType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
+        ignoreNonNumericalFeatures=False, useLog=None, reuseData=False, inputSeparator='automatic'):
     """Function to instantiate one of the UML data container types.
 
-    returnType: string (or None) indicating which kind of UML data type you want
-    returned. If None is given, UML will attempt to detect the type most
+    returnType: string (or None) indicating which kind of UML data type you
+    want returned. If None is given, UML will attempt to detect the type most
     appropriate for the data. Currently accepted are the strings "List",
     "Matrix", and "Sparse" -- which are case sensitive.
 
@@ -441,14 +469,6 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     all points in the data are assigned a name and the names for each point
     are unique.
 
-    fileType: allows the user to explictly specify the format expected when
-    loading from a file. Normally, if a file is being loaded, the extension
-    of the file name is used to indicate the format. However, if fileType is
-    specified, it will override the file extension. Also, when loading from a
-    file with no extension, the user is requred to specify a format via
-    fileType. This argument is ignored if loading from a python object.
-    Currently accepted values are "csv" and "mtx", with a default value of None
-
     name: When not None, this value is set as the name attribute of the
     returned object
 
@@ -470,8 +490,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     kept from the raw data. The order of this list will determine the order
     of features in the resultant object. In the case of reading data from a
     file, the selection will be done at read time, thus limiting the amount
-    of data read into memory. Names and indices are defined with respect to the data
-    regardless of filtering by the ignoreNonNumericalFeatures flag; just
+    of data read into memory. Names and indices are defined with respect to the
+    data regardless of filtering by the ignoreNonNumericalFeatures flag; just
     because a feature is removed, the indices of subsequent features will not
     be shifted. The ignoreNonNumericalFeatures flag is only consdered after
     selection: if a selected feature has non-numerical values and
@@ -493,6 +513,11 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     useLog: True, False, or None (default) valued flag indicating whether this
     call should be logged by the UML logger. If None, the configurable	global
     default is used.
+
+    inputSeparator: The character that is used to separate fields in the input
+    file, if necessary. By default, a value of 'automatic' will attempt to 
+    determine the appropriate separator. Otherwise, a single character string
+    of the separator in the file can be passed.
 
     """
     # validation of pointNames and featureNames
@@ -526,10 +551,9 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
         ret = createDataFromFile(
-            returnType=returnType, data=data, pointNames=pointNames,
-            featureNames=featureNames, fileType=fileType, name=name,
-            ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
-            keepPoints=keepPoints, keepFeatures=keepFeatures)
+            returnType=returnType, data=data, pointNames=pointNames, featureNames=featureNames,
+            name=name, keepPoints=keepPoints, keepFeatures=keepFeatures,
+            ignoreNonNumericalFeatures=ignoreNonNumericalFeatures, inputSeparator=inputSeparator)
         return ret
     # no other allowed inputs
     else:

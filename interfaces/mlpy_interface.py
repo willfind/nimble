@@ -1,7 +1,7 @@
 """
 Relies on being scikit-learn 0.9 or above
 
-OLS and LARS learners are not allowed as learners. KernelExponential is 
+OLS and LARS learners are not allowed as learners. KernelExponential is
 not allowed as a Kernel.
 
 """
@@ -345,7 +345,14 @@ class Mlpy(UniversalInterface):
                 value = arguments[name]
             learnParams[name] = value
 
-        learner = self.findCallable(learnerName)(**initParams)
+        # use patch if necessary
+        patchedLearners = ["DLDA", "Parzen", "ElasticNet", "ElasticNetC"]
+        if learnerName in patchedLearners:
+            patchModule = importlib.import_module("interfaces.mlpy_patches")
+            initLearner = getattr(patchModule, learnerName)
+        else:
+            initLearner = self.findCallable(learnerName)
+        learner = initLearner(**initParams)
         learner.learn(**learnParams)
 
         return learner
@@ -502,12 +509,13 @@ class Mlpy(UniversalInterface):
         """
         namedModule = self._searcher.findInPackage(parent, name)
 
-        # TODO for python 3
+        # for python 3
         # in python 3, inspect.getargspec(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
         # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
-        # excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
-        # if sys.version_info.major > 2 and (parent is None or parent.lower in excludeList):
-        #     return self._paramQueryHardCoded(name, parent, ignore)
+        excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
+        if sys.version_info.major > 2 and 'kernel' not in name.lower():
+            if parent is None or parent.lower() in excludeList:
+                return self._paramQueryHardCoded(name, parent, ignore)
 
         if not namedModule is None:
             try:

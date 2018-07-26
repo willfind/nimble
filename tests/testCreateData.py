@@ -4,8 +4,13 @@ from nose.plugins.attrib import attr
 import tempfile
 import numpy
 import os
+import sys
 import copy
 import itertools
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
 
 import UML
 from UML.exceptions import ArgumentException
@@ -29,6 +34,21 @@ def test_createData_CSV_data():
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("1,2,3\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = UML.createData(returnType=t, data=tmpCSV.name, name=objName)
+
+            assert fromList == fromCSV
+
+
+def test_createData_CSV_dataRandomExtension():
+    """ Test of createData() loading a csv file without csv extension """
+    for t in returnTypes:
+        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
@@ -101,6 +121,27 @@ def test_createData_MTXArr_data():
             else:
                 assert fromList == fromMTXArr
 
+def test_createData_MTXArr_dataRandomExtension():
+    """ Test of createData() loading a mtx (arr format) file without mtx extension """
+    for t in returnTypes:
+        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+
+        # instantiate from mtx array file
+        with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpMTXArr:
+            tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
+            tmpMTXArr.write("1 3\n")
+            tmpMTXArr.write("1\n")
+            tmpMTXArr.write("2\n")
+            tmpMTXArr.write("3\n")
+            tmpMTXArr.flush()
+            objName = 'fromMTXArr'
+            fromMTXArr = UML.createData(returnType=t, data=tmpMTXArr.name, name=objName)
+
+            if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
+                assert fromList.isApproximatelyEqual(fromMTXArr)
+            else:
+                assert fromList == fromMTXArr
+
 
 def test_createData_MTXCoo_data():
     """ Test of createData() loading a mtx (coo format) file, default params """
@@ -123,16 +164,36 @@ def test_createData_MTXCoo_data():
             else:
                 assert fromList == fromMTXCoo
 
+def test_createData_MTXCoo_dataRandomExtension():
+    """ Test of createData() loading a mtx (coo format) file without mtx extension """
+    for t in returnTypes:
+        fromList = UML.createData(returnType=t, data=[[1, 2, 3]])
+
+        # instantiate from mtx coordinate file
+        with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpMTXCoo:
+            tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.write("1 1 1\n")
+            tmpMTXCoo.write("1 2 2\n")
+            tmpMTXCoo.write("1 3 3\n")
+            tmpMTXCoo.flush()
+            objName = 'fromMTXCoo'
+            fromMTXCoo = UML.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
+
+            if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
+                assert fromList.isApproximatelyEqual(fromMTXCoo)
+            else:
+                assert fromList == fromMTXCoo
+
 
 @raises(FileFormatException)
 def test_createData_CSV_unequalRowLength_short():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
-        tmpCSV.write("1,2,3,4\n")
-        tmpCSV.write("4,5,6\n")
+        tmpCSV.write('1,2,3,4\n')
+        tmpCSV.write('4,5,6\n')
         tmpCSV.flush()
 
         UML.createData(returnType="List", data=tmpCSV.name)
-
 
 @raises(FileFormatException)
 def test_createData_CSV_unequalRowLength_long():
@@ -169,6 +230,7 @@ def test_createData_CSV_unequalRowLength_position():
             UML.createData(returnType="List", data=tmpCSV.name, featureNames=True)
             assert False  # the previous call should have raised an exception
         except FileFormatException as ffe:
+            print(ffe.value)
             # We expect a message of the format:
             #
             assert '1' in ffe.value  # defining line
@@ -436,7 +498,7 @@ def test_automaticByType_pname_interaction_with_fname():
 #        retT = None
 #        print rawT + " " + str(retT)
 #        import pdb
-#        pdb.set_trace()        
+#        pdb.set_trace()
 
         # pnames auto triggered with auto fnames
         raw = "point_names,fname0,fname1,fname2\npname0,1,2,3\n"
@@ -616,7 +678,7 @@ def test_csv_roundtrip_autonames():
         data = [[1, 0, 5, 12], [0, 1, 3, 17], [0, 0, 8, 22]]
         pnames = ['p0','p1','p2']
         fnames = ['f0','f1','f2', 'f3']
-        
+
         withFnames = UML.createData(retType, data, featureNames=fnames)
         withBoth = UML.createData(retType, data, featureNames=fnames, pointNames=pnames)
 
@@ -713,9 +775,9 @@ def test_extractNames_CscSparse():
 
     for t in returnTypes:
         inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
-        inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
+        inDataRaw = scipy.sparse.csc_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
-        specRaw = scipy.sparse.coo_matrix(specRaw)
+        specRaw = scipy.sparse.csc_matrix(specRaw)
 
         inData = UML.createData(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
@@ -764,7 +826,7 @@ def test_createData_CSV_passedOpen():
             openFile = open(openFile.name, 'rU')
             namelessOpenFile = NamelessFile(openFile)
             fromCSV = UML.createData(
-                returnType=t, data=namelessOpenFile, fileType='csv')
+                returnType=t, data=namelessOpenFile)
             assert fromCSV.name.startswith(UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromCSV.path is None
             assert fromCSV.absolutePath is None
@@ -800,7 +862,7 @@ def test_createData_MTXArr_passedOpen():
             openFile = open(tmpMTXArr.name, 'rU')
             namelessOpenFile = NamelessFile(openFile)
             fromMTXArr = UML.createData(
-                returnType=t, data=namelessOpenFile, fileType='mtx')
+                returnType=t, data=namelessOpenFile)
             assert fromMTXArr.name.startswith(
                 UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXArr.path is None
@@ -837,13 +899,144 @@ def test_createData_MTXCoo_passedOpen():
             openFile = open(tmpMTXCoo.name, 'rU')
             namelessOpenFile = NamelessFile(openFile)
             fromMTXCoo = UML.createData(
-                returnType=t, data=namelessOpenFile, fileType='mtx')
+                returnType=t, data=namelessOpenFile)
             assert fromMTXCoo.name.startswith(
                 UML.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXCoo.path is None
             assert fromMTXCoo.absolutePath is None
             assert fromMTXCoo.relativePath is None
 
+###########################
+# url as a source of data #
+###########################
+
+def mocked_requests_get(*args, **kwargs):
+    class MockResponse:
+        """mock of Response object returned by a call to requests.get"""
+        def __init__(self, content, status_code, ok=True, reason=None, encoding='utf-8'):
+            # In Response object, .content returns bytes and .text returns unicode
+            # python2 uses .content and python3 uses .text in the code, so setting
+            # self.content and self.text to content replicates the desired behavior
+            self.content = content
+            self.text = content
+            self.status_code = status_code
+            self.ok = ok
+            self.reason = reason
+            self.apparent_encoding = encoding
+
+    if args[0] == 'http://mockrequests.uml/CSVNoExtension':
+        return MockResponse('1,2,3\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSVAmbiguousExtension.data':
+        return MockResponse('1,2,3\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSV.csv':
+        return MockResponse('1,2,3\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSVcarriagereturn.csv':
+        return MockResponse('1,2,3\r4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSVunicodetest.csv':
+        return MockResponse('1,2,\xc2\xa1\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/CSVquotednewline.csv':
+        # csv allows for newline characters in field values within double quotes
+        return MockResponse('1,2,"a/nb"\n4,5,6', 200)
+    elif args[0] == 'http://mockrequests.uml/MTXNoExtension':
+        mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
+        return MockResponse(mtx, 200)
+    elif args[0] == 'http://mockrequests.uml/MTXAmbiguousExtension.data':
+        mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
+        return MockResponse(mtx, 200)
+    elif args[0] == 'http://mockrequests.uml/MTX.mtx':
+        mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
+        return MockResponse(mtx, 200)
+
+    return MockResponse(None, 404, False, 'Not Found')
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVNoExtension(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVNoExtension'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVAmbiguousExtension(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVAmbiguousExtension.data'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVFileOK(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.uml/CSV.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVCarriageReturn(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVcarriagereturn.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVNonUnicodeValues(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVunicodetest.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
+        print(exp)
+        print(fromWeb)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVQuotedNewLine(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVquotednewline.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_MTXNoExtension(mock_get):
+    for t in returnTypes:
+        # None returnType for url will default to Sparse so use coo_matrix for data
+        data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
+        exp = UML.createData(returnType=t, data=data)
+        url = 'http://mockrequests.uml/MTXNoExtension'
+        fromWeb = UML.createData(returnType=t, data=url)
+        print(t, fromWeb == exp)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_MTXAmbiguousExtension(mock_get):
+    for t in returnTypes:
+        # None returnType for url will default to Sparse so use coo_matrix for data
+        data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
+        exp = UML.createData(returnType=t, data=data)
+        url = 'http://mockrequests.uml/MTXAmbiguousExtension.data'
+        fromWeb = UML.createData(returnType=t, data=url)
+        print(t, fromWeb == exp)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_MTXFileOK(mock_get):
+    for t in returnTypes:
+        # None returnType for url will default to Sparse so use coo_matrix for data
+        data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
+        exp = UML.createData(returnType=t, data=data)
+        url = 'http://mockrequests.uml/MTX.mtx'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@raises(ArgumentException)
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_linkError(mock_get):
+    for t in returnTypes:
+        url = 'http://mockrequests.uml/linknotfound.csv'
+        fromWeb = UML.createData(returnType=t, data=url)
 
 ###################################
 # ignoreNonNumericalFeatures flag #
@@ -1752,6 +1945,53 @@ def test_createData_keepPoints_csv_endAfterAllFound():
         fromCSV = UML.createData("Matrix", data=tmpCSV.name, keepPoints=[1, 0])
         assert fromCSV == wanted
 
+######################
+### inputSeparator ###
+######################
+
+def test_createData_csv_inputSeparatorAutomatic():
+    wanted = UML.createData("Matrix", data=[[1,2,3], [4,5,6]])
+    # instantiate from csv file
+    for delimiter in [',', '\t', ' ', ':', ';', '|']:
+        with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+            tmpCSV.write("1{0}2{0}3\n".format(delimiter))
+            tmpCSV.write("4{0}5{0}6\n".format(delimiter))
+            tmpCSV.flush()
+
+            fromCSV = UML.createData("Matrix", data=tmpCSV.name)
+            assert fromCSV == wanted
+
+def test_createData_csv_inputSeparatorSpecified():
+    wanted = UML.createData("Matrix", data=[[1,2,3], [4,5,6]])
+    # instantiate from csv file
+    for delimiter in [',', '\t', ' ', ':', ';', '|']:
+        with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+            tmpCSV.write("1{0}2{0}3\n".format(delimiter))
+            tmpCSV.write("4{0}5{0}6\n".format(delimiter))
+            tmpCSV.flush()
+
+            fromCSV = UML.createData("Matrix", data=tmpCSV.name, inputSeparator=delimiter)
+            assert fromCSV == wanted
+
+@raises(FileFormatException)
+def test_createData_csv_inputSeparatorConfusion():
+    with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+        tmpCSV.write("1,2;3\n")
+        tmpCSV.write("4,5,6\n")
+        tmpCSV.flush()
+
+        fromCSV = UML.createData("Matrix", data=tmpCSV.name)
+
+@raises(ArgumentException)
+def test_createData_csv_inputSeparatorNot1Character():
+    with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
+        tmpCSV.write("1,,2,,3\n")
+        tmpCSV.write("4,,5,,6\n")
+        tmpCSV.flush()
+
+        fromCSV = UML.createData("Matrix", data=tmpCSV.name, inputSeparator=',,')
+
+
 
 ###################
 ### Other tests ###
@@ -1788,11 +2028,6 @@ def test_createData_csv_nonremoval_efficiency():
 
 # test that if both in comment and specified names are present, the
 # specified names win out.
-
-
-
-# test fileType parameter : overide from extension, or no
-# extension data
 
 
 # unit tests demonstrating our file loaders can handle arbitrarly placed blank lines
