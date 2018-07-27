@@ -12,7 +12,7 @@ def boilerplate():
     import os
     # add UML parent directory to sys.path
     thisFileLocation = os.path.abspath(__file__)
-    UMLParentDir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(thisFileLocation))))
+    UMLParentDir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(thisFileLocation)))))
     sys.path.append(UMLParentDir)
     import UML
     import UML.examples
