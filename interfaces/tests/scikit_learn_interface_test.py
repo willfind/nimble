@@ -315,7 +315,8 @@ def testSciKitLearnPredictAndTransformLearners():
                'StandardScaler', 'LabelBinarizer', 'LabelEncoder',
                'DummyClassifier', 'DictVectorizer', 'CountVectorizer',
                'TfidfVectorizer', 'MultiLabelBinarizer', 'SparseRandomProjection',
-               'GaussianRandomProjection', 'LinearDiscriminantAnalysis']
+               'GaussianRandomProjection', 'LinearDiscriminantAnalysis',
+               'Normalizer', 'ZeroEstimator', 'ScaledLogOddsEstimator']
 
     for learner in learners:
         if learner not in exclude:
@@ -337,7 +338,10 @@ def testSciKitLearnPredictAndTransformLearners():
                 trainY = cTrainY.data
                 testX = cTestX.data
 
-            args, _, _, _  = inspect.getargspec(sklObj)
+            try:
+                args, _, _, _  = inspect.getargspec(sklObj)
+            except TypeError:
+                args, _, _, _ = inspect.getargspec(sklObj.__init__)
             uml_kwds = {}
             uml_kwds['trainX'] = trainXObj
             uml_kwds['trainY'] = trainYObj
