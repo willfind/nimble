@@ -2630,7 +2630,7 @@ class _foldIteratorClass():
             else:
                 currTest = copied.extractPoints(self.foldList[self.index])
                 currTrain = copied
-                currTrain.shufflePoints(indices)
+                currTrain.sortPoints(sortHelper=indices)
                 resultsList.append((currTrain, currTest))
         self.index = self.index + 1
         return resultsList

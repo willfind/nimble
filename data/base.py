@@ -111,7 +111,7 @@ class Base(object):
 
         name: the name to be associated with this object.
 
-        paths: a tuple, where the first entry is taken to be the string
+        pathes: a tuple, where the first entry is taken to be the string
         representing the absolute path to the source file of the data and
         the second entry is taken to be the relative path. Both may be
         None if these values are to be unspecified.
@@ -182,7 +182,7 @@ class Base(object):
         if paths[0] is not None and not isinstance(paths[0], six.string_types):
             raise ArgumentException(
                 "paths[0] must be None or an absolute path to the file from which the data originates")
-        if paths[0] is not None and not os.path.isabs(paths[0]) and not paths[0].startswith('http'):
+        if paths[0] is not None and not os.path.isabs(paths[0]):
             raise ArgumentException("paths[0] must be an absolute path")
         self._absPath = paths[0]
 
@@ -240,13 +240,7 @@ class Base(object):
     relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
 
     def _getPath(self):
-        if self.absolutePath:
-            return self.absolutePath
-        elif self.relativePath:
-            return self.relativePath
-        # return self.absolutePath
-
-    path = property(_getPath, doc="The path to the file this data originated from")
+        return self.absolutePath
 
     def _pointNamesCreated(self):
         """
@@ -269,6 +263,8 @@ class Base(object):
             return False
         else:
             return True
+
+    path = property(_getPath, doc="The path to the file this data originated from")
 
     ########################
     # Low Level Operations #
@@ -2492,9 +2488,9 @@ class Base(object):
         sortBy: may indicate the feature to sort by or None if the entire point
         is to be taken as a key
 
-        sortHelper: either an iterable, list-like object of identifiers (name or
-        index), a comparator or a scoring function, or None to indicate the
-        natural ordering
+        sortHelper: either an iterable, list-like object of identifiers (names
+        and/or indices), a comparator or a scoring function, or None to indicate
+        the natural ordering
 
         """
         self._genericSortFrontend('point', sortBy, sortHelper)
@@ -2507,9 +2503,9 @@ class Base(object):
         sortBy: indicates the point to sort by or None if the entire point
         is to be taken as a key
 
-        sortHelper: either an iterable, list-like object of identifiers (name or
-        index), a comparator or a scoring function, or None to indicate the
-        natural ordering
+        sortHelper: either an iterable, list-like object of identifiers (names
+        and/or indices), a comparator or a scoring function, or None to indicate
+        the natural ordering
 
         """
         self._genericSortFrontend('feature', sortBy, sortHelper)
@@ -2709,7 +2705,7 @@ class Base(object):
         otherwise it is uniform random across the space of possible retentions.
 
         """
-        self._genericRetainFrontend('retain', 'point', toRetain, start, end, number, randomize)
+        self._retain_implementation('retain', 'point', toRetain, start, end, number, randomize)
 
 
     def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
@@ -2733,10 +2729,10 @@ class Base(object):
         otherwise it is uniform random across the space of possible retentions.
 
         """
-        self._genericRetainFrontend('retain', 'feature', toRetain, start, end, number, randomize)
+        self._retain_implementation('retain', 'feature', toRetain, start, end, number, randomize)
 
 
-    def _genericRetainFrontend(self, structure, axis, toRetain, start, end, number, randomize):
+    def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
         """Generic retaining function for retainPoints or retainFeatures. The complements
         of toRetain are identified to use the extract backend, this is done within this
         implementation except for functions which are complemented within the next helper
