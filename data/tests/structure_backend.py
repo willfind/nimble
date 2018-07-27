@@ -490,7 +490,7 @@ class StructureDataSafe(DataTestObject):
         toTest._name = 'testName'
 
         ext1 = toTest.copyPoints(0)
-        print(toTest.name)
+
         assert ext1.nameIsDefault()
         assert ext1.path == 'testAbsPath'
         assert ext1.absolutePath == 'testAbsPath'
@@ -4830,7 +4830,7 @@ class StructureModifying(DataTestObject):
         expData = [[], [], []]
         expData = numpy.array(expData).T
         expTest = self.constructor(expData)
-        print(toTest, expTest)
+
         assert toTest.isIdentical(expTest)
 
 
@@ -5358,7 +5358,7 @@ class StructureModifying(DataTestObject):
         expData = [[], [], [], []]
         expData = numpy.array(expData)
         expTest = self.constructor(expData)
-        print(toTest, expTest)
+
         assert toTest.isIdentical(expTest)
 
 
