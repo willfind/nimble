@@ -937,13 +937,9 @@ def mocked_requests_get(*args, **kwargs):
     elif args[0] == 'http://mockrequests.uml/CSVquotednewline.csv':
         # csv allows for newline characters in field values within double quotes
         return MockResponse('1,2,"a/nb"\n4,5,6', 200)
-    elif args[0] == 'http://mockrequests.uml/MTXNoExtension':
-        mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
-        return MockResponse(mtx, 200)
-    elif args[0] == 'http://mockrequests.uml/MTXAmbiguousExtension.data':
-        mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
-        return MockResponse(mtx, 200)
-    elif args[0] == 'http://mockrequests.uml/MTX.mtx':
+    elif (args[0] == 'http://mockrequests.uml/MTXNoExtension' or
+          args[0] == 'http://mockrequests.uml/MTXAmbiguousExtension.data' or
+          args[0] == 'http://mockrequests.uml/MTX.mtx'):
         mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
         return MockResponse(mtx, 200)
 
@@ -987,8 +983,6 @@ def test_createData_http_CSVNonUnicodeValues(mock_get):
         exp = UML.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,6]])
         url = 'http://mockrequests.uml/CSVunicodetest.csv'
         fromWeb = UML.createData(returnType=t, data=url)
-        print(exp)
-        print(fromWeb)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
@@ -1000,6 +994,15 @@ def test_createData_http_CSVQuotedNewLine(mock_get):
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_CSVPathsEqualUrl(mock_get):
+    for t in returnTypes:
+        exp = UML.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        url = 'http://mockrequests.uml/CSVNoExtension'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb.absolutePath == url
+        assert fromWeb.relativePath == None
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_MTXNoExtension(mock_get):
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
@@ -1007,7 +1010,6 @@ def test_createData_http_MTXNoExtension(mock_get):
         exp = UML.createData(returnType=t, data=data)
         url = 'http://mockrequests.uml/MTXNoExtension'
         fromWeb = UML.createData(returnType=t, data=url)
-        print(t, fromWeb == exp)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
@@ -1018,7 +1020,6 @@ def test_createData_http_MTXAmbiguousExtension(mock_get):
         exp = UML.createData(returnType=t, data=data)
         url = 'http://mockrequests.uml/MTXAmbiguousExtension.data'
         fromWeb = UML.createData(returnType=t, data=url)
-        print(t, fromWeb == exp)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
@@ -1030,6 +1031,17 @@ def test_createData_http_MTXFileOK(mock_get):
         url = 'http://mockrequests.uml/MTX.mtx'
         fromWeb = UML.createData(returnType=t, data=url)
         assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_MTXPathsEqualUrl(mock_get):
+    for t in returnTypes:
+        # None returnType for url will default to Sparse so use coo_matrix for data
+        data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
+        exp = UML.createData(returnType=t, data=data)
+        url = 'http://mockrequests.uml/MTXNoExtension'
+        fromWeb = UML.createData(returnType=t, data=url)
+        assert fromWeb.absolutePath == url
+        assert fromWeb.relativePath == None
 
 @raises(ArgumentException)
 @mock.patch('requests.get', side_effect=mocked_requests_get)

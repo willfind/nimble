@@ -480,12 +480,14 @@ class StructureDataSafe(DataTestObject):
     def test_copyPoints_index_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
+        # need to set source paths for view objects
         if isinstance(toTest, UML.data.BaseView):
-            return
-        #don't test view.
+            toTest._source._absPath = 'testAbsPath'
+            toTest._source._relPath = 'testRelPath'
+        else:
+            toTest._absPath = 'testAbsPath'
+            toTest._relPath = 'testRelPath'
         toTest._name = 'testName'
-        toTest._absPath = 'testAbsPath'
-        toTest._relPath = 'testRelPath'
 
         ext1 = toTest.copyPoints(0)
 
@@ -624,17 +626,20 @@ class StructureDataSafe(DataTestObject):
     def test_copyPoints_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        if isinstance(toTest, UML.data.BaseView):
-            return
-        #don't test view.
+
         def oneOrFour(point):
             if 1 in point or 4 in point:
                 return True
             return False
 
-        toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        # need to set source paths for view objects
+        if isinstance(toTest, UML.data.BaseView):
+            toTest._source._absPath = 'testAbsPath'
+            toTest._source._relPath = 'testRelPath'
+        else:
+            toTest._absPath = 'testAbsPath'
+            toTest._relPath = 'testRelPath'
+        toTest._name = 'testName'
 
         ext = toTest.copyPoints(oneOrFour)
 
@@ -702,12 +707,14 @@ class StructureDataSafe(DataTestObject):
     def test_copyPoints_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
+        # need to set source paths for view objects
         if isinstance(toTest, UML.data.BaseView):
-            return
-        #don't test view.
-        toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+            toTest._source._absPath = 'testAbsPath'
+            toTest._source._relPath = 'testRelPath'
+        else:
+            toTest._absPath = 'testAbsPath'
+            toTest._relPath = 'testRelPath'
+        toTest._name = 'testName'
 
         ret = toTest.copyPoints(start=1, end=2)
 
@@ -1072,12 +1079,14 @@ class StructureDataSafe(DataTestObject):
     def test_copyFeatures_List_NamePath_Preserve(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
+        # need to set source paths for view objects
         if isinstance(toTest, UML.data.BaseView):
-            return
-        #don't test view.
-        toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+            toTest._source._absPath = 'testAbsPath'
+            toTest._source._relPath = 'testRelPath'
+        else:
+            toTest._absPath = 'testAbsPath'
+            toTest._relPath = 'testRelPath'
+        toTest._name = 'testName'
 
         ext1 = toTest.copyFeatures(0)
 
@@ -1254,17 +1263,20 @@ class StructureDataSafe(DataTestObject):
     def test_copyFeatures_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
-        if isinstance(toTest, UML.data.BaseView):
-            return
-        #don't test view.
+
         def absoluteOne(feature):
             if 1 in feature or -1 in feature:
                 return True
             return False
 
-        toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        # need to set source paths for view objects
+        if isinstance(toTest, UML.data.BaseView):
+            toTest._source._absPath = 'testAbsPath'
+            toTest._source._relPath = 'testRelPath'
+        else:
+            toTest._absPath = 'testAbsPath'
+            toTest._relPath = 'testRelPath'
+        toTest._name = 'testName'
 
         ext = toTest.copyFeatures(absoluteOne)
 
@@ -1370,12 +1382,14 @@ class StructureDataSafe(DataTestObject):
     def test_copyFeatures_range_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
+        # need to set source paths for view objects
         if isinstance(toTest, UML.data.BaseView):
-            return
-        #don't test view.
-        toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+            toTest._source._absPath = 'testAbsPath'
+            toTest._source._relPath = 'testRelPath'
+        else:
+            toTest._absPath = 'testAbsPath'
+            toTest._relPath = 'testRelPath'
+        toTest._name = 'testName'
 
         ret = toTest.copyFeatures(start=1, end=2)
 
@@ -4961,7 +4975,7 @@ class StructureModifying(DataTestObject):
         expData = [[], [], []]
         expData = numpy.array(expData).T
         expTest = self.constructor(expData)
-        print(toTest, expTest)
+
         assert toTest.isIdentical(expTest)
 
 
@@ -5489,7 +5503,7 @@ class StructureModifying(DataTestObject):
         expData = [[], [], [], []]
         expData = numpy.array(expData)
         expTest = self.constructor(expData)
-        print(toTest, expTest)
+
         assert toTest.isIdentical(expTest)
 
 

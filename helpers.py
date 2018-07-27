@@ -487,13 +487,16 @@ def initDataObject(
         if isinstance(path, tuple):
             pathsToPass = path
         else:
-            if os.path.isabs(path):
+            if path.startswith('http'):
+                pathsToPass = (path, None)
+            elif os.path.isabs(path):
                 absPath = path
                 relPath = os.path.relpath(path)
+                pathsToPass = (absPath, relPath)
             else:
                 absPath = os.path.abspath(path)
                 relPath = path
-            pathsToPass = (absPath, relPath)
+                pathsToPass = (absPath, relPath)
 
     initMethod = getattr(UML.data, returnType)
     try:
