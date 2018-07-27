@@ -1348,15 +1348,6 @@ class HighLevelModifying(DataTestObject):
     # shufflePoints() #
     ###################
 
-    @raises(ArgumentException)
-    def test_shufflePoints_exceptionIndicesPEmpty(self):
-        """ tests shufflePoints() throws an ArgumentException when given invalid indices """
-        data = [[], []]
-        data = numpy.array(data).T
-        toTest = self.constructor(data)
-        toTest.shufflePoints([1, 3])
-
-
     def test_shufflePoints_noLongerEqual(self):
         """ Tests shufflePoints() results in a changed object """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -1403,14 +1394,6 @@ class HighLevelModifying(DataTestObject):
     #####################
     # shuffleFeatures() #
     #####################
-
-    @raises(ArgumentException)
-    def test_shuffleFeatures_exceptionIndicesFEmpty(self):
-        """ tests shuffleFeatures() throws an ArgumentException when given invalid indices """
-        data = [[], []]
-        data = numpy.array(data)
-        toTest = self.constructor(data)
-        toTest.shuffleFeatures([1, 3])
 
     def test_shuffleFeatures_noLongerEqual(self):
         """ Tests shuffleFeatures() results in a changed object """
