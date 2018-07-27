@@ -1034,7 +1034,7 @@ class Base(object):
         """
         Permute the indexing of the points so they are in a random order. Note: this relies on
         python's random.shuffle() so may not be sufficiently random for large number of points.
-        See shuffle()'s documentation. None is always returned.
+        See shuffle()'s documentation.
 
         """
         return self._genericShuffleFrontend('point')
@@ -2524,16 +2524,20 @@ class Base(object):
             otherCount = self.features
             sort_implementation = self._sortPoints_implementation
             setNames = self.setPointNames
-            def permuter(pView):
-                return indices[self.getPointIndex(pView.getPointName(0))]
+            def permuterFactory(permIndices):
+                def permuter(pView):
+                    return permIndices[self.getPointIndex(pView.getPointName(0))]
+                return permuter
         else:
             otherAxis = 'point'
             axisCount = self.features
             otherCount = self.points
             sort_implementation = self._sortFeatures_implementation
             setNames = self.setFeatureNames
-            def permuter(fView):
-                return indices[self.getFeatureIndex(fView.getFeatureName(0))]
+            def permuterFactory(permIndices):
+                def permuter(fView):
+                    return permIndices[self.getFeatureIndex(fView.getFeatureName(0))]
+                return permuter
 
         if sortBy is not None and isinstance(sortBy, six.string_types):
             sortBy = self._getIndex(sortBy, otherAxis)
@@ -2541,16 +2545,16 @@ class Base(object):
         if sortHelper is not None and not hasattr(sortHelper, '__call__'):
             indices = self._constructIndicesList(axis, sortHelper)
             if len(indices) != axisCount:
-                msg = "This object contains {0} points, ".format(axisCount)
+                msg = "This object contains {0} {1}s, ".format(axisCount, axis)
                 msg += "but sortHelper has {0} identifiers".format(len(indices))
                 raise ArgumentException(msg)
             if len(indices) != len(set(indices)):
-                msg = "This object contains {0} points, ".format(axisCount)
+                msg = "This object contains {0} {1}s, ".format(axisCount, axis)
                 msg += "but sortHelper has {0} ".format(len(set(indices)))
                 msg += "unique identifiers"
                 raise ArgumentException(msg)
 
-            sortHelper = permuter
+            sortHelper = permuterFactory(indices)
 
         # its already sorted in these cases
         if otherCount == 0 or axisCount == 0 or axisCount == 1:

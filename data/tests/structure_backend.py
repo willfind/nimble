@@ -2570,12 +2570,19 @@ class StructureModifying(DataTestObject):
         toTest.sortPoints(sortHelper=[1, 3])
 
     @raises(ArgumentException)
+    def test_sortPoints_exceptionIndicesSmall(self):
+        """ tests sortPoints() throws an ArgumentException when given an incorrectly sized indices list """
+        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.sortPoints(sortHelper=[1, 0])
+
+    @raises(ArgumentException)
     def test_sortPoints_exceptionNotUniqueIds(self):
         """ tests sortPoints() throws an ArgumentException when given duplicate indices """
-        data = [[], []]
-        data = numpy.array(data)
+        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
         toTest = self.constructor(data)
-        toTest.sortPoints(sortHelper=[1, 1])
+        toTest.sortPoints(sortHelper=[1, 1, 0])
 
     #################
     # sortFeatures() #
@@ -2721,13 +2728,23 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.sortFeatures(sortHelper=[1, 3])
 
+
+    @raises(ArgumentException)
+    def test_sortFeatures_exceptionIndicesSmall(self):
+        """ tests sortFeatures() throws an ArgumentException when given an incorrectly sized indices list """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.sortFeatures(sortHelper=[1, 0])
+
+
     @raises(ArgumentException)
     def test_sortFeatures_exceptionNotUniqueIds(self):
         """ tests sortFeatures() throws an ArgumentException when given duplicate indices """
-        data = [[], []]
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
         data = numpy.array(data)
         toTest = self.constructor(data)
-        toTest.sortFeatures(sortHelper=[1, 1])
+        toTest.sortFeatures(sortHelper=[1, 1, 0])
 
 
     #################
