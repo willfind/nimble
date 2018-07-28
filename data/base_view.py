@@ -25,7 +25,7 @@ class BaseView(Base):
         """
         Initializes the object which overides all of the funcitonality in
         UML.data.Base to either handle the provided access limits or throw
-        exceptions for inappopriate operations.
+        exceptions for inappropriate operations.
 
         source: the UML object that this is a view into.
 
@@ -328,7 +328,7 @@ class BaseView(Base):
         """
         self._readOnlyException("extractPointsByCoinToss")
 
-    def shufflePoints(self, indices=None):
+    def shufflePoints(self):
         """
         Permute the indexing of the points so they are in a random order. Note: this relies on
         python's random.shuffle() so may not be sufficiently random for large number of points.
@@ -337,7 +337,7 @@ class BaseView(Base):
         """
         self._readOnlyException("shufflePoints")
 
-    def shuffleFeatures(self, indices=None):
+    def shuffleFeatures(self):
         """
         Permute the indexing of the features so they are in a random order. Note: this relies on
         python's random.shuffle() so may not be sufficiently random for large number of features.
@@ -345,6 +345,80 @@ class BaseView(Base):
 
         """
         self._readOnlyException("shuffleFeatures")
+
+    def normalizePoints(self, subtract=None, divide=None, applyResultTo=None):
+        """
+        Modify all points in this object according to the given
+        operations.
+
+        applyResultTo: default None, if a UML object is given, then
+        perform the same operations to it as are applied to the calling
+        object. However, if a statistical method is specified as subtract
+        or divide, then	concrete values are first calculated only from
+        querying the calling object, and the operation is performed on
+        applyResultTo using the results; as if a UML object was given
+        for the subtract or divide arguments.
+
+        subtract: what should be subtracted from data. May be a fixed
+        numerical value, a string defining a statistical function (all of
+        the same ones callable though pointStatistics), or a UML data
+        object. If a vector shaped object is given, then the value
+        associated with each point will be subtracted from all values of
+        that point. Otherwise, the values in the object are used for
+        elementwise subtraction. Default None - equivalent to subtracting
+        0.
+
+        divide: defines the denominator for dividing the data. May be a
+        fixed numerical value, a string defining a statistical function
+        (all of the same ones callable though pointStatistics), or a UML
+        data object. If a vector shaped object is given, then the value
+        associated with each point will be used in division of all values
+        for that point. Otherwise, the values in the object are used for
+        elementwise division. Default None - equivalent to dividing by
+        1.
+
+        Returns None while having affected the data of the calling
+        object and applyResultTo (if non-None).
+
+        """
+        self._readOnlyException("normalizePoints")
+
+    def normalizeFeatures(self, subtract=None, divide=None, applyResultTo=None):
+        """
+        Modify all features in this object according to the given
+        operations.
+
+        applyResultTo: default None, if a UML object is given, then
+        perform the same operations to it as are applied to the calling
+        object. However, if a statistical method is specified as subtract
+        or divide, then	concrete values are first calculated only from
+        querying the calling object, and the operation is performed on
+        applyResultTo using the results; as if a UML object was given
+        for the subtract or divide arguments.
+
+        subtract: what should be subtracted from data. May be a fixed
+        numerical value, a string defining a statistical function (all of
+        the same ones callable though featureStatistics), or a UML data
+        object. If a vector shaped object is given, then the value
+        associated with each feature will be subtracted from all values of
+        that feature. Otherwise, the values in the object are used for
+        elementwise subtraction. Default None - equivalent to subtracting
+        0.
+
+        divide: defines the denominator for dividing the data. May be a
+        fixed numerical value, a string defining a statistical function
+        (all of the same ones callable though featureStatistics), or a UML
+        data object. If a vector shaped object is given, then the value
+        associated with each feature will be used in division of all values
+        for that feature. Otherwise, the values in the object are used for
+        elementwise division. Default None - equivalent to dividing by
+        1.
+
+        Returns None while having affected the data of the calling
+        object and applyResultTo (if non-None).
+
+        """
+        self._readOnlyException("normalizeFeatures")
 
 
     ########################################
@@ -420,15 +494,21 @@ class BaseView(Base):
         Modify this object, removing those points that are specified by the input, and returning
         an object containing those removed points.
 
-        toExtract may be a single identifier, a list of identifiers, or a function that when
-        given a point will return True if it is to be removed. number is the quantity of points that
-        we are to be extracted, the default None means unlimited extraction. start and end are
-        parameters indicating range based extraction: if range based extraction is employed,
-        toExtract must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.points respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen points are determined by point order, otherwise it is uniform random across the
-        space of possible removals.
+        toExtract may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be extracted, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be extracted, the default None means
+        unrestricted extraction.
+
+        start and end are parameters indicating range based extraction: if range based
+        extraction is employed, toExtract must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible removals.
 
         """
         self._readOnlyException("extractPoints")
@@ -436,22 +516,118 @@ class BaseView(Base):
     def extractFeatures(self, toExtract=None, start=None, end=None, number=None, randomize=False):
         """
         Modify this object, removing those features that are specified by the input, and returning
-        an object containing those removed features. This particular function only does argument
-        checking and modifying the featureNames for this object. It is the job of helper functions in
-        the derived class to perform the removal and assign featureNames for the returned object.
+        an object containing those removed features.
 
-        toExtract may be a single identifier, a list of identifiers, or a function that when
-        given a feature will return True if it is to be removed. number is the quantity of features that
-        are to be extracted, the default None means unlimited extraction. start and end are
-        parameters indicating range based extraction: if range based extraction is employed,
-        toExtract must be None, and vice versa. If only one of start and end are non-None, the
-        other defaults to 0 and self.features respectably. randomize indicates whether random
-        sampling is to be used in conjunction with the number parameter, if randomize is False,
-        the chosen features are determined by feature order, otherwise it is uniform random across the
-        space of possible removals.
+        toExtract may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be extracted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be extracted, the default None means
+        unrestricted extraction.
+
+        start and end are parameters indicating range based extraction: if range based
+        extraction is employed, toExtract must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible removals.
 
         """
         self._readOnlyException("extractFeatures")
+
+    def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False):
+        """
+        Modify this object, removing those points that are specified by the input.
+
+        toDelete may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be deleted, the default None means
+        unrestricted deletion.
+
+        start and end are parameters indicating range based deletion: if range based
+        deletion is employed, toDelete must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible removals.
+
+        """
+        self._readOnlyException("deletePoints")
+
+    def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
+        """
+        Modify this object, removing those features that are specified by the input.
+
+        toDelete may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be deleted, the default None means
+        unrestricted deleted.
+
+        start and end are parameters indicating range based deletion: if range based
+        deletion is employed, toDelete must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible removals.
+
+        """
+        self._readOnlyException("deleteFeatures")
+
+    def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
+        """
+        Modify this object, retaining those points that are specified by the input.
+
+        toRetain may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a point will return True if it is to be retained, or a
+        filter function, as a string, containing a comparison operator between a feature name
+        and a value (i.e 'feat1<10')
+
+        number is the quantity of points that are to be retained, the default None means
+        unrestricted retention.
+
+        start and end are parameters indicating range based retention: if range based
+        retention is employed, toRetain must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.points respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen points are determined by point order,
+        otherwise it is uniform random across the space of possible retentions.
+
+        """
+        self._readOnlyException("retainPoints")
+
+    def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
+        """
+        Modify this object, retaining those features that are specified by the input.
+
+        toRetain may be a single identifier (name and/or index), a list of identifiers,
+        a function that when given a feature will return True if it is to be deleted, or a
+        filter function, as a string, containing a comparison operator between a point name
+        and a value (i.e 'point1<10')
+
+        number is the quantity of features that are to be retained, the default None means
+        unrestricted retention.
+
+        start and end are parameters indicating range based retention: if range based
+        retention is employed, toRetain must be None, and vice versa. If only one of start
+        and end are non-None, the other defaults to 0 and self.features respectably.
+
+        randomize indicates whether random sampling is to be used in conjunction with the number
+        parameter, if randomize is False, the chosen features are determined by feature order,
+        otherwise it is uniform random across the space of possible retentions.
+
+        """
+        self._readOnlyException("retainFeatures")
 
     def referenceDataFrom(self, other):
         """
@@ -512,6 +688,131 @@ class BaseView(Base):
 
         """
         self._readOnlyException("transformEachElement")
+
+    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
+        """
+        Revise the contents of the calling object so that it contains the provided
+        values in the given location.
+
+        values - Either a constant value or a UML object whose size is consistent
+        with the given start and end indices.
+
+        pointStart - the inclusive ID of the first point in the calling object
+        whose contents will be modified.
+
+        featureStart - the inclusive ID of the first feature in the calling object
+        whose contents will be modified.
+
+        pointEnd - the inclusive ID of the last point in the calling object
+        whose contents will be modified.
+
+        featureEnd - the inclusive ID of the last feature in the calling object
+        whose contents will be modified.
+
+        """
+        self._readOnlyException("fillWith")
+
+    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
+        """
+        This function is to remove, replace or impute missing values in an UML container data object.
+
+        method - a str. It can be 'remove points', 'remove features', 'feature mean', 'feature median', 'feature mode', 'zero', 'constant', 'forward fill'
+        'backward fill', 'interpolate'
+
+        features - can be None to indicate all features, or a str to indicate the name of a single feature, or an int to indicate
+        the index of a feature, or a list of feature names, or a list of features' indices, or a list of mix of feature names and feature indices. In this function, only those features in the input 'features'
+        will be processed.
+
+        arguments - for some kind of methods, we need to setup arguments.
+        for method = 'remove points', 'remove features', arguments can be 'all' or 'any' etc.
+        for method = 'constant', arguments must be a value
+        for method = 'interpolate', arguments can be a dict which stores inputs for numpy.interp
+
+        alsoTreatAsMissing -  a list. In this function, numpy.NaN and None are always treated as missing. You can add extra values which
+        should be treated as missing values too, in alsoTreatAsMissing.
+
+        markMissing: True or False. If it is True, then extra columns for those features will be added, in which 0 (False) or 1 (True) will be filled to
+        indicate if the value in a cell is originally missing or not.
+
+        """
+        self._readOnlyException("handleMissingValues")
+
+    def flattenToOnePoint(self):
+        """
+        Adjust this object in place so that the same values are all in a single point.
+
+        Each feature in the result maps to exactly one value from the original object.
+        The order of values respects the point order from the original object,
+        if there were n features in the original, the first n values in the result
+        will exactly match the first point, the nth to (2n-1)th values will exactly
+        match the original second point, etc. The feature names will be transformed
+        such that the value at the intersection of the "pn_i" named point and "fn_j"
+        named feature from the original object will have a feature name of "fn_j | pn_i".
+        The single point will have a name of "Flattened".
+
+        Raises: ImproperActionException if an axis has length 0
+
+        """
+        self._readOnlyException("flattenToOnePoint")
+
+    def flattenToOneFeature(self):
+        """
+        Adjust this object in place so that the same values are all in a single feature.
+
+        Each point in the result maps to exactly one value from the original object.
+        The order of values respects the feature order from the original object,
+        if there were n points in the original, the first n values in the result
+        will exactly match the first feature, the nth to (2n-1)th values will exactly
+        match the original second feature, etc. The point names will be transformed
+        such that the value at the intersection of the "pn_i" named point and "fn_j"
+        named feature from the original object will have a point name of "pn_i | fn_j".
+        The single feature will have a name of "Flattened".
+
+        Raises: ImproperActionException if an axis has length 0
+
+        """
+        self._readOnlyException("flattenToOneFeature")
+
+    def unflattenFromOnePoint(self, numPoints):
+        """
+        Adjust this point vector in place to an object that it could have been flattend from.
+
+        This is an inverse of the method flattenToOnePoint: if an object foo with n
+        points calls the flatten method, then this method with n as the argument, the
+        result should be identical to the original foo. It is not limited to objects
+        that have previously had flattenToOnePoint called on them; any object whose
+        structure and names are consistent with a previous call to flattenToOnePoint
+        may call this method. This includes objects with all default names.
+
+        Raises: ArgumentException if numPoints does not divide the length of the point
+        vector.
+
+        Raises: ImproperActionException if an axis has length 0, there is more than one
+        point, or the names are inconsistent with a previous call to flattenToOnePoint.
+
+        """
+        self._readOnlyException("unflattenFromOnePoint")
+
+
+    def unflattenFromOneFeature(self, numFeatures):
+        """
+        Adjust this feature vector in place to an object that it could have been flattend from.
+
+        This is an inverse of the method flattenToOneFeature: if an object foo with n
+        features calls the flatten method, then this method with n as the argument, the
+        result should be identical to the original foo. It is not limited to objects
+        that have previously had flattenToOneFeature called on them; any object whose
+        structure and names are consistent with a previous call to flattenToOneFeature
+        may call this method. This includes objects with all default names.
+
+        Raises: ArgumentException if numPoints does not divide the length of the point
+        vector.
+
+        Raises: ImproperActionException if an axis has length 0, there is more than one
+        point, or the names are inconsistent with a previous call to flattenToOnePoint.
+
+        """
+        self._readOnlyException("unflattenFromOneFeature")
 
 
     ###############################################################
