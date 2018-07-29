@@ -411,23 +411,3 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
         # modify the width associated with the colHold
         if removalWidths is not None:
             removalWidths[removeIndex] = len(colHold)
-
-
-def valuesToPythonList(values, argName):
-    """
-    Create a python list of values from an integer (python or numpy),
-    string, or an iterable container object
-
-    """
-    if isinstance(values, (int, numpy.integer, six.string_types)):
-        return [values]
-    valuesList = []
-    try:
-        for val in values:
-            valuesList.append(val)
-    except TypeError:
-        msg = "The argument '{0}' is not an integer ".format(argName)
-        msg += "(python or numpy), string, or an iterable container object."
-        raise ArgumentException(msg)
-
-    return valuesList

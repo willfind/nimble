@@ -72,8 +72,6 @@ from .dataHelpers import formatIfNeeded
 
 from .dataHelpers import makeConsistentFNamesAndData
 
-from .dataHelpers import valuesToPythonList
-
 def to2args(f):
     """
     this function is for __pow__. In cython, __pow__ must have 3 arguments and default can't be used there.
@@ -86,6 +84,26 @@ def to2args(f):
 
 def hashCodeFunc(elementValue, pointNum, featureNum):
     return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
+
+
+def valuesToPythonList(values, argName):
+    """
+    Create a python list of values from an integer (python or numpy),
+    string, or an iterable container object
+
+    """
+    if isinstance(values, (int, numpy.integer, six.string_types)):
+        return [values]
+    valuesList = []
+    try:
+        for val in values:
+            valuesList.append(val)
+    except TypeError:
+        msg = "The argument '{0}' is not an integer ".format(argName)
+        msg += "(python or numpy), string, or an iterable container object."
+        raise ArgumentException(msg)
+
+    return valuesList
 
 class Base(object):
     """
