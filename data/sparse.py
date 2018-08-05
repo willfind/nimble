@@ -220,6 +220,7 @@ class Sparse(Base):
             indexGetter = self.getPointIndex
             nameGetter = self.getPointName
             nameGetterStr = 'getPointName'
+            names = self.getPointNames()
         else:
             viewMaker = self.featureView
             targetAxis = self.data.col
@@ -227,6 +228,19 @@ class Sparse(Base):
             indexGetter = self.getFeatureIndex
             nameGetter = self.getFeatureName
             nameGetterStr = 'getFeatureName'
+            names = self.getFeatureNames()
+
+        if isinstance(sortHelper, list):
+            sortedData = []
+            idxDict = {val: idx for idx, val in enumerate(sortHelper)}
+            if axisType == 'point':
+                sortedData = [idxDict[val] for val in self.data.row]
+                self.data.row = numpy.array(sortedData)
+            else:
+                sortedData = [idxDict[val] for val in self.data.col]
+                self.data.col = numpy.array(sortedData)
+            newNameOrder = [names[idx] for idx in sortHelper]
+            return newNameOrder
 
         test = viewMaker(0)
         try:

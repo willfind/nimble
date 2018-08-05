@@ -161,12 +161,24 @@ class List(Base):
             indexGetter = self.getPointIndex
             nameGetter = self.getPointName
             nameGetterStr = 'getPointName'
+            names = self.getPointNames()
         else:
             test = self.featureView(0)
             viewIter = self.featureIterator()
             indexGetter = self.getFeatureIndex
             nameGetter = self.getFeatureName
             nameGetterStr = 'getFeatureName'
+            names = self.getFeatureNames()
+
+        if isinstance(sortHelper, list):
+            sortData = numpy.array(self.data)
+            if axis == 'point':
+                sortData = sortData[sortHelper, :]
+            else:
+                sortData = sortData[:, sortHelper]
+            self.data = sortData.tolist()
+            newNameOrder = [names[idx] for idx in sortHelper]
+            return newNameOrder
 
         scorer = None
         comparator = None
