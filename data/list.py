@@ -14,7 +14,7 @@ import UML
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import View
-from .dataHelpers import reorderToMatchExtractionList
+from .dataHelpers import reorderToMatchList
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 import six
@@ -236,230 +236,49 @@ class List(Base):
         return newNameOrder
 
 
-    def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
+    def _structuralBackend_implementation(self, structure, axis, targetList):
         """
-        Function to extract points according to the parameters, and return an object containing
-        the removed points with default feature names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be extracted, and randomize indicates whether the choice of who to extract should
-        be by order or uniform random.
+        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
+        copyPoints/Features. Returns a new object containing only the points in targetList and
+        performs some modifications to the original object if necessary. This function does not
+        perform all of the modification or process how each function handles the returned value,
+        these are managed separately by each frontend function.
+        """
+        pnames = []
+        fnames = []
+        data = numpy.matrix(self.data, dtype=object)
 
-        """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            return self._extractPointsByList_implementation(toExtract)
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO randomize in the extractPointByFunction case
-            else:
-                return self._extractPointsByFunction_implementation(toExtract, number)
-        # by range
-        elif start is not None or end is not None:
-            return self._extractPointsByRange_implementation(start, end)
+        if axis == 'point':
+            keepList = [idx for idx in range(self.points) if idx not in targetList]
+            satisfying = data[targetList, :]
+            if structure != 'copy':
+                keep = data[keepList, :]
+                self.data = keep.tolist()
+
+            for index in targetList:
+                pnames.append(self.getPointName(index))
+            fnames = self.getFeatureNames()
+
         else:
-            msg = "Malformed or missing inputs"
-            raise ArgumentException(msg)
+            if self.data == []:
+                # create empty matrix with correct shape
+                data = numpy.matrix(numpy.empty((self.points,self.features)), dtype=object)
 
+            keepList = [idx for idx in range(self.features) if idx not in targetList]
+            satisfying = data[:, targetList]
+            if structure != 'copy':
+                keep = data[:, keepList]
+                self.data = keep.tolist()
 
-    def _extractPointsByList_implementation(self, toExtract):
-        """
-        Modify this object to have only the points that are not listed in toExtract,
-        returning an object containing those points that are.
+            for index in targetList:
+                fnames.append(self.getFeatureName(index))
+            pnames = self.getPointNames()
 
-        """
-        toWrite = 0
-        satisfying = []
-        for i in range(self.points):
-            if i not in toExtract:
-                self.data[toWrite] = self.data[i]
-                toWrite += 1
-            else:
-                satisfying.append(self.data[i])
+            if structure != 'copy':
+                self._numFeatures = self._numFeatures - len(targetList)
 
-        # blank out the elements beyond our last copy, ie our last wanted point.
-        for index in range(toWrite, len(self.data)):
-            self.data.pop()
+        return List(satisfying, pointNames=pnames, featureNames=fnames, reuseData=True)
 
-        # construct pointName list
-        nameList = []
-        for index in toExtract:
-            nameList.append(self.getPointName(index))
-
-        extracted = List(satisfying, reuseData=True, featureNames=self.getFeatureNames())
-        reorderToMatchExtractionList(extracted, toExtract, 'point')
-        extracted.setPointNames(nameList)
-
-        return extracted
-
-    def _extractPointsByFunction_implementation(self, toExtract, number):
-        """
-        Modify this object to have only the points that do not satisfy the given function,
-        returning an object containing those points that do.
-
-        """
-        toWrite = 0
-        satisfying = []
-        names = []
-        # walk through each point, copying the wanted points back to the toWrite index
-        # toWrite is only incremented when we see a wanted point; unwanted points are copied
-        # over
-        for index in range(len(self.data)):
-            point = self.data[index]
-            if number > 0 and toExtract(self.pointView(index)):
-                satisfying.append(point)
-                number = number - 1
-                names.append(self.getPointName(index))
-            else:
-                self.data[toWrite] = point
-                toWrite += 1
-
-        # blank out the elements beyond our last copy, ie our last wanted point.
-        for index in range(toWrite, len(self.data)):
-            self.data.pop()
-
-        if len(satisfying) == 0:
-            rawTrans = []
-            for i in range(self.features):
-                rawTrans.append([])
-            ret = List(rawTrans)
-            ret.transpose()
-            return ret
-        else:
-            return List(satisfying, pointNames=names, reuseData=True)
-
-    def _extractPointsByRange_implementation(self, start, end):
-        """
-        Modify this object to have only those points that are not within the given range,
-        inclusive; returning an object containing those points that are.
-
-        """
-        toWrite = start
-        inRange = []
-        for i in range(start, self.points):
-            if i <= end:
-                inRange.append(self.data[i])
-            else:
-                self.data[toWrite] = self.data[i]
-                toWrite += 1
-
-        # blank out the elements beyond our last copy, ie our last wanted point.
-        for index in range(toWrite, len(self.data)):
-            self.data.pop()
-
-        # construct featureName list
-        nameList = []
-        for index in range(start, end + 1):
-            nameList.append(self.getPointName(index))
-
-        return List(inRange, pointNames=nameList, reuseData=True)
-
-
-    def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
-        """
-        Function to extract features according to the parameters, and return an object containing
-        the removed features with their featureNames from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be extracted, and randomize indicates whether the choice of who to
-        extract should be by order or uniform random.
-
-        """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            return self._extractFeaturesByList_implementation(toExtract)
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO
-            else:
-                return self._extractFeaturesByFunction_implementation(toExtract, number)
-        # by range
-        elif start is not None or end is not None:
-            return self._extractFeaturesByRange_implementation(start, end)
-        else:
-            raise ArgumentException("Malformed or missing inputs")
-
-
-    def _extractFeaturesByList_implementation(self, toExtract):
-        """
-        Modify this object to have only the features that are not given in the input,
-        returning an object containing those features that are, with the same featureNames
-        they had previously. It does not modify the featureNames for the calling object.
-
-        """
-        targetPos = {}
-        for index in range(len(toExtract)):
-            targetPos[toExtract[index]] = index
-
-        # we want to extract values from a list from the end
-        # for efficiency. So we sort and reverse the removal indices
-        toExtractSortRev = copy.copy(toExtract)
-        toExtractSortRev.sort()
-        toExtractSortRev.reverse()
-        extractedData = []
-        for point in self.data:
-            extractedPoint = [None] * len(toExtract)
-            for fID in toExtractSortRev:
-                extractedPoint[targetPos[fID]] = point.pop(fID)
-            extractedData.append(extractedPoint)
-
-        self._numFeatures = self._numFeatures - len(toExtract)
-
-        # construct featureName list from the original unsorted toExtract
-        featureNameList = []
-        for index in toExtract:
-            featureNameList.append(self.getFeatureName(index))
-
-        return List(extractedData, featureNames=featureNameList, pointNames=self.getPointNames(), reuseData=True)
-
-
-    def _extractFeaturesByFunction_implementation(self, function, number):
-        """
-        Modify this object to have only the features whose views do not satisfy the given
-        function, returning an object containing those features whose views do, with the
-        same featureNames	they had previously. It does not modify the featureNames for the calling object.
-
-        """
-        # all we're doing is making a list and calling extractFeaturesBy list, no need
-        # deal with featureNames or the number of features.
-        toExtract = []
-        for i, ithView in enumerate(self.featureIterator()):
-            if function(ithView):
-                toExtract.append(i)
-        return self._extractFeaturesByList_implementation(toExtract)
-
-
-    def _extractFeaturesByRange_implementation(self, start, end):
-        """
-        Modify this object to have only those features that are not within the given range,
-        inclusive; returning an object containing those features that are, with the same featureNames
-        they had previously. It does not modify the featureNames for the calling object.
-        """
-        extractedData = []
-        for point in self.data:
-            extractedPoint = []
-            #end + 1 because our ranges are inclusive, xrange's are not
-            for index in reversed(range(start, end + 1)):
-                extractedPoint.append(point.pop(index))
-            extractedPoint.reverse()
-            extractedData.append(extractedPoint)
-
-        self._numFeatures = self._numFeatures - len(extractedPoint)
-
-        # construct featureName list
-        featureNameList = []
-        for index in range(start, end + 1):
-            featureNameList.append(self.getFeatureName(index))
-
-        return List(extractedData, featureNames=featureNameList, reuseData=True)
 
     def _mapReducePoints_implementation(self, mapper, reducer):
         mapResults = {}
@@ -598,18 +417,31 @@ class List(Base):
         self._numFeatures = other._numFeatures
 
     def _copyAs_implementation(self, format):
+
         if format == 'Sparse':
             if self.points == 0 or self.features == 0:
                 emptyData = numpy.empty(shape=(self.points, self.features))
-                return UML.createData('Sparse', emptyData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+                return UML.createData('Sparse', emptyData)
+            return UML.createData('Sparse', self.data)
 
         if format is None or format == 'List':
-            return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            if self.points == 0 or self.features == 0:
+                emptyData = numpy.empty(shape=(self.points, self.features))
+                return UML.createData('List', emptyData)
+            else:
+                return UML.createData('List', self.data)
         if format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            if self.points == 0 or self.features == 0:
+                emptyData = numpy.empty(shape=(self.points, self.features))
+                return UML.createData('Matrix', emptyData)
+            else:
+                return UML.createData('Matrix', self.data)
         if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            if self.points == 0 or self.features == 0:
+                emptyData = numpy.empty(shape=(self.points, self.features))
+                return UML.createData('DataFrame', emptyData)
+            else:
+                return UML.createData('DataFrame', self.data)
         if format == 'pythonlist':
             return copy.deepcopy(self.data)
         if format == 'numpyarray':
@@ -631,39 +463,6 @@ class List(Base):
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(numpy.array(self.data))
 
-    def _copyPoints_implementation(self, points, start, end):
-        retData = []
-        if points is not None:
-            for index in points:
-                retData.append(copy.copy(self.data[index]))
-        else:
-            for i in range(start, end + 1):
-                retData.append(copy.copy(self.data[i]))
-
-        return List(retData, reuseData=True)
-
-    def _copyFeatures_implementation(self, indices, start, end):
-        if self.points == 0:
-            ret = []
-            count = len(indices) if indices is not None else (end + 1 - start)
-            for i in range(count):
-                ret.append([])
-            retObj = List(ret)
-            retObj.transpose()
-            return retObj
-
-        ret = []
-        for point in self.data:
-            retPoint = []
-            if indices is not None:
-                for i in indices:
-                    retPoint.append(point[i])
-            else:
-                for i in range(start, end + 1):
-                    retPoint.append(point[i])
-            ret.append(retPoint)
-
-        return List(ret, reuseData=True)
 
     def _transformEachPoint_implementation(self, function, points):
         for i, p in enumerate(self.pointIterator()):
@@ -920,7 +719,6 @@ class List(Base):
         self.data = result
         self._numFeatures = numFeatures
 
-
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
 
@@ -932,20 +730,35 @@ class List(Base):
             def _copyAs_implementation(self, format):
                 # we only want to change how List and pythonlist copying is done
                 # we also temporarily convert self.data to a python list for copyAs
-                listForm = [[self._source.data[pID][fID] for fID in range(self._fStart, self._fEnd)] \
+                if self._pointNamesCreated():
+                    pNames = self.getPointNames()
+                else:
+                    pNames = False
+                if self._featureNamesCreated():
+                    fNames = self.getFeatureNames()
+                else:
+                    fNames = False
+
+                if (self.points == 0 or self.features == 0) and format != 'List':
+                    emptyStandin = numpy.empty((self.points, self.features))
+                    intermediate = UML.createData('Matrix', emptyStandin)
+                    return intermediate.copyAs(format)
+
+                listForm = [[self._source.data[pID][fID] for fID in range(self._fStart, self._fEnd)]
                             for pID in range(self._pStart, self._pEnd)]
                 if format is None:
                     format = 'List'
                 if format != 'List' and format != 'pythonlist':
                     origData = self.data
                     self.data = listForm
-                    res = super(ListView, self)._copyAs_implementation(format)
+                    res = super(ListView, self)._copyAs_implementation(
+                        format)
                     self.data = origData
                     return res
 
                 if format == 'List':
-                    return UML.createData('List', listForm, pointNames=self.getPointNames(),
-                                         featureNames=self.getFeatureNames())
+                    return UML.createData('List', listForm, pointNames=pNames,
+                                          featureNames=fNames)
                 else:
                     return listForm
 

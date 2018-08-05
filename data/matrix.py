@@ -33,7 +33,6 @@ class Matrix(Base):
         """
         data can only be a numpy matrix
         """
-
         if (not isinstance(data, (numpy.matrix, numpy.ndarray))):# and 'PassThrough' not in str(type(data)):
             msg = "the input data can only be a numpy matrix or ListPassThrough."
             raise ArgumentException(msg)
@@ -53,7 +52,7 @@ class Matrix(Base):
                     self.data = numpy.matrix(data, dtype=numpy.float)
                 except ValueError:
                     self.data = numpy.matrix(data, dtype=object)
-
+        
         kwds['featureNames'] = featureNames
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
@@ -181,187 +180,37 @@ class Matrix(Base):
         return newNameOrder
 
 
-    def _extractPoints_implementation(self, toExtract, start, end, number, randomize):
+    def _structuralBackend_implementation(self, structure, axis, targetList):
         """
-        Function to extract points according to the parameters, and return an object containing
-        the removed points with default names. The actual work is done by further helper
-        functions, this determines which helper to call, and modifies the input to accomodate
-        the number and randomize parameters, where number indicates how many of the possibilities
-        should be extracted, and randomize indicates whether the choice of who to extract should
-        be by order or uniform random.
-
+        Backend for extractPoints/Features, deletePoints/Features, retainPoints/Features, and
+        copyPoints/Features. Returns a new object containing only the points in targetList and
+        performs some modifications to the original object if necessary. This function does not
+        perform all of the modification or process how each function handles the returned value,
+        these are managed separately by each frontend function.
         """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            return self._extractPointsByList_implementation(toExtract)
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO randomize in the extractPointByFunction case
-            else:
-                return self._extractPointsByFunction_implementation(toExtract, number)
-        # by range
-        elif start is not None or end is not None:
-            return self._extractPointsByRange_implementation(start, end)
-        else:
-            msg = "Malformed or missing inputs"
-            raise ArgumentException(msg)
-
-    def _extractPointsByList_implementation(self, toExtract):
-        """
-        Modify this object to have only the points that are not given in the input,
-        returning an object containing those points that are.
-
-        """
-        ret = self.data[toExtract]
-        self.data = numpy.delete(self.data, toExtract, 0)
-
-        # construct featureName list
         nameList = []
-        for index in toExtract:
-            nameList.append(self.getPointName(index))
-
-        return Matrix(ret, pointNames=nameList)
-
-    def _extractPointsByFunction_implementation(self, toExtract, number):
-        """
-        Modify this object to have only the points that do not satisfy the given function,
-        returning an object containing those points that do.
-
-        """
-        #if the toExtract is a vectorized function, then call matrix based function
-        #otherwise, call view based function
-        if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-            function = matrixBasedApplyAlongAxis
+        if axis == 'point':
+            axisVal = 0
+            getName = self.getPointName
+            ret = self.data[targetList]
+            pointNames = nameList
+            featureNames = self.getFeatureNames()
         else:
-            function = viewBasedApplyAlongAxis
-        results = function(toExtract, 'point', self)
-        results = results.astype(numpy.int)
+            axisVal = 1
+            getName = self.getFeatureName
+            ret = self.data[:, targetList]
+            featureNames = nameList
+            pointNames = self.getPointNames()
 
-        # need to convert our 1/0 array to to list of points to be removed
-        # can do this by just getting the non-zero indices
-        toRemove = numpy.flatnonzero(results)
-        ###spencer added this on 3/7/2017 to make it take into account number:
-        if number is not None and len(toRemove) > number:
-            toRemove = toRemove[:number]
-            assert len(toRemove) == number
-        ###end of spencer added code
-        ret = self.data[toRemove, :]
-        self.data = numpy.delete(self.data, toRemove, 0)
+        if structure != 'copy':
+            self.data = numpy.delete(self.data, targetList, axisVal)
 
-        # construct featureName list
-        nameList = []
-        for index in toRemove:
-            nameList.append(self.getPointName(index))
+        # construct nameList
+        for index in targetList:
+            nameList.append(getName(index))
 
-        return Matrix(ret, pointNames=nameList)
+        return Matrix(ret, pointNames=pointNames, featureNames=featureNames)
 
-    def _extractPointsByRange_implementation(self, start, end):
-        """
-        Modify this object to have only those points that are not within the given range,
-        inclusive; returning an object containing those points that are.
-
-        """
-        # +1 on end in ranges, because our ranges are inclusive
-        ret = self.data[start:end + 1, :]
-        self.data = numpy.delete(self.data, numpy.s_[start:end + 1], 0)
-
-        # construct featureName list
-        nameList = []
-        for index in range(start, end + 1):
-            nameList.append(self.getPointName(index))
-
-        return Matrix(ret, pointNames=nameList)
-
-    def _extractFeatures_implementation(self, toExtract, start, end, number, randomize):
-        """
-        Function to extract features according to the parameters, and return an object containing
-        the removed features with their featureName names from this object. The actual work is done by
-        further helper functions, this determines which helper to call, and modifies the input
-        to accomodate the number and randomize parameters, where number indicates how many of the
-        possibilities should be extracted, and randomize indicates whether the choice of who to
-        extract should be by order or uniform random.
-
-        """
-        # list of identifiers
-        if isinstance(toExtract, list):
-            assert number == len(toExtract)
-            assert not randomize
-            return self._extractFeaturesByList_implementation(toExtract)
-        # boolean function
-        elif hasattr(toExtract, '__call__'):
-            if randomize:
-                #apply to each
-                raise NotImplementedError  # TODO
-            else:
-                return self._extractFeaturesByFunction_implementation(toExtract, number)
-        # by range
-        elif start is not None or end is not None:
-            return self._extractFeaturesByRange_implementation(start, end)
-        else:
-            raise ArgumentException("Malformed or missing inputs")
-
-
-    def _extractFeaturesByList_implementation(self, toExtract):
-        """
-        Modify this object to have only the features that are not given in the input,
-        returning an object containing those features that are.
-
-        """
-        ret = self.data[:, toExtract]
-        self.data = numpy.delete(self.data, toExtract, 1)
-
-        # construct featureName list
-        featureNameList = []
-        for index in toExtract:
-            featureNameList.append(self.getFeatureName(index))
-
-        return Matrix(ret, featureNames=featureNameList, pointNames=self.getPointNames())
-
-    def _extractFeaturesByFunction_implementation(self, toExtract, number):
-        """
-        Modify this object to have only the features whose views do not satisfy the given
-        function, returning an object containing those features whose views do.
-
-        """
-        #if the toExtract is a vectorized function, then call matrix based function
-        #otherwise, call view based function
-        if hasattr(toExtract, 'vectorized') and toExtract.vectorized:
-            function = matrixBasedApplyAlongAxis
-        else:
-            function = viewBasedApplyAlongAxis
-        results = function(toExtract, 'feature', self)
-        results = results.astype(numpy.int)
-
-        # need to convert our 1/0 array to to list of points to be removed
-        # can do this by just getting the non-zero indices
-        toRemove = numpy.flatnonzero(results)
-
-        return self._extractFeaturesByList_implementation(toRemove)
-
-
-    def _extractFeaturesByRange_implementation(self, start, end):
-        """
-        Modify this object to have only those features that are not within the given range,
-        inclusive; returning an object containing those features that are.
-
-        start and end must not be null, must be within the range of possible features,
-        and start must not be greater than end
-
-        """
-        # +1 on end in ranges, because our ranges are inclusive
-        ret = self.data[:, start:end + 1]
-        self.data = numpy.delete(self.data, numpy.s_[start:end + 1], 1)
-
-        # construct featureName list
-        featureNameList = []
-        for index in range(start, end + 1):
-            featureNameList.append(self.getFeatureName(index))
-
-        return Matrix(ret, featureNames=featureNameList)
 
     def _mapReducePoints_implementation(self, mapper, reducer):
         # apply_along_axis() expects a scalar or array of scalars as output,
@@ -505,12 +354,15 @@ class Matrix(Base):
         self.data = other.data
 
     def _copyAs_implementation(self, format):
-        if format == 'Sparse':
-            return UML.createData('Sparse', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-        if format == 'List':
-            return UML.createData('List', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+
         if format is None or format == 'Matrix':
-            return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
+            return UML.createData('Matrix', self.data)
+        if format == 'Sparse':
+            return UML.createData('Sparse', self.data)
+        if format == 'List':
+            return UML.createData('List', self.data)
+        if format == 'DataFrame':
+            return UML.createData('DataFrame', self.data)
         if format == 'pythonlist':
             return self.data.tolist()
         if format == 'numpyarray':
@@ -527,26 +379,9 @@ class Matrix(Base):
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(self.data)
-        if format == 'DataFrame':
-            return UML.createData('DataFrame', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
 
-        return UML.createData('Matrix', self.data, pointNames=self.getPointNames(), featureNames=self.getFeatureNames())
-
-    def _copyPoints_implementation(self, points, start, end):
-        if points is not None:
-            ret = self.data[points]
-        else:
-            ret = self.data[start:end + 1, :]
-
-        return Matrix(ret)
-
-    def _copyFeatures_implementation(self, indices, start, end):
-        if indices is not None:
-            ret = self.data[:, indices]
-        else:
-            ret = self.data[:, start:end + 1]
-
-        return Matrix(ret)
+        return UML.createData('Matrix', self.data)
+        
 
 
     def _transformEachPoint_implementation(self, function, points):
@@ -952,7 +787,17 @@ class Matrix(Base):
             ret = self.data - other.data
         else:
             ret = self.data - other
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+
+        if not self._pointNamesCreated():
+            pNames = None
+        else:
+            pNames = self.getPointNames()
+        if not self._featureNamesCreated():
+            fNames = None
+        else:
+            fNames = self.getFeatureNames()
+
+        return Matrix(ret, pointNames=pNames, featureNames=fNames, reuseData=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data

@@ -429,16 +429,16 @@ def listLearners(package=None):
 
     return results
 
-
-def createData(returnType, data, pointNames='automatic', featureNames='automatic',
-               elementType=None, fileType=None, name=None, path=None, keepPoints='all',
-               keepFeatures='all', ignoreNonNumericalFeatures=False, useLog=None,
-               reuseData=False, treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
-               replaceMissingWith=numpy.nan):
+def createData(
+        returnType, data, pointNames='automatic', featureNames='automatic',
+        elementType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
+        ignoreNonNumericalFeatures=False, useLog=None, reuseData=False, inputSeparator='automatic',
+        treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+        replaceMissingWith=numpy.nan):
     """Function to instantiate one of the UML data container types.
 
-    returnType: string (or None) indicating which kind of UML data type you want
-    returned. If None is given, UML will attempt to detect the type most
+    returnType: string (or None) indicating which kind of UML data type you
+    want returned. If None is given, UML will attempt to detect the type most
     appropriate for the data. Currently accepted are the strings "List",
     "Matrix", and "Sparse" -- which are case sensitive.
 
@@ -470,14 +470,6 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     specified explictly by some list-like or dict-like object, so long as
     all points in the data are assigned a name and the names for each point
     are unique.
-
-    fileType: allows the user to explictly specify the format expected when
-    loading from a file. Normally, if a file is being loaded, the extension
-    of the file name is used to indicate the format. However, if fileType is
-    specified, it will override the file extension. Also, when loading from a
-    file with no extension, the user is requred to specify a format via
-    fileType. This argument is ignored if loading from a python object.
-    Currently accepted values are "csv" and "mtx", with a default value of None
 
     name: When not None, this value is set as the name attribute of the
     returned object
@@ -524,6 +516,11 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     call should be logged by the UML logger. If None, the configurable	global
     default is used.
 
+    inputSeparator: The character that is used to separate fields in the input
+    file, if necessary. By default, a value of 'automatic' will attempt to
+    determine the appropriate separator. Otherwise, a single character string
+    of the separator in the file can be passed.
+
     treatAsMissing: A list of values that will be treated as missing values in
     the data. These values will be replaced with value from replaceMissingWith
     By default this list is [float('nan'), numpy.nan, None, '', 'None', 'nan']
@@ -564,10 +561,9 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
         ret = createDataFromFile(
-            returnType=returnType, data=data, pointNames=pointNames,
-            featureNames=featureNames, fileType=fileType, name=name,
-            ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
-            keepPoints=keepPoints, keepFeatures=keepFeatures,
+            returnType=returnType, data=data, pointNames=pointNames, featureNames=featureNames,
+            name=name, keepPoints=keepPoints, keepFeatures=keepFeatures,
+            ignoreNonNumericalFeatures=ignoreNonNumericalFeatures, inputSeparator=inputSeparator,
             treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith)
         return ret
     # no other allowed inputs
