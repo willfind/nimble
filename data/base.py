@@ -111,7 +111,7 @@ class Base(object):
 
         name: the name to be associated with this object.
 
-        pathes: a tuple, where the first entry is taken to be the string
+        paths: a tuple, where the first entry is taken to be the string
         representing the absolute path to the source file of the data and
         the second entry is taken to be the relative path. Both may be
         None if these values are to be unspecified.
@@ -182,7 +182,7 @@ class Base(object):
         if paths[0] is not None and not isinstance(paths[0], six.string_types):
             raise ArgumentException(
                 "paths[0] must be None or an absolute path to the file from which the data originates")
-        if paths[0] is not None and not os.path.isabs(paths[0]):
+        if paths[0] is not None and not os.path.isabs(paths[0]) and not paths[0].startswith('http'):
             raise ArgumentException("paths[0] must be an absolute path")
         self._absPath = paths[0]
 
@@ -242,6 +242,8 @@ class Base(object):
     def _getPath(self):
         return self.absolutePath
 
+    path = property(_getPath, doc="The path to the file this data originated from")
+
     def _pointNamesCreated(self):
         """
         Returns True if point default names have been created/assigned
@@ -263,8 +265,6 @@ class Base(object):
             return False
         else:
             return True
-
-    path = property(_getPath, doc="The path to the file this data originated from")
 
     ########################
     # Low Level Operations #
@@ -321,7 +321,7 @@ class Base(object):
         if self.features == 0:
             raise ArgumentException("Cannot set any feature names; this object has no features ")
         if self.featureNames is None:
-            self._setAllDefault('feature') 
+            self._setAllDefault('feature')
         self._setName_implementation(oldIdentifier, newName, 'feature', False)
 
 
@@ -409,10 +409,10 @@ class Base(object):
             self._setAllDefault('point')
         return self.pointNames[name]
 
-    def getPointIndices(self, names): 
-        if not self._pointNamesCreated(): 
-            self._setAllDefault('point') 
-        return [self.pointNames[n] for n in names] 
+    def getPointIndices(self, names):
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        return [self.pointNames[n] for n in names]
 
     def hasPointName(self, name):
         try:
@@ -431,11 +431,11 @@ class Base(object):
             self._setAllDefault('feature')
         return self.featureNames[name]
 
-    def getFeatureIndices(self, names): 
-        if not self._featureNamesCreated(): 
-            self._setAllDefault('feature') 
-        return [self.featureNames[n] for n in names] 
-            
+    def getFeatureIndices(self, names):
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
+        return [self.featureNames[n] for n in names]
+
     def hasFeatureName(self, name):
         try:
             self.getFeatureIndex(name)
@@ -1030,54 +1030,48 @@ class Base(object):
         return True
 
 
-    def shufflePoints(self, indices=None):
+    def shufflePoints(self):
         """
         Permute the indexing of the points so they are in a random order. Note: this relies on
         python's random.shuffle() so may not be sufficiently random for large number of points.
-        See shuffle()'s documentation. None is always returned.
+        See shuffle()'s documentation.
 
         """
-        if indices is None:
-            indices = list(range(0, self.points))
-            pythonRandom.shuffle(indices)
-        else:
-            if len(indices) != self.points:
-                raise ArgumentException(
-                    "If indices are supplied, it must be a list with all and only valid point indices")
-            for value in indices:
-                if value < 0 or value > self.points:
-                    raise ArgumentException("A value in indices is out of bounds of the valid range of points")
-
-        def permuter(pView):
-            return indices[self.getPointIndex(pView.getPointName(0))]
-
-        # permuter.permuter = True
-        # permuter.indices = indices
-        self.sortPoints(sortHelper=permuter)
+        return self._genericShuffleFrontend('point')
 
 
-    def shuffleFeatures(self, indices=None):
+    def shuffleFeatures(self):
         """
         Permute the indexing of the features so they are in a random order. Note: this relies on
         python's random.shuffle() so may not be sufficiently random for large number of features.
-        See shuffle()'s documentation. None is always returned.
+        See shuffle()'s documentation.
 
         """
-        if indices is None:
-            indices = list(range(0, self.features))
-            pythonRandom.shuffle(indices)
+        return self._genericShuffleFrontend('feature')
+
+
+    def _genericShuffleFrontend(self, axis):
+        """
+        Generic function for shufflePoints and shuffleFeatures. Note: this relies on
+        python's random.shuffle() so may not be sufficiently random for large number of features.
+        See shuffle()'s documentation.
+
+        """
+        if axis == 'point':
+            values = self.points
+            sorter = self.sortPoints
+            def permuter(pView):
+                return indices[self.getPointIndex(pView.getPointName(0))]
         else:
-            if len(indices) != self.features:
-                raise ArgumentException(
-                    "If indices are supplied, it must be a list with all and only valid features indices")
-            for value in indices:
-                if value < 0 or value > self.features:
-                    raise ArgumentException("A value in indices is out of bounds of the valid range of features")
+            values = self.features
+            sorter = self.sortFeatures
+            def permuter(fView):
+                return indices[self.getFeatureIndex(fView.getFeatureName(0))]
 
-        def permuter(fView):
-            return indices[self.getFeatureIndex(fView.getFeatureName(0))]
+        indices = list(range(values))
+        pythonRandom.shuffle(indices)
 
-        self.sortFeatures(sortHelper=permuter)
+        sorter(sortHelper=permuter)
 
 
     def copy(self):
@@ -2486,50 +2480,88 @@ class Base(object):
             self.referenceDataFrom(newObj)
 
 
+
     def sortPoints(self, sortBy=None, sortHelper=None):
         """
-        Modify this object so that the points are sorted in place, where sortBy may
-        indicate the feature to sort by or None if the entire point is to be taken as a key,
-        sortHelper may either be comparator, a scoring function, or None to indicate the natural
-        ordering. None is always returned.
+        Modify this object so that the points are sorted in place.
+
+        sortBy: may indicate the feature to sort by or None if the entire point
+        is to be taken as a key
+
+        sortHelper: either an iterable, list-like object of identifiers (names
+        and/or indices), a comparator or a scoring function, or None to indicate
+        the natural ordering
+
         """
-        # its already sorted in these cases
-        if self.features == 0 or self.points == 0 or self.points == 1:
-            return
-        if sortBy is not None and sortHelper is not None:
-            raise ArgumentException("Cannot specify a feature to sort by and a helper function")
-        if sortBy is None and sortHelper is None:
-            raise ArgumentException("Either sortBy or sortHelper must not be None")
+        self._genericSortFrontend('point', sortBy, sortHelper)
 
-        if sortBy is not None and isinstance(sortBy, six.string_types):
-            sortBy = self._getFeatureIndex(sortBy)
-
-        newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
-        self.setPointNames(newPointNameOrder)
-
-        self.validate()
 
     def sortFeatures(self, sortBy=None, sortHelper=None):
         """
-        Modify this object so that the features are sorted in place, where sortBy may
-        indicate the feature to sort by or None if the entire point is to be taken as a key,
-        sortHelper may either be comparator, a scoring function, or None to indicate the natural
-        ordering.  None is always returned.
+        Modify this object so that the features are sorted in place.
+
+        sortBy: indicates the point to sort by or None if the entire point
+        is to be taken as a key
+
+        sortHelper: either an iterable, list-like object of identifiers (names
+        and/or indices), a comparator or a scoring function, or None to indicate
+        the natural ordering
 
         """
-        # its already sorted in these cases
-        if self.features == 0 or self.points == 0 or self.features == 1:
-            return
+        self._genericSortFrontend('feature', sortBy, sortHelper)
+
+
+    def _genericSortFrontend(self, axis, sortBy, sortHelper):
+        """Generic sorting function for SortPoints and SortFeatures"""
         if sortBy is not None and sortHelper is not None:
             raise ArgumentException("Cannot specify a feature to sort by and a helper function")
         if sortBy is None and sortHelper is None:
             raise ArgumentException("Either sortBy or sortHelper must not be None")
 
-        if sortBy is not None and isinstance(sortBy, six.string_types):
-            sortBy = self._getPointIndex(sortBy)
+        if axis == 'point':
+            otherAxis = 'feature'
+            axisCount = self.points
+            otherCount = self.features
+            sort_implementation = self._sortPoints_implementation
+            setNames = self.setPointNames
+            def permuterFactory(permIndices):
+                def permuter(pView):
+                    return permIndices[self.getPointIndex(pView.getPointName(0))]
+                return permuter
+        else:
+            otherAxis = 'point'
+            axisCount = self.features
+            otherCount = self.points
+            sort_implementation = self._sortFeatures_implementation
+            setNames = self.setFeatureNames
+            def permuterFactory(permIndices):
+                def permuter(fView):
+                    return permIndices[self.getFeatureIndex(fView.getFeatureName(0))]
+                return permuter
 
-        newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
-        self.setFeatureNames(newFeatureNameOrder)
+        if sortBy is not None and isinstance(sortBy, six.string_types):
+            sortBy = self._getIndex(sortBy, otherAxis)
+
+        if sortHelper is not None and not hasattr(sortHelper, '__call__'):
+            indices = self._constructIndicesList(axis, sortHelper)
+            if len(indices) != axisCount:
+                msg = "This object contains {0} {1}s, ".format(axisCount, axis)
+                msg += "but sortHelper has {0} identifiers".format(len(indices))
+                raise ArgumentException(msg)
+            if len(indices) != len(set(indices)):
+                msg = "This object contains {0} {1}s, ".format(axisCount, axis)
+                msg += "but sortHelper has {0} ".format(len(set(indices)))
+                msg += "unique identifiers"
+                raise ArgumentException(msg)
+
+            sortHelper = permuterFactory(indices)
+
+        # its already sorted in these cases
+        if otherCount == 0 or axisCount == 0 or axisCount == 1:
+            return
+
+        newNameOrder = sort_implementation(sortBy, sortHelper)
+        setNames(newNameOrder)
 
         self.validate()
 
@@ -2705,7 +2737,7 @@ class Base(object):
 
 
     def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
-        """Implements retainPoints or retainFeatures based on the axis. The complements
+        """Generic retaining function for retainPoints or retainFeatures. The complements
         of toRetain are identified to use the extract backend, this is done within this
         implementation except for functions which are complemented within the next helper
         function
@@ -2715,13 +2747,13 @@ class Base(object):
             getNames = self.getPointNames
             getIndex = self._getPointIndex
             values = self.points
-            shuffleValues = self.shufflePoints
+            sortValues = self.sortPoints
         else:
             hasName = self.hasFeatureName
             getNames = self.getFeatureNames
             getIndex = self._getFeatureIndex
             values = self.features
-            shuffleValues = self.shuffleFeatures
+            sortValues = self.sortFeatures
 
         # extract points not in toRetain
         if toRetain is not None:
@@ -2743,7 +2775,7 @@ class Base(object):
                 indices = [None for _ in range(values)]
                 for idx, value in enumerate(reindex):
                     indices[value] = idx
-                shuffleValues(indices)
+                sortValues(sortHelper=indices)
                 # extract any values after the toRetain values
                 extractValues = range(len(toRetain), values)
                 toExtract = list(extractValues)
@@ -2789,7 +2821,7 @@ class Base(object):
         if randomize:
             indices = list(range(0, values))
             pythonRandom.shuffle(indices)
-            shuffleValues(indices)
+            sortValues(sortHelper=indices)
 
         if number is not None:
             start = number
@@ -2852,7 +2884,7 @@ class Base(object):
         one may specify 'python list', 'numpy array', or 'numpy matrix', 'scipy csr',
         'scypy csc', 'list of dict' or 'dict of list'.
 
-        """        
+        """
         #make lower case, strip out all white space and periods, except if format
         # is one of the accepted UML data types
         if format not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2984,7 +3016,7 @@ class Base(object):
         else:
             CopyObj.featureNamesInverse = None
             CopyObj.featureNames = None
-        
+
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
 
@@ -3365,7 +3397,7 @@ class Base(object):
         The single feature will have a name of "Flattened".
 
         Raises: ImproperActionException if an axis has length 0
-        
+
         """
         if self.points == 0:
             msg = "Can only flattenToOneFeature when there is one or more points. " \
@@ -3571,7 +3603,7 @@ class Base(object):
                   "it will not be possible to equally divide the elements into the desired " \
                   "number of features."
             raise ArgumentException(msg)
-        
+
         if not self._pointNamesCreated():
             self._setAllDefault('point')
         if not self._featureNamesCreated():
@@ -4654,7 +4686,7 @@ class Base(object):
             raise ArgumentException("The other object cannot be None")
         if not isinstance(other, Base):
             raise ArgumentException("Must provide another representation type to determine pointName difference")
-        
+
         self._defaultNamesGeneration_NamesSetOperations(other, 'point')
 
         return six.viewkeys(self.pointNames) - six.viewkeys(other.pointNames)

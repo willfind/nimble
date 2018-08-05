@@ -487,13 +487,16 @@ def initDataObject(
         if isinstance(path, tuple):
             pathsToPass = path
         else:
-            if os.path.isabs(path):
+            if path.startswith('http'):
+                pathsToPass = (path, None)
+            elif os.path.isabs(path):
                 absPath = path
                 relPath = os.path.relpath(path)
+                pathsToPass = (absPath, relPath)
             else:
                 absPath = os.path.abspath(path)
                 relPath = path
-            pathsToPass = (absPath, relPath)
+                pathsToPass = (absPath, relPath)
 
     initMethod = getattr(UML.data, returnType)
     try:
@@ -2630,7 +2633,7 @@ class _foldIteratorClass():
             else:
                 currTest = copied.extractPoints(self.foldList[self.index])
                 currTrain = copied
-                currTrain.shufflePoints(indices)
+                currTrain.sortPoints(sortHelper=indices)
                 resultsList.append((currTrain, currTest))
         self.index = self.index + 1
         return resultsList

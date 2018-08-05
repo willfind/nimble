@@ -57,9 +57,6 @@ class Sparse(Base):
         else:#data is numpy.matrix
             self.data = scipy.sparse.coo_matrix(data)
 
-        #print('self.data: {}'.format(self.data))
-        #print('type(self.data): {}'.format(type(self.data)))
-
         self._sorted = None
         kwds['shape'] = self.data.shape
         kwds['pointNames'] = pointNames
@@ -946,11 +943,6 @@ class Sparse(Base):
             # must change the row entry before modifying the col entry
             self.data.row[i] = self.data.col[i] / numFeatures
             self.data.col[i] = self.data.col[i] % numFeatures
-        
-        print('self.data.data:\n{}'.format(self.data.data))
-        print('self.data.row:\n{}'.format(self.data.row))
-        print('self.data.col:\n{}'.format(self.data.col))
-        print('newShape:{}'.format(newShape))
 
         self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), newShape)
         self._sorted = 'point'
@@ -1649,7 +1641,6 @@ def removeDuplicatesByConversion(coo_obj):
         return coo_obj.tocsr().tocoo()
         # return coo_obj.tocsc().tocoo()
     except TypeError:
-        print('coo_obj: \n{}'.format(coo_obj))
         raise TypeError('Unable to represent this configuration of data in Sparse object.')
 
 
