@@ -15,6 +15,7 @@ from six.moves import range
 from six.moves import zip
 import sys
 import warnings
+import dill
 
 import __main__ as main
 mplError = None
@@ -2890,6 +2891,20 @@ class Base(object):
         self._nextDefaultValueFeature = other._nextDefaultValueFeature
 
         self.validate()
+
+
+    def save(self, outputFilename):
+        with open(outputFilename, 'wb') as file:
+            dill.dump(self, file)
+        # print('session_' + outputFilename)
+        # print(globals())
+        # dill.dump_session('session_' + outputFilename)
+
+    def load(inputFile):
+        with open(inputFile, 'rb') as file:
+            ret = dill.load(file)
+        # dill.load_session('session_' + inputFile)
+        return ret
 
 
     def copyAs(self, format, rowsArePoints=True, outputAs1D=False):

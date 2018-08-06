@@ -30,6 +30,7 @@ import six
 from six.moves import range
 import warnings
 
+import dill
 
 def captureOutput(toWrap):
     """Decorator which will safefly redirect standard error within the
@@ -860,6 +861,21 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     extraInfo=mergedArguments, numFolds=None)
 
             return ret
+
+        def save(self, outputFilename):
+            with open(outputFilename, 'wb') as file:
+                dill.dump(self, file)
+            print('session_' + outputFilename)
+            print(globals())
+            # dill.dump_session('session_' + outputFilename)
+
+
+        def load(inputFile):
+            with open(inputFile, 'rb') as file:
+                ret = dill.load(file)
+            # dill.load_session('session_' + inputFile)
+            return ret
+
 
         @captureOutput
         def retrain(self, trainX, trainY=None):

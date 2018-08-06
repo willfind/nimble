@@ -1198,3 +1198,21 @@ def coo_matrixTodense(origTodense):
 if scipy:
     #monkey patch for coo_matrix.todense
     scipy.sparse.coo_matrix.todense = coo_matrixTodense(scipy.sparse.coo_matrix.todense)
+
+
+def save(object, outputFilename):
+    """
+    Save UML Base objects or TrainedLearner Objects.
+    """
+    if isinstance(object, UML.data.Base):
+        object.save(outputFilename)
+    elif isinstance(object, UML.interfaces.universal_interface.UniversalInterface.TrainedLearner):
+        object.save(outputFilename)
+    else:
+        raise ('Objects supported to be save are UML.Base and Trained Learner objects')
+
+
+def load(inputFile):
+    raise NotImplementedError
+#     with open(inputFile, 'rb') as file:
+#     return ret
