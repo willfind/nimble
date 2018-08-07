@@ -2582,7 +2582,7 @@ class Base(object):
                                               number, randomize)
 
         ret.setFeatureNames(self.getFeatureNames())
-        self._adjustCountAndNames(ret, 'point')
+        self._adjustCountAndNames('point', ret)
 
         ret._relPath = self.relativePath
         ret._absPath = self.absolutePath
@@ -2618,7 +2618,7 @@ class Base(object):
                                               number, randomize)
 
         ret.setPointNames(self.getPointNames())
-        self._adjustCountAndNames(ret, 'feature')
+        self._adjustCountAndNames('feature', ret)
 
         ret._relPath = self.relativePath
         ret._absPath = self.absolutePath
@@ -2770,7 +2770,7 @@ class Base(object):
 
             ret = self._genericStructuralFrontend('retain', axis, toExtract, start, end, number,
                                                   False)
-            self._adjustCountAndNames(ret, axis)
+            self._adjustCountAndNames(axis, ret)
             self.validate()
 
         # convert start and end to indexes
@@ -2795,14 +2795,14 @@ class Base(object):
             if start - 1 >= 0:
                 ret = self._genericStructuralFrontend('retain', axis, None, 0, start - 1,
                                                           None, False)
-                self._adjustCountAndNames(ret, axis)
+                self._adjustCountAndNames(axis, ret)
                 self.validate()
         if end is not None:
             # only need to perform if end is not the last value
             if end + 1 <= values - 1:
                 ret = self._genericStructuralFrontend('retain', axis, None, end + 1, values - 1,
                                                           None, False)
-                self._adjustCountAndNames(ret, axis)
+                self._adjustCountAndNames(axis, ret)
                 self.validate()
 
         if randomize:
@@ -2815,7 +2815,7 @@ class Base(object):
             end = values - 1
             ret = self._genericStructuralFrontend('retain', axis, None, start, end,
                                                       None, False)
-            self._adjustCountAndNames(ret, axis)
+            self._adjustCountAndNames(axis, ret)
             self.validate()
 
 
@@ -5463,7 +5463,7 @@ class Base(object):
             raise ArgumentException(msg)
 
 
-    def _adjustCountAndNames(self, other, axis):
+    def _adjustCountAndNames(self, axis, other):
         """
         Adjust the count and names (when names have been generated) for this object,
         removing the names that have been extracted to the other object
