@@ -2551,8 +2551,7 @@ class Base(object):
             return
 
         newNameOrder = sort_implementation(sortBy, sortHelper)
-        if namesCreated:
-            setNames(newNameOrder)
+        setNames(newNameOrder)
 
         self.validate()
 
