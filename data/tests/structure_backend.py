@@ -1773,7 +1773,6 @@ class StructureModifying(DataTestObject):
         assert orig1.isIdentical(orig6)
         assert orig1.isIdentical(orig9)
 
-
     ##############
     # __init__() #
     ##############
@@ -6505,7 +6504,7 @@ class StructureModifying(DataTestObject):
             expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
         else:
             expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
-            expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
+            expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=None)
         toTest.transformEachElement(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)
