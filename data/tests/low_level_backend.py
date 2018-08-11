@@ -1347,12 +1347,13 @@ class LowLevelBackend(object):
 
         toTest._constructIndicesList('point', iter2D)
 
-    #####################
+    ########################
     # inheritBaseDocstring #
-    #####################
+    ########################
 
     def test_inheritBaseDocstring_asClassDecorator(self):
         """test inheritBaseDocstring inherits Base docstrings for methods without docstrings"""
+
         @inheritBaseDocstring
         class InheritDocs(Base):
             """Unique Class Docstring"""
