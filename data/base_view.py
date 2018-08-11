@@ -6,15 +6,10 @@ base class for read only views of data objects.
 
 from __future__ import division
 from __future__ import absolute_import
-from .base import Base
+from .base import Base, inherit_docstring
 from UML.exceptions import ImproperActionException
-
+import inspect
 import copy
-
-# copy the docstring for the function from Base
-def inherit_docstring(func):
-    func.__doc__ = getattr(Base, func.__name__).__doc__
-    return func
 
 # prepend a message that view objects will raise an exception to Base docstring
 def exception_docstring(func):

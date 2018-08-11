@@ -85,6 +85,24 @@ def to2args(f):
 def hashCodeFunc(elementValue, pointNum, featureNum):
     return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
 
+def inherit_docstring(toInherit):
+    """
+    Decorator to copy docstrings from Base for reimplementations. This can be
+    applied to a class or single function. Only functions without docstrings
+    will inherit the Base docstring.
+    """
+    if inspect.isclass(toInherit):
+        writable = toInherit.__dict__
+        for name in writable:
+            if inspect.isfunction(writable[name]) and hasattr(Base, name):
+                func = writable[name]
+                if not func.__doc__ and hasattr(Base, name):
+                    func.__doc__ = getattr(Base, name).__doc__
+    else:
+        toInherit.__doc__ = getattr(Base, toInherit.__name__).__doc__
+    return toInherit
+
+
 class Base(object):
     """
     Class defining important data manipulation operations and giving functionality

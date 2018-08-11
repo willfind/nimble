@@ -25,6 +25,7 @@ import pandas
 from UML import createData
 from UML.data import Base
 from UML.data import available
+from UML.data.base import inherit_docstring
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nose.tools import *
@@ -1345,3 +1346,52 @@ class LowLevelBackend(object):
         iter2D = SimpleIterator([1,'p2'])
 
         toTest._constructIndicesList('point', iter2D)
+
+    #####################
+    # inherit_docstring #
+    #####################
+
+    def test_inherit_docstring_asClassDecorator(self):
+        """test inherit_docstrings inherits Base docstrings for methods without docstrings"""
+        @inherit_docstring
+        class InheritDocs(Base):
+            """Unique Class Docstring"""
+
+            def __init__(self):
+                """Don't Inherit"""
+                pass
+
+            def copy(self):
+                pass
+
+            # these test there are no issues for methods that are not in Base
+            def _notBaseNoDoc(self):
+                pass
+
+            def _notBaseWithDoc(self):
+                """Unique Docstring"""
+                pass
+
+        toTest = InheritDocs()
+
+        assert toTest.__doc__ != Base.__doc__
+        assert toTest.__doc__ == "Unique Class Docstring"
+
+        assert toTest.__init__.__doc__ != Base.__init__.__doc__
+        assert toTest.__init__.__doc__ == "Don't Inherit"
+
+        assert toTest.copy.__doc__ is not None
+        assert toTest.copy.__doc__ == Base.copy.__doc__
+
+        assert toTest._notBaseNoDoc.__doc__ is None
+        assert toTest._notBaseWithDoc.__doc__ == "Unique Docstring"
+
+    def test_inherit_docstring_asFunctionDecorator(self):
+        """test inherit_docstrings inherits Base docstrings"""
+
+        @inherit_docstring
+        def copy(self):
+                pass
+
+        assert copy.__doc__ is not None
+        assert copy.__doc__ == Base.copy.__doc__

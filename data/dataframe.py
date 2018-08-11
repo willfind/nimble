@@ -12,7 +12,7 @@ import numpy
 
 pd = UML.importModule('pandas')
 
-from .base import Base, cmp_to_key
+from .base import Base, inherit_docstring, cmp_to_key
 import numpy as np
 scipy = UML.importModule('scipy.sparse')
 
@@ -22,7 +22,7 @@ import re
 from .base_view import BaseView
 from .dataHelpers import DEFAULT_PREFIX
 
-
+@inherit_docstring
 class DataFrame(Base):
     """
     Class providing implementations of data manipulation operations on data stored
@@ -284,16 +284,16 @@ class DataFrame(Base):
                 self.data.columns = self.getFeatureNames()
                 if includePointNames:
                     outFile.write('point_names')
-            
+
             if includePointNames:
                     self.data.index = self.getPointNames()
 
         self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
-        
+
         if includePointNames:
             self._updateName('point')
         if includeFeatureNames:
-            self._updateName('feature') 
+            self._updateName('feature')
 
     def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
         """

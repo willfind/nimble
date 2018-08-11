@@ -11,7 +11,7 @@ import itertools
 import copy
 
 import UML
-from .base import Base, cmp_to_key
+from .base import Base, inherit_docstring, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import View
 from UML.exceptions import ArgumentException, PackageException
@@ -22,6 +22,7 @@ from six.moves import zip
 from functools import reduce
 scipy = UML.importModule('scipy.io')
 
+@inherit_docstring
 class Matrix(Base):
     """
     Class providing implementations of data manipulation operations on data stored
@@ -52,7 +53,7 @@ class Matrix(Base):
                     self.data = numpy.matrix(data, dtype=numpy.float)
                 except ValueError:
                     self.data = numpy.matrix(data, dtype=object)
-        
+
         kwds['featureNames'] = featureNames
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
@@ -381,7 +382,7 @@ class Matrix(Base):
             return scipy.sparse.csr_matrix(self.data)
 
         return UML.createData('Matrix', self.data)
-        
+
 
 
     def _transformEachPoint_implementation(self, function, points):
