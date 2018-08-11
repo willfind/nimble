@@ -862,11 +862,29 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
             return ret
 
-        def save(self, outputFilename):
-            with open(outputFilename, 'wb') as file:
-                dill.dump(self, file)
-            print('session_' + outputFilename)
-            print(globals())
+        def save(self, outputPath):
+            """
+            Save object to a file.
+
+            outputPath: the location (including file name and extension) where
+                we want to write the output file.
+                
+            If filename extension .umlm is not included in file name it would
+            be added to the output file.
+
+            Uses dill library to serialize it.
+            """
+            extension = '.umlm'
+            if not outputPath.endswith(extension):
+                outputPath = outputPath + extension
+
+            with open(outputPath, 'wb') as file:
+                try:
+                    dill.dump(self, file)
+                except Exception as e:
+                    raise(e)
+            # print('session_' + outputFilename)
+            # print(globals())
             # dill.dump_session('session_' + outputFilename)
 
 

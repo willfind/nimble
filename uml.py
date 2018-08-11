@@ -13,6 +13,7 @@ import os
 import copy
 import six.moves.configparser
 import math
+import dill
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -1175,6 +1176,42 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY, performanceFunction,
     return performance
 
 
+def loadData(inputPath):
+    """
+    Load UML data object.
+
+    inputPath: the location (including file name and extension) where
+        to find file previously produce by UML.data .save().
+
+    Expected file extension '.umld'.
+    """
+    if not inputPath.endswith('.umld'):
+        raise ArgumentException('file extension for a saved UML data object should be .umld')
+    with open(inputPath, 'rb') as file:
+        ret = dill.load(file)
+    if not isinstance(ret, UML.data.Base):
+        raise ArgumentException('File does not contain a UML valid data Object.')
+    return ret
+
+
+def loadLearner(inputPath):
+    """
+    Load UML trainedLearner object.
+
+    inputPath: the location (including file name and extension) where
+        to find file previously produce for a trainedLearner object.
+
+    Expected file extension '.umlm'.
+    """
+    if not inputPath.endswith('.umlm'):
+        raise ArgumentException('File extension for a saved UML model should be .umlm')
+    with open(inputPath, 'rb') as file:
+        ret = dill.load(file)
+    if not isinstance(ret, UML.interfaces.universal_interface.UniversalInterface.TrainedLearner):
+        raise ArgumentException('File does not contain a UML valid trainedLearner Object.')
+    return ret
+
+
 def coo_matrixTodense(origTodense):
     """
     decorator for coo_matrix.todense
@@ -1198,21 +1235,3 @@ def coo_matrixTodense(origTodense):
 if scipy:
     #monkey patch for coo_matrix.todense
     scipy.sparse.coo_matrix.todense = coo_matrixTodense(scipy.sparse.coo_matrix.todense)
-
-
-def save(object, outputFilename):
-    """
-    Save UML Base objects or TrainedLearner Objects.
-    """
-    if isinstance(object, UML.data.Base):
-        object.save(outputFilename)
-    elif isinstance(object, UML.interfaces.universal_interface.UniversalInterface.TrainedLearner):
-        object.save(outputFilename)
-    else:
-        raise ('Objects supported to be save are UML.Base and Trained Learner objects')
-
-
-def load(inputFile):
-    raise NotImplementedError
-#     with open(inputFile, 'rb') as file:
-#     return ret
