@@ -11,7 +11,7 @@ import numbers
 import itertools
 
 import UML
-from .base import Base, inherit_docstring, cmp_to_key
+from .base import Base, inheritBaseDocstring, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import View
 from .dataHelpers import reorderToMatchList
@@ -40,7 +40,7 @@ def isAllowedSingleElement(x):
 
     return
 
-@inherit_docstring
+@inheritBaseDocstring
 class List(Base):
     """
     Class providing implementations of data manipulation operations on data stored

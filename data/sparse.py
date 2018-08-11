@@ -22,7 +22,7 @@ if scipy is not None:
 
 import UML.data
 from . import dataHelpers
-from .base import Base, inherit_docstring, cmp_to_key
+from .base import Base, inheritBaseDocstring, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import View
 
@@ -32,7 +32,7 @@ from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')
 import warnings
 
-@inherit_docstring
+@inheritBaseDocstring
 class Sparse(Base):
 
     def __init__(self, data, pointNames=None, featureNames=None, reuseData=False, elementType=None, **kwds):

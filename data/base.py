@@ -85,7 +85,7 @@ def to2args(f):
 def hashCodeFunc(elementValue, pointNum, featureNum):
     return ((sin(pointNum) + cos(featureNum)) / 2.0) * elementValue
 
-def inherit_docstring(toInherit):
+def inheritBaseDocstring(toInherit):
     """
     Decorator to copy docstrings from Base for reimplementations. This can be
     applied to a class or single function. Only functions without docstrings

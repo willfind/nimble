@@ -25,7 +25,7 @@ import pandas
 from UML import createData
 from UML.data import Base
 from UML.data import available
-from UML.data.base import inherit_docstring
+from UML.data.base import inheritBaseDocstring
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nose.tools import *
@@ -1348,12 +1348,12 @@ class LowLevelBackend(object):
         toTest._constructIndicesList('point', iter2D)
 
     #####################
-    # inherit_docstring #
+    # inheritBaseDocstring #
     #####################
 
-    def test_inherit_docstring_asClassDecorator(self):
-        """test inherit_docstrings inherits Base docstrings for methods without docstrings"""
-        @inherit_docstring
+    def test_inheritBaseDocstring_asClassDecorator(self):
+        """test inheritBaseDocstring inherits Base docstrings for methods without docstrings"""
+        @inheritBaseDocstring
         class InheritDocs(Base):
             """Unique Class Docstring"""
 
@@ -1386,10 +1386,10 @@ class LowLevelBackend(object):
         assert toTest._notBaseNoDoc.__doc__ is None
         assert toTest._notBaseWithDoc.__doc__ == "Unique Docstring"
 
-    def test_inherit_docstring_asFunctionDecorator(self):
-        """test inherit_docstrings inherits Base docstrings"""
+    def test_inheritBaseDocstring_asFunctionDecorator(self):
+        """test inheritBaseDocstring inherits Base docstrings"""
 
-        @inherit_docstring
+        @inheritBaseDocstring
         def copy(self):
                 pass
 
