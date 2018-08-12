@@ -71,6 +71,11 @@ class SciKitLearn(UniversalInterface):
         #				self.newLearners.append(name)
 
         def isLearner(obj):
+            if not inspect.isclass(obj):
+                return False
+            if not issubclass(obj, self.skl.base.BaseEstimator):
+                return False
+
             hasFit = hasattr(obj, 'fit')
             hasPred = hasattr(obj, 'predict')
             hasTrans = hasattr(obj, 'transform')
@@ -109,10 +114,15 @@ class SciKitLearn(UniversalInterface):
     def _listLearnersBackend(self):
         possibilities = self._searcher.allLearners()
 
-        exclude = ['BaseDiscreteNB', 'libsvm', 'GMMHMM', 'GaussianHMM', 'MultinomialHMM',
-                   'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression', 'LogOddsEstimator',
-                   'PriorProbabilityEstimator', 'MeanEstimator', 'TransformerMixin', 'ClusterMixin',
-                   'BaggingClassifier', ]
+        exclude = [
+            'BaseDiscreteNB', 'libsvm', 'GMMHMM', 'GaussianHMM', 'MultinomialHMM',
+            'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression',
+            'LogOddsEstimator', 'PriorProbabilityEstimator', 'MeanEstimator',
+            'BaggingClassifier', 'PatchExtractor', 'DummyClassifier',
+            'CountVectorizer', 'TfidfVectorizer', 'LabelBinarizer',
+            'MultiLabelBinarizer', 'LabelEncoder', 'FeatureHasher',
+            'DictVectorizer',
+            'FeatureAgglomeration', 'LocalOutlierFactor', 'NMF', 'KernelCenterer',]
         ret = []
         for name in possibilities:
             if not name in exclude:
@@ -128,13 +138,21 @@ class SciKitLearn(UniversalInterface):
 
         """
         obj = self.findCallable(name)
-        if hasattr(obj, 'classes_') or hasattr(obj, 'label_') or hasattr(obj, 'labels_'):
+        if issubclass(obj, self.skl.base.ClassifierMixin):
             return 'classification'
-        if "Classifier" in obj.__name__:
-            return 'classification'
-
-        if "Regressor" in obj.__name__:
+        if issubclass(obj, self.skl.base.RegressorMixin):
             return 'regression'
+        if issubclass(obj, self.skl.base.ClusterMixin):
+            return 'cluster'
+        if issubclass(obj, self.skl.base.TransformerMixin):
+            return 'transformation'
+        # if hasattr(obj, 'classes_') or hasattr(obj, 'label_') or hasattr(obj, 'labels_'):
+        #     return 'classification'
+        # if "Classifier" in obj.__name__:
+        #     return 'classification'
+        #
+        # if "Regressor" in obj.__name__:
+        #     return 'regression'
 
         return 'UNKNOWN'
 
@@ -155,7 +173,7 @@ class SciKitLearn(UniversalInterface):
         ret = self._paramQuery(name, None)
         if ret is None:
             return ret
-        (objArgs, v, k, d) = ret
+        (objArgs, d) = ret
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
@@ -197,7 +215,7 @@ class SciKitLearn(UniversalInterface):
         ret = self._paramQuery(name, None)
         if ret is None:
             return ret
-        (objArgs, v, k, d) = ret
+        (objArgs, d) = ret
         ret = {}
         if d is not None:
             for i in range(len(d)):
@@ -231,8 +249,8 @@ class SciKitLearn(UniversalInterface):
         ret = {}
         for stage in toProcess:
             currNames = stage[0]
-            currDefaults = stage[3]
-            if stage[3] is not None:
+            currDefaults = stage[1]
+            if stage[1] is not None:
                 for i in range(len(currDefaults)):
                     key = currNames[-(i + 1)]
                     value = currDefaults[-(i + 1)]
@@ -384,7 +402,11 @@ class SciKitLearn(UniversalInterface):
             fitParams[name] = value
 
         learner = self.findCallable(learnerName)(**initParams)
-        learner.fit(**fitParams)
+        try:
+            learner.fit(**fitParams)
+        except ValueError as ve:
+            # these occur when the learner requires different input data (multi-dimensional, non-negative)
+            raise ArgumentException(str(ve))
         if hasattr(learner, 'decision_function') or hasattr(learner, 'predict_proba'):
             if trainY is not None:
                 labelOrder = numpy.unique(trainY)
@@ -420,6 +442,10 @@ class SciKitLearn(UniversalInterface):
             return self._predict(learner, testX, arguments, customDict)
         elif hasattr(learner, 'transform'):
             return self._transform(learner, testX, arguments, customDict)
+        elif hasattr(learner, 'labels_'):
+            return learner.labels_
+        elif hasattr(learner, 'embedding_'):
+            return learner.embedding_
         else:
             raise TypeError("Cannot apply this learner to data, no predict or transform function")
 
@@ -555,72 +581,77 @@ class SciKitLearn(UniversalInterface):
         if namedModule is None:
             return None
 
-        class InheritedEmptyInit(object):
-            pass
-
-        if type(namedModule) == type(getattr(InheritedEmptyInit, '__init__')):
-            return ([], None, None, None)
-
-        try:
-            (args, v, k, d) = inspect.getargspec(namedModule)
-            (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
-            if 'random_state' in args:
-                index = args.index('random_state')
-                negdex = index - len(args)
-                d[negdex] = UML.randomness.generateSubsidiarySeed()
-            return (args, v, k, d)
-        except TypeError:
-            try:
-                (args, v, k, d) = inspect.getargspec(namedModule.__init__)
-                (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
-                if 'random_state' in args:
-                    index = args.index('random_state')
-                    negdex = index - len(args)
-                    d[negdex] = UML.randomness.generateSubsidiarySeed()
-                return (args, v, k, d)
-            except TypeError:
-                return self._paramQueryHardCoded(name, parent, ignore)
-
-
-    def _paramQueryHardCoded(self, name, parent, ignore):
-        """
-        Returns a list of parameters for in package entities that we have hard coded,
-        under the assumption that it is difficult or impossible to find that data
-        automatically
-
-        """
-        if parent is not None and parent.lower() == 'KernelCenterer'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-        if parent is not None and parent.lower() == 'LabelEncoder'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-        if parent is not None and parent.lower() == 'DummyRegressor'.lower():
-            if name == '__init__':
-            #				ret = (['strategy', 'constant'], None, None, ['mean', None])
-                ret = ([], None, None, [])
-            (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
-        if parent is not None and parent.lower() == 'ZeroEstimator'.lower():
-            if name == '__init__':
-                return ([], None, None, [])
-
-        if parent is not None and parent.lower() == 'GaussianNB'.lower():
-            if name == '__init__':
-                ret = ([], None, None, [])
-            elif name == 'fit':
-                ret = (['X', 'y'], None, None, [])
-            elif name == 'predict':
-                ret = (['X'], None, None, [])
+        if inspect.isclass(namedModule) or name == '__init__':
+            if parent is None:
+                toCall = self.findCallable(name)
             else:
-                return None
+                toCall = self.findCallable(parent)
+            obj = toCall()
+            initDefaults = obj.get_params()
+            initParams = list(initDefaults.keys())
+            initValues = list(initDefaults.values())
+            return (initParams, initValues)
 
-            (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
-            return (newArgs, ret[1], ret[2], newDefaults)
+        (args, v, k, d) = inspect.getargspec(namedModule)
+        (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
 
-        return None
+        # if 'random_state' in args:
+        #     index = args.index('random_state')
+        #     negdex = index - len(args)
+        #     d[negdex] = UML.randomness.generateSubsidiarySeed()
+        return (args, d)
+        # except TypeError:
+        #     try:
+        #         (args, v, k, d) = inspect.getargspec(namedModule.__init__)
+        #         (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+        #         if 'random_state' in args:
+        #             index = args.index('random_state')
+        #             negdex = index - len(args)
+        #             d[negdex] = UML.randomness.generateSubsidiarySeed()
+        #         return (args, d)
+        #     except TypeError:
+        #         return self._paramQueryHardCoded(name, parent, ignore)
+
+    # 
+    # def _paramQueryHardCoded(self, name, parent, ignore):
+    #     """
+    #     Returns a list of parameters for in package entities that we have hard coded,
+    #     under the assumption that it is difficult or impossible to find that data
+    #     automatically
+    #
+    #     """
+    #     if parent is not None and parent.lower() == 'KernelCenterer'.lower():
+    #         if name == '__init__':
+    #             ret = ([], None, None, [])
+    #         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+    #         return (newArgs, ret[1], ret[2], newDefaults)
+    #     if parent is not None and parent.lower() == 'LabelEncoder'.lower():
+    #         if name == '__init__':
+    #             ret = ([], None, None, [])
+    #         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+    #         return (newArgs, ret[1], ret[2], newDefaults)
+    #     if parent is not None and parent.lower() == 'DummyRegressor'.lower():
+    #         if name == '__init__':
+    #         #				ret = (['strategy', 'constant'], None, None, ['mean', None])
+    #             ret = ([], None, None, [])
+    #         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+    #         return (newArgs, ret[1], ret[2], newDefaults)
+    #     if parent is not None and parent.lower() == 'ZeroEstimator'.lower():
+    #         if name == '__init__':
+    #             return ([], None, None, [])
+    #
+    #     if parent is not None and parent.lower() == 'GaussianNB'.lower():
+    #         if name == '__init__':
+    #             ret = ([], None, None, [])
+    #         elif name == 'fit':
+    #             ret = (['X', 'y'], None, None, [])
+    #         elif name == 'predict':
+    #             ret = (['X'], None, None, [])
+    #         else:
+    #             return None
+    #
+    #         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
+    #         return (newArgs, ret[1], ret[2], newDefaults)
+    #
+    #     return None
 

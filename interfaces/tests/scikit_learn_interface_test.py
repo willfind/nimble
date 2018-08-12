@@ -1,31 +1,8 @@
 """
 Unit tests for scikit_learn_interface.py
 
-129/153 learners tested
-
-17/153 untested due to various errors
-    # sklearn.feature_extraction
-    ['DictVectorizer', 'PatchExtractor', 'CountVectorizer', 'TfidfTransformer',
-     'TfidfVectorizer', 'FeatureHasher']
-
-    # sklearn.preprocessing
-    ['LabelBinarizer', 'LabelEncoder', 'StandardScaler',
-     'KernelCenterer', 'MultiLabelBinarizer',]
-
-    # sklearn.decomposition
-    ['RandomizedPCA', 'SparsePCA', 'MiniBatchSparsePCA',]
-
-    # sklearn.dummy
-    ['DummyClassifier']
-
-7/153 untest due to not having a predict or transform method
-    # sklearn.manifold
-    ['MDS', 'SpectralEmbedding', 'TSNE']
-    # sklearn.cluster
-    ['AgglomerativeClustering', 'DBSCAN', 'FeatureAgglomeration', 'SpectralClustering']
-    # sklearn.neighbors
-    ['LocalOutlierFactor']
-
+130 learners tested
+6 additional learners excluded in scikit_learn_interface.py due to unsolved errors
 """
 
 from __future__ import absolute_import
@@ -295,90 +272,79 @@ def testSciKitLearnListLearners():
                         assert key in pSet
 
 
+def getLearnersByType(lType, ignore=[]):
+    learners = UML.listLearners(packageName)
+    typeMatch = []
+    for learner in learners:
+        learnerType = UML.learnerType(toCall(learner))
+        if lType == learnerType and learner not in ignore:
+            typeMatch.append(learner)
+    return typeMatch
+
+
 @attr('slow')
-def testSciKitLearnPredictAndTransformLearners():
-    """ Test that output from UML.trainAndApply match output from scikitlearn
-    learners directly"""
+def testSciKitLearnClassificationLearners():
+    data = generateClassificationData(2, 20, 10)
+    # some classification learners require non-negative data
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    testX = abs(data[1][0])
+    Xtrain = trainX.data
+    Ytrain = trainY.data
+    Xtest = testX.data
 
-    skl = SciKitLearn()
-
-    ((rTrainX, rTrainY) , (rTestX, rTestY)) = generateRegressionData(2, 20, 10)
-    ((cTrainX, cTrainY) , (cTestX, cTestY)) = generateClassificationData(2, 20, 10)
-    # some classification learners cannot handle negative data
-    cTrainX, cTrainY, cTestX, cTestY = abs(cTrainX), abs(cTrainY), abs(cTestX), abs(cTestY)
-
-    learners = UML.listLearners('scikitlearn')
-
-    exclude = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso',
-               'MultiTaskLassoCV', 'MiniBatchSparsePCA', 'RandomizedPCA',
-               'SparsePCA', 'PatchExtractor', 'FeatureHasher', 'KernelCenterer',
-               'StandardScaler', 'LabelBinarizer', 'LabelEncoder',
-               'DummyClassifier', 'DictVectorizer', 'CountVectorizer',
-               'TfidfVectorizer', 'MultiLabelBinarizer', 'SparseRandomProjection',
-               'GaussianRandomProjection', 'LinearDiscriminantAnalysis',
-               'Normalizer', 'ZeroEstimator', 'ScaledLogOddsEstimator']
+    learners = getLearnersByType('classification')
 
     for learner in learners:
-        if learner not in exclude:
-            sklObj = skl.findCallable(learner)
-            fullName = 'scikitlearn.' + learner
-            lType = UML.learnerType(fullName)
-            if lType == 'regression':
-                trainXObj = rTrainX
-                trainYObj = rTrainY
-                testXObj = rTestX
-                trainX = rTrainX.data
-                trainY = rTrainY.data
-                testX = rTestX.data
-            else:
-                trainXObj = cTrainX
-                trainYObj = cTrainY
-                testXObj = cTestX
-                trainX = cTrainX.data
-                trainY = cTrainY.data
-                testX = cTestX.data
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+        sciKitLearnObj.fit(Xtrain, Ytrain)
+        predSKL = sciKitLearnObj.predict(Xtest)
+        predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
+        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
 
-            try:
-                args, _, _, _  = inspect.getargspec(sklObj)
-            except TypeError:
-                args, _, _, _ = inspect.getargspec(sklObj.__init__)
-            uml_kwds = {}
-            uml_kwds['trainX'] = trainXObj
-            uml_kwds['trainY'] = trainYObj
-            if 'random_state' in args:
-                seed = UML.randomness.generateSubsidiarySeed()
-                sciKitLearnObj = sklObj(random_state=seed)
-                uml_kwds['arguments'] = {'random_state':seed}
-            else:
-                sciKitLearnObj = sklObj()
-            sciKitLearnObj.fit(trainX, trainY)
-
-            if hasattr(sklObj, 'predict'):
-                uml_kwds['testX'] = testXObj
-                predictionUML = UML.trainAndApply(toCall(learner), **uml_kwds)
-                predictionSciKit = sciKitLearnObj.predict(testX)
-                predictionSciKit = UML.createData('Matrix', predictionSciKit.reshape(-1,1))
-
-                assert predictionUML is not None
-                assert predictionUML.isIdentical(predictionSciKit)
-
-            elif hasattr(sklObj, 'transform'):
-                transArgs, _, _, _ = inspect.getargspec(sklObj.transform)
-                skl_kwds = {}
-                if 'X' in transArgs:
-                    skl_kwds['X'] = trainX
-                if 'y' in transArgs:
-                    skl_kwds['y'] = trainY
-
-                transformUML = UML.trainAndApply(toCall(learner), **uml_kwds)
-                transformSciKit = sciKitLearnObj.transform(**skl_kwds)
-                transformSciKit = UML.createData('Matrix', transformSciKit)
-
-                assert transformUML is not None
-                assert transformUML.isIdentical(transformSciKit)
+        assert predUML.isApproximatelyEqual(predSKL)
 
 
-def testSciKitLearnMultiTaskLearners():
+@attr('slow')
+def testSciKitLearnRegressionLearners():
+    data = generateRegressionData(2, 20, 10)
+    trainX = data[0][0]
+    trainY = data[0][1]
+    testX = data[1][0]
+    Xtrain = trainX.data
+    Ytrain = trainY.data
+    Xtest = testX.data
+
+    ignore = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV',   # special cases, tested elsewhere
+              'MultiTaskLasso', 'MultiTaskLassoCV',]
+    learners = getLearnersByType('regression', ignore)
+
+    for learner in learners:
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+        sciKitLearnObj.fit(Xtrain, Ytrain)
+        predSKL = sciKitLearnObj.predict(Xtest)
+        predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
+        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
+
+        assert predUML.isApproximatelyEqual(predSKL)
+
+
+@attr('slow')
+def testSciKitLearnMultiTaskRegressionLearners():
     """ Test that predictions for from UML.trainAndApply match predictions from scikitlearn
     multitask learners with predict method"""
 
@@ -404,6 +370,173 @@ def testSciKitLearnMultiTaskLearners():
         predictionSciKit = UML.createData('Matrix', predictionSciKit)
 
         assert predictionUML.isIdentical(predictionSciKit)
+
+
+@attr('slow')
+def testSciKitLearnClusterLearners():
+    data = generateClusteredPoints(3, 60, 8)
+    data = data[0]
+    data.shufflePoints()
+    trainX = data[:50,:]
+    testX = data[50:,:]
+    Xtrain = trainX.data
+    Xtest = testX.data
+
+    learners = getLearnersByType('cluster')
+
+    for learner in learners:
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+        try:
+            sciKitLearnObj.fit(Xtrain)
+            predSKL = sciKitLearnObj.predict(Xtest)
+        except AttributeError:
+            predSKL = sciKitLearnObj.fit_predict(Xtrain, Xtest)
+        predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
+        predUML = UML.trainAndApply(toCall(learner), trainX, testX=testX, arguments=arguments)
+
+        assert predUML.isIdentical(predSKL)
+
+
+@attr('slow')
+def testSciKitLearnOtherPredictLearners():
+    data = generateClassificationData(2, 20, 10)
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    testX = abs(data[1][0])
+    Xtrain = trainX.data
+    Ytrain = trainY.data
+    Xtest = testX.data
+
+    ignore = ['TSNE', 'MDS', 'SpectralEmbedding', 'RandomTreesEmbedding',] # special cases, tested elsewhere
+    learners = getLearnersByType('other', ignore)
+
+    for learner in learners:
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+
+        sciKitLearnObj.fit(Xtrain, Ytrain)
+        predSKL = sciKitLearnObj.predict(Xtest)
+        predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
+        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
+
+        assert predUML.isApproximatelyEqual(predSKL)
+
+
+@attr('slow')
+def testSciKitLearnTransformationLearners():
+
+    data = generateClassificationData(2, 20, 10)
+    trainX = abs(data[0][0])
+    trainY = abs(data[0][1])
+    Xtrain = trainX.data
+    Ytrain = trainY.data
+
+    ignore = ['GaussianRandomProjection', 'SparseRandomProjection',   # special cases, tested elsewhere
+              'MiniBatchSparsePCA', 'SparsePCA',]
+    learners = getLearnersByType('transformation', ignore)
+
+    for learner in learners:
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+        sciKitLearnObj.fit(Xtrain, Ytrain)
+        predSKL = sciKitLearnObj.transform(Xtrain)
+        predSKL = UML.createData('Matrix', predSKL)
+        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, arguments=arguments)
+
+        assert predUML.isApproximatelyEqual(predSKL)
+
+
+@attr('slow')
+def testSciKitLearnProjectionTransformation():
+    trainX = UML.createRandomData('Sparse', 10, 10000, sparsity=0.98)
+    Xtrain = trainX.data
+
+    learners = ['GaussianRandomProjection', 'SparseRandomProjection',]
+
+    for learner in learners:
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+        sciKitLearnObj.fit(Xtrain)
+        predSKL = sciKitLearnObj.transform(Xtrain)
+        predSKL = UML.createData('Matrix', predSKL)
+        predUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
+
+        assert predUML.isApproximatelyEqual(predSKL)
+
+@attr('slow')
+def testSciKitLearnPCATransformationWithErrors():
+    # do not accept sparse matrices
+    trainX = UML.createRandomData('Matrix', 100, 10, sparsity=0.9)
+    Xtrain = trainX.data
+
+    learners = ['MiniBatchSparsePCA', 'SparsePCA',]
+
+    for learner in learners:
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        #TODO explore why ridge_alpha defaults to 'deprecated'
+        arguments['ridge_alpha'] = 0.1
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+        sciKitLearnObj.fit(Xtrain)
+        predSKL = sciKitLearnObj.transform(Xtrain)
+        predSKL = UML.createData('Matrix', predSKL)
+        predUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
+
+        assert predUML.isApproximatelyEqual(predSKL)
+
+@attr('slow')
+def testSciKitLearnOtherTransformLearners():
+    data = generateClassificationData(2, 20, 10)
+    trainX = abs(data[0][0])
+    Xtrain = trainX.data
+
+    learners = ['TSNE', 'MDS', 'SpectralEmbedding', 'RandomTreesEmbedding',]
+
+    for learner in learners:
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+
+        predSKL = sciKitLearnObj.fit_transform(Xtrain)
+        predSKL = UML.createData('Matrix', predSKL)
+        predUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
+
+        assert predUML.isApproximatelyEqual(predSKL)
 
 
 def testCustomRidgeRegressionCompare():
@@ -463,13 +596,13 @@ def testGetAttributesCallable():
     toTest = allLearners
 
     for learner in toTest:
-    #		print learner
         fullName = 'scikitlearn.' + learner
         lType = UML.learnerType(fullName)
         if lType == 'classification':
             try:
                 tl = UML.train(fullName, cTrainX, cTrainY)
-            # this is meant to safely bypass those learners that have required arguments
+            # this is meant to safely bypass those learners that have required
+            # arguments or require unique data
             except ArgumentException as ae:
                 pass
             # this is generally how shogun explodes
@@ -479,7 +612,38 @@ def testGetAttributesCallable():
         if lType == 'regression':
             try:
                 tl = UML.train(fullName, rTrainX, rTrainY)
-            # this is meant to safely bypass those learners that have required arguments
+            # this is meant to safely bypass those learners that have required
+            # arguments or require unique data
+            except ArgumentException as ae:
+                pass
+            except SystemError as se:
+                pass
+            tl.getAttributes()
+        if lType == 'transformation':
+            try:
+                tl = UML.train(fullName, cTrainX, cTrainY)
+            # this is meant to safely bypass those learners that have required
+            # arguments or require unique data
+            except ArgumentException as ae:
+                pass
+            except SystemError as se:
+                pass
+            tl.getAttributes()
+        if lType == 'cluster':
+            try:
+                tl = UML.train(fullName, cTrainX, cTrainY)
+            # this is meant to safely bypass those learners that have required
+            # arguments or require unique data
+            except ArgumentException as ae:
+                pass
+            except SystemError as se:
+                pass
+            tl.getAttributes()
+        if lType == 'other':
+            try:
+                tl = UML.train(fullName, cTrainX, cTrainY)
+            # this is meant to safely bypass those learners that have required
+            # arguments or require unique data
             except ArgumentException as ae:
                 pass
             except SystemError as se:
