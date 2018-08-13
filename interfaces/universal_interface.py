@@ -30,7 +30,7 @@ import six
 from six.moves import range
 import warnings
 
-import dill
+import cloudpickle
 
 def captureOutput(toWrap):
     """Decorator which will safefly redirect standard error within the
@@ -880,20 +880,12 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
             with open(outputPath, 'wb') as file:
                 try:
-                    dill.dump(self, file)
+                    cloudpickle.dump(self, file)
                 except Exception as e:
                     raise(e)
             # print('session_' + outputFilename)
             # print(globals())
             # dill.dump_session('session_' + outputFilename)
-
-
-        def load(inputFile):
-            with open(inputFile, 'rb') as file:
-                ret = dill.load(file)
-            # dill.load_session('session_' + inputFile)
-            return ret
-
 
         @captureOutput
         def retrain(self, trainX, trainY=None):
