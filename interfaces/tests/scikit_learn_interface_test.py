@@ -489,7 +489,7 @@ def testSciKitLearnProjectionTransformation():
         assert predUML.isApproximatelyEqual(predSKL)
 
 @attr('slow')
-def testSciKitLearnPCATransformationWithErrors():
+def testSciKitLearnSparsePCATransformation():
     # do not accept sparse matrices
     trainX = UML.createRandomData('Matrix', 100, 10, sparsity=0.9)
     Xtrain = trainX.data

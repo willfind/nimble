@@ -47,6 +47,10 @@ class SciKitLearn(UniversalInterface):
 
         self.skl = importlib.import_module('sklearn')
 
+        version = self.skl.__version__
+        self._version = version
+        self._versionList = list(map(int,version.split('.')))
+
         #		oldList = self._listLearnersBackend()
 
         # __all__ has been known to not have some subpackages that we want
@@ -383,6 +387,10 @@ class SciKitLearn(UniversalInterface):
         TAKES name of learner, transformed arguments
         RETURNS an in package object to be wrapped by a TrainedLearner object
         """
+        if self._versionList[1] < 19:
+            msg = "UML was tested using sklearn 0.19.1 and above, we cannot be "
+            msg += "sure of success for version {0}".format(self._version)
+            warnings.warn(msg)
         # get parameter names
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
@@ -595,63 +603,4 @@ class SciKitLearn(UniversalInterface):
         (args, v, k, d) = inspect.getargspec(namedModule)
         (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
 
-        # if 'random_state' in args:
-        #     index = args.index('random_state')
-        #     negdex = index - len(args)
-        #     d[negdex] = UML.randomness.generateSubsidiarySeed()
         return (args, d)
-        # except TypeError:
-        #     try:
-        #         (args, v, k, d) = inspect.getargspec(namedModule.__init__)
-        #         (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
-        #         if 'random_state' in args:
-        #             index = args.index('random_state')
-        #             negdex = index - len(args)
-        #             d[negdex] = UML.randomness.generateSubsidiarySeed()
-        #         return (args, d)
-        #     except TypeError:
-        #         return self._paramQueryHardCoded(name, parent, ignore)
-
-    # 
-    # def _paramQueryHardCoded(self, name, parent, ignore):
-    #     """
-    #     Returns a list of parameters for in package entities that we have hard coded,
-    #     under the assumption that it is difficult or impossible to find that data
-    #     automatically
-    #
-    #     """
-    #     if parent is not None and parent.lower() == 'KernelCenterer'.lower():
-    #         if name == '__init__':
-    #             ret = ([], None, None, [])
-    #         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
-    #         return (newArgs, ret[1], ret[2], newDefaults)
-    #     if parent is not None and parent.lower() == 'LabelEncoder'.lower():
-    #         if name == '__init__':
-    #             ret = ([], None, None, [])
-    #         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
-    #         return (newArgs, ret[1], ret[2], newDefaults)
-    #     if parent is not None and parent.lower() == 'DummyRegressor'.lower():
-    #         if name == '__init__':
-    #         #				ret = (['strategy', 'constant'], None, None, ['mean', None])
-    #             ret = ([], None, None, [])
-    #         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
-    #         return (newArgs, ret[1], ret[2], newDefaults)
-    #     if parent is not None and parent.lower() == 'ZeroEstimator'.lower():
-    #         if name == '__init__':
-    #             return ([], None, None, [])
-    #
-    #     if parent is not None and parent.lower() == 'GaussianNB'.lower():
-    #         if name == '__init__':
-    #             ret = ([], None, None, [])
-    #         elif name == 'fit':
-    #             ret = (['X', 'y'], None, None, [])
-    #         elif name == 'predict':
-    #             ret = (['X'], None, None, [])
-    #         else:
-    #             return None
-    #
-    #         (newArgs, newDefaults) = self._removeFromTailMatchedLists(ret[0], ret[3], ignore)
-    #         return (newArgs, ret[1], ret[2], newDefaults)
-    #
-    #     return None
-
