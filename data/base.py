@@ -1060,18 +1060,14 @@ class Base(object):
         if axis == 'point':
             values = self.points
             sorter = self.sortPoints
-            def permuter(pView):
-                return indices[self.getPointIndex(pView.getPointName(0))]
         else:
             values = self.features
             sorter = self.sortFeatures
-            def permuter(fView):
-                return indices[self.getFeatureIndex(fView.getFeatureName(0))]
 
         indices = list(range(values))
         pythonRandom.shuffle(indices)
 
-        sorter(sortHelper=permuter)
+        sorter(sortHelper=indices)
 
 
     def copy(self):
@@ -2523,21 +2519,15 @@ class Base(object):
             axisCount = self.points
             otherCount = self.features
             sort_implementation = self._sortPoints_implementation
+            namesCreated = self._pointNamesCreated()
             setNames = self.setPointNames
-            def permuterFactory(permIndices):
-                def permuter(pView):
-                    return permIndices[self.getPointIndex(pView.getPointName(0))]
-                return permuter
         else:
             otherAxis = 'point'
             axisCount = self.features
             otherCount = self.points
             sort_implementation = self._sortFeatures_implementation
+            namesCreated = self._featureNamesCreated()
             setNames = self.setFeatureNames
-            def permuterFactory(permIndices):
-                def permuter(fView):
-                    return permIndices[self.getFeatureIndex(fView.getFeatureName(0))]
-                return permuter
 
         if sortBy is not None and isinstance(sortBy, six.string_types):
             sortBy = self._getIndex(sortBy, otherAxis)
@@ -2554,7 +2544,7 @@ class Base(object):
                 msg += "unique identifiers"
                 raise ArgumentException(msg)
 
-            sortHelper = permuterFactory(indices)
+            sortHelper = indices
 
         # its already sorted in these cases
         if otherCount == 0 or axisCount == 0 or axisCount == 1:
@@ -2591,15 +2581,14 @@ class Base(object):
         ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
                                               number, randomize)
 
-        self._pointCount -= ret.points
         ret.setFeatureNames(self.getFeatureNames())
-        for key in ret.getPointNames():
-            self._removePointNameAndShift(key)
+        self._adjustCountAndNames('point', ret)
 
         ret._relPath = self.relativePath
         ret._absPath = self.absolutePath
 
         self.validate()
+
         return ret
 
 
@@ -2628,16 +2617,14 @@ class Base(object):
         ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
                                               number, randomize)
 
-        self._featureCount -= ret.features
-        if ret.features != 0:
-            ret.setPointNames(self.getPointNames())
-        for key in ret.getFeatureNames():
-            self._removeFeatureNameAndShift(key)
+        ret.setPointNames(self.getPointNames())
+        self._adjustCountAndNames('feature', ret)
 
         ret._relPath = self.relativePath
         ret._absPath = self.absolutePath
 
         self.validate()
+
         return ret
 
     def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False):
@@ -2768,14 +2755,11 @@ class Base(object):
                 toExtract = [value for value in range(values) if value != toRetain]
 
             elif isinstance(toRetain, list):
-                toRetain = [self._getIndex(value, axis) for value in toRetain]
+                toRetain = self._constructIndicesList(axis, toRetain)
                 toExtract = [value for value in range(values) if value not in toRetain]
                 # change the index order of the values to match toRetain
                 reindex = toRetain + toExtract
-                indices = [None for _ in range(values)]
-                for idx, value in enumerate(reindex):
-                    indices[value] = idx
-                sortValues(sortHelper=indices)
+                sortValues(sortHelper=reindex)
                 # extract any values after the toRetain values
                 extractValues = range(len(toRetain), values)
                 toExtract = list(extractValues)
@@ -2786,7 +2770,8 @@ class Base(object):
 
             ret = self._genericStructuralFrontend('retain', axis, toExtract, start, end, number,
                                                   False)
-            self._adjustNamesAndValidate(ret, axis)
+            self._adjustCountAndNames(axis, ret)
+            self.validate()
 
         # convert start and end to indexes
         if start is not None and end is not None:
@@ -2810,13 +2795,15 @@ class Base(object):
             if start - 1 >= 0:
                 ret = self._genericStructuralFrontend('retain', axis, None, 0, start - 1,
                                                           None, False)
-                self._adjustNamesAndValidate(ret, axis)
+                self._adjustCountAndNames(axis, ret)
+                self.validate()
         if end is not None:
             # only need to perform if end is not the last value
             if end + 1 <= values - 1:
                 ret = self._genericStructuralFrontend('retain', axis, None, end + 1, values - 1,
                                                           None, False)
-                self._adjustNamesAndValidate(ret, axis)
+                self._adjustCountAndNames(axis, ret)
+                self.validate()
 
         if randomize:
             indices = list(range(0, values))
@@ -2828,7 +2815,8 @@ class Base(object):
             end = values - 1
             ret = self._genericStructuralFrontend('retain', axis, None, start, end,
                                                       None, False)
-            self._adjustNamesAndValidate(ret, axis)
+            self._adjustCountAndNames(axis, ret)
+            self.validate()
 
 
     def countPoints(self, condition):
@@ -4983,7 +4971,7 @@ class Base(object):
         return self._getIndex(identifier, 'feature')
 
     def _getIndex(self, identifier, axis):
-        num = len(self.getPointNames()) if axis == 'point' else len(self.getFeatureNames())
+        num = self.points if axis == 'point' else self.features
         nameGetter = self.getPointIndex if axis == 'point' else self.getFeatureIndex
         accepted = (six.string_types, int, numpy.integer)
 
@@ -4996,10 +4984,9 @@ class Base(object):
             msg = "An identifier cannot be None."
             raise ArgumentException(msg)
         if not isinstance(identifier, accepted):
-            axisCount = self.points if axis == 'point' else self.features
             msg = "The identifier must be either a string (a valid " + axis
             msg += " name) or an integer (python or numpy) index between 0 and "
-            msg += str(axisCount - 1) + " inclusive. Instead we got: " + str(identifier)
+            msg += str(num - 1) + " inclusive. Instead we got: " + str(identifier)
             raise ArgumentException(msg)
         if isinstance(identifier, (int, numpy.integer)):
             if identifier < 0:
@@ -5017,6 +5004,7 @@ class Base(object):
                 msg = "The " + axis + " name '" + identifier + "' cannot be found."
                 raise ArgumentException(msg)
         return toReturn
+
 
 
     def _nextDefaultName(self, axis):
@@ -5133,6 +5121,7 @@ class Base(object):
 
         #delete from inverse, since list, del will deal with 'remapping'
         del selfNamesInv[index]
+
 
     def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
         """
@@ -5294,18 +5283,17 @@ class Base(object):
 
         """
         if isinstance(values, (int, numpy.integer, six.string_types)):
-            values = self._getIndex(values, axis)
-            return [values]
+            value = self._getIndex(values, axis)
+            return [value]
         if pd and isinstance(values, pd.DataFrame):
             msg = "A pandas DataFrame object is not a valid input "
             msg += "for '{0}s'. ".format(axis)
             msg += "Only one-dimensional objects are accepted."
             raise ArgumentException(msg)
-        valuesList = []
+        indicesList = []
         try:
             for val in values:
-                valuesList.append(val)
-            indicesList = [self._getIndex(val, axis) for val in valuesList]
+                indicesList.append(self._getIndex(val, axis))
         except TypeError:
             msg = "The argument '{0}s' is not iterable.".format(axis)
             raise ArgumentException(msg)
@@ -5475,16 +5463,33 @@ class Base(object):
             raise ArgumentException(msg)
 
 
-    def _adjustNamesAndValidate(self, ret, axis):
+    def _adjustCountAndNames(self, axis, other):
+        """
+        Adjust the count and names (when names have been generated) for this object,
+        removing the names that have been extracted to the other object
+        """
         if axis == 'point':
-            self._pointCount -= ret.points
-            for key in ret.getPointNames():
-                self._removePointNameAndShift(key)
+            self._pointCount -= other.points
+            if self._pointNamesCreated():
+                idxList= []
+                for name in other.getPointNames():
+                    idxList.append(self.pointNames[name])
+                idxList= sorted(idxList)
+                for i in range(len(idxList)):
+                    del self.pointNamesInverse[idxList[i] - i]
+                self.pointNames = {pt:idx for idx, pt in enumerate(self.pointNamesInverse)}
+
         else:
-            self._featureCount -= ret.features
-            for key in ret.getFeatureNames():
-                self._removeFeatureNameAndShift(key)
-        self.validate()
+            self._featureCount -= other.features
+            if self._featureNamesCreated():
+                idxList= []
+                for name in other.getFeatureNames():
+                    idxList.append(self.featureNames[name])
+                idxList= sorted(idxList)
+                for i in range(len(idxList)):
+                    del self.featureNamesInverse[idxList[i] - i]
+                self.featureNames = {pt:idx for idx, pt in enumerate(self.featureNamesInverse)}
+
 
 def cmp_to_key(mycmp):
     """Convert a cmp= function for python2 into a key= function for python3"""

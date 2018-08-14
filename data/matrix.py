@@ -52,7 +52,7 @@ class Matrix(Base):
                     self.data = numpy.matrix(data, dtype=numpy.float)
                 except ValueError:
                     self.data = numpy.matrix(data, dtype=object)
-        
+
         kwds['featureNames'] = featureNames
         kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
@@ -107,12 +107,23 @@ class Matrix(Base):
             indexGetter = self.getPointIndex
             nameGetter = self.getPointName
             nameGetterStr = 'getPointName'
+            names = self.getPointNames()
         else:
             test = self.featureView(0)
             viewIter = self.featureIterator()
             indexGetter = self.getFeatureIndex
             nameGetter = self.getFeatureName
             nameGetterStr = 'getFeatureName'
+            names = self.getFeatureNames()
+
+        if isinstance(sortHelper, list):
+            if axis == 'point':
+                self.data = self.data[sortHelper, :]
+            else:
+                self.data = self.data[:, sortHelper]
+            newNameOrder = [names[idx] for idx in sortHelper]
+            return newNameOrder
+
         scorer = None
         comparator = None
         try:
@@ -381,7 +392,7 @@ class Matrix(Base):
             return scipy.sparse.csr_matrix(self.data)
 
         return UML.createData('Matrix', self.data)
-        
+
 
 
     def _transformEachPoint_implementation(self, function, points):
