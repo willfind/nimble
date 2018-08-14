@@ -1386,13 +1386,3 @@ class LowLevelBackend(object):
 
         assert toTest._notBaseNoDoc.__doc__ is None
         assert toTest._notBaseWithDoc.__doc__ == "Unique Docstring"
-
-    def test_inheritBaseDocstring_asFunctionDecorator(self):
-        """test inheritBaseDocstring inherits Base docstrings"""
-
-        @inheritBaseDocstring
-        def copy(self):
-                pass
-
-        assert copy.__doc__ is not None
-        assert copy.__doc__ == Base.copy.__doc__

@@ -24,6 +24,7 @@ def exception_docstring(func):
     return func
 
 
+@inheritBaseDocstring
 class BaseView(Base):
     """
     Class defining read only view objects, which have the same api as a
@@ -69,36 +70,31 @@ class BaseView(Base):
         #		kwds['name'] = self._source.name
         super(BaseView, self).__init__(**kwds)
 
-    # redifinition from Base, except without the setter, using source
+    # redefinition from Base, except without the setter, using source
     # object's attributes
-    @inheritBaseDocstring
     def _getObjName(self):
         return self._name
 
     name = property(_getObjName, doc="A name to be displayed when printing or logging this object")
 
-    # redifinition from Base, using source object's attributes
-    @inheritBaseDocstring
+    # redefinition from Base, using source object's attributes
     def _getAbsPath(self):
         return self._source._absPath
 
     absolutePath = property(_getAbsPath, doc="The path to the file this data originated from, in absolute form")
 
-    # redifinition from Base, using source object's attributes
-    @inheritBaseDocstring
+    # redefinition from Base, using source object's attributes
     def _getRelPath(self):
         return self._source._relPath
 
     relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
 
-    @inheritBaseDocstring
     def _pointNamesCreated(self):
         if self._source.pointNamesInverse is None:
             return False
         else:
             return True
 
-    @inheritBaseDocstring
     def _featureNamesCreated(self):
         if self._source.featureNamesInverse is None:
             return False
@@ -115,26 +111,22 @@ class BaseView(Base):
     # Reimplemented Operations #
     ############################
 
-    @inheritBaseDocstring
     def getPointNames(self):
         ret = self._source.getPointNames()
         ret = ret[self._pStart:self._pEnd]
 
         return ret
 
-    @inheritBaseDocstring
     def getFeatureNames(self):
         ret = self._source.getFeatureNames()
         ret = ret[self._fStart:self._fEnd]
 
         return ret
 
-    @inheritBaseDocstring
     def getPointName(self, index):
         corrected = index + self._pStart
         return self._source.getPointName(corrected)
 
-    @inheritBaseDocstring
     def getPointIndex(self, name):
         possible = self._source.getPointIndex(name)
         if possible >= self._pStart and possible < self._pEnd:
@@ -142,12 +134,10 @@ class BaseView(Base):
         else:
             raise KeyError()
 
-    @inheritBaseDocstring
     def getFeatureName(self, index):
         corrected = index + self._fStart
         return self._source.getFeatureName(corrected)
 
-    @inheritBaseDocstring
     def getFeatureIndex(self, name):
         possible = self._source.getFeatureIndex(name)
         if possible >= self._fStart and possible < self._fEnd:
@@ -155,7 +145,6 @@ class BaseView(Base):
         else:
             raise KeyError()
 
-    @inheritBaseDocstring
     def _copyNames(self, CopyObj):
 
         if self._pointNamesCreated():
@@ -197,7 +186,6 @@ class BaseView(Base):
                 for name in self._source.featureNamesInverse[self._fEnd:self._source.features + 1]:
                     del CopyObj.featureNames[name]
 
-    @inheritBaseDocstring
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
 
