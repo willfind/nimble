@@ -562,7 +562,7 @@ class SciKitLearn(UniversalInterface):
             return ([], None, None, None)
 
         try:
-            (args, v, k, d) = inspect.getargspec(namedModule)
+            (args, v, k, d) = UML.helpers.parseSignature(namedModule)
             (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
             if 'random_state' in args:
                 index = args.index('random_state')
@@ -571,7 +571,7 @@ class SciKitLearn(UniversalInterface):
             return (args, v, k, d)
         except TypeError:
             try:
-                (args, v, k, d) = inspect.getargspec(namedModule.__init__)
+                (args, v, k, d) = UML.helpers.parseSignature(namedModule.__init__)
                 (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
                 if 'random_state' in args:
                     index = args.index('random_state')

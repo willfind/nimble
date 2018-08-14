@@ -1451,7 +1451,7 @@ class HighLevelModifying(DataTestObject):
             d = func.__func__.__defaults__
             assert (d is None) or (d == (None, None, None))
         else:#if it is a normal python function
-            a, va, vk, d = inspect.getargspec(func)
+            a, va, vk, d = UML.helpers.parseSignature(func)
             assert d == (None, None, None)
 
         if axis == 'point':

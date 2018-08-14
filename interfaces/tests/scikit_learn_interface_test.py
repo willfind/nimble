@@ -241,7 +241,7 @@ def testSciKitLearnUnsupervisedProblemLearners():
 #	ret = UML.trainAndApply(toCall("MultinomialHMM"), trainingObj, testX=testObj)
 
 def testSciKitLearnArgspecFailures():
-    """ Test scikitLearn() on those learners that cannot be passed to inspect.getargspec """
+    """ Test scikitLearn() on those learners that cannot be passed to UML.helpers.parseSignature """
     variables = ["x1", "x2"]
     data = [[1, 0], [3, 3], [50, 0]]
     trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -339,9 +339,9 @@ def testSciKitLearnPredictAndTransformLearners():
                 testX = cTestX.data
 
             try:
-                args, _, _, _  = inspect.getargspec(sklObj)
+                args, _, _, _  = UML.helpers.parseSignature(sklObj)
             except TypeError:
-                args, _, _, _ = inspect.getargspec(sklObj.__init__)
+                args, _, _, _ = UML.helpers.parseSignature(sklObj.__init__)
             uml_kwds = {}
             uml_kwds['trainX'] = trainXObj
             uml_kwds['trainY'] = trainYObj
@@ -363,7 +363,7 @@ def testSciKitLearnPredictAndTransformLearners():
                 assert predictionUML.isIdentical(predictionSciKit)
 
             elif hasattr(sklObj, 'transform'):
-                transArgs, _, _, _ = inspect.getargspec(sklObj.transform)
+                transArgs, _, _, _ = UML.helpers.parseSignature(sklObj.transform)
                 skl_kwds = {}
                 if 'X' in transArgs:
                     skl_kwds['X'] = trainX
