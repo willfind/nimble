@@ -49,9 +49,7 @@ class SciKitLearn(UniversalInterface):
 
         version = self.skl.__version__
         self._version = version
-        self._versionList = list(map(int,version.split('.')))
-
-        #		oldList = self._listLearnersBackend()
+        self._versionSplit = list(map(int,version.split('.')))
 
         # __all__ has been known to not have some subpackages that we want
         # so we check the root directory of sklearn for names that we can
@@ -116,6 +114,14 @@ class SciKitLearn(UniversalInterface):
         return True
 
     def _listLearnersBackend(self):
+        ret = []
+        # # TODO sklearn.utils.testing.all_estimators will be implemented in 0.20
+        # try:
+        #     all_estimators = self.skl.util.testing.all_estimators
+        #     estimators = all_estimators()
+        #     for name, module in estimators:
+        #         ret.append(name)
+        # except:
         possibilities = self._searcher.allLearners()
 
         exclude = [
@@ -387,7 +393,7 @@ class SciKitLearn(UniversalInterface):
         TAKES name of learner, transformed arguments
         RETURNS an in package object to be wrapped by a TrainedLearner object
         """
-        if self._versionList[1] < 19:
+        if self._versionSplit[1] < 19:
             msg = "UML was tested using sklearn 0.19.1 and above, we cannot be "
             msg += "sure of success for version {0}".format(self._version)
             warnings.warn(msg)
