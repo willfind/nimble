@@ -38,13 +38,13 @@ import UML
 
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 
-from UML.helpers import generateClusteredPoints
-
 from UML.randomness import numpyRandom
 from UML.randomness import generateSubsidiarySeed
 from UML.exceptions import ArgumentException
 from UML.helpers import generateClassificationData
 from UML.helpers import generateRegressionData
+from UML.helpers import generateClusteredPoints
+from UML.helpers import _parseSignature
 from UML.calculate.loss import rootMeanSquareError
 from UML.interfaces.scikit_learn_interface import SciKitLearn
 
@@ -241,7 +241,7 @@ def testSciKitLearnUnsupervisedProblemLearners():
 #	ret = UML.trainAndApply(toCall("MultinomialHMM"), trainingObj, testX=testObj)
 
 def testSciKitLearnArgspecFailures():
-    """ Test scikitLearn() on those learners that cannot be passed to UML.helpers.parseSignature """
+    """ Test scikitLearn() on those learners that cannot be passed to getargspec """
     variables = ["x1", "x2"]
     data = [[1, 0], [3, 3], [50, 0]]
     trainingObj = UML.createData('Matrix', data, featureNames=variables)
@@ -339,9 +339,9 @@ def testSciKitLearnPredictAndTransformLearners():
                 testX = cTestX.data
 
             try:
-                args, _, _, _  = UML.helpers.parseSignature(sklObj)
+                args, _, _, _  = _parseSignature(sklObj)
             except TypeError:
-                args, _, _, _ = UML.helpers.parseSignature(sklObj.__init__)
+                args, _, _, _ = _parseSignature(sklObj.__init__)
             uml_kwds = {}
             uml_kwds['trainX'] = trainXObj
             uml_kwds['trainY'] = trainYObj
@@ -363,7 +363,7 @@ def testSciKitLearnPredictAndTransformLearners():
                 assert predictionUML.isIdentical(predictionSciKit)
 
             elif hasattr(sklObj, 'transform'):
-                transArgs, _, _, _ = UML.helpers.parseSignature(sklObj.transform)
+                transArgs, _, _, _ = _parseSignature(sklObj.transform)
                 skl_kwds = {}
                 if 'X' in transArgs:
                     skl_kwds['X'] = trainX

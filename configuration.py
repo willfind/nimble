@@ -338,7 +338,7 @@ class SessionConfiguration(object):
             if not hasattr(toCall, '__call__'):
                 msg = 'toCall must be callable (function, method, etc) or None'
                 raise ArgumentException(msg)
-            if len(UML.helpers.parseSignature(toCall)[0]) != 1:
+            if len(UML.helpers._parseSignature(toCall)[0]) != 1:
                 msg = 'toCall may only take one argument'
                 raise ArgumentException(msg)
 

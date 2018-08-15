@@ -25,7 +25,7 @@ from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
 
-from UML.helpers import _mergeArguments, generateAllPairs, countWins
+from UML.helpers import _mergeArguments, generateAllPairs, countWins, _parseSignature
 import six
 from six.moves import range
 import warnings
@@ -97,7 +97,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 raise TypeError(
                     "Improper implementation of _exposedFunctions, each member of the return must have __name__ attribute")
             # takes self as attribute
-            (args, varargs, keywords, defaults) = UML.helpers.parseSignature(exposed)
+            (args, varargs, keywords, defaults) = _parseSignature(exposed)
             if args[0] != 'self':
                 raise TypeError(
                     "Improper implementation of _exposedFunctions each member's first argument must be 'self', interpreted as a TrainedLearner")
@@ -720,7 +720,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             exposedFunctions = self.interface._exposedFunctions()
             for exposed in exposedFunctions:
                 methodName = getattr(exposed, '__name__')
-                (args, varargs, keywords, defaults) = UML.helpers.parseSignature(exposed)
+                (args, varargs, keywords, defaults) = _parseSignature(exposed)
                 if 'trainedLearner' in args:
                     wrapped = functools.partial(exposed, trainedLearner=self)
                     wrapped.__doc__ = 'Wrapped version of the ' + methodName + ' function where the "trainedLearner" parameter has been fixed as this object, and the "self" parameter has been fixed to be ' + str(

@@ -25,7 +25,7 @@ from UML.helpers import trainAndApplyOneVsOne
 from UML.helpers import trainAndApplyOneVsAll
 from UML.helpers import _mergeArguments
 from UML.helpers import computeMetrics
-from UML.helpers import parseSignature
+from UML.helpers import _parseSignature
 from UML.calculate import rootMeanSquareError
 from UML.calculate import meanAbsoluteError
 from UML.calculate import fractionIncorrect
@@ -640,12 +640,12 @@ def testGenerateAllPairs():
     testPairs2 = generateAllPairs(testList2)
     assert testPairs2 is None
 
-def test_parseSignature():
+def test__parseSignature():
 
     def checkSignature(a, b, c, d=False, e=True, f=None, *sigArgs, **sigKwargs):
         pass
 
-    a, v, k, d = parseSignature(checkSignature)
+    a, v, k, d = _parseSignature(checkSignature)
 
     assert a == ['a', 'b', 'c', 'd', 'e', 'f']
     assert v == 'sigArgs'

@@ -5,7 +5,7 @@ import numpy
 import six
 from six.moves import range
 
-from UML.helpers import parseSignature
+from UML.helpers import _parseSignature
 
 
 class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
@@ -37,9 +37,9 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
                     accepted))
 
         # check train / apply params
-        trainInfo = parseSignature(check.train)
-        incInfo = parseSignature(check.incrementalTrain)
-        applyInfo = parseSignature(check.apply)
+        trainInfo = _parseSignature(check.train)
+        incInfo = _parseSignature(check.incrementalTrain)
+        applyInfo = _parseSignature(check.apply)
         if trainInfo[0][0] != 'self' or trainInfo[0][1] != 'trainX' or trainInfo[0][2] != 'trainY':
             raise TypeError(
                 "The train method of a CustomLearner must have 'trainX' and 'trainY' as its first two (non 'self') parameters")
@@ -69,7 +69,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         # getScores has same params as apply if overridden
         getScoresImplemented = overridden('getScores')
         if getScoresImplemented:
-            getScoresInfo = parseSignature(check.getScores)
+            getScoresInfo = _parseSignature(check.getScores)
             if getScoresInfo != applyInfo:
                 raise TypeError("The signature for the getScores() method must be the same as the apply() method")
 
@@ -82,7 +82,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
                 raise TypeError("The classmethod options must return a list of stings")
 
         # check that we can instantiate this subclass
-        initInfo = parseSignature(check.__init__)
+        initInfo = _parseSignature(check.__init__)
         if len(initInfo[0]) > 1 or initInfo[0][0] != 'self':
             raise TypeError("The __init__() method for this class must only have self as an argument")
 
@@ -113,7 +113,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         Class method used to determine the parameters of only the train
         method.
         """
-        info = parseSignature(cls.train)
+        info = _parseSignature(cls.train)
         return info[0][2:]
 
     @classmethod
@@ -122,7 +122,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         Class method used to determine the default values of only the train
         method.
         """
-        info = parseSignature(cls.train)
+        info = _parseSignature(cls.train)
         (objArgs, v, k, d) = info
         ret = {}
         if d is not None:
@@ -136,7 +136,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         Class method used to determine the parameters of only the apply
         method.
         """
-        info = parseSignature(cls.apply)
+        info = _parseSignature(cls.apply)
         return info[0][1:]
 
     @classmethod
@@ -145,7 +145,7 @@ class CustomLearner(six.with_metaclass(abc.ABCMeta, object)):
         Class method used to determine the default values of only the apply
         method.
         """
-        info = parseSignature(cls.apply)
+        info = _parseSignature(cls.apply)
         (objArgs, v, k, d) = info
         ret = {}
         if d is not None:

@@ -3654,7 +3654,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
                                 arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
 
 
-def parseSignature(func):
+def _parseSignature(func):
     try:
         argspec = inspect.getfullargspec(func)[:4] #py3
     except:
