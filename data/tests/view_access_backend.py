@@ -25,13 +25,4 @@ class ViewAccess(DataTestObject):
         assert len(viewLines) == len(baseLines) + 3
         assert viewLines[3:] == baseLines
 
-    def test_inheritBaseDocstring_decorator(self):
-        """ test wrapper provides same docstring as Base for a method with a
-        separate implementation for view objects"""
-        viewDoc = getattr(BaseView, 'view').__doc__
-        baseDoc = getattr(Base, 'view').__doc__
-
-        assert viewDoc == baseDoc
-
-
 # get retType TODO -- still not sure what is correct functionality.

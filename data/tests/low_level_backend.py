@@ -25,7 +25,7 @@ import pandas
 from UML import createData
 from UML.data import Base
 from UML.data import available
-from UML.data.base import inheritBaseDocstring
+from UML.data.dataHelpers import inheritDocstringsFactory
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nose.tools import *
@@ -1351,38 +1351,48 @@ class LowLevelBackend(object):
     # inheritBaseDocstring #
     ########################
 
-    def test_inheritBaseDocstring_asClassDecorator(self):
-        """test inheritBaseDocstring inherits Base docstrings for methods without docstrings"""
+    def test_inheritDocstringsFactory(self):
+        """test docstrings from methods without docstrings are inherited from the passed class"""
 
-        @inheritBaseDocstring
+        class toInherit(object):
+            def __init__(self):
+                """toInherit __init__ docstring"""
+                pass
+
+            def copy(self):
+                """toInherit copy docstring"""
+                pass
+
+        @inheritDocstringsFactory(toInherit)
         class InheritDocs(Base):
-            """Unique Class Docstring"""
+            """InheritDocs class docstring"""
 
             def __init__(self):
-                """Don't Inherit"""
+                """inheritDocs __init__ docstring"""
                 pass
 
             def copy(self):
                 pass
 
-            # these test there are no issues for methods that are not in Base
-            def _notBaseNoDoc(self):
+            # these test there are no issues for methods that are not in inherited class
+            def _noDoc(self):
                 pass
 
-            def _notBaseWithDoc(self):
-                """Unique Docstring"""
+            def _withDoc(self):
+                """_withDoc docstring"""
                 pass
 
         toTest = InheritDocs()
 
-        assert toTest.__doc__ != Base.__doc__
-        assert toTest.__doc__ == "Unique Class Docstring"
+        assert toTest.__doc__ != toInherit.__doc__
+        assert toTest.__doc__ == "InheritDocs class docstring"
 
-        assert toTest.__init__.__doc__ != Base.__init__.__doc__
-        assert toTest.__init__.__doc__ == "Don't Inherit"
+        assert toTest.__init__.__doc__ != toInherit.__init__.__doc__
+        assert toTest.__init__.__doc__ == "inheritDocs __init__ docstring"
 
         assert toTest.copy.__doc__ is not None
-        assert toTest.copy.__doc__ == Base.copy.__doc__
+        assert toTest.copy.__doc__ == toInherit.copy.__doc__
 
-        assert toTest._notBaseNoDoc.__doc__ is None
-        assert toTest._notBaseWithDoc.__doc__ == "Unique Docstring"
+
+        assert toTest._noDoc.__doc__ is None
+        assert toTest._withDoc.__doc__ == "_withDoc docstring"

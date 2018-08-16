@@ -11,9 +11,9 @@ import itertools
 import copy
 
 import UML
-from .base import Base, inheritBaseDocstring, cmp_to_key
+from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .dataHelpers import View
+from .dataHelpers import inheritDocstringsFactory
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
@@ -22,7 +22,7 @@ from six.moves import zip
 from functools import reduce
 scipy = UML.importModule('scipy.io')
 
-@inheritBaseDocstring
+@inheritDocstringsFactory(Base)
 class Matrix(Base):
     """
     Class providing implementations of data manipulation operations on data stored

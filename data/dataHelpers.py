@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import copy
 import math
 import string
+import inspect
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -162,7 +163,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         return ret
 
     (retPNames, retFNames) = (None, None)
-        
+
     if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
         retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
     elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
@@ -180,7 +181,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         retFNames = otherSource.featureNames
     else:
         retFNames = None
-        
+
     return (retPNames, retFNames)
 
 
@@ -408,3 +409,21 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
         # modify the width associated with the colHold
         if removalWidths is not None:
             removalWidths[removeIndex] = len(colHold)
+
+
+def inheritDocstringsFactory(toInherit):
+    """
+    Decorator to copy docstrings from Base for reimplementations. This can be
+    applied to a class or single function. Only functions without docstrings
+    will inherit the Base docstring.
+    """
+    def inheritDocstring(cls):
+        writable = cls.__dict__
+        for name in writable:
+            if inspect.isfunction(writable[name]) and hasattr(toInherit, name):
+                func = writable[name]
+                if not func.__doc__ and hasattr(toInherit, name):
+                    func.__doc__ = getattr(toInherit, name).__doc__
+
+        return cls
+    return inheritDocstring

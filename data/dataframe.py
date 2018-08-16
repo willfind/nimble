@@ -12,7 +12,7 @@ import numpy
 
 pd = UML.importModule('pandas')
 
-from .base import Base, inheritBaseDocstring, cmp_to_key
+from .base import Base, cmp_to_key
 import numpy as np
 scipy = UML.importModule('scipy.sparse')
 
@@ -21,8 +21,9 @@ import copy
 import re
 from .base_view import BaseView
 from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import inheritDocstringsFactory
 
-@inheritBaseDocstring
+@inheritDocstringsFactory(Base)
 class DataFrame(Base):
     """
     Class providing implementations of data manipulation operations on data stored

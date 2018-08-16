@@ -8,7 +8,8 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 
-from .base import Base, inheritBaseDocstring
+from .base import Base
+from .dataHelpers import inheritDocstringsFactory
 from UML.exceptions import ImproperActionException
 
 # prepend a message that view objects will raise an exception to Base docstring
@@ -24,7 +25,7 @@ def exception_docstring(func):
     return func
 
 
-@inheritBaseDocstring
+@inheritDocstringsFactory(Base)
 class BaseView(Base):
     """
     Class defining read only view objects, which have the same api as a
