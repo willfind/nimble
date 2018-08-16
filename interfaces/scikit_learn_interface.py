@@ -124,15 +124,11 @@ class SciKitLearn(UniversalInterface):
         # except:
         possibilities = self._searcher.allLearners()
 
-        exclude = [
-            'BaseDiscreteNB', 'libsvm', 'GMMHMM', 'GaussianHMM', 'MultinomialHMM',
-            'GridSearchCV', 'RandomizedSearchCV', 'IsotonicRegression',
-            'LogOddsEstimator', 'PriorProbabilityEstimator', 'MeanEstimator',
-            'BaggingClassifier', 'PatchExtractor', 'DummyClassifier',
+        exclude = ['PatchExtractor', 'DummyClassifier',
             'CountVectorizer', 'TfidfVectorizer', 'LabelBinarizer',
             'MultiLabelBinarizer', 'LabelEncoder', 'FeatureHasher',
-            'DictVectorizer',
-            'FeatureAgglomeration', 'LocalOutlierFactor', 'NMF', 'KernelCenterer',]
+            'DictVectorizer', 'IsotonicRegression', 'FeatureAgglomeration',
+            'LocalOutlierFactor', 'KernelCenterer',]
         ret = []
         for name in possibilities:
             if not name in exclude:
@@ -393,10 +389,13 @@ class SciKitLearn(UniversalInterface):
         TAKES name of learner, transformed arguments
         RETURNS an in package object to be wrapped by a TrainedLearner object
         """
+        msg = "UML was tested using sklearn 0.19.1 and above, we cannot be "
+        msg += "sure of success for version {0}".format(self._version)
         if self._versionSplit[1] < 19:
-            msg = "UML was tested using sklearn 0.19.1 and above, we cannot be "
-            msg += "sure of success for version {0}".format(self._version)
             warnings.warn(msg)
+        elif self._versionSplit[1] == 19 and self._version[2] < 1:
+            warnings.warn(msg)
+
         # get parameter names
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         fitNames = self._paramQuery('fit', learnerName, ['self'])[0]

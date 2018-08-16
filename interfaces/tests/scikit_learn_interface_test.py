@@ -1,8 +1,6 @@
 """
 Unit tests for scikit_learn_interface.py
 
-130 learners tested
-6 additional learners excluded in scikit_learn_interface.py due to unsolved errors
 """
 
 from __future__ import absolute_import
@@ -189,49 +187,6 @@ def testSciKitLearnScoreModeBinary():
     assert allScores.features == 2
 
     checkLabelOrderingAndScoreAssociations([1, 2], bestScores, allScores)
-
-
-def testSciKitLearnUnsupervisedProblemLearners():
-    """ Test sciKitLearn() by calling some unsupervised learners problematic in previous implementations """
-    variables = ["x1", "x2"]
-    data = [[1, 0], [3, 3], [50, 0]]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-
-    data2 = [[1, 0], [1, 1], [5, 1], [34, 4]]
-    testObj = UML.createData('Matrix', data2)
-
-    UML.trainAndApply(toCall("GMM"), trainingObj, testX=testObj)
-    UML.trainAndApply(toCall("DPGMM"), trainingObj, testX=testObj)
-    UML.trainAndApply(toCall("VBGMM"), trainingObj, testX=testObj)
-
-
-#def testSciKitLearnObsAsArgumentName():
-#	""" Test scikitLearn() by calling learners with 'obs' instead of 'X' as a fit/predict argument """
-#	data = [[1,3,], [2,3], [0,1], [3,0], [3,2]]
-#	trainingObj = UML.createData('Matrix', data)
-
-#	data2 = [[2,3],[1,2],[0,1], [1,3]]
-#	testObj = UML.createData('Matrix', data2)
-
-#	ret = UML.trainAndApply(toCall("GMMHMM"), trainingObj, testX=testObj, arguments={'n_components':3})
-#	ret = UML.trainAndApply(toCall("GaussianHMM"), trainingObj, testX=testObj)
-#	ret = UML.trainAndApply(toCall("MultinomialHMM"), trainingObj, testX=testObj)
-
-def testSciKitLearnArgspecFailures():
-    """ Test scikitLearn() on those learners that cannot be passed to inspect.getargspec """
-    variables = ["x1", "x2"]
-    data = [[1, 0], [3, 3], [50, 0]]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-
-    dataY = [[0], [1], [2]]
-    trainingYObj = UML.createData('Matrix', dataY)
-
-    data2 = [[1, 0], [1, 1], [5, 1], [34, 4]]
-    testObj = UML.createData('Matrix', data2)
-
-    UML.trainAndApply(toCall("GaussianNB"), trainingObj, testX=testObj, trainY=trainingYObj)
-    # data dependent?
-    UML.trainAndApply(toCall("MultinomialNB"), trainingObj, testX=testObj, trainY=trainingYObj)
 
 
 def testSciKitLearnCrossDecomp():
@@ -445,7 +400,7 @@ def testSciKitLearnTransformationLearners():
     Ytrain = trainY.data
 
     ignore = ['GaussianRandomProjection', 'SparseRandomProjection',   # special cases, tested elsewhere
-              'MiniBatchSparsePCA', 'SparsePCA',]
+              'MiniBatchSparsePCA', 'SparsePCA', 'NMF']
     learners = getLearnersByType('transformation', ignore)
 
     for learner in learners:
@@ -458,16 +413,16 @@ def testSciKitLearnTransformationLearners():
             arguments['random_state'] = seed
             sciKitLearnObj.set_params(**arguments)
         sciKitLearnObj.fit(Xtrain, Ytrain)
-        predSKL = sciKitLearnObj.transform(Xtrain)
-        predSKL = UML.createData('Matrix', predSKL)
-        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, arguments=arguments)
+        transSKL = sciKitLearnObj.transform(Xtrain)
+        transSKL = UML.createData('Matrix', transSKL)
+        transUML = UML.trainAndApply(toCall(learner), trainX, trainY, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        assert transUML.isApproximatelyEqual(transSKL)
 
 
 @attr('slow')
-def testSciKitLearnProjectionTransformation():
-    trainX = UML.createRandomData('Sparse', 10, 10000, sparsity=0.98)
+def testSciKitLearnRandomProjectionTransformation():
+    trainX = UML.createRandomData('Matrix', 10, 10000, 0.98)
     Xtrain = trainX.data
 
     learners = ['GaussianRandomProjection', 'SparseRandomProjection',]
@@ -481,12 +436,12 @@ def testSciKitLearnProjectionTransformation():
         if 'random_state' in sciKitLearnObj.get_params():
             arguments['random_state'] = seed
             sciKitLearnObj.set_params(**arguments)
-        sciKitLearnObj.fit(Xtrain)
-        predSKL = sciKitLearnObj.transform(Xtrain)
-        predSKL = UML.createData('Matrix', predSKL)
-        predUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        transSKL = sciKitLearnObj.fit_transform(Xtrain)
+        transSKL = UML.createData('Matrix', transSKL)
+        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
+
+        assert transUML.isApproximatelyEqual(transSKL)
 
 @attr('slow')
 def testSciKitLearnSparsePCATransformation():
@@ -508,14 +463,14 @@ def testSciKitLearnSparsePCATransformation():
             arguments['random_state'] = seed
             sciKitLearnObj.set_params(**arguments)
         sciKitLearnObj.fit(Xtrain)
-        predSKL = sciKitLearnObj.transform(Xtrain)
-        predSKL = UML.createData('Matrix', predSKL)
-        predUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
+        transSKL = sciKitLearnObj.transform(Xtrain)
+        transSKL = UML.createData('Matrix', transSKL)
+        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        assert transUML.isApproximatelyEqual(transSKL)
 
 @attr('slow')
-def testSciKitLearnOtherTransformLearners():
+def testSciKitLearnEmbeddingLearners():
     data = generateClassificationData(2, 20, 10)
     trainX = abs(data[0][0])
     Xtrain = trainX.data
@@ -532,11 +487,31 @@ def testSciKitLearnOtherTransformLearners():
             arguments['random_state'] = seed
             sciKitLearnObj.set_params(**arguments)
 
-        predSKL = sciKitLearnObj.fit_transform(Xtrain)
-        predSKL = UML.createData('Matrix', predSKL)
-        predUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
+        transSKL = sciKitLearnObj.fit_transform(Xtrain)
+        transSKL = UML.createData('Matrix', transSKL)
+        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        assert transUML.isApproximatelyEqual(transSKL)
+
+
+def testSciKitLearnNMF():
+    # must be non-negative matrix
+    Xtrain = [[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]]
+    trainX = UML.createData('Matrix', Xtrain)
+
+    skl = SciKitLearn()
+    sklObj = skl.findCallable('NMF')
+    sciKitLearnObj = sklObj()
+    seed = UML.randomness.generateSubsidiarySeed()
+    arguments = {}
+    arguments['random_state'] = seed
+    sciKitLearnObj.set_params(**arguments)
+    sciKitLearnObj.fit(Xtrain)
+    transSKL = sciKitLearnObj.transform(Xtrain)
+    transSKL = UML.createData('Matrix', transSKL)
+    transUML = UML.trainAndApply(toCall('NMF'), trainX, arguments=arguments)
+
+    assert transUML.isApproximatelyEqual(transSKL)
 
 
 def testCustomRidgeRegressionCompare():
