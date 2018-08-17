@@ -885,8 +885,6 @@ class Base(object):
             # features = copy.copy(features)
             features = [self._getFeatureIndex(i) for i in features]
 
-        self.validate()
-
         if outputType is not None:
             optType = outputType
         else:
@@ -933,6 +931,8 @@ class Base(object):
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
+
+        self.validate()
 
         return ret
 
