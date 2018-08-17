@@ -954,38 +954,67 @@ class Base(object):
             # features = copy.copy(features)
             features = [self._getFeatureIndex(i) for i in features]
 
-        self.validate()
-
-        points = points if points else list(range(self.points))
-        features = features if features else list(range(self.features))
-        valueArray = numpy.empty([len(points), len(features)])
-        p = 0
-        for pi in points:
-            f = 0
-            for fj in features:
-                value = self[pi, fj]
-                if preserveZeros and value == 0:
-                    valueArray[p, f] = 0
-                else:
-                    currRet = function(value) if oneArg else function(value, pi, fj)
-                    if skipNoneReturnValues and currRet is None:
-                        valueArray[p, f] = value
-                    else:
-                        valueArray[p, f] = currRet
-                f += 1
-            p += 1
-
         if outputType is not None:
             optType = outputType
         else:
             optType = self.getTypeString()
 
-        ret = UML.createData(optType, valueArray)
+        # Use vectorized for functions with oneArg
+        if oneArg:
+            if not preserveZeros:
+                # check if the function preserves zero values
+                preserveZeros = function(0) == 0
+            def functionWrap(value):
+                if preserveZeros and value == 0:
+                    return 0
+                currRet = function(value)
+                if skipNoneReturnValues and currRet is None:
+                    return value
+                else:
+                    return currRet
+
+            vectorized = numpy.vectorize(functionWrap)
+            ret = self._calculateForEachElement_implementation(
+                     vectorized, points, features, preserveZeros, optType)
+        else:
+            points = points if points else list(range(self.points))
+            features = features if features else list(range(self.features))
+            valueArray = numpy.empty([len(points), len(features)])
+            p = 0
+            for pi in points:
+                f = 0
+                for fj in features:
+                    value = self[pi, fj]
+                    if preserveZeros and value == 0:
+                        valueArray[p, f] = 0
+                    else:
+                        currRet = function(value) if oneArg else function(value, pi, fj)
+                        if skipNoneReturnValues and currRet is None:
+                            valueArray[p, f] = value
+                        else:
+                            valueArray[p, f] = currRet
+                    f += 1
+                p += 1
+
+            ret = UML.createData(optType, valueArray)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
+        self.validate()
+
         return ret
+
+    def _calculateForEachElementGenericVectorized(self, function, points, features,
+                                                  outputType):
+        # need points/features as arrays for indexing
+        points = numpy.array(points) if points else numpy.array(range(self.points))
+        features = numpy.array(features) if features else numpy.array(range(self.features))
+        toCalculate = self.copyAs('numpyarray')
+        # array with only desired points and features
+        toCalculate = toCalculate[points[:,None], features]
+        values = function(toCalculate)
+        return UML.createData(outputType, values)
 
 
     def countElements(self, function):

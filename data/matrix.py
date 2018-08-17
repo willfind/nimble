@@ -395,6 +395,12 @@ class Matrix(Base):
 
 
 
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
+
+
     def _transformEachPoint_implementation(self, function, points):
         for i, p in enumerate(self.pointIterator()):
             if points is not None and i not in points:

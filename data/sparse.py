@@ -645,6 +645,42 @@ class Sparse(Base):
             return self.data.tocsr()
 
 
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        if not isinstance(self, BaseView):
+            data = self.data.data
+            row = self.data.row
+            col = self.data.col
+        else:
+            # initiate generic implementation for view types
+            preserveZeros = False
+        # all data
+        if preserveZeros and points is None and features is None:
+            data = function(data)
+            values = coo_matrix((data, (row, col)), shape=self.data.shape)
+            # note: even if function transforms nonzero values into zeros
+            # our init methods will filter them out from the data attribute
+            return UML.createData(outputType, values)
+        # subset of data
+        if preserveZeros:
+            dataSubset = []
+            rowSubset = []
+            colSubset = []
+            for idx in range(len(data)):
+                if row[idx] in points and col[idx] in features:
+                    rowSubset.append(row[idx])
+                    colSubset.append(col[idx])
+                    dataSubset.append(data[idx])
+            dataSubset = function(dataSubset)
+            values = coo_matrix((dataSubset, (rowSubset, colSubset)))
+            # note: even if function transforms nonzero values into zeros
+            # our init methods will filter them out from the data attribute
+            return UML.createData(outputType, values)
+        # zeros not preserved
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
+
+
     def _transformEachPoint_implementation(self, function, points):
         self._transformEach_implementation(function, points, 'point')
 
@@ -1263,6 +1299,8 @@ class Sparse(Base):
             except Exception:
                 tmpBool = all([i != 0 for i in self.data.data])
             assert tmpBool
+
+            assert self.data.dtype.type is not numpy.string_
 
             if self._sorted == 'point':
                 assert all(self.data.row[:-1] <= self.data.row[1:])

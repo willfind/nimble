@@ -365,6 +365,13 @@ class DataFrame(Base):
 
         return UML.createData('DataFrame', dataArray)
 
+
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
+
+
     def _transformEachPoint_implementation(self, function, points):
         """
 
