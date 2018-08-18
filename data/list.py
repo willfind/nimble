@@ -171,7 +171,7 @@ class List(Base):
             names = self.getFeatureNames()
 
         if isinstance(sortHelper, list):
-            sortData = numpy.array(self.data)
+            sortData = numpy.array(self.data, dtype=numpy.object_)
             if axis == 'point':
                 sortData = sortData[sortHelper, :]
             else:
