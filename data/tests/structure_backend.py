@@ -2705,6 +2705,19 @@ class StructureModifying(DataTestObject):
 
         assert toTest.isIdentical(objExp)
 
+
+    def test_sortFeatures_dataTypeRetainedFromList(self):
+        """ Test sortFeatures() data not converted when sorting by list"""
+        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
+        toTest = self.constructor(data)
+
+        toTest.sortFeatures(sortHelper=[2, 1, 0])
+
+        expData = [[3.0, 2, 'a'], [6.0, 5, 'b'], [9.0, 8, 'c']]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+
     def test_sortFeatures_indicesList(self):
         """ Test sortFeatures() when we specify a list of indices """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
