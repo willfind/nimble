@@ -849,13 +849,31 @@ class Base(object):
 
         return res
 
-    def countUniqueFeatureValues(self, feature):
+    def countEachUniqueValue(self, points=None, features=None):
         """
-        Count unique values for one feature or multiple features combination.
-        Input:
-        feature: can be an int, string or a list of int or a list of string
+        Returns a dictionary containing each unique value as a key and the
+        number of times that value occurs as the value.
+
+        points: Can be a single identifier or iterable, list-like object of
+        identifiers. If points is None all points will be analyzed.
+
+        features: Can be a single identifier or iterable, list-like object of
+        identifiers. If features is None all features will be analyzed.
+
         """
-        return self.groupByFeature(feature, countUniqueValueOnly=True)
+        toCount = self.view()
+        if points is not None:
+            toCount = toCount[points,:]
+        if features is not None:
+            toCount = toCount[:, features]
+
+        uniqueCount = {}
+        for point in toCount.pointIterator():
+            for val in point:
+                uniqueCount[val] = uniqueCount.get(val, 0)
+                uniqueCount[val] += 1
+
+        return uniqueCount
 
     def pointIterator(self):
     #		if self.features == 0:
