@@ -854,11 +854,11 @@ class Base(object):
         Returns a dictionary containing each unique value as a key and the
         number of times that value occurs as the value.
 
-        points: Can be a single identifier or iterable, list-like object of
-        identifiers. If points is None all points will be analyzed.
+        points: May be None indicating application to all points, a single
+        identifier or iterable, list-like object of identifiers.
 
-        features: Can be a single identifier or iterable, list-like object of
-        identifiers. If features is None all features will be analyzed.
+        features: May be None indicating application to all features, a single 
+        identifier or iterable, list-like object of identifiers.
 
         """
         toCount = self.view()
