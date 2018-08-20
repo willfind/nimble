@@ -780,6 +780,55 @@ class HighLevelDataSafe(DataTestObject):
 
         assert [5, 7] in retRaw
 
+
+    def test_calculateForEachElement_All_zero(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret1 = toTest.calculateForEachElement(lambda x: 0)
+        ret2 = toTest.calculateForEachElement(lambda x: 0, preserveZeros=True)
+
+        expData = [[0,0,0],[0,0,0],[0,0,0]]
+        expObj = self.constructor(expData)
+        assert ret1 == expObj
+        assert ret2 == expObj
+
+    def test_calculateForEachElement_String_conversion_manipulations(self):
+        def allString(val):
+            return str(val)
+
+        toSMap = {2:'two', 4:'four', 6:'six', 8:'eight'}
+        def f1(val):
+            return toSMap[val] if val in toSMap else val
+
+        toIMap = {'two':2, 'four':4, 'six':6, 'eight':8}
+        def f2(val):
+            return toIMap[val] if val in toIMap else val
+
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret0A = toTest.calculateForEachElement(allString)
+        ret0B = toTest.calculateForEachElement(allString, preserveZeros=True)
+
+        exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
+        exp0Obj = self.constructor(exp0Data)
+        assert ret0A == exp0Obj
+        assert ret0B == exp0Obj
+
+        ret1 = toTest.calculateForEachElement(f1)
+
+        exp1Data =  [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
+        exp1Obj = self.constructor(exp1Data)
+
+        assert ret1 == exp1Obj
+
+        ret2 = ret.calculateForEachElement(f2)
+
+        exp2Obj = self.constructor(data)
+
+        assert ret2 == exp2Obj
+
+
+
     #############################
     # countElements() #
     #############################

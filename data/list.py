@@ -161,12 +161,24 @@ class List(Base):
             indexGetter = self.getPointIndex
             nameGetter = self.getPointName
             nameGetterStr = 'getPointName'
+            names = self.getPointNames()
         else:
             test = self.featureView(0)
             viewIter = self.featureIterator()
             indexGetter = self.getFeatureIndex
             nameGetter = self.getFeatureName
             nameGetterStr = 'getFeatureName'
+            names = self.getFeatureNames()
+
+        if isinstance(sortHelper, list):
+            sortData = numpy.array(self.data)
+            if axis == 'point':
+                sortData = sortData[sortHelper, :]
+            else:
+                sortData = sortData[:, sortHelper]
+            self.data = sortData.tolist()
+            newNameOrder = [names[idx] for idx in sortHelper]
+            return newNameOrder
 
         scorer = None
         comparator = None
@@ -462,6 +474,13 @@ class List(Base):
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(numpy.array(self.data))
+
+
+
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
 
 
     def _transformEachPoint_implementation(self, function, points):

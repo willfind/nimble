@@ -111,12 +111,23 @@ class DataFrame(Base):
             indexGetter = self.getPointIndex
             nameGetter = self.getPointName
             nameGetterStr = 'getPointName'
+            names = self.getPointNames()
         else:
             test = self.featureView(0)
             viewIter = self.featureIterator()
             indexGetter = self.getFeatureIndex
             nameGetter = self.getFeatureName
             nameGetterStr = 'getFeatureName'
+            names = self.getFeatureNames()
+
+        if isinstance(sortHelper, list):
+            if axis == 'point':
+                self.data = self.data.iloc[sortHelper, :]
+            else:
+                self.data = self.data.iloc[:, sortHelper]
+            newNameOrder = [names[idx] for idx in sortHelper]
+            return newNameOrder
+
         scorer = None
         comparator = None
         try:
@@ -284,16 +295,16 @@ class DataFrame(Base):
                 self.data.columns = self.getFeatureNames()
                 if includePointNames:
                     outFile.write('point_names')
-            
+
             if includePointNames:
                     self.data.index = self.getPointNames()
 
         self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
-        
+
         if includePointNames:
             self._updateName('point')
         if includeFeatureNames:
-            self._updateName('feature') 
+            self._updateName('feature')
 
     def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
         """
@@ -353,6 +364,13 @@ class DataFrame(Base):
             return scipy.sparse.csr_matrix(dataArray)
 
         return UML.createData('DataFrame', dataArray)
+
+
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
+
 
     def _transformEachPoint_implementation(self, function, points):
         """

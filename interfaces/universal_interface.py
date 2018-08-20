@@ -335,8 +335,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         possibleParamSets = self.getLearnerParameterNames(learnerName)
         possibleDefaults = self.getLearnerDefaultValues(learnerName)
         bestIndex = self._chooseBestParameterSet(possibleParamSets, possibleDefaults, arguments)
-        #		if bestSet is None:
-        #			raise ArgumentException("Missing arguments")
+
         (neededParams, availableDefaults) = (possibleParamSets[bestIndex], possibleDefaults[bestIndex])
         available = copy.deepcopy(arguments)
 
@@ -350,8 +349,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         if isinstance(val, six.string_types):
             tmpCallable = self.findCallable(val)
-            if (tmpCallable is not None) and hasattr(tmpCallable, "__init__"):
-            #if the tmpCallable is a function, then it is not instantiable
+
+            # if tmpCallable returned something, so long as it isn't a function
+            # or a method, it should be instantiable
+            isNone = tmpCallable is None
+            isMethod = inspect.ismethod(tmpCallable)
+            isFunction = inspect.isfunction(tmpCallable)
+            if not isNone and not isMethod and not isFunction:
                 return True
 
         return False
@@ -374,9 +378,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         delayedInstantiations = {}
         #work through this level's needed parameters
         for paramName in currNeededParams:
-        #			if paramName == 'kernel':
-        #				import pdb
-        #				pdb.set_trace()
             # is the param actually there? Is there a default associated with it?
             present = paramName in available
             hasDefault = paramName in currDefaults
