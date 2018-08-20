@@ -62,7 +62,7 @@ from .uml import crossValidateReturnBest
 from .uml import learnerType
 
 from .uml import loadData
-from .uml import loadLearner
+from .uml import loadTrainedLearner
 
 # now finish out with any other configuration that needs to be done
 

@@ -37,7 +37,7 @@ import tempfile
 
 import UML
 
-from UML import loadLearner
+from UML import loadTrainedLearner
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 
 from UML.helpers import generateClusteredPoints
@@ -843,7 +843,7 @@ def _test_saveLoad(trainerLearnerObj, testObj):
     """
     tmpFile = tempfile.NamedTemporaryFile(suffix=".umlm")
     trainerLearnerObj.save(tmpFile.name)
-    trainer_ret_l = loadLearner(tmpFile.name)
+    trainer_ret_l = loadTrainedLearner(tmpFile.name)
     assert (trainerLearnerObj.apply(testObj).isIdentical(
         trainer_ret_l.apply(testObj)))
 
@@ -857,7 +857,7 @@ def _test_saveLoad_tryApproximately(trainerLearnerObj, testObj):
     """
     tmpFile = tempfile.NamedTemporaryFile(suffix=".umlm")
     trainerLearnerObj.save(tmpFile.name)
-    trainer_ret_l = loadLearner(tmpFile.name)
+    trainer_ret_l = loadTrainedLearner(tmpFile.name)
     try:
         assert (trainerLearnerObj.apply(testObj).isIdentical(
             trainer_ret_l.apply(testObj)))

@@ -1194,7 +1194,7 @@ def loadData(inputPath):
     return ret
 
 
-def loadLearner(inputPath):
+def loadTrainedLearner(inputPath):
     """
     Load UML trainedLearner object.
 
