@@ -294,14 +294,13 @@ class QueryBackend(DataTestObject):
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
 
-    ########
+    #################
     # save/LoadData #
-    ########
+    #################
 
     def test_save(self):
         tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
 
-        # instantiate object
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
