@@ -360,7 +360,10 @@ def testSciKitLearnPredictAndTransformLearners():
                 predictionSciKit = UML.createData('Matrix', predictionSciKit.reshape(-1,1))
 
                 assert predictionUML is not None
-                assert predictionUML.isIdentical(predictionSciKit)
+                try:    
+                    assert predictionUML.isIdentical(predictionSciKit)
+                except AssertionError:
+                    assert predictionUML.isApproximatelyEqual(predictionSciKit)
 
             elif hasattr(sklObj, 'transform'):
                 transArgs, _, _, _ = inspect.getargspec(sklObj.transform)
@@ -375,7 +378,10 @@ def testSciKitLearnPredictAndTransformLearners():
                 transformSciKit = UML.createData('Matrix', transformSciKit)
 
                 assert transformUML is not None
-                assert transformUML.isIdentical(transformSciKit)
+                try:
+                    assert transformUML.isIdentical(transformSciKit)
+                except AssertionError:
+                    assert transformUML.isApproximatelyEqual(transformSciKit)
 
 
 def testSciKitLearnMultiTaskLearners():
