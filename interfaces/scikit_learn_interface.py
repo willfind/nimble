@@ -345,6 +345,11 @@ class SciKitLearn(UniversalInterface):
                 trainY = (trainY.copyAs('numpy array'))
             else:
                 trainY = trainY.copyAs('numpy array', outputAs1D=True)
+            if trainY.dtype == numpy.object_:
+                try:
+                    trainY = trainY.astype(numpy.float)
+                except ValueError:
+                    pass
 
         if testX is not None:
             if testX.getTypeString() == 'Matrix':

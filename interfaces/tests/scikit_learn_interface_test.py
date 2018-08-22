@@ -590,3 +590,26 @@ def testGetAttributesCallable():
                 print (learner + " : " + lType)
                 print(ae)
         tl.getAttributes()
+
+def testConvertYTrainDType():
+    """ test trainY dtype is converted to float when learner requires Y to be numeric"""
+    train = [['a', 1, -1, -3, -3, -1],
+              ['b', 2, 0.4, -0.8, 0.2, -0.3],
+              ['c', 3, 2, 1, 2, 4]]
+    test = [['a', 1, -2, -1, -3, -2],
+            ['c', 3, 1, 2, 3, 1]]
+    # object will have 'object' dtype because of strings in data
+    trainObj = UML.createData('Matrix', train)
+    trainObj.retainFeatures([1, 2, 3, 4, 5])
+    testObj = UML.createData('Matrix', test)
+    testObj.retainFeatures([2,3,4,5])
+
+    # case1 trainY passed as integer
+    assert trainObj[:,0].data.dtype == numpy.object_
+    pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, 0, testObj)
+
+    #case2 trainY passed as UML object
+    trainY = trainObj.extractFeatures(0)
+    assert trainY.data.dtype == numpy.object_
+    pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
+

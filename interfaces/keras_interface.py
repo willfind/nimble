@@ -11,6 +11,7 @@ import numpy
 import os
 import sys
 import functools
+import logging
 
 import UML
 
@@ -42,11 +43,12 @@ class Keras(UniversalInterface):
             sys.path.insert(0, kerasDir)
 
         self.keras = UML.importModule('keras')
-        #to make Model handel inputs and outputs explicitly, monkey patching is needed
-        modelFunc = self.keras.models.Model.__init__
-        def tmpFunc(self, inputs=None, outputs=None, layers=None, **kwarguments):
-            modelFunc(self, inputs=inputs, outputs=outputs)
-        self.keras.models.Model.__init__ = tmpFunc
+
+        backendName = self.keras.backend.backend()
+        # tensorflow has a tremendous quantity of informational outputs which
+        # drown out anything else on standard out
+        if backendName == 'tensorflow':
+            logging.getLogger('tensorflow').disabled = True
 
         # keras 2.0.8 has no __all__
         names = os.listdir(self.keras.__path__[0])
