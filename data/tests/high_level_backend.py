@@ -1172,7 +1172,7 @@ class HighLevelModifying(DataTestObject):
         exp = self.constructor(expData, featureNames=expFeatureNames)
 
         assert toTest.isIdentical(exp)
-        assert ret is None
+        assert ret == expFeatureNames
 
     def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
         data = [[1], [2], [3]]
