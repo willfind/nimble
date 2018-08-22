@@ -566,6 +566,7 @@ def testGetAttributesCallable():
     ((cTrainX, cTrainY), (cTestX, cTestY)) = cData
     rData = generateRegressionData(2, 10, 5)
     ((rTrainX, rTrainY), (rTestX, rTestY)) = rData
+    printExceptions = False
 
     allLearners = UML.listLearners('scikitlearn')
     toTest = allLearners
@@ -573,54 +574,19 @@ def testGetAttributesCallable():
     for learner in toTest:
         fullName = 'scikitlearn.' + learner
         lType = UML.learnerType(fullName)
-        if lType == 'classification':
-            try:
-                tl = UML.train(fullName, cTrainX, cTrainY)
-            # this is meant to safely bypass those learners that have required
-            # arguments or require unique data
-            except ArgumentException as ae:
-                pass
-            # this is generally how shogun explodes
-            except SystemError as se:
-                pass
-            tl.getAttributes()
+        if lType in ['classification', 'transformation', 'cluster', 'other']:
+            X = cTrainX
+            Y = cTrainY
         if lType == 'regression':
-            try:
-                tl = UML.train(fullName, rTrainX, rTrainY)
-            # this is meant to safely bypass those learners that have required
-            # arguments or require unique data
-            except ArgumentException as ae:
-                pass
-            except SystemError as se:
-                pass
-            tl.getAttributes()
-        if lType == 'transformation':
-            try:
-                tl = UML.train(fullName, cTrainX, cTrainY)
-            # this is meant to safely bypass those learners that have required
-            # arguments or require unique data
-            except ArgumentException as ae:
-                pass
-            except SystemError as se:
-                pass
-            tl.getAttributes()
-        if lType == 'cluster':
-            try:
-                tl = UML.train(fullName, cTrainX, cTrainY)
-            # this is meant to safely bypass those learners that have required
-            # arguments or require unique data
-            except ArgumentException as ae:
-                pass
-            except SystemError as se:
-                pass
-            tl.getAttributes()
-        if lType == 'other':
-            try:
-                tl = UML.train(fullName, cTrainX, cTrainY)
-            # this is meant to safely bypass those learners that have required
-            # arguments or require unique data
-            except ArgumentException as ae:
-                pass
-            except SystemError as se:
-                pass
-            tl.getAttributes()
+            X = rTrainX
+            Y = rTrainY
+
+        try:
+            tl = UML.train(fullName, X, Y)
+        # this is meant to safely bypass those learners that have required
+        # arguments or require unique data
+        except ArgumentException as ae:
+            if printExceptions:
+                print (learner + " : " + lType)
+                print(ae)
+        tl.getAttributes()

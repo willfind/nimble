@@ -393,7 +393,7 @@ class SciKitLearn(UniversalInterface):
         msg += "sure of success for version {0}".format(self._version)
         if self._versionSplit[1] < 19:
             warnings.warn(msg)
-        elif self._versionSplit[1] == 19 and self._version[2] < 1:
+        elif self._versionSplit[1] == 19 and self._versionSplit[2] < 1:
             warnings.warn(msg)
 
         # get parameter names
