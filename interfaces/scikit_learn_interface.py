@@ -1,5 +1,5 @@
 """
-Relies on being scikit-learn 0.9 or above
+Relies on being scikit-learn 0.19 or above
 
 """
 
