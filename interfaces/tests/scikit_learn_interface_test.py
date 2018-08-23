@@ -6,6 +6,7 @@ Unit tests for scikit_learn_interface.py
 from __future__ import absolute_import
 import numpy.testing
 from nose.plugins.attrib import attr
+from nose.tools import raises
 import importlib
 import inspect
 
@@ -226,6 +227,11 @@ def testSciKitLearnListLearners():
                     for key in dSet.keys():
                         assert key in pSet
 
+@raises(ArgumentException)
+def testSciKitLearnExcludedLearners():
+    trainX = UML.createData('Matrix', [1,2,3])
+    apply = UML.trainAndApply(toCall('KernelCenterer'), trainX)
+
 
 def getLearnersByType(lType, ignore=[]):
     learners = UML.listLearners(packageName)
@@ -369,7 +375,7 @@ def testSciKitLearnOtherPredictLearners():
     Ytrain = trainY.data
     Xtest = testX.data
 
-    ignore = ['TSNE', 'MDS', 'SpectralEmbedding', 'RandomTreesEmbedding',] # special cases, tested elsewhere
+    ignore = ['TSNE', 'MDS', 'SpectralEmbedding',] # special cases, tested elsewhere
     learners = getLearnersByType('other', ignore)
 
     for learner in learners:
@@ -400,7 +406,7 @@ def testSciKitLearnTransformationLearners():
     Ytrain = trainY.data
 
     ignore = ['GaussianRandomProjection', 'SparseRandomProjection',   # special cases, tested elsewhere
-              'MiniBatchSparsePCA', 'SparsePCA', 'NMF']
+              'MiniBatchSparsePCA', 'SparsePCA', 'NMF', 'FastICA', 'Isomap', 'VarianceThreshold']
     learners = getLearnersByType('transformation', ignore)
 
     for learner in learners:
@@ -418,7 +424,6 @@ def testSciKitLearnTransformationLearners():
         transUML = UML.trainAndApply(toCall(learner), trainX, trainY, arguments=arguments)
 
         assert transUML.isApproximatelyEqual(transSKL)
-
 
 @attr('slow')
 def testSciKitLearnRandomProjectionTransformation():
@@ -475,7 +480,7 @@ def testSciKitLearnEmbeddingLearners():
     trainX = abs(data[0][0])
     Xtrain = trainX.data
 
-    learners = ['TSNE', 'MDS', 'SpectralEmbedding', 'RandomTreesEmbedding',]
+    learners = ['TSNE', 'MDS', 'SpectralEmbedding',]
 
     for learner in learners:
         skl = SciKitLearn()
@@ -494,24 +499,27 @@ def testSciKitLearnEmbeddingLearners():
         assert transUML.isApproximatelyEqual(transSKL)
 
 
-def testSciKitLearnNMF():
+def testSciKitLearnTransformationDataInputIssues():
     # must be non-negative matrix
     Xtrain = [[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]]
     trainX = UML.createData('Matrix', Xtrain)
 
-    skl = SciKitLearn()
-    sklObj = skl.findCallable('NMF')
-    sciKitLearnObj = sklObj()
-    seed = UML.randomness.generateSubsidiarySeed()
-    arguments = {}
-    arguments['random_state'] = seed
-    sciKitLearnObj.set_params(**arguments)
-    sciKitLearnObj.fit(Xtrain)
-    transSKL = sciKitLearnObj.transform(Xtrain)
-    transSKL = UML.createData('Matrix', transSKL)
-    transUML = UML.trainAndApply(toCall('NMF'), trainX, arguments=arguments)
+    learners = ['NMF', 'FastICA', 'Isomap', 'VarianceThreshold',]
+    for learner in learners:
+        skl = SciKitLearn()
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        seed = UML.randomness.generateSubsidiarySeed()
+        arguments = {}
+        if 'random_state' in sciKitLearnObj.get_params():
+            arguments['random_state'] = seed
+            sciKitLearnObj.set_params(**arguments)
+        sciKitLearnObj.fit(Xtrain)
+        transSKL = sciKitLearnObj.transform(Xtrain)
+        transSKL = UML.createData('Matrix', transSKL)
+        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-    assert transUML.isApproximatelyEqual(transSKL)
+        assert transUML.isApproximatelyEqual(transSKL)
 
 
 def testCustomRidgeRegressionCompare():

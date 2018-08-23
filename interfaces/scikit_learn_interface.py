@@ -14,9 +14,9 @@ import numpy
 import os
 import sys
 import functools
+import warnings
 
 import UML
-import warnings
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
@@ -45,60 +45,28 @@ class SciKitLearn(UniversalInterface):
         if sciKitLearnDir is not None:
             sys.path.insert(0, sciKitLearnDir)
 
-        self.skl = importlib.import_module('sklearn')
+        # suppress DeprecationWarnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",category=DeprecationWarning)
+            self.skl = importlib.import_module('sklearn')
 
         version = self.skl.__version__
         self._version = version
         self._versionSplit = list(map(int,version.split('.')))
 
-        # __all__ has been known to not have some subpackages that we want
-        # so we check the root directory of sklearn for names that we can
-        # attempt to import
-        names = os.listdir(self.skl.__path__[0])
-        possibilities = []
-        for name in names:
-            splitList = name.split('.')
-            if len(splitList) == 1 or splitList[1] in ['py', 'pyc']:
-                if splitList[0] not in self.skl.__all__ and not splitList[0].startswith('_'):
-                    possibilities.append(splitList[0])
-
-        possibilities = numpy.unique(possibilities).tolist()
-        if 'utils' in possibilities:
-            possibilities.remove('utils')
-        self.skl.__all__.extend(possibilities)
-
-        #		self.newLearners = []
-        #		for name in self._listLearnersBackend():
-        #			if name not in oldList:
-        #				self.newLearners.append(name)
-
-        def isLearner(obj):
-            if not inspect.isclass(obj):
-                return False
-            if not issubclass(obj, self.skl.base.BaseEstimator):
-                return False
-
-            hasFit = hasattr(obj, 'fit')
+        from sklearn.utils.testing import all_estimators
+        all_estimators = all_estimators()
+        self.allEstimators = {}
+        for name, obj in all_estimators:
+            # all_estimators includes some without predict, transform,
+            # fit_predict or fit_transform, all have fit attribute
             hasPred = hasattr(obj, 'predict')
             hasTrans = hasattr(obj, 'transform')
             hasFitPred = hasattr(obj, 'fit_predict')
             hasFitTrans = hasattr(obj, 'fit_transform')
 
-            if not ((hasFit and (hasPred or hasTrans)) or hasFitPred or hasFitTrans):
-                return False
-
-            try:
-                instantiated = obj()
-            except TypeError:
-                # We're using a failed init call as a cue that object in question
-                # is a kind of intermediate class (which we want to ignore). All
-                # the working estimators seem to have full defaults for all params
-                # to __init__
-                return False
-
-            return True
-
-        self._searcher = PythonSearcher(self.skl, self.skl.__all__, {}, isLearner, 2)
+            if hasPred or hasTrans or hasFitPred or hasFitTrans:
+                self.allEstimators[name] = obj
 
         super(SciKitLearn, self).__init__()
 
@@ -114,27 +82,14 @@ class SciKitLearn(UniversalInterface):
         return True
 
     def _listLearnersBackend(self):
-        ret = []
-        # # TODO sklearn.utils.testing.all_estimators will be implemented in 0.20
-        # try:
-        #     all_estimators = self.skl.util.testing.all_estimators
-        #     estimators = all_estimators()
-        #     for name, module in estimators:
-        #         ret.append(name)
-        # except:
-        possibilities = self._searcher.allLearners()
+        possibilities = []
+        exclude = ['FeatureAgglomeration', 'LocalOutlierFactor', 'KernelCenterer',]
 
-        exclude = ['PatchExtractor', 'DummyClassifier',
-            'CountVectorizer', 'TfidfVectorizer', 'LabelBinarizer',
-            'MultiLabelBinarizer', 'LabelEncoder', 'FeatureHasher',
-            'DictVectorizer', 'IsotonicRegression', 'FeatureAgglomeration',
-            'LocalOutlierFactor', 'KernelCenterer',]
-        ret = []
-        for name in possibilities:
-            if not name in exclude:
-                ret.append(name)
+        for name in self.allEstimators.keys():
+            if name not in exclude:
+                possibilities.append(name)
 
-        return ret
+        return possibilities
 
     def learnerType(self, name):
         """
@@ -168,7 +123,10 @@ class SciKitLearn(UniversalInterface):
         TAKES string name
         RETURNS reference to in-package function or constructor
         """
-        return self._searcher.findInPackage(None, name)
+        try:
+            return self.allEstimators[name]
+        except KeyError:
+            return None
 
     def _getParameterNamesBackend(self, name):
         """
@@ -208,7 +166,7 @@ class SciKitLearn(UniversalInterface):
         elif fitTransform is not None:
             ret = init[0] + fitTransform[0]
         else:
-            raise ArgumentException("Cannot get parameter names for leaner " + learnerName)
+            raise ArgumentException("Cannot get parameter names for learner " + learnerName)
 
         return [ret]
 
@@ -391,10 +349,10 @@ class SciKitLearn(UniversalInterface):
         """
         msg = "UML was tested using sklearn 0.19.1 and above, we cannot be "
         msg += "sure of success for version {0}".format(self._version)
-        if self._versionSplit[1] < 19:
-            warnings.warn(msg)
-        elif self._versionSplit[1] == 19 and self._version[2] < 1:
-            warnings.warn(msg)
+        # if self._versionSplit[1] < 19:
+        #     warnings.warn(msg)
+        # elif self._versionSplit[1] == 19 and self._versionSplit[2] < 1:
+        #     warnings.warn(msg)
 
         # get parameter names
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
@@ -455,8 +413,10 @@ class SciKitLearn(UniversalInterface):
             return self._predict(learner, testX, arguments, customDict)
         elif hasattr(learner, 'transform'):
             return self._transform(learner, testX, arguments, customDict)
+        # labels_ is the return for learners with fit_predict only
         elif hasattr(learner, 'labels_'):
             return learner.labels_
+        # embedding_ is the return for learners with fit_transform only
         elif hasattr(learner, 'embedding_'):
             return learner.embedding_
         else:
@@ -589,23 +549,20 @@ class SciKitLearn(UniversalInterface):
         None if the desired thing cannot be found
 
         """
-        namedModule = self._searcher.findInPackage(parent, name)
+        if parent is None:
+            namedModule = self.findCallable(name)
+        else:
+            namedModule = self.findCallable(parent)
 
-        if namedModule is None:
-            return None
-
-        if inspect.isclass(namedModule) or name == '__init__':
-            if parent is None:
-                toCall = self.findCallable(name)
-            else:
-                toCall = self.findCallable(parent)
-            obj = toCall()
+        if parent is None or name == '__init__':
+            obj = namedModule()
             initDefaults = obj.get_params()
             initParams = list(initDefaults.keys())
             initValues = list(initDefaults.values())
             return (initParams, initValues)
-
-        (args, v, k, d) = inspect.getargspec(namedModule)
-        (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
-
-        return (args, d)
+        elif not hasattr(namedModule, name):
+            return None
+        else:
+            (args, v, k, d) = inspect.getargspec(getattr(namedModule, name))
+            (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
+            return (args, d)
