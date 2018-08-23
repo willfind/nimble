@@ -347,12 +347,10 @@ class SciKitLearn(UniversalInterface):
         TAKES name of learner, transformed arguments
         RETURNS an in package object to be wrapped by a TrainedLearner object
         """
-        msg = "UML was tested using sklearn 0.19.1 and above, we cannot be "
+        msg = "UML was tested using sklearn 0.19 and above, we cannot be "
         msg += "sure of success for version {0}".format(self._version)
-        # if self._versionSplit[1] < 19:
-        #     warnings.warn(msg)
-        # elif self._versionSplit[1] == 19 and self._versionSplit[2] < 1:
-        #     warnings.warn(msg)
+        if self._versionSplit[1] < 19:
+            warnings.warn(msg)
 
         # get parameter names
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
