@@ -271,9 +271,14 @@ def testSciKitLearnClassificationLearners():
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
-        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        TL = UML.train(toCall(learner), trainX, trainY, arguments=arguments)
+        predUML = TL.apply(testX)
+        predSL = _apply_saveLoad(TL, testX)
+
+        equalityAssertHelper(predSKL, predUML, predSL)
+
+
 
 
 @attr('slow')
@@ -302,9 +307,12 @@ def testSciKitLearnRegressionLearners():
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
-        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        TL = UML.train(toCall(learner), trainX, trainY, arguments=arguments)
+        predUML = TL.apply(testX)
+        predSL = _apply_saveLoad(TL, testX)
+
+        equalityAssertHelper(predSKL, predUML, predSL)
 
 
 @attr('slow')
@@ -325,7 +333,6 @@ def testSciKitLearnMultiTaskRegressionLearners():
     multiTaskLearners = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV']
 
     for learner in multiTaskLearners:
-        predictionUML = UML.trainAndApply(toCall(learner),trainX=trainXObj, trainY=trainYObj, testX=testXObj)
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         sciKitLearnObj.fit(trainX, trainY)
@@ -333,7 +340,11 @@ def testSciKitLearnMultiTaskRegressionLearners():
         # convert to UML data object for comparison
         predictionSciKit = UML.createData('Matrix', predictionSciKit)
 
-        assert predictionUML.isIdentical(predictionSciKit)
+        TL = UML.train(toCall(learner), trainXObj, trainYObj)
+        predUML = TL.apply(testXObj)
+        predSL = _apply_saveLoad(TL, testXObj)
+
+        equalityAssertHelper(predictionSciKit, predUML, predSL)
 
 
 @attr('slow')
@@ -363,9 +374,12 @@ def testSciKitLearnClusterLearners():
         except AttributeError:
             predSKL = sciKitLearnObj.fit_predict(Xtrain, Xtest)
         predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
-        predUML = UML.trainAndApply(toCall(learner), trainX, testX=testX, arguments=arguments)
 
-        assert predUML.isIdentical(predSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        predUML = TL.apply(testX)
+        predSL = _apply_saveLoad(TL, testX)
+
+        equalityAssertHelper(predSKL, predUML, predSL)
 
 
 @attr('slow')
@@ -394,9 +408,12 @@ def testSciKitLearnOtherPredictLearners():
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
-        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        TL = UML.train(toCall(learner), trainX, trainY, arguments=arguments)
+        predUML = TL.apply(testX)
+        predSL = _apply_saveLoad(TL, testX)
+
+        equalityAssertHelper(predSKL, predUML, predSL)
 
 
 @attr('slow')
@@ -424,9 +441,13 @@ def testSciKitLearnTransformationLearners():
         sciKitLearnObj.fit(Xtrain, Ytrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, trainY, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, trainY, arguments=arguments)
+        transSL = _apply_saveLoad(TL, trainX)
+        transUML = TL.apply(trainX)
+
+
+        equalityAssertHelper(transSKL, transUML, transSL)
 
 @attr('slow')
 def testSciKitLearnRandomProjectionTransformation():
@@ -447,9 +468,12 @@ def testSciKitLearnRandomProjectionTransformation():
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        transUML = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transUML, transSL)
 
 @attr('slow')
 def testSciKitLearnSparsePCATransformation():
@@ -473,9 +497,13 @@ def testSciKitLearnSparsePCATransformation():
         sciKitLearnObj.fit(Xtrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        transUML = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transUML, transSL)
+
 
 @attr('slow')
 def testSciKitLearnEmbeddingLearners():
@@ -497,9 +525,12 @@ def testSciKitLearnEmbeddingLearners():
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        transUML = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transUML, transSL)
 
 
 def testSciKitLearnTransformationDataInputIssues():
@@ -520,9 +551,12 @@ def testSciKitLearnTransformationDataInputIssues():
         sciKitLearnObj.fit(Xtrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        transUML = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transUML, transSL)
 
 
 def testCustomRidgeRegressionCompare():
@@ -534,11 +568,13 @@ def testCustomRidgeRegressionCompare():
     testObj = UML.createData('Matrix', data2)
 
     name = 'Custom.RidgeRegression'
-    ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb': 1})
+    TL = UML.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})
+    ret1 = TL.apply(testObj)
     ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj,
                              arguments={'alpha': 1, 'fit_intercept': False})
+    ret3 = _apply_saveLoad(TL, testObj)
 
-    assert ret1.isApproximatelyEqual(ret2)
+    equalityAssertHelper(ret1, ret2, ret3)
 
 
 def testCustomRidgeRegressionCompareRandomized():
@@ -547,11 +583,13 @@ def testCustomRidgeRegressionCompareRandomized():
     testObj = UML.createRandomData("Matrix", 100, 59, .1)
 
     name = 'Custom.RidgeRegression'
-    ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb': 1})
+    TL = UML.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})
+    ret1 = TL.apply(testObj)
     ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj,
                              arguments={'alpha': 1, 'fit_intercept': False})
+    ret3 = _apply_saveLoad(TL, testObj)
 
-    assert ret1.isApproximatelyEqual(ret2)
+    equalityAssertHelper(ret1, ret2, ret3)
 
 
 @attr('slow')
@@ -564,10 +602,12 @@ def testCustomKNNClassficationCompareRandomized():
 
     cusname = 'Custom.KNNClassifier'
     sklname = "Scikitlearn.KNeighborsClassifier"
-    ret1 = UML.trainAndApply(cusname, trainX, trainY=trainY, testX=testX, k=5)
+    TL = UML.train(cusname, trainX, trainY=trainY, k=5)
+    ret1 = TL.apply(testX)
     ret2 = UML.trainAndApply(sklname, trainX, trainY=trainY, testX=testX, n_neighbors=5, algorithm='brute')
+    ret3 = _apply_saveLoad(TL, testX)
 
-    assert ret1.isApproximatelyEqual(ret2)
+    equalityAssertHelper(ret1, ret2, ret3)
 
 
 @attr('slow')
@@ -602,6 +642,7 @@ def testGetAttributesCallable():
                 print(ae)
         tl.getAttributes()
 
+
 def testConvertYTrainDType():
     """ test trainY dtype is converted to float when learner requires Y to be numeric"""
     train = [['a', 1, -1, -3, -3, -1],
@@ -624,355 +665,26 @@ def testConvertYTrainDType():
     assert trainY.data.dtype == numpy.object_
     pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
 
-###################
-# save/load tests #
-###################
 
-def testSciKitLearnHandmadeRegression_saveLoadLearner():
-    """Test save/load TrainedLearner object for scikit-learn handmade regression."""
-    variables = ["Y", "x1", "x2"]
-    data = [[2, 1, 1], [3, 1, 2], [4, 2, 2], ]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-
-    data2 = [[0, 1]]
-    testObj = UML.createData('Matrix', data2)
-
-    trainer_ret = UML.train(toCall("LinearRegression"), trainingObj, trainY="Y",
-                            arguments={})
-    _test_saveLoad(trainer_ret, testObj)
-
-
-def testSciKitLearnSparseRegression_saveLoadLearner():
-    """Test save/load TrainedLearner object for scikit-learn sparse regression."""
-    if not scipy:
-        return
-
-    x = 1000
-    c = 10
-    points = numpyRandom.randint(0, x, c)
-    points2 = numpyRandom.randint(0, x, c)
-    cols = numpyRandom.randint(0, x, c)
-    cols2 = numpyRandom.randint(0, x, c)
-    data = numpyRandom.rand(c)
-    A = scipy.sparse.coo_matrix((data, (points, cols)), shape=(x, x))
-    obj = UML.createData('Sparse', A)
-    testObj = obj.copy()
-    testObj.extractFeatures(cols[0])
-
-    trainer_ret = UML.train(toCall('SGDRegressor'), trainX=obj, trainY=cols[0])
-    _test_saveLoad(trainer_ret, testObj)
-
-
-def testSciKitLearnHandmadeClustering_saveLoadLearner():
-    """Test save/load TrainedLearner object for scikit-learn handmade clustering."""
-    variables = ["x1", "x2"]
-    data = [[1, 0], [3, 3], [5, 0], ]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-
-    data2 = [[1, 0], [1, 1], [5, 1], [3, 4]]
-    testObj = UML.createData('Matrix', data2)
-
-    trainer_ret = UML.train(toCall("KMeans"), trainingObj,
-                            arguments={'n_clusters': 3})
-    _test_saveLoad(trainer_ret, testObj)
-
-
-def testSciKitLearnHandmadeSparseClustering_saveLoadLearner():
-    """Test save/load TrainedLearner object for scikit-learn sparse clustering."""
-    if not scipy:
-        return
-    trainData = scipy.sparse.lil_matrix((3, 3))
-    trainData[0, :] = [2, 3, 1]
-    trainData[1, :] = [2, 2, 1]
-    trainData[2, :] = [0, 0, 0]
-    trainData = UML.createData('Sparse', data=trainData)
-
-    testData = scipy.sparse.lil_matrix((3, 2))
-    testData[0, :] = [3, 3]
-    testData[1, :] = [3, 2]
-    testData[2, :] = [-1, 0]
-    testData = UML.createData('Sparse', data=testData)
-
-    trainer_ret = UML.train(toCall('MiniBatchKMeans'),
-                            trainData, trainY=2, arguments={'n_clusters': 2})
-    _test_saveLoad(trainer_ret, testData)
-
-
-def testSciKitLearnScoreMode_saveLoadLearner():
-    """Test save/load TrainedLearner object for scikit-learn scoreMode flags."""
-    variables = ["Y", "x1", "x2"]
-    data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2]]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-
-    data2 = [[2, 3], [-200, 0]]
-    testObj = UML.createData('Matrix', data2)
-
-    trainer_ret = UML.train(toCall("SVC"), trainingObj,
-                            trainY="Y", arguments={})
-    _test_saveLoad(trainer_ret, testObj)
-
-    trainer_ret = UML.train(toCall("SVC"), trainingObj, trainY="Y", arguments={},
-                            scoreMode='bestScore')
-    _test_saveLoad(trainer_ret, testObj)
-
-    trainer_ret = UML.train(toCall("SVC"), trainingObj, trainY="Y", arguments={},
-                            scoreMode='allScores')
-    _test_saveLoad(trainer_ret, testObj)
-
-
-def testSciKitLearnScoreModeBinary_saveLoadLearner():
-    """Test save/load TrainedLearner object for scikit-learn scoreMode flags (binary case)."""
-    variables = ["Y", "x1", "x2"]
-    data = [[1, 30, 2], [2, 1, 1], [2, 0, 1],
-            [2, -1, -1], [1, 30, 3], [1, 34, 4]]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-
-    data2 = [[2, 1], [25, 0]]
-    testObj = UML.createData('Matrix', data2)
-
-    # default scoreMode is 'label'
-    trainer_ret = UML.train(toCall("SVC"), trainingObj,
-                            trainY="Y", arguments={})
-    _test_saveLoad(trainer_ret, testObj)
-
-    trainer_ret = UML.train(toCall("SVC"), trainingObj, trainY="Y", arguments={},
-                            scoreMode='bestScore')
-    _test_saveLoad(trainer_ret, testObj)
-
-    trainer_ret = UML.train(toCall("SVC"), trainingObj, trainY="Y", arguments={},
-                            scoreMode='allScores')
-    _test_saveLoad(trainer_ret, testObj)
-
-
-def testSciKitLearnUnsupervisedProblemLearners_saveLoadLearner():
-    """Test save/load TrainedLearner object for some scikit-learn unsupervised learners problematic in previous implementations"""
-    variables = ["x1", "x2"]
-    data = [[1, 0], [3, 3], [50, 0]]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-
-    data2 = [[1, 0], [1, 1], [5, 1], [34, 4]]
-    testObj = UML.createData('Matrix', data2)
-
-    trainer_ret = UML.train(toCall("GMM"), trainingObj)
-    _test_saveLoad(trainer_ret, testObj)
-    trainer_ret = UML.train(toCall("DPGMM"), trainingObj)
-    _test_saveLoad(trainer_ret, testObj)
-    trainer_ret = UML.train(toCall("VBGMM"), trainingObj)
-    _test_saveLoad(trainer_ret, testObj)
-
-
-def testSciKitLearnArgspecFailures_saveLoadLearner():
-    """Test save/load TrainedLearner object on those learners that cannot be passed to inspect.getargspec"""
-    variables = ["x1", "x2"]
-    data = [[1, 0], [3, 3], [50, 0]]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-
-    dataY = [[0], [1], [2]]
-    trainingYObj = UML.createData('Matrix', dataY)
-
-    data2 = [[1, 0], [1, 1], [5, 1], [34, 4]]
-    testObj = UML.createData('Matrix', data2)
-
-    trainer_ret = UML.train(toCall("GaussianNB"),
-                            trainingObj, trainY=trainingYObj)
-    # data dependent?
-    _test_saveLoad(trainer_ret, testObj)
-    trainer_ret = UML.train(toCall("MultinomialNB"),
-                            trainingObj, trainY=trainingYObj)
-    _test_saveLoad(trainer_ret, testObj)
-
-
-def testSciKitLearnCrossDecomp_saveLoadLearner():
-    """Test save/load TrainedLearner object for some scikit-learn learners which take 2d Y data"""
-    variables = ["x1", "x2"]
-    data = [[1, 0], [3, 3], [50, 0], [12, 3], [8, 228]]
-    trainingObj = UML.createData('Matrix', data, featureNames=variables)
-    dataY = [[0, 1], [0, 1], [2, 2], [1, 30], [5, 21]]
-    trainingYObj = UML.createData('Matrix', dataY)
-
-    data2 = [[1, 0], [1, 1], [5, 1], [34, 4]]
-    testObj = UML.createData('Matrix', data2)
-
-    trainer_ret = UML.train(toCall("CCA"), trainingObj, trainY=trainingYObj)
-    _test_saveLoad(trainer_ret, testObj)
-    trainer_ret = UML.train(toCall("PLSCanonical"),
-                            trainingObj, trainY=trainingYObj)
-    _test_saveLoad(trainer_ret, testObj)
-    trainer_ret = UML.train(toCall("PLSRegression"),
-                            trainingObj, trainY=trainingYObj)
-    _test_saveLoad(trainer_ret, testObj)
-    trainer_ret = UML.train(toCall("PLSSVD"), trainingObj, trainY=trainingYObj)
-    _test_saveLoad(trainer_ret, testObj)
-
-
-@attr('slow')
-def testSciKitLearnPredictAndTransformLearners_saveLoadLearner():
-    """Test save/load TrainedLearner object for some predict and transform scikit-learn learners"""
-
-    skl = SciKitLearn()
-
-    ((rTrainX, rTrainY), (rTestX, rTestY)) = generateRegressionData(2, 20, 10)
-    ((cTrainX, cTrainY), (cTestX, cTestY)) = generateClassificationData(2, 20, 10)
-    # some classification learners cannot handle negative data
-    cTrainX, cTrainY, cTestX, cTestY = abs(
-        cTrainX), abs(cTrainY), abs(cTestX), abs(cTestY)
-
-    learners = UML.listLearners('scikitlearn')
-
-    exclude = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso',
-               'MultiTaskLassoCV', 'MiniBatchSparsePCA', 'RandomizedPCA',
-               'SparsePCA', 'PatchExtractor', 'FeatureHasher', 'KernelCenterer',
-               'StandardScaler', 'LabelBinarizer', 'LabelEncoder',
-               'DummyClassifier', 'DictVectorizer', 'CountVectorizer',
-               'TfidfVectorizer', 'MultiLabelBinarizer', 'SparseRandomProjection',
-               'GaussianRandomProjection', 'LinearDiscriminantAnalysis',
-               'Normalizer', 'ZeroEstimator', 'ScaledLogOddsEstimator']
-
-    for learner in learners:
-        if learner not in exclude:
-            sklObj = skl.findCallable(learner)
-            fullName = 'scikitlearn.' + learner
-            lType = UML.learnerType(fullName)
-            if lType == 'regression':
-                trainXObj = rTrainX
-                trainYObj = rTrainY
-                testXObj = rTestX
-                trainX = rTrainX.data
-                trainY = rTrainY.data
-                testX = rTestX.data
-            else:
-                trainXObj = cTrainX
-                trainYObj = cTrainY
-                testXObj = cTestX
-                trainX = cTrainX.data
-                trainY = cTrainY.data
-                testX = cTestX.data
-
-            try:
-                args, _, _, _ = inspect.getargspec(sklObj)
-            except TypeError:
-                args, _, _, _ = inspect.getargspec(sklObj.__init__)
-            uml_kwds = {}
-            uml_kwds['trainX'] = trainXObj
-            uml_kwds['trainY'] = trainYObj
-            if 'random_state' in args:
-                seed = UML.randomness.generateSubsidiarySeed()
-                sciKitLearnObj = sklObj(random_state=seed)
-                uml_kwds['arguments'] = {'random_state': seed}
-            else:
-                sciKitLearnObj = sklObj()
-            sciKitLearnObj.fit(trainX, trainY)
-
-            if hasattr(sklObj, 'predict'):
-                trainer_predictor = UML.train(toCall(learner), **uml_kwds)
-                _test_saveLoad_tryApproximately(trainer_predictor, testXObj)
-
-            elif hasattr(sklObj, 'transform'):
-                transArgs, _, _, _ = inspect.getargspec(sklObj.transform)
-                trainer_transform = UML.train(toCall(learner), **uml_kwds)
-                _test_saveLoad_tryApproximately(trainer_transform, testXObj)
-
-
-def testSciKitLearnMultiTaskLearners_saveLoadLearner():
-    """Test save/load TrainedLearner object for some multitask
-    scikit-learn learners with predict method"""
-
-    skl = SciKitLearn()
-
-    trainX = [[0, 0], [1, 1], [2, 2]]
-    trainY = [[0, 0], [1, 1], [2, 2]]
-    testX = [[2, 2], [0, 0], [1, 1]]
-
-    trainXObj = UML.createData('Matrix', trainX)
-    trainYObj = UML.createData('Matrix', trainY)
-    testXObj = UML.createData('Matrix', testX)
-
-    multiTaskLearners = ['MultiTaskElasticNet',
-                         'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV']
-
-    for learner in multiTaskLearners:
-        trainer_predictor = UML.train(
-            toCall(learner), trainX=trainXObj, trainY=trainYObj)
-        _test_saveLoad(trainer_predictor, testXObj)
-
-
-def testCustomRidgeRegressionCompare_saveLoadLearner():
-    """Test save/load TrainedLearner object for Ridgeregression"""
-
-    data = [[0, 1, 2], [13, 12, 4], [345, 233, 76]]
-    trainObj = UML.createData('Matrix', data)
-
-    data2 = [[122, 34], [76, -3]]
-    testObj = UML.createData('Matrix', data2)
-
-    name = 'Custom.RidgeRegression'
-    trainer_ret = UML.train(name, trainX=trainObj,
-                            trainY=0, arguments={'lamb': 1})
-    _test_saveLoad(trainer_ret, testObj)
-
-    trainer_ret = UML.train("Scikitlearn.Ridge", trainX=trainObj, trainY=0,
-                            arguments={'alpha': 1, 'fit_intercept': False})
-    _test_saveLoad(trainer_ret, testObj)
-
-
-def testCustomRidgeRegressionCompareRandomized_saveLoadLearner():
-    """Test save/load TrainedLearner object for custom Ridgeregression"""
-
-    trainObj = UML.createRandomData("Matrix", 1000, 60, .1)
-    testObj = UML.createRandomData("Matrix", 100, 59, .1)
-
-    name = 'Custom.RidgeRegression'
-    trainer_ret = UML.train(name, trainX=trainObj,
-                            trainY=0, arguments={'lamb': 1})
-    _test_saveLoad(trainer_ret, testObj)
-    trainer_ret = UML.train("Scikitlearn.Ridge", trainX=trainObj, trainY=0,
-                            arguments={'alpha': 1, 'fit_intercept': False})
-    _test_saveLoad(trainer_ret, testObj)
-
-
-@attr('slow')
-def testCustomKNNClassficationCompareRandomized_saveLoadLearner():
-    """Test save/load TrainedLearner object for custom KNNClassifier"""
-
-    trainX, ignore, trainY = generateClusteredPoints(5, 50, 5, addFeatureNoise=True, addLabelNoise=False,
-                                                     addLabelColumn=False)
-    testX, ignore, testY = generateClusteredPoints(5, 5, 5, addFeatureNoise=True, addLabelNoise=False,
-                                                   addLabelColumn=False)
-
-    cusname = 'Custom.KNNClassifier'
-    sklname = "Scikitlearn.KNeighborsClassifier"
-    trainer_ret = UML.train(cusname, trainX, trainY=trainY, k=5)
-    _test_saveLoad(trainer_ret, testX)
-    trainer_ret = UML.train(sklname, trainX, trainY=trainY,
-                            n_neighbors=5, algorithm='brute')
-    _test_saveLoad(trainer_ret, testX)
-
-
-def _test_saveLoad(trainerLearnerObj, testObj):
+def _apply_saveLoad(trainerLearnerObj, givenTestX):
     """
-    save/load TrainedLearner object and test equal results when applying
-    loaded and original model to a testObj.
+    Given a TrainedLearner object, return the results of apply after having
+    saved then loaded the learner from a file.
     """
-    tmpFile = tempfile.NamedTemporaryFile(suffix=".umlm")
-    trainerLearnerObj.save(tmpFile.name)
-    trainer_ret_l = loadTrainedLearner(tmpFile.name)
-    assert (trainerLearnerObj.apply(testObj).isIdentical(
-        trainer_ret_l.apply(testObj)))
+    with tempfile.NamedTemporaryFile(suffix=".umlm") as tmpFile:
+        trainerLearnerObj.save(tmpFile.name)
+        trainer_ret_l = loadTrainedLearner(tmpFile.name)
+        return trainer_ret_l.apply(givenTestX)
 
 
-def _test_saveLoad_tryApproximately(trainerLearnerObj, testObj):
-    """
-    save/load TrainedLearner object and test equal results when applying
-    loaded and original model to a testObj.
-    If isIdentical fails the function at least try to check if they are
-    ApproximatelyEqual.
-    """
-    tmpFile = tempfile.NamedTemporaryFile(suffix=".umlm")
-    trainerLearnerObj.save(tmpFile.name)
-    trainer_ret_l = loadTrainedLearner(tmpFile.name)
-    try:
-        assert (trainerLearnerObj.apply(testObj).isIdentical(
-            trainer_ret_l.apply(testObj)))
-    except AssertionError:
-        assert trainerLearnerObj.apply(testObj).isApproximatelyEqual(
-            trainer_ret_l.apply(testObj))
+def equalityAssertHelper(ret1, ret2, ret3=None):
+    def identicalThenApprox(lhs, rhs):
+        try:
+            assert lhs.isIdentical(rhs)
+        except AssertionError:
+            assert lhs.isApproximatelyEqual(rhs)
+
+    identicalThenApprox(ret1, ret2)
+    if ret3 is not None:
+        identicalThenApprox(ret1, ret3)
+        identicalThenApprox(ret2, ret3)

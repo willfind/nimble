@@ -288,10 +288,10 @@ class SciKitLearn(UniversalInterface):
         by the package implementor, for example to be used in _outputTransformation()
 
         """
-        mustCopy = ['PLSRegression']
+        mustCopyTrainX = ['PLSRegression']
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
-            if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopy:
+            if trainX.getTypeString() == 'Matrix' and learnerName not in mustCopyTrainX:
                 trainX = trainX.data
             elif trainX.getTypeString() == 'Sparse':
                 trainX = trainX.copyAs('scipycsr')
@@ -310,7 +310,8 @@ class SciKitLearn(UniversalInterface):
                     pass
 
         if testX is not None:
-            if testX.getTypeString() == 'Matrix':
+            mustCopyTestX = ['StandardScaler']
+            if testX.getTypeString() == 'Matrix' and learnerName not in mustCopyTestX:
                 testX = testX.data
             elif testX.getTypeString() == 'Sparse':
                 testX = testX.copyAs('scipycsr')
