@@ -30,6 +30,7 @@ import six
 from six.moves import range
 import warnings
 
+import cloudpickle
 
 def captureOutput(toWrap):
     """Decorator which will safefly redirect standard error within the
@@ -860,6 +861,31 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     extraInfo=mergedArguments, numFolds=None)
 
             return ret
+
+        def save(self, outputPath):
+            """
+            Save object to a file.
+
+            outputPath: the location (including file name and extension) where
+                we want to write the output file.
+                
+            If filename extension .umlm is not included in file name it would
+            be added to the output file.
+
+            Uses dill library to serialize it.
+            """
+            extension = '.umlm'
+            if not outputPath.endswith(extension):
+                outputPath = outputPath + extension
+
+            with open(outputPath, 'wb') as file:
+                try:
+                    cloudpickle.dump(self, file)
+                except Exception as e:
+                    raise(e)
+            # print('session_' + outputFilename)
+            # print(globals())
+            # dill.dump_session('session_' + outputFilename)
 
         @captureOutput
         def retrain(self, trainX, trainY=None):

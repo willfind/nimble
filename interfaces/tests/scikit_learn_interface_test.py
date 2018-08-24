@@ -9,9 +9,11 @@ from nose.plugins.attrib import attr
 from nose.tools import raises
 import importlib
 import inspect
+import tempfile
 
 import UML
 
+from UML import loadTrainedLearner
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 
 from UML.helpers import generateClusteredPoints
@@ -23,6 +25,7 @@ from UML.helpers import generateClassificationData
 from UML.helpers import generateRegressionData
 from UML.calculate.loss import rootMeanSquareError
 from UML.interfaces.scikit_learn_interface import SciKitLearn
+from UML.interfaces.universal_interface import UniversalInterface
 
 from sklearn.metrics import mean_squared_error
 
@@ -268,9 +271,14 @@ def testSciKitLearnClassificationLearners():
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
-        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        TL = UML.train(toCall(learner), trainX, trainY, arguments=arguments)
+        predUML = TL.apply(testX)
+        predSL = _apply_saveLoad(TL, testX)
+
+        equalityAssertHelper(predSKL, predUML, predSL)
+
+
 
 
 @attr('slow')
@@ -299,9 +307,12 @@ def testSciKitLearnRegressionLearners():
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
-        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        TL = UML.train(toCall(learner), trainX, trainY, arguments=arguments)
+        predUML = TL.apply(testX)
+        predSL = _apply_saveLoad(TL, testX)
+
+        equalityAssertHelper(predSKL, predUML, predSL)
 
 
 @attr('slow')
@@ -322,7 +333,6 @@ def testSciKitLearnMultiTaskRegressionLearners():
     multiTaskLearners = ['MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV']
 
     for learner in multiTaskLearners:
-        predictionUML = UML.trainAndApply(toCall(learner),trainX=trainXObj, trainY=trainYObj, testX=testXObj)
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         sciKitLearnObj.fit(trainX, trainY)
@@ -330,7 +340,11 @@ def testSciKitLearnMultiTaskRegressionLearners():
         # convert to UML data object for comparison
         predictionSciKit = UML.createData('Matrix', predictionSciKit)
 
-        assert predictionUML.isIdentical(predictionSciKit)
+        TL = UML.train(toCall(learner), trainXObj, trainYObj)
+        predUML = TL.apply(testXObj)
+        predSL = _apply_saveLoad(TL, testXObj)
+
+        equalityAssertHelper(predictionSciKit, predUML, predSL)
 
 
 @attr('slow')
@@ -360,9 +374,12 @@ def testSciKitLearnClusterLearners():
         except AttributeError:
             predSKL = sciKitLearnObj.fit_predict(Xtrain, Xtest)
         predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
-        predUML = UML.trainAndApply(toCall(learner), trainX, testX=testX, arguments=arguments)
 
-        assert predUML.isIdentical(predSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        predUML = TL.apply(testX)
+        predSL = _apply_saveLoad(TL, testX)
+
+        equalityAssertHelper(predSKL, predUML, predSL)
 
 
 @attr('slow')
@@ -391,9 +408,12 @@ def testSciKitLearnOtherPredictLearners():
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = UML.createData('Matrix', predSKL.reshape(-1,1))
-        predUML = UML.trainAndApply(toCall(learner), trainX, trainY, testX, arguments=arguments)
 
-        assert predUML.isApproximatelyEqual(predSKL)
+        TL = UML.train(toCall(learner), trainX, trainY, arguments=arguments)
+        predUML = TL.apply(testX)
+        predSL = _apply_saveLoad(TL, testX)
+
+        equalityAssertHelper(predSKL, predUML, predSL)
 
 
 @attr('slow')
@@ -421,9 +441,13 @@ def testSciKitLearnTransformationLearners():
         sciKitLearnObj.fit(Xtrain, Ytrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, trainY, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, trainY, arguments=arguments)
+        transSL = _apply_saveLoad(TL, trainX)
+        transUML = TL.apply(trainX)
+
+
+        equalityAssertHelper(transSKL, transUML, transSL)
 
 @attr('slow')
 def testSciKitLearnRandomProjectionTransformation():
@@ -444,9 +468,12 @@ def testSciKitLearnRandomProjectionTransformation():
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        transUML = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transUML, transSL)
 
 @attr('slow')
 def testSciKitLearnSparsePCATransformation():
@@ -470,9 +497,13 @@ def testSciKitLearnSparsePCATransformation():
         sciKitLearnObj.fit(Xtrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        transUML = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transUML, transSL)
+
 
 @attr('slow')
 def testSciKitLearnEmbeddingLearners():
@@ -494,9 +525,12 @@ def testSciKitLearnEmbeddingLearners():
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        transUML = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transUML, transSL)
 
 
 def testSciKitLearnTransformationDataInputIssues():
@@ -517,9 +551,12 @@ def testSciKitLearnTransformationDataInputIssues():
         sciKitLearnObj.fit(Xtrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = UML.createData('Matrix', transSKL)
-        transUML = UML.trainAndApply(toCall(learner), trainX, arguments=arguments)
 
-        assert transUML.isApproximatelyEqual(transSKL)
+        TL = UML.train(toCall(learner), trainX, arguments=arguments)
+        transUML = TL.apply(trainX)
+        transSL = _apply_saveLoad(TL, trainX)
+
+        equalityAssertHelper(transSKL, transUML, transSL)
 
 
 def testCustomRidgeRegressionCompare():
@@ -531,11 +568,13 @@ def testCustomRidgeRegressionCompare():
     testObj = UML.createData('Matrix', data2)
 
     name = 'Custom.RidgeRegression'
-    ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb': 1})
+    TL = UML.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})
+    ret1 = TL.apply(testObj)
     ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj,
                              arguments={'alpha': 1, 'fit_intercept': False})
+    ret3 = _apply_saveLoad(TL, testObj)
 
-    assert ret1.isApproximatelyEqual(ret2)
+    equalityAssertHelper(ret1, ret2, ret3)
 
 
 def testCustomRidgeRegressionCompareRandomized():
@@ -544,11 +583,13 @@ def testCustomRidgeRegressionCompareRandomized():
     testObj = UML.createRandomData("Matrix", 100, 59, .1)
 
     name = 'Custom.RidgeRegression'
-    ret1 = UML.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, arguments={'lamb': 1})
+    TL = UML.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})
+    ret1 = TL.apply(testObj)
     ret2 = UML.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj,
                              arguments={'alpha': 1, 'fit_intercept': False})
+    ret3 = _apply_saveLoad(TL, testObj)
 
-    assert ret1.isApproximatelyEqual(ret2)
+    equalityAssertHelper(ret1, ret2, ret3)
 
 
 @attr('slow')
@@ -561,10 +602,12 @@ def testCustomKNNClassficationCompareRandomized():
 
     cusname = 'Custom.KNNClassifier'
     sklname = "Scikitlearn.KNeighborsClassifier"
-    ret1 = UML.trainAndApply(cusname, trainX, trainY=trainY, testX=testX, k=5)
+    TL = UML.train(cusname, trainX, trainY=trainY, k=5)
+    ret1 = TL.apply(testX)
     ret2 = UML.trainAndApply(sklname, trainX, trainY=trainY, testX=testX, n_neighbors=5, algorithm='brute')
+    ret3 = _apply_saveLoad(TL, testX)
 
-    assert ret1.isApproximatelyEqual(ret2)
+    equalityAssertHelper(ret1, ret2, ret3)
 
 
 @attr('slow')
@@ -599,6 +642,7 @@ def testGetAttributesCallable():
                 print(ae)
         tl.getAttributes()
 
+
 def testConvertYTrainDType():
     """ test trainY dtype is converted to float when learner requires Y to be numeric"""
     train = [['a', 1, -1, -3, -3, -1],
@@ -621,3 +665,26 @@ def testConvertYTrainDType():
     assert trainY.data.dtype == numpy.object_
     pred = UML.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
 
+
+def _apply_saveLoad(trainerLearnerObj, givenTestX):
+    """
+    Given a TrainedLearner object, return the results of apply after having
+    saved then loaded the learner from a file.
+    """
+    with tempfile.NamedTemporaryFile(suffix=".umlm") as tmpFile:
+        trainerLearnerObj.save(tmpFile.name)
+        trainer_ret_l = loadTrainedLearner(tmpFile.name)
+        return trainer_ret_l.apply(givenTestX)
+
+
+def equalityAssertHelper(ret1, ret2, ret3=None):
+    def identicalThenApprox(lhs, rhs):
+        try:
+            assert lhs.isIdentical(rhs)
+        except AssertionError:
+            assert lhs.isApproximatelyEqual(rhs)
+
+    identicalThenApprox(ret1, ret2)
+    if ret3 is not None:
+        identicalThenApprox(ret1, ret3)
+        identicalThenApprox(ret2, ret3)

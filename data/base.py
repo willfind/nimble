@@ -15,6 +15,7 @@ from six.moves import range
 from six.moves import zip
 import sys
 import warnings
+import cloudpickle
 
 import __main__ as main
 mplError = None
@@ -1548,6 +1549,32 @@ class Base(object):
                 toOut._writeFile_implementation(outPath, format, includePointNames, includeFeatureNames)
                 return
 
+    def save(self, outputPath):
+        """
+        Save object to a file.
+
+        outputPath: the location (including file name and extension) where
+            we want to write the output file.
+            
+        If filename extension .umld is not included in file name it would
+        be added to the output file.
+            
+        Uses dill library to serialize it.
+        """
+        
+        extension = '.umld'
+        if not outputPath.endswith(extension):
+            outputPath = outputPath + extension
+
+        with open(outputPath, 'wb') as file:
+            try:
+                cloudpickle.dump(self, file)
+            except Exception as e:
+                raise(e)
+        # TODO: save session     
+        # print('session_' + outputFilename)
+        # print(globals())
+        # dill.dump_session('session_' + outputFilename)
 
     def getTypeString(self):
         """
@@ -2892,7 +2919,6 @@ class Base(object):
         self._nextDefaultValueFeature = other._nextDefaultValueFeature
 
         self.validate()
-
 
     def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
         """
