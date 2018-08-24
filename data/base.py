@@ -528,6 +528,8 @@ class Base(object):
         toConvert.extractFeatures([varName])
         self.appendFeatures(toConvert)
 
+        return toConvert.getFeatureNames()
+
 
     def transformFeatureToIntegers(self, featureToConvert):
         """
