@@ -821,7 +821,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert ret1 == exp1Obj
 
-        ret2 = ret.calculateForEachElement(f2)
+        ret2 = ret1.calculateForEachElement(f2)
 
         exp2Obj = self.constructor(data)
 
