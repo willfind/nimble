@@ -570,18 +570,44 @@ class Matrix(Base):
                         self.data[i, j] = arguments
             else:
                 raise ArgumentException(msg)
-        elif method == 'forward fill':
-            for tmpItem in missingIdxDictFeature.items():
-                    j = tmpItem[0]
-                    for i in tmpItem[1]:
-                        if i > 0:
-                            self.data[i, j] = self.data[i-1, j]
-        elif method == 'backward fill':
-            for tmpItem in missingIdxDictFeature.items():
-                    j = tmpItem[0]
-                    for i in sorted(tmpItem[1], reverse=True):
-                        if i < self.points - 1:
-                            self.data[i, j] = self.data[i+1, j]
+        elif method == 'forward fill' or method == 'backward fill':
+            if method == 'forward fill':
+                initial = 'first'
+                missingFromInitialPoint = missingIdxDictPoint[0]
+                def sortMissing(lst):
+                    return lst
+                def referenceIdx(idx):
+                    return idx - 1
+            else:
+                initial = 'last'
+                missingFromInitialPoint = missingIdxDictPoint[self.points - 1]
+                def sortMissing(lst):
+                    return sorted(lst, reverse=True)
+                def referenceIdx(idx):
+                    return idx + 1
+            if len(missingFromInitialPoint) == 0:
+                for tmpItem in missingIdxDictFeature.items():
+                        j = tmpItem[0]
+                        for i in sortMissing(tmpItem[1]):
+                            if i > 0:
+                                self.data[i, j] = self.data[referenceIdx(i), j]
+            else:
+                # the initial point has one or more missing values, but we will
+                # also check if any of those features contain all missing values
+                allMissingValuesFeatureIndices = []
+                for feature in missingFromInitialPoint:
+                    if len(missingIdxDictFeature[feature]) == self.points:
+                        allMissingValuesFeatureIndices.append(feature)
+                msg = "Cannot remove all missing values using {0}. ".format(method)
+                if len(allMissingValuesFeatureIndices) == 0:
+                    msg += "The {0} point has missing values ".format(initial)
+                    msg += "at indices {0}.".format(missingFromInitialPoint)
+                    raise ArgumentException(msg)
+                else:
+                    msg += "The features at indices "
+                    msg += "{0} ".format(allMissingValuesFeatureIndices)
+                    msg += "contain only missing values"
+                    raise ArgumentException(msg)
         elif method == 'interpolate':
             for tmpItem in missingIdxDictFeature.items():
                 j = tmpItem[0]

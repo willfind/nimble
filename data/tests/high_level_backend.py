@@ -1759,6 +1759,11 @@ class HighLevelModifying(DataTestObject):
         assert expAlsoL == alsoLess
         assert expAlsoM == alsoMore
 
+
+    #########################
+    # handleMissingValues() #
+    #########################
+
     def test_handleMissingValues_remove_points(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
@@ -1890,7 +1895,7 @@ class HighLevelModifying(DataTestObject):
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
 
-    def test_handleMissingValues_forward_fill(self):
+    def test_handleMissingValues_forward_fill_simple(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
@@ -1899,7 +1904,21 @@ class HighLevelModifying(DataTestObject):
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
 
-    def test_handleMissingValues_backward_fill(self):
+    @raises(ArgumentException)
+    def test_handleMissingValues_forward_fill_firstPointContainsMissing(self):
+        obj0 = self.constructor([[1, None, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+
+        obj1 = obj0.copy()
+        obj1.handleMissingValues(method='forward fill')
+
+    @raises(ArgumentException)
+    def test_handleMissingValues_forward_fill_allMissingFeature(self):
+        obj0 = self.constructor([[1, None, 3], [None, 11, None], [None, 11, 9], [7, 11, 9]], featureNames=['a', 'b', 'c'])
+
+        obj1 = obj0.copy()
+        obj1.handleMissingValues(method='forward fill', alsoTreatAsMissing=[11])
+
+    def test_handleMissingValues_backward_fill_simple(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj3 = obj0.copy()
@@ -1907,6 +1926,20 @@ class HighLevelModifying(DataTestObject):
         ret3 = self.constructor([[1, 2, 3, False, False, False], [7, 8, 9, True, True, True], [7, 8, 9, False, True, True], [7, 8, 9, False, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
+
+    @raises(ArgumentException)
+    def test_handleMissingValues_backward_fill_lastPointContainsMissing(self):
+        obj0 = self.constructor([[1, None, 3], [None, 11, None], [7, 11, None], [7, None, 9]], featureNames=['a', 'b', 'c'])
+
+        obj1 = obj0.copy()
+        obj1.handleMissingValues(method='backward fill')
+
+    @raises(ArgumentException)
+    def test_handleMissingValues_backward_fill_allMissingFeature(self):
+        obj0 = self.constructor([[1, None, 3], [None, 11, None], [None, 11, 9], [7, 11, 9]], featureNames=['a', 'b', 'c'])
+
+        obj1 = obj0.copy()
+        obj1.handleMissingValues(method='backward fill', alsoTreatAsMissing=[11])
 
     def test_handleMissingValues_interpolate(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
@@ -1916,6 +1949,7 @@ class HighLevelModifying(DataTestObject):
         ret3 = self.constructor([[1, 2, 3, False, False, False], [4, 11, 5, True, False, True], [7, 11, 7, False, False, True], [7, 8, 9, False, False, False]])
         ret3.setFeatureNames(['a', 'b', 'c', 'a_missing', 'b_missing', 'c_missing'])
         assert obj3 == ret3
+
 
 class HighLevelAll(HighLevelDataSafe, HighLevelModifying):
     pass

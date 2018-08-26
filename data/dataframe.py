@@ -518,6 +518,41 @@ class DataFrame(Base):
                 self.data.fillna(myd, inplace=True)
             else:
                 raise ArgumentException(msg)
+        elif method == 'forward fill' or method == 'backward fill':
+            def isMissing(val):
+                return val in alsoTreatAsMissing or val != val or val is None
+            if method == 'forward fill':
+                initial = 'first'
+                initialIdx = 0
+                fill = 'ffill'
+            else:
+                initial = 'last'
+                initialIdx = self.points - 1
+                fill = 'bfill'
+            initialPoint = self.data.iloc[initialIdx, :]
+            initialPointHasMissing = any(isMissing(val) for val in initialPoint)
+            if not initialPointHasMissing:
+                self.data[featuresList] = self.data[featuresList].fillna(method=fill)
+            else:
+                # the initial point has one or more missing values, but we will
+                # also check if any of those features contain all missing values
+                initialMissingValuesIndices = []
+                allMissingValuesFeatureIndices = []
+                for idx, feature in enumerate(initialPoint):
+                    if isMissing(feature):
+                        initialMissingValuesIndices.append(idx)
+                        if all(isMissing(val) for val in self.data.iloc[:, idx]):
+                            allMissingValuesFeatureIndices.append(idx)
+                msg = "Cannot remove all missing values using {0}. ".format(method)
+                if len(allMissingValuesFeatureIndices) == 0:
+                    msg += "The {0} point has missing values ".format(initial)
+                    msg += "at indices {0}.".format(initialMissingValuesIndices)
+                    raise ArgumentException(msg)
+                else:
+                    msg += "The features at indices "
+                    msg += "{0} ".format(allMissingValuesFeatureIndices)
+                    msg += "contain only missing values"
+                    raise ArgumentException(msg)
         elif method == 'forward fill':
             self.data[featuresList] = self.data[featuresList].fillna(method='ffill')
         elif method == 'backward fill':
