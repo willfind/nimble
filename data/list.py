@@ -106,6 +106,7 @@ class List(Base):
 
         self._numFeatures = shape[1]
         self.data = data
+        self.elementType = elementType
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
@@ -459,7 +460,7 @@ class List(Base):
         if format == 'numpyarray':
             if self.points == 0 or self.features == 0:
                 return numpy.empty(shape=(self.points, self.features))
-            return numpy.array(self.data)
+            return numpy.array(self.data, dtype=self.elementType)
         if format == 'numpymatrix':
             if self.points == 0 or self.features == 0:
                 return numpy.matrix(numpy.empty(shape=(self.points, self.features)))

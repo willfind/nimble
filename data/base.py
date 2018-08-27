@@ -964,53 +964,44 @@ class Base(object):
 
         # try to use vectorized for functions with oneArg
         if oneArg:
-            try:
-                if not preserveZeros:
-                    # check if the function preserves zero values
-                    preserveZeros = function(0) == 0
-                def functionWrap(value):
-                    if preserveZeros and value == 0:
-                        return 0
-                    currRet = function(value)
-                    if skipNoneReturnValues and currRet is None:
-                        return value
-                    else:
-                        return currRet
-
-                vectorized = numpy.vectorize(functionWrap)
-                ret = self._calculateForEachElement_implementation(
-                         vectorized, points, features, preserveZeros, optType)
-
-                ret._absPath = self.absolutePath
-                ret._relPath = self.relativePath
-
-                self.validate()
-
-                return ret
-            # vectorize can only handle numeric data manipulations
-            except ValueError:
-                pass
-        # if unable to vectorize, iterate over each point
-        points = points if points else list(range(self.points))
-        features = features if features else list(range(self.features))
-        valueArray = numpy.empty([len(points), len(features)], dtype=numpy.object_)
-        p = 0
-        for pi in points:
-            f = 0
-            for fj in features:
-                value = self[pi, fj]
+            if not preserveZeros:
+                # check if the function preserves zero values
+                preserveZeros = function(0) == 0
+            def functionWrap(value):
                 if preserveZeros and value == 0:
-                    valueArray[p, f] = 0
+                    return 0
+                currRet = function(value)
+                if skipNoneReturnValues and currRet is None:
+                    return value
                 else:
-                    currRet = function(value) if oneArg else function(value, pi, fj)
-                    if skipNoneReturnValues and currRet is None:
-                        valueArray[p, f] = value
-                    else:
-                        valueArray[p, f] = currRet
-                f += 1
-            p += 1
+                    return currRet
 
-        ret = UML.createData(optType, valueArray)
+            vectorized = numpy.vectorize(functionWrap)
+            ret = self._calculateForEachElement_implementation(
+                     vectorized, points, features, preserveZeros, optType)
+
+        else:
+            # if unable to vectorize, iterate over each point
+            points = points if points else list(range(self.points))
+            features = features if features else list(range(self.features))
+            valueArray = numpy.empty([len(points), len(features)], dtype=numpy.object_)
+            p = 0
+            for pi in points:
+                f = 0
+                for fj in features:
+                    value = self[pi, fj]
+                    if preserveZeros and value == 0:
+                        valueArray[p, f] = 0
+                    else:
+                        currRet = function(value) if oneArg else function(value, pi, fj)
+                        if skipNoneReturnValues and currRet is None:
+                            valueArray[p, f] = value
+                        else:
+                            valueArray[p, f] = currRet
+                    f += 1
+                p += 1
+
+            ret = UML.createData(optType, valueArray)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -1027,8 +1018,19 @@ class Base(object):
         toCalculate = self.copyAs('numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:,None], features]
-        values = function(toCalculate)
-        return UML.createData(outputType, values)
+        try:
+            values = function(toCalculate)
+            # check if values has numeric dtype
+            if numpy.issubdtype(values.dtype, numpy.number):
+                return UML.createData(outputType, values)
+            else:
+                return UML.createData(outputType, values, elementType=numpy.object_)
+        except Exception:
+            # change output type of vectorized function to object to handle nonnumeric data
+            function.otypes = [numpy.object_]
+            values = function(toCalculate)
+            return UML.createData(outputType, values, elementType=numpy.object_)
+
 
 
     def countElements(self, function):

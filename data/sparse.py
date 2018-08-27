@@ -656,7 +656,11 @@ class Sparse(Base):
             preserveZeros = False
         # all data
         if preserveZeros and points is None and features is None:
-            data = function(data)
+            try:
+                data = function(data)
+            except Exception:
+                function.otypes = [numpy.object_]
+                data = function(data)
             values = coo_matrix((data, (row, col)), shape=self.data.shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
@@ -1767,11 +1771,16 @@ class SparseView(BaseView, Sparse):
         return GenericIt()
 
     def _copyAs_implementation(self, format):
-
         if self.points == 0 or self.features == 0:
             emptyStandin = numpy.empty((self.points, self.features))
             intermediate = UML.createData('Matrix', emptyStandin)
             return intermediate.copyAs(format)
+
+        if format == 'numpyarray':
+            pStart, pEnd = self._pStart, self._pEnd
+            fStart, fEnd = self._fStart, self._fEnd
+            limited = self._source.data.todense()[pStart:pEnd, fStart:fEnd]
+            return numpy.array(limited)
 
         limited = self._source.copyPoints(start=self._pStart, end=self._pEnd - 1)
         limited = limited.copyFeatures(start=self._fStart, end=self._fEnd - 1)

@@ -406,8 +406,8 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
        isAllowedSingleElement(rawData[0]) or
        isinstance(rawData[0], list) or
        hasattr(rawData[0], 'setLimit'))):
-        # attempt to convert the list to floats to remain consistent with other UML types
-        # if unsuccessful we will keep the list as is, comparable to numpy object dtype
+        # attempt to convert the list to floats to remain consistent with other
+        # UML types if unsuccessful we will keep the list as is
         try:
             # 1D list
             rawData = list(map(numpy.float, rawData))
@@ -416,7 +416,6 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
                 #2D list
                 convertedData = []
                 for point in rawData:
-                    print(point)
                     convertedData.append(list(map(numpy.float, point)))
                 rawData = convertedData
             except (ValueError, TypeError):
