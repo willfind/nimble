@@ -57,9 +57,6 @@ class Sparse(Base):
         else:#data is numpy.matrix
             self.data = scipy.sparse.coo_matrix(data)
 
-        #print('self.data: {}'.format(self.data))
-        #print('type(self.data): {}'.format(type(self.data)))
-
         self._sorted = None
         kwds['shape'] = self.data.shape
         kwds['pointNames'] = pointNames
@@ -222,6 +219,7 @@ class Sparse(Base):
             indexGetter = self.getPointIndex
             nameGetter = self.getPointName
             nameGetterStr = 'getPointName'
+            names = self.getPointNames()
         else:
             viewMaker = self.featureView
             targetAxis = self.data.col
@@ -229,6 +227,19 @@ class Sparse(Base):
             indexGetter = self.getFeatureIndex
             nameGetter = self.getFeatureName
             nameGetterStr = 'getFeatureName'
+            names = self.getFeatureNames()
+
+        if isinstance(sortHelper, list):
+            sortedData = []
+            idxDict = {val: idx for idx, val in enumerate(sortHelper)}
+            if axisType == 'point':
+                sortedData = [idxDict[val] for val in self.data.row]
+                self.data.row = numpy.array(sortedData)
+            else:
+                sortedData = [idxDict[val] for val in self.data.col]
+                self.data.col = numpy.array(sortedData)
+            newNameOrder = [names[idx] for idx in sortHelper]
+            return newNameOrder
 
         test = viewMaker(0)
         try:
@@ -648,6 +659,42 @@ class Sparse(Base):
             return self.data.tocsr()
 
 
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        if not isinstance(self, BaseView):
+            data = self.data.data
+            row = self.data.row
+            col = self.data.col
+        else:
+            # initiate generic implementation for view types
+            preserveZeros = False
+        # all data
+        if preserveZeros and points is None and features is None:
+            data = function(data)
+            values = coo_matrix((data, (row, col)), shape=self.data.shape)
+            # note: even if function transforms nonzero values into zeros
+            # our init methods will filter them out from the data attribute
+            return UML.createData(outputType, values)
+        # subset of data
+        if preserveZeros:
+            dataSubset = []
+            rowSubset = []
+            colSubset = []
+            for idx in range(len(data)):
+                if row[idx] in points and col[idx] in features:
+                    rowSubset.append(row[idx])
+                    colSubset.append(col[idx])
+                    dataSubset.append(data[idx])
+            dataSubset = function(dataSubset)
+            values = coo_matrix((dataSubset, (rowSubset, colSubset)))
+            # note: even if function transforms nonzero values into zeros
+            # our init methods will filter them out from the data attribute
+            return UML.createData(outputType, values)
+        # zeros not preserved
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
+
+
     def _transformEachPoint_implementation(self, function, points):
         self._transformEach_implementation(function, points, 'point')
 
@@ -961,11 +1008,6 @@ class Sparse(Base):
             self.data.row[i] = self.data.col[i] / numFeatures
             self.data.col[i] = self.data.col[i] % numFeatures
 
-        print('self.data.data:\n{}'.format(self.data.data))
-        print('self.data.row:\n{}'.format(self.data.row))
-        print('self.data.col:\n{}'.format(self.data.col))
-        print('newShape:{}'.format(newShape))
-
         self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), newShape)
         self._sorted = 'point'
 
@@ -1271,6 +1313,8 @@ class Sparse(Base):
             except Exception:
                 tmpBool = all([i != 0 for i in self.data.data])
             assert tmpBool
+
+            assert self.data.dtype.type is not numpy.string_
 
             if self._sorted == 'point':
                 assert all(self.data.row[:-1] <= self.data.row[1:])
@@ -1666,7 +1710,6 @@ def removeDuplicatesByConversion(coo_obj):
         return coo_obj.tocsr().tocoo()
         # return coo_obj.tocsc().tocoo()
     except TypeError:
-        print('coo_obj: \n{}'.format(coo_obj))
         raise TypeError('Unable to represent this configuration of data in Sparse object.')
 
 

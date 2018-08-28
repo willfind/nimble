@@ -18,6 +18,7 @@ scipy = UML.importModule('scipy.sparse')
 
 import itertools
 import copy
+import re
 from .base_view import BaseView
 from .dataHelpers import DEFAULT_PREFIX
 
@@ -110,12 +111,23 @@ class DataFrame(Base):
             indexGetter = self.getPointIndex
             nameGetter = self.getPointName
             nameGetterStr = 'getPointName'
+            names = self.getPointNames()
         else:
             test = self.featureView(0)
             viewIter = self.featureIterator()
             indexGetter = self.getFeatureIndex
             nameGetter = self.getFeatureName
             nameGetterStr = 'getFeatureName'
+            names = self.getFeatureNames()
+
+        if isinstance(sortHelper, list):
+            if axis == 'point':
+                self.data = self.data.iloc[sortHelper, :]
+            else:
+                self.data = self.data.iloc[:, sortHelper]
+            newNameOrder = [names[idx] for idx in sortHelper]
+            return newNameOrder
+
         scorer = None
         comparator = None
         try:
@@ -280,9 +292,19 @@ class DataFrame(Base):
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
+                self.data.columns = self.getFeatureNames()
                 if includePointNames:
                     outFile.write('point_names')
+
+            if includePointNames:
+                    self.data.index = self.getPointNames()
+
         self.data.to_csv(outPath, mode='a', index=includePointNames, header=includeFeatureNames)
+
+        if includePointNames:
+            self._updateName('point')
+        if includeFeatureNames:
+            self._updateName('feature')
 
     def _writeFileMTX_implementation(self, outPath, includePointNames, includeFeatureNames):
         """
@@ -297,9 +319,9 @@ class DataFrame(Base):
 
         comment = '#'
         if includePointNames:
-            comment += ','.join(self.data.index)
+            comment += ','.join(self.getPointNames())
         if includeFeatureNames:
-            comment += '\n#' + ','.join(self.data.columns)
+            comment += '\n#' + ','.join(self.getFeatureNames())
         mmwrite(outPath, self.data, comment=comment)
 
     def _referenceDataFrom_implementation(self, other):
@@ -342,6 +364,13 @@ class DataFrame(Base):
             return scipy.sparse.csr_matrix(dataArray)
 
         return UML.createData('DataFrame', dataArray)
+
+
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
+
 
     def _transformEachPoint_implementation(self, function, points):
         """
@@ -437,9 +466,9 @@ class DataFrame(Base):
         if alsoTreatAsMissingDict:
             myd = {i: alsoTreatAsMissingDict for i in featuresList}
             self.data.replace(myd, inplace=True)
-            
+
         if markMissing:
-            #add extra columns to indicate if the original value was missing or not
+            # construct extra columns to indicate if the original value was missing or not
             extraDf = self.data[featuresList].isnull()
         #from now, based on method and arguments, process self.data
         if method == 'remove points':
@@ -539,29 +568,48 @@ class DataFrame(Base):
                   sklearn.neighbors.KNeighborsRegressor, sklearn.neighbors.KNeighborsClassifier'
             raise ArgumentException(msg)
 
+        # add the constructed columns marking missing values into the object now that it won't
+        # interfere with the rest of the processing.
         if markMissing:
             self.data = self.data.join(extraDf[[i for i in featuresList if i in self.data.columns]], rsuffix='_missing', how='left')
+
+        # there are no other structure changes to self.data beyond this point, so we can update our record
+        # of shape. We must do this before setting point/feature names.
         pCount, fCount = self.data.shape
         self._featureCount = fCount
-
-        if self._featureNamesCreated():
-            print('self.data.columns.tolist():{}'.format(self.data.columns.tolist()))
-            fNames = [self.getFeatureNames()[i] for i in self.data.columns.tolist()]
-            self.setFeatureNames(fNames)
-        # else:
-        #     fNames = [DEFAULT_PREFIX + str(f_idx) for f_idx in self.data.columns.tolist()]
-        #     self.setFeatureNames(fNames)
         self._pointCount = pCount
 
-        if self._pointNamesCreated():
-            PNames = [self.getPointNames()[i] for i in self.data.index.tolist()]
-            self.setPointNames(PNames)
-        # else:
-        #     pNames = [DEFAULT_PREFIX + str(p_idx) for p_idx in self.data.index.tolist()]
-        #     self.setPointNames(pNames)
+        # if we've removed features or added new features to mark missing values, and we have not
+        # deferred name creation, then we must assign corrected feature names. Deferred names will
+        # take care of the adjusted size upon assignment
+        if (method == 'remove features' or markMissing) and self._featureNamesCreated():
+            # Get the correct names. In the case of column removal, data.columns uses the indices
+            # keyed to the original shape of the object, so we can easily access only the names for
+            # columns that remain. In the case of column addition, we have to convert the indices
+            # (either stand alone, or in a missing tag) to actual names.
+            def fix_name(x):
+                x = str(x)
+                search_res = re.search('^(.+)_missing', x)
+                if search_res:
+                    name = self.getFeatureNames()[int(search_res.group(1))] + '_missing'
+                else:
+                    name = self.getFeatureNames()[int(x)]
+                return name
+
+            fNames = [fix_name(i) for i in self.data.columns]
+            self.setFeatureNames(fNames)
+
+        # if we've removed points, and we have not deferred name creation,
+        # then we must assign corrected point names. Deferred names will
+        # take care of the adjusted size upon assignment
+        if method == 'remove points' and self._pointNamesCreated():
+            pNames = [self.getPointNames()[i] for i in self.data.index.tolist()]
+            self.setPointNames(pNames)
+
+        # reset index and column to values matching self.data's current size
         self._updateName('point')
         self._updateName('feature')
-            
+
     def _flattenToOnePoint_implementation(self):
         numElements = self.points * self.features
         self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
@@ -594,7 +642,6 @@ class DataFrame(Base):
                 super(DataFrameView, self).__init__(**kwds)
 
             def _setAllDefault(self, axis):
-                print(super(DataFrameView, self))
                 super(DataFrameView, self)._setAllDefault(axis)
 
         kwds = {}
