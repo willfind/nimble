@@ -2431,7 +2431,7 @@ class Base(object):
         """
         self._genericInsertFrontend('feature', toAppend, None, 'appendFeatures', 'toAppend')
 
-
+    #TODO determine name for this function
     def insertPoints(self, toInsert, insertBefore=None):
         """
         Expand this object by inserting the points of the toInsert prior to the
@@ -2453,6 +2453,7 @@ class Base(object):
         """
         self._genericInsertFrontend('point', toInsert, insertBefore, 'insertPoints', 'toInsert')
 
+    #TODO determine name for this function
     def insertFeatures(self, toInsert, insertBefore=None):
         """
         Expand this object by inserting the features of the toInsert prior to
@@ -2504,73 +2505,6 @@ class Base(object):
             self._setInsertedNames('feature', toInsert, insertBefore)
 
         self.validate()
-
-    def _setInsertedNames(self, axis, insertedObj, insertedBefore):
-        self._validateAxis(axis)
-        if axis == 'point':
-            selfNames = self.getPointNames()
-            insertedNames = insertedObj.getPointNames()
-            setSelfNames = self.setPointNames
-        else:
-            selfNames = self.getFeatureNames()
-            insertedNames = insertedObj.getFeatureNames()
-            setSelfNames = self.setFeatureNames
-        # ensure no collision with default names
-        adjustedNames = []
-        for name in insertedNames:
-            if name.startswith(DEFAULT_PREFIX):
-                adjustedNames.append(self._nextDefaultName(axis))
-            else:
-                adjustedNames.append(name)
-        startNames = selfNames[:insertedBefore]
-        endNames = selfNames[insertedBefore:]
-
-        newNames = startNames + adjustedNames + endNames
-        setSelfNames(newNames)
-
-
-    def _alignNames(self, axis, other):
-        """
-        Sort the point or feature names of the passed object to match this object.
-        If sorting is necessary, a copy will be returned to prevent modification
-        of the passed object, otherwise the original object will be returned.
-        Assumes validation of the names has already occurred.
-        """
-        self._validateAxis(axis)
-        if axis == 'point':
-            namesCreated = self._pointNamesCreated()
-            selfNames = self.getPointNames
-            otherNames = other.getPointNames
-            def sorter(obj, names):
-                return getattr(obj, 'sortPoints')(sortHelper=names)
-        else:
-            namesCreated = self._featureNamesCreated()
-            selfNames = self.getFeatureNames
-            otherNames = other.getFeatureNames
-            sortOther = other.sortFeatures
-            def sorter(obj, names):
-                return getattr(obj, 'sortFeatures')(sortHelper=names)
-
-        if namesCreated:
-            allDefault = all(name.startswith(DEFAULT_PREFIX) for name in selfNames())
-            reorder = selfNames() != otherNames()
-            if not allDefault and reorder:
-                other = other.copy()
-                sorter(other, selfNames())
-
-        return other
-
-    def _validateInsertableData(self, axis, toInsert, funcString, argName):
-        self._validateAxis(axis)
-        self._validateValueIsNotNone(argName, toInsert)
-        self._validateValueIsUMLDataObject(argName, toInsert, True)
-        self._validateEmptyNamesIntersection(axis, argName, toInsert)
-        if axis == 'point':
-            self._validateObjHasSameNumberOfFeatures(argName, toInsert)
-            self._validateReorderedNames('feature', funcString, toInsert)
-        else:
-            self._validateObjHasSameNumberOfPoints(argName, toInsert)
-            self._validateReorderedNames('point', funcString, toInsert)
 
 
     def sortPoints(self, sortBy=None, sortHelper=None):
@@ -5096,7 +5030,6 @@ class Base(object):
         return toReturn
 
 
-
     def _nextDefaultName(self, axis):
         self._validateAxis(axis)
         if axis == 'point':
@@ -5501,6 +5434,75 @@ class Base(object):
                 msg += "... (only first 10 entries out of " + str(full)
                 msg += " total)"
             raise ArgumentException(msg)
+
+
+    def _setInsertedNames(self, axis, insertedObj, insertedBefore):
+        self._validateAxis(axis)
+        if axis == 'point':
+            selfNames = self.getPointNames()
+            insertedNames = insertedObj.getPointNames()
+            setSelfNames = self.setPointNames
+        else:
+            selfNames = self.getFeatureNames()
+            insertedNames = insertedObj.getFeatureNames()
+            setSelfNames = self.setFeatureNames
+        # ensure no collision with default names
+        adjustedNames = []
+        for name in insertedNames:
+            if name.startswith(DEFAULT_PREFIX):
+                adjustedNames.append(self._nextDefaultName(axis))
+            else:
+                adjustedNames.append(name)
+        startNames = selfNames[:insertedBefore]
+        endNames = selfNames[insertedBefore:]
+
+        newNames = startNames + adjustedNames + endNames
+        setSelfNames(newNames)
+
+
+    def _alignNames(self, axis, other):
+        """
+        Sort the point or feature names of the passed object to match this object.
+        If sorting is necessary, a copy will be returned to prevent modification
+        of the passed object, otherwise the original object will be returned.
+        Assumes validation of the names has already occurred.
+        """
+        self._validateAxis(axis)
+        if axis == 'point':
+            namesCreated = self._pointNamesCreated()
+            selfNames = self.getPointNames
+            otherNames = other.getPointNames
+            def sorter(obj, names):
+                return getattr(obj, 'sortPoints')(sortHelper=names)
+        else:
+            namesCreated = self._featureNamesCreated()
+            selfNames = self.getFeatureNames
+            otherNames = other.getFeatureNames
+            sortOther = other.sortFeatures
+            def sorter(obj, names):
+                return getattr(obj, 'sortFeatures')(sortHelper=names)
+
+        if namesCreated:
+            allDefault = all(name.startswith(DEFAULT_PREFIX) for name in selfNames())
+            reorder = selfNames() != otherNames()
+            if not allDefault and reorder:
+                other = other.copy()
+                sorter(other, selfNames())
+
+        return other
+
+    def _validateInsertableData(self, axis, toInsert, funcString, argName):
+        self._validateAxis(axis)
+        self._validateValueIsNotNone(argName, toInsert)
+        self._validateValueIsUMLDataObject(argName, toInsert, True)
+        self._validateEmptyNamesIntersection(axis, argName, toInsert)
+        if axis == 'point':
+            self._validateObjHasSameNumberOfFeatures(argName, toInsert)
+            self._validateReorderedNames('feature', funcString, toInsert)
+        else:
+            self._validateObjHasSameNumberOfPoints(argName, toInsert)
+            self._validateReorderedNames('point', funcString, toInsert)
+
 
     def _validateMatPlotLibImport(self, error, name):
         if error is not None:
