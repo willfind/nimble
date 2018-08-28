@@ -962,7 +962,7 @@ class Base(object):
         else:
             optType = self.getTypeString()
 
-        # try to use vectorized for functions with oneArg
+        # Use vectorized for functions with oneArg
         if oneArg:
             if not preserveZeros:
                 # check if the function preserves zero values
@@ -984,7 +984,7 @@ class Base(object):
             # if unable to vectorize, iterate over each point
             points = points if points else list(range(self.points))
             features = features if features else list(range(self.features))
-            valueArray = numpy.empty([len(points), len(features)], dtype=numpy.object_)
+            valueArray = numpy.empty([len(points), len(features)])
             p = 0
             for pi in points:
                 f = 0
