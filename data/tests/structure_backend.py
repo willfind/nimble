@@ -3005,6 +3005,24 @@ class StructureModifying(DataTestObject):
     def test_insertFeatures_NamePath_preservation(self):
         self.backend_insert_NamePath_preservation('feature')
 
+    def test_insertPoints_noNamesCreated(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toInsert = self.constructor([[-1, -2, -3]])
+        toTest.insertPoints(toInsert)
+
+        assert not toTest._pointNamesCreated()
+        assert not toTest._featureNamesCreated()
+
+    def test_insertFeatures_noNamesCreated(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toInsert = self.constructor([[-1], [-2], [-3]])
+        toTest.insertFeatures(toInsert)
+
+        assert not toTest._featureNamesCreated()
+        assert not toTest._pointNamesCreated()
+
 
     ##############
     # sortPoints() #

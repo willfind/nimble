@@ -5439,10 +5439,14 @@ class Base(object):
     def _setInsertedNames(self, axis, insertedObj, insertedBefore):
         self._validateAxis(axis)
         if axis == 'point':
+            if not self._pointNamesCreated() and not insertedObj._pointNamesCreated():
+                return
             selfNames = self.getPointNames()
             insertedNames = insertedObj.getPointNames()
             setSelfNames = self.setPointNames
         else:
+            if not self._featureNamesCreated() and not insertedObj._featureNamesCreated():
+                return
             selfNames = self.getFeatureNames()
             insertedNames = insertedObj.getFeatureNames()
             setSelfNames = self.setFeatureNames
@@ -5492,17 +5496,25 @@ class Base(object):
         return other
 
     def _validateInsertableData(self, axis, toInsert, funcString, argName):
+        """
+        Responsible for all the validation necessary before inserting an object
+
+        """
         self._validateAxis(axis)
         self._validateValueIsNotNone(argName, toInsert)
         self._validateValueIsUMLDataObject(argName, toInsert, True)
-        self._validateEmptyNamesIntersection(axis, argName, toInsert)
         if axis == 'point':
             self._validateObjHasSameNumberOfFeatures(argName, toInsert)
-            self._validateReorderedNames('feature', funcString, toInsert)
+            if self._pointNamesCreated() or toInsert._pointNamesCreated():
+                self._validateEmptyNamesIntersection(axis, argName, toInsert)
+            if self._featureNamesCreated() or toInsert._featureNamesCreated():
+                self._validateReorderedNames('feature', funcString, toInsert)
         else:
             self._validateObjHasSameNumberOfPoints(argName, toInsert)
-            self._validateReorderedNames('point', funcString, toInsert)
-
+            if self._featureNamesCreated() or toInsert._featureNamesCreated():
+                self._validateEmptyNamesIntersection(axis, argName, toInsert)
+            if self._pointNamesCreated() or toInsert._pointNamesCreated():
+                self._validateReorderedNames('point', funcString, toInsert)
 
     def _validateMatPlotLibImport(self, error, name):
         if error is not None:
