@@ -130,22 +130,38 @@ class List(Base):
         self.data = transposed
         self._numFeatures = tempFeatures
 
-    def _appendPoints_implementation(self, toAppend):
+    def _insertPoints_implementation(self, toInsert, insertBefore):
         """
-        Append the points from the toAppend object to the bottom of the features in this object
+        Insert the points from the toInsert object below the provided index in this object,
+        the remaining points from this object will continue below the inserted points
 
         """
-        for pointIndex in range(toAppend.points):
-            self.data.append(copy.deepcopy(toAppend.data[pointIndex]))
+        insertedLength = self.points + toInsert.points
+        insertRange = range(insertBefore, insertBefore + toInsert.points)
+        insertIndex = 0
+        selfIndex = 0
+        allData = []
+        for pointIndex in range(insertedLength):
+            if pointIndex in insertRange:
+                allData.append(toInsert.data[insertIndex])
+                insertIndex += 1
+            else:
+                allData.append(self.data[selfIndex])
+                selfIndex += 1
+        self.data = allData
 
-    def _appendFeatures_implementation(self, toAppend):
+    def _insertFeatures_implementation(self, toInsert, insertBefore):
         """
-        Append the features from the toAppend object to right ends of the points in this object
+        Insert the features from the toInsert object to the right of the provided index in this object,
+        the remaining points from this object will continue to the right of the inserted points
 
         """
         for i in range(self.points):
-            self.data[i] += copy.deepcopy(toAppend.data[i])
-        self._numFeatures = self._numFeatures + toAppend.features
+            startData = self.data[i][:insertBefore]
+            endData = self.data[i][insertBefore:]
+            allPointData = startData + list(toInsert.data[i]) + endData
+            self.data[i] = allPointData
+        self._numFeatures = self._numFeatures + toInsert.features
 
 
     def _sortPoints_implementation(self, sortBy, sortHelper):

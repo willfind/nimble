@@ -64,27 +64,25 @@ class DataFrame(Base):
         """
         self.data = self.data.T
 
-    def appendPoints(self, toAppend):
-        super(DataFrame, self).appendPoints(toAppend)
+    def _insertPoints_implementation(self, toInsert, insertBefore):
+        """
+        Append the points from the toInsert object to the bottom of the features in this object
+
+        """
+        startData = self.data.iloc[:insertBefore, :]
+        endData = self.data.iloc[insertBefore:, :]
+        self.data = pd.concat((startData, toInsert.data, endData), axis=0)
         self._updateName(axis='point')
 
-    def _appendPoints_implementation(self, toAppend):
+    def _insertFeatures_implementation(self, toInsert, insertBefore):
         """
-        Append the points from the toAppend object to the bottom of the features in this object
+        Append the features from the toInsert object to right ends of the points in this object
 
         """
-        self.data = pd.concat((self.data, toAppend.data), axis=0)
-
-    def appendFeatures(self, toAppend):
-        super(DataFrame, self).appendFeatures(toAppend)
+        startData = self.data.iloc[:, :insertBefore]
+        endData = self.data.iloc[:, insertBefore:]
+        self.data = pd.concat((startData, toInsert.data, endData), axis=1)
         self._updateName(axis='feature')
-
-    def _appendFeatures_implementation(self, toAppend):
-        """
-        Append the features from the toAppend object to right ends of the points in this object
-
-        """
-        self.data = pd.concat((self.data, toAppend.data), axis=1)
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
         """

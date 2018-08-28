@@ -2439,6 +2439,579 @@ class StructureModifying(DataTestObject):
         self.backend_append_automaticReorder('feature', True)
 
 
+    #####################################
+    # insertPoints() / insertFeatures() #
+    #####################################
+
+    def backend_insert_exceptionNone(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+
+        if axis == 'point':
+            toTest.insertPoints(None)
+        else:
+            toTest.insertFeatures(None)
+
+    @raises(ArgumentException)
+    def test_insertPoints_exceptionNone(self):
+        """ Test insertPoints() for ArgumentException when toInsert is None"""
+        self.backend_insert_exceptionNone('point')
+
+    @raises(ArgumentException)
+    def test_insertFeatures_exceptionNone(self):
+        """ Test insertFeatures() for ArgumentException when toInsert is None """
+        self.backend_insert_exceptionNone('feature')
+
+
+    def backend_insert_exceptionWrongSize(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toInsert = self.constructor([[2, 3, 4, 5, 6]])
+
+        if axis == 'point':
+            toTest.insertPoints(toInsert)
+        else:
+            toInsert.transpose()
+            toTest.insertFeatures(toInsert)
+
+    @raises(ArgumentException)
+    def test_insertPoints_exceptionWrongSize(self):
+        """ Test insertPoints() for ArgumentException when toInsert has too many features """
+        self.backend_insert_exceptionWrongSize('point')
+
+    @raises(ArgumentException)
+    def test_insertFeatures_exceptionWrongSize(self):
+        """ Test insertFeatures() for ArgumentException when toInsert has too many points """
+        self.backend_insert_exceptionWrongSize('feature')
+
+
+    def backend_insert_exception_extendAxis_SameName(self, axis):
+        toTest1 = self.constructor([[1, 2]], pointNames=["hello"])
+        toTest2 = self.constructor([[1, 2], [5, 6]], pointNames=["hello", "goodbye"])
+
+        if axis == 'point':
+            toTest2.insertPoints(toTest1)
+        else:
+            toTest1.transpose()
+            toTest2.transpose()
+            toTest2.insertFeatures(toTest1)
+
+    @raises(ArgumentException)
+    def test_insertPoints_exceptionSamePointName(self):
+        """ Test insertPoints() for ArgumentException when toInsert and self have a pointName in common """
+        self.backend_insert_exception_extendAxis_SameName('point')
+
+    @raises(ArgumentException)
+    def test_insertFeatures_exceptionSameFeatureName(self):
+        """ Test insertFeatures() for ArgumentException when toInsert and self have a featureName in common """
+        self.backend_insert_exception_extendAxis_SameName('feature')
+
+
+    def backend_insert_exception_sharedAxis_unsharedName(self, axis):
+        toTest1 = self.constructor([[1, 2]], featureNames=['1', '2'])
+        toTest2 = self.constructor([[2, 1], [6, 5]], featureNames=['6', '1'])
+
+        if axis == 'point':
+            toTest2.insertPoints(toTest1)
+        else:
+            toTest1.transpose()
+            toTest2.transpose()
+            toTest2.insertFeatures(toTest1)
+
+    @raises(ArgumentException)
+    def test_insertPoints_exception_unsharedFeatureName(self):
+        """ Test insertPoints() for ArgumentException when toInsert and self have a featureName not in common """
+        self.backend_insert_exception_sharedAxis_unsharedName('point')
+
+    @raises(ArgumentException)
+    def test_insertFeatures_exception_unsharedPointName(self):
+        """ Test insertFeatures() for ArgumentException when toInsert and self have a pointName not in common """
+        self.backend_insert_exception_sharedAxis_unsharedName('feature')
+
+
+    def backend_insert_exceptionNonUMLDataType(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+
+        if axis == 'point':
+            toTest.insertPoints([[1, 1, 1]])
+        else:
+            toTest.insertFeatures([[1], [1], [1]])
+
+    @raises(ArgumentException)
+    def test_insertPoints_exceptionNonUMLDataType(self):
+        self.backend_insert_exceptionNonUMLDataType('point')
+
+    @raises(ArgumentException)
+    def test_insertFeatures_exceptionNonUMLDataType(self):
+        self.backend_insert_exceptionNonUMLDataType('feature')
+
+
+    def backend_insert_exception_outOfOrder_with_defaults(self, axis):
+        toTest1 = self.constructor([[1, 2, 3]])
+        toTest2 = self.constructor([[1, 3, 2]])
+
+        toTest1.setFeatureName(1, '2')
+        toTest1.setFeatureName(2, '3')
+        toTest2.setFeatureName(1, '3')
+        toTest2.setFeatureName(2, '2')
+
+        if axis == 'point':
+            toTest1.insertPoints(toTest2)
+        else:
+            toTest1.transpose()
+            toTest2.transpose()
+            toTest1.insertFeatures(toTest2)
+
+
+    @raises(ArgumentException)
+    def test_insertPoints_exception_outOfOrder_with_defaults(self):
+        """ Test insertPoints() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
+        self.backend_insert_exception_outOfOrder_with_defaults('point')
+
+    @raises(ArgumentException)
+    def test_insertFeatures_exception_outOfOrder_with_defaults(self):
+        """ Test insertFeatures() for ArgumentException when toInsert and self contain a mix of set names and default names not in the same order"""
+        self.backend_insert_exception_outOfOrder_with_defaults('feature')
+
+
+    def backend_insert_emptyObject(self, axis, insertBefore=None):
+        empty = [[], []]
+
+        if axis == 'point':
+            empty = numpy.array(empty).T
+            data = [[1, 2]]
+        else:
+            empty = numpy.array(empty)
+            data = [[1], [2]]
+
+        toTest = self.constructor(empty)
+        toInsert = self.constructor(data)
+        toExp = self.constructor(data)
+
+        if axis == 'point':
+            toTest.insertPoints(toInsert, insertBefore)
+        else:
+            toTest.insertFeatures(toInsert, insertBefore)
+
+        assert toTest.isIdentical(toExp)
+
+    def test_insertPoints_fromEmpty_bottom(self):
+        """ Test insertPoints() to bottom when the calling object is point empty """
+        self.backend_insert_emptyObject('point')
+
+    def test_insertFeatures_fromEmpty_right(self):
+        """ Test insertFeatures() to right when the calling object is feature empty """
+        self.backend_insert_emptyObject('feature')
+
+    def test_insertPoints_fromEmpty_top(self):
+        """ Test insertPoints() to top when the calling object is point empty """
+        self.backend_insert_emptyObject('point', 0)
+
+    def test_insertFeatures_fromEmpty_left(self):
+        """ Test insertFeatures() to left when the calling object is feature empty """
+        self.backend_insert_emptyObject('feature', 0)
+
+    def test_insertPoints_fromEmpty_mid(self):
+        """ Test insertPoints() to middle when the calling object is point empty """
+        self.backend_insert_emptyObject('point', 1)
+
+    def test_insertFeatures_fromEmpty_mid(self):
+        """ Test insertFeatures() to middle when the calling object is feature empty """
+        self.backend_insert_emptyObject('feature', 1)
+
+
+    def backend_insert_handmadeSingle(self, axis, insertBefore=None):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        offNames = ['o1', 'o2', 'o3']
+        names = ['one', 'two', 'three']
+        addName = ['new']
+
+        if axis == 'point':
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]]
+                namesExp = ['one', 'two', 'three', 'new']
+            elif insertBefore == 0:
+                dataExpected = [[-1, -2, -3], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+                namesExp = ['new', 'one', 'two', 'three']
+            elif insertBefore == 1:
+                dataExpected = [[1, 2, 3], [-1, -2, -3], [4, 5, 6], [7, 8, 9]]
+                namesExp = ['one', 'new', 'two', 'three']
+            toTest = self.constructor(data, pointNames=names, featureNames=offNames)
+            toInsert = self.constructor([[-1, -2, -3]], pointNames=addName, featureNames=offNames)
+            expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
+            ret = toTest.insertPoints(toInsert, insertBefore)  # RET CHECK
+        else:
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+                namesExp = ['one', 'two', 'three', 'new']
+            elif insertBefore == 0:
+                dataExpected = [[-1, 1, 2, 3], [-2, 4, 5, 6], [-3, 7, 8, 9]]
+                namesExp = ['new', 'one', 'two', 'three']
+            elif insertBefore == 1:
+                dataExpected = [[1, -1, 2, 3], [4, -2, 5, 6], [7, -3, 8, 9]]
+                namesExp = ['one', 'new', 'two', 'three']
+            toTest = self.constructor(data, pointNames=offNames, featureNames=names)
+            toInsert = self.constructor([[-1], [-2], [-3]], pointNames=offNames, featureNames=addName)
+            expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
+            ret = toTest.insertFeatures(toInsert, insertBefore)  # RET CHECK
+
+        assert toTest.isIdentical(expected)
+        assert ret is None
+
+    def test_insertPoints_handmadeSingle_bottom(self):
+        """ Test insertPoints() against handmade output for a single added point to the bottom"""
+        self.backend_insert_handmadeSingle('point')
+
+    def test_insertFeatures_handmadeSingle_right(self):
+        """ Test insertFeatures() against handmade output for a single added feature to the right"""
+        self.backend_insert_handmadeSingle('feature')
+
+    def test_insertPoints_handmadeSingle_top(self):
+        """ Test insertPoints() against handmade output for a single added point the the top"""
+        self.backend_insert_handmadeSingle('point', 0)
+
+    def test_insertFeatures_handmadeSingle_left(self):
+        """ Test insertFeatures() against handmade output for a single added feature to the left"""
+        self.backend_insert_handmadeSingle('feature', 0)
+
+    def test_insertPoints_handmadeSingle_mid(self):
+        """ Test insertPoints() against handmade output for a single added point in the middle"""
+        self.backend_insert_handmadeSingle('point', 1)
+
+    def test_insertFeatures_handmadeSingle_mid(self):
+        """ Test insertFeatures() against handmade output for a single added feature in the middle"""
+        self.backend_insert_handmadeSingle('feature', 1)
+
+
+    def backend_insert_handmadeSequence(self, axis, insertBefore=None):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        offNames = ['o1', 'o2', 'o3']
+        names = ['one', 'two', 'three']
+        newNames = ['a1', 'b1', 'b2', 'c1']
+        toInsert = [[0.1, 0.2, 0.3], [0.01, 0.02, 0.03], [0, 0, 0], [10, 11, 12]]
+        toInsert = self.constructor(toInsert, pointNames=newNames, featureNames=offNames)
+
+        if axis == 'point':
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [0.1, 0.2, 0.3],
+                                [0.01, 0.02, 0.03], [0, 0, 0], [10, 11, 12]]
+                namesExp = names + newNames
+            elif insertBefore == 0:
+                dataExpected = [[10, 11, 12], [0, 0, 0], [0.01, 0.02, 0.03], [0.1, 0.2, 0.3],
+                                [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+                namesExp = list(reversed(newNames)) + names
+            elif insertBefore == 1:
+                dataExpected = [[1, 2, 3], [10, 11, 12], [0, 0, 0], [0.01, 0.02, 0.03],
+                                [0.1, 0.2, 0.3], [4, 5, 6], [7, 8, 9]]
+                namesExp = names[:1] + list(reversed(newNames)) + names[1:]
+            toTest = self.constructor(data, pointNames=names, featureNames=offNames)
+            for nextAdd in toInsert.pointIterator():
+                toTest.insertPoints(nextAdd, insertBefore)
+            expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
+        else:
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3, 0.1, 0.01, 0, 10], [4, 5, 6, 0.2, 0.02, 0, 11], [7, 8, 9, 0.3, 0.03, 0, 12]]
+                namesExp = names + newNames
+            elif insertBefore == 0:
+                dataExpected = [[10, 0, 0.01, 0.1, 1, 2, 3], [11, 0, 0.02, 0.2, 4, 5, 6], [12, 0, 0.03, 0.3, 7, 8, 9]]
+                namesExp = list(reversed(newNames)) + names
+            elif insertBefore == 1:
+                dataExpected = [[1, 10, 0, 0.01, 0.1, 2, 3], [4, 11, 0, 0.02, 0.2, 5, 6], [7, 12, 0, 0.03, 0.3, 8, 9]]
+                namesExp = names[:1] + list(reversed(newNames)) + names[1:]
+            toTest = self.constructor(data, pointNames=offNames, featureNames=names)
+            toInsert.transpose()
+            for nextAdd in toInsert.featureIterator():
+                toTest.insertFeatures(nextAdd, insertBefore)
+            expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
+
+        assert toTest.isIdentical(expected)
+
+    def test_insertPoints_handmadeSequence_bottom(self):
+        """ Test insertPoints() against handmade output for a sequence of additions to the bottom"""
+        self.backend_insert_handmadeSequence('point')
+
+    def test_insertFeatures_handmadeSequence_right(self):
+        """ Test insertFeatures() against handmade output for a sequence of additions to the right"""
+        self.backend_insert_handmadeSequence('feature')
+
+    def test_insertPoints_handmadeSequence_top(self):
+        """ Test insertPoints() against handmade output for a sequence of additions to the top"""
+        self.backend_insert_handmadeSequence('point', 0)
+
+    def test_insertFeatures_handmadeSequence_left(self):
+        """ Test insertFeatures() against handmade output for a sequence of additions to the left"""
+        self.backend_insert_handmadeSequence('feature', 0)
+
+    def test_insertPoints_handmadeSequence_mid(self):
+        """ Test insertPoints() against handmade output for a sequence of additions in the middle"""
+        self.backend_insert_handmadeSequence('point', 1)
+
+    def test_insertFeatures_handmadeSequence_mid(self):
+        """ Test insertFeatures() against handmade output for a sequence of additions in the middle"""
+        self.backend_insert_handmadeSequence('feature', 1)
+
+
+    def backend_insert_selfInsert(self, axis, insertBefore=None):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        names = ['one', 'two', 'three']
+
+        if axis == 'point':
+            orig = self.constructor(data, featureNames=names)
+        else:
+            orig = self.constructor(data, pointNames=names)
+
+        dup = orig.copy()
+
+        if axis == 'point':
+            dupNames = dup.getPointNames()
+            assert orig.getPointNames() == dupNames
+
+            orig.insertPoints(orig, insertBefore)
+
+            if insertBefore is None or insertBefore == 0:
+                dataExp = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+            elif insertBefore == 1:
+                dataExp = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [7, 8, 9], [4, 5, 6], [7, 8, 9]]
+            expected = self.constructor(dataExp, featureNames=names)
+        else:
+            dupNames = dup.getFeatureNames()
+            assert orig.getFeatureNames() == dupNames
+
+            orig.insertFeatures(orig, insertBefore)
+
+            if insertBefore is None or insertBefore == 0:
+                dataExp = [[1, 2, 3, 1, 2, 3], [4, 5, 6, 4, 5, 6], [7, 8, 9, 7, 8, 9]]
+            elif insertBefore == 1:
+                dataExp = [[1, 1, 2, 3, 2, 3], [4, 4, 5, 6, 5, 6], [7, 7, 8, 9, 8, 9]]
+            expected = self.constructor(dataExp, pointNames=names)
+
+        assert orig == expected
+
+        checkNames = orig.getPointNames() if axis == 'point' else orig.getFeatureNames()
+        lastDefIndex = int(dupNames[2][-1])
+        if insertBefore is None:
+            assert checkNames[:3] == dupNames
+            # indexes of inserted data
+            idx1, idx2, idx3 = 3, 4, 5
+        elif insertBefore == 0:
+            assert checkNames[3:] == dupNames
+            # indexes of inserted data
+            idx1, idx2, idx3 = 0, 1, 2
+        elif insertBefore == 1:
+            assert [checkNames[0]] + checkNames[4:] == dupNames
+            # indexes of inserted data
+            idx1, idx2, idx3 = 1, 2, 3
+
+        assert checkNames[idx1] == DEFAULT_PREFIX + str(lastDefIndex + 1)
+        assert checkNames[idx2] == DEFAULT_PREFIX + str(lastDefIndex + 2)
+        assert checkNames[idx3] == DEFAULT_PREFIX + str(lastDefIndex + 3)
+
+    def test_insertPoints_selfInsert_bottom(self):
+        self.backend_insert_selfInsert('point')
+
+    def test_insertFeatures_selfInsert_right(self):
+        self.backend_insert_selfInsert('feature')
+
+    def test_insertPoints_selfInsert_top(self):
+        self.backend_insert_selfInsert('point', 0)
+
+    def test_insertFeatures_selfInsert_left(self):
+        self.backend_insert_selfInsert('feature', 0)
+
+    def test_insertPoints_selfInsert_mid(self):
+        self.backend_insert_selfInsert('point', 1)
+
+    def test_insertFeatures_selfInsert_mid(self):
+        self.backend_insert_selfInsert('feature', 1)
+
+
+    def backend_insert_automaticReorder(self, axis, defPrimaryNames, insertBefore=None):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        offNames = ['off1', 'off2', 'off3']
+        addOffName = ['off3', 'off2', 'off1']
+        if defPrimaryNames:
+            names = [None] * 3
+            addName = [None]
+            namesExp = [None] * 4
+        else:
+            names = ['one', 'two', 'three']
+            addName = ['new']
+            if insertBefore is None:
+                namesExp = ['one', 'two', 'three', 'new']
+            elif insertBefore == 0:
+                namesExp = ['new', 'one', 'two', 'three']
+            elif insertBefore == 1:
+                namesExp = ['one', 'new', 'two', 'three']
+
+        if axis == 'point':
+            toAddData = [[-3, -2, -1]]
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]]
+            elif insertBefore == 0:
+                dataExpected = [[-1, -2, -3], [1, 2, 3], [4, 5, 6], [7, 8, 9]]
+            elif insertBefore == 1:
+                dataExpected = [[1, 2, 3], [-1, -2, -3], [4, 5, 6], [7, 8, 9]]
+            toTest = self.constructor(data, pointNames=names, featureNames=offNames)
+            toInsert = self.constructor(toAddData, pointNames=addName, featureNames=addOffName)
+            expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
+            toTest.insertPoints(toInsert, insertBefore)
+        else:
+            toAddData = [[-3], [-2], [-1]]
+            if insertBefore is None:
+                dataExpected = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
+            elif insertBefore == 0:
+                dataExpected = [[-1, 1, 2, 3], [-2, 4, 5, 6], [-3, 7, 8, 9]]
+            elif insertBefore == 1:
+                dataExpected = [[1, -1, 2, 3], [4, -2, 5, 6], [7, -3, 8, 9]]
+            toTest = self.constructor(data, pointNames=offNames, featureNames=names)
+            toInsert = self.constructor(toAddData, pointNames=addOffName, featureNames=addName)
+            expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
+            toTest.insertFeatures(toInsert, insertBefore)
+
+        assert toTest.isIdentical(expected)
+
+
+    def test_insertPoints_automaticReorder_fullySpecifiedNames_bottom(self):
+        self.backend_insert_automaticReorder('point', False)
+
+    def test_insertFeatures_automaticReorder_fullySpecifiedNames_right(self):
+        self.backend_insert_automaticReorder('feature', False)
+
+    def test_insertPoints_automaticReorder_defaultPointNames_bottom(self):
+        self.backend_insert_automaticReorder('point', True)
+
+    def test_insertFeatures_automaticReorder_defaultFeatureNames_right(self):
+        self.backend_insert_automaticReorder('feature', True)
+
+    def test_insertPoints_automaticReorder_fullySpecifiedNames_top(self):
+        self.backend_insert_automaticReorder('point', False, 0)
+
+    def test_insertFeatures_automaticReorder_fullySpecifiedNames_left(self):
+        self.backend_insert_automaticReorder('feature', False, 0)
+
+    def test_insertPoints_automaticReorder_defaultPointNames_top(self):
+        self.backend_insert_automaticReorder('point', True, 0)
+
+    def test_insertFeatures_automaticReorder_defaultFeatureNames_left(self):
+        self.backend_insert_automaticReorder('feature', True, 0)
+
+    def test_insertPoints_automaticReorder_fullySpecifiedNames_mid(self):
+        self.backend_insert_automaticReorder('point', False, 1)
+
+    def test_insertFeatures_automaticReorder_fullySpecifiedNames_mid(self):
+        self.backend_insert_automaticReorder('feature', False, 1)
+
+    def test_insertPoints_automaticReorder_defaultPointNames_mid(self):
+        self.backend_insert_automaticReorder('point', True, 1)
+
+    def test_insertFeatures_automaticReorder_defaultFeatureNames_mid(self):
+        self.backend_insert_automaticReorder('feature', True, 1)
+
+    def backend_insert_allPossibleUMLDataType(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        currType = self.constructor([]).getTypeString()
+        availableTypes = UML.data.available
+        otherTypes = [retType for retType in availableTypes if retType != currType]
+        inserted = []
+        for other in otherTypes:
+            toTest = self.constructor(data)
+            if axis == 'point':
+                insertData = [[-1, -2, -3]]
+                otherTest = UML.createData(other, insertData)
+                exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+                toTest.insertPoints(otherTest)
+                inserted.append(toTest)
+            else:
+                insertData = [[-1], [-2], [-3]]
+                otherTest = UML.createData(other, insertData)
+                exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
+                toTest.insertFeatures(otherTest)
+                inserted.append(toTest)
+
+        assert all(exp == obj for obj in inserted)
+
+    def test_insertPoints_allPossibleUMLDataType(self):
+        self.backend_insert_allPossibleUMLDataType('point')
+
+    def test_insertFeatures_allPossibleUMLDataType(self):
+        self.backend_insert_allPossibleUMLDataType('feature')
+
+
+    def backend_insert_noReorderWithAllDefaultNames(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        if axis == 'point':
+            insertData = [[-1, -2, -3]]
+            # assign names to be the reverse of toTest's default names
+            fNames = list(reversed(toTest.getFeatureNames()))
+            toInsert = self.constructor(insertData, featureNames=fNames)
+            assert toTest.getFeatureNames() != toInsert.getFeatureNames()
+
+            exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
+            toTest.insertPoints(toInsert)
+
+        else:
+            insertData = [[-1], [-2], [-3]]
+            # assign names to be the reverse of toTest's default names
+            pNames = list(reversed(toTest.getPointNames()))
+            toInsert = self.constructor(insertData, pointNames=pNames)
+            assert toTest.getPointNames() != toInsert.getPointNames()
+
+            exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
+            toTest.insertFeatures(toInsert)
+
+        assert toTest == exp
+
+    def test_insertPoints_noReorderWithAllDefaultNames(self):
+        self.backend_insert_noReorderWithAllDefaultNames('point')
+
+    def test_insertFeatures_noReorderWithAllDefaultNames(self):
+        self.backend_insert_noReorderWithAllDefaultNames('feature')
+
+    def backend_insert_NamePath_preservation(self, axis):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        names = ['one', 'two', 'three']
+
+        if axis == 'point':
+            toTest = self.constructor(data, pointNames=names)
+            toInsert = self.constructor([[-1, -2, -3]], pointNames=['new'])
+        else:
+            toTest = self.constructor(data, featureNames=names)
+            toInsert = self.constructor([[-1], [-2], [-3]], featureNames=['new'])
+
+        toTest._name = "TestName"
+        toTest._absPath = "TestAbsPath"
+        toTest._relPath = "testRelPath"
+
+        toInsert._name = "TestNameOther"
+        toInsert._absPath = "TestAbsPathOther"
+        toInsert._relPath = "testRelPathOther"
+
+        if axis == 'point':
+            toTest.insertPoints(toInsert)
+        else:
+            toTest.insertFeatures(toInsert)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.relativePath == 'testRelPath'
+
+    def test_insertPoints_NamePath_preservation(self):
+        self.backend_insert_NamePath_preservation('point')
+
+    def test_insertFeatures_NamePath_preservation(self):
+        self.backend_insert_NamePath_preservation('feature')
+
+    def test_insertPoints_noNamesCreated(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        toInsert = self.constructor([[-1, -2, -3]])
+        toTest.insertPoints(toInsert)
+
+
     ##############
     # sortPoints() #
     ##############

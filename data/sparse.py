@@ -158,44 +158,81 @@ class Sparse(Base):
         toPlot = self.copyAs("Matrix")
         return toPlot._plot(outPath, includeColorbar)
 
-    def _appendPoints_implementation(self, toAppend):
+    def _insertPoints_implementation(self, toInsert, insertBefore):
         """
-        Append the points from the toAppend object to the bottom of the features in this object
+        Append the points from the toInsert object to the bottom of the features in this object
 
         """
-        newData = numpy.append(self.data.data, toAppend.data.data)
-        newRow = numpy.append(self.data.row, toAppend.data.row)
-        newCol = numpy.append(self.data.col, toAppend.data.col)
-
-        # correct the row entries
-        offset = self.points
-        toAdd = numpy.ones(len(newData) - len(self.data.data), dtype=newRow.dtype) * offset
-        newRow[len(self.data.data):] += toAdd
-
-        numNewRows = self.points + toAppend.points
+        self._sortInternal('point')
+        newData = []
+        newRow = []
+        newCol = []
+        # add original data until insert location
+        for i, row in enumerate(self.data.row):
+            if row < insertBefore:
+                newRow.append(row)
+                newCol.append(self.data.col[i])
+                newData.append(self.data.data[i])
+            else:
+                break
+        splitLength = len(newRow)
+        # add inserted data with adjusted row
+        for i, row in enumerate(toInsert.data.row):
+            newRow.append(row + insertBefore)
+            newCol.append(toInsert.data.col[i])
+            newData.append(toInsert.data.data[i])
+        # add remaining original data with adjusted row
+        for i, row in enumerate(self.data.row[splitLength:]):
+            newRow.append(row + toInsert.points)
+            newCol.append(self.data.col[splitLength:][i])
+            newData.append(self.data.data[splitLength:][i])
+        # handle conflicts between original dtype and inserted data
+        try:
+            newData = numpy.array(newData, dtype=self.data.dtype)
+        except ValueError:
+            newData = numpy.array(newData, dtype=numpy.object_)
+        numNewRows = self.points + toInsert.points
         self.data = coo_matrix((newData, (newRow, newCol)), shape=(numNewRows, self.features))
-        if self._sorted == 'feature':
-            self._sorted = None
+        self._sorted = None
 
 
-    def _appendFeatures_implementation(self, toAppend):
+    def _insertFeatures_implementation(self, toInsert, insertBefore):
         """
-        Append the features from the toAppend object to right ends of the points in this object
+        Append the features from the toInsert object to right ends of the points in this object
 
         """
-        newData = numpy.append(self.data.data, toAppend.data.data)
-        newRow = numpy.append(self.data.row, toAppend.data.row)
-        newCol = numpy.append(self.data.col, toAppend.data.col)
+        self._sortInternal('feature')
+        newData = []
+        newRow = []
+        newCol = []
+        # add original data until insert location
+        for i, col in enumerate(self.data.col):
+            if col < insertBefore:
+                newRow.append(self.data.row[i])
+                newCol.append(col)
+                newData.append(self.data.data[i])
+            else:
+                break
+        # add inserted data with adjusted col
+        splitLength = len(newCol)
+        for i, col in enumerate(toInsert.data.col):
+            newRow.append(toInsert.data.row[i])
+            newCol.append(col + insertBefore)
+            newData.append(toInsert.data.data[i])
+        # add remaining original data with adjusted col
+        for i, col in enumerate(self.data.col[splitLength:]):
+            newRow.append(self.data.row[splitLength:][i])
+            newCol.append(col + toInsert.features)
+            newData.append(self.data.data[splitLength:][i])
+        # handle conflicts between original dtype and inserted data
+        try:
+            newData = numpy.array(newData, dtype=self.data.dtype)
+        except ValueError:
+            newData = numpy.array(newData, dtype=numpy.object_)
 
-        # correct the col entries
-        offset = self.features
-        toAdd = numpy.ones(len(newData) - len(self.data.data), dtype=newCol.dtype) * offset
-        newCol[len(self.data.data):] += toAdd
-
-        numNewCols = self.features + toAppend.features
+        numNewCols = self.features + toInsert.features
         self.data = coo_matrix((newData, (newRow, newCol)), shape=(self.points, numNewCols))
-        if self._sorted == 'point':
-            self._sorted = None
+        self._sorted = None
 
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
