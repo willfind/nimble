@@ -160,7 +160,9 @@ class Sparse(Base):
 
     def _insertPoints_implementation(self, toInsert, insertBefore):
         """
-        Append the points from the toInsert object to the bottom of the features in this object
+        Insert the points from the toInsert object below the provided index in
+        this object, the remaining points from this object will continue below
+        the inserted points
 
         """
         self._sortInternal('point')
@@ -198,7 +200,9 @@ class Sparse(Base):
 
     def _insertFeatures_implementation(self, toInsert, insertBefore):
         """
-        Append the features from the toInsert object to right ends of the points in this object
+        Insert the features from the toInsert object to the right of the
+        provided index in this object, the remaining points from this object
+        will continue to the right of the inserted points
 
         """
         self._sortInternal('feature')

@@ -2435,11 +2435,10 @@ class Base(object):
     def insertPoints(self, toInsert, insertBefore=None):
         """
         Expand this object by inserting the points of the toInsert prior to the
-        insertBefore identifier, merging together their points. The points in
-        toInsert do not need to be in the same order as in the calling object;
-        the data will automatically be placed using the calling object's point
-        order if there is an unambiguous mapping. toInsert will be unaffected by
-        calling this method.
+        insertBefore identifier. The points in toInsert do not need to be in the
+        same order as in the calling object; the data will automatically be
+        placed using the calling object's point order if there is an unambiguous
+        mapping. toInsert will be unaffected by calling this method.
 
         toInsert - the UML data object whose contents we will be including
         in this object. Must have the same number of points as the calling
@@ -2448,7 +2447,8 @@ class Base(object):
         necessarily in the same order.
 
         insertBefore - the index or point name prior to which the data from
-        toInsert will be inserted.
+        toInsert will be inserted. The default value, None, indicates that the
+        data will be inserted below all points in this object.
 
         """
         self._genericInsertFrontend('point', toInsert, insertBefore, 'insertPoints', 'toInsert')
@@ -2457,11 +2457,10 @@ class Base(object):
     def insertFeatures(self, toInsert, insertBefore=None):
         """
         Expand this object by inserting the features of the toInsert prior to
-        the insertBefore identifier, merging together their features. The points
-        in toInsert do not need to be in the same order as in the calling object;
-        the data will automatically be placed using the calling object's feature
-        order if there is an unambiguous mapping. toInsert will be unaffected by
-        calling this method.
+        the insertBefore identifier. The points in toInsert do not need to be in
+        the same order as in the calling object; the data will automatically be
+        placed using the calling object's feature order if there is an
+        unambiguous mapping. toInsert will be unaffected by calling this method.
 
         toInsert - the UML data object whose contents we will be including
         in this object. Must have the same number of features as the calling
@@ -2470,7 +2469,8 @@ class Base(object):
         necessarily in the same order.
 
         insertBefore - the index or feature name prior to which the data from
-        toInsert will be inserted.
+        toInsert will be inserted. The default value, None, indicates that the
+        data will be inserted to the right of all features in this object.
 
         """
         self._genericInsertFrontend('feature', toInsert, insertBefore, 'insertFeatures', 'toInsert')
@@ -5490,6 +5490,7 @@ class Base(object):
             allDefault = all(name.startswith(DEFAULT_PREFIX) for name in selfNames())
             reorder = selfNames() != otherNames()
             if not allDefault and reorder:
+                # use copy when reordering so other object is not modified
                 other = other.copy()
                 sorter(other, selfNames())
 

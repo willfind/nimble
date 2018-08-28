@@ -2854,6 +2854,7 @@ class StructureModifying(DataTestObject):
                 dataExpected = [[1, 2, 3], [-1, -2, -3], [4, 5, 6], [7, 8, 9]]
             toTest = self.constructor(data, pointNames=names, featureNames=offNames)
             toInsert = self.constructor(toAddData, pointNames=addName, featureNames=addOffName)
+            expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=namesExp, featureNames=offNames)
             toTest.insertPoints(toInsert, insertBefore)
         else:
@@ -2866,9 +2867,12 @@ class StructureModifying(DataTestObject):
                 dataExpected = [[1, -1, 2, 3], [4, -2, 5, 6], [7, -3, 8, 9]]
             toTest = self.constructor(data, pointNames=offNames, featureNames=names)
             toInsert = self.constructor(toAddData, pointNames=addOffName, featureNames=addName)
+            expInsert = toInsert.copy()
             expected = self.constructor(dataExpected, pointNames=offNames, featureNames=namesExp)
             toTest.insertFeatures(toInsert, insertBefore)
 
+        # check that toInsert object was not modified when reordering occurred
+        assert toInsert.isIdentical(expInsert)
         assert toTest.isIdentical(expected)
 
 
