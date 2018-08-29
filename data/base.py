@@ -2784,21 +2784,31 @@ class Base(object):
     def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
         """Generic retaining function for retainPoints or retainFeatures. The complements
         of toRetain are identified to use the extract backend, this is done within this
-        implementation except for functions which are complemented within the next helper
-        function
+        implementation except when toRetain is a function which is complemented within
+        the next helper function
+
         """
         if axis == 'point':
             hasName = self.hasPointName
             getNames = self.getPointNames
-            getIndex = self._getPointIndex
-            values = self.points
+            axisLength = self.points
             sortValues = self.sortPoints
         else:
             hasName = self.hasFeatureName
             getNames = self.getFeatureNames
-            getIndex = self._getFeatureIndex
-            values = self.features
+            axisLength = self.features
             sortValues = self.sortFeatures
+
+        self._validateStructuralArguments(structure, axis, toRetain, start, end,
+                                          number, randomize)
+        # will use number and randomize as necessary here unless toRetain is
+        # a function where it will be handled in _genericStructuralFrontend
+        passNumber = None
+        passRandomize = False
+
+        # generic exception message if number is too large
+        msg = "The value for 'number', {0}, ".format(number)
+        msg += "is greater than the number of {0}s ".format(axis)
 
         # extract points not in toRetain
         if toRetain is not None:
@@ -2808,73 +2818,64 @@ class Base(object):
                 else:
                     # toRetain is a function passed as a string
                     toExtract = toRetain
+                    passNumber = number
+                    passRandomize = randomize
 
-            elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
-                toExtract = [value for value in range(values) if value != toRetain]
+            elif isinstance(toRetain, (int, numpy.integer)):
+                toExtract = [value for value in range(axisLength) if value != toRetain]
 
             elif isinstance(toRetain, list):
                 toRetain = self._constructIndicesList(axis, toRetain)
-                toExtract = [value for value in range(values) if value not in toRetain]
+                if number and number > len(toRetain):
+                    msg += "to retain, {0}".format(len(toRetain))
+                    raise ArgumentException(msg)
+                if randomize:
+                    toRetain = pythonRandom.sample(toRetain, number)
+                elif number:
+                    toRetain = toRetain[:number]
+                toExtract = [value for value in range(axisLength) if value not in toRetain]
                 # change the index order of the values to match toRetain
-                reindex = toRetain + toExtract
-                sortValues(sortHelper=reindex)
-                # extract any values after the toRetain values
-                extractValues = range(len(toRetain), values)
-                toExtract = list(extractValues)
-
+                if not randomize:
+                    reindex = toRetain + toExtract
+                    sortValues(sortHelper=reindex)
+                    # extract any values after the toRetain values
+                    extractValues = range(len(toRetain), axisLength)
+                    toExtract = list(extractValues)
             else:
                 # toRetain is a function
                 toExtract = toRetain
+                passNumber = number
+                passRandomize = randomize
 
-            ret = self._genericStructuralFrontend('retain', axis, toExtract, start, end, number,
-                                                  False)
-            self._adjustCountAndNames(axis, ret)
-            self.validate()
-
-        # convert start and end to indexes
-        if start is not None and end is not None:
-            start = getIndex(start)
-            end = getIndex(end)
-            if start > end:
-                msg = "the value for start ({0}) exceeds the value of end ({1})".format(start,end)
+        # extract points not in start to end range
+        elif start is not None or end is not None:
+            start = 0 if start is None else self._getIndex(start, axis)
+            end = axisLength - 1 if end is None else self._getIndex(end, axis)
+            self._validateStartEndRange(start, end, axisLength)
+            toRetain = [value for value in range(start, end + 1)]
+            if number and number > len(toRetain):
+                msg += "to retain, {0}".format(len(toRetain))
                 raise ArgumentException(msg)
+            if randomize:
+                toRetain = pythonRandom.sample(toRetain, number)
+            elif number:
+                toRetain = toRetain[:number]
+            toExtract = [value for value in range(axisLength) if value not in toRetain]
+
+        # extract points after number
+        else:
+            allIndexes = [i for i in range(axisLength)]
+            if number > len(allIndexes):
+                raise ArgumentException(msg)
+            if randomize:
+                toRetain = pythonRandom.sample(allIndexes, number)
             else:
-                # adjust end and values for start values that will be removed
-                end -= start
-                values -= start
-        elif start is not None:
-            start = getIndex(start)
-        elif end is not None:
-            end = getIndex(end)
+                toRetain = allIndexes[:number]
+            toExtract = [value for value in range(axisLength) if value not in toRetain]
 
-        # extract points not between start and end
-        if start is not None:
-            # only need to perform if start is not the first value
-            if start - 1 >= 0:
-                ret = self._genericStructuralFrontend('retain', axis, None, 0, start - 1,
-                                                          None, False)
-                self._adjustCountAndNames(axis, ret)
-                self.validate()
-        if end is not None:
-            # only need to perform if end is not the last value
-            if end + 1 <= values - 1:
-                ret = self._genericStructuralFrontend('retain', axis, None, end + 1, values - 1,
-                                                          None, False)
-                self._adjustCountAndNames(axis, ret)
-                self.validate()
-
-        if randomize:
-            indices = list(range(0, values))
-            pythonRandom.shuffle(indices)
-            sortValues(sortHelper=indices)
-
-        if number is not None:
-            start = number
-            end = values - 1
-            ret = self._genericStructuralFrontend('retain', axis, None, start, end,
-                                                      None, False)
-            self._adjustCountAndNames(axis, ret)
-            self.validate()
+        ret = self._genericStructuralFrontend('retain', axis, target=toExtract,
+                                              number=passNumber, randomize=passRandomize)
+        self._adjustCountAndNames(axis, ret)
 
 
     def countPoints(self, condition):
@@ -4308,25 +4309,20 @@ class Base(object):
     def _genericStructuralFrontend(self, structure, axis, target=None, start=None,
                                    end=None, number=None, randomize=False):
         if axis == 'point':
-            getIndex = self._getPointIndex
             axisLength = self.points
             hasNameChecker1, hasNameChecker2 = self.hasPointName, self.hasFeatureName
-            viewIterator = self.copy().pointIterator
+            viewIterator = self.pointIterator
         else:
-            getIndex = self._getFeatureIndex
             axisLength = self.features
             hasNameChecker1, hasNameChecker2 = self.hasFeatureName, self.hasPointName
-            viewIterator = self.copy().featureIterator
+            viewIterator = self.featureIterator
 
-        if number is not None and number < 1:
-            msg = "number must be greater than zero"
-            raise ArgumentException(msg)
+        self._validateStructuralArguments(structure, axis, target, start, end,
+                                          number, randomize)
         if target is not None:
-            if start is not None or end is not None:
-                raise ArgumentException("Range removal is exclusive, to use it, target must be None")
             if isinstance(target, six.string_types):
                 if hasNameChecker1(target):
-                    target = getIndex(target)
+                    target = self._getIndex(target, axis)
                     targetList = [target]
                 #if axis=point and target is not a point name, or
                 # if axis=feature and target is not a feature name,
@@ -4379,7 +4375,7 @@ class Base(object):
                 #verify everything in list is a valid index and convert names into indices
                 targetList = []
                 for identifier in target:
-                    targetList.append(getIndex(identifier))
+                    targetList.append(self._getIndex(identifier, axis))
             # boolean function
             elif hasattr(target, '__call__'):
                 if structure == 'retain':
@@ -4389,41 +4385,49 @@ class Base(object):
                     target = complement
                 # construct list from function
                 targetList = []
+                if structure == 'retain':
+                    keepList = []
                 for targetID, view in enumerate(viewIterator()):
                     if target(view):
                         targetList.append(targetID)
+                    elif structure == 'retain':
+                        keepList.append(targetID)
+                # add additional indexes to targetList if not keeping every
+                # index from returned function
+                if structure == 'retain' and number is not None:
+                    addBack = len(keepList) - number
+                    if addBack > 0:
+                        if randomize:
+                            pythonRandom.shuffle(keepList)
+                        for i in range(addBack):
+                            targetList.append(keepList[-i])
+                    elif addBack < 0:
+                        msg = "The value for 'number' ({0}) ".format(number)
+                        msg += "is greater than the number of {0}s ".format(axis)
+                        msg += "to retain ({0})".format(len(keepList))
+                        raise ArgumentException(msg)
 
         elif start is not None or end is not None:
-            start = 0 if start is None else getIndex(start)
-            end = axisLength - 1 if end is None else getIndex(end)
-
-            if start < 0 or start > axisLength:
-                msg = "start must be a valid index, in the range of possible "
-                msg += axis + 's'
-                raise ArgumentException(msg)
-            if end < 0 or end > axisLength:
-                msg = "end must be a valid index, in the range of possible "
-                msg += axis + 's'
-                raise ArgumentException(msg)
-            if start > end:
-                raise ArgumentException("The start index cannot be greater than the end index")
+            start = 0 if start is None else self._getIndex(start, axis)
+            end = axisLength - 1 if end is None else self._getIndex(end, axis)
+            self._validateStartEndRange(start, end, axisLength)
 
             # end + 1 because our range is inclusive
             targetList = list(range(start,end + 1))
 
-        elif number is not None:
-            targetList = list(range(0, number))
         else:
-            targetName = "to" + structure.capitalize()
-            msg = "You must provide a value for " + targetName + ", or start/end, or "
-            msg += "number. "
-            raise ArgumentException(msg)
+            targetList = [value for value in range(axisLength)]
 
-        if randomize:
-            targetList = pythonRandom.sample(targetList, number)
-            targetList.sort()
-        if number is not None:
-            targetList = targetList[:number]
+        if number and structure != 'retain':
+            if number > len(targetList):
+                msg = "The value for 'number' ({0}) ".format(number)
+                msg += "is greater than the number of {0}s ".format(axis)
+                msg += "to {0} ({1})".format(structure, len(targetList))
+                raise ArgumentException(msg)
+            if randomize:
+                targetList = pythonRandom.sample(targetList, number)
+            else:
+                targetList = targetList[:number]
 
         if structure == 'count':
             return len(targetList)
@@ -5519,7 +5523,6 @@ class Base(object):
 
             raise ArgumentException(msg)
 
-
     def _adjustCountAndNames(self, axis, other):
         """
         Adjust the count and names (when names have been generated) for this object,
@@ -5546,6 +5549,41 @@ class Base(object):
                 for i in range(len(idxList)):
                     del self.featureNamesInverse[idxList[i] - i]
                 self.featureNames = {pt:idx for idx, pt in enumerate(self.featureNamesInverse)}
+
+
+    def _validateStartEndRange(self, start, end, axisLength):
+        """check that the start and end values are valid"""
+        if start < 0 or start > axisLength:
+            msg = "start must be a valid index, in the range of possible "
+            msg += axis + 's'
+            raise ArgumentException(msg)
+        if end < 0 or end > axisLength:
+            msg = "end must be a valid index, in the range of possible "
+            msg += axis + 's'
+            raise ArgumentException(msg)
+        if start > end:
+            raise ArgumentException("The start index cannot be greater than the end index")
+
+    def _validateStructuralArguments(self, structure, axis, target, start, end,
+                                    number, randomize):
+        targetName = 'to' + structure.capitalize()
+        if target is None and start is None and end is None and number is None:
+            msg = "You must provide a value for {0}, ".format(targetName)
+            msg += " or start/end, or number."
+            raise ArgumentException(msg)
+        if number is not None and number < 1:
+            msg = "number must be greater than zero"
+            raise ArgumentException(msg)
+        if number is None and randomize:
+            msg = "randomize selects a random subset of {0}s to ".format(axis)
+            msg += "{0}. When randomize=True, the number ".format(structure)
+            msg += "argument cannot be None"
+            raise ArgumentException(msg)
+        if target is not None:
+            if start is not None or end is not None:
+                msg = "Range removal is exclusive, to use it, "
+                msg += "{0} must be None".format(targetName)
+                raise ArgumentException(msg)
 
 
 def cmp_to_key(mycmp):

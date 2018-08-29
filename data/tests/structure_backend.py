@@ -64,8 +64,93 @@ def plusOneOnlyEven(value):
     else:
         return None
 
+def allTrue(value):
+    return True
 
-class StructureDataSafe(DataTestObject):
+def allFalse(value):
+    return False
+
+def oneOrFour(point):
+    if 1 in point or 4 in point:
+        return True
+    return False
+
+def absoluteOne(feature):
+    if 1 in feature or -1 in feature:
+        return True
+    return False
+
+def evenOnly(feature):
+    return feature[0] % 2 == 0
+
+
+class StructureShared(DataTestObject):
+    """
+    Test backends shared between the data safe and data modifying subobject
+    test sets.
+
+    """
+
+    ###################################################################
+    # common backend for exceptions extract, delete, retain, and copy #
+    ###################################################################
+
+    def back_structural_randomizeNoNumber(self, structure, axis):
+        if axis == 'point':
+            toCall = structure + "Points"
+        else:
+            toCall = structure + "Features"
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = getattr(toTest, toCall)([0,1,2], randomize=True)
+
+    def back_structural_list_numberGreaterThanTargeted(self, structure, axis):
+        if axis == 'point':
+            toCall = structure + "Points"
+        else:
+            toCall = structure + "Features"
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = getattr(toTest, toCall)([0,1], number=3)
+
+    def back_structural_function_numberGreaterThanTargeted(self, structure, axis):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+
+        if axis == 'point':
+            toCall = structure + "Points"
+            def selTwo(p):
+                return p.getPointName(0) in pointNames[:2]
+        else:
+            toCall = structure + "Features"
+            def selTwo(f):
+                return f.getFeatureName(0) in featureNames[:2]
+
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = getattr(toTest, toCall)(selTwo, number=3)
+
+    def back_structural_range_numberGreaterThanTargeted(self, structure, axis):
+        if axis == 'point':
+            toCall = structure + "Points"
+        else:
+            toCall = structure + "Features"
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = getattr(toTest, toCall)(start=0, end=1, number=3)
+
+
+class StructureDataSafe(StructureShared):
 
     #############
     # copyAs #
@@ -581,9 +666,6 @@ class StructureDataSafe(DataTestObject):
         toTest = self.constructor(data)
         expRet = self.constructor(data)
 
-        def allTrue(point):
-            return True
-
         ret = toTest.copyPoints(allTrue)
         expTest = self.constructor(data)
 
@@ -595,10 +677,7 @@ class StructureDataSafe(DataTestObject):
         toTest = self.constructor(data)
         expTest = self.constructor(data)
 
-        def takeNone(point):
-            return False
-
-        ret = toTest.copyPoints(takeNone)
+        ret = toTest.copyPoints(allFalse)
 
         data = [[], [], []]
         data = numpy.array(data).T
@@ -612,11 +691,6 @@ class StructureDataSafe(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
-
         ext = toTest.copyPoints(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]])
         assert ext.isIdentical(exp)
@@ -626,11 +700,6 @@ class StructureDataSafe(DataTestObject):
     def test_copyPoints_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         # need to set source paths for view objects
         if isinstance(toTest, UML.data.BaseView):
@@ -656,11 +725,6 @@ class StructureDataSafe(DataTestObject):
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         ext = toTest.copyPoints(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
@@ -1010,8 +1074,30 @@ class StructureDataSafe(DataTestObject):
     def test_copyPoints_numberOnly(self):
         self.back_copy_numberOnly('point')
 
-    def test_copyPoints_numberAndRandomize(self):
-        self.back_copy_numberAndRandomize('point')
+    def test_copyPoints_functionAndNumber(self):
+        self.back_copy_functionAndNumber('point')
+
+    def test_copyPoints_numberAndRandomizeAllData(self):
+        self.back_copy_numberAndRandomizeAllData('point')
+
+    def test_copyPoints_numberAndRandomizeSelectedData(self):
+        self.back_copy_numberAndRandomizeSelectedData('point')
+
+    @raises(ArgumentException)
+    def test_copyPoints_randomizeNoNumber(self):
+        self.back_structural_randomizeNoNumber('copy', 'point')
+
+    @raises(ArgumentException)
+    def test_copyPoints_list_numberGreaterThanTargeted(self):
+        self.back_structural_list_numberGreaterThanTargeted('copy', 'point')
+
+    @raises(ArgumentException)
+    def test_copyPoints_function_numberGreaterThanTargeted(self):
+        self.back_structural_function_numberGreaterThanTargeted('copy', 'point')
+
+    @raises(ArgumentException)
+    def test_copyPoints_range_numberGreaterThanTargeted(self):
+        self.back_structural_range_numberGreaterThanTargeted('copy', 'point')
 
     #######################
     # copy common backend #
@@ -1038,7 +1124,31 @@ class StructureDataSafe(DataTestObject):
         assert exp.isIdentical(ret)
         assert rem.isIdentical(toTest)
 
-    def back_copy_numberAndRandomize(self, axis):
+    def back_copy_functionAndNumber(self, axis):
+        if axis == 'point':
+            toCall = "copyPoints"
+        else:
+            toCall = "copyFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        ret = getattr(toTest, toCall)(allTrue, number=2)
+        if axis == 'point':
+            exp = self.constructor(data[:2], pointNames=pnames[:2], featureNames=fnames)
+            rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        else:
+            exp = self.constructor([p[:2] for p in data], pointNames=pnames, featureNames=fnames[:2])
+            rem = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        assert exp.isIdentical(ret)
+        assert rem.isIdentical(toTest)
+
+    def back_copy_numberAndRandomizeAllData(self, axis):
+        """test that randomizing (with same randomly chosen seed) and limiting to a
+        given number provides the same result for all input types if using all the data
+        """
         if axis == 'point':
             toCall = "copyPoints"
         else:
@@ -1048,18 +1158,81 @@ class StructureDataSafe(DataTestObject):
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = toTest1.copy()
+        toTest3 = toTest1.copy()
+        toTest4 = toTest1.copy()
+        expTest = toTest1.copy()
 
-        UML.randomness.startAlternateControl(seed=1)
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed=1)
-        retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.startAlternateControl(seed)
+        retList = getattr(toTest2, toCall)([0, 1, 2, 3], number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
+        UML.randomness.startAlternateControl(seed)
+        retRange = getattr(toTest3, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed)
+        retFunc = getattr(toTest4, toCall)(allTrue, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        if axis == 'point':
+            assert ret.points == 3
+        else:
+            assert ret.features == 3
+
+        assert ret.isIdentical(retList)
         assert ret.isIdentical(retRange)
-        assert toTest1.isIdentical(toTest2)
+        assert ret.isIdentical(retFunc)
+
+        assert toTest1.isIdentical(expTest)
+        assert toTest2.isIdentical(expTest)
+        assert toTest3.isIdentical(expTest)
+        assert toTest4.isIdentical(expTest)
+
+    def back_copy_numberAndRandomizeSelectedData(self, axis):
+        """test that randomization occurs after the data has been selected from the user inputs """
+        if axis == 'point':
+            toCall = "copyPoints"
+        else:
+            toCall = "copyFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = toTest1.copy()
+        toTest3 = toTest1.copy()
+        if axis == 'point':
+            exp1 = toTest1[1, :]
+            exp2 = toTest1[2, :]
+        else:
+            exp1 = toTest1[:, 1]
+            exp2 = toTest1[:, 2]
+
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
+        retList = getattr(toTest1, toCall)([1, 2], number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed)
+        retRange = getattr(toTest2, toCall)(start=1, end=2, number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        def middleRowsOrCols(value):
+            return value[0] in [2, 4, 5, 7]
+
+        UML.randomness.startAlternateControl(seed)
+        retFunc = getattr(toTest3, toCall)(middleRowsOrCols, number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        assert retList.isIdentical(exp1) or retList.isIdentical(exp2)
+        assert retRange.isIdentical(exp1) or retList.isIdentical(exp2)
+        assert retFunc.isIdentical(exp1) or retList.isIdentical(exp2)
 
     #####################
     # copyFeatures #
@@ -1133,7 +1306,6 @@ class StructureDataSafe(DataTestObject):
         ext2 = toTest.copyFeatures([3, 2])
         exp2 = self.constructor([[-1, 3], [-2, 6], [-3, 9]], pointNames=pointNames)
         assert ext2.isIdentical(exp2)
-        expEndData = [[2], [5], [8]]
         expEnd = self.constructor(data, pointNames=pointNames)
         assert toTest.isIdentical(expEnd)
 
@@ -1221,9 +1393,6 @@ class StructureDataSafe(DataTestObject):
         toTest = self.constructor(data)
         expRet = self.constructor(data)
 
-        def allTrue(point):
-            return True
-
         ret = toTest.copyFeatures(allTrue)
         assert ret.isIdentical(expRet)
         expEnd = self.constructor(data)
@@ -1234,10 +1403,7 @@ class StructureDataSafe(DataTestObject):
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        def takeNone(point):
-            return False
-
-        ret = toTest.copyFeatures(takeNone)
+        ret = toTest.copyFeatures(allFalse)
         expRet = self.constructor([[],[],[]])
         assert ret.isIdentical(expRet)
         assert toTest.isIdentical(exp)
@@ -1247,11 +1413,6 @@ class StructureDataSafe(DataTestObject):
         """ Test copyFeatures() against handmade output for function copies """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         ext = toTest.copyFeatures(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]])
@@ -1263,11 +1424,6 @@ class StructureDataSafe(DataTestObject):
     def test_copyFeatures_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         # need to set source paths for view objects
         if isinstance(toTest, UML.data.BaseView):
@@ -1294,11 +1450,6 @@ class StructureDataSafe(DataTestObject):
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         ext = toTest.copyFeatures(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]], pointNames=pointNames, featureNames=['one', 'neg'])
@@ -1629,11 +1780,33 @@ class StructureDataSafe(DataTestObject):
     def test_copyFeatures_numberOnly(self):
         self.back_copy_numberOnly('feature')
 
-    def test_copyFeatures_numberAndRandomize(self):
-        self.back_copy_numberAndRandomize('feature')
+    def test_copyFeatures_functionAndNumber(self):
+        self.back_copy_functionAndNumber('feature')
+
+    def test_copyFeatures_numberAndRandomizeAllData(self):
+        self.back_copy_numberAndRandomizeAllData('feature')
+
+    def test_copyFeatures_numberAndRandomizeSelectedData(self):
+        self.back_copy_numberAndRandomizeSelectedData('feature')
+
+    @raises(ArgumentException)
+    def test_copyFeatures_randomizeNoNumber(self):
+        self.back_structural_randomizeNoNumber('copy', 'feature')
+
+    @raises(ArgumentException)
+    def test_copyFeatures_list_numberGreaterThanTargeted(self):
+        self.back_structural_list_numberGreaterThanTargeted('copy', 'feature')
+
+    @raises(ArgumentException)
+    def test_copyFeatures_function_numberGreaterThanTargeted(self):
+        self.back_structural_function_numberGreaterThanTargeted('copy', 'feature')
+
+    @raises(ArgumentException)
+    def test_copyFeatures_range_numberGreaterThanTargeted(self):
+        self.back_structural_range_numberGreaterThanTargeted('copy', 'feature')
 
 
-class StructureModifying(DataTestObject):
+class StructureModifying(StructureShared):
 
     ##############
     # create data
@@ -2759,7 +2932,6 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.sortFeatures(sortHelper=[1, 1, 0])
 
-
     #################
     # extractPoints() #
     #################
@@ -2884,9 +3056,6 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         expRet = self.constructor(data)
 
-        def allTrue(point):
-            return True
-
         ret = toTest.extractPoints(allTrue)
         assert ret.isIdentical(expRet)
 
@@ -2901,13 +3070,7 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        def takeNone(point):
-            return False
-
-        #		import pdb
-        #		pdb.set_trace()
-
-        ret = toTest.extractPoints(takeNone)
+        ret = toTest.extractPoints(allFalse)
 
         data = [[], [], []]
         data = numpy.array(data).T
@@ -2921,11 +3084,6 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
-
         ext = toTest.extractPoints(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]])
         assert ext.isIdentical(exp)
@@ -2935,11 +3093,6 @@ class StructureModifying(DataTestObject):
     def test_extractPoints_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         toTest._name = "testName"
         toTest._absPath = "testAbsPath"
@@ -2960,11 +3113,6 @@ class StructureModifying(DataTestObject):
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         ext = toTest.extractPoints(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
@@ -3311,11 +3459,30 @@ class StructureModifying(DataTestObject):
     def test_extractPoints_numberOnly(self):
         self.back_extract_numberOnly('point')
 
-    def test_extractPoints_numberAndRandomize(self):
-        self.back_extract_numberAndRandomize('point')
+    def test_extractPoints_functionAndNumber(self):
+        self.back_extract_functionAndNumber('point')
 
-    #TODO an extraction test where all data is removed
-    #TODO extraction tests for all of the number and randomize combinations
+    def test_extractPoints_numberAndRandomizeAllData(self):
+        self.back_extract_numberAndRandomizeAllData('point')
+
+    def test_extractPoints_numberAndRandomizeSelectedData(self):
+        self.back_extract_numberAndRandomizeSelectedData('point')
+
+    @raises(ArgumentException)
+    def test_extractPoints_randomizeNoNumber(self):
+        self.back_structural_randomizeNoNumber('extract', 'point')
+
+    @raises(ArgumentException)
+    def test_extractPoints_list_numberGreaterThanTargeted(self):
+        self.back_structural_list_numberGreaterThanTargeted('extract', 'point')
+
+    @raises(ArgumentException)
+    def test_extractPoints_function_numberGreaterThanTargeted(self):
+        self.back_structural_function_numberGreaterThanTargeted('extract', 'point')
+
+    @raises(ArgumentException)
+    def test_extractPoints_range_numberGreaterThanTargeted(self):
+        self.back_structural_range_numberGreaterThanTargeted('extract', 'point')
 
     ##########################
     # extract common backend #
@@ -3342,7 +3509,31 @@ class StructureModifying(DataTestObject):
         assert exp.isIdentical(ret)
         assert rem.isIdentical(toTest)
 
-    def back_extract_numberAndRandomize(self, axis):
+    def back_extract_functionAndNumber(self, axis):
+        if axis == 'point':
+            toCall = "extractPoints"
+        else:
+            toCall = "extractFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        ret = getattr(toTest, toCall)(allTrue, number=2)
+        if axis == 'point':
+            exp = self.constructor(data[:2], pointNames=pnames[:2], featureNames=fnames)
+            rem = self.constructor(data[2:], pointNames=pnames[2:], featureNames=fnames)
+        else:
+            exp = self.constructor([p[:2] for p in data], pointNames=pnames, featureNames=fnames[:2])
+            rem = self.constructor([p[2:] for p in data], pointNames=pnames, featureNames=fnames[2:])
+
+        assert exp.isIdentical(ret)
+        assert rem.isIdentical(toTest)
+
+    def back_extract_numberAndRandomizeAllData(self, axis):
+        """test that randomizing (with same randomly chosen seed) and limiting to a
+        given number provides the same result for all input types if using all the data
+        """
         if axis == 'point':
             toCall = "extractPoints"
         else:
@@ -3352,19 +3543,88 @@ class StructureModifying(DataTestObject):
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = toTest1.copy()
+        toTest3 = toTest1.copy()
+        toTest4 = toTest1.copy()
 
-        UML.randomness.startAlternateControl(seed=1)
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed=1)
-        retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.startAlternateControl(seed)
+        retList = getattr(toTest2, toCall)([0, 1, 2, 3], number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        assert ret.isIdentical(retRange)
-        assert toTest1.isIdentical(toTest2)
+        UML.randomness.startAlternateControl(seed)
+        retRange = getattr(toTest3, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
 
+        UML.randomness.startAlternateControl(seed)
+        retFunc = getattr(toTest4, toCall)(allTrue, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        if axis == 'point':
+            assert ret.points == 3
+            assert toTest1.points == 1
+        else:
+            assert ret.features == 3
+            assert toTest1.features == 1
+
+        assert ret.isIdentical(retList)
+        assert ret.isIdentical(retRange)
+        assert ret.isIdentical(retFunc)
+        assert toTest1.isIdentical(toTest2)
+        assert toTest1.isIdentical(toTest3)
+        assert toTest1.isIdentical(toTest4)
+
+    def back_extract_numberAndRandomizeSelectedData(self, axis):
+        """test that randomization occurs after the data has been selected from the user inputs """
+        if axis == 'point':
+            toCall = "extractPoints"
+        else:
+            toCall = "extractFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = toTest1.copy()
+        toTest3 = toTest1.copy()
+        if axis == 'point':
+            expRet1 = toTest1[1, :]
+            expRet2 = toTest1[2, :]
+            expTest1 = toTest1[[0, 1, 3], :]
+            expTest2 = toTest1[[0, 2, 3], :]
+        else:
+            expRet1 = toTest1[:, 1]
+            expRet2 = toTest1[:, 2]
+            expTest1 = toTest1[:, [0, 1, 3]]
+            expTest2 = toTest1[:, [0, 2, 3]]
+
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
+        retList = getattr(toTest1, toCall)([1, 2], number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed)
+        retRange = getattr(toTest2, toCall)(start=1, end=2, number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        def middleRowsOrCols(value):
+            return value[0] in [2, 4, 5, 7]
+
+        UML.randomness.startAlternateControl(seed)
+        retFunc = getattr(toTest3, toCall)(middleRowsOrCols, number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        assert retList.isIdentical(expRet1) or retList.isIdentical(expRet2)
+        assert retRange.isIdentical(expRet1) or retList.isIdentical(expRet2)
+        assert retFunc.isIdentical(expRet1) or retList.isIdentical(expRet2)
+
+        assert toTest1.isIdentical(expTest1) or toTest1.isIdentical(expTest2)
+        assert toTest2.isIdentical(expTest1) or toTest2.isIdentical(expTest2)
+        assert toTest3.isIdentical(expTest1) or toTest3.isIdentical(expTest2)
 
     ####################
     # extractFeatures() #
@@ -3531,9 +3791,6 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         expRet = self.constructor(data)
 
-        def allTrue(point):
-            return True
-
         ret = toTest.extractFeatures(allTrue)
         assert ret.isIdentical(expRet)
 
@@ -3548,10 +3805,7 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        def takeNone(point):
-            return False
-
-        ret = toTest.extractFeatures(takeNone)
+        ret = toTest.extractFeatures(allFalse)
 
         data = [[], [], []]
         data = numpy.array(data)
@@ -3566,11 +3820,6 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
 
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
-
         ext = toTest.extractFeatures(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]])
         assert ext.isIdentical(exp)
@@ -3581,11 +3830,6 @@ class StructureModifying(DataTestObject):
     def test_extractFeatures_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         toTest._name = "testName"
         toTest._absPath = "testAbsPath"
@@ -3607,11 +3851,6 @@ class StructureModifying(DataTestObject):
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         ext = toTest.extractFeatures(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]], pointNames=pointNames, featureNames=['one', 'neg'])
@@ -3946,9 +4185,30 @@ class StructureModifying(DataTestObject):
     def test_extractFeatures_numberOnly(self):
         self.back_extract_numberOnly('feature')
 
-    def test_extractFeatures_numberAndRandomize(self):
-        self.back_extract_numberAndRandomize('feature')
+    def test_extractFeatures_functionAndNumber(self):
+        self.back_extract_functionAndNumber('feature')
 
+    def test_extractFeatures_numberAndRandomizeAllData(self):
+        self.back_extract_numberAndRandomizeAllData('feature')
+
+    def test_extractFeatures_numberAndRandomizeSelectedData(self):
+        self.back_extract_numberAndRandomizeSelectedData('feature')
+
+    @raises(ArgumentException)
+    def test_extractFeatures_randomizeNoNumber(self):
+        self.back_structural_randomizeNoNumber('extract', 'feature')
+
+    @raises(ArgumentException)
+    def test_extractFeatures_list_numberGreaterThanTargeted(self):
+        self.back_structural_list_numberGreaterThanTargeted('extract', 'feature')
+
+    @raises(ArgumentException)
+    def test_extractFeatures_function_numberGreaterThanTargeted(self):
+        self.back_structural_function_numberGreaterThanTargeted('extract', 'feature')
+
+    @raises(ArgumentException)
+    def test_extractFeatures_range_numberGreaterThanTargeted(self):
+        self.back_structural_range_numberGreaterThanTargeted('extract', 'feature')
 
     ################
     # deletePoints #
@@ -4050,9 +4310,6 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        def allTrue(point):
-            return True
-
         toTest.deletePoints(allTrue)
 
         data = [[], [], []]
@@ -4066,13 +4323,7 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        def takeNone(point):
-            return False
-
-        #		import pdb
-        #		pdb.set_trace()
-
-        toTest.deletePoints(takeNone)
+        toTest.deletePoints(allFalse)
 
         assert toTest.isIdentical(exp)
 
@@ -4081,11 +4332,6 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
-
         toTest.deletePoints(oneOrFour)
         expEnd = self.constructor([[7, 8, 9]])
         assert toTest.isIdentical(expEnd)
@@ -4093,11 +4339,6 @@ class StructureModifying(DataTestObject):
     def test_deletePoints_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         toTest._name = "testName"
         toTest._absPath = "testAbsPath"
@@ -4115,11 +4356,6 @@ class StructureModifying(DataTestObject):
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         toTest.deletePoints(oneOrFour)
         expEnd = self.constructor([[7, 8, 9]], featureNames=featureNames)
@@ -4400,8 +4636,30 @@ class StructureModifying(DataTestObject):
     def test_deletePoints_numberOnly(self):
         self.back_delete_numberOnly('point')
 
-    def test_deletePoints_numberAndRandomize(self):
-        self.back_delete_numberAndRandomize('point')
+    def test_deletePoints_functionAndNumber(self):
+        self.back_delete_functionAndNumber('point')
+
+    def test_deletePoints_numberAndRandomizeAllData(self):
+        self.back_delete_numberAndRandomizeAllData('point')
+
+    def test_deletePoints_numberAndRandomizeSelectedData(self):
+        self.back_delete_numberAndRandomizeSelectedData('point')
+
+    @raises(ArgumentException)
+    def test_deletePoints_randomizeNoNumber(self):
+        self.back_structural_randomizeNoNumber('delete', 'point')
+
+    @raises(ArgumentException)
+    def test_deletePoints_list_numberGreaterThanTargeted(self):
+        self.back_structural_list_numberGreaterThanTargeted('delete', 'point')
+
+    @raises(ArgumentException)
+    def test_deletePoints_function_numberGreaterThanTargeted(self):
+        self.back_structural_function_numberGreaterThanTargeted('delete', 'point')
+
+    @raises(ArgumentException)
+    def test_deletePoints_range_numberGreaterThanTargeted(self):
+        self.back_structural_range_numberGreaterThanTargeted('delete', 'point')
 
     #########################
     # delete common backend #
@@ -4417,7 +4675,7 @@ class StructureModifying(DataTestObject):
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = getattr(toTest, toCall)(number=3)
+        getattr(toTest, toCall)(number=3)
         if axis == 'point':
             rem = self.constructor(data[3:], pointNames=pnames[3:], featureNames=fnames)
         else:
@@ -4425,7 +4683,28 @@ class StructureModifying(DataTestObject):
 
         assert rem.isIdentical(toTest)
 
-    def back_delete_numberAndRandomize(self, axis):
+    def back_delete_functionAndNumber(self, axis):
+        if axis == 'point':
+            toCall = "deletePoints"
+        else:
+            toCall = "deleteFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        getattr(toTest, toCall)(allTrue, number=2)
+        if axis == 'point':
+            rem = self.constructor(data[2:], pointNames=pnames[2:], featureNames=fnames)
+        else:
+            rem = self.constructor([p[2:] for p in data], pointNames=pnames, featureNames=fnames[2:])
+
+        assert rem.isIdentical(toTest)
+
+    def back_delete_numberAndRandomizeAllData(self, axis):
+        """test that randomizing (with same randomly chosen seed) and limiting to a
+        given number provides the same result for all input types if using all the data
+        """
         if axis == 'point':
             toCall = "deletePoints"
         else:
@@ -4435,17 +4714,75 @@ class StructureModifying(DataTestObject):
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = toTest1.copy()
+        toTest3 = toTest1.copy()
+        toTest4 = toTest1.copy()
 
-        UML.randomness.startAlternateControl(seed=1)
-        ret = getattr(toTest1, toCall)(number=3, randomize=True)
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed=1)
-        retRange = getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest2, toCall)([0, 1, 2, 3], number=3, randomize=True)
         UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest3, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest4, toCall)(allTrue, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        if axis == 'point':
+            assert toTest1.points == 1
+        else:
+            assert toTest1.features == 1
 
         assert toTest1.isIdentical(toTest2)
+        assert toTest1.isIdentical(toTest3)
+        assert toTest1.isIdentical(toTest4)
+
+    def back_delete_numberAndRandomizeSelectedData(self, axis):
+        """test that randomization occurs after the data has been selected from the user inputs """
+        if axis == 'point':
+            toCall = "deletePoints"
+        else:
+            toCall = "deleteFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = toTest1.copy()
+        toTest3 = toTest1.copy()
+        if axis == 'point':
+            exp1 = toTest1[[0, 1, 3], :]
+            exp2 = toTest1[[0, 2, 3], :]
+        else:
+            exp1 = toTest1[:, [0, 1, 3]]
+            exp2 = toTest1[:, [0, 2, 3]]
+
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest1, toCall)([1, 2], number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest2, toCall)(start=1, end=2, number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        def middleRowsOrCols(value):
+            return value[0] in [2, 4, 5, 7]
+
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest3, toCall)(middleRowsOrCols, number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
+        assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
+        assert toTest3.isIdentical(exp1) or toTest3.isIdentical(exp2)
 
     ##################
     # deleteFeatures #
@@ -4579,9 +4916,6 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        def allTrue(point):
-            return True
-
         toTest.deleteFeatures(allTrue)
 
         data = [[], [], []]
@@ -4595,10 +4929,7 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         exp = self.constructor(data)
 
-        def takeNone(point):
-            return False
-
-        toTest.deleteFeatures(takeNone)
+        toTest.deleteFeatures(allFalse)
 
         assert toTest.isIdentical(exp)
 
@@ -4607,11 +4938,6 @@ class StructureModifying(DataTestObject):
         """ Test deleteFeatures() against handmade output for function deletion """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         toTest.deleteFeatures(absoluteOne)
 
@@ -4622,11 +4948,6 @@ class StructureModifying(DataTestObject):
     def test_deleteFeatures_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         toTest._name = "testName"
         toTest._absPath = "testAbsPath"
@@ -4645,11 +4966,6 @@ class StructureModifying(DataTestObject):
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         ext = toTest.deleteFeatures(absoluteOne)
         expEnd = self.constructor([[2, 3], [5, 6], [8, 9]], pointNames=pointNames, featureNames=["two", "three"])
@@ -4926,8 +5242,30 @@ class StructureModifying(DataTestObject):
     def test_deleteFeatures_numberOnly(self):
         self.back_delete_numberOnly('feature')
 
-    def test_deleteFeatures_numberAndRandomize(self):
-        self.back_delete_numberAndRandomize('feature')
+    def test_deleteFeatures_functionAndNumber(self):
+        self.back_delete_functionAndNumber('feature')
+
+    def test_deleteFeatures_numberAndRandomizeAllData(self):
+        self.back_delete_numberAndRandomizeAllData('feature')
+
+    def test_deleteFeatures_numberAndRandomizeSelectedData(self):
+        self.back_delete_numberAndRandomizeSelectedData('feature')
+
+    @raises(ArgumentException)
+    def test_deleteFeatures_randomizeNoNumber(self):
+        self.back_structural_randomizeNoNumber('delete', 'feature')
+
+    @raises(ArgumentException)
+    def test_deleteFeatures_list_numberGreaterThanTargeted(self):
+        self.back_structural_list_numberGreaterThanTargeted('delete', 'feature')
+
+    @raises(ArgumentException)
+    def test_deleteFeatures_function_numberGreaterThanTargeted(self):
+        self.back_structural_function_numberGreaterThanTargeted('delete', 'feature')
+
+    @raises(ArgumentException)
+    def test_deleteFeatures_range_numberGreaterThanTargeted(self):
+        self.back_structural_range_numberGreaterThanTargeted('delete', 'feature')
 
     ################
     # retainPoints #
@@ -4974,7 +5312,6 @@ class StructureModifying(DataTestObject):
         expData = [[], [], []]
         expData = numpy.array(expData).T
         expTest = self.constructor(expData)
-
         assert toTest.isIdentical(expTest)
 
 
@@ -5052,9 +5389,6 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         expTest = self.constructor(data)
 
-        def allTrue(point):
-            return True
-
         toTest.retainPoints(allTrue)
         assert toTest.isIdentical(expTest)
 
@@ -5063,26 +5397,25 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        def takeNone(point):
-            return False
+        toTest.retainPoints(allFalse)
 
-        toTest.retainPoints(takeNone)
-
-        data = [[], [], []]
-        data = numpy.array(data).T
-        expTest = self.constructor(data)
+        expData = numpy.array([[], [], []])
+        expData = expData.T
+        expTest = self.constructor(expData)
 
         assert toTest.isIdentical(expTest)
+
+    def test_retainPoints_function_NumberAndRandomize(self):
+        data = [[1], [2], [3], [4], [5], [6], [7], [8]]
+        toTest = self.constructor(data)
+
+        toTest.retainPoints(evenOnly, number=3, randomize=True)
+        assert toTest.points == 3
 
     def test_retainPoints_handmadeFunction(self):
         """ Test retainPoints() against handmade output for function retention """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         toTest.retainPoints(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]])
@@ -5092,11 +5425,6 @@ class StructureModifying(DataTestObject):
     def test_retainPoints_func_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         toTest._name = "testName"
         toTest._absPath = "testAbsPath"
@@ -5114,11 +5442,6 @@ class StructureModifying(DataTestObject):
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
-
-        def oneOrFour(point):
-            if 1 in point or 4 in point:
-                return True
-            return False
 
         toTest.retainPoints(oneOrFour)
         exp = self.constructor([[1, 2, 3], [4, 5, 6]], featureNames=featureNames)
@@ -5408,9 +5731,30 @@ class StructureModifying(DataTestObject):
     def test_retainPoints_numberOnly(self):
         self.back_retain_numberOnly('point')
 
-    def test_retainPoints_numberAndRandomize(self):
-        self.back_retain_numberAndRandomize('point')
+    def test_retainPoints_functionAndNumber(self):
+        self.back_retain_functionAndNumber('point')
 
+    def test_retainPoints_numberAndRandomizeAllData(self):
+        self.back_retain_numberAndRandomizeAllData('point')
+
+    def test_retainPoints_numberAndRandomizeSelectedData(self):
+        self.back_retain_numberAndRandomizeSelectedData('point')
+
+    @raises(ArgumentException)
+    def test_retainPoints_randomizeNoNumber(self):
+        self.back_structural_randomizeNoNumber('retain', 'point')
+
+    @raises(ArgumentException)
+    def test_retainPoints_list_numberGreaterThanTargeted(self):
+        self.back_structural_list_numberGreaterThanTargeted('retain', 'point')
+
+    @raises(ArgumentException)
+    def test_retainPoints_function_numberGreaterThanTargeted(self):
+        self.back_structural_function_numberGreaterThanTargeted('retain', 'point')
+
+    @raises(ArgumentException)
+    def test_retainPoints_range_numberGreaterThanTargeted(self):
+        self.back_structural_range_numberGreaterThanTargeted('retain', 'point')
 
     #########################
     # retain common backend #
@@ -5426,7 +5770,7 @@ class StructureModifying(DataTestObject):
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = getattr(toTest, toCall)(number=3)
+        getattr(toTest, toCall)(number=3)
         if axis == 'point':
             exp = self.constructor(data[:3], pointNames=pnames[:3], featureNames=fnames)
         else:
@@ -5434,7 +5778,28 @@ class StructureModifying(DataTestObject):
 
         assert exp.isIdentical(toTest)
 
-    def back_retain_numberAndRandomize(self, axis):
+    def back_retain_functionAndNumber(self, axis):
+        if axis == 'point':
+            toCall = "retainPoints"
+        else:
+            toCall = "retainFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        getattr(toTest, toCall)([0,1,2], number=2)
+        if axis == 'point':
+            exp = self.constructor(data[:2], pointNames=pnames[:2], featureNames=fnames)
+        else:
+            exp = self.constructor([p[:2] for p in data], pointNames=pnames, featureNames=fnames[:2])
+
+        assert toTest.isIdentical(exp)
+
+    def back_retain_numberAndRandomizeAllData(self, axis):
+        """test that randomizing (with same randomly chosen seed) and limiting to a
+        given number provides the same result for all input types if using all the data
+        """
         if axis == 'point':
             toCall = "retainPoints"
         else:
@@ -5444,18 +5809,75 @@ class StructureModifying(DataTestObject):
         pnames = ['1', '4', '7', '10']
         fnames = ['a', 'b', 'd', 'gg']
         toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        toTest2 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = toTest1.copy()
+        toTest3 = toTest1.copy()
+        toTest4 = toTest1.copy()
 
-        UML.randomness.startAlternateControl(seed=1)
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall)(number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        UML.randomness.startAlternateControl(seed=1)
-        getattr(toTest2, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest2, toCall)([0, 1, 2, 3], number=3, randomize=True)
         UML.randomness.endAlternateControl()
 
-        assert toTest1.isIdentical(toTest2)
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest3, toCall)(start=0, end=3, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
 
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest4, toCall)(allTrue, number=3, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        if axis == 'point':
+            assert toTest1.points == 3
+        else:
+            assert toTest1.features == 3
+
+        assert toTest1.isIdentical(toTest2)
+        assert toTest1.isIdentical(toTest3)
+        assert toTest1.isIdentical(toTest4)
+
+    def back_retain_numberAndRandomizeSelectedData(self, axis):
+        """test that randomization occurs after the data has been selected from the user inputs """
+        if axis == 'point':
+            toCall = "retainPoints"
+        else:
+            toCall = "retainFeatures"
+
+        data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 14]]
+        pnames = ['1', '4', '7', '10']
+        fnames = ['a', 'b', 'd', 'gg']
+        toTest1 = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTest2 = toTest1.copy()
+        toTest3 = toTest1.copy()
+        if axis == 'point':
+            exp1 = toTest1[1, :]
+            exp2 = toTest1[2, :]
+        else:
+            exp1 = toTest1[:, 1]
+            exp2 = toTest1[:, 2]
+
+        seed = UML.randomness.generateSubsidiarySeed()
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest1, toCall)([1, 2], number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest2, toCall)(start=1, end=2, number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        def middleRowsOrCols(value):
+            return value[0] in [2, 4, 5, 7]
+
+        UML.randomness.startAlternateControl(seed)
+        getattr(toTest3, toCall)(middleRowsOrCols, number=1, randomize=True)
+        UML.randomness.endAlternateControl()
+
+        assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
+        assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
+        assert toTest3.isIdentical(exp1) or toTest3.isIdentical(exp2)
 
     ##################
     # retainFeatures #
@@ -5502,7 +5924,6 @@ class StructureModifying(DataTestObject):
         expData = [[], [], [], []]
         expData = numpy.array(expData)
         expTest = self.constructor(expData)
-
         assert toTest.isIdentical(expTest)
 
 
@@ -5606,9 +6027,6 @@ class StructureModifying(DataTestObject):
         toTest = self.constructor(data)
         expTest = self.constructor(data)
 
-        def allTrue(point):
-            return True
-
         toTest.retainFeatures(allTrue)
         assert toTest.isIdentical(expTest)
 
@@ -5616,10 +6034,7 @@ class StructureModifying(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        def takeNone(point):
-            return False
-
-        toTest.retainFeatures(takeNone)
+        toTest.retainFeatures(allFalse)
 
         data = [[], [], []]
         data = numpy.array(data)
@@ -5627,16 +6042,17 @@ class StructureModifying(DataTestObject):
 
         assert toTest.isIdentical(expTest)
 
+    def test_retainFeatures_function_NumberAndRandomize(self):
+        data = [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]]
+        toTest = self.constructor(data)
+
+        toTest.retainFeatures(evenOnly, number=2, randomize=True)
+        assert toTest.features == 2
 
     def test_retainFeatures_handmadeFunction(self):
         """ Test retainFeatures() against handmade output for function retention """
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         toTest.retainFeatures(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]])
@@ -5645,11 +6061,6 @@ class StructureModifying(DataTestObject):
     def test_retainFeatures_func_NamePath_preservation(self):
         data = [[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]]
         toTest = self.constructor(data)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         toTest._name = "testName"
         toTest._absPath = "testAbsPath"
@@ -5668,11 +6079,6 @@ class StructureModifying(DataTestObject):
         featureNames = ["one", "two", "three", "neg"]
         pointNames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-        def absoluteOne(feature):
-            if 1 in feature or -1 in feature:
-                return True
-            return False
 
         toTest.retainFeatures(absoluteOne)
         exp = self.constructor([[1, -1], [4, -2], [7, -3]], pointNames=pointNames, featureNames=['one', 'neg'])
@@ -5955,9 +6361,30 @@ class StructureModifying(DataTestObject):
     def test_retainFeatures_numberOnly(self):
         self.back_retain_numberOnly('feature')
 
-    def test_retainFeatures_numberAndRandomize(self):
-        self.back_retain_numberAndRandomize('feature')
+    def test_retainFeatures_functionAndNumber(self):
+        self.back_retain_functionAndNumber('feature')
 
+    def test_retainFeatures_numberAndRandomizeAllData(self):
+        self.back_retain_numberAndRandomizeAllData('feature')
+
+    def test_retainFeatures_numberAndRandomizeSelectedData(self):
+        self.back_retain_numberAndRandomizeSelectedData('feature')
+
+    @raises(ArgumentException)
+    def test_retainFeatures_randomizeNoNumber(self):
+        self.back_structural_randomizeNoNumber('retain', 'feature')
+
+    @raises(ArgumentException)
+    def test_retainFeatures_list_numberGreaterThanTargeted(self):
+        self.back_structural_list_numberGreaterThanTargeted('retain', 'feature')
+
+    @raises(ArgumentException)
+    def test_retainFeatures_function_numberGreaterThanTargeted(self):
+        self.back_structural_function_numberGreaterThanTargeted('retain', 'feature')
+
+    @raises(ArgumentException)
+    def test_retainFeatures_range_numberGreaterThanTargeted(self):
+        self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
 
     #####################
     # referenceDataFrom #
