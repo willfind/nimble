@@ -213,7 +213,6 @@ def reorderToMatchList(dataObject, matchList, axis):
         indexGetter = lambda x: dataObject.getFeatureIndex(x.getFeatureName(0))
 
     def scorer(viewObj):
-        x = viewObj.getPointName(0)
         index = indexGetter(viewObj)
         return mappedOrig[sortedList[index]]
 

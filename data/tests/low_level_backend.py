@@ -793,6 +793,31 @@ class LowLevelBackend(object):
 
 
     ##########################
+    # _adjustCountAndNames() #
+    ##########################
+
+    def test_adjustCountAndNames_pointCountAndNames(self):
+        origNames = ["zero", "one", "two", "three"]
+        orig = self.constructor(pointNames=origNames)
+        other = self.constructor(pointNames=["one", "two"])
+        expNames = ["zero", "three"]
+        orig._adjustCountAndNames('point', other)
+
+        assert orig.points == 2
+        assert orig.getPointNames() == expNames
+
+    def test_adjustCountAndNames_featureCountAndNames(self):
+        origNames = ["zero", "one", "two", "three"]
+        orig = self.constructor(featureNames=origNames)
+        other = self.constructor(featureNames=["one", "two"])
+        expNames = ["zero", "three"]
+        orig._adjustCountAndNames('feature', other)
+
+        assert orig.features == 2
+        assert orig.getFeatureNames() == expNames
+
+
+    ##########################
     # _removePointNameAndShift() #
     ##########################
 

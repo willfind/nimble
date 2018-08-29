@@ -15,6 +15,7 @@ from six.moves import range
 from six.moves import zip
 import sys
 import warnings
+import cloudpickle
 
 import __main__ as main
 mplError = None
@@ -131,7 +132,7 @@ class Base(object):
 
         name: the name to be associated with this object.
 
-        pathes: a tuple, where the first entry is taken to be the string
+        paths: a tuple, where the first entry is taken to be the string
         representing the absolute path to the source file of the data and
         the second entry is taken to be the relative path. Both may be
         None if these values are to be unspecified.
@@ -190,7 +191,7 @@ class Base(object):
         if paths[0] is not None and not isinstance(paths[0], six.string_types):
             raise ArgumentException(
                 "paths[0] must be None or an absolute path to the file from which the data originates")
-        if paths[0] is not None and not os.path.isabs(paths[0]):
+        if paths[0] is not None and not os.path.isabs(paths[0]) and not paths[0].startswith('http'):
             raise ArgumentException("paths[0] must be an absolute path")
         self._absPath = paths[0]
 
@@ -250,6 +251,8 @@ class Base(object):
     def _getPath(self):
         return self.absolutePath
 
+    path = property(_getPath, doc="The path to the file this data originated from")
+
     def _pointNamesCreated(self):
         """
         Returns True if point default names have been created/assigned
@@ -271,8 +274,6 @@ class Base(object):
             return False
         else:
             return True
-
-    path = property(_getPath, doc="The path to the file this data originated from")
 
     ########################
     # Low Level Operations #
@@ -527,6 +528,8 @@ class Base(object):
         # remove the original feature, and combine with self
         toConvert.extractFeatures([varName])
         self.appendFeatures(toConvert)
+
+        return toConvert.getFeatureNames()
 
 
     def transformFeatureToIntegers(self, featureToConvert):
@@ -925,38 +928,67 @@ class Base(object):
         if features is not None:
             features = self._constructIndicesList('feature', features)
 
-        self.validate()
-
-        points = points if points else list(range(self.points))
-        features = features if features else list(range(self.features))
-        valueArray = numpy.empty([len(points), len(features)])
-        p = 0
-        for pi in points:
-            f = 0
-            for fj in features:
-                value = self[pi, fj]
-                if preserveZeros and value == 0:
-                    valueArray[p, f] = 0
-                else:
-                    currRet = function(value) if oneArg else function(value, pi, fj)
-                    if skipNoneReturnValues and currRet is None:
-                        valueArray[p, f] = value
-                    else:
-                        valueArray[p, f] = currRet
-                f += 1
-            p += 1
-
         if outputType is not None:
             optType = outputType
         else:
             optType = self.getTypeString()
 
-        ret = UML.createData(optType, valueArray)
+        # Use vectorized for functions with oneArg
+        if oneArg:
+            if not preserveZeros:
+                # check if the function preserves zero values
+                preserveZeros = function(0) == 0
+            def functionWrap(value):
+                if preserveZeros and value == 0:
+                    return 0
+                currRet = function(value)
+                if skipNoneReturnValues and currRet is None:
+                    return value
+                else:
+                    return currRet
+
+            vectorized = numpy.vectorize(functionWrap)
+            ret = self._calculateForEachElement_implementation(
+                     vectorized, points, features, preserveZeros, optType)
+        else:
+            points = points if points else list(range(self.points))
+            features = features if features else list(range(self.features))
+            valueArray = numpy.empty([len(points), len(features)])
+            p = 0
+            for pi in points:
+                f = 0
+                for fj in features:
+                    value = self[pi, fj]
+                    if preserveZeros and value == 0:
+                        valueArray[p, f] = 0
+                    else:
+                        currRet = function(value) if oneArg else function(value, pi, fj)
+                        if skipNoneReturnValues and currRet is None:
+                            valueArray[p, f] = value
+                        else:
+                            valueArray[p, f] = currRet
+                    f += 1
+                p += 1
+
+            ret = UML.createData(optType, valueArray)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
 
+        self.validate()
+
         return ret
+
+    def _calculateForEachElementGenericVectorized(self, function, points, features,
+                                                  outputType):
+        # need points/features as arrays for indexing
+        points = numpy.array(points) if points else numpy.array(range(self.points))
+        features = numpy.array(features) if features else numpy.array(range(self.features))
+        toCalculate = self.copyAs('numpyarray')
+        # array with only desired points and features
+        toCalculate = toCalculate[points[:,None], features]
+        values = function(toCalculate)
+        return UML.createData(outputType, values)
 
 
     def countElements(self, function):
@@ -1001,54 +1033,44 @@ class Base(object):
         return True
 
 
-    def shufflePoints(self, indices=None):
+    def shufflePoints(self):
         """
         Permute the indexing of the points so they are in a random order. Note: this relies on
         python's random.shuffle() so may not be sufficiently random for large number of points.
-        See shuffle()'s documentation. None is always returned.
+        See shuffle()'s documentation.
 
         """
-        if indices is None:
-            indices = list(range(0, self.points))
-            pythonRandom.shuffle(indices)
-        else:
-            if len(indices) != self.points:
-                raise ArgumentException(
-                    "If indices are supplied, it must be a list with all and only valid point indices")
-            for value in indices:
-                if value < 0 or value > self.points:
-                    raise ArgumentException("A value in indices is out of bounds of the valid range of points")
-
-        def permuter(pView):
-            return indices[self.getPointIndex(pView.getPointName(0))]
-
-        # permuter.permuter = True
-        # permuter.indices = indices
-        self.sortPoints(sortHelper=permuter)
+        return self._genericShuffleFrontend('point')
 
 
-    def shuffleFeatures(self, indices=None):
+    def shuffleFeatures(self):
         """
         Permute the indexing of the features so they are in a random order. Note: this relies on
         python's random.shuffle() so may not be sufficiently random for large number of features.
-        See shuffle()'s documentation. None is always returned.
+        See shuffle()'s documentation.
 
         """
-        if indices is None:
-            indices = list(range(0, self.features))
-            pythonRandom.shuffle(indices)
+        return self._genericShuffleFrontend('feature')
+
+
+    def _genericShuffleFrontend(self, axis):
+        """
+        Generic function for shufflePoints and shuffleFeatures. Note: this relies on
+        python's random.shuffle() so may not be sufficiently random for large number of features.
+        See shuffle()'s documentation.
+
+        """
+        if axis == 'point':
+            values = self.points
+            sorter = self.sortPoints
         else:
-            if len(indices) != self.features:
-                raise ArgumentException(
-                    "If indices are supplied, it must be a list with all and only valid features indices")
-            for value in indices:
-                if value < 0 or value > self.features:
-                    raise ArgumentException("A value in indices is out of bounds of the valid range of features")
+            values = self.features
+            sorter = self.sortFeatures
 
-        def permuter(fView):
-            return indices[self.getFeatureIndex(fView.getFeatureName(0))]
+        indices = list(range(values))
+        pythonRandom.shuffle(indices)
 
-        self.sortFeatures(sortHelper=permuter)
+        sorter(sortHelper=indices)
 
 
     def copy(self):
@@ -1498,6 +1520,32 @@ class Base(object):
                 toOut._writeFile_implementation(outPath, format, includePointNames, includeFeatureNames)
                 return
 
+    def save(self, outputPath):
+        """
+        Save object to a file.
+
+        outputPath: the location (including file name and extension) where
+            we want to write the output file.
+            
+        If filename extension .umld is not included in file name it would
+        be added to the output file.
+            
+        Uses dill library to serialize it.
+        """
+        
+        extension = '.umld'
+        if not outputPath.endswith(extension):
+            outputPath = outputPath + extension
+
+        with open(outputPath, 'wb') as file:
+            try:
+                cloudpickle.dump(self, file)
+            except Exception as e:
+                raise(e)
+        # TODO: save session     
+        # print('session_' + outputFilename)
+        # print(globals())
+        # dill.dump_session('session_' + outputFilename)
 
     def getTypeString(self):
         """
@@ -2457,50 +2505,82 @@ class Base(object):
             self.referenceDataFrom(newObj)
 
 
+
     def sortPoints(self, sortBy=None, sortHelper=None):
         """
-        Modify this object so that the points are sorted in place, where sortBy may
-        indicate the feature to sort by or None if the entire point is to be taken as a key,
-        sortHelper may either be comparator, a scoring function, or None to indicate the natural
-        ordering. None is always returned.
+        Modify this object so that the points are sorted in place.
+
+        sortBy: may indicate the feature to sort by or None if the entire point
+        is to be taken as a key
+
+        sortHelper: either an iterable, list-like object of identifiers (names
+        and/or indices), a comparator or a scoring function, or None to indicate
+        the natural ordering
+
         """
-        # its already sorted in these cases
-        if self.features == 0 or self.points == 0 or self.points == 1:
-            return
-        if sortBy is not None and sortHelper is not None:
-            raise ArgumentException("Cannot specify a feature to sort by and a helper function")
-        if sortBy is None and sortHelper is None:
-            raise ArgumentException("Either sortBy or sortHelper must not be None")
+        self._genericSortFrontend('point', sortBy, sortHelper)
 
-        if sortBy is not None and isinstance(sortBy, six.string_types):
-            sortBy = self._getFeatureIndex(sortBy)
-
-        newPointNameOrder = self._sortPoints_implementation(sortBy, sortHelper)
-        self.setPointNames(newPointNameOrder)
-
-        self.validate()
 
     def sortFeatures(self, sortBy=None, sortHelper=None):
         """
-        Modify this object so that the features are sorted in place, where sortBy may
-        indicate the feature to sort by or None if the entire point is to be taken as a key,
-        sortHelper may either be comparator, a scoring function, or None to indicate the natural
-        ordering.  None is always returned.
+        Modify this object so that the features are sorted in place.
+
+        sortBy: indicates the point to sort by or None if the entire point
+        is to be taken as a key
+
+        sortHelper: either an iterable, list-like object of identifiers (names
+        and/or indices), a comparator or a scoring function, or None to indicate
+        the natural ordering
 
         """
-        # its already sorted in these cases
-        if self.features == 0 or self.points == 0 or self.features == 1:
-            return
+        self._genericSortFrontend('feature', sortBy, sortHelper)
+
+
+    def _genericSortFrontend(self, axis, sortBy, sortHelper):
+        """Generic sorting function for SortPoints and SortFeatures"""
         if sortBy is not None and sortHelper is not None:
             raise ArgumentException("Cannot specify a feature to sort by and a helper function")
         if sortBy is None and sortHelper is None:
             raise ArgumentException("Either sortBy or sortHelper must not be None")
 
-        if sortBy is not None and isinstance(sortBy, six.string_types):
-            sortBy = self._getPointIndex(sortBy)
+        if axis == 'point':
+            otherAxis = 'feature'
+            axisCount = self.points
+            otherCount = self.features
+            sort_implementation = self._sortPoints_implementation
+            namesCreated = self._pointNamesCreated()
+            setNames = self.setPointNames
+        else:
+            otherAxis = 'point'
+            axisCount = self.features
+            otherCount = self.points
+            sort_implementation = self._sortFeatures_implementation
+            namesCreated = self._featureNamesCreated()
+            setNames = self.setFeatureNames
 
-        newFeatureNameOrder = self._sortFeatures_implementation(sortBy, sortHelper)
-        self.setFeatureNames(newFeatureNameOrder)
+        if sortBy is not None and isinstance(sortBy, six.string_types):
+            sortBy = self._getIndex(sortBy, otherAxis)
+
+        if sortHelper is not None and not hasattr(sortHelper, '__call__'):
+            indices = self._constructIndicesList(axis, sortHelper)
+            if len(indices) != axisCount:
+                msg = "This object contains {0} {1}s, ".format(axisCount, axis)
+                msg += "but sortHelper has {0} identifiers".format(len(indices))
+                raise ArgumentException(msg)
+            if len(indices) != len(set(indices)):
+                msg = "This object contains {0} {1}s, ".format(axisCount, axis)
+                msg += "but sortHelper has {0} ".format(len(set(indices)))
+                msg += "unique identifiers"
+                raise ArgumentException(msg)
+
+            sortHelper = indices
+
+        # its already sorted in these cases
+        if otherCount == 0 or axisCount == 0 or axisCount == 1:
+            return
+
+        newNameOrder = sort_implementation(sortBy, sortHelper)
+        setNames(newNameOrder)
 
         self.validate()
 
@@ -2535,15 +2615,14 @@ class Base(object):
         ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
                                               number, randomize)
 
-        self._pointCount -= ret.points
         ret.setFeatureNames(self.getFeatureNames())
-        for key in ret.getPointNames():
-            self._removePointNameAndShift(key)
+        self._adjustCountAndNames('point', ret)
 
         ret._relPath = self.relativePath
         ret._absPath = self.absolutePath
 
         self.validate()
+
         return ret
 
 
@@ -2577,16 +2656,14 @@ class Base(object):
         ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
                                               number, randomize)
 
-        self._featureCount -= ret.features
-        if ret.features != 0:
-            ret.setPointNames(self.getPointNames())
-        for key in ret.getFeatureNames():
-            self._removeFeatureNameAndShift(key)
+        ret.setPointNames(self.getPointNames())
+        self._adjustCountAndNames('feature', ret)
 
         ret._relPath = self.relativePath
         ret._absPath = self.absolutePath
 
         self.validate()
+
         return ret
 
     def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False):
@@ -2706,23 +2783,33 @@ class Base(object):
 
 
     def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
-        """Implements retainPoints or retainFeatures based on the axis. The complements
+        """Generic retaining function for retainPoints or retainFeatures. The complements
         of toRetain are identified to use the extract backend, this is done within this
-        implementation except for functions which are complemented within the next helper
-        function
+        implementation except when toRetain is a function which is complemented within
+        the next helper function
+
         """
         if axis == 'point':
             hasName = self.hasPointName
             getNames = self.getPointNames
-            getIndex = self._getPointIndex
-            values = self.points
-            shuffleValues = self.shufflePoints
+            axisLength = self.points
+            sortValues = self.sortPoints
         else:
             hasName = self.hasFeatureName
             getNames = self.getFeatureNames
-            getIndex = self._getFeatureIndex
-            values = self.features
-            shuffleValues = self.shuffleFeatures
+            axisLength = self.features
+            sortValues = self.sortFeatures
+
+        self._validateStructuralArguments(structure, axis, toRetain, start, end,
+                                          number, randomize)
+        # will use number and randomize as necessary here unless toRetain is
+        # a function where it will be handled in _genericStructuralFrontend
+        passNumber = None
+        passRandomize = False
+
+        # generic exception message if number is too large
+        msg = "The value for 'number', {0}, ".format(number)
+        msg += "is greater than the number of {0}s ".format(axis)
 
         # extract points not in toRetain
         if toRetain is not None:
@@ -2732,74 +2819,67 @@ class Base(object):
                 else:
                     # toRetain is a function passed as a string
                     toExtract = toRetain
+                    passNumber = number
+                    passRandomize = randomize
 
-            elif isinstance(toRetain, (int, numpy.int, numpy.int64)):
-                toExtract = [value for value in range(values) if value != toRetain]
+            elif isinstance(toRetain, (int, numpy.integer)):
+                toExtract = [value for value in range(axisLength) if value != toRetain]
 
             # list-like container objects
             elif not hasattr(toRetain, '__call__'):
                 # toRetain is other container type or range() in python3
                 toRetain = self._constructIndicesList(axis, toRetain, 'toRetain')
-                toExtract = [value for value in range(values) if value not in toRetain]
+                if number and number > len(toRetain):
+                    msg += "to retain, {0}".format(len(toRetain))
+                    raise ArgumentException(msg)
+                if randomize:
+                    toRetain = pythonRandom.sample(toRetain, number)
+                elif number:
+                    toRetain = toRetain[:number]
+                toExtract = [value for value in range(axisLength) if value not in toRetain]
                 # change the index order of the values to match toRetain
-                reindex = toRetain + toExtract
-                indices = [None for _ in range(values)]
-                for idx, value in enumerate(reindex):
-                    indices[value] = idx
-                shuffleValues(indices)
-                # extract any values after the toRetain values
-                extractValues = range(len(toRetain), values)
-                toExtract = list(extractValues)
+                if not randomize:
+                    reindex = toRetain + toExtract
+                    sortValues(sortHelper=reindex)
+                    # extract any values after the toRetain values
+                    extractValues = range(len(toRetain), axisLength)
+                    toExtract = list(extractValues)
 
             # toRetain is a function
             else:
                 toExtract = toRetain
+                passNumber = number
+                passRandomize = randomize
 
-            ret = self._genericStructuralFrontend('retain', axis, toExtract, start, end, number,
-                                                  False)
-            self._adjustNamesAndValidate(ret, axis)
-
-        # convert start and end to indexes
-        if start is not None and end is not None:
-            start = getIndex(start)
-            end = getIndex(end)
-            if start > end:
-                msg = "the value for start ({0}) exceeds the value of end ({1})".format(start,end)
+        # extract points not in start to end range
+        elif start is not None or end is not None:
+            start = 0 if start is None else self._getIndex(start, axis)
+            end = axisLength - 1 if end is None else self._getIndex(end, axis)
+            self._validateStartEndRange(start, end, axisLength)
+            toRetain = [value for value in range(start, end + 1)]
+            if number and number > len(toRetain):
+                msg += "to retain, {0}".format(len(toRetain))
                 raise ArgumentException(msg)
+            if randomize:
+                toRetain = pythonRandom.sample(toRetain, number)
+            elif number:
+                toRetain = toRetain[:number]
+            toExtract = [value for value in range(axisLength) if value not in toRetain]
+
+        # extract points after number
+        else:
+            allIndexes = [i for i in range(axisLength)]
+            if number > len(allIndexes):
+                raise ArgumentException(msg)
+            if randomize:
+                toRetain = pythonRandom.sample(allIndexes, number)
             else:
-                # adjust end and values for start values that will be removed
-                end -= start
-                values -= start
-        elif start is not None:
-            start = getIndex(start)
-        elif end is not None:
-            end = getIndex(end)
+                toRetain = allIndexes[:number]
+            toExtract = [value for value in range(axisLength) if value not in toRetain]
 
-        # extract points not between start and end
-        if start is not None:
-            # only need to perform if start is not the first value
-            if start - 1 >= 0:
-                ret = self._genericStructuralFrontend('retain', axis, None, 0, start - 1,
-                                                          None, False)
-                self._adjustNamesAndValidate(ret, axis)
-        if end is not None:
-            # only need to perform if end is not the last value
-            if end + 1 <= values - 1:
-                ret = self._genericStructuralFrontend('retain', axis, None, end + 1, values - 1,
-                                                          None, False)
-                self._adjustNamesAndValidate(ret, axis)
-
-        if randomize:
-            indices = list(range(0, values))
-            pythonRandom.shuffle(indices)
-            shuffleValues(indices)
-
-        if number is not None:
-            start = number
-            end = values - 1
-            ret = self._genericStructuralFrontend('retain', axis, None, start, end,
-                                                      None, False)
-            self._adjustNamesAndValidate(ret, axis)
+        ret = self._genericStructuralFrontend('retain', axis, target=toExtract,
+                                              number=passNumber, randomize=passRandomize)
+        self._adjustCountAndNames(axis, ret)
 
 
     def countPoints(self, condition):
@@ -2844,7 +2924,6 @@ class Base(object):
         self._nextDefaultValueFeature = other._nextDefaultValueFeature
 
         self.validate()
-
 
     def copyAs(self, format, rowsArePoints=True, outputAs1D=False):
         """
@@ -4208,25 +4287,20 @@ class Base(object):
     def _genericStructuralFrontend(self, structure, axis, target=None, start=None,
                                    end=None, number=None, randomize=False):
         if axis == 'point':
-            getIndex = self._getPointIndex
             axisLength = self.points
             hasNameChecker1, hasNameChecker2 = self.hasPointName, self.hasFeatureName
-            viewIterator = self.copy().pointIterator
+            viewIterator = self.pointIterator
         else:
-            getIndex = self._getFeatureIndex
             axisLength = self.features
             hasNameChecker1, hasNameChecker2 = self.hasFeatureName, self.hasPointName
-            viewIterator = self.copy().featureIterator
+            viewIterator = self.featureIterator
 
-        if number is not None and number < 1:
-            msg = "number must be greater than zero"
-            raise ArgumentException(msg)
+        self._validateStructuralArguments(structure, axis, target, start, end,
+                                          number, randomize)
         if target is not None:
-            if start is not None or end is not None:
-                raise ArgumentException("Range removal is exclusive, to use it, target must be None")
             if isinstance(target, six.string_types):
                 if hasNameChecker1(target):
-                    target = getIndex(target)
+                    target = self._getIndex(target, axis)
                     targetList = [target]
                 #if axis=point and target is not a point name, or
                 # if axis=feature and target is not a feature name,
@@ -4271,6 +4345,7 @@ class Base(object):
                             break
                     #if the target can't be converted to a function
                     if isinstance(target, six.string_types):
+<<<<<<< HEAD
                         try:
                             target = self._constructIndicesList(axis, target)
                         except ArgumentException:
@@ -4291,41 +4366,49 @@ class Base(object):
                     target = complement
                 # construct list from function
                 targetList = []
+                if structure == 'retain':
+                    keepList = []
                 for targetID, view in enumerate(viewIterator()):
                     if target(view):
                         targetList.append(targetID)
+                    elif structure == 'retain':
+                        keepList.append(targetID)
+                # add additional indexes to targetList if not keeping every
+                # index from returned function
+                if structure == 'retain' and number is not None:
+                    addBack = len(keepList) - number
+                    if addBack > 0:
+                        if randomize:
+                            pythonRandom.shuffle(keepList)
+                        for i in range(addBack):
+                            targetList.append(keepList[-i])
+                    elif addBack < 0:
+                        msg = "The value for 'number' ({0}) ".format(number)
+                        msg += "is greater than the number of {0}s ".format(axis)
+                        msg += "to retain ({0})".format(len(keepList))
+                        raise ArgumentException(msg)
 
         elif start is not None or end is not None:
-            start = 0 if start is None else getIndex(start)
-            end = axisLength - 1 if end is None else getIndex(end)
-
-            if start < 0 or start > axisLength:
-                msg = "start must be a valid index, in the range of possible "
-                msg += axis + 's'
-                raise ArgumentException(msg)
-            if end < 0 or end > axisLength:
-                msg = "end must be a valid index, in the range of possible "
-                msg += axis + 's'
-                raise ArgumentException(msg)
-            if start > end:
-                raise ArgumentException("The start index cannot be greater than the end index")
+            start = 0 if start is None else self._getIndex(start, axis)
+            end = axisLength - 1 if end is None else self._getIndex(end, axis)
+            self._validateStartEndRange(start, end, axisLength)
 
             # end + 1 because our range is inclusive
             targetList = list(range(start,end + 1))
 
-        elif number is not None:
-            targetList = list(range(0, number))
         else:
-            targetName = "to" + structure.capitalize()
-            msg = "You must provide a value for " + targetName + ", or start/end, or "
-            msg += "number. "
-            raise ArgumentException(msg)
+            targetList = [value for value in range(axisLength)]
 
-        if randomize:
-            targetList = pythonRandom.sample(targetList, number)
-            targetList.sort()
-        if number is not None:
-            targetList = targetList[:number]
+        if number and structure != 'retain':
+            if number > len(targetList):
+                msg = "The value for 'number' ({0}) ".format(number)
+                msg += "is greater than the number of {0}s ".format(axis)
+                msg += "to {0} ({1})".format(structure, len(targetList))
+                raise ArgumentException(msg)
+            if randomize:
+                targetList = pythonRandom.sample(targetList, number)
+            else:
+                targetList = targetList[:number]
 
         if structure == 'count':
             return len(targetList)
@@ -4930,7 +5013,7 @@ class Base(object):
         return self._getIndex(identifier, 'feature')
 
     def _getIndex(self, identifier, axis):
-        num = len(self.getPointNames()) if axis == 'point' else len(self.getFeatureNames())
+        num = self.points if axis == 'point' else self.features
         nameGetter = self.getPointIndex if axis == 'point' else self.getFeatureIndex
         accepted = (six.string_types, int, numpy.integer)
 
@@ -4943,10 +5026,9 @@ class Base(object):
             msg = "An identifier cannot be None."
             raise ArgumentException(msg)
         if not isinstance(identifier, accepted):
-            axisCount = self.points if axis == 'point' else self.features
             msg = "The identifier must be either a string (a valid " + axis
             msg += " name) or an integer (python or numpy) index between 0 and "
-            msg += str(axisCount - 1) + " inclusive. Instead we got: " + str(identifier)
+            msg += str(num - 1) + " inclusive. Instead we got: " + str(identifier)
             raise ArgumentException(msg)
         if isinstance(identifier, (int, numpy.integer)):
             if identifier < 0:
@@ -4964,6 +5046,7 @@ class Base(object):
                 msg = "The " + axis + " name '" + identifier + "' cannot be found."
                 raise ArgumentException(msg)
         return toReturn
+
 
 
     def _nextDefaultName(self, axis):
@@ -5080,6 +5163,7 @@ class Base(object):
 
         #delete from inverse, since list, del will deal with 'remapping'
         del selfNamesInv[index]
+
 
     def _setName_implementation(self, oldIdentifier, newName, axis, allowDefaults=False):
         """
@@ -5408,17 +5492,68 @@ class Base(object):
 
             raise ArgumentException(msg)
 
-
-    def _adjustNamesAndValidate(self, ret, axis):
+    def _adjustCountAndNames(self, axis, other):
+        """
+        Adjust the count and names (when names have been generated) for this object,
+        removing the names that have been extracted to the other object
+        """
         if axis == 'point':
-            self._pointCount -= ret.points
-            for key in ret.getPointNames():
-                self._removePointNameAndShift(key)
+            self._pointCount -= other.points
+            if self._pointNamesCreated():
+                idxList= []
+                for name in other.getPointNames():
+                    idxList.append(self.pointNames[name])
+                idxList= sorted(idxList)
+                for i in range(len(idxList)):
+                    del self.pointNamesInverse[idxList[i] - i]
+                self.pointNames = {pt:idx for idx, pt in enumerate(self.pointNamesInverse)}
+
         else:
-            self._featureCount -= ret.features
-            for key in ret.getFeatureNames():
-                self._removeFeatureNameAndShift(key)
-        self.validate()
+            self._featureCount -= other.features
+            if self._featureNamesCreated():
+                idxList= []
+                for name in other.getFeatureNames():
+                    idxList.append(self.featureNames[name])
+                idxList= sorted(idxList)
+                for i in range(len(idxList)):
+                    del self.featureNamesInverse[idxList[i] - i]
+                self.featureNames = {pt:idx for idx, pt in enumerate(self.featureNamesInverse)}
+
+
+    def _validateStartEndRange(self, start, end, axisLength):
+        """check that the start and end values are valid"""
+        if start < 0 or start > axisLength:
+            msg = "start must be a valid index, in the range of possible "
+            msg += axis + 's'
+            raise ArgumentException(msg)
+        if end < 0 or end > axisLength:
+            msg = "end must be a valid index, in the range of possible "
+            msg += axis + 's'
+            raise ArgumentException(msg)
+        if start > end:
+            raise ArgumentException("The start index cannot be greater than the end index")
+
+    def _validateStructuralArguments(self, structure, axis, target, start, end,
+                                    number, randomize):
+        targetName = 'to' + structure.capitalize()
+        if target is None and start is None and end is None and number is None:
+            msg = "You must provide a value for {0}, ".format(targetName)
+            msg += " or start/end, or number."
+            raise ArgumentException(msg)
+        if number is not None and number < 1:
+            msg = "number must be greater than zero"
+            raise ArgumentException(msg)
+        if number is None and randomize:
+            msg = "randomize selects a random subset of {0}s to ".format(axis)
+            msg += "{0}. When randomize=True, the number ".format(structure)
+            msg += "argument cannot be None"
+            raise ArgumentException(msg)
+        if target is not None:
+            if start is not None or end is not None:
+                msg = "Range removal is exclusive, to use it, "
+                msg += "{0} must be None".format(targetName)
+                raise ArgumentException(msg)
+
 
 def cmp_to_key(mycmp):
     """Convert a cmp= function for python2 into a key= function for python3"""
