@@ -84,7 +84,73 @@ def evenOnly(feature):
     return feature[0] % 2 == 0
 
 
-class StructureDataSafe(DataTestObject):
+class StructureShared(DataTestObject):
+    """
+    Test backends shared between the data safe and data modifying subobject
+    test sets.
+
+    """
+
+    ###################################################################
+    # common backend for exceptions extract, delete, retain, and copy #
+    ###################################################################
+
+    def back_structural_randomizeNoNumber(self, structure, axis):
+        if axis == 'point':
+            toCall = structure + "Points"
+        else:
+            toCall = structure + "Features"
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = getattr(toTest, toCall)([0,1,2], randomize=True)
+
+    def back_structural_list_numberGreaterThanTargeted(self, structure, axis):
+        if axis == 'point':
+            toCall = structure + "Points"
+        else:
+            toCall = structure + "Features"
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = getattr(toTest, toCall)([0,1], number=3)
+
+    def back_structural_function_numberGreaterThanTargeted(self, structure, axis):
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+
+        if axis == 'point':
+            toCall = structure + "Points"
+            def selTwo(p):
+                return p.getPointName(0) in pointNames[:2]
+        else:
+            toCall = structure + "Features"
+            def selTwo(f):
+                return f.getFeatureName(0) in featureNames[:2]
+
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = getattr(toTest, toCall)(selTwo, number=3)
+
+    def back_structural_range_numberGreaterThanTargeted(self, structure, axis):
+        if axis == 'point':
+            toCall = structure + "Points"
+        else:
+            toCall = structure + "Features"
+        featureNames = ["one", "two", "three"]
+        pointNames = ['1', '4', '7']
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        ret = getattr(toTest, toCall)(start=0, end=1, number=3)
+
+
+class StructureDataSafe(StructureShared):
 
     #############
     # copyAs #
@@ -1019,19 +1085,19 @@ class StructureDataSafe(DataTestObject):
 
     @raises(ArgumentException)
     def test_copyPoints_randomizeNoNumber(self):
-        self.back_copy_randomizeNoNumber('copy', 'point')
+        self.back_structural_randomizeNoNumber('copy', 'point')
 
     @raises(ArgumentException)
     def test_copyPoints_list_numberGreaterThanTargeted(self):
-        self.back_copy_list_numberGreaterThanTargeted('copy', 'point')
+        self.back_structural_list_numberGreaterThanTargeted('copy', 'point')
 
     @raises(ArgumentException)
     def test_copyPoints_function_numberGreaterThanTargeted(self):
-        self.back_copy_function_numberGreaterThanTargeted('copy', 'point')
+        self.back_structural_function_numberGreaterThanTargeted('copy', 'point')
 
     @raises(ArgumentException)
     def test_copyPoints_range_numberGreaterThanTargeted(self):
-        self.back_copy_range_numberGreaterThanTargeted('copy', 'point')
+        self.back_structural_range_numberGreaterThanTargeted('copy', 'point')
 
     #######################
     # copy common backend #
@@ -1167,58 +1233,6 @@ class StructureDataSafe(DataTestObject):
         assert retList.isIdentical(exp1) or retList.isIdentical(exp2)
         assert retRange.isIdentical(exp1) or retList.isIdentical(exp2)
         assert retFunc.isIdentical(exp1) or retList.isIdentical(exp2)
-
-    ####################
-    # raise exceptions #
-    ####################
-
-    def back_copy_randomizeNoNumber(self, structure, axis):
-        if axis == 'point':
-            toCall = structure + "Points"
-        else:
-            toCall = structure + "Features"
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)([0,1,2], randomize=True)
-
-    def back_copy_list_numberGreaterThanTargeted(self, structure, axis):
-        if axis == 'point':
-            toCall = structure + "Points"
-        else:
-            toCall = structure + "Features"
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)([0,1,2], number=4)
-
-    def back_copy_function_numberGreaterThanTargeted(self, structure, axis):
-        if axis == 'point':
-            toCall = structure + "Points"
-        else:
-            toCall = structure + "Features"
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)(allTrue, number=4)
-
-    def back_copy_range_numberGreaterThanTargeted(self, structure, axis):
-        if axis == 'point':
-            toCall = structure + "Points"
-        else:
-            toCall = structure + "Features"
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)(start=0, end=2, number=4)
 
     #####################
     # copyFeatures #
@@ -1777,22 +1791,22 @@ class StructureDataSafe(DataTestObject):
 
     @raises(ArgumentException)
     def test_copyFeatures_randomizeNoNumber(self):
-        self.back_copy_randomizeNoNumber('copy', 'feature')
+        self.back_structural_randomizeNoNumber('copy', 'feature')
 
     @raises(ArgumentException)
     def test_copyFeatures_list_numberGreaterThanTargeted(self):
-        self.back_copy_list_numberGreaterThanTargeted('copy', 'feature')
+        self.back_structural_list_numberGreaterThanTargeted('copy', 'feature')
 
     @raises(ArgumentException)
     def test_copyFeatures_function_numberGreaterThanTargeted(self):
-        self.back_copy_function_numberGreaterThanTargeted('copy', 'feature')
+        self.back_structural_function_numberGreaterThanTargeted('copy', 'feature')
 
     @raises(ArgumentException)
     def test_copyFeatures_range_numberGreaterThanTargeted(self):
-        self.back_copy_range_numberGreaterThanTargeted('copy', 'feature')
+        self.back_structural_range_numberGreaterThanTargeted('copy', 'feature')
 
 
-class StructureModifying(DataTestObject):
+class StructureModifying(StructureShared):
 
     ##############
     # create data
@@ -2917,59 +2931,6 @@ class StructureModifying(DataTestObject):
         data = numpy.array(data)
         toTest = self.constructor(data)
         toTest.sortFeatures(sortHelper=[1, 1, 0])
-
-
-    #########################################################
-    # common backend for exceptions extract, delete, retain #
-    #########################################################
-
-    def back_structural_randomizeNoNumber(self, structure, axis):
-        if axis == 'point':
-            toCall = structure + "Points"
-        else:
-            toCall = structure + "Features"
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)([0,1,2], randomize=True)
-
-    def back_structural_list_numberGreaterThanTargeted(self, structure, axis):
-        if axis == 'point':
-            toCall = structure + "Points"
-        else:
-            toCall = structure + "Features"
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)([0,1,2], number=4)
-
-    def back_structural_function_numberGreaterThanTargeted(self, structure, axis):
-        if axis == 'point':
-            toCall = structure + "Points"
-        else:
-            toCall = structure + "Features"
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)(allTrue, number=4)
-
-    def back_structural_range_numberGreaterThanTargeted(self, structure, axis):
-        if axis == 'point':
-            toCall = structure + "Points"
-        else:
-            toCall = structure + "Features"
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = getattr(toTest, toCall)(start=0, end=2, number=4)
 
     #################
     # extractPoints() #
