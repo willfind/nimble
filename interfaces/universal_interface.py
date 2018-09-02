@@ -30,7 +30,7 @@ import six
 from six.moves import range
 import warnings
 
-import cloudpickle
+cloudpickle = UML.importModule('cloudpickle')
 
 def captureOutput(toWrap):
     """Decorator which will safefly redirect standard error within the
@@ -864,16 +864,19 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         def save(self, outputPath):
             """
-            Save object to a file.
+            Save model to a file.
 
             outputPath: the location (including file name and extension) where
                 we want to write the output file.
-                
+
             If filename extension .umlm is not included in file name it would
             be added to the output file.
 
             Uses dill library to serialize it.
             """
+            if not cloudpickle:
+                msg = "To save UML models, cloudpickle must be installed"
+                raise PackageException(msg)
             extension = '.umlm'
             if not outputPath.endswith(extension):
                 outputPath = outputPath + extension

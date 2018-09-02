@@ -15,7 +15,6 @@ from six.moves import range
 from six.moves import zip
 import sys
 import warnings
-import cloudpickle
 
 import __main__ as main
 mplError = None
@@ -55,6 +54,8 @@ pd = UML.importModule('pandas')
 cython = UML.importModule('cython')
 if cython is None or not cython.compiled:
     from math import sin, cos
+
+cloudpickle = UML.importModule('cloudpickle')
 
 from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
@@ -1555,13 +1556,15 @@ class Base(object):
 
         outputPath: the location (including file name and extension) where
             we want to write the output file.
-            
+
         If filename extension .umld is not included in file name it would
         be added to the output file.
-            
+
         Uses dill library to serialize it.
         """
-        
+        if not cloudpickle:
+            msg = "To save UML objects, cloudpickle must be installed"
+            raise PackageException(msg)
         extension = '.umld'
         if not outputPath.endswith(extension):
             outputPath = outputPath + extension
@@ -1571,7 +1574,7 @@ class Base(object):
                 cloudpickle.dump(self, file)
             except Exception as e:
                 raise(e)
-        # TODO: save session     
+        # TODO: save session
         # print('session_' + outputFilename)
         # print(globals())
         # dill.dump_session('session_' + outputFilename)
