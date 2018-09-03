@@ -798,8 +798,8 @@ class DataFrame(Base):
         else:
             rightData = other
         leftData += rightData
-
-        return UML.createData('DataFrame', leftData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(leftData, reuseData=True)
+        # return UML.createData('DataFrame', leftData, reuseData=True)
 
     def _radd__implementation(self, other):
         ret = other + self.data.values
