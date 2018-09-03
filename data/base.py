@@ -4075,18 +4075,20 @@ class Base(object):
 
         # Test element type self
         if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+            try:
+                self._validateNumericData_implementation()
+            except ValueError:
+                raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
         # test element type other
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
             if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+                try:
+                    other._validateNumericData_implementation()
+                except ValueError:
+                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
             if self.points != other.points:
                 msg = "The number of points in each object must be equal. "
@@ -4101,7 +4103,7 @@ class Base(object):
 
         # check name restrictions
         if isUML:
-            if self._pointNamesCreated() and other._pointNamesCreated is not None:
+            if self._pointNamesCreated() and other._pointNamesCreated():
                 self._validateEqualNames('point', 'point', opName, other)
             if self._featureNamesCreated() and other._featureNamesCreated():
                 self._validateEqualNames('feature', 'feature', opName, other)
