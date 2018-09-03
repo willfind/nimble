@@ -856,6 +856,13 @@ class List(Base):
             for point in self.data:
             #				assert isinstance(point, list)
                 assert len(point) == expectedLength
+    
+    def _validateNumericData_implementation(self):
+        try:
+            np_array = numpy.array(self.data)
+            np_array.astype('int')
+        except ValueError:
+            raise ValueError('Object contains no numeric values')
 
     def _containsZero_implementation(self):
         """
