@@ -785,7 +785,7 @@ class Matrix(Base):
             ret = self.data + other.data
         else:
             ret = self.data + other
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _radd__implementation(self, other):
         ret = other + self.data
