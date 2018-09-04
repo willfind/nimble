@@ -86,8 +86,8 @@ class FoldIteratorTester(object):
         assert fold1Train.points + fold1Test.points == 5
         assert fold2Train.points + fold2Test.points == 5
 
-        fold1Train.appendPoints(fold1Test)
-        fold2Train.appendPoints(fold2Test)
+        fold1Train.addPoints(fold1Test)
+        fold2Train.addPoints(fold2Test)
 
     def test_makeFoldIterator_verifyPartitions_Unsupervised(self):
         """ Test makeFoldIterator() yields the correct number folds and partitions the data, with a None data """
@@ -108,8 +108,8 @@ class FoldIteratorTester(object):
         assert fold1Train.points + fold1Test.points == 5
         assert fold2Train.points + fold2Test.points == 5
 
-        fold1Train.appendPoints(fold1Test)
-        fold2Train.appendPoints(fold2Test)
+        fold1Train.addPoints(fold1Test)
+        fold2Train.addPoints(fold2Test)
 
         assert fold1NoneTrain is None
         assert fold1NoneTest is None

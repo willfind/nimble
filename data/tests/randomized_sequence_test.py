@@ -541,8 +541,8 @@ def pickGen(dataObj, seed, genList):
 
 ftp = functools.partial
 
-generators = {'appendFeatures': [genObjMatchPoints],
-              'appendPoints': [genObjMatchFeatures],
+generators = {'addFeatures': [genObjMatchPoints],
+              'addPoints': [genObjMatchFeatures],
               'calculateForEachElement': [genViewFuncElmts, ftp(pickGen, genList=(genPID, genPIDList)),
                                           ftp(pickGen, genList=(genFID, genFIDList)), genBool, genBool],
               'calculateForEachFeature': [genViewFunc, genFIDList],
@@ -601,7 +601,7 @@ def makeParams(funcName, dataObj, seed):
     generatorList = generators[funcName]
     (args, varargs, keywords, defaults) = inspect.getargspec(getattr(dataObj, funcName))
 
-    #	if funcName.startswith('appendFeatures'):
+    #	if funcName.startswith('addFeatures'):
     #		pdb.set_trace()
 
     argList = []

@@ -238,8 +238,8 @@ def seperateData(dataAll, omitList):
     indexOfFirst = dataAll.getFeatureIndex(nameOfFirst)
 
     usedData = dataAll.extractFeatures(start=indexOfFirst, end=None)
-    usedData.appendFeatures(dataAll.copyFeatures("isMale"))
-    usedData.appendFeatures(dataAll.copyFeatures("InTestSet"))
+    usedData.addFeatures(dataAll.copyFeatures("isMale"))
+    usedData.addFeatures(dataAll.copyFeatures("InTestSet"))
 
     usedData.extractFeatures(omitList)
 
@@ -573,7 +573,7 @@ def analysis_randomness_effects(trainX, trainY, testX, testY):
         currTL = allTL[i]
         currCoefs = currTL.getAttributes()['origCoefs'].flatten().reshape(1,75)
         currCoefsObj = UML.createData("Matrix", currCoefs)
-        coefsObj.appendPoints(currCoefsObj)
+        coefsObj.addPoints(currCoefsObj)
 
 #   print coefsObj.points
 #   print coefsObj.features
@@ -624,8 +624,8 @@ def analysis_finalModel_perGenderAvgScores(trainX, trainY, testX, testY):
     coefs = trainedLearner.backend.coef_.flatten()
     print(coefs.shape)
 
-    trainX.appendPoints(testX)
-    trainY.appendPoints(testY)
+    trainX.addPoints(testX)
+    trainY.addPoints(testY)
 
     nzIDs = trainY.copyAs("numpyarray",outputAs1D=True).nonzero()[0]
 

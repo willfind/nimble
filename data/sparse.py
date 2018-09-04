@@ -158,9 +158,9 @@ class Sparse(Base):
         toPlot = self.copyAs("Matrix")
         return toPlot._plot(outPath, includeColorbar)
 
-    def _insertPoints_implementation(self, toInsert, insertBefore):
+    def _addPoints_implementation(self, toAdd, insertBefore):
         """
-        Insert the points from the toInsert object below the provided index in
+        Insert the points from the toAdd object below the provided index in
         this object, the remaining points from this object will continue below
         the inserted points
 
@@ -179,13 +179,13 @@ class Sparse(Base):
                 break
         splitLength = len(newRow)
         # add inserted data with adjusted row
-        for i, row in enumerate(toInsert.data.row):
+        for i, row in enumerate(toAdd.data.row):
             newRow.append(row + insertBefore)
-            newCol.append(toInsert.data.col[i])
-            newData.append(toInsert.data.data[i])
+            newCol.append(toAdd.data.col[i])
+            newData.append(toAdd.data.data[i])
         # add remaining original data with adjusted row
         for i, row in enumerate(self.data.row[splitLength:]):
-            newRow.append(row + toInsert.points)
+            newRow.append(row + toAdd.points)
             newCol.append(self.data.col[splitLength:][i])
             newData.append(self.data.data[splitLength:][i])
         # handle conflicts between original dtype and inserted data
@@ -193,14 +193,14 @@ class Sparse(Base):
             newData = numpy.array(newData, dtype=self.data.dtype)
         except ValueError:
             newData = numpy.array(newData, dtype=numpy.object_)
-        numNewRows = self.points + toInsert.points
+        numNewRows = self.points + toAdd.points
         self.data = coo_matrix((newData, (newRow, newCol)), shape=(numNewRows, self.features))
         self._sorted = None
 
 
-    def _insertFeatures_implementation(self, toInsert, insertBefore):
+    def _addFeatures_implementation(self, toAdd, insertBefore):
         """
-        Insert the features from the toInsert object to the right of the
+        Insert the features from the toAdd object to the right of the
         provided index in this object, the remaining points from this object
         will continue to the right of the inserted points
 
@@ -219,14 +219,14 @@ class Sparse(Base):
                 break
         # add inserted data with adjusted col
         splitLength = len(newCol)
-        for i, col in enumerate(toInsert.data.col):
-            newRow.append(toInsert.data.row[i])
+        for i, col in enumerate(toAdd.data.col):
+            newRow.append(toAdd.data.row[i])
             newCol.append(col + insertBefore)
-            newData.append(toInsert.data.data[i])
+            newData.append(toAdd.data.data[i])
         # add remaining original data with adjusted col
         for i, col in enumerate(self.data.col[splitLength:]):
             newRow.append(self.data.row[splitLength:][i])
-            newCol.append(col + toInsert.features)
+            newCol.append(col + toAdd.features)
             newData.append(self.data.data[splitLength:][i])
         # handle conflicts between original dtype and inserted data
         try:
@@ -234,7 +234,7 @@ class Sparse(Base):
         except ValueError:
             newData = numpy.array(newData, dtype=numpy.object_)
 
-        numNewCols = self.features + toInsert.features
+        numNewCols = self.features + toAdd.features
         self.data = coo_matrix((newData, (newRow, newCol)), shape=(self.points, numNewCols))
         self._sorted = None
 
@@ -1216,7 +1216,7 @@ class Sparse(Base):
         if markMissing:
             toAppend = UML.createData('Sparse', extraDummy, featureNames=extraFeatureNames, pointNames=self.getPointNames())
             self._sorted = None#need to reset this, o.w. may fail in validate
-            self.appendFeatures(toAppend)
+            self.addFeatures(toAppend)
 
     def _binarySearch(self, x, y):
             if self._sorted == 'point':

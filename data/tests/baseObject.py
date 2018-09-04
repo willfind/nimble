@@ -75,9 +75,9 @@ def viewConstructorMaker(concreteType):
                                                    pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all')
 
-            firstPoint.appendPoints(orig)
+            firstPoint.addPoints(orig)
             full = firstPoint
-            full.appendPoints(lastPoint)
+            full.addPoints(lastPoint)
 
             pStart = 1
             pEnd = full.points - 2
@@ -95,7 +95,7 @@ def viewConstructorMaker(concreteType):
                                                      name=name, path=orig.path, keepPoints='all', keepFeatures='all')
             lastFeature.transpose()
 
-            full.appendFeatures(lastFeature)
+            full.addFeatures(lastFeature)
             fStart = None
             fEnd = full.features - 2
         else:

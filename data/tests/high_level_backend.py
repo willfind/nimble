@@ -1117,7 +1117,7 @@ class HighLevelModifying(DataTestObject):
         stringData = [[5, 'six']]
         toAdd = UML.createData('List', stringData)
         if toTest.getTypeString() == 'List':
-            toTest.appendPoints(toAdd)
+            toTest.addPoints(toAdd)
             toTest.dropFeaturesContainingType(six.string_types)
             assert toTest.features == 1
 

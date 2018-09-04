@@ -64,28 +64,28 @@ class DataFrame(Base):
         """
         self.data = self.data.T
 
-    def _insertPoints_implementation(self, toInsert, insertBefore):
+    def _addPoints_implementation(self, toAdd, insertBefore):
         """
-        Insert the points from the toInsert object below the provided index in
+        Insert the points from the toAdd object below the provided index in
         this object, the remaining points from this object will continue below
         the inserted points
 
         """
         startData = self.data.iloc[:insertBefore, :]
         endData = self.data.iloc[insertBefore:, :]
-        self.data = pd.concat((startData, toInsert.data, endData), axis=0)
+        self.data = pd.concat((startData, toAdd.data, endData), axis=0)
         self._updateName(axis='point')
 
-    def _insertFeatures_implementation(self, toInsert, insertBefore):
+    def _addFeatures_implementation(self, toAdd, insertBefore):
         """
-        Insert the features from the toInsert object to the right of the
+        Insert the features from the toAdd object to the right of the
         provided index in this object, the remaining points from this object
         will continue to the right of the inserted points
 
         """
         startData = self.data.iloc[:, :insertBefore]
         endData = self.data.iloc[:, insertBefore:]
-        self.data = pd.concat((startData, toInsert.data, endData), axis=1)
+        self.data = pd.concat((startData, toAdd.data, endData), axis=1)
         self._updateName(axis='feature')
 
     def _sortPoints_implementation(self, sortBy, sortHelper):

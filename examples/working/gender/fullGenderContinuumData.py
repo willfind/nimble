@@ -210,7 +210,7 @@ def batchCreateFromOrigFile(name):
 
     for index, obj in enumerate(batches):
         if index > 0:
-            trainY.appendPoints(obj.extractFeatures(0))
+            trainY.addPoints(obj.extractFeatures(0))
         assert "gender" not in obj.getFeatureNames()
         replaceNAs(obj)
         batches[index] = obj.copyAs("List")
@@ -224,10 +224,10 @@ def batchCreateFromOrigFile(name):
     print("batches NA replaced")
 
     dataAll = batches[0]
-    dataAll.appendPoints(batches[1])
-    dataAll.appendPoints(batches[2])
-    dataAll.appendPoints(batches[3])
-    dataAll.appendPoints(batches[4])
+    dataAll.addPoints(batches[1])
+    dataAll.addPoints(batches[2])
+    dataAll.addPoints(batches[3])
+    dataAll.addPoints(batches[4])
 
     print("batches combined")
 
@@ -239,7 +239,7 @@ def batchCreateFromOrigFile(name):
     print("transformed trainY to integers")
     print(trainY.getFeatureNames())
 
-    dataAll.appendFeatures(trainY)
+    dataAll.addFeatures(trainY)
 
     return dataAll
 
@@ -396,7 +396,7 @@ def writeOutCoefficientsAndNames(trainedLearner, trialType):
 
     namesObj = UML.createData("List", [trainX.getFeatureNames()])
 
-    namesObj.appendFeatures(coefsObj)
+    namesObj.addFeatures(coefsObj)
 
     path = "/home/tpburns/gimbel_tech/gender-sparse-coefs-" + trialType
     namesObj.writeFile(path, format='csv', includeNames=False)

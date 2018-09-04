@@ -318,20 +318,12 @@ class BaseView(Base):
         self._readOnlyException("transpose")
 
     @exception_docstring
-    def appendPoints(self, toAppend):
-        self._readOnlyException("appendPoints")
+    def addPoints(self, toAdd, insertBefore=None):
+        self._readOnlyException("addPoints")
 
     @exception_docstring
-    def appendFeatures(self, toAppend):
-        self._readOnlyException("appendFeatures")
-
-    @exception_docstring
-    def insertPoints(self, toInsert):
-        self._readOnlyException("insertPoints")
-
-    @exception_docstring
-    def insertFeatures(self, toInsert):
-        self._readOnlyException("insertFeatures")
+    def addFeatures(self, toAdd, insertBefore=None):
+        self._readOnlyException("addFeatures")
 
     @exception_docstring
     def sortPoints(self, sortBy=None, sortHelper=None):
