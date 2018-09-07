@@ -4345,7 +4345,6 @@ class Base(object):
                             break
                     #if the target can't be converted to a function
                     if isinstance(target, six.string_types):
-<<<<<<< HEAD
                         try:
                             target = self._constructIndicesList(axis, target)
                         except ArgumentException:
