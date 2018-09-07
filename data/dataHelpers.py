@@ -413,16 +413,16 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
 
 def inheritDocstringsFactory(toInherit):
     """
-    Decorator to copy docstrings from Base for reimplementations. This can be
-    applied to a class or single function. Only functions without docstrings
-    will inherit the Base docstring.
+    Factory to make decorator to copy docstrings from toInherit for reimplementations
+    in the wrapped object. Only those functions without docstrings will be given the
+    corresponding docstrings from toInherit.
     """
     def inheritDocstring(cls):
         writable = cls.__dict__
         for name in writable:
             if inspect.isfunction(writable[name]) and hasattr(toInherit, name):
                 func = writable[name]
-                if not func.__doc__ and hasattr(toInherit, name):
+                if not func.__doc__:
                     func.__doc__ = getattr(toInherit, name).__doc__
 
         return cls
