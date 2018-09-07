@@ -345,20 +345,15 @@ class Mlpy(UniversalInterface):
                 value = arguments[name]
             learnParams[name] = value
 
-        learner = self.findCallable(learnerName)(**initParams)
-        try:
-            learner.learn(**learnParams)
-        except ValueError as e:
-            if learnerName not in ["DLDA", "Parzen"]:
-                raise e
-            if learnerName == "DLDA":
-                from interfaces.mlpy_patches import DLDA
-                learner = DLDA(**initParams)
-                learner.learn(**learnParams)
-            elif learnerName == "Parzen":
-                from interfaces.mlpy_patches import Parzen
-                learner = Parzen(**initParams)
-                learner.learn(**learnParams)
+        # use patch if necessary
+        patchedLearners = ["DLDA", "Parzen", "ElasticNet", "ElasticNetC"]
+        if learnerName in patchedLearners:
+            patchModule = importlib.import_module("interfaces.mlpy_patches")
+            initLearner = getattr(patchModule, learnerName)
+        else:
+            initLearner = self.findCallable(learnerName)
+        learner = initLearner(**initParams)
+        learner.learn(**learnParams)
 
         return learner
 

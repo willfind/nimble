@@ -4,8 +4,7 @@ Methods tested in this file (none modify the data):
 
 pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView,
 featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
-featureSimilarities, pointStatistics, featureStatistics,
-nonZeroIteratorPointGrouped, nonZeroIteratorFeatureGrouped
+featureSimilarities, pointStatistics, featureStatistics, nonZeroIterator
 
 """
 
@@ -22,6 +21,7 @@ from nose.plugins.attrib import attr
 from copy import deepcopy
 
 import UML
+from UML import loadData
 from UML.data import BaseView
 from UML.data.tests.baseObject import DataTestObject
 from UML.data.dataHelpers import formatIfNeeded
@@ -293,6 +293,43 @@ class QueryBackend(DataTestObject):
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
+
+    #################
+    # save/LoadData #
+    #################
+
+    def test_save(self):
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".umld")
+
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pointNames = ['1', 'one', '2', '0']
+        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        
+        toSave.save(tmpFile.name)
+
+        LoadObj = loadData(tmpFile.name)
+        assert toSave.isIdentical(LoadObj)
+        assert LoadObj.isIdentical(toSave)
+
+    def test_save_extensionHandling(self):
+        tmpFile = tempfile.NamedTemporaryFile()
+        data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pointNames = ['1', 'one', '2', '0']
+        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        
+        toSave.save(tmpFile.name)
+        LoadObj = loadData(tmpFile.name + '.umld')
+        assert isinstance(LoadObj, UML.data.Base)
+        
+        try:
+            LoadObj = loadData(tmpFile.name)
+        except ArgumentException as ae:
+            assert True
+        else:
+            assert False
+
 
     ##############
     # __getitem__#
@@ -1851,34 +1888,37 @@ class QueryBackend(DataTestObject):
             assert startSize < endSize
 
 
-    ###############################
-    # nonZeroIteratorPointGrouped #
-    ###############################
+    ###################
+    # nonZeroIterator #
+    ###################
 
     def test_nonZeroIteratorPointGrouped_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.nonZeroIteratorPointGrouped():
+        for val in obj.nonZeroIterator(iterateBy='points'):
             ret.append(val)
 
         assert ret == [1, 2, 4, 5]
-
-
-    #################################
-    # nonZeroIteratorFeatureGrouped #
-    #################################
 
     def test_nonZeroIteratorFeatureGrouped_handmade(self):
         data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
         obj = self.constructor(data)
 
         ret = []
-        for val in obj.nonZeroIteratorFeatureGrouped():
+        for val in obj.nonZeroIterator(iterateBy='features'):
             ret.append(val)
 
         assert ret == [1, 4, 2, 5]
+
+    @raises(ArgumentException)
+    def test_nonZeroIteratorException_unexpectedIterateBy(self):
+        data = [[0, 1, 2], [0, 4, 0], [0, 0, 5], [0, 0, 0]]
+        obj = self.constructor(data)
+
+        for val in obj.nonZeroIterator(iterateBy='elements'):
+            pass
 
 
 ###########

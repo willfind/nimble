@@ -14,6 +14,7 @@ import copy
 import six.moves.configparser
 import math
 from dateutil.parser import parse
+import cloudpickle
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -436,16 +437,19 @@ def listLearners(package=None):
             results.append(learnerName)
 
     return results
-
+  
 
 @logCapture
-def createData(returnType, data, pointNames='automatic', featureNames='automatic', elementType=None,
-               fileType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
-               ignoreNonNumericalFeatures=False, useLog=None, reuseData=False):
+def createData(
+        returnType, data, pointNames='automatic', featureNames='automatic',
+        elementType=None, name=None, path=None, keepPoints='all', keepFeatures='all',
+        ignoreNonNumericalFeatures=False, useLog=None, reuseData=False, inputSeparator='automatic',
+        treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+        replaceMissingWith=numpy.nan):
     """Function to instantiate one of the UML data container types.
 
-    returnType: string (or None) indicating which kind of UML data type you want
-    returned. If None is given, UML will attempt to detect the type most
+    returnType: string (or None) indicating which kind of UML data type you
+    want returned. If None is given, UML will attempt to detect the type most
     appropriate for the data. Currently accepted are the strings "List",
     "Matrix", and "Sparse" -- which are case sensitive.
 
@@ -478,14 +482,6 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     all points in the data are assigned a name and the names for each point
     are unique.
 
-    fileType: allows the user to explictly specify the format expected when
-    loading from a file. Normally, if a file is being loaded, the extension
-    of the file name is used to indicate the format. However, if fileType is
-    specified, it will override the file extension. Also, when loading from a
-    file with no extension, the user is requred to specify a format via
-    fileType. This argument is ignored if loading from a python object.
-    Currently accepted values are "csv" and "mtx", with a default value of None
-
     name: When not None, this value is set as the name attribute of the
     returned object
 
@@ -507,8 +503,8 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     kept from the raw data. The order of this list will determine the order
     of features in the resultant object. In the case of reading data from a
     file, the selection will be done at read time, thus limiting the amount
-    of data read into memory. Names and indices are defined with respect to the data
-    regardless of filtering by the ignoreNonNumericalFeatures flag; just
+    of data read into memory. Names and indices are defined with respect to the
+    data regardless of filtering by the ignoreNonNumericalFeatures flag; just
     because a feature is removed, the indices of subsequent features will not
     be shifted. The ignoreNonNumericalFeatures flag is only consdered after
     selection: if a selected feature has non-numerical values and
@@ -531,6 +527,18 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
     call should be logged by the UML logger. If None, the configurable	global
     default is used.
 
+    inputSeparator: The character that is used to separate fields in the input
+    file, if necessary. By default, a value of 'automatic' will attempt to
+    determine the appropriate separator. Otherwise, a single character string
+    of the separator in the file can be passed.
+
+    treatAsMissing: A list of values that will be treated as missing values in
+    the data. These values will be replaced with value from replaceMissingWith
+    By default this list is [float('nan'), numpy.nan, None, '', 'None', 'nan']
+    Set to None or [] to disable replacing missing values.
+
+    replaceMissingWith: A single value with which to replace any value in
+    treatAsMissing. By default this is numpy.nan
     """
 
     # validation of pointNames and featureNames
@@ -559,17 +567,20 @@ def createData(returnType, data, pointNames='automatic', featureNames='automatic
         ret = initDataObject(
             returnType=returnType, rawData=data, pointNames=pointNames,
             featureNames=featureNames, elementType=elementType, name=name, path=path,
-            keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData)
+            keepPoints=keepPoints, keepFeatures=keepFeatures, reuseData=reuseData,
+            treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith)
         UML.logger.active.logLoad(returnType, ret.points, ret.features, name, path)
+
         return ret
     # input is an open file or a path to a file
     elif isinstance(data, six.string_types) or looksFileLike(data):
         ret = createDataFromFile(
-            returnType=returnType, data=data, pointNames=pointNames,
-            featureNames=featureNames, fileType=fileType, name=name,
-            ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
-            keepPoints=keepPoints, keepFeatures=keepFeatures)
+            returnType=returnType, data=data, pointNames=pointNames, featureNames=featureNames,
+            name=name, keepPoints=keepPoints, keepFeatures=keepFeatures,
+            ignoreNonNumericalFeatures=ignoreNonNumericalFeatures, inputSeparator=inputSeparator,
+            treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith)
         UML.logger.active.logLoad(returnType, ret.points, ret.features, name, path)
+
         return ret
     # no other allowed inputs
     else:
@@ -1236,6 +1247,43 @@ def showLog(levelOfDetail=2, leastRunsAgo=0, mostRunsAgo=2, startDate=None, endD
                 raise ArgumentException(msg)
         UML.logger.active.showLog(levelOfDetail, leastRunsAgo, mostRunsAgo, startDate, endDate,
                                   maximumEntries, searchForText, regex, saveToFileName, append)
+
+
+def loadData(inputPath):
+    """
+    Load UML data object.
+
+    inputPath: the location (including file name and extension) where
+        to find file previously generated by UML.data .save().
+
+    Expected file extension '.umld'.
+    """
+    if not inputPath.endswith('.umld'):
+        raise ArgumentException('file extension for a saved UML data object should be .umld')
+    with open(inputPath, 'rb') as file:
+        ret = cloudpickle.load(file)
+    if not isinstance(ret, UML.data.Base):
+        raise ArgumentException('File does not contain a UML valid data Object.')
+    return ret
+
+
+def loadTrainedLearner(inputPath):
+    """
+    Load UML trainedLearner object.
+
+    inputPath: the location (including file name and extension) where
+        to find file previously generated for a trainedLearner object.
+
+    Expected file extension '.umlm'.
+    """
+    if not inputPath.endswith('.umlm'):
+        raise ArgumentException('File extension for a saved UML model should be .umlm')
+    with open(inputPath, 'rb') as file:
+        ret = cloudpickle.load(file)
+    if not isinstance(ret, UML.interfaces.universal_interface.UniversalInterface.TrainedLearner):
+        raise ArgumentException('File does not contain a UML valid trainedLearner Object.')
+    return ret
+
 
 def coo_matrixTodense(origTodense):
     """

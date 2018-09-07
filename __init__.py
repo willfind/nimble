@@ -64,6 +64,9 @@ from .uml import showLog
 
 from .uml import learnerType
 
+from .uml import loadData
+from .uml import loadTrainedLearner
+
 # now finish out with any other configuration that needs to be done
 
 # These learners are required for unit testing, so we ensure they will

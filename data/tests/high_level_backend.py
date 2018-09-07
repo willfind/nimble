@@ -425,6 +425,106 @@ class HighLevelDataSafe(DataTestObject):
 
 
     #######################
+    # mapReduceFeatures() #
+    #######################
+
+    @raises(ImproperActionException)
+    def test_mapReduceFeatures_argumentExceptionNoPoints(self):
+        """ Test mapReduceFeatures() for ImproperActionException when there are no points  """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        toTest.mapReduceFeatures(simpleMapper, simpleReducer)
+
+
+    def test_mapReduceFeatures_emptyResultNoFeatures(self):
+        """ Test mapReduceFeatures() when given feature empty data """
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        ret = toTest.mapReduceFeatures(simpleMapper, simpleReducer)
+
+        data = numpy.empty(shape=(0, 0))
+        exp = self.constructor(data)
+        assert ret.isIdentical(exp)
+
+
+    @raises(ArgumentException)
+    def test_mapReduceFeatures_argumentExceptionNoneMap(self):
+        """ Test mapReduceFeatures() for ArgumentException when mapper is None """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.mapReduceFeatures(None, simpleReducer)
+
+    @raises(ArgumentException)
+    def test_mapReduceFeatures_argumentExceptionNoneReduce(self):
+        """ Test mapReduceFeatures() for ArgumentException when reducer is None """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.mapReduceFeatures(simpleMapper, None)
+
+    @raises(ArgumentException)
+    def test_mapReduceFeatures_argumentExceptionUncallableMap(self):
+        """ Test mapReduceFeatures() for ArgumentException when mapper is not callable """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.mapReduceFeatures("hello", simpleReducer)
+
+    @raises(ArgumentException)
+    def test_mapReduceFeatures_argumentExceptionUncallableReduce(self):
+        """ Test mapReduceFeatures() for ArgumentException when reducer is not callable """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTest.mapReduceFeatures(simpleMapper, 5)
+
+
+    def test_mapReduceFeatures_handmade(self):
+        """ Test mapReduceFeatures() against handmade output """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        ret = toTest.mapReduceFeatures(simpleMapper, simpleReducer)
+
+        exp = self.constructor([[1, 11], [2, 13], [3, 15]])
+
+        assert (ret.isIdentical(exp))
+        assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
+
+    def test_mapReduceFeatures_NamePath_preservation(self):
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames,
+                                  name=preserveName, path=preservePair)
+
+        ret = toTest.mapReduceFeatures(simpleMapper, simpleReducer)
+
+        assert toTest.name == preserveName
+        assert toTest.absolutePath == preserveAPath
+        assert toTest.relativePath == preserveRPath
+
+        assert ret.nameIsDefault()
+        assert ret.absolutePath == preserveAPath
+        assert ret.relativePath == preserveRPath
+
+
+    def test_mapReduceFeatures_handmadeNoneReturningReducer(self):
+        """ Test mapReduceFeatures() against handmade output with a None returning Reducer """
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+        ret = toTest.mapReduceFeatures(simpleMapper, oddOnlyReducer)
+
+        exp = self.constructor([[1, 11], [3, 15]])
+
+        assert (ret.isIdentical(exp))
+        assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
+
+
+    #######################
     # pointIterator() #
     #######################
 
@@ -679,6 +779,55 @@ class HighLevelDataSafe(DataTestObject):
         retRaw = ret.copyAs(format="python list")
 
         assert [5, 7] in retRaw
+
+
+    def test_calculateForEachElement_All_zero(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret1 = toTest.calculateForEachElement(lambda x: 0)
+        ret2 = toTest.calculateForEachElement(lambda x: 0, preserveZeros=True)
+
+        expData = [[0,0,0],[0,0,0],[0,0,0]]
+        expObj = self.constructor(expData)
+        assert ret1 == expObj
+        assert ret2 == expObj
+
+    def test_calculateForEachElement_String_conversion_manipulations(self):
+        def allString(val):
+            return str(val)
+
+        toSMap = {2:'two', 4:'four', 6:'six', 8:'eight'}
+        def f1(val):
+            return toSMap[val] if val in toSMap else val
+
+        toIMap = {'two':2, 'four':4, 'six':6, 'eight':8}
+        def f2(val):
+            return toIMap[val] if val in toIMap else val
+
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret0A = toTest.calculateForEachElement(allString)
+        ret0B = toTest.calculateForEachElement(allString, preserveZeros=True)
+
+        exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
+        exp0Obj = self.constructor(exp0Data)
+        assert ret0A == exp0Obj
+        assert ret0B == exp0Obj
+
+        ret1 = toTest.calculateForEachElement(f1)
+
+        exp1Data =  [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
+        exp1Obj = self.constructor(exp1Data)
+
+        assert ret1 == exp1Obj
+
+        ret2 = ret.calculateForEachElement(f2)
+
+        exp2Obj = self.constructor(data)
+
+        assert ret2 == exp2Obj
+
+
 
     #############################
     # countElements() #
@@ -1023,7 +1172,7 @@ class HighLevelModifying(DataTestObject):
         exp = self.constructor(expData, featureNames=expFeatureNames)
 
         assert toTest.isIdentical(exp)
-        assert ret is None
+        assert ret == expFeatureNames
 
     def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
         data = [[1], [2], [3]]
@@ -1248,15 +1397,6 @@ class HighLevelModifying(DataTestObject):
     # shufflePoints() #
     ###################
 
-    @raises(ArgumentException)
-    def test_shufflePoints_exceptionIndicesPEmpty(self):
-        """ tests shufflePoints() throws an ArgumentException when given invalid indices """
-        data = [[], []]
-        data = numpy.array(data).T
-        toTest = self.constructor(data)
-        toTest.shufflePoints([1, 3])
-
-
     def test_shufflePoints_noLongerEqual(self):
         """ Tests shufflePoints() results in a changed object """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
@@ -1303,14 +1443,6 @@ class HighLevelModifying(DataTestObject):
     #####################
     # shuffleFeatures() #
     #####################
-
-    @raises(ArgumentException)
-    def test_shuffleFeatures_exceptionIndicesFEmpty(self):
-        """ tests shuffleFeatures() throws an ArgumentException when given invalid indices """
-        data = [[], []]
-        data = numpy.array(data)
-        toTest = self.constructor(data)
-        toTest.shuffleFeatures([1, 3])
 
     def test_shuffleFeatures_noLongerEqual(self):
         """ Tests shuffleFeatures() results in a changed object """
