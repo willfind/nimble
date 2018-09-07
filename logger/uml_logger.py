@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import sys
 import time
 import six
 import inspect
@@ -12,6 +13,7 @@ from dateutil.parser import parse
 from ast import literal_eval
 from textwrap import wrap
 from functools import wraps
+from future.utils import raise_
 
 import UML
 from UML.exceptions import ArgumentException
@@ -56,7 +58,8 @@ def logCapture(function):
             logger.position -= 1
         except Exception as e:
             logger.position = 0
-            raise e
+            einfo = sys.exc_info()
+            raise_(einfo[1], None, einfo[2])
         finally:
             timer.stop("timer")
         if "useLog" in argNames and logger.position == 0:

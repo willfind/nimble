@@ -193,52 +193,44 @@ def testPrepTypeFunctionsUseLog():
             ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
 
+    def checkLogLengthAndContents(funcName):
+        logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
+        assert logLength == lengthExpected
+        expEntry = "'function': '{0}'".format(funcName)
+        assert expEntry in logInfo
+
     # dropFeaturesContainingType; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.dropFeaturesContainingType(str)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'dropFeaturesContainingType'" in logInfo
+    checkLogLengthAndContents('dropFeaturesContainingType')
 
     # replaceFeatureWithBinaryFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.replaceFeatureWithBinaryFeatures(0)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'replaceFeatureWithBinaryFeatures'" in logInfo
+    checkLogLengthAndContents('replaceFeatureWithBinaryFeatures')
 
     # transformFeatureToIntegers; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.transformFeatureToIntegers(0)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'transformFeatureToIntegers'" in logInfo
+    checkLogLengthAndContents('transformFeatureToIntegers')
 
     # extractPointsByCoinToss; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.extractPointsByCoinToss(0.5)
     lengthExpected += 1
+    checkLogLengthAndContents('extractPointsByCoinToss')
 
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'extractPointsByCoinToss'" in logInfo
-
-    # mapReducePoints; createData not logged
-    dataObj = UML.createData("Matrix", data, useLog=False)
-    def simpleMapper(point):
-        pID = point[0]
+    def simpleMapper(vector):
+        vID = vector[0]
         intList = []
-        for i in range(1, len(point)):
-            intList.append(point[i])
+        for i in range(1, len(vector)):
+            intList.append(vector[i])
         ret = []
         for value in intList:
-            ret.append((pID, value))
+            ret.append((vID, value))
         return ret
 
     def simpleReducer(identifier, valuesList):
@@ -247,159 +239,146 @@ def testPrepTypeFunctionsUseLog():
             total += value
         return (identifier, total)
 
+    # mapReducePoints; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.mapReducePoints(simpleMapper,simpleReducer)
     lengthExpected += 1
+    checkLogLengthAndContents('mapReducePoints')
 
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'mapReducePoints'" in logInfo
+    # mapReduceFeatures; createData not logged
+    dataObj = UML.createData("Matrix", numpy.array(data, dtype=object).T, featureNames=False, useLog=False)
+    calculated = dataObj.mapReduceFeatures(simpleMapper,simpleReducer)
+    lengthExpected += 1
+    checkLogLengthAndContents('mapReduceFeatures')
 
     # groupByFeature; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.groupByFeature(by=0)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'groupByFeature'" in logInfo
+    checkLogLengthAndContents('groupByFeature')
 
     # calculateForEachElement; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.calculateForEachElement(lambda x: len(x), features=0)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'calculateForEachElement'" in logInfo
+    checkLogLengthAndContents('calculateForEachElement')
 
     # calculateForEachPoint; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.calculateForEachPoint(lambda x: len(x))
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'calculateForEachPoint'" in logInfo
+    checkLogLengthAndContents('calculateForEachPoint')
 
     # calculateForEachFeature; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     calculated = dataObj.calculateForEachFeature(lambda x: len(x), features=0)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'calculateForEachFeature'" in logInfo
+    checkLogLengthAndContents('calculateForEachFeature')
 
     # shufflePoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.shufflePoints()
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'shufflePoints'" in logInfo
+    checkLogLengthAndContents('shufflePoints')
 
     # shuffleFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.shuffleFeatures()
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'shuffleFeatures'" in logInfo
+    checkLogLengthAndContents('shuffleFeatures')
 
     # trainAndTestSets; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     train, test = dataObj.trainAndTestSets(testFraction=0.5)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'trainAndTestSets'" in logInfo
+    checkLogLengthAndContents('trainAndTestSets')
 
     # normalizePoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.normalizePoints(subtract=0, divide=1)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'normalizePoints'" in logInfo
+    checkLogLengthAndContents('normalizePoints')
 
     # normalizeFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.normalizeFeatures(subtract=0, divide=1)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'normalizeFeatures'" in logInfo
+    checkLogLengthAndContents('normalizeFeatures')
 
     # sortPoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.sortPoints(sortBy=dataObj.getFeatureName(0))
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'sortPoints'" in logInfo
+    checkLogLengthAndContents('sortPoints')
 
     # sortFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataObj.sortFeatures(sortBy=dataObj.getFeatureName(0))
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'sortFeatures'" in logInfo
+    checkLogLengthAndContents('sortFeatures')
 
     # extractPoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.extractPoints(toExtract=0)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'extractPoints'" in logInfo
+    checkLogLengthAndContents('extractPoints')
 
     # extractFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     extracted = dataObj.extractFeatures(toExtract=0)
     lengthExpected += 1
+    checkLogLengthAndContents('extractFeatures')
 
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'extractFeatures'" in logInfo
+    # deletePoints; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    extracted = dataObj.deletePoints(toDelete=0)
+    lengthExpected += 1
+    checkLogLengthAndContents('deletePoints')
+
+    # deleteFeatures; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    extracted = dataObj.deleteFeatures(toDelete=0)
+    lengthExpected += 1
+    checkLogLengthAndContents('deleteFeatures')
+
+    # retainPoints; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    extracted = dataObj.retainPoints(toRetain=0)
+    lengthExpected += 1
+    checkLogLengthAndContents('retainPoints')
+
+    # retainFeatures; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    extracted = dataObj.retainFeatures(toRetain=0)
+    lengthExpected += 1
+    checkLogLengthAndContents('retainFeatures')
+
+    # referenceDataFrom; createData not logged
+    dataObj = UML.createData("Matrix", data, useLog=False)
+    dataObj.referenceDataFrom(dataObj)
+    lengthExpected += 1
+    checkLogLengthAndContents('referenceDataFrom')
 
     # transformEachPoint; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.transformEachPoint(lambda x: [point for point in x])
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'transformEachPoint'" in logInfo
+    checkLogLengthAndContents('transformEachPoint')
 
     # transformEachFeature; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.transformEachFeature(lambda x: [point for point in x], features=0)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'transformEachFeature'" in logInfo
+    checkLogLengthAndContents('transformEachFeature')
 
     # transformEachElement; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.transformEachElement(lambda x: [point for point in x], features=0)
     lengthExpected += 1
-
-    logLength, logInfo = singleValueQueries(lengthQuery, infoQuery)
-    assert logLength == lengthExpected
-    assert "'function': 'transformEachElement'" in logInfo
+    checkLogLengthAndContents('transformEachElement')
 
 @with_setup(setup_func, teardown_func)
 def testDataTypeFunctionsUseLog():
@@ -443,57 +422,48 @@ def testBaseObjectFunctionsWithoutUseLog():
             ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2],
             ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3]]
 
+    def checkNotLogged():
+        logLength = singleValueQueries(lengthQuery)[0]
+        assert logLength == 0
+
     # copyPoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copyPoints(start=1)
-
-    logLength = singleValueQueries(lengthQuery)[0]
-    assert logLength == 0
+    checkNotLogged()
 
     # copyFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copyFeatures(start=1)
-
-    logLength = singleValueQueries(lengthQuery)[0]
-    assert logLength == 0
+    checkNotLogged()
 
     # copyAs; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     dataCopy = dataObj.copyAs("pythonlist")
-
-    logLength = singleValueQueries(lengthQuery)[0]
-    assert logLength == 0
+    checkNotLogged()
 
     # countPoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     count = dataObj.countPoints(lambda x: x[1]>0)
-
-    logLength = singleValueQueries(lengthQuery)[0]
-    assert logLength == 0
+    checkNotLogged()
 
     # countFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     count = dataObj.countFeatures(lambda x: type(x) == str)
-
-    logLength = singleValueQueries(lengthQuery)[0]
-    assert logLength == 0
+    checkNotLogged()
 
     # appendPoints; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     appendData = [["d", 4], ["d", 4], ["d", 4], ["d", 4], ["d", 4], ["d", 4]]
     toAppend = UML.createData("Matrix", appendData, useLog=False)
     dataObj.appendPoints(toAppend)
-
-    logLength = singleValueQueries(lengthQuery)[0]
-    assert logLength == 0
+    checkNotLogged()
 
     # appendFeatures; createData not logged
     dataObj = UML.createData("Matrix", data, useLog=False)
     appendData = numpy.zeros((18,1))
     toAppend = UML.createData("Matrix", appendData, useLog=False)
     dataObj.appendFeatures(toAppend)
-    logLength = singleValueQueries(lengthQuery)[0]
-    assert logLength == 0
+    checkNotLogged()
 
 
 @with_setup(setup_func, teardown_func)

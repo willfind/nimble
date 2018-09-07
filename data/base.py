@@ -746,7 +746,7 @@ class Base(object):
 
 
     @logCapture
-    def mapReducePoints(self, mapper, reducer):
+    def mapReducePoints(self, mapper, reducer, useLog=None):
         """
         Return a new object containing the results of the given mapper and
         reducer functions
@@ -761,7 +761,7 @@ class Base(object):
         return self._mapReduce_implementation('point', mapper, reducer)
 
     @logCapture
-    def mapReduceFeatures(self, mapper, reducer):
+    def mapReduceFeatures(self, mapper, reducer, useLog=None):
         """
         Return a new object containing the results of the given mapper and
         reducer functions
@@ -988,7 +988,10 @@ class Base(object):
         if oneArg:
             if not preserveZeros:
                 # check if the function preserves zero values
-                preserveZeros = function(0) == 0
+                try:
+                    preserveZeros = function(0) == 0
+                except Exception:
+                    pass
             def functionWrap(value):
                 if preserveZeros and value == 0:
                     return 0
@@ -1108,7 +1111,7 @@ class Base(object):
         """
         return self._genericShuffleFrontend('feature')
 
-      
+
     def _genericShuffleFrontend(self, axis):
         """
         Generic function for shufflePoints and shuffleFeatures. Note: this relies on
@@ -1606,13 +1609,13 @@ class Base(object):
 
         outputPath: the location (including file name and extension) where
             we want to write the output file.
-            
+
         If filename extension .umld is not included in file name it would
         be added to the output file.
-            
+
         Uses dill library to serialize it.
         """
-        
+
         extension = '.umld'
         if not outputPath.endswith(extension):
             outputPath = outputPath + extension
@@ -1622,7 +1625,7 @@ class Base(object):
                 cloudpickle.dump(self, file)
             except Exception as e:
                 raise(e)
-        # TODO: save session     
+        # TODO: save session
         # print('session_' + outputFilename)
         # print(globals())
         # dill.dump_session('session_' + outputFilename)
@@ -2744,7 +2747,7 @@ class Base(object):
 
 
     @logCapture
-    def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False):
+    def deletePoints(self, toDelete=None, start=None, end=None, number=None, randomize=False, useLog=None):
         """
         Modify this object, removing those points that are specified by the input.
 
@@ -2769,7 +2772,7 @@ class Base(object):
 
 
     @logCapture
-    def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
+    def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False, useLog=None):
         """
         Modify this object, removing those features that are specified by the input.
 
@@ -2794,7 +2797,7 @@ class Base(object):
 
 
     @logCapture
-    def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
+    def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False, useLog=None):
 
         """
         Modify this object, retaining those points that are specified by the input.
@@ -2820,7 +2823,7 @@ class Base(object):
 
 
     @logCapture
-    def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
+    def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False, useLog=None):
         """
         Modify this object, retaining those features that are specified by the input.
 
@@ -2960,7 +2963,7 @@ class Base(object):
 
 
     @logCapture
-    def referenceDataFrom(self, other):
+    def referenceDataFrom(self, other, useLog=None):
         """
         Modifies the internal data of this object to refer to the same data as other. In other
         words, the data wrapped by both the self and other objects resides in the
