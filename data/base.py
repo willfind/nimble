@@ -106,6 +106,7 @@ def valuesToPythonList(values, argName):
 
     return valuesList
 
+
 class Base(object):
     """
     Class defining important data manipulation operations and giving functionality
