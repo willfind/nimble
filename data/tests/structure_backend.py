@@ -2744,6 +2744,18 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(objExp)
 
+    def test_sortPoints_dataTypeRetainedFromList(self):
+        """ Test sortPoints() data not converted when sorting by list"""
+        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
+        toTest = self.constructor(data)
+
+        toTest.sortPoints(sortHelper=[2, 1, 0])
+
+        expData = [['c', 8, 9.0], ['b', 5, 6.0], ['a', 2, 3.0]]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+
     def test_sortPoints_indicesList(self):
         """ Test sortPoints() when we specify a list of indices """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
@@ -2759,8 +2771,8 @@ class StructureModifying(StructureShared):
     def test_sortPoints_namesList(self):
         """ Test sortPoints() when we specify a list of point names """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        fnames = ['3', '6', '9']
-        toTest = self.constructor(data, pointNames=fnames)
+        pnames = ['3', '6', '9']
+        toTest = self.constructor(data, pointNames=pnames)
 
         toTest.sortPoints(sortHelper=['9', '6', '3'])
 
@@ -2773,8 +2785,8 @@ class StructureModifying(StructureShared):
     def test_sortPoints_mixedList(self):
         """ Test sortPoints() when we specify a mixed list (names/indices) """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        fnames = ['3', '6', '9']
-        toTest = self.constructor(data, pointNames=fnames)
+        pnames = ['3', '6', '9']
+        toTest = self.constructor(data, pointNames=pnames)
 
         toTest.sortPoints(sortHelper=['9', '6', 0])
 
@@ -2902,6 +2914,19 @@ class StructureModifying(StructureShared):
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
+
+
+    def test_sortFeatures_dataTypeRetainedFromList(self):
+        """ Test sortFeatures() data not converted when sorting by list"""
+        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
+        toTest = self.constructor(data)
+
+        toTest.sortFeatures(sortHelper=[2, 1, 0])
+
+        expData = [[3.0, 2, 'a'], [6.0, 5, 'b'], [9.0, 8, 'c']]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
 
     def test_sortFeatures_indicesList(self):
         """ Test sortFeatures() when we specify a list of indices """
