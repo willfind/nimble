@@ -14,13 +14,18 @@ _featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
 setPointName, setFeatureName, setPointNames, setFeatureNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, getPointNames, getFeatureNames, __len__,
-getFeatureIndex, getFeatureName, getPointIndex, getPointName
+getFeatureIndex, getFeatureName, getPointIndex, getPointName,
+_constructIndicesList
 
 """
 
 from __future__ import absolute_import
 import numpy
 import pandas
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
 
 from UML import createData
 from UML.data import Base
@@ -58,6 +63,12 @@ class NotIterable(object):
     def __init__(self, *args):
         self.values = args
 
+class CalledFunctionException(Exception):
+    def __init__(self):
+        pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
 
 def confirmExpectedNames(toTest, axis, expected):
     if axis == 'point':
@@ -540,14 +551,14 @@ class LowLevelBackend(object):
     @raises(ArgumentException)
     def test_setPointNames_exceptionNonStringPointNameInList(self):
         """ Test setPointNames() for ArgumentException when a list element is not a string """
-        toTest = self.constructor(pointNames=['one'])
-        nonStringNames = [1, 2, 3]
-        toTest.setPointNames(nonStringNames)
+        toTest = self.constructor(pointNames=['one', 'two', 'three'])
+        nonStringName = ['one', 'two', 3]
+        toTest.setPointNames(nonStringName)
 
     @raises(ArgumentException)
     def test_setPointNames_exceptionNonUniqueStringInList(self):
         """ Test setPointNames() for ArgumentException when a list element is not unique """
-        toTest = self.constructor(pointNames=['one'])
+        toTest = self.constructor(pointNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
         toTest.setPointNames(nonUnique)
 
@@ -557,6 +568,12 @@ class LowLevelBackend(object):
         toTest = self.constructor()
         toAssign = ["hey", "gone", "none", "blank"]
         toTest.setPointNames(toAssign)
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+        toTest = self.constructor(pointNames=['one', 'two', 'three'])
+        toTest.setPointNames(['a', 'b', 'c'])
 
     def test_setPointNames_emptyDataAndList(self):
         """ Test setPointNames() when both the data and the list are empty """
@@ -679,6 +696,12 @@ class LowLevelBackend(object):
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
         toTest.setFeatureNames(toAssign)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setFeatureNames_calls_valuesToPythonList(self, mockFunc):
+        toTest = self.constructor(featureNames=['one', 'two', 'three'])
+        toTest.setFeatureNames(['a', 'b', 'c'])
+
     def test_setFeatureNames_emptyDataAndDict(self):
         """ Test setFeatureNames() when both the data and the dict are empty """
         toTest = self.constructor()
@@ -704,14 +727,14 @@ class LowLevelBackend(object):
     @raises(ArgumentException)
     def test_setFeatureNames_exceptionNonStringFeatureNameInList(self):
         """ Test setFeatureNames() for ArgumentException when a list element is not a string """
-        toTest = self.constructor(featureNames=['one'])
-        nonStringFeatureNames = [1, 2, 3]
+        toTest = self.constructor(featureNames=['one', 'two', 'three'])
+        nonStringFeatureNames = ['one', 'two', 3]
         toTest.setFeatureNames(nonStringFeatureNames)
 
     @raises(ArgumentException)
     def test_setFeatureNames_exceptionNonUniqueStringInList(self):
         """ Test setFeatureNames() for ArgumentException when a list element is not unique """
-        toTest = self.constructor(featureNames=['one'])
+        toTest = self.constructor(featureNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
         toTest.setFeatureNames(nonUnique)
 
@@ -767,6 +790,31 @@ class LowLevelBackend(object):
         assert toTest.getFeatureName(2) == DEFAULT_PREFIX + str(nextNum - 1)
         assert toTest.getFeatureName(3).startswith(DEFAULT_PREFIX)
         assert ret is None
+
+
+    ##########################
+    # _adjustCountAndNames() #
+    ##########################
+
+    def test_adjustCountAndNames_pointCountAndNames(self):
+        origNames = ["zero", "one", "two", "three"]
+        orig = self.constructor(pointNames=origNames)
+        other = self.constructor(pointNames=["one", "two"])
+        expNames = ["zero", "three"]
+        orig._adjustCountAndNames('point', other)
+
+        assert orig.points == 2
+        assert orig.getPointNames() == expNames
+
+    def test_adjustCountAndNames_featureCountAndNames(self):
+        origNames = ["zero", "one", "two", "three"]
+        orig = self.constructor(featureNames=origNames)
+        other = self.constructor(featureNames=["one", "two"])
+        expNames = ["zero", "three"]
+        orig._adjustCountAndNames('feature', other)
+
+        assert orig.features == 2
+        assert orig.getFeatureNames() == expNames
 
 
     ##########################
@@ -1208,8 +1256,18 @@ class LowLevelBackend(object):
         assert toTest._constructIndicesList('feature', strFts1D) == expected
         assert toTest._constructIndicesList('feature', mixFts1D) == expected
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+        pointNames = ['p1','p2','p3']
+        toTest = self.constructor(pointNames=pointNames)
+        toTest._constructIndicesList(['p1', 'p2', 'p3'])
+
     def test_constructIndicesList_pythonList(self):
         self._constructIndicesList_backend(lambda lst: lst)
+
+    def test_constructIndicesList_pythonTuple(self):
+        self._constructIndicesList_backend(lambda lst: tuple(lst))
 
     def test_constructIndicesList_pythonGenerator(self):
         self._constructIndicesList_backend(lambda lst: (val for val in lst))
@@ -1253,6 +1311,17 @@ class LowLevelBackend(object):
 
         assert toTest._constructIndicesList('point', ptIndex) == expected
         assert toTest._constructIndicesList('feature', ftIndex) == expected
+
+    def test_constructIndicesList_pythonRange(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+        expected = [1, 2]
+
+        testRange = range(1,3)
+
+        assert toTest._constructIndicesList('point', testRange) == expected
+        assert toTest._constructIndicesList('feature', testRange) == expected
 
     @raises(ArgumentException)
     def test_constructIndicesList_singleFloat(self):

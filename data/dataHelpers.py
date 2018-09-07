@@ -9,11 +9,14 @@ from __future__ import absolute_import
 import copy
 import math
 import string
+import numpy
 
 from abc import ABCMeta
 from abc import abstractmethod
 import six
 from six.moves import range
+
+from UML.exceptions import ArgumentException
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -162,7 +165,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         return ret
 
     (retPNames, retFNames) = (None, None)
-        
+
     if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
         retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
     elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
@@ -180,7 +183,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         retFNames = otherSource.featureNames
     else:
         retFNames = None
-        
+
     return (retPNames, retFNames)
 
 
@@ -210,7 +213,6 @@ def reorderToMatchList(dataObject, matchList, axis):
         indexGetter = lambda x: dataObject.getFeatureIndex(x.getFeatureName(0))
 
     def scorer(viewObj):
-        x = viewObj.getPointName(0)
         index = indexGetter(viewObj)
         return mappedOrig[sortedList[index]]
 
