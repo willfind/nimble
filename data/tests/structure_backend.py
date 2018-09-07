@@ -22,6 +22,10 @@ import numpy
 import os
 import os.path
 from nose.tools import *
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
 
 from copy import deepcopy
 
@@ -63,6 +67,16 @@ def plusOneOnlyEven(value):
         return (value + 1)
     else:
         return None
+
+class CalledFunctionException(Exception):
+    def __init__(self):
+        pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
+
+def noChange(value):
+    return value
 
 def allTrue(value):
     return True
@@ -551,6 +565,13 @@ class StructureDataSafe(StructureShared):
     ###################
     # copyPoints #
     ###################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_copyPoints_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        ret = toTest.copyPoints(['a', 'b'])
 
     def test_copyPoints_handmadeSingle(self):
         """ Test copyPoints() against handmade output when copying one point """
@@ -1237,6 +1258,13 @@ class StructureDataSafe(StructureShared):
     #####################
     # copyFeatures #
     #####################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_copyFeatures_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        ret = toTest.copyFeatures(['a', 'b'])
 
     def test_copyFeatures_handmadeSingle(self):
         """ Test copyFeatures() against handmade output when copying one feature """
@@ -2112,6 +2140,15 @@ class StructureModifying(StructureShared):
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo_str)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_init_pointNames_calls_valuesToPythonList(self, mockFunc):
+        self.constructor([1,2,3], pointNames=['one'])
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_init_featureNames_calls_valuesToPythonList(self, mockFunc):
+        self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
     ###############
     # transpose() #
@@ -2936,6 +2973,13 @@ class StructureModifying(StructureShared):
     # extractPoints() #
     #################
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_extractPoints_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        ret = toTest.extractPoints(['a', 'b'])
+
     def test_extractPoints_handmadeSingle(self):
         """ Test extractPoints() against handmade output when extracting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3123,7 +3167,7 @@ class StructureModifying(StructureShared):
 
     @raises(ArgumentException)
     def test_extractPoints_exceptionStartInvalid(self):
-        """ Test extracPoints() for ArgumentException when start is not a valid point index """
+        """ Test extractPoints() for ArgumentException when start is not a valid point index """
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames)
@@ -3629,6 +3673,13 @@ class StructureModifying(StructureShared):
     ####################
     # extractFeatures() #
     ####################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_extractFeatures_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        ret = toTest.extractFeatures(['a', 'b'])
 
     def test_extractFeatures_handmadeSingle(self):
         """ Test extractFeatures() against handmade output when extracting one feature """
@@ -4213,6 +4264,14 @@ class StructureModifying(StructureShared):
     ################
     # deletePoints #
     ################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_deletePoints_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        toTest.deletePoints(['a', 'b'])
+
     def test_deletePoints_handmadeSingle(self):
         """ Test deletePoints() against handmade output when deleting one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -4788,6 +4847,13 @@ class StructureModifying(StructureShared):
     # deleteFeatures #
     ##################
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_deleteFeatures_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        toTest.deleteFeatures(['a', 'b'])
+
     def test_deleteFeatures_handmadeSingle(self):
         """ Test deleteFeatures() against handmade output when deleting one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -5271,6 +5337,13 @@ class StructureModifying(StructureShared):
     # retainPoints #
     ################
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_retainPoints_calls_constructIndicesList(self, mockFunc):
+        """ Test retainPoints calls _constructIndicesList before calling _genericStructuralFrontend"""
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+        toTest.retainPoints(['a', 'b'])
+
     def test_retainPoints_handmadeSingle(self):
         """ Test retainPoints() against handmade output when retaining one point """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -5294,7 +5367,7 @@ class StructureModifying(StructureShared):
         assert toTest.relativePath == 'testRelPath'
 
 
-    def test_retainPoints_ListIntoPEmpty(self):
+    def test_retainPoints_list_retain_all(self):
         """ Test retainPoints() by retaining a list of all points """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
@@ -5314,6 +5387,14 @@ class StructureModifying(StructureShared):
         expTest = self.constructor(expData)
         assert toTest.isIdentical(expTest)
 
+    def test_retainPoints_pythonRange(self):
+        """ Test retainPoints() by retaining a python range of points """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        toTest = self.constructor(data)
+        exp = self.constructor([[4, 5, 6], [7, 8, 9]])
+        toTest.retainPoints(range(1,3))
+
+        assert toTest.isIdentical(exp)
 
     def test_retainPoints_handmadeListSequence(self):
         """ Test retainPoints() against handmade output for several list retentions """
@@ -5883,6 +5964,13 @@ class StructureModifying(StructureShared):
     # retainFeatures #
     ##################
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_retainFeatures_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        toTest.retainFeatures(['a', 'b'])
+
     def test_retainFeatures_handmadeSingle(self):
         """ Test retainFeatures() against handmade output when retaining one feature """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -5906,7 +5994,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == 'testAbsPath'
         assert toTest.relativePath == 'testRelPath'
 
-    def test_retainFeatures_ListIntoFEmpty(self):
+    def test_retainFeatures_list_retain_all(self):
         """ Test retainFeatures() by retaining a list of all features """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(data)
@@ -5926,6 +6014,14 @@ class StructureModifying(StructureShared):
         expTest = self.constructor(expData)
         assert toTest.isIdentical(expTest)
 
+    def test_retainFeatures_pythonRange(self):
+        """ Test retainFeatures() by retaining a python range of points """
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        toTest = self.constructor(data)
+        exp = self.constructor([[2, 3], [5, 6], [8, 9], [11, 12]])
+        toTest.retainFeatures(range(1,3))
+
+        assert toTest.isIdentical(exp)
 
     def test_retainFeatures_ListIntoFEmptyOutOfOrder(self):
         """ Test retainFeatures() by retaining a list of all features """
@@ -6508,6 +6604,13 @@ class StructureModifying(StructureShared):
 
         origObj.transformEachPoint(emitLower)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_transformEachPoint_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        toTest.transformEachPoint(noChange, points=['a', 'b'])
+
     def test_transformEachPoint_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -6624,6 +6727,12 @@ class StructureModifying(StructureShared):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.transformEachFeature(None)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_transformEachFeature_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
+
+        toTest.transformEachFeature(noChange, features=['a', 'b'])
 
     def test_transformEachFeature_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -6712,6 +6821,26 @@ class StructureModifying(StructureShared):
     ##########################
     # transformEachElement() #
     ##########################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_transformEachElement_calls_constructIndicesList1(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
+
+        def noChange(point):
+            return point
+
+        toTest.transformEachElement(noChange, points=['a', 'b'])
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_transformEachElement_calls_constructIndicesList2(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
+
+        def noChange(point):
+            return point
+
+        toTest.transformEachElement(noChange, features=['a', 'b'])
 
     def test_transformEachElement_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]

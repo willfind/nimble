@@ -24,6 +24,10 @@ from __future__ import absolute_import
 from copy import deepcopy
 from nose.tools import *
 from nose.plugins.attrib import attr
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
 
 import os.path
 import numpy
@@ -85,6 +89,16 @@ def plusOneOnlyEven(value):
     else:
         return None
 
+class CalledFunctionException(Exception):
+    def __init__(self):
+        pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
+
+def noChange(value):
+    return value
+
 
 class HighLevelDataSafe(DataTestObject):
     ###########################
@@ -120,6 +134,12 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.calculateForEachPoint(emitLower)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_calculateForEachPoint_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        ret = toTest.calculateForEachPoint(noChange, points=['a', 'b'])
 
     def test_calculateForEachPoint_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -238,6 +258,12 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.calculateForEachFeature(None)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_calculateForEachFeature_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
+
+        ret = toTest.calculateForEachFeature(noChange, features=['a', 'b'])
 
     def test_calculateForEachFeature_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -720,6 +746,26 @@ class HighLevelDataSafe(DataTestObject):
     #############################
     # calculateForEachElement() #
     #############################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_calculateForEachElement_calls_constructIndicesList1(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
+
+        def noChange(point):
+            return point
+
+        ret = toTest.calculateForEachElement(noChange, points=['a', 'b'])
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_calculateForEachElement_calls_constructIndicesList2(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
+
+        def noChange(point):
+            return point
+
+        ret = toTest.calculateForEachElement(noChange, features=['a', 'b'])
 
     def test_calculateForEachElement_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -1807,6 +1853,20 @@ class HighLevelModifying(DataTestObject):
         assert expObj == obj2
         assert expAlsoL == alsoLess
         assert expAlsoM == alsoMore
+
+    #######################
+    # handleMissingValues #
+    #######################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_handleMissingValues_calls_constructIndicesList1(self, mockFunc):
+        toTest = self.constructor([[1,2,3],[4,5,None],[7,8,9]], pointNames=['a', 'b','c'])
+
+        def noChange(point):
+            return point
+
+        toTest.handleMissingValues('remove points', features=['c'])
 
     def test_handleMissingValues_remove_points(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])

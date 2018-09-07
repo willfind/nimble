@@ -9,11 +9,14 @@ from __future__ import absolute_import
 import copy
 import math
 import string
+import numpy
 
 from abc import ABCMeta
 from abc import abstractmethod
 import six
 from six.moves import range
+
+from UML.exceptions import ArgumentException
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
