@@ -13,7 +13,7 @@ import copy
 import UML
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .dataHelpers import View
+from .dataHelpers import inheritDocstringsFactory
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
@@ -22,6 +22,7 @@ from six.moves import zip
 from functools import reduce
 scipy = UML.importModule('scipy.io')
 
+@inheritDocstringsFactory(Base)
 class Matrix(Base):
     """
     Class providing implementations of data manipulation operations on data stored
@@ -392,7 +393,6 @@ class Matrix(Base):
             return scipy.sparse.csr_matrix(self.data)
 
         return UML.createData('Matrix', self.data)
-
 
 
     def _calculateForEachElement_implementation(self, function, points, features,

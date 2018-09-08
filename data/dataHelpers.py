@@ -12,10 +12,13 @@ import string
 import inspect
 import re
 
+
 from abc import ABCMeta
 from abc import abstractmethod
 import six
 from six.moves import range
+
+from UML.exceptions import ArgumentException
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -409,3 +412,21 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
         # modify the width associated with the colHold
         if removalWidths is not None:
             removalWidths[removeIndex] = len(colHold)
+
+
+def inheritDocstringsFactory(toInherit):
+    """
+    Factory to make decorator to copy docstrings from toInherit for reimplementations
+    in the wrapped object. Only those functions without docstrings will be given the
+    corresponding docstrings from toInherit.
+    """
+    def inheritDocstring(cls):
+        writable = cls.__dict__
+        for name in writable:
+            if inspect.isfunction(writable[name]) and hasattr(toInherit, name):
+                func = writable[name]
+                if not func.__doc__:
+                    func.__doc__ = getattr(toInherit, name).__doc__
+
+        return cls
+    return inheritDocstring

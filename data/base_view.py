@@ -6,15 +6,11 @@ base class for read only views of data objects.
 
 from __future__ import division
 from __future__ import absolute_import
-from .base import Base
-from UML.exceptions import ImproperActionException
-
 import copy
 
-# copy the docstring for the function from Base
-def inherit_docstring(func):
-    func.__doc__ = getattr(Base, func.__name__).__doc__
-    return func
+from .base import Base
+from .dataHelpers import inheritDocstringsFactory
+from UML.exceptions import ImproperActionException
 
 # prepend a message that view objects will raise an exception to Base docstring
 def exception_docstring(func):
@@ -29,6 +25,7 @@ def exception_docstring(func):
     return func
 
 
+@inheritDocstringsFactory(Base)
 class BaseView(Base):
     """
     Class defining read only view objects, which have the same api as a
@@ -74,36 +71,31 @@ class BaseView(Base):
         #		kwds['name'] = self._source.name
         super(BaseView, self).__init__(**kwds)
 
-    # redifinition from Base, except without the setter, using source
+    # redefinition from Base, except without the setter, using source
     # object's attributes
-    @inherit_docstring
     def _getObjName(self):
         return self._name
 
     name = property(_getObjName, doc="A name to be displayed when printing or logging this object")
 
-    # redifinition from Base, using source object's attributes
-    @inherit_docstring
+    # redefinition from Base, using source object's attributes
     def _getAbsPath(self):
         return self._source._absPath
 
     absolutePath = property(_getAbsPath, doc="The path to the file this data originated from, in absolute form")
 
-    # redifinition from Base, using source object's attributes
-    @inherit_docstring
+    # redefinition from Base, using source object's attributes
     def _getRelPath(self):
         return self._source._relPath
 
     relativePath = property(_getRelPath, doc="The path to the file this data originated from, in relative form")
 
-    @inherit_docstring
     def _pointNamesCreated(self):
         if self._source.pointNamesInverse is None:
             return False
         else:
             return True
 
-    @inherit_docstring
     def _featureNamesCreated(self):
         if self._source.featureNamesInverse is None:
             return False
@@ -120,26 +112,22 @@ class BaseView(Base):
     # Reimplemented Operations #
     ############################
 
-    @inherit_docstring
     def getPointNames(self):
         ret = self._source.getPointNames()
         ret = ret[self._pStart:self._pEnd]
 
         return ret
 
-    @inherit_docstring
     def getFeatureNames(self):
         ret = self._source.getFeatureNames()
         ret = ret[self._fStart:self._fEnd]
 
         return ret
 
-    @inherit_docstring
     def getPointName(self, index):
         corrected = index + self._pStart
         return self._source.getPointName(corrected)
 
-    @inherit_docstring
     def getPointIndex(self, name):
         possible = self._source.getPointIndex(name)
         if possible >= self._pStart and possible < self._pEnd:
@@ -147,12 +135,10 @@ class BaseView(Base):
         else:
             raise KeyError()
 
-    @inherit_docstring
     def getFeatureName(self, index):
         corrected = index + self._fStart
         return self._source.getFeatureName(corrected)
 
-    @inherit_docstring
     def getFeatureIndex(self, name):
         possible = self._source.getFeatureIndex(name)
         if possible >= self._fStart and possible < self._fEnd:
@@ -160,7 +146,6 @@ class BaseView(Base):
         else:
             raise KeyError()
 
-    @inherit_docstring
     def _copyNames(self, CopyObj):
 
         if self._pointNamesCreated():
@@ -202,7 +187,6 @@ class BaseView(Base):
                 for name in self._source.featureNamesInverse[self._fEnd:self._source.features + 1]:
                     del CopyObj.featureNames[name]
 
-    @inherit_docstring
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
 
