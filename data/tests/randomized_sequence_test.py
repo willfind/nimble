@@ -20,7 +20,7 @@ import UML
 from UML.data import Base
 from UML.data import BaseView
 from UML.exceptions import ArgumentException
-from UML.helpers import _parseSignature
+from UML.helpers import inspectArguments
 from UML.randomness import pythonRandom
 from six.moves import range
 
@@ -599,7 +599,7 @@ untested = ['dropFeaturesContainingType', # how can you choose the type?
 def makeParams(funcName, dataObj, seed):
     random.seed(seed)
     generatorList = generators[funcName]
-    (args, varargs, keywords, defaults) = _parseSignature(getattr(dataObj, funcName))
+    (args, varargs, keywords, defaults) = inspectArguments(getattr(dataObj, funcName))
 
     #	if funcName.startswith('appendFeatures'):
     #		pdb.set_trace()
@@ -665,7 +665,7 @@ def TODO_GeneratorListSandC():
     for funcName in generators.keys():
         # test that there are generators for each possible argument
         # (except self)
-        (a, v, k, d) = _parseSignature(getattr(dobj, funcName))
+        (a, v, k, d) = inspectArguments(getattr(dobj, funcName))
         assert (len(a) - 1) == len(generators[funcName])
 
         assert funcName in testable
@@ -679,7 +679,7 @@ def TODO_MakeParamsExclusivity():
         # random trials
         for i in range(50):
             genArgs = makeParams(funcName, dobj, UML.randomness.pythonRandom.random())
-            (args, v, k, defaults) = _parseSignature(getattr(dobj, funcName))
+            (args, v, k, defaults) = inspectArguments(getattr(dobj, funcName))
             seenNonDefault = False
             for ex in mutuallyExclusiveParams[funcName]:
                 if isinstance(ex, tuple):

@@ -3654,7 +3654,7 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
                                 arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
 
 
-def _parseSignature(func):
+def inspectArguments(func):
     """
     To be used in place of inspect.getargspec for Python3 compatibility.
     Return is the tuple (args, varargs, keywords, defaults)

@@ -20,7 +20,7 @@ import UML
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
-from UML.helpers import _parseSignature
+from UML.helpers import inspectArguments
 from six.moves import range
 
 # Contains path to sciKitLearn root directory
@@ -568,6 +568,6 @@ class SciKitLearn(UniversalInterface):
         elif not hasattr(namedModule, name):
             return None
         else:
-            (args, v, k, d) = _parseSignature(getattr(namedModule, name))
+            (args, v, k, d) = inspectArguments(getattr(namedModule, name))
             (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
             return (args, d)
