@@ -1103,6 +1103,18 @@ class HighLevelDataSafe(DataTestObject):
         assert unique['a'] == 1
         assert unique['c'] == 1
 
+    def test_countEachUniqueValue_limitPointsAndFeatures_cornercase(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
+
+        unique = toTest.countEachUniqueValue(features=[0,'f3'], points=[0,'p3'])
+
+        assert len(unique) == 2
+        assert unique[1] == 2
+        assert unique[3] == 2
+
 class HighLevelModifying(DataTestObject):
     ##############################
     # dropFeaturesContainingType #
