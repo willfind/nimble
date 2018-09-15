@@ -618,6 +618,20 @@ class Matrix(Base):
         self._pointCount = pCount
         self.setPointNames(pointNames)
 
+    def _fill_implementation(self, axis, filler, match):
+        fillArray = numpy.array(filler)
+        if axis == 'feature':
+            fillArray = fillArray.T
+        try:
+            self.data[match(self.data)] = fillArray[match(self.data)]
+        except ValueError:
+            # match is checking presence in a list
+            mask = []
+            for point in self.pointIterator():
+                mask.append([match(v) for v in point])
+            maskArray = numpy.array(mask)
+            self.data[maskArray] = fillArray[maskArray]
+
     def _flattenToOnePoint_implementation(self):
         numElements = self.points * self.features
         self.data = self.data.reshape((1, numElements), order='C')

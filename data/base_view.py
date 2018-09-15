@@ -169,7 +169,7 @@ class BaseView(Base):
         CopyObj._nextDefaultValueFeature = self._source._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._source._nextDefaultValuePoint
 
-        if self.points != self._source.points:
+        if self.points != self._source.points and self._pointNamesCreated():
             if self._pStart != 0:
                 CopyObj.pointNames = {}
                 for idx, name in enumerate(CopyObj.pointNamesInverse):
@@ -178,7 +178,7 @@ class BaseView(Base):
                 for name in self._source.pointNamesInverse[self._pEnd:self._source.points + 1]:
                     del CopyObj.pointNames[name]
 
-        if self.features != self._source.features:
+        if self.features != self._source.features and self._featureNamesCreated():
             if self._fStart != 0:
                 CopyObj.featureNames = {}
                 for idx, name in enumerate(CopyObj.featureNamesInverse):

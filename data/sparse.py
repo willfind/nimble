@@ -1192,6 +1192,36 @@ class Sparse(Base):
             self._sorted = None#need to reset this, o.w. may fail in validate
             self.appendFeatures(toAppend)
 
+    def _fill_implementation(self, axis, filler, match):
+        preserveZeros = not match(0)
+        fillArray = numpy.array(filler)
+        if axis == 'feature':
+            fillArray = fillArray.T
+            locate = self.data.col
+        else:
+            locate = self.data.row
+        if preserveZeros:
+            for i, val in enumerate(self.data.data):
+                if match(val):
+                    row = self.data.row[i]
+                    col = self.data.col[i]
+                    self.data.data[i] = fillArray[row, col]
+        else:
+            dataArray = self.data.todense()
+            try:
+                dataArray[match(dataArray)] = fillArray[match(dataArray)]
+            except ValueError:
+                # match is checking presence in a list
+                mask = []
+                for point in self.pointIterator():
+                    mask.append([match(v) for v in point])
+                maskArray = numpy.array(mask)
+                dataArray[maskArray] = dataArray[maskArray]
+            returnShape = self.data.shape
+            self.data = coo_matrix(dataArray, returnShape)
+            self._sorted = None
+
+
     def _binarySearch(self, x, y):
             if self._sorted == 'point':
                 start, end = numpy.searchsorted(self.data.row, [x, x+1])#binary search

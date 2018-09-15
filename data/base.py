@@ -61,6 +61,7 @@ from UML.exceptions import ImproperActionException
 from UML.logger import produceFeaturewiseReport
 from UML.logger import produceAggregateReport
 from UML.randomness import pythonRandom
+from UML.match.match import convertMatchToFunction
 
 from . import dataHelpers
 
@@ -1527,13 +1528,13 @@ class Base(object):
 
         outputPath: the location (including file name and extension) where
             we want to write the output file.
-            
+
         If filename extension .umld is not included in file name it would
         be added to the output file.
-            
+
         Uses dill library to serialize it.
         """
-        
+
         extension = '.umld'
         if not outputPath.endswith(extension):
             outputPath = outputPath + extension
@@ -1543,7 +1544,7 @@ class Base(object):
                 cloudpickle.dump(self, file)
             except Exception as e:
                 raise(e)
-        # TODO: save session     
+        # TODO: save session
         # print('session_' + outputFilename)
         # print(globals())
         # dill.dump_session('session_' + outputFilename)
@@ -3347,6 +3348,44 @@ class Base(object):
             featuresList = [self.getFeatureName(i) for i in featuresList]
 
         self._handleMissingValues_implementation(method, featuresList, arguments, alsoTreatAsMissing, markMissing)
+
+
+    def fillUsingPoints(self, match, fill, arguments=None):
+        """
+        """
+        self._genericFillFrontend('point', match, fill, arguments)
+
+    def fillUsingFeatures(self, match, fill, arguments=None):
+        """
+        """
+        self._genericFillFrontend('feature', match, fill,arguments)
+
+    def fill(self, match, fillType, basedOn='feature', arguments=None):
+        """
+        """
+        self._genericFillFrontend(basedOn, match, fillType, arguments)
+
+    def _genericFillFrontend(self, axis, match, fill, arguments):
+        self._validateAxis(axis)
+        if axis == 'point':
+            iterator = self.pointIterator
+        else:
+            iterator = self.featureIterator
+        match = convertMatchToFunction(match)
+        if not hasattr(fill, '__call__'):
+            fillConstant = fill
+            fill = lambda v, m: fillConstant
+        filler = []
+        if arguments is not None:
+            # user provides arguments for a UML fill function
+            for vector in iterator():
+                filler.append(fill(vector, match, arguments))
+        else:
+            for vector in iterator():
+                filler.append(fill(vector, match))
+        self._fill_implementation(axis, filler, match)
+
+        self.validate()
 
 
     def _flattenNames(self, discardAxis):

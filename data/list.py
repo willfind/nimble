@@ -698,6 +698,22 @@ class List(Base):
         self._pointCount = pCount
         self.setPointNames(pointNames)
 
+    def _fill_implementation(self, axis, filler, match):
+        fillArray = numpy.array(filler)
+        if axis == 'feature':
+            fillArray = fillArray.T
+        objArray = numpy.array(self.data)
+        try:
+            objArray[match(objArray)] = fillArray[match(objArray)]
+        except ValueError:
+            # match is checking presence in a list
+            mask = []
+            for point in self.pointIterator():
+                mask.append([match(v) for v in point])
+            maskArray = numpy.array(mask)
+            objArray[maskArray] = fillArray[maskArray]
+        self.data = objArray.tolist()
+
     def _flattenToOnePoint_implementation(self):
         onto = self.data[0]
         for i in range(1,self.points):

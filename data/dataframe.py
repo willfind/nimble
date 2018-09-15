@@ -611,6 +611,20 @@ class DataFrame(Base):
         self._updateName('point')
         self._updateName('feature')
 
+    def _fill_implementation(self, axis, filler, match):
+        fillDF = pd.DataFrame(filler)
+        if axis == 'feature':
+            fillDF = fillDF.T
+        try:
+            self.data[match(self.data)] = fillDF[match(self.data)]
+        except ValueError:
+            # match is checking presence in a list
+            mask = []
+            for point in self.pointIterator():
+                mask.append([match(v) for v in point])
+            maskDF = pd.DataFrame(mask)
+            self.data[maskDF] = fillDF[maskDF]
+
     def _flattenToOnePoint_implementation(self):
         numElements = self.points * self.features
         self.data = pd.DataFrame(self.data.values.reshape((1, numElements), order='C'))
