@@ -45,10 +45,16 @@ def anyAllValuesBackend(anyOrAll, matrix, func):
         # 1D matrix
         return test([func(val) for val in matrix])
     except ArgumentException:
-        for i in range(matrix.features):
-            if test([func(val) for val in matrix[:, i]]):
-                return True
-        return False
+        if anyOrAll == 'any':
+            for i in range(matrix.features):
+                if test([func(val) for val in matrix[:, i]]):
+                    return True
+            return False
+        else:
+            for i in range(matrix.features):
+                if not test([func(val) for val in matrix[:, i]]):
+                    return False
+            return True
 
 def anyValuesMissing(matrix):
     return anyAllValuesBackend('any', matrix, missing)
