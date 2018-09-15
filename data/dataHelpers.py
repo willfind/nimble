@@ -8,12 +8,14 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 import math
-import string
+import inspect
 
 from abc import ABCMeta
 from abc import abstractmethod
 import six
 from six.moves import range
+
+from UML.exceptions import ArgumentException
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -162,7 +164,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         return ret
 
     (retPNames, retFNames) = (None, None)
-        
+
     if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
         retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
     elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
@@ -180,7 +182,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
         retFNames = otherSource.featureNames
     else:
         retFNames = None
-        
+
     return (retPNames, retFNames)
 
 
@@ -210,7 +212,6 @@ def reorderToMatchList(dataObject, matchList, axis):
         indexGetter = lambda x: dataObject.getFeatureIndex(x.getFeatureName(0))
 
     def scorer(viewObj):
-        x = viewObj.getPointName(0)
         index = indexGetter(viewObj)
         return mappedOrig[sortedList[index]]
 
@@ -408,3 +409,21 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
         # modify the width associated with the colHold
         if removalWidths is not None:
             removalWidths[removeIndex] = len(colHold)
+
+
+def inheritDocstringsFactory(toInherit):
+    """
+    Factory to make decorator to copy docstrings from toInherit for reimplementations
+    in the wrapped object. Only those functions without docstrings will be given the
+    corresponding docstrings from toInherit.
+    """
+    def inheritDocstring(cls):
+        writable = cls.__dict__
+        for name in writable:
+            if inspect.isfunction(writable[name]) and hasattr(toInherit, name):
+                func = writable[name]
+                if not func.__doc__:
+                    func.__doc__ = getattr(toInherit, name).__doc__
+
+        return cls
+    return inheritDocstring

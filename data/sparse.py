@@ -24,7 +24,7 @@ import UML.data
 from . import dataHelpers
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .dataHelpers import View
+from .dataHelpers import inheritDocstringsFactory
 
 from UML.exceptions import ImproperActionException
 from UML.exceptions import PackageException
@@ -32,6 +32,7 @@ from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')
 import warnings
 
+@inheritDocstringsFactory(Base)
 class Sparse(Base):
 
     def __init__(self, data, pointNames=None, featureNames=None, reuseData=False, elementType=None, **kwds):
@@ -80,7 +81,7 @@ class Sparse(Base):
     def pointIterator(self):
         self._sortInternal('point')
 
-        class pointIt():
+        class pointIt(object):
             def __init__(self, outer):
                 self._outer = outer
                 self._nextID = 0
@@ -132,7 +133,6 @@ class Sparse(Base):
                     raise StopIteration
                 if self._outer._sorted != "feature" or not self._stillSorted:
                 #					print "actually called"
-
                     self._stillSorted = False
                     value = self._outer.featureView(self._nextID)
                 else:
@@ -332,25 +332,33 @@ class Sparse(Base):
 
 
     def _structuralVectorized_implementation(self, structure, axis, targetList):
-        pnames = []
-        fnames = []
-        data = self.data
+        """
+        Make use of scipy csr or csc matrices for indexing targeted values
+
+        """
+        axisNames = []
         if axis == 'point':
-            for index in targetList:
-                pnames.append(self.getPointName(index))
-            fnames = self.getFeatureNames()
-            notTarget = [idx for idx in range(self.points) if idx not in targetList]
-            data = data.tocsr()
+            getAxisName = self.getPointName
+            getOtherNames = self.getFeatureNames
+            data = self.data.tocsr()
             targeted = data[targetList, :]
-            notTargeted = data[notTarget, :]
+            if structure != 'copy':
+                notTarget = [idx for idx in range(self.points) if idx not in targetList]
+                notTargeted = data[notTarget, :]
         else:
-            pnames = self.getPointNames()
-            for index in targetList:
-                fnames.append(self.getFeatureName(index))
-            notTarget = [idx for idx in range(self.features) if idx not in targetList]
-            data = data.tocsc()
+            getAxisName = self.getFeatureName
+            getOtherNames = self.getPointNames
+            data = self.data.tocsc()
             targeted = data[:, targetList]
-            notTargeted = data[:, notTarget]
+            if structure != 'copy':
+                notTarget = [idx for idx in range(self.features) if idx not in targetList]
+                notTargeted = data[:, notTarget]
+
+        self._validateAxis(axis)
+
+        for index in targetList:
+            axisNames.append(getAxisName(index))
+        otherNames = getOtherNames()
 
         if structure != 'copy':
             self.data = notTargeted.tocoo()
@@ -358,16 +366,23 @@ class Sparse(Base):
 
         ret = targeted.tocoo()
 
-        return Sparse(ret, pointNames=pnames, featureNames=fnames, reuseData=True)
+        if axis == 'point':
+            return Sparse(ret, pointNames=axisNames, featureNames=otherNames, reuseData=True)
+        else:
+            return Sparse(ret, pointNames=otherNames, featureNames=axisNames, reuseData=True)
 
 
     def _structuralIterative_implementation(self, structure, axis, targetList):
+        """
+        Iterate through each point in the object to index targeted values
+
+        """
         dtype = numpy.object_
         if axis == 'point':
-            viewIterator = self.copy().pointIterator
+            viewIterator = self.pointIterator
             targetCount = self.points
         else:
-            viewIterator = self.copy().featureIterator
+            viewIterator = self.featureIterator
             targetCount = self.features
 
         targetLength = len(targetList)
@@ -643,6 +658,42 @@ class Sparse(Base):
             return self.data.tocsc()
         if format == 'scipycsr':
             return self.data.tocsr()
+
+
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        if not isinstance(self, BaseView):
+            data = self.data.data
+            row = self.data.row
+            col = self.data.col
+        else:
+            # initiate generic implementation for view types
+            preserveZeros = False
+        # all data
+        if preserveZeros and points is None and features is None:
+            data = function(data)
+            values = coo_matrix((data, (row, col)), shape=self.data.shape)
+            # note: even if function transforms nonzero values into zeros
+            # our init methods will filter them out from the data attribute
+            return UML.createData(outputType, values)
+        # subset of data
+        if preserveZeros:
+            dataSubset = []
+            rowSubset = []
+            colSubset = []
+            for idx in range(len(data)):
+                if row[idx] in points and col[idx] in features:
+                    rowSubset.append(row[idx])
+                    colSubset.append(col[idx])
+                    dataSubset.append(data[idx])
+            dataSubset = function(dataSubset)
+            values = coo_matrix((dataSubset, (rowSubset, colSubset)))
+            # note: even if function transforms nonzero values into zeros
+            # our init methods will filter them out from the data attribute
+            return UML.createData(outputType, values)
+        # zeros not preserved
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
 
 
     def _transformEachPoint_implementation(self, function, points):
@@ -1264,6 +1315,8 @@ class Sparse(Base):
                 tmpBool = all([i != 0 for i in self.data.data])
             assert tmpBool
 
+            assert self.data.dtype.type is not numpy.string_
+
             if self._sorted == 'point':
                 assert all(self.data.row[:-1] <= self.data.row[1:])
 
@@ -1546,15 +1599,18 @@ def _sortInternal_coo_matrix(obj, sortAs):
 
     sortKeys = numpy.lexsort((sortOff, sortPrime))
 
-    newData = obj.data[sortKeys]
-    newRow = obj.row[sortKeys]
-    newCol = obj.col[sortKeys]
+    obj.data = obj.data[sortKeys]
+    obj.row = obj.row[sortKeys]
+    obj.col = obj.col[sortKeys]
 
-    n = len(newData)
-    obj.data[:n] = newData
-    obj.row[:n] = newRow
-    obj.col[:n] = newCol
-
+    # newData = obj.data[sortKeys]
+    # newRow = obj.row[sortKeys]
+    # newCol = obj.col[sortKeys]
+    #
+    # n = len(newData)
+    # obj.data[:n] = newData
+    # obj.row[:n] = newRow
+    # obj.col[:n] = newCol
 
 def _numLessThan(value, toCheck): # TODO caching
     ltCount = 0

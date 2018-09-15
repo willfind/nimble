@@ -13,7 +13,7 @@ import itertools
 import UML
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .dataHelpers import View
+from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import reorderToMatchList
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
@@ -40,6 +40,7 @@ def isAllowedSingleElement(x):
 
     return
 
+@inheritDocstringsFactory(Base)
 class List(Base):
     """
     Class providing implementations of data manipulation operations on data stored
@@ -171,7 +172,7 @@ class List(Base):
             names = self.getFeatureNames()
 
         if isinstance(sortHelper, list):
-            sortData = numpy.array(self.data)
+            sortData = numpy.array(self.data, dtype=numpy.object_)
             if axis == 'point':
                 sortData = sortData[sortHelper, :]
             else:
@@ -474,6 +475,13 @@ class List(Base):
                 msg = "scipy is not available"
                 raise PackageException(msg)
             return scipy.sparse.csr_matrix(numpy.array(self.data))
+
+
+
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
 
 
     def _transformEachPoint_implementation(self, function, points):

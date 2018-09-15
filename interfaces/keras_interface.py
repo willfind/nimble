@@ -18,6 +18,7 @@ import UML
 from UML.exceptions import ArgumentException
 from UML.interfaces.interface_helpers import PythonSearcher
 from UML.interfaces.interface_helpers import collectAttributes
+from UML.helpers import inspectArguments
 from six.moves import range
 
 # Contains path to keras root directory
@@ -571,7 +572,7 @@ class Keras(UniversalInterface):
             return ([], None, None, None)
 
         try:
-            (args, v, k, d) = inspect.getargspec(namedModule)
+            (args, v, k, d) = inspectArguments(namedModule)
             (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
             if 'random_state' in args:
                 index = args.index('random_state')
@@ -580,7 +581,7 @@ class Keras(UniversalInterface):
             return (args, v, k, d)
         except TypeError:
             try:
-                (args, v, k, d) = inspect.getargspec(namedModule.__init__)
+                (args, v, k, d) = inspectArguments(namedModule.__init__)
                 (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
                 if 'random_state' in args:
                     index = args.index('random_state')

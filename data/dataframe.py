@@ -21,8 +21,9 @@ import copy
 import re
 from .base_view import BaseView
 from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import inheritDocstringsFactory
 
-
+@inheritDocstringsFactory(Base)
 class DataFrame(Base):
     """
     Class providing implementations of data manipulation operations on data stored
@@ -364,6 +365,13 @@ class DataFrame(Base):
             return scipy.sparse.csr_matrix(dataArray)
 
         return UML.createData('DataFrame', dataArray)
+
+
+    def _calculateForEachElement_implementation(self, function, points, features,
+                                                preserveZeros, outputType):
+        return self._calculateForEachElementGenericVectorized(
+               function, points, features, outputType)
+
 
     def _transformEachPoint_implementation(self, function, points):
         """
