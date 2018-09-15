@@ -93,6 +93,8 @@ def valuesToPythonList(values, argName):
     string, or an iterable container object
 
     """
+    if isinstance(values, list):
+        return values
     if isinstance(values, (int, numpy.integer, six.string_types)):
         return [values]
     valuesList = []
@@ -845,21 +847,22 @@ class Base(object):
         points: May be None indicating application to all points, a single
         identifier or iterable, list-like object of identifiers.
 
-        features: May be None indicating application to all features, a single 
+        features: May be None indicating application to all features, a single
         identifier or iterable, list-like object of identifiers.
 
         """
-        toCount = self.view()
-        if points is not None:
-            toCount = toCount[points,:]
-        if features is not None:
-            toCount = toCount[:, features]
-
         uniqueCount = {}
-        for point in toCount.pointIterator():
-            for val in point:
-                uniqueCount[val] = uniqueCount.get(val, 0)
-                uniqueCount[val] += 1
+        if points is None:
+            points = [i for i in range(self.points)]
+        if features is None:
+            features = [i for i in range(self.features)]
+        points = valuesToPythonList(points, 'points')
+        features = valuesToPythonList(features, 'features')
+        for i in points:
+            for j in features:
+                val = self[i, j]
+                temp = uniqueCount.get(val,0)
+                uniqueCount[val] = temp + 1
 
         return uniqueCount
 
@@ -1545,13 +1548,13 @@ class Base(object):
 
         outputPath: the location (including file name and extension) where
             we want to write the output file.
-            
+
         If filename extension .umld is not included in file name it would
         be added to the output file.
-            
+
         Uses dill library to serialize it.
         """
-        
+
         extension = '.umld'
         if not outputPath.endswith(extension):
             outputPath = outputPath + extension
@@ -1561,7 +1564,7 @@ class Base(object):
                 cloudpickle.dump(self, file)
             except Exception as e:
                 raise(e)
-        # TODO: save session     
+        # TODO: save session
         # print('session_' + outputFilename)
         # print(globals())
         # dill.dump_session('session_' + outputFilename)
