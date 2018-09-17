@@ -559,7 +559,6 @@ generators = {'appendFeatures': [genObjMatchPoints],
               'extractFeatures': [genFIDList, None, None, genFNumLim, genBool],
               #TODO!!!! first arg can also be function!!!!
               'extractPoints': [genPIDList, None, None, genPNumLim, genBool],
-              'extractPointsByCoinToss': [genProb],
               'featureView': [genFID],
               'hashCode': [],
               'isApproximatelyEqual': [genObj],

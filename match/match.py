@@ -45,6 +45,7 @@ def anyAllValuesBackend(anyOrAll, matrix, func):
         # 1D matrix
         return test([func(val) for val in matrix])
     except ArgumentException:
+        # 2D matrix
         if anyOrAll == 'any':
             for i in range(matrix.features):
                 if test([func(val) for val in matrix[:, i]]):
@@ -55,6 +56,30 @@ def anyAllValuesBackend(anyOrAll, matrix, func):
                 if not test([func(val) for val in matrix[:, i]]):
                     return False
             return True
+
+def convertMatchToFunction(match):
+    if not hasattr(match, '__call__'):
+        if ((hasattr(match, '__iter__') or
+           hasattr(match, '__getitem__')) and
+           not isinstance(match, six.string_types)):
+            matchList = match
+            match = lambda x: x in matchList
+        else:
+            matchConstant = match
+            match = lambda x: x == matchConstant
+    return match
+
+def anyValues(match):
+    match = convertMatchToFunction(match)
+    def anyValueFinder(matrix):
+        return anyAllValuesBackend('any', matrix, match)
+    return anyValueFinder
+
+def allValues(match):
+    match = convertMatchToFunction(match)
+    def allValueFinder(matrix):
+        return anyAllValuesBackend('all', matrix, match)
+    return allValueFinder
 
 def anyValuesMissing(matrix):
     return anyAllValuesBackend('any', matrix, missing)
@@ -97,27 +122,3 @@ def anyValuesNegative(matrix):
 
 def allValuesNegative(matrix):
     return anyAllValuesBackend('all', matrix, negative)
-
-def convertMatchToFunction(match):
-    if not hasattr(match, '__call__'):
-        if ((hasattr(match, '__iter__') or
-           hasattr(match, '__getitem__')) and
-           not isinstance(match, six.string_types)):
-            matchList = match
-            match = lambda x: x in matchList
-        else:
-            matchConstant = match
-            match = lambda x: x == matchConstant
-    return match
-
-def anyValues(match):
-    match = convertMatchToFunction(match)
-    def anyValueFinder(matrix):
-        return anyAllValuesBackend('any', matrix, match)
-    return anyValueFinder
-
-def allValues(match):
-    match = convertMatchToFunction(match)
-    def allValueFinder(matrix):
-        return anyAllValuesBackend('all', matrix, match)
-    return allValueFinder

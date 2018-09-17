@@ -1,27 +1,24 @@
 import UML
 import numpy
 
+from UML.match import convertMatchToFunction
 from UML.exceptions import ArgumentException
 
-# def mean(match):
-#     def meanCalc(vector):
-#         unmatched = UML.createData('List', [val for val in vector if not match(val)])
-#         if len(vector) == 0:
-#             msg = 'Cannot calculate mean'
-#             raise ArgumentException(msg)
-#         mean = UML.calculate.mean(unmatched)
-#         return [mean if match(val) else val for val in vector]
-#     return meanCalc
-
-def sortByMatch(vector, match):
-    matched = []
-    unmatched = []
-    for i, val in enumerate(vector):
-        if match(val):
-            matched.append(i)
-        else:
-            unmatched.append(i)
-    return matched, unmatched
+def factory(match, fill, arguments=None):
+    if not hasattr(match, '__call__'):
+        match = convertMatchToFunction(match)
+    if not hasattr(fill, '__call__'):
+        fillConstant = fill
+        if fillConstant is None:
+            fillConstant = numpy.nan
+        fill = lambda v, m: [fillConstant if m(val) else val for val in v]
+    if arguments is None:
+        def fillFunction(vector):
+            return fill(vector, match)
+    else:
+        def fillFunction(vector):
+            return fill(vector, match, arguments)
+    return fillFunction
 
 def mean(vector, match):
     unmatched = UML.createData('List', [val for val in vector if not match(val)])

@@ -49,6 +49,7 @@ import operator
 from multiprocessing import Process
 
 import UML
+from UML import fill
 
 pd = UML.importModule('pandas')
 
@@ -578,31 +579,6 @@ class Base(object):
         converted.setFeatureName(0, toConvert.getFeatureName(0))
 
         self.appendFeatures(converted)
-
-    def extractPointsByCoinToss(self, extractionProbability):
-        """
-        Return a new object containing a randomly selected sample of points
-        from this object, where a random experiment is performed for each
-        point, with the chance of selection equal to the extractionProbabilty
-        parameter. Those selected values are also removed from this object.
-
-        """
-        #		if self.points == 0:
-        #			raise ImproperActionException("Cannot extract points from an object with 0 points")
-
-        if extractionProbability is None:
-            raise ArgumentException("Must provide a extractionProbability")
-        if extractionProbability <= 0:
-            raise ArgumentException("extractionProbability must be greater than zero")
-        if extractionProbability >= 1:
-            raise ArgumentException("extractionProbability must be less than one")
-
-        def experiment(point):
-            return bool(pythonRandom.random() < extractionProbability)
-
-        ret = self.extractPoints(experiment)
-
-        return ret
 
 
     def calculateForEachPoint(self, function, points=None):
@@ -3170,9 +3146,9 @@ class Base(object):
         if points is not None:
             points = self._constructIndicesList('point', points)
 
-        self.validate()
-
         self._transformEachPoint_implementation(function, points)
+
+        self.validate()
 
 
     def transformEachFeature(self, function, features=None):
@@ -3196,9 +3172,9 @@ class Base(object):
         if features is not None:
             features = self._constructIndicesList('feature', features)
 
-        self.validate()
-
         self._transformEachFeature_implementation(function, features)
+
+        self.validate()
 
 
     def transformEachElement(self, toTransform, points=None, features=None, preserveZeros=False,
@@ -3301,92 +3277,25 @@ class Base(object):
         self.validate()
 
 
-    def handleMissingValues(self, method='remove points', features=None, arguments=None,
-                            alsoTreatAsMissing=[], markMissing=False):
-        """
-        This function is to remove, replace or impute missing values in an UML
-        container data object.
-
-        method - a string in the form of one of the following:
-        'remove points', 'remove features', 'feature mean', 'feature median',
-        'feature mode', 'zero', 'constant', 'forward fill', 'backward fill',
-        'interpolate'
-
-        features - can be None to indicate all features, a single feature
-        identifier (name or index) or an iterable, list-like container of
-        feature identifiers. In this function, only those features in the input
-        'features' will be processed.
-
-        arguments - for some kind of methods, we need to setup arguments.
-        for method = 'remove points', 'remove features', arguments can be 'all'
-        or 'any' etc.
-        for method = 'constant', arguments must be a value
-        for method = 'interpolate', arguments can be a dict which stores inputs
-        for numpy.interp
-
-        alsoTreatAsMissing - a list. In this function, numpy.NaN and None are
-        always treated as missing. You can add extra values which should be
-        treated as missing values too, in alsoTreatAsMissing.
-
-        markMissing - True or False. If it is True, then extra columns for those
-        features will be added, in which 0 (False) or 1 (True) will be filled to
-        indicate if the value in a cell is originally missing or not.
-
-        """
-        #convert features to a list of index
-        if features is not None:
-            featuresList = self._constructIndicesList('feature', features)
-        else:
-            featuresList = list(range(self._getfeatureCount()))
-
-        #convert single value alsoTreatAsMissing to a list
-        if not hasattr(alsoTreatAsMissing, '__len__') or isinstance(alsoTreatAsMissing, six.string_types):
-            alsoTreatAsMissing = [alsoTreatAsMissing]
-
-        if isinstance(self, UML.data.DataFrame):
-            #for DataFrame, pass column names instead of indices
-            featuresList = [self.getFeatureName(i) for i in featuresList]
-
-        self._handleMissingValues_implementation(method, featuresList, arguments, alsoTreatAsMissing, markMissing)
-
-
-    def fillUsingPoints(self, match, fill, arguments=None):
+    def fillUsingPoints(self, match, fill, arguments=None, points=None):
         """
         """
-        self._genericFillFrontend('point', match, fill, arguments)
-
-    def fillUsingFeatures(self, match, fill, arguments=None):
-        """
-        """
-        self._genericFillFrontend('feature', match, fill,arguments)
-
-    def fill(self, match, fillType, basedOn='feature', arguments=None):
-        """
-        """
-        self._genericFillFrontend(basedOn, match, fillType, arguments)
-
-    def _genericFillFrontend(self, axis, match, fill, arguments):
-        self._validateAxis(axis)
-        if axis == 'point':
-            iterator = self.pointIterator
-        else:
-            iterator = self.featureIterator
-        match = convertMatchToFunction(match)
-        if not hasattr(fill, '__call__'):
-            fillConstant = fill
-            fill = lambda v, m: fillConstant
-        filler = []
-        if arguments is not None:
-            # user provides arguments for a UML fill function
-            for vector in iterator():
-                filler.append(fill(vector, match, arguments))
-        else:
-            for vector in iterator():
-                filler.append(fill(vector, match))
-        self._fill_implementation(axis, filler, match)
-
+        self._genericFillFrontend('point', match, fill, arguments, points, None)
         self.validate()
 
+    def fillUsingFeatures(self, match, fill, arguments=None, features=None):
+        """
+        """
+        self._genericFillFrontend('feature', match, fill, arguments, None, features)
+        self.validate()
+
+    def _genericFillFrontend(self, axis, toMatch, toFill, arguments, points, features):
+        self._validateAxis(axis)
+        toTransform = fill.factory(toMatch, toFill, arguments)
+        if axis == 'point':
+            self.transformEachPoint(toTransform, points)
+        else:
+            self.transformEachFeature(toTransform, features)
 
     def _flattenNames(self, discardAxis):
         """

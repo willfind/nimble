@@ -53,8 +53,8 @@ def test_match_negative():
     false = positiveTypes + zeroTypes + stringTypes + missingTypes
     backend_match_value(match.negative, true, false)
 
-def backend_match_anyAll(func, data):
-    any = func.__name__[:3] == 'any'
+def backend_match_anyAll(anyOrAll, func, data):
+    any = anyOrAll == 'any'
     data = numpy.array(data, dtype=numpy.object_)
     for t in UML.data.available:
         toTest = UML.createData(t, data)
@@ -91,105 +91,105 @@ def backend_match_anyAll(func, data):
 def test_match_anyValuesMissing():
     fill = numpy.nan
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll(match.anyValuesMissing, data)
+    backend_match_anyAll('any', match.anyValuesMissing, data)
 
 def test_match_allValuesMissing():
     fill = numpy.nan
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll(match.allValuesMissing, data)
+    backend_match_anyAll('all', match.allValuesMissing, data)
 
 def test_match_anyValuesNumeric():
     fill = 3
     data = [['a','b',fill], ['c','d',fill], ['e',fill,fill]]
-    backend_match_anyAll(match.anyValuesNumeric, data)
+    backend_match_anyAll('any', match.anyValuesNumeric, data)
 
 def test_match_allValuesNumeric():
     fill = -3.0
     data = [['a','b',fill], ['c','d',fill], ['e',fill,fill]]
-    backend_match_anyAll(match.allValuesNumeric, data)
+    backend_match_anyAll('all', match.allValuesNumeric, data)
 
 def test_match_anyValuesNonNumeric():
     fill = 'n/a'
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll(match.anyValuesNonNumeric, data)
+    backend_match_anyAll('any', match.anyValuesNonNumeric, data)
 
 def test_match_allValuesNonNumeric():
     fill = 'missing'
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll(match.allValuesNonNumeric, data)
+    backend_match_anyAll('all', match.allValuesNonNumeric, data)
 
 def test_match_anyValuesZero():
     fill = 0
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll(match.anyValuesZero, data)
+    backend_match_anyAll('any', match.anyValuesZero, data)
 
 def test_match_allValuesZero():
     fill = 0.0
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll(match.allValuesZero, data)
+    backend_match_anyAll('all', match.allValuesZero, data)
 
 def test_match_anyValuesNonZero():
     fill = 1
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.anyValuesNonZero, data)
+    backend_match_anyAll('any', match.anyValuesNonZero, data)
 
 def test_match_allValuesNonZero():
     fill = 'a'
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.allValuesNonZero, data)
+    backend_match_anyAll('all', match.allValuesNonZero, data)
 
 def test_match_anyValuesPositive():
     fill = 1
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.anyValuesPositive, data)
+    backend_match_anyAll('any', match.anyValuesPositive, data)
 
 def test_match_allValuesPositive():
     fill = 2.4
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.allValuesPositive, data)
+    backend_match_anyAll('all', match.allValuesPositive, data)
 
 def test_match_anyValuesNegative():
     fill = -1
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.allValuesNegative, data)
+    backend_match_anyAll('any', match.anyValuesNegative, data)
 
 def test_match_allValuesNegative():
     fill = -2.4
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.allValuesNegative, data)
+    backend_match_anyAll('all', match.allValuesNegative, data)
 
 def test_match_anyValues_int():
     fill = 3
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.anyValues(fill), data)
+    backend_match_anyAll('any', match.anyValues(fill), data)
 
 def test_match_allValues_int():
     fill = 3
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.allValues(fill), data)
+    backend_match_anyAll('all', match.allValues(fill), data)
 
 def test_match_anyValues_str():
     fill = 'a'
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.anyValues(fill), data)
+    backend_match_anyAll('any', match.anyValues(fill), data)
 
 def test_match_allValues_str():
     fill = 'a'
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll(match.allValues(fill), data)
+    backend_match_anyAll('all', match.allValues(fill), data)
 
 def test_match_anyValues_list():
     data = [[0,0,1], [0,0,2], [0,'a','a']]
-    backend_match_anyAll(match.anyValues([1, 2, 'a']), data)
+    backend_match_anyAll('any', match.anyValues([1, 2, 'a']), data)
 
 def test_match_allValues_list():
     data = [[0,0,1], [0,0,2], [0,'a','a']]
-    backend_match_anyAll(match.allValues([1, 2, 'a']), data)
+    backend_match_anyAll('all', match.allValues([1, 2, 'a']), data)
 
 def test_match_anyValues_func():
     data = [[0,0,1], [0,0,2], [0,3,3]]
-    backend_match_anyAll(match.anyValues(lambda x: x > 0), data)
+    backend_match_anyAll('any', match.anyValues(lambda x: x > 0), data)
 
 def test_match_allValues_func():
     data = [[0,0,1], [0,0,2], [0,3,3]]
-    backend_match_anyAll(match.allValues(lambda x: x > 0), data)
+    backend_match_anyAll('all', match.allValues(lambda x: x > 0), data)

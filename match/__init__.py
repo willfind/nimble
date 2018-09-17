@@ -4,6 +4,7 @@ TODO
 
 from __future__ import absolute_import
 
+from .match import convertMatchToFunction
 from .match import missing
 from .match import numeric
 from .match import nonNumeric

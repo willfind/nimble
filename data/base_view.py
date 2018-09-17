@@ -257,10 +257,6 @@ class BaseView(Base):
         self._readOnlyException("transformFeatureToIntegers")
 
     @exception_docstring
-    def extractPointsByCoinToss(self, extractionProbability):
-        self._readOnlyException("extractPointsByCoinToss")
-
-    @exception_docstring
     def shufflePoints(self):
         self._readOnlyException("shufflePoints")
 
@@ -361,10 +357,6 @@ class BaseView(Base):
     @exception_docstring
     def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd):
         self._readOnlyException("fillWith")
-
-    @exception_docstring
-    def handleMissingValues(self, method='remove points', features=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
-        self._readOnlyException("handleMissingValues")
 
     @exception_docstring
     def flattenToOnePoint(self):
