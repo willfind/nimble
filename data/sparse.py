@@ -722,6 +722,14 @@ class Sparse(Base):
                 currOut = list(view)
             else:
                 currOut = function(view)
+                # currRet might return an ArgumentException with a message which needs to be
+                # formatted with the axis and current index before being raised
+                if isinstance(currOut, ArgumentException):
+                    currOut.value = currOut.value.format(axis, viewID)
+                    raise currOut
+                elif not isinstance(currOut, list):
+                    # output can be view object, need to convert
+                    currOut = list(currOut)
 
             # easy way to reuse code if we have a singular return
             if not hasattr(currOut, '__iter__'):

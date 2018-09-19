@@ -5,11 +5,12 @@ import UML
 from UML import match
 
 
-def backend_match_value(func, true, false):
+def backend_match_value(toMatch, true, false):
+    """backend for match functions that accept a value"""
     for t in true:
-        assert func(t)
+        assert toMatch(t)
     for f in false:
-        assert not func(f)
+        assert not toMatch(f)
 
 missingTypes = [None, float('nan'), numpy.nan]
 stringTypes = ['a', str(1)]
@@ -54,12 +55,12 @@ def test_match_negative():
     backend_match_value(match.negative, true, false)
 
 def backend_match_anyAll(anyOrAll, func, data):
-    any = anyOrAll == 'any'
+    """backend for match functions accepting 1D and 2D data and testing for any or all"""
     data = numpy.array(data, dtype=numpy.object_)
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         # test whole matrix
-        if any:
+        if anyOrAll == 'any':
             assert func(toTest)
         else:
             allMatching = toTest[:,2]
@@ -67,96 +68,102 @@ def backend_match_anyAll(anyOrAll, func, data):
             assert func(allMatching)
         # test by feature
         for i, feature in enumerate(toTest.featureIterator()):
+            # index 0 never contains any matching values
             if i == 0:
                 assert not func(feature)
-            elif i == 1 and any:
+            # index 1 contains matching value, but not all matching
+            elif i == 1 and anyOrAll == 'any':
                 assert func(feature)
             elif i == 1:
                 assert not func(feature)
+            # index 2 contains all matching values
             else:
                 assert func(feature)
         # test by point
         toTest = UML.createData(t, data.T)
         for i, point in enumerate(toTest.pointIterator()):
+            # index 0 never contains any matching values
             if i == 0:
                 assert not func(point)
-            elif i == 1 and any:
+            # index 1 contains matching value, but not all matching
+            elif i == 1 and anyOrAll == 'any':
                 assert func(point)
             elif i == 1:
                 assert not func(point)
+            # index 2 contains all matching values
             else:
                 assert func(point)
 
 
-def test_match_anyValuesMissing():
+def test_match_anyMissing():
     fill = numpy.nan
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll('any', match.anyValuesMissing, data)
+    backend_match_anyAll('any', match.anyMissing, data)
 
-def test_match_allValuesMissing():
+def test_match_allMissing():
     fill = numpy.nan
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll('all', match.allValuesMissing, data)
+    backend_match_anyAll('all', match.allMissing, data)
 
-def test_match_anyValuesNumeric():
+def test_match_anyNumeric():
     fill = 3
     data = [['a','b',fill], ['c','d',fill], ['e',fill,fill]]
-    backend_match_anyAll('any', match.anyValuesNumeric, data)
+    backend_match_anyAll('any', match.anyNumeric, data)
 
-def test_match_allValuesNumeric():
+def test_match_allNumeric():
     fill = -3.0
     data = [['a','b',fill], ['c','d',fill], ['e',fill,fill]]
-    backend_match_anyAll('all', match.allValuesNumeric, data)
+    backend_match_anyAll('all', match.allNumeric, data)
 
-def test_match_anyValuesNonNumeric():
+def test_match_anyNonNumeric():
     fill = 'n/a'
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll('any', match.anyValuesNonNumeric, data)
+    backend_match_anyAll('any', match.anyNonNumeric, data)
 
-def test_match_allValuesNonNumeric():
+def test_match_allNonNumeric():
     fill = 'missing'
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll('all', match.allValuesNonNumeric, data)
+    backend_match_anyAll('all', match.allNonNumeric, data)
 
-def test_match_anyValuesZero():
+def test_match_anyZero():
     fill = 0
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll('any', match.anyValuesZero, data)
+    backend_match_anyAll('any', match.anyZero, data)
 
-def test_match_allValuesZero():
+def test_match_allZero():
     fill = 0.0
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
-    backend_match_anyAll('all', match.allValuesZero, data)
+    backend_match_anyAll('all', match.allZero, data)
 
-def test_match_anyValuesNonZero():
+def test_match_anyNonZero():
     fill = 1
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll('any', match.anyValuesNonZero, data)
+    backend_match_anyAll('any', match.anyNonZero, data)
 
-def test_match_allValuesNonZero():
+def test_match_allNonZero():
     fill = 'a'
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll('all', match.allValuesNonZero, data)
+    backend_match_anyAll('all', match.allNonZero, data)
 
-def test_match_anyValuesPositive():
+def test_match_anyPositive():
     fill = 1
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll('any', match.anyValuesPositive, data)
+    backend_match_anyAll('any', match.anyPositive, data)
 
-def test_match_allValuesPositive():
+def test_match_allPositive():
     fill = 2.4
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll('all', match.allValuesPositive, data)
+    backend_match_anyAll('all', match.allPositive, data)
 
-def test_match_anyValuesNegative():
+def test_match_anyNegative():
     fill = -1
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll('any', match.anyValuesNegative, data)
+    backend_match_anyAll('any', match.anyNegative, data)
 
-def test_match_allValuesNegative():
+def test_match_allNegative():
     fill = -2.4
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
-    backend_match_anyAll('all', match.allValuesNegative, data)
+    backend_match_anyAll('all', match.allNegative, data)
 
 def test_match_anyValues_int():
     fill = 3

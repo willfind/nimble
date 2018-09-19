@@ -406,6 +406,11 @@ class Matrix(Base):
             if points is not None and i not in points:
                 continue
             currRet = function(p)
+            # currRet might return an ArgumentException with a message which needs to be
+            # formatted with the axis and current index before being raised
+            if isinstance(currRet, ArgumentException):
+                currRet.value = currRet.value.format('point', i)
+                raise currRet
             if len(currRet) != self.features:
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
@@ -413,6 +418,9 @@ class Matrix(Base):
                 currRet = numpy.array(currRet, dtype=numpy.float)
             except ValueError:
                 currRet = numpy.array(currRet, dtype=numpy.object_)
+                # need self.data to be object dtype if inserting object dtype
+                if numpy.issubdtype(self.data.dtype, numpy.number):
+                    self.data = self.data.astype(numpy.object_)
             self.data[i, :] = numpy.array(currRet).reshape(1, self.features)
 
     def _transformEachFeature_implementation(self, function, features):
@@ -420,6 +428,11 @@ class Matrix(Base):
             if features is not None and j not in features:
                 continue
             currRet = function(f)
+            # currRet might return an ArgumentException with a message which needs to be
+            # formatted with the axis and current index before being raised
+            if isinstance(currRet, ArgumentException):
+                currRet.value = currRet.value.format('feature', j)
+                raise currRet
             if len(currRet) != self.points:
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
@@ -427,6 +440,9 @@ class Matrix(Base):
                 currRet = numpy.array(currRet, dtype=numpy.float)
             except ValueError:
                 currRet = numpy.array(currRet, dtype=numpy.object_)
+                # need self.data to be object dtype if inserting object dtype
+                if numpy.issubdtype(self.data.dtype, numpy.number):
+                    self.data = self.data.astype(numpy.object_)
             self.data[:, j] = numpy.array(currRet).reshape(self.points, 1)
 
     def _transformEachElement_implementation(self, toTransform, points, features, preserveZeros, skipNoneReturnValues):
@@ -474,7 +490,7 @@ class Matrix(Base):
 
         self.data[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
 
-    
+
     def _flattenToOnePoint_implementation(self):
         numElements = self.points * self.features
         self.data = self.data.reshape((1, numElements), order='C')

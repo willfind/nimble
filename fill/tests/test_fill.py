@@ -8,13 +8,55 @@ from UML import match
 from UML.exceptions import ArgumentException
 
 
-def test_fillFactory_matchConstant_fillConstant():
+def test_fillFactory_matchNumeric_fillNumeric():
     func = fill.factory(1, 0)
-    data = [1, 1, 1]
-    exp = [0, 0, 0]
+    data = [1, 1, 2]
+    exp = [0, 0, 2]
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         assert func(toTest) == exp
+
+def test_fillFactory_matchString_fillString():
+    func = fill.factory('a', 'b')
+    data = ['a', 'a', 'c']
+    exp = ['b', 'b', 'c']
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert func(toTest) == exp
+
+def test_fillFactory_matchString_fillNumeric():
+    func = fill.factory('a', 0)
+    data = ['a', 'a', 'c']
+    exp = [0, 0, 'c']
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert func(toTest) == exp
+
+def test_fillFactory_matchNumeric_fillString():
+    func = fill.factory(0, 'a')
+    data = [0, 0, 1]
+    exp = ['a', 'a', 1]
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert func(toTest) == exp
+
+def test_fillFactory_matchNumeric_fillNone():
+    func = fill.factory(1, None)
+    data = [1, 1, 0]
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert func(toTest)[0] != func(toTest)[0]
+        assert func(toTest)[1] != func(toTest)[1]
+        assert func(toTest)[2] == func(toTest)[2]
+
+def test_fillFactory_matchString_fillNone():
+    func = fill.factory('a', None)
+    data = ['a', 'a', 0]
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert func(toTest)[0] != func(toTest)[0]
+        assert func(toTest)[1] != func(toTest)[1]
+        assert func(toTest)[2] == func(toTest)[2]
 
 def test_fillFactory_matchList_fillConstant():
     func = fill.factory([1, 2], 0)
@@ -41,47 +83,85 @@ def test_fillFactory_matchFunction_fillFunction():
     exp = [1, 3, 5]
     assert func(data) == exp
 
+def test_constant_noMatches():
+    data = [1, 2, 2, 9]
+    match = lambda x: False
+    constant = 100
+    expected = [1, 2, 2, 9]
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert fill.constant(toTest, match, constant) == expected
+
+def test_constant_number_ignoreMatches():
+    data = [1, 2, 2, 9]
+    match = lambda x: x == 2
+    constant = 100
+    expected = [1, 100, 100, 9]
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert fill.constant(toTest, match, constant) == expected
+
+def test_constant_string_ignoreMatches():
+    data = [1, 2, 2, 9]
+    match = lambda x: x == 2
+    constant = ""
+    expected = [1, "", "", 9]
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert fill.constant(toTest, match, constant) == expected
+
+def test_constant_allMatches():
+    data = [1, 2, 2, 9]
+    match = lambda x: x in [1, 2, 9]
+    constant = 100
+    expected = [100, 100, 100, 100]
+    for t in UML.data.available:
+        toTest = UML.createData(t, data)
+        assert fill.constant(toTest, match, constant) == expected
+
 def backend_fill(func, data, match, expected=None):
+    "backend for fill functions that do not require additional arguments"
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         if expected:
-            assert func(toTest, match) == expected
+            # if no matches, the return may be a UML object otherwise a list
+            expObj = UML.createData(t, expected)
+            assert func(toTest, match) == expected or func(toTest, match) == expObj
+        # for ArgumentException
         else:
-            func(toTest, match)
+            assert isinstance(func(toTest, match), ArgumentException)
 
 def test_mean_noMatches():
-    data = [1, 2, 9]
+    data = [1, 2, 2, 9]
     match = lambda x: False
-    expected = [1, 2, 9]
+    expected = [1, 2, 2, 9]
     backend_fill(fill.mean, data, match, expected)
 
 def test_mean_ignoreMatch():
-    data = [1, 2, 9]
+    data = [1, 2, 2, 9]
     match = lambda x: x == 2
-    expected = [1, 5, 9]
+    expected = [1, 5, 5, 9]
     backend_fill(fill.mean, data, match, expected)
 
-@raises(ArgumentException)
 def test_mean_allMatches():
-    data = [1, 2, 9]
-    match = lambda x: x in [1, 2, 9]
+    data = [1, 2, 2, 9]
+    match = lambda x: x in [1, 2, 2, 9]
     backend_fill(fill.mean, data, match)
 
 def test_median_noMatches():
-    data = [1, 9, 2]
+    data = [1, 2, 9, 2]
     match = lambda x: False
-    expected = [1, 9, 2]
+    expected = [1, 2, 9, 2]
     backend_fill(fill.median, data, match, expected)
 
 def test_median_ignoreMatch():
-    data = [1, 9, 2]
+    data = [1, 2, 9, 2]
     match = lambda x: x == 2
-    expected = [1, 9, 5]
+    expected = [1, 5, 9, 5]
     backend_fill(fill.median, data, match, expected)
 
-@raises(ArgumentException)
 def test_median_allMatches():
-    data = [1, 2, 9]
+    data = [1, 2, 9, 2]
     match = lambda x: x in [1, 2, 9]
     backend_fill(fill.median, data, match)
 
@@ -97,69 +177,79 @@ def test_mode_ignoreMatch():
     expected = [1, 9, 9, 9, 9, 9]
     backend_fill(fill.mode, data, match, expected)
 
-@raises(ArgumentException)
 def test_mode_allMatches():
     data = [1, 2, 2, 9, 9]
     match = lambda x: x in [1, 2, 9]
     backend_fill(fill.mode, data, match)
 
 def test_forward_noMatches():
-    data = [1, 2, 3]
+    data = [1, 2, 3, 4]
     match = lambda x: False
     expected = data
     backend_fill(fill.forward, data, match, expected)
 
-
 def test_forward_withMatch():
-    data = [1, 2, 3]
+    data = [1, 2, 3, 4]
     match = lambda x: x == 2
-    expected = [1, 1, 3]
+    expected = [1, 1, 3, 4]
     backend_fill(fill.forward, data, match, expected)
 
-@raises(ArgumentException)
+def test_forward_consecutiveMatches():
+    data = [1, 2, 2, 2, 3, 4, 5]
+    match = lambda x: x == 2
+    expected = [1, 1, 1, 1, 3, 4, 5]
+    backend_fill(fill.forward, data, match, expected)
+
 def test_forward_InitialContainsMatch():
-    data = [1, 2, 3]
+    data = [1, 2, 3, 4]
     match = lambda x: x == 1
     backend_fill(fill.forward, data, match)
 
 def test_backward_noMatches():
-    data = [1, 2, 3]
+    data = [1, 2, 3, 4]
     match = lambda x: False
     expected = data
     backend_fill(fill.backward, data, match, expected)
 
 def test_backward_withMatch():
-    data = [1, 2, 3]
+    data = [1, 2, 3, 4]
     match = lambda x: x == 2
-    expected = [1, 3, 3]
+    expected = [1, 3, 3, 4]
     backend_fill(fill.backward, data, match, expected)
 
-@raises(ArgumentException)
+def test_backward_consecutiveMatches():
+    data = [1, 2, 2, 2, 3, 4, 5]
+    match = lambda x: x == 2
+    expected = [1, 3, 3, 3, 3, 4, 5]
+    backend_fill(fill.backward, data, match, expected)
+
 def test_backward_InitialContainsMatch():
-    data = [1, 2, 3]
-    match = lambda x: x == 3
+    data = [1, 2, 3, 4]
+    match = lambda x: x == 4
     backend_fill(fill.backward, data, match)
 
 def test_interpolate_noMatches():
-    data = [1, 2, 5]
+    data = [1, 2, 2, 10]
     match = lambda x: False
     expected = data
     backend_fill(fill.interpolate, data, match, expected)
 
 def test_interpolate_withMatch():
-    data = [1, 2, 5]
+    data = [1, 2, 2, 10]
     match = lambda x: x == 2
-    expected = [1, 3, 5]
+    # linear function y = x + 3
+    expected = [1, 4, 7, 10]
     backend_fill(fill.interpolate, data, match, expected)
 
 def test_interpolate_withArguments():
-    data = [1,2,5]
+    data = [1, "na", "na", 5]
     arguments = {}
     arguments['x'] = [1]
-    arguments['xp'] = [0, 2]
-    arguments['fp'] = [1, 5]
-    match = lambda x: x == 2
-    expected = [1, 3, 5]
+    # linear function y = 2x + 5
+    arguments['xp'] = [0, 4, 8]
+    arguments['fp'] = [5, 13, 21]
+    match = lambda x: x == "na"
+    expected = [1, 7, 9, 5]
     for t in UML.data.available:
         toTest = UML.createData(t, data)
         assert fill.interpolate(toTest, match, arguments) == expected

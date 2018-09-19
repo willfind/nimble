@@ -1745,14 +1745,14 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj1 = obj0.copy()
-        obj1.deletePoints(match.anyValuesMissing)
+        obj1.deletePoints(match.anyMissing)
         ret1 = self.constructor([[1, 2, 3], [7, 8, 9]])
         ret1.setFeatureNames(['a', 'b', 'c'])
         assert obj1 == ret1
 
         obj2 = obj0.copy()
         obj2.fillUsingFeatures(11, None)
-        obj2.deletePoints(match.allValuesMissing)
+        obj2.deletePoints(match.allMissing)
         ret2 = self.constructor([[1, 2, 3], [7, None, None], [7, 8, 9]])
         ret2.setFeatureNames(['a', 'b', 'c'])
         assert obj2 == ret2
@@ -1760,7 +1760,7 @@ class HighLevelModifying(DataTestObject):
         #TODO do we want to use markModified???
         obj3 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj3.fillUsingFeatures([1,2,3], None)
-        obj3.deletePoints(match.allValuesMissing)
+        obj3.deletePoints(match.allMissing)
         ret3 = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
         ret3.setFeatureNames(['a', 'b', 'c'])
         assert obj3 == ret3
@@ -1769,7 +1769,7 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([['x', 2, 3], [4, 11, 6], ['y', 11, 'z'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj1 = obj0.copy()
-        obj1.deletePoints(match.anyValuesNonNumeric)
+        obj1.deletePoints(match.anyNonNumeric)
         ret1 = self.constructor([[4, 11, 6], [7, 8, 9]])
         ret1.setFeatureNames(['a', 'b', 'c'])
         assert obj1 == ret1
@@ -1777,7 +1777,7 @@ class HighLevelModifying(DataTestObject):
         obj2 = obj0.copy()
         obj2.fillUsingFeatures(11, 'missing')
         print(obj2)
-        obj2.deletePoints(match.allValuesNonNumeric)
+        obj2.deletePoints(match.allNonNumeric)
         print(obj2)
         ret2 = self.constructor([['x', 2, 3], [4, 'missing', 6], [7, 8, 9]])
         ret2.setFeatureNames(['a', 'b', 'c'])
@@ -1822,21 +1822,21 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj1 = obj0.copy()
-        obj1.deleteFeatures(match.anyValuesMissing)
+        obj1.deleteFeatures(match.anyMissing)
         ret1 = self.constructor([[2], [11], [11], [8]])
         ret1.setFeatureNames(['b'])
         assert obj1 == ret1
 
         obj2 = obj0.copy()
         obj2.fillUsingFeatures([3,9], None)
-        obj2.deleteFeatures(match.allValuesMissing)
+        obj2.deleteFeatures(match.allMissing)
         ret2 = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
         ret2.setFeatureNames(['a', 'b'])
         assert obj2 == ret2
 
         obj3 = obj0.copy()
         obj3.fillUsingFeatures([1,7], None)
-        obj3.deleteFeatures(match.allValuesMissing)
+        obj3.deleteFeatures(match.allMissing)
         ret3 = self.constructor([[2, 3], [11, None], [11, None], [8, 9]])
         ret3.setFeatureNames(['b', 'c'])
         assert obj3 == ret3
@@ -1845,14 +1845,14 @@ class HighLevelModifying(DataTestObject):
         obj0 = self.constructor([[1, 2, 3], ['x', 11, 'y'], [7, 11, 'z'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
 
         obj1 = obj0.copy()
-        obj1.deleteFeatures(match.anyValuesNonNumeric)
+        obj1.deleteFeatures(match.anyNonNumeric)
         ret1 = self.constructor([[2], [11], [11], [8]])
         ret1.setFeatureNames(['b'])
         assert obj1 == ret1
 
         obj2 = obj0.copy()
         obj2.fillUsingFeatures([3,9], 'x')
-        obj2.deleteFeatures(match.allValuesNonNumeric)
+        obj2.deleteFeatures(match.allNonNumeric)
         ret2 = self.constructor([[1, 2], ['x', 11], [7, 11], [7, 8]])
         ret2.setFeatureNames(['a', 'b'])
         assert obj2 == ret2
@@ -1896,7 +1896,7 @@ class HighLevelModifying(DataTestObject):
     #
     #     obj1 = obj0.copy()
     #     obj1.fillUsingFeatures([2, 9], None)
-    #     obj1.deleteFeatures(match.anyValuesMissing)
+    #     obj1.deleteFeatures(match.anyMissing)
     #
     # @raises(ArgumentException)
     # def test_fillUsingFeatures_remove_features2(self):
@@ -1904,9 +1904,9 @@ class HighLevelModifying(DataTestObject):
     #
     #     obj1 = obj0.copy()
     #     obj1.fillUsingFeatures(2, None)
-    #     obj1.deleteFeatures(match.anyValuesMissing)
+    #     obj1.deleteFeatures(match.anyMissing)
 
-    def test_fillUsingFeatures_feature_mean_missing(self):
+    def test_fillUsingFeatures_mean_missing(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
         obj1.fillUsingFeatures(match.missing, fill.mean)
@@ -1921,7 +1921,7 @@ class HighLevelModifying(DataTestObject):
         ret2.setFeatureNames(['a', 'b', 'c'])
         assert obj2 == ret2
 
-    def test_fillUsingFeatures_feature_mean_nonNumeric(self):
+    def test_fillUsingFeatures_mean_nonNumeric(self):
         obj0 = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
         obj1.fillUsingFeatures(match.nonNumeric, fill.mean)
@@ -1936,7 +1936,12 @@ class HighLevelModifying(DataTestObject):
         ret2.setFeatureNames(['a', 'b', 'c'])
         assert obj2 == ret2
 
-    def test_fillUsingFeatures_feature_median_missing(self):
+    @raises(ArgumentException)
+    def test_fillUsingFeatures_mean_allMatches(self):
+        obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
+        obj.fillUsingFeatures(match.missing, fill.mean)
+
+    def test_fillUsingFeatures_median_missing(self):
         obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj.fillUsingFeatures(11, None)
         obj.fillUsingFeatures(match.missing, fill.median)
@@ -1944,7 +1949,7 @@ class HighLevelModifying(DataTestObject):
         ret.setFeatureNames(['a', 'b', 'c'])
         assert obj == ret
 
-    def test_fillUsingFeatures_feature_median_nonNumeric(self):
+    def test_fillUsingFeatures_median_nonNumeric(self):
         obj = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj.fillUsingFeatures(11, 'na')
         obj.fillUsingFeatures(match.nonNumeric, fill.median)
@@ -1952,7 +1957,12 @@ class HighLevelModifying(DataTestObject):
         ret.setFeatureNames(['a', 'b', 'c'])
         assert obj == ret
 
-    def test_fillUsingFeatures_feature_mode(self):
+    @raises(ArgumentException)
+    def test_fillUsingFeatures_median_allMatches(self):
+        obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
+        obj.fillUsingFeatures(match.missing, fill.median)
+
+    def test_fillUsingFeatures_mode(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj0.fillUsingFeatures(9, None)
         obj0.fillUsingFeatures(match.missing, fill.mode)
@@ -1966,6 +1976,11 @@ class HighLevelModifying(DataTestObject):
         ret1 = self.constructor([['a','b','g'], ['e','d', 'g'], ['e','d', 'g'], ['e','f', 'g']])
         ret1.setFeatureNames(['a', 'b', 'c'])
         assert obj1 == ret1
+
+    @raises(ArgumentException)
+    def test_fillUsingFeatures_mode_allMatches(self):
+        obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
+        obj.fillUsingFeatures(match.missing, fill.mode)
 
     def test_fillUsingFeatures_zero(self):
         obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
@@ -1992,8 +2007,7 @@ class HighLevelModifying(DataTestObject):
         assert obj == ret
 
     @raises(ArgumentException)
-    def test_fillUsingFeatures_forward_firstPointContainsMissing(self):
-        # NOTE ArgumentException needs work
+    def test_fillUsingFeatures_forward_firstFeatureValueMissing(self):
         obj = self.constructor([[1, None, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj.fillUsingFeatures(match.missing, fill.forward)
 
@@ -2006,7 +2020,7 @@ class HighLevelModifying(DataTestObject):
         assert obj == ret
 
     @raises(ArgumentException)
-    def test_fillUsingFeatures_backward_lastPointContainsMissing(self):
+    def test_fillUsingFeatures_backward_lastFeatureValueMissing(self):
         obj = self.constructor([[1, None, 3], [None, 11, None], [7, 11, None], [7, None, 9]], featureNames=['a', 'b', 'c'])
         obj.fillUsingFeatures(match.missing, fill.backward)
 
@@ -2034,42 +2048,70 @@ class HighLevelModifying(DataTestObject):
         data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
         toTest = self.constructor(data)
 
-        expData = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+        expData = [[1, 2, -3, 4], [5, 2, -3, 8], [9, 10, 11, 4]]
         exp = self.constructor(expData)
 
-        def rootSquared(feat, match):
+        def firstValue(feat, match):
+            first = feat[0]
             ret = []
-            for val in feat:
+            for i, val in enumerate(feat):
                 if match(val):
-                    ret.append((val ** 2) ** (0.5))
+                    ret.append(first)
                 else:
                     ret.append(val)
             return ret
 
-        toTest.fillUsingFeatures(match.negative, rootSquared)
+        toTest.fillUsingFeatures(match.negative, firstValue)
         assert toTest == exp
 
     def test_fillUsingFeatures_custom_fillAndMatch(self):
         data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
         toTest = self.constructor(data)
 
-        expData = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+        expData = [[1, 2, -3, 4], [5, 2, -3, 8], [9, 10, 11, 4]]
         exp = self.constructor(expData)
 
         def negative(value):
             return value < 0
 
-        def rootSquared(feat, match):
+        def firstValue(feat, match):
+            first = feat[0]
             ret = []
-            for val in feat:
+            for i, val in enumerate(feat):
                 if match(val):
-                    ret.append((val ** 2) ** (0.5))
+                    ret.append(first)
                 else:
                     ret.append(val)
             return ret
 
-        toTest.fillUsingFeatures(negative, rootSquared)
+        toTest.fillUsingFeatures(negative, firstValue)
         assert toTest == exp
+
+    def test_fillUsingFeatures_fillValuesWithNaN_list(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingFeatures(999, None)
+        obj.fillUsingFeatures([1, numpy.nan], 0)
+
+        exp = self.constructor([[0, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj == exp
+
+    def test_fillUsingFeatures_fillValuesWithNaN_function(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingFeatures(999, None)
+        obj.fillUsingFeatures(match.missing, 0)
+
+        exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj == exp
+
+    def test_fillUsingFeatures_fillNumericWithNonNumeric(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingFeatures(999, 'na')
+
+        exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
+        assert obj == exp
 
     def test_fillUsingFeatures_NamePath_preservation(self):
         data = [['a'], ['b'], [1]]

@@ -6,21 +6,50 @@ from UML.exceptions import ArgumentException
 
 
 def missing(value):
+    """
+    Determines if a single value is missing
+    missing values in UML are None and (python or numpy) nan values
+    """
     return value is None or value != value
 
 def numeric(value):
+    """
+    Determines if a single value is numeric
+    numeric values include any values with a python or numpy numeric type
+    """
     return isinstance(value, (int, float, complex, numpy.number))
 
 def nonNumeric(value):
+    """
+    Determines if a single is not numeric
+    nonNumeric values include any values without a python or numpy numeric type
+    """
     return not numeric(value)
 
 def zero(value):
+    """
+    Determines if a single value is equal to zero
+    zero values include any numeric value equal to zero
+    """
+    if not numeric(value):
+        return False
     return value == 0
 
 def nonZero(value):
+    """
+    Determines if a single value is not equal to zero
+    nonZero values include any non-numeric value and any numeric value
+    not equal to zero
+    """
+    if not numeric(value):
+        return True
     return not zero(value)
 
 def positive(value):
+    """
+    Determines if a single value is greater than zero
+    positive values include any numeric value greater than zero
+    """
     if not numeric(value):
         return False
     try:
@@ -29,6 +58,10 @@ def positive(value):
         return False
 
 def negative(value):
+    """
+    Determines if a single value is less than zero
+    negative values include any numeric value less than zero
+    """
     if not numeric(value):
         return False
     try:
@@ -36,89 +69,149 @@ def negative(value):
     except Exception:
         return False
 
-def anyAllValuesBackend(anyOrAll, matrix, func):
+def anyAllValuesBackend(anyOrAll, data, match):
+    """
+    Backend function for determining if the data contains any matching values
+    or all matching values
+    """
     if anyOrAll == 'any':
         test = any
     else:
         test = all
     try:
-        # 1D matrix
-        return test([func(val) for val in matrix])
+        # 1D data
+        return test([match(val) for val in data])
     except ArgumentException:
-        # 2D matrix
+        # 2D data
         if anyOrAll == 'any':
-            for i in range(matrix.features):
-                if test([func(val) for val in matrix[:, i]]):
+            # if any feature contains a match we can return True
+            for i in range(data.features):
+                if test([match(val) for val in data[:, i]]):
                     return True
             return False
         else:
-            for i in range(matrix.features):
-                if not test([func(val) for val in matrix[:, i]]):
+            # if any feature does not have all matches we can return False
+            for i in range(data.features):
+                if not test([match(val) for val in data[:, i]]):
                     return False
             return True
 
 def convertMatchToFunction(match):
+    """
+    Convert iterables and constants to functions so that a match can always
+    be determined by calling match(value)
+    """
     if not hasattr(match, '__call__'):
-        if ((hasattr(match, '__iter__') or
-           hasattr(match, '__getitem__')) and
+        # case1: list-like
+        if ((hasattr(match, '__iter__') or hasattr(match, '__getitem__')) and
            not isinstance(match, six.string_types)):
             matchList = match
-            match = lambda x: x in matchList
+            # if nans in the list, need to include separate check in function
+            if not all([val == val for val in matchList]):
+                match = lambda x: x != x or x in matchList
+            else:
+                match = lambda x: x in matchList
+        # case2: constant
         else:
             matchConstant = match
             match = lambda x: x == matchConstant
     return match
 
 def anyValues(match):
+    """
+    Factory function
+    """
     match = convertMatchToFunction(match)
-    def anyValueFinder(matrix):
-        return anyAllValuesBackend('any', matrix, match)
+    def anyValueFinder(data):
+        return anyAllValuesBackend('any', data, match)
     return anyValueFinder
 
 def allValues(match):
     match = convertMatchToFunction(match)
-    def allValueFinder(matrix):
-        return anyAllValuesBackend('all', matrix, match)
+    def allValueFinder(data):
+        return anyAllValuesBackend('all', data, match)
     return allValueFinder
 
-def anyValuesMissing(matrix):
-    return anyAllValuesBackend('any', matrix, missing)
+def anyMissing(data):
+    """
+    Determines if any values in the data are missing
+    """
+    return anyAllValuesBackend('any', data, missing)
 
-def allValuesMissing(matrix):
-    return anyAllValuesBackend('all', matrix, missing)
+def allMissing(data):
+    """
+    Determines if all values in the data are missing
+    """
+    return anyAllValuesBackend('all', data, missing)
 
-def anyValuesNumeric(matrix):
-    return anyAllValuesBackend('any', matrix, numeric)
+def anyNumeric(data):
+    """
+    Determines if any values in the data are numeric
+    """
+    return anyAllValuesBackend('any', data, numeric)
 
-def allValuesNumeric(matrix):
-    return anyAllValuesBackend('all', matrix, numeric)
+def allNumeric(data):
+    """
+    Determines if all values in the data are numeric
+    """
+    return anyAllValuesBackend('all', data, numeric)
 
-def anyValuesNonNumeric(matrix):
-    return anyAllValuesBackend('any', matrix, nonNumeric)
+def anyNonNumeric(data):
+    """
+    Determines if any values in the data are non-numeric
+    """
+    return anyAllValuesBackend('any', data, nonNumeric)
 
-def allValuesNonNumeric(matrix):
-    return anyAllValuesBackend('all', matrix, nonNumeric)
+def allNonNumeric(data):
+    """
+    Determines if all values in the data are non-numeric
+    """
+    return anyAllValuesBackend('all', data, nonNumeric)
 
-def anyValuesZero(matrix):
-    return anyAllValuesBackend('any', matrix, zero)
+def anyZero(data):
+    """
+    Determines if any values in the data are equal to zero
+    """
+    return anyAllValuesBackend('any', data, zero)
 
-def allValuesZero(matrix):
-    return anyAllValuesBackend('all', matrix, zero)
+def allZero(data):
+    """
+    Determines if all values in the data are equal to zero
+    """
+    return anyAllValuesBackend('all', data, zero)
 
-def anyValuesNonZero(matrix):
-    return anyAllValuesBackend('any', matrix, nonZero)
+def anyNonZero(data):
+    """
+    Determines if any values in the data are not equal to zero
+    """
+    return anyAllValuesBackend('any', data, nonZero)
 
-def allValuesNonZero(matrix):
-    return anyAllValuesBackend('all', matrix, nonZero)
+def allNonZero(data):
+    """
+    Determines if all values in the data are not equal to zero
+    """
+    return anyAllValuesBackend('all', data, nonZero)
 
-def anyValuesPositive(matrix):
-    return anyAllValuesBackend('any', matrix, positive)
+def anyPositive(data):
+    """
+    Determines if any values in the data are greater than zero
+    """
+    return anyAllValuesBackend('any', data, positive)
 
-def allValuesPositive(matrix):
-    return anyAllValuesBackend('all', matrix, positive)
+def allPositive(data):
+    """
+    Determines if all values in the data are greater than zero
+    """
+    return anyAllValuesBackend('all', data, positive)
 
-def anyValuesNegative(matrix):
-    return anyAllValuesBackend('any', matrix, negative)
+def anyNegative(data):
+    """
+    Determines if any values in the data are less than zero
+    """
+    return anyAllValuesBackend('any', data, negative)
 
-def allValuesNegative(matrix):
-    return anyAllValuesBackend('all', matrix, negative)
+def allNegative(data):
+    """
+    Determines if all values in the data are less than zero
+    """
+    return anyAllValuesBackend('all', data, negative)

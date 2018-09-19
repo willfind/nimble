@@ -381,6 +381,11 @@ class DataFrame(Base):
             if points is not None and i not in points:
                 continue
             currRet = function(p)
+            # currRet might return an ArgumentException with a message which needs to be
+            # formatted with the axis and current index before being raised
+            if isinstance(currRet, ArgumentException):
+                currRet.value = currRet.value.format('point', i)
+                raise currRet
             if len(currRet) != self.features:
                 msg = "function must return an iterable with as many elements as features in this object"
                 raise ArgumentException(msg)
@@ -392,6 +397,11 @@ class DataFrame(Base):
             if features is not None and j not in features:
                 continue
             currRet = function(f)
+            # currRet might return an ArgumentException with a message which needs to be
+            # formatted with the axis and current index before being raised
+            if isinstance(currRet, ArgumentException):
+                currRet.value = currRet.value.format('feature', j)
+                raise currRet
             if len(currRet) != self.points:
                 msg = "function must return an iterable with as many elements as points in this object"
                 raise ArgumentException(msg)
