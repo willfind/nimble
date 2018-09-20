@@ -727,9 +727,6 @@ class Sparse(Base):
                 if isinstance(currOut, ArgumentException):
                     currOut.value = currOut.value.format(axis, viewID)
                     raise currOut
-                elif not isinstance(currOut, list):
-                    # output can be view object, need to convert
-                    currOut = list(currOut)
 
             # easy way to reuse code if we have a singular return
             if not hasattr(currOut, '__iter__'):
@@ -1690,11 +1687,10 @@ class SparseView(BaseView, Sparse):
         oIt = other.pointIterator()
         for sPoint in sIt:
             oPoint = next(oIt)
-
-            for i, val in enumerate(sPoint):
-                if val != oPoint[i]:
+            for i, sVal in enumerate(sPoint):
+                oVal = oPoint[i]
+                if sVal != oVal and not (sVal != sVal and oVal != oVal):
                     return False
-
         return True
 
     def _containsZero_implementation(self):

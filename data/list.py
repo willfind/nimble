@@ -328,7 +328,9 @@ class List(Base):
         if self.features != other.features:
             return False
         for index in range(self.points):
-            if self.data[index] != other.data[index]:
+            sPoint = self.data[index]
+            oPoint = other.data[index]
+            if sPoint != oPoint:
                 return False
         return True
 
@@ -668,8 +670,9 @@ class List(Base):
                 return self.fRange
 
             def __eq__(self, other):
-                for i, val in enumerate(self):
-                    if val != other[i]:
+                for i, sVal in enumerate(self):
+                    oVal = other[i]
+                    if sVal != oVal and not (sVal != sVal and oVal != oVal):
                         return False
                 return True
 

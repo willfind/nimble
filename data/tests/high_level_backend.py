@@ -1741,171 +1741,6 @@ class HighLevelModifying(DataTestObject):
     # fillUsingFeatures #
     #####################
 
-    def test_fillUsingFeatures_remove_points_missing(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.deletePoints(match.anyMissing)
-        ret1 = self.constructor([[1, 2, 3], [7, 8, 9]])
-        ret1.setFeatureNames(['a', 'b', 'c'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.fillUsingFeatures(11, None)
-        obj2.deletePoints(match.allMissing)
-        ret2 = self.constructor([[1, 2, 3], [7, None, None], [7, 8, 9]])
-        ret2.setFeatureNames(['a', 'b', 'c'])
-        assert obj2 == ret2
-
-        #TODO do we want to use markModified???
-        obj3 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj3.fillUsingFeatures([1,2,3], None)
-        obj3.deletePoints(match.allMissing)
-        ret3 = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
-        ret3.setFeatureNames(['a', 'b', 'c'])
-        assert obj3 == ret3
-
-    def test_fillUsingFeatures_remove_points_nonNumeric(self):
-        obj0 = self.constructor([['x', 2, 3], [4, 11, 6], ['y', 11, 'z'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.deletePoints(match.anyNonNumeric)
-        ret1 = self.constructor([[4, 11, 6], [7, 8, 9]])
-        ret1.setFeatureNames(['a', 'b', 'c'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.fillUsingFeatures(11, 'missing')
-        print(obj2)
-        obj2.deletePoints(match.allNonNumeric)
-        print(obj2)
-        ret2 = self.constructor([['x', 2, 3], [4, 'missing', 6], [7, 8, 9]])
-        ret2.setFeatureNames(['a', 'b', 'c'])
-        print(ret2)
-        assert obj2 == ret2
-
-        #TODO assertion with nan's not working when dtype is object
-
-    def test_fillUsingFeatures_remove_points_list(self):
-        obj0 = self.constructor([['x', 2, 3], [4, 11, 6], ['y', 11, 11], [7, 8, 11]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.deletePoints(match.anyValues(['x', 'y']))
-        ret1 = self.constructor([[4, 11, 6], [7, 8, 11]])
-        ret1.setFeatureNames(['a', 'b', 'c'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.fillUsingFeatures(11, 'x')
-        obj2.deletePoints(match.allValues(['x', 'y']))
-        ret2 = self.constructor([['x', 2, 3], [4, 'x', 6], [7, 8, 'x']])
-        ret2.setFeatureNames(['a', 'b', 'c'])
-        assert obj2 == ret2
-
-    def test_fillUsingFeatures_remove_points_function(self):
-        obj0 = self.constructor([[-1, 2, 3], [4, 11, 6], [-1, 11, -2], [7, 8, numpy.nan]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.deletePoints(match.anyValues(lambda x: x < 0))
-        ret1 = self.constructor([[4, 11, 6], [7, 8, numpy.nan]])
-        ret1.setFeatureNames(['a', 'b', 'c'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.fillUsingFeatures(11, -1)
-        obj2.deletePoints(match.allValues(lambda x: x < 0))
-        ret2 = self.constructor([[-1, 2, 3], [4, -1, 6], [7, 8, numpy.nan]])
-        ret2.setFeatureNames(['a', 'b', 'c'])
-        assert obj2 == ret2
-
-    def test_fillUsingFeatures_remove_features_missing(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.deleteFeatures(match.anyMissing)
-        ret1 = self.constructor([[2], [11], [11], [8]])
-        ret1.setFeatureNames(['b'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.fillUsingFeatures([3,9], None)
-        obj2.deleteFeatures(match.allMissing)
-        ret2 = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
-        ret2.setFeatureNames(['a', 'b'])
-        assert obj2 == ret2
-
-        obj3 = obj0.copy()
-        obj3.fillUsingFeatures([1,7], None)
-        obj3.deleteFeatures(match.allMissing)
-        ret3 = self.constructor([[2, 3], [11, None], [11, None], [8, 9]])
-        ret3.setFeatureNames(['b', 'c'])
-        assert obj3 == ret3
-
-    def test_fillUsingFeatures_remove_features_nonNumeric(self):
-        obj0 = self.constructor([[1, 2, 3], ['x', 11, 'y'], [7, 11, 'z'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.deleteFeatures(match.anyNonNumeric)
-        ret1 = self.constructor([[2], [11], [11], [8]])
-        ret1.setFeatureNames(['b'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.fillUsingFeatures([3,9], 'x')
-        obj2.deleteFeatures(match.allNonNumeric)
-        ret2 = self.constructor([[1, 2], ['x', 11], [7, 11], [7, 8]])
-        ret2.setFeatureNames(['a', 'b'])
-        assert obj2 == ret2
-
-    def test_fillUsingFeatures_remove_features_list(self):
-        obj0 = self.constructor([[1, 2, 3], ['x', 11, 'y'], [7, 11, 'z'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.deleteFeatures(match.anyValues(['x', 'y', 'z']))
-        ret1 = self.constructor([[2], [11], [11], [8]])
-        ret1.setFeatureNames(['b'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.fillUsingFeatures([3,9], 'z')
-        obj2.deleteFeatures(match.allValues(['x', 'y', 'z']))
-        ret2 = self.constructor([[1, 2], ['x', 11], [7, 11], [7, 8]])
-        ret2.setFeatureNames(['a', 'b'])
-        assert obj2 == ret2
-
-    def test_fillUsingFeatures_remove_features_function(self):
-        obj0 = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -2], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-
-        obj1 = obj0.copy()
-        obj1.deleteFeatures(match.anyValues(lambda x: x < 0))
-        ret1 = self.constructor([[2], [11], [11], [8]])
-        ret1.setFeatureNames(['b'])
-        assert obj1 == ret1
-
-        obj2 = obj0.copy()
-        obj2.fillUsingFeatures([3,9], -1)
-        obj2.deleteFeatures(match.allValues(lambda x: x < 0))
-        ret2 = self.constructor([[1, 2], [-1, 11], [7, 11], [7, 8]])
-        ret2.setFeatureNames(['a', 'b'])
-        assert obj2 == ret2
-
-    #TODO do we want exception if all data removed?
-    # @raises(ArgumentException)
-    # def test_fillUsingFeatures_remove_points2(self):
-    #     obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-    #
-    #     obj1 = obj0.copy()
-    #     obj1.fillUsingFeatures([2, 9], None)
-    #     obj1.deleteFeatures(match.anyMissing)
-    #
-    # @raises(ArgumentException)
-    # def test_fillUsingFeatures_remove_features2(self):
-    #     obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-    #
-    #     obj1 = obj0.copy()
-    #     obj1.fillUsingFeatures(2, None)
-    #     obj1.deleteFeatures(match.anyMissing)
-
     def test_fillUsingFeatures_mean_missing(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
@@ -1991,18 +1826,16 @@ class HighLevelModifying(DataTestObject):
         assert obj == ret
 
     def test_fillUsingFeatures_constant(self):
-        obj = self.constructor([[1, 2, 3], [None, 0, None], [7, 0, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj.fillUsingFeatures(0, None)
-        obj.fillUsingFeatures(match.missing, 100)
+        obj = self.constructor([[1, 2, 3], [0, 0, 0], [7, 0, 0], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.fillUsingFeatures(0, 100)
         ret = self.constructor([[1, 2, 3], [100, 100, 100], [7, 100, 100], [7, 8, 9]])
         ret.setFeatureNames(['a', 'b', 'c'])
         assert obj == ret
 
     def test_fillUsingFeatures_forward(self):
         obj = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj.fillUsingFeatures(11, None)
         obj.fillUsingFeatures(match.missing, fill.forward)
-        ret = self.constructor([[1, 2, 3], [1, 2, 3], [7, 2, 3], [7, 8, 9]])
+        ret = self.constructor([[1, 2, 3], [1, 11, 3], [7, 11, 3], [7, 8, 9]])
         ret.setFeatureNames(['a', 'b', 'c'])
         assert obj == ret
 
@@ -2087,6 +1920,23 @@ class HighLevelModifying(DataTestObject):
         toTest.fillUsingFeatures(negative, firstValue)
         assert toTest == exp
 
+    def test_fillUsingPoints_fillValuesWithNaN_constant(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj1 = self.constructor(data)
+        obj2 = self.constructor(data)
+        obj3 = self.constructor(data)
+        obj1.filllUsingFeatures(999, float('nan'))
+        obj2.filllUsingFeatures(999, None)
+        obj3.filllUsingFeatures(999, numpy.nan)
+        obj1.filllUsingFeatures(None, 0)
+        obj2.filllUsingFeatures(numpy.nan, 0)
+        obj3.filllUsingFeatures(float('nan'), 0)
+
+        exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj1 == exp
+        assert obj2 == obj1
+        assert obj3 == obj1
+
     def test_fillUsingFeatures_fillValuesWithNaN_list(self):
         data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
         obj = self.constructor(data)
@@ -2122,6 +1972,246 @@ class HighLevelModifying(DataTestObject):
         toTest._relPath = "testRelPath"
 
         toTest.fillUsingFeatures(match.nonNumeric, 0)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.relativePath == 'testRelPath'
+
+
+    ###################
+    # fillUsingPoints #
+    ###################
+
+    def test_fillUsingPoints_mean_missing(self):
+        obj0 = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj1 = obj0.copy()
+        obj1.fillUsingPoints(match.missing, fill.mean)
+        ret1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        ret1.setPointNames(['a', 'b', 'c'])
+        assert obj1 == ret1
+
+        obj2 = obj0.copy()
+        obj2.fillUsingPoints([4, 8], None)
+        obj2.fillUsingPoints(match.missing, fill.mean)
+        ret2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
+        ret2.setPointNames(['a', 'b', 'c'])
+        assert obj2 == ret2
+
+    def test_fillUsingPoints_mean_nonNumeric(self):
+        obj0 = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
+        obj1 = obj0.copy()
+        obj1.fillUsingPoints(match.nonNumeric, fill.mean)
+        ret1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        ret1.setPointNames(['a', 'b', 'c'])
+        assert obj1 == ret1
+
+        obj2 = obj0.copy()
+        obj2.fillUsingPoints([4, 8], 'na')
+        obj2.fillUsingPoints(match.nonNumeric, fill.mean)
+        ret2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
+        ret2.setPointNames(['a', 'b', 'c'])
+        assert obj2 == ret2
+
+    @raises(ArgumentException)
+    def test_fillUsingPoints_mean_allMatches(self):
+        obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
+        obj.fillUsingPoints(match.missing, fill.mean)
+
+    def test_fillUsingPoints_median_missing(self):
+        obj = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.median)
+        ret = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 9]])
+        ret.setPointNames(['a', 'b', 'c'])
+        assert obj == ret
+
+    def test_fillUsingPoints_median_nonNumeric(self):
+        obj = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(11, 'na')
+        obj.fillUsingPoints(match.nonNumeric, fill.median)
+        ret = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 5, 5]])
+        ret.setPointNames(['a', 'b', 'c'])
+        assert obj == ret
+
+    @raises(ArgumentException)
+    def test_fillUsingPoints_median_allMatches(self):
+        obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
+        obj.fillUsingPoints(match.missing, fill.median)
+
+    def test_fillUsingPoints_mode(self):
+        obj0 = self.constructor([[1, 2, 3, 3], [None, 6, 8, 8], [9, 9, 11, None]], pointNames=['a', 'b', 'c'])
+        obj0.fillUsingPoints(9, None)
+        obj0.fillUsingPoints(match.missing, fill.mode)
+        ret0 = self.constructor([[1, 2, 3, 3], [8, 6, 8, 8], [11, 11, 11, 11]], pointNames=['a', 'b', 'c'])
+        ret0.setPointNames(['a', 'b', 'c'])
+        assert obj0 == ret0
+
+        obj1 = self.constructor([['a', 'b', 'c', 'c'], [None, 'f', 'h', 'h'], ['i', 'i', 'k', None]], pointNames=['a', 'b', 'c'])
+        obj1.fillUsingPoints('b', None)
+        obj1.fillUsingPoints(match.missing, fill.mode)
+        ret1 = self.constructor([['a', 'c', 'c', 'c'], ['h', 'f', 'h', 'h'], ['i', 'i', 'k', 'i']], pointNames=['a', 'b', 'c'])
+        ret1.setPointNames(['a', 'b', 'c'])
+        assert obj1 == ret1
+
+    @raises(ArgumentException)
+    def test_fillUsingPoints_mode_allMatches(self):
+        obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
+        obj.fillUsingPoints(match.missing, fill.mode)
+
+    def test_fillUsingPoints_zero(self):
+        obj = self.constructor([[1, 2, None], [None, 11, 6], [7, 11, None], [7, 8, 9]], pointNames=['a', 'b', 'c', 'd'])
+        obj.fillUsingPoints(11, None)
+        obj.fillUsingPoints(match.missing, 0, points=['b', 'c'])
+        ret = self.constructor([[1, 2, None], [0, 0, 6], [7, 0, 0], [7, 8, 9]])
+        ret.setPointNames(['a', 'b', 'c', 'd'])
+        assert obj == ret
+
+    def test_fillUsingPoints_constant(self):
+        obj = self.constructor([[1, 2, 3], [0, 0, 0], [7, 0, 0], [7, 8, 9]], pointNames=['a', 'b', 'c', 'd'])
+        obj.fillUsingPoints(0, 100)
+        ret = self.constructor([[1, 2, 3], [100, 100, 100], [7, 100, 100], [7, 8, 9]])
+        ret.setPointNames(['a', 'b', 'c', 'd'])
+        assert obj == ret
+
+    def test_fillUsingPoints_forward(self):
+        obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.forward)
+        ret = self.constructor([[1, 2, 3, 4], [5, 5, 5, 8], [9, 1, 11, 11]])
+        ret.setPointNames(['a', 'b', 'c'])
+        assert obj == ret
+
+    @raises(ArgumentException)
+    def test_fillUsingPoints_forward_firstFeatureValueMissing(self):
+        obj = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.forward)
+
+    def test_fillUsingPoints_backward(self):
+        obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [None, 1, 11, 2]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(11, None)
+        obj.fillUsingPoints(match.missing, fill.backward)
+        ret = self.constructor([[1, 2, 3, 4], [5, 8, 8, 8], [1, 1, 2, 2]])
+        ret.setPointNames(['a', 'b', 'c'])
+        assert obj == ret
+
+    @raises(ArgumentException)
+    def test_fillUsingPoints_backward_lastFeatureValueMissing(self):
+        obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.backward)
+
+    def test_fillUsingPoints_interpolate(self):
+        obj = self.constructor([[1, 2, 3, 4], [5, None, None, 8], [None, 1, None, 5]], pointNames=['a', 'b', 'c'])
+        obj.fillUsingPoints(match.missing, fill.interpolate)
+        ret = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [1, 1, 3, 5]])
+        ret.setPointNames(['a', 'b', 'c'])
+        assert obj == ret
+
+    def test_fillUsingPoints_custom_match(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]]
+        exp = self.constructor(expData)
+
+        def negative(value):
+            return value < 0
+
+        toTest.fillUsingPoints(negative, 0)
+        assert toTest == exp
+
+    def test_fillUsingPoints_custom_fill(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, 1, 4], [5, 5, 5, 8], [9, 10, 11, 9]]
+        exp = self.constructor(expData)
+
+        def firstValue(feat, match):
+            first = feat[0]
+            ret = []
+            for i, val in enumerate(feat):
+                if match(val):
+                    ret.append(first)
+                else:
+                    ret.append(val)
+            return ret
+
+        toTest.fillUsingPoints(match.negative, firstValue)
+        assert toTest == exp
+
+    def test_fillUsingPoints_custom_fillAndMatch(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, 1, 4], [5, 5, 5, 8], [9, 10, 11, 9]]
+        exp = self.constructor(expData)
+
+        def negative(value):
+            return value < 0
+
+        def firstValue(feat, match):
+            first = feat[0]
+            ret = []
+            for i, val in enumerate(feat):
+                if match(val):
+                    ret.append(first)
+                else:
+                    ret.append(val)
+            return ret
+
+        toTest.fillUsingPoints(negative, firstValue)
+        assert toTest == exp
+
+    def test_fillUsingPoints_fillValuesWithNaN_constant(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj1 = self.constructor(data)
+        obj2 = self.constructor(data)
+        obj3 = self.constructor(data)
+        obj1.fillUsingPoints(999, float('nan'))
+        obj2.fillUsingPoints(999, None)
+        obj3.fillUsingPoints(999, numpy.nan)
+        obj1.fillUsingPoints(None, 0)
+        obj2.fillUsingPoints(numpy.nan, 0)
+        obj3.fillUsingPoints(float('nan'), 0)
+
+        exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj1 == exp
+        assert obj2 == obj1
+        assert obj3 == obj1
+
+    def test_fillUsingPoints_fillValuesWithNaN_list(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingPoints(999, None)
+        obj.fillUsingPoints([1, numpy.nan], 0)
+
+        exp = self.constructor([[0, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj == exp
+
+    def test_fillUsingPoints_fillValuesWithNaN_function(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingPoints(999, None)
+        obj.fillUsingPoints(match.missing, 0)
+
+        exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
+        assert obj == exp
+
+    def test_fillUsingPoints_fillNumericWithNonNumeric(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.fillUsingPoints(999, 'na')
+
+        exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
+        assert obj == exp
+
+    def test_fillUsingPoints_NamePath_preservation(self):
+        data = [['a', 'b', 1]]
+        toTest = self.constructor(data)
+
+        toTest._name = "TestName"
+        toTest._absPath = "TestAbsPath"
+        toTest._relPath = "testRelPath"
+
+        toTest.fillUsingPoints(match.nonNumeric, 0)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"

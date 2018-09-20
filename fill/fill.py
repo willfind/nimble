@@ -39,7 +39,7 @@ def mean(vector, match):
     """
     unmatched = UML.createData('List', [val for val in vector if not match(val)])
     if len(unmatched) == len(vector):
-        return vector
+        return list(vector)
     if len(unmatched) == 0:
         msg = "Cannot calculate mean. The mean is calculated based on "
         msg += "unmatched values and all values for the {0} at index {1} "
@@ -57,7 +57,7 @@ def median(vector, match):
     """
     unmatched = UML.createData('List', [val for val in vector if not match(val)])
     if len(unmatched) == len(vector):
-        return vector
+        return list(vector)
     if len(unmatched) == 0:
         msg = "Cannot calculate median. The median is calculated based on "
         msg += "unmatched values and all values for the {0} at index {1} "
@@ -74,7 +74,7 @@ def mode(vector, match):
     """
     unmatched = UML.createData('List', [val for val in vector if not match(val)])
     if len(unmatched) == len(vector):
-        return vector
+        return list(vector)
     if len(unmatched) == 0:
         msg = "Cannot calculate mode. The mode is calculated based on "
         msg += "unmatched values and all values for the {0} at index {1} "

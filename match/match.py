@@ -114,12 +114,19 @@ def convertMatchToFunction(match):
         # case2: constant
         else:
             matchConstant = match
-            match = lambda x: x == matchConstant
+            if matchConstant is None or matchConstant != matchConstant:
+                match = lambda x: x is None or x != x
+            else:
+                match = lambda x: x == matchConstant
     return match
 
 def anyValues(match):
     """
-    Factory function
+    Creates a function which accepts data and returns if any values within the
+    data contain a match
+
+    match can be a single value, iterable of values, or a boolean function that
+    accepts a single value as input
     """
     match = convertMatchToFunction(match)
     def anyValueFinder(data):
@@ -127,6 +134,13 @@ def anyValues(match):
     return anyValueFinder
 
 def allValues(match):
+    """
+    Creates a function which accepts data and returns if all values within the
+    data contain a match
+
+    match can be a single value, iterable of values, or a boolean function that
+    accepts a single value as input
+    """
     match = convertMatchToFunction(match)
     def allValueFinder(data):
         return anyAllValuesBackend('all', data, match)

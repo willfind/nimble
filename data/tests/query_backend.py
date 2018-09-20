@@ -145,6 +145,20 @@ class QueryBackend(DataTestObject):
         assert toTest1.isIdentical(toTest2)
         assert toTest2.isIdentical(toTest1)
 
+    def test_isIdentical_FalseWithNaN(self):
+        """ Test isIdentical() against some non-equal input with nan"""
+        toTest1 = self.constructor([[1, numpy.nan, 5]])
+        toTest2 = self.constructor(deepcopy([[1, numpy.nan, 3]]))
+        assert not toTest1.isIdentical(toTest2)
+        assert not toTest2.isIdentical(toTest1)
+
+    def test_isIdentical_TrueWithNaN(self):
+        """ Test isIdentical() against some actually equal input with nan """
+        toTest1 = self.constructor([[1, numpy.nan, 5]])
+        toTest2 = self.constructor(deepcopy([[1, numpy.nan, 5]]))
+        assert toTest1.isIdentical(toTest2)
+        assert toTest2.isIdentical(toTest1)
+
 
     ############
     # writeFile #
@@ -305,7 +319,7 @@ class QueryBackend(DataTestObject):
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        
+
         toSave.save(tmpFile.name)
 
         LoadObj = loadData(tmpFile.name)
@@ -318,11 +332,11 @@ class QueryBackend(DataTestObject):
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        
+
         toSave.save(tmpFile.name)
         LoadObj = loadData(tmpFile.name + '.umld')
         assert isinstance(LoadObj, UML.data.Base)
-        
+
         try:
             LoadObj = loadData(tmpFile.name)
         except ArgumentException as ae:
