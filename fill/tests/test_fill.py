@@ -126,7 +126,7 @@ def backend_fill(func, data, match, expected=None):
         if expected:
             # if no matches, the return may be a UML object otherwise a list
             expObj = UML.createData(t, expected)
-            assert func(toTest, match) == expected or func(toTest, match) == expObj
+            assert func(toTest, match) == expected
         # for ArgumentException
         else:
             assert isinstance(func(toTest, match), ArgumentException)
@@ -148,6 +148,11 @@ def test_mean_allMatches():
     match = lambda x: x in [1, 2, 2, 9]
     backend_fill(fill.mean, data, match)
 
+def test_mean_cannotCalculate():
+    data = ['a', 'b', 3, 4]
+    match = lambda x: x == 'b'
+    backend_fill(fill.mean, data, match)
+
 def test_median_noMatches():
     data = [1, 2, 9, 2]
     match = lambda x: False
@@ -163,6 +168,11 @@ def test_median_ignoreMatch():
 def test_median_allMatches():
     data = [1, 2, 9, 2]
     match = lambda x: x in [1, 2, 9]
+    backend_fill(fill.median, data, match)
+
+def test_median_cannotCalculate():
+    data = ['a', 'b', 3, 4]
+    match = lambda x: x == 'b'
     backend_fill(fill.median, data, match)
 
 def test_mode_noMatches():

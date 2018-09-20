@@ -47,6 +47,11 @@ def mean(vector, match):
         # return so msg can be formatted before being raised
         return ArgumentException(msg)
     mean = UML.calculate.mean(unmatched)
+    if mean is None:
+        msg = "Cannot calculate mean. The {0} at index {1} "
+        msg += "contains non-numeric values or is all NaN values"
+        # return so msg can be formatted before being raised
+        return ArgumentException(msg)
     return [mean if match(val) else val for val in vector]
 
 
@@ -65,6 +70,11 @@ def median(vector, match):
         # return so msg can be formatted before being raised
         return ArgumentException(msg)
     median = UML.calculate.median(unmatched)
+    if median is None:
+        msg = "Cannot calculate median. The {0} at index {1} "
+        msg += "contains non-numeric values or is all NaN values"
+        # return so msg can be formatted before being raised
+        return ArgumentException(msg)
     return [median if match(val) else val for val in vector]
 
 def mode(vector, match):
