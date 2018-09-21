@@ -1,7 +1,9 @@
 import UML
 import numpy
+import copy
 
 from UML.match import convertMatchToFunction
+from UML.match import anyValues
 from UML.exceptions import ArgumentException
 
 def factory(match, fill, arguments=None):
@@ -94,7 +96,7 @@ def mode(vector, match):
     mode = UML.calculate.mode(unmatched)
     return [mode if match(val) else val for val in vector]
 
-def forward(vector, match):
+def forwardFill(vector, match):
     """
     Fill matching values with the previous known unmatched value in the point
     or feature
@@ -112,7 +114,7 @@ def forward(vector, match):
             ret.append(v)
     return ret
 
-def backward(vector, match):
+def backwardFill(vector, match):
     """
     Fill matched values with the next known unmatched value in the point or
     feature
@@ -123,7 +125,6 @@ def backward(vector, match):
         # return so msg can be formatted before being raised
         return ArgumentException(msg)
     ret = []
-    # reverse to work backward
     for v in reversed(vector):
         # prepend since we are working backward
         if match(v):
@@ -162,3 +163,51 @@ def interpolate(vector, match, arguments=None):
         else:
             ret.append(vector[i])
     return ret
+
+
+def kNeighborsRegressor(data, match, arguments=None):
+    return kNeighborsBackend("skl.KNeighborsRegressor", data, match, arguments)
+
+def kNeighborsClassifier(data, match, arguments=None):
+    return kNeighborsBackend("skl.KNeighborsClassifier", data, match, arguments)
+
+def kNeighborsBackend(method, data, match, arguments):
+    if arguments is None:
+        arguments = {}
+
+    tmpDict = {}#store idx, col and values for matching values
+    for pID, pt in enumerate(data.pointIterator()):
+        notPID = [idx for idx in range(data.points) if idx != pID]
+        # find matching values in the point
+        if anyValues(match)(pt):
+            notMatchFts = []
+            matchFts = []
+            for idx, val in enumerate(pt):
+                if match(val):
+                    matchFts.append(idx)
+                else:
+                    notMatchFts.append(idx)
+            predictData = data[pID, notMatchFts]
+
+            # make prediction for each matching value
+            for fID in matchFts:
+                # training data includes not matching features and this feature
+                notMatchFts.append(fID)
+                trainingData = data[notPID, notMatchFts]
+                trainingData.deletePoints(anyValues(match))
+                pred = UML.trainAndApply(method, trainingData, -1, predictData,
+                                         arguments=arguments)
+                pred = pred[0]
+                tmpDict[pID, fID] = pred
+                # remove this feature so next prediction will not include it
+                del notMatchFts[-1]
+
+    def transform(value, i, j):
+        try:
+            return tmpDict[(i, j)]
+        except KeyError:
+            return value
+
+    data.transformEachElement(transform)
+
+    return data

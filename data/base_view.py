@@ -245,8 +245,19 @@ class BaseView(Base):
     ###########################
 
     @exception_docstring
-    def dropFeaturesContainingType(self, typeToDrop):
-        self._readOnlyException("dropFeaturesContainingType")
+    def fillUsingPoints(self, match, fill, arguments=None, points=None,
+                        returnModified=False):
+        self._readOnlyException("fillUsingPoints")
+
+    @exception_docstring
+    def fillUsingFeatures(self, match, fill, arguments=None, points=None,
+                          returnModified=False):
+        self._readOnlyException("fillUsingFeatures")
+
+    @exception_docstring
+    def fillUsingFeatures(self, match, fill, arguments=None, points=None,
+                          features=None, returnModified=False):
+        self._readOnlyException("fillUsingFeatures")
 
     @exception_docstring
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):

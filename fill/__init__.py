@@ -5,9 +5,12 @@ from .fill import constant
 from .fill import mean
 from .fill import median
 from .fill import mode
-from .fill import forward
-from .fill import backward
+from .fill import forwardFill
+from .fill import backwardFill
 from .fill import interpolate
+from .fill import kNeighborsClassifier
+from .fill import kNeighborsRegressor
 
-__all__ = ['backward', 'constant', 'factory', 'forward', 'interpolate',
-           'mean', 'median', 'mode',]
+__all__ = ['backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
+           'kNeighborsClassifier', 'kNeighborsRegressor', 'mean', 'median',
+           'mode',]

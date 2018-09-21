@@ -452,36 +452,6 @@ class Base(object):
     # Higher Order Operations #
     ###########################
 
-    def dropFeaturesContainingType(self, typeToDrop):
-        """
-        Modify this object so that it no longer contains features which have the specified
-        type as values. None is always returned.
-
-        """
-        if not isinstance(typeToDrop, (list, tuple)):
-            if not isinstance(typeToDrop, type):
-                raise ArgumentException(
-                    "The only allowed inputs are a list of types or a single type, yet the input is neither a list or a type")
-            typeToDrop = [typeToDrop]
-        else:
-            for value in typeToDrop:
-                if not isinstance(value, type):
-                    raise ArgumentException("When giving a list as input, every contained value must be a type")
-
-        if self.points == 0 or self.features == 0:
-            return
-
-        def hasType(feature):
-            for value in feature:
-                for typeValue in typeToDrop:
-                    if isinstance(value, typeValue):
-                        return True
-            return False
-
-        removed = self.extractFeatures(hasType)
-        return
-
-
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):
         """
         Modify this object so that the chosen feature is removed, and binary valued
@@ -3277,25 +3247,146 @@ class Base(object):
         self.validate()
 
 
-    def fillUsingPoints(self, match, fill, arguments=None, points=None):
+    def fillUsingPoints(self, match, fill, arguments=None, points=None,
+                        returnModified=False):
         """
+        Fill matching values within each point with a specified value based on
+        the values in that point. fillUsingPoints can also be used for filling
+        with any constant value
+
+        match: A single value, list of values, or function. If a function, it
+          must accept a single value and return True if the value is a match.
+          Common match types can be imported from UML's match module (missing,
+          nonNumeric, zero, etc.)
+
+        fill: A single value or function. If a function, it must be in the
+          format toFill(point, match) or toFill(point, match, arguments) and
+          return the transformed point as a list of values.
+          Common fill methods can be imported from UML's fill module (mean,
+          median, mode, forwardFill, backwardFill, interpolation)
+
+        arguments: Any additional arguments being passed to the fill function
+
+        points: Select specific points to apply fill to. If points is None, the
+          fill will be applied to all points.  Otherwise, points may be a
+          single identifier or list of identifiers
+
+        returnModified: return an object containing True for the modified
+          values in each point and False for unmodified values
         """
-        self._genericFillFrontend('point', match, fill, arguments, points, None)
+        # TODO returnModified
+        # if returnModified:
+        #     if points is None:
+        #         modified = self.copy()
+        #         pNames = [name + "_modified" for name in self.getPointNames()]
+        #     else:
+        #         modified = self.copyFeatures(points)
+        #         pNames = []
+        #         for pID in points:
+        #             if isinstance(pID, str):
+        #                 fNames.append(pID + "_modified")
+        #             else:
+        #                 fNames.append(self.getPointName(pID) + "_modified")
+        #
+        #     bools = lambda vals: [True if match(v) else False for v in vals]
+        #     modified.transformEachPoint(bools)
+        #     modified.setPointNames(pNames)
+        # else:
+        #     modified = None
+
+        self._genericFillUsingAxisFrontend('point', match, fill, arguments, points, None)
         self.validate()
 
-    def fillUsingFeatures(self, match, fill, arguments=None, features=None):
+        # return modified
+
+    def fillUsingFeatures(self, match, fill, arguments=None, features=None,
+                          returnModified=False):
         """
+        Fill matching values within each feature with a specified value based
+        on the values in that feature. fillUsingFeatures can also be used for
+        filling with any constant value
+
+        match: A single value, list of values, or function. If a function, it
+          must accept a single value and return True if the value is a match.
+          Common match types can be imported from UML's match module (missing,
+          nonNumeric, zero, etc.)
+
+        fill: A single value or function. If a function, it must be in the
+          format toFill(feature, match) or toFill(feature, match, arguments)
+          and return the transformed feature as a list of values.
+          Common fill methods can be imported from UML's fill module (mean,
+          median, mode, forwardFill, backwardFill, interpolation)
+
+        arguments: Any additional arguments being passed to the fill function
+
+        features: Select specific features to apply fill to. If features is
+          None, the fill will be applied to all features.  Otherwise, features
+          may be a single identifier or list of identifiers
+
+        returnModified: return an object containing True for the modified
+          values in each feature and False for unmodified values
         """
-        self._genericFillFrontend('feature', match, fill, arguments, None, features)
+        # TODO returnModified
+        # if returnModified:
+        #     if features is None:
+        #         modified = self.copy()
+        #         fNames = [name + "_modified" for name in self.getFeatureNames()]
+        #     else:
+        #         modified = self.copyFeatures(features)
+        #         fNames = []
+        #         for fID in features:
+        #             if isinstance(fID, str):
+        #                 fNames.append(fID + "_modified")
+        #             else:
+        #                 fNames.append(self.getFeatureName(fID) + "_modified")
+        #
+        #     bools = lambda vals: [True if match(v) else False for v in vals]
+        #     modified.transformEachFeature(bools)
+        #     modified.setFeatureNames(fNames)
+        # else:
+        #     modified = None
+
+        self._genericFillUsingAxisFrontend('feature', match, fill, arguments,
+                                           None, features)
         self.validate()
 
-    def _genericFillFrontend(self, axis, toMatch, toFill, arguments, points, features):
+        # return modified
+
+    def _genericFillUsingAxisFrontend(self, axis, toMatch, toFill, arguments,
+                                      points, features):
         self._validateAxis(axis)
         toTransform = fill.factory(toMatch, toFill, arguments)
         if axis == 'point':
             self.transformEachPoint(toTransform, points)
         else:
             self.transformEachFeature(toTransform, features)
+
+    def fillUsingNeighbors(self, toMatch, toFill, arguments=None, points=None,
+                           features=None, returnModified=False):
+        """
+        """
+        # TODO returnModified
+        # if returnModified:
+        #     modified = numpy.zeros((self.points, self.features))
+        #     for i in points:
+        #         for j in features:
+        #             modified[i, j] = 1
+        #     modifiedObj = UML.createData(modified)
+        tmpData = toFill(self.copy(), toMatch, arguments)
+        if points is None and features is None:
+            self.referenceDataFrom(tmpData)
+            return
+        if points is None:
+            points = [i for i in range(self.points)]
+        else:
+             points = self._constructIndicesList('point', points)
+        if features is None:
+            features = [i for i in range(self.features)]
+        else:
+             features = self._constructIndicesList('feature', features)
+        for i in points:
+            for j in features:
+                self._setValue(tmpData[i, j], i, j)
 
     def _flattenNames(self, discardAxis):
         """

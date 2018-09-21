@@ -837,3 +837,6 @@ class DataFrame(Base):
             df.columns = numpy.arange(len(df.columns), dtype=df.columns.dtype)
 
         return UML.createData('DataFrame', ret, **{name: nameList, otherName: otherNameList})
+
+    def _setValue(self, value, pIdx, fIdx):
+        self.data.iloc[pIdx, fIdx] = value

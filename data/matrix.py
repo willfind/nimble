@@ -805,6 +805,9 @@ class Matrix(Base):
         self.data = ret
         return self
 
+    def _setValue(self, value, pIdx, fIdx):
+        self.data[pIdx, fIdx] = value
+
 
 def viewBasedApplyAlongAxis(function, axis, outerObject):
     """ applies the given function to each view along the given axis, returning the results

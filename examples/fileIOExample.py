@@ -17,6 +17,7 @@ if __name__ == "__main__":
     import os.path
     import UML
     from UML import createData
+    from UML import match
 
     # string manipulation to get and make paths
     pathOrig = os.path.join(UML.UMLPath, "datasets/adult_income_classification_tiny.csv")
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     full = createData("DataFrame", pathOrig, featureNames=True)
 
     # scrub the set of any string valued data
-    full.dropFeaturesContainingType(six.string_types)
+    full.deleteFeatures(match.anyNonNumeric)
 
     # demonstrate splitting the data in train and test sets out of place. By default,
     # the distribution of points between the two returned objects is random.
