@@ -3274,30 +3274,23 @@ class Base(object):
         returnModified: return an object containing True for the modified
           values in each point and False for unmodified values
         """
-        # TODO returnModified
-        # if returnModified:
-        #     if points is None:
-        #         modified = self.copy()
-        #         pNames = [name + "_modified" for name in self.getPointNames()]
-        #     else:
-        #         modified = self.copyFeatures(points)
-        #         pNames = []
-        #         for pID in points:
-        #             if isinstance(pID, str):
-        #                 fNames.append(pID + "_modified")
-        #             else:
-        #                 fNames.append(self.getPointName(pID) + "_modified")
-        #
-        #     bools = lambda vals: [True if match(v) else False for v in vals]
-        #     modified.transformEachPoint(bools)
-        #     modified.setPointNames(pNames)
-        # else:
-        #     modified = None
+        # TODO efficiency of returnModified
+        if returnModified:
+            def bools(values):
+                return [True if match(val) else False for val in values]
+            if points is None:
+                modified = self.calculateForEachPoint(bools)
+            else:
+                modified = self[points, :].calculateForEachPoint(bools)
+            modNames = [name + "_modified" for name in modified.getPointNames()]
+            modified.setPointNames(modNames)
+        else:
+            modified = None
 
         self._genericFillUsingAxisFrontend('point', match, fill, arguments, points, None)
         self.validate()
 
-        # return modified
+        return modified
 
     def fillUsingFeatures(self, match, fill, arguments=None, features=None,
                           returnModified=False):
@@ -3326,31 +3319,24 @@ class Base(object):
         returnModified: return an object containing True for the modified
           values in each feature and False for unmodified values
         """
-        # TODO returnModified
-        # if returnModified:
-        #     if features is None:
-        #         modified = self.copy()
-        #         fNames = [name + "_modified" for name in self.getFeatureNames()]
-        #     else:
-        #         modified = self.copyFeatures(features)
-        #         fNames = []
-        #         for fID in features:
-        #             if isinstance(fID, str):
-        #                 fNames.append(fID + "_modified")
-        #             else:
-        #                 fNames.append(self.getFeatureName(fID) + "_modified")
-        #
-        #     bools = lambda vals: [True if match(v) else False for v in vals]
-        #     modified.transformEachFeature(bools)
-        #     modified.setFeatureNames(fNames)
-        # else:
-        #     modified = None
+        # TODO efficiency of returnModified
+        if returnModified:
+            def bools(values):
+                return [True if match(val) else False for val in values]
+            if features is None:
+                modified = self.calculateForEachFeature(bools)
+            else:
+                modified = self[:, features].calculateForEachFeature(bools)
+            modNames = [name + "_modified" for name in modified.getFeatureNames()]
+            modified.setFeatureNames(modNames)
+        else:
+            modified = None
 
         self._genericFillUsingAxisFrontend('feature', match, fill, arguments,
                                            None, features)
         self.validate()
 
-        # return modified
+        return modified
 
     def _genericFillUsingAxisFrontend(self, axis, toMatch, toFill, arguments,
                                       points, features):
@@ -3361,21 +3347,47 @@ class Base(object):
         else:
             self.transformEachFeature(toTransform, features)
 
-    def fillUsingNeighbors(self, toMatch, toFill, arguments=None, points=None,
+    def fillUsingKNeighbors(self, match, fill, arguments=None, points=None,
                            features=None, returnModified=False):
         """
+        Fill matching values with values based on the points nearest neighbors
+
+        match: A single value, list of values, or function. If a function, it
+          must accept a single value and return True if the value is a match.
+          Common match types can be imported from UML's match module (missing,
+          nonNumeric, zero, etc.)
+
+        fill: kNeighbors fill methods can be imported from UML's fill module:
+          kNeighborsRegressor or kNeighborsClassifier
+
+        arguments: A dictionary of arguments containing parameters for the
+          sklearn learner being used. If arguments is None, the default
+          parameters will be used.
+
+        features: Select specific features to apply fill to. If features is
+          None, the fill will be applied to all features.  Otherwise, features
+          may be a single identifier or list of identifiers
+
+        returnModified: return an object containing True for the modified
+          values in each feature and False for unmodified values
         """
-        # TODO returnModified
-        # if returnModified:
-        #     modified = numpy.zeros((self.points, self.features))
-        #     for i in points:
-        #         for j in features:
-        #             modified[i, j] = 1
-        #     modifiedObj = UML.createData(modified)
-        tmpData = toFill(self.copy(), toMatch, arguments)
+        # TODO efficiency of returnModified
+        if returnModified:
+            modified = self.calculateForEachElement(match, points=points, features=features)
+            modNames = [name + "_modified" for name in modified.getFeatureNames()]
+            modified.setFeatureNames(modNames)
+            if points is not None and features is not None:
+                modified = modified[points: features]
+            elif points is not None:
+                modified = modified[points, :]
+            elif features is not None:
+                modified = modified[:, features]
+        else:
+            modified = None
+        tmpData = fill(self.copy(), match, arguments)
         if points is None and features is None:
             self.referenceDataFrom(tmpData)
-            return
+            return modified
         if points is None:
             points = [i for i in range(self.points)]
         else:
@@ -3387,6 +3399,8 @@ class Base(object):
         for i in points:
             for j in features:
                 self._setValue(tmpData[i, j], i, j)
+
+        return modified
 
     def _flattenNames(self, discardAxis):
         """

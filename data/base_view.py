@@ -255,7 +255,7 @@ class BaseView(Base):
         self._readOnlyException("fillUsingFeatures")
 
     @exception_docstring
-    def fillUsingFeatures(self, match, fill, arguments=None, points=None,
+    def fillUsingKNeighbors(self, match, fill, arguments=None, points=None,
                           features=None, returnModified=False):
         self._readOnlyException("fillUsingFeatures")
 

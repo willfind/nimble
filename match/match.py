@@ -24,15 +24,13 @@ def nonNumeric(value):
     Determines if a single is not numeric
     nonNumeric values include any values without a python or numpy numeric type
     """
-    return not numeric(value)
+    return not isinstance(value, (int, float, complex, numpy.number))
 
 def zero(value):
     """
     Determines if a single value is equal to zero
     zero values include any numeric value equal to zero
     """
-    if not numeric(value):
-        return False
     return value == 0
 
 def nonZero(value):
@@ -41,17 +39,13 @@ def nonZero(value):
     nonZero values include any non-numeric value and any numeric value
     not equal to zero
     """
-    if not numeric(value):
-        return True
-    return not zero(value)
+    return value != 0
 
 def positive(value):
     """
     Determines if a single value is greater than zero
     positive values include any numeric value greater than zero
     """
-    if not numeric(value):
-        return False
     try:
         return value > 0
     except Exception:
@@ -62,8 +56,6 @@ def negative(value):
     Determines if a single value is less than zero
     negative values include any numeric value less than zero
     """
-    if not numeric(value):
-        return False
     try:
         return value < 0
     except Exception:
