@@ -4126,9 +4126,9 @@ class Base(object):
                 raise ZeroDivisionError(msg)
 
     def _genericNumericBinary(self, opName, other):
-        ret = self._genericNumericBinary_validation(opName, other)
-        if ret == NotImplemented:
-            return ret
+        # ret = self._genericNumericBinary_validation(opName, other)
+        # if ret == NotImplemented:
+        #     return ret
 
         isUML = isinstance(other, UML.data.Base)
 
@@ -4145,7 +4145,12 @@ class Base(object):
         else:
             (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
 
-        ret = self._genericNumericBinary_implementation(opName, other)
+        try:
+            ret = self._genericNumericBinary_implementation(opName, other)
+        except Exception as e:
+            self._genericNumericBinary_validation(opName, other)
+            raise(e)
+
 
         if retPNames is not None:
             ret.setPointNames(retPNames)
