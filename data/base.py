@@ -4099,12 +4099,6 @@ class Base(object):
         if self.points == 0 or self.features == 0:
             raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
 
-        # check name restrictions
-        if isUML:
-            if self._pointNamesCreated() and other._pointNamesCreated():
-                self._validateEqualNames('point', 'point', opName, other)
-            if self._featureNamesCreated() and other._featureNamesCreated():
-                self._validateEqualNames('feature', 'feature', opName, other)
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
                     '__itruediv__', '__floordiv__', '__rfloordiv__', '__ifloordiv__',
@@ -4123,6 +4117,7 @@ class Base(object):
                 msg += + "is zero"
                 raise ZeroDivisionError(msg)
 
+
     def _genericNumericBinary(self, opName, other):
 
         isUML = isinstance(other, UML.data.Base)
@@ -4130,6 +4125,12 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
+            
+            # check name restrictions
+            if self._pointNamesCreated() and other._pointNamesCreated():
+                self._validateEqualNames('point', 'point', opName, other)
+            if self._featureNamesCreated() and other._featureNamesCreated():
+                self._validateEqualNames('feature', 'feature', opName, other)
 
         # figure out return obj's point / feature names
         # if unary:
