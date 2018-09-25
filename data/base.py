@@ -3751,6 +3751,20 @@ class Base(object):
 
         self.validate()
 
+    def _mul_numericValidation(self, other):
+   
+        if self.points > 0:
+            for val in self.pointView(0):
+                if not dataHelpers._looksNumeric(val):
+                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+        
+        if isinstance(other, UML.data.Base):
+            if other.points > 0:
+                for val in other.pointView(0):
+                    if not dataHelpers._looksNumeric(val):
+                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+        
+
 
     def __mul__(self, other):
         """
@@ -3761,24 +3775,14 @@ class Base(object):
         if not isinstance(other, UML.data.Base) and not dataHelpers._looksNumeric(other):
             return NotImplemented
 
+        # Test element type self
         if self.points == 0 or self.features == 0:
             raise ImproperActionException("Cannot do a multiplication when points or features is empty")
-
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
         # test element type other
         if isinstance(other, UML.data.Base):
             if other.points == 0 or other.features == 0:
                 raise ImproperActionException("Cannot do a multiplication when points or features is empty")
-
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
             if self.features != other.points:
                 raise ArgumentException("The number of features in the calling object must "
@@ -3786,7 +3790,12 @@ class Base(object):
 
             self._validateEqualNames('feature', 'point', '__mul__', other)
 
-        ret = self._mul__implementation(other)
+        try:
+            ret = self._mul__implementation(other)
+        except Exception as e:
+            self._mul_numericValidation(other)
+            raise(e)
+
 
         if isinstance(other, UML.data.Base):
             ret.setPointNames(self.getPointNames())
