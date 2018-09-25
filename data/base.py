@@ -4082,8 +4082,6 @@ class Base(object):
 
         # test element type other
         if isUML:
-            if opName.startswith('__r'):
-                return NotImplemented
             if other.points > 0:
                 try:
                     other._validateNumericData_implementation()
@@ -4126,11 +4124,12 @@ class Base(object):
                 raise ZeroDivisionError(msg)
 
     def _genericNumericBinary(self, opName, other):
-        # ret = self._genericNumericBinary_validation(opName, other)
-        # if ret == NotImplemented:
-        #     return ret
 
         isUML = isinstance(other, UML.data.Base)
+
+        if isUML:
+            if opName.startswith('__r'):
+                return NotImplemented
 
         # figure out return obj's point / feature names
         # if unary:
