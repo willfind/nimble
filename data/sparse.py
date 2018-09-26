@@ -1452,11 +1452,6 @@ class Sparse(Base):
         # flag that we are internally sorted
         self._sorted = axis
 
-    def _setValue(self, value, pIdx, fIdx):
-        for i, (r, c) in enumerate(zip(self.data.row, self.data.col)):
-            if r == pIdx and c == fIdx:
-                self.data.data[i] = value
-
 
 ###################
 # Generic Helpers #

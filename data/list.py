@@ -864,6 +864,3 @@ class List(Base):
             return numpy.matrix(numpy.empty([len(self.getPointNames()), len(self.getFeatureNames())]))
 
         return numpy.matrix(self.data)
-
-    def _setValue(self, value, pIdx, fIdx):
-        self.data[pIdx][fIdx] = value
