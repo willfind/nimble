@@ -31,6 +31,7 @@ locationCache = {}
 
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
+from UML.helpers import inspectArguments
 
 
 class Mlpy(UniversalInterface):
@@ -510,7 +511,7 @@ class Mlpy(UniversalInterface):
         namedModule = self._searcher.findInPackage(parent, name)
 
         # for python 3
-        # in python 3, inspect.getargspec(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
+        # in python 3, inspectArguments(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
         # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
         excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
         if sys.version_info.major > 2 and 'kernel' not in name.lower():
@@ -519,7 +520,7 @@ class Mlpy(UniversalInterface):
 
         if not namedModule is None:
             try:
-                (args, v, k, d) = inspect.getargspec(namedModule)
+                (args, v, k, d) = inspectArguments(namedModule)
                 (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
                 if 'seed' in args:
                     index = args.index('seed')
@@ -528,7 +529,7 @@ class Mlpy(UniversalInterface):
                 return (args, v, k, d)
             except TypeError:
                 try:
-                    (args, v, k, d) = inspect.getargspec(namedModule.__init__)
+                    (args, v, k, d) = inspectArguments(namedModule.__init__)
                     (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
                     if 'seed' in args:
                         index = args.index('seed')
