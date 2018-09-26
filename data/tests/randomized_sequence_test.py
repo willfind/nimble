@@ -591,7 +591,7 @@ untested = ['featureIterator', 'pointIterator', #iterator equality isn't a sensi
             'featureReport', # floating point equality errors? / do we care?
             'pointCount', 'featureCount', # not callable
             'toString' # different underlying types will produce different outputs
-            'fillUsingPoints', 'fillUsingFeatures', 'fillUsingKNeighbors'
+            'fillUsingPoints', 'fillUsingFeatures', 'fillUsingAllData'
 ]
 
 

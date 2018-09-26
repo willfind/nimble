@@ -255,9 +255,9 @@ class BaseView(Base):
         self._readOnlyException("fillUsingFeatures")
 
     @exception_docstring
-    def fillUsingKNeighbors(self, match, fill, arguments=None, points=None,
+    def fillUsingAllData(self, match, fill, arguments=None, points=None,
                           features=None, returnModified=False):
-        self._readOnlyException("fillUsingFeatures")
+        self._readOnlyException("fillUsingAllData")
 
     @exception_docstring
     def replaceFeatureWithBinaryFeatures(self, featureToReplace):

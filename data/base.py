@@ -2542,7 +2542,9 @@ class Base(object):
           1. a single identifier (name or index)
           2. an iterable, list-like container of identifiers
           3. a function that when given a point will return True if it is to
-             be extracted
+             be extracted. Certain functions for matching points containing
+             any or all specified values are available in UML's match module:
+             anyMissing, allNonNumeric, allZero, etc.
           4. a filter function, as a string, containing a comparison operator
              between a feature name and a value (i.e 'feat1<10')
 
@@ -2583,7 +2585,9 @@ class Base(object):
           1. a single identifier (name or index)
           2. an iterable, list-like container of identifiers
           3. a function that when given a feature will return True if it is to
-             be extracted
+             be extracted. Certain functions for matching features containing
+             any or all specified values are available in UML's match module:
+             anyMissing, allNonNumeric, allZero, etc.
           4. a filter function, as a string, containing a comparison operator
              between a point name and a value (i.e 'point1<10')
 
@@ -2622,7 +2626,9 @@ class Base(object):
           1. a single identifier (name or index)
           2. an iterable, list-like container of identifiers
           3. a function that when given a point will return True if it is to
-             be deleted
+             be deleted. Certain functions for matching points containing
+             any or all specified values are available in UML's match module:
+             anyMissing, allNonNumeric, allZero, etc.
           4. a filter function, as a string, containing a comparison operator
              between a feature name and a value (i.e 'feat1<10')
 
@@ -2651,7 +2657,9 @@ class Base(object):
           1. a single identifier (name or index)
           2. an iterable, list-like container of identifiers
           3. a function that when given a feature will return True if it is to
-             be deleted
+             be deleted. Certain functions for matching features containing
+             any or all specified values are available in UML's match module:
+             anyMissing, allNonNumeric, allZero, etc.
           4. a filter function, as a string, containing a comparison operator
              between a point name and a value (i.e 'point1<10')
 
@@ -2680,7 +2688,9 @@ class Base(object):
           1. a single identifier (name or index)
           2. an iterable, list-like container of identifiers
           3. a function that when given a point will return True if it is to
-             be retained
+             be retained. Certain functions for matching points containing
+             any or all specified values are available in UML's match module:
+             anyMissing, allNonNumeric, allZero, etc.
           4. a filter function, as a string, containing a comparison operator
              between a feature name and a value (i.e 'feat1<10')
 
@@ -2709,7 +2719,9 @@ class Base(object):
           1. a single identifier (name or index)
           2. an iterable, list-like container of identifiers
           3. a function that when given a feature will return True if it is to
-             be retained
+             be retained. Certain functions for matching features containing
+             any or all specified values are available in UML's match module:
+             anyMissing, allNonNumeric, allZero, etc.
           4. a filter function, as a string, containing a comparison operator
              between a point name and a value (i.e 'point1<10')
 
@@ -3256,14 +3268,14 @@ class Base(object):
 
         match: A single value, list of values, or function. If a function, it
           must accept a single value and return True if the value is a match.
-          Common match types can be imported from UML's match module (missing,
-          nonNumeric, zero, etc.)
+          Certain match types can be imported from UML's match module:
+          missing, nonNumeric, zero, etc.
 
         fill: A single value or function. If a function, it must be in the
-          format toFill(point, match) or toFill(point, match, arguments) and
+          format fill(point, match) or fill(point, match, arguments) and
           return the transformed point as a list of values.
-          Common fill methods can be imported from UML's fill module (mean,
-          median, mode, forwardFill, backwardFill, interpolation)
+          Certain fill methods can be imported from UML's fill module:
+          mean, median, mode, forwardFill, backwardFill, interpolation
 
         arguments: Any additional arguments being passed to the fill function
 
@@ -3274,7 +3286,6 @@ class Base(object):
         returnModified: return an object containing True for the modified
           values in each point and False for unmodified values
         """
-        # TODO efficiency of returnModified
         if returnModified:
             def bools(values):
                 return [True if match(val) else False for val in values]
@@ -3301,14 +3312,14 @@ class Base(object):
 
         match: A single value, list of values, or function. If a function, it
           must accept a single value and return True if the value is a match.
-          Common match types can be imported from UML's match module (missing,
-          nonNumeric, zero, etc.)
+          Certain match types can be imported from UML's match module:
+          missing, nonNumeric, zero, etc.
 
         fill: A single value or function. If a function, it must be in the
-          format toFill(feature, match) or toFill(feature, match, arguments)
+          format fill(feature, match) or fill(feature, match, arguments)
           and return the transformed feature as a list of values.
-          Common fill methods can be imported from UML's fill module (mean,
-          median, mode, forwardFill, backwardFill, interpolation)
+          Certain fill methods can be imported from UML's fill module:
+          mean, median, mode, forwardFill, backwardFill, interpolation
 
         arguments: Any additional arguments being passed to the fill function
 
@@ -3319,7 +3330,6 @@ class Base(object):
         returnModified: return an object containing True for the modified
           values in each feature and False for unmodified values
         """
-        # TODO efficiency of returnModified
         if returnModified:
             def bools(values):
                 return [True if match(val) else False for val in values]
@@ -3347,7 +3357,7 @@ class Base(object):
         else:
             self.transformEachFeature(toTransform, features)
 
-    def fillUsingKNeighbors(self, match, fill, arguments=None, points=None,
+    def fillUsingAllData(self, match, fill, arguments=None, points=None,
                            features=None, returnModified=False):
         """
         Fill matching values with values based on the points nearest neighbors
@@ -3357,12 +3367,17 @@ class Base(object):
           Common match types can be imported from UML's match module (missing,
           nonNumeric, zero, etc.)
 
-        fill: kNeighbors fill methods can be imported from UML's fill module:
-          kNeighborsRegressor or kNeighborsClassifier
+        fill: A function in the format fill(data, match) or
+          fill(data, match, arguments) where data is the entire UML data object
+          and the transformed data object is being returned.
+          Certain fill methods can be imported from UML's fill module:
+          kNeighborsRegressor, kNeighborsClassifier
 
-        arguments: A dictionary of arguments containing parameters for the
-          sklearn learner being used. If arguments is None, the default
-          parameters will be used.
+        arguments: Any additional arguments being passed to the fill function
+
+        points: Select specific points to apply fill to. If points is None, the
+          fill will be applied to all points.  Otherwise, points may be a
+          single identifier or list of identifiers
 
         features: Select specific features to apply fill to. If features is
           None, the fill will be applied to all features.  Otherwise, features
@@ -3371,34 +3386,26 @@ class Base(object):
         returnModified: return an object containing True for the modified
           values in each feature and False for unmodified values
         """
-        # TODO efficiency of returnModified
         if returnModified:
             modified = self.calculateForEachElement(match, points=points, features=features)
             modNames = [name + "_modified" for name in modified.getFeatureNames()]
             modified.setFeatureNames(modNames)
             if points is not None and features is not None:
-                modified = modified[points: features]
+                modified = modified[points, features]
             elif points is not None:
                 modified = modified[points, :]
             elif features is not None:
                 modified = modified[:, features]
         else:
             modified = None
+
         tmpData = fill(self.copy(), match, arguments)
         if points is None and features is None:
             self.referenceDataFrom(tmpData)
-            return modified
-        if points is None:
-            points = [i for i in range(self.points)]
         else:
-             points = self._constructIndicesList('point', points)
-        if features is None:
-            features = [i for i in range(self.features)]
-        else:
-             features = self._constructIndicesList('feature', features)
-        for i in points:
-            for j in features:
-                self._setValue(tmpData[i, j], i, j)
+            def transform(value, i, j):
+                return tmpData[i, j]
+            self.transformEachElement(transform, points, features)
 
         return modified
 
