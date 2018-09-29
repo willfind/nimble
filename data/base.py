@@ -94,6 +94,8 @@ def valuesToPythonList(values, argName):
     string, or an iterable container object
 
     """
+    if isinstance(values, list):
+        return values
     if isinstance(values, (int, numpy.integer, six.string_types)):
         return [values]
     valuesList = []
@@ -857,14 +859,34 @@ class Base(object):
 
         return res
 
+
     @logCapture
-    def countUniqueFeatureValues(self, feature):
+    def countEachUniqueValue(self, points=None, features=None):
         """
-        Count unique values for one feature or multiple features combination.
-        Input:
-        feature: can be an int, string or a list of int or a list of string
+        Returns a dictionary containing each unique value as a key and the
+        number of times that value occurs as the value.
+
+        points: May be None indicating application to all points, a single
+        identifier or iterable, list-like object of identifiers.
+
+        features: May be None indicating application to all features, a single
+        identifier or iterable, list-like object of identifiers.
+
         """
-        return self.groupByFeature(feature, countUniqueValueOnly=True)
+        uniqueCount = {}
+        if points is None:
+            points = [i for i in range(self.points)]
+        if features is None:
+            features = [i for i in range(self.features)]
+        points = valuesToPythonList(points, 'points')
+        features = valuesToPythonList(features, 'features')
+        for i in points:
+            for j in features:
+                val = self[i, j]
+                temp = uniqueCount.get(val,0)
+                uniqueCount[val] = temp + 1
+
+        return uniqueCount
 
     def pointIterator(self):
     #		if self.features == 0:
