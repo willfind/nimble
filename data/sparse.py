@@ -24,7 +24,7 @@ import UML.data
 from . import dataHelpers
 from .base import Base, cmp_to_key
 from .base_view import BaseView
-from .dataHelpers import View
+from .dataHelpers import inheritDocstringsFactory
 
 from UML.exceptions import ImproperActionException
 from UML.exceptions import PackageException
@@ -32,6 +32,7 @@ from UML.randomness import pythonRandom
 pd = UML.importModule('pandas')
 import warnings
 
+@inheritDocstringsFactory(Base)
 class Sparse(Base):
 
     def __init__(self, data, pointNames=None, featureNames=None, reuseData=False, elementType=None, **kwds):

@@ -16,13 +16,13 @@ import UML
 from UML import loadTrainedLearner
 from UML.interfaces.tests.test_helpers import checkLabelOrderingAndScoreAssociations
 
-from UML.helpers import generateClusteredPoints
-
 from UML.randomness import numpyRandom
 from UML.randomness import generateSubsidiarySeed
 from UML.exceptions import ArgumentException
 from UML.helpers import generateClassificationData
 from UML.helpers import generateRegressionData
+from UML.helpers import generateClusteredPoints
+from UML.helpers import inspectArguments
 from UML.calculate.loss import rootMeanSquareError
 from UML.interfaces.scikit_learn_interface import SciKitLearn
 from UML.interfaces.universal_interface import UniversalInterface

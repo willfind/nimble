@@ -21,8 +21,9 @@ import copy
 import re
 from .base_view import BaseView
 from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import inheritDocstringsFactory
 
-
+@inheritDocstringsFactory(Base)
 class DataFrame(Base):
     """
     Class providing implementations of data manipulation operations on data stored
