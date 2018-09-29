@@ -1627,7 +1627,7 @@ class HighLevelModifying(DataTestObject):
             assert (d is None) or (d == (None, None, None, None))
         else:#if it is a normal python function
             a, va, vk, d = UML.helpers.inspectArguments(func)
-            assert d == (None, None, None)
+            assert d == (None, None, None, None)
 
         if axis == 'point':
             return caller.normalizePoints(subtract=subtract, divide=divide, applyResultTo=also)
