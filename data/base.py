@@ -4230,15 +4230,17 @@ class Base(object):
                 # if axis=feature and target is not a feature name,
                 # then check if it's a valid query string
                 else:
-                    optrDict = {'<=': operator.le, '>=': operator.ge, '!=': operator.ne, '==': operator.eq, \
-                                        '=': operator.eq, '<': operator.lt, '>': operator.gt}
+                    optrDict = {'<=': operator.le, '>=': operator.ge,
+                                '!=': operator.ne, '==': operator.eq,
+                                '<': operator.lt, '>': operator.gt}
                     for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
                         if optr in target:
                             targetList = target.split(optr)
                             optr = '==' if optr == '=' else optr
                             #after splitting at the optr, 2 items must be in the list
                             if len(targetList) != 2:
-                                msg = "the target(%s) is a query string but there is an error" % target
+                                msg = "the target({0}) is a ".format(target)
+                                msg += "query string but there is an error"
                                 raise ArgumentException(msg)
                             nameOfFeatureOrPoint, valueOfFeatureOrPoint = targetList
                             nameOfFeatureOrPoint = nameOfFeatureOrPoint.strip()
@@ -4247,8 +4249,8 @@ class Base(object):
                             #when axis=point, check if the feature exists or not
                             #when axis=feature, check if the point exists or not
                             if not hasNameChecker2(nameOfFeatureOrPoint):
-                                msg = "the %s %s doesn't exist" % (
-                                'feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
+                                msg = "the {0} '{1}' doesn't exist".format(
+                                  'feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
                                 raise ArgumentException(msg)
 
                             optrOperator = optrDict[optr]
@@ -4267,15 +4269,11 @@ class Base(object):
                             target_f.optr = optrOperator
                             target = target_f
                             break
-                    #if the target can't be converted to a function
-                    if isinstance(target, six.string_types):
-                        try:
-                            target = self._constructIndicesList(axis, target)
-                        except ArgumentException:
-                            argName = 'to' + structure.capitalize()
-                            msg = '{0} '.format(argName)
-                            msg += 'is not a valid point name nor a valid query string'
-                            raise ArgumentException(msg)
+                    # the target can't be converted to a function
+                    else:
+                        msg = "'{0}' is not a valid ".format(target)
+                        msg += '{0} name nor a valid query string'.format(axis)
+                        raise ArgumentException(msg)
             # list-like container types
             if not hasattr(target, '__call__'):
                 argName = 'to' + structure.capitalize()
@@ -5228,7 +5226,7 @@ class Base(object):
         try:
             indicesList = [self._getIndex(val, axis) for val in valuesList]
         except ArgumentException as ae:
-            msg = "Invalid index value for the argument '{0}'. ".format(argName)
+            msg = "Invalid value for the argument '{0}'. ".format(argName)
             # add more detail to msg; slicing to exclude quotes
             msg += str(ae)[1:-1]
             raise ArgumentException(msg)
