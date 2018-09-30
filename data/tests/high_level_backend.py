@@ -752,20 +752,14 @@ class HighLevelDataSafe(DataTestObject):
     def test_calculateForEachElement_calls_constructIndicesList1(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
-        def noChange(point):
-            return point
-
-        ret = toTest.calculateForEachElement(noChange, points=['a', 'b'])
+        ret = toTest.calculateForEachElement(passThrough, points=['a', 'b'])
 
     @raises(CalledFunctionException)
     @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
     def test_calculateForEachElement_calls_constructIndicesList2(self, mockFunc):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
-        def noChange(point):
-            return point
-
-        ret = toTest.calculateForEachElement(noChange, features=['a', 'b'])
+        ret = toTest.calculateForEachElement(passThrough, features=['a', 'b'])
 
     def test_calculateForEachElement_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -783,48 +777,59 @@ class HighLevelDataSafe(DataTestObject):
 
     def test_calculateForEachElement_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
+        pNames = ['1', '4', '7']
+        fNames = ['one', 'two', 'three']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        exp = self.constructor(data, pointNames=pNames, featureNames=fNames)
         ret = toTest.calculateForEachElement(passThrough)
-        retRaw = ret.copyAs(format="python list")
 
-        assert [1, 2, 3] in retRaw
-        assert [4, 5, 6] in retRaw
-        assert [7, 8, 9] in retRaw
+        assert ret.isIdentical(exp)
 
 
     def test_calculateForEachElement_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
-        toTest = self.constructor(data)
+        pNames = ['1', '4', '7']
+        fNames = ['one', 'two', 'three']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[2, 0, 4], [0, 6, 7], [8, 0, 10]]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=fNames)
         ret = toTest.calculateForEachElement(plusOne, preserveZeros=True)
-        retRaw = ret.copyAs(format="python list")
 
-        assert [2, 0, 4] in retRaw
-        assert [0, 6, 7] in retRaw
-        assert [8, 0, 10] in retRaw
+        assert ret.isIdentical(exp)
 
 
     def test_calculateForEachElement_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
+        expData = [[1, 3, 3], [5, 5, 7], [7, 9, 9]]
+        exp = self.constructor(expData)
         ret = toTest.calculateForEachElement(plusOneOnlyEven, skipNoneReturnValues=True)
-        retRaw = ret.copyAs(format="python list")
 
-        assert [1, 3, 3] in retRaw
-        assert [5, 5, 7] in retRaw
-        assert [7, 9, 9] in retRaw
-
+        assert ret.isIdentical(exp)
 
     def test_calculateForEachElement_plusOneLimited(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        names = ['one', 'two', 'three']
-        pnames = ['1', '4', '7']
-        toTest = self.constructor(data, pointNames=pnames, featureNames=names)
-
+        pNames = ['1', '4', '7']
+        fNames = ['one', 'two', 'three']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[5,7]]
+        exp = self.constructor(expData, pointNames=['4'], featureNames=['two', 'three'])
         ret = toTest.calculateForEachElement(plusOneOnlyEven, points='4', features=[1, 'three'],
                                              skipNoneReturnValues=True)
-        retRaw = ret.copyAs(format="python list")
 
-        assert [5, 7] in retRaw
+        assert ret.isIdentical(exp)
+
+    def test_calculateForEachPoint_PlusOneLimitedPreserveZeros(self):
+        data = [[0, 2, 3], [0, 5, 6], [7, 0, 9]]
+        pNames = ['1', '4', '7']
+        fNames = ['one', 'two', 'three']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[0, 3], [7, 0]]
+        exp = self.constructor(expData, pointNames=['1', '7'], featureNames=['one', 'two'])
+        ret = toTest.calculateForEachElement(plusOneOnlyEven, points=[0, '7'], features=[0, 'two'],
+                                             preserveZeros=True, skipNoneReturnValues=True)
+
+        assert ret.isIdentical(exp)
 
 
     def test_calculateForEachElement_All_zero(self):
@@ -875,9 +880,9 @@ class HighLevelDataSafe(DataTestObject):
 
 
 
-    #############################
+    ###################
     # countElements() #
-    #############################
+    ###################
 
     def test_countElements(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
