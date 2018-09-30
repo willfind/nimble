@@ -3652,3 +3652,15 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
     """
     return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, f=trainAndApplyOneVsOne, \
                                 arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
+
+
+def inspectArguments(func):
+    """
+    To be used in place of inspect.getargspec for Python3 compatibility.
+    Return is the tuple (args, varargs, keywords, defaults)
+    """
+    try:
+        argspec = inspect.getfullargspec(func)[:4] #py3
+    except:
+        argspec = inspect.getargspec(func) #py2
+    return argspec

@@ -10,7 +10,7 @@ Methods tested in this file:
 In object HighLevelDataSafe:
 calculateForEachPoint, calculateForEachFeature, mapReducePoints, pointIterator,
 featureIterator, calculateForEachElement, isApproximatelyEqual,
-trainAndTestSets
+trainAndTestSets, countEachUniqueValue
 
 In object HighLevelModifying:
 dropFeaturesContainingType, replaceFeatureWithBinaryFeatures,
@@ -24,6 +24,10 @@ from __future__ import absolute_import
 from copy import deepcopy
 from nose.tools import *
 from nose.plugins.attrib import attr
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
 
 import os.path
 import numpy
@@ -85,6 +89,16 @@ def plusOneOnlyEven(value):
     else:
         return None
 
+class CalledFunctionException(Exception):
+    def __init__(self):
+        pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
+
+def noChange(value):
+    return value
+
 
 class HighLevelDataSafe(DataTestObject):
     ###########################
@@ -120,6 +134,12 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.calculateForEachPoint(emitLower)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_calculateForEachPoint_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
+
+        ret = toTest.calculateForEachPoint(noChange, points=['a', 'b'])
 
     def test_calculateForEachPoint_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -238,6 +258,12 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.calculateForEachFeature(None)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_calculateForEachFeature_calls_constructIndicesList(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
+
+        ret = toTest.calculateForEachFeature(noChange, features=['a', 'b'])
 
     def test_calculateForEachFeature_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -721,6 +747,26 @@ class HighLevelDataSafe(DataTestObject):
     # calculateForEachElement() #
     #############################
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_calculateForEachElement_calls_constructIndicesList1(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
+
+        def noChange(point):
+            return point
+
+        ret = toTest.calculateForEachElement(noChange, points=['a', 'b'])
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_calculateForEachElement_calls_constructIndicesList2(self, mockFunc):
+        toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
+
+        def noChange(point):
+            return point
+
+        ret = toTest.calculateForEachElement(noChange, features=['a', 'b'])
+
     def test_calculateForEachElement_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, name=preserveName, path=preservePair)
@@ -1084,10 +1130,90 @@ class HighLevelDataSafe(DataTestObject):
         assert False  # implausible number of checks for random order were unsucessful
 
 
+    ########################
+    # countEachUniqueValue #
+    ########################
+
+    def test_countEachUniqueValue_allPtsAndFtrs(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        toTest = self.constructor(data)
+        unique = toTest.countEachUniqueValue()
+
+        assert len(unique) == 6
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['b'] == 1
+        assert unique['c'] == 1
+
+    def test_countEachUniqueValue_limitPoints(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, pointNames=pNames)
+        unique = toTest.countEachUniqueValue(points=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countEachUniqueValue(points='p1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countEachUniqueValue(points=[0,'p3'])
+
+        assert len(unique) == 3
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+
+    def test_countEachUniqueValue_limitFeatures(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(data, featureNames=fNames)
+        unique = toTest.countEachUniqueValue(features=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[3] == 1
+        assert unique['a'] == 1
+
+        unique = toTest.countEachUniqueValue(features='f1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[3] == 1
+        assert unique['a'] == 1
+
+        unique = toTest.countEachUniqueValue(features=[0,'f3'])
+
+        assert len(unique) == 4
+        assert unique[1] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['c'] == 1
+
+    def test_countEachUniqueValue_limitPointsAndFeatures_cornercase(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
+
+        unique = toTest.countEachUniqueValue(features=[0,'f3'], points=[0,'p3'])
+
+        assert len(unique) == 2
+        assert unique[1] == 2
+        assert unique[3] == 2
+
 class HighLevelModifying(DataTestObject):
-    ###########################
+    ##############################
     # dropFeaturesContainingType #
-    ###########################
+    ##############################
 
     def test_dropFeaturesContainingType_emptyTest(self):
         """ Test dropFeaturesContainingType() when the data is empty """
@@ -1500,7 +1626,7 @@ class HighLevelModifying(DataTestObject):
             d = func.__func__.__defaults__
             assert (d is None) or (d == (None, None, None))
         else:#if it is a normal python function
-            a, va, vk, d = inspect.getargspec(func)
+            a, va, vk, d = UML.helpers.inspectArguments(func)
             assert d == (None, None, None)
 
         if axis == 'point':
@@ -1807,6 +1933,20 @@ class HighLevelModifying(DataTestObject):
         assert expObj == obj2
         assert expAlsoL == alsoLess
         assert expAlsoM == alsoMore
+
+    #######################
+    # handleMissingValues #
+    #######################
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.Base._constructIndicesList', side_effect=calledException)
+    def test_handleMissingValues_calls_constructIndicesList1(self, mockFunc):
+        toTest = self.constructor([[1,2,3],[4,5,None],[7,8,9]], pointNames=['a', 'b','c'])
+
+        def noChange(point):
+            return point
+
+        toTest.handleMissingValues('remove points', features=['c'])
 
     def test_handleMissingValues_remove_points(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
