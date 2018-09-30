@@ -1213,7 +1213,7 @@ def loadTrainedLearner(inputPath):
         raise ArgumentException('File extension for a saved UML model should be .umlm')
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
-    if not isinstance(ret, UML.interfaces.universal_interface.UniversalInterface.TrainedLearner):
+    if not isinstance(ret, UML.interfaces.universal_interface.TrainedLearner):
         raise ArgumentException('File does not contain a UML valid trainedLearner Object.')
     return ret
 
