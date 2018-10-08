@@ -3778,14 +3778,16 @@ class Base(object):
         try:
             ret = self._mul__implementation(other)
         except Exception as e:
+            #TODO: improve how the exception is catch
             self._numericValidation()
             other._numericValidation()
             raise(e)
 
-
         if isinstance(other, UML.data.Base):
-            ret.setPointNames(self.getPointNames())
-            ret.setFeatureNames(other.getFeatureNames())
+            if self._pointNamesCreated():
+                ret.setPointNames(self.getPointNames())
+            if other._featureNamesCreated():
+                ret.setFeatureNames(other.getFeatureNames())
 
         pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
 
