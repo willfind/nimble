@@ -1734,8 +1734,6 @@ class SparseView(BaseView, Sparse):
         super(SparseView, self).__init__(**kwds)
 
     def _validate_implementation(self, level):
-        # TODO: review implementation.
-        # Unit Tests broken after _validateNumericData_implementation was added.
         self._source.validate(level)
 
     def _validateNumericData_implementation(self):
