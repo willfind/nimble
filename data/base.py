@@ -3680,17 +3680,6 @@ class Base(object):
         """
         if not isinstance(other, UML.data.Base):
             raise ArgumentException("'other' must be an instance of a UML data object")
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-        # test element type other
-        if other.points > 0:
-            for val in other.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
         if self.points != other.points:
             raise ArgumentException("The number of points in each object must be equal.")
@@ -3703,7 +3692,13 @@ class Base(object):
         self._validateEqualNames('point', 'point', 'elementwiseMultiply', other)
         self._validateEqualNames('feature', 'feature', 'elementwiseMultiply', other)
 
-        self._elementwiseMultiply_implementation(other)
+        try:
+            self._elementwiseMultiply_implementation(other)
+        except Exception as e:
+            #TODO: improve how the exception is catch
+            self._numericValidation()
+            other._numericValidation()
+            raise(e)
 
         (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
         self.setPointNames(retPNames)
@@ -3716,19 +3711,7 @@ class Base(object):
         if not singleValue and not isinstance(other, UML.data.Base):
             raise ArgumentException("'other' must be an instance of a UML data object or a single numeric value")
 
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-        # test element type other
         if isinstance(other, UML.data.Base):
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
             # same shape
             if self.points != other.points:
                 raise ArgumentException("The number of points in each object must be equal.")
@@ -3740,13 +3723,21 @@ class Base(object):
 
         if isinstance(other, UML.data.Base):
             def powFromRight(val, pnum, fnum):
-                return val ** other[pnum, fnum]
-
+                try:
+                    return val ** other[pnum, fnum]
+                except Exception as e:
+                    self._numericValidation()
+                    other._numericValidation()
+                    raise(e)
             self.transformEachElement(powFromRight)
         else:
             def powFromRight(val, pnum, fnum):
-                return val ** other
-
+                try:
+                    return val ** other
+                except Exception as e:
+                    self._numericValidation()
+                    other._numericValidation()
+                    raise(e)
             self.transformEachElement(powFromRight)
 
         self.validate()
