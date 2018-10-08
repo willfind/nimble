@@ -3974,8 +3974,14 @@ class Base(object):
         if other < 0:
             raise ArgumentException("other must be greater than zero")
 
-        retPNames = self.getPointNames()
-        retFNames = self.getFeatureNames()
+        if self._pointNamesCreated():
+            retPNames = self.getPointNames()
+        else:
+            retPNames = None
+        if self._featureNamesCreated():
+            retFNames = self.getFeatureNames()
+        else:
+            retFNames = None
 
         if other == 1:
             ret = self.copy()
@@ -3984,8 +3990,18 @@ class Base(object):
 
         # exact conditions in which we need to instantiate this object
         if other == 0 or other % 2 == 0:
-            identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
-                                      pointNames=retPNames, featureNames=retFNames)
+            if retPNames and retFNames:
+                identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
+                                          pointNames=retPNames, featureNames=retFNames)
+            elif retPNames and not retFNames:
+                identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
+                                          pointNames=retPNames, featureNames='automatic')
+            elif not retPNames and retFNames:
+                identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
+                                          pointNames='automatic', featureNames=retFNames)
+            else:
+                identity = UML.createData(
+                    self.getTypeString(), numpy.eye(self.points))
         if other == 0:
             return identity
 
