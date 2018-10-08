@@ -4122,11 +4122,8 @@ class Base(object):
                 return NotImplemented
             
             self._genericNumericBinary_sizeValidation(opName, other)
-
-            if self._pointNamesCreated() and other._pointNamesCreated():
-                self._validateEqualNames('point', 'point', opName, other)
-            if self._featureNamesCreated() and other._featureNamesCreated():
-                self._validateEqualNames('feature', 'feature', opName, other)
+            self._validateEqualNames('point', 'point', opName, other)
+            self._validateEqualNames('feature', 'feature', opName, other)
 
         # figure out return obj's point / feature names
         # if unary:
