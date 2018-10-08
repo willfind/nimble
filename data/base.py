@@ -639,7 +639,8 @@ class Base(object):
             setNames = [self.getPointName(x) for x in sorted(points)]
             ret.setPointNames(setNames)
         else:
-            ret.setPointNames(self.getPointNames())
+            if self._pointNamesCreated():
+                ret.setPointNames(self.getPointNames())
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -678,7 +679,8 @@ class Base(object):
             setNames = [self.getFeatureName(x) for x in sorted(features)]
             ret.setFeatureNames(setNames)
         else:
-            ret.setFeatureNames(self.getFeatureNames())
+            if self._featureNamesCreated():
+                ret.setFeatureNames(self.getFeatureNames())
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
