@@ -4063,8 +4063,14 @@ class Base(object):
     def __abs__(self):
         """ Perform element wise absolute value on this object """
         ret = self.calculateForEachElement(abs)
-        ret.setPointNames(self.getPointNames())
-        ret.setFeatureNames(self.getFeatureNames())
+        if self._pointNamesCreated():
+            ret.setPointNames(self.getPointNames())
+        else:
+            ret.setPointNames(None)
+        if self._featureNamesCreated():
+            ret.setFeatureNames(self.getFeatureNames())
+        else:
+            ret.setPointNames(None)
 
         ret._name = dataHelpers.nextDefaultObjectName()
         ret._absPath = self.absolutePath
