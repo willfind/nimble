@@ -2436,6 +2436,9 @@ class Base(object):
             origCountS = self.points
             origCountTA = toAppend.points
 
+
+            selfNamesCreated = self._pointNamesCreated
+            toAppendNamesCreated = toAppend._pointNamesCreated
             otherAxis = 'feature'
             funcString = 'appendPoints'
             selfSetName = self.setPointName
@@ -2451,6 +2454,8 @@ class Base(object):
             origCountS = self.features
             origCountTA = toAppend.features
 
+            selfNamesCreated = self._featureNamesCreated
+            toAppendNamesCreated = toAppend._featureNamesCreated
             otherAxis = 'point'
             funcString = 'appendFeatures'
             selfSetName = self.setFeatureName
@@ -2479,16 +2484,17 @@ class Base(object):
         # features already have default name assignments, so we set the correct
         # names. In the case of the standard implementation, we must use Base's
         # helper to add new names.
-        for i in range(origCountTA):
-            currName = toAppendGetName(i)
-            # This insures there is no name collision with defaults already
-            # present in the original object
-            if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                currName = self._nextDefaultName(axis)
-            if isReordered or differentType:
-                selfSetName(origCountS + i, currName)
-            else:
-                selfAddName(currName)
+        if selfNamesCreated() and toAppendNamesCreated():
+            for i in range(origCountTA):
+                currName = toAppendGetName(i)
+                # This insures there is no name collision with defaults already
+                # present in the original object
+                if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                    currName = self._nextDefaultName(axis)
+                if isReordered or differentType:
+                    selfSetName(origCountS + i, currName)
+                else:
+                    selfAddName(currName)
 
         self.validate()
 
@@ -4979,11 +4985,15 @@ class Base(object):
         the presence of default names.
         """
         if axis == 'point':
+            if not self._pointNamesCreated() and not other._pointNamesCreated():
+                return False
             lnames = self.getPointNames()
             rnames = other.getPointNames()
             lGetter = self.getPointIndex
             rGetter = other.getPointIndex
         else:
+            if not self._featureNamesCreated() and not other._featureNamesCreated():
+                return False
             lnames = self.getFeatureNames()
             rnames = other.getFeatureNames()
             lGetter = self.getFeatureIndex
