@@ -3751,21 +3751,6 @@ class Base(object):
 
         self.validate()
 
-    def _mul_numericValidation(self, other):
-   
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-        
-        if isinstance(other, UML.data.Base):
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-        
-
-
     def __mul__(self, other):
         """
         Perform matrix multiplication or scalar multiplication on this object depending on
@@ -3793,7 +3778,8 @@ class Base(object):
         try:
             ret = self._mul__implementation(other)
         except Exception as e:
-            self._mul_numericValidation(other)
+            self._numericValidation()
+            other._numericValidation()
             raise(e)
 
 
@@ -4076,6 +4062,26 @@ class Base(object):
         ret._relPath = self.relativePath
         return ret
 
+    def _numericValidation(self):
+        if self.points > 0:
+            try:
+                self._validateNumericData_implementation()
+            except ValueError:
+                raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+    def _genericNumericBinary_sizeValidation(self, opName, other):
+        if self.points != other.points:
+            msg = "The number of points in each object must be equal. "
+            msg += "(self=" + str(self.points) + " vs other="
+            msg += str(other.points) + ")"
+            raise ArgumentException(msg)
+        if self.features != other.features:
+            raise ArgumentException("The number of features in each object must be equal.")
+
+        if self.points == 0 or self.features == 0:
+            raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
+
+
     def _genericNumericBinary_validation(self, opName, other):
         isUML = isinstance(other, UML.data.Base)
 
@@ -4083,31 +4089,11 @@ class Base(object):
             raise ArgumentException("'other' must be an instance of a UML data object or a scalar")
 
         # Test element type self
-        if self.points > 0:
-            try:
-                self._validateNumericData_implementation()
-            except ValueError:
-                raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+        self._numericValidation()
 
         # test element type other
         if isUML:
-            if other.points > 0:
-                try:
-                    other._validateNumericData_implementation()
-                except ValueError:
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-            if self.points != other.points:
-                msg = "The number of points in each object must be equal. "
-                msg += "(self=" + str(self.points) + " vs other="
-                msg += str(other.points) + ")"
-                raise ArgumentException(msg)
-            if self.features != other.features:
-                raise ArgumentException("The number of features in each object must be equal.")
-
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
-
+            other._numericValidation()
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
                     '__itruediv__', '__floordiv__', '__rfloordiv__', '__ifloordiv__',
@@ -4135,7 +4121,8 @@ class Base(object):
             if opName.startswith('__r'):
                 return NotImplemented
             
-            # check name restrictions
+            self._genericNumericBinary_sizeValidation(opName, other)
+
             if self._pointNamesCreated() and other._pointNamesCreated():
                 self._validateEqualNames('point', 'point', opName, other)
             if self._featureNamesCreated() and other._featureNamesCreated():
