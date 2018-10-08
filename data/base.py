@@ -537,7 +537,7 @@ class Base(object):
 
     def transformFeatureToIntegers(self, featureToConvert):
         """
-        Modify this object so that the chosen feature in removed, and a new integer
+        Modify this object so that the chosen feature is removed, and a new integer
         valued feature is added with values 0 to n-1, one for each of n values present
         in the original feature. None is always returned.
 
@@ -575,7 +575,9 @@ class Base(object):
             return mapping[point[0]]
 
         converted = toConvert.calculateForEachPoint(lookup)
-        converted.setPointNames(toConvert.getPointNames())
+
+        if toConvert._pointNamesCreated():
+            converted.setPointNames(toConvert.getPointNames())
         converted.setFeatureName(0, toConvert.getFeatureName(0))
 
         self.appendFeatures(converted)
@@ -2642,8 +2644,9 @@ class Base(object):
         """
         ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
                                               number, randomize)
+        if self._featureNamesCreated():
+            ret.setFeatureNames(self.getFeatureNames())
 
-        ret.setFeatureNames(self.getFeatureNames())
         self._adjustCountAndNames('point', ret)
 
         ret._relPath = self.relativePath
@@ -2683,8 +2686,9 @@ class Base(object):
         """
         ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
                                               number, randomize)
+        if self._pointNamesCreated():
+            ret.setPointNames(self.getPointNames())
 
-        ret.setPointNames(self.getPointNames())
         self._adjustCountAndNames('feature', ret)
 
         ret._relPath = self.relativePath
