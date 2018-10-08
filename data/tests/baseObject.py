@@ -66,14 +66,24 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         if orig.points != 0:
             firstPRaw = [[0] * orig.features]
-            firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
-                                                    pointNames=['firstPNonView'], featureNames=orig.getFeatureNames(),
-                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+            if orig._featureNamesCreated():
+                firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
+                                                        pointNames=['firstPNonView'], featureNames=orig.getFeatureNames(),
+                                                        name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+            else:
+                firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
+                                                        pointNames=['firstPNonView'], featureNames='automatic',
+                                                        name=name, path=orig.path, keepPoints='all', keepFeatures='all')
 
             lastPRaw = [[3] * orig.features]
-            lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
-                                                   pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
-                                                   name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+            if orig._featureNamesCreated():
+                lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
+                                                       pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
+                                                       name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+            else:
+                lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
+                                                       pointNames=['lastPNonView'], featureNames='automatic',
+                                                       name=name, path=orig.path, keepPoints='all', keepFeatures='all')
 
             firstPoint.appendPoints(orig)
             full = firstPoint
@@ -90,9 +100,15 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         if orig.features != 0:
             lastFRaw = [[1] * full.points]
-            lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
-                                                     featureNames=full.getPointNames(), pointNames=['lastFNonView'],
-                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+            if full._pointNamesCreated():
+                lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
+                                                         featureNames=full.getPointNames(), pointNames=['lastFNonView'],
+                                                         name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+            else:
+                lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
+                                                         featureNames='automatic', pointNames=['lastFNonView'],
+                                                         name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+            
             lastFeature.transpose()
 
             full.appendFeatures(lastFeature)
