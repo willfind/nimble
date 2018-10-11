@@ -4080,9 +4080,9 @@ class Base(object):
     def _numericValidation(self):
         if self.points > 0:
             try:
-                self._validateNumericData_implementation()
+                self.calculateForEachElement(dataHelpers._checkNumeric)
             except ValueError:
-                raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+                   raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
     def _genericNumericBinary_sizeValidation(self, opName, other):
         if self.points != other.points:
