@@ -1325,12 +1325,6 @@ class Sparse(Base):
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
 
-    def _validateNumericData_implementation(self):
-        try:
-            self.data.astype('int')
-        except ValueError:
-            raise ValueError('Object contains no numeric values')
-
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained
@@ -1735,9 +1729,6 @@ class SparseView(BaseView, Sparse):
 
     def _validate_implementation(self, level):
         self._source.validate(level)
-
-    def _validateNumericData_implementation(self):
-        self._source._validateNumericData_implementation()
 
     def _getitem_implementation(self, x, y):
         adjX = x + self._pStart

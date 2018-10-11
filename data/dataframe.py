@@ -661,13 +661,6 @@ class DataFrame(Base):
         assert shape[0] == self.points
         assert shape[1] == self.features
 
-    def _validateNumericData_implementation(self):
-        try:
-            self.data.astype('int')
-        except ValueError:
-            raise ValueError('Object contains no numeric values')
-
-
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained
