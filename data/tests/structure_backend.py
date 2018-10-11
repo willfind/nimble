@@ -7633,6 +7633,421 @@ class StructureModifying(StructureShared):
         assert testObj == expObj
 
 
+    ################
+    # featureUnion #
+    ################
+
+    # TODO not first feature, shared featurenames?, pointNames in returned obj?
+
+    @raises(ArgumentException)
+    def test_featureUnion_exception_noPointNamesOrOnFeature(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        union = leftObj.featureUnion(rightObj)
+
+    @raises(ArgumentException)
+    def test_featureUnion_exception_pointNamesWithDefaults(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        leftObj.setPointName(0, 'a')
+        rightObj.setPointName(0, 'a')
+        assert leftObj.getPointName(1).startswith(DEFAULT_PREFIX)
+        assert rightObj.getPointName(1).startswith(DEFAULT_PREFIX)
+        union = leftObj.featureUnion(rightObj)
+
+    @raises(ArgumentException)
+    def test_featureUnion_exception_bothNonUnique(self):
+        dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['c', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+    def test_featureUnion_pointNames_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj)
+        assert union == exp
+
+    def test_featureUnion_pointNames_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [[3, 4], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'c'], featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj)
+        assert union == exp
+
+    def test_featureUnion_pointNames_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [[3, 4], [0, 0], [-3, -4], [9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'x', 'c', 'y'], featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
+                   ['d', -5, -6, None, None], [None, None, None, 0, 0], [None, None, None, 9, 9]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj)
+        assert union == exp
+
+    def test_featureUnion_onFeature_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+    def test_featureUnion_onFeature_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+    def test_featureUnion_onFeature_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
+                   ['d', -5, -6, None, None], ['x', None, None, 0, 0], ['y', None, None, 9, 9]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+    def test_featureUnion_onFeature_rightOnlyUnique_matchForEachLeft(self):
+        dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        dataR = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, -3, -4],
+                   ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+    def test_featureUnion_onFeature_rightOnlyUnique_missingLeftMatches(self):
+        dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        dataR = [['a', 3, 4], ['c', -4, -3], ['d', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, None, None],
+                   ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3], ['d', None, None, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+    def test_featureUnion_onFeature_leftOnlyUnique_matchForEachRight(self):
+        dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
+                   ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+    def test_featureUnion_onFeature_notFirstFeature(self):
+        dataL = [[1, 'a', 2], [5, 'b', 6], [-1, 'c', -2], [-5, 'd', -6]]
+        dataR = [[3, 'a', 4], [-3, 'c', -4]]
+        fNamesL = ['f1', 'id', 'f2']
+        fNamesR = ['f3', 'id', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+
+    #######################
+    # featureIntersection #
+    #######################
+
+    # TODO not first feature, shared featurenames?, pointNames in returned obj?
+
+    @raises(ArgumentException)
+    def test_featureUnion_exception_noPointNamesOrOnFeature(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        intersection = leftObj.featureIntersection(rightObj)
+
+    @raises(ArgumentException)
+    def test_featureUnion_exception_pointNamesWithDefaults(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        leftObj.setPointName(0, 'a')
+        rightObj.setPointName(0, 'a')
+        assert leftObj.getPointName(1).startswith(DEFAULT_PREFIX)
+        assert rightObj.getPointName(1).startswith(DEFAULT_PREFIX)
+        intersection = leftObj.featureIntersection(rightObj)
+
+    @raises(ArgumentException)
+    def test_featureUnion_exception_bothNonUnique(self):
+        dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['c', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+
+    def test_featureIntersection_pointNames_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj)
+        assert intersection == exp
+
+    def test_featureIntersection_pointNames_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [[3, 4], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'c'], featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj)
+        assert intersection == exp
+
+    def test_featureIntersection_pointNames_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [[3, 4], [0, 0], [-3, -4], [9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'x', 'c', 'y'], featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj)
+        assert intersection == exp
+
+    def test_featureIntersection_onFeature_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+        assert intersection == exp
+
+    def test_featureIntersection_onFeature_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+        assert intersection == exp
+
+    def test_featureIntersection_onFeature_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+        assert intersection == exp
+
+    def test_featureIntersection_onFeature_rightOnlyUnique_matchForEachLeft(self):
+        dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        dataR = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, -3, -4],
+                   ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+        assert intersection == exp
+
+    def test_featureIntersection_onFeature_rightOnlyUnique_missingLeftMatches(self):
+        dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        dataR = [['a', 3, 4], ['c', -4, -3], ['d', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+        assert intersection == exp
+
+    def test_featureIntersection_onFeature_leftOnlyUnique_matchForEachRight(self):
+        dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
+                   ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+        assert intersection == exp
+
+    def test_featureIntersection_onFeature_notFirstFeature(self):
+        dataL = [[1, 'a', 2], [5, 'b', 6], [-1, 'c', -2], [-5, 'd', -6]]
+        dataR = [[3, 'a', 4], [-3, 'c', -4]]
+        fNamesL = ['f1', 'id', 'f2']
+        fNamesR = ['f3', 'id', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+        assert intersection == exp
+
+    ###################
+    # leftJoin, will be integrated into addFeatures, inplace operation
+    ###################
+
+    @raises(ArgumentException)
+    def test_featureLeftJoin_exception_rightNotUnique(self):
+        dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
+                   ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        leftObj.featureLeftJoin(rightObj, 'id')
+        assert leftObj == exp
+
+    def test_featureLeftJoin_onFeature_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        leftObj.featureLeftJoin(rightObj, 'id')
+        assert leftObj == exp
+
+    def test_featureLeftJoin_onFeature_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        leftObj.featureLeftJoin(rightObj, 'id')
+        assert leftObj == exp
+
+    def test_featureLeftJoin_onFeature_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
+                   ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        leftObj.featureLeftJoin(rightObj, 'id')
+        assert leftObj == exp
+
 def exceptionHelper(testObj, target, args, wanted, checkMsg):
     try:
         getattr(testObj, target)(*args)

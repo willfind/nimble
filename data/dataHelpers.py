@@ -283,6 +283,7 @@ def hasNonDefault(obj, axis):
     for index in possibleIndices:
         if not getter(index).startswith(DEFAULT_PREFIX):
             ret = True
+            break
 
     return ret
 

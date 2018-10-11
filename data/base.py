@@ -258,7 +258,7 @@ class Base(object):
 
     def _pointNamesCreated(self):
         """
-        Returns True if point default names have been created/assigned
+        Returns True if point names have been created/assigned
         to the object.
         If the object does not have points it returns True.
         """
@@ -269,12 +269,32 @@ class Base(object):
 
     def _featureNamesCreated(self):
         """
-        Returns True if feature default names have been created/assigned
+        Returns True if feature names have been created/assigned
         to the object.
         If the object does not have features it returns True.
         """
         if self.featureNamesInverse is None:
             return False
+        else:
+            return True
+
+    def _anyDefaultPointNames(self):
+        """
+        Returns True if any default point names exists or if pointNames have
+        not been created.
+        """
+        if self._pointNamesCreated():
+            return any([name.startswith(DEFAULT_PREFIX) for name in self.getPointNames()])
+        else:
+            return True
+
+    def _anyDefaultFeatureNames(self):
+        """
+        Returns True if any default feature names exists or if pointNames have
+        not been created.
+        """
+        if self._featureNamesCreated():
+            return any([name.startswith(DEFAULT_PREFIX) for name in self.getFeatureNames()])
         else:
             return True
 
@@ -390,9 +410,18 @@ class Base(object):
         to.
 
         """
-        if not self._pointNamesCreated():
-            self._setAllDefault('point')
-        return copy.copy(self.pointNamesInverse)
+        return self._getPointNames()
+
+    def _getPointNames(self, method='force'):
+        if self._pointNamesCreated():
+            return copy.copy(self.pointNamesInverse)
+        elif 'force':
+             self._setAllDefault('point')
+             return copy.copy(self.pointNamesInverse)
+        elif 'iterator':
+            return []
+        elif 'indexer':
+            return [None] * self.points
 
     def getFeatureNames(self):
         """Returns a list containing all feature names, where their index
@@ -400,9 +429,18 @@ class Base(object):
         correspond to.
 
         """
-        if not self._featureNamesCreated():
-            self._setAllDefault('feature')
-        return copy.copy(self.featureNamesInverse)
+        return self._getFeatureNames()
+
+    def _getFeatureNames(self, method='force'):
+        if self._featureNamesCreated():
+            return copy.copy(self.featureNamesInverse)
+        elif 'force':
+             self._setAllDefault('feature')
+             return copy.copy(self.featureNamesInverse)
+        elif 'iterator':
+            return []
+        elif 'indexer':
+            return [None] * self.features
 
     def getPointName(self, index):
         if not self._pointNamesCreated():
@@ -3661,6 +3699,121 @@ class Base(object):
         self._featureCount = numFeatures
         self.setPointNames(ret[1])
         self.setFeatureNames(ret[0])
+
+    def featureUnion(self, other, onFeature=None):
+        """
+        TODO
+        """
+        return self._join_implementation("union", other, onFeature)
+
+    # TODO points make sense?
+    # def pointUnion(self, other, onPoints=None):
+    #     pass
+
+    def featureIntersection(self, other, onFeature=None):
+        """
+        TODO
+        """
+        return self._join_implementation("intersection", other, onFeature)
+
+    # TODO points make sense?
+    # def pointIntersection(self, other, onPoints=None):
+    #     pass
+
+    def featureLeftJoin(self, other, onFeature=None):
+        self.referenceDataFrom(self._join_implementation("left", other, onFeature))
+
+    def _join_implementation(self, method, other, onFeature):
+        # when won't this work?
+          # if onFeature is None and no point names exist
+          # if onFeature is None and pointNames are default
+          # if onFeature is None and one of the features is not unique
+        # what to do if shared feature names???
+        # allow index as onFeature???
+
+        # validation
+        if onFeature is None:
+            if not (self._pointNamesCreated() and other._pointNamesCreated()):
+                msg = "Point names for each object or a feature to perform "
+                msg += "the {0} on must be provided".format(method)
+                raise ArgumentException(msg)
+            defaultPtsL = self._anyDefaultPointNames()
+            defaultPtsR = other._anyDefaultPointNames()
+            if defaultPtsL or defaultPtsR:
+                msg = "Cannot perform {0} when default ".format(method)
+                msg += "point names are present"
+                raise ArgumentException(msg)
+        else:
+            uniqueFtL = len(set(self[:, onFeature])) == self.points
+            uniqueFtR = len(set(other[:, onFeature])) == other.points
+            if not (uniqueFtL or uniqueFtR):
+                msg = "features{0} only supports ".format(method.capitalize())
+                msg += "joining on a feature which contains only unique "
+                msg += "values in one or both objects. "
+                raise ArgumentException(msg)
+            if method == 'left' and not uniqueFtR:
+                msg = "Cannot perform join. onFeature in the other object "
+                msg += "must contain only one possible matching value "
+                msg += "for each onFeature value in this object"
+                raise ArgumentException(msg)
+        # implementation
+        matched = []
+        merged = []
+        if onFeature is None:
+            mapper = {p.getPointName(0): list(p) for p in other.pointIterator()}
+            for pt in self.pointIterator():
+                if pt.getPointName(0) in mapper:
+                    merged.append(list(pt) + mapper[pt.getPointName(0)])
+                    matched.append(pt.getPointName(0))
+                elif method == 'union' or method == 'left':
+                    merged.append(list(pt) + [None] * other.features)
+            if method == 'union':
+                for pt in other.pointIterator():
+                    if pt.getPointName(0) not in matched:
+                        merged.append([None] * self.features + mapper[pt.getPointName(0)])
+            fNames = self.getFeatureNames() + other.getFeatureNames()
+
+        else:
+            if uniqueFtR:
+                sort = False
+                left = self
+                right = other
+            else:
+                sort = True
+                left = other
+                right = self
+            # type implementations?
+            notOnL = [n for n in left.getFeatureNames() if n != onFeature]
+            notOnR = [n for n in right.getFeatureNames() if n != onFeature]
+            mapper = {p[onFeature]: list(p[notOnR]) for p in right.pointIterator()}
+            for pt in left.pointIterator():
+                on = pt[onFeature]
+                notOn = list(pt[notOnL]) # as list since needed for concatenation
+                if on in mapper:
+                    if sort:
+                        merged.append(list(on) + mapper[on] + notOn)
+                    else:
+                        merged.append(list(on) + notOn + mapper[on])
+                    matched.append(on)
+                elif method == 'union' or method=='left':
+                    if sort:
+                        merged.append(list(on) + [None] * (right.features - 1) + notOn)
+                    else:
+                        merged.append(list(on) + notOn + [None] * (right.features - 1))
+            if method == 'union':
+                for pt in right.pointIterator():
+                    on = pt[onFeature]
+                    if on not in matched:
+                        if sort:
+                            merged.append(list(on) + mapper[on] + [None] * (left.features - 1))
+                        else:
+                            merged.append(list(on) + [None] * (left.features - 1) + mapper[on])
+            if sort:
+                fNames = [onFeature] + notOnR + notOnL
+            else:
+                fNames = [onFeature] + notOnL + notOnR
+
+        return UML.createData(self.getTypeString(), merged, featureNames=fNames)
 
 
     ###############################################################
