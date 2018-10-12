@@ -3704,7 +3704,7 @@ class Base(object):
         """
         TODO
         """
-        return self._join_implementation("union", other, onFeature)
+        return self._genericMergeFrontend("union", other, onFeature)
 
     # TODO points make sense?
     # def pointUnion(self, other, onPoints=None):
@@ -3714,22 +3714,23 @@ class Base(object):
         """
         TODO
         """
-        return self._join_implementation("intersection", other, onFeature)
+        return self._genericMergeFrontend("intersection", other, onFeature)
 
     # TODO points make sense?
     # def pointIntersection(self, other, onPoints=None):
     #     pass
 
+    #TODO integrate into addFeatures
     def featureLeftJoin(self, other, onFeature=None):
-        self.referenceDataFrom(self._join_implementation("left", other, onFeature))
+        self.referenceDataFrom(self._genericMergeFrontend("left", other, onFeature))
 
-    def _join_implementation(self, method, other, onFeature):
+    def _genericMergeFrontend(self, method, other, onFeature):
         # when won't this work?
           # if onFeature is None and no point names exist
           # if onFeature is None and pointNames are default
           # if onFeature is None and one of the features is not unique
         # what to do if shared feature names???
-        # allow index as onFeature???
+        # allow index (integer) as onFeature???
 
         # validation
         if onFeature is None:
@@ -3756,64 +3757,78 @@ class Base(object):
                 msg += "must contain only one possible matching value "
                 msg += "for each onFeature value in this object"
                 raise ArgumentException(msg)
-        # implementation
-        matched = []
-        merged = []
-        if onFeature is None:
-            mapper = {p.getPointName(0): list(p) for p in other.pointIterator()}
-            for pt in self.pointIterator():
-                if pt.getPointName(0) in mapper:
-                    merged.append(list(pt) + mapper[pt.getPointName(0)])
-                    matched.append(pt.getPointName(0))
-                elif method == 'union' or method == 'left':
-                    merged.append(list(pt) + [None] * other.features)
-            if method == 'union':
-                for pt in other.pointIterator():
-                    if pt.getPointName(0) not in matched:
-                        merged.append([None] * self.features + mapper[pt.getPointName(0)])
-            fNames = self.getFeatureNames() + other.getFeatureNames()
 
+
+        sort = False
+        if self.getTypeString() == other.getTypeString():
+            if self.getTypeString() != 'DataFrame' and onFeature and not uniqueFtR:
+                sort = True
+            ret = self._merge_implementation(method, other, onFeature)
+        # generic implementation
         else:
-            if uniqueFtR:
-                sort = False
-                left = self
-                right = other
-            else:
+            left = self
+            right = other
+            if onFeature and not uniqueFtR:
                 sort = True
                 left = other
                 right = self
-            # type implementations?
-            notOnL = [n for n in left.getFeatureNames() if n != onFeature]
+            ret = self._genericMerge_implementation(left, right, method, onFeature)
+
+        if sort:
+            onIdxL = self.getFeatureIndex(onFeature)
+            onIdxR = other.getFeatureIndex(onFeature)
+            reindex = []
+            for i in range(onIdxL):
+                reindex.append(i + other.features)
+            reindex.append(onIdxR)
+            for i in range(onIdxL, self.features - 1):
+                reindex.append(i + other.features)
+            for i in range(onIdxR):
+                reindex.append(i)
+            for i in range(onIdxR + 1 , other.features):
+                reindex.append(i)
+            ret.sortFeatures(sortHelper=reindex)
+        if onFeature is None:
+            ret.setFeatureNames(self.getFeatureNames() + other.getFeatureNames())
+        else:
+            ret.setFeatureNames(self.getFeatureNames() + [n for n in other.getFeatureNames() if n != onFeature])
+
+
+        return ret
+
+    def _genericMerge_implementation(self, left, right, method, onFeature):
+        matched = []
+        merged = []
+        if onFeature is None:
+            mapper = {p.getPointName(0): list(p) for p in right.pointIterator()}
+            missingR = [None] * right.features
+        else:
+            onIdx = left.getFeatureIndex(onFeature)
             notOnR = [n for n in right.getFeatureNames() if n != onFeature]
             mapper = {p[onFeature]: list(p[notOnR]) for p in right.pointIterator()}
-            for pt in left.pointIterator():
-                on = pt[onFeature]
-                notOn = list(pt[notOnL]) # as list since needed for concatenation
-                if on in mapper:
-                    if sort:
-                        merged.append(list(on) + mapper[on] + notOn)
-                    else:
-                        merged.append(list(on) + notOn + mapper[on])
-                    matched.append(on)
-                elif method == 'union' or method=='left':
-                    if sort:
-                        merged.append(list(on) + [None] * (right.features - 1) + notOn)
-                    else:
-                        merged.append(list(on) + notOn + [None] * (right.features - 1))
-            if method == 'union':
-                for pt in right.pointIterator():
-                    on = pt[onFeature]
-                    if on not in matched:
-                        if sort:
-                            merged.append(list(on) + mapper[on] + [None] * (left.features - 1))
-                        else:
-                            merged.append(list(on) + [None] * (left.features - 1) + mapper[on])
-            if sort:
-                fNames = [onFeature] + notOnR + notOnL
-            else:
-                fNames = [onFeature] + notOnL + notOnR
+            missingR = [None] * (right.features - 1)
 
-        return UML.createData(self.getTypeString(), merged, featureNames=fNames)
+        for pt in left.pointIterator():
+            on = pt[onFeature] if onFeature else pt.getPointName(0)
+            if on in mapper:
+                merged.append(list(pt) + mapper[on])
+                matched.append(on)
+            elif method == 'union' or method == 'left':
+                merged.append(list(pt) + missingR)
+        if method == 'union' and not onFeature:
+            missingL = [None] * left.features
+            for pt in right.pointIterator():
+                on = pt[onFeature] if onFeature else pt.getPointName(0)
+                if on not in matched:
+                    merged.append(missingL + list(pt))
+        elif method == 'union':
+            for pt in right.pointIterator():
+                on = pt[onFeature] if onFeature else pt.getPointName(0)
+                missingL = [None] * onIdx + [on] + [None] * (left.features - onIdx - 1)
+                if on not in matched:
+                    merged.append(missingL + list(pt[notOnR]))
+
+        return UML.createData(self.getTypeString(), merged)
 
 
     ###############################################################

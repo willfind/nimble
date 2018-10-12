@@ -7801,13 +7801,27 @@ class StructureModifying(StructureShared):
 
     def test_featureUnion_onFeature_notFirstFeature(self):
         dataL = [[1, 'a', 2], [5, 'b', 6], [-1, 'c', -2], [-5, 'd', -6]]
-        dataR = [[3, 'a', 4], [-3, 'c', -4]]
+        dataR = [[3, 4, 'a'], [-3, -4, 'c']]
         fNamesL = ['f1', 'id', 'f2']
-        fNamesR = ['f3', 'id', 'f4']
+        fNamesR = ['f3', 'f4', 'id']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
-        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        expData = [[1, 'a', 2, 3, 4], [5, 'b', 6, None, None], [-1, 'c', -2, -3, -4], [-5, 'd', -6, None, None]]
+        fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        union = leftObj.featureUnion(rightObj, 'id')
+        assert union == exp
+
+    def test_featureUnion_onFeature_leftOnlyUnique_notFirstFeature(self):
+        dataL = [[3, 'a', 4], [-3, 'b', -4], [-4, 'c', -3]]
+        dataR = [[1, 2, 'a'], [4, 3, 'a'], [-1, -2, 'b'], [-6, -5, 'c'], [-3, -4, 'c']]
+        fNamesL = ['f1', 'id', 'f2']
+        fNamesR = ['f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [[3, 'a', 4, 1, 2], [3, 'a', 4, 4, 3], [-3, 'b', -4, -1, -2],
+                   [-4, 'c', -3, -6, -5], [-4, 'c', -3, -3, -4]]
+        fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
         exp = self.constructor(expData, featureNames=fNamesExp)
         union = leftObj.featureUnion(rightObj, 'id')
         assert union == exp
@@ -7977,13 +7991,27 @@ class StructureModifying(StructureShared):
 
     def test_featureIntersection_onFeature_notFirstFeature(self):
         dataL = [[1, 'a', 2], [5, 'b', 6], [-1, 'c', -2], [-5, 'd', -6]]
-        dataR = [[3, 'a', 4], [-3, 'c', -4]]
+        dataR = [[3, 4, 'a'], [-3, -4, 'c']]
         fNamesL = ['f1', 'id', 'f2']
-        fNamesR = ['f3', 'id', 'f4']
+        fNamesR = ['f3', 'f4', 'id']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
-        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        expData = [[1, 'a', 2, 3, 4], [-1, 'c', -2, -3, -4]]
+        fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        intersection = leftObj.featureIntersection(rightObj, 'id')
+        assert intersection == exp
+
+    def test_featureIntersection_onFeature_leftOnlyUnique_notFirstFeature(self):
+        dataL = [[3, 'a', 4], [-3, 'b', -4], [-4, 'c', -3]]
+        dataR = [[1, 2, 'a'], [4, 3, 'a'], [-1, -2, 'b'], [-6, -5, 'c'], [-3, -4, 'c']]
+        fNamesL = ['f1', 'id', 'f2']
+        fNamesR = ['f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [[3, 'a', 4, 1, 2], [3, 'a', 4, 4, 3], [-3, 'b', -4, -1, -2],
+                   [-4, 'c', -3, -6, -5], [-4, 'c', -3, -3, -4]]
+        fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
         exp = self.constructor(expData, featureNames=fNamesExp)
         intersection = leftObj.featureIntersection(rightObj, 'id')
         assert intersection == exp

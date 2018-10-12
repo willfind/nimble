@@ -628,6 +628,30 @@ class DataFrame(Base):
         numPoints = self.points // numFeatures
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
+    def _merge_implementation(self, method, other, onFeature):
+        if method == 'union':
+            method = 'outer'
+        elif method == 'intersection':
+            method = 'inner'
+        tmpDfL = self.data.astype(numpy.object_)
+        tmpDfL.columns = self.getFeatureNames()
+        tmpDfR = other.data.astype(numpy.object_)
+        tmpDfR.columns = other.getFeatureNames()
+
+        if onFeature is None:
+            tmpDfL.index = self.getPointNames()
+            tmpDfR.index = other.getPointNames()
+            merged = tmpDfL.merge(tmpDfR, how=method, left_index=True, right_index=True)
+            merged.reset_index(drop=True, inplace=True)
+            merged.columns = range(merged.shape[1])
+        else:
+            merged = tmpDfL.merge(tmpDfR, how=method, on=onFeature)
+            merged.reset_index()
+            merged.columns = range(merged.shape[1])
+        return DataFrame(merged)
+
+
+
     def _getitem_implementation(self, x, y):
         # return self.data.ix[x, y]
         #use self.data.values is much faster

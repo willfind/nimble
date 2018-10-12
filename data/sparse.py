@@ -1212,6 +1212,16 @@ class Sparse(Base):
             else:
                 raise ImproperActionException('self._sorted is not either point nor feature.')
 
+    def _merge_implementation(self, method, other, onFeature):
+        if onFeature:
+            uniqueFtR = len(set(other[:, onFeature])) == other.points
+        left = self
+        right = other
+        if onFeature and not uniqueFtR:
+            left = other
+            right = self
+        return self._genericMerge_implementation(left, right, method, onFeature)
+
     def _getitem_implementation(self, x, y):
         """
         currently, we sort the data first and then do binary search

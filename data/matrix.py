@@ -634,6 +634,16 @@ class Matrix(Base):
         numPoints = self.points // numFeatures
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
 
+    def _merge_implementation(self, method, other, onFeature):
+        if onFeature:
+            uniqueFtR = len(set(other[:, onFeature])) == other.points
+        left = self
+        right = other
+        if onFeature and not uniqueFtR:
+            left = other
+            right = self
+        return self._genericMerge_implementation(left, right, method, onFeature)
+
     def _getitem_implementation(self, x, y):
         return self.data[x, y]
 
