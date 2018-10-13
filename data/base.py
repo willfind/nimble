@@ -394,6 +394,11 @@ class Base(object):
             self._setAllDefault('point')
         return copy.copy(self.pointNamesInverse)
 
+    def _getPointNames(self):
+        if not self._pointNamesCreated():
+            return None
+        return self.getPointNames()
+
     def getFeatureNames(self):
         """Returns a list containing all feature names, where their index
         in the list is the same as the index of the feature they
@@ -403,6 +408,11 @@ class Base(object):
         if not self._featureNamesCreated():
             self._setAllDefault('feature')
         return copy.copy(self.featureNamesInverse)
+
+    def _getFeatureNames(self):
+        if not self._featureNamesCreated():
+            return None
+        return self.getFeatureNames()
 
     def getPointName(self, index):
         if not self._pointNamesCreated():
