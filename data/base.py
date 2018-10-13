@@ -649,8 +649,7 @@ class Base(object):
             setNames = [self.getPointName(x) for x in sorted(points)]
             ret.setPointNames(setNames)
         else:
-            if self._pointNamesCreated():
-                ret.setPointNames(self.getPointNames())
+            ret.setPointNames(self._getPointNames())
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -689,8 +688,7 @@ class Base(object):
             setNames = [self.getFeatureName(x) for x in sorted(features)]
             ret.setFeatureNames(setNames)
         else:
-            if self._featureNamesCreated():
-                ret.setFeatureNames(self.getFeatureNames())
+            ret.setFeatureNames(self._getFeatureNames())
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -2379,24 +2377,9 @@ class Base(object):
         self._transpose_implementation()
 
         self._pointCount, self._featureCount = self._featureCount, self._pointCount
-
-        if self._pointNamesCreated() and self._featureNamesCreated():
-            self.pointNames, self.featureNames = self.featureNames, self.pointNames
-            self.setFeatureNames(self.featureNames)
-            self.setPointNames(self.pointNames)
-        elif self._pointNamesCreated():
-            self.featureNames = self.pointNames
-            self.pointNames = None
-            self.pointNamesInverse = None
-            self.setFeatureNames(self.featureNames)
-        elif self._featureNamesCreated():
-            self.pointNames = self.featureNames
-            self.featureNames = None
-            self.featureNamesInverse = None
-            self.setPointNames(self.pointNames)
-        else:
-            pass
-
+        self.pointNames, self.featureNames = self._getFeatureNames(), self._getPointNames()
+        self.setFeatureNames(self.featureNames)
+        self.setPointNames(self.pointNames)
         self.validate()
 
     def appendPoints(self, toAppend):
@@ -2656,8 +2639,7 @@ class Base(object):
         """
         ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
                                               number, randomize)
-        if self._featureNamesCreated():
-            ret.setFeatureNames(self.getFeatureNames())
+        ret.setFeatureNames(self._getFeatureNames())
 
         self._adjustCountAndNames('point', ret)
 
@@ -2698,8 +2680,7 @@ class Base(object):
         """
         ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
                                               number, randomize)
-        if self._pointNamesCreated():
-            ret.setPointNames(self.getPointNames())
+        ret.setPointNames(self._getPointNames())
 
         self._adjustCountAndNames('feature', ret)
 
@@ -3093,23 +3074,10 @@ class Base(object):
         return ret
 
     def _copyNames (self, CopyObj):
-        if self._pointNamesCreated():
-            CopyObj.pointNamesInverse = self.getPointNames()
-            CopyObj.pointNames = copy.copy(self.pointNames)
-            # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.index = self.getPointNames()
-        else:
-            CopyObj.pointNamesInverse = None
-            CopyObj.pointNames = None
-
-        if self._featureNamesCreated():
-            CopyObj.featureNamesInverse = self.getFeatureNames()
-            CopyObj.featureNames = copy.copy(self.featureNames)
-            # if CopyObj.getTypeString() == 'DataFrame':
-            #     CopyObj.data.columns = self.getFeatureNames()
-        else:
-            CopyObj.featureNamesInverse = None
-            CopyObj.featureNames = None
+        CopyObj.pointNamesInverse = self._getPointNames()
+        CopyObj.pointNames = copy.copy(self.pointNames)
+        CopyObj.featureNamesInverse = self._getFeatureNames()
+        CopyObj.featureNames = copy.copy(self.featureNames)
 
         CopyObj._nextDefaultValueFeature = self._nextDefaultValueFeature
         CopyObj._nextDefaultValuePoint = self._nextDefaultValuePoint
@@ -4123,10 +4091,8 @@ class Base(object):
 
         # check name restrictions
         if isUML:
-            if self._pointNamesCreated() and other._pointNamesCreated is not None:
-                self._validateEqualNames('point', 'point', opName, other)
-            if self._featureNamesCreated() and other._featureNamesCreated():
-                self._validateEqualNames('feature', 'feature', opName, other)
+            self._validateEqualNames('point', 'point', opName, other)
+            self._validateEqualNames('feature', 'feature', opName, other)
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
                     '__itruediv__', '__floordiv__', '__rfloordiv__', '__ifloordiv__',
