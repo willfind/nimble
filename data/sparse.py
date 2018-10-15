@@ -199,18 +199,18 @@ class Sparse(Base):
 
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
-        indices = self.sort_general_implementation(sortBy, sortHelper, 'point')
+        indices = self._sort_general_implementation(sortBy, sortHelper, 'point')
         self._sorted = None
         return indices
 
 
     def _sortFeatures_implementation(self, sortBy, sortHelper):
-        indices = self.sort_general_implementation(sortBy, sortHelper, 'feature')
+        indices = self._sort_general_implementation(sortBy, sortHelper, 'feature')
         self._sorted = None
         return indices
 
 
-    def sort_general_implementation(self, sortBy, sortHelper, axisType):
+    def _sort_general_implementation(self, sortBy, sortHelper, axisType):
         scorer = None
         comparator = None
         if axisType == 'point':
@@ -1215,12 +1215,108 @@ class Sparse(Base):
     def _merge_implementation(self, method, other, onFeature):
         if onFeature:
             uniqueFtR = len(set(other[:, onFeature])) == other.points
-        left = self
-        right = other
-        if onFeature and not uniqueFtR:
-            left = other
-            right = self
-        return self._genericMerge_implementation(left, right, method, onFeature)
+            numFts = self.features + other.features - 1
+            if uniqueFtR:
+                onIdxL = self.getFeatureIndex(onFeature)
+                onIdxR = other.getFeatureIndex(onFeature)
+                leftFeatures = self.features
+                leftData = self.data.data.copy()
+                leftRow = self.data.row.copy()
+                leftCol = self.data.col.copy()
+                rightFeatures = other.features
+                rightData = other.data.data.copy()
+                rightRow = other.data.row.copy()
+                rightCol = other.data.col.copy()
+            else:
+                # flip so unique is on the right, will be sorted after in Base
+                onIdxL = other.getFeatureIndex(onFeature)
+                onIdxR = self.getFeatureIndex(onFeature)
+                leftFeatures = other.features
+                leftData = other.data.data.copy()
+                leftRow = other.data.row.copy()
+                leftCol = other.data.col.copy()
+                rightFeatures = self.features
+                rightData = self.data.data.copy()
+                rightRow = self.data.row.copy()
+                rightCol = self.data.col.copy()
+        else:
+            # using pointNames, prepend pointNames to left and right arrays
+            numFts = self.features + other.features
+            onIdxL = 0
+            onIdxR = 0
+            leftFeatures = self.features
+            leftData = self.data.data.copy().astype(numpy.object_)
+            leftData = numpy.append([self.getPointNames()], leftData)
+            leftRow = numpy.append([i for i in range(self.points)], self.data.row.copy())
+            leftCol = numpy.append([0 for i in range(self.points)], self.data.col.copy() + 1)
+            rightFeatures = other.features
+            rightData = other.data.data.copy().astype(numpy.object_)
+            rightData = numpy.append([other.getPointNames()], rightData)
+            rightRow = numpy.append([i for i in range(other.points)], other.data.row.copy())
+            rightCol = numpy.append([0 for i in range(other.points)], other.data.col.copy() + 1)
+
+        mergedData = numpy.empty((1,0), dtype=numpy.object_)
+        mergedRow = []
+        mergedCol = []
+        matched = []
+        nextPt = 0
+        numPts = 0
+        for ptIdxL, target in enumerate(leftData[leftCol == onIdxL]):
+            rowIdxR = numpy.where(rightData[rightCol == onIdxR] == target)[0]
+            # len(rowIdxR) will be 1 if match, else 0
+            if len(rowIdxR) > 0:
+                ptIdxR = rowIdxR[0]
+                if onFeature:
+                    ptL = leftData[leftRow == ptIdxL]
+                    rPtData = rightData[rightRow == ptIdxR]
+                    ptR = rPtData[rightData[rightRow == ptIdxR] != target]
+                    pt = numpy.append(ptL, ptR)
+                else:
+                    ptL = leftData[leftRow == ptIdxL][1:]
+                    ptR = rightData[rightRow == ptIdxR][1:]
+                matched.append(target)
+            elif method == 'left' or method == 'union':
+                if onFeature:
+                    ptL = leftData[leftRow == ptIdxL]
+                    ptR = [numpy.nan] * (rightFeatures - 1)
+                else:
+                    ptL = leftData[leftRow == ptIdxL][1:]
+                    ptR = [numpy.nan] * (rightFeatures)
+            else:
+                # don't append any data for intersection
+                continue
+            pt = numpy.append(ptL, ptR)
+            mergedData = numpy.append(mergedData, pt)
+            mergedRow.extend([nextPt] * len(pt))
+            mergedCol.extend([i for i in range(len(pt))])
+            nextPt += 1
+            numPts += 1
+
+        if method == 'union':
+            for ptIdxR, target in enumerate(rightData[rightCol == onIdxR]):
+                if target not in matched:
+                    if onFeature:
+                        ptL = [numpy.nan] * onIdxL
+                        ptL.append(target)
+                        ptL.extend([numpy.nan] * (leftFeatures - onIdxL - 1))
+                        ptL = numpy.array(ptL, dtype=numpy.object_)
+                        # need right data without onFeature
+                        rData = rightData[rightRow == ptIdxR]
+                        ptR1 = rData[:onIdxR]
+                        ptR2 = rData[onIdxR + 1:]
+                        ptR = numpy.append(ptR1, ptR2)
+                    else:
+                        # account for pointNames added
+                        ptL = [numpy.nan] * leftFeatures
+                        ptR = rightData[rightRow == ptIdxR][1:]
+                    pt = numpy.append(ptL, ptR)
+                    mergedData = numpy.append(mergedData, pt)
+                    mergedRow.extend([nextPt] * len(pt))
+                    mergedCol.extend([i for i in range(len(pt))])
+                    nextPt += 1
+                    numPts += 1
+
+        return Sparse(coo_matrix((mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts)))
 
     def _getitem_implementation(self, x, y):
         """

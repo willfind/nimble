@@ -742,12 +742,78 @@ class List(Base):
     def _merge_implementation(self, method, other, onFeature):
         if onFeature:
             uniqueFtR = len(set(other[:, onFeature])) == other.points
-        left = self
-        right = other
-        if onFeature and not uniqueFtR:
-            left = other
-            right = self
-        return self._genericMerge_implementation(left, right, method, onFeature)
+            if uniqueFtR:
+                onIdxL = self.getFeatureIndex(onFeature)
+                onIdxR = other.getFeatureIndex(onFeature)
+                left = copy.copy(self.data)
+                right = copy.copy(other.data)
+            else:
+                # flip so unique is on the right, will be sorted after in Base
+                onIdxL = other.getFeatureIndex(onFeature)
+                onIdxR = self.getFeatureIndex(onFeature)
+                left = copy.copy(other.data)
+                right = copy.copy(self.data)
+        else:
+            # using pointNames, prepend pointNames to left and right lists
+            onIdxL = 0
+            onIdxR = 0
+            left = []
+            for point in self.pointIterator():
+                ptL = [point.getPointName(0)]
+                ptL.extend(list(point))
+                left.append(ptL)
+            right = []
+            for point in other.pointIterator():
+                ptR = [point.getPointName(0)]
+                ptR.extend(list(point))
+                right.append(ptR)
+
+        matched = []
+        merged = []
+        notOnR = [i for i in range(len(right[0])) if i != onIdxR]
+        mapper = {}
+        for i in range(len(right)):
+            values = right[i][:onIdxR] + right[i][onIdxR + 1:]
+            mapper[right[i][onIdxR]] = values
+
+        for row in left:
+            target = row[onIdxL]
+            if onFeature is None:
+                row = row[1:]
+            if target in mapper:
+                ptL = row
+                ptR = mapper[target]
+                pt = ptL + ptR
+                merged.append(pt)
+                matched.append(target)
+            elif method == 'left' or method == 'union':
+                ptL = row
+                ptR = [numpy.nan] * (len(right[0]) - 1)
+                pt = ptL + ptR
+                merged.append(pt)
+
+        if method == 'union':
+            for row in right:
+                target = row[onIdxR]
+                if target not in matched:
+                    if onFeature is None:
+                        row = row[1:]
+                    ptL1 = [numpy.nan] * onIdxL
+                    ptL3 = [numpy.nan] * (len(left[0]) - onIdxL - 1)
+                    if onFeature is None:
+                        # don't target when using pointNames
+                        ptL2 = []
+                        ptR = row
+                    else:
+                        # add target to left side; ignore on right
+                        ptL2 = [target]
+                        ptR1 = row[:onIdxR]
+                        ptR2 = row[(onIdxR + 1):]
+                        ptR = ptR1 + ptR2
+                    pt = ptL1 + ptL2 + ptL3 + ptR
+                    merged.append(pt)
+
+        return List(merged)
 
     def _getitem_implementation(self, x, y):
         return self.data[x][y]

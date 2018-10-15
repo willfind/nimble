@@ -270,11 +270,15 @@ class Matrix(Base):
             return False
         if self.features != other.features:
             return False
-
         try:
-            numpy.testing.assert_equal(self.data, other.data)
+            numpy.testing.assert_array_equal(self.data, other.data)
         except AssertionError:
-            return False
+            for i in range(self.points):
+                for j in range(self.features):
+                    sVal = self.data[i,j]
+                    oVal = other.data[i,j]
+                    if sVal != oVal and sVal == sVal:
+                        return False
         return True
 
     def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
@@ -635,14 +639,73 @@ class Matrix(Base):
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
 
     def _merge_implementation(self, method, other, onFeature):
+        selfArr = numpy.array(self.data, dtype=numpy.object_)
+        otherArr = numpy.array(other.data, dtype=numpy.object_)
         if onFeature:
             uniqueFtR = len(set(other[:, onFeature])) == other.points
-        left = self
-        right = other
-        if onFeature and not uniqueFtR:
-            left = other
-            right = self
-        return self._genericMerge_implementation(left, right, method, onFeature)
+            if uniqueFtR:
+                onIdxL = self.getFeatureIndex(onFeature)
+                onIdxR = other.getFeatureIndex(onFeature)
+                left = selfArr
+                right = otherArr
+            else:
+                # flip so unique is on the right, will be sorted after in Base
+                onIdxL = other.getFeatureIndex(onFeature)
+                onIdxR = self.getFeatureIndex(onFeature)
+                left = otherArr
+                right = selfArr
+        else:
+            # using pointNames, prepend pointNames to left and right arrays
+            onIdxL = 0
+            onIdxR = 0
+            ptsL = numpy.array(self.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
+            left = numpy.concatenate((ptsL, selfArr), axis=1)
+            ptsR = numpy.array(other.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
+            right = numpy.concatenate((ptsR, otherArr), axis=1)
+
+        matched = []
+        merged = []
+        notOnR = [i for i in range(right.shape[1]) if i != onIdxR]
+        mapper = {right[i, onIdxR]: right[i, notOnR] for i in range(right.shape[0])}
+        for row in left:
+            target = row[onIdxL]
+            if onFeature is None:
+                row = row[1:]
+            if target in mapper:
+                ptL = row
+                ptR = mapper[target]
+                pt = numpy.concatenate((ptL, ptR)).flatten()
+                merged.append(pt)
+                matched.append(target)
+            elif method == 'left' or method == 'union':
+                ptL = row.reshape(1, -1)
+                ptR = numpy.ones((1, right.shape[1] - 1)) * numpy.nan
+                pt = numpy.append(ptL, ptR)
+                merged.append(pt)
+
+        if method == 'union':
+            for row in right:
+                target = row[onIdxR]
+                if target not in matched:
+                    if onFeature is None:
+                        row = row[1:]
+                    ptL1 = numpy.ones((1, onIdxL)) * numpy.nan
+                    ptL3 = numpy.ones((1, left.shape[1] - onIdxL - 1)) * numpy.nan
+                    if onFeature is None:
+                        # don't target when using pointNames
+                        ptL2 = numpy.empty((1,0))
+                        ptR = row.reshape(1, -1)
+                    else:
+                        # add target to left side; ignore on right
+                        ptL2 = numpy.array(target).reshape(1, 1)
+                        ptR1 = row[:onIdxR].reshape(1, -1)
+                        ptR2 = row[(onIdxR + 1):].reshape(1, -1)
+                        ptR = numpy.append(ptR1, ptR2).reshape(1, -1)
+                    pt = numpy.concatenate((ptL1, ptL2, ptL3, ptR), axis=1)
+                    pt = pt.flatten()
+                    merged.append(pt)
+
+        return Matrix(numpy.matrix(merged))
 
     def _getitem_implementation(self, x, y):
         return self.data[x, y]

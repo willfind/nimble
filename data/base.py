@@ -3758,13 +3758,14 @@ class Base(object):
                 msg += "for each onFeature value in this object"
                 raise ArgumentException(msg)
 
-
         sort = False
+        # type implementations
         if self.getTypeString() == other.getTypeString():
+            # pandas performs the sort for DataFrame
             if self.getTypeString() != 'DataFrame' and onFeature and not uniqueFtR:
                 sort = True
             ret = self._merge_implementation(method, other, onFeature)
-        # generic implementation
+        # generic implementation for mixed types
         else:
             left = self
             right = other
@@ -3792,7 +3793,6 @@ class Base(object):
             ret.setFeatureNames(self.getFeatureNames() + other.getFeatureNames())
         else:
             ret.setFeatureNames(self.getFeatureNames() + [n for n in other.getFeatureNames() if n != onFeature])
-
 
         return ret
 

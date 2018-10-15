@@ -7637,7 +7637,8 @@ class StructureModifying(StructureShared):
     # featureUnion #
     ################
 
-    # TODO not first feature, shared featurenames?, pointNames in returned obj?
+    # TODO shared featurenames?, pointNames in returned obj?
+    # sort on integer feature, different object types
 
     @raises(ArgumentException)
     def test_featureUnion_exception_noPointNamesOrOnFeature(self):
@@ -7714,6 +7715,8 @@ class StructureModifying(StructureShared):
         fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
         exp = self.constructor(expData, featureNames=fNamesExp)
         union = leftObj.featureUnion(rightObj)
+        print(exp)
+        print(union)
         assert union == exp
 
     def test_featureUnion_onFeature_exactMatch(self):
@@ -7755,6 +7758,8 @@ class StructureModifying(StructureShared):
         fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
         exp = self.constructor(expData, featureNames=fNamesExp)
         union = leftObj.featureUnion(rightObj, 'id')
+        print(exp)
+        print(union)
         assert union == exp
 
     def test_featureUnion_onFeature_rightOnlyUnique_matchForEachLeft(self):
