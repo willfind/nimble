@@ -2447,9 +2447,9 @@ class Base(object):
         if self.getTypeString() != toAdd.getTypeString():
             toAdd = toAdd.copyAs(self.getTypeString())
 
-        if axis == 'point' and (insertBefore is None or self.points == 0):
+        if axis == 'point' and insertBefore is None:
             insertBefore = self.points
-        elif axis == 'feature' and (insertBefore is None or self.features == 0):
+        elif axis == 'feature' and insertBefore is None:
             insertBefore = self.features
         else:
             insertBefore = self._getIndex(insertBefore, axis)

@@ -2212,21 +2212,15 @@ class StructureModifying(DataTestObject):
         """ Test addFeatures() to right when the calling object is feature empty """
         self.backend_insert_emptyObject('feature')
 
+    @raises(ArgumentException)
     def test_addPoints_fromEmpty_top(self):
-        """ Test addPoints() to top when the calling object is point empty """
+        """ Test addPoints() with an appendBefore ID when the calling object is point empty raises exception """
         self.backend_insert_emptyObject('point', 0)
 
+    @raises(ArgumentException)
     def test_addFeatures_fromEmpty_left(self):
-        """ Test addFeatures() to left when the calling object is feature empty """
+        """ Test addFeatures() with an appendBefore ID when the calling object is feature empty raises exception """
         self.backend_insert_emptyObject('feature', 0)
-
-    def test_addPoints_fromEmpty_mid(self):
-        """ Test addPoints() to middle when the calling object is point empty """
-        self.backend_insert_emptyObject('point', 1)
-
-    def test_addFeatures_fromEmpty_mid(self):
-        """ Test addFeatures() to middle when the calling object is feature empty """
-        self.backend_insert_emptyObject('feature', 1)
 
 
     def backend_insert_handmadeSingle(self, axis, insertBefore=None):
