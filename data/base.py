@@ -5462,15 +5462,27 @@ class Base(object):
         self._validateValueIsUMLDataObject('toAdd', toAdd, True)
         if axis == 'point':
             self._validateObjHasSameNumberOfFeatures('toAdd', toAdd)
-            if self._pointNamesCreated() or toAdd._pointNamesCreated():
+            # this helper ignores default names - so we can only have an intersection of
+            # names when BOTH objects have names created.
+            if self._pointNamesCreated() and toAdd._pointNamesCreated():
                 self._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
-            if self._featureNamesCreated() or toAdd._featureNamesCreated():
+            # helper looks for name inconsistency that can be resolved by reordering -
+            # definitionally, if one object has all default names, there can be no
+            # inconsistency, so both objects must have names assigned for this to
+            # be relevant.
+            if self._featureNamesCreated() and toAdd._featureNamesCreated():
                 self._validateReorderedNames('feature', 'addPoints', toAdd)
         else:
             self._validateObjHasSameNumberOfPoints('toAdd', toAdd)
-            if self._featureNamesCreated() or toAdd._featureNamesCreated():
+            # this helper ignores default names - so we can only have an intersection of
+            # names when BOTH objects have names created.
+            if self._featureNamesCreated() and toAdd._featureNamesCreated():
                 self._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
-            if self._pointNamesCreated() or toAdd._pointNamesCreated():
+            # helper looks for name inconsistency that can be resolved by reordering -
+            # definitionally, if one object has all default names, there can be no
+            # inconsistency, so both objects must have names assigned for this to
+            # be relevant.
+            if self._pointNamesCreated() and toAdd._pointNamesCreated():
                 self._validateReorderedNames('point', 'addFeatures', toAdd)
 
     def _validateMatPlotLibImport(self, error, name):
