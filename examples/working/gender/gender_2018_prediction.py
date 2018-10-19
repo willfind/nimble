@@ -426,16 +426,18 @@ def plotData(gender, qData, cats, qParity, outPath, makeXAxisLabels):
             spaces['Aesthetic'] = 106
             spaces['Amicable'] = 107
             spaces['At Ease'] = 112
-            spaces['Compassionate'] = 86
+            spaces['Compassionate'] = 87
             spaces['Complexity Seeking'] = 72
-            spaces['Emotionally Aware'] = 75
-            spaces['Forgiving'] = 105
+            spaces['Emotionally Aware'] = 76
+            spaces['Forgiving'] = 106
             spaces['Honest'] = 112
             spaces['Improvisational'] = 85
             spaces['Peaceful'] = 108
             spaces['Risk Taking'] = 98
             spaces['Self Defending'] = 88
-            spaces['Self Valuing'] = 92
+            spaces['Self Valuing'] = 96
+
+
             spaces['Sex Focused'] = 95
             spaces['Thick Skinned'] = 90
             spaces['Unselfish'] = 106
@@ -546,8 +548,8 @@ def plotData(gender, qData, cats, qParity, outPath, makeXAxisLabels):
             leg = plt.legend(handles, labels, loc=2, frameon=False)
 
         if meanStyle == 'bubble_inside':
-            mscatter = plt.scatter(meanMX, meanMY, s=465, c=meanColorM, zorder=2)
-            fscatter = plt.scatter(meanFX, meanFY, s=465, c=meanColorF, zorder=2)
+            mscatter = plt.scatter(meanMX, meanMY, s=550, c=meanColorM, zorder=2)
+            fscatter = plt.scatter(meanFX, meanFY, s=550, c=meanColorF, zorder=2)
 
             mTVal = round(meanMX/2.0, 1)
             mTVal = abs(mTVal) if mTVal == -0 else mTVal

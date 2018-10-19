@@ -77,7 +77,7 @@ for arrowX in wanted:
     loc = ((arrowX*2)-arrowLeftShift, 5)
 #    print loc
 #    xOffset = 0.8
-    xOffset = 0.3
+    xOffset = 0.25
     yOffset = 1
     textLoc = (loc[0]+xOffset, loc[1]) if loc[0] < 0 else (loc[0]-xOffset, loc[1])
     textAlignment = "left" if loc[0] < 0 else "right"
@@ -96,43 +96,43 @@ for arrowX in wanted:
 
     # use pillow to crop the useless top and bottom white space / X axis frame
     toCrop = PIL.Image.open(currName)
-    box = (0, 135, 1440, 195)
+    box = (0, 140, 1440, 190)
     tight = toCrop.crop(box)
 
     # grab a vertical white bar to cover over the Y axis frame
     if NO_Y_LABEL:
-        whiteVertBox = (0,0,5,60)
+        whiteVertBox = (0,0,5,50)
     else:
-        whiteVertBox = (1410,0,1440,60)
+        whiteVertBox = (1410,0,1440,50)
     whiteVertBar = tight.crop(whiteVertBox)
 
     # paste over the left and right portions of the frame
     if NO_Y_LABEL:
-        targetBoxL1 = (45,0,50,60)
-        targetBoxL2 = (45,0,50,60)
-        targetBoxR = (1400,0,1405,60)
+        targetBoxL1 = (45,0,50,50)
+        targetBoxL2 = (45,0,50,50)
+        targetBoxR = (1400,0,1405,50)
     else:
-        targetBoxL1 = (20,0,50,60)
-        targetBoxL2 = (31,0,61,60)
-        targetBoxR = (1400,0,1430,60)
+        targetBoxL1 = (20,0,50,50)
+        targetBoxL2 = (31,0,61,50)
+        targetBoxR = (1400,0,1430,50)
     tight.paste(whiteVertBar, targetBoxL1)
     tight.paste(whiteVertBar, targetBoxL2)
     tight.paste(whiteVertBar, targetBoxR)
 
     if arrowX == 10:
-        flipBox = (1375,0,1400,60)
+        flipBox = (1375,0,1400,50)
         flip = tight.crop(flipBox)
         flipT = flip.transpose(Image.FLIP_LEFT_RIGHT)
-        flipTBox = (1400,0,1425,65)
+        flipTBox = (1400,0,1425,50)
         tight.paste(flipT, flipTBox)
 
     if arrowX == -10:
         if NO_Y_LABEL:
-            flipBox = (50,0,75,60)
-            flipTBox = (25,0,50,60)
+            flipBox = (50,0,75,50)
+            flipTBox = (25,0,50,50)
         else:
-            flipBox = (61,0,86,60)
-            flipTBox = (36,0,61,60)
+            flipBox = (61,0,86,50)
+            flipTBox = (36,0,61,50)
         flip = tight.crop(flipBox)
         flipT = flip.transpose(Image.FLIP_LEFT_RIGHT)
         tight.paste(flipT, flipTBox)
@@ -144,7 +144,7 @@ for arrowX in wanted:
         toExtend = toCrop = PIL.Image.open(DEMONSTRATE_PATH + ".png")
         extended = toExtend.resize((1440,708))
         extended.paste(toExtend)
-        pasteBox = (0, 648, 1440, 708)
+        pasteBox = (0, 648, 1440, 698)
         extended.paste(tight, pasteBox)
         saveLoc = os.path.join(rootFolder, DEMONSTRATE_FILE +'_' + _name + ".png")
 #        print (saveLoc)
