@@ -1,98 +1,126 @@
 
 from __future__ import absolute_import
-from .allowImports import boilerplate
+from allowImports import boilerplate
 from six.moves import range
 boilerplate()
 
 import UML
+import sys
 import os.path
+import numpy
+import matplotlib
+from matplotlib import pyplot as plt
 
-matplotlib = UML.importModule("matplotlib")
-if matplotlib:
-    mlines = UML.importModule("matplotlib.mlines")
-    mpatches = UML.importModule("matplotlib.mpatches")
-    plt = UML.importModule("matplotlib.pyplot")
-
-PIL = UML.importModule("PIL")
-if PIL:
-    Image = UML.importModule("PIL.Image")
+import PIL
+from PIL import Image
 
 NO_Y_LABEL = False
 
-rootFolder = "/home/tpburns/gimbel_tech/data/gender/2nd_round_trial/user_arrow"
+rootFolder = "/home/tpburns/sparkwave/data/gender/3rd_round/user_arrow"
 fileName = os.path.join(rootFolder, 'arrow')
 
 
-matplotlib.rc('font', size=12)
+#matplotlib.rc('font', size=12)
 
 # setup the figure that we will be using later
 W = 960.0
-#W = 1440
-#H = 27.0
-H = 120
+H = 240
 DPI = 96.0
 DPISAVE = 144.0
+DEMONSTRATE = True
+DEMONSTRATE_PATH = "/home/tpburns/sparkwave/data/gender/3rd_round/plots/Aesthetic"
+DEMONSTRATE_FILE = "Aesthetic"
 
-wanted = [-9.99]
-#wanted = [.5 * i for i in xrange(-20,21)]
-wanted += [.5 * i for i in range(-19,20)]
-wanted += [9.99]
+#W = 960.0
+#H = 432.0
+#DPI = 96.0
+#DPISAVE = 144.0
+
 #wanted = [-9.99]
+#wanted = [.5 * i for i in xrange(-20,21)]
+#wanted += [.5 * i for i in range(-19,20)]
+#wanted += [9.99]
+#wanted = [-9.99]
+
+#wanted = [-3]
+#wanted += [.25 * i for i in range(-11,12)]
+wanted = [.5 * i  for i in range(-6,7)]
+print wanted
+#wanted += [3]
+
+dummyData = [9] * 13
+xVals = numpy.array([i for i in range(-6, 7)])
+
 for arrowX in wanted:
     fig = plt.figure(facecolor='white', figsize=(W/DPI, H/DPI), tight_layout=True)
     ax = plt.axes()
+    ax.set_frame_on(False)
+#    ax.grid(True)
 
-#   ax.set_frame_on(False)
+    plt.plot(xVals, dummyData, marker='.', linestyle='-', markersize=10)
 
-#   plt.xticks([])
-    plt.yticks([])
-
-    plt.xlim(-10, 10)
+    plt.xlim(-6.6, 6.6)
     plt.ylim(0, 10)
 
-    loc = (arrowX, 5)
-    xOffset = 0.8
+    tickNames = [-3, "", -2, "", -1, "", 0, "", 1, "", 2, "", 3]
+    loc, labels = plt.xticks(xVals, tickNames)
+    ytickVals = [0,9]
+    ytickStr = ['0%', '90%']
+    plt.yticks(ytickVals, ytickStr)
+    plt.ylabel("% of resp", fontweight='bold', fontsize=12)
+
+    # For Uparrow. Yes, really, you can check with grid lines turned on
+#    arrowLeftShift = 0.104
+    # for uparrow.
+    arrowLeftShift = 0.06
+
+    loc = ((arrowX*2)-arrowLeftShift, 5)
+#    print loc
+#    xOffset = 0.8
+    xOffset = 0.3
     yOffset = 1
     textLoc = (loc[0]+xOffset, loc[1]) if loc[0] < 0 else (loc[0]-xOffset, loc[1])
     textAlignment = "left" if loc[0] < 0 else "right"
 
-    plt.ylabel("of")
-    plt.plot(loc[0], loc[1], marker='$\Downarrow$', color="Black", markersize=35)
-    plt.annotate("Your Score", xy=(loc[0],loc[1]), xytext=(textLoc[0], textLoc[1]), color="Black", horizontalalignment=textAlignment, verticalalignment='center')
+    plt.plot(loc[0], loc[1], marker='$\uparrow$', color="Black", markersize=20)
+    plt.annotate("Your Score", xy=(loc[0],loc[1]), xytext=(textLoc[0], textLoc[1]), color="Black", horizontalalignment=textAlignment, verticalalignment='top')
+
+#    print (str(plt.xlim()))
 
     arrowX = round(arrowX) if abs(arrowX) == 9.99 else arrowX
     _name = "_".join(str(arrowX).split("."))
     currName = os.path.join(rootFolder, _name + ".png")
     plt.savefig(currName, dpi=DPISAVE)
     plt.close()
+#    continue
 
     # use pillow to crop the useless top and bottom white space / X axis frame
     toCrop = PIL.Image.open(currName)
-    box = (0, 40, 1440, 105)
+    box = (0, 135, 1440, 195)
     tight = toCrop.crop(box)
 
     # grab a vertical white bar to cover over the Y axis frame
     if NO_Y_LABEL:
-        whiteVertBox = (0,0,5,65)
+        whiteVertBox = (0,0,5,60)
     else:
-        whiteVertBox = (1410,0,1440,65)
+        whiteVertBox = (1410,0,1440,60)
     whiteVertBar = tight.crop(whiteVertBox)
 
     # paste over the left and right portions of the frame
     if NO_Y_LABEL:
-        targetBoxL1 = (45,0,50,65)
-        targetBoxL2 = (45,0,50,65)
-        targetBoxR = (1400,0,1405,65)
+        targetBoxL1 = (45,0,50,60)
+        targetBoxL2 = (45,0,50,60)
+        targetBoxR = (1400,0,1405,60)
     else:
-        targetBoxL1 = (20,0,50,65)
-        targetBoxL2 = (31,0,61,65)
-        targetBoxR = (1400,0,1430,65)
+        targetBoxL1 = (20,0,50,60)
+        targetBoxL2 = (31,0,61,60)
+        targetBoxR = (1400,0,1430,60)
     tight.paste(whiteVertBar, targetBoxL1)
     tight.paste(whiteVertBar, targetBoxL2)
     tight.paste(whiteVertBar, targetBoxR)
 
     if arrowX == 10:
-        flipBox = (1375,0,1400,65)
+        flipBox = (1375,0,1400,60)
         flip = tight.crop(flipBox)
         flipT = flip.transpose(Image.FLIP_LEFT_RIGHT)
         flipTBox = (1400,0,1425,65)
@@ -100,14 +128,24 @@ for arrowX in wanted:
 
     if arrowX == -10:
         if NO_Y_LABEL:
-            flipBox = (50,0,75,65)
-            flipTBox = (25,0,50,65)
+            flipBox = (50,0,75,60)
+            flipTBox = (25,0,50,60)
         else:
-            flipBox = (61,0,86,65)
-            flipTBox = (36,0,61,65)
+            flipBox = (61,0,86,60)
+            flipTBox = (36,0,61,60)
         flip = tight.crop(flipBox)
         flipT = flip.transpose(Image.FLIP_LEFT_RIGHT)
         tight.paste(flipT, flipTBox)
 
-
     tight.save(currName, "png")
+
+
+    if DEMONSTRATE:
+        toExtend = toCrop = PIL.Image.open(DEMONSTRATE_PATH + ".png")
+        extended = toExtend.resize((1440,708))
+        extended.paste(toExtend)
+        pasteBox = (0, 648, 1440, 708)
+        extended.paste(tight, pasteBox)
+        saveLoc = os.path.join(rootFolder, DEMONSTRATE_FILE +'_' + _name + ".png")
+#        print (saveLoc)
+        extended.save(saveLoc, "png")
