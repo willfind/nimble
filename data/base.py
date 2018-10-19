@@ -2395,10 +2395,33 @@ class Base(object):
 
     def addPoints(self, toAdd, insertBefore=None):
         """
-        Expand this object by inserting the points of the toAdd prior to the
-        insertBefore identifier. The points in toAdd do not need to be in the
+        Expand this object by inserting the points of toAdd prior to the
+        insertBefore identifier. The features in toAdd do not need to be in the
         same order as in the calling object; the data will automatically be
-        placed using the calling object's point order if there is an
+        placed using the calling object's feature order if there is an
+        unambiguous mapping. toAdd will be unaffected by calling this method.
+
+        toAdd - the UML data object whose contents we will be including
+        in this object. Must have the same number of features as the calling
+        object. Must not share any point names with the calling object.
+        Must have the same features names as the calling object, but not
+        necessarily in the same order.
+
+        insertBefore - the index or point name prior to which the data from
+        toAdd will be inserted. The default value, None, indicates that the
+        data will be inserted below all points in this object, or in other
+        words: appended to the end of the current points.
+
+        """
+        self._genericAddFrontend('point', toAdd, insertBefore)
+
+
+    def addFeatures(self, toAdd, insertBefore=None):
+        """
+        Expand this object by inserting the features of toAdd prior to
+        the insertBefore identifier. The points in toAdd do not need to be in
+        the same order as in the calling object; the data will automatically be
+        placed using the calling object's feature order if there is an
         unambiguous mapping. toAdd will be unaffected by calling this method.
 
         toAdd - the UML data object whose contents we will be including
@@ -2407,31 +2430,10 @@ class Base(object):
         Must have the same point names as the calling object, but not
         necessarily in the same order.
 
-        insertBefore - the index or point name prior to which the data from
-        toAdd will be inserted. The default value, None, indicates that the
-        data will be inserted below all points in this object.
-
-        """
-        self._genericAddFrontend('point', toAdd, insertBefore)
-
-
-    def addFeatures(self, toAdd, insertBefore=None):
-        """
-        Expand this object by inserting the features of the toAdd prior to
-        the insertBefore identifier. The points in toAdd do not need to be in
-        the same order as in the calling object; the data will automatically be
-        placed using the calling object's feature order if there is an
-        unambiguous mapping. toAdd will be unaffected by calling this method.
-
-        toAdd - the UML data object whose contents we will be including
-        in this object. Must have the same number of features as the calling
-        object. Must not share any point names with the calling object.
-        Must have the same feature names as the calling object, but not
-        necessarily in the same order.
-
         insertBefore - the index or feature name prior to which the data from
         toAdd will be inserted. The default value, None, indicates that the
-        data will be inserted to the right of all features in this object.
+        data will be inserted to the right of all features in this object,
+        or in other words: appended to the end of the current features.
 
         """
         self._genericAddFrontend('feature', toAdd, insertBefore)
