@@ -4902,10 +4902,8 @@ class Base(object):
     def _validateReorderedNames(self, axis, callSym, other):
         """
         Validate axis names to check to see if they are equal ignoring order.
-        Returns True if the names are equal but reordered, False if they are
-        equal and the same order (ignoring defaults), and raises an exception
-        if they do not share exactly the same names, or requires reordering in
-        the presence of default names.
+        Raises an exception if the objects do not share exactly the same names,
+        or requires reordering in the presence of default names.
         """
         if axis == 'point':
             lnames = self.getPointNames()
@@ -5445,10 +5443,11 @@ class Base(object):
             namesCreated = self._featureNamesCreated()
             selfNames = self.getFeatureNames
             otherNames = other.getFeatureNames
-            sortOther = other.sortFeatures
             def sorter(obj, names):
                 return getattr(obj, 'sortFeatures')(sortHelper=names)
 
+        # This may not look exhaustive, but because of the previous call to _validateInsertableData
+        # before this helper, most of the other cases will have already caused an exception
         if namesCreated:
             allDefault = all(name.startswith(DEFAULT_PREFIX) for name in selfNames())
             reorder = selfNames() != otherNames()
