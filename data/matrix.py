@@ -68,20 +68,29 @@ class Matrix(Base):
         self.data = self.data.getT()
 
 
-    def _appendPoints_implementation(self, toAppend):
+    def _addPoints_implementation(self, toAdd, insertBefore):
         """
-        Append the points from the toAppend object to the bottom of the features in this object
+        Insert the points from the toAdd object below the provided index in
+        this object, the remaining points from this object will continue below
+        the inserted points
 
         """
-        self.data = numpy.concatenate((self.data, toAppend.data), 0)
+        startData = self.data[:insertBefore, :]
+        endData = self.data[insertBefore:, :]
+        self.data = numpy.concatenate((startData, toAdd.data, endData), 0)
 
 
-    def _appendFeatures_implementation(self, toAppend):
+    def _addFeatures_implementation(self, toAdd, insertBefore):
         """
-        Append the features from the toAppend object to right ends of the points in this object
+        Insert the features from the toAdd object to the right of the
+        provided index in this object, the remaining points from this object
+        will continue to the right of the inserted points
 
         """
-        self.data = numpy.concatenate((self.data, toAppend.data), 1)
+        startData = self.data[:, :insertBefore]
+        endData = self.data[:, insertBefore:]
+        self.data = numpy.concatenate((startData, toAdd.data, endData), 1)
+
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
         """

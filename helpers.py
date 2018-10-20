@@ -2570,7 +2570,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             if collectedY is None:
                 collectedY = curTestingY
             else:
-                collectedY.appendPoints(curTestingY)
+                collectedY.addPoints(curTestingY)
 
         # setup for next iteration
         argumentCombinationIterator.reset()
@@ -2585,7 +2585,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # we combine the results objects into one, and then calc performance
         else:
             for resultIndex in range(1, len(results)):
-                results[0].appendPoints(results[resultIndex])
+                results[0].addPoints(results[resultIndex])
 
             # TODO raise RuntimeError("How do we guarantee Y and results are in same order?")
             finalPerformance = computeMetrics(collectedY, None, results[0], performanceFunction)
@@ -3314,7 +3314,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     # we want the data and the labels together in one object or this method
     if isinstance(trainY, Base):
         trainX = trainX.copy()
-        trainX.appendFeatures(trainY)
+        trainX.addFeatures(trainY)
         trainY = trainX.features - 1
 
     # Get set of unique class labels, then generate list of all 2-combinations of
@@ -3356,9 +3356,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
             rawPredictions = partialResults.copyAs(format="List")
         else:
             partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
-            rawPredictions.appendFeatures(partialResults.copyAs(format="List"))
-        pairData.appendFeatures(pairTrueLabels)
-        trainX.appendPoints(pairData)
+            rawPredictions.addFeatures(partialResults.copyAs(format="List"))
+        pairData.addFeatures(pairTrueLabels)
+        trainX.addPoints(pairData)
         predictionFeatureID += 1
 
     if useLog:
@@ -3497,7 +3497,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         else:
             #as it's added to results object, rename each column with its corresponding class label
             oneLabelResults.setFeatureName(0, str(label))
-            rawPredictions.appendFeatures(oneLabelResults)
+            rawPredictions.addFeatures(oneLabelResults)
 
     if useLog:
         timer.stop('train')

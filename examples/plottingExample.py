@@ -61,7 +61,7 @@ if __name__ == "__main__":
         scaled = (raw1 * 3) + raw2
         obj1 = UML.createData("Matrix", raw1)
         obj2 = UML.createData("Matrix", scaled)
-        obj1.appendFeatures(obj2)
+        obj1.addFeatures(obj2)
 
         #obj1.setFeatureName(0, "[0, 1) random noise")
         obj1.setFeatureName(1, "(Feature 0 * 3) + noise")
