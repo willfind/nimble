@@ -628,7 +628,7 @@ class DataFrame(Base):
         numPoints = self.points // numFeatures
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
-    def _merge_implementation(self, method, other, onFeature):
+    def _merge_implementation(self, other, method, onFeature):
         if method == 'union':
             method = 'outer'
         elif method == 'intersection':

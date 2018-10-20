@@ -422,7 +422,7 @@ class Sparse(Base):
         (selfShape, targetShape) = _calcShapes(self.data.shape, targetLength, axis)
         if structure != 'copy':
             otherData = numpy.array(keepData, dtype=dtype)
-            self.data = coo_matrix((keepData, (keepRows, keepCols)), shape=selfShape)
+            self.data = coo_matrix((otherData, (keepRows, keepCols)), shape=selfShape)
         # coo_matrix will force list to simplest numpy dtype unless converted to an array
         targetData = numpy.array(targetData, dtype=dtype)
         ret = coo_matrix((targetData, (targetRows, targetCols)), shape=targetShape)
@@ -1212,7 +1212,7 @@ class Sparse(Base):
             else:
                 raise ImproperActionException('self._sorted is not either point nor feature.')
 
-    def _merge_implementation(self, method, other, onFeature):
+    def _merge_implementation(self, other, method, onFeature):
         if onFeature:
             uniqueFtR = len(set(other[:, onFeature])) == other.points
             numFts = self.features + other.features - 1

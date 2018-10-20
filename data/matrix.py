@@ -469,8 +469,11 @@ class Matrix(Base):
             values = values * numpy.ones((pointEnd - pointStart + 1, featureEnd - featureStart + 1))
         else:
             values = values.data
-
-        self.data[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
+        try:
+            self.data[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
+        except ValueError:
+            self.data = self.data.astype(numpy.object_)
+            self.data[pointStart:pointEnd + 1, featureStart:featureEnd + 1] = values
 
     def _handleMissingValues_implementation(self, method='remove points', featuresList=None, arguments=None, alsoTreatAsMissing=[], markMissing=False):
         """
@@ -638,7 +641,7 @@ class Matrix(Base):
         numPoints = self.points // numFeatures
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
 
-    def _merge_implementation(self, method, other, onFeature):
+    def _merge_implementation(self, other, method, onFeature):
         selfArr = numpy.array(self.data, dtype=numpy.object_)
         otherArr = numpy.array(other.data, dtype=numpy.object_)
         if onFeature:

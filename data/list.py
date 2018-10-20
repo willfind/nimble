@@ -739,7 +739,7 @@ class List(Base):
         self.data = result
         self._numFeatures = numFeatures
 
-    def _merge_implementation(self, method, other, onFeature):
+    def _merge_implementation(self, other, method, onFeature):
         if onFeature:
             uniqueFtR = len(set(other[:, onFeature])) == other.points
             if uniqueFtR:
