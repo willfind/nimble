@@ -630,7 +630,7 @@ class DataFrame(Base):
         numPoints = self.points // numFeatures
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
-    def _merge_implementation(self, other, method, onFeature):
+    def _merge_implementation(self, other, method, onFeature, matchingFtIdx):
         if method == 'union':
             method = 'outer'
         elif method == 'intersection':
@@ -647,9 +647,33 @@ class DataFrame(Base):
             merged.reset_index(drop=True, inplace=True)
             merged.columns = range(merged.shape[1])
         else:
+            onIdxL = self.getFeatureIndex(onFeature)
             merged = tmpDfL.merge(tmpDfR, how=method, on=onFeature)
             merged.reset_index()
             merged.columns = range(merged.shape[1])
+
+        toDrop = []
+        for l, r in zip(matchingFtIdx[0], matchingFtIdx[1]):
+            if onFeature and l == onIdxL:
+                # onFeature column has already been merged
+                continue
+            elif onFeature:
+                # one less to account for onFeature
+                r = r + len(tmpDfL.columns) - 1
+            else:
+                r = r + len(tmpDfL.columns)
+            matches = merged.iloc[:,l] == merged.iloc[:,r]
+            nansL = merged.iloc[:,l] != merged.iloc[:,l]
+            nansR = merged.iloc[:,r] != merged.iloc[:,r]
+            allValues = matches + nansL + nansR
+            if not all(allValues):
+                msg = "The objects contain different values for the same feature"
+                raise ArgumentException(msg)
+            else:
+                merged.iloc[:, l][nansL] = merged.iloc[:, r][nansL]
+                toDrop.append(r)
+        merged.drop(toDrop, axis=1, inplace=True)
+
         return DataFrame(merged)
 
 

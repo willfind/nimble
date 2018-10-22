@@ -650,7 +650,7 @@ class Matrix(Base):
         numPoints = self.points // numFeatures
         self.data = self.data.reshape((numPoints, numFeatures), order='F')
 
-    def _merge_implementation(self, other, method, onFeature):
+    def _merge_implementation(self, other, method, onFeature, matchingFtIdx):
         selfArr = numpy.array(self.data, dtype=numpy.object_)
         otherArr = numpy.array(other.data, dtype=numpy.object_)
         if onFeature:
@@ -666,6 +666,7 @@ class Matrix(Base):
                 onIdxR = self.getFeatureIndex(onFeature)
                 left = otherArr
                 right = selfArr
+                matchingFtIdx = [matchingFtIdx[1], matchingFtIdx[0]]
         else:
             # using pointNames, prepend pointNames to left and right arrays
             onIdxL = 0
@@ -674,24 +675,35 @@ class Matrix(Base):
             left = numpy.concatenate((ptsL, selfArr), axis=1)
             ptsR = numpy.array(other.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
             right = numpy.concatenate((ptsR, otherArr), axis=1)
+            matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+            matchingFtIdx[0].append(0)
+            matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
+            matchingFtIdx[1].append(0)
 
         matched = []
         merged = []
-        notOnR = [i for i in range(right.shape[1]) if i != onIdxR]
-        mapper = {right[i, onIdxR]: right[i, notOnR] for i in range(right.shape[0])}
+        unmatchedPtsR = right.shape[1] - len(matchingFtIdx[1])
+        mapper = {right[i, onIdxR]: right[i] for i in range(right.shape[0])}
         for row in left:
             target = row[onIdxL]
-            if onFeature is None:
-                row = row[1:]
             if target in mapper:
                 ptL = row
                 ptR = mapper[target]
+                matches = ptL[matchingFtIdx[0]] == ptR[matchingFtIdx[1]]
+                nansL = ptL[matchingFtIdx[0]] != ptL[matchingFtIdx[0]]
+                nansR = ptR[matchingFtIdx[1]] != ptR[matchingFtIdx[1]]
+                allValues = matches + nansL + nansR
+                if not all(allValues):
+                    msg = "The objects contain different values for the same feature"
+                    raise ArgumentException(msg)
+                else:
+                    ptR = numpy.delete(ptR, matchingFtIdx[1])
                 pt = numpy.concatenate((ptL, ptR)).flatten()
                 merged.append(pt)
                 matched.append(target)
             elif method == 'left' or method == 'union':
                 ptL = row.reshape(1, -1)
-                ptR = numpy.ones((1, right.shape[1] - 1)) * numpy.nan
+                ptR = numpy.ones((1, unmatchedPtsR)) * numpy.nan
                 pt = numpy.append(ptL, ptR)
                 merged.append(pt)
 
@@ -701,23 +713,37 @@ class Matrix(Base):
                 if target not in matched:
                     if onFeature is None:
                         row = row[1:]
-                    ptL1 = numpy.ones((1, onIdxL)) * numpy.nan
-                    ptL3 = numpy.ones((1, left.shape[1] - onIdxL - 1)) * numpy.nan
-                    if onFeature is None:
-                        # don't target when using pointNames
-                        ptL2 = numpy.empty((1,0))
-                        ptR = row.reshape(1, -1)
-                    else:
-                        # add target to left side; ignore on right
-                        ptL2 = numpy.array(target).reshape(1, 1)
-                        ptR1 = row[:onIdxR].reshape(1, -1)
-                        ptR2 = row[(onIdxR + 1):].reshape(1, -1)
-                        ptR = numpy.append(ptR1, ptR2).reshape(1, -1)
-                    pt = numpy.concatenate((ptL1, ptL2, ptL3, ptR), axis=1)
-                    pt = pt.flatten()
+                    pt = numpy.ones((left.shape[1] + unmatchedPtsR,), dtype=numpy.object_) * numpy.nan
+                    for i, val in enumerate(row):
+                        if i in matchingFtIdx[1]:
+                            pt[matchingFtIdx[0][i]] = val
+                        else:
+                            pt[i + left.shape[1] - 1] = val
+                    # print(pt)
+                    # ptL1 = numpy.ones((1, onIdxL)) * numpy.nan
+                    # ptL3 = numpy.ones((1, left.shape[1] - onIdxL - 1)) * numpy.nan
+                    # if onFeature is None:
+                    #     # don't target when using pointNames
+                    #     ptL2 = numpy.empty((1,0))
+                    #     ptR = row.reshape(1, -1)
+                    # else:
+                    #     # add target to left side; ignore on right
+                    #     ptL2 = numpy.array(target).reshape(1, 1)
+                    #     ptR1 = row[:onIdxR].reshape(1, -1)
+                    #     ptR2 = row[(onIdxR + 1):].reshape(1, -1)
+                    #     ptR = numpy.append(ptR1, ptR2).reshape(1, -1)
+                    # pt = numpy.concatenate((ptL1, ptL2, ptL3, ptR), axis=1)
+                    # pt = pt.flatten()
                     merged.append(pt)
 
-        return Matrix(numpy.matrix(merged))
+        if len(merged) == 0 and onFeature is None:
+            merged = numpy.empty((0, left.shape[1] + unmatchedPtsR - 1))
+        elif len(merged) == 0:
+            merged = numpy.empty((0, left.shape[1] + unmatchedPtsR))
+        elif onFeature is None:
+            # remove point names feature
+            merged = [row[1:] for row in merged]
+        return Matrix(numpy.matrix(merged, dtype=numpy.object_))
 
     def _getitem_implementation(self, x, y):
         return self.data[x, y]
