@@ -138,9 +138,9 @@ if __name__ == "__main__":
 
             #get rid of some of the points in the test set X and Y based on a filter
             Z = testXTemp.copy()
-            Z.appendFeatures(testY)
+            Z.addFeatures(testY)
             ZInSample = trainXTemp.copy()
-            ZInSample.appendFeatures(trainYCopy.copy())
+            ZInSample.addFeatures(trainYCopy.copy())
 
             if filterFunctionForTestPoints != None:
                 Z = Z.extractPoints(filterFunctionForTestPoints)
