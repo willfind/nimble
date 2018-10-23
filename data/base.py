@@ -2452,13 +2452,11 @@ class Base(object):
         if axis == 'point':
             toAdd = self._alignNames('feature', toAdd)
             self._addPoints_implementation(toAdd, insertBefore)
-            self._setpointCount(self.points + toAdd.points)
-            self._setAddedNames('point', toAdd, insertBefore)
+            self._setAddedCountAndNames('point', toAdd, insertBefore)
         else:
             toAdd = self._alignNames('point', toAdd)
             self._addFeatures_implementation(toAdd, insertBefore)
-            self._setfeatureCount(self.features + toAdd.features)
-            self._setAddedNames('feature', toAdd, insertBefore)
+            self._setAddedCountAndNames('feature', toAdd, insertBefore)
 
         self.validate()
 
@@ -5391,20 +5389,24 @@ class Base(object):
             raise ArgumentException(msg)
 
 
-    def _setAddedNames(self, axis, addedObj, insertedBefore):
+    def _setAddedCountAndNames(self, axis, addedObj, insertedBefore):
         self._validateAxis(axis)
         if axis == 'point':
             if not self._pointNamesCreated() and not addedObj._pointNamesCreated():
+                self._setpointCount(self.points + addedObj.points)
                 return
             selfNames = self.getPointNames()
             insertedNames = addedObj.getPointNames()
             setSelfNames = self.setPointNames
+            self._setpointCount(self.points + addedObj.points)
         else:
             if not self._featureNamesCreated() and not addedObj._featureNamesCreated():
+                self._setfeatureCount(self.features + addedObj.features)
                 return
             selfNames = self.getFeatureNames()
             insertedNames = addedObj.getFeatureNames()
             setSelfNames = self.setFeatureNames
+            self._setfeatureCount(self.features + addedObj.features)
         # ensure no collision with default names
         adjustedNames = []
         for name in insertedNames:
