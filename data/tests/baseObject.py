@@ -20,7 +20,7 @@ def objConstructorMaker(returnType):
             return UML.createData(
                 returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith)
+                replaceMissingWith=replaceMissingWith, elementType=elementType)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
@@ -43,7 +43,7 @@ def viewConstructorMaker(concreteType):
 
     def constructor(
             data, pointNames='automatic', featureNames='automatic',
-            name=None, path=(None, None),
+            name=None, path=(None, None), elementType=None,
             treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
             replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
@@ -51,14 +51,14 @@ def viewConstructorMaker(concreteType):
             orig = UML.createData(
                 concreteType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith)
+                replaceMissingWith=replaceMissingWith, elementType=elementType)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
         else:
             orig = UML.helpers.initDataObject(
                 concreteType, rawData=data, pointNames=pointNames,
-                featureNames=featureNames, name=name, path=path,
+                featureNames=featureNames, name=name, path=path, elementType=elementType,
                 keepPoints='all', keepFeatures='all', treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith)
 
@@ -68,12 +68,14 @@ def viewConstructorMaker(concreteType):
             firstPRaw = [[0] * orig.features]
             firstPoint = UML.helpers.initDataObject(concreteType, rawData=firstPRaw,
                                                     pointNames=['firstPNonView'], featureNames=orig.getFeatureNames(),
-                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+                                                    name=name, path=orig.path, keepPoints='all', keepFeatures='all',
+                                                    elementType=elementType)
 
             lastPRaw = [[3] * orig.features]
             lastPoint = UML.helpers.initDataObject(concreteType, rawData=lastPRaw,
                                                    pointNames=['lastPNonView'], featureNames=orig.getFeatureNames(),
-                                                   name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+                                                   name=name, path=orig.path, keepPoints='all', keepFeatures='all',
+                                                   elementType=elementType)
 
             firstPoint.addPoints(orig)
             full = firstPoint
@@ -92,7 +94,8 @@ def viewConstructorMaker(concreteType):
             lastFRaw = [[1] * full.points]
             lastFeature = UML.helpers.initDataObject(concreteType, rawData=lastFRaw,
                                                      featureNames=full.getPointNames(), pointNames=['lastFNonView'],
-                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all')
+                                                     name=name, path=orig.path, keepPoints='all', keepFeatures='all',
+                                                     elementType=elementType)
             lastFeature.transpose()
 
             full.addFeatures(lastFeature)

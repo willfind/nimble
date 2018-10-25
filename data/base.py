@@ -972,7 +972,9 @@ class Base(object):
             vectorized = numpy.vectorize(functionWrap)
             ret = self._calculateForEachElement_implementation(
                      vectorized, points, features, preserveZeros, optType)
+
         else:
+            # if unable to vectorize, iterate over each point
             points = points if points else list(range(self.points))
             features = features if features else list(range(self.features))
             valueArray = numpy.empty([len(points), len(features)])
@@ -1009,8 +1011,19 @@ class Base(object):
         toCalculate = self.copyAs('numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:,None], features]
-        values = function(toCalculate)
-        return UML.createData(outputType, values)
+        try:
+            values = function(toCalculate)
+            # check if values has numeric dtype
+            if numpy.issubdtype(values.dtype, numpy.number):
+                return UML.createData(outputType, values)
+            else:
+                return UML.createData(outputType, values, elementType=numpy.object_)
+        except Exception:
+            # change output type of vectorized function to object to handle nonnumeric data
+            function.otypes = [numpy.object_]
+            values = function(toCalculate)
+            return UML.createData(outputType, values, elementType=numpy.object_)
+
 
 
     def countElements(self, function):

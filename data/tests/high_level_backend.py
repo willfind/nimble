@@ -851,28 +851,27 @@ class HighLevelDataSafe(DataTestObject):
             return toIMap[val] if val in toIMap else val
 
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
+        toTest = self.constructor(data, elementType=object)
         ret0A = toTest.calculateForEachElement(allString)
         ret0B = toTest.calculateForEachElement(allString, preserveZeros=True)
 
         exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
-        exp0Obj = self.constructor(exp0Data)
+        exp0Obj = self.constructor(exp0Data, elementType=object)
         assert ret0A == exp0Obj
         assert ret0B == exp0Obj
 
         ret1 = toTest.calculateForEachElement(f1)
 
-        exp1Data =  [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
+        exp1Data = [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
         exp1Obj = self.constructor(exp1Data)
 
         assert ret1 == exp1Obj
 
-        ret2 = ret.calculateForEachElement(f2)
+        ret2 = ret1.calculateForEachElement(f2)
 
         exp2Obj = self.constructor(data)
 
         assert ret2 == exp2Obj
-
 
 
     #############################
