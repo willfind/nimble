@@ -2452,13 +2452,17 @@ class Base(object):
         if axis == 'point':
             toAdd = self._alignNames('feature', toAdd)
             self._addPoints_implementation(toAdd, insertBefore)
-            self._setpointCount(self.points + toAdd.points)
-            self._setAddedNames('point', toAdd, insertBefore)
+            if not self._pointNamesCreated() and not toAdd._pointNamesCreated():
+                self._setpointCount(self.points + toAdd.points)
+            else:
+                self._setAddedCountAndNames('point', toAdd, insertBefore)
         else:
             toAdd = self._alignNames('point', toAdd)
             self._addFeatures_implementation(toAdd, insertBefore)
-            self._setfeatureCount(self.features + toAdd.features)
-            self._setAddedNames('feature', toAdd, insertBefore)
+            if not self._featureNamesCreated() and not toAdd._featureNamesCreated():
+                self._setfeatureCount(self.features + toAdd.features)
+            else:
+                self._setAddedCountAndNames('feature', toAdd, insertBefore)
 
         self.validate()
 
@@ -5391,20 +5395,18 @@ class Base(object):
             raise ArgumentException(msg)
 
 
-    def _setAddedNames(self, axis, addedObj, insertedBefore):
+    def _setAddedCountAndNames(self, axis, addedObj, insertedBefore):
         self._validateAxis(axis)
         if axis == 'point':
-            if not self._pointNamesCreated() and not addedObj._pointNamesCreated():
-                return
             selfNames = self.getPointNames()
             insertedNames = addedObj.getPointNames()
             setSelfNames = self.setPointNames
+            self._setpointCount(self.points + addedObj.points)
         else:
-            if not self._featureNamesCreated() and not addedObj._featureNamesCreated():
-                return
             selfNames = self.getFeatureNames()
             insertedNames = addedObj.getFeatureNames()
             setSelfNames = self.setFeatureNames
+            self._setfeatureCount(self.features + addedObj.features)
         # ensure no collision with default names
         adjustedNames = []
         for name in insertedNames:
@@ -5462,15 +5464,27 @@ class Base(object):
         self._validateValueIsUMLDataObject('toAdd', toAdd, True)
         if axis == 'point':
             self._validateObjHasSameNumberOfFeatures('toAdd', toAdd)
-            if self._pointNamesCreated() or toAdd._pointNamesCreated():
+            # this helper ignores default names - so we can only have an intersection of
+            # names when BOTH objects have names created.
+            if self._pointNamesCreated() and toAdd._pointNamesCreated():
                 self._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
-            if self._featureNamesCreated() or toAdd._featureNamesCreated():
+            # helper looks for name inconsistency that can be resolved by reordering -
+            # definitionally, if one object has all default names, there can be no
+            # inconsistency, so both objects must have names assigned for this to
+            # be relevant.
+            if self._featureNamesCreated() and toAdd._featureNamesCreated():
                 self._validateReorderedNames('feature', 'addPoints', toAdd)
         else:
             self._validateObjHasSameNumberOfPoints('toAdd', toAdd)
-            if self._featureNamesCreated() or toAdd._featureNamesCreated():
+            # this helper ignores default names - so we can only have an intersection of
+            # names when BOTH objects have names created.
+            if self._featureNamesCreated() and toAdd._featureNamesCreated():
                 self._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
-            if self._pointNamesCreated() or toAdd._pointNamesCreated():
+            # helper looks for name inconsistency that can be resolved by reordering -
+            # definitionally, if one object has all default names, there can be no
+            # inconsistency, so both objects must have names assigned for this to
+            # be relevant.
+            if self._pointNamesCreated() and toAdd._pointNamesCreated():
                 self._validateReorderedNames('point', 'addFeatures', toAdd)
 
     def _validateMatPlotLibImport(self, error, name):
