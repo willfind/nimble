@@ -360,7 +360,9 @@ def plotData(gender, qData, cats, qParity, outPath, makeXAxisLabels):
     W = 960.0
     H = 432.0
     DPI = 96.0
-    DPISAVE = 144.0
+#    DPISAVE = 144.0
+    DPISAVE = 288.0
+    RATIO = DPISAVE / DPI
 
     for i in range(catData.features):
         fig = plt.figure(facecolor='white', figsize=(W / DPI, H / DPI), tight_layout=True)
@@ -570,16 +572,19 @@ def plotData(gender, qData, cats, qParity, outPath, makeXAxisLabels):
         plt.savefig(currPath, dpi=DPISAVE)
         plt.close()
 
+        box = (0, 400, 960, 417)
+        def adjust(val):
+            return int(math.floor(val * RATIO))
+        box = tuple(map(adjust, box))
+#        box = (0, 600, 1440, 626)
         if makeXAxisLabels:
             toCrop = PIL.Image.open(currPath + ".png")
-            box = (0, 600, 1440, 626)
             tight = toCrop.crop(box)
             tight.save(outPath + "/labels/" + cat +".png", "png")
         else:  # glue labels to bottom
             toLabel = toCrop = PIL.Image.open(currPath + ".png")
             label = PIL.Image.open(outPath + "/labels/" + cat +".png")
-            toLabelBox = (0, 600, 1440, 626)
-            toLabel.paste(label, toLabelBox)
+            toLabel.paste(label, box)
             toLabel.save(currPath + ".png", "png")
 
         # use PIL to cut vertical whitespace
