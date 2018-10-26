@@ -15,7 +15,6 @@ from six.moves import range
 from six.moves import zip
 import sys
 import warnings
-import cloudpickle
 
 import __main__ as main
 mplError = None
@@ -55,6 +54,8 @@ pd = UML.importModule('pandas')
 cython = UML.importModule('cython')
 if cython is None or not cython.compiled:
     from math import sin, cos
+
+cloudpickle = UML.importModule('cloudpickle')
 
 from UML.exceptions import ArgumentException, PackageException
 from UML.exceptions import ImproperActionException
@@ -1567,7 +1568,9 @@ class Base(object):
 
         Uses dill library to serialize it.
         """
-
+        if not cloudpickle:
+            msg = "To save UML objects, cloudpickle must be installed"
+            raise PackageException(msg)
         extension = '.umld'
         if not outputPath.endswith(extension):
             outputPath = outputPath + extension
