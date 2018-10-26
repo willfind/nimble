@@ -27,6 +27,29 @@ returnTypes.append(None)
 # Data values correctness #
 ###########################
 
+def test_createData_raw_stringConversion():
+    """
+    """
+    for t in returnTypes:
+        values = []
+        toTest = UML.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
+        for i in range(toTest.points):
+            for j in range(toTest.features):
+                values.append(toTest[i,j])
+        assert all(isinstance(val, float) for val in values)
+
+def test_createData_raw_noStringConversion():
+    """
+    """
+    for t in returnTypes:
+        values = []
+        toTest = UML.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']], elementType=object)
+        for i in range(toTest.points):
+            for j in range(toTest.features):
+                values.append(toTest[i,j])
+        assert all(isinstance(val, str) for val in values)
+
+
 def test_createData_CSV_data():
     """ Test of createData() loading a csv file, default params """
     for t in returnTypes:

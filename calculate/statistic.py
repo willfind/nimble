@@ -337,7 +337,7 @@ def residuals(toPredict, controlVars):
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
-    workingCV.appendFeatures(UML.ones(workingType, cvP, 1))
+    workingCV.addFeatures(UML.ones(workingType, cvP, 1))
     workingCV = workingCV.copyAs("numpy matrix")
     workingTP = toPredict.copyAs("numpy matrix")
 

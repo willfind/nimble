@@ -25,12 +25,12 @@ from UML.interfaces.interface_helpers import checkClassificationStrategy
 from UML.interfaces.interface_helpers import cacheWrapper
 from UML.logger import Stopwatch
 
-from UML.helpers import _mergeArguments, generateAllPairs, countWins
+from UML.helpers import _mergeArguments, generateAllPairs, countWins, inspectArguments
 import six
 from six.moves import range
 import warnings
 
-import cloudpickle
+cloudpickle = UML.importModule('cloudpickle')
 
 def captureOutput(toWrap):
     """Decorator which will safefly redirect standard error within the
@@ -98,7 +98,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 raise TypeError(
                     "Improper implementation of _exposedFunctions, each member of the return must have __name__ attribute")
             # takes self as attribute
-            (args, varargs, keywords, defaults) = inspect.getargspec(exposed)
+            (args, varargs, keywords, defaults) = inspectArguments(exposed)
             if args[0] != 'self':
                 raise TypeError(
                     "Improper implementation of _exposedFunctions each member's first argument must be 'self', interpreted as a TrainedLearner")
@@ -186,14 +186,14 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
                 if useLog:
                     timer.stop('trainOVA')
-                return self.TrainedLearners(trainedLearners, 'OneVsAll', labelSet)
+                return TrainedLearners(trainedLearners, 'OneVsAll', labelSet)
 
             #1 VS 1
             if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
                 # we want the data and the labels together in one object or this method
                 if isinstance(trainY, UML.data.Base):
                     trainX = trainX.copy()
-                    trainX.appendFeatures(trainY)
+                    trainX.addFeatures(trainY)
                     trainY = trainX.features - 1
 
                 # Get set of unique class labels, then generate list of all 2-combinations of
@@ -229,11 +229,11 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     pairTrueLabels = pairData.extractFeatures(trainY)
                     trainedLearners.append(self._train(learnerName, pairData.copy(), pairTrueLabels.copy(), arguments=arguments, \
                                                        timer=timer))
-                    pairData.appendFeatures(pairTrueLabels)
-                    trainX.appendPoints(pairData)
+                    pairData.addFeatures(pairTrueLabels)
+                    trainX.addPoints(pairData)
                 if useLog:
                     timer.stop('trainOVO')
-                return self.TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
+                return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
         return self._train(learnerName, trainX, trainY, arguments, timer)
 
@@ -250,7 +250,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             has2dOutput = len(outputData) > 1
 
         # encapsulate into TrainedLearner object
-        return self.TrainedLearner(learnerName, arguments, transformedInputs, customDict, trainedBackend, self,
+        return TrainedLearner(learnerName, arguments, transformedInputs, customDict, trainedBackend, self,
                                    has2dOutput)
 
     def _confirmValidLearner(self, learnerName):
@@ -692,422 +692,6 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         else:
             return rawScores
 
-    class TrainedLearner():
-
-        def __init__(self, learnerName, arguments, transformedInputs, customDict, backend, interfaceObject,
-                     has2dOutput):
-            """
-            Initialize the object wrapping the trained learner stored in backend, and setting up
-            the object methods that may be used to modify or query the backend trained learner.
-
-            learnerName: the name of the learner used in the backend
-            arguments: reference to the original arguments parameter to the trainAndApply() function
-            transformedArguments: a tuple containing the return value of _inputTransformation() that was called when training the learner in the backend
-            customDict: reference to the customizable dictionary that is passed to I/O transformation, training and applying a learner
-            backend: the return value from _trainer(), a reference to a some object that is to be used by the package implementor during application
-            interfaceObject: a reference to the subclass of UniversalInterface from which this TrainedLearner is being instantiated.
-
-            """
-            self.learnerName = learnerName
-            self.arguments = arguments
-            self.transformedTrainX = transformedInputs[0]
-            self.transformedTrainY = transformedInputs[1]
-            self.transformedTestX = transformedInputs[2]
-            self.transformedArguments = transformedInputs[3]
-            self.customDict = customDict
-            self.backend = backend
-            self.interface = interfaceObject
-            self.has2dOutput = has2dOutput
-
-            exposedFunctions = self.interface._exposedFunctions()
-            for exposed in exposedFunctions:
-                methodName = getattr(exposed, '__name__')
-                (args, varargs, keywords, defaults) = inspect.getargspec(exposed)
-                if 'trainedLearner' in args:
-                    wrapped = functools.partial(exposed, trainedLearner=self)
-                    wrapped.__doc__ = 'Wrapped version of the ' + methodName + ' function where the "trainedLearner" parameter has been fixed as this object, and the "self" parameter has been fixed to be ' + str(
-                        interfaceObject)
-                else:
-                    wrapped = functools.partial(exposed)
-                    wrapped.__doc__ = 'Wrapped version of the ' + methodName + ' function where the "self" parameter has been fixed to be ' + str(
-                        interfaceObject)
-                setattr(self, methodName, wrapped)
-
-        @captureOutput
-        def test(
-                self, testX, testY, performanceFunction, arguments={},
-                output='match', scoreMode='label', useLog=None, **kwarguments):
-            """
-            Returns the evaluation of predictions of testX using the argument
-            performanceFunction to do the evalutation. Equivalent to having called
-            this interface's trainAndqTest method, as long as the data and parameter
-            setup for training was the same.
-
-            """
-            if useLog is None:
-                useLog = UML.settings.get("logger", "enabledByDefault")
-                useLog = True if useLog.lower() == 'true' else False
-
-            timer = None
-            if useLog:
-                timer = Stopwatch()
-                timer.start("test")
-
-            #UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, multiClassStrategy)
-            UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
-
-            # need to do this here so we
-            mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
-
-            pred = self.apply(testX, mergedArguments, output, scoreMode, useLog=False)
-            performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction)
-
-            if useLog:
-                timer.stop('test')
-                fullName = self.interface.getCanonicalName() + self.learnerName
-                # Signature:
-                # (self, trainData, trainLabels, testData, testLabels, function,
-                # metrics, predictions, performance, timer, extraInfo=None,
-                # numFolds=None)
-                UML.logger.active.logRun(
-                    trainData=None, trainLabels=None, testData=testX,
-                    testLabels=testY, function=fullName,
-                    metrics=[performanceFunction], predictions=pred,
-                    performance=[performance], timer=timer,
-                    extraInfo=mergedArguments, numFolds=None)
-
-            return performance
-
-        def _mergeWithTrainArguments(self, newArguments1, newArguments2):
-            """
-            When calling apply, merges our fixed arguments with our provided arguments,
-            giving the new arguments precedence if needed.
-
-            """
-            ret = _mergeArguments(self.transformedArguments, newArguments1)
-            ret = _mergeArguments(ret, newArguments2)
-            return ret
-
-        @captureOutput
-        def apply(
-                self, testX, arguments={}, output='match', scoreMode='label',
-                useLog=None, **kwarguments):
-            """
-            Returns the application of this learner to the given test data (i.e. performing
-            prediction, transformation, etc. as appropriate to the learner). Equivalent to
-            having called trainAndApply with the same same setup as this learner was trained
-            on.
-
-            """
-            UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
-
-            if useLog is None:
-                useLog = UML.settings.get("logger", "enabledByDefault")
-                useLog = True if useLog.lower() == 'true' else False
-
-            timer = None
-            if useLog:
-                timer = Stopwatch()
-                timer.start("apply")
-
-            #			self.interface._validateOutputFlag(output)
-            #			self.interface._validateScoreModeFlag(scoreMode)
-            mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
-
-            # input transformation
-            (trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None,
-                                                                                              None, testX,
-                                                                                              mergedArguments,
-                                                                                              self.customDict)
-
-            # depending on the mode, we need different information.
-            labels = None
-            if scoreMode != 'label':
-                scores = self.getScores(testX, usedArguments)
-            if scoreMode != 'allScores':
-                labels = self.interface._applier(self.backend, transTestX, usedArguments, self.customDict)
-                labels = self.interface._outputTransformation(self.learnerName, labels, usedArguments, output, "label",
-                                                              self.customDict)
-
-            if scoreMode == 'label':
-                ret = labels
-            elif scoreMode == 'allScores':
-                ret = scores
-            else:
-                scoreOrder = self.interface._getScoresOrder(self.backend)
-                scoreOrder = list(scoreOrder)
-                # find scores matching predicted labels
-                def grabValue(row):
-                    pointIndex = scores.getPointIndex(row.getPointName(0))
-                    rowIndex = scoreOrder.index(labels[pointIndex, 0])
-                    return row[rowIndex]
-
-                scoreVector = scores.calculateForEachPoint(grabValue)
-                labels.appendFeatures(scoreVector)
-
-                ret = labels
-
-            if useLog:
-                timer.stop('apply')
-                fullName = self.interface.getCanonicalName() + self.learnerName
-                # Signature:
-                # (self, trainData, trainLabels, testData, testLabels, function,
-                # metrics, predictions, performance, timer, extraInfo=None,
-                # numFolds=None)
-                UML.logger.active.logRun(
-                    trainData=None, trainLabels=None, testData=testX,
-                    testLabels=None, function=fullName, metrics=None,
-                    predictions=ret, performance=None, timer=timer,
-                    extraInfo=mergedArguments, numFolds=None)
-
-            return ret
-
-        def save(self, outputPath):
-            """
-            Save object to a file.
-
-            outputPath: the location (including file name and extension) where
-                we want to write the output file.
-                
-            If filename extension .umlm is not included in file name it would
-            be added to the output file.
-
-            Uses dill library to serialize it.
-            """
-            extension = '.umlm'
-            if not outputPath.endswith(extension):
-                outputPath = outputPath + extension
-
-            with open(outputPath, 'wb') as file:
-                try:
-                    cloudpickle.dump(self, file)
-                except Exception as e:
-                    raise(e)
-            # print('session_' + outputFilename)
-            # print(globals())
-            # dill.dump_session('session_' + outputFilename)
-
-        @captureOutput
-        def retrain(self, trainX, trainY=None):
-            has2dOutput = False
-            outputData = trainX if trainY is None else trainY
-            if isinstance(outputData, UML.data.Base):
-                has2dOutput = outputData.features > 1
-            elif isinstance(outputData, (list, tuple)):
-                has2dOutput = len(outputData) > 1
-
-            #			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
-            (newBackend, transformedInputs, customDict) = self.interface._trainBackend(self.learnerName, trainX, trainY,
-                                                                                       self.arguments, None)
-            self.backend = newBackend
-            self.transformedInputs = transformedInputs
-            self.customDict = customDict
-            self.has2dOutput = has2dOutput
-
-        @captureOutput
-        def incrementalTrain(self, trainX, trainY=None):
-            (trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName, trainX, trainY,
-                                                                                     None, self.arguments,
-                                                                                     self.customDict)
-            self.backend = self.interface._incrementalTrainer(self.backend, trainX, trainY, arguments, self.customDict)
-
-        @captureOutput
-        def getAttributes(self):
-            """ Returns the attributes of the trained learner (and sub objects).
-            The returned value will be a dict, mapping names of attribtues to
-            values of attributes. In the case of collisions (especially when getting
-            attributes from nested objects) the attribute names may be prefaced with
-            the name of the object from which they originate.
-
-            The input learner params provided by the user for initilization and
-            training will always be included in the output. If there is a collision
-            between an input and an attribute of the same name discovered by the
-            learner, and their values do not match, then the discovered attribute's
-            name will be prefaced with the learner name. Similarly for nested objects
-            such as sub-learners and kenerls.
-
-            """
-            discovered = self.interface._getAttributes(self.backend)
-            inputs = self.arguments
-
-            for key in inputs.keys():
-                value = inputs[key]
-                if key in list(discovered.keys()):
-                    if value != discovered[key]:
-                        newKey = self.learnerName + '.' + key
-                        discovered[newKey] = discovered[key]
-                    discovered[key] = value
-
-            return discovered
-
-        @captureOutput
-        def getScores(self, testX, arguments={}, **kwarguments):
-            """
-            Returns the scores for all labels for each data point. If this TrainedLearner
-            is named foo, this operation is equivalent to calling foo.apply with
-            'scoreMode="allScores"'
-
-            """
-            usedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
-            (trainX, trainY, testX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None,
-                                                                                         testX, usedArguments,
-                                                                                         self.customDict)
-
-            rawScores = self.interface._getScores(self.backend, testX, usedArguments, self.customDict)
-            umlTypeRawScores = self.interface._outputTransformation(self.learnerName, rawScores, usedArguments,
-                                                                    "Matrix", "allScores", self.customDict)
-            formatedRawOrder = self.interface._formatScoresToOvA(self.learnerName, self.backend, testX, None,
-                                                                 umlTypeRawScores, usedArguments, self.customDict)
-            internalOrder = self.interface._getScoresOrder(self.backend)
-            naturalOrder = sorted(internalOrder)
-            if numpy.array_equal(naturalOrder, internalOrder):
-                return formatedRawOrder
-            desiredDict = {}
-            for i in range(len(naturalOrder)):
-                label = naturalOrder[i]
-                desiredDict[label] = i
-
-            def sortScorer(feature):
-                index = formatedRawOrder.getFeatureIndex(feature.getFeatureName(0))
-                label = internalOrder[index]
-                return desiredDict[label]
-
-            formatedRawOrder.sortFeatures(sortHelper=sortScorer)
-            return formatedRawOrder
-
-    class TrainedLearners(TrainedLearner):
-        """
-
-        """
-        def __init__(self, trainedLearners, method, labelSet):
-            """
-
-            """
-            self.trainedLearnersList = trainedLearners
-            self.method = method
-            self.labelSet = labelSet
-            self.has2dOutput = trainedLearners[0].has2dOutput
-            self.transformedArguments = trainedLearners[0].transformedArguments
-            self.interface = trainedLearners[0].interface
-            self.learnerName = trainedLearners[0].learnerName
-
-        @captureOutput
-        def apply(self, testX, arguments={}, output='match', scoreMode='label',
-                useLog=None, **kwarguments):
-            """
-
-            """
-            rawPredictions = None
-            # import pdb; pdb.set_trace()
-            #1 VS All
-            if self.method == 'OneVsAll':
-                for trainedLearner in self.trainedLearnersList:
-                    oneLabelResults = trainedLearner.apply(testX, arguments, output, 'label', useLog)
-                    label = trainedLearner.label
-                    #put all results into one Base container, of the same type as trainX
-                    if rawPredictions is None:
-                        rawPredictions = oneLabelResults
-                        #as it's added to results object, rename each column with its corresponding class label
-                        rawPredictions.setFeatureName(0, str(label))
-                    else:
-                        #as it's added to results object, rename each column with its corresponding class label
-                        oneLabelResults.setFeatureName(0, str(label))
-                        rawPredictions.appendFeatures(oneLabelResults)
-
-                if scoreMode.lower() == 'label'.lower():
-                    winningPredictionIndices = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionIndex).copyAs(
-                        format="python list")
-                    winningLabels = []
-                    for [winningIndex] in winningPredictionIndices:
-                        winningLabels.append([self.labelSet[int(winningIndex)]])
-                    return UML.createData(rawPredictions.getTypeString(), winningLabels, featureNames=['winningLabel'])
-
-                elif scoreMode.lower() == 'bestScore'.lower():
-                    #construct a list of lists, with each row in the list containing the predicted
-                    #label and score of that label for the corresponding row in rawPredictions
-                    predictionMatrix = rawPredictions.copyAs(format="python list")
-                    indexToLabel = rawPredictions.getFeatureNames()
-                    tempResultsList = []
-                    for row in predictionMatrix:
-                        bestLabelAndScore = UML.helpers.extractWinningPredictionIndexAndScore(row, indexToLabel)
-                        tempResultsList.append([bestLabelAndScore[0], bestLabelAndScore[1]])
-                    #wrap the results data in a List container
-                    featureNames = ['PredictedClassLabel', 'LabelScore']
-                    resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
-                    return resultsContainer
-
-                elif scoreMode.lower() == 'allScores'.lower():
-                    #create list of Feature Names/Column Headers for final return object
-                    columnHeaders = sorted([str(i) for i in self.labelSet])
-                    #create map between label and index in list, so we know where to put each value
-                    labelIndexDict = {v: k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
-                    featureNamesItoN = rawPredictions.getFeatureNames()
-                    predictionMatrix = rawPredictions.copyAs(format="python list")
-                    resultsContainer = []
-                    for row in predictionMatrix:
-                        finalRow = [0] * len(columnHeaders)
-                        scores = UML.helpers.extractConfidenceScores(row, featureNamesItoN)
-                        for label, score in scores.items():
-                            #get numerical index of label in return object
-                            finalIndex = labelIndexDict[label]
-                            #put score into proper place in its row
-                            finalRow[finalIndex] = score
-                        resultsContainer.append(finalRow)
-                    #wrap data in Base container
-                    return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
-
-            #1 VS 1
-            elif self.method == 'OneVsOne':
-                predictionFeatureID = 0
-                for trainedLearner in self.trainedLearnersList:
-                    #train classifier on that data; apply it to the test set
-                    partialResults = trainedLearner.apply(testX, arguments, output, 'label', useLog)
-                    #put predictions into table of predictions
-                    if rawPredictions is None:
-                        rawPredictions = partialResults.copyAs(format="List")
-                    else:
-                        partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
-                        rawPredictions.appendFeatures(partialResults.copyAs(format="List"))
-                    predictionFeatureID += 1
-                #set up the return data based on which format has been requested
-                if scoreMode.lower() == 'label'.lower():
-                    ret = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionLabel)
-                    ret.setFeatureName(0, "winningLabel")
-                    return ret
-                elif scoreMode.lower() == 'bestScore'.lower():
-                    #construct a list of lists, with each row in the list containing the predicted
-                    #label and score of that label for the corresponding row in rawPredictions
-                    predictionMatrix = rawPredictions.copyAs(format="python list")
-                    tempResultsList = []
-                    for row in predictionMatrix:
-                        scores = countWins(row)
-                        sortedScores = sorted(scores, key=scores.get, reverse=True)
-                        bestLabel = sortedScores[0]
-                        tempResultsList.append([bestLabel, scores[bestLabel]])
-
-                    #wrap the results data in a List container
-                    featureNames = ['PredictedClassLabel', 'LabelScore']
-                    resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
-                    return resultsContainer
-                elif scoreMode.lower() == 'allScores'.lower():
-                    columnHeaders = sorted([str(i) for i in self.labelSet])
-                    labelIndexDict = {str(v): k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
-                    predictionMatrix = rawPredictions.copyAs(format="python list")
-                    resultsContainer = []
-                    for row in predictionMatrix:
-                        finalRow = [0] * len(columnHeaders)
-                        scores = countWins(row)
-                        for label, score in scores.items():
-                            finalIndex = labelIndexDict[str(label)]
-                            finalRow[finalIndex] = score
-                        resultsContainer.append(finalRow)
-
-                    return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
-
-
-            else:
-                raise(ArgumentException('Wrong multiclassification method.'))
-
 
     ##############################################
     ### CACHING FRONTENDS FOR ABSTRACT METHODS ###
@@ -1387,6 +971,435 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
 
         """
         pass
+
+##################
+# TrainedLearner #
+##################
+
+class TrainedLearner(object):
+
+    def __init__(self, learnerName, arguments, transformedInputs, customDict, backend, interfaceObject,
+                 has2dOutput):
+        """
+        Initialize the object wrapping the trained learner stored in backend, and setting up
+        the object methods that may be used to modify or query the backend trained learner.
+
+        learnerName: the name of the learner used in the backend
+        arguments: reference to the original arguments parameter to the trainAndApply() function
+        transformedArguments: a tuple containing the return value of _inputTransformation() that was called when training the learner in the backend
+        customDict: reference to the customizable dictionary that is passed to I/O transformation, training and applying a learner
+        backend: the return value from _trainer(), a reference to a some object that is to be used by the package implementor during application
+        interfaceObject: a reference to the subclass of UniversalInterface from which this TrainedLearner is being instantiated.
+
+        """
+        self.learnerName = learnerName
+        self.arguments = arguments
+        self.transformedTrainX = transformedInputs[0]
+        self.transformedTrainY = transformedInputs[1]
+        self.transformedTestX = transformedInputs[2]
+        self.transformedArguments = transformedInputs[3]
+        self.customDict = customDict
+        self.backend = backend
+        self.interface = interfaceObject
+        self.has2dOutput = has2dOutput
+
+        exposedFunctions = self.interface._exposedFunctions()
+        for exposed in exposedFunctions:
+            methodName = getattr(exposed, '__name__')
+            (args, varargs, keywords, defaults) = inspect.getargspec(exposed)
+            if 'trainedLearner' in args:
+                wrapped = functools.partial(exposed, trainedLearner=self)
+                wrapped.__doc__ = 'Wrapped version of the ' + methodName + ' function where the "trainedLearner" parameter has been fixed as this object, and the "self" parameter has been fixed to be ' + str(
+                    interfaceObject)
+            else:
+                wrapped = functools.partial(exposed)
+                wrapped.__doc__ = 'Wrapped version of the ' + methodName + ' function where the "self" parameter has been fixed to be ' + str(
+                    interfaceObject)
+            setattr(self, methodName, wrapped)
+
+    @captureOutput
+    def test(
+            self, testX, testY, performanceFunction, arguments={},
+            output='match', scoreMode='label', useLog=None, **kwarguments):
+        """
+        Returns the evaluation of predictions of testX using the argument
+        performanceFunction to do the evalutation. Equivalent to having called
+        this interface's trainAndqTest method, as long as the data and parameter
+        setup for training was the same.
+
+        """
+        if useLog is None:
+            useLog = UML.settings.get("logger", "enabledByDefault")
+            useLog = True if useLog.lower() == 'true' else False
+
+        timer = None
+        if useLog:
+            timer = Stopwatch()
+            timer.start("test")
+
+        #UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, multiClassStrategy)
+        UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
+
+        # need to do this here so we
+        mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
+
+        pred = self.apply(testX, mergedArguments, output, scoreMode, useLog=False)
+        performance = UML.helpers.computeMetrics(testY, None, pred, performanceFunction)
+
+        if useLog:
+            timer.stop('test')
+            fullName = self.interface.getCanonicalName() + self.learnerName
+            # Signature:
+            # (self, trainData, trainLabels, testData, testLabels, function,
+            # metrics, predictions, performance, timer, extraInfo=None,
+            # numFolds=None)
+            UML.logger.active.logRun(
+                trainData=None, trainLabels=None, testData=testX,
+                testLabels=testY, function=fullName,
+                metrics=[performanceFunction], predictions=pred,
+                performance=[performance], timer=timer,
+                extraInfo=mergedArguments, numFolds=None)
+
+        return performance
+
+    def _mergeWithTrainArguments(self, newArguments1, newArguments2):
+        """
+        When calling apply, merges our fixed arguments with our provided arguments,
+        giving the new arguments precedence if needed.
+
+        """
+        ret = _mergeArguments(self.transformedArguments, newArguments1)
+        ret = _mergeArguments(ret, newArguments2)
+        return ret
+
+    @captureOutput
+    def apply(
+            self, testX, arguments={}, output='match', scoreMode='label',
+            useLog=None, **kwarguments):
+        """
+        Returns the application of this learner to the given test data (i.e. performing
+        prediction, transformation, etc. as appropriate to the learner). Equivalent to
+        having called trainAndApply with the same same setup as this learner was trained
+        on.
+
+        """
+        UML.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode, None)
+
+        if useLog is None:
+            useLog = UML.settings.get("logger", "enabledByDefault")
+            useLog = True if useLog.lower() == 'true' else False
+
+        timer = None
+        if useLog:
+            timer = Stopwatch()
+            timer.start("apply")
+
+        #			self.interface._validateOutputFlag(output)
+        #			self.interface._validateScoreModeFlag(scoreMode)
+        mergedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
+
+        # input transformation
+        (trainX, trainY, transTestX, usedArguments) = self.interface._inputTransformation(self.learnerName, None,
+                                                                                          None, testX,
+                                                                                          mergedArguments,
+                                                                                          self.customDict)
+
+        # depending on the mode, we need different information.
+        labels = None
+        if scoreMode != 'label':
+            scores = self.getScores(testX, usedArguments)
+        if scoreMode != 'allScores':
+            labels = self.interface._applier(self.backend, transTestX, usedArguments, self.customDict)
+            labels = self.interface._outputTransformation(self.learnerName, labels, usedArguments, output, "label",
+                                                          self.customDict)
+
+        if scoreMode == 'label':
+            ret = labels
+        elif scoreMode == 'allScores':
+            ret = scores
+        else:
+            scoreOrder = self.interface._getScoresOrder(self.backend)
+            scoreOrder = list(scoreOrder)
+            # find scores matching predicted labels
+            def grabValue(row):
+                pointIndex = scores.getPointIndex(row.getPointName(0))
+                rowIndex = scoreOrder.index(labels[pointIndex, 0])
+                return row[rowIndex]
+
+            scoreVector = scores.calculateForEachPoint(grabValue)
+            labels.addFeatures(scoreVector)
+
+            ret = labels
+
+        if useLog:
+            timer.stop('apply')
+            fullName = self.interface.getCanonicalName() + self.learnerName
+            # Signature:
+            # (self, trainData, trainLabels, testData, testLabels, function,
+            # metrics, predictions, performance, timer, extraInfo=None,
+            # numFolds=None)
+            UML.logger.active.logRun(
+                trainData=None, trainLabels=None, testData=testX,
+                testLabels=None, function=fullName, metrics=None,
+                predictions=ret, performance=None, timer=timer,
+                extraInfo=mergedArguments, numFolds=None)
+
+        return ret
+
+    def save(self, outputPath):
+        """
+        Save model to a file.
+
+        outputPath: the location (including file name and extension) where
+            we want to write the output file.
+
+        If filename extension .umlm is not included in file name it would
+        be added to the output file.
+
+        Uses dill library to serialize it.
+        """
+        if not cloudpickle:
+            msg = "To save UML models, cloudpickle must be installed"
+            raise PackageException(msg)
+        extension = '.umlm'
+        if not outputPath.endswith(extension):
+            outputPath = outputPath + extension
+
+        with open(outputPath, 'wb') as file:
+            try:
+                cloudpickle.dump(self, file)
+            except Exception as e:
+                raise(e)
+        # print('session_' + outputFilename)
+        # print(globals())
+        # dill.dump_session('session_' + outputFilename)
+
+    @captureOutput
+    def retrain(self, trainX, trainY=None):
+        has2dOutput = False
+        outputData = trainX if trainY is None else trainY
+        if isinstance(outputData, UML.data.Base):
+            has2dOutput = outputData.features > 1
+        elif isinstance(outputData, (list, tuple)):
+            has2dOutput = len(outputData) > 1
+
+        #			(trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName,trainX, trainY, None, self.arguments, self.customDict)
+        (newBackend, transformedInputs, customDict) = self.interface._trainBackend(self.learnerName, trainX, trainY,
+                                                                                   self.arguments, None)
+        self.backend = newBackend
+        self.transformedInputs = transformedInputs
+        self.customDict = customDict
+        self.has2dOutput = has2dOutput
+
+    @captureOutput
+    def incrementalTrain(self, trainX, trainY=None):
+        (trainX, trainY, testX, arguments) = self.interface._inputTransformation(self.learnerName, trainX, trainY,
+                                                                                 None, self.arguments,
+                                                                                 self.customDict)
+        self.backend = self.interface._incrementalTrainer(self.backend, trainX, trainY, arguments, self.customDict)
+
+    @captureOutput
+    def getAttributes(self):
+        """ Returns the attributes of the trained learner (and sub objects).
+        The returned value will be a dict, mapping names of attribtues to
+        values of attributes. In the case of collisions (especially when getting
+        attributes from nested objects) the attribute names may be prefaced with
+        the name of the object from which they originate.
+
+        The input learner params provided by the user for initilization and
+        training will always be included in the output. If there is a collision
+        between an input and an attribute of the same name discovered by the
+        learner, and their values do not match, then the discovered attribute's
+        name will be prefaced with the learner name. Similarly for nested objects
+        such as sub-learners and kenerls.
+
+        """
+        discovered = self.interface._getAttributes(self.backend)
+        inputs = self.arguments
+
+        for key in inputs.keys():
+            value = inputs[key]
+            if key in list(discovered.keys()):
+                if value != discovered[key]:
+                    newKey = self.learnerName + '.' + key
+                    discovered[newKey] = discovered[key]
+                discovered[key] = value
+
+        return discovered
+
+    @captureOutput
+    def getScores(self, testX, arguments={}, **kwarguments):
+        """
+        Returns the scores for all labels for each data point. If this TrainedLearner
+        is named foo, this operation is equivalent to calling foo.apply with
+        'scoreMode="allScores"'
+
+        """
+        usedArguments = self._mergeWithTrainArguments(arguments, kwarguments)
+        (trainX, trainY, testX, usedArguments) = self.interface._inputTransformation(self.learnerName, None, None,
+                                                                                     testX, usedArguments,
+                                                                                     self.customDict)
+
+        rawScores = self.interface._getScores(self.backend, testX, usedArguments, self.customDict)
+        umlTypeRawScores = self.interface._outputTransformation(self.learnerName, rawScores, usedArguments,
+                                                                "Matrix", "allScores", self.customDict)
+        formatedRawOrder = self.interface._formatScoresToOvA(self.learnerName, self.backend, testX, None,
+                                                             umlTypeRawScores, usedArguments, self.customDict)
+        internalOrder = self.interface._getScoresOrder(self.backend)
+        naturalOrder = sorted(internalOrder)
+        if numpy.array_equal(naturalOrder, internalOrder):
+            return formatedRawOrder
+        desiredDict = {}
+        for i in range(len(naturalOrder)):
+            label = naturalOrder[i]
+            desiredDict[label] = i
+
+        def sortScorer(feature):
+            index = formatedRawOrder.getFeatureIndex(feature.getFeatureName(0))
+            label = internalOrder[index]
+            return desiredDict[label]
+
+        formatedRawOrder.sortFeatures(sortHelper=sortScorer)
+        return formatedRawOrder
+
+class TrainedLearners(TrainedLearner):
+    """
+
+    """
+    def __init__(self, trainedLearners, method, labelSet):
+        """
+
+        """
+        self.trainedLearnersList = trainedLearners
+        self.method = method
+        self.labelSet = labelSet
+        self.has2dOutput = trainedLearners[0].has2dOutput
+        self.transformedArguments = trainedLearners[0].transformedArguments
+        self.interface = trainedLearners[0].interface
+        self.learnerName = trainedLearners[0].learnerName
+
+    @captureOutput
+    def apply(self, testX, arguments={}, output='match', scoreMode='label',
+            useLog=None, **kwarguments):
+        """
+
+        """
+        rawPredictions = None
+        # import pdb; pdb.set_trace()
+        #1 VS All
+        if self.method == 'OneVsAll':
+            for trainedLearner in self.trainedLearnersList:
+                oneLabelResults = trainedLearner.apply(testX, arguments, output, 'label', useLog)
+                label = trainedLearner.label
+                #put all results into one Base container, of the same type as trainX
+                if rawPredictions is None:
+                    rawPredictions = oneLabelResults
+                    #as it's added to results object, rename each column with its corresponding class label
+                    rawPredictions.setFeatureName(0, str(label))
+                else:
+                    #as it's added to results object, rename each column with its corresponding class label
+                    oneLabelResults.setFeatureName(0, str(label))
+                    rawPredictions.addFeatures(oneLabelResults)
+
+            if scoreMode.lower() == 'label'.lower():
+                winningPredictionIndices = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionIndex).copyAs(
+                    format="python list")
+                winningLabels = []
+                for [winningIndex] in winningPredictionIndices:
+                    winningLabels.append([self.labelSet[int(winningIndex)]])
+                return UML.createData(rawPredictions.getTypeString(), winningLabels, featureNames=['winningLabel'])
+
+            elif scoreMode.lower() == 'bestScore'.lower():
+                #construct a list of lists, with each row in the list containing the predicted
+                #label and score of that label for the corresponding row in rawPredictions
+                predictionMatrix = rawPredictions.copyAs(format="python list")
+                indexToLabel = rawPredictions.getFeatureNames()
+                tempResultsList = []
+                for row in predictionMatrix:
+                    bestLabelAndScore = UML.helpers.extractWinningPredictionIndexAndScore(row, indexToLabel)
+                    tempResultsList.append([bestLabelAndScore[0], bestLabelAndScore[1]])
+                #wrap the results data in a List container
+                featureNames = ['PredictedClassLabel', 'LabelScore']
+                resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
+                return resultsContainer
+
+            elif scoreMode.lower() == 'allScores'.lower():
+                #create list of Feature Names/Column Headers for final return object
+                columnHeaders = sorted([str(i) for i in self.labelSet])
+                #create map between label and index in list, so we know where to put each value
+                labelIndexDict = {v: k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
+                featureNamesItoN = rawPredictions.getFeatureNames()
+                predictionMatrix = rawPredictions.copyAs(format="python list")
+                resultsContainer = []
+                for row in predictionMatrix:
+                    finalRow = [0] * len(columnHeaders)
+                    scores = UML.helpers.extractConfidenceScores(row, featureNamesItoN)
+                    for label, score in scores.items():
+                        #get numerical index of label in return object
+                        finalIndex = labelIndexDict[label]
+                        #put score into proper place in its row
+                        finalRow[finalIndex] = score
+                    resultsContainer.append(finalRow)
+                #wrap data in Base container
+                return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
+
+        #1 VS 1
+        elif self.method == 'OneVsOne':
+            predictionFeatureID = 0
+            for trainedLearner in self.trainedLearnersList:
+                #train classifier on that data; apply it to the test set
+                partialResults = trainedLearner.apply(testX, arguments, output, 'label', useLog)
+                #put predictions into table of predictions
+                if rawPredictions is None:
+                    rawPredictions = partialResults.copyAs(format="List")
+                else:
+                    partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
+                    rawPredictions.addFeatures(partialResults.copyAs(format="List"))
+                predictionFeatureID += 1
+            #set up the return data based on which format has been requested
+            if scoreMode.lower() == 'label'.lower():
+                ret = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionLabel)
+                ret.setFeatureName(0, "winningLabel")
+                return ret
+            elif scoreMode.lower() == 'bestScore'.lower():
+                #construct a list of lists, with each row in the list containing the predicted
+                #label and score of that label for the corresponding row in rawPredictions
+                predictionMatrix = rawPredictions.copyAs(format="python list")
+                tempResultsList = []
+                for row in predictionMatrix:
+                    scores = countWins(row)
+                    sortedScores = sorted(scores, key=scores.get, reverse=True)
+                    bestLabel = sortedScores[0]
+                    tempResultsList.append([bestLabel, scores[bestLabel]])
+
+                #wrap the results data in a List container
+                featureNames = ['PredictedClassLabel', 'LabelScore']
+                resultsContainer = UML.createData("List", tempResultsList, featureNames=featureNames)
+                return resultsContainer
+            elif scoreMode.lower() == 'allScores'.lower():
+                columnHeaders = sorted([str(i) for i in self.labelSet])
+                labelIndexDict = {str(v): k for k, v in zip(list(range(len(columnHeaders))), columnHeaders)}
+                predictionMatrix = rawPredictions.copyAs(format="python list")
+                resultsContainer = []
+                for row in predictionMatrix:
+                    finalRow = [0] * len(columnHeaders)
+                    scores = countWins(row)
+                    for label, score in scores.items():
+                        finalIndex = labelIndexDict[str(label)]
+                        finalRow[finalIndex] = score
+                    resultsContainer.append(finalRow)
+
+                return UML.createData(rawPredictions.getTypeString(), resultsContainer, featureNames=columnHeaders)
+
+
+        else:
+            raise(ArgumentException('Wrong multiclassification method.'))
+
+
+###########
+# Helpers #
+###########
+
 
 def relabeler(point, label=None):
     if point[0] != label:

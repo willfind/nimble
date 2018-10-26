@@ -10,7 +10,7 @@ Methods tested in this file:
 In object HighLevelDataSafe:
 calculateForEachPoint, calculateForEachFeature, mapReducePoints, pointIterator,
 featureIterator, calculateForEachElement, isApproximatelyEqual,
-trainAndTestSets
+trainAndTestSets, countEachUniqueValue
 
 In object HighLevelModifying:
 dropFeaturesContainingType, replaceFeatureWithBinaryFeatures,
@@ -851,28 +851,27 @@ class HighLevelDataSafe(DataTestObject):
             return toIMap[val] if val in toIMap else val
 
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
+        toTest = self.constructor(data, elementType=object)
         ret0A = toTest.calculateForEachElement(allString)
         ret0B = toTest.calculateForEachElement(allString, preserveZeros=True)
 
         exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
-        exp0Obj = self.constructor(exp0Data)
+        exp0Obj = self.constructor(exp0Data, elementType=object)
         assert ret0A == exp0Obj
         assert ret0B == exp0Obj
 
         ret1 = toTest.calculateForEachElement(f1)
 
-        exp1Data =  [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
+        exp1Data = [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
         exp1Obj = self.constructor(exp1Data)
 
         assert ret1 == exp1Obj
 
-        ret2 = ret.calculateForEachElement(f2)
+        ret2 = ret1.calculateForEachElement(f2)
 
         exp2Obj = self.constructor(data)
 
         assert ret2 == exp2Obj
-
 
 
     #############################
@@ -1130,10 +1129,90 @@ class HighLevelDataSafe(DataTestObject):
         assert False  # implausible number of checks for random order were unsucessful
 
 
+    ########################
+    # countEachUniqueValue #
+    ########################
+
+    def test_countEachUniqueValue_allPtsAndFtrs(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        toTest = self.constructor(data)
+        unique = toTest.countEachUniqueValue()
+
+        assert len(unique) == 6
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['b'] == 1
+        assert unique['c'] == 1
+
+    def test_countEachUniqueValue_limitPoints(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, pointNames=pNames)
+        unique = toTest.countEachUniqueValue(points=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countEachUniqueValue(points='p1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countEachUniqueValue(points=[0,'p3'])
+
+        assert len(unique) == 3
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+
+    def test_countEachUniqueValue_limitFeatures(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(data, featureNames=fNames)
+        unique = toTest.countEachUniqueValue(features=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[3] == 1
+        assert unique['a'] == 1
+
+        unique = toTest.countEachUniqueValue(features='f1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[3] == 1
+        assert unique['a'] == 1
+
+        unique = toTest.countEachUniqueValue(features=[0,'f3'])
+
+        assert len(unique) == 4
+        assert unique[1] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['c'] == 1
+
+    def test_countEachUniqueValue_limitPointsAndFeatures_cornercase(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
+
+        unique = toTest.countEachUniqueValue(features=[0,'f3'], points=[0,'p3'])
+
+        assert len(unique) == 2
+        assert unique[1] == 2
+        assert unique[3] == 2
+
 class HighLevelModifying(DataTestObject):
-    ###########################
+    ##############################
     # dropFeaturesContainingType #
-    ###########################
+    ##############################
 
     def test_dropFeaturesContainingType_emptyTest(self):
         """ Test dropFeaturesContainingType() when the data is empty """
@@ -1163,7 +1242,7 @@ class HighLevelModifying(DataTestObject):
         stringData = [[5, 'six']]
         toAdd = UML.createData('List', stringData)
         if toTest.getTypeString() == 'List':
-            toTest.appendPoints(toAdd)
+            toTest.addPoints(toAdd)
             toTest.dropFeaturesContainingType(six.string_types)
             assert toTest.features == 1
 
@@ -1546,7 +1625,7 @@ class HighLevelModifying(DataTestObject):
             d = func.__func__.__defaults__
             assert (d is None) or (d == (None, None, None))
         else:#if it is a normal python function
-            a, va, vk, d = inspect.getargspec(func)
+            a, va, vk, d = UML.helpers.inspectArguments(func)
             assert d == (None, None, None)
 
         if axis == 'point':
