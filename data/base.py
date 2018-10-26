@@ -527,11 +527,11 @@ class Base(object):
             value = point[0]
             ret = toConvert.calculateForEachPoint(makeFunc(value))
             ret.setFeatureName(0, varName + "=" + str(value).strip())
-            toConvert.appendFeatures(ret)
+            toConvert.addFeatures(ret)
 
         # remove the original feature, and combine with self
         toConvert.extractFeatures([varName])
-        self.appendFeatures(toConvert)
+        self.addFeatures(toConvert)
 
         return toConvert.getFeatureNames()
 
@@ -579,7 +579,7 @@ class Base(object):
         converted.setPointNames(toConvert.getPointNames())
         converted.setFeatureName(0, toConvert.getFeatureName(0))
 
-        self.appendFeatures(converted)
+        self.addFeatures(converted)
 
     def extractPointsByCoinToss(self, extractionProbability):
         """
@@ -973,7 +973,9 @@ class Base(object):
             vectorized = numpy.vectorize(functionWrap)
             ret = self._calculateForEachElement_implementation(
                      vectorized, points, features, preserveZeros, optType)
+
         else:
+            # if unable to vectorize, iterate over each point
             points = points if points else list(range(self.points))
             features = features if features else list(range(self.features))
             valueArray = numpy.empty([len(points), len(features)])
@@ -1010,8 +1012,19 @@ class Base(object):
         toCalculate = self.copyAs('numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:,None], features]
-        values = function(toCalculate)
-        return UML.createData(outputType, values)
+        try:
+            values = function(toCalculate)
+            # check if values has numeric dtype
+            if numpy.issubdtype(values.dtype, numpy.number):
+                return UML.createData(outputType, values)
+            else:
+                return UML.createData(outputType, values, elementType=numpy.object_)
+        except Exception:
+            # change output type of vectorized function to object to handle nonnumeric data
+            function.otypes = [numpy.object_]
+            values = function(toCalculate)
+            return UML.createData(outputType, values, elementType=numpy.object_)
+
 
 
     def countElements(self, function):
@@ -2388,147 +2401,86 @@ class Base(object):
 
         self.validate()
 
-    def appendPoints(self, toAppend):
+
+    def addPoints(self, toAdd, insertBefore=None):
         """
-        Expand this object by appending the points from the toAppend object
-        after the points currently in this object, merging together their
-        features. The features in toAppend do not need to be in the same
-        order as in the calling object; the data will automatically be
+        Expand this object by inserting the points of toAdd prior to the
+        insertBefore identifier. The features in toAdd do not need to be in the
+        same order as in the calling object; the data will automatically be
         placed using the calling object's feature order if there is an
-        unambiguous mapping. toAppend will be unaffected by calling this
-        method.
+        unambiguous mapping. toAdd will be unaffected by calling this method.
 
-        toAppend - the UML data object whose contents we will be including
+        toAdd - the UML data object whose contents we will be including
         in this object. Must have the same number of features as the calling
-        object. Must not share any point names with the calling object. Must
-        have the same feature names as the calling object, but not necessarily
-        in the same order.
+        object. Must not share any point names with the calling object.
+        Must have the same features names as the calling object, but not
+        necessarily in the same order.
+
+        insertBefore - the index or point name prior to which the data from
+        toAdd will be inserted. The default value, None, indicates that the
+        data will be inserted below all points in this object, or in other
+        words: appended to the end of the current points.
 
         """
-        self._append_implementation('point', toAppend)
+        self._genericAddFrontend('point', toAdd, insertBefore)
 
 
-    def appendFeatures(self, toAppend):
+    def addFeatures(self, toAdd, insertBefore=None):
         """
-        Expand this object by appending the features from the toAppend object
-        after the features currently in this object, merging together their
-        points. The points in toAppend do not need to be in the same
-        order as in the calling object; the data will automatically be
-        placed using the calling object's point order if there is an
-        unambiguous mapping. toAppend will be unaffected by calling this
-        method.
+        Expand this object by inserting the features of toAdd prior to
+        the insertBefore identifier. The points in toAdd do not need to be in
+        the same order as in the calling object; the data will automatically be
+        placed using the calling object's feature order if there is an
+        unambiguous mapping. toAdd will be unaffected by calling this method.
 
-        toAppend - the UML data object whose contents we will be including
+        toAdd - the UML data object whose contents we will be including
         in this object. Must have the same number of points as the calling
         object. Must not share any feature names with the calling object.
         Must have the same point names as the calling object, but not
         necessarily in the same order.
 
+        insertBefore - the index or feature name prior to which the data from
+        toAdd will be inserted. The default value, None, indicates that the
+        data will be inserted to the right of all features in this object,
+        or in other words: appended to the end of the current features.
+
         """
-        self._append_implementation('feature', toAppend)
+        self._genericAddFrontend('feature', toAdd, insertBefore)
 
 
-    def _append_implementation(self, axis, toAppend):
-        self._validateValueIsNotNone("toAppend", toAppend)
-        self._validateValueIsUMLDataObject("toAppend", toAppend, True)
-        self._validateEmptyNamesIntersection(axis, "toAppend", toAppend)
+    def _genericAddFrontend(self, axis, toAdd, insertBefore):
+        """
+        Performs the validation and modifications for all insert operations
+
+        """
+        self._validateAxis(axis)
+        self._validateInsertableData(axis, toAdd)
+        if self.getTypeString() != toAdd.getTypeString():
+            toAdd = toAdd.copyAs(self.getTypeString())
+
+        if axis == 'point' and insertBefore is None:
+            insertBefore = self.points
+        elif axis == 'feature' and insertBefore is None:
+            insertBefore = self.features
+        else:
+            insertBefore = self._getIndex(insertBefore, axis)
 
         if axis == 'point':
-            self._validateObjHasSameNumberOfFeatures("toAppend", toAppend)
-            # need this in case we are self appending
-            origCountS = self.points
-            origCountTA = toAppend.points
-
-            otherAxis = 'feature'
-            funcString = 'appendPoints'
-            selfSetName = self.setPointName
-            toAppendGetName = toAppend.getPointName
-            selfAppendImplementation = self._appendPoints_implementation
-            selfSetCount = self._setpointCount
-            selfCount = self._pointCount
-            toAppendCount = toAppend.points
-            selfAddName = self._addPointName
-        else:
-            self._validateObjHasSameNumberOfPoints("toAppend", toAppend)
-            # need this in case we are self appending
-            origCountS = self.features
-            origCountTA = toAppend.features
-
-            otherAxis = 'point'
-            funcString = 'appendFeatures'
-            selfSetName = self.setFeatureName
-            selfAppendImplementation = self._appendFeatures_implementation
-            toAppendGetName = toAppend.getFeatureName
-            selfSetName = self.setFeatureName
-            selfSetCount = self._setfeatureCount
-            selfCount = self._featureCount
-            toAppendCount = toAppend.features
-            selfAddName = self._addFeatureName
-
-        # Two cases will require us to use a generic implementation with
-        # reordering capabilities: the names are consistent but out of order,
-        # or the type of the objects is different.
-        isReordered = self._validateReorderedNames(otherAxis, funcString, toAppend)
-        differentType = self.getTypeString() != toAppend.getTypeString()
-
-        if isReordered or differentType:
-            self._appendReorder_implementation(axis, toAppend)
-        else:
-            selfAppendImplementation(toAppend)
-            selfSetCount(selfCount + toAppendCount)
-
-        # Have to make sure the point/feature names match the extended data. In
-        # the case that the reordering implementation is used, the new points or
-        # features already have default name assignments, so we set the correct
-        # names. In the case of the standard implementation, we must use Base's
-        # helper to add new names.
-        for i in range(origCountTA):
-            currName = toAppendGetName(i)
-            # This insures there is no name collision with defaults already
-            # present in the original object
-            if currName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                currName = self._nextDefaultName(axis)
-            if isReordered or differentType:
-                selfSetName(origCountS + i, currName)
+            toAdd = self._alignNames('feature', toAdd)
+            self._addPoints_implementation(toAdd, insertBefore)
+            if not self._pointNamesCreated() and not toAdd._pointNamesCreated():
+                self._setpointCount(self.points + toAdd.points)
             else:
-                selfAddName(currName)
+                self._setAddedCountAndNames('point', toAdd, insertBefore)
+        else:
+            toAdd = self._alignNames('point', toAdd)
+            self._addFeatures_implementation(toAdd, insertBefore)
+            if not self._featureNamesCreated() and not toAdd._featureNamesCreated():
+                self._setfeatureCount(self.features + toAdd.features)
+            else:
+                self._setAddedCountAndNames('feature', toAdd, insertBefore)
 
         self.validate()
-
-
-    def _appendReorder_implementation(self, axis, toAppend):
-        if axis == 'point':
-            newPointNames = self.getPointNames() + ([None] * toAppend.points)
-            newFeatureNames = toAppend.getFeatureNames()
-            newPointSize = self.points + toAppend.points
-            newFeatureSize = self.features
-        else:
-            newPointNames = toAppend.getPointNames()
-            newFeatureNames = self.getFeatureNames() + ([None] * toAppend.features)
-            newPointSize = self.points
-            newFeatureSize = self.features + toAppend.features
-
-        newObj = UML.zeros(self.getTypeString(), newPointSize, newFeatureSize,
-                           pointNames=newPointNames, featureNames=newFeatureNames, name=self.name)
-
-        if axis == 'point':
-            newObj.fillWith(toAppend, self.points, 0, newObj.points - 1, newObj.features - 1)
-            resortOrder = [self.getFeatureIndex(toAppend.getFeatureName(i)) for i in range(self.features)]
-            orderObj = UML.createData(self.getTypeString(), resortOrder)
-            newObj.fillWith(orderObj, self.points - 1, 0, self.points - 1, newObj.features - 1)
-            newObj.sortFeatures(sortBy=self.points - 1)
-            newObj.fillWith(self, 0, 0, self.points - 1, newObj.features - 1)
-            self.referenceDataFrom(newObj)
-        else:
-            newObj.fillWith(toAppend, 0, self.features, newObj.points - 1, newObj.features - 1)
-            resortOrder = [self.getPointIndex(toAppend.getPointName(i)) for i in range(self.points)]
-            orderObj = UML.createData(self.getTypeString(), resortOrder)
-            orderObj.transpose()
-            newObj.fillWith(orderObj, 0, self.features - 1, newObj.points - 1, self.features - 1)
-            newObj.sortPoints(sortBy=self.features - 1)
-            newObj.fillWith(self, 0, 0, newObj.points - 1, self.features - 1)
-            self.referenceDataFrom(newObj)
-
 
 
     def sortPoints(self, sortBy=None, sortHelper=None):
@@ -4931,7 +4883,7 @@ class Base(object):
                         # and therefore, must not appear at all.
                         if rightNames.count(lname) > 0:
                             ret[index] = (lname, rname)
-                            ret[rightNames[lname]] = (lname, rname)
+                            ret[rightNames.index(lname)] = (lname, rname)
 
 
         # check both name directions
@@ -4976,10 +4928,8 @@ class Base(object):
     def _validateReorderedNames(self, axis, callSym, other):
         """
         Validate axis names to check to see if they are equal ignoring order.
-        Returns True if the names are equal but reordered, False if they are
-        equal and the same order (ignoring defaults), and raises an exception
-        if they do not share exactly the same names, or requires reordering in
-        the presence of default names.
+        Raises an exception if the objects do not share exactly the same names,
+        or requires reordering in the presence of default names.
         """
         if axis == 'point':
             lnames = self.getPointNames()
@@ -5024,11 +4974,6 @@ class Base(object):
                 print(msg, file=sys.stderr)
 
                 raise ArgumentException(msg)
-            else:  # names are not different, but are reordered
-                return True
-        else:  # names exactly equal
-            return False
-
 
     def _getPointIndex(self, identifier):
         return self._getIndex(identifier, 'point')
@@ -5070,7 +5015,6 @@ class Base(object):
                 msg = "The " + axis + " name '" + identifier + "' cannot be found."
                 raise ArgumentException(msg)
         return toReturn
-
 
 
     def _nextDefaultName(self, axis):
@@ -5436,14 +5380,13 @@ class Base(object):
             raise ArgumentException(msg)
 
     def _validateEmptyNamesIntersection(self, axis, argName, argValue):
+        self._validateAxis(axis)
         if axis == 'point':
             intersection = self._pointNameIntersection(argValue)
             nString = 'pointNames'
         elif axis == 'feature':
             intersection = self._featureNameIntersection(argValue)
             nString = 'featureNames'
-        else:
-            raise ArgumentException("invalid axis")
 
         shared = []
         if intersection:
@@ -5466,6 +5409,99 @@ class Base(object):
                 msg += "... (only first 10 entries out of " + str(full)
                 msg += " total)"
             raise ArgumentException(msg)
+
+
+    def _setAddedCountAndNames(self, axis, addedObj, insertedBefore):
+        self._validateAxis(axis)
+        if axis == 'point':
+            selfNames = self.getPointNames()
+            insertedNames = addedObj.getPointNames()
+            setSelfNames = self.setPointNames
+            self._setpointCount(self.points + addedObj.points)
+        else:
+            selfNames = self.getFeatureNames()
+            insertedNames = addedObj.getFeatureNames()
+            setSelfNames = self.setFeatureNames
+            self._setfeatureCount(self.features + addedObj.features)
+        # ensure no collision with default names
+        adjustedNames = []
+        for name in insertedNames:
+            if name.startswith(DEFAULT_PREFIX):
+                adjustedNames.append(self._nextDefaultName(axis))
+            else:
+                adjustedNames.append(name)
+        startNames = selfNames[:insertedBefore]
+        endNames = selfNames[insertedBefore:]
+
+        newNames = startNames + adjustedNames + endNames
+        setSelfNames(newNames)
+
+
+    def _alignNames(self, axis, other):
+        """
+        Sort the point or feature names of the passed object to match this object.
+        If sorting is necessary, a copy will be returned to prevent modification
+        of the passed object, otherwise the original object will be returned.
+        Assumes validation of the names has already occurred.
+        """
+        self._validateAxis(axis)
+        if axis == 'point':
+            namesCreated = self._pointNamesCreated()
+            selfNames = self.getPointNames
+            otherNames = other.getPointNames
+            def sorter(obj, names):
+                return getattr(obj, 'sortPoints')(sortHelper=names)
+        else:
+            namesCreated = self._featureNamesCreated()
+            selfNames = self.getFeatureNames
+            otherNames = other.getFeatureNames
+            def sorter(obj, names):
+                return getattr(obj, 'sortFeatures')(sortHelper=names)
+
+        # This may not look exhaustive, but because of the previous call to _validateInsertableData
+        # before this helper, most of the other cases will have already caused an exception
+        if namesCreated:
+            allDefault = all(name.startswith(DEFAULT_PREFIX) for name in selfNames())
+            reorder = selfNames() != otherNames()
+            if not allDefault and reorder:
+                # use copy when reordering so other object is not modified
+                other = other.copy()
+                sorter(other, selfNames())
+
+        return other
+
+    def _validateInsertableData(self, axis, toAdd):
+        """
+        Responsible for all the validation necessary before inserting an object
+
+        """
+        self._validateAxis(axis)
+        self._validateValueIsNotNone('toAdd', toAdd)
+        self._validateValueIsUMLDataObject('toAdd', toAdd, True)
+        if axis == 'point':
+            self._validateObjHasSameNumberOfFeatures('toAdd', toAdd)
+            # this helper ignores default names - so we can only have an intersection of
+            # names when BOTH objects have names created.
+            if self._pointNamesCreated() and toAdd._pointNamesCreated():
+                self._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
+            # helper looks for name inconsistency that can be resolved by reordering -
+            # definitionally, if one object has all default names, there can be no
+            # inconsistency, so both objects must have names assigned for this to
+            # be relevant.
+            if self._featureNamesCreated() and toAdd._featureNamesCreated():
+                self._validateReorderedNames('feature', 'addPoints', toAdd)
+        else:
+            self._validateObjHasSameNumberOfPoints('toAdd', toAdd)
+            # this helper ignores default names - so we can only have an intersection of
+            # names when BOTH objects have names created.
+            if self._featureNamesCreated() and toAdd._featureNamesCreated():
+                self._validateEmptyNamesIntersection(axis, 'toAdd', toAdd)
+            # helper looks for name inconsistency that can be resolved by reordering -
+            # definitionally, if one object has all default names, there can be no
+            # inconsistency, so both objects must have names assigned for this to
+            # be relevant.
+            if self._pointNamesCreated() and toAdd._pointNamesCreated():
+                self._validateReorderedNames('point', 'addFeatures', toAdd)
 
     def _validateMatPlotLibImport(self, error, name):
         if error is not None:

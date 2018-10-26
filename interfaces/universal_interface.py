@@ -193,7 +193,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # we want the data and the labels together in one object or this method
                 if isinstance(trainY, UML.data.Base):
                     trainX = trainX.copy()
-                    trainX.appendFeatures(trainY)
+                    trainX.addFeatures(trainY)
                     trainY = trainX.features - 1
 
                 # Get set of unique class labels, then generate list of all 2-combinations of
@@ -229,8 +229,8 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                     pairTrueLabels = pairData.extractFeatures(trainY)
                     trainedLearners.append(self._train(learnerName, pairData.copy(), pairTrueLabels.copy(), arguments=arguments, \
                                                        timer=timer))
-                    pairData.appendFeatures(pairTrueLabels)
-                    trainX.appendPoints(pairData)
+                    pairData.addFeatures(pairTrueLabels)
+                    trainX.addPoints(pairData)
                 if useLog:
                     timer.stop('trainOVO')
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
@@ -692,6 +692,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         else:
             return rawScores
 
+
     ##############################################
     ### CACHING FRONTENDS FOR ABSTRACT METHODS ###
     ##############################################
@@ -1126,7 +1127,7 @@ class TrainedLearner(object):
                 return row[rowIndex]
 
             scoreVector = scores.calculateForEachPoint(grabValue)
-            labels.appendFeatures(scoreVector)
+            labels.addFeatures(scoreVector)
 
             ret = labels
 
@@ -1298,7 +1299,7 @@ class TrainedLearners(TrainedLearner):
                 else:
                     #as it's added to results object, rename each column with its corresponding class label
                     oneLabelResults.setFeatureName(0, str(label))
-                    rawPredictions.appendFeatures(oneLabelResults)
+                    rawPredictions.addFeatures(oneLabelResults)
 
             if scoreMode.lower() == 'label'.lower():
                 winningPredictionIndices = rawPredictions.calculateForEachPoint(UML.helpers.extractWinningPredictionIndex).copyAs(
@@ -1353,7 +1354,7 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = partialResults.copyAs(format="List")
                 else:
                     partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
-                    rawPredictions.appendFeatures(partialResults.copyAs(format="List"))
+                    rawPredictions.addFeatures(partialResults.copyAs(format="List"))
                 predictionFeatureID += 1
             #set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():

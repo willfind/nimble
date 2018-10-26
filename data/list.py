@@ -107,6 +107,7 @@ class List(Base):
 
         self._numFeatures = shape[1]
         self.data = data
+        self._elementType = elementType
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
@@ -131,22 +132,40 @@ class List(Base):
         self.data = transposed
         self._numFeatures = tempFeatures
 
-    def _appendPoints_implementation(self, toAppend):
+    def _addPoints_implementation(self, toAdd, insertBefore):
         """
-        Append the points from the toAppend object to the bottom of the features in this object
+        Insert the points from the toAdd object below the provided index in
+        this object, the remaining points from this object will continue below
+        the inserted points
 
         """
-        for pointIndex in range(toAppend.points):
-            self.data.append(copy.deepcopy(toAppend.data[pointIndex]))
+        insertedLength = self.points + toAdd.points
+        insertRange = range(insertBefore, insertBefore + toAdd.points)
+        insertIndex = 0
+        selfIndex = 0
+        allData = []
+        for pointIndex in range(insertedLength):
+            if pointIndex in insertRange:
+                allData.append(toAdd.data[insertIndex])
+                insertIndex += 1
+            else:
+                allData.append(self.data[selfIndex])
+                selfIndex += 1
+        self.data = allData
 
-    def _appendFeatures_implementation(self, toAppend):
+    def _addFeatures_implementation(self, toAdd, insertBefore):
         """
-        Append the features from the toAppend object to right ends of the points in this object
+        Insert the features from the toAdd object to the right of the
+        provided index in this object, the remaining points from this object
+        will continue to the right of the inserted points
 
         """
         for i in range(self.points):
-            self.data[i] += copy.deepcopy(toAppend.data[i])
-        self._numFeatures = self._numFeatures + toAppend.features
+            startData = self.data[i][:insertBefore]
+            endData = self.data[i][insertBefore:]
+            allPointData = startData + list(toAdd.data[i]) + endData
+            self.data[i] = allPointData
+        self._numFeatures = self._numFeatures + toAdd.features
 
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
@@ -460,7 +479,7 @@ class List(Base):
         if format == 'numpyarray':
             if self.points == 0 or self.features == 0:
                 return numpy.empty(shape=(self.points, self.features))
-            return numpy.array(self.data)
+            return numpy.array(self.data, dtype=self._elementType)
         if format == 'numpymatrix':
             if self.points == 0 or self.features == 0:
                 return numpy.matrix(numpy.empty(shape=(self.points, self.features)))

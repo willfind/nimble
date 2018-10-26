@@ -74,7 +74,7 @@ def buildTrainingAndTestingSetsForPredictions(data, fractionOfDataForTesting, fe
 
         #add just those labels we'll be predicting to the features to form a combined set
         featuresWithLabels = currentFeatures.copy()
-        featuresWithLabels.appendFeatures(currentLabels)
+        featuresWithLabels.addFeatures(currentLabels)
         labelFeatureNum = featuresWithLabels.features - 1
 
         #get the training and testing data for this label
@@ -116,27 +116,27 @@ def testBuildTrainingAndTestingSetsForPredictions():
     assert trainXs[1].points == 4
     assert testXs[1].points == 2
     jointXs0 = trainXs[0].copy()
-    jointXs0.appendPoints(testXs[0])
+    jointXs0.addPoints(testXs[0])
     jointXs0.sortPoints("x1")
     print("jointXs0\n", jointXs0)
     assert jointXs0.isApproximatelyEqual(createData("Matrix", [[1, 5, 2, 7], [3, 5, 2, 3], [4, 9.2, 3, 5]]))
 
     jointYs0 = trainYs[0].copy()
-    jointYs0.appendPoints(testYs[0])
+    jointYs0.addPoints(testYs[0])
     jointYs0.sortPoints(0)
 
     print("jointYs0\n", jointYs0)
     assert jointYs0.isApproximatelyEqual(createData("Matrix", [[1], [3], [5]]))
 
     jointXs1 = trainXs[1].copy()
-    jointXs1.appendPoints(testXs[1])
+    jointXs1.addPoints(testXs[1])
     jointXs1.sortPoints("x1")
     assert jointXs1.isApproximatelyEqual(createData("Matrix",
                                                     [[1, 5, 2, 7], [2, 2, 3.2, 9.1], [3, 5, 2, 3], [4, 9.2, 3, 5],
                                                      [5, -4, 2, 1], [6, -2, -3, -2]]))
 
     jointYs1 = trainYs[1].copy()
-    jointYs1.appendPoints(testYs[1])
+    jointYs1.addPoints(testYs[1])
     jointYs1.sortPoints(0)
 
     print("jointYs1\n", jointYs1)
@@ -509,7 +509,7 @@ def plotStandardDeviationDistributionsForLiarsAndHonest(allFeatures):
 
 #pointStdDevs.show()
 #stats = pointMeans.copy()
-#stats.appendFeatures(pointStdDevs)
+#stats.addFeatures(pointStdDevs)
 #stats.plotFeatureCross(0,1)
 
 #def pointsToZScores(data):
