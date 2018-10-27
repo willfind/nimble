@@ -630,25 +630,34 @@ class DataFrame(Base):
         numPoints = self.points // numFeatures
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
-    def _merge_implementation(self, other, method, onFeature, matchingFtIdx):
-        if method == 'union':
-            method = 'outer'
-        elif method == 'intersection':
-            method = 'inner'
+    def _merge_implementation(self, other, point, feature, onFeature, matchingFtIdx):
+        if point == 'union':
+            point = 'outer'
+        elif point == 'intersection':
+            point = 'inner'
         tmpDfL = self.data.astype(numpy.object_)
         tmpDfL.columns = self.getFeatureNames()
         tmpDfR = other.data.astype(numpy.object_)
         tmpDfR.columns = other.getFeatureNames()
 
+        if feature == 'intersection':
+            tmpDfL = tmpDfL.iloc[:, matchingFtIdx[0]]
+            tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
+            matchingFtIdx[0] = list(range(tmpDfL.shape[1]))
+            matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
+
         if onFeature is None:
             tmpDfL.index = self.getPointNames()
-            tmpDfR.index = other.getPointNames()
-            merged = tmpDfL.merge(tmpDfR, how=method, left_index=True, right_index=True)
+            if self._allDefaultPointNames() and other._allDefaultPointNames():
+                tmpDfR.index = ['_' + name for name in other.getPointNames()]
+            else:
+                tmpDfR.index = other.getPointNames()
+            merged = tmpDfL.merge(tmpDfR, how=point, left_index=True, right_index=True)
             merged.reset_index(drop=True, inplace=True)
             merged.columns = range(merged.shape[1])
         else:
-            onIdxL = self.getFeatureIndex(onFeature)
-            merged = tmpDfL.merge(tmpDfR, how=method, on=onFeature)
+            onIdxL = tmpDfL.columns.get_loc(onFeature)
+            merged = tmpDfL.merge(tmpDfR, how=point, on=onFeature)
             merged.reset_index()
             merged.columns = range(merged.shape[1])
 
@@ -657,16 +666,16 @@ class DataFrame(Base):
             if onFeature and l == onIdxL:
                 # onFeature column has already been merged
                 continue
-            elif onFeature:
-                # one less to account for onFeature
+            elif onFeature and l > onIdxL:
+                # one less to account for merged onFeature
                 r = r + len(tmpDfL.columns) - 1
             else:
                 r = r + len(tmpDfL.columns)
             matches = merged.iloc[:,l] == merged.iloc[:,r]
-            nansL = merged.iloc[:,l] != merged.iloc[:,l]
-            nansR = merged.iloc[:,r] != merged.iloc[:,r]
-            allValues = matches + nansL + nansR
-            if not all(allValues):
+            nansL = numpy.array([x != x for x in merged.iloc[:,l]])
+            nansR = numpy.array([x != x for x in merged.iloc[:,r]])
+            acceptableValues = matches + nansL + nansR
+            if not all(acceptableValues):
                 msg = "The objects contain different values for the same feature"
                 raise ArgumentException(msg)
             else:

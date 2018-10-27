@@ -757,79 +757,143 @@ class List(Base):
         self.data = result
         self._numFeatures = numFeatures
 
-    def _merge_implementation(self, other, method, onFeature):
+    def _merge_implementation(self, other, point, feature, onFeature, matchingFtIdx):
+        sort = False
         if onFeature:
             uniqueFtR = len(set(other[:, onFeature])) == other.points
-            if uniqueFtR:
+            if uniqueFtR and feature == "intersection":
+                onIdxLoc = matchingFtIdx[0].index(self.getFeatureIndex(onFeature))
+                onIdxL = onIdxLoc
+                onIdxR = onIdxLoc
+                left = [[row[i] for i in matchingFtIdx[0]] for row in self.data]
+                right = [[row[i] for i in matchingFtIdx[1]] for row in other.data]
+            elif uniqueFtR:
                 onIdxL = self.getFeatureIndex(onFeature)
                 onIdxR = other.getFeatureIndex(onFeature)
                 left = copy.copy(self.data)
                 right = copy.copy(other.data)
+            elif not uniqueFtR and feature == "intersection":
+                # flip so unique is on the right
+                onIdxLoc = matchingFtIdx[1].index(other.getFeatureIndex(onFeature))
+                onIdxL = onIdxLoc
+                onIdxR = onIdxLoc
+                left = [[row[i] for i in matchingFtIdx[1]] for row in other.data]
+                right = [[row[i] for i in matchingFtIdx[0]] for row in self.data]
             else:
-                # flip so unique is on the right, will be sorted after in Base
+                sort = True
                 onIdxL = other.getFeatureIndex(onFeature)
                 onIdxR = self.getFeatureIndex(onFeature)
                 left = copy.copy(other.data)
                 right = copy.copy(self.data)
+                matchingFtIdx = [matchingFtIdx[1], matchingFtIdx[0]]
         else:
             # using pointNames, prepend pointNames to left and right lists
             onIdxL = 0
             onIdxR = 0
             left = []
-            for point in self.pointIterator():
-                ptL = [point.getPointName(0)]
-                ptL.extend(list(point))
-                left.append(ptL)
-            right = []
-            for point in other.pointIterator():
-                ptR = [point.getPointName(0)]
-                ptR.extend(list(point))
-                right.append(ptR)
+            if feature == "intersection":
+                for pt in self.pointIterator():
+                    ptL = [pt.getPointName(0)]
+                    ptL.extend(list(pt[matchingFtIdx[0]]))
+                    left.append(ptL)
+                right = []
+                for pt in other.pointIterator():
+                    ptR = [pt.getPointName(0)]
+                    ptR.extend(list(pt[matchingFtIdx[1]]))
+                    right.append(ptR)
+            else:
+                for pt in self.pointIterator():
+                    ptL = [pt.getPointName(0)]
+                    ptL.extend(list(pt))
+                    left.append(ptL)
+                right = []
+                for pt in other.pointIterator():
+                    ptR = [pt.getPointName(0)]
+                    ptR.extend(list(pt))
+                    right.append(ptR)
+                matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+                matchingFtIdx[0].insert(0, 0)
+                matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
+                matchingFtIdx[1].insert(0, 0)
+
+        if feature == "intersection":
+            # features were sorted above so they are matched by index
+            matchingFtIdx[0] = list(range(len(left[0])))
+            matchingFtIdx[1] = matchingFtIdx[0]
+
+        if sort:
+            reindex = []
+            for i in range(onIdxR):
+                reindex.append(i + len(left[0]))
+            reindex.append(onIdxL)
+            for i in range(onIdxR, len(left[0]) - 1):
+                reindex.append(i + len(right[0]))
+            for i in range(onIdxL):
+                reindex.append(i)
+            for i in range(onIdxL + 1 , len(right[0])):
+                reindex.append(i)
 
         matched = []
         merged = []
-        notOnR = [i for i in range(len(right[0])) if i != onIdxR]
+        unmatchedPtCountR = len(right[0]) - len(matchingFtIdx[1])
         mapper = {}
         for i in range(len(right)):
-            values = right[i][:onIdxR] + right[i][onIdxR + 1:]
+            values = right[i]
             mapper[right[i][onIdxR]] = values
-
         for row in left:
             target = row[onIdxL]
-            if onFeature is None:
-                row = row[1:]
+            # if onFeature is None and target.startswith(DEFAULT_PREFIX):
+            #     # treat default point names as new point
+            #     target = None
             if target in mapper:
                 ptL = row
                 ptR = mapper[target]
+                # check for conflicts between matching features
+                matches = [ptL[i] == ptR[j] for i, j in zip(matchingFtIdx[0], matchingFtIdx[1])]
+                nansL = [ptL[i] != ptL[i] for i in matchingFtIdx[0]]
+                nansR = [ptR[j] != ptR[j] for j in matchingFtIdx[1]]
+                acceptableValues = [m + nL + nR for m, nL, nR in zip(matches, nansL, nansR)]
+                if not all(acceptableValues):
+                    msg = "The objects contain different values for the same feature"
+                    raise ArgumentException(msg)
+                else:
+                    ptR = [ptR[i] for i in range(len(ptR)) if i not in matchingFtIdx[1]]
                 pt = ptL + ptR
+                if sort:
+                    pt = [pt[i] for i in reindex]
                 merged.append(pt)
                 matched.append(target)
-            elif method == 'left' or method == 'union':
+            elif point == 'left' or point == 'union':
                 ptL = row
-                ptR = [numpy.nan] * (len(right[0]) - 1)
+                ptR = [numpy.nan] * (len(right[0]) - len(matchingFtIdx[1]))
                 pt = ptL + ptR
+                if sort:
+                    pt = [pt[i] for i in reindex]
                 merged.append(pt)
 
-        if method == 'union':
+        if point == 'union':
+            notMatchingR = [i for i in range(len(right[0])) if i not in matchingFtIdx[1]]
             for row in right:
                 target = row[onIdxR]
                 if target not in matched:
-                    if onFeature is None:
-                        row = row[1:]
-                    ptL1 = [numpy.nan] * onIdxL
-                    ptL3 = [numpy.nan] * (len(left[0]) - onIdxL - 1)
-                    if onFeature is None:
-                        # don't target when using pointNames
-                        ptL2 = []
-                        ptR = row
-                    else:
-                        # add target to left side; ignore on right
-                        ptL2 = [target]
-                        ptR1 = row[:onIdxR]
-                        ptR2 = row[(onIdxR + 1):]
-                        ptR = ptR1 + ptR2
-                    pt = ptL1 + ptL2 + ptL3 + ptR
+                    pt = [numpy.nan] * (len(left[0]) + unmatchedPtCountR)
+                    for i, j in zip (matchingFtIdx[0], matchingFtIdx[1]):
+                        pt[i] = row[j]
+
+                    pt[len(left[0]):] = [row[i] for i in range(len(right[0])) if i not in matchingFtIdx[1]]
+                    if sort:
+                        pt = [pt[i] for i in reindex]
                     merged.append(pt)
+
+        if len(merged) == 0 and onFeature is None:
+            merged = numpy.empty((0, len(left[0]) + unmatchedPtCountR - 1))
+            merged = numpy.matrix(merged)
+        elif len(merged) == 0:
+            merged = numpy.empty((0, len(left[0]) + unmatchedPtCountR))
+            merged = numpy.matrix(merged)
+        elif onFeature is None:
+            # remove point names feature
+            merged = [row[1:] for row in merged]
 
         return List(merged)
 

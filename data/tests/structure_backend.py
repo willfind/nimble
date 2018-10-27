@@ -7848,6 +7848,7 @@ class StructureModifying(StructureShared):
             merged = left.merge(right, point='union', feature='union', onFeature=on)
             assert (merged.points, merged.features) == expected[0]
         except ArgumentException as ae:
+            print(ae)
             assert ae.__class__ is expected[0]
 
         try:
@@ -8311,227 +8312,229 @@ class StructureModifying(StructureShared):
 
 
 
-    #     ###################
-    #     # ptUnion/ftUnion #
-    #     ###################
-    #
-    # @raises(ArgumentException)
-    # def test_merge_ptUnion_ftUnion_pointNamesWithDefaults(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [[3, 4], [7, 8], [-3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     leftObj.setPointName(0, 'a')
-    #     rightObj.setPointName(0, 'a')
-    #     assert leftObj.getPointName(1).startswith(DEFAULT_PREFIX)
-    #     assert rightObj.getPointName(1).startswith(DEFAULT_PREFIX)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union')
-    #
-    # @raises(ArgumentException)
-    # def test_merge_ptUnion_ftUnion_exception_bothNonUnique(self):
-    #     dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
-    #     dataR = [['a', 3, 4], ['c', 7, 8], ['c', -3, -4]]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # @raises(ArgumentException)
-    # def test_merge_ptUnion_ftUnion_ptNames_ftMismatch(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4]]
-    #     pNamesL = ['p1', 'p2', 'p3']
-    #     pNamesR = ['p2', 'p1', 'p3']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union')
-    #
-    # def test_merge_ptUnion_ftUnion_pointNames_exactMatch(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [[3, 4], [7, 8], [-3, -4]]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, pointNames=pNames, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_pointNames_exactMatch_sharedFt(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [[3, 4, 'a'], [7, 8, 'b'], [-3, -4, 'c']]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4', 'id']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, pointNames=pNames, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_pointNames_allRightInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [[3, 4], [-3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=['a', 'c'], featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_pointNames_rightNotAlwaysInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [[3, 4], [0, 0], [-3, -4], [9, 9]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=['a', 'x', 'c', 'y'], featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
-    #                ['d', -5, -6, None, None], [None, None, None, 0, 0], [None, None, None, 9, 9]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd', 'x', 'y'], featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_exactMatch(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_exactMatch_sharedFt(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [[3, 4, 'a'], [7, 8, 'b'], [-3, -4, 'c']]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4', 'id']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_allRightInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [['a', 3, 4], ['c', -3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_rightNotAlwaysInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
-    #                ['d', -5, -6, None, None], ['x', None, None, 0, 0], ['y', None, None, 9, 9]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_rightOnlyUnique_matchForEachLeft(self):
-    #     dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
-    #     dataR = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, -3, -4],
-    #                ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_rightOnlyUnique_missingLeftMatches(self):
-    #     dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
-    #     dataR = [['a', 3, 4], ['c', -4, -3], ['d', -3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, None, None],
-    #                ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3], ['d', None, None, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_leftOnlyUnique_matchForEachRight(self):
-    #     dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
-    #     dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
-    #                ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_notFirstFeature(self):
-    #     dataL = [[1, 'a', 2], [5, 'b', 6], [-1, 'c', -2], [-5, 'd', -6]]
-    #     dataR = [[3, 4, 'a'], [-3, -4, 'c']]
-    #     fNamesL = ['f1', 'id', 'f2']
-    #     fNamesR = ['f3', 'f4', 'id']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [[1, 'a', 2, 3, 4], [5, 'b', 6, None, None], [-1, 'c', -2, -3, -4], [-5, 'd', -6, None, None]]
-    #     fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftUnion_onFeature_leftOnlyUnique_notFirstFeature(self):
-    #     dataL = [[3, 'a', 4], [-3, 'b', -4], [-4, 'c', -3]]
-    #     dataR = [[1, 2, 'a'], [4, 3, 'a'], [-1, -2, 'b'], [-6, -5, 'c'], [-3, -4, 'c']]
-    #     fNamesL = ['f1', 'id', 'f2']
-    #     fNamesR = ['f3', 'f4', 'id']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [[3, 'a', 4, 1, 2], [3, 'a', 4, 4, 3], [-3, 'b', -4, -1, -2],
-    #                [-4, 'c', -3, -6, -5], [-4, 'c', -3, -3, -4]]
-    #     fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
+        ###################
+        # ptUnion/ftUnion #
+        ###################
+
+    @raises(ArgumentException)
+    def test_merge_ptUnion_ftUnion_pointNamesWithDefaults(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        leftObj.setPointName(0, 'a')
+        rightObj.setPointName(0, 'a')
+        assert leftObj.getPointName(1).startswith(DEFAULT_PREFIX)
+        assert rightObj.getPointName(1).startswith(DEFAULT_PREFIX)
+        merged = leftObj.merge(rightObj, point='union', feature='union')
+
+    @raises(ArgumentException)
+    def test_merge_ptUnion_ftUnion_exception_bothNonUnique(self):
+        dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['c', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+
+    @raises(ArgumentException)
+    def test_merge_ptUnion_ftUnion_ptNames_ftMismatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNamesL = ['p1', 'p2', 'p3']
+        pNamesR = ['p2', 'p1', 'p3']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        merged = leftObj.merge(rightObj, point='union', feature='union')
+
+    def test_merge_ptUnion_ftUnion_pointNames_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, pointNames=pNames, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_pointNames_exactMatch_sharedFt(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4, 'a'], [7, 8, 'b'], [-3, -4, 'c']]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, pointNames=pNames, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_pointNames_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [[3, 4], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'c'], featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union')
+        print(merged)
+        print(exp)
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_pointNames_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [[3, 4], [0, 0], [-3, -4], [9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'x', 'c', 'y'], featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
+                   ['d', -5, -6, None, None], [None, None, None, 0, 0], [None, None, None, 9, 9]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd', 'x', 'y'], featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_exactMatch_sharedFt(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4, 'a'], [7, 8, 'b'], [-3, -4, 'c']]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
+                   ['d', -5, -6, None, None], ['x', None, None, 0, 0], ['y', None, None, 9, 9]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_rightOnlyUnique_matchForEachLeft(self):
+        dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        dataR = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, -3, -4],
+                   ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_rightOnlyUnique_missingLeftMatches(self):
+        dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        dataR = [['a', 3, 4], ['c', -4, -3], ['d', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, None, None],
+                   ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3], ['d', None, None, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        print(exp)
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_leftOnlyUnique_matchForEachRight(self):
+        dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
+                   ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_notFirstFeature(self):
+        dataL = [[1, 'a', 2], [5, 'b', 6], [-1, 'c', -2], [-5, 'd', -6]]
+        dataR = [[3, 4, 'a'], [-3, -4, 'c']]
+        fNamesL = ['f1', 'id', 'f2']
+        fNamesR = ['f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [[1, 'a', 2, 3, 4], [5, 'b', 6, None, None], [-1, 'c', -2, -3, -4], [-5, 'd', -6, None, None]]
+        fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_leftOnlyUnique_notFirstFeature(self):
+        dataL = [[3, 'a', 4], [-3, 'b', -4], [-4, 'c', -3]]
+        dataR = [[1, 2, 'a'], [4, 3, 'a'], [-1, -2, 'b'], [-6, -5, 'c'], [-3, -4, 'c']]
+        fNamesL = ['f1', 'id', 'f2']
+        fNamesR = ['f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [[3, 'a', 4, 1, 2], [3, 'a', 4, 4, 3], [-3, 'b', -4, -1, -2],
+                   [-4, 'c', -3, -6, -5], [-4, 'c', -3, -3, -4]]
+        fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert merged == exp
+
     # def test_merge_ptUnion_ftUnion_noPointNamesOrOnFeature(self):
     #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
     #     dataR = [[3, 4], [7, 8], [-3, -4]]
@@ -8539,72 +8542,73 @@ class StructureModifying(StructureShared):
     #     fNamesR = ['f3', 'f4']
     #     leftObj = self.constructor(dataL, featureNames=fNamesL)
     #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a',1,2,3,4], ['b',5,6,7,8], ['c',-1,-2,-3,-4]]
+    #     expData = [['a',1,2,None,None], ['b',5,6,None,None], ['c',-1,-2,None,None],
+    #                [None,None,None,3,4], [None,None,None,7,8], [None,None,None,-3,-4]]
     #     expFNames = fNamesL + fNamesR
     #     exp = self.constructor(expData, featureNames=expFNames)
     #     merged = leftObj.merge(rightObj, point='union', feature='union')
     #     assert merged == exp
-    #
-    #     ##########################
-    #     # ptUnion/ftIntersection #
-    #     ##########################
-    #
-    # @raises(ArgumentException)
-    # def test_merge_ptUnion_ftIntersection_ptNames_ftMismatch(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4]]
-    #     pNamesL = ['p1', 'p2', 'p3']
-    #     pNamesR = ['p2', 'p1', 'p3']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     merged = leftObj.merge(rightObj, point='union', feature='intersection')
-    #
-    # def test_merge_ptUnion_ftIntersection_pointNames_sharedFt(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4], ['d', -7, -8]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesR)
-    #     expData = [['a'], ['b'], ['c'], ['d']]
-    #     fNamesExp = ['id']
-    #     exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='intersection')
-    #     assert merged == exp
-    #
-    # #TODO what if nans in one object are the only thing causing differences in feature
-    # def test_merge_ptUnion_ftIntersection_pointNames_sharedFt(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [['a',3, 4], [None, 7, 8], [None, -3, -4], ['d', -7, -8]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesR)
-    #     expData = [['a'], ['b'], ['c'], ['d']]
-    #     fNamesExp = ['id']
-    #     exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='intersection')
-    #     assert merged == exp
-    #
-    # def test_merge_ptUnion_ftIntersection_onFeature_sharedFt(self):
-    #     dataL = [['x', 3, 'a', 4], ['y', -3, 'b', -4], ['y', -4, 'c', -3]]
-    #     dataR = [['x', 1, 2, 'a'], ['x', 4, 3, 'a'], ['y', -1, -2, 'b'], ['y', -6, -5, 'c'], ['y', -3, -4, 'c']]
-    #     fNamesL = ['f0', 'f1', 'id', 'f2']
-    #     fNamesR = ['f0', 'f3', 'f4', 'id']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['x', 'a'], ['x', 'a'], ['y', 'b'],['y', 'c'], ['y', 'c']]
-    #     fNamesExp = ['f0', 'id']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='union', feature='intersection', onFeature='id')
-    #     assert merged == exp
-    #
-    #     ##########################
-    #     # ptIntersection/ftUnion #
-    #     ##########################
-    #
+
+        ##########################
+        # ptUnion/ftIntersection #
+        ##########################
+
+    @raises(ArgumentException)
+    def test_merge_ptUnion_ftIntersection_ptNames_ftMismatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNamesL = ['p1', 'p2', 'p3']
+        pNamesR = ['p2', 'p1', 'p3']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        merged = leftObj.merge(rightObj, point='union', feature='intersection')
+
+    def test_merge_ptUnion_ftIntersection_pointNames_sharedFt(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a',3, 4], ['b', 7, 8], ['c', -3, -4], ['d', -7, -8]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesR)
+        expData = [['a'], ['b'], ['c'], ['d']]
+        fNamesExp = ['id']
+        exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='intersection')
+        assert merged == exp
+
+    #TODO what if nans in one object are the only thing causing differences in feature
+    def test_merge_ptUnion_ftIntersection_pointNames_sharedFt(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a',3, 4], [None, 7, 8], [None, -3, -4], ['d', -7, -8]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesR)
+        expData = [['a'], ['b'], ['c'], ['d']]
+        fNamesExp = ['id']
+        exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='intersection')
+        assert merged == exp
+
+    def test_merge_ptUnion_ftIntersection_onFeature_sharedFt(self):
+        dataL = [['x', 3, 'a', 4], ['y', -3, 'b', -4], ['y', -4, 'c', -3]]
+        dataR = [['x', 1, 2, 'a'], ['x', 4, 3, 'a'], ['y', -1, -2, 'b'], ['y', -6, -5, 'c'], ['y', -3, -4, 'c']]
+        fNamesL = ['f0', 'f1', 'id', 'f2']
+        fNamesR = ['f0', 'f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['x', 'a'], ['x', 'a'], ['y', 'b'],['y', 'c'], ['y', 'c']]
+        fNamesExp = ['f0', 'id']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='union', feature='intersection', onFeature='id')
+        assert merged == exp
+
+        ##########################
+        # ptIntersection/ftUnion #
+        ##########################
+
     # @raises(ArgumentException)
     # def test_merge_ptIntersection_ftUnion_exception_noPointNamesOrOnFeature(self):
     #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
@@ -8614,313 +8618,313 @@ class StructureModifying(StructureShared):
     #     leftObj = self.constructor(dataL, featureNames=fNamesL)
     #     rightObj = self.constructor(dataR, featureNames=fNamesR)
     #     merged = leftObj.merge(rightObj, point='intersection', feature='union')
-    #
-    # @raises(ArgumentException)
-    # def test_merge_ptIntersection_ftUnion_exception_pointNamesWithDefaults(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [[3, 4], [7, 8], [-3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     leftObj.setPointName(0, 'a')
-    #     rightObj.setPointName(0, 'a')
-    #     assert leftObj.getPointName(1).startswith(DEFAULT_PREFIX)
-    #     assert rightObj.getPointName(1).startswith(DEFAULT_PREFIX)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union')
-    #
-    # @raises(ArgumentException)
-    # def test_merge_ptIntersection_ftUnion_exception_bothNonUnique(self):
-    #     dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
-    #     dataR = [['a', 3, 4], ['c', 7, 8], ['c', -3, -4]]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #
-    # def test_merge_ptIntersection_ftUnion_pointNames_exactMatch(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [[3, 4], [7, 8], [-3, -4]]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, pointNames=pNames, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_pointNames_allRightInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [[3, 4], [-3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=['a', 'c'], featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, pointNames=['a', 'c'],featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_pointNames_rightNotAlwaysInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [[3, 4], [0, 0], [-3, -4], [9, 9]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=['a', 'x', 'c', 'y'], featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, pointNames=['a', 'c'], featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_onFeature_exactMatch(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_onFeature_allRightInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [['a', 3, 4], ['c', -3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_onFeature_rightNotAlwaysInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_onFeature_rightOnlyUnique_matchForEachLeft(self):
-    #     dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
-    #     dataR = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, -3, -4],
-    #                ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_onFeature_rightOnlyUnique_missingLeftMatches(self):
-    #     dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
-    #     dataR = [['a', 3, 4], ['c', -4, -3], ['d', -3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_onFeature_leftOnlyUnique_matchForEachRight(self):
-    #     dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
-    #     dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
-    #                ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_onFeature_notFirstFeature(self):
-    #     dataL = [[1, 'a', 2], [5, 'b', 6], [-1, 'c', -2], [-5, 'd', -6]]
-    #     dataR = [[3, 4, 'a'], [-3, -4, 'c']]
-    #     fNamesL = ['f1', 'id', 'f2']
-    #     fNamesR = ['f3', 'f4', 'id']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [[1, 'a', 2, 3, 4], [-1, 'c', -2, -3, -4]]
-    #     fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptIntersection_ftUnion_onFeature_leftOnlyUnique_notFirstFeature(self):
-    #     dataL = [[3, 'a', 4], [-3, 'b', -4], [-4, 'c', -3]]
-    #     dataR = [[1, 2, 'a'], [4, 3, 'a'], [-1, -2, 'b'], [-6, -5, 'c'], [-3, -4, 'c']]
-    #     fNamesL = ['f1', 'id', 'f2']
-    #     fNamesR = ['f3', 'f4', 'id']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [[3, 'a', 4, 1, 2], [3, 'a', 4, 4, 3], [-3, 'b', -4, -1, -2],
-    #                [-4, 'c', -3, -6, -5], [-4, 'c', -3, -3, -4]]
-    #     fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    #     ##################
-    #     # ptLeft/ftUnion #
-    #     ##################
-    #
-    # @raises(ArgumentException)
-    # def test_merge_ptLeft_ftUnion_exception_rightNotUnique(self):
-    #     dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
-    #     dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
-    #                ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #     merged = leftObj.merge(rightObj, point='left', feature='union', onFeature='id')
-    #
-    #     assert merged == exp
-    #
-    # def test_merge_ptLeft_ftUnion_onFeature_exactMatch(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-    #     dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
-    #     pNames = ['a', 'b', 'c']
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #
-    #     merged = leftObj.merge(rightObj, point='left', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptLeft_ftUnion_onFeature_allRightInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [['a', 3, 4], ['c', -3, -4]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #
-    #     merged = leftObj.merge(rightObj, point='left', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    # def test_merge_ptLeft_ftUnion_onFeature_rightNotAlwaysInLeft(self):
-    #     dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
-    #     dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
-    #     fNamesL = ['id', 'f1', 'f2']
-    #     fNamesR = ['id', 'f3', 'f4']
-    #     leftObj = self.constructor(dataL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, featureNames=fNamesR)
-    #     expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
-    #                ['d', -5, -6, None, None]]
-    #     fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-    #     exp = self.constructor(expData, featureNames=fNamesExp)
-    #
-    #     merged = leftObj.merge(rightObj, point='left', feature='union', onFeature='id')
-    #     assert merged == exp
-    #
-    #     ###############
-    #     # pointStrict #
-    #     ###############
-    #
-    # def test_merge_pointStrict_merge_ptNames_allNames(self):
-    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-    #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
-    #     fNamesL = ["f1", "f2", "id"]
-    #     fNamesR = ["id", "f3", "f4"]
-    #     pNamesL = ["p1", "p2", "p3", "p4"]
-    #     pNamesR = ["p3", "p2", "p1", "p4"]
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     expData = [[1,1,"a",2,2], [1,1,"b",2,2], [1,1,"c",2,2], [1,1,"d",2,2]]
-    #     expFNames = ["f1", "f2", "id", "f3", "f4"]
-    #     exp = self.constructor(expData, pointNames=pNamesL, featureNames=expFNames)
-    #
-    #     merged = leftObj.merge(rightObj, point='strict', feature='union', onFeature=None)
-    #     assert merged == exp
-    #
-    # def test_merge_pointStrict_merge_ptNames_allNames(self):
-    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-    #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
-    #     fNamesL = ["f1", "f2", "id"]
-    #     fNamesR = ["id", "f3", "f4"]
-    #     pNamesL = ["p1", "p2", "p3", "p4"]
-    #     pNamesR = ["p3", "p2", "p1", "p4"]
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     expData = [["a"], ["b"], ["c"], ["d"]]
-    #     expFNames = ["id"]
-    #     exp = self.constructor(expData, pointNames=pNamesL, featureNames=expFNames)
-    #
-    #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature=None)
-    #     assert merged == exp
-    #
-    # def test_merge_pointStrict_merge_onFeature_allNames(self):
-    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-    #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
-    #     fNamesL = ["f1", "f2", "id"]
-    #     fNamesR = ["id", "f3", "f4"]
-    #     pNamesL = ["p1", "p2", "p3", "p4"]
-    #     pNamesR = ["p3", "p2", "p1", "p4"]
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     expData = [[1,1,"a",2,2], [1,1,"b",2,2], [1,1,"c",2,2], [1,1,"d",2,2]]
-    #     expFNames = ["f1", "f2", "id", "f3", "f4"]
-    #     exp = self.constructor(expData, featureNames=expFNames)
-    #
-    #     merged = leftObj.merge(rightObj, point='strict', feature='union', onFeature="id")
-    #     assert merged == exp
-    #
-    # def test_merge_pointStrict_merge_onFeature_allNames(self):
-    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-    #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
-    #     fNamesL = ["f1", "f2", "id"]
-    #     fNamesR = ["id", "f3", "f4"]
-    #     pNamesL = ["p1", "p2", "p3", "p4"]
-    #     pNamesR = ["p3", "p2", "p1", "p4"]
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     expData = [["a"], ["b"], ["c"], ["d"]]
-    #     expFNames = ["id"]
-    #     exp = self.constructor(expData, featureNames=expFNames)
-    #
-    #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
-    #     assert merged == exp
-    #
-    # def test_merge_pointStrict_merge_ptNames_ptNamesOnly(self):
+
+    @raises(ArgumentException)
+    def test_merge_ptIntersection_ftUnion_exception_pointNamesWithDefaults(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        leftObj.setPointName(0, 'a')
+        rightObj.setPointName(0, 'a')
+        assert leftObj.getPointName(1).startswith(DEFAULT_PREFIX)
+        assert rightObj.getPointName(1).startswith(DEFAULT_PREFIX)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union')
+
+    @raises(ArgumentException)
+    def test_merge_ptIntersection_ftUnion_exception_bothNonUnique(self):
+        dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['c', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+
+    def test_merge_ptIntersection_ftUnion_pointNames_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, pointNames=pNames, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_pointNames_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [[3, 4], [-3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'c'], featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, pointNames=['a', 'c'],featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_pointNames_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [[3, 4], [0, 0], [-3, -4], [9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'x', 'c', 'y'], featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, pointNames=['a', 'c'], featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_onFeature_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_onFeature_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_onFeature_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_onFeature_rightOnlyUnique_matchForEachLeft(self):
+        dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        dataR = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['b', -1, -2, -3, -4],
+                   ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_onFeature_rightOnlyUnique_missingLeftMatches(self):
+        dataL = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        dataR = [['a', 3, 4], ['c', -4, -3], ['d', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['a', 4, 3, 3, 4], ['c', -6, -5, -4, -3], ['c', -3, -4, -4, -3]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_onFeature_leftOnlyUnique_matchForEachRight(self):
+        dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
+                   ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_onFeature_notFirstFeature(self):
+        dataL = [[1, 'a', 2], [5, 'b', 6], [-1, 'c', -2], [-5, 'd', -6]]
+        dataR = [[3, 4, 'a'], [-3, -4, 'c']]
+        fNamesL = ['f1', 'id', 'f2']
+        fNamesR = ['f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [[1, 'a', 2, 3, 4], [-1, 'c', -2, -3, -4]]
+        fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptIntersection_ftUnion_onFeature_leftOnlyUnique_notFirstFeature(self):
+        dataL = [[3, 'a', 4], [-3, 'b', -4], [-4, 'c', -3]]
+        dataR = [[1, 2, 'a'], [4, 3, 'a'], [-1, -2, 'b'], [-6, -5, 'c'], [-3, -4, 'c']]
+        fNamesL = ['f1', 'id', 'f2']
+        fNamesR = ['f3', 'f4', 'id']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [[3, 'a', 4, 1, 2], [3, 'a', 4, 4, 3], [-3, 'b', -4, -1, -2],
+                   [-4, 'c', -3, -6, -5], [-4, 'c', -3, -3, -4]]
+        fNamesExp = ['f1', 'id', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='intersection', feature='union', onFeature='id')
+        assert merged == exp
+
+        ##################
+        # ptLeft/ftUnion #
+        ##################
+
+    @raises(ArgumentException)
+    def test_merge_ptLeft_ftUnion_exception_rightNotUnique(self):
+        dataL = [['a', 3, 4], ['b', -3, -4], ['c', -4, -3]]
+        dataR = [['a', 1, 2], ['a', 4, 3], ['b', -1, -2], ['c', -6, -5], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 3, 4, 1, 2], ['a', 3, 4, 4, 3], ['b', -3, -4, -1, -2],
+                   ['c', -4, -3, -6, -5], ['c', -4, -3, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        merged = leftObj.merge(rightObj, point='left', feature='union', onFeature='id')
+
+        assert merged == exp
+
+    def test_merge_ptLeft_ftUnion_onFeature_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+
+        merged = leftObj.merge(rightObj, point='left', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptLeft_ftUnion_onFeature_allRightInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['c', -3, -4]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4], ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+
+        merged = leftObj.merge(rightObj, point='left', feature='union', onFeature='id')
+        assert merged == exp
+
+    def test_merge_ptLeft_ftUnion_onFeature_rightNotAlwaysInLeft(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a', 3, 4], ['x', 0, 0], ['c', -3, -4], ['y', 9, 9]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, None, None], ['c', -1, -2, -3, -4],
+                   ['d', -5, -6, None, None]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+
+        merged = leftObj.merge(rightObj, point='left', feature='union', onFeature='id')
+        assert merged == exp
+
+        ###############
+        # pointStrict #
+        ###############
+
+    def test_merge_pointStrict_featureUnion_ptNames_allNames(self):
+        dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
+        dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
+        fNamesL = ["f1", "f2", "id"]
+        fNamesR = ["id", "f3", "f4"]
+        pNamesL = ["p1", "p2", "p3", "p4"]
+        pNamesR = ["p3", "p2", "p1", "p4"]
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        expData = [[1,1,"a",2,2], [1,1,"b",2,2], [1,1,"c",2,2], [1,1,"d",2,2]]
+        expFNames = ["f1", "f2", "id", "f3", "f4"]
+        exp = self.constructor(expData, pointNames=pNamesL, featureNames=expFNames)
+
+        merged = leftObj.merge(rightObj, point='strict', feature='union', onFeature=None)
+        assert merged == exp
+
+    def test_merge_pointStrict_featureIntersection_ptNames_allNames(self):
+        dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
+        dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
+        fNamesL = ["f1", "f2", "id"]
+        fNamesR = ["id", "f3", "f4"]
+        pNamesL = ["p1", "p2", "p3", "p4"]
+        pNamesR = ["p3", "p2", "p1", "p4"]
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        expData = [["a"], ["b"], ["c"], ["d"]]
+        expFNames = ["id"]
+        exp = self.constructor(expData, pointNames=pNamesL, featureNames=expFNames)
+
+        merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature=None)
+        assert merged == exp
+
+    def test_merge_pointStrict_featureUnion_onFeature_allNames(self):
+        dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
+        dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
+        fNamesL = ["f1", "f2", "id"]
+        fNamesR = ["id", "f3", "f4"]
+        pNamesL = ["p1", "p2", "p3", "p4"]
+        pNamesR = ["p3", "p2", "p1", "p4"]
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        expData = [[1,1,"a",2,2], [1,1,"b",2,2], [1,1,"c",2,2], [1,1,"d",2,2]]
+        expFNames = ["f1", "f2", "id", "f3", "f4"]
+        exp = self.constructor(expData, featureNames=expFNames)
+
+        merged = leftObj.merge(rightObj, point='strict', feature='union', onFeature="id")
+        assert merged == exp
+
+    def test_merge_pointStrict_featureIntersection_onFeature_allNames(self):
+        dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
+        dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
+        fNamesL = ["f1", "f2", "id"]
+        fNamesR = ["id", "f3", "f4"]
+        pNamesL = ["p1", "p2", "p3", "p4"]
+        pNamesR = ["p3", "p2", "p1", "p4"]
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        expData = [["a"], ["b"], ["c"], ["d"]]
+        expFNames = ["id"]
+        exp = self.constructor(expData, featureNames=expFNames)
+
+        merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
+        assert merged == exp
+
+    # def test_merge_pointStrict_featureUnion_ptNames_ptNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     pNamesL = ["p1", "p2", "p3", "p4"]
@@ -8934,7 +8938,7 @@ class StructureModifying(StructureShared):
     #     assert merged == exp
     #
     # @raises(ArgumentException)
-    # def test_merge_pointStrict_merge_ptNames_ptNamesOnly(self):
+    # def test_merge_pointStrict_featureIntersection_ptNames_ptNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     pNamesL = ["p1", "p2", "p3", "p4"]
@@ -8945,7 +8949,7 @@ class StructureModifying(StructureShared):
     #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature=None)
     #
     # @raises(ArgumentException)
-    # def test_merge_pointStrict_merge_onFeature_ptNamesOnly(self):
+    # def test_merge_pointStrict_featureUnion_onFeature_ptNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     pNamesL = ["p1", "p2", "p3", "p4"]
@@ -8956,7 +8960,7 @@ class StructureModifying(StructureShared):
     #     merged = leftObj.merge(rightObj, point='strict', feature='union', onFeature="id")
     #
     # @raises(ArgumentException)
-    # def test_merge_pointStrict_merge_onFeature_ptNamesOnly(self):
+    # def test_merge_pointStrict_featureIntersection_onFeature_ptNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     pNamesL = ["p1", "p2", "p3", "p4"]
@@ -8967,7 +8971,7 @@ class StructureModifying(StructureShared):
     #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
     #
     # @raises(ArgumentException)
-    # def test_merge_pointStrict_merge_ptNames_ftNamesOnly(self):
+    # def test_merge_pointStrict_featureUnion_ptNames_ftNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     fNamesL = ["f1", "f2", "id"]
@@ -8978,7 +8982,7 @@ class StructureModifying(StructureShared):
     #     merged = leftObj.merge(rightObj, point='strict', feature='union', onFeature=None)
     #
     # @raises(ArgumentException)
-    # def test_merge_pointStrict_merge_ptNames_ftNamesOnly(self):
+    # def test_merge_pointStrict_featureIntersection_ptNames_ftNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     fNamesL = ["f1", "f2", "id"]
@@ -8988,7 +8992,7 @@ class StructureModifying(StructureShared):
     #
     #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature=None)
     #
-    # def test_merge_pointStrict_merge_onFeature_ftNamesOnly(self):
+    # def test_merge_pointStrict_featureUnion_onFeature_ftNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     fNamesL = ["f1", "f2", "id"]
@@ -9002,7 +9006,7 @@ class StructureModifying(StructureShared):
     #     merged = leftObj.merge(rightObj, point='strict', feature='union', onFeature="id")
     #     assert merged == exp
     #
-    # def test_merge_pointStrict_merge_onFeature_ftNamesOnly(self):
+    # def test_merge_pointStrict_featureIntersection_onFeature_ftNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     fNamesL = ["f1", "f2", "id"]
@@ -9015,8 +9019,8 @@ class StructureModifying(StructureShared):
     #
     #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
     #     assert merged == exp
-    #
-    # def test_merge_pointStrict_merge_ptNames_noNames(self):
+
+    # def test_merge_pointStrict_featureUnion_ptNames_noNames(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     leftObj = self.constructor(dataL)
@@ -9028,7 +9032,16 @@ class StructureModifying(StructureShared):
     #     assert merged == exp
     #
     # @raises(ArgumentException)
-    # def test_merge_pointStrict_merge_ptNames_noNames(self):
+    # def test_merge_pointStrict_featureIntersection_ptNames_noNames(self):
+    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
+    #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
+    #     leftObj = self.constructor(dataL)
+    #     rightObj = self.constructor(dataR)
+    #
+    #     merged = leftObj.merge(rightObj, point='strict', feature='intersection')
+    #
+    # @raises(ArgumentException)
+    # def test_merge_pointStrict_featureIntersection_onFeature_noNames(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     leftObj = self.constructor(dataL)
@@ -9037,77 +9050,68 @@ class StructureModifying(StructureShared):
     #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
     #
     # @raises(ArgumentException)
-    # def test_merge_pointStrict_merge_onFeature_noNames(self):
+    # def test_merge_pointStrict_featureIntersection_onFeature_noNames(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
     #     leftObj = self.constructor(dataL)
     #     rightObj = self.constructor(dataR)
     #
     #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
-    #
-    # @raises(ArgumentException)
-    # def test_merge_pointStrict_merge_onFeature_noNames(self):
-    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-    #     dataR = [["c",2,2], ["b",2,2], ["a",2,2], ["d",2,2]]
-    #     leftObj = self.constructor(dataL)
-    #     rightObj = self.constructor(dataR)
-    #
-    #     merged = leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
-    #
-    #     #################
-    #     # featureStrict #
-    #     #################
-    #
-    # def test_merge_featureStrict_pointUnion_ptNames_allNames(self):
-    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-    #     dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
-    #     fNamesL = ["f1", "f2", "id"]
-    #     fNamesR = ["id", "f1", "f2"]
-    #     pNamesL = ["p1", "p2", "p3", "p4"]
-    #     pNamesR = ["p4", "p5", "p6", "p7"]
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     expData = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"], [2,2,"x"], [2,2,"y"], [2,2,"z"]]
-    #     expPNames = ["p1", "p2", "p3", "p4", "p5", "p6", "p7"]
-    #     exp = self.constructor(expData, pointNames=expPNames, featureNames=fNamesL)
-    #
-    #     merged = leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
-    #     assert merged == exp
-    #
-    # #TODO check exception for descriptiveness
-    # @raises(ArgumentException)
-    # def test_merge_featureStrict_pointUnion_ptNames_allNames_ftMismatch(self):
-    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-    #     dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
-    #     fNamesL = ["f1", "f2", "id"]
-    #     fNamesR = ["id", "f1", "f3"]
-    #     pNamesL = ["p1", "p2", "p3", "p4"]
-    #     pNamesR = ["p4", "p5", "p6", "p7"]
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     expData = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"], [2,2,"x"], [2,2,"y"], [2,2,"z"]]
-    #     expPNames = ["p1", "p2", "p3", "p4", "p5", "p6", "p7"]
-    #     exp = self.constructor(expData, pointNames=expPNames, featureNames=fNamesL)
-    #
-    #     merged = leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
-    #     assert merged == exp
-    #
-    # def test_merge_featureStrict_pointIntersection_ptNames_allNames(self):
-    #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
-    #     dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
-    #     fNamesL = ["f1", "f2", "id"]
-    #     fNamesR = ["id", "f1", "f2"]
-    #     pNamesL = ["p1", "p2", "p3", "p4"]
-    #     pNamesR = ["p4", "p5", "p6", "p7"]
-    #     leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-    #     rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-    #     expData = [[1,1,"d"]]
-    #     expPNames = ["p4"]
-    #     exp = self.constructor(expData, pointNames=expPNames, featureNames=fNamesL)
-    #
-    #     merged = leftObj.merge(rightObj, point='intersection', feature='strict', onFeature=None)
-    #     assert merged == exp
-    #
+
+        #################
+        # featureStrict #
+        #################
+
+    def test_merge_featureStrict_pointUnion_ptNames_allNames(self):
+        dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
+        dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
+        fNamesL = ["f1", "f2", "id"]
+        fNamesR = ["id", "f1", "f2"]
+        pNamesL = ["p1", "p2", "p3", "p4"]
+        pNamesR = ["p4", "p5", "p6", "p7"]
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        expData = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"], [2,2,"x"], [2,2,"y"], [2,2,"z"]]
+        expPNames = ["p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=fNamesL)
+
+        merged = leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
+        assert merged == exp
+
+    #TODO check exception for descriptiveness
+    @raises(ArgumentException)
+    def test_merge_featureStrict_pointUnion_ptNames_allNames_ftMismatch(self):
+        dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
+        dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
+        fNamesL = ["f1", "f2", "id"]
+        fNamesR = ["id", "f1", "f3"]
+        pNamesL = ["p1", "p2", "p3", "p4"]
+        pNamesR = ["p4", "p5", "p6", "p7"]
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        expData = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"], [2,2,"x"], [2,2,"y"], [2,2,"z"]]
+        expPNames = ["p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=fNamesL)
+
+        merged = leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
+        assert merged == exp
+
+    def test_merge_featureStrict_pointIntersection_ptNames_allNames(self):
+        dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
+        dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
+        fNamesL = ["f1", "f2", "id"]
+        fNamesR = ["id", "f1", "f2"]
+        pNamesL = ["p1", "p2", "p3", "p4"]
+        pNamesR = ["p4", "p5", "p6", "p7"]
+        leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
+        expData = [[1,1,"d"]]
+        expPNames = ["p4"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=fNamesL)
+
+        merged = leftObj.merge(rightObj, point='intersection', feature='strict', onFeature=None)
+        assert merged == exp
+
     # def test_merge_featureStrict_pointUnion_ptNames_ptNamesOnly(self):
     #     dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
     #     dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
