@@ -1266,22 +1266,22 @@ class Sparse(Base):
         sort = False
         if onFeature:
             uniqueFtR = len(set(other[:, onFeature])) == other.points
-            # if uniqueFtR and feature == "intersection":
-            #     onIdxLoc = matchingFtIdx[0].index(self.getFeatureIndex(onFeature))
-            #     onIdxL = onIdxLoc
-            #     onIdxR = onIdxLoc
-            #     leftFtCount = len(matchingFtIdx[0])
-            #     keepDataL = numpy.isin(self.data.col, matchingFtIdx[0])
-            #     leftData = self.data.data[keepDataL]
-            #     leftRow = self.data.row[keepDataL]
-            #     leftCol = self.data.col[keepDataL]
-            #     # no additional features will be present in right
-            #     rightFtCount = 0
-            #     keepDataR = numpy.isin(other.data.col, matchingFtIdx[1])
-            #     rightData = other.data.data[keepDataR]
-            #     rightRow = other.data.row[keepDataR]
-            #     rightCol = other.data.col[keepDataR]
-            if uniqueFtR:
+            if uniqueFtR and feature == "intersection":
+                onIdxL = self.getFeatureIndex(onFeature)
+                onIdxR = other.getFeatureIndex(onFeature)
+                leftFtCount = len(matchingFtIdx[0])
+                keepDataL = numpy.isin(self.data.col, matchingFtIdx[0])
+                leftData = self.data.data[keepDataL]
+                leftRow = self.data.row[keepDataL]
+                leftCol = self.data.col[keepDataL]
+                # no additional features will be present in right
+                rightFtCount = 0
+                keepDataR = numpy.isin(other.data.col, matchingFtIdx[1])
+                rightData = other.data.data[keepDataR]
+                rightRow = other.data.row[keepDataR]
+                rightCol = other.data.col[keepDataR]
+
+            elif uniqueFtR:
                 onIdxL = self.getFeatureIndex(onFeature)
                 onIdxR = other.getFeatureIndex(onFeature)
                 leftFtCount = self.features
@@ -1293,21 +1293,23 @@ class Sparse(Base):
                 rightRow = other.data.row.copy()
                 rightCol = other.data.col.copy()
                 numFts = self.features + other.features - len(matchingFtIdx[1])
-            # elif not uniqueFtR and feature == "intersection":
-            #     onIdxLoc = matchingFtIdx[0].index(self.getFeatureIndex(onFeature))
-            #     onIdxL = onIdxLoc
-            #     onIdxR = onIdxLoc
-            #     leftFtCount = len(matchingFtIdx[0])
-            #     keepDataL = numpy.isin(other.data.col, matchingFtIdx[1])
-            #     leftData = other.data.data[keepDataL]
-            #     leftRow = other.data.row[keepDataL]
-            #     leftCol = other.data.col[keepDataL]
-            #     # no additional features will be present in right
-            #     rightFtCount = 0
-            #     keepDataR = numpy.isin(self.data.col, matchingFtIdx[0])
-            #     rightData = self.data.data[keepDataR]
-            #     rightRow = self.data.row[keepDataR]
-            #     rightCol = self.data.col[keepDataR]
+
+            elif not uniqueFtR and feature == "intersection":
+                onIdxL = other.getFeatureIndex(onFeature)
+                onIdxR = self.getFeatureIndex(onFeature)
+                leftFtCount = len(matchingFtIdx[0])
+                keepDataL = numpy.isin(other.data.col, matchingFtIdx[1])
+                leftData = other.data.data[keepDataL]
+                leftRow = other.data.row[keepDataL]
+                leftCol = other.data.col[keepDataL]
+                # no additional features will be present in right
+                rightFtCount = 0
+                keepDataR = numpy.isin(self.data.col, matchingFtIdx[0])
+                rightData = self.data.data[keepDataR]
+                rightRow = self.data.row[keepDataR]
+                rightCol = self.data.col[keepDataR]
+                matchingFtIdx = [matchingFtIdx[1], matchingFtIdx[0]]
+
             else:
                 # flip so unique is on the right, will be sorted after in Base
                 sort = True
@@ -1340,33 +1342,19 @@ class Sparse(Base):
             matchingFtIdx[0].insert(0, 0)
             matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
             matchingFtIdx[1].insert(0, 0)
-            # if feature == "intersection":
-            #     leftFtCount = len(matchingFtIdx[0])
-            #     keepDataL = numpy.isin(leftCol, matchingFtIdx[0])
-            #     leftData = leftData[keepDataL]
-            #     leftRow = leftRow[keepDataL]
-            #     leftCol = leftCol[keepDataL]
-            #     # no additional features will be present in right
-            #     rightFtCount = 0
-            #     keepDataR = numpy.isin(rightCol, matchingFtIdx[1])
-            #     rightData = rightData[keepDataR]
-            #     rightRow = rightRow[keepDataR]
-            #     rightCol = rightCol[keepDataR]
+            if feature == "intersection":
+                leftFtCount = len(matchingFtIdx[0])
+                keepDataL = numpy.isin(leftCol, matchingFtIdx[0])
+                leftData = leftData[keepDataL]
+                leftRow = leftRow[keepDataL]
+                leftCol = leftCol[keepDataL]
+                # no additional features will be present in right
+                rightFtCount = 0
+                keepDataR = numpy.isin(rightCol, matchingFtIdx[1])
+                rightData = rightData[keepDataR]
+                rightRow = rightRow[keepDataR]
+                rightCol = rightCol[keepDataR]
 
-        if sort:
-            reindex = []
-            for i in range(onIdxR):
-                reindex.append(i + leftFtCount)
-            reindex.append(onIdxL)
-            for i in range(onIdxR, leftFtCount - 1):
-                reindex.append(i + rightFtCount)
-            for i in range(onIdxL):
-                reindex.append(i)
-            for i in range(onIdxL + 1 , rightFtCount):
-                reindex.append(i)
-
-        print(self)
-        print(other)
         mergedData = numpy.empty((0,0), dtype=numpy.object_)
         mergedRow = []
         mergedCol = []
@@ -1382,19 +1370,17 @@ class Sparse(Base):
                     ptL = leftData[leftRow == ptIdxL]
                 else:
                     ptL = leftData[leftRow == ptIdxL][1:]
-                # only unmatched points from right
-                matchL = leftData[(leftRow == ptIdxL) & (numpy.in1d(leftCol, matchingFtIdx[0]))]
-                matchR = rightData[(rightRow == ptIdxR) & (numpy.in1d(rightCol, matchingFtIdx[1]))]
-                matches = matchL == matchR
-                nansL = matchL != matchL
-                nansR = matchR != matchR
-                acceptableValues = matches + nansL + nansR
-                print(matchL, matchR)
-                if not all(acceptableValues):
-                    msg = "The objects contain different values for the same feature"
-                    raise ArgumentException(msg)
+                for ftIdxL, ftIdxR in zip(matchingFtIdx[0], matchingFtIdx[1]):
+                    matchL = leftData[(leftRow == ptIdxL) & (leftCol == ftIdxL)]
+                    matchR = rightData[(rightRow == ptIdxR) & (rightCol == ftIdxR)]
+                    matches = matchL == matchR
+                    nansL = matchL != matchL
+                    nansR = matchR != matchR
+                    acceptableValues = matches + nansL + nansR
+                    if not all(acceptableValues):
+                        msg = "The objects contain different values for the same feature"
+                        raise ArgumentException(msg)
                 ptR = rightData[(rightRow == ptIdxR) & (numpy.in1d(rightCol, matchingFtIdx[1], invert=True))]
-                print(ptL, ptR)
                 matched.append(target)
             elif point == 'left' or point == 'union':
                 if onFeature:
@@ -1429,31 +1415,28 @@ class Sparse(Base):
                     mergedCol.extend([i for i in range(len(pt))])
                     nextPt += 1
                     numPts += 1
-        if sort:
-            mergedCol = [reindex[i] for i in mergedCol]
 
-        if feature == "intersection":
-            leftFtCount = len(matchingFtIdx[0])
-            # no additional features from right with intersection
-            rightFtCount = 0
-            if onFeature is None:
-                matchingFtIdx[0] = matchingFtIdx[0][1:]
-                matchingFtIdx[0] = list(map(lambda x: x - 1, matchingFtIdx[0]))
-            intersecting = numpy.in1d(mergedCol, matchingFtIdx[0])
-            mergedData = mergedData[intersecting]
-            mergedRow = [idx for idx, keep in zip(mergedRow, intersecting) if keep]
-            mergedCol = [idx for idx, keep in zip(mergedCol, intersecting) if keep]
+        if sort:
+            reindex = []
+            for i in range(onIdxR):
+                reindex.append(i + leftFtCount)
+            reindex.append(onIdxL)
+            # rightFtCount ignores on value, so add 1
+            for i in range(onIdxR + 1, rightFtCount + 1):
+                reindex.append(i + rightFtCount)
+            for i in range(onIdxL):
+                reindex.append(i)
+            for i in range(onIdxL + 1, rightFtCount + 1):
+                reindex.append(i)
+
+        if sort:
+            mergedCol = [reindex.index(i) for i in mergedCol]
 
         numFts = leftFtCount + rightFtCount
-        print(numFts)
         if onFeature is None:
             numFts = numFts - 1
         if len(mergedData) == 0:
             mergedData = []
-        print(len(mergedData))
-        print(len(mergedRow))
-        print(len(mergedCol))
-        print(coo_matrix((mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts)).todense())
 
         return Sparse(coo_matrix((mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts)))
 
