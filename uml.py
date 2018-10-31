@@ -13,7 +13,6 @@ import os
 import copy
 import six.moves.configparser
 import math
-import cloudpickle
 
 import UML
 from UML.exceptions import ArgumentException, PackageException
@@ -49,6 +48,7 @@ from UML.calculate import detectBestResult
 import six
 from six.moves import range
 from six.moves import zip
+cloudpickle = UML.importModule('cloudpickle')
 scipy = UML.importModule('scipy.sparse')
 
 UMLPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -1185,6 +1185,9 @@ def loadData(inputPath):
 
     Expected file extension '.umld'.
     """
+    if not cloudpickle:
+        msg = "To load UML objects, cloudpickle must be installed"
+        raise PackageException(msg)
     if not inputPath.endswith('.umld'):
         raise ArgumentException('file extension for a saved UML data object should be .umld')
     with open(inputPath, 'rb') as file:
@@ -1203,11 +1206,14 @@ def loadTrainedLearner(inputPath):
 
     Expected file extension '.umlm'.
     """
+    if not cloudpickle:
+        msg = "To load UML models, cloudpickle must be installed"
+        raise PackageException(msg)
     if not inputPath.endswith('.umlm'):
         raise ArgumentException('File extension for a saved UML model should be .umlm')
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
-    if not isinstance(ret, UML.interfaces.universal_interface.UniversalInterface.TrainedLearner):
+    if not isinstance(ret, UML.interfaces.universal_interface.TrainedLearner):
         raise ArgumentException('File does not contain a UML valid trainedLearner Object.')
     return ret
 
