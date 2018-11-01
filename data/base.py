@@ -3686,6 +3686,7 @@ class Base(object):
         """
         TODO
         """
+        print(point, feature)
         if point == 'strict' or feature == 'strict':
             return self._genericStrictMerge_implementation(other, point, feature, onFeature)
         else:

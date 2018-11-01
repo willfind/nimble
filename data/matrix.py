@@ -679,11 +679,11 @@ class Matrix(Base):
                 left = selfArr
                 right = otherArr
             elif not uniqueFtR and (feature == "intersection" or feature == "left"):
+                # flip so unique is on the right
                 sort = True
                 ptIdxMatch = []
                 ptIdxL = []
                 ptIdxR = []
-                # flip so unique is on the right
                 onIdxLoc = matchingFtIdx[1].index(other.getFeatureIndex(onFeature))
                 onIdxL = onIdxLoc
                 onIdxR = onIdxLoc
@@ -768,7 +768,8 @@ class Matrix(Base):
         unmatchedPtCountR = right.shape[1] - len(matchingFtIdx[1])
         mapper = {right[i, onIdxR]: right[i] for i in range(right.shape[0])}
 
-        for idx, row in enumerate(left):
+        idx = 0
+        for row in left:
             target = row[onIdxL]
             if target in mapper:
                 ptL = row
@@ -782,7 +783,7 @@ class Matrix(Base):
                     msg = "The objects contain different values for the same feature"
                     raise ArgumentException(msg)
                 if len(nansL) > 0:
-                    # fill any nan values in left with the corresponding
+                    # fill any nan values in left with the corresponding right value
                     for i, value in enumerate(ptL[matchingFtIdx[0]]):
                         if value != value:
                             ptL[matchingFtIdx[0]][i] = ptR[matchingFtIdx[1]][i]
@@ -791,6 +792,7 @@ class Matrix(Base):
                 if sort:
                     pt = pt[reindex]
                     ptIdxMatch.append(idx)
+                idx += 1
                 merged.append(pt)
                 matched.append(target)
             elif point == 'union' or (point == 'left' and not sort):
@@ -800,9 +802,10 @@ class Matrix(Base):
                 if sort:
                     pt = pt[reindex]
                     ptIdxL.append(idx)
+                idx += 1
                 merged.append(pt)
 
-        if (point=="left" and sort) or point == 'union':
+        if point == 'union' or (point=="left" and sort):
             notMatchingR = [i for i in range(right.shape[1]) if i not in matchingFtIdx[1]]
             idx = 0
             for row in right:
@@ -819,13 +822,19 @@ class Matrix(Base):
 
         if sort and point != 'left':
             # sort point order to match left object
-            currentIdx = [i for i in range(len(merged))]
-            lastIdxFlipped = 0
+            ptIdxAll = [i for i in range(len(merged))]
+            flipCount = 0
             for l, r in zip(ptIdxL, ptIdxR):
-                currentIdx[l], currentIdx[r] = r, l
-                lastIdxFlipped += l
-            currentIdx[len(ptIdxMatch) + lastIdxFlipped:] = ptIdxL
-            merged = [merged[i] for i in currentIdx]
+                ptIdxAll[l], ptIdxAll[r] = r, l
+                flipCount += 1
+            # all matching points and swapped points from original left object
+            ptIdxAll = ptIdxAll[:len(ptIdxMatch) + flipCount]
+            # additional unmatched points from original left object
+            if len(ptIdxR) > flipCount:
+                ptIdxAll.extend(ptIdxR[flipCount:])
+            # points from original right object
+            ptIdxAll.extend(ptIdxL)
+            merged = [merged[i] for i in ptIdxAll]
 
         if len(merged) == 0 and onFeature is None:
             merged = numpy.empty((0, left.shape[1] + unmatchedPtCountR - 1))

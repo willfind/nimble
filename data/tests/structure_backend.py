@@ -8753,8 +8753,8 @@ class StructureModifying(StructureShared):
         pIntersection_fUnion = mLargest[:4, :]
         pIntersection_fIntersection = mLargest[:4, "id"]
         pIntersection_fLeft = mLargest[:4, ["id", "f1", "f2"]]
-        pLeft_fUnion = mLargest[:4, :]
-        pLeft_fIntersection = mLargest[:4, "id"]
+        pLeft_fUnion = mLargest[:5, :]
+        pLeft_fIntersection = mLargest[:5, "id"]
 
         expected = [
             pUnion_fUnion, pUnion_fIntersection, pUnion_fLeft,
@@ -8793,7 +8793,7 @@ class StructureModifying(StructureShared):
 
         self.merge_backend(right, expected, on="id")
 
-    def test_merge_onFeature_sharedIds_newFeatures_duplicate(self):
+    def test_merge_onFeature_sharedIds_newFeatures_duplicate_mixedOrder(self):
         dataL = [["id1", "a", 1], ["id3", "c", 3], ["id6", "f", 6]]
         dataR = [["id2", "w", 9], ["id3", "v", 8], ["id4", "x", 7], ["id4", "y", 6], ["id5", "z", 5]]
         fNamesR = ["id", "f3", "f4"]
@@ -8801,12 +8801,30 @@ class StructureModifying(StructureShared):
         right = self.constructor(dataR, featureNames=fNamesR)
 
         mData = [["id1", "a", 1, None, None], ["id3", "c", 3, "v", 8],
-                 ["id6", "f", 6, None, None],["id2", "b", 2, "w", 9],
+                 ["id6", "f", 6, None, None],["id2", None, None, "w", 9],
                  ["id4", None, None, "x", 7], ["id4", None, None, "y", 6], ["id5", None, None, "z", 5]]
         mFtNames = ["id", "f1", "f2", "f3", "f4"]
         mLargest = self.constructor(mData, featureNames=mFtNames)
 
         merged = left.merge(right, point='union', feature='union', onFeature="id")
+        assert merged == mLargest
+
+    def test_merge_onFeature_sharedIds_newFeatures_duplicate_differentMatchIdx(self):
+        dataL = [["id1", "a", 1], ["id3", "c", 3], ["id6", "f", 6], ["id7", "g", 7]]
+        dataR = [["id3", "v", 8], ["id4", "x", 7], ["id4", "y", 6]]
+        fNamesR = ["id", "f3", "f4"]
+        left = self.constructor(dataL, featureNames=["id", "f1", "f2"])
+        right = self.constructor(dataR, featureNames=fNamesR)
+
+        mData = [["id1", "a", 1, None, None], ["id3", "c", 3, "v", 8],
+                 ["id6", "f", 6, None, None],["id7", "g", 7, None, None],
+                 ["id4", None, None, "x", 7], ["id4", None, None, "y", 6]]
+        mFtNames = ["id", "f1", "f2", "f3", "f4"]
+        mLargest = self.constructor(mData, featureNames=mFtNames)
+
+        merged = left.merge(right, point='union', feature='union', onFeature="id")
+        print(merged)
+        print(mLargest)
         assert merged == mLargest
 
     def test_merge_onFeature_sameIds_sameFeatures_duplicate(self):
