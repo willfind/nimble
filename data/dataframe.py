@@ -263,8 +263,13 @@ class DataFrame(Base):
             tmp1 = self.data.values
             tmp2 = other.data.values
             np.testing.assert_equal(tmp1, tmp2)
-        except AssertionError:
-            return False
+        except AssertionError as e:
+            for i in range(self.points):
+                for j in range(self.features):
+                    sVal = self.data.iloc[i,j]
+                    oVal = other.data.iloc[i,j]
+                    if sVal != oVal and sVal == sVal:
+                        return False
         return True
 
     def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):

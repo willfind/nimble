@@ -3746,119 +3746,6 @@ class Base(object):
 
         return tempSelf._genericMergeFrontend(tempOther, point, feature, onFeature)
 
-
-
-
-        # hasFtNamesL = not self._allDefaultFeatureNames()
-        # hasFtNamesR = not other._allDefaultFeatureNames()
-        # tempSelf = self.copy()
-        # tempOther = other.copy()
-        # matching = []
-        #
-        # # should we have getPoints() and getFeatures() functions?
-        # def getSlice(axis, obj, idx):
-        #     if axis == 'point':
-        #         return obj[idx, :]
-        #     else:
-        #         return obj[:, idx]
-        #
-        # if point == 'strict' and feature == 'strict':
-        #     msg = 'Both point and feature cannot be strict'
-        #     raise ArgumentException(msg)
-        #
-        # elif point == 'strict':
-        #     axis = 'point'
-        #     oppAxis = 'feature'
-        #     if self.points != other.points:
-        #         msg = "Both objects must have the same number of points "
-        #         msg += "when points='strict'"
-        #         raise ArgumentException(msg)
-        #     if hasFtNamesL and hasFtNamesR:
-        #         matching = tempSelf._getMatchingNames(oppAxis, other)
-        #     elif feature == 'intersection':
-        #         msg = "Cannot find {0} intersection without {0} names".format(oppAxis)
-        #         raise ArgumentException(msg)
-        #     checkAxisL = sorted(tempSelf.getPointNames()) if hasFtNamesL else False
-        #     checkAxisR = sorted(tempOther.getPointNames()) if hasFtNamesR else False
-        #     # when strict, we assume the names match the other object if names missing
-        #     if checkAxisL != checkAxisR:
-        #         if checkAxisL:
-        #             tempOther.setPointNames(tempSelf.getPointNames())
-        #             checkAxisR = sorted(tempOther.getPointNames())
-        #         else:
-        #             tempSelf.setPointNames(tempOther.getPointNames())
-        #             checkAxisL = sorted(tempSelf.getPointNames())
-        #     sortOther = tempOther.sortPoints
-        #     setOtherNames = tempOther.setPointNames
-        #     deleteOther = tempOther.deleteFeatures
-        #     appendSelf = tempSelf.addFeatures
-        # else:
-        #     axis = 'feature'
-        #     oppAxis = 'point'
-        #     # if onFeature:
-        #     #     msg = "onFeature must be None when feature='strict'"
-        #     #     raise ArgumentException(msg)
-        #     if self.features != other.features:
-        #         msg = "Both objects must have the same number of features "
-        #         msg += "when features='strict'"
-        #         raise ArgumentException(msg)
-        #     if hasPtNamesL and hasPtNamesR:
-        #         matching = tempSelf._getMatchingNames(oppAxis, other)
-        #     elif point == 'intersection':
-        #         msg = "Cannot find {0} intersection without {0} names".format(oppAxis)
-        #         raise ArgumentException(msg)
-        #     checkAxisL = sorted(tempSelf.getFeatureNames()) if hasFtNamesL else False
-        #     checkAxisR = sorted(tempOther.getFeatureNames()) if hasFtNamesR else False
-        #     # when strict, we assume the names match the other object if names missing
-        #     if (checkAxisL and not checkAxisR) or (not checkAxisL and checkAxisR):
-        #         if checkAxisL:
-        #             tempOther.setFeatureNames(tempSelf.getFeatureNames())
-        #             checkAxisR = sorted(tempOther.getFeatureNames())
-        #         else:
-        #             tempSelf.setFeatureNames(tempOther.getFeatureNames())
-        #             checkAxisL = sorted(tempSelf.getFeatureNames())
-        #     sortOther = tempOther.sortFeatures
-        #     setOtherNames= tempOther.setFeatureNames
-        #     deleteOther = tempOther.deletePoints
-        #     appendSelf = tempSelf.addPoints
-        #
-        # if onFeature is None:
-        #     # check both have point names or neither have point names
-        #     if (checkAxisL and checkAxisR) and (checkAxisL != checkAxisR):
-        #         msg = "{0} names do not match between objects".format(axis.capitalize())
-        #         raise ArgumentException(msg)
-        #     if checkAxisR:
-        #         sortOther(sortHelper=tempSelf._getAxisNames(axis))
-        #     for name in matching:
-        #         if getSlice(oppAxis, tempSelf, name) != getSlice(oppAxis, tempOther, name):
-        #             msg = "The {0} '{1}' is in both ".format(oppAxis, name)
-        #             msg += "objects, but they contain different data"
-        #             raise ArgumentException(msg)
-        #
-        # elif points='strict':
-        #     # onFeature only available when points='strict'
-        #     # ignoring point names when using onFeature
-        #     tempOther.sortPoints(sortBy=onFeature)
-        #     tempSelf.setPointNames()
-        #     tempOther.setPointNames()
-        #     if onFeature not in matching:
-        #         msg = "onFeature must be a feature name in both objects"
-        #         raise ArgumentException(msg)
-        #     if len(set(tempSelf[:, onFeature])) != len(tempSelf[:, onFeature]):
-        #         msg = "Each point must have a unique value at feature "
-        #         msg += "'{0}' when points='strict'".format(onFeature)
-        #         raise ArgumentException(msg)
-        #     if tempSelf[:, onFeature] != tempOther[:, onFeature]:
-        #         msg = "Each point must have a single, matching value at "
-        #         msg += "feature '{0}' when points='strict'".format(onFeature)
-        #         raise ArgumentException(msg)
-        # deleteOther(matching)
-        # appendSelf(tempOther)
-        # if point == 'intersection' or feature == 'intersection':
-        #     tempSelf = getSlice(oppAxis, tempSelf, matching)
-        #
-        # return tempSelf
-
     def _genericMergeFrontend(self, other, point, feature, onFeature):
         # when won't this work?
           # if onFeature is None and no point names exist
@@ -3868,10 +3755,18 @@ class Base(object):
         # allow index (integer) as onFeature???
 
         # validation
+        if (onFeature is None and point == "intersection") and not (self._pointNamesCreated() and other._pointNamesCreated()):
+            msg = "Point names are required in both objects when "
+            msg += "point='intersection'"
+            raise ArgumentException(msg)
+        if feature == "intersection" and not (self._featureNamesCreated() and other._featureNamesCreated()):
+            msg = "Feature names are required in both objects when "
+            msg += "feature='intersection'"
+            raise ArgumentException(msg)
+        defaultPtsL = self._anyDefaultPointNames() and not self._allDefaultPointNames()
+        defaultPtsR = other._anyDefaultPointNames() and not other._allDefaultPointNames()
         if onFeature is None:
             # TODO could remove and treat default as new point
-            defaultPtsL = self._anyDefaultPointNames() and not self._allDefaultPointNames()
-            defaultPtsR = other._anyDefaultPointNames() and not other._allDefaultPointNames()
             if defaultPtsL or defaultPtsR:
                 msg = "Cannot perform the merge when default "
                 msg += "point names are present"
@@ -3882,11 +3777,6 @@ class Base(object):
             if not (uniqueFtL or uniqueFtR):
                 msg = "UML only supports joining on a feature which "
                 msg += "contains only unique values in one or both objects."
-                raise ArgumentException(msg)
-            if point == 'left' and not uniqueFtR:
-                msg = "Cannot perform join. onFeature in the other object "
-                msg += "must contain only one possible matching value "
-                msg += "for each onFeature value in this object"
                 raise ArgumentException(msg)
 
         matchingFts = self._getMatchingNames('feature', other)
@@ -3910,8 +3800,20 @@ class Base(object):
                 right = self
             ret = left._genericMerge_implementation(right, point, onFeature)
 
-        if feature == "intersection" and not self.getFeatureName(0).startswith('_STRICT_'):
+        if feature == "left":
+            ret.setFeatureNames(self.getFeatureNames())
+        elif feature == "intersection" and not self.getFeatureName(0).startswith('_STRICT_'):
             ftNames = self[:, matchingFts].getFeatureNames()
+            ret.setFeatureNames(ftNames)
+        elif self._featureNamesCreated() and not other._featureNamesCreated():
+            ftNamesL = self.getFeatureNames()
+            ftNamesR = [DEFAULT_PREFIX + str(i) for i in range(other.features)]
+            ftNames = ftNamesL + ftNamesR
+            ret.setFeatureNames(ftNames)
+        elif other._featureNamesCreated() and not self._featureNamesCreated():
+            ftNamesL = [DEFAULT_PREFIX + str(i) for i in range(self.features)]
+            ftNamesR = other.getFeatureNames()
+            ftNames = ftNamesL + ftNamesR
             ret.setFeatureNames(ftNames)
         elif not self.getFeatureName(0).startswith('_STRICT_'):
             ftNamesL = self.getFeatureNames()
@@ -3919,12 +3821,14 @@ class Base(object):
             ftNames = ftNamesL + ftNamesR
             ret.setFeatureNames(ftNames)
 
-        if onFeature is None and point == 'union':
+        if onFeature is None and point == 'left':
+            ret.setPointNames(self.getPointNames())
+        elif onFeature is None and point == 'union':
             ptNamesL = self.getPointNames()
-            if self._allDefaultPointNames():
-                ptNamesR = [self._nextDefaultName('point') for _ in range(other.points)]
-            else:
+            if other._pointNamesCreated():
                 ptNamesR = [name for name in other.getPointNames() if name not in ptNamesL]
+            else:
+                ptNamesR = [self._nextDefaultName('point') for _ in range(other.points)]
             ptNames = ptNamesL + ptNamesR
             ret.setPointNames(ptNames)
         elif onFeature is None:
@@ -4020,15 +3924,19 @@ class Base(object):
         return UML.createData(self.getTypeString(), merged)
 
     def _getMatchingNames(self, axis, other):
+        matches = []
         if axis == 'point':
+            if not self._pointNamesCreated() or not other._pointNamesCreated():
+                return matches
             selfNames = self.getPointNames()
             otherNames = other.getPointNames()
         else:
+            if not self._featureNamesCreated() or not other._featureNamesCreated():
+                return matches
             selfNames = self.getFeatureNames()
             otherNames = other.getFeatureNames()
         allNames = selfNames + otherNames
         hasMatching = len(set(allNames)) != len(allNames)
-        matches = []
         if hasMatching:
             for name in selfNames:
                 if name in otherNames:

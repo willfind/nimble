@@ -281,14 +281,16 @@ class Matrix(Base):
         if self.features != other.features:
             return False
         try:
-            numpy.testing.assert_array_equal(self.data, other.data)
-        except AssertionError:
-            for i in range(self.points):
-                for j in range(self.features):
-                    sVal = self.data[i,j]
-                    oVal = other.data[i,j]
-                    if sVal != oVal and sVal == sVal:
-                        return False
+        #     numpy.testing.assert_array_equal(self.data, other.data)
+        # except AssertionError:
+            checkPos = self.data != other.data
+
+            testS = numpy.array(self.data[checkPos], dtype=numpy.float_)
+            testO = numpy.array(self.data[checkPos], dtype=numpy.float_)
+            return numpy.isnan(testS).all() and numpy.isnan(testO).all()
+        except Exception:
+            return False
+
         return True
 
     def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
@@ -658,26 +660,47 @@ class Matrix(Base):
         sort = False
         if onFeature:
             uniqueFtR = len(set(other[:, onFeature])) == other.points
-            if uniqueFtR and feature == "intersection":
+            if uniqueFtR and (feature == "intersection" or feature == "left"):
                 onIdxLoc = matchingFtIdx[0].index(self.getFeatureIndex(onFeature))
                 onIdxL = onIdxLoc
                 onIdxR = onIdxLoc
-                left = selfArr[:, matchingFtIdx[0]]
                 right = otherArr[:, matchingFtIdx[1]]
+                # matching indices in right were sorted when slicing above
+                matchingFtIdx[1] = list(range(right.shape[1]))
+                if feature == "intersection":
+                    left = selfArr[:, matchingFtIdx[0]]
+                    # matching indices in left were sorted when slicing above
+                    matchingFtIdx[0] = list(range(left.shape[1]))
+                else:
+                    left = selfArr
             elif uniqueFtR:
                 onIdxL = self.getFeatureIndex(onFeature)
                 onIdxR = other.getFeatureIndex(onFeature)
                 left = selfArr
                 right = otherArr
-            elif not uniqueFtR and feature == "intersection":
+            elif not uniqueFtR and (feature == "intersection" or feature == "left"):
+                sort = True
+                ptIdxMatch = []
+                ptIdxL = []
+                ptIdxR = []
                 # flip so unique is on the right
                 onIdxLoc = matchingFtIdx[1].index(other.getFeatureIndex(onFeature))
                 onIdxL = onIdxLoc
                 onIdxR = onIdxLoc
                 left = otherArr[:, matchingFtIdx[1]]
-                right = selfArr[:, matchingFtIdx[0]]
+                matchingFtIdx[1] = list(range(left.shape[1]))
+                if feature == "intersection":
+                    right = selfArr[:, matchingFtIdx[0]]
+                    matchingFtIdx[0] = list(range(right.shape[1]))
+                else:
+                    right = selfArr
+                # adjust matchingFtIdx lists
+                matchingFtIdx = list(reversed(matchingFtIdx))
             else:
                 sort = True
+                ptIdxMatch = []
+                ptIdxL = []
+                ptIdxR = []
                 onIdxL = other.getFeatureIndex(onFeature)
                 onIdxR = self.getFeatureIndex(onFeature)
                 left = otherArr
@@ -687,73 +710,101 @@ class Matrix(Base):
             # using pointNames, prepend pointNames to left and right arrays
             onIdxL = 0
             onIdxR = 0
-            ptsL = numpy.array(self.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
-            ptsR = numpy.array(other.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
+            if self._pointNamesCreated():
+                ptsL = numpy.array(self.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
+            else:
+                defNames = [DEFAULT_PREFIX + str(i) for i in range(self.points)]
+                ptsL = numpy.array(defNames, dtype=numpy.object_).reshape(-1, 1)
+            if other._pointNamesCreated():
+                ptsR = numpy.array(other.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
+            else:
+                defNames = [DEFAULT_PREFIX + str(i) for i in range(other.points)]
+                ptsR = numpy.array(defNames, dtype=numpy.object_).reshape(-1, 1)
             if feature == "intersection":
                 left = numpy.concatenate((ptsL, selfArr[:, matchingFtIdx[0]]), axis=1)
                 right = numpy.concatenate((ptsR, otherArr[:, matchingFtIdx[1]]), axis=1)
+                # matching indices were sorted when slicing above
+                # this also accounts for prepended column
+                matchingFtIdx[0] = list(range(left.shape[1]))
+                matchingFtIdx[1] = matchingFtIdx[0]
+            elif feature == "left":
+                left = numpy.concatenate((ptsL, selfArr), axis=1)
+                right = numpy.concatenate((ptsR, otherArr[:, matchingFtIdx[1]]), axis=1)
+                # account for new column in matchingFtIdx
+                matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+                matchingFtIdx[0].insert(0, 0)
+                # matching indices were sorted when slicing above
+                # this also accounts for prepended column
+                matchingFtIdx[1] = list(range(right.shape[1]))
             else:
                 left = numpy.concatenate((ptsL, selfArr), axis=1)
                 right = numpy.concatenate((ptsR, otherArr), axis=1)
-            matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
-            matchingFtIdx[0].insert(0, 0)
-            matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
-            matchingFtIdx[1].insert(0, 0)
-
-        if feature == "intersection":
-            # features were sorted above so they are matched by index
-            matchingFtIdx[0] = list(range(left.shape[1]))
-            matchingFtIdx[1] = matchingFtIdx[0]
+                # account for new column in matchingFtIdx
+                matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
+                matchingFtIdx[0].insert(0, 0)
+                matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
+                matchingFtIdx[1].insert(0, 0)
 
         if sort:
-            reindex = []
-            for i in range(onIdxR):
-                reindex.append(i + left.shape[1])
-            reindex.append(onIdxL)
-            for i in range(onIdxR, left.shape[1] - 1):
-                reindex.append(i + right.shape[1])
-            for i in range(onIdxL):
-                reindex.append(i)
-            for i in range(onIdxL + 1 , right.shape[1]):
-                reindex.append(i)
+            # feature sorting order to match left object
+            reindex = list(range(left.shape[1] + right.shape[1]))
+            for i in range(right.shape[1]):
+                reindex[i] = i + left.shape[1]
+            for i in range(left.shape[1]):
+                reindex[i + right.shape[1]] = i
+            for l, r in zip(matchingFtIdx[0], matchingFtIdx[1]):
+                l = l + right.shape[1]
+                reindex[l], reindex[r] = reindex[r], reindex[l]
+            # reset index values before remove the unused indices
+            reindex = numpy.array(reindex)
+            remove = list(map(lambda x: x + right.shape[1], matchingFtIdx[0]))
+            for idx in remove:
+                idxVal = reindex[idx]
+                reindex[reindex > idxVal] = reindex[reindex > idxVal] - 1
+            reindex = numpy.delete(reindex, remove)
 
         matched = []
         merged = []
         unmatchedPtCountR = right.shape[1] - len(matchingFtIdx[1])
         mapper = {right[i, onIdxR]: right[i] for i in range(right.shape[0])}
-        for row in left:
+
+        for idx, row in enumerate(left):
             target = row[onIdxL]
-            # if onFeature is None and target.startswith(DEFAULT_PREFIX):
-            #     # treat default point names as new point
-            #     target = None
             if target in mapper:
                 ptL = row
                 ptR = mapper[target]
                 # check for conflicts between matching features
                 matches = ptL[matchingFtIdx[0]] == ptR[matchingFtIdx[1]]
                 nansL = numpy.array([x != x for x in ptL[matchingFtIdx[0]]])
-                nansR = numpy.array([x != x for x in ptR[matchingFtIdx[0]]])
+                nansR = numpy.array([x != x for x in ptR[matchingFtIdx[1]]])
                 acceptableValues = matches + nansL + nansR
                 if not all(acceptableValues):
                     msg = "The objects contain different values for the same feature"
                     raise ArgumentException(msg)
-                else:
-                    ptR = numpy.delete(ptR, matchingFtIdx[1])
+                if len(nansL) > 0:
+                    # fill any nan values in left with the corresponding
+                    for i, value in enumerate(ptL[matchingFtIdx[0]]):
+                        if value != value:
+                            ptL[matchingFtIdx[0]][i] = ptR[matchingFtIdx[1]][i]
+                ptR = numpy.delete(ptR, matchingFtIdx[1])
                 pt = numpy.concatenate((ptL, ptR)).flatten()
                 if sort:
                     pt = pt[reindex]
+                    ptIdxMatch.append(idx)
                 merged.append(pt)
                 matched.append(target)
-            elif point == 'left' or point == 'union':
+            elif point == 'union' or (point == 'left' and not sort):
                 ptL = row.reshape(1, -1)
                 ptR = numpy.ones((1, unmatchedPtCountR)) * numpy.nan
                 pt = numpy.append(ptL, ptR)
                 if sort:
                     pt = pt[reindex]
+                    ptIdxL.append(idx)
                 merged.append(pt)
 
-        if point == 'union':
+        if (point=="left" and sort) or point == 'union':
             notMatchingR = [i for i in range(right.shape[1]) if i not in matchingFtIdx[1]]
+            idx = 0
             for row in right:
                 target = row[onIdxR]
                 if target not in matched:
@@ -762,7 +813,19 @@ class Matrix(Base):
                     pt[left.shape[1]:] = row[notMatchingR]
                     if sort:
                         pt = pt[reindex]
+                        ptIdxR.append(idx + left.shape[0])
+                    idx += 1
                     merged.append(pt)
+
+        if sort and point != 'left':
+            # sort point order to match left object
+            currentIdx = [i for i in range(len(merged))]
+            lastIdxFlipped = 0
+            for l, r in zip(ptIdxL, ptIdxR):
+                currentIdx[l], currentIdx[r] = r, l
+                lastIdxFlipped += l
+            currentIdx[len(ptIdxMatch) + lastIdxFlipped:] = ptIdxL
+            merged = [merged[i] for i in currentIdx]
 
         if len(merged) == 0 and onFeature is None:
             merged = numpy.empty((0, left.shape[1] + unmatchedPtCountR - 1))
