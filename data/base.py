@@ -1571,6 +1571,7 @@ class Base(object):
         if not cloudpickle:
             msg = "To save UML objects, cloudpickle must be installed"
             raise PackageException(msg)
+
         extension = '.umld'
         if not outputPath.endswith(extension):
             outputPath = outputPath + extension
@@ -2589,8 +2590,8 @@ class Base(object):
         across the space of possible points.
 
         """
-        ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
-                                              number, randomize)
+        ret = self._genericStructuralFrontend('extract', 'point', toExtract,
+                                              start, end, number, randomize)
 
         ret.setFeatureNames(self.getFeatureNames())
         self._adjustCountAndNames('point', ret)
@@ -2630,8 +2631,8 @@ class Base(object):
         across the space of possible features.
 
         """
-        ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
-                                              number, randomize)
+        ret = self._genericStructuralFrontend('extract', 'feature', toExtract,
+                                              start, end, number, randomize)
 
         ret.setPointNames(self.getPointNames())
         self._adjustCountAndNames('feature', ret)
@@ -2669,7 +2670,10 @@ class Base(object):
         across the space of possible points.
 
         """
-        ret = self.extractPoints(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
+        ret = self._genericStructuralFrontend('delete', 'point', toDelete,
+                                              start, end, number, randomize)
+        self._adjustCountAndNames('point', ret)
+        self.validate()
 
 
     def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
@@ -2698,7 +2702,10 @@ class Base(object):
         across the space of possible features.
 
         """
-        ret = self.extractFeatures(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
+        ret = self._genericStructuralFrontend('delete', 'feature', toDelete,
+                                              start, end, number, randomize)
+        self._adjustCountAndNames('feature', ret)
+        self.validate()
 
 
     def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
@@ -2727,7 +2734,15 @@ class Base(object):
         across the space of possible points.
 
         """
-        self._retain_implementation('retain', 'point', toRetain, start, end, number, randomize)
+        ref = self._genericStructuralFrontend('retain', 'point', toRetain,
+                                              start, end, number, randomize)
+        ref.setFeatureNames(self.getFeatureNames())
+        ref._relPath = self.relativePath
+        ref._absPath = self.absolutePath
+
+        self.referenceDataFrom(ref)
+
+        self.validate()
 
 
     def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
@@ -2756,107 +2771,16 @@ class Base(object):
         across the space of possible features.
 
         """
-        self._retain_implementation('retain', 'feature', toRetain, start, end, number, randomize)
+        ref = self._genericStructuralFrontend('retain', 'feature', toRetain,
+                                              start, end, number, randomize)
+        ref.setPointNames(self.getPointNames())
 
+        ref._relPath = self.relativePath
+        ref._absPath = self.absolutePath
 
-    def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
-        """Generic retaining function for retainPoints or retainFeatures. The complements
-        of toRetain are identified to use the extract backend, this is done within this
-        implementation except when toRetain is a function which is complemented within
-        the next helper function
+        self.referenceDataFrom(ref)
 
-        """
-        if axis == 'point':
-            hasName = self.hasPointName
-            getNames = self.getPointNames
-            axisLength = self.points
-            sortValues = self.sortPoints
-        else:
-            hasName = self.hasFeatureName
-            getNames = self.getFeatureNames
-            axisLength = self.features
-            sortValues = self.sortFeatures
-
-        self._validateStructuralArguments(structure, axis, toRetain, start, end,
-                                          number, randomize)
-        # will use number and randomize as necessary here unless toRetain is
-        # a function where it will be handled in _genericStructuralFrontend
-        passNumber = None
-        passRandomize = False
-
-        # generic exception message if number is too large
-        msg = "The value for 'number', {0}, ".format(number)
-        msg += "is greater than the number of {0}s ".format(axis)
-
-        # extract points not in toRetain
-        if toRetain is not None:
-            if isinstance(toRetain, six.string_types):
-                if hasName(toRetain):
-                    toExtract = [value for value in getNames() if value != toRetain]
-                else:
-                    # toRetain is a function passed as a string
-                    toExtract = toRetain
-                    passNumber = number
-                    passRandomize = randomize
-
-            elif isinstance(toRetain, (int, numpy.integer)):
-                toExtract = [value for value in range(axisLength) if value != toRetain]
-
-            # list-like container objects
-            elif not hasattr(toRetain, '__call__'):
-                # toRetain is other container type or range() in python3
-                toRetain = self._constructIndicesList(axis, toRetain, 'toRetain')
-                if number and number > len(toRetain):
-                    msg += "to retain, {0}".format(len(toRetain))
-                    raise ArgumentException(msg)
-                if randomize:
-                    toRetain = pythonRandom.sample(toRetain, number)
-                elif number:
-                    toRetain = toRetain[:number]
-                toExtract = [value for value in range(axisLength) if value not in toRetain]
-                # change the index order of the values to match toRetain
-                if not randomize:
-                    reindex = toRetain + toExtract
-                    sortValues(sortHelper=reindex)
-                    # extract any values after the toRetain values
-                    extractValues = range(len(toRetain), axisLength)
-                    toExtract = list(extractValues)
-
-            # toRetain is a function
-            else:
-                toExtract = toRetain
-                passNumber = number
-                passRandomize = randomize
-
-        # extract points not in start to end range
-        elif start is not None or end is not None:
-            start = 0 if start is None else self._getIndex(start, axis)
-            end = axisLength - 1 if end is None else self._getIndex(end, axis)
-            self._validateStartEndRange(start, end, axisLength)
-            toRetain = [value for value in range(start, end + 1)]
-            if number and number > len(toRetain):
-                msg += "to retain, {0}".format(len(toRetain))
-                raise ArgumentException(msg)
-            if randomize:
-                toRetain = pythonRandom.sample(toRetain, number)
-            elif number:
-                toRetain = toRetain[:number]
-            toExtract = [value for value in range(axisLength) if value not in toRetain]
-
-        # extract points after number
-        else:
-            allIndexes = [i for i in range(axisLength)]
-            if number > len(allIndexes):
-                raise ArgumentException(msg)
-            if randomize:
-                toRetain = pythonRandom.sample(allIndexes, number)
-            else:
-                toRetain = allIndexes[:number]
-            toExtract = [value for value in range(axisLength) if value not in toRetain]
-
-        ret = self._genericStructuralFrontend('retain', axis, target=toExtract,
-                                              number=passNumber, randomize=passRandomize)
-        self._adjustCountAndNames(axis, ret)
+        self.validate()
 
 
     def countPoints(self, condition):
@@ -4283,15 +4207,17 @@ class Base(object):
                 # if axis=feature and target is not a feature name,
                 # then check if it's a valid query string
                 else:
-                    optrDict = {'<=': operator.le, '>=': operator.ge, '!=': operator.ne, '==': operator.eq, \
-                                        '=': operator.eq, '<': operator.lt, '>': operator.gt}
+                    optrDict = {'<=': operator.le, '>=': operator.ge,
+                                '!=': operator.ne, '==': operator.eq,
+                                '<': operator.lt, '>': operator.gt}
                     for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
                         if optr in target:
                             targetList = target.split(optr)
                             optr = '==' if optr == '=' else optr
                             #after splitting at the optr, 2 items must be in the list
                             if len(targetList) != 2:
-                                msg = "the target(%s) is a query string but there is an error" % target
+                                msg = "the target({0}) is a ".format(target)
+                                msg += "query string but there is an error"
                                 raise ArgumentException(msg)
                             nameOfFeatureOrPoint, valueOfFeatureOrPoint = targetList
                             nameOfFeatureOrPoint = nameOfFeatureOrPoint.strip()
@@ -4300,8 +4226,8 @@ class Base(object):
                             #when axis=point, check if the feature exists or not
                             #when axis=feature, check if the point exists or not
                             if not hasNameChecker2(nameOfFeatureOrPoint):
-                                msg = "the %s %s doesn't exist" % (
-                                'feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
+                                msg = "the {0} '{1}' doesn't exist".format(
+                                  'feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
                                 raise ArgumentException(msg)
 
                             optrOperator = optrDict[optr]
@@ -4320,49 +4246,22 @@ class Base(object):
                             target_f.optr = optrOperator
                             target = target_f
                             break
-                    #if the target can't be converted to a function
-                    if isinstance(target, six.string_types):
-                        try:
-                            target = self._constructIndicesList(axis, target)
-                        except ArgumentException:
-                            argName = 'to' + structure.capitalize()
-                            msg = '{0} '.format(argName)
-                            msg += 'is not a valid point name nor a valid query string'
-                            raise ArgumentException(msg)
+                    # the target can't be converted to a function
+                    else:
+                        msg = "'{0}' is not a valid ".format(target)
+                        msg += '{0} name nor a valid query string'.format(axis)
+                        raise ArgumentException(msg)
             # list-like container types
             if not hasattr(target, '__call__'):
                 argName = 'to' + structure.capitalize()
                 targetList = self._constructIndicesList(axis, target, argName)
             # boolean function
             else:
-                if structure == 'retain':
-                    targetFunction = target
-                    def complement(*args):
-                        return not targetFunction(*args)
-                    target = complement
                 # construct list from function
                 targetList = []
-                if structure == 'retain':
-                    keepList = []
                 for targetID, view in enumerate(viewIterator()):
                     if target(view):
                         targetList.append(targetID)
-                    elif structure == 'retain':
-                        keepList.append(targetID)
-                # add additional indexes to targetList if not keeping every
-                # index from returned function
-                if structure == 'retain' and number is not None:
-                    addBack = len(keepList) - number
-                    if addBack > 0:
-                        if randomize:
-                            pythonRandom.shuffle(keepList)
-                        for i in range(addBack):
-                            targetList.append(keepList[-i])
-                    elif addBack < 0:
-                        msg = "The value for 'number' ({0}) ".format(number)
-                        msg += "is greater than the number of {0}s ".format(axis)
-                        msg += "to retain ({0})".format(len(keepList))
-                        raise ArgumentException(msg)
 
         elif start is not None or end is not None:
             start = 0 if start is None else self._getIndex(start, axis)
@@ -4375,7 +4274,7 @@ class Base(object):
         else:
             targetList = [value for value in range(axisLength)]
 
-        if number and structure != 'retain':
+        if number:
             if number > len(targetList):
                 msg = "The value for 'number' ({0}) ".format(number)
                 msg += "is greater than the number of {0}s ".format(axis)
@@ -5296,7 +5195,7 @@ class Base(object):
         try:
             indicesList = [self._getIndex(val, axis) for val in valuesList]
         except ArgumentException as ae:
-            msg = "Invalid index value for the argument '{0}'. ".format(argName)
+            msg = "Invalid value for the argument '{0}'. ".format(argName)
             # add more detail to msg; slicing to exclude quotes
             msg += str(ae)[1:-1]
             raise ArgumentException(msg)
