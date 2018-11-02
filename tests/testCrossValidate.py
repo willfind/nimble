@@ -137,7 +137,7 @@ def test_crossValidate_reasonable_results():
     assert result < .001
 
     index = X.features
-    X.appendFeatures(Y)
+    X.addFeatures(Y)
     result = crossValidate(regressionAlgo, X, index, meanAbsoluteError, {}, numFolds=5)
     #assert error essentially zero since there's no noise
     assert result < .001
@@ -177,7 +177,7 @@ def test_crossValidate_2d_api_check():
 
     index = X.features
     combined = X.copy()
-    combined.appendFeatures(Y)
+    combined.addFeatures(Y)
     combined.setFeatureNames(['X1', 'X2', 'X3', 'Y1', 'Y2'])
     result = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, numFolds=5)
     #assert error essentially zero since there's no noise

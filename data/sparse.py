@@ -158,44 +158,85 @@ class Sparse(Base):
         toPlot = self.copyAs("Matrix")
         return toPlot._plot(outPath, includeColorbar)
 
-    def _appendPoints_implementation(self, toAppend):
+    def _addPoints_implementation(self, toAdd, insertBefore):
         """
-        Append the points from the toAppend object to the bottom of the features in this object
+        Insert the points from the toAdd object below the provided index in
+        this object, the remaining points from this object will continue below
+        the inserted points
 
         """
-        newData = numpy.append(self.data.data, toAppend.data.data)
-        newRow = numpy.append(self.data.row, toAppend.data.row)
-        newCol = numpy.append(self.data.col, toAppend.data.col)
-
-        # correct the row entries
-        offset = self.points
-        toAdd = numpy.ones(len(newData) - len(self.data.data), dtype=newRow.dtype) * offset
-        newRow[len(self.data.data):] += toAdd
-
-        numNewRows = self.points + toAppend.points
+        self._sortInternal('point')
+        newData = []
+        newRow = []
+        newCol = []
+        # add original data until insert location
+        for i, row in enumerate(self.data.row):
+            if row < insertBefore:
+                newRow.append(row)
+                newCol.append(self.data.col[i])
+                newData.append(self.data.data[i])
+            else:
+                break
+        splitLength = len(newRow)
+        # add inserted data with adjusted row
+        for i, row in enumerate(toAdd.data.row):
+            newRow.append(row + insertBefore)
+            newCol.append(toAdd.data.col[i])
+            newData.append(toAdd.data.data[i])
+        # add remaining original data with adjusted row
+        for i, row in enumerate(self.data.row[splitLength:]):
+            newRow.append(row + toAdd.points)
+            newCol.append(self.data.col[splitLength:][i])
+            newData.append(self.data.data[splitLength:][i])
+        # handle conflicts between original dtype and inserted data
+        try:
+            newData = numpy.array(newData, dtype=self.data.dtype)
+        except ValueError:
+            newData = numpy.array(newData, dtype=numpy.object_)
+        numNewRows = self.points + toAdd.points
         self.data = coo_matrix((newData, (newRow, newCol)), shape=(numNewRows, self.features))
-        if self._sorted == 'feature':
-            self._sorted = None
+        self._sorted = None
 
 
-    def _appendFeatures_implementation(self, toAppend):
+    def _addFeatures_implementation(self, toAdd, insertBefore):
         """
-        Append the features from the toAppend object to right ends of the points in this object
+        Insert the features from the toAdd object to the right of the
+        provided index in this object, the remaining points from this object
+        will continue to the right of the inserted points
 
         """
-        newData = numpy.append(self.data.data, toAppend.data.data)
-        newRow = numpy.append(self.data.row, toAppend.data.row)
-        newCol = numpy.append(self.data.col, toAppend.data.col)
+        self._sortInternal('feature')
+        newData = []
+        newRow = []
+        newCol = []
+        # add original data until insert location
+        for i, col in enumerate(self.data.col):
+            if col < insertBefore:
+                newRow.append(self.data.row[i])
+                newCol.append(col)
+                newData.append(self.data.data[i])
+            else:
+                break
+        # add inserted data with adjusted col
+        splitLength = len(newCol)
+        for i, col in enumerate(toAdd.data.col):
+            newRow.append(toAdd.data.row[i])
+            newCol.append(col + insertBefore)
+            newData.append(toAdd.data.data[i])
+        # add remaining original data with adjusted col
+        for i, col in enumerate(self.data.col[splitLength:]):
+            newRow.append(self.data.row[splitLength:][i])
+            newCol.append(col + toAdd.features)
+            newData.append(self.data.data[splitLength:][i])
+        # handle conflicts between original dtype and inserted data
+        try:
+            newData = numpy.array(newData, dtype=self.data.dtype)
+        except ValueError:
+            newData = numpy.array(newData, dtype=numpy.object_)
 
-        # correct the col entries
-        offset = self.features
-        toAdd = numpy.ones(len(newData) - len(self.data.data), dtype=newCol.dtype) * offset
-        newCol[len(self.data.data):] += toAdd
-
-        numNewCols = self.features + toAppend.features
+        numNewCols = self.features + toAdd.features
         self.data = coo_matrix((newData, (newRow, newCol)), shape=(self.points, numNewCols))
-        if self._sorted == 'point':
-            self._sorted = None
+        self._sorted = None
 
 
     def _sortPoints_implementation(self, sortBy, sortHelper):
@@ -670,7 +711,11 @@ class Sparse(Base):
             preserveZeros = False
         # all data
         if preserveZeros and points is None and features is None:
-            data = function(data)
+            try:
+                data = function(data)
+            except Exception:
+                function.otypes = [numpy.object_]
+                data = function(data)
             values = coo_matrix((data, (row, col)), shape=self.data.shape)
             # note: even if function transforms nonzero values into zeros
             # our init methods will filter them out from the data attribute
@@ -1173,7 +1218,6 @@ class Sparse(Base):
 
             return SparseView(**kwds)
 
-
     def _validate_implementation(self, level):
         assert self.data.shape[0] == self.points
         assert self.data.shape[1] == self.features
@@ -1198,8 +1242,6 @@ class Sparse(Base):
 
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
-
-
 
     def _containsZero_implementation(self):
         """
@@ -1658,11 +1700,16 @@ class SparseView(BaseView, Sparse):
         return GenericIt()
 
     def _copyAs_implementation(self, format):
-
         if self.points == 0 or self.features == 0:
             emptyStandin = numpy.empty((self.points, self.features))
             intermediate = UML.createData('Matrix', emptyStandin)
             return intermediate.copyAs(format)
+
+        if format == 'numpyarray':
+            pStart, pEnd = self._pStart, self._pEnd
+            fStart, fEnd = self._fStart, self._fEnd
+            limited = self._source.data.todense()[pStart:pEnd, fStart:fEnd]
+            return numpy.array(limited)
 
         limited = self._source.copyPoints(start=self._pStart, end=self._pEnd - 1)
         limited = limited.copyFeatures(start=self._fStart, end=self._fEnd - 1)

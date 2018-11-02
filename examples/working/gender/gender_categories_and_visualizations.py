@@ -157,7 +157,7 @@ def loadResponseData(path):
     responses = responses.extractFeatures(start=firstQID, end=lastQID)
     responses = responses.copyAs("Matrix")
 
-    responses.appendFeatures(genderValue)
+    responses.addFeatures(genderValue)
 
 #   genderValue.show("gender", maxWidth=120, maxHeight=30, nameLength=15)
 #   responses.show("Qs", maxWidth=120, maxHeight=30, nameLength=15)
@@ -397,7 +397,7 @@ def determineBestSubScores(namesByCategory, categoriesByQName, responses, gender
 
                 qDat = responses.copyFeatures(q)
                 uDat = responses.copyFeatures(u)
-                qDat.appendFeatures(uDat)
+                qDat.addFeatures(uDat)
                 corr = qDat.featureSimilarities("correlation")
                 qToQ.append(abs(corr[0,1]))
 
@@ -603,7 +603,7 @@ def printSelectedCategoryCorrelationMatrix(responses, gender, selected, categori
         if collected is None:
             collected = sub
         else:
-            collected.appendFeatures(sub)
+            collected.addFeatures(sub)
     
     if partialCorr:
         residuals_collected = residuals(collected, gender)
@@ -627,7 +627,7 @@ def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selecte
     collectedF = None
 
     resposnsesSafe = responses.copy()
-    resposnsesSafe.appendFeatures(gender)
+    resposnsesSafe.addFeatures(gender)
     males = resposnsesSafe.extractPoints(lambda x: x['male0female1'] == 0)
     females = resposnsesSafe
 
@@ -643,12 +643,12 @@ def printSelectedCategoryPartialCorrelationGenderDiff(responses, gender, selecte
         if collectedM is None:
             collectedM = subM
         else:
-            collectedM.appendFeatures(subM)
+            collectedM.addFeatures(subM)
 
         if collectedF is None:
             collectedF = subF
         else:
-            collectedF.appendFeatures(subF)
+            collectedF.addFeatures(subF)
 
     corrsM = collectedM.featureSimilarities('correlation')
     corrsF = collectedF.featureSimilarities('correlation')
@@ -699,7 +699,7 @@ def printSelectedQuestionCorrelationMatrix(responses, selected, outFile=None):
             if collected is None:
                 collected = sub
             else:
-                collected.appendFeatures(sub)
+                collected.addFeatures(sub)
     
     corrs = collected.featureSimilarities('correlation')
 #   corrs.show("Selected Question Correlation Matrix", maxHeight=None, maxWidth=None, nameLength=25)
@@ -714,14 +714,14 @@ def printSelectedQuestionToSelectedCategoryCorrelation(responses, selected, cate
         for qName in qs:
             q = responses.copyFeatures(qName)
 
-            q.appendFeatures(sub)
+            q.addFeatures(sub)
             corr = q.featureSimilarities("correlation")
             corr.setPointName(0, qName)
             corr.setFeatureName(1, 'Q to Cat Corr')
             corr = corr.view(0,0,1,1)
             if collected is None:
                 collected = UML.createData("Matrix", [], featureNames=['Q to Cat Corr'])
-            collected.appendPoints(corr)
+            collected.addPoints(corr)
 
     collected = abs(collected)
 #   collected.show("Selected Question To Category Correlation", maxHeight=None, maxWidth=None, nameLength=50)
@@ -738,7 +738,7 @@ def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, catego
         q1 = -q1 if categoriesByQName[qName1,1] == 'male' else q1
         q2 = -q2 if categoriesByQName[qName2,1] == 'male' else q2
 
-        q1.appendFeatures(q2)
+        q1.addFeatures(q2)
         qs = q1
         corr = qs.featureSimilarities("correlation")
         corr.setPointName(0, category)
@@ -746,7 +746,7 @@ def printQuestionToQuestionInSameCategoryCorrelation(responses, selected, catego
         corr = corr.view(0,0,1,1)           
         if collected is None:
             collected = UML.createData("Matrix", [], featureNames=['Q to Q in Same Cat Corr'])
-        collected.appendPoints(corr)
+        collected.addPoints(corr)
 
 #   collected = abs(collected)
 #   collected.show("Selected Question To Category Correlation", maxHeight=None, maxWidth=None, nameLength=50)
@@ -766,7 +766,7 @@ def outputFile_selected_data(responses, categoriesByQName, selected, outPath):
             selectedNames.append(fname)
 
     selectedQs = selectedQs.extractFeatures(selectedNames)
-    selectedQs.appendFeatures(gender)
+    selectedQs.addFeatures(gender)
     selectedData = selectedQs
 
     if outPath is not None:
@@ -800,7 +800,7 @@ def outputFile_selected_and_transformed_data(responses, categoriesByQName, scale
 
 #   responsesOnly.pointView(0).show("AfterNorm", maxWidth=None)
 
-    responsesOnly.appendFeatures(gender)
+    responsesOnly.addFeatures(gender)
     transformedData = responsesOnly
 
     if outPath is not None:
@@ -808,7 +808,7 @@ def outputFile_selected_and_transformed_data(responses, categoriesByQName, scale
 
 
 def scoreToGenderCorrelation(scores, genders):
-    scores.appendFeatures(genders)
+    scores.addFeatures(genders)
     corr = scores.featureSimilarities("correlation")
     scores.extractFeatures(1)
     return corr[0,1]
@@ -860,7 +860,7 @@ def setupCategoryScaleTypes(categoriesByQName, selected, includeMale):
 
     if categoriesByQName.features == 3:
         categoriesByQName.extractFeatures('genderHigherAvgOfCat')
-    categoriesByQName.appendFeatures(catScaleFeature)
+    categoriesByQName.addFeatures(catScaleFeature)
 
     return ret
 
