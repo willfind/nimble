@@ -3559,17 +3559,6 @@ class Base(object):
         """
         if not isinstance(other, UML.data.Base):
             raise ArgumentException("'other' must be an instance of a UML data object")
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-        # test element type other
-        if other.points > 0:
-            for val in other.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
         if self.points != other.points:
             raise ArgumentException("The number of points in each object must be equal.")
@@ -3582,7 +3571,13 @@ class Base(object):
         self._validateEqualNames('point', 'point', 'elementwiseMultiply', other)
         self._validateEqualNames('feature', 'feature', 'elementwiseMultiply', other)
 
-        self._elementwiseMultiply_implementation(other)
+        try:
+            self._elementwiseMultiply_implementation(other)
+        except Exception as e:
+            #TODO: improve how the exception is catch
+            self._numericValidation()
+            other._numericValidation()
+            raise(e)
 
         (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
         self.setPointNames(retPNames)
@@ -3595,19 +3590,7 @@ class Base(object):
         if not singleValue and not isinstance(other, UML.data.Base):
             raise ArgumentException("'other' must be an instance of a UML data object or a single numeric value")
 
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-        # test element type other
         if isinstance(other, UML.data.Base):
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
             # same shape
             if self.points != other.points:
                 raise ArgumentException("The number of points in each object must be equal.")
@@ -3619,17 +3602,24 @@ class Base(object):
 
         if isinstance(other, UML.data.Base):
             def powFromRight(val, pnum, fnum):
-                return val ** other[pnum, fnum]
-
+                try:
+                    return val ** other[pnum, fnum]
+                except Exception as e:
+                    self._numericValidation()
+                    other._numericValidation()
+                    raise(e)
             self.transformEachElement(powFromRight)
         else:
             def powFromRight(val, pnum, fnum):
-                return val ** other
-
+                try:
+                    return val ** other
+                except Exception as e:
+                    self._numericValidation()
+                    other._numericValidation()
+                    raise(e)
             self.transformEachElement(powFromRight)
 
         self.validate()
-
 
     def __mul__(self, other):
         """
@@ -3640,24 +3630,14 @@ class Base(object):
         if not isinstance(other, UML.data.Base) and not dataHelpers._looksNumeric(other):
             return NotImplemented
 
+        # Test element type self
         if self.points == 0 or self.features == 0:
             raise ImproperActionException("Cannot do a multiplication when points or features is empty")
-
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
         # test element type other
         if isinstance(other, UML.data.Base):
             if other.points == 0 or other.features == 0:
                 raise ImproperActionException("Cannot do a multiplication when points or features is empty")
-
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
             if self.features != other.points:
                 raise ArgumentException("The number of features in the calling object must "
@@ -3665,11 +3645,19 @@ class Base(object):
 
             self._validateEqualNames('feature', 'point', '__mul__', other)
 
-        ret = self._mul__implementation(other)
+        try:
+            ret = self._mul__implementation(other)
+        except Exception as e:
+            #TODO: improve how the exception is catch
+            self._numericValidation()
+            other._numericValidation()
+            raise(e)
 
         if isinstance(other, UML.data.Base):
-            ret.setPointNames(self.getPointNames())
-            ret.setFeatureNames(other.getFeatureNames())
+            if self._pointNamesCreated():
+                ret.setPointNames(self.getPointNames())
+            if other._featureNamesCreated():
+                ret.setFeatureNames(other.getFeatureNames())
 
         pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
 
@@ -3865,8 +3853,14 @@ class Base(object):
         if other < 0:
             raise ArgumentException("other must be greater than zero")
 
-        retPNames = self.getPointNames()
-        retFNames = self.getFeatureNames()
+        if self._pointNamesCreated():
+            retPNames = self.getPointNames()
+        else:
+            retPNames = None
+        if self._featureNamesCreated():
+            retFNames = self.getFeatureNames()
+        else:
+            retFNames = None
 
         if other == 1:
             ret = self.copy()
@@ -3875,8 +3869,10 @@ class Base(object):
 
         # exact conditions in which we need to instantiate this object
         if other == 0 or other % 2 == 0:
+            identityPNames = 'automatic' if retPNames is None else retPNames
+            identityFNames = 'automatic' if retFNames is None else retFNames
             identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
-                                      pointNames=retPNames, featureNames=retFNames)
+                                      pointNames=identityPNames, featureNames=identityFNames)
         if other == 0:
             return identity
 
@@ -3938,13 +3934,39 @@ class Base(object):
     def __abs__(self):
         """ Perform element wise absolute value on this object """
         ret = self.calculateForEachElement(abs)
-        ret.setPointNames(self.getPointNames())
-        ret.setFeatureNames(self.getFeatureNames())
+        if self._pointNamesCreated():
+            ret.setPointNames(self.getPointNames())
+        else:
+            ret.setPointNames(None)
+        if self._featureNamesCreated():
+            ret.setFeatureNames(self.getFeatureNames())
+        else:
+            ret.setPointNames(None)
 
         ret._name = dataHelpers.nextDefaultObjectName()
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
         return ret
+
+    def _numericValidation(self):
+        if self.points > 0:
+            try:
+                self.calculateForEachElement(dataHelpers._checkNumeric)
+            except ValueError:
+                   raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+    def _genericNumericBinary_sizeValidation(self, opName, other):
+        if self.points != other.points:
+            msg = "The number of points in each object must be equal. "
+            msg += "(self=" + str(self.points) + " vs other="
+            msg += str(other.points) + ")"
+            raise ArgumentException(msg)
+        if self.features != other.features:
+            raise ArgumentException("The number of features in each object must be equal.")
+
+        if self.points == 0 or self.features == 0:
+            raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
+
 
     def _genericNumericBinary_validation(self, opName, other):
         isUML = isinstance(other, UML.data.Base)
@@ -3953,37 +3975,11 @@ class Base(object):
             raise ArgumentException("'other' must be an instance of a UML data object or a scalar")
 
         # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+        self._numericValidation()
 
         # test element type other
         if isUML:
-            if opName.startswith('__r'):
-                return NotImplemented
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-            if self.points != other.points:
-                msg = "The number of points in each object must be equal. "
-                msg += "(self=" + str(self.points) + " vs other="
-                msg += str(other.points) + ")"
-                raise ArgumentException(msg)
-            if self.features != other.features:
-                raise ArgumentException("The number of features in each object must be equal.")
-
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
-
-        # check name restrictions
-        if isUML:
-            if self._pointNamesCreated() and other._pointNamesCreated is not None:
-                self._validateEqualNames('point', 'point', opName, other)
-            if self._featureNamesCreated() and other._featureNamesCreated():
-                self._validateEqualNames('feature', 'feature', opName, other)
+            other._numericValidation()
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
                     '__itruediv__', '__floordiv__', '__rfloordiv__', '__ifloordiv__',
@@ -4002,12 +3998,18 @@ class Base(object):
                 msg += + "is zero"
                 raise ZeroDivisionError(msg)
 
+
     def _genericNumericBinary(self, opName, other):
-        ret = self._genericNumericBinary_validation(opName, other)
-        if ret == NotImplemented:
-            return ret
 
         isUML = isinstance(other, UML.data.Base)
+
+        if isUML:
+            if opName.startswith('__r'):
+                return NotImplemented
+            
+            self._genericNumericBinary_sizeValidation(opName, other)
+            self._validateEqualNames('point', 'point', opName, other)
+            self._validateEqualNames('feature', 'feature', opName, other)
 
         # figure out return obj's point / feature names
         # if unary:
@@ -4022,7 +4024,12 @@ class Base(object):
         else:
             (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
 
-        ret = self._genericNumericBinary_implementation(opName, other)
+        try:
+            ret = self._genericNumericBinary_implementation(opName, other)
+        except Exception as e:
+            self._genericNumericBinary_validation(opName, other)
+            raise(e)
+
 
         if retPNames is not None:
             ret.setPointNames(retPNames)
