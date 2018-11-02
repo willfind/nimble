@@ -654,7 +654,11 @@ class DataFrame(Base):
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
 
-        return DataFrameView(**kwds)
+        ret = DataFrameView(**kwds)
+        ret._updateName('point')
+        ret._updateName('feature')
+
+        return ret
 
     def _validate_implementation(self, level):
         shape = self.data.shape

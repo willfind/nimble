@@ -3990,18 +3990,10 @@ class Base(object):
 
         # exact conditions in which we need to instantiate this object
         if other == 0 or other % 2 == 0:
-            if retPNames and retFNames:
-                identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
-                                          pointNames=retPNames, featureNames=retFNames)
-            elif retPNames and not retFNames:
-                identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
-                                          pointNames=retPNames, featureNames='automatic')
-            elif not retPNames and retFNames:
-                identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
-                                          pointNames='automatic', featureNames=retFNames)
-            else:
-                identity = UML.createData(
-                    self.getTypeString(), numpy.eye(self.points))
+            identityPNames = 'automatic' if retPNames is None else retPNames
+            identityFNames = 'automatic' if retFNames is None else retFNames
+            identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
+                                      pointNames=identityPNames, featureNames=identityFNames)
         if other == 0:
             return identity
 
