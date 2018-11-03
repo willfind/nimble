@@ -640,23 +640,29 @@ class DataFrame(Base):
             point = 'outer'
         elif point == 'intersection':
             point = 'inner'
-        tmpDfL = self.data.astype(numpy.object_)
-        tmpDfL.columns = self.getFeatureNames()
-        tmpDfR = other.data.astype(numpy.object_)
-        tmpDfR.columns = other.getFeatureNames()
+        tmpDfL = self.data.copy()
+        if self._featureNamesCreated():
+            tmpDfL.columns = self.getFeatureNames()
+        tmpDfR = other.data.copy()
+        if other._featureNamesCreated():
+            tmpDfR.columns = other.getFeatureNames()
 
         if feature == 'intersection':
             tmpDfL = tmpDfL.iloc[:, matchingFtIdx[0]]
             tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
             matchingFtIdx[0] = list(range(tmpDfL.shape[1]))
             matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
+        elif feature == "left":
+            tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
+            matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
 
         if onFeature is None:
-            tmpDfL.index = self.getPointNames()
-            if self._allDefaultPointNames() and other._allDefaultPointNames():
-                tmpDfR.index = ['_' + name for name in other.getPointNames()]
-            else:
+            if self._pointNamesCreated():
+                tmpDfL.index = self.getPointNames()
+            if other._pointNamesCreated():
                 tmpDfR.index = other.getPointNames()
+            else:
+                tmpDfR.index = [i for i in range(self.points, self.points + other.points)]
             merged = tmpDfL.merge(tmpDfR, how=point, left_index=True, right_index=True)
             merged.reset_index(drop=True, inplace=True)
             merged.columns = range(merged.shape[1])
@@ -687,7 +693,7 @@ class DataFrame(Base):
                 merged.iloc[:, l][nansL] = merged.iloc[:, r][nansL]
                 toDrop.append(r)
         merged.drop(toDrop, axis=1, inplace=True)
-
+    
         return DataFrame(merged)
 
 

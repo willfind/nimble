@@ -25,6 +25,7 @@ from . import dataHelpers
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import DEFAULT_PREFIX
 
 from UML.exceptions import ImproperActionException
 from UML.exceptions import PackageException
@@ -1267,97 +1268,38 @@ class Sparse(Base):
                 raise ImproperActionException('self._sorted is not either point nor feature.')
 
     def _merge_implementation(self, other, point, feature, onFeature, matchingFtIdx):
-        sort = False
+        leftFtCount = self.features
+        rightFtCount = other.features - len(matchingFtIdx[0])
         if onFeature:
-            uniqueFtR = len(set(other[:, onFeature])) == other.points
-            if uniqueFtR and feature == "intersection":
-                onIdxL = self.getFeatureIndex(onFeature)
-                onIdxR = other.getFeatureIndex(onFeature)
-                leftFtCount = len(matchingFtIdx[0])
-                keepDataL = numpy.isin(self.data.col, matchingFtIdx[0])
-                leftData = self.data.data[keepDataL]
-                leftRow = self.data.row[keepDataL]
-                leftCol = self.data.col[keepDataL]
-                # no additional features will be present in right
-                rightFtCount = 0
-                keepDataR = numpy.isin(other.data.col, matchingFtIdx[1])
-                rightData = other.data.data[keepDataR]
-                rightRow = other.data.row[keepDataR]
-                rightCol = other.data.col[keepDataR]
-
-            elif uniqueFtR:
-                onIdxL = self.getFeatureIndex(onFeature)
-                onIdxR = other.getFeatureIndex(onFeature)
-                leftFtCount = self.features
-                leftData = self.data.data.copy()
-                leftRow = self.data.row.copy()
-                leftCol = self.data.col.copy()
-                rightFtCount = other.features - len(matchingFtIdx[1])
-                rightData = other.data.data.copy()
-                rightRow = other.data.row.copy()
-                rightCol = other.data.col.copy()
-                numFts = self.features + other.features - len(matchingFtIdx[1])
-
-            elif not uniqueFtR and feature == "intersection":
-                onIdxL = other.getFeatureIndex(onFeature)
-                onIdxR = self.getFeatureIndex(onFeature)
-                leftFtCount = len(matchingFtIdx[0])
-                keepDataL = numpy.isin(other.data.col, matchingFtIdx[1])
-                leftData = other.data.data[keepDataL]
-                leftRow = other.data.row[keepDataL]
-                leftCol = other.data.col[keepDataL]
-                # no additional features will be present in right
-                rightFtCount = 0
-                keepDataR = numpy.isin(self.data.col, matchingFtIdx[0])
-                rightData = self.data.data[keepDataR]
-                rightRow = self.data.row[keepDataR]
-                rightCol = self.data.col[keepDataR]
-                matchingFtIdx = [matchingFtIdx[1], matchingFtIdx[0]]
-
-            else:
-                # flip so unique is on the right, will be sorted after in Base
-                sort = True
-                onIdxL = other.getFeatureIndex(onFeature)
-                onIdxR = self.getFeatureIndex(onFeature)
-                leftFtCount = other.features
-                leftData = other.data.data.copy()
-                leftRow = other.data.row.copy()
-                leftCol = other.data.col.copy()
-                rightFtCount = self.features - len(matchingFtIdx[1])
-                rightData = self.data.data.copy()
-                rightRow = self.data.row.copy()
-                rightCol = self.data.col.copy()
-                matchingFtIdx = [matchingFtIdx[1], matchingFtIdx[0]]
+            onIdxL = self.getFeatureIndex(onFeature)
+            onIdxR = other.getFeatureIndex(onFeature)
+            leftData = self.data.data.copy()
+            leftRow = self.data.row.copy()
+            leftCol = self.data.col.copy()
+            rightData = other.data.data.copy()
+            rightRow = other.data.row.copy()
+            rightCol = other.data.col.copy()
         else:
-            # using pointNames, prepend pointNames to left and right arrays
             onIdxL = 0
             onIdxR = 0
-            leftFtCount = self.features + 1
             leftData = self.data.data.copy().astype(numpy.object_)
-            leftData = numpy.append([self.getPointNames()], leftData)
+            if self._pointNamesCreated():
+                leftData = numpy.append([self.getPointNames()], leftData)
+            else:
+                leftData = numpy.append([DEFAULT_PREFIX + str(i) for i in range(self.points)], leftData)
             leftRow = numpy.append([i for i in range(self.points)], self.data.row.copy())
             leftCol = numpy.append([0 for i in range(self.points)], self.data.col.copy() + 1)
-            rightFtCount = other.features - len(matchingFtIdx[1])
             rightData = other.data.data.copy().astype(numpy.object_)
-            rightData = numpy.append([other.getPointNames()], rightData)
+            if other._pointNamesCreated():
+                rightData = numpy.append([other.getPointNames()], rightData)
+            else:
+                rightData = numpy.append([DEFAULT_PREFIX + str(i) for i in range(self.points, self.points + other.points)], rightData)
             rightRow = numpy.append([i for i in range(other.points)], other.data.row.copy())
             rightCol = numpy.append([0 for i in range(other.points)], other.data.col.copy() + 1)
             matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
             matchingFtIdx[0].insert(0, 0)
             matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
             matchingFtIdx[1].insert(0, 0)
-            if feature == "intersection":
-                leftFtCount = len(matchingFtIdx[0])
-                keepDataL = numpy.isin(leftCol, matchingFtIdx[0])
-                leftData = leftData[keepDataL]
-                leftRow = leftRow[keepDataL]
-                leftCol = leftCol[keepDataL]
-                # no additional features will be present in right
-                rightFtCount = 0
-                keepDataR = numpy.isin(rightCol, matchingFtIdx[1])
-                rightData = rightData[keepDataR]
-                rightRow = rightRow[keepDataR]
-                rightCol = rightCol[keepDataR]
 
         mergedData = numpy.empty((0,0), dtype=numpy.object_)
         mergedRow = []
@@ -1367,78 +1309,91 @@ class Sparse(Base):
         numPts = 0
         for ptIdxL, target in enumerate(leftData[leftCol == onIdxL]):
             rowIdxR = numpy.where(rightData[rightCol == onIdxR] == target)[0]
-            # len(rowIdxR) will be 0 if no matches
             if len(rowIdxR) > 0:
-                ptIdxR = rowIdxR[0]
-                if onFeature:
+                for ptIdxR in rowIdxR:
                     ptL = leftData[leftRow == ptIdxL]
-                else:
-                    ptL = leftData[leftRow == ptIdxL][1:]
-                for ftIdxL, ftIdxR in zip(matchingFtIdx[0], matchingFtIdx[1]):
-                    matchL = leftData[(leftRow == ptIdxL) & (leftCol == ftIdxL)]
-                    matchR = rightData[(rightRow == ptIdxR) & (rightCol == ftIdxR)]
-                    matches = matchL == matchR
-                    nansL = matchL != matchL
-                    nansR = matchR != matchR
+                    ptR = rightData[rightRow == ptIdxR]
+                    matches = ptL[matchingFtIdx[0]] == ptR[matchingFtIdx[1]]
+                    nansL = ptL[matchingFtIdx[0]] != ptL[matchingFtIdx[0]]
+                    nansR = ptR[matchingFtIdx[1]] != ptR[matchingFtIdx[1]]
                     acceptableValues = matches + nansL + nansR
                     if not all(acceptableValues):
                         msg = "The objects contain different values for the same feature"
                         raise ArgumentException(msg)
-                ptR = rightData[(rightRow == ptIdxR) & (numpy.in1d(rightCol, matchingFtIdx[1], invert=True))]
-                matched.append(target)
-            elif point == 'left' or point == 'union':
+                    if len(nansL) > 0:
+                        # fill any nan values in left with the corresponding right value
+                        for i, value in enumerate(ptL[matchingFtIdx[0]]):
+                            if value != value:
+                                ptL[matchingFtIdx[0]][i] = ptR[matchingFtIdx[1]][i]
+                    ptR = ptR[[i for i in range(len(ptR)) if i not in matchingFtIdx[1]]]
+                    pt = numpy.append(ptL, ptR)
+                    if feature == "intersection":
+                        pt = pt[matchingFtIdx[0]]
+                    elif onFeature and feature == "left":
+                        pt = pt[:self.features]
+                    elif feature == "left":
+                        pt = pt[:self.features + 1]
+                    if onFeature is None:
+                        pt = pt[1:]
+                    matched.append(target)
+                    mergedData = numpy.append(mergedData, pt)
+                    mergedRow.extend([nextPt] * len(pt))
+                    mergedCol.extend([i for i in range(len(pt))])
+                    nextPt += 1
+                    numPts += 1
+            elif point == "union" or point == "left":
+                ptL = leftData[leftRow == ptIdxL]
                 if onFeature:
-                    ptL = leftData[leftRow == ptIdxL]
-                    ptR = [numpy.nan] * rightFtCount
+                    ptR = [numpy.nan] * (other.features - len(matchingFtIdx[1]))
                 else:
-                    ptL = leftData[leftRow == ptIdxL][1:]
-                    ptR = [numpy.nan] * rightFtCount
-            else:
-                # don't append any data for intersection
-                continue
-            pt = numpy.append(ptL, ptR)
-            mergedData = numpy.append(mergedData, pt)
-            mergedRow.extend([nextPt] * len(pt))
-            mergedCol.extend([i for i in range(len(pt))])
-            nextPt += 1
-            numPts += 1
-
+                    ptR = [numpy.nan] * (other.features - len(matchingFtIdx[1]) + 1)
+                pt = numpy.append(ptL, ptR)
+                if feature == "intersection":
+                    pt = pt[matchingFtIdx[0]]
+                elif onFeature and feature == "left":
+                    pt = pt[:self.features]
+                elif feature == "left":
+                    pt = pt[:self.features + 1]
+                if onFeature is None:
+                    pt = pt[1:]
+                mergedData = numpy.append(mergedData, pt)
+                mergedRow.extend([nextPt] * len(pt))
+                mergedCol.extend([i for i in range(len(pt))])
+                nextPt += 1
+                numPts += 1
         if point == 'union':
             for ptIdxR, target in enumerate(rightData[rightCol == onIdxR]):
                 if target not in matched:
-                    ptL = numpy.array([numpy.nan] * leftFtCount, dtype=numpy.object_)
+                    if onFeature:
+                        ptL = numpy.array([numpy.nan] * self.features, dtype=numpy.object_)
+                    else:
+                        ptL = numpy.array([numpy.nan] * (self.features + 1), dtype=numpy.object_)
                     ptL[matchingFtIdx[0]] = rightData[(rightRow == ptIdxR)][matchingFtIdx[1]]
                     # only unmatched points from right
                     ptR = rightData[(rightRow == ptIdxR) & (numpy.in1d(rightCol, matchingFtIdx[1], invert=True))]
-                    if onFeature is None:
-                        # account for pointNames added
-                        ptL = ptL[1:]
                     pt = numpy.append(ptL, ptR)
+                    if feature == "intersection":
+                        pt = pt[matchingFtIdx[0]]
+                    elif onFeature and feature == "left":
+                        pt = pt[:self.features]
+                    elif feature == "left":
+                        pt = pt[:self.features + 1]
+                    if onFeature is None:
+                        # remove pointNames column added
+                        pt = pt[1:]
                     mergedData = numpy.append(mergedData, pt)
                     mergedRow.extend([nextPt] * len(pt))
                     mergedCol.extend([i for i in range(len(pt))])
                     nextPt += 1
                     numPts += 1
 
-        if sort:
-            reindex = []
-            for i in range(onIdxR):
-                reindex.append(i + leftFtCount)
-            reindex.append(onIdxL)
-            # rightFtCount ignores on value, so add 1
-            for i in range(onIdxR + 1, rightFtCount + 1):
-                reindex.append(i + rightFtCount)
-            for i in range(onIdxL):
-                reindex.append(i)
-            for i in range(onIdxL + 1, rightFtCount + 1):
-                reindex.append(i)
-
-        if sort:
-            mergedCol = [reindex.index(i) for i in mergedCol]
-
         numFts = leftFtCount + rightFtCount
-        if onFeature is None:
-            numFts = numFts - 1
+        if onFeature and feature == "intersection":
+            numFts = len(matchingFtIdx[0])
+        elif feature == "intersection":
+            numFts = len(matchingFtIdx[0]) - 1
+        elif feature == "left":
+            numFts = self.features
         if len(mergedData) == 0:
             mergedData = []
 

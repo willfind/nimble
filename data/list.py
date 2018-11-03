@@ -759,10 +759,8 @@ class List(Base):
         self._numFeatures = numFeatures
 
     def _merge_implementation(self, other, point, feature, onFeature, matchingFtIdx):
-        sort = False
         if onFeature:
-            uniqueFtR = len(set(other[:, onFeature])) == other.points
-            if uniqueFtR and (feature == "intersection" or feature == "left"):
+            if feature == "intersection" or feature == "left":
                 onIdxLoc = matchingFtIdx[0].index(self.getFeatureIndex(onFeature))
                 onIdxL = onIdxLoc
                 onIdxR = onIdxLoc
@@ -775,39 +773,11 @@ class List(Base):
                     matchingFtIdx[0] = list(range(len(left[0])))
                 else:
                     left = copy.copy(self.data)
-            elif uniqueFtR:
+            else:
                 onIdxL = self.getFeatureIndex(onFeature)
                 onIdxR = other.getFeatureIndex(onFeature)
                 left = copy.copy(self.data)
                 right = copy.copy(other.data)
-            elif not uniqueFtR and (feature == "intersection" or feature == "left"):
-                # flip so unique is on the right
-                sort = True
-                ptIdxMatch = []
-                ptIdxL = []
-                ptIdxR = []
-                onIdxLoc = matchingFtIdx[1].index(other.getFeatureIndex(onFeature))
-                onIdxL = onIdxLoc
-                onIdxR = onIdxLoc
-                left = [[row[i] for i in matchingFtIdx[1]] for row in other.data]
-                matchingFtIdx[1] = list(range(len(left[0])))
-                if feature == "intersection":
-                    right = [[row[i] for i in matchingFtIdx[0]] for row in self.data]
-                    matchingFtIdx[0] = list(range(len(right[0])))
-                else:
-                    right = copy.copy(self.data)
-                # adjust matchingFtIdx lists
-                matchingFtIdx = list(reversed(matchingFtIdx))
-            else:
-                sort = True
-                ptIdxMatch = []
-                ptIdxL = []
-                ptIdxR = []
-                onIdxL = other.getFeatureIndex(onFeature)
-                onIdxR = self.getFeatureIndex(onFeature)
-                left = copy.copy(other.data)
-                right = copy.copy(self.data)
-                matchingFtIdx = [matchingFtIdx[1], matchingFtIdx[0]]
         else:
             # using pointNames, prepend pointNames to left and right lists
             onIdxL = 0
@@ -819,7 +789,7 @@ class List(Base):
                 if pt._pointNamesCreated():
                     return pt.getPointName(0)
                 else:
-                    return DEFAULT_PREFIX + str(i)
+                    return DEFAULT_PREFIX + str(idx)
 
             if feature == "intersection":
                 for i, pt in enumerate(self.pointIterator()):
@@ -827,7 +797,7 @@ class List(Base):
                     ptL.extend([pt[i] for i in matchingFtIdx[0]])
                     left.append(ptL)
                 for i, pt in enumerate(other.pointIterator()):
-                    ptR = [ptNameGetter(pt, i)]
+                    ptR = [ptNameGetter(pt, i + self.points)]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
                 # matching indices were sorted above
@@ -840,7 +810,7 @@ class List(Base):
                     ptL.extend(list(pt))
                     left.append(ptL)
                 for i, pt in enumerate(other.pointIterator()):
-                    ptR = [ptNameGetter(pt, i)]
+                    ptR = [ptNameGetter(pt, i + self.points)]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
                 # account for new column in matchingFtIdx
@@ -855,7 +825,7 @@ class List(Base):
                     ptL.extend(list(pt))
                     left.append(ptL)
                 for i, pt in enumerate(other.pointIterator()):
-                    ptR = [ptNameGetter(pt, i)]
+                    ptR = [ptNameGetter(pt, i + self.points)]
                     ptR.extend(list(pt))
                     right.append(ptR)
                 matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
@@ -863,70 +833,46 @@ class List(Base):
                 matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
                 matchingFtIdx[1].insert(0, 0)
 
-        if sort:
-            # feature sorting order to match left object
-            reindex = list(range(len(left[0]) + len(right[0])))
-            for i in range(len(right[0])):
-                reindex[i] = i + len(left[0])
-            for i in range(len(left[0])):
-                reindex[i + len(right[0])] = i
-            for l, r in zip(matchingFtIdx[0], matchingFtIdx[1]):
-                l = l + len(right[0])
-                reindex[l], reindex[r] = reindex[r], reindex[l]
-            # reset index values before remove the unused indices
-            reindex = numpy.array(reindex)
-            remove = list(map(lambda x: x + len(right[0]), matchingFtIdx[0]))
-            for idx in remove:
-                idxVal = reindex[idx]
-                reindex[reindex > idxVal] = reindex[reindex > idxVal] - 1
-            reindex = numpy.delete(reindex, remove).tolist()
-
         matched = []
         merged = []
         unmatchedPtCountR = len(right[0]) - len(matchingFtIdx[1])
-        mapper = {}
+        matchMapper = {}
+        for pt in left:
+            match = [right[i] for i in range(len(right)) if right[i][onIdxR] == pt[onIdxL]]
+            if len(match) > 0:
+                matchMapper[pt[onIdxL]] = match
 
-        for i in range(len(right)):
-            values = right[i]
-            mapper[right[i][onIdxR]] = values
-
-        for idx, row in enumerate(left):
+        for row in left:
             target = row[onIdxL]
-            if target in mapper:
+            if target in matchMapper:
                 ptL = row
-                ptR = mapper[target]
-                # check for conflicts between matching features
-                matches = [ptL[i] == ptR[j] for i, j in zip(matchingFtIdx[0], matchingFtIdx[1])]
-                nansL = [ptL[i] != ptL[i] for i in matchingFtIdx[0]]
-                nansR = [ptR[j] != ptR[j] for j in matchingFtIdx[1]]
-                acceptableValues = [m + nL + nR for m, nL, nR in zip(matches, nansL, nansR)]
-                if not all(acceptableValues):
-                    msg = "The objects contain different values for the same feature"
-                    raise ArgumentException(msg)
-                if len(nansL) > 0:
-                    # fill any nan values in left with the corresponding right value
-                    for i, value in enumerate(ptL):
-                        if value != value and i in matchingFtIdx[0]:
-                            ptL[i] = ptR[matchingFtIdx[1][matchingFtIdx[0].index(i)]]
-                ptR = [ptR[i] for i in range(len(ptR)) if i not in matchingFtIdx[1]]
-                pt = ptL + ptR
-                if sort:
-                    pt = [pt[i] for i in reindex]
-                    ptIdxMatch.append(idx)
-                merged.append(pt)
+                matchesR = matchMapper[target]
+                for ptR in matchesR:
+                    # check for conflicts between matching features
+                    matches = [ptL[i] == ptR[j] for i, j in zip(matchingFtIdx[0], matchingFtIdx[1])]
+                    nansL = [ptL[i] != ptL[i] for i in matchingFtIdx[0]]
+                    nansR = [ptR[j] != ptR[j] for j in matchingFtIdx[1]]
+                    acceptableValues = [m + nL + nR for m, nL, nR in zip(matches, nansL, nansR)]
+                    if not all(acceptableValues):
+                        msg = "The objects contain different values for the same feature"
+                        raise ArgumentException(msg)
+                    if len(nansL) > 0:
+                        # fill any nan values in left with the corresponding right value
+                        for i, value in enumerate(ptL):
+                            if value != value and i in matchingFtIdx[0]:
+                                ptL[i] = ptR[matchingFtIdx[1][matchingFtIdx[0].index(i)]]
+                    ptR = [ptR[i] for i in range(len(ptR)) if i not in matchingFtIdx[1]]
+                    pt = ptL + ptR
+                    merged.append(pt)
                 matched.append(target)
-            elif point == 'union' or (point == 'left' and not sort):
+            elif point == 'union' or point == 'left':
                 ptL = row
                 ptR = [numpy.nan] * (len(right[0]) - len(matchingFtIdx[1]))
                 pt = ptL + ptR
-                if sort:
-                    pt = [pt[i] for i in reindex]
-                    ptIdxL.append(idx)
                 merged.append(pt)
 
-        if point == 'union' or (point=="left" and sort):
+        if point == 'union':
             notMatchingR = [i for i in range(len(right[0])) if i not in matchingFtIdx[1]]
-            idx = 0
             for row in right:
                 target = row[onIdxR]
                 if target not in matched:
@@ -934,27 +880,7 @@ class List(Base):
                     for i, j in zip (matchingFtIdx[0], matchingFtIdx[1]):
                         pt[i] = row[j]
                     pt[len(left[0]):] = [row[i] for i in range(len(right[0])) if i not in matchingFtIdx[1]]
-                    if sort:
-                        pt = [pt[i] for i in reindex]
-                        ptIdxR.append(idx + len(left))
-                    idx += 1
                     merged.append(pt)
-
-        if sort and point != 'left':
-            # sort point order to match left object
-            ptIdxAll = [i for i in range(len(merged))]
-            flipCount = 0
-            for l, r in zip(ptIdxL, ptIdxR):
-                ptIdxAll[l], ptIdxAll[r] = r, l
-                flipCount += 1
-            # all matching points and swapped points from original left object
-            ptIdxAll = ptIdxAll[:len(ptIdxMatch) + flipCount]
-            # additional unmatched points from original left object
-            if len(ptIdxR) > flipCount:
-                ptIdxAll.extend(ptIdxR[flipCount:])
-            # points from original right object
-            ptIdxAll.extend(ptIdxL)
-            merged = [merged[i] for i in ptIdxAll]
 
         if len(merged) == 0 and onFeature is None:
             merged = numpy.empty((0, len(left[0]) + unmatchedPtCountR - 1))

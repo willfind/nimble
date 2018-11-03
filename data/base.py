@@ -3686,7 +3686,6 @@ class Base(object):
         """
         TODO
         """
-        print(point, feature)
         if point == 'strict' or feature == 'strict':
             return self._genericStrictMerge_implementation(other, point, feature, onFeature)
         else:
@@ -3768,13 +3767,6 @@ class Base(object):
         return tempSelf._genericMergeFrontend(tempOther, point, feature, onFeature)
 
     def _genericMergeFrontend(self, other, point, feature, onFeature):
-        # when won't this work?
-          # if onFeature is None and no point names exist
-          # if onFeature is None and pointNames are default
-          # if onFeature is None and one of the features is not unique
-        # what to do if shared feature names???
-        # allow index (integer) as onFeature???
-
         # validation
         if (onFeature is None and point == "intersection") and not (self._pointNamesCreated() and other._pointNamesCreated()):
             msg = "Point names are required in both objects when "
@@ -3787,7 +3779,7 @@ class Base(object):
         defaultPtsL = self._anyDefaultPointNames() and not self._allDefaultPointNames()
         defaultPtsR = other._anyDefaultPointNames() and not other._allDefaultPointNames()
         if onFeature is None:
-            # TODO could remove and treat default as new point
+            # TODO could remove and treat default as new point?
             if defaultPtsL or defaultPtsR:
                 msg = "Cannot perform the merge when default "
                 msg += "point names are present"
@@ -3807,21 +3799,13 @@ class Base(object):
             idxR = other.getFeatureIndex(name)
             matchingFtIdx[0].append(idxL)
             matchingFtIdx[1].append(idxR)
-        # type implementations
-        if self.getTypeString() == other.getTypeString():
-            ret = self._merge_implementation(other, point, feature, onFeature, matchingFtIdx)
-        # generic implementation for mixed types
-        else:
-            sort = False
-            left = self
-            right = other
-            if onFeature and not uniqueFtR:
-                sort = True
-                left = other
-                right = self
-            ret = left._genericMerge_implementation(right, point, onFeature)
 
-        if feature == "left":
+        if self.getTypeString() != other.getTypeString():
+            other = other.copyAs(self.getTypeString())
+        ret = self._merge_implementation(other, point, feature, onFeature,
+                                         matchingFtIdx)
+
+        if feature == "left" and self._featureNamesCreated():
             ret.setFeatureNames(self.getFeatureNames())
         elif feature == "intersection" and not self.getFeatureName(0).startswith('_STRICT_'):
             ftNames = self[:, matchingFts].getFeatureNames()
@@ -3836,14 +3820,17 @@ class Base(object):
             ftNamesR = other.getFeatureNames()
             ftNames = ftNamesL + ftNamesR
             ret.setFeatureNames(ftNames)
-        elif not self.getFeatureName(0).startswith('_STRICT_'):
+        elif self._featureNamesCreated() and not self.getFeatureName(0).startswith('_STRICT_'):
             ftNamesL = self.getFeatureNames()
             ftNamesR = [name for name in other.getFeatureNames() if name not in matchingFts]
             ftNames = ftNamesL + ftNamesR
             ret.setFeatureNames(ftNames)
 
-        if onFeature is None and point == 'left':
-            ret.setPointNames(self.getPointNames())
+        if self.getPointName(0).startswith('_STRICT_'):
+            ret.setPointNames()
+        elif onFeature is None and point == 'left':
+            if self._pointNamesCreated():
+                ret.setPointNames(self.getPointNames())
         elif onFeature is None and point == 'union':
             ptNamesL = self.getPointNames()
             if other._pointNamesCreated():
@@ -3857,92 +3844,6 @@ class Base(object):
             ret.setPointNames(ptNames)
 
         return ret
-
-    def _genericMerge_implementation(self, other, method, onFeature):
-        matched = []
-        merged = []
-        if onFeature is None:
-            mapper = {p.getPointName(0): list(p) for p in other.pointIterator()}
-            missingR = [None] * other.features
-        else:
-            onIdx = self.getFeatureIndex(onFeature)
-            notOnR = [n for n in other.getFeatureNames() if n != onFeature]
-            mapper = {p[onFeature]: list(p[notOnR]) for p in other.pointIterator()}
-            missingR = [None] * (other.features - 1)
-
-        for pt in self.pointIterator():
-            on = pt[onFeature] if onFeature else pt.getPointName(0)
-            if on in mapper:
-                merged.append(list(pt) + mapper[on])
-                matched.append(on)
-            elif method == 'union' or method == 'self':
-                merged.append(list(pt) + missingR)
-        if method == 'union' and not onFeature:
-            missingL = [None] * self.features
-            for pt in other.pointIterator():
-                on = pt[onFeature] if onFeature else pt.getPointName(0)
-                if on not in matched:
-                    merged.append(missingL + list(pt))
-        elif method == 'union':
-            for pt in other.pointIterator():
-                on = pt[onFeature] if onFeature else pt.getPointName(0)
-                missingL = [None] * onIdx + [on] + [None] * (self.features - onIdx - 1)
-                if on not in matched:
-                    merged.append(missingL + list(pt[notOnR]))
-
-        # if sort:
-        #     onIdxL = self.getFeatureIndex(onFeature)
-        #     onIdxR = other.getFeatureIndex(onFeature)
-        #     reindex = []
-        #     for i in range(onIdxL):
-        #         reindex.append(i + other.features)
-        #     reindex.append(onIdxR)
-        #     for i in range(onIdxL, self.features - 1):
-        #         reindex.append(i + other.features)
-        #     for i in range(onIdxR):
-        #         reindex.append(i)
-        #     for i in range(onIdxR + 1 , other.features):
-        #         reindex.append(i)
-        #     ret.sortFeatures(sortHelper=reindex)
-
-        # matchingFts = self._getMatchingNames('feature', other)
-        # toModify = []
-        # toRemove = []
-        # mergedFeatures = []
-        # if onFeature:
-        #     # onFeature already removed from right in implementation
-        #     matchingFts.remove(onFeature)
-
-        # for name in matchingFts:
-        #     leftIdx = self._getFeatureIndex(name)
-        #     if onFeature:
-        #         rightIdx = other._getFeatureIndex(name) + (self.features - 1)
-        #     else:
-        #         rightIdx = other._getFeatureIndex(name) + self.features
-        #     mergedFt = []
-        #     for i in range(ret.points):
-        #         if ret[i, leftIdx] != ret[i, leftIdx]:
-        #             mergedFt.append(ret[i, rightIdx])
-        #         elif ret[i, rightIdx] != ret[i, rightIdx]:
-        #             mergedFt.append(ret[i, leftIdx])
-        #         elif ret[i, leftIdx] == ret[i, rightIdx]:
-        #             mergedFt.append(ret[i, leftIdx])
-        #         else:
-        #             msg = "The feature '{0}' is in both objects ".format(name)
-        #             msg += "but has different data"
-        #             raise ArgumentException(msg)
-        #     mergedFeatures.append(mergedFt)
-        #     toModify.append(leftIdx)
-        #     toRemove.append(rightIdx)
-        #
-        # if len(mergedFeatures) > 0:
-        #     for ft, idx in zip(mergedFeatures, toModify):
-        #         if ret.points == 0:
-        #             break
-        #         ret.transformEachFeature(lambda x: ft, features=idx)
-        #     ret.deleteFeatures(toRemove)
-
-        return UML.createData(self.getTypeString(), merged)
 
     def _getMatchingNames(self, axis, other):
         matches = []
