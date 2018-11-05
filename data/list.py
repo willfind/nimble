@@ -766,17 +766,20 @@ class List(Base):
                 onIdxR = onIdxLoc
                 right = [[row[i] for i in matchingFtIdx[1]] for row in other.data]
                 # matching indices in right were sorted when slicing above
-                matchingFtIdx[1] = list(range(len(right[0])))
-                if feature == "intersection":
-                    left = [[row[i] for i in matchingFtIdx[0]] for row in self.data]
-                    # matching indices in left were sorted when slicing above
-                    matchingFtIdx[0] = list(range(len(left[0])))
+                if len(right) > 0:
+                    matchingFtIdx[1] = list(range(len(right[0])))
                 else:
-                    left = copy.copy(self.data)
+                    matchingFtIdx[1] = []
+                if feature == "intersection":
+                    self.data = [[row[i] for i in matchingFtIdx[0]] for row in self.data]
+                    # matching indices in left were sorted when slicing above
+                    if len(self.data) > 0:
+                        matchingFtIdx[0] = list(range(len(self.data[0])))
+                    else:
+                        matchingFtIdx[0] = []
             else:
                 onIdxL = self.getFeatureIndex(onFeature)
                 onIdxR = other.getFeatureIndex(onFeature)
-                left = copy.copy(self.data)
                 right = copy.copy(other.data)
         else:
             # using pointNames, prepend pointNames to left and right lists
@@ -794,21 +797,23 @@ class List(Base):
             if feature == "intersection":
                 for i, pt in enumerate(self.pointIterator()):
                     ptL = [ptNameGetter(pt, i)]
-                    ptL.extend([pt[i] for i in matchingFtIdx[0]])
-                    left.append(ptL)
+                    intersect = [val for idx, val in enumerate(self.data[i]) if idx in matchingFtIdx[0]]
+                    self.data[i] = ptL + intersect
                 for i, pt in enumerate(other.pointIterator()):
                     ptR = [ptNameGetter(pt, i + self.points)]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
                 # matching indices were sorted above
                 # this also accounts for prepended column
-                matchingFtIdx[0] = list(range(len(left[0])))
+                if len(self.data) > 0:
+                    matchingFtIdx[0] = list(range(len(self.data[0])))
+                else:
+                    matchingFtIdx[0] = []
                 matchingFtIdx[1] = matchingFtIdx[0]
             elif feature == "left":
                 for i, pt in enumerate(self.pointIterator()):
                     ptL = [ptNameGetter(pt, i)]
-                    ptL.extend(list(pt))
-                    left.append(ptL)
+                    self.data[i] = ptL + self.data[i]
                 for i, pt in enumerate(other.pointIterator()):
                     ptR = [ptNameGetter(pt, i + self.points)]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
@@ -822,8 +827,7 @@ class List(Base):
             else:
                 for i, pt in enumerate(self.pointIterator()):
                     ptL = [ptNameGetter(pt, i)]
-                    ptL.extend(list(pt))
-                    left.append(ptL)
+                    self.data[i] = ptL + self.data[i]
                 for i, pt in enumerate(other.pointIterator()):
                     ptR = [ptNameGetter(pt, i + self.points)]
                     ptR.extend(list(pt))
@@ -832,7 +836,7 @@ class List(Base):
                 matchingFtIdx[0].insert(0, 0)
                 matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
                 matchingFtIdx[1].insert(0, 0)
-
+        left = self.data
         matched = []
         merged = []
         unmatchedPtCountR = len(right[0]) - len(matchingFtIdx[1])
@@ -842,10 +846,9 @@ class List(Base):
             if len(match) > 0:
                 matchMapper[pt[onIdxL]] = match
 
-        for row in left:
-            target = row[onIdxL]
+        for ptL in left:
+            target = ptL[onIdxL]
             if target in matchMapper:
-                ptL = row
                 matchesR = matchMapper[target]
                 for ptR in matchesR:
                     # check for conflicts between matching features
@@ -856,7 +859,7 @@ class List(Base):
                     if not all(acceptableValues):
                         msg = "The objects contain different values for the same feature"
                         raise ArgumentException(msg)
-                    if len(nansL) > 0:
+                    if sum(nansL) > 0:
                         # fill any nan values in left with the corresponding right value
                         for i, value in enumerate(ptL):
                             if value != value and i in matchingFtIdx[0]:
@@ -866,7 +869,6 @@ class List(Base):
                     merged.append(pt)
                 matched.append(target)
             elif point == 'union' or point == 'left':
-                ptL = row
                 ptR = [numpy.nan] * (len(right[0]) - len(matchingFtIdx[1]))
                 pt = ptL + ptR
                 merged.append(pt)
@@ -882,17 +884,14 @@ class List(Base):
                     pt[len(left[0]):] = [row[i] for i in range(len(right[0])) if i not in matchingFtIdx[1]]
                     merged.append(pt)
 
-        if len(merged) == 0 and onFeature is None:
-            merged = numpy.empty((0, len(left[0]) + unmatchedPtCountR - 1))
-            merged = numpy.matrix(merged)
-        elif len(merged) == 0:
-            merged = numpy.empty((0, len(left[0]) + unmatchedPtCountR))
-            merged = numpy.matrix(merged)
-        elif onFeature is None:
+        self._featureCount = len(left[0]) + unmatchedPtCountR
+        self._pointCount = len(merged)
+        if onFeature is None:
             # remove point names feature
             merged = [row[1:] for row in merged]
+            self._featureCount -= 1
 
-        return List(merged)
+        self.data = merged
 
     def _getitem_implementation(self, x, y):
         return self.data[x][y]

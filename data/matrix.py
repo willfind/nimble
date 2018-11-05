@@ -655,7 +655,7 @@ class Matrix(Base):
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
-        selfArr = numpy.array(self.data, dtype=numpy.object_)
+        self.data = numpy.array(self.data, dtype=numpy.object_)
         otherArr = numpy.array(other.data, dtype=numpy.object_)
         if onFeature:
             if feature == "intersection" or feature == "left":
@@ -666,15 +666,12 @@ class Matrix(Base):
                 # matching indices in right were sorted when slicing above
                 matchingFtIdx[1] = list(range(right.shape[1]))
                 if feature == "intersection":
-                    left = selfArr[:, matchingFtIdx[0]]
+                    self.data = self.data[:, matchingFtIdx[0]]
                     # matching indices in left were sorted when slicing above
-                    matchingFtIdx[0] = list(range(left.shape[1]))
-                else:
-                    left = selfArr
+                    matchingFtIdx[0] = list(range(self.data.shape[1]))
             else:
                 onIdxL = self.getFeatureIndex(onFeature)
                 onIdxR = other.getFeatureIndex(onFeature)
-                left = selfArr
                 right = otherArr
         else:
             # using pointNames, prepend pointNames to left and right arrays
@@ -691,14 +688,14 @@ class Matrix(Base):
                 defNames = [DEFAULT_PREFIX + str(i) for i in range(self.points, self.points + other.points)]
                 ptsR = numpy.array(defNames, dtype=numpy.object_).reshape(-1, 1)
             if feature == "intersection":
-                left = numpy.concatenate((ptsL, selfArr[:, matchingFtIdx[0]]), axis=1)
+                self.data = numpy.concatenate((ptsL, self.data[:, matchingFtIdx[0]]), axis=1)
                 right = numpy.concatenate((ptsR, otherArr[:, matchingFtIdx[1]]), axis=1)
                 # matching indices were sorted when slicing above
                 # this also accounts for prepended column
-                matchingFtIdx[0] = list(range(left.shape[1]))
+                matchingFtIdx[0] = list(range(self.data.shape[1]))
                 matchingFtIdx[1] = matchingFtIdx[0]
             elif feature == "left":
-                left = numpy.concatenate((ptsL, selfArr), axis=1)
+                self.data = numpy.concatenate((ptsL, self.data), axis=1)
                 right = numpy.concatenate((ptsR, otherArr[:, matchingFtIdx[1]]), axis=1)
                 # account for new column in matchingFtIdx
                 matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
@@ -707,13 +704,14 @@ class Matrix(Base):
                 # this also accounts for prepended column
                 matchingFtIdx[1] = list(range(right.shape[1]))
             else:
-                left = numpy.concatenate((ptsL, selfArr), axis=1)
+                self.data = numpy.concatenate((ptsL, self.data), axis=1)
                 right = numpy.concatenate((ptsR, otherArr), axis=1)
                 # account for new column in matchingFtIdx
                 matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
                 matchingFtIdx[0].insert(0, 0)
                 matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
                 matchingFtIdx[1].insert(0, 0)
+        left = self.data
 
         matched = []
         merged = []
@@ -723,11 +721,9 @@ class Matrix(Base):
             match = right[right[:, onIdxR] == pt[onIdxL]]
             if len(match) > 0:
                 matchMapper[pt[onIdxL]] = match
-
-        for row in left:
-            target = row[onIdxL]
+        for ptL in left:
+            target = ptL[onIdxL]
             if target in matchMapper:
-                ptL = row
                 matchesR = matchMapper[target]
                 for ptR in matchesR:
                     # check for conflicts between matching features
@@ -738,7 +734,7 @@ class Matrix(Base):
                     if not all(acceptableValues):
                         msg = "The objects contain different values for the same feature"
                         raise ArgumentException(msg)
-                    if len(nansL) > 0:
+                    if nansL.any():
                         # fill any nan values in left with the corresponding right value
                         for i, value in enumerate(ptL[matchingFtIdx[0]]):
                             if value != value:
@@ -748,7 +744,7 @@ class Matrix(Base):
                     merged.append(pt)
                 matched.append(target)
             elif point == 'union' or point == 'left':
-                ptL = row.reshape(1, -1)
+                ptL = ptL.reshape(1, -1)
                 ptR = numpy.ones((1, unmatchedPtCountR)) * numpy.nan
                 pt = numpy.append(ptL, ptR)
                 merged.append(pt)
@@ -763,15 +759,21 @@ class Matrix(Base):
                     pt[left.shape[1]:] = row[notMatchingR]
                     merged.append(pt)
 
+
+        self._featureCount = left.shape[1] + unmatchedPtCountR
+        self._pointCount = len(merged)
         if len(merged) == 0 and onFeature is None:
             merged = numpy.empty((0, left.shape[1] + unmatchedPtCountR - 1))
+            self._featureCount -= 1
         elif len(merged) == 0:
             merged = numpy.empty((0, left.shape[1] + unmatchedPtCountR))
         elif onFeature is None:
             # remove point names feature
             merged = [row[1:] for row in merged]
+            self._featureCount -= 1
 
-        return Matrix(numpy.matrix(merged, dtype=numpy.object_))
+
+        self.data = numpy.matrix(merged, dtype=numpy.object_)
 
     def _getitem_implementation(self, x, y):
         return self.data[x, y]

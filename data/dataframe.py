@@ -640,37 +640,37 @@ class DataFrame(Base):
             point = 'outer'
         elif point == 'intersection':
             point = 'inner'
-        tmpDfL = self.data.copy()
         if self._featureNamesCreated():
-            tmpDfL.columns = self.getFeatureNames()
+            self.data.columns = self.getFeatureNames()
         tmpDfR = other.data.copy()
         if other._featureNamesCreated():
             tmpDfR.columns = other.getFeatureNames()
 
         if feature == 'intersection':
-            tmpDfL = tmpDfL.iloc[:, matchingFtIdx[0]]
+            self.data = self.data.iloc[:, matchingFtIdx[0]]
             tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
-            matchingFtIdx[0] = list(range(tmpDfL.shape[1]))
+            matchingFtIdx[0] = list(range(self.data.shape[1]))
             matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
         elif feature == "left":
             tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
             matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
 
+        numColsL = len(self.data.columns)
         if onFeature is None:
             if self._pointNamesCreated():
-                tmpDfL.index = self.getPointNames()
+                self.data.index = self.getPointNames()
             if other._pointNamesCreated():
                 tmpDfR.index = other.getPointNames()
             else:
                 tmpDfR.index = [i for i in range(self.points, self.points + other.points)]
-            merged = tmpDfL.merge(tmpDfR, how=point, left_index=True, right_index=True)
-            merged.reset_index(drop=True, inplace=True)
-            merged.columns = range(merged.shape[1])
+            self.data = self.data.merge(tmpDfR, how=point, left_index=True, right_index=True)
+            self.data.reset_index(drop=True, inplace=True)
+            self.data.columns = range(self.data.shape[1])
         else:
-            onIdxL = tmpDfL.columns.get_loc(onFeature)
-            merged = tmpDfL.merge(tmpDfR, how=point, on=onFeature)
-            merged.reset_index()
-            merged.columns = range(merged.shape[1])
+            onIdxL = self.data.columns.get_loc(onFeature)
+            self.data = self.data.merge(tmpDfR, how=point, on=onFeature)
+            self.data.reset_index()
+            self.data.columns = range(self.data.shape[1])
 
         toDrop = []
         for l, r in zip(matchingFtIdx[0], matchingFtIdx[1]):
@@ -679,24 +679,23 @@ class DataFrame(Base):
                 continue
             elif onFeature and l > onIdxL:
                 # one less to account for merged onFeature
-                r = r + len(tmpDfL.columns) - 1
+                r = r + numColsL - 1
             else:
-                r = r + len(tmpDfL.columns)
-            matches = merged.iloc[:,l] == merged.iloc[:,r]
-            nansL = numpy.array([x != x for x in merged.iloc[:,l]])
-            nansR = numpy.array([x != x for x in merged.iloc[:,r]])
+                r = r + numColsL
+            matches = self.data.iloc[:,l] == self.data.iloc[:,r]
+            nansL = numpy.array([x != x for x in self.data.iloc[:,l]])
+            nansR = numpy.array([x != x for x in self.data.iloc[:,r]])
             acceptableValues = matches + nansL + nansR
             if not all(acceptableValues):
                 msg = "The objects contain different values for the same feature"
                 raise ArgumentException(msg)
-            else:
-                merged.iloc[:, l][nansL] = merged.iloc[:, r][nansL]
-                toDrop.append(r)
-        merged.drop(toDrop, axis=1, inplace=True)
-    
-        return DataFrame(merged)
+            if nansL.any():
+                self.data.iloc[:, l][nansL] = self.data.iloc[:, r][nansL]
+            toDrop.append(r)
+        self.data.drop(toDrop, axis=1, inplace=True)
 
-
+        self._featureCount = numColsL + len(tmpDfR.columns) - len(matchingFtIdx[1])
+        self._pointCount = len(self.data.index)
 
     def _getitem_implementation(self, x, y):
         # return self.data.ix[x, y]

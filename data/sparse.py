@@ -553,9 +553,11 @@ class Sparse(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Sparse):
             return False
+        print('here')
         # for nonempty matrices, we use a shape mismatch to indicate non-equality
         if self.data.shape != other.data.shape:
             return False
+        print('here')
 
         if isinstance(other, SparseView):
             return other._isIdentical_implementation(self)
@@ -1273,22 +1275,22 @@ class Sparse(Base):
         if onFeature:
             onIdxL = self.getFeatureIndex(onFeature)
             onIdxR = other.getFeatureIndex(onFeature)
-            leftData = self.data.data.copy()
-            leftRow = self.data.row.copy()
-            leftCol = self.data.col.copy()
+            leftData = self.data.data
+            leftRow = self.data.row
+            leftCol = self.data.col
             rightData = other.data.data.copy()
             rightRow = other.data.row.copy()
             rightCol = other.data.col.copy()
         else:
             onIdxL = 0
             onIdxR = 0
-            leftData = self.data.data.copy().astype(numpy.object_)
+            leftData = self.data.data.astype(numpy.object_)
             if self._pointNamesCreated():
                 leftData = numpy.append([self.getPointNames()], leftData)
             else:
                 leftData = numpy.append([DEFAULT_PREFIX + str(i) for i in range(self.points)], leftData)
-            leftRow = numpy.append([i for i in range(self.points)], self.data.row.copy())
-            leftCol = numpy.append([0 for i in range(self.points)], self.data.col.copy() + 1)
+            leftRow = numpy.append([i for i in range(self.points)], self.data.row)
+            leftCol = numpy.append([0 for i in range(self.points)], self.data.col + 1)
             rightData = other.data.data.copy().astype(numpy.object_)
             if other._pointNamesCreated():
                 rightData = numpy.append([other.getPointNames()], rightData)
@@ -1307,6 +1309,7 @@ class Sparse(Base):
         matched = []
         nextPt = 0
         numPts = 0
+
         for ptIdxL, target in enumerate(leftData[leftCol == onIdxL]):
             rowIdxR = numpy.where(rightData[rightCol == onIdxR] == target)[0]
             if len(rowIdxR) > 0:
@@ -1329,6 +1332,7 @@ class Sparse(Base):
                     pt = numpy.append(ptL, ptR)
                     if feature == "intersection":
                         pt = pt[matchingFtIdx[0]]
+                        leftFtCount = len(matchingFtIdx[0])
                     elif onFeature and feature == "left":
                         pt = pt[:self.features]
                     elif feature == "left":
@@ -1361,6 +1365,7 @@ class Sparse(Base):
                 mergedCol.extend([i for i in range(len(pt))])
                 nextPt += 1
                 numPts += 1
+
         if point == 'union':
             for ptIdxR, target in enumerate(rightData[rightCol == onIdxR]):
                 if target not in matched:
@@ -1397,7 +1402,10 @@ class Sparse(Base):
         if len(mergedData) == 0:
             mergedData = []
 
-        return Sparse(coo_matrix((mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts)))
+        self._featureCount = numFts
+        self._pointCount = numPts
+
+        self.data = coo_matrix((mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))
 
     def _getitem_implementation(self, x, y):
         """
