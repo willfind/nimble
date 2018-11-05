@@ -656,13 +656,16 @@ class DataFrame(Base):
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
 
-        return DataFrameView(**kwds)
+        ret = DataFrameView(**kwds)
+        ret._updateName('point')
+        ret._updateName('feature')
+
+        return ret
 
     def _validate_implementation(self, level):
         shape = self.data.shape
         assert shape[0] == self.points
         assert shape[1] == self.features
-
 
     def _containsZero_implementation(self):
         """
@@ -794,12 +797,11 @@ class DataFrame(Base):
         else:
             rightData = other
         leftData += rightData
-
-        return UML.createData('DataFrame', leftData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(leftData, reuseData=True)
 
     def _radd__implementation(self, other):
-        ret = other + self.data.values
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        ret = other + self.data
+        return DataFrame(ret, reuseData=True)
 
     def _iadd__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -817,7 +819,7 @@ class DataFrame(Base):
             rightData = other
         leftData -= rightData
 
-        return UML.createData('DataFrame', leftData, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(leftData, reuseData=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data.values
@@ -834,17 +836,19 @@ class DataFrame(Base):
     def _div__implementation(self, other):
         if isinstance(other, UML.data.Base):
             if scipy and scipy.sparse.isspmatrix(other.data):
-                ret = self.data.values / other.data.todense()
+                ret = self.data / other.data.todense()
+            elif isinstance(other.data, list):
+                ret = self.data / np.array(other.data)
             else:
-                ret = self.data.values / other.data
+                ret = self.data / other.data
         else:
-            ret = self.data.values / other
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+            ret = self.data / other
+        return DataFrame(ret, reuseData=True)
 
 
     def _rdiv__implementation(self, other):
-        ret = other / self.data.values
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        ret = np.asmatrix(other / self.data.values)
+        return DataFrame(ret, reuseData=True)
 
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -865,11 +869,11 @@ class DataFrame(Base):
                 ret = self.data.values.__truediv__(other.data)
         else:
             ret = self.data.values.__itruediv__(other)
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(np.asmatrix(ret), reuseData=True)        
 
     def _rtruediv__implementation(self, other):
         ret = self.data.values.__rtruediv__(other)
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
     def _itruediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -890,12 +894,12 @@ class DataFrame(Base):
                 ret = self.data.values // other.data
         else:
             ret = self.data.values // other
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(np.asmatrix(ret), reuseData=True)        
 
 
     def _rfloordiv__implementation(self, other):
         ret = other // self.data.values
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
     def _ifloordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -916,12 +920,12 @@ class DataFrame(Base):
                 ret = self.data.values % other.data
         else:
             ret = self.data.values % other
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(np.asmatrix(ret), reuseData=True)        
 
 
     def _rmod__implementation(self, other):
         ret = other % self.data.values
-        return UML.createData('DataFrame', ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return DataFrame(np.asmatrix(ret), reuseData=True)        
 
 
     def _imod__implementation(self, other):
