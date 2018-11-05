@@ -15,6 +15,7 @@ from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import allDataIdentical
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
@@ -280,18 +281,8 @@ class Matrix(Base):
             return False
         if self.features != other.features:
             return False
-        try:
-        #     numpy.testing.assert_array_equal(self.data, other.data)
-        # except AssertionError:
-            checkPos = self.data != other.data
 
-            testS = numpy.array(self.data[checkPos], dtype=numpy.float_)
-            testO = numpy.array(self.data[checkPos], dtype=numpy.float_)
-            return numpy.isnan(testS).all() and numpy.isnan(testO).all()
-        except Exception:
-            return False
-
-        return True
+        return allDataIdentical(self.data, other.data)
 
     def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
         """
@@ -677,15 +668,21 @@ class Matrix(Base):
             # using pointNames, prepend pointNames to left and right arrays
             onIdxL = 0
             onIdxR = 0
-            if self._pointNamesCreated():
+            if not self._anyDefaultPointNames():
                 ptsL = numpy.array(self.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
+            elif self._pointNamesCreated():
+                namesL = [n + '_l' if n.startswith(DEFAULT_PREFIX) else n for n in self.getPointNames()]
+                ptsL = numpy.array(namesL, dtype=numpy.object_).reshape(-1, 1)
             else:
-                defNames = [DEFAULT_PREFIX + str(i) for i in range(self.points)]
+                defNames = [DEFAULT_PREFIX + '_l' for _ in range(self.points)]
                 ptsL = numpy.array(defNames, dtype=numpy.object_).reshape(-1, 1)
-            if other._pointNamesCreated():
+            if not other._anyDefaultPointNames():
                 ptsR = numpy.array(other.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
+            elif other._pointNamesCreated():
+                namesR = [n + '_r' if n.startswith(DEFAULT_PREFIX) else n for n in other.getPointNames()]
+                ptsR = numpy.array(namesR, dtype=numpy.object_).reshape(-1, 1)
             else:
-                defNames = [DEFAULT_PREFIX + str(i) for i in range(self.points, self.points + other.points)]
+                defNames = [DEFAULT_PREFIX + '_r' for _ in range(other.points)]
                 ptsR = numpy.array(defNames, dtype=numpy.object_).reshape(-1, 1)
             if feature == "intersection":
                 self.data = numpy.concatenate((ptsL, self.data[:, matchingFtIdx[0]]), axis=1)
@@ -798,6 +795,7 @@ class Matrix(Base):
         shape = numpy.shape(self.data)
         assert shape[0] == self.points
         assert shape[1] == self.features
+
 
     def _containsZero_implementation(self):
         """
@@ -925,11 +923,11 @@ class Matrix(Base):
             ret = self.data + other.data
         else:
             ret = self.data + other
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _radd__implementation(self, other):
         ret = other + self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _iadd__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -944,11 +942,21 @@ class Matrix(Base):
             ret = self.data - other.data
         else:
             ret = self.data - other
-        return Matrix(ret, reuseData=True)
+
+        if not self._pointNamesCreated():
+            pNames = None
+        else:
+            pNames = self.getPointNames()
+        if not self._featureNamesCreated():
+            fNames = None
+        else:
+            fNames = self.getFeatureNames()
+
+        return Matrix(ret, pointNames=pNames, featureNames=fNames, reuseData=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -966,12 +974,12 @@ class Matrix(Base):
                 ret = self.data / other.data
         else:
             ret = self.data / other
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rdiv__implementation(self, other):
         ret = other / self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -992,11 +1000,11 @@ class Matrix(Base):
                 ret = self.data.__truediv__(other.data)
         else:
             ret = self.data.__itruediv__(other)
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _rtruediv__implementation(self, other):
         ret = self.data.__rtruediv__(other)
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _itruediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -1017,12 +1025,12 @@ class Matrix(Base):
                 ret = self.data // other.data
         else:
             ret = self.data // other
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rfloordiv__implementation(self, other):
         ret = other // self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
     def _ifloordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -1043,12 +1051,12 @@ class Matrix(Base):
                 ret = self.data % other.data
         else:
             ret = self.data % other
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _rmod__implementation(self, other):
         ret = other % self.data
-        return Matrix(ret, reuseData=True)
+        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
 
 
     def _imod__implementation(self, other):

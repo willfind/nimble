@@ -108,6 +108,7 @@ class List(Base):
 
         self._numFeatures = shape[1]
         self.data = data
+        self._elementType = elementType
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
@@ -479,7 +480,7 @@ class List(Base):
         if format == 'numpyarray':
             if self.points == 0 or self.features == 0:
                 return numpy.empty(shape=(self.points, self.features))
-            return numpy.array(self.data)
+            return numpy.array(self.data, dtype=self._elementType)
         if format == 'numpymatrix':
             if self.points == 0 or self.features == 0:
                 return numpy.matrix(numpy.empty(shape=(self.points, self.features)))
@@ -788,19 +789,23 @@ class List(Base):
             left = []
             right = []
 
-            def ptNameGetter(pt, idx):
-                if pt._pointNamesCreated():
-                    return pt.getPointName(0)
+            def ptNameGetter(obj, idx, suffix):
+                if obj._pointNamesCreated():
+                    name = obj.getPointName(idx)
+                    if not name.startswith(DEFAULT_PREFIX):
+                        return name
+                    else:
+                        return name + suffix
                 else:
-                    return DEFAULT_PREFIX + str(idx)
+                    return DEFAULT_PREFIX + str(idx) + suffix
 
             if feature == "intersection":
-                for i, pt in enumerate(self.pointIterator()):
-                    ptL = [ptNameGetter(pt, i)]
-                    intersect = [val for idx, val in enumerate(self.data[i]) if idx in matchingFtIdx[0]]
+                for i, pt in enumerate(self.data):
+                    ptL = [ptNameGetter(self, i, '_l')]
+                    intersect = [val for idx, val in enumerate(pt) if idx in matchingFtIdx[0]]
                     self.data[i] = ptL + intersect
-                for i, pt in enumerate(other.pointIterator()):
-                    ptR = [ptNameGetter(pt, i + self.points)]
+                for i, pt in enumerate(other.data):
+                    ptR = [ptNameGetter(other, i, '_r')]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
                 # matching indices were sorted above
@@ -811,11 +816,11 @@ class List(Base):
                     matchingFtIdx[0] = []
                 matchingFtIdx[1] = matchingFtIdx[0]
             elif feature == "left":
-                for i, pt in enumerate(self.pointIterator()):
-                    ptL = [ptNameGetter(pt, i)]
-                    self.data[i] = ptL + self.data[i]
-                for i, pt in enumerate(other.pointIterator()):
-                    ptR = [ptNameGetter(pt, i + self.points)]
+                for i, pt in enumerate(self.data):
+                    ptL = [ptNameGetter(self, i, '_l')]
+                    self.data[i] = ptL + pt
+                for i, pt in enumerate(other.data):
+                    ptR = [ptNameGetter(other, i, '_r')]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
                 # account for new column in matchingFtIdx
@@ -825,18 +830,19 @@ class List(Base):
                 # this also accounts for prepended column
                 matchingFtIdx[1] = list(range(len(right[0])))
             else:
-                for i, pt in enumerate(self.pointIterator()):
-                    ptL = [ptNameGetter(pt, i)]
-                    self.data[i] = ptL + self.data[i]
-                for i, pt in enumerate(other.pointIterator()):
-                    ptR = [ptNameGetter(pt, i + self.points)]
-                    ptR.extend(list(pt))
+                for i, pt in enumerate(self.data):
+                    ptL = [ptNameGetter(self, i, '_l')]
+                    self.data[i] = ptL + pt
+                for i, pt in enumerate(other.data):
+                    ptR = [ptNameGetter(other, i, '_r')]
+                    ptR.extend(pt)
                     right.append(ptR)
                 matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
                 matchingFtIdx[0].insert(0, 0)
                 matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
                 matchingFtIdx[1].insert(0, 0)
         left = self.data
+
         matched = []
         merged = []
         unmatchedPtCountR = len(right[0]) - len(matchingFtIdx[1])

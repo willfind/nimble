@@ -26,6 +26,7 @@ from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import DEFAULT_PREFIX
+from .dataHelpers import allDataIdentical
 
 from UML.exceptions import ImproperActionException
 from UML.exceptions import PackageException
@@ -553,11 +554,9 @@ class Sparse(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Sparse):
             return False
-        print('here')
         # for nonempty matrices, we use a shape mismatch to indicate non-equality
         if self.data.shape != other.data.shape:
             return False
-        print('here')
 
         if isinstance(other, SparseView):
             return other._isIdentical_implementation(self)
@@ -567,22 +566,10 @@ class Sparse(Base):
             tmpRight = other.copy()
             tmpLeft._sortInternal('feature')
             tmpRight._sortInternal('feature')
-            try:
-                numpy.testing.assert_equal(tmpLeft.data.data, tmpRight.data.data)
-                numpy.testing.assert_equal(tmpLeft.data.row, tmpRight.data.row)
-                numpy.testing.assert_equal(tmpLeft.data.col, tmpRight.data.col)
-                return True
-            except Exception:
-                # numpy.testing.assert_equal will fail for object dtype
-                sIt = self.pointIterator()
-                oIt = other.pointIterator()
-                for sPoint in sIt:
-                    oPoint = next(oIt)
 
-                    for i, val in enumerate(sPoint):
-                        if val != oPoint[i] and val == val:
-                            return False
-                return True
+            return (allDataIdentical(tmpLeft.data.data, tmpRight.data.data) and
+                    allDataIdentical(tmpLeft.data.row, tmpRight.data.row) and
+                    allDataIdentical(tmpLeft.data.col, tmpRight.data.col))
 
     def _getTypeString_implementation(self):
         return 'Sparse'
@@ -1285,17 +1272,26 @@ class Sparse(Base):
             onIdxL = 0
             onIdxR = 0
             leftData = self.data.data.astype(numpy.object_)
-            if self._pointNamesCreated():
+            if not self._anyDefaultPointNames():
                 leftData = numpy.append([self.getPointNames()], leftData)
+            elif self._pointNamesCreated():
+                leftNames = [n + '_l' if n.startswith(DEFAULT_PREFIX) else n
+                             for n in self.getPointNames()]
+                leftData = numpy.append([leftNames], leftData)
             else:
                 leftData = numpy.append([DEFAULT_PREFIX + str(i) for i in range(self.points)], leftData)
             leftRow = numpy.append([i for i in range(self.points)], self.data.row)
             leftCol = numpy.append([0 for i in range(self.points)], self.data.col + 1)
             rightData = other.data.data.copy().astype(numpy.object_)
-            if other._pointNamesCreated():
+            if not other._anyDefaultPointNames():
                 rightData = numpy.append([other.getPointNames()], rightData)
+            elif other._pointNamesCreated():
+                rightNames = [n + '_r' if n.startswith(DEFAULT_PREFIX) else n
+                             for n in other.getPointNames()]
+                rightData = numpy.append([rightNames], rightData)
             else:
                 rightData = numpy.append([DEFAULT_PREFIX + str(i) for i in range(self.points, self.points + other.points)], rightData)
+
             rightRow = numpy.append([i for i in range(other.points)], other.data.row.copy())
             rightCol = numpy.append([0 for i in range(other.points)], other.data.col.copy() + 1)
             matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))

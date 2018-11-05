@@ -22,6 +22,7 @@ import re
 from .base_view import BaseView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import allDataIdentical
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -259,18 +260,7 @@ class DataFrame(Base):
         if self.features != other.features:
             return False
 
-        try:
-            tmp1 = self.data.values
-            tmp2 = other.data.values
-            np.testing.assert_equal(tmp1, tmp2)
-        except AssertionError as e:
-            for i in range(self.points):
-                for j in range(self.features):
-                    sVal = self.data.iloc[i,j]
-                    oVal = other.data.iloc[i,j]
-                    if sVal != oVal and sVal == sVal:
-                        return False
-        return True
+        return allDataIdentical(self.data.values, other.data.values)
 
     def _writeFile_implementation(self, outPath, format, includePointNames, includeFeatureNames):
         """
@@ -636,6 +626,7 @@ class DataFrame(Base):
         self.data = pd.DataFrame(self.data.values.reshape((numPoints, numFeatures), order='F'))
 
     def _merge_implementation(self, other, point, feature, onFeature, matchingFtIdx):
+
         if point == 'union':
             point = 'outer'
         elif point == 'intersection':
@@ -657,12 +648,20 @@ class DataFrame(Base):
 
         numColsL = len(self.data.columns)
         if onFeature is None:
-            if self._pointNamesCreated():
+            if not self._anyDefaultPointNames():
                 self.data.index = self.getPointNames()
-            if other._pointNamesCreated():
+            elif self._pointNamesCreated():
+                self.data.index = [n + '_l' if n.startswith(DEFAULT_PREFIX)
+                                   else n for n in self.getPointNames()]
+            if not other._anyDefaultPointNames():
                 tmpDfR.index = other.getPointNames()
+            elif other._pointNamesCreated():
+                tmpDfR.index = [n + '_r' if n.startswith(DEFAULT_PREFIX)
+                                else n for n in other.getPointNames()]
             else:
+                # pandas handles no names correctly if index set to unique integers
                 tmpDfR.index = [i for i in range(self.points, self.points + other.points)]
+
             self.data = self.data.merge(tmpDfR, how=point, left_index=True, right_index=True)
             self.data.reset_index(drop=True, inplace=True)
             self.data.columns = range(self.data.shape[1])
@@ -936,7 +935,7 @@ class DataFrame(Base):
                 ret = self.data.values.__truediv__(other.data)
         else:
             ret = self.data.values.__itruediv__(other)
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
     def _rtruediv__implementation(self, other):
         ret = self.data.values.__rtruediv__(other)
@@ -961,7 +960,7 @@ class DataFrame(Base):
                 ret = self.data.values // other.data
         else:
             ret = self.data.values // other
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _rfloordiv__implementation(self, other):
@@ -987,12 +986,12 @@ class DataFrame(Base):
                 ret = self.data.values % other.data
         else:
             ret = self.data.values % other
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _rmod__implementation(self, other):
         ret = other % self.data.values
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _imod__implementation(self, other):

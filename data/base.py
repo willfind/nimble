@@ -317,15 +317,6 @@ class Base(object):
         else:
             return True
 
-    def _getAxisNames(self, axis):
-        self._validateAxis(axis)
-        if axis == 'point':
-            if self._pointNamesCreated():
-                return self.getPointNames()
-        else:
-            if self._featureNamesCreated():
-                return self.getFeatureNames()
-
     ########################
     # Low Level Operations #
     ########################
@@ -438,18 +429,9 @@ class Base(object):
         to.
 
         """
-        return self._getPointNames()
-
-    def _getPointNames(self, method='force'):
-        if self._pointNamesCreated():
-            return copy.copy(self.pointNamesInverse)
-        elif 'force':
-             self._setAllDefault('point')
-             return copy.copy(self.pointNamesInverse)
-        elif 'iterator':
-            return []
-        elif 'indexer':
-            return [None] * self.points
+        if not self._pointNamesCreated():
+            self._setAllDefault('point')
+        return copy.copy(self.pointNamesInverse)
 
     def getFeatureNames(self):
         """Returns a list containing all feature names, where their index
@@ -457,18 +439,9 @@ class Base(object):
         correspond to.
 
         """
-        return self._getFeatureNames()
-
-    def _getFeatureNames(self, method='force'):
-        if self._featureNamesCreated():
-            return copy.copy(self.featureNamesInverse)
-        elif 'force':
-             self._setAllDefault('feature')
-             return copy.copy(self.featureNamesInverse)
-        elif 'iterator':
-            return []
-        elif 'indexer':
-            return [None] * self.features
+        if not self._featureNamesCreated():
+            self._setAllDefault('feature')
+        return copy.copy(self.featureNamesInverse)
 
     def getPointName(self, index):
         if not self._pointNamesCreated():
@@ -3608,8 +3581,44 @@ class Base(object):
 
     def merge(self, other, point='strict', feature='union', onFeature=None):
         """
-        TODO
+        Merge data from another object into this object based on point names or
+        a common feature between the objects. How the data will be merged is
+        based upon the string arguments provided to point and feature.
+
+        If onFeature is None, the objects will be merged on the point names.
+        Otherwise, the objects will be merged on the feature provided.
+        onFeature allows for duplicate values to be present in the provided
+        feature, however, one of the objects must contain only unique values
+        for each point when onFeature is provided.
+
+        The allowed strings for the point and feature arguments are as follows:
+
+        'strict': The points/features in the callee exactly match the
+          points/features in the caller, however, they may be in a different
+          order. If onFeature is None and no names are provided, it will be
+          assumed the order is the same.
+
+        'union': Return all points/features from the caller and callee. If
+          onFeature is None, unnamed points/features will be assumed to be
+          unique. Any missing data from the caller and callee will be filled
+          with numpy.NaN
+
+        'intersection': Return only points/features shared between the caller
+          and callee. If onFeature is None, point/feature names are required.
+
+        'left': Return only the points/features from the caller. Any
+          missing data from the callee will be filled with numpy.NaN
         """
+        point = point.lower()
+        feature = feature.lower()
+        valid = ['strict', 'left', 'union', 'intersection']
+        if point not in valid:
+            msg = "point must be 'strict', 'left', 'union', or 'intersection'"
+            raise ArgumentException(msg)
+        if feature not in valid:
+            msg = "feature must be 'strict', 'left', 'union', or 'intersection'"
+            raise ArgumentException(msg)
+
         if point == 'strict' or feature == 'strict':
             return self._genericStrictMerge_implementation(other, point, feature, onFeature)
         else:
@@ -3619,10 +3628,10 @@ class Base(object):
         """
         Validation and helper function when point or feature is set to strict
         """
+        # NOTE could return this object?
         if point == 'strict' and feature == 'strict':
             msg = 'Both point and feature cannot be strict'
             raise ArgumentException(msg)
-        self.copy()
         tmpOther = other.copy()
         if point == 'strict':
             axis = 'point'
@@ -3676,9 +3685,10 @@ class Base(object):
         # make sure each id has a unique match in the other object
         elif axis == 'point':
             try:
-                self[:, onFeature]
+                self[0, onFeature]
+                tmpOther[0, onFeature]
             except KeyError:
-                msg = "feature names are required to merge using onFeature"
+                msg = "could not locate feature '{0}' in both objects".format(onFeature)
                 raise ArgumentException(msg)
             if len(set(self[:, onFeature])) != self.points:
                 msg = "when point='strict', onFeature must contain only unique values"
@@ -3702,13 +3712,13 @@ class Base(object):
             raise ArgumentException(msg)
         defaultPtsL = self._anyDefaultPointNames() and not self._allDefaultPointNames()
         defaultPtsR = other._anyDefaultPointNames() and not other._allDefaultPointNames()
-        if onFeature is None:
-            # TODO could remove and treat default as new point?
-            if defaultPtsL or defaultPtsR:
-                msg = "Cannot perform the merge when default "
-                msg += "point names are present"
+        if onFeature is not None:
+            try:
+                self[0, onFeature]
+                other[0, onFeature]
+            except KeyError:
+                msg = "could not locate feature '{0}' in both objects".format(onFeature)
                 raise ArgumentException(msg)
-        else:
             uniqueFtL = len(set(self[:, onFeature])) == self.points
             uniqueFtR = len(set(other[:, onFeature])) == other.points
             if not (uniqueFtL or uniqueFtR):
@@ -3725,14 +3735,11 @@ class Base(object):
             idxR = other.getFeatureIndex(name)
             matchingFtIdx[0].append(idxL)
             matchingFtIdx[1].append(idxR)
-        print(point, feature)
-        print(self.data)
-        print(other.data)
+
         if self.getTypeString() != other.getTypeString():
             other = other.copyAs(self.getTypeString())
         self._merge_implementation(other, point, feature, onFeature, matchingFtIdx)
 
-        print(self.points, self.features)
         if strict == 'feature':
             if '_STRICT' in self.getFeatureName(0) and '_STRICT' in other.getFeatureName(0):
                 self.featureNames = None
@@ -3771,21 +3778,28 @@ class Base(object):
             if self._pointNamesCreated():
                 self.setPointNames(self.getPointNames())
         elif onFeature is None and point == 'intersection':
-            ptNames = [name for name in self.getPointNames() if name in other.getPointNames()]
+            ptNames = [name for name in self.getPointNames()
+                       if name in other.getPointNames()
+                       and not name.startswith(DEFAULT_PREFIX)]
             self.setPointNames(ptNames)
         elif onFeature is None:
             if self._pointNamesCreated() and other._pointNamesCreated():
                 ptNamesL = self.getPointNames()
-                ptNamesR = [name for name in other.getPointNames() if name not in ptNamesL]
-                ptNames = ptNamesL + ptNamesR
+                if other._anyDefaultPointNames():
+                    ptNamesR = [self._nextDefaultName('point') if
+                                n.startswith(DEFAULT_PREFIX) else n
+                                for n in self.getPointNames()]
+                else:
+                    ptNamesR = other.getPointNames()
+                ptNames = ptNamesL + [name for name in ptNamesR if name not in ptNamesL]
                 self.setPointNames(ptNames)
             elif self._pointNamesCreated():
                 ptNamesL = self.getPointNames()
-                ptNamesR = [DEFAULT_PREFIX + str(i) for i in range(other.points)]
+                ptNamesR = [self._nextDefaultName('point') for _ in range(other.points)]
                 ptNames = ptNamesL + ptNamesR
                 self.setPointNames(ptNames)
             elif other._pointNamesCreated():
-                ptNamesL = [DEFAULT_PREFIX + str(i) for i in range(self.points)]
+                ptNamesL = [other._nextDefaultName('point') for _ in range(self.points)]
                 ptNamesR = other.getPointNames()
                 ptNames = ptNamesL + ptNamesR
                 self.setPointNames(ptNames)
@@ -4278,7 +4292,7 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-            
+
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
