@@ -799,7 +799,6 @@ class Matrix(Base):
         assert shape[0] == self.points
         assert shape[1] == self.features
 
-
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained
@@ -926,11 +925,11 @@ class Matrix(Base):
             ret = self.data + other.data
         else:
             ret = self.data + other
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _radd__implementation(self, other):
         ret = other + self.data
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _iadd__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -945,21 +944,11 @@ class Matrix(Base):
             ret = self.data - other.data
         else:
             ret = self.data - other
-
-        if not self._pointNamesCreated():
-            pNames = None
-        else:
-            pNames = self.getPointNames()
-        if not self._featureNamesCreated():
-            fNames = None
-        else:
-            fNames = self.getFeatureNames()
-
-        return Matrix(ret, pointNames=pNames, featureNames=fNames, reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _rsub__implementation(self, other):
         ret = other - self.data
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _isub__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -977,12 +966,12 @@ class Matrix(Base):
                 ret = self.data / other.data
         else:
             ret = self.data / other
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
 
     def _rdiv__implementation(self, other):
         ret = other / self.data
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _idiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -1003,11 +992,11 @@ class Matrix(Base):
                 ret = self.data.__truediv__(other.data)
         else:
             ret = self.data.__itruediv__(other)
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _rtruediv__implementation(self, other):
         ret = self.data.__rtruediv__(other)
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _itruediv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -1028,12 +1017,12 @@ class Matrix(Base):
                 ret = self.data // other.data
         else:
             ret = self.data // other
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
 
     def _rfloordiv__implementation(self, other):
         ret = other // self.data
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
     def _ifloordiv__implementation(self, other):
         if isinstance(other, UML.data.Base):
@@ -1054,12 +1043,12 @@ class Matrix(Base):
                 ret = self.data % other.data
         else:
             ret = self.data % other
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
 
     def _rmod__implementation(self, other):
         ret = other % self.data
-        return Matrix(ret, pointNames=self.getPointNames(), featureNames=self.getFeatureNames(), reuseData=True)
+        return Matrix(ret, reuseData=True)
 
 
     def _imod__implementation(self, other):

@@ -1127,7 +1127,8 @@ class List(Base):
         """
         for pNum in range(self.points):
             for fNum in range(self.features):
-                self.data[pNum][fNum] *= other[pNum, fNum]
+                # Divided by 1 to make it raise if it involves non-numeric types ('str')
+                self.data[pNum][fNum] *= other[pNum, fNum] / 1
 
     def _scalarMultiply_implementation(self, scalar):
         """

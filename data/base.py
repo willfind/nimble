@@ -1636,6 +1636,7 @@ class Base(object):
         if not cloudpickle:
             msg = "To save UML objects, cloudpickle must be installed"
             raise PackageException(msg)
+
         extension = '.umld'
         if not outputPath.endswith(extension):
             outputPath = outputPath + extension
@@ -2654,8 +2655,8 @@ class Base(object):
         across the space of possible points.
 
         """
-        ret = self._genericStructuralFrontend('extract', 'point', toExtract, start, end,
-                                              number, randomize)
+        ret = self._genericStructuralFrontend('extract', 'point', toExtract,
+                                              start, end, number, randomize)
 
         ret.setFeatureNames(self.getFeatureNames())
         self._adjustCountAndNames('point', ret)
@@ -2695,8 +2696,8 @@ class Base(object):
         across the space of possible features.
 
         """
-        ret = self._genericStructuralFrontend('extract', 'feature', toExtract, start, end,
-                                              number, randomize)
+        ret = self._genericStructuralFrontend('extract', 'feature', toExtract,
+                                              start, end, number, randomize)
 
         ret.setPointNames(self.getPointNames())
         self._adjustCountAndNames('feature', ret)
@@ -2734,7 +2735,10 @@ class Base(object):
         across the space of possible points.
 
         """
-        ret = self.extractPoints(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
+        ret = self._genericStructuralFrontend('delete', 'point', toDelete,
+                                              start, end, number, randomize)
+        self._adjustCountAndNames('point', ret)
+        self.validate()
 
 
     def deleteFeatures(self, toDelete=None, start=None, end=None, number=None, randomize=False):
@@ -2763,7 +2767,10 @@ class Base(object):
         across the space of possible features.
 
         """
-        ret = self.extractFeatures(toExtract=toDelete, start=start, end=end, number=number, randomize=randomize)
+        ret = self._genericStructuralFrontend('delete', 'feature', toDelete,
+                                              start, end, number, randomize)
+        self._adjustCountAndNames('feature', ret)
+        self.validate()
 
 
     def retainPoints(self, toRetain=None, start=None, end=None, number=None, randomize=False):
@@ -2792,7 +2799,15 @@ class Base(object):
         across the space of possible points.
 
         """
-        self._retain_implementation('retain', 'point', toRetain, start, end, number, randomize)
+        ref = self._genericStructuralFrontend('retain', 'point', toRetain,
+                                              start, end, number, randomize)
+        ref.setFeatureNames(self.getFeatureNames())
+        ref._relPath = self.relativePath
+        ref._absPath = self.absolutePath
+
+        self.referenceDataFrom(ref)
+
+        self.validate()
 
 
     def retainFeatures(self, toRetain=None, start=None, end=None, number=None, randomize=False):
@@ -2821,107 +2836,16 @@ class Base(object):
         across the space of possible features.
 
         """
-        self._retain_implementation('retain', 'feature', toRetain, start, end, number, randomize)
+        ref = self._genericStructuralFrontend('retain', 'feature', toRetain,
+                                              start, end, number, randomize)
+        ref.setPointNames(self.getPointNames())
 
+        ref._relPath = self.relativePath
+        ref._absPath = self.absolutePath
 
-    def _retain_implementation(self, structure, axis, toRetain, start, end, number, randomize):
-        """Generic retaining function for retainPoints or retainFeatures. The complements
-        of toRetain are identified to use the extract backend, this is done within this
-        implementation except when toRetain is a function which is complemented within
-        the next helper function
+        self.referenceDataFrom(ref)
 
-        """
-        if axis == 'point':
-            hasName = self.hasPointName
-            getNames = self.getPointNames
-            axisLength = self.points
-            sortValues = self.sortPoints
-        else:
-            hasName = self.hasFeatureName
-            getNames = self.getFeatureNames
-            axisLength = self.features
-            sortValues = self.sortFeatures
-
-        self._validateStructuralArguments(structure, axis, toRetain, start, end,
-                                          number, randomize)
-        # will use number and randomize as necessary here unless toRetain is
-        # a function where it will be handled in _genericStructuralFrontend
-        passNumber = None
-        passRandomize = False
-
-        # generic exception message if number is too large
-        msg = "The value for 'number', {0}, ".format(number)
-        msg += "is greater than the number of {0}s ".format(axis)
-
-        # extract points not in toRetain
-        if toRetain is not None:
-            if isinstance(toRetain, six.string_types):
-                if hasName(toRetain):
-                    toExtract = [value for value in getNames() if value != toRetain]
-                else:
-                    # toRetain is a function passed as a string
-                    toExtract = toRetain
-                    passNumber = number
-                    passRandomize = randomize
-
-            elif isinstance(toRetain, (int, numpy.integer)):
-                toExtract = [value for value in range(axisLength) if value != toRetain]
-
-            # list-like container objects
-            elif not hasattr(toRetain, '__call__'):
-                # toRetain is other container type or range() in python3
-                toRetain = self._constructIndicesList(axis, toRetain, 'toRetain')
-                if number and number > len(toRetain):
-                    msg += "to retain, {0}".format(len(toRetain))
-                    raise ArgumentException(msg)
-                if randomize:
-                    toRetain = pythonRandom.sample(toRetain, number)
-                elif number:
-                    toRetain = toRetain[:number]
-                toExtract = [value for value in range(axisLength) if value not in toRetain]
-                # change the index order of the values to match toRetain
-                if not randomize:
-                    reindex = toRetain + toExtract
-                    sortValues(sortHelper=reindex)
-                    # extract any values after the toRetain values
-                    extractValues = range(len(toRetain), axisLength)
-                    toExtract = list(extractValues)
-
-            # toRetain is a function
-            else:
-                toExtract = toRetain
-                passNumber = number
-                passRandomize = randomize
-
-        # extract points not in start to end range
-        elif start is not None or end is not None:
-            start = 0 if start is None else self._getIndex(start, axis)
-            end = axisLength - 1 if end is None else self._getIndex(end, axis)
-            self._validateStartEndRange(start, end, axisLength)
-            toRetain = [value for value in range(start, end + 1)]
-            if number and number > len(toRetain):
-                msg += "to retain, {0}".format(len(toRetain))
-                raise ArgumentException(msg)
-            if randomize:
-                toRetain = pythonRandom.sample(toRetain, number)
-            elif number:
-                toRetain = toRetain[:number]
-            toExtract = [value for value in range(axisLength) if value not in toRetain]
-
-        # extract points after number
-        else:
-            allIndexes = [i for i in range(axisLength)]
-            if number > len(allIndexes):
-                raise ArgumentException(msg)
-            if randomize:
-                toRetain = pythonRandom.sample(allIndexes, number)
-            else:
-                toRetain = allIndexes[:number]
-            toExtract = [value for value in range(axisLength) if value not in toRetain]
-
-        ret = self._genericStructuralFrontend('retain', axis, target=toExtract,
-                                              number=passNumber, randomize=passRandomize)
-        self._adjustCountAndNames(axis, ret)
+        self.validate()
 
 
     def countPoints(self, condition):
@@ -3907,17 +3831,6 @@ class Base(object):
         """
         if not isinstance(other, UML.data.Base):
             raise ArgumentException("'other' must be an instance of a UML data object")
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-        # test element type other
-        if other.points > 0:
-            for val in other.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
         if self.points != other.points:
             raise ArgumentException("The number of points in each object must be equal.")
@@ -3930,7 +3843,13 @@ class Base(object):
         self._validateEqualNames('point', 'point', 'elementwiseMultiply', other)
         self._validateEqualNames('feature', 'feature', 'elementwiseMultiply', other)
 
-        self._elementwiseMultiply_implementation(other)
+        try:
+            self._elementwiseMultiply_implementation(other)
+        except Exception as e:
+            #TODO: improve how the exception is catch
+            self._numericValidation()
+            other._numericValidation()
+            raise(e)
 
         (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
         self.setPointNames(retPNames)
@@ -3943,19 +3862,7 @@ class Base(object):
         if not singleValue and not isinstance(other, UML.data.Base):
             raise ArgumentException("'other' must be an instance of a UML data object or a single numeric value")
 
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-        # test element type other
         if isinstance(other, UML.data.Base):
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
             # same shape
             if self.points != other.points:
                 raise ArgumentException("The number of points in each object must be equal.")
@@ -3967,17 +3874,24 @@ class Base(object):
 
         if isinstance(other, UML.data.Base):
             def powFromRight(val, pnum, fnum):
-                return val ** other[pnum, fnum]
-
+                try:
+                    return val ** other[pnum, fnum]
+                except Exception as e:
+                    self._numericValidation()
+                    other._numericValidation()
+                    raise(e)
             self.transformEachElement(powFromRight)
         else:
             def powFromRight(val, pnum, fnum):
-                return val ** other
-
+                try:
+                    return val ** other
+                except Exception as e:
+                    self._numericValidation()
+                    other._numericValidation()
+                    raise(e)
             self.transformEachElement(powFromRight)
 
         self.validate()
-
 
     def __mul__(self, other):
         """
@@ -3988,24 +3902,14 @@ class Base(object):
         if not isinstance(other, UML.data.Base) and not dataHelpers._looksNumeric(other):
             return NotImplemented
 
+        # Test element type self
         if self.points == 0 or self.features == 0:
             raise ImproperActionException("Cannot do a multiplication when points or features is empty")
-
-        # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
         # test element type other
         if isinstance(other, UML.data.Base):
             if other.points == 0 or other.features == 0:
                 raise ImproperActionException("Cannot do a multiplication when points or features is empty")
-
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
 
             if self.features != other.points:
                 raise ArgumentException("The number of features in the calling object must "
@@ -4013,11 +3917,19 @@ class Base(object):
 
             self._validateEqualNames('feature', 'point', '__mul__', other)
 
-        ret = self._mul__implementation(other)
+        try:
+            ret = self._mul__implementation(other)
+        except Exception as e:
+            #TODO: improve how the exception is catch
+            self._numericValidation()
+            other._numericValidation()
+            raise(e)
 
         if isinstance(other, UML.data.Base):
-            ret.setPointNames(self.getPointNames())
-            ret.setFeatureNames(other.getFeatureNames())
+            if self._pointNamesCreated():
+                ret.setPointNames(self.getPointNames())
+            if other._featureNamesCreated():
+                ret.setFeatureNames(other.getFeatureNames())
 
         pathSource = 'merge' if isinstance(other, UML.data.Base) else 'self'
 
@@ -4213,8 +4125,14 @@ class Base(object):
         if other < 0:
             raise ArgumentException("other must be greater than zero")
 
-        retPNames = self.getPointNames()
-        retFNames = self.getFeatureNames()
+        if self._pointNamesCreated():
+            retPNames = self.getPointNames()
+        else:
+            retPNames = None
+        if self._featureNamesCreated():
+            retFNames = self.getFeatureNames()
+        else:
+            retFNames = None
 
         if other == 1:
             ret = self.copy()
@@ -4223,8 +4141,10 @@ class Base(object):
 
         # exact conditions in which we need to instantiate this object
         if other == 0 or other % 2 == 0:
+            identityPNames = 'automatic' if retPNames is None else retPNames
+            identityFNames = 'automatic' if retFNames is None else retFNames
             identity = UML.createData(self.getTypeString(), numpy.eye(self.points),
-                                      pointNames=retPNames, featureNames=retFNames)
+                                      pointNames=identityPNames, featureNames=identityFNames)
         if other == 0:
             return identity
 
@@ -4286,13 +4206,39 @@ class Base(object):
     def __abs__(self):
         """ Perform element wise absolute value on this object """
         ret = self.calculateForEachElement(abs)
-        ret.setPointNames(self.getPointNames())
-        ret.setFeatureNames(self.getFeatureNames())
+        if self._pointNamesCreated():
+            ret.setPointNames(self.getPointNames())
+        else:
+            ret.setPointNames(None)
+        if self._featureNamesCreated():
+            ret.setFeatureNames(self.getFeatureNames())
+        else:
+            ret.setPointNames(None)
 
         ret._name = dataHelpers.nextDefaultObjectName()
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
         return ret
+
+    def _numericValidation(self):
+        if self.points > 0:
+            try:
+                self.calculateForEachElement(dataHelpers._checkNumeric)
+            except ValueError:
+                   raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+
+    def _genericNumericBinary_sizeValidation(self, opName, other):
+        if self.points != other.points:
+            msg = "The number of points in each object must be equal. "
+            msg += "(self=" + str(self.points) + " vs other="
+            msg += str(other.points) + ")"
+            raise ArgumentException(msg)
+        if self.features != other.features:
+            raise ArgumentException("The number of features in each object must be equal.")
+
+        if self.points == 0 or self.features == 0:
+            raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
+
 
     def _genericNumericBinary_validation(self, opName, other):
         isUML = isinstance(other, UML.data.Base)
@@ -4301,37 +4247,11 @@ class Base(object):
             raise ArgumentException("'other' must be an instance of a UML data object or a scalar")
 
         # Test element type self
-        if self.points > 0:
-            for val in self.pointView(0):
-                if not dataHelpers._looksNumeric(val):
-                    raise ArgumentException("This data object contains non numeric data, cannot do this operation")
+        self._numericValidation()
 
         # test element type other
         if isUML:
-            if opName.startswith('__r'):
-                return NotImplemented
-            if other.points > 0:
-                for val in other.pointView(0):
-                    if not dataHelpers._looksNumeric(val):
-                        raise ArgumentException("This data object contains non numeric data, cannot do this operation")
-
-            if self.points != other.points:
-                msg = "The number of points in each object must be equal. "
-                msg += "(self=" + str(self.points) + " vs other="
-                msg += str(other.points) + ")"
-                raise ArgumentException(msg)
-            if self.features != other.features:
-                raise ArgumentException("The number of features in each object must be equal.")
-
-        if self.points == 0 or self.features == 0:
-            raise ImproperActionException("Cannot do " + opName + " when points or features is empty")
-
-        # check name restrictions
-        if isUML:
-            if self._pointNamesCreated() and other._pointNamesCreated is not None:
-                self._validateEqualNames('point', 'point', opName, other)
-            if self._featureNamesCreated() and other._featureNamesCreated():
-                self._validateEqualNames('feature', 'feature', opName, other)
+            other._numericValidation()
 
         divNames = ['__div__', '__rdiv__', '__idiv__', '__truediv__', '__rtruediv__',
                     '__itruediv__', '__floordiv__', '__rfloordiv__', '__ifloordiv__',
@@ -4350,12 +4270,18 @@ class Base(object):
                 msg += + "is zero"
                 raise ZeroDivisionError(msg)
 
+
     def _genericNumericBinary(self, opName, other):
-        ret = self._genericNumericBinary_validation(opName, other)
-        if ret == NotImplemented:
-            return ret
 
         isUML = isinstance(other, UML.data.Base)
+
+        if isUML:
+            if opName.startswith('__r'):
+                return NotImplemented
+            
+            self._genericNumericBinary_sizeValidation(opName, other)
+            self._validateEqualNames('point', 'point', opName, other)
+            self._validateEqualNames('feature', 'feature', opName, other)
 
         # figure out return obj's point / feature names
         # if unary:
@@ -4370,7 +4296,12 @@ class Base(object):
         else:
             (retPNames, retFNames) = dataHelpers.mergeNonDefaultNames(self, other)
 
-        ret = self._genericNumericBinary_implementation(opName, other)
+        try:
+            ret = self._genericNumericBinary_implementation(opName, other)
+        except Exception as e:
+            self._genericNumericBinary_validation(opName, other)
+            raise(e)
+
 
         if retPNames is not None:
             ret.setPointNames(retPNames)
@@ -4555,15 +4486,17 @@ class Base(object):
                 # if axis=feature and target is not a feature name,
                 # then check if it's a valid query string
                 else:
-                    optrDict = {'<=': operator.le, '>=': operator.ge, '!=': operator.ne, '==': operator.eq, \
-                                        '=': operator.eq, '<': operator.lt, '>': operator.gt}
+                    optrDict = {'<=': operator.le, '>=': operator.ge,
+                                '!=': operator.ne, '==': operator.eq,
+                                '<': operator.lt, '>': operator.gt}
                     for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
                         if optr in target:
                             targetList = target.split(optr)
                             optr = '==' if optr == '=' else optr
                             #after splitting at the optr, 2 items must be in the list
                             if len(targetList) != 2:
-                                msg = "the target(%s) is a query string but there is an error" % target
+                                msg = "the target({0}) is a ".format(target)
+                                msg += "query string but there is an error"
                                 raise ArgumentException(msg)
                             nameOfFeatureOrPoint, valueOfFeatureOrPoint = targetList
                             nameOfFeatureOrPoint = nameOfFeatureOrPoint.strip()
@@ -4572,8 +4505,8 @@ class Base(object):
                             #when axis=point, check if the feature exists or not
                             #when axis=feature, check if the point exists or not
                             if not hasNameChecker2(nameOfFeatureOrPoint):
-                                msg = "the %s %s doesn't exist" % (
-                                'feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
+                                msg = "the {0} '{1}' doesn't exist".format(
+                                  'feature' if axis == 'point' else 'point', nameOfFeatureOrPoint)
                                 raise ArgumentException(msg)
 
                             optrOperator = optrDict[optr]
@@ -4592,49 +4525,22 @@ class Base(object):
                             target_f.optr = optrOperator
                             target = target_f
                             break
-                    #if the target can't be converted to a function
-                    if isinstance(target, six.string_types):
-                        try:
-                            target = self._constructIndicesList(axis, target)
-                        except ArgumentException:
-                            argName = 'to' + structure.capitalize()
-                            msg = '{0} '.format(argName)
-                            msg += 'is not a valid point name nor a valid query string'
-                            raise ArgumentException(msg)
+                    # the target can't be converted to a function
+                    else:
+                        msg = "'{0}' is not a valid ".format(target)
+                        msg += '{0} name nor a valid query string'.format(axis)
+                        raise ArgumentException(msg)
             # list-like container types
             if not hasattr(target, '__call__'):
                 argName = 'to' + structure.capitalize()
                 targetList = self._constructIndicesList(axis, target, argName)
             # boolean function
             else:
-                if structure == 'retain':
-                    targetFunction = target
-                    def complement(*args):
-                        return not targetFunction(*args)
-                    target = complement
                 # construct list from function
                 targetList = []
-                if structure == 'retain':
-                    keepList = []
                 for targetID, view in enumerate(viewIterator()):
                     if target(view):
                         targetList.append(targetID)
-                    elif structure == 'retain':
-                        keepList.append(targetID)
-                # add additional indexes to targetList if not keeping every
-                # index from returned function
-                if structure == 'retain' and number is not None:
-                    addBack = len(keepList) - number
-                    if addBack > 0:
-                        if randomize:
-                            pythonRandom.shuffle(keepList)
-                        for i in range(addBack):
-                            targetList.append(keepList[-i])
-                    elif addBack < 0:
-                        msg = "The value for 'number' ({0}) ".format(number)
-                        msg += "is greater than the number of {0}s ".format(axis)
-                        msg += "to retain ({0})".format(len(keepList))
-                        raise ArgumentException(msg)
 
         elif start is not None or end is not None:
             start = 0 if start is None else self._getIndex(start, axis)
@@ -4647,7 +4553,7 @@ class Base(object):
         else:
             targetList = [value for value in range(axisLength)]
 
-        if number and structure != 'retain':
+        if number:
             if number > len(targetList):
                 msg = "The value for 'number' ({0}) ".format(number)
                 msg += "is greater than the number of {0}s ".format(axis)
@@ -5568,7 +5474,7 @@ class Base(object):
         try:
             indicesList = [self._getIndex(val, axis) for val in valuesList]
         except ArgumentException as ae:
-            msg = "Invalid index value for the argument '{0}'. ".format(argName)
+            msg = "Invalid value for the argument '{0}'. ".format(argName)
             # add more detail to msg; slicing to exclude quotes
             msg += str(ae)[1:-1]
             raise ArgumentException(msg)

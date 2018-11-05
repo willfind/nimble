@@ -229,6 +229,14 @@ def _looksNumeric(val):
     return True
 
 
+def _checkNumeric(val):
+    """
+    Check if value looks numeric. Raise ValueError if not.
+    """
+    if not _looksNumeric(val):
+        raise ValueError("Value '{}' does not seem to be numeric".format(val))
+
+
 def formatIfNeeded(value, sigDigits):
     """
     Format the value into a string, and in the case of a float typed value,
