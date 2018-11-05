@@ -1275,6 +1275,7 @@ class Sparse(Base):
             if not self._anyDefaultPointNames():
                 leftData = numpy.append([self.getPointNames()], leftData)
             elif self._pointNamesCreated():
+                # differentiate default names between objects; note still start with DEFAULT_PREFIX
                 leftNames = [n + '_l' if n.startswith(DEFAULT_PREFIX) else n
                              for n in self.getPointNames()]
                 leftData = numpy.append([leftNames], leftData)
@@ -1286,6 +1287,7 @@ class Sparse(Base):
             if not other._anyDefaultPointNames():
                 rightData = numpy.append([other.getPointNames()], rightData)
             elif other._pointNamesCreated():
+                # differentiate default names between objects; note still start with DEFAULT_PREFIX
                 rightNames = [n + '_r' if n.startswith(DEFAULT_PREFIX) else n
                              for n in other.getPointNames()]
                 rightData = numpy.append([rightNames], rightData)

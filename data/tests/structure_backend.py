@@ -7827,7 +7827,6 @@ class StructureModifying(StructureShared):
     ###########
     # merge() #
     ###########
-    # TODO different object types, default names strict
 
     @raises(ArgumentException)
     def test_merge_exception_invalidPointString(self):
@@ -8005,11 +8004,8 @@ class StructureModifying(StructureShared):
             try:
                 test = left.copy()
                 test.merge(right, point=pt, feature=ft, onFeature=on)
-                print(test, exp)
                 assert test == exp
-            except Exception as e:
-                print(pt, ft)
-                print(e)
+            except ArgumentException:
                 assert exp is ArgumentException
 
 
@@ -9688,8 +9684,6 @@ class StructureModifying(StructureShared):
         exp = self.constructor(expData, featureNames=expFNames, pointNames=pNamesL)
 
         leftObj.merge(rightObj, point='strict', feature='union', onFeature="id")
-        print(leftObj)
-        print(exp)
         assert leftObj == exp
 
     def test_merge_pointStrict_featureIntersection_onFeature_allNames(self):

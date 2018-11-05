@@ -795,6 +795,7 @@ class List(Base):
                     if not name.startswith(DEFAULT_PREFIX):
                         return name
                     else:
+                        # differentiate default names between objects; note still start with DEFAULT_PREFIX
                         return name + suffix
                 else:
                     return DEFAULT_PREFIX + str(idx) + suffix

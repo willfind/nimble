@@ -671,6 +671,7 @@ class Matrix(Base):
             if not self._anyDefaultPointNames():
                 ptsL = numpy.array(self.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
             elif self._pointNamesCreated():
+                # differentiate default names between objects; note still start with DEFAULT_PREFIX
                 namesL = [n + '_l' if n.startswith(DEFAULT_PREFIX) else n for n in self.getPointNames()]
                 ptsL = numpy.array(namesL, dtype=numpy.object_).reshape(-1, 1)
             else:
@@ -679,6 +680,7 @@ class Matrix(Base):
             if not other._anyDefaultPointNames():
                 ptsR = numpy.array(other.getPointNames(), dtype=numpy.object_).reshape(-1, 1)
             elif other._pointNamesCreated():
+                # differentiate default names between objects; note still start with DEFAULT_PREFIX
                 namesR = [n + '_r' if n.startswith(DEFAULT_PREFIX) else n for n in other.getPointNames()]
                 ptsR = numpy.array(namesR, dtype=numpy.object_).reshape(-1, 1)
             else:

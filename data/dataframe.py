@@ -651,11 +651,13 @@ class DataFrame(Base):
             if not self._anyDefaultPointNames():
                 self.data.index = self.getPointNames()
             elif self._pointNamesCreated():
+                # differentiate default names between objects; note still start with DEFAULT_PREFIX
                 self.data.index = [n + '_l' if n.startswith(DEFAULT_PREFIX)
                                    else n for n in self.getPointNames()]
             if not other._anyDefaultPointNames():
                 tmpDfR.index = other.getPointNames()
             elif other._pointNamesCreated():
+                # differentiate default names between objects; note still start with DEFAULT_PREFIX
                 tmpDfR.index = [n + '_r' if n.startswith(DEFAULT_PREFIX)
                                 else n for n in other.getPointNames()]
             else:

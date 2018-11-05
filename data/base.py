@@ -3742,9 +3742,11 @@ class Base(object):
 
         if strict == 'feature':
             if '_STRICT' in self.getFeatureName(0) and '_STRICT' in other.getFeatureName(0):
+                # objects did not have feature names
                 self.featureNames = None
                 self.featureNamesInverse = None
             elif '_STRICT' in self.getFeatureName(0):
+                # use feature names from other object
                 self.setFeatureNames(other.getFeatureNames())
         elif feature == "intersection":
             if self._featureNamesCreated():
@@ -3766,26 +3768,31 @@ class Base(object):
                 ftNamesR = other.getFeatureNames()
                 ftNames = ftNamesL + ftNamesR
                 self.setFeatureName(ftNames)
+        # no name setting needed for left
 
         if strict == 'point':
             if '_STRICT' in self.getPointName(0) and '_STRICT' in other.getPointName(0):
-                # objects originally did not have names
+                # objects did not have point names
                 self.pointNames = None
                 self.pointNamesInverse = None
             elif '_STRICT' in self.getPointName(0):
+                # use point names from other object
                 self.setPointNames(other.getPointNames())
         elif onFeature is None and point == 'left':
             if self._pointNamesCreated():
                 self.setPointNames(self.getPointNames())
         elif onFeature is None and point == 'intersection':
+            # default names cannot be included in intersection
             ptNames = [name for name in self.getPointNames()
                        if name in other.getPointNames()
                        and not name.startswith(DEFAULT_PREFIX)]
             self.setPointNames(ptNames)
         elif onFeature is None:
+            # union cases
             if self._pointNamesCreated() and other._pointNamesCreated():
                 ptNamesL = self.getPointNames()
                 if other._anyDefaultPointNames():
+                    # handle default name conflicts
                     ptNamesR = [self._nextDefaultName('point') if
                                 n.startswith(DEFAULT_PREFIX) else n
                                 for n in self.getPointNames()]
