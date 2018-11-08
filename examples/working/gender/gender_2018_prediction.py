@@ -17,6 +17,7 @@ import math
 import UML
 
 from UML.calculate import fractionCorrect
+from UML.calculate import residuals
 from UML.examples.working.gender.gender_prediction import LogisticRegressionNoTraining
 
 scipy = UML.importModule("scipy")
@@ -208,6 +209,15 @@ def splitDataForTrial(data, numTest, seed):
 def qResponsesToCatResponses(qResponses, categories, qParity):
     """
     Return a data set containing the category scores for each person
+
+    qResponses: object where each point is a person's list of of responses
+    to each question
+
+    categories: dict mapping the name of a category to a double of the questions
+    in that category
+
+    qParity: dict mapping the name of a question to the sign modifier needed to
+    convert the question score into the scale of the category
     """
     catList = [c for c in categories.keys()]
 
@@ -594,6 +604,18 @@ def plotData(gender, qData, cats, qParity, outPath, makeXAxisLabels):
 #        tight.save(currPath + ".png", "png")
 
 
+def plotCompanionCorrelationMatrix(qData, gender, categories, qParity, outFile):
+    catData = qResponsesToCatResponses(qData, categories, qParity)
+
+    residuals_catData = residuals(catData, gender)
+    corrs = residuals_catData.featureSimilarities('correlation')
+
+#    corrs = catData.featureSimilarities('correlation')
+
+    corrs.sortPoints(sortHelper=lambda x: x.getPointName(0))
+    corrs.sortFeatures(sortHelper=lambda x: x.getFeatureName(0))
+    corrs.writeFile(outFile)
+
 
 if __name__ == "__main__":
     import time
@@ -611,10 +633,13 @@ if __name__ == "__main__":
     TEST_NUMBER = 0
     SPLIT_SEED = 42
 
-    PLOT_RESPONSES = True
+    # Constants controlling which tasks we do when running this script
+    # NOTE: some of these may be mutually exclusive.
+    PLOT_RESPONSES = False
     PLOT_MAKE_LABELS =True
     PARITY_GENDER_TRAINING = False
     ADD_SQUARED_FEATURES = False
+    OUTPUT_PLOT_COMPANION_CORRELATION_MATRIX = True
 
     # Source Data
     sourceDir = sys.argv[1]
@@ -631,14 +656,13 @@ if __name__ == "__main__":
     # Output files for visualizations
     outDir_plots = os.path.join(sourceDir, "plots")
 
+    # Output data for analysis data
+    outpath_plotCompanion_correlation = os.path.join(sourceDir, "metaData", "category_correlations.csv")
+
     # load response data and gender prediction variable
     predictionData = loadPredictionData(path_responses)
     assert predictionData.points == INDATA_QUANTITY_ASSERT
     categories, qParity = loadMetaData(path_metadata)
-
-
-    if ADD_SQUARED_FEATURES:
-        addSquaredFeatures(predictionData)
 
     if PLOT_RESPONSES:
         safeResponses = predictionData.copy()
@@ -650,6 +674,16 @@ if __name__ == "__main__":
             plotData(safeGender2, safeResponses2, categories, qParity, outDir_plots, PLOT_MAKE_LABELS)
         plotData(safeGender, safeResponses, categories, qParity, outDir_plots, False)
         sys.exit(0)
+
+    if OUTPUT_PLOT_COMPANION_CORRELATION_MATRIX:
+        safeResponses = predictionData.copy()
+        safeResponses.deleteFeatures("participant_id")
+        safeGender = safeResponses.extractFeatures("femaleAs1MaleAs0")
+        plotCompanionCorrelationMatrix(safeResponses, safeGender, categories, qParity,outpath_plotCompanion_correlation)
+
+    if ADD_SQUARED_FEATURES:
+        addSquaredFeatures(predictionData)
+
 
     splits = splitDataForTrial(predictionData, TEST_NUMBER, SPLIT_SEED)
     (responseTrain, genderTrain, responseTest, genderTest) = splits
