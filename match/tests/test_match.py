@@ -64,7 +64,7 @@ def backend_match_anyAll(anyOrAll, func, data):
             assert func(toTest)
         else:
             allMatching = toTest[:,2]
-            allMatching.appendFeatures(allMatching)
+            allMatching.addFeatures(allMatching)
             assert func(allMatching)
         # test by feature
         for i, feature in enumerate(toTest.featureIterator()):
