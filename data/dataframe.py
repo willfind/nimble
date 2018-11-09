@@ -648,20 +648,18 @@ class DataFrame(Base):
 
         numColsL = len(self.data.columns)
         if onFeature is None:
-            if not self._anyDefaultPointNames():
-                self.data.index = self.getPointNames()
-            elif self._pointNamesCreated():
-                # differentiate default names between objects; note still start with DEFAULT_PREFIX
+            if self._pointNamesCreated() and other._pointNamesCreated():
+                # differentiate default names between objects
                 self.data.index = [n + '_l' if n.startswith(DEFAULT_PREFIX)
                                    else n for n in self.getPointNames()]
-            if not other._anyDefaultPointNames():
-                tmpDfR.index = other.getPointNames()
-            elif other._pointNamesCreated():
-                # differentiate default names between objects; note still start with DEFAULT_PREFIX
                 tmpDfR.index = [n + '_r' if n.startswith(DEFAULT_PREFIX)
                                 else n for n in other.getPointNames()]
+            elif self._pointNamesCreated() or other._pointNamesCreated():
+                # there will be no matches, need left points ordered first
+                self.data.index = [i for i in range(self.points)]
+                tmpDfR.index = [i for i in range(self.points, self.points + other.points)]
             else:
-                # pandas handles no names correctly if index set to unique integers
+                # left already has index set to range(self.points)
                 tmpDfR.index = [i for i in range(self.points, self.points + other.points)]
 
             self.data = self.data.merge(tmpDfR, how=point, left_index=True, right_index=True)

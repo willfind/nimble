@@ -1257,6 +1257,10 @@ class Sparse(Base):
                 raise ImproperActionException('self._sorted is not either point nor feature.')
 
     def _merge_implementation(self, other, point, feature, onFeature, matchingFtIdx):
+        if self._sorted != 'feature':
+            self._sortInternal('feature')
+        if other._sorted != 'feature':
+            other._sortInternal('feature')
         leftFtCount = self.features
         rightFtCount = other.features - len(matchingFtIdx[0])
         if onFeature:
@@ -1293,7 +1297,6 @@ class Sparse(Base):
                 rightData = numpy.append([rightNames], rightData)
             else:
                 rightData = numpy.append([DEFAULT_PREFIX + str(i) for i in range(self.points, self.points + other.points)], rightData)
-
             rightRow = numpy.append([i for i in range(other.points)], other.data.row.copy())
             rightCol = numpy.append([0 for i in range(other.points)], other.data.col.copy() + 1)
             matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
