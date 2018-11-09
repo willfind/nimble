@@ -1833,6 +1833,75 @@ class StructureDataSafe(StructureShared):
     def test_copyFeatures_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'feature')
 
+    ################
+    # uniquePoints #
+    ################
+
+    def test_uniquePoints_allNames(self):
+        data = [['George', 'Washington'], ['George', 'Washington'],
+                ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
+                ['James', 'Madison']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George', 'Washington'], ['John', 'Adams'],
+                   ['Thomas', 'Jefferson'], ['James', 'Madison']]
+        ret = test.uniquePoints()
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
+        print(ret)
+        print(exp)
+        assert ret == exp
+
+    def test_uniquePoints_noNames(self):
+        data = [['George', 'Washington'], ['George', 'Washington'],
+                ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
+                ['James', 'Madison']]
+        test = self.constructor(data)
+        expData = [['George', 'Washington'], ['John', 'Adams'],
+                   ['Thomas', 'Jefferson'], ['James', 'Madison']]
+        ret = test.uniquePoints()
+        exp = self.constructor(expData)
+        print(ret)
+        print(exp)
+        assert ret == exp
+
+    def test_uniquePoints_subsetFeature0(self):
+        data = [['George', 'Washington'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'], ['James', 'Madison'],
+                ['James', 'Monroe'], ['John Quincy', 'Adams'],
+                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George'], ['John'], ['Thomas'], ['James'],
+                   ['John Quincy'], ['Andrew'], ['Martin']]
+        expPtNames = ["p0", "p1", "p2", "p3", "p5", "p6", "p7"]
+        ret = test[:, 0].uniquePoints()
+        exp = self.constructor(expData, pointNames=expPtNames, featureNames=["firstName"])
+
+        assert ret == exp
+
+    def test_uniquePoints_subsetFeature1(self):
+        data = [['George', 'Washington'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'], ['James', 'Madison'],
+                ['James', 'Monroe'], ['John Quincy', 'Adams'],
+                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['Washington'], ['Adams'], ['Jefferson'], ['Madison'],
+                   ['Monroe'], ['Jackson'], ['Van Buren']]
+        expPtNames = ["p0", "p1", "p2", "p3", "p4", "p6", "p7"]
+        ret = test[:, 1].uniquePoints()
+        exp = self.constructor(expData, pointNames=expPtNames, featureNames=["lastName"])
+
+        assert ret == exp
+
 
 class StructureModifying(StructureShared):
 

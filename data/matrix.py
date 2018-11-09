@@ -667,6 +667,24 @@ class Matrix(Base):
         assert shape[0] == self.points
         assert shape[1] == self.features
 
+    def _uniquePoints_implementation(self):
+        uniquePts = set()
+        uniqueIndices = []
+        for i, row in enumerate(numpy.array(self.data)):
+            if tuple(row) not in uniquePts:
+                uniquePts.add(tuple(row))
+                uniqueIndices.append(i)
+        uniqueData = self.data[uniqueIndices]
+        if self._pointNamesCreated():
+            pNames = [self.getPointName(i) for i in uniqueIndices]
+        else:
+            pNames = None
+        if self._featureNamesCreated():
+            fNames = self.getFeatureNames()
+        else:
+            fNames = None
+        return Matrix(uniqueData, pointNames=pNames, featureNames=fNames)
+
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained

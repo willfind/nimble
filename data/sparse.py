@@ -1370,6 +1370,40 @@ class Sparse(Base):
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
 
+    def _uniquePoints_implementation(self):
+        if self._sorted != "feature":
+            self._sortInternal("feature")
+        uniquePts = set()
+        uniqueData = []
+        uniqueRow = []
+        uniqueCol = []
+        keepNames = []
+        numPts = 0
+        for i in range(self.points):
+            pointLoc = self.data.row == i
+            if tuple(self.data.data[pointLoc]) not in uniquePts:
+                uniquePts.add(tuple(self.data.data[pointLoc]))
+                uniqueData.extend(self.data.data[pointLoc])
+                uniqueRow.extend([numPts for _ in range(sum(pointLoc))])
+                uniqueCol.extend(self.data.col[pointLoc])
+                if self._pointNamesCreated():
+                    keepNames.append(self.getPointName(i))
+                numPts += 1
+
+        uniqueCoo = coo_matrix((uniqueData, (uniqueRow, uniqueCol)), shape=(numPts, self.features))
+
+        if len(keepNames) > 0:
+            pNames = keepNames
+        else:
+            pNames = None
+        if self._featureNamesCreated():
+            fNames = self.getFeatureNames()
+        else:
+            fNames = None
+        self._sorted = None
+
+        return Sparse(uniqueCoo, pointNames=pNames, featureNames=fNames)
+
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained
@@ -1867,6 +1901,38 @@ class SparseView(BaseView, Sparse):
                     return False
 
         return True
+
+    def _uniquePoints_implementation(self):
+        uniquePts = set()
+        uniqueData = []
+        uniqueRow = []
+        uniqueCol = []
+        keepNames = []
+        numPts = 0
+        for i, row in enumerate(self.pointIterator()):
+        # for i in range(self.points):
+            if tuple(row) not in uniquePts:
+                uniquePts.add(tuple(row))
+                uniqueData.extend(row)
+                uniqueRow.extend([numPts for _ in range(self.features)])
+                uniqueCol.extend([j for j in range(self.features)])
+                if self._pointNamesCreated():
+                    keepNames.append(self.getPointName(i))
+                numPts += 1
+
+        uniqueCoo = coo_matrix((uniqueData, (uniqueRow, uniqueCol)), shape=(numPts, self.features))
+
+        if len(keepNames) > 0:
+            pNames = keepNames
+        else:
+            pNames = None
+        if self._featureNamesCreated():
+            fNames = self.getFeatureNames()
+        else:
+            fNames = None
+        self._sorted = None
+
+        return Sparse(uniqueCoo, pointNames=pNames, featureNames=fNames)
 
     def _containsZero_implementation(self):
         for sPoint in self.pointIterator():

@@ -667,6 +667,26 @@ class DataFrame(Base):
         assert shape[0] == self.points
         assert shape[1] == self.features
 
+    def _uniquePoints_implementation(self):
+        uniquePts = set()
+        uniqueIndices = []
+        for i, row in self.data.iterrows():
+            if tuple(row.values) not in uniquePts:
+                uniquePts.add(tuple(row.values))
+                uniqueIndices.append(i)
+        uniqueData = self.data.iloc[uniqueIndices, :]
+
+        if self._pointNamesCreated():
+            pNames = [self.getPointNames()[i] for i in uniqueIndices]
+        else:
+            pNames = None
+        if self._featureNamesCreated():
+            fNames = self.getFeatureNames()
+        else:
+            fNames = None
+
+        return DataFrame(uniqueData, pointNames=pNames, featureNames=fNames)
+
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0 contained
@@ -869,7 +889,7 @@ class DataFrame(Base):
                 ret = self.data.values.__truediv__(other.data)
         else:
             ret = self.data.values.__itruediv__(other)
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
     def _rtruediv__implementation(self, other):
         ret = self.data.values.__rtruediv__(other)
@@ -894,7 +914,7 @@ class DataFrame(Base):
                 ret = self.data.values // other.data
         else:
             ret = self.data.values // other
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _rfloordiv__implementation(self, other):
@@ -920,12 +940,12 @@ class DataFrame(Base):
                 ret = self.data.values % other.data
         else:
             ret = self.data.values % other
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _rmod__implementation(self, other):
         ret = other % self.data.values
-        return DataFrame(np.asmatrix(ret), reuseData=True)        
+        return DataFrame(np.asmatrix(ret), reuseData=True)
 
 
     def _imod__implementation(self, other):

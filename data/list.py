@@ -837,12 +837,12 @@ class List(Base):
                 self.pRange = pEnd - pStart
                 self.fStart = fStart
                 self.fEnd = fEnd
-                self.fviewer = FeatureViewer(self.source, fStart, fEnd)
 
             def __getitem__(self, key):
+                self.fviewer = FeatureViewer(self.source, self.fStart, self.fEnd)
                 if key < 0 or key >= self.pRange:
                     raise IndexError("")
-
+                print(key)
                 self.fviewer.setLimit(key + self.pStart)
                 return self.fviewer
 
@@ -875,6 +875,27 @@ class List(Base):
             for point in self.data:
             #				assert isinstance(point, list)
                 assert len(point) == expectedLength
+
+    def _uniquePoints_implementation(self):
+        uniquePts = set()
+        uniqueIndices = []
+        for i, row in enumerate(self.data):
+            if tuple(row) not in uniquePts:
+                uniquePts.add(tuple(row))
+                uniqueIndices.append(i)
+        uniqueData = [self.data[i] for i in uniqueIndices]
+        print(uniqueIndices)
+        print(uniqueData)
+        if self._pointNamesCreated():
+            pNames = [self.getPointName(i) for i in uniqueIndices]
+        else:
+            pNames = None
+        if self._featureNamesCreated():
+            fNames = self.getFeatureNames()
+        else:
+            fNames = None
+
+        return List(uniqueData, pointNames=pNames, featureNames=fNames)
 
     def _containsZero_implementation(self):
         """

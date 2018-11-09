@@ -840,6 +840,14 @@ class Base(object):
 
         return res
 
+    def uniquePoints(self):
+        """
+        Returns a new object with only unique points. If point names are
+        present, the point name of the first instance of the unique point in
+        this object will be assigned.
+        """
+        return self._uniquePoints_implementation()
+
     def countEachUniqueValue(self, points=None, features=None):
         """
         Returns a dictionary containing each unique value as a key and the
@@ -4006,7 +4014,7 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-            
+
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
