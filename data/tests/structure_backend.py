@@ -1837,7 +1837,7 @@ class StructureDataSafe(StructureShared):
     # uniquePoints #
     ################
 
-    def test_uniquePoints_allNames(self):
+    def test_uniquePoints_allNames_string(self):
         data = [['George', 'Washington'], ['George', 'Washington'],
                 ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
                 ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
@@ -1850,8 +1850,35 @@ class StructureDataSafe(StructureShared):
                    ['Thomas', 'Jefferson'], ['James', 'Madison']]
         ret = test.uniquePoints()
         exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
-        print(ret)
-        print(exp)
+        assert ret == exp
+
+    def test_uniquePoints_allNames_numeric(self):
+        data = [[0, 0], [0, 0],
+                [99, 99], [99, 99],
+                [5.5, 11], [5.5, 11],  [5.5, 11],
+                [-1, -2]]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [[0, 0], [99, 99], [5.5, 11], [-1, -2]]
+        ret = test.uniquePoints()
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p4", "p7"], featureNames=ftNames)
+        assert ret == exp
+
+    def test_uniquePoints_allNames_mixed(self):
+        data = [['George', 0], ['George', 0],
+                ['John', 1], ['John', 1], ['John', 1],
+                ['Thomas', 2],  ['Thomas', 2],
+                ['James', 3]]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George', 0], ['John', 1],
+                   ['Thomas', 2], ['James', 3]]
+        ret = test.uniquePoints()
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
         assert ret == exp
 
     def test_uniquePoints_noNames(self):
@@ -1864,8 +1891,6 @@ class StructureDataSafe(StructureShared):
                    ['Thomas', 'Jefferson'], ['James', 'Madison']]
         ret = test.uniquePoints()
         exp = self.constructor(expData)
-        print(ret)
-        print(exp)
         assert ret == exp
 
     def test_uniquePoints_subsetFeature0(self):
