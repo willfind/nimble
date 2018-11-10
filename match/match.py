@@ -47,6 +47,9 @@ def positive(value):
     positive values include any numeric value greater than zero
     """
     try:
+        # py2 inteprets strings as greater than 0, trying to add zero will
+        # raise exception for strings
+        value + 0
         return value > 0
     except Exception:
         return False
@@ -57,6 +60,9 @@ def negative(value):
     negative values include any numeric value less than zero
     """
     try:
+        # py2 inteprets None as less than 0, trying to add zero will
+        # raise exception for None
+        value + 0
         return value < 0
     except Exception:
         return False
