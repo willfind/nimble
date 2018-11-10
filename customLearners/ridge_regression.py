@@ -15,7 +15,7 @@ class RidgeRegression(CustomLearner):
         #		ones = UML.createData("Matrix", numpy.ones(trainX.points))
         #		ones.transpose()
         #		trainX = trainX.copy()
-        #		trainX.appendFeatures(ones)
+        #		trainX.addFeatures(ones)
 
         # trainX and trainY are input as points in rows, features in columns
         # in other words: Points x Features.
@@ -37,7 +37,7 @@ class RidgeRegression(CustomLearner):
     #		ones = UML.createData("Matrix", numpy.ones(testX.points))
     #		ones.transpose()
     #		testX = testX.copy()
-    #		testX.appendFeatures(ones)
+    #		testX.addFeatures(ones)
 
         # testX input as points in rows, features in columns
         rawXPxF = testX.copyAs("numpyarray")

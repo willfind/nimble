@@ -31,6 +31,7 @@ locationCache = {}
 
 from UML.interfaces.universal_interface import UniversalInterface
 from UML.interfaces.interface_helpers import PythonSearcher
+from UML.helpers import inspectArguments
 
 
 class Mlpy(UniversalInterface):
@@ -345,20 +346,15 @@ class Mlpy(UniversalInterface):
                 value = arguments[name]
             learnParams[name] = value
 
-        learner = self.findCallable(learnerName)(**initParams)
-        try:
-            learner.learn(**learnParams)
-        except ValueError as e:
-            if learnerName not in ["DLDA", "Parzen"]:
-                raise e
-            if learnerName == "DLDA":
-                from interfaces.mlpy_patches import DLDA
-                learner = DLDA(**initParams)
-                learner.learn(**learnParams)
-            elif learnerName == "Parzen":
-                from interfaces.mlpy_patches import Parzen
-                learner = Parzen(**initParams)
-                learner.learn(**learnParams)
+        # use patch if necessary
+        patchedLearners = ["DLDA", "Parzen", "ElasticNet", "ElasticNetC"]
+        if learnerName in patchedLearners:
+            patchModule = importlib.import_module("interfaces.mlpy_patches")
+            initLearner = getattr(patchModule, learnerName)
+        else:
+            initLearner = self.findCallable(learnerName)
+        learner = initLearner(**initParams)
+        learner.learn(**learnParams)
 
         return learner
 
@@ -515,7 +511,7 @@ class Mlpy(UniversalInterface):
         namedModule = self._searcher.findInPackage(parent, name)
 
         # for python 3
-        # in python 3, inspect.getargspec(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
+        # in python 3, inspectArguments(mlpy.KNN.__init__) works, but returns back wrong arguments. we need to purposely run
         # self._paramQueryHardCoded(name, parent, ignore) for KNN, PCA...
         excludeList = ['libsvm', 'knn', 'liblinear', 'maximumlikelihoodc', 'KernelAdatron'.lower(), 'ClassTree'.lower(), 'MFastHCluster'.lower(), 'kmeans']
         if sys.version_info.major > 2 and 'kernel' not in name.lower():
@@ -524,7 +520,7 @@ class Mlpy(UniversalInterface):
 
         if not namedModule is None:
             try:
-                (args, v, k, d) = inspect.getargspec(namedModule)
+                (args, v, k, d) = inspectArguments(namedModule)
                 (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
                 if 'seed' in args:
                     index = args.index('seed')
@@ -533,7 +529,7 @@ class Mlpy(UniversalInterface):
                 return (args, v, k, d)
             except TypeError:
                 try:
-                    (args, v, k, d) = inspect.getargspec(namedModule.__init__)
+                    (args, v, k, d) = inspectArguments(namedModule.__init__)
                     (args, d) = self._removeFromTailMatchedLists(args, d, ignore)
                     if 'seed' in args:
                         index = args.index('seed')

@@ -15,6 +15,8 @@ import inspect
 import numpy
 import importlib
 import numbers
+import requests
+from io import StringIO, BytesIO
 
 import os.path
 import re
@@ -263,6 +265,7 @@ def transposeMatrix(matrixObj):
     """
     return numpy.matrix(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
+
 def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType):
     """
     1. if rawData is like {'a':[1,2], 'b':[3,4]}, then convert it to np.matrix and extract
@@ -272,20 +275,36 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
     if featureNames is True, then extract feature names from the 1st row in rawData
     4. convert data to np matrix
     """
-    #1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
-    #featureNames must be those keys
-    #pointNames must be False or automatic
-    if isinstance(rawData, dict):
+    if not isinstance(pointNames, str) and not isinstance(featureNames, str) \
+            and not isinstance(pointNames, bool) and not isinstance(featureNames, bool)\
+            and pointNames is not None and featureNames is not None:
+
+        try:
+            if callable(getattr(pointNames, '__len__')) \
+                    and callable(getattr(pointNames, '__getitem__')) \
+                    and callable(getattr(featureNames, '__len__')) \
+                    and callable(getattr(featureNames, '__getitem__')):
+                pass
+        except AttributeError:
+            msg = ("if pointNames and featureNames are not 'bool' or a 'str'"
+                   "they should be other 'iterable' object")
+            raise AttributeError(msg)
+
+
+    # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.matrix
+    # featureNames must be those keys
+    # pointNames must be False or automatic
+    elif isinstance(rawData, dict):
         if rawData:
             featureNames = list(rawData.keys())
             rawData = numpy.matrix(list(rawData.values()), dtype=elementType)
             if len(featureNames) == len(rawData):
-                #{'a':[1,3], 'b':[2,4], 'c':['a', 'b']} --> keys = ['a', 'c', 'b']
-                #np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
-                #thus transpose is needed
-                #{'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
-                #np.matrix(values()) = [[1,3,2]]
-                #transpose is not needed
+                # {'a':[1,3], 'b':[2,4], 'c':['a', 'b']} --> keys = ['a', 'c', 'b']
+                # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
+                # thus transpose is needed
+                # {'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
+                # np.matrix(values()) = [[1,3,2]]
+                # transpose is not needed
                 rawData = transposeMatrix(rawData)
             pointNames = None
 
@@ -294,9 +313,9 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             rawData = numpy.matrix(numpy.empty([0, 0]), dtype=elementType)
             pointNames = None
 
-    #2. convert list of dict like [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
-    #featureNames must be those keys
-    #pointNames must be False or automatic
+    # 2. convert list of dict like [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.matrix
+    # featureNames must be those keys
+    # pointNames must be False or automatic
     elif isinstance(rawData, list) and len(rawData) > 0 and isinstance(rawData[0], dict):
         # double nested list contained list-type forced values from the first row
         values = [list(rawData[0].values())]
@@ -375,23 +394,48 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
             assert tempFeatureNames is None
             featureNames = featureNames
 
-    #4. if type(data) dosen't match returnType, then convert data to numpy matrix or coo_matrix.
-    #if elementType is not None, then convert each element in data to elementType.
-    if (elementType is None) and (\
-        (isinstance(rawData, list) and returnType == 'List' and len(rawData) != 0 and (\
-            #this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
-            #otherwise, we need to covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
-            isAllowedSingleElement(rawData[0]) or isinstance(rawData[0], list) or hasattr(rawData[0], 'setLimit'))) or \
-        (pd and isinstance(rawData, pd.DataFrame) and returnType == 'DataFrame') or \
-        (scipy and scipy.sparse.isspmatrix(rawData) and returnType == 'Sparse')\
-        ):
+
+    # 4. if type(data) doesn't match returnType, then convert data to numpy matrix or coo_matrix.
+    # if elementType is not None, then convert each element in data to elementType.
+    if (elementType is None and
+       isinstance(rawData, list) and
+       returnType == 'List' and
+       len(rawData) != 0 and (
+       #this list can only be [[]], [1,2,3], ['ab', 'c'], [[1,2,'a'], [4,5,'b']]
+       #otherwise, we need to covert the list to matrix, such [np.array([1,2]), np.array(3,4)]
+       isAllowedSingleElement(rawData[0]) or
+       isinstance(rawData[0], list) or
+       hasattr(rawData[0], 'setLimit'))):
+        # attempt to convert the list to floats to remain consistent with other
+        # UML types if unsuccessful we will keep the list as is
+        try:
+            # 1D list
+            rawData = list(map(numpy.float, rawData))
+        except (TypeError, ValueError):
+            try:
+                #2D list
+                convertedData = []
+                for point in rawData:
+                    convertedData.append(list(map(numpy.float, point)))
+                rawData = convertedData
+            except (ValueError, TypeError):
+                pass
+    elif (elementType is None and
+         pd and isinstance(rawData, pd.DataFrame) and
+         not isinstance(rawData, pd.SparseDataFrame) and
+         returnType == 'DataFrame'):
+        pass
+    elif (elementType is None and
+         scipy and scipy.sparse.isspmatrix(rawData) and
+         returnType == 'Sparse'):
         pass
     elif isinstance(rawData, (numpy.ndarray, numpy.matrix)):
         #if the input data is a np matrix, then convert it anyway to make sure try dtype=float 1st.
         rawData = elementTypeConvert(rawData, elementType)
-    elif pd and isinstance(rawData, pd.SparseDataFrame) and returnType == 'Sparse':
+    elif pd and isinstance(rawData, pd.SparseDataFrame):
         #from sparse to sparse, instead of via np matrix
-        rawData = scipy.sparse.coo_matrix(rawData, dtype=elementType)
+        rawData = elementTypeConvert(rawData, elementType)
+        rawData = scipy.sparse.coo_matrix(rawData)
 
     elif isinstance(rawData, (list, tuple)):
         #when rawData = [], or feature empty [[]], we need to use pointNames and featureNames
@@ -406,7 +450,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         else:
             rawData = elementTypeConvert(rawData, elementType)
 
-    elif pd and isinstance(rawData, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
+    elif pd and isinstance(rawData, (pd.DataFrame, pd.Series)):
         rawData = elementTypeConvert(rawData, elementType)
 
     elif scipy and scipy.sparse.isspmatrix(rawData):
@@ -417,6 +461,7 @@ def extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, el
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData), numpy.NaN)
 
     return rawData, pointNames, featureNames
+
 
 def elementTypeConvert(rawData, elementType):
     """
@@ -439,10 +484,56 @@ def elementTypeConvert(rawData, elementType):
             data = numpy.matrix(rawData, dtype=object)
         return data
 
+def replaceMissingData(rawData, treatAsMissing, replaceMissingWith, elementType=None):
+    """
+    convert any values in rawData found in treatAsMissing with replaceMissingWith value
+    """
+    # check if nan values are included in treatAsMissing
+    nanIsMissing = False
+    for missing in treatAsMissing:
+        if isinstance(missing, float) and numpy.isnan(missing):
+            nanIsMissing = True
+            break
+    # boolean function for whether value should be treated as missing
+    def missingCheck(x):
+        if nanIsMissing and isinstance(x, float) and numpy.isnan(x):
+            return True
+        else:
+            return x in treatAsMissing
+    # vectorize missingCheck function
+    missingReplacer = numpy.vectorize(missingCheck, otypes=["bool"])
+
+    if isinstance(rawData, (list, tuple)):
+        # use raw data (converting to numpy array for lists) to apply vectorized function
+        handleMissing = numpy.array(rawData, dtype=object)
+        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        rawData = handleMissing.tolist()
+
+    elif isinstance(rawData, (numpy.matrix, numpy.ndarray)):
+        handleMissing = rawData.astype(object)
+        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        rawData = elementTypeConvert(handleMissing, elementType)
+
+    elif scipy.sparse.issparse(rawData):
+        handleMissing = rawData.data.astype(object)
+        handleMissing[missingReplacer(handleMissing)] = replaceMissingWith
+        handleMissing = elementTypeConvert(handleMissing, elementType)
+        # elementTypeConvert returns matrix, need a 1D array
+        handleMissing = handleMissing.A1
+        rawData.data = handleMissing
+
+    elif isinstance(rawData, (pd.DataFrame, pd.Series)):
+        if len(rawData.values) > 0:
+            # .where keeps the values that return True, use ~ to replace those values instead
+            rawData = rawData.where(~rawData.isin(treatAsMissing), replaceMissingWith)
+
+    return rawData
 
 def initDataObject(
-        returnType, rawData, pointNames, featureNames, name, path,
-        keepPoints, keepFeatures, elementType=None, reuseData=False):
+        returnType, rawData, pointNames, featureNames, name, path, keepPoints, keepFeatures,
+        elementType=None, reuseData=False,
+        treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
+        replaceMissingWith=numpy.nan):
     """
     1. set up autoType
     2.
@@ -458,7 +549,12 @@ def initDataObject(
         returnType = autoType
 
     #may need to extract names and may need to convert data to matrix
-    rawData, pointNames, featureNames = extractNamesAndConvertData(returnType, rawData, pointNames, featureNames, elementType)
+    rawData, pointNames, featureNames = extractNamesAndConvertData(
+        returnType, rawData, pointNames, featureNames, elementType)
+
+    # handle missing values
+    if treatAsMissing is not None:
+        rawData = replaceMissingData(rawData, treatAsMissing, replaceMissingWith, elementType)
 
     pathsToPass = (None, None)
     if path is not None:
@@ -466,23 +562,30 @@ def initDataObject(
         if isinstance(path, tuple):
             pathsToPass = path
         else:
-            if os.path.isabs(path):
+            if path.startswith('http'):
+                pathsToPass = (path, None)
+            elif os.path.isabs(path):
                 absPath = path
                 relPath = os.path.relpath(path)
+                pathsToPass = (absPath, relPath)
             else:
                 absPath = os.path.abspath(path)
                 relPath = path
-            pathsToPass = (absPath, relPath)
+                pathsToPass = (absPath, relPath)
 
     initMethod = getattr(UML.data, returnType)
     try:
-        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData)
+        ret = initMethod(rawData, pointNames=pointNames, featureNames=featureNames,
+                         name=name, paths=pathsToPass, elementType=elementType,
+                         reuseData=reuseData)
     except Exception as e:
         einfo = sys.exc_info()
         #something went wrong. instead, try to auto load and then convert
         try:
             autoMethod = getattr(UML.data, autoType)
-            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames, name=name, paths=pathsToPass, elementType=elementType, reuseData=reuseData)
+            ret = autoMethod(rawData, pointNames=pointNames, featureNames=featureNames,
+                             name=name, paths=pathsToPass, elementType=elementType,
+                             reuseData=reuseData)
             ret = ret.copyAs(returnType)
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
@@ -577,8 +680,9 @@ def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
 
 
 def createDataFromFile(
-        returnType, data, pointNames, featureNames, fileType, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures):
+        returnType, data, pointNames, featureNames, name,
+        ignoreNonNumericalFeatures, keepPoints, keepFeatures, inputSeparator,
+        treatAsMissing, replaceMissingWith):
     """
     Helper for createData which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -586,61 +690,95 @@ def createDataFromFile(
     createData's parameters with the same names).
 
     """
-    # Use the path' extension if fileType isn't specified
-    if fileType is None:
+    # try to find an extension for possible optimizations
+    if isinstance(data, six.string_types):
         path = data
-        if not isinstance(path, six.string_types):
-            try:
-                path = data.name
-            except AttributeError:
-                msg = "The file must be recognizable by it's extension, or a type must "
-                msg += "be specified using the 'fileType' parameter. However, since an "
-                msg += "open file object was passed which didn't have a name attribute, we "
-                msg += "cannot determine the type of the file"
-                raise ArgumentException(msg)
+    else:
+        # try getting name attribute from file
+        try:
+            path = data.name
+        except AttributeError:
+            path = None
 
+    # detect extension from the path
+    if path is not None:
         split = path.rsplit('.', 1)
         extension = None
         if len(split) > 1:
             extension = split[1].lower()
-        if extension is None:
-            msg = "The file must be recognizable by extension, or a type must "
-            msg += "be specified using the 'fileType' parameter"
-            raise ArgumentException(msg)
-        fileType = extension
+    else:
+        extension = None
+
+    def isMtxFileChecker(ioStream):
+        # find first non empty line to check header
+        startPosition = ioStream.tell()
+        currLine = ioStream.readline()
+        while currLine == '':
+            currLine = ioStream.readline()
+        header = currLine
+        ioStream.seek(startPosition)
+
+        # check beginning of header for sentinal - on both string or binary stream
+        return header[:14] == "%%MatrixMarket" or header[:14] == b"%%MatrixMarket"
+
+    toPass = data
+    # Case: string value means we need to open the file, either directly or through
+    # an http request
+    if isinstance(toPass, six.string_types):
+        if toPass[:4] == 'http':
+            response = requests.get(data, stream=True)
+            if not response.ok:
+                msg = "The data could not be accessed from the webpage. "
+                msg += "HTTP Status: {0}, ".format(response.status_code)
+                msg += "Reason: {0}".format(response.reason)
+                raise ArgumentException(msg)
+
+            # check python version
+            py3 = sys.version_info[0] == 3
+            if py3:
+                toPass = StringIO(response.text, newline=None)
+                isMtxFile = isMtxFileChecker(toPass)
+                # scipy.io.mmreader needs bytes object
+                if isMtxFile:
+                    toPass = BytesIO(bytes(response.content, response.apparent_encoding))
+            # in python 2, we can just always use BytesIO
+            else:
+                # handle universal newline
+                content = "\n".join(response.content.splitlines())
+                toPass = BytesIO(content)
+                isMtxFile = isMtxFileChecker(toPass)
+        else:
+            toPass = open(data, 'rU')
+            isMtxFile = isMtxFileChecker(toPass)
+    # Case: we are given an open file already
+    else:
+        isMtxFile = isMtxFileChecker(toPass)
 
     loadType = returnType
     if loadType is None:
-        if fileType == 'csv':
-            loadType = 'Matrix'
-        elif fileType == 'mtx':
-            loadType = 'Auto'
-        else:
-            loadType = 'Matrix'
+        loadType = 'Auto' if isMtxFile else 'Matrix'
+
+    # use detected format to override file extension
+    if isMtxFile:
+        extension = 'mtx'
 
     # Choose what code to use to load the file. Take into consideration the end
     # result we are trying to load into.
-    directPath = "_load" + fileType + "For" + loadType
-    # try to get loading function
-    retData, retPNames, retFNames, selectSuccess = None, None, None, False
+    if loadType is not None and extension is not None:
+        directPath = "_load" + extension + "For" + loadType
+    else:
+        directPath = None
 
-    toPass = data
-    if isinstance(toPass, six.string_types):
-        toPass = open(data, 'rU')
     if directPath in globals():
         loader = globals()[directPath]
         loaded = loader(
             toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures)
+            keepPoints, keepFeatures, inputSeparator=inputSeparator)
+    # If we don't know, default to trying to load a value separated file
     else:
-        if fileType == 'csv':
-            loaded = _loadcsvForMatrix(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures)
-        if fileType == 'mtx':
-            loaded = _loadmtxForAuto(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures)
+        loaded = _loadcsvUsingPython(
+            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+            keepPoints, keepFeatures, inputSeparator=inputSeparator)
 
     (retData, retPNames, retFNames, selectSuccess) = loaded
 
@@ -668,12 +806,13 @@ def createDataFromFile(
 
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, path,
-        keepPoints, keepFeatures)
+        keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
+        replaceMissingWith=replaceMissingWith)
 
 
 def _loadmtxForAuto(
         openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
-        keepPoints, keepFeatures):
+        keepPoints, keepFeatures, **kwargs):
     """
     Uses scipy helpers to read a matrix market file; returning whatever is most
     appropriate for the file. If it is a matrix market array type, a numpy
@@ -1026,7 +1165,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues, secondValues):
 
     return (pointNames, featureNames)
 
-def _checkCSV_for_Names(openFile, pointNames, featureNames):
+def _checkCSV_for_Names(openFile, pointNames, featureNames, dialect):
     """
     Will check for triggers to automatically determine the positions of
     the point or feature names if they have not been specified by the
@@ -1056,7 +1195,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
     # Use the robust csv reader to read the first two lines (if available)
     # these are saved to used in further autodection
     openFile.seek(startPosition)
-    rowReader = csv.reader(openFile)
+    rowReader = csv.reader(openFile, dialect)
     try:
         firstDataRow = next(rowReader)
         while firstDataRow == []:
@@ -1075,7 +1214,7 @@ def _checkCSV_for_Names(openFile, pointNames, featureNames):
     (pointNames, featureNames) = autoDetectNamesFromRaw(pointNames, featureNames,
                                                         firstDataRow, secondDataRow)
 
-    # reset everyting to make the loop easier
+    # reset everything to make the loop easier
     openFile.seek(startPosition)
 
     return (pointNames, featureNames)
@@ -1142,7 +1281,7 @@ def _selectionNameValidation(keep, hasNames, kind):
 
 
 def _csv_getFNamesAndAnalyzeRows(
-        pointNames, featureNames, openFile, lineReader, skippedLines):
+        pointNames, featureNames, openFile, lineReader, skippedLines, dialect):
     """
     If needed, take the first row from the lineReader to define the
     feature names. Regardless of whether feature names are desired,
@@ -1168,7 +1307,7 @@ def _csv_getFNamesAndAnalyzeRows(
     else:
         startPosition = openFile.tell()
         filtered = itertools.ifilter(_filterCSVRow, openFile)
-        trialReader = csv.reader(filtered)
+        trialReader = csv.reader(filtered, dialect)
         trialRow = next(trialReader)
         # Number values in a row excluding point names
         numFeatures = len(trialRow)
@@ -1183,7 +1322,7 @@ def _csv_getFNamesAndAnalyzeRows(
 
 
 def _validateRowLength(
-        row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex):
+        row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex, delimiter):
     """
     Given a row read from a csv line reader, and the expected length of
     that row, raise an appropriately worded exception if there is a
@@ -1194,7 +1333,8 @@ def _validateRowLength(
         msg += str(len(row)) + ". We expected a length of "
         msg += str(numColumns) + ". The expected row length was defined "
         msg += "by looking at the " + columnsDefSrc + " on line "
-        msg += str(columnsDefIndex) + "."
+        msg += str(columnsDefIndex) + " and using '" + delimiter
+        msg += "' as the separator."
         raise FileFormatException(msg)
 
 
@@ -1369,10 +1509,32 @@ def _namesDictToList(names, kind, paramName):
 
     return ret
 
+def _detectDialectFromSeparator(openFile, inputSeparator):
+    "find the dialect to pass to csv.reader based on inputSeparator"
+    startPosition = openFile.tell()
+    # skip commented lines
+    skipped = _advancePastComments(openFile)
+    if inputSeparator == 'automatic':
+        # detect the delimiter from the first line of data
+        dialect = csv.Sniffer().sniff(openFile.readline())
+    elif len(inputSeparator) > 1:
+        msg = "inputSeparator must be a single character"
+        raise ArgumentException(msg)
+    elif inputSeparator == '\t':
+        dialect = csv.excel_tab
+    else:
+        dialect = csv.excel
+        dialect.delimiter = inputSeparator
+
+    # reset everything to make the loop easier
+    openFile.seek(startPosition)
+
+    return dialect
+
 
 def _loadcsvUsingPython(
         openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
-        keepPoints, keepFeatures):
+        keepPoints, keepFeatures, **kwargs):
     """
     Loads a csv file using a reader from python's csv module
 
@@ -1421,13 +1583,14 @@ def _loadcsvUsingPython(
     were applied in this function call.
 
     """
+    inputSeparator = kwargs['inputSeparator']
+    dialect = _detectDialectFromSeparator(openFile, inputSeparator)
+
     (pointNames, featureNames) = _checkCSV_for_Names(
-        openFile, pointNames, featureNames)
+        openFile, pointNames, featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
     featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')
-
-    # TODO Try to determine formating
 
     # Advance the file past any beginning of file comments, record
     # how many are skipped
@@ -1435,7 +1598,7 @@ def _loadcsvUsingPython(
     # remake the file iterator to ignore empty lines
     filtered = itertools.ifilter(_filterCSVRow, openFile)
     # send that line iterator to the csv reader
-    lineReader = csv.reader(filtered)
+    lineReader = csv.reader(filtered, dialect)
 
     # after _checkCSV_for_Names then both pointNames and featureNames
     # should either be True, False, a list or a dict. In the case of
@@ -1449,7 +1612,7 @@ def _loadcsvUsingPython(
     # columns in a row, and record a few book-keeping details
     # to be output in case of an exception
     namesAndMore = _csv_getFNamesAndAnalyzeRows(
-        pointNames, featureNames, openFile, lineReader, skippedLines)
+        pointNames, featureNames, openFile, lineReader, skippedLines, dialect)
     retFNames = namesAndMore[0]
     numFeatures = namesAndMore[1]
     numColumns = namesAndMore[2]
@@ -1527,7 +1690,8 @@ def _loadcsvUsingPython(
 
         # Validation: require equal length of all rows
         _validateRowLength(
-            row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex)
+            row, numColumns, lineIndex, columnsDefSrc, columnsDefIndex,
+            delimiter=dialect.delimiter)
 
         # grab the pointName if needed
         currPName = None
@@ -1824,8 +1988,11 @@ def convertAndFilterRow(row, pointIndex, record, toRemoveSet,
 _loadcsvForList = _loadcsvUsingPython
 _loadcsvForMatrix = _loadcsvUsingPython
 _loadcsvForSparse = _loadcsvUsingPython
+_loadcsvForDataFrame = _loadcsvUsingPython
+_loadmtxForList = _loadmtxForAuto
 _loadmtxForMatrix = _loadmtxForAuto
 _loadmtxForSparse = _loadmtxForAuto
+_loadmtxForDataFrame = _loadmtxForAuto
 
 
 def autoRegisterFromSettings():
@@ -2425,7 +2592,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
             if collectedY is None:
                 collectedY = curTestingY
             else:
-                collectedY.appendPoints(curTestingY)
+                collectedY.addPoints(curTestingY)
 
         # setup for next iteration
         argumentCombinationIterator.reset()
@@ -2440,7 +2607,7 @@ def crossValidateBackend(learnerName, X, Y, performanceFunction, arguments={}, f
         # we combine the results objects into one, and then calc performance
         else:
             for resultIndex in range(1, len(results)):
-                results[0].appendPoints(results[resultIndex])
+                results[0].addPoints(results[resultIndex])
 
             # TODO raise RuntimeError("How do we guarantee Y and results are in same order?")
             finalPerformance = computeMetrics(collectedY, None, results[0], performanceFunction)
@@ -2541,7 +2708,7 @@ class _foldIteratorClass():
             else:
                 currTest = copied.extractPoints(self.foldList[self.index])
                 currTrain = copied
-                currTrain.shufflePoints(indices)
+                currTrain.sortPoints(sortHelper=indices)
                 resultsList.append((currTrain, currTest))
         self.index = self.index + 1
         return resultsList
@@ -3169,7 +3336,7 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
     # we want the data and the labels together in one object or this method
     if isinstance(trainY, Base):
         trainX = trainX.copy()
-        trainX.appendFeatures(trainY)
+        trainX.addFeatures(trainY)
         trainY = trainX.features - 1
 
     # Get set of unique class labels, then generate list of all 2-combinations of
@@ -3211,9 +3378,9 @@ def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments={}, scor
             rawPredictions = partialResults.copyAs(format="List")
         else:
             partialResults.setFeatureName(0, 'predictions-' + str(predictionFeatureID))
-            rawPredictions.appendFeatures(partialResults.copyAs(format="List"))
-        pairData.appendFeatures(pairTrueLabels)
-        trainX.appendPoints(pairData)
+            rawPredictions.addFeatures(partialResults.copyAs(format="List"))
+        pairData.addFeatures(pairTrueLabels)
+        trainX.addPoints(pairData)
         predictionFeatureID += 1
 
     if useLog:
@@ -3352,7 +3519,7 @@ def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments={}, scor
         else:
             #as it's added to results object, rename each column with its corresponding class label
             oneLabelResults.setFeatureName(0, str(label))
-            rawPredictions.appendFeatures(oneLabelResults)
+            rawPredictions.addFeatures(oneLabelResults)
 
     if useLog:
         timer.stop('train')
@@ -3507,3 +3674,15 @@ def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, arguments={}
     """
     return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX, trainY=trainY, testX=testX, testY=testY, f=trainAndApplyOneVsOne, \
                                 arguments=arguments, performanceFunction=performanceFunction, useLog=useLog, **kwarguments)
+
+
+def inspectArguments(func):
+    """
+    To be used in place of inspect.getargspec for Python3 compatibility.
+    Return is the tuple (args, varargs, keywords, defaults)
+    """
+    try:
+        argspec = inspect.getfullargspec(func)[:4] #py3
+    except:
+        argspec = inspect.getargspec(func) #py2
+    return argspec

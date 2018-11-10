@@ -8,7 +8,7 @@ from UML.exceptions import ArgumentException, PackageException
 
 scipy = UML.importModule('scipy')
 
-numericalTypes = (int, float, int)
+numericalTypes = (int, float, int, numpy.number)
 
 
 def proportionMissing(values):
@@ -337,7 +337,7 @@ def residuals(toPredict, controlVars):
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
-    workingCV.appendFeatures(UML.ones(workingType, cvP, 1))
+    workingCV.addFeatures(UML.ones(workingType, cvP, 1))
     workingCV = workingCV.copyAs("numpy matrix")
     workingTP = toPredict.copyAs("numpy matrix")
 

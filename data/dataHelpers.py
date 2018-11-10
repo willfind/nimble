@@ -8,12 +8,14 @@ from __future__ import division
 from __future__ import absolute_import
 import copy
 import math
-import string
+import inspect
 
 from abc import ABCMeta
 from abc import abstractmethod
 import six
 from six.moves import range
+
+from UML.exceptions import ArgumentException
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -161,19 +163,36 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
         return ret
 
-    retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
-    retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
+    (retPNames, retFNames) = (None, None)
+
+    if baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
+        retPNames = mergeNames(baseSource.getPointNames(), otherSource.getPointNames())
+    elif baseSource._pointNamesCreated() and not otherSource._pointNamesCreated():
+        retPNames = baseSource.pointNames
+    elif not baseSource._pointNamesCreated() and otherSource._pointNamesCreated():
+        retPNames = otherSource.pointNames
+    else:
+        retPNames = None
+
+    if baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
+        retFNames = mergeNames(baseSource.getFeatureNames(), otherSource.getFeatureNames())
+    elif baseSource._featureNamesCreated() and not otherSource._featureNamesCreated():
+        retFNames = baseSource.featureNames
+    elif not baseSource._featureNamesCreated() and otherSource._featureNamesCreated():
+        retFNames = otherSource.featureNames
+    else:
+        retFNames = None
 
     return (retPNames, retFNames)
 
 
-def reorderToMatchExtractionList(dataObject, extractionList, axis):
+def reorderToMatchList(dataObject, matchList, axis):
     """
     Helper which will reorder the data object along the specified axis so that
-    instead of being in an order corresponding to a sorted version of extractionList,
-    it will be in the order of the given extractionList.
+    instead of being in an order corresponding to a sorted version of matchList,
+    it will be in the order of the given matchList.
 
-    extractionList must contain only indices, not name based identifiers.
+    matchList must contain only indices, not name based identifiers.
 
     """
     if axis.lower() == "point":
@@ -181,11 +200,11 @@ def reorderToMatchExtractionList(dataObject, extractionList, axis):
     else:
         sortFunc = dataObject.sortFeatures
 
-    sortedList = copy.copy(extractionList)
+    sortedList = copy.copy(matchList)
     sortedList.sort()
     mappedOrig = {}
-    for i in range(len(extractionList)):
-        mappedOrig[extractionList[i]] = i
+    for i in range(len(matchList)):
+        mappedOrig[matchList[i]] = i
 
     if axis == 'point':
         indexGetter = lambda x: dataObject.getPointIndex(x.getPointName(0))
@@ -208,6 +227,14 @@ def _looksNumeric(val):
     if not hasattr(val, '__truediv__') or isinstance(val, six.string_types):
         return False
     return True
+
+
+def _checkNumeric(val):
+    """
+    Check if value looks numeric. Raise ValueError if not.
+    """
+    if not _looksNumeric(val):
+        raise ValueError("Value '{}' does not seem to be numeric".format(val))
 
 
 def formatIfNeeded(value, sigDigits):
@@ -390,3 +417,21 @@ def makeConsistentFNamesAndData(fnames, data, dataWidths, colHold):
         # modify the width associated with the colHold
         if removalWidths is not None:
             removalWidths[removeIndex] = len(colHold)
+
+
+def inheritDocstringsFactory(toInherit):
+    """
+    Factory to make decorator to copy docstrings from toInherit for reimplementations
+    in the wrapped object. Only those functions without docstrings will be given the
+    corresponding docstrings from toInherit.
+    """
+    def inheritDocstring(cls):
+        writable = cls.__dict__
+        for name in writable:
+            if inspect.isfunction(writable[name]) and hasattr(toInherit, name):
+                func = writable[name]
+                if not func.__doc__:
+                    func.__doc__ = getattr(toInherit, name).__doc__
+
+        return cls
+    return inheritDocstring

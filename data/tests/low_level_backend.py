@@ -14,12 +14,23 @@ _featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
 setPointName, setFeatureName, setPointNames, setFeatureNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, getPointNames, getFeatureNames, __len__,
-getFeatureIndex, getFeatureName, getPointIndex, getPointName
+getFeatureIndex, getFeatureName, getPointIndex, getPointName,
+_constructIndicesList
 
 """
 
 from __future__ import absolute_import
+import numpy
+import pandas
+try:
+    from unittest import mock #python >=3.3
+except:
+    import mock
+
+from UML import createData
 from UML.data import Base
+from UML.data import available
+from UML.data.dataHelpers import inheritDocstringsFactory
 from UML.data.dataHelpers import DEFAULT_PREFIX
 from UML.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nose.tools import *
@@ -35,6 +46,30 @@ from UML.randomness import pythonRandom
 # helpers #
 ###########
 
+class SimpleIterator(object):
+    def __init__(self, *args):
+        self.values = args
+
+    def __iter__(self):
+        return iter(self.values)
+
+class GetItemOnly(object):
+    def __init__(self, *args):
+        self.values = args
+
+    def __getitem__(self, i):
+        return self.values[i]
+
+class NotIterable(object):
+    def __init__(self, *args):
+        self.values = args
+
+class CalledFunctionException(Exception):
+    def __init__(self):
+        pass
+
+def calledException(*args, **kwargs):
+    raise CalledFunctionException()
 
 def confirmExpectedNames(toTest, axis, expected):
     if axis == 'point':
@@ -517,14 +552,14 @@ class LowLevelBackend(object):
     @raises(ArgumentException)
     def test_setPointNames_exceptionNonStringPointNameInList(self):
         """ Test setPointNames() for ArgumentException when a list element is not a string """
-        toTest = self.constructor(pointNames=['one'])
-        nonStringNames = [1, 2, 3]
-        toTest.setPointNames(nonStringNames)
+        toTest = self.constructor(pointNames=['one', 'two', 'three'])
+        nonStringName = ['one', 'two', 3]
+        toTest.setPointNames(nonStringName)
 
     @raises(ArgumentException)
     def test_setPointNames_exceptionNonUniqueStringInList(self):
         """ Test setPointNames() for ArgumentException when a list element is not unique """
-        toTest = self.constructor(pointNames=['one'])
+        toTest = self.constructor(pointNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
         toTest.setPointNames(nonUnique)
 
@@ -534,6 +569,12 @@ class LowLevelBackend(object):
         toTest = self.constructor()
         toAssign = ["hey", "gone", "none", "blank"]
         toTest.setPointNames(toAssign)
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+        toTest = self.constructor(pointNames=['one', 'two', 'three'])
+        toTest.setPointNames(['a', 'b', 'c'])
 
     def test_setPointNames_emptyDataAndList(self):
         """ Test setPointNames() when both the data and the list are empty """
@@ -656,6 +697,12 @@ class LowLevelBackend(object):
         toAssign = {"hey": 0, "gone": 1, "none": 2, "blank": 3}
         toTest.setFeatureNames(toAssign)
 
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setFeatureNames_calls_valuesToPythonList(self, mockFunc):
+        toTest = self.constructor(featureNames=['one', 'two', 'three'])
+        toTest.setFeatureNames(['a', 'b', 'c'])
+
     def test_setFeatureNames_emptyDataAndDict(self):
         """ Test setFeatureNames() when both the data and the dict are empty """
         toTest = self.constructor()
@@ -681,14 +728,14 @@ class LowLevelBackend(object):
     @raises(ArgumentException)
     def test_setFeatureNames_exceptionNonStringFeatureNameInList(self):
         """ Test setFeatureNames() for ArgumentException when a list element is not a string """
-        toTest = self.constructor(featureNames=['one'])
-        nonStringFeatureNames = [1, 2, 3]
+        toTest = self.constructor(featureNames=['one', 'two', 'three'])
+        nonStringFeatureNames = ['one', 'two', 3]
         toTest.setFeatureNames(nonStringFeatureNames)
 
     @raises(ArgumentException)
     def test_setFeatureNames_exceptionNonUniqueStringInList(self):
         """ Test setFeatureNames() for ArgumentException when a list element is not unique """
-        toTest = self.constructor(featureNames=['one'])
+        toTest = self.constructor(featureNames=['one', 'two', 'three', 'four'])
         nonUnique = ['1', '2', '3', '1']
         toTest.setFeatureNames(nonUnique)
 
@@ -744,6 +791,31 @@ class LowLevelBackend(object):
         assert toTest.getFeatureName(2) == DEFAULT_PREFIX + str(nextNum - 1)
         assert toTest.getFeatureName(3).startswith(DEFAULT_PREFIX)
         assert ret is None
+
+
+    ##########################
+    # _adjustCountAndNames() #
+    ##########################
+
+    def test_adjustCountAndNames_pointCountAndNames(self):
+        origNames = ["zero", "one", "two", "three"]
+        orig = self.constructor(pointNames=origNames)
+        other = self.constructor(pointNames=["one", "two"])
+        expNames = ["zero", "three"]
+        orig._adjustCountAndNames('point', other)
+
+        assert orig.points == 2
+        assert orig.getPointNames() == expNames
+
+    def test_adjustCountAndNames_featureCountAndNames(self):
+        origNames = ["zero", "one", "two", "three"]
+        orig = self.constructor(featureNames=origNames)
+        other = self.constructor(featureNames=["one", "two"])
+        expNames = ["zero", "three"]
+        orig._adjustCountAndNames('feature', other)
+
+        assert orig.features == 2
+        assert orig.getFeatureNames() == expNames
 
 
     ##########################
@@ -1158,3 +1230,238 @@ class LowLevelBackend(object):
     def test_len_exception(self):
         nn = self.constructor(psize=11, fsize=33)
         len(nn)
+
+
+    #########################
+    # _constructIndicesList #
+    #########################
+
+    def _constructIndicesList_backend(self, container):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+        expected = [1,2]
+
+        # one-dimensional input
+        intPts1D = container([1,2])
+        strPts1D = container(['p2', 'p3'])
+        mixPts1D = container([1, 'p3'])
+        intFts1D = container([1,2])
+        strFts1D = container(['f2', 'f3'])
+        mixFts1D = container([1, 'f3'])
+
+        assert toTest._constructIndicesList('point', intPts1D) == expected
+        assert toTest._constructIndicesList('point', strPts1D) == expected
+        assert toTest._constructIndicesList('point', mixPts1D) == expected
+        assert toTest._constructIndicesList('feature', intFts1D) == expected
+        assert toTest._constructIndicesList('feature', strFts1D) == expected
+        assert toTest._constructIndicesList('feature', mixFts1D) == expected
+
+    @raises(CalledFunctionException)
+    @mock.patch('UML.data.base.valuesToPythonList', side_effect=calledException)
+    def test_setPointNames_calls_valuesToPythonList(self, mockFunc):
+        pointNames = ['p1','p2','p3']
+        toTest = self.constructor(pointNames=pointNames)
+        toTest._constructIndicesList(['p1', 'p2', 'p3'])
+
+    def test_constructIndicesList_pythonList(self):
+        self._constructIndicesList_backend(lambda lst: lst)
+
+    def test_constructIndicesList_pythonTuple(self):
+        self._constructIndicesList_backend(lambda lst: tuple(lst))
+
+    def test_constructIndicesList_pythonGenerator(self):
+        self._constructIndicesList_backend(lambda lst: (val for val in lst))
+
+    def test_constructIndicesList_UMLObjects(self):
+        for retType in available:
+            self._constructIndicesList_backend(
+                lambda lst: createData(retType, lst, elementType=object))
+
+    def test_constructIndicesList_numpyArray(self):
+        self._constructIndicesList_backend(lambda lst: numpy.array(lst,dtype=object))
+
+    def test_constructIndicesList_pandasSeries(self):
+        self._constructIndicesList_backend(lambda lst: pandas.Series(lst))
+
+    def test_constructIndicesList_handmadeIterator(self):
+        self._constructIndicesList_backend(lambda lst: SimpleIterator(*lst))
+
+    def test_constructIndicesList_handmadeGetItemOnly(self):
+        self._constructIndicesList_backend(lambda lst: GetItemOnly(*lst))
+
+    def test_constructIndicesList_singleInteger(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+        expected = [2]
+
+        index = 2
+
+        assert toTest._constructIndicesList('point', index) == expected
+        assert toTest._constructIndicesList('feature', index) == expected
+
+    def test_constructIndicesList_singleString(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+        expected = [2]
+
+        ptIndex = 'p3'
+        ftIndex = 'f3'
+
+        assert toTest._constructIndicesList('point', ptIndex) == expected
+        assert toTest._constructIndicesList('feature', ftIndex) == expected
+
+    def test_constructIndicesList_pythonRange(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+        expected = [1, 2]
+
+        testRange = range(1,3)
+
+        assert toTest._constructIndicesList('point', testRange) == expected
+        assert toTest._constructIndicesList('feature', testRange) == expected
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_singleFloat(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+
+        ptIndex = 2.0
+
+        toTest._constructIndicesList('point', ptIndex)
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_floatIteratable(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+
+        ftIndex = [2.0]
+
+        toTest._constructIndicesList('feature', ftIndex)
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_floatInList(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+
+        ptIndex = [0, 'p2', 2.0]
+
+        toTest._constructIndicesList('point', ptIndex)
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_InvalidIndexInteger(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+
+        ftIndex = [2, 3]
+
+        toTest._constructIndicesList('feature', ftIndex)
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_InvalidIndexString(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+
+        ftIndex = ['f3', 'f4']
+
+        toTest._constructIndicesList('feature', ftIndex)
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_handmadeNotIterable(self):
+        self._constructIndicesList_backend(lambda lst: NotIterable(*lst))
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_numpyMatrix(self):
+        self._constructIndicesList_backend(lambda lst: numpy.matrix(lst))
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_pandasDataFrame(self):
+        self._constructIndicesList_backend(lambda lst: pandas.DataFrame(lst))
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_handmade2DOne(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+
+        list2D = [['f1','f2']]
+
+        toTest._constructIndicesList('feature', list2D)
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_handmade2DTwo(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+
+        array2D = numpy.array([[1,2,3],[4,5,6]])
+
+        toTest._constructIndicesList('feature', array2D)
+
+    @raises(ArgumentException)
+    def test_constructIndicesList_handmade2DThree(self):
+        pointNames = ['p1','p2','p3']
+        featureNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
+
+        iter2D = SimpleIterator([1,'p2'])
+
+        toTest._constructIndicesList('point', iter2D)
+
+    ########################
+    # inheritBaseDocstring #
+    ########################
+
+    def test_inheritDocstringsFactory(self):
+        """test docstrings from methods without docstrings are inherited from the passed class"""
+
+        class toInherit(object):
+            def __init__(self):
+                """toInherit __init__ docstring"""
+                pass
+
+            def copy(self):
+                """toInherit copy docstring"""
+                pass
+
+        @inheritDocstringsFactory(toInherit)
+        class InheritDocs(Base):
+            """InheritDocs class docstring"""
+
+            def __init__(self):
+                """inheritDocs __init__ docstring"""
+                pass
+
+            def copy(self):
+                pass
+
+            # these test there are no issues for methods that are not in inherited class
+            def _noDoc(self):
+                pass
+
+            def _withDoc(self):
+                """_withDoc docstring"""
+                pass
+
+        toTest = InheritDocs()
+
+        assert toTest.__doc__ != toInherit.__doc__
+        assert toTest.__doc__ == "InheritDocs class docstring"
+
+        assert toTest.__init__.__doc__ != toInherit.__init__.__doc__
+        assert toTest.__init__.__doc__ == "inheritDocs __init__ docstring"
+
+        assert toTest.copy.__doc__ is not None
+        assert toTest.copy.__doc__ == toInherit.copy.__doc__
+
+
+        assert toTest._noDoc.__doc__ is None
+        assert toTest._withDoc.__doc__ == "_withDoc docstring"

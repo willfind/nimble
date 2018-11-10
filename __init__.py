@@ -61,6 +61,9 @@ from .uml import crossValidateReturnBest
 
 from .uml import learnerType
 
+from .uml import loadData
+from .uml import loadTrainedLearner
+
 # now finish out with any other configuration that needs to be done
 
 # These learners are required for unit testing, so we ensure they will
@@ -88,7 +91,8 @@ __all__ = ['createData', 'createRandomData', 'crossValidate',
            'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
            'identity', 'learnerDefaultValues', 'learnerParameters',
            'learnerType', 'listDataFunctions', 'listLearners',
-           'listUMLFunctions', 'normalizeData', 'ones',
-           'registerCustomLearner', 'registerCustomLearnerAsDefault',
-           'setRandomSeed', 'settings', 'train', 'trainAndApply',
-           'trainAndTest', 'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
+           'listUMLFunctions', 'loadData', 'loadTrainedLearner',
+           'normalizeData', 'ones', 'registerCustomLearner',
+           'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
+           'train', 'trainAndApply', 'trainAndTest',
+           'trainAndTestOnTrainingData', 'UMLPath', 'zeros']
