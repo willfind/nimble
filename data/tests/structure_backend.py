@@ -428,11 +428,13 @@ class StructureDataSafe(StructureShared):
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        out = orig.copyAs(orig.getTypeString(), rowsArePoints=False)
+        for retType in UML.data.available:
 
-        desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
+            out = orig.copyAs(retType, rowsArePoints=False)
 
-        assert out == desired
+            desired = UML.createData(retType, dataT, pointNames=featureNames, featureNames=pointNames)
+
+            assert out == desired
 
         out = orig.copyAs(format='pythonlist', rowsArePoints=False)
 
@@ -446,13 +448,15 @@ class StructureDataSafe(StructureShared):
 
         assert numpy.array_equal(out, dataT)
 
-        out = orig.copyAs(format='scipycsr', rowsArePoints=False)
+        if scipy:
 
-        assert numpy.array_equal(out.toarray(), dataT)
+            out = orig.copyAs(format='scipycsr', rowsArePoints=False)
 
-        out = orig.copyAs(format='scipycsc', rowsArePoints=False)
+            assert numpy.array_equal(out.toarray(), dataT)
 
-        assert numpy.array_equal(out.toarray(), dataT)
+            out = orig.copyAs(format='scipycsc', rowsArePoints=False)
+
+            assert numpy.array_equal(out.toarray(), dataT)
 
         out = orig.copyAs(format='list of dict', rowsArePoints=False)
 
