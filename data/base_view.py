@@ -15,13 +15,18 @@ from UML.exceptions import ImproperActionException
 # prepend a message that view objects will raise an exception to Base docstring
 def exception_docstring(func):
     name = func.__name__
-    baseDoc = getattr(Base, name).__doc__
-    if baseDoc is not None:
-        viewMsg = "The {0} method is object modifying and ".format(name)
-        viewMsg += "will always raise an exception for view objects.\n\n"
-        viewMsg += "For reference, the docstring for this method "
-        viewMsg += "when objects can be modified is below:\n"
-        func.__doc__ = viewMsg + baseDoc
+    try:
+        baseDoc = getattr(Base, name).__doc__
+        if baseDoc is not None:
+            viewMsg = "The {0} method is object modifying and ".format(name)
+            viewMsg += "will always raise an exception for view objects.\n\n"
+            viewMsg += "For reference, the docstring for this method "
+            viewMsg += "when objects can be modified is below:\n"
+            func.__doc__ = viewMsg + baseDoc
+    except AttributeError:
+        # ignore built-in functions that differ between py2 and py3
+        # (__idiv__ vs __itruediv__, __ifloordiv__)
+        pass
     return func
 
 
