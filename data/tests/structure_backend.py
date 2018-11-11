@@ -468,10 +468,6 @@ class StructureDataSafe(StructureShared):
 
         assert out == desired
 
-
-
-
-
     def test_copy_outputAs1DWrongFormat(self):
         """ Test copyAs will raise exception when given an unallowed format """
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
