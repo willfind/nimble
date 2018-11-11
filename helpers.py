@@ -46,7 +46,6 @@ from UML.randomness import numpyRandom
 import six
 from six.moves import range
 from six.moves import zip
-from future.utils import raise_
 try:
     from sys import intern
     class Py2Key:#for python3
@@ -590,7 +589,7 @@ def initDataObject(
         # If it didn't work, report the error on the thing the user ACTUALLY
         # wanted
         except:
-            raise_(einfo[1], None, einfo[2])
+            six.reraise(einfo[0], einfo[1], einfo[2])
 
 
     def makeCmp(keepList, outerObj, axis):

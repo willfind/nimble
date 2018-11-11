@@ -961,16 +961,19 @@ class Base(object):
             if not preserveZeros:
                 # check if the function preserves zero values
                 preserveZeros = function(0) == 0
-            def functionWrap(value):
-                if preserveZeros and value == 0:
-                    return 0
-                currRet = function(value)
-                if skipNoneReturnValues and currRet is None:
-                    return value
-                else:
-                    return currRet
+            def funcFactory(function, preserveZeros, skipNoneReturnValues):
+                def functionWrap(value):
+                    if preserveZeros and value == 0:
+                        return 0
+                    currRet = function(value)
+                    if skipNoneReturnValues and currRet is None:
+                        return value
+                    else:
+                        return currRet
+                return functionWrap
 
-            vectorized = numpy.vectorize(functionWrap)
+            vectorizedFunc = funcFactory(function, preserveZeros, skipNoneReturnValues)
+            vectorized = numpy.vectorize(vectorizedFunc)
             ret = self._calculateForEachElement_implementation(
                      vectorized, points, features, preserveZeros, optType)
 
@@ -4006,7 +4009,7 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-            
+
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
@@ -5489,12 +5492,10 @@ class Base(object):
     def _validateStartEndRange(self, start, end, axisLength):
         """check that the start and end values are valid"""
         if start < 0 or start > axisLength:
-            msg = "start must be a valid index, in the range of possible "
-            msg += axis + 's'
+            msg = "start='{0}' is not a a valid index".format(start)
             raise ArgumentException(msg)
         if end < 0 or end > axisLength:
-            msg = "end must be a valid index, in the range of possible "
-            msg += axis + 's'
+            msg = "end='{0}' is not a valid index".format(end)
             raise ArgumentException(msg)
         if start > end:
             raise ArgumentException("The start index cannot be greater than the end index")

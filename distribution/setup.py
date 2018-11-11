@@ -90,7 +90,6 @@ def run_setup(with_extensions):
         packages=find_packages(exclude=['*.tests',
                                         '*.examples*']),
         install_requires=['six>=1.5.1',
-                          'future>=0.11.4',
                           'numpy>=1.10.4',
                          ],
         ext_modules=ext_modules,
