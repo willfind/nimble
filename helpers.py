@@ -15,7 +15,6 @@ import inspect
 import numpy
 import importlib
 import numbers
-import requests
 from io import StringIO, BytesIO
 
 import os.path
@@ -66,6 +65,7 @@ except:
 
 scipy = UML.importModule('scipy.io')
 pd = UML.importModule('pandas')
+requests = UML.importModule('requests')
 
 def findBestInterface(package):
     """
@@ -725,6 +725,10 @@ def createDataFromFile(
     # an http request
     if isinstance(toPass, six.string_types):
         if toPass[:4] == 'http':
+            if requests is None:
+                msg = "To load data from a webpage, the requests module must "
+                msg += "be installed"
+                raise PackageException(msg)
             response = requests.get(data, stream=True)
             if not response.ok:
                 msg = "The data could not be accessed from the webpage. "

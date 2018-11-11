@@ -14,6 +14,8 @@ from setuptools.command.sdist import sdist
 from distutils.errors import CCompilerError, DistutilsExecError, \
     DistutilsPlatformError
 
+# NOTE this file belongs one level above
+
 # command line: python setup.py sdist
     # builds source distribution with C extensions
 # command line: python setup.py bdist_wheel
@@ -96,6 +98,7 @@ def run_setup(with_extensions):
         cmdclass=cmdclass,
         )
 
+# TODO warning not showing when C file installs failed. Appears to be captured by setuptools
 try:
     run_setup(True)
 except BuildFailed:
