@@ -422,7 +422,7 @@ class StructureDataSafe(StructureShared):
     def test_copy_rowsArePointsFalse(self):
         """ Test copyAs() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = numpy.array(data).T
 
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
@@ -433,6 +433,26 @@ class StructureDataSafe(StructureShared):
         desired = self.constructor(dataT, pointNames=featureNames, featureNames=pointNames)
 
         assert out == desired
+
+        out = orig.copyAs(format='pythonlist', rowsArePoints=False)
+
+        assert out == dataT.tolist()
+
+        out = orig.copyAs(format='numpyarray', rowsArePoints=False)
+
+        assert numpy.array_equal(out, dataT)
+
+        out = orig.copyAs(format='numpymatrix', rowsArePoints=False)
+
+        assert numpy.array_equal(out, dataT)
+
+        out = orig.copyAs(format='scipycsr', rowsArePoints=False)
+
+        assert numpy.array_equal(out.toarray(), dataT)
+
+        out = orig.copyAs(format='scipycsc', rowsArePoints=False)
+
+        assert numpy.array_equal(out.toarray(), dataT)
 
         out = orig.copyAs(format='list of dict', rowsArePoints=False)
 
@@ -447,6 +467,10 @@ class StructureDataSafe(StructureShared):
         desired = desired.copyAs(format='dict of list')
 
         assert out == desired
+
+
+
+
 
     def test_copy_outputAs1DWrongFormat(self):
         """ Test copyAs will raise exception when given an unallowed format """
