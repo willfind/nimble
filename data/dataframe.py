@@ -22,6 +22,7 @@ import re
 from .base_view import BaseView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -667,25 +668,17 @@ class DataFrame(Base):
         assert shape[0] == self.points
         assert shape[1] == self.features
 
-    def _uniquePoints_implementation(self):
-        uniquePts = set()
-        uniqueIndices = []
-        for i, row in self.data.iterrows():
-            if tuple(row.values) not in uniquePts:
-                uniquePts.add(tuple(row.values))
-                uniqueIndices.append(i)
-        uniqueData = self.data.iloc[uniqueIndices, :]
+    def _genericUnique_implementation(self, axis):
+        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self, axis)
+        uniqueData = pd.DataFrame(uniqueData)
+        if numpy.array_equal(self.data.values, uniqueData):
+            return self.copy()
+        axisNames, offAxisNames = uniqueNameGetter(self, axis, uniqueIndices)
 
-        if self._pointNamesCreated():
-            pNames = [self.getPointNames()[i] for i in uniqueIndices]
+        if axis == 'point':
+            return DataFrame(uniqueData, pointNames=axisNames, featureNames=offAxisNames)
         else:
-            pNames = None
-        if self._featureNamesCreated():
-            fNames = self.getFeatureNames()
-        else:
-            fNames = None
-
-        return DataFrame(uniqueData, pointNames=pNames, featureNames=fNames)
+            return DataFrame(uniqueData, pointNames=offAxisNames, featureNames=axisNames)
 
     def _containsZero_implementation(self):
         """

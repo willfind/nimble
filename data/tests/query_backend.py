@@ -4,7 +4,8 @@ Methods tested in this file (none modify the data):
 
 pointCount, featureCount, isIdentical, writeFile, __getitem__, pointView,
 featureView, view, containsZero, __eq__, __ne__, toString, pointSimilarities,
-featureSimilarities, pointStatistics, featureStatistics, nonZeroIterator
+featureSimilarities, pointStatistics, featureStatistics, nonZeroIterator,
+countEachUniqueValue
 
 """
 
@@ -305,7 +306,7 @@ class QueryBackend(DataTestObject):
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        
+
         toSave.save(tmpFile.name)
 
         LoadObj = loadData(tmpFile.name)
@@ -318,11 +319,11 @@ class QueryBackend(DataTestObject):
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
         toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        
+
         toSave.save(tmpFile.name)
         LoadObj = loadData(tmpFile.name + '.umld')
         assert isinstance(LoadObj, UML.data.Base)
-        
+
         try:
             LoadObj = loadData(tmpFile.name)
         except ArgumentException as ae:
@@ -1920,6 +1921,85 @@ class QueryBackend(DataTestObject):
         for val in obj.nonZeroIterator(iterateBy='elements'):
             pass
 
+    ########################
+    # countEachUniqueValue #
+    ########################
+
+    def test_countEachUniqueValue_allPtsAndFtrs(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        toTest = self.constructor(data)
+        unique = toTest.countEachUniqueValue()
+
+        assert len(unique) == 6
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['b'] == 1
+        assert unique['c'] == 1
+
+    def test_countEachUniqueValue_limitPoints(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, pointNames=pNames)
+        unique = toTest.countEachUniqueValue(points=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countEachUniqueValue(points='p1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countEachUniqueValue(points=[0,'p3'])
+
+        assert len(unique) == 3
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+
+    def test_countEachUniqueValue_limitFeatures(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(data, featureNames=fNames)
+        unique = toTest.countEachUniqueValue(features=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[3] == 1
+        assert unique['a'] == 1
+
+        unique = toTest.countEachUniqueValue(features='f1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[3] == 1
+        assert unique['a'] == 1
+
+        unique = toTest.countEachUniqueValue(features=[0,'f3'])
+
+        assert len(unique) == 4
+        assert unique[1] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['c'] == 1
+
+    def test_countEachUniqueValue_limitPointsAndFeatures_cornercase(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
+
+        unique = toTest.countEachUniqueValue(features=[0,'f3'], points=[0,'p3'])
+
+        assert len(unique) == 2
+        assert unique[1] == 2
+        assert unique[3] == 2
 
 ###########
 # Helpers #

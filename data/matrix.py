@@ -14,6 +14,7 @@ import UML
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
@@ -667,23 +668,16 @@ class Matrix(Base):
         assert shape[0] == self.points
         assert shape[1] == self.features
 
-    def _uniquePoints_implementation(self):
-        uniquePts = set()
-        uniqueIndices = []
-        for i, row in enumerate(numpy.array(self.data)):
-            if tuple(row) not in uniquePts:
-                uniquePts.add(tuple(row))
-                uniqueIndices.append(i)
-        uniqueData = self.data[uniqueIndices]
-        if self._pointNamesCreated():
-            pNames = [self.getPointName(i) for i in uniqueIndices]
+    def _genericUnique_implementation(self, axis):
+        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self, axis)
+        if numpy.array_equal(self.data, uniqueData):
+            return self.copy()
+
+        axisNames, offAxisNames = uniqueNameGetter(self, axis, uniqueIndices)
+        if axis == 'point':
+            return Matrix(uniqueData, pointNames=axisNames, featureNames=offAxisNames)
         else:
-            pNames = None
-        if self._featureNamesCreated():
-            fNames = self.getFeatureNames()
-        else:
-            fNames = None
-        return Matrix(uniqueData, pointNames=pNames, featureNames=fNames)
+            return Matrix(uniqueData, pointNames=offAxisNames, featureNames=axisNames)
 
     def _containsZero_implementation(self):
         """

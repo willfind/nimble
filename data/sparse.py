@@ -1370,39 +1370,69 @@ class Sparse(Base):
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
 
-    def _uniquePoints_implementation(self):
-        if self._sorted != "feature":
+    def _genericUnique_implementation(self, axis):
+        self._validateAxis(axis)
+        if self._sorted is None:
             self._sortInternal("feature")
-        uniquePts = set()
+        if axis == 'point':
+            toIter = self.points
+            axisLocator = self.data.row
+            offAxisLocator = self.data.col
+            hasAxisNames = self._pointNamesCreated()
+            getAxisName = self.getPointName
+            getAxisNames = self.getPointNames
+            hasOffAxisNames = self._featureNamesCreated()
+            getOffAxisNames = self.getFeatureNames
+        else:
+            toIter = self.features
+            axisLocator = self.data.col
+            offAxisLocator = self.data.row
+            hasAxisNames = self._featureNamesCreated()
+            getAxisName = self.getFeatureName
+            getAxisNames = self.getFeatureNames
+            hasOffAxisNames = self._pointNamesCreated()
+            getOffAxisNames = self.getPointNames
+
+        unique = set()
         uniqueData = []
-        uniqueRow = []
-        uniqueCol = []
+        uniqueAxis = []
+        uniqueOffAxis = []
         keepNames = []
-        numPts = 0
-        for i in range(self.points):
-            pointLoc = self.data.row == i
-            if tuple(self.data.data[pointLoc]) not in uniquePts:
-                uniquePts.add(tuple(self.data.data[pointLoc]))
-                uniqueData.extend(self.data.data[pointLoc])
-                uniqueRow.extend([numPts for _ in range(sum(pointLoc))])
-                uniqueCol.extend(self.data.col[pointLoc])
-                if self._pointNamesCreated():
-                    keepNames.append(self.getPointName(i))
-                numPts += 1
+        axisCount = 0
+        for i in range(toIter):
+            axisLoc = axisLocator == i
+            # data values can look the same but have zeros in different places;
+            # zip with offAxis to ensure the locations are the same as well
+            key = tuple(zip(self.data.data[axisLoc], offAxisLocator[axisLoc]))
+            if key not in unique:
+                unique.add(key)
+                uniqueData.extend(self.data.data[axisLoc])
+                uniqueAxis.extend([axisCount for _ in range(sum(axisLoc))])
+                uniqueOffAxis.extend(offAxisLocator[axisLoc])
+                if hasAxisNames:
+                    keepNames.append(getAxisName(i))
+                axisCount += 1
 
-        uniqueCoo = coo_matrix((uniqueData, (uniqueRow, uniqueCol)), shape=(numPts, self.features))
+        if hasAxisNames and keepNames == getAxisNames():
+            return self.copy()
 
+        axisNames = None
+        offAxisNames = None
         if len(keepNames) > 0:
-            pNames = keepNames
-        else:
-            pNames = None
-        if self._featureNamesCreated():
-            fNames = self.getFeatureNames()
-        else:
-            fNames = None
+            axisNames = keepNames
+        if hasOffAxisNames:
+            offAxisNames = getOffAxisNames()
         self._sorted = None
 
-        return Sparse(uniqueCoo, pointNames=pNames, featureNames=fNames)
+        uniqueData = numpy.array(uniqueData, dtype=numpy.object_)
+        if axis == 'point':
+            uniqueCoo = coo_matrix((uniqueData, (uniqueAxis, uniqueOffAxis)),
+                                    shape=(axisCount, self.features))
+            return Sparse(uniqueCoo, pointNames=axisNames, featureNames=offAxisNames)
+        else:
+            uniqueCoo = coo_matrix((uniqueData, (uniqueOffAxis, uniqueAxis)),
+                                    shape=(self.points, axisCount))
+            return Sparse(uniqueCoo, pointNames=offAxisNames, featureNames=axisNames)
 
     def _containsZero_implementation(self):
         """
@@ -1861,6 +1891,33 @@ class SparseView(BaseView, Sparse):
         return GenericIt()
 
     def _copyAs_implementation(self, format):
+        if format == "Sparse":
+            sourceData = self._source.data.data.copy()
+            sourceRow = self._source.data.row.copy()
+            sourceCol = self._source.data.col.copy()
+
+            keep = ((sourceRow >= self._pStart) &
+                     (sourceRow < self._pEnd) &
+                     (sourceCol >= self._fStart) &
+                     (sourceCol < self._fEnd))
+            keepData = sourceData[keep]
+            keepRow = sourceRow[keep]
+            keepCol = sourceCol[keep]
+            if self._pStart > 0:
+                keepRow = list(map(lambda x: x - self._pStart, keepRow))
+            if self._fStart > 0:
+                keepCol = list(map(lambda x: x - self._fStart, keepCol))
+
+            coo = coo_matrix((keepData, (keepRow, keepCol)),
+                             shape=(self.points, self.features))
+            pNames = None
+            fNames = None
+            if self._pointNamesCreated():
+                pNames=self.getPointNames()
+            if self._featureNamesCreated():
+                fNames=self.getFeatureNames()
+            return Sparse(coo, pointNames=pNames, featureNames=fNames)
+
         if self.points == 0 or self.features == 0:
             emptyStandin = numpy.empty((self.points, self.features))
             intermediate = UML.createData('Matrix', emptyStandin)
@@ -1875,7 +1932,7 @@ class SparseView(BaseView, Sparse):
         limited = self._source.copyPoints(start=self._pStart, end=self._pEnd - 1)
         limited = limited.copyFeatures(start=self._fStart, end=self._fEnd - 1)
 
-        if format is None or format == 'Sparse':
+        if format is None:
             return limited
         else:
             return limited._copyAs_implementation(format)
@@ -1901,38 +1958,6 @@ class SparseView(BaseView, Sparse):
                     return False
 
         return True
-
-    def _uniquePoints_implementation(self):
-        uniquePts = set()
-        uniqueData = []
-        uniqueRow = []
-        uniqueCol = []
-        keepNames = []
-        numPts = 0
-        for i, row in enumerate(self.pointIterator()):
-        # for i in range(self.points):
-            if tuple(row) not in uniquePts:
-                uniquePts.add(tuple(row))
-                uniqueData.extend(row)
-                uniqueRow.extend([numPts for _ in range(self.features)])
-                uniqueCol.extend([j for j in range(self.features)])
-                if self._pointNamesCreated():
-                    keepNames.append(self.getPointName(i))
-                numPts += 1
-
-        uniqueCoo = coo_matrix((uniqueData, (uniqueRow, uniqueCol)), shape=(numPts, self.features))
-
-        if len(keepNames) > 0:
-            pNames = keepNames
-        else:
-            pNames = None
-        if self._featureNamesCreated():
-            fNames = self.getFeatureNames()
-        else:
-            fNames = None
-        self._sorted = None
-
-        return Sparse(uniqueCoo, pointNames=pNames, featureNames=fNames)
 
     def _containsZero_implementation(self):
         for sPoint in self.pointIterator():
@@ -2017,3 +2042,7 @@ class SparseView(BaseView, Sparse):
                 return self.next()
 
         return nzIt()
+
+    def _genericUnique_implementation(self, axis):
+        unique = self.copyAs('Sparse')
+        return unique._genericUnique_implementation(axis)

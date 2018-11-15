@@ -10,7 +10,7 @@ Methods tested in this file:
 In object HighLevelDataSafe:
 calculateForEachPoint, calculateForEachFeature, mapReducePoints, pointIterator,
 featureIterator, calculateForEachElement, isApproximatelyEqual,
-trainAndTestSets, countEachUniqueValue
+trainAndTestSets, uniquePoints, uniqueFeatures
 
 In object HighLevelModifying:
 dropFeaturesContainingType, replaceFeatureWithBinaryFeatures,
@@ -1128,86 +1128,236 @@ class HighLevelDataSafe(DataTestObject):
 
         assert False  # implausible number of checks for random order were unsucessful
 
+    ################
+    # uniquePoints #
+    ################
 
-    ########################
-    # countEachUniqueValue #
-    ########################
+    def test_uniquePoints_allNames_string(self):
+        data = [['George', 'Washington'], ['George', 'Washington'],
+                ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
+                ['James', 'Madison']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
 
-    def test_countEachUniqueValue_allPtsAndFtrs(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        toTest = self.constructor(data)
-        unique = toTest.countEachUniqueValue()
+        expData = [['George', 'Washington'], ['John', 'Adams'],
+                   ['Thomas', 'Jefferson'], ['James', 'Madison']]
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
 
-        assert len(unique) == 6
-        assert unique[1] == 2
-        assert unique[2] == 2
-        assert unique[3] == 2
-        assert unique['a'] == 1
-        assert unique['b'] == 1
-        assert unique['c'] == 1
+        ret = test.uniquePoints()
 
-    def test_countEachUniqueValue_limitPoints(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        pNames = ['p1', 'p2', 'p3']
-        toTest = self.constructor(data, pointNames=pNames)
-        unique = toTest.countEachUniqueValue(points=0)
+        assert ret == exp
 
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[2] == 1
-        assert unique[3] == 1
+    def test_uniquePoints_allNames_numeric(self):
+        data = [[0, 0], [0, 0],
+                [99, 99], [99, 99],
+                [5.5, 11], [5.5, 11],  [5.5, 11],
+                [-1, -2]]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
 
-        unique = toTest.countEachUniqueValue(points='p1')
+        expData = [[0, 0], [99, 99], [5.5, 11], [-1, -2]]
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p4", "p7"], featureNames=ftNames)
 
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[2] == 1
-        assert unique[3] == 1
+        ret = test.uniquePoints()
 
-        unique = toTest.countEachUniqueValue(points=[0,'p3'])
+        assert ret == exp
 
-        assert len(unique) == 3
-        assert unique[1] == 2
-        assert unique[2] == 2
-        assert unique[3] == 2
+    def test_uniquePoints_allNames_mixed(self):
+        data = [['George', 0], ['George', 0],
+                ['John', 1], ['John', 1], ['John', 1],
+                ['Thomas', 2],  ['Thomas', 2],
+                ['James', 3]]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
 
-    def test_countEachUniqueValue_limitFeatures(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        fNames = ['f1', 'f2', 'f3']
-        toTest = self.constructor(data, featureNames=fNames)
-        unique = toTest.countEachUniqueValue(features=0)
+        expData = [['George', 0], ['John', 1],
+                   ['Thomas', 2], ['James', 3]]
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
 
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[3] == 1
-        assert unique['a'] == 1
+        ret = test.uniquePoints()
 
-        unique = toTest.countEachUniqueValue(features='f1')
+        assert ret == exp
 
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[3] == 1
-        assert unique['a'] == 1
+    def test_uniquePoints_allNames_allUnique(self):
+        data = [['George', 'Washington'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'], ['James', 'Madison'],
+                ['James', 'Monroe'], ['John Quincy', 'Adams'],
+                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
 
-        unique = toTest.countEachUniqueValue(features=[0,'f3'])
+        exp = test.copy()
 
-        assert len(unique) == 4
-        assert unique[1] == 2
-        assert unique[3] == 2
-        assert unique['a'] == 1
-        assert unique['c'] == 1
+        ret = test.uniquePoints()
 
-    def test_countEachUniqueValue_limitPointsAndFeatures_cornercase(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        fNames = ['f1', 'f2', 'f3']
-        pNames = ['p1', 'p2', 'p3']
-        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
+        assert ret == exp
 
-        unique = toTest.countEachUniqueValue(features=[0,'f3'], points=[0,'p3'])
+    def test_uniquePoints_noNames(self):
+        data = [['George', 'Washington'], ['George', 'Washington'],
+                ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
+                ['James', 'Madison']]
+        test = self.constructor(data)
+        expData = [['George', 'Washington'], ['John', 'Adams'],
+                   ['Thomas', 'Jefferson'], ['James', 'Madison']]
+        exp = self.constructor(expData)
 
-        assert len(unique) == 2
-        assert unique[1] == 2
-        assert unique[3] == 2
+        ret = test.uniquePoints()
+
+        assert ret == exp
+
+    def test_uniquePoints_subsetFeature0(self):
+        data = [['George', 'Washington'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'], ['James', 'Madison'],
+                ['James', 'Monroe'], ['John Quincy', 'Adams'],
+                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George'], ['John'], ['Thomas'], ['James'],
+                   ['John Quincy'], ['Andrew'], ['Martin']]
+        expPtNames = ["p0", "p1", "p2", "p3", "p5", "p6", "p7"]
+        exp = self.constructor(expData, pointNames=expPtNames, featureNames=["firstName"])
+
+        ret = test[:, 0].uniquePoints()
+
+        assert ret == exp
+
+    def test_uniquePoints_subsetFeature1(self):
+        data = [['George', 'Washington'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'], ['James', 'Madison'],
+                ['James', 'Monroe'], ['John Quincy', 'Adams'],
+                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['Washington'], ['Adams'], ['Jefferson'], ['Madison'],
+                   ['Monroe'], ['Jackson'], ['Van Buren']]
+        expPtNames = ["p0", "p1", "p2", "p3", "p4", "p6", "p7"]
+        exp = self.constructor(expData, pointNames=expPtNames, featureNames=["lastName"])
+
+        ret = test[:, 1].uniquePoints()
+
+        assert ret == exp
+
+    ##################
+    # uniqueFeatures #
+    ##################
+
+    def test_uniqueFeatures_allNames_string(self):
+        data = [['a','b','c','a','b','c'],
+                ['1','2','3','1','2','4'],
+                ['0','0','0','0','0','0']]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['a','b','c','c'], ['1','2','3','4'], ['0','0','0','0']]
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f5"])
+
+        ret = test.uniqueFeatures()
+
+        assert ret == exp
+
+    def test_uniqueFeatures_allNames_numeric(self):
+        data = [[0, 1, 2, 0, 1, 2],
+                [0, 0, 0, 0, 0, 0],
+                [-1, -2, -3, -1, -1, -3]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [[0, 1, 2, 1], [0, 0, 0, 0], [-1, -2, -3, -1]]
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f4"])
+
+        ret = test.uniqueFeatures()
+
+        assert ret == exp
+
+    def test_uniqueFeatures_allNames_mixed(self):
+        data = [['George', 0, 'George', 0, 'George', 0],
+                ['John', 1, 'James', 3, 'John', 3],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George', 0, 'George', 0],
+                   ['John', 1, 'James', 3],
+                   ['Thomas', 2, 'Thomas', 2]]
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f3"])
+
+        ret = test.uniqueFeatures()
+
+        assert ret == exp
+
+    def test_uniqueFeatures_allNames_allUnique(self):
+        data = [['George', 0, 'George', 1, 'James', 2],
+                ['John', 1, 'James', 0, 'John', 1],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 0]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        exp = test.copy()
+
+        ret = test.uniqueFeatures()
+
+        print(ret)
+        print(exp)
+        assert ret == exp
+
+    def test_uniqueFeatures_noNames(self):
+        data = [['George', 0, 'George', 0, 'George', 0],
+                ['John', 1, 'James', 3, 'John', 3],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
+        test = self.constructor(data)
+
+        expData = [['George', 0, 'George', 0],
+                   ['John', 1, 'James', 3],
+                   ['Thomas', 2, 'Thomas', 2]]
+        exp = self.constructor(expData)
+
+        ret = test.uniqueFeatures()
+
+        assert ret == exp
+
+    def test_uniqueFeatures_subsetPoint0(self):
+        data = [['George', 0, 'George', 0, 'George', 0],
+                ['John', 1, 'James', 3, 'John', 3],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George', 0]]
+        exp = self.constructor(expData, pointNames=["p0"], featureNames=["f0", "f1"])
+
+        ret = test[0, :].uniqueFeatures()
+
+        assert ret == exp
+
+    def test_uniqueFeatures_subsetPoint1(self):
+        data = [['George', 0, 'George', 0, 'George', 0],
+                ['John', 1, 'James', 3, 'John', 3],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['John', 1, 'James', 3]]
+        exp = self.constructor(expData, pointNames=["p1"], featureNames=["f0", "f1", "f2", "f3"])
+
+        ret = test[1, :].uniqueFeatures()
+
+        assert ret == exp
 
 class HighLevelModifying(DataTestObject):
     ##############################

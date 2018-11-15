@@ -15,6 +15,7 @@ from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
 from .dataHelpers import reorderToMatchList
+from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 import six
@@ -876,25 +877,17 @@ class List(Base):
             #				assert isinstance(point, list)
                 assert len(point) == expectedLength
 
-    def _uniquePoints_implementation(self):
-        uniquePts = set()
-        uniqueIndices = []
-        for i, row in enumerate(self.data):
-            if tuple(row) not in uniquePts:
-                uniquePts.add(tuple(row))
-                uniqueIndices.append(i)
-        uniqueData = [self.data[i] for i in uniqueIndices]
+    def _genericUnique_implementation(self, axis):
+        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self, axis)
+        uniqueData = uniqueData.tolist()
+        if self.data == uniqueData:
+            return self.copy()
 
-        if self._pointNamesCreated():
-            pNames = [self.getPointName(i) for i in uniqueIndices]
+        axisNames, offAxisNames = uniqueNameGetter(self, axis, uniqueIndices)
+        if axis == 'point':
+            return List(uniqueData, pointNames=axisNames, featureNames=offAxisNames)
         else:
-            pNames = None
-        if self._featureNamesCreated():
-            fNames = self.getFeatureNames()
-        else:
-            fNames = None
-
-        return List(uniqueData, pointNames=pNames, featureNames=fNames)
+            return List(uniqueData, pointNames=offAxisNames, featureNames=axisNames)
 
     def _containsZero_implementation(self):
         """
