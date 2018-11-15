@@ -3542,6 +3542,116 @@ class Base(object):
         self.setFeatureNames(ret[0])
 
 
+    def splitPointsByCollapsingFeatures(self, featuresToCollapse,
+                                        nameFeatureNames, nameFeatureValues):
+        """
+        TODO
+        """
+        numCollapsed = len(featuresToCollapse)
+        collapseIndices = [self._getFeatureIndex(ft) for ft in featuresToCollapse]
+        retainIndices = [idx for idx in range(self.features) if idx not in collapseIndices]
+        numRetPoints = self.points * numCollapsed
+        numRetFeatures = self.features - numCollapsed + 2
+
+        self._splitPointsByCollapsingFeatures_implementation(
+            featuresToCollapse, nameFeatureNames, nameFeatureValues,
+            collapseIndices, retainIndices, numRetPoints, numRetFeatures)
+
+        self._pointCount = numRetPoints
+        self._featureCount = numRetFeatures
+        ftNames = [self.getFeatureName(idx) for idx in retainIndices]
+        ftNames.extend([nameFeatureNames, nameFeatureValues])
+        self.setFeatureNames(ftNames)
+        if self._pointNamesCreated():
+            appendedPts = []
+            for name in self.getPointNames():
+                for i in range(numCollapsed):
+                    appendedPts.append("{0}_{1}".format(name, i))
+            self.setPointNames(appendedPts)
+
+    def combinePointsByExpandingFeatures(self, featureForNames, featureForValues):
+        """
+        TODO
+        """
+        namesIdx = self._getFeatureIndex(featureForNames)
+        valuesIdx = self._getFeatureIndex(featureForValues)
+        uncombinedIdx = [i for i in range(self.features) if i != namesIdx and i != valuesIdx]
+        uniqueNames = []
+        for name in self[:, featureForNames]:
+            if name not in uniqueNames:
+                uniqueNames.append(name)
+        numRetFeatures = self.features + len(uniqueNames) - 2
+
+        self._combinePointsByExpandingFeatures_implementation(
+            namesIdx, valuesIdx, uncombinedIdx, uniqueNames, numRetFeatures)
+
+        self._featureCount = numRetFeatures
+        fNames = self.getFeatureNames()
+        fNames.remove(featureForNames)
+        fNames.remove(featureForValues)
+        for name in reversed(uniqueNames):
+            fNames.insert(namesIdx, name)
+        self.setFeatureNames(fNames)
+
+        # points have changed, will not attempt to guess which point names to use
+        if self._pointNamesCreated():
+            self.pointNames = None
+            self.pointNamesInverse = None
+
+    def splitFeatureByParsing(self, feature, splitOn, splitFeatureNames):
+        """
+        TODO
+        """
+        if not (isinstance(splitOn, (int, numpy.integer, six.string_types))
+                or hasattr(splitOn, '__iter__')
+                or hasattr(splitOn, '__call__')):
+            msg = "splitOn must be an integer, string, or function"
+            raise ArgumentException(msg)
+
+        splitList = []
+        for value in self[:, feature]:
+            if isinstance(splitOn, six.string_types):
+                splitList.append(value.split(splitOn))
+            elif isinstance(splitOn, (int, numpy.number)):
+                splitList.append([value[:splitOn], value[splitOn:]])
+            elif hasattr(splitOn, '__iter__'):
+                split = []
+                startIdx = 0
+                for item in splitOn:
+                    if isinstance(item, six.string_types):
+                        split.append(value[startIdx:].split(item)[0])
+                        # find index of value from startIdx on, o.w. will only
+                        # ever return first instance. Add len of previous
+                        # values to get actual index and add one to bypass this
+                        # item in next iteration
+                        startIdx = (value[startIdx:].index(item) +
+                                    len(value[:startIdx]) + 1)
+                    elif isinstance(item, (int, numpy.integer)):
+                        split.append(value[startIdx:item])
+                        startIdx = item
+                    else:
+                        msg = "A list of items for splitOn may only contain "
+                        msg += " integers and strings"
+                        raise ArgumentException(msg)
+                split.append(value[startIdx:])
+                splitList.append(split)
+            else:
+                splitList.append(splitOn(value))
+
+        featureIndex = self._getFeatureIndex(feature)
+        numNewFeatures = len(splitList[0])
+        numRetFeatures = self.features - 1 + numNewFeatures
+
+        self._splitFeatureByParsing_implementation(
+                featureIndex, splitList, numRetFeatures, numNewFeatures)
+
+        self._featureCount = numRetFeatures
+        fNames = self.getFeatureNames()[:featureIndex]
+        fNames.extend(splitFeatureNames)
+        fNames.extend(self.getFeatureNames()[featureIndex + 1:])
+        self.setFeatureNames(fNames)
+
+
     ###############################################################
     ###############################################################
     ###   Subclass implemented numerical operation functions    ###
@@ -4006,7 +4116,7 @@ class Base(object):
         if isUML:
             if opName.startswith('__r'):
                 return NotImplemented
-            
+
             self._genericNumericBinary_sizeValidation(opName, other)
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)

@@ -758,6 +758,65 @@ class List(Base):
         self.data = result
         self._numFeatures = numFeatures
 
+    def _splitPointsByCollapsingFeatures_implementation(self,
+            featuresToCollapse, nameFeatureNames, nameFeatureValues,
+            collapseIndices, retainIndices, numRetPoints, numRetFeatures):
+        collapseData = []
+        retainData = []
+        for pt in self.data:
+            collapseFeatures = []
+            retainFeatures = []
+            for idx in collapseIndices:
+                collapseFeatures.append(pt[idx])
+            for idx in retainIndices:
+                retainFeatures.append(pt[idx])
+            collapseData.append(collapseFeatures)
+            retainData.append(retainFeatures)
+
+        tmpData = numpy.empty((numRetPoints, numRetFeatures), dtype=numpy.object_)
+        tmpData[:, :-2] = numpy.repeat(retainData, len(featuresToCollapse), axis=0)
+
+        currFtNames = [self.getFeatureName(idx) for idx in collapseIndices]
+        # stack feature names repeatedly to create new feature
+        namesAsFeature = numpy.tile(currFtNames, (1, self.points))
+        tmpData[:, -2] = namesAsFeature
+        # flatten values by row then reshape into new feature
+        valuesAsFeature = numpy.array(collapseData).flatten()
+        tmpData[:, -1] = valuesAsFeature
+
+        self.data = tmpData.tolist()
+
+    def _combinePointsByExpandingFeatures_implementation(self,
+            namesIdx, valuesIdx, uncombinedIdx, uniqueNames, numRetFeatures):
+        unique = {} #probably need ordered dict?
+        for row in self.data:
+            uncombined = tuple([row[i] for i in uncombinedIdx])
+            if uncombined not in unique:
+                unique[uncombined] = {}
+            unique[uncombined][row[namesIdx]] = row[valuesIdx]
+
+        tmpData = numpy.empty(shape=(len(unique), numRetFeatures), dtype=numpy.object_)
+
+        for i, point in enumerate(unique):
+            tmpData[i, :namesIdx] = point[:namesIdx]
+            for j, name in enumerate(uniqueNames):
+                tmpData[i, namesIdx + j] = unique[point][name]
+            tmpData[i, namesIdx + len(uniqueNames):] = point[namesIdx:]\
+
+        self.data = tmpData.tolist()
+        self._pointCount = len(unique)
+
+    def _splitFeatureByParsing_implementation(self,
+            featureIndex, splitList, numRetFeatures, numNewFeatures):
+        tmpData = numpy.empty(shape=(self.points, numRetFeatures), dtype=numpy.object_)
+
+        tmpData[:,:featureIndex] = [ft[:featureIndex] for ft in self.data]
+        for i in range(numNewFeatures):
+            tmpData[:,featureIndex + i] = [lst[i] for lst in splitList]
+        tmpData[:,featureIndex + numNewFeatures:] = [ft[featureIndex + 1:] for ft in self.data]
+
+        self.data = tmpData.tolist()
+
     def _getitem_implementation(self, x, y):
         return self.data[x][y]
 

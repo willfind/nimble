@@ -1073,6 +1073,88 @@ class Sparse(Base):
         self.data = coo_matrix((self.data.data, (self.data.row, self.data.col)), newShape)
         self._sorted = 'feature'
 
+    def _splitPointsByCollapsingFeatures_implementation(self,
+            featuresToCollapse, nameFeatureNames, nameFeatureValues,
+            collapseIndices, retainIndices, numRetPoints, numRetFeatures):
+        if self._sorted is None:
+            self._sortInternal('point')
+
+        tmpData = []
+        tmpRow = []
+        tmpCol = []
+        collapseNames = [self.getFeatureName(idx) for idx in collapseIndices]
+
+        for ptIdx in range(self.points):
+            inRetain = [val in retainIndices for val in self.data.col]
+            inCollapse = [val in collapseIndices for val in self.data.col]
+            retainData = self.data.data[(self.data.row == ptIdx) & (inRetain)]
+            retainCol = self.data.col[(self.data.row == ptIdx) & (inRetain)]
+            collapseData = self.data.data[(self.data.row == ptIdx) & (inCollapse)]
+            sort = numpy.argsort(collapseIndices)
+            collapseData = collapseData[sort]
+            for idx, value in enumerate(collapseData):
+                tmpData.extend(retainData)
+                tmpRow.extend([ptIdx * len(featuresToCollapse) + idx] * len(retainData))
+                tmpCol.extend(retainCol)
+                tmpData.append(collapseNames[idx])
+                tmpRow.append(ptIdx * len(featuresToCollapse) + idx)
+                tmpCol.append(numRetFeatures - 2)
+                tmpData.append(value)
+                tmpRow.append(ptIdx * len(featuresToCollapse) + idx)
+                tmpCol.append(numRetFeatures - 1)
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        self.data = coo_matrix((tmpData, (tmpRow, tmpCol)), shape=(numRetPoints, numRetFeatures))
+        self._sorted = None
+
+    def _combinePointsByExpandingFeatures_implementation(self,
+            namesIdx, valuesIdx, uncombinedIdx, uniqueNames, numRetFeatures):
+        if self._sorted is None:
+            self._sortInternal('point')
+        unique = {}
+        for ptIdx in range(self.points):
+            point = self.data.data[self.data.row == ptIdx]
+            key = tuple(point[uncombinedIdx])
+            if key not in unique:
+                unique[key] = {}
+            unique[key][point[namesIdx]] = point[valuesIdx]
+
+        tmpData = []
+        tmpRow = []
+        tmpCol = []
+        for idx, point in enumerate(unique):
+            tmpPoint = list(point[:namesIdx])
+            for name in uniqueNames:
+                tmpPoint.append(unique[point][name])
+            tmpPoint.extend(point[namesIdx:])
+            tmpData.extend(tmpPoint)
+            tmpRow.extend([idx for _ in range(len(point) + len(uniqueNames))])
+            tmpCol.extend([i for i in range(numRetFeatures)])
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        self.data = coo_matrix((tmpData, (tmpRow, tmpCol)), shape=(len(unique), numRetFeatures))
+        self._pointCount = len(unique)
+        self._sorted = None
+
+    def _splitFeatureByParsing_implementation(self,
+            featureIndex, splitList, numRetFeatures, numNewFeatures):
+        keep = self.data.col != featureIndex
+        tmpData = self.data.data[keep]
+        tmpRow = self.data.row[keep]
+        tmpCol = self.data.col[keep]
+
+        shift = tmpCol > featureIndex
+        tmpCol[shift] = tmpCol[shift] + numNewFeatures - 1
+
+        for idx in range(numNewFeatures):
+            tmpData = numpy.concatenate((tmpData, [lst[idx] for lst in splitList]))
+            tmpRow = numpy.concatenate((tmpRow, [i for i in range(self.points)]))
+            tmpCol = numpy.concatenate((tmpCol, [featureIndex + idx for _ in range(self.points)]))
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        self.data = coo_matrix((tmpData, (tmpRow, tmpCol)), shape=(self.points, numRetFeatures))
+        self._sorted = None
+
     def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
         #instead of always copying, use reshape or resize to sometimes cut array down
         # to size???
