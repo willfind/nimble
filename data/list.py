@@ -9,6 +9,7 @@ import copy
 import numpy
 import numbers
 import itertools
+from collections import OrderedDict
 
 import UML
 from .base import Base, cmp_to_key
@@ -759,8 +760,8 @@ class List(Base):
         self._numFeatures = numFeatures
 
     def _splitPointsByCollapsingFeatures_implementation(self,
-            featuresToCollapse, nameFeatureNames, nameFeatureValues,
-            collapseIndices, retainIndices, numRetPoints, numRetFeatures):
+            featuresToCollapse, collapseIndices, retainIndices,
+            numRetPoints, numRetFeatures):
         collapseData = []
         retainData = []
         for pt in self.data:
@@ -785,14 +786,24 @@ class List(Base):
         tmpData[:, -1] = valuesAsFeature
 
         self.data = tmpData.tolist()
+        self._numFeatures = numRetFeatures
 
     def _combinePointsByExpandingFeatures_implementation(self,
             namesIdx, valuesIdx, uncombinedIdx, uniqueNames, numRetFeatures):
-        unique = {} #probably need ordered dict?
-        for row in self.data:
+        unique = OrderedDict()
+        pNames = []
+        for idx, row in enumerate(self.data):
             uncombined = tuple([row[i] for i in uncombinedIdx])
             if uncombined not in unique:
                 unique[uncombined] = {}
+                if self._pointNamesCreated():
+                    pNames.append(self.getPointName(idx))
+            if row[namesIdx] in unique[uncombined]:
+                msg = "The point at index {0} cannot be combined ".format(idx)
+                msg += "because there is already a value for the feature "
+                msg += "{0} in another point which this ".format(row[namesIdx])
+                msg += "point would be combined with."
+                raise ArgumentException(msg)
             unique[uncombined][row[namesIdx]] = row[valuesIdx]
 
         tmpData = numpy.empty(shape=(len(unique), numRetFeatures), dtype=numpy.object_)
@@ -800,11 +811,17 @@ class List(Base):
         for i, point in enumerate(unique):
             tmpData[i, :namesIdx] = point[:namesIdx]
             for j, name in enumerate(uniqueNames):
-                tmpData[i, namesIdx + j] = unique[point][name]
-            tmpData[i, namesIdx + len(uniqueNames):] = point[namesIdx:]\
+                if name in unique[point]:
+                    tmpData[i, namesIdx + j] = unique[point][name]
+                else:
+                    tmpData[i, namesIdx + j] = numpy.nan
+            tmpData[i, namesIdx + len(uniqueNames):] = point[namesIdx:]
 
         self.data = tmpData.tolist()
         self._pointCount = len(unique)
+        self._numFeatures = numRetFeatures
+        if self._pointNamesCreated():
+            self.setPointNames(pNames)
 
     def _splitFeatureByParsing_implementation(self,
             featureIndex, splitList, numRetFeatures, numNewFeatures):
@@ -812,10 +829,17 @@ class List(Base):
 
         tmpData[:,:featureIndex] = [ft[:featureIndex] for ft in self.data]
         for i in range(numNewFeatures):
-            tmpData[:,featureIndex + i] = [lst[i] for lst in splitList]
+            newFeat = []
+            for lst in splitList:
+                if i < len(lst):
+                    newFeat.append(lst[i])
+                else:
+                    newFeat.append(numpy.nan)
+            tmpData[:,featureIndex + i] = newFeat
         tmpData[:,featureIndex + numNewFeatures:] = [ft[featureIndex + 1:] for ft in self.data]
 
         self.data = tmpData.tolist()
+        self._numFeatures = numRetFeatures
 
     def _getitem_implementation(self, x, y):
         return self.data[x][y]

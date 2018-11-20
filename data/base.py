@@ -3541,11 +3541,58 @@ class Base(object):
         self.setPointNames(ret[1])
         self.setFeatureNames(ret[0])
 
-
     def splitPointsByCollapsingFeatures(self, featuresToCollapse,
-                                        nameFeatureNames, nameFeatureValues):
+                                        featureForNames, featureForValues):
         """
-        TODO
+        Split each point in this object into k points, one point for each
+        featureName/value pair in featuresToCollapse. For all k points, the
+        uncollapsed features are copied from the original point. The collapsed
+        features are replaced by only two features which are filled with a
+        unique featureName/value pair for each of the k points.
+
+        An object containing n points, m features and k features-to-collapse will
+        result in this object containing (n * m) points and (m - k + 2) features.
+
+        featuresToCollapse: A list or iterable container-like object of names
+          and or indices of the features that will be collapsed.  The first of
+          the two resulting features will contain the names of these features.
+          The second resulting feature will contain the values of this feature
+
+        featureForNames: A string to describe the feature which will contain
+          the collapsed feature names
+
+        featureForValues: A string to describe the feature which will contain
+          the values from the collapsed features
+
+        Example:
+
+        data.splitPointsByCollapsingFeatures(['jan', 'feb', 'mar'], 'month', 'temp')
+
+                 data (before)                            data (after)
+        +-------------------------------+       +-----------------------------+
+        | city        | jan | feb | mar |       | city         | month | temp |
+        +-------------+-----+-----+-----+       +--------------+-------+------+
+        | New York    | 4   | 5   | 10  |       | New York     | jan   | 4    |
+        +-------------+-----+-----+-----+  -->  +--------------+-------+------+
+        | Los Angeles | 20  | 21  | 21  |       | New York     | feb   | 5    |
+        +-------------+-----+-----+-----+       +--------------+-------+------+
+        | Chicago     | 0   | 2   | 7   |       | New York     | mar   | 10   |
+        +-------------+-----+-----+-----+       +--------------+-------+------+
+                                                | Los Angeles  | jan   | 20   |
+                                                +--------------+-------+------+
+                                                | Los Angeles  | feb   | 21   |
+                                                +--------------+-------+------+
+                                                | Los Angeles  | mar   | 21   |
+                                                +--------------+-------+------+
+                                                | Chicago      | jan   | 0    |
+                                                +--------------+-------+------+
+                                                | Chicago      | feb   | 2    |
+                                                +--------------+-------+------+
+                                                | Chicago      | mar   | 7    |
+                                                +--------------+-------+------+
+
+        This function was inspired by the gather function from the tidyr
+        library created by Hadley Wickham in the R programming language.
         """
         numCollapsed = len(featuresToCollapse)
         collapseIndices = [self._getFeatureIndex(ft) for ft in featuresToCollapse]
@@ -3554,13 +3601,13 @@ class Base(object):
         numRetFeatures = self.features - numCollapsed + 2
 
         self._splitPointsByCollapsingFeatures_implementation(
-            featuresToCollapse, nameFeatureNames, nameFeatureValues,
-            collapseIndices, retainIndices, numRetPoints, numRetFeatures)
+            featuresToCollapse, collapseIndices, retainIndices,
+            numRetPoints, numRetFeatures)
 
         self._pointCount = numRetPoints
         self._featureCount = numRetFeatures
         ftNames = [self.getFeatureName(idx) for idx in retainIndices]
-        ftNames.extend([nameFeatureNames, nameFeatureValues])
+        ftNames.extend([featureForNames, featureForValues])
         self.setFeatureNames(ftNames)
         if self._pointNamesCreated():
             appendedPts = []
@@ -3569,15 +3616,61 @@ class Base(object):
                     appendedPts.append("{0}_{1}".format(name, i))
             self.setPointNames(appendedPts)
 
-    def combinePointsByExpandingFeatures(self, featureForNames, featureForValues):
+        self.validate()
+
+    def combinePointsByExpandingFeatures(self, featureWithFeatureNames,
+                                         featureWithValues):
         """
-        TODO
+        Combine any points containing matching values at every feature except
+        featureWithFeatureNames and featureWithValues. Each combined point will
+        expand its features to include a new feature for each unique value in
+        featureWithFeatureNames. The corresponding featureName/value pairs in
+        featureWithFeatureNames and featureWithValues from each point will
+        become the values for the expanded features for the combined points.
+        If a combined point lacks a featureName/value pair for any given
+        feature, numpy.nan will be assigned as the value at that feature. The
+        combined point name will be assigned the point name of the first
+        instance of that point, if point names are present.
+
+        An object containing n points with k being unique at every feature
+        except featureWithFeatureNames and featureWithValues, m features, and j
+        unique values in featureWithFeatureNames will be modified to include k
+        points and (m - 2 + j) features.
+
+        featureWithFeatureNames: The name or index of the feature containing
+          the values that will become the names of the features in the combined
+          points
+
+        featureWithValues: The name or index of the feature of values that
+          corresponds to the values in featureWithFeatureNames
+
+        Example:
+
+        data.combinePointsByExpandingFeatures('dist', 'time')
+
+                 data (before)                               data (after)
+        +-----------+------+------+-------+      +-----------+------+------+-------+
+        | athlete   | ctry | dist | time  |      | athlete   | ctry | 100m | 200m  |
+        +-----------+------+------+-------+      +-----------+------+------+-------+
+        | Bolt      | JAM  | 100m | 9.81  |      | Bolt      | JAM  | 9.81 | 19.78 |
+        +-----------+------+------+-------+  ->  +-----------+------+------+-------+
+        | Bolt      | JAM  | 200m | 19.78 |      | Gatlin    | USA  | 9.89 | nan   |
+        +-----------+------+------+-------+      +-----------+------+------+-------+
+        | Gatlin    | USA  | 100m | 9.89  |      | de Grasse | CAN  | 9.91 | 20.02 |
+        +-----------+------+------+-------+      +-----------+------+------+-------+
+        | de Grasse | CAN  | 200m | 20.02 |
+        +-----------+------+------+-------+
+        | de Grasse | CAN  | 100m | 9.91  |
+        +-----------+------+------+-------+
+
+        This function was inspired by the spread function from the tidyr
+        library created by Hadley Wickham in the R programming language.
         """
-        namesIdx = self._getFeatureIndex(featureForNames)
-        valuesIdx = self._getFeatureIndex(featureForValues)
+        namesIdx = self._getFeatureIndex(featureWithFeatureNames)
+        valuesIdx = self._getFeatureIndex(featureWithValues)
         uncombinedIdx = [i for i in range(self.features) if i != namesIdx and i != valuesIdx]
         uniqueNames = []
-        for name in self[:, featureForNames]:
+        for name in self[:, featureWithFeatureNames]:
             if name not in uniqueNames:
                 uniqueNames.append(name)
         numRetFeatures = self.features + len(uniqueNames) - 2
@@ -3586,38 +3679,91 @@ class Base(object):
             namesIdx, valuesIdx, uncombinedIdx, uniqueNames, numRetFeatures)
 
         self._featureCount = numRetFeatures
-        fNames = self.getFeatureNames()
-        fNames.remove(featureForNames)
-        fNames.remove(featureForValues)
+        fNames = [self.getFeatureName(i) for i in uncombinedIdx]
         for name in reversed(uniqueNames):
             fNames.insert(namesIdx, name)
         self.setFeatureNames(fNames)
 
-        # points have changed, will not attempt to guess which point names to use
-        if self._pointNamesCreated():
-            self.pointNames = None
-            self.pointNamesInverse = None
+        self.validate()
 
-    def splitFeatureByParsing(self, feature, splitOn, splitFeatureNames):
+    def splitFeatureByParsing(self, feature, rule, resultingNames):
         """
-        TODO
+        Split a feature into multiple features by parsing the feature and
+        dividing it into separate parts. Each value must split into a number of
+        values equal to the length of resultingNames.
+
+        feature - The name or index of the feature to parse and split
+
+        rule - can be any of the following:
+
+          string - split the value at any instance of the character string.
+            This works in the same way as python's built-in split() function;
+            removing this string.
+
+          integer - the index position where the split will occur. Unlike a
+            string, no characters will be removed when using integer. All
+            characters before the index will be split from characters at and
+            after the index.
+
+          list - may contain integer and/or string values
+
+          function - any function accepting a value as input, splitting the
+            value and returning a list of the split values.
+
+        resultingNames - a list of strings defining the names of the split
+          features.
+
+        Examples:
+
+        data.splitFeatureByParsing(location, ', ', ['city', 'country'])
+
+                 data (before)                          data (after)
+        +----------------------------+      +----------------+--------------+
+        | location                   |      | city           | country      |
+        +----------------------------+      +----------------+--------------+
+        | Johannesburg, South Africa |      | Johannesburg   | South Africa |
+        +----------------------------+  ->  +----------------+--------------+
+        | Rio de Janeiro, Brazil     |      | Rio de Janeiro | Brazil       |
+        +----------------------------+      +----------------+--------------+
+        | Moscow, Russia             |      | Moscow         | Russia       |
+        +----------------------------+      +----------------+--------------+
+
+        data.splitFeatureByParsing(product, 3, ['category', 'id'])
+
+            data (before)                        data (after)
+        +---------+----------+          +----------+-----+----------+
+        | product | quantity |          | category | id  | quantity |
+        +---------+----------+          +----------+-----+----------+
+        | AGG932  | 44       |          | AGG      | 932 | 44       |
+        +---------+----------+          +----------+-----+----------+
+        | AGG734  | 11       |    ->    | AGG      | 734 | 11       |
+        +---------+----------+          +----------+-----+----------+
+        | HEQ892  | 1        |          | HEQ      | 892 | 1        |
+        +---------+----------+          +----------+-----+----------+
+        | LEQ331  | 2        |          | LEQ      | 331 | 2        |
+        +---------+----------+          +----------+-----+----------+
+
+        This function was inspired by the separate function from the tidyr
+        library created by Hadley Wickham in the R programming language.
         """
-        if not (isinstance(splitOn, (int, numpy.integer, six.string_types))
-                or hasattr(splitOn, '__iter__')
-                or hasattr(splitOn, '__call__')):
-            msg = "splitOn must be an integer, string, or function"
+        if not (isinstance(rule, (int, numpy.integer, six.string_types))
+                or hasattr(rule, '__iter__')
+                or hasattr(rule, '__call__')):
+            msg = "rule must be an integer, string, iterable of integers "
+            msg += "and/or strings, or a function"
             raise ArgumentException(msg)
 
         splitList = []
-        for value in self[:, feature]:
-            if isinstance(splitOn, six.string_types):
-                splitList.append(value.split(splitOn))
-            elif isinstance(splitOn, (int, numpy.number)):
-                splitList.append([value[:splitOn], value[splitOn:]])
-            elif hasattr(splitOn, '__iter__'):
+        numNewFeatures = len(resultingNames)
+        for i, value in enumerate(self[:, feature]):
+            if isinstance(rule, six.string_types):
+                splitList.append(value.split(rule))
+            elif isinstance(rule, (int, numpy.number)):
+                splitList.append([value[:rule], value[rule:]])
+            elif hasattr(rule, '__iter__'):
                 split = []
                 startIdx = 0
-                for item in splitOn:
+                for item in rule:
                     if isinstance(item, six.string_types):
                         split.append(value[startIdx:].split(item)[0])
                         # find index of value from startIdx on, o.w. will only
@@ -3630,16 +3776,21 @@ class Base(object):
                         split.append(value[startIdx:item])
                         startIdx = item
                     else:
-                        msg = "A list of items for splitOn may only contain "
+                        msg = "A list of items for rule may only contain "
                         msg += " integers and strings"
                         raise ArgumentException(msg)
                 split.append(value[startIdx:])
                 splitList.append(split)
             else:
-                splitList.append(splitOn(value))
+                splitList.append(rule(value))
+            if len(splitList[-1]) != numNewFeatures:
+                msg = "The value at index {0} split into ".format(i)
+                msg += "{0} values, ".format(len(splitList[-1]))
+                msg += "but resultingNames contains "
+                msg += "{0} features".format(numNewFeatures)
+                raise ArgumentException(msg)
 
         featureIndex = self._getFeatureIndex(feature)
-        numNewFeatures = len(splitList[0])
         numRetFeatures = self.features - 1 + numNewFeatures
 
         self._splitFeatureByParsing_implementation(
@@ -3647,9 +3798,11 @@ class Base(object):
 
         self._featureCount = numRetFeatures
         fNames = self.getFeatureNames()[:featureIndex]
-        fNames.extend(splitFeatureNames)
+        fNames.extend(resultingNames)
         fNames.extend(self.getFeatureNames()[featureIndex + 1:])
         self.setFeatureNames(fNames)
+
+        self.validate()
 
 
     ###############################################################
