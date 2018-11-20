@@ -15,6 +15,7 @@ from six.moves import range
 from six.moves import zip
 import sys
 import warnings
+from collections import OrderedDict
 
 import __main__ as main
 mplError = None
@@ -3597,12 +3598,14 @@ class Base(object):
         numCollapsed = len(featuresToCollapse)
         collapseIndices = [self._getFeatureIndex(ft) for ft in featuresToCollapse]
         retainIndices = [idx for idx in range(self.features) if idx not in collapseIndices]
+        currNumPoints = self.points
+        currFtNames = [self.getFeatureName(idx) for idx in collapseIndices]
         numRetPoints = self.points * numCollapsed
         numRetFeatures = self.features - numCollapsed + 2
 
         self._splitPointsByCollapsingFeatures_implementation(
             featuresToCollapse, collapseIndices, retainIndices,
-            numRetPoints, numRetFeatures)
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
 
         self._pointCount = numRetPoints
         self._featureCount = numRetFeatures
@@ -3669,20 +3672,43 @@ class Base(object):
         namesIdx = self._getFeatureIndex(featureWithFeatureNames)
         valuesIdx = self._getFeatureIndex(featureWithValues)
         uncombinedIdx = [i for i in range(self.features) if i != namesIdx and i != valuesIdx]
+
+        # using OrderedDict supports point name setting
+        unique = OrderedDict()
+        pNames = []
+        for idx, row in enumerate(self.pointIterator()):
+            uncombined = tuple(row[uncombinedIdx])
+            if uncombined not in unique:
+                unique[uncombined] = {}
+                if self._pointNamesCreated():
+                    pNames.append(self.getPointName(idx))
+            if row[namesIdx] in unique[uncombined]:
+                msg = "The point at index {0} cannot be combined ".format(idx)
+                msg += "because there is already a value for the feature "
+                msg += "{0} in another point which this ".format(row[namesIdx])
+                msg += "point would be combined with."
+                raise ArgumentException(msg)
+            unique[uncombined][row[namesIdx]] = row[valuesIdx]
+
         uniqueNames = []
         for name in self[:, featureWithFeatureNames]:
             if name not in uniqueNames:
                 uniqueNames.append(name)
         numRetFeatures = self.features + len(uniqueNames) - 2
 
-        self._combinePointsByExpandingFeatures_implementation(
-            namesIdx, valuesIdx, uncombinedIdx, uniqueNames, numRetFeatures)
+        self._combinePointsByExpandingFeatures_implementation(unique,
+            namesIdx, uniqueNames, numRetFeatures)
 
         self._featureCount = numRetFeatures
+        self._pointCount = len(unique)
+
         fNames = [self.getFeatureName(i) for i in uncombinedIdx]
         for name in reversed(uniqueNames):
             fNames.insert(namesIdx, name)
         self.setFeatureNames(fNames)
+
+        if self._pointNamesCreated():
+            self.setPointNames(pNames)
 
         self.validate()
 
@@ -3754,7 +3780,7 @@ class Base(object):
             raise ArgumentException(msg)
 
         splitList = []
-        numNewFeatures = len(resultingNames)
+        numResultingFts = len(resultingNames)
         for i, value in enumerate(self[:, feature]):
             if isinstance(rule, six.string_types):
                 splitList.append(value.split(rule))
@@ -3783,18 +3809,18 @@ class Base(object):
                 splitList.append(split)
             else:
                 splitList.append(rule(value))
-            if len(splitList[-1]) != numNewFeatures:
+            if len(splitList[-1]) != numResultingFts:
                 msg = "The value at index {0} split into ".format(i)
                 msg += "{0} values, ".format(len(splitList[-1]))
                 msg += "but resultingNames contains "
-                msg += "{0} features".format(numNewFeatures)
+                msg += "{0} features".format(numResultingFts)
                 raise ArgumentException(msg)
 
         featureIndex = self._getFeatureIndex(feature)
-        numRetFeatures = self.features - 1 + numNewFeatures
+        numRetFeatures = self.features - 1 + numResultingFts
 
         self._splitFeatureByParsing_implementation(
-                featureIndex, splitList, numRetFeatures, numNewFeatures)
+                featureIndex, splitList, numRetFeatures, numResultingFts)
 
         self._featureCount = numRetFeatures
         fNames = self.getFeatureNames()[:featureIndex]

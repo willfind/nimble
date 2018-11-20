@@ -9,12 +9,13 @@ import numpy
 import sys
 import itertools
 import copy
-from collections import OrderedDict
 
 import UML
 from .base import Base, cmp_to_key
 from .base_view import BaseView
 from .dataHelpers import inheritDocstringsFactory
+from .dataHelpers import fillArrayWithCollapsedFeatures
+from .dataHelpers import fillArrayWithExpandedFeatures
 from UML.exceptions import ArgumentException, PackageException
 from UML.randomness import pythonRandom
 from UML.randomness import numpyRandom
@@ -646,70 +647,34 @@ class Matrix(Base):
 
     def _splitPointsByCollapsingFeatures_implementation(self,
             featuresToCollapse, collapseIndices, retainIndices,
-            numRetPoints, numRetFeatures):
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
         collapseData = self.data[:, collapseIndices]
         retainData = self.data[:, retainIndices]
-        tmpData = numpy.empty((numRetPoints, numRetFeatures), dtype=numpy.object_)
-        tmpData[:, :-2] = numpy.repeat(retainData, len(featuresToCollapse), axis=0)
 
-        currFtNames = [self.getFeatureName(idx) for idx in collapseIndices]
-        # stack feature names repeatedly to create new feature
-        namesAsFeature = numpy.tile(currFtNames, (1, self.points))
-        tmpData[:, -2] = namesAsFeature
-        # flatten values by row then reshape into new feature
-        valuesAsFeature = collapseData.flatten()
-        tmpData[:, -1] = valuesAsFeature
+        tmpData = fillArrayWithCollapsedFeatures(
+            featuresToCollapse, retainData, collapseData, currNumPoints,
+            currFtNames, numRetPoints, numRetFeatures)
 
         self.data = numpy.matrix(tmpData)
 
     def _combinePointsByExpandingFeatures_implementation(self,
-            namesIdx, valuesIdx, uncombinedIdx, uniqueNames, numRetFeatures):
-        unique = OrderedDict()
-        pNames = []
-        for idx, row in enumerate(numpy.array(self.data)):
-            uncombined = tuple(row[uncombinedIdx])
-            if uncombined not in unique:
-                unique[uncombined] = {}
-                if self._pointNamesCreated():
-                    pNames.append(self.getPointName(idx))
-            if row[namesIdx] in unique[uncombined]:
-                msg = "The point at index {0} cannot be combined ".format(idx)
-                msg += "because there is already a value for the feature "
-                msg += "{0} in another point which this ".format(row[namesIdx])
-                msg += "point would be combined with."
-                raise ArgumentException(msg)
-            unique[uncombined][row[namesIdx]] = row[valuesIdx]
-
-        tmpData = numpy.empty(shape=(len(unique), numRetFeatures), dtype=numpy.object_)
-
-        for i, point in enumerate(unique):
-            tmpData[i, :namesIdx] = point[:namesIdx]
-            for j, name in enumerate(uniqueNames):
-                if name in unique[point]:
-                    tmpData[i, namesIdx + j] = unique[point][name]
-                else:
-                    tmpData[i, namesIdx + j] = numpy.nan
-            tmpData[i, namesIdx + len(uniqueNames):] = point[namesIdx:]
+            uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
+                                                uniqueNames, numRetFeatures)
 
         self.data = numpy.matrix(tmpData)
-        self._pointCount = len(unique)
-        if self._pointNamesCreated():
-            self.setPointNames(pNames)
 
     def _splitFeatureByParsing_implementation(self,
-            featureIndex, splitList, numRetFeatures, numNewFeatures):
+            featureIndex, splitList, numRetFeatures, numResultingFts):
         tmpData = numpy.empty(shape=(self.points, numRetFeatures), dtype=numpy.object_)
 
         tmpData[:,:featureIndex] = self.data[:, :featureIndex]
-        for i in range(numNewFeatures):
+        for i in range(numResultingFts):
             newFeat = []
             for lst in splitList:
-                if i < len(lst):
-                    newFeat.append(lst[i])
-                else:
-                    newFeat.append(numpy.nan)
+                newFeat.append(lst[i])
             tmpData[:,featureIndex + i] = newFeat
-        tmpData[:,featureIndex + numNewFeatures:] = self.data[:, featureIndex + 1:]
+        tmpData[:,featureIndex + numResultingFts:] = self.data[:, featureIndex + 1:]
 
         self.data = numpy.matrix(tmpData)
 

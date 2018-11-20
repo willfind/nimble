@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import copy
 import math
 import inspect
+import numpy
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -435,3 +436,42 @@ def inheritDocstringsFactory(toInherit):
 
         return cls
     return inheritDocstring
+
+def fillArrayWithCollapsedFeatures(featuresToCollapse, retainData,
+                                   collapseData, currNumPoints, currFtNames,
+                                   numRetPoints, numRetFeatures):
+    """
+    Helper function for modifying the underlying data for
+    splitPointsByCollapsingFeatures. Used in all non-sparse implementations.
+    """
+    fill = numpy.empty((numRetPoints, numRetFeatures), dtype=numpy.object_)
+    fill[:, :-2] = numpy.repeat(retainData, len(featuresToCollapse), axis=0)
+
+    # stack feature names repeatedly to create new feature
+    namesAsFeature = numpy.tile(currFtNames, (1, currNumPoints))
+    fill[:, -2] = namesAsFeature
+    # flatten values by row then reshape into new feature
+    valuesAsFeature = collapseData.flatten()
+    fill[:, -1] = valuesAsFeature
+
+    return fill
+
+def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
+                                  numRetFeatures):
+    """
+    Helper function for modifying the underlying data for
+    combinePointsByExpandingFeatures. Used in all non-sparse implementations.
+    """
+    fill = numpy.empty(shape=(len(uniqueDict), numRetFeatures),
+                       dtype=numpy.object_)
+
+    for i, point in enumerate(uniqueDict):
+        fill[i, :namesIdx] = point[:namesIdx]
+        for j, name in enumerate(uniqueNames):
+            if name in uniqueDict[point]:
+                fill[i, namesIdx + j] = uniqueDict[point][name]
+            else:
+                fill[i, namesIdx + j] = numpy.nan
+        fill[i, namesIdx + len(uniqueNames):] = point[namesIdx:]
+
+    return fill

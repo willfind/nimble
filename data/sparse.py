@@ -7,7 +7,6 @@ from __future__ import division
 from __future__ import absolute_import
 import numpy
 import copy
-from collections import OrderedDict
 
 import UML
 
@@ -1075,7 +1074,7 @@ class Sparse(Base):
 
     def _splitPointsByCollapsingFeatures_implementation(self,
             featuresToCollapse, collapseIndices, retainIndices,
-            numRetPoints, numRetFeatures):
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
         if self._sorted is None:
             self._sortInternal('point')
 
@@ -1107,34 +1106,15 @@ class Sparse(Base):
         self._sorted = None
 
     def _combinePointsByExpandingFeatures_implementation(self,
-            namesIdx, valuesIdx, uncombinedIdx, uniqueNames, numRetFeatures):
-        if self._sorted is None:
-            self._sortInternal('point')
-        unique = OrderedDict()
-        pNames = []
-        for ptIdx in range(self.points):
-            point = self.data.data[self.data.row == ptIdx]
-            uncombined = tuple(point[uncombinedIdx])
-            if uncombined not in unique:
-                unique[uncombined] = {}
-                if self._pointNamesCreated():
-                    pNames.append(self.getPointName(ptIdx))
-            if point[namesIdx] in unique[uncombined]:
-                msg = "The point at index {0} cannot be combined ".format(ptIdx)
-                msg += "because there is already a value for the feature "
-                msg += "{0} in another point which this ".format(point[namesIdx])
-                msg += "point would be combined with."
-                raise ArgumentException(msg)
-            unique[uncombined][point[namesIdx]] = point[valuesIdx]
-
+            uniqueDict, namesIdx, uniqueNames, numRetFeatures):
         tmpData = []
         tmpRow = []
         tmpCol = []
-        for idx, point in enumerate(unique):
+        for idx, point in enumerate(uniqueDict):
             tmpPoint = list(point[:namesIdx])
             for name in uniqueNames:
-                if name in unique[point]:
-                    tmpPoint.append(unique[point][name])
+                if name in uniqueDict[point]:
+                    tmpPoint.append(uniqueDict[point][name])
                 else:
                     tmpPoint.append(numpy.nan)
             tmpPoint.extend(point[namesIdx:])
@@ -1143,29 +1123,24 @@ class Sparse(Base):
             tmpCol.extend([i for i in range(numRetFeatures)])
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
-        self.data = coo_matrix((tmpData, (tmpRow, tmpCol)), shape=(len(unique), numRetFeatures))
-        self._pointCount = len(unique)
-        if self._pointNamesCreated():
-            self.setPointNames(pNames)
+        self.data = coo_matrix((tmpData, (tmpRow, tmpCol)),
+                               shape=(len(uniqueDict), numRetFeatures))
         self._sorted = None
 
     def _splitFeatureByParsing_implementation(self,
-            featureIndex, splitList, numRetFeatures, numNewFeatures):
+            featureIndex, splitList, numRetFeatures, numResultingFts):
         keep = self.data.col != featureIndex
         tmpData = self.data.data[keep]
         tmpRow = self.data.row[keep]
         tmpCol = self.data.col[keep]
 
         shift = tmpCol > featureIndex
-        tmpCol[shift] = tmpCol[shift] + numNewFeatures - 1
+        tmpCol[shift] = tmpCol[shift] + numResultingFts - 1
 
-        for idx in range(numNewFeatures):
+        for idx in range(numResultingFts):
             newFeat = []
             for lst in splitList:
-                if idx < len(lst):
-                    newFeat.append(lst[idx])
-                else:
-                    newFeat.append(numpy.nan)
+                newFeat.append(lst[idx])
             tmpData = numpy.concatenate((tmpData, newFeat))
             tmpRow = numpy.concatenate((tmpRow, [i for i in range(self.points)]))
             tmpCol = numpy.concatenate((tmpCol, [featureIndex + idx for _ in range(self.points)]))
